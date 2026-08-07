@@ -1,0 +1,53 @@
+# Deploys the API to the Lightsail web instance - ONLY when files under api/
+# change. Runs on push to main (maintainers) with repo variable
+# DEPLOY_ENABLED=true and secrets DEPLOY_SSH_KEY / DEPLOY_HOST / DEPLOY_USER.
+name: Deploy api (Lightsail)
+
+on:
+  push:
+    branches: [main]
+    paths: ['api/**']
+  workflow_dispatch:
+
+# Least privilege for GITHUB_TOKEN.
+#
+# Without this the token takes the repository default, which on a public repo
+# is more than any of these jobs needs. None of them writes to GitHub - they
+# build, test, upload an artifact or deploy outward - so read is the ceiling.
+# Releases are created by release.yml, which asks for contents: write there.
+permissions:
+  contents: read
+jobs:
+  deploy:
+    if: vars.DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy.pem
+          chmod 600 ~/.ssh/deploy.pem
+          ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts
+      # Every tenant process runs from this one shared checkout; each gets its
+      # own env file from apps/tenants/env/, which is outside this directory
+      # and so is never touched. The old destination (~/apps/api) matched
+      # nothing on the server, so this workflow used to deploy into thin air.
+      - name: Sync api folder
+        run: |
+          rsync -az --delete \
+            --exclude node_modules --exclude .env --exclude uploads \
+            --exclude .wwebjs_auth --exclude .wwebjs_cache \
+            -e "ssh -i ~/.ssh/deploy.pem" \
+            api/ "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:~/apps/tenants/app/api/"
+      - name: Install deps and reload tenants
+        run: |
+          # No --update-env: pm2 would overwrite each tenant's cached env with
+          # this SSH session's environment, which has none of the per-tenant
+          # PORT or MONGODB_URI values. That has taken tenants down before.
+          # A code-only deploy does not need it.
+          ssh -i ~/.ssh/deploy.pem "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
+            'set -e
+             cd ~/apps/tenants/app/api && npm ci --omit=dev --silent
+             pm2 reload $(pm2 jlist | node -e "let d=\"\";process.stdin.on(\"data\",c=>d+=c).on(\"end\",()=>console.log(JSON.parse(d).filter(p=>/^posnic-tenant-/.test(p.name)).map(p=>p.name).join(\" \")))")
+             pm2 save'

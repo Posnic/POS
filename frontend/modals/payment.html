@@ -1,0 +1,37 @@
+<div id="infobar-settings-sidebar-payment" class="infobar-settings-sidebar">
+    <div class="infobar-settings-sidebar-head d-flex w-100 justify-content-between infobar_denomcalss">
+        <h4 id="exampleModalCenterTitle"><span id="payment-heading">Add</span>&nbsp;<lang class="lang_tax_title">Payment Field</lang> </h4>
+        <a href="javascript:void(0)" class="infobar-settings-close" data-id="payment"><img src="static/images/svg-icon/close.svg" class="img-fluid menu-hamburger-close" alt="close"></a>
+    </div>
+    <div class="infobar-settings-sidebar-body loader-tax">
+        <div class="custom-mode-setting">            
+            <form id='payment_add_form'> 
+                <div class="form-row">
+                    <div class="form-group col-md-12">
+                        <label for="payment_value"> Method <span class="text-danger">*</span> </label>
+                                                         
+                            <input id="payment_value" type="text" minlength="1" name="payment_value" class="form-control border-control text-right" 
+                                   style="display: block;" required>
+                            <input type="hidden" id="payment_id" name="payment_id" class="payment_id">
+                       
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-12">
+                        <div class="pull-right">
+                            <button type="button" class="btn btn-outline-secondary infobar-settngs-reset" id="payment_reset" onclick="PosnicPro.payment.paymentClearForm();"><i class="feather icon-refreshi-ccw mr-2"></i><lang class="lang_clear_title"> Clear</lang></button>
+                            <button type="button" class="btn btn-outline-secondary infobar-settings-reset payment_edit_reset" id="payment_edit_reset" onclick="PosnicPro.payment.resetEditButton(this.id);"><i class="feather icon-refresh-ccw mr-2"></i><lang class="lang_reset_title"> Reset</lang></button>
+                           
+                            <button type="button" class="btn btn-outline-danger infobar-settings-close" data-id="payment"><i class="feather icon-x-circle mr-2"></i><lang class="lang_close_title"> Close</lang>
+                            </button>
+                            <button type="submit" class="btn btn-outline-primary">
+                                <i class="feather icon-save mr-2"></i><span id="payment_text_change"> <lang class="lang_save_title">Save</lang></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- Tax payment End -->

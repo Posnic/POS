@@ -1,0 +1,2403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hardware Manager</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 35px 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            opacity: 0.95;
+            font-size: 17px;
+            font-weight: 400;
+        }
+
+        /* Responsive Tabs */
+        .tabs {
+            display: flex;
+            flex-wrap: wrap;
+            background: white;
+            border-bottom: 3px solid #e9ecef;
+            gap: 0;
+            padding: 0;
+        }
+
+        .tab {
+            flex: 1 1 auto;
+            min-width: 180px;
+            padding: 18px 25px;
+            text-align: center;
+            cursor: pointer;
+            background: #f8f9fa;
+            border: none;
+            border-bottom: 3px solid transparent;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+            color: #6c757d;
+            position: relative;
+        }
+
+        .tab:hover:not(.tab-disabled) {
+            background: rgba(102,126,234,.08);
+            border-bottom-color: #667eea;
+            color: #667eea;
+        }
+
+        .tab.active {
+            background: white;
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-active-indicator {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 3px 3px 0 0;
+        }
+
+        .tab-disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #e9ecef;
+        }
+
+        .tab-disabled:hover {
+            transform: none;
+        }
+
+        /* Content Area */
+        .content {
+            padding: 40px;
+            min-height: 500px;
+            background: #fafbfc;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .btn-loading {
+            opacity: 0.8;
+            cursor: not-allowed;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.3); }
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            font-size: 15px;
+            color: #374151;
+        }
+
+        select, input[type="text"], textarea {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 15px;
+            background: white;
+            transition: all 0.3s;
+            color: #374151;
+        }
+
+        select:focus, input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102,126,234,.1);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            transition: all 0.3s;
+            letter-spacing: 0.3px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102,126,234,.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+        }
+
+        .btn-success:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(40,167,69,.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(220,53,69,.4);
+        }
+
+        /* Status Messages */
+        .status {
+            padding: 16px;
+            margin: 15px 0;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .status-connected {
+            background: #d4edda;
+            border: 2px solid #28a745;
+            color: #155724;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Lists */
+        .printer-list {
+            list-style: none;
+            padding: 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .printer-item {
+            padding: 18px;
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .printer-item:hover {
+            border-color: #506fe4;
+            box-shadow: 0 2px 8px rgba(80, 111, 228, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .printer-item.selected {
+            border-color: #28a745;
+            background: #e8f5e9;
+            box-shadow: 0 2px 8px rgba(40, 167, 69, 0.15);
+        }
+
+        .printer-item.default {
+            border-color: #506fe4;
+            background: rgba(80, 111, 228, 0.1);
+        }
+
+        .printer-name {
+            font-weight: 700;
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 6px;
+        }
+
+        .printer-info {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            margin-left: 8px;
+            text-transform: uppercase;
+        }
+
+        .badge.default {
+            background: #506fe4;
+            color: white;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .tabs {
+                flex-direction: column;
+            }
+
+            .tab {
+                min-width: 100%;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .printer-list {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .live-data {
+            font-size: 28px;
+            font-weight: bold;
+            color: #506fe4;
+            margin: 20px 0;
+            padding: 30px;
+            background: rgba(80, 111, 228, 0.1);
+            border: 2px solid #506fe4;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .port-info {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 15px 0;
+        }
+
+        h2 {
+            color: #506fe4;
+            margin: 25px 0 15px;
+            font-size: 22px;
+            font-weight: 600;
+        }
+    </style>
+  <!-- The shop's theme, applied over this window's own styles. See window-theme.js. -->
+  <link rel="stylesheet" href="window-theme.css">
+  <script src="window-theme.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 Hardware Manager</h1>
+            <p>Manage all your POS devices from one place</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('receipt')">🧾 Receipt Printer</button>
+            <button class="tab" onclick="switchTab('cash')">💰 Cash Drawer</button>
+            <button class="tab" onclick="switchTab('weight')">⚖️ Weight Machine</button>
+            <!-- Only a shop running table service has anything to print a KOT
+                 for; the dashboard mirrors the setting into preferences. -->
+            <button class="tab" id="kotTabButton" onclick="switchTab('kot')" style="display:none;">🖨️ Multi KOT Print</button>
+            <button class="tab" onclick="switchTab('mobile')">📱 Mobile Devices</button>
+            <button class="tab" onclick="switchTab('scanner')">🔎 Barcode Scanner</button>
+        </div>
+
+        <div class="content">
+            <!-- Cash Drawer Tab (now default) -->
+            <!--
+              Receipt printing lives here rather than in Settings because it
+              describes this machine, not the shop. Two counters have different
+              printers attached and often different paper: a shop-wide setting
+              would have one till overwriting the other's.
+
+              Everything about what the receipt SAYS - header, footer, logo,
+              tax lines - stays in Settings, because that is a shop decision.
+            -->
+            <div id="receiptTab" class="tab-content active">
+                <div id="rpStatus" style="display:none;padding:16px 20px;border-radius:12px;margin-bottom:20px;font-weight:600;font-size:15px;box-shadow:0 2px 8px rgba(0,0,0,0.1);"></div>
+
+                <div style="background:#fff;padding:24px;border-radius:16px;box-shadow:0 4px 16px rgba(0,0,0,0.08);margin-bottom:20px;">
+                    <div style="font-weight:700;color:#2c3e50;margin-bottom:14px;">
+                        🖨️ Printer for sale receipts
+                    </div>
+                    <div style="display:flex;gap:12px;align-items:center;">
+                        <select id="rpPrinterSelect"
+                            style="flex:1;padding:14px 16px;border:2px solid #e9ecef;border-radius:10px;font-size:15px;background:#fff;color:#2c3e50;">
+                            <option value="default" id="rpDefaultOption">System default printer</option>
+                        </select>
+                        <button class="btn btn-secondary" onclick="rpLoadPrinters()"
+                            style="padding:14px 22px;border-radius:10px;">🔄 Reload</button>
+                    </div>
+                    <div style="font-size:13px;color:#9ca3af;margin-top:10px;">
+                        Applies to this computer only. Other counters keep their own.
+                    </div>
+                </div>
+
+                <div style="background:#f8f9fb;padding:24px;border-radius:16px;margin-bottom:20px;">
+                    <div style="font-weight:700;color:#2c3e50;margin-bottom:6px;">📏 Paper width</div>
+                    <div style="font-size:13px;color:#9ca3af;margin-bottom:14px;">
+                        Measure the roll or read it off the box. This is what stops the
+                        amount column printing off the right edge.
+                    </div>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                        <label class="rp-paper"><input type="radio" name="rpWidth" value="80" checked> 80mm roll</label>
+                        <label class="rp-paper"><input type="radio" name="rpWidth" value="58"> 58mm roll</label>
+                        <label class="rp-paper"><input type="radio" name="rpWidth" value="a4"> A4 sheet</label>
+                    </div>
+                </div>
+
+                <div style="text-align:center;margin:26px 0;">
+                    <button id="rpTestBtn" onclick="rpTestPrint()"
+                        style="background:linear-gradient(135deg,#43cea2,#185a9d);color:#fff;border:none;
+                               padding:18px 46px;border-radius:14px;font-size:18px;font-weight:700;cursor:pointer;
+                               box-shadow:0 6px 18px rgba(24,90,157,.3);">
+                        🧾 PRINT A TEST RECEIPT
+                    </button>
+                    <div style="color:#9ca3af;font-size:13px;margin-top:10px;">
+                        Prints a sample on the paper you have loaded, so you find out here rather than at the till
+                    </div>
+                </div>
+
+                <div style="border-top:1px solid #e9ecef;padding-top:16px;text-align:right;">
+                    <button class="btn btn-primary" onclick="rpSave()"
+                        style="padding:14px 28px;border-radius:10px;">💾 Save Settings</button>
+                </div>
+            </div>
+
+            <div id="cashTab" class="tab-content">
+                <!-- Status bar -->
+                <div id="cdStatus" style="display:none;padding:16px 20px;border-radius:12px;margin-bottom:20px;font-weight:600;font-size:15px;box-shadow:0 2px 8px rgba(0,0,0,0.1);"></div>
+
+                <!-- Printer method config -->
+                <div id="cdPrinterConfig" style="background:#fff;padding:24px;border-radius:16px;box-shadow:0 4px 16px rgba(0,0,0,0.08);margin-bottom:20px;">
+                    <div class="form-group">
+                        <label style="font-size:16px;font-weight:700;color:#2c3e50;display:block;margin-bottom:12px;">🖨️ Receipt Printer (cash drawer connected to it):</label>
+                        <div style="display:flex;gap:12px;">
+                            <select id="cdPrinterSelect" style="flex:1;padding:14px 16px;border:2px solid #e9ecef;border-radius:10px;font-size:15px;background:#fff;color:#2c3e50;transition:border-color .2s;">
+                                <option value="">-- Load printers --</option>
+                            </select>
+                            <button onclick="cdLoadPrinters()" class="btn btn-primary" style="padding:14px 24px;border-radius:10px;font-weight:600;white-space:nowrap;">🔍 Load</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pin & auto-open -->
+                <div style="background:linear-gradient(135deg,#f8f9fa 0%,#e9ecef 100%);padding:24px;border-radius:16px;box-shadow:0 4px 16px rgba(0,0,0,0.08);margin-bottom:20px;">
+                    <div style="display:flex;align-items:center;gap:32px;flex-wrap:wrap;">
+                        <div style="flex:1;min-width:280px;">
+                            <label style="font-size:16px;font-weight:700;color:#2c3e50;display:block;margin-bottom:12px;">📍 Trigger Pin:</label>
+                            <div style="display:flex;gap:20px;">
+                                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 16px;background:#fff;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.08);transition:all .2s;">
+                                    <input type="radio" name="cdPin" value="0" checked style="width:18px;height:18px;"> Pin 2 (RJ11)
+                                </label>
+                                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 16px;background:#fff;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.08);transition:all .2s;">
+                                    <input type="radio" name="cdPin" value="1" style="width:18px;height:18px;"> Pin 5
+                                </label>
+                            </div>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:10px;padding:12px 20px;background:#fff;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,0.08);">
+                            <input type="checkbox" id="cdAutoOpen" style="width:20px;height:20px;">
+                            <label for="cdAutoOpen" style="cursor:pointer;font-weight:600;color:#2c3e50;font-size:15px;">Auto-open on every sale</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Big Open Drawer button -->
+                <div style="text-align:center;margin:32px 0;">
+                    <button id="cdOpenBtn" onclick="cdOpen()"
+                        style="background:linear-gradient(135deg,#00c853 0%,#69f0ae 100%);color:#fff;border:none;border-radius:20px;padding:28px 80px;font-size:26px;font-weight:800;cursor:pointer;box-shadow:0 8px 30px rgba(0,200,83,0.4);transition:all .3s;letter-spacing:1px;text-transform:uppercase;">
+                        🗃️ Open Cash Drawer
+                    </button>
+                    <div style="margin-top:12px;color:#6c757d;font-size:14px;">Click to test cash drawer connection</div>
+                </div>
+
+                <!-- Save config -->
+                <div style="border-top:2px solid #e9ecef;padding-top:20px;display:flex;justify-content:flex-end;">
+                    <button onclick="cdSaveConfig()" style="background:linear-gradient(135deg,#007bff 0%,#00d4ff 100%);color:#fff;border:none;border-radius:10px;padding:14px 32px;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(0,123,255,0.3);transition:all .2s;">💾 Save Settings</button>
+                </div>
+            </div>
+
+            <!-- Weight Machine Tab -->
+            <div id="weightTab" class="tab-content">
+                <div id="portSelection">
+                    <div class="form-group">
+                        <label>📡 Available Serial Ports:</label>
+                        <div style="display:flex;gap:12px;align-items:center;margin-top:6px;">
+                            <button id="listPortsBtn" class="btn btn-primary" style="flex:1;">🔍 Scan for Devices</button>
+                            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:500;">
+                                <input type="checkbox" id="enableSimulation" style="width:18px;height:18px;">
+                                <span>🎮 Simulation Mode (no hardware)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="portsDropdownSection" class="form-group hidden">
+                        <label for="portsDropdown">Choose your weight machine:</label>
+                        <select id="portsDropdown">
+                            <option value="">Select a device...</option>
+                        </select>
+                        <div class="port-info" id="selectedPortInfo" style="display: none;"></div>
+                    </div>
+
+                    <button id="connectToPortBtn" class="btn btn-success hidden" disabled>🔌 Connect to Device</button>
+                </div>
+
+                <div id="connectedState" class="hidden">
+                    <div class="status status-connected">
+                        <div>✅ Connected to Weight Machine</div>
+                        <div id="connectedPortDisplay" style="font-size: 14px; margin-top: 8px;"></div>
+                    </div>
+
+                    <div id="liveWeightDisplay" class="live-data">
+                        <div style="font-size: 18px; margin-bottom: 12px;">Current Weight:</div>
+                        <div id="weightValue">---.-- kg</div>
+                        <div id="lastUpdate" style="font-size: 13px; margin-top: 12px; opacity: 0.8;"></div>
+                    </div>
+
+                    <button id="disconnectBtn" class="btn btn-danger">❌ Disconnect</button>
+                </div>
+            </div>
+
+            <!-- Multi KOT Print Tab -->
+            <div id="kotTab" class="tab-content">
+                <div id="kotStatusBar" style="display:none;padding:14px 18px;border-radius:12px;margin-bottom:20px;font-weight:600;font-size:15px;"></div>
+
+                <!-- Connected banner -->
+                <div id="kotConnectedBanner" style="display:none;background:linear-gradient(135deg,#28a745,#20c997);color:#fff;padding:16px 22px;border-radius:14px;margin-bottom:20px;display:none;">
+                    <div style="font-size:17px;font-weight:700;">✅ Multi KOT Print, Active</div>
+                    <div id="kotBannerInfo" style="font-size:13px;margin-top:6px;opacity:.9;"></div>
+                </div>
+
+                <!-- Setup card -->
+                <div id="kotSetupCard" style="background:#fff;padding:26px;border-radius:16px;box-shadow:0 4px 16px rgba(0,0,0,0.08);margin-bottom:20px;">
+                    <div class="form-group">
+                        <label style="font-size:15px;font-weight:700;color:#2c3e50;">🌐 API URL:</label>
+                        <!-- Filled in from the running app. It was typed here as
+                             localhost:5555, which stopped being true when the port
+                             began being derived per installation - and a kitchen
+                             printer that silently stops printing is not noticed
+                             until service. Still editable, because a dedicated
+                             kitchen PC may poll a till on another machine. -->
+                        <input type="text" id="kotApiUrl" placeholder="filled in automatically"
+                            style="margin-top:8px;padding:12px 14px;border:2px solid #e5e7eb;border-radius:10px;font-size:14px;width:100%;">
+                        <div style="font-size:12.5px;color:#9ca3af;margin-top:6px;">
+                            Set automatically. Change it only if this computer prints tickets for a
+                            till running on another machine.
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label style="font-size:15px;font-weight:700;color:#2c3e50;">🏪 Branch ID:</label>
+                        <input type="text" id="kotBranchId" placeholder="Enter Branch ID"
+                            style="margin-top:8px;padding:12px 14px;border:2px solid #e5e7eb;border-radius:10px;font-size:14px;width:100%;">
+                    </div>
+                    <div class="form-group">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                            <label style="font-size:15px;font-weight:700;color:#2c3e50;margin:0;">🖨️ KOT Printer(s):</label>
+                            <button onclick="kotLoadPrinters()" class="btn btn-primary" style="padding:8px 16px;font-size:13px;">🔍 Load Printers</button>
+                        </div>
+                        <div id="kotPrinterList"
+                            style="border:2px solid #e5e7eb;border-radius:10px;background:#fafafa;min-height:60px;max-height:200px;overflow-y:auto;padding:6px 4px;">
+                            <div style="padding:14px;color:#9ca3af;font-size:13px;text-align:center;">Click "Load Printers" to list available printers.</div>
+                        </div>
+                        <div id="kotPrinterNote" style="margin-top:8px;padding:10px 14px;border-radius:8px;background:#fff3cd;border:1px solid #ffc107;font-size:12px;color:#856404;display:none;">
+                            🔒 Printer selection is locked while polling is active. Click <strong>Stop Polling</strong> to change printer settings.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action buttons -->
+                <div style="display:flex;gap:14px;margin-bottom:24px;">
+                    <button id="kotStartBtn" onclick="kotStart()" class="btn btn-success" style="flex:1;padding:16px;font-size:16px;">▶ Start KOT Polling</button>
+                    <button id="kotStopBtn"  onclick="kotStop()"  class="btn btn-danger"  style="flex:1;padding:16px;font-size:16px;" disabled>⏹ Stop Polling</button>
+                </div>
+
+                <!-- Live status -->
+                <div style="background:#f8f9fa;border:2px solid #e9ecef;border-radius:12px;padding:20px;">
+                    <div style="font-size:15px;font-weight:700;color:#374151;margin-bottom:12px;">📊 Live Status</div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                        <div style="background:#fff;padding:14px;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,.06);">
+                            <div style="font-size:12px;color:#6c757d;font-weight:600;">STATUS</div>
+                            <div id="kotLiveStatus" style="font-size:15px;font-weight:700;color:#28a745;margin-top:4px;">Idle</div>
+                        </div>
+                        <div style="background:#fff;padding:14px;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,.06);">
+                            <div style="font-size:12px;color:#6c757d;font-weight:600;">LAST POLL</div>
+                            <div id="kotLastPoll" style="font-size:14px;font-weight:600;color:#374151;margin-top:4px;">, </div>
+                        </div>
+                        <div style="background:#fff;padding:14px;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,.06);">
+                            <div style="font-size:12px;color:#6c757d;font-weight:600;">BRANCH</div>
+                            <div id="kotLiveBranch" style="font-size:14px;font-weight:600;color:#374151;margin-top:4px;">, </div>
+                        </div>
+                        <div style="background:#fff;padding:14px;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,.06);">
+                            <div style="font-size:12px;color:#6c757d;font-weight:600;">PRINTERS</div>
+                            <div id="kotLivePrinters" style="font-size:13px;font-weight:600;color:#374151;margin-top:4px;">, </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KOT Logs section -->
+                <div style="margin-top:24px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                        <div style="font-size:15px;font-weight:700;color:#374151;">📋 KOT Print Logs</div>
+                        <div style="display:flex;gap:8px;align-items:center;">
+                            <span id="kotAutoRefreshBadge" style="display:none;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#6f42c1;background:#f3e8ff;padding:4px 10px;border-radius:20px;"></span>
+                            <input type="date" id="kotLogDate" style="padding:8px 12px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;">
+                            <button onclick="kotLoadLogs()" class="btn btn-primary" style="padding:8px 16px;font-size:13px;">🔍 Load</button>
+                        </div>
+                    </div>
+                    <div id="kotLogsContainer" style="background:#fff;border:2px solid #e9ecef;border-radius:12px;overflow:hidden;">
+                        <div id="kotLogsEmpty" style="padding:32px;text-align:center;color:#9ca3af;font-size:14px;">Select a date and click Load to view logs.</div>
+                        <div id="kotSelectionBar" style="display:none;padding:8px 12px;background:#f3e8ff;border-bottom:1.5px solid #d8b4fe;">
+                            <div style="display:flex;align-items:center;gap:10px;">
+                                <span id="kotSelectionCount" style="font-size:13px;font-weight:700;color:#6f42c1;"></span>
+                                <button onclick="kotDeleteSelected()" style="padding:5px 14px;border:none;border-radius:6px;background:#dc2626;color:#fff;font-weight:700;font-size:12px;cursor:pointer;">🗑️ Delete Selected</button>
+                                <button onclick="kotClearSelection()" style="padding:5px 12px;border:1.5px solid #cbd5e1;border-radius:6px;background:#fff;color:#64748b;font-weight:600;font-size:12px;cursor:pointer;">✕ Clear</button>
+                            </div>
+                        </div>
+                        <table id="kotLogsTable" style="display:none;width:100%;border-collapse:collapse;font-size:13px;">
+                            <thead>
+                                <tr style="background:#f3f4f6;border-bottom:2px solid #e5e7eb;">
+                                    <th style="padding:10px 12px;text-align:center;width:36px;">
+                                        <input type="checkbox" id="kotSelectAllCb" style="width:15px;height:15px;cursor:pointer;accent-color:#6f42c1;">
+                                    </th>
+                                    <th style="padding:10px 12px;text-align:left;font-weight:700;color:#374151;">Time</th>
+                                    <th style="padding:10px 12px;text-align:left;font-weight:700;color:#374151;">Sale ID</th>
+                                    <th style="padding:10px 12px;text-align:left;font-weight:700;color:#374151;">Table</th>
+                                    <th style="padding:10px 12px;text-align:left;font-weight:700;color:#374151;">Type</th>
+                                    <th style="padding:10px 12px;text-align:left;font-weight:700;color:#374151;">KOT#</th>
+                                    <th style="padding:10px 12px;text-align:left;font-weight:700;color:#374151;">Device IP</th>
+                                    <th style="padding:10px 12px;text-align:left;font-weight:700;color:#374151;">Printers</th>
+                                    <th style="padding:10px 12px;text-align:center;font-weight:700;color:#374151;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="kotLogsBody"></tbody>
+                        </table>
+                        <div id="kotLogsPagination" style="display:none;padding:10px 14px;border-top:1px solid #e9ecef;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KOT Delete Confirm Modal -->
+            <div id="kotDeleteConfirmModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10000;align-items:center;justify-content:center;">
+                <div style="background:#fff;width:360px;max-width:92%;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden;">
+                    <div style="background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;padding:18px 22px;display:flex;align-items:center;gap:12px;">
+                        <span style="font-size:22px;">🗑️</span>
+                        <span style="font-size:16px;font-weight:700;">Delete Log Entry</span>
+                    </div>
+                    <div style="padding:22px 24px;">
+                        <p style="margin:0;font-size:14px;color:#374151;line-height:1.6;">Are you sure you want to delete this KOT log entry?<br><span style="color:#6b7280;font-size:12px;">This action cannot be undone.</span></p>
+                    </div>
+                    <div style="padding:14px 22px 20px;display:flex;gap:10px;justify-content:flex-end;">
+                        <button id="kotDeleteCancelBtn" style="padding:9px 20px;border:1.5px solid #dee2e6;border-radius:8px;background:#fff;color:#374151;font-weight:600;font-size:13px;cursor:pointer;">Cancel</button>
+                        <button id="kotDeleteConfirmBtn" style="padding:9px 20px;border:none;border-radius:8px;background:#dc2626;color:#fff;font-weight:700;font-size:13px;cursor:pointer;">🗑️ Delete</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KOT Log Detail Modal -->
+            <div id="kotDetailModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;overflow-y:auto;">
+                <div style="background:#fff;width:480px;max-width:95%;margin:60px auto;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden;">
+                    <div style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:20px 24px;display:flex;justify-content:space-between;align-items:center;">
+                        <div style="font-size:17px;font-weight:700;">🖨️ KOT Print Detail</div>
+                        <button onclick="kotCloseModal()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:50%;width:32px;height:32px;font-size:18px;cursor:pointer;line-height:1;">✕</button>
+                    </div>
+                    <div id="kotDetailBody" style="padding:24px;"></div>
+                    <div style="padding:16px 24px;background:#f8f9fa;display:flex;gap:10px;justify-content:flex-end;">
+                        <button id="kotDetailReprintBtn" onclick="kotReprintFromModal()" class="btn btn-success" style="padding:10px 20px;">🔄 Reprint</button>
+                        <button onclick="kotCloseModal()" class="btn btn-secondary" style="padding:10px 20px;">Close</button>
+                    </div>
+                </div>
+            </div>
+
+            <!--
+                Scanner Tab
+
+                There is nothing to connect here, and that is the point. A USB
+                barcode scanner is a keyboard: it types the digits and presses
+                Enter. It needs no driver and no port, and the item search
+                already matches on barcode, so a scanner works the moment it is
+                plugged in.
+
+                This tab used to say "coming soon", which told shopkeepers the
+                opposite of the truth. What it offers instead is the thing that
+                is actually hard - seeing what the scanner really sent, because
+                when one misbehaves it is almost always a missing Enter, a
+                stray prefix, or a keyboard layout turning digits into
+                something else. All three are obvious the moment you can see
+                the raw input, and invisible otherwise.
+            -->
+            <div id="scannerTab" class="tab-content">
+                <h2>🔎 Barcode Scanner</h2>
+
+                <div class="status" style="background:#d4edda;color:#155724;display:block;">
+                    ✓ No setup needed. A USB scanner acts as a keyboard - plug it in and it works.
+                </div>
+
+                <div class="card" style="margin-top:20px;">
+                    <h3 style="margin-top:0;">Test your scanner</h3>
+                    <p style="color:#555;font-size:14px;margin-bottom:14px;">
+                        Click the box and scan any barcode. What the scanner typed appears below,
+                        exactly as the till receives it.
+                    </p>
+                    <input type="text" id="scannerTestInput" autocomplete="off"
+                        placeholder="Click here, then scan a barcode"
+                        style="width:100%;padding:16px;font-size:18px;border:2px solid #d5dae5;
+                               border-radius:10px;font-family:monospace;">
+
+                    <div id="scannerResult" style="margin-top:18px;display:none;"></div>
+
+                    <div id="scannerHistory" style="margin-top:18px;"></div>
+                </div>
+
+                <div class="card" style="margin-top:20px;">
+                    <h3 style="margin-top:0;">If a scan does not work</h3>
+                    <ul style="color:#555;font-size:14px;line-height:1.9;margin:0;padding-left:20px;">
+                        <li><strong>Nothing appears at all</strong> - the scanner is not in keyboard
+                            mode. Most scanners ship with a manual containing a "USB HID" or
+                            "keyboard wedge" barcode; scan that one.</li>
+                        <li><strong>Digits appear but the item is not found</strong> - the barcode is
+                            not on any item yet. Add it in the item's Barcode field.</li>
+                        <li><strong>The code appears but nothing happens until you press Enter</strong>
+                            - the scanner is not sending a return. Its manual has a "add Enter
+                            suffix" barcode.</li>
+                        <li><strong>Letters or symbols instead of digits</strong> - the scanner is set
+                            to a different keyboard layout than this computer. Set both to the same.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Mobile Devices Tab -->
+            <div id="mobileTab" class="tab-content">
+                <!-- Connection Info Card -->
+                <div style="background:#f0f4ff;border:1.5px solid #c7d7ff;border-radius:14px;padding:20px 24px;margin-bottom:20px;">
+                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
+                        <span style="font-size:28px;">📡</span>
+                        <div>
+                            <div style="font-weight:700;font-size:15px;color:#1e3a8a;">Local Network Server</div>
+                            <div style="font-size:12px;color:#3b5ac6;">Point your Table Order app to this address</div>
+                        </div>
+                        <div style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                            <span id="mobileServerStatus" style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:#16a34a;background:#dcfce7;padding:4px 11px;border-radius:20px;">
+                                <span style="width:8px;height:8px;background:#16a34a;border-radius:50%;display:inline-block;"></span> Online
+                            </span>
+                            <button id="mobileRefreshBtn" onclick="refreshMobileInfo(this)" style="padding:8px 16px;border:none;border-radius:8px;background:#3b5ac6;color:#fff;font-weight:600;cursor:pointer;font-size:13px;display:inline-flex;align-items:center;gap:6px;transition:opacity .2s;">🔄 Refresh</button>
+                            <button onclick="clearMobileData()" style="padding:8px 14px;border:1.5px solid #cbd5e1;border-radius:8px;background:#fff;color:#64748b;font-weight:600;cursor:pointer;font-size:13px;">🗑 Clear Logs</button>
+                        </div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <code id="mobileApiUrl" style="flex:1;background:#fff;border:1.5px solid #c7d7ff;border-radius:8px;padding:10px 14px;font-size:14px;color:#1e3a8a;font-weight:700;user-select:all;">Loading...</code>
+                        <button id="mobileCopyBtn" onclick="copyApiUrl(this)" style="padding:10px 18px;border:none;border-radius:8px;background:#22c55e;color:#fff;font-weight:700;cursor:pointer;font-size:13px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;transition:all .2s;">📋 Copy</button>
+                    </div>
+                    <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
+                        <span style="font-size:12px;color:#64748b;">Set this URL in the Table Order app → Server Settings → API URL</span>
+                        <span id="mobileLastRefresh" style="font-size:11px;color:#94a3b8;"></span>
+                    </div>
+                </div>
+
+                <!-- Block / Unblock Confirmation Modal -->
+                <div id="blockConfirmModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;align-items:center;justify-content:center;">
+                    <div style="background:#fff;border-radius:16px;padding:28px 28px 22px;width:380px;max-width:90vw;box-shadow:0 20px 60px rgba(0,0,0,0.3);font-family:inherit;">
+                        <div id="blockModalIcon" style="font-size:36px;text-align:center;margin-bottom:12px;">🚫</div>
+                        <div id="blockModalTitle" style="font-weight:700;font-size:16px;color:#111827;text-align:center;margin-bottom:8px;"></div>
+                        <div id="blockModalMsg" style="font-size:13px;color:#6b7280;text-align:center;line-height:1.6;margin-bottom:22px;"></div>
+                        <div style="display:flex;gap:10px;">
+                            <button id="blockModalCancel" style="flex:1;padding:10px;border:1.5px solid #e5e7eb;border-radius:10px;background:#fff;color:#374151;font-weight:600;font-size:13px;cursor:pointer;">Cancel</button>
+                            <button id="blockModalConfirm" style="flex:1;padding:10px;border:none;border-radius:10px;font-weight:700;font-size:13px;cursor:pointer;"></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Connected Devices -->
+                <div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;margin-bottom:16px;overflow:hidden;">
+                    <div style="padding:14px 20px;background:#f8fafc;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                        <span style="font-weight:700;font-size:14px;color:#374151;">📱 Connected Devices <span id="deviceCount" style="background:#3b5ac6;color:#fff;border-radius:20px;padding:2px 10px;font-size:12px;margin-left:6px;">0</span> <span id="deviceLimitBadge" style="display:none;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;margin-left:4px;"></span></span>
+                        <span style="display:flex;align-items:center;gap:6px;font-size:12px;color:#64748b;">
+                            Max devices:
+                            <select id="maxDevicesSelect"
+                                style="padding:3px 8px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:12px;outline:none;cursor:pointer;"
+                                onchange="saveMaxDevices(this.value)">
+                                <option value="6">6</option>
+                            </select>
+                        </span>
+                    </div>
+                    <div id="deviceTableWrap" style="overflow-x:auto;">
+                        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                            <thead><tr style="background:#f1f5f9;">
+                                <th style="padding:10px 14px;text-align:left;color:#64748b;font-weight:600;">IP Address</th>
+                                <th style="padding:10px 14px;text-align:left;color:#64748b;font-weight:600;">Device</th>
+                                <th style="padding:10px 14px;text-align:center;color:#64748b;font-weight:600;">Status</th>
+                                <th style="padding:10px 14px;text-align:left;color:#64748b;font-weight:600;">First Seen</th>
+                                <th style="padding:10px 14px;text-align:left;color:#64748b;font-weight:600;">Last Seen</th>
+                                <th style="padding:10px 14px;text-align:center;color:#64748b;font-weight:600;">Actions</th>
+                            </tr></thead>
+                            <tbody id="deviceTableBody"><tr><td colspan="6" style="text-align:center;padding:20px;color:#94a3b8;">No devices connected yet</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Blocked Devices -->
+                <div style="background:#fff;border:1px solid #fecaca;border-radius:14px;margin-bottom:16px;overflow:hidden;">
+                    <div style="padding:14px 20px;background:#fff5f5;border-bottom:1px solid #fecaca;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                        <span style="font-weight:700;font-size:14px;color:#dc2626;">🚫 Blocked Devices <span id="blockedCount" style="background:#dc2626;color:#fff;border-radius:20px;padding:2px 10px;font-size:12px;margin-left:6px;">0</span></span>
+                        <span style="font-size:12px;color:#94a3b8;">Blocked devices cannot access the app, survives log clears &amp; restarts</span>
+                    </div>
+                    <div style="overflow-x:auto;">
+                        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                            <thead><tr style="background:#fef2f2;">
+                                <th style="padding:10px 14px;text-align:left;color:#64748b;font-weight:600;">Blocked IP Address</th>
+                                <th style="padding:10px 14px;text-align:right;color:#64748b;font-weight:600;">Action</th>
+                            </tr></thead>
+                            <tbody id="blockedDeviceBody"><tr><td colspan="2" style="text-align:center;padding:16px;color:#94a3b8;">No blocked devices</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Login Logs -->
+                <div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;overflow:hidden;">
+                    <div style="padding:14px 20px;background:#f8fafc;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;">
+                        <span style="font-weight:700;font-size:14px;color:#374151;">🔐 Login Events</span>
+                        <span style="font-size:12px;color:#94a3b8;">Recent authentication attempts (newest first)</span>
+                    </div>
+                    <div id="loginLogTableWrap" style="overflow-x:auto;max-height:280px;overflow-y:auto;">
+                        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                            <thead><tr style="background:#f1f5f9;position:sticky;top:0;z-index:1;">
+                                <th style="padding:10px 14px;text-align:left;color:#64748b;font-weight:600;">Time</th>
+                                <th style="padding:10px 14px;text-align:left;color:#64748b;font-weight:600;">IP</th>
+                                <th style="padding:10px 14px;text-align:left;color:#64748b;font-weight:600;">Path</th>
+                                <th style="padding:10px 14px;text-align:center;color:#64748b;font-weight:600;">Status</th>
+                            </tr></thead>
+                            <tbody id="loginLogBody"><tr><td colspan="4" style="text-align:center;padding:20px;color:#94a3b8;">No login events yet</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /*
+         * What this operating system calls its default printer.
+         *
+         * The page said "Windows default" everywhere, including on a Mac,
+         * where it named a thing that does not exist - and a shop reading that
+         * reasonably wonders what else the software has misunderstood about
+         * their machine.
+         *
+         * Falls back to the neutral wording rather than guessing Windows, so a
+         * page opened somewhere the bridge is unavailable is vague rather than
+         * wrong.
+         */
+        const OS_PLATFORM = (window.electronAPI && window.electronAPI.platform) || '';
+        const OS_DEFAULT_LABEL =
+            OS_PLATFORM === 'win32'  ? 'Windows default' :
+            OS_PLATFORM === 'darwin' ? 'macOS default'   :
+            OS_PLATFORM === 'linux'  ? 'system default'  : 'system default';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const opt = document.getElementById('rpDefaultOption');
+            if (opt) opt.textContent = OS_DEFAULT_LABEL.replace(/^./, (c) => c.toUpperCase()) + ' printer';
+        });
+
+        // Global variables
+        let availablePorts = [];
+        let selectedPortPath = null;
+        let connectedPortPath = null;
+        let printers = [];
+        let selectedPrinter = null;
+
+        // DOM Elements
+        const listPortsBtn = document.getElementById('listPortsBtn');
+        const portsDropdownSection = document.getElementById('portsDropdownSection');
+        const portsDropdown = document.getElementById('portsDropdown');
+        const selectedPortInfo = document.getElementById('selectedPortInfo');
+        const connectToPortBtn = document.getElementById('connectToPortBtn');
+        const portSelection = document.getElementById('portSelection');
+        const connectedState = document.getElementById('connectedState');
+        const connectedPortDisplay = document.getElementById('connectedPortDisplay');
+        const weightValue = document.getElementById('weightValue');
+        const lastUpdate = document.getElementById('lastUpdate');
+        const disconnectBtn = document.getElementById('disconnectBtn');
+
+        // ===========================
+        // TAB SWITCHING
+        // ===========================
+        function switchTab(tabName) {
+            if (event && event.target && event.target.classList.contains('tab-disabled')) {
+                return;
+            }
+
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            if (event && event.target) event.target.classList.add('active');
+
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            /*
+             * Every tab button's name must appear here.
+             *
+             * 'receipt' did not. The line above had already stripped .active
+             * from every panel, so clicking Receipt Printer hid all of them and
+             * then had nothing to show - a blank window. It looked fine until
+             * you clicked it, because receiptTab is marked active in the markup
+             * and starts out visible; the first click was what broke it.
+             */
+            const tabMap = {
+                'receipt': 'receiptTab',
+                'weight':  'weightTab',
+                'scanner': 'scannerTab',
+                'cash':    'cashTab',
+                'kot':     'kotTab',
+                'mobile':  'mobileTab'
+            };
+
+            const targetTab = tabMap[tabName];
+            if (targetTab) {
+                document.getElementById(targetTab).classList.add('active');
+
+                // 'printer' was never a tab name either, so this never ran and
+                // the printer list stayed empty until Reload was pressed.
+                if (tabName === 'receipt' && printers.length === 0) {
+                    refreshPrinters();
+                }
+                if (tabName === 'mobile') {
+                    refreshMobileInfo();
+                }
+                if (tabName === 'scanner') {
+                    setTimeout(() => document.getElementById('scannerTestInput').focus(), 60);
+                }
+            }
+        }
+
+        // ===========================
+        // WEIGHT MACHINE FUNCTIONS
+        // ===========================
+        async function listAvailablePorts() {
+            listPortsBtn.disabled = true;
+            listPortsBtn.textContent = '🔄 Scanning...';
+
+            const enableSimulation = document.getElementById('enableSimulation').checked;
+
+            try {
+                if (!window.electronAPI || !window.electronAPI.hardware) {
+                    throw new Error('electronAPI not available');
+                }
+
+                availablePorts = await window.electronAPI.hardware.scanSerialPorts(enableSimulation);
+
+                if (availablePorts.length === 0) {
+                    alert('No serial ports found. Try enabling Simulation Mode.');
+                    return;
+                }
+
+                portsDropdown.innerHTML = '<option value="">Select a device...</option>';
+                availablePorts.forEach((port, index) => {
+                    const option = document.createElement('option');
+                    option.value = port.path;
+                    option.dataset.isMock = port.isMock || false;
+                    option.textContent = `${index + 1}. ${port.path} - ${port.manufacturer || 'Unknown'}${port.isMock ? ' (SIMULATION)' : ''}`;
+                    portsDropdown.appendChild(option);
+                });
+
+                portsDropdownSection.classList.remove('hidden');
+            } catch (error) {
+                alert('Error: ' + error.message);
+            } finally {
+                listPortsBtn.disabled = false;
+                listPortsBtn.textContent = '🔍 Scan for Devices';
+            }
+        }
+
+        function onPortSelected() {
+            selectedPortPath = portsDropdown.value;
+
+            if (selectedPortPath) {
+                const selectedPort = availablePorts.find(p => p.path === selectedPortPath);
+                if (selectedPort) {
+                    selectedPortInfo.style.display = 'block';
+                    selectedPortInfo.innerHTML = `<strong>Device:</strong> ${selectedPort.path}<br><strong>Manufacturer:</strong> ${selectedPort.manufacturer || 'Unknown'}${selectedPort.isMock ? '<br><strong>⚠️ SIMULATION MODE</strong>' : ''}`;
+                    connectToPortBtn.classList.remove('hidden');
+                    connectToPortBtn.disabled = false;
+                }
+            } else {
+                selectedPortInfo.style.display = 'none';
+                connectToPortBtn.classList.add('hidden');
+            }
+        }
+
+        async function connectToSelectedPort() {
+            if (!selectedPortPath) return;
+
+            const selectedPort = availablePorts.find(p => p.path === selectedPortPath);
+            const isMock = selectedPort ? (selectedPort.isMock || false) : false;
+
+            connectToPortBtn.disabled = true;
+            connectToPortBtn.textContent = '🔄 Connecting...';
+
+            try {
+                const result = await window.electronAPI.hardware.connectPort(selectedPortPath, isMock);
+                if (result.success) {
+                    connectedPortPath = selectedPortPath;
+                    portSelection.classList.add('hidden');
+                    connectedState.classList.remove('hidden');
+                    connectedPortDisplay.textContent = `Connected to: ${connectedPortPath}${isMock ? ' (SIMULATION)' : ''}`;
+                    // Persist for auto-reconnect on next startup
+                    await window.electronAPI.preferences.set('hardware.weightMachine', {
+                        port: connectedPortPath,
+                        isMock: isMock,
+                        simulation: document.getElementById('enableSimulation').checked
+                    });
+                } else {
+                    throw new Error(result.error || 'Connection failed');
+                }
+            } catch (error) {
+                alert('Connection failed: ' + error.message);
+                connectToPortBtn.disabled = false;
+                connectToPortBtn.textContent = '🔌 Connect to Device';
+            }
+        }
+
+        async function disconnectFromPort() {
+            await window.electronAPI.hardware.disconnectPort();
+            await window.electronAPI.preferences.set('hardware.weightMachine', null);
+            connectedPortPath = null;
+            connectedState.classList.add('hidden');
+            portSelection.classList.remove('hidden');
+            selectedPortPath = null;
+            portsDropdown.value = '';
+            selectedPortInfo.style.display = 'none';
+            connectToPortBtn.classList.add('hidden');
+        }
+
+        function updateWeightDisplay(data) {
+            if (!weightValue) return;
+
+            if (typeof data === 'object' && data.weight !== undefined) {
+                weightValue.textContent = `${data.weight} kg`;
+                if (lastUpdate && data.timestamp) {
+                    const timestamp = new Date(data.timestamp).toLocaleTimeString();
+                    lastUpdate.textContent = `Last updated: ${timestamp}`;
+                    lastUpdate.style.color = data.isValid ? '#28a745' : '#d63384';
+                }
+            }
+        }
+
+        // ===========================
+        // PRINTER FUNCTIONS
+        // ===========================
+        async function refreshPrinters() {
+            const statusDiv = document.getElementById('printerStatus');
+            const printerList = document.getElementById('printerList');
+            
+            console.log('🖨️ Refreshing printers...');
+            console.log('statusDiv:', statusDiv);
+            console.log('printerList:', printerList);
+            
+            statusDiv.classList.remove('hidden');
+            statusDiv.style.display = 'block';
+            statusDiv.style.background = '#d1ecf1';
+            statusDiv.style.color = '#0c5460';
+            statusDiv.textContent = '🔍 Loading printers...';
+            
+            try {
+                console.log('Calling window.electronAPI.printer.list()...');
+                printers = await window.electronAPI.printer.list();
+                console.log('Printers received:', printers);
+                
+                if (printers.length === 0) {
+                    statusDiv.style.background = '#f8d7da';
+                    statusDiv.style.color = '#721c24';
+                    statusDiv.textContent = '❌ No printers found';
+                    printerList.innerHTML = '';
+                    return;
+                }
+                
+                statusDiv.style.background = '#d4edda';
+                statusDiv.style.color = '#155724';
+                statusDiv.textContent = `✅ Found ${printers.length} printer(s)`;
+                
+                const html = printers.map((p, i) => `
+                    <li class="printer-item ${p.isDefault ? 'default' : ''}" onclick="selectPrinter(${i})">
+                        <div class="printer-name">
+                            ${p.displayName || p.name}
+                            ${p.isDefault ? '<span class="badge default">DEFAULT</span>' : ''}
+                        </div>
+                        <div class="printer-info">${p.name} | ${p.status === 0 ? 'Ready' : 'Not Ready'}</div>
+                    </li>
+                `).join('');
+                
+                console.log('Generated HTML:', html);
+                printerList.innerHTML = html;
+                console.log('✅ Printer list updated');
+            } catch (error) {
+                console.error('❌ Error refreshing printers:', error);
+                statusDiv.style.background = '#f8d7da';
+                statusDiv.style.color = '#721c24';
+                statusDiv.textContent = `❌ Error: ${error.message}`;
+            }
+        }
+
+        async function selectPrinter(index) {
+            selectedPrinter = printers[index];
+            document.querySelectorAll('.printer-item').forEach((item, i) => {
+                item.classList.toggle('selected', i === index);
+            });
+            document.getElementById('printBtn').disabled = false;
+            
+            // Save to preferences
+            try {
+                await window.electronAPI.printer.setDefault(selectedPrinter.name);
+                console.log('✅ Saved default printer:', selectedPrinter.name);
+            } catch (error) {
+                console.error('❌ Failed to save default printer:', error);
+            }
+            
+            const statusDiv = document.getElementById('printerStatus');
+            statusDiv.style.background = '#d4edda';
+            statusDiv.style.color = '#155724';
+            statusDiv.textContent = `✅ Selected: ${selectedPrinter.displayName || selectedPrinter.name} (Saved as default)`;
+        }
+
+        async function printToSelected() {
+            if (!selectedPrinter) {
+                alert('Please select a printer first');
+                return;
+            }
+            
+            const html = document.getElementById('printContent').value;
+            const copies = parseInt(document.getElementById('copies').value);
+            const statusDiv = document.getElementById('printerStatus');
+            
+            statusDiv.style.background = '#d1ecf1';
+            statusDiv.style.color = '#0c5460';
+            statusDiv.textContent = '🖨️ Printing...';
+            
+            try {
+                const result = await window.electronAPI.printer.print(html, {
+                    printerName: selectedPrinter.name,
+                    copies: copies,
+                    silent: true
+                });
+                
+                statusDiv.style.background = result.success ? '#d4edda' : '#f8d7da';
+                statusDiv.style.color = result.success ? '#155724' : '#721c24';
+                statusDiv.textContent = result.success 
+                    ? `✅ Printed to ${selectedPrinter.displayName}` 
+                    : `❌ ${result.error}`;
+            } catch (error) {
+                statusDiv.style.background = '#f8d7da';
+                statusDiv.style.color = '#721c24';
+                statusDiv.textContent = `❌ ${error.message}`;
+            }
+        }
+
+        async function printToDefault() {
+            const html = document.getElementById('printContent').value;
+            const copies = parseInt(document.getElementById('copies').value);
+            const statusDiv = document.getElementById('printerStatus');
+            
+            statusDiv.style.background = '#d1ecf1';
+            statusDiv.style.color = '#0c5460';
+            statusDiv.textContent = '🖨️ Printing...';
+            
+            try {
+                const result = await window.electronAPI.printer.print(html, { copies, silent: true });
+                
+                statusDiv.style.background = result.success ? '#d4edda' : '#f8d7da';
+                statusDiv.style.color = result.success ? '#155724' : '#721c24';
+                statusDiv.textContent = result.success 
+                    ? '✅ Printed to default printer' 
+                    : `❌ ${result.error}`;
+            } catch (error) {
+                statusDiv.style.background = '#f8d7da';
+                statusDiv.style.color = '#721c24';
+                statusDiv.textContent = `❌ ${error.message}`;
+            }
+        }
+
+        // ===========================
+        // INITIALIZATION
+        // ===========================
+        if (window.electronAPI && window.electronAPI.hardware) {
+            window.electronAPI.hardware.onUsbData((data) => {
+                updateWeightDisplay(data);
+            });
+
+            window.electronAPI.hardware.onPortError((error) => {
+                if (lastUpdate) {
+                    lastUpdate.textContent = `Error: ${error}`;
+                    lastUpdate.style.color = 'red';
+                }
+            });
+        }
+
+        listPortsBtn.addEventListener('click', listAvailablePorts);
+        portsDropdown.addEventListener('change', onPortSelected);
+        connectToPortBtn.addEventListener('click', connectToSelectedPort);
+        disconnectBtn.addEventListener('click', disconnectFromPort);
+
+        // Auto-reconnect
+        async function autoReconnect() {
+            try {
+                const prefs = await window.electronAPI.preferences.get('hardware.weightMachine');
+                if (prefs && prefs.enabled && prefs.port) {
+                    const result = await window.electronAPI.hardware.connectPort(prefs.port);
+                    if (result.success) {
+                        connectedPortPath = prefs.port;
+                        portSelection.classList.add('hidden');
+                        connectedState.classList.remove('hidden');
+                        connectedPortDisplay.textContent = `Connected to: ${connectedPortPath}`;
+                    }
+                }
+            } catch (error) {
+                // No previous connection
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            autoReconnect();
+            rpInit();
+            cdInit();
+            kotInit();
+        });
+
+        // ===========================
+        // CASH DRAWER FUNCTIONS
+        // ===========================
+        const cd = () => window.electronAPI.cashDrawer;
+
+        function cdShowStatus(msg, type) {
+            const el = document.getElementById('cdStatus');
+            el.style.display = 'block';
+            const styles = {
+                success: 'background:#d4edda;color:#155724;border:1px solid #c3e6cb;',
+                error:   'background:#f8d7da;color:#721c24;border:1px solid #f5c6cb;',
+                info:    'background:#d1ecf1;color:#0c5460;border:1px solid #bee5eb;',
+                warn:    'background:#fff3cd;color:#856404;border:1px solid #ffeaa7;'
+            };
+            el.style.cssText = `display:block;padding:12px 16px;border-radius:8px;margin-bottom:16px;font-weight:600;${styles[type]||styles.info}`;
+            el.textContent = msg;
+        }
+
+        async function cdLoadPrinters() {
+            cdShowStatus('Loading printers...', 'info');
+            const list = await window.electronAPI.printer.list();
+            const sel = document.getElementById('cdPrinterSelect');
+            sel.innerHTML = '<option value="">-- Select printer --</option>';
+            list.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.name;
+                opt.textContent = (p.displayName || p.name) + (p.isDefault ? ' (Default)' : '');
+                sel.appendChild(opt);
+            });
+            cdShowStatus(`Found ${list.length} printer(s)`, list.length ? 'success' : 'warn');
+        }
+
+        async function cdOpen() {
+            const pin    = Number(document.querySelector('input[name="cdPin"]:checked').value);
+            const printerName = document.getElementById('cdPrinterSelect').value;
+            const btn    = document.getElementById('cdOpenBtn');
+
+            if (!printerName) {
+                cdShowStatus('Please select a printer first.', 'warn');
+                return;
+            }
+
+            btn.style.opacity = '0.7';
+            btn.disabled = true;
+            cdShowStatus('Opening drawer...', 'info');
+
+            const result = await cd().openViaPrinter(printerName, pin);
+
+            if (result.success) {
+                cdShowStatus('✅ Cash drawer opened!', 'success');
+                btn.style.background = 'linear-gradient(135deg,#1976d2,#42a5f5)';
+                setTimeout(() => {
+                    btn.style.background = 'linear-gradient(135deg,#28a745,#20c997)';
+                }, 600);
+            } else {
+                cdShowStatus(`❌ ${result.error}`, 'error');
+            }
+            btn.style.opacity = '1'; btn.disabled = false;
+        }
+
+        async function cdSaveConfig() {
+            const pin         = Number(document.querySelector('input[name="cdPin"]:checked').value);
+            const autoOpen    = document.getElementById('cdAutoOpen').checked;
+            const printerName = document.getElementById('cdPrinterSelect').value;
+
+            const config = { method: 'printer', printerName, pin, autoOpenOnSale: autoOpen };
+            const result = await cd().saveConfig(config);
+            cdShowStatus(result.success ? '✅ Settings saved!' : `❌ ${result.error}`, result.success ? 'success' : 'error');
+        }
+
+        // ===========================
+        // RECEIPT PRINTER
+        // ===========================
+        //
+        // Stored through the preferences bridge rather than localStorage: this
+        // window and the till's own window are different origins, so they do
+        // not share a localStorage. preferences is a file the main process
+        // owns, which both can reach.
+        const rpPref = () => window.electronAPI && window.electronAPI.preferences;
+
+        function rpShowStatus(msg, type) {
+            const el = document.getElementById('rpStatus');
+            const styles = {
+                success: 'background:#d4edda;color:#155724;border:1px solid #c3e6cb;',
+                error:   'background:#f8d7da;color:#721c24;border:1px solid #f5c6cb;',
+                info:    'background:#d1ecf1;color:#0c5460;border:1px solid #bee5eb;',
+                warn:    'background:#fff3cd;color:#856404;border:1px solid #ffeaa7;'
+            };
+            el.style.cssText = `display:block;padding:12px 16px;border-radius:8px;margin-bottom:16px;font-weight:600;${styles[type]||styles.info}`;
+            el.textContent = msg;
+        }
+
+        async function rpLoadPrinters() {
+            const sel = document.getElementById('rpPrinterSelect');
+            const wanted = sel.value;
+            try {
+                const list = await window.electronAPI.printer.list();
+                sel.querySelectorAll('option:not([value="default"])').forEach((o) => o.remove());
+                (list || []).forEach((p) => {
+                    const opt = document.createElement('option');
+                    opt.value = p.name;
+                    opt.textContent = (p.displayName || p.name) + (p.isDefault ? ` (${OS_DEFAULT_LABEL})` : '');
+                    sel.appendChild(opt);
+                });
+                if (wanted) sel.value = wanted;
+                if (!sel.value) sel.value = 'default';
+                rpShowStatus(`Found ${(list || []).length} printer(s)`, (list || []).length ? 'success' : 'warn');
+            } catch (e) {
+                rpShowStatus('Could not read the printer list: ' + e.message, 'error');
+            }
+        }
+
+        async function rpInit() {
+            await rpLoadPrinters();
+            if (!rpPref()) return;
+            try {
+                const printer = await rpPref().get('receipt_printer');
+                const width = await rpPref().get('print_width');
+
+                const sel = document.getElementById('rpPrinterSelect');
+                if (printer) {
+                    sel.value = printer;
+                    // Unplugged or renamed since it was chosen: the select falls
+                    // silently back to blank, so say what happened instead.
+                    if (sel.value !== printer) {
+                        sel.value = 'default';
+                        rpShowStatus(`Saved printer "${printer}" is not connected. Using the ${OS_DEFAULT_LABEL}.`, 'warn');
+                    }
+                }
+                if (width) {
+                    const radio = document.querySelector(`input[name="rpWidth"][value="${width}"]`);
+                    if (radio) radio.checked = true;
+                }
+            } catch (e) {
+                console.warn('rpInit:', e.message);
+            }
+        }
+
+        async function rpSave() {
+            const printer = document.getElementById('rpPrinterSelect').value || 'default';
+            const width = (document.querySelector('input[name="rpWidth"]:checked') || {}).value || '80';
+            try {
+                await rpPref().set('receipt_printer', printer);
+                await rpPref().set('print_width', width);
+                rpShowStatus('Saved. The till picks this up on its next receipt.', 'success');
+            } catch (e) {
+                rpShowStatus('Could not save: ' + e.message, 'error');
+            }
+        }
+
+        /*
+         * A sample on the paper that is actually loaded.
+         *
+         * Built here rather than borrowed from the till, because this window
+         * does not load the till's scripts - and the point is to prove the
+         * printer and the width before a customer is waiting.
+         */
+        /*
+         * A sample receipt through the same path a real sale takes.
+         *
+         * Sales print as ESC/POS on the desktop, so a test that sent HTML
+         * would prove nothing about them. The figures below are chosen to be
+         * awkward on purpose: a name longer than the paper, an amount at the
+         * widest it gets, and a total that has to stay hard right.
+         */
+        async function rpTestPrint() {
+            const printer = document.getElementById('rpPrinterSelect').value || 'default';
+            const width = (document.querySelector('input[name="rpWidth"]:checked') || {}).value || '80';
+
+            if (printer === 'default') {
+                rpShowStatus(`Choose a printer first: a receipt cannot be sent to the ${OS_DEFAULT_LABEL}.`, 'warn');
+                return;
+            }
+            if (width === 'a4') {
+                rpShowStatus('A4 receipts still print as a page. This test is for thermal rolls.', 'info');
+                return;
+            }
+
+            const now = new Date();
+            const sale = {
+                storeName: 'TEST RECEIPT',
+                storeAddress: width + 'mm roll \u00b7 ' + (width === '58' ? '32' : '48') + ' columns',
+                billNo: 'TEST-001',
+                date: now.toLocaleString('en-IN'),
+                items: [
+                    { name: 'Rice 5kg premium sona masoori', qty: '1', amount: 480 },
+                    { name: 'Sugar 1kg', qty: '2', amount: 90 },
+                    { name: 'Cooking oil 1L pouch', qty: '1', amount: 145 }
+                ],
+                subTotal: 715, taxes: [{ label: 'CGST 9%', amount: 32.18 }, { label: 'SGST 9%', amount: 32.18 }],
+                roundOff: 0.64, total: 780,
+                payments: [{ label: 'Cash', amount: 1000 }], change: 220,
+                itemCount: 3,
+                footer: 'If every amount above ends flush with\nthe right edge, the width is correct.',
+                showThanks: false
+            };
+
+            const btn = document.getElementById('rpTestBtn');
+            btn.disabled = true;
+            rpShowStatus('Sending a test receipt...', 'info');
+            try {
+                const result = await window.electronAPI.printer.printReceipt(sale, {
+                    printerName: printer, paperWidth: width, cut: true
+                });
+                if (result && result.success) {
+                    rpShowStatus('Sent ' + result.bytes + ' bytes. Check that every amount ends flush right.', 'success');
+                } else {
+                    rpShowStatus('Print failed: ' + ((result && result.error) || 'unknown reason'), 'error');
+                }
+            } catch (e) {
+                rpShowStatus('Print failed: ' + e.message, 'error');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function cdInit() {
+            /*
+             * Fill the printer list first, always.
+             *
+             * This used to read the saved settings and return early when there
+             * were none - which is exactly the state of a machine that has just
+             * been set up. The list was never fetched, so the dropdown held
+             * nothing but its placeholder and the shop had to find the Load
+             * button before it could choose anything. It looked like printer
+             * support had been removed.
+             *
+             * The list does not depend on the settings. Load it, then lay any
+             * saved choice on top.
+             */
+            try {
+                await cdLoadPrinters();
+            } catch (e) {
+                cdShowStatus('Could not read the printer list: ' + e.message, 'error');
+                return;
+            }
+
+            try {
+                const cfg = await cd().loadConfig();
+                if (!cfg) return;   // nothing saved yet; the list is still usable
+
+                const pinRadio = document.querySelector(`input[name="cdPin"][value="${cfg.pin || 0}"]`);
+                if (pinRadio) pinRadio.checked = true;
+
+                document.getElementById('cdAutoOpen').checked = !!cfg.autoOpenOnSale;
+
+                if (cfg.printerName) {
+                    const sel = document.getElementById('cdPrinterSelect');
+                    sel.value = cfg.printerName;
+                    // A printer that has been unplugged or renamed is no longer
+                    // in the list, so the select silently falls back to blank.
+                    // Say so, rather than letting them press Open and wonder.
+                    if (sel.value !== cfg.printerName) {
+                        cdShowStatus(`Saved printer "${cfg.printerName}" is not connected. Choose another.`, 'warn');
+                    }
+                }
+            } catch (e) {
+                console.warn('cdInit error:', e.message);
+            }
+        }
+        // ===========================
+        // MULTI KOT PRINT FUNCTIONS
+        // ===========================
+        let kotStatusTimer = null;
+
+        function kotShowStatus(msg, type) {
+            const el = document.getElementById('kotStatusBar');
+            const styles = {
+                success: 'background:#d4edda;color:#155724;border:1px solid #c3e6cb;',
+                error:   'background:#f8d7da;color:#721c24;border:1px solid #f5c6cb;',
+                info:    'background:#d1ecf1;color:#0c5460;border:1px solid #bee5eb;',
+                warn:    'background:#fff3cd;color:#856404;border:1px solid #ffeaa7;'
+            };
+            el.style.cssText = `display:block;padding:12px 16px;border-radius:8px;margin-bottom:16px;font-weight:600;${styles[type]||styles.info}`;
+            el.textContent = msg;
+        }
+
+        function _kotCheckedPrinters() {
+            return Array.from(document.querySelectorAll('#kotPrinterList input[type=checkbox]:checked')).map(cb => cb.value);
+        }
+
+        function _kotRenderPrinterList(list, savedNames) {
+            const container = document.getElementById('kotPrinterList');
+            if (!list || !list.length) {
+                container.innerHTML = '<div style="padding:14px;color:#9ca3af;font-size:13px;text-align:center;">No printers found.</div>';
+                return;
+            }
+            container.innerHTML = '';
+            list.forEach((p, i) => {
+                const name    = p.name;
+                const label   = (p.displayName || p.name) + (p.isDefault ? ' ⭐ Default' : '');
+                const checked = (savedNames || []).includes(name);
+                const id      = 'kotCb_' + i;
+                const row     = document.createElement('label');
+                row.htmlFor   = id;
+                row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;transition:background .15s;';
+                row.onmouseenter = () => row.style.background = '#eef2ff';
+                row.onmouseleave = () => row.style.background = '';
+                row.innerHTML = `
+                    <input type="checkbox" id="${id}" value="${name}" ${checked ? 'checked' : ''}
+                        style="width:16px;height:16px;accent-color:#667eea;cursor:pointer;flex-shrink:0;">
+                    <span style="font-size:14px;color:#374151;font-weight:${p.isDefault ? '700' : '500'};">${label}</span>`;
+                container.appendChild(row);
+            });
+        }
+
+        async function kotLoadPrinters() {
+            kotShowStatus('Loading printers...', 'info');
+            try {
+                const list       = await window.electronAPI.printer.list();
+                const savedNames = _kotCheckedPrinters();
+                _kotRenderPrinterList(list, savedNames);
+                kotShowStatus(`Found ${list.length} printer(s), check to select`, list.length ? 'success' : 'warn');
+            } catch (e) {
+                kotShowStatus('Error loading printers: ' + e.message, 'error');
+            }
+        }
+
+        async function kotStart() {
+            const branchId    = document.getElementById('kotBranchId').value.trim();
+            // Empty means "wherever the app is"; the manager resolves that
+            // itself rather than us guessing a port here.
+            const apiUrl      = document.getElementById('kotApiUrl').value.trim();
+            const printerNames = _kotCheckedPrinters();
+
+            if (!branchId) { kotShowStatus('Branch ID is required.', 'warn'); return; }
+            if (!printerNames.length) { kotShowStatus('Select at least one printer.', 'warn'); return; }
+
+            kotShowStatus('Starting KOT polling...', 'info');
+            try {
+                await window.electronAPI.kot.startPolling({ branchId, printerNames, apiUrl });
+                kotShowStatus('✅ KOT polling started! Listening for new orders every 5 seconds.', 'success');
+                kotUpdateButtons(true);
+                kotRefreshStatus();
+            } catch (e) {
+                kotShowStatus('Error: ' + e.message, 'error');
+            }
+        }
+
+        async function kotStop() {
+            try {
+                await window.electronAPI.kot.stopPolling();
+                kotShowStatus('⏹ KOT polling stopped.', 'warn');
+                kotUpdateButtons(false);
+                if (kotStatusTimer) { clearInterval(kotStatusTimer); kotStatusTimer = null; }
+                document.getElementById('kotLiveStatus').textContent = 'Idle';
+                document.getElementById('kotLiveStatus').style.color = '#6c757d';
+                document.getElementById('kotConnectedBanner').style.display = 'none';
+            } catch (e) {
+                kotShowStatus('Error: ' + e.message, 'error');
+            }
+        }
+
+        function kotUpdateButtons(running) {
+            document.getElementById('kotStartBtn').disabled = running;
+            document.getElementById('kotStopBtn').disabled  = !running;
+            document.getElementById('kotConnectedBanner').style.display = running ? 'block' : 'none';
+
+            // Lock printer list while polling is active
+            document.querySelectorAll('#kotPrinterList input[type=checkbox]').forEach(cb => cb.disabled = running);
+            document.querySelectorAll('#kotPrinterList label').forEach(lbl => lbl.style.opacity = running ? '0.55' : '1');
+            document.querySelector('button[onclick="kotLoadPrinters()"]').disabled = running;
+            document.getElementById('kotPrinterNote').style.display = running ? 'block' : 'none';
+        }
+
+        async function kotRefreshStatus() {
+            try {
+                const s = await window.electronAPI.kot.getStatus();
+                document.getElementById('kotLiveStatus').textContent  = s.isPolling ? '🟢 Polling' : 'Idle';
+                document.getElementById('kotLiveStatus').style.color  = s.isPolling ? '#28a745' : '#6c757d';
+                document.getElementById('kotLastPoll').textContent    = s.lastPollTime   || ', ';
+                document.getElementById('kotLiveBranch').textContent  = s.branchId       || ', ';
+                document.getElementById('kotLivePrinters').textContent = s.printerNames?.join(', ') || ', ';
+                if (s.isPolling) {
+                    document.getElementById('kotBannerInfo').textContent =
+                        `Branch: ${s.branchId} | Printers: ${s.printerNames?.join(', ')}`;
+                }
+            } catch (e) { /* ignore */ }
+        }
+
+        async function kotInit() {
+            try {
+                const cfg = await window.electronAPI.kot.getConfig();
+                if (cfg.branchId) document.getElementById('kotBranchId').value = cfg.branchId;
+                if (cfg.apiUrl)   document.getElementById('kotApiUrl').value   = cfg.apiUrl;
+
+                // Load printers and pre-check saved ones
+                const list = await window.electronAPI.printer.list();
+                _kotRenderPrinterList(list, cfg.printerNames || []);
+
+                // If config exists, auto-start polling
+                if (cfg.branchId && cfg.printerNames && cfg.printerNames.length) {
+                    await window.electronAPI.kot.startPolling(cfg);
+                    kotUpdateButtons(true);
+                    kotShowStatus('✅ KOT polling restored from saved settings.', 'success');
+                }
+
+                // Poll status every 5 seconds to update live display
+                kotStatusTimer = setInterval(kotRefreshStatus, 5000);
+                kotRefreshStatus();
+
+                // Set log date to today and load
+                const todayStr = new Date().toISOString().slice(0, 10);
+                document.getElementById('kotLogDate').value = todayStr;
+                kotLoadLogs();
+            } catch (e) {
+                console.warn('kotInit error:', e.message);
+            }
+        }
+
+        // ─── KOT Log Functions ────────────────────────────────────────────
+        let _kotCurrentLogs = [];
+        let _kotCurrentModalEntry = null;
+        let _kotLogPage = 1;
+        const _kotLogsPerPage = 10;
+        let _kotCurrentDate = '';
+        let _kotAutoRefreshTimer = null;
+        let _kotCountdownTimer = null;
+        const _kotRefreshInterval = 30;
+        let _kotSelectedIds = new Set();
+
+        function _kotUpdateSelectionBar() {
+            const bar = document.getElementById('kotSelectionBar');
+            const countEl = document.getElementById('kotSelectionCount');
+            if (_kotSelectedIds.size > 0) {
+                bar.style.display = 'block';
+                countEl.textContent = `🗂 ${_kotSelectedIds.size} log${_kotSelectedIds.size > 1 ? 's' : ''} selected`;
+            } else {
+                bar.style.display = 'none';
+            }
+        }
+
+        function kotClearSelection() {
+            _kotSelectedIds.clear();
+            kotRenderLogs();
+        }
+
+        function kotDeleteSelected() {
+            if (_kotSelectedIds.size === 0) return;
+            const count = _kotSelectedIds.size;
+            const modal = document.getElementById('kotDeleteConfirmModal');
+            modal.querySelector('p').innerHTML = `Are you sure you want to delete <strong>${count} log entr${count > 1 ? 'ies' : 'y'}</strong>?<br><span style="color:#6b7280;font-size:12px;">This action cannot be undone.</span>`;
+            modal.style.display = 'flex';
+            document.getElementById('kotDeleteConfirmBtn').onclick = async () => {
+                modal.style.display = 'none';
+                const ids = [..._kotSelectedIds];
+                let failed = 0;
+                for (const id of ids) {
+                    try {
+                        await window.electronAPI.kot.deleteLog(_kotCurrentDate, id);
+                        _kotCurrentLogs = _kotCurrentLogs.filter(l => l.id !== id);
+                        _kotSelectedIds.delete(id);
+                    } catch { failed++; }
+                }
+                if (failed === 0) kotShowStatus(`${ids.length} log${ids.length > 1 ? 's' : ''} deleted`, 'success');
+                else kotShowStatus(`Deleted ${ids.length - failed}, failed ${failed}`, 'error');
+                kotRenderLogs();
+            };
+            document.getElementById('kotDeleteCancelBtn').onclick = () => { modal.style.display = 'none'; };
+        }
+
+        function _kotStartAutoRefresh() {
+            _kotStopAutoRefresh();
+            let remaining = _kotRefreshInterval;
+            _kotUpdateCountdown(remaining);
+            _kotCountdownTimer = setInterval(() => {
+                remaining--;
+                _kotUpdateCountdown(remaining);
+                if (remaining <= 0) {
+                    remaining = _kotRefreshInterval;
+                    _kotSilentRefresh();
+                }
+            }, 1000);
+        }
+
+        function _kotStopAutoRefresh() {
+            if (_kotCountdownTimer) { clearInterval(_kotCountdownTimer); _kotCountdownTimer = null; }
+            _kotUpdateCountdown(null);
+        }
+
+        function _kotUpdateCountdown(sec) {
+            const el = document.getElementById('kotAutoRefreshBadge');
+            if (!el) return;
+            if (sec === null) { el.style.display = 'none'; return; }
+            el.style.display = 'inline-flex';
+            el.textContent = `🔄 ${sec}s`;
+        }
+
+        async function _kotSilentRefresh() {
+            if (!_kotCurrentDate) return;
+            try {
+                const logs = await window.electronAPI.kot.getLogs(_kotCurrentDate);
+                _kotCurrentLogs = logs || [];
+                kotRenderLogs();
+            } catch (e) { /* silent */ }
+        }
+
+        async function kotLoadLogs() {
+            const date = document.getElementById('kotLogDate').value;
+            if (!date) { kotShowStatus('Please select a date.', 'warn'); return; }
+            try {
+                const logs = await window.electronAPI.kot.getLogs(date);
+                _kotCurrentLogs = logs || [];
+                _kotCurrentDate = date;
+                _kotLogPage = 1;
+                _kotSelectedIds.clear();
+                kotRenderLogs();
+                _kotStartAutoRefresh();
+            } catch (e) {
+                kotShowStatus('Error loading logs: ' + e.message, 'error');
+            }
+        }
+
+        function kotRenderPage(page) {
+            _kotLogPage = page;
+            kotRenderLogs();
+        }
+
+        function kotRenderLogs() {
+            const date = _kotCurrentDate;
+            const logs = [..._kotCurrentLogs].reverse();
+            const empty = document.getElementById('kotLogsEmpty');
+            const table = document.getElementById('kotLogsTable');
+            const tbody = document.getElementById('kotLogsBody');
+            const paginationEl = document.getElementById('kotLogsPagination');
+
+            if (!logs.length) {
+                empty.textContent = 'No KOT print logs found for ' + date + '.';
+                empty.style.display = 'block';
+                table.style.display = 'none';
+                paginationEl.style.display = 'none';
+                return;
+            }
+
+            const total = logs.length;
+            const totalPages = Math.ceil(total / _kotLogsPerPage);
+            _kotLogPage = Math.max(1, Math.min(_kotLogPage, totalPages));
+            const start = (_kotLogPage - 1) * _kotLogsPerPage;
+            const slice = logs.slice(start, start + _kotLogsPerPage);
+
+            empty.style.display = 'none';
+            table.style.display = 'table';
+            tbody.innerHTML = '';
+
+            // Build pagination
+            if (totalPages > 1) {
+                let pageButtons = '';
+                for (let i = 1; i <= totalPages; i++) {
+                    pageButtons += `<button onclick="kotRenderPage(${i})"
+                        style="min-width:32px;height:30px;padding:0 8px;border:1.5px solid ${i === _kotLogPage ? '#6f42c1' : '#dee2e6'};
+                        border-radius:6px;background:${i === _kotLogPage ? '#6f42c1' : '#fff'};
+                        color:${i === _kotLogPage ? '#fff' : '#374151'};font-weight:600;font-size:12px;cursor:pointer;">${i}</button>`;
+                }
+                paginationEl.style.display = 'flex';
+                paginationEl.style.justifyContent = 'space-between';
+                paginationEl.style.alignItems = 'center';
+                paginationEl.innerHTML = `
+                    <span style="font-size:12px;color:#6c757d;">Showing ${start + 1}–${Math.min(start + _kotLogsPerPage, total)} of ${total}</span>
+                    <div style="display:flex;gap:5px;align-items:center;">
+                        <button onclick="kotRenderPage(${_kotLogPage - 1})" ${_kotLogPage <= 1 ? 'disabled' : ''}
+                            style="height:30px;padding:0 10px;border:1.5px solid #dee2e6;border-radius:6px;background:#fff;
+                            color:${_kotLogPage <= 1 ? '#adb5bd' : '#374151'};font-weight:600;font-size:12px;cursor:${_kotLogPage <= 1 ? 'default' : 'pointer'};">‹ Prev</button>
+                        ${pageButtons}
+                        <button onclick="kotRenderPage(${_kotLogPage + 1})" ${_kotLogPage >= totalPages ? 'disabled' : ''}
+                            style="height:30px;padding:0 10px;border:1.5px solid #dee2e6;border-radius:6px;background:#fff;
+                            color:${_kotLogPage >= totalPages ? '#adb5bd' : '#374151'};font-weight:600;font-size:12px;cursor:${_kotLogPage >= totalPages ? 'default' : 'pointer'};">Next ›</button>
+                    </div>`;
+            } else {
+                paginationEl.style.display = 'none';
+            }
+
+            // Select-all header checkbox state
+            const pageSelectedCount = slice.filter(l => _kotSelectedIds.has(l.id)).length;
+            const allPageSelected = pageSelectedCount === slice.length && slice.length > 0;
+            const somePageSelected = pageSelectedCount > 0 && !allPageSelected;
+            const selectAllCb = document.getElementById('kotSelectAllCb');
+            if (selectAllCb) {
+                selectAllCb.checked = allPageSelected;
+                selectAllCb.indeterminate = somePageSelected;
+                selectAllCb.onchange = () => {
+                    slice.forEach(l => {
+                        if (selectAllCb.checked) _kotSelectedIds.add(l.id);
+                        else _kotSelectedIds.delete(l.id);
+                    });
+                    kotRenderLogs();
+                };
+            }
+            _kotUpdateSelectionBar();
+
+            slice.forEach((log, i) => {
+                const checked = _kotSelectedIds.has(log.id);
+                const t = new Date(log.time);
+                const timeStr = t.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                const rowBg = checked ? '#f5f3ff' : (i % 2 === 0 ? '#fff' : '#f9fafb');
+
+                const kindColors = { new: '#28a745', modified: '#fd7e14', edit: '#fd7e14', cancel: '#dc3545' };
+                const kindLabel  = { new: '🆕 New', modified: '✏️ Modified', edit: '✏️ Modified', cancel: '❌ Cancel' };
+
+                const printerHtml = (log.printers || []).map(p =>
+                    `<span style="display:inline-block;font-size:11px;padding:2px 6px;border-radius:4px;margin:1px;
+                        background:${p.status === 'success' ? '#d4edda' : '#f8d7da'};
+                        color:${p.status === 'success' ? '#155724' : '#721c24'};">
+                        ${p.status === 'success' ? '✓' : '✗'} ${p.name.length > 14 ? p.name.slice(0,14)+'…' : p.name}
+                    </span>`
+                ).join('');
+
+                const tr = document.createElement('tr');
+                tr.style.background = rowBg;
+                tr.style.borderBottom = '1px solid #f0f0f0';
+                tr.innerHTML = `
+                    <td style="padding:10px 12px;text-align:center;width:36px;">
+                        <input type="checkbox" class="kot-row-cb" data-id="${log.id}"
+                            ${checked ? 'checked' : ''}
+                            style="width:15px;height:15px;cursor:pointer;accent-color:#6f42c1;">
+                    </td>
+                    <td style="padding:10px 12px;color:#374151;">${timeStr}</td>
+                    <td style="padding:10px 12px;font-weight:600;color:#2563eb;">${log.saleDisplayId || ', '}</td>
+                    <td style="padding:10px 12px;color:#374151;">${log.table || ', '}</td>
+                    <td style="padding:10px 12px;">
+                        <span style="font-size:12px;font-weight:700;color:${kindColors[log.printKind]||'#6c757d'}">
+                            ${kindLabel[log.printKind] || log.printKind}
+                        </span>
+                    </td>
+                    <td style="padding:10px 12px;font-weight:700;color:#374151;">#${log.kotNumber}</td>
+                    <td style="padding:10px 12px;font-family:monospace;font-size:12px;color:#6f42c1;">${log.deviceIp || ', '}</td>
+                    <td style="padding:10px 12px;">${printerHtml}</td>
+                    <td style="padding:10px 12px;text-align:center;">
+                        <button onclick='kotViewDetail(${JSON.stringify(log).replace(/'/g,"&apos;")})' title="View details"
+                            style="background:#6f42c1;color:#fff;border:none;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:12px;margin:2px;">👁</button>
+                        <button onclick='kotDeleteLog(${JSON.stringify(log.id)})' title="Delete log"
+                            style="background:#dc3545;color:#fff;border:none;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:12px;margin:2px;">🗑</button>
+                    </td>`;
+                tbody.appendChild(tr);
+
+                // Wire row checkbox
+                tr.querySelector('.kot-row-cb').addEventListener('change', (e) => {
+                    if (e.target.checked) _kotSelectedIds.add(log.id);
+                    else _kotSelectedIds.delete(log.id);
+                    kotRenderLogs();
+                });
+            });
+        }
+
+        function kotViewDetail(log) {
+            _kotCurrentModalEntry = log;
+            const kindLabel = { new: '🆕 New Order', modified: '✏️ Modified', edit: '✏️ Modified', cancel: '❌ Cancelled' };
+            const t = new Date(log.time).toLocaleString();
+
+            const printerRows = (log.printers || []).map(p => `
+                <div style="display:flex;justify-content:space-between;padding:6px 10px;border-radius:6px;margin-bottom:4px;
+                    background:${p.status === 'success' ? '#d4edda' : '#f8d7da'};">
+                    <span style="font-weight:600;">${p.name}</span>
+                    <span style="font-weight:700;color:${p.status === 'success' ? '#155724' : '#721c24'};">
+                        ${p.status === 'success' ? '✓ Printed' : '✗ Failed' + (p.reason ? ': ' + p.reason : '')}
+                    </span>
+                </div>`).join('');
+
+            const itemRows = (log.items || []).map(it => `
+                <div style="display:flex;justify-content:space-between;padding:6px 10px;border-bottom:1px dashed #e5e7eb;">
+                    <span>${it.item_name || it.name || it.product_name || ''}</span>
+                    <span style="font-weight:700;">×${it.item_quantity || it.quantity || it.qty || 1}</span>
+                </div>`).join('');
+
+            document.getElementById('kotDetailBody').innerHTML = `
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+                    <div><div style="font-size:11px;color:#9ca3af;font-weight:600;">TIME</div><div style="font-weight:600;">${t}</div></div>
+                    <div><div style="font-size:11px;color:#9ca3af;font-weight:600;">SALE ID</div><div style="font-weight:700;color:#2563eb;">${log.saleDisplayId||', '}</div></div>
+                    <div><div style="font-size:11px;color:#9ca3af;font-weight:600;">TABLE</div><div style="font-weight:600;">${log.table||', '} (Pax: ${log.pax||', '})</div></div>
+                    <div><div style="font-size:11px;color:#9ca3af;font-weight:600;">TYPE</div><div style="font-weight:700;">${kindLabel[log.printKind]||log.printKind} &nbsp; KOT#${log.kotNumber}</div></div>
+                    <div><div style="font-size:11px;color:#9ca3af;font-weight:600;">DINE TYPE</div><div style="font-weight:600;">${log.dineType||', '}</div></div>
+                </div>
+                <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:8px;">Items</div>
+                <div style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;margin-bottom:16px;">
+                    ${itemRows || '<div style="padding:12px;color:#9ca3af;text-align:center;">No items</div>'}
+                </div>
+                <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:8px;">Printer Results</div>
+                ${printerRows || '<div style="color:#9ca3af;">No printer data</div>'}`;
+
+            document.getElementById('kotDetailModal').style.display = 'block';
+        }
+
+        async function kotReprintFromModal() {
+            if (!_kotCurrentModalEntry) return;
+            const btn = document.getElementById('kotDetailReprintBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Reprinting…';
+            try {
+                const results = await window.electronAPI.kot.reprint(_kotCurrentModalEntry);
+                const ok = results && results.some(r => r.status === 'success');
+                btn.textContent = ok ? '✅ Done!' : '⚠️ Check printers';
+                setTimeout(() => { btn.disabled = false; btn.textContent = '🔄 Reprint'; }, 2500);
+            } catch (e) {
+                btn.disabled = false;
+                btn.textContent = '🔄 Reprint';
+                kotShowStatus('Reprint error: ' + e.message, 'error');
+            }
+        }
+
+        function kotDeleteLog(logId) {
+            const modal = document.getElementById('kotDeleteConfirmModal');
+            modal.style.display = 'flex';
+            document.getElementById('kotDeleteConfirmBtn').onclick = async () => {
+                modal.style.display = 'none';
+                try {
+                    await window.electronAPI.kot.deleteLog(_kotCurrentDate, logId);
+                    _kotCurrentLogs = _kotCurrentLogs.filter(l => l.id !== logId);
+                    kotRenderLogs();
+                } catch (e) {
+                    kotShowStatus('Delete error: ' + e.message, 'error');
+                }
+            };
+            document.getElementById('kotDeleteCancelBtn').onclick = () => {
+                modal.style.display = 'none';
+            };
+        }
+
+        function kotCloseModal() {
+            document.getElementById('kotDetailModal').style.display = 'none';
+            _kotCurrentModalEntry = null;
+        }
+
+        // ===========================
+        // MOBILE DEVICES FUNCTIONS
+        // ===========================
+        let _mobileApiUrl = '';
+
+
+        let _blockedSet = new Set();
+        let _maxDevices = 6;
+
+        async function saveMaxDevices(val) {
+            val = Math.max(1, Math.min(10, parseInt(val, 10) || 6));
+            await window.electronAPI.preferences.set('mobile.maxDevices', val);
+            _maxDevices = val;
+            await refreshMobileInfo();
+        }
+
+        function _rebuildMaxSelect(deviceCount) {
+            const sel = document.getElementById('maxDevicesSelect');
+            if (!sel) return;
+            const min = Math.max(1, deviceCount);
+            const current = _maxDevices || 6;
+            sel.innerHTML = '';
+            for (let i = min; i <= 10; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = i;
+                if (i === current) opt.selected = true;
+                sel.appendChild(opt);
+            }
+            if (current < min) {
+                sel.value = min;
+                _maxDevices = min;
+                window.electronAPI.preferences.set('mobile.maxDevices', min);
+            }
+        }
+
+        async function refreshMobileInfo(btn) {
+            const refreshBtn = btn || document.getElementById('mobileRefreshBtn');
+            if (refreshBtn) {
+                refreshBtn.disabled = true;
+                refreshBtn.classList.add('btn-loading');
+                refreshBtn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px;"><span style="width:13px;height:13px;border:2px solid rgba(255,255,255,.5);border-top-color:#fff;border-radius:50%;display:inline-block;animation:spin .7s linear infinite;"></span> Loading...</span>';
+            }
+
+            try {
+                const info = await window.electronAPI.mobile.getInfo();
+                _mobileApiUrl = info.apiUrl;
+                document.getElementById('mobileApiUrl').textContent = info.apiUrl;
+            } catch (e) { /* ignore */ }
+
+
+            // Load blocked IPs first (used in device table rendering)
+            try {
+                const blocked = await window.electronAPI.mobile.getBlocked();
+                _blockedSet = new Set(blocked);
+                renderBlockedList(blocked);
+            } catch (e) { _blockedSet = new Set(); }
+
+            try {
+                const saved = await window.electronAPI.preferences.get('mobile.maxDevices');
+                if (saved) _maxDevices = Math.max(1, parseInt(saved, 10) || 6);
+            } catch (e) { /* ignore */ }
+
+            try {
+                const devices = await window.electronAPI.mobile.getDevices();
+                const tbody = document.getElementById('deviceTableBody');
+                const MAX_D = _maxDevices;
+                document.getElementById('deviceCount').textContent = devices.length;
+                _rebuildMaxSelect(devices.length);
+                const limitBadge = document.getElementById('deviceLimitBadge');
+                if (limitBadge) {
+                    if (devices.length >= MAX_D) {
+                        limitBadge.textContent = `${devices.length}/${MAX_D}, Full`;
+                        limitBadge.style.cssText = 'display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;margin-left:4px;background:#fee2e2;color:#dc2626;';
+                    } else if (devices.length >= MAX_D - 1) {
+                        limitBadge.textContent = `${devices.length}/${MAX_D}`;
+                        limitBadge.style.cssText = 'display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;margin-left:4px;background:#fef9c3;color:#b45309;';
+                    } else {
+                        limitBadge.textContent = `${devices.length}/${MAX_D}`;
+                        limitBadge.style.cssText = 'display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;margin-left:4px;background:#f1f5f9;color:#64748b;';
+                    }
+                }
+                if (!devices.length) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:#94a3b8;">No devices connected yet</td></tr>';
+                } else {
+                    const now = Date.now();
+                    tbody.innerHTML = devices.map(d => {
+                        const lastMs = d.lastSeen ? new Date(d.lastSeen).getTime() : 0;
+                        const diffSec = Math.floor((now - lastMs) / 1000);
+                        const online = diffSec < 45;
+                        const agoText = diffSec < 60 ? `${diffSec}s ago`
+                            : diffSec < 3600 ? `${Math.floor(diffSec/60)}m ago`
+                            : `${Math.floor(diffSec/3600)}h ago`;
+                        const statusBadge = online
+                            ? `<span style="display:inline-flex;align-items:center;gap:4px;background:#dcfce7;color:#166534;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:700;" title="Last seen ${agoText}">
+                                <span style="width:7px;height:7px;background:#16a34a;border-radius:50%;display:inline-block;animation:pulse 1.5s infinite;"></span>Online</span>`
+                            : `<span style="display:inline-flex;align-items:center;gap:4px;background:#f1f5f9;color:#64748b;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:600;" title="Last seen ${agoText}">
+                                <span style="width:7px;height:7px;background:#94a3b8;border-radius:50%;display:inline-block;"></span>${agoText}</span>`;
+                        const safeIp = d.ip.replace(/'/g, '');
+                        const isBlocked = _blockedSet.has(d.ip);
+                        const finalBadge = isBlocked
+                            ? `<span style="display:inline-flex;align-items:center;gap:4px;background:#fee2e2;color:#dc2626;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:700;">
+                                <span style="width:7px;height:7px;background:#dc2626;border-radius:50%;display:inline-block;"></span>Blocked</span>`
+                            : statusBadge;
+                        return `
+                        <tr style="border-bottom:1px solid #f1f5f9;${isBlocked ? 'opacity:0.65;' : ''}">
+                            <td style="padding:10px 14px;font-weight:700;color:#1e40af;">${d.ip}</td>
+                            <td style="padding:10px 14px;color:#475569;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${d.ua || ''}">${_shortUA(d.ua)}</td>
+                            <td style="padding:10px 14px;text-align:center;">${finalBadge}</td>
+                            <td style="padding:10px 14px;color:#64748b;font-size:12px;">${_fmt(d.firstSeen)}</td>
+                            <td style="padding:10px 14px;color:#64748b;font-size:12px;">${_fmt(d.lastSeen)}</td>
+                            <td style="padding:10px 14px;text-align:center;white-space:nowrap;">
+                                ${isBlocked
+                                    ? `<button onclick="unblockDevice('${safeIp}')" title="Unblock this device"
+                                        style="background:#dcfce7;color:#16a34a;border:none;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:12px;font-weight:600;">
+                                        ✅ Unblock
+                                       </button>`
+                                    : `<button onclick="blockDevice('${safeIp}')" title="Block this device"
+                                        style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:12px;font-weight:600;">
+                                        🚫 Block
+                                       </button>`
+                                }
+                            </td>
+                        </tr>`;
+                    }).join('');
+                }
+            } catch (e) { /* ignore */ }
+
+            try {
+                const logs = await window.electronAPI.mobile.getLogs();
+                const logBody = document.getElementById('loginLogBody');
+                if (!logs.length) {
+                    logBody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:#94a3b8;">No login events yet</td></tr>';
+                } else {
+                    logBody.innerHTML = [...logs].reverse().slice(0, 100).map(l => `
+                        <tr style="border-bottom:1px solid #f1f5f9;">
+                            <td style="padding:9px 14px;font-size:12px;color:#64748b;">${_fmt(l.time)}</td>
+                            <td style="padding:9px 14px;font-weight:600;color:#1e40af;">${l.ip}</td>
+                            <td style="padding:9px 14px;font-size:12px;color:#475569;">${l.path}</td>
+                            <td style="padding:9px 14px;text-align:center;">
+                                <span style="display:inline-block;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;
+                                    background:${l.success ? '#dcfce7' : '#fee2e2'};color:${l.success ? '#166534' : '#991b1b'};">
+                                    ${l.success ? '✅ OK' : '❌ ' + l.statusCode}
+                                </span>
+                            </td>
+                        </tr>`).join('');
+                }
+            } catch (e) { /* ignore */ }
+
+            // Update last refresh timestamp
+            const lrEl = document.getElementById('mobileLastRefresh');
+            if (lrEl) lrEl.textContent = 'Updated ' + new Date().toLocaleTimeString();
+
+            // Restore refresh button
+            if (refreshBtn) {
+                refreshBtn.disabled = false;
+                refreshBtn.classList.remove('btn-loading');
+                refreshBtn.innerHTML = '🔄 Refresh';
+            }
+        }
+
+        function _shortUA(ua) {
+            if (!ua) return 'Unknown';
+            if (/android/i.test(ua)) return '📱 Android ' + (ua.match(/Android ([\d.]+)/)?.[1] || '');
+            if (/iphone/i.test(ua)) return '🍎 iPhone';
+            if (/ipad/i.test(ua)) return '🍎 iPad';
+            if (/chrome/i.test(ua)) return '🌐 Chrome';
+            if (/firefox/i.test(ua)) return '🦊 Firefox';
+            return ua.substring(0, 40);
+        }
+
+        function _fmt(iso) {
+            if (!iso) return ', ';
+            return new Date(iso).toLocaleString();
+        }
+
+        function copyApiUrl(btn) {
+            if (!_mobileApiUrl) return;
+            const doSuccess = () => {
+                btn.innerHTML = '✅ Copied!';
+                btn.style.background = '#16a34a';
+                btn.disabled = true;
+                setTimeout(() => {
+                    btn.innerHTML = '📋 Copy';
+                    btn.style.background = '#22c55e';
+                    btn.disabled = false;
+                }, 2000);
+            };
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(_mobileApiUrl).then(doSuccess).catch(() => {
+                    _fallbackCopy(_mobileApiUrl);
+                    doSuccess();
+                });
+            } else {
+                _fallbackCopy(_mobileApiUrl);
+                doSuccess();
+            }
+        }
+
+        function _fallbackCopy(text) {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.cssText = 'position:fixed;opacity:0;';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+        }
+
+        function _showModal({ icon, title, msg, confirmLabel, confirmColor, onConfirm }) {
+            const modal = document.getElementById('blockConfirmModal');
+            document.getElementById('blockModalIcon').textContent = icon;
+            document.getElementById('blockModalTitle').textContent = title;
+            document.getElementById('blockModalMsg').textContent = msg;
+            const btn = document.getElementById('blockModalConfirm');
+            btn.textContent = confirmLabel;
+            btn.style.background = confirmColor;
+            btn.style.color = '#fff';
+            modal.style.display = 'flex';
+            const close = () => { modal.style.display = 'none'; };
+            document.getElementById('blockModalCancel').onclick = close;
+            btn.onclick = async () => { close(); await onConfirm(); };
+        }
+
+        async function blockDevice(ip) {
+            _showModal({
+                icon: '🚫',
+                title: `Block ${ip}?`,
+                msg: 'The device will be immediately disconnected and cannot access the app until you unblock it.',
+                confirmLabel: 'Block Device',
+                confirmColor: '#dc2626',
+                onConfirm: async () => {
+                    try {
+                        await window.electronAPI.mobile.blockDevice(ip);
+                        await refreshMobileInfo();
+                    } catch (e) { alert('Error: ' + e.message); }
+                }
+            });
+        }
+
+        async function unblockDevice(ip) {
+            _showModal({
+                icon: '✅',
+                title: `Unblock ${ip}?`,
+                msg: 'The device will be allowed to access the app again.',
+                confirmLabel: 'Unblock Device',
+                confirmColor: '#16a34a',
+                onConfirm: async () => {
+                    try {
+                        await window.electronAPI.mobile.unblockDevice(ip);
+                        await refreshMobileInfo();
+                    } catch (e) { alert('Error: ' + e.message); }
+                }
+            });
+        }
+
+        function renderBlockedList(blocked) {
+            const el = document.getElementById('blockedDeviceBody');
+            const countEl = document.getElementById('blockedCount');
+            if (!el) return;
+            if (countEl) countEl.textContent = blocked.length;
+            if (!blocked.length) {
+                el.innerHTML = '<tr><td colspan="2" style="text-align:center;padding:16px;color:#94a3b8;">No blocked devices</td></tr>';
+                return;
+            }
+            el.innerHTML = blocked.map(ip => {
+                const safeIp = ip.replace(/'/g, '');
+                return `<tr style="border-bottom:1px solid #f1f5f9;">
+                    <td style="padding:10px 14px;font-weight:700;color:#dc2626;">${ip}</td>
+                    <td style="padding:10px 14px;text-align:right;">
+                        <button onclick="unblockDevice('${safeIp}')"
+                            style="background:#dcfce7;color:#16a34a;border:none;border-radius:6px;padding:5px 12px;cursor:pointer;font-size:12px;font-weight:600;">
+                            ✅ Unblock
+                        </button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        async function clearMobileData() {
+            _showModal({
+                icon: '🗑️',
+                title: 'Clear All Logs?',
+                msg: 'This will remove all connected device records and login logs. Blocked IPs will not be affected.',
+                confirmLabel: 'Clear Logs',
+                confirmColor: '#f59e0b',
+                onConfirm: async () => {
+                    await window.electronAPI.mobile.clear();
+                    await refreshMobileInfo();
+                }
+            });
+            return;
+        }
+
+        // Auto-reconnect weight machine + auto-refresh mobile tab
+        /*
+         * The scanner test.
+         *
+         * A scanner types faster than a person and finishes with Enter, so the
+         * gap between keystrokes is what tells them apart: anything under
+         * ~30ms per character is a machine. Measuring it lets the test report
+         * the speed, which is the quickest way to tell "the scanner sent
+         * nothing" from "somebody typed it by hand".
+         */
+        (function scannerTest() {
+            const scans = [];
+            let firstKeyAt = 0;
+            let lastKeyAt = 0;
+
+            document.addEventListener('DOMContentLoaded', () => {
+                const input = document.getElementById('scannerTestInput');
+                if (!input) return;
+
+                input.addEventListener('keydown', (e) => {
+                    const now = Date.now();
+                    if (!input.value) firstKeyAt = now;
+                    lastKeyAt = now;
+
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        report(input.value, firstKeyAt, now, true);
+                        input.value = '';
+                        return;
+                    }
+                });
+
+                // A scanner with no Enter suffix still stops typing, so a short
+                // pause is treated as the end of a scan. Without this the tab
+                // would look broken for exactly the scanners it should be
+                // diagnosing.
+                let idle = null;
+                input.addEventListener('input', () => {
+                    clearTimeout(idle);
+                    idle = setTimeout(() => {
+                        if (!input.value) return;
+                        report(input.value, firstKeyAt, lastKeyAt, false);
+                        input.value = '';
+                    }, 700);
+                });
+            });
+
+            function esc(s) {
+                return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            }
+
+            function report(raw, from, to, hadEnter) {
+                const chars = raw.length;
+                const ms = Math.max(0, to - from);
+                const perChar = chars > 1 ? ms / (chars - 1) : 0;
+                const looksScanned = chars > 3 && perChar < 30;
+
+                const digitsOnly = /^[0-9]+$/.test(raw);
+                const notes = [];
+                if (!hadEnter) {
+                    notes.push('No Enter at the end. The till will wait for one - '
+                        + 'set an Enter suffix on the scanner.');
+                }
+                if (!digitsOnly) {
+                    notes.push('Contains characters that are not digits. If the barcode is '
+                        + 'numeric, the scanner and this computer are on different keyboard layouts.');
+                }
+                if (!looksScanned && chars > 3) {
+                    notes.push('Typed at ' + Math.round(perChar) + 'ms per character, which is '
+                        + 'hand speed rather than a scanner.');
+                }
+
+                const box = document.getElementById('scannerResult');
+                box.style.display = 'block';
+                box.innerHTML =
+                    '<div style="padding:16px;border-radius:10px;background:'
+                    + (notes.length ? '#fff3cd' : '#d4edda') + ';color:'
+                    + (notes.length ? '#856404' : '#155724') + ';">'
+                    + '<div style="font-size:20px;font-family:monospace;font-weight:700;'
+                    + 'word-break:break-all;">' + esc(raw) + '</div>'
+                    + '<div style="margin-top:8px;font-size:13px;">'
+                    + chars + ' characters'
+                    + (chars > 1 ? ' &middot; ' + Math.round(perChar) + 'ms per character' : '')
+                    + (hadEnter ? ' &middot; ended with Enter' : '')
+                    + '</div>'
+                    + (notes.length
+                        ? '<ul style="margin:10px 0 0;padding-left:18px;font-size:13px;">'
+                          + notes.map((n) => '<li>' + n + '</li>').join('') + '</ul>'
+                        : '<div style="margin-top:8px;font-size:13px;">'
+                          + 'This is exactly what the till receives. Nothing to change.</div>')
+                    + '</div>';
+
+                scans.unshift({ raw, chars, hadEnter });
+                const history = document.getElementById('scannerHistory');
+                history.innerHTML = scans.length < 2 ? '' :
+                    '<div style="font-size:13px;color:#666;margin-bottom:6px;">Earlier scans</div>'
+                    + scans.slice(1, 6).map((s) =>
+                        '<div style="font-family:monospace;font-size:14px;padding:6px 0;'
+                        + 'border-bottom:1px solid #eee;">' + esc(s.raw) + '</div>').join('');
+            }
+        }());
+
+        document.addEventListener('DOMContentLoaded', () => {
+            /*
+             * The KOT tab belongs to shops running table service. The dashboard
+             * mirrors that setting into per-machine preferences, because this
+             * window cannot read the dashboard's own storage.
+             */
+            (async () => {
+                try {
+                    const kot = await window.electronAPI.preferences.get('kot.enabled');
+                    const tab = document.getElementById('kotTabButton');
+                    if (tab) tab.style.display = kot ? '' : 'none';
+                } catch (e) {
+                    // Unknown means leave it hidden: a grocery seeing a KOT tab
+                    // is worse than a restaurant having to open Config once.
+                }
+            })();
+
+            // Weight machine: restore last connected port
+            (async () => {
+                try {
+                    const saved = await window.electronAPI.preferences.get('hardware.weightMachine');
+                    if (!saved || !saved.port) return;
+
+                    // Restore simulation checkbox
+                    const simCheck = document.getElementById('enableSimulation');
+                    if (simCheck) simCheck.checked = !!(saved.simulation || saved.isMock);
+
+                    // Scan ports with saved simulation setting
+                    availablePorts = await window.electronAPI.hardware.scanSerialPorts(!!(saved.simulation || saved.isMock));
+
+                    // Ensure the saved port is in the list (for mock ports)
+                    if (!availablePorts.find(p => p.path === saved.port) && saved.isMock) {
+                        availablePorts.push({ path: saved.port, isMock: true, manufacturer: 'Simulation' });
+                    }
+
+                    // Try to reconnect
+                    const result = await window.electronAPI.hardware.connectPort(saved.port, !!(saved.isMock));
+                    if (result && result.success) {
+                        connectedPortPath = saved.port;
+                        portSelection.classList.add('hidden');
+                        connectedState.classList.remove('hidden');
+                        connectedPortDisplay.textContent = `Connected to: ${connectedPortPath}${saved.isMock ? ' (SIMULATION)' : ''} ✅ Auto-reconnected`;
+                    }
+                } catch (e) { /* ignore if hardware not ready */ }
+            })();
+
+            // Mobile tab: auto-refresh every 10 seconds
+            setInterval(() => {
+                if (document.getElementById('mobileTab')?.classList.contains('active')) {
+                    refreshMobileInfo();
+                }
+            }, 10000);
+        });
+    </script>
+</body>
+</html>

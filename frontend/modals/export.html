@@ -1,0 +1,33 @@
+<!-- start Export modal -->
+<div class="modal fade export_modal close_on_esc" id="export_modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><lang class="lang_exporttitle">Export <span id="exportHeading"></span> Detail</lang></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row justify-content-center">                                             
+                    <h6>
+                        <span class="exportCountValue text-success mr-3 action-icon badge badge-success-inverse">
+                        </span> 
+                    <lang class="lang_willbeexported_title"> Selected detail will be exported </lang>
+                    </h6>     
+                      <input type="hidden" id="selectrow">
+                     <input type="hidden" id="table_row">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-danger" data-dismiss="modal">
+                   <i class="feather icon-x-circle mr-2"></i> <lang class="lang_close_title"> Close </lang>
+                </button>
+               <button type="button" id="onclickExportButton"
+                        class="btn btn-outline-primary"> <lang class="lang_download_title"><i class="feather icon-download mr-2"></i>Download </lang>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- end Export modal -->

@@ -1,0 +1,26 @@
+<svg id="Small_Icons" data-name="Small Icons" xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: none;
+        stroke: #fff;
+        stroke-linecap: round;
+        stroke-width: 3px;
+      }
+
+      .cls-1, .cls-2 {
+        fill-rule: evenodd;
+      }
+
+      .cls-2 {
+        fill: #fff;
+        opacity: 0.25;
+      }
+    </style>
+  </defs>
+  <g id="Email">
+    <path id="Rounded_Rectangle_16" data-name="Rounded Rectangle 16" class="cls-1" d="M6.408,10.5H43.592a3,3,0,0,1,3,3v24a3,3,0,0,1-3,3H6.408a3,3,0,0,1-3-3v-24A3,3,0,0,1,6.408,10.5Z"/>
+    <path class="cls-2" d="M4,32l43-5V38l-4,3L4,40V32Z"/>
+    <path class="cls-1" d="M4,16s10.959,6.22,15,8a13.8,13.8,0,0,0,12,0c4.228-1.878,15-8,15-8"/>
+  </g>
+</svg>

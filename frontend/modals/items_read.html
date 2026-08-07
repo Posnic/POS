@@ -1,0 +1,365 @@
+
+<div id="infobar-settings-sidebar-item-details" class="infobar-settings-sidebar">
+    <div class="infobar-settings-sidebar-head d-flex w-100 justify-content-between">
+        <h4 id="exampleModalCenterTitle"><lang class="lang_itemdetail_title">Item Details</lang></h4>
+        <a href="javascript:void(0)" class="infobar-settings-close" data-id="item">
+            <img src="static/images/svg-icon/close.svg" class="img-fluid menu-hamburger-close" alt="close">
+        </a>
+    </div>
+    <div class="infobar-settings-sidebar-body">
+        <ul class="nav nav-tabs mb-3" id="defaultTab" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" id="item-detail-tab" data-toggle="tab" href="#item_detail" role="tab" aria-controls="item_detail" aria-selected="true"><lang class="lang_manage_title"> Details</lang></a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="item-description-tab" data-toggle="tab" href="#description_detail" role="tab" aria-controls="description_detail" aria-selected="true"><lang class="lang_description"> Description</lang></a>
+            </li>
+            <li class="nav-item" onclick="return PosnicPro.itemdetails.itemdetailsTable();">
+                <a class="nav-link" id="item-sale-tab" data-toggle="tab" href="#item_sale" role="tab" aria-controls="item_sale" aria-selected="false"><lang class="lang_activity"> Activities</lang></a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="item-image-tab" data-toggle="tab" href="#item_image" role="tab" aria-controls="item_image" aria-selected="true"><lang class="lang_images"> Images</lang></a>
+            </li>
+        </ul>
+        <div class="custom-mode-setting loader-item" style="border:none;">            
+            <div class="slider-modal-body">
+                <div class="tab-content" id="defaultTabContent">
+
+
+                    <div class="tab-pane fade show active" id="item_detail" role="tabpanel" aria-labelledby="item-detail-tab">
+                        <div class="row">
+                            <div class="col-lg-12 col-xl-12">
+                                <div class="row">
+                                    <div class="col-md-6" style="border-right: 1px solid #ddd;">
+                                        <div class="table-responsive m-b-30">
+                                            <table class="table table-border table-striped mb-0">
+                                                <tbody class="label-text-color">
+                                                    <tr>
+                                                        <th scope="row"><lang class="lang_image_title"> Cover Image </lang></th>
+                                                <td style="width: 70%;"><a href="#"><img src='' class="itemimageview" width='40' height='40' alt="NoImg"></a> 
+                                                </td>
+                                                </tr>
+                                                <tr>
+                                                    <th scope="row"><lang class="lang_name_title"> Name </lang></th>
+                                                <td><span id="item_view_name"></span></td>
+                                                </tr>
+                                                <tr>
+                                                    <th scope="row"><lang class="lang_sku_title"> SKU </lang></th>
+                                                <td><span id="item_view_itemid"></span></td>
+                                                </tr>
+                                                <tr>
+                                                    <th scope="row"><lang class="lang_barcodeid_title"> Barcode Id </lang></th>
+                                                <td><span id="item_view_barcode_id"></span></td>
+                                                </tr>
+                                                <tr>
+                                                    <th scope="row"><lang class="lang_date_title"> Date </lang></th>
+                                                <td><span id="item_view_date"></span></td>
+                                                </tr>
+                                                <tr>
+                                                    <th scope="row"><lang class="lang_supply_title"> Supplier</lang></th>
+                                                <td><span id="item_view_supplier_name"></span></td>
+                                                </tr>
+                                                <tr>
+                                                    <th scope="row"><lang class="lang_category_title"> Category</lang></th>
+                                                <td><span id="item_view_category_name"></span></td>
+                                                </tr>
+                                                <tr class="item-discount">
+                                                    <th scope="row"><lang class="lang_discount_title"> Discount </lang></th>
+                                                <td class="discount_amountval" style="display:none;"> <span class="item-discount-sign"></span>&nbsp;<span class="item-discount-value"></span> </td>
+                                                <td class="discount_percentageval" style="display:none;"> <span class="item-discount-value"></span><span class="item-discount-sign"></span> </td>
+
+                                                </tr>
+                                                <tr class="item-hsntax">
+                                                    <th scope="row"><lang class="lang_sku_title"> Hsn Code </lang></th>
+                                                <td><span id="item_view_hsncode"></span></td>
+                                                </tr>
+                                                <tr class="item-hsntax">
+                                                    <th scope="row"><lang class="lang_sku_title"> Hsn Description </lang></th>
+                                                <td><span id="item_view_hsndescription"></span></td>
+                                                </tr>   
+                                                <tr class="item-taxdefault">
+                                                    <th scope="row"><lang class="lang_sku_title"> Tax Name </lang></th>
+                                                <td><span id="item_view_tax_name"></span></td>
+                                                </tr>
+                                                <tr>
+                                                    <th scope="row"><lang class="lang_tax_title"> Tax </lang></th>
+                                                <td><span id="item_view_tax"></span>%&nbsp;<span class="badge badge-icon badge-info"><span id="item_view_tax_type"></span></span></td>
+                                                </tr>
+                                                <tr>
+                                                    <th scope="row"> <lang class="lang_branchaccess_title">Item Position </lang></th>
+                                                <td><span id="item_view_sort_order"></span></td>
+                                                </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <table class="table table-border table-striped mb-0">
+                                            <tbody class="label-text-color"> 
+
+                                                <tr>
+                                                    <th scope="row"><lang class="lang_mrp_title">M.R.P Amount </lang></th>
+                                            <td><span class="sign display-currency">₹</span>&nbsp;<span id="item_view_mrpprice"></span></td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row"><lang class="lang_companyamount_title"> Company Amount </lang></th>
+                                            <td><span class="sign display-currency">₹</span>&nbsp;<span id="item_view_companyprice"></span></td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row"><lang class="lang_sellingamount_title"> Selling Amount</lang></th>
+                                            <td><span class="sign display-currency">₹</span>&nbsp;<span id="item_view_sellingprice"></span></td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row"><lang class="lang_availablequatity_title"> Available Quantity </lang></th>
+                                            <td><span id="item_view_available_quantity"></span>&nbsp;<span id="item_view_units"></span></td>
+                                            </tr>
+                                            <th scope="row"><lang class="lang_mfg_title"> Items MFG Date </lang></th>
+                                            <td><span id="items_view_mfg_date"></span></td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row"><lang class="lang_expiry_title"> Items Expiry Date </lang></th>
+                                            <td><span id="items_view_expiry_date"></span></td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row"><lang class="lang_createdate_title"> Created Date </lang></th>
+                                            <td><span id="item_view_created_date"></span></td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row"><lang class="lang_update_title"> Updated Date </lang></th>
+                                            <td><span id="item_view_updated_date"></span></td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row"><lang class="lang_trackinventory_title">Track Inventory </lang></th>
+                                            <td>
+                                                <span class="badge badge-danger badge-icon" id="item-access">
+                                                    <i class="fa fa-times" id="item-view-access"></i>
+                                                    <span id="inventory-access-item"><lang class="lang_on_title">ON </lang></span>
+                                                </span>
+                                            </td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">Sales Channel</th>
+                                                <td>
+                                                    <span class="badge badge-danger badge-icon" id="channel-access">
+                                                        <i class="fa fa-times" id="item-view-channel-access"></i>
+                                                        <span id="channel-access-item"><lang class="lang_on_title">ON </lang></span>
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">Kiosk</th>
+                                                <td>
+                                                    <span class="badge badge-danger badge-icon" id="ecommerce-access">
+                                                        <i class="fa fa-times" id="item-view-ecommerce-access"></i>
+                                                        <span id="ecommerce-access-item"><lang class="lang_on_title">ON </lang></span>
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">Negative Stock</th>
+                                                <td>
+                                                    <span class="badge badge-danger badge-icon" id="stock-access">
+                                                        <i class="fa fa-times" id="item-view-stock-access"></i>
+                                                        <span id="stock-access-item"><lang class="lang_on_title">ON </lang></span>
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            </tbody>
+                                        </table>
+
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="item_sale" role="tabpanel" aria-labelledby="item-sale-tab">
+                        <div class="row">
+                            <div class="col-xs-12 col-sm-3 col-lg-3 col-md-12">
+                                <div class="portlet light slider-portlet-vh">
+                                    <div class="portlet-body">
+                                        <div class="row">
+                                            <div class="col-lg-12 col-xl-12">
+                                                <div class="card bg-secondary-rgba m-b-30">
+                                                    <div class="card-body">
+                                                        <div class="row align-items-center">
+                                                            <div class="col-12 text-center">
+                                                                <h5 class="card-title text-primary mb-1 font-16"><lang class="lang_noreturnds">Total Sale</lang></h5>
+                                                            </div>
+                                                            <div class="col-12 text-center">
+                                                                <span class="item_details_saletotalvalue font-18">0</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="card bg-secondary-rgba m-b-30">
+                                                    <div class="card-body">
+                                                        <div class="row align-items-center">
+                                                            <div class="col-12 text-center">
+                                                                <h5 class="card-title text-primary mb-1 font-16"> <lang class="lang_noitemsold">Total no. of item sold</lang></h5>
+                                                            </div>
+                                                            <div class="col-12 text-center">
+                                                                <span class="item_details_totalsale font-18">0</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="card bg-secondary-rgba m-b-30">
+                                                    <div class="card-body">
+                                                        <div class="row align-items-center">
+                                                            <div class="col-12 text-center">
+                                                                <h5 class="card-title text-primary mb-1 font-16"><lang class="lang_noreturnds">Total return</lang></h5>
+                                                            </div>
+                                                            <div class="col-12 text-center">
+                                                                <span class="item_details_returntotalvalue font-18">0</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="card bg-secondary-rgba m-b-30">
+                                                    <div class="card-body">
+                                                        <div class="row align-items-center">
+                                                            <div class="col-12 text-center">
+                                                                <h5 class="card-title text-primary mb-1 font-16"><lang class="lang_noreturnds">Total no. of item return</lang></h5>
+                                                            </div>
+                                                            <div class="col-12 text-center">
+                                                                <span class="item_details_totalreturn font-18">0</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div> 
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-xs-12 col-sm-9 col-lg-9 col-md-12">
+                                <div class="portlet light slider-portlet-vh">
+                                    <div class="portlet-title margin-bottom-0">
+                                        <div class="caption caption-basic font-green-meadow">
+                                            <span class="caption-subject bold uppercase"><lang class="lang_salesdetail_title">Sale History</lang></span>
+                                        </div>
+                                        <div class="actions">
+                                            <div class="inline-block text-left">
+                                                <div class="form-md-line-input form-md-floating-label custom-select2-ui">
+
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="portlet-body padding-top-0 loader-itemactivity">
+                                        <div class="row itemactivity_content">
+                                            <div class="col-lg-2 col-md-2 form-group mb-0 amount-spent-select selecct-align">
+                                                <select class="form-control select_page" id="view_itemdetails_per_page" data-id="itemdetails" onChange="PosnicPro.setPerPage(this, 'Table');">
+                                                    <option value="5" selected>5</option>
+                                                    <option value="10">10</option>
+                                                    <option value="25">25</option>
+                                                    <option value="50">50</option>
+                                                    <option value="100">100</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-lg-10 col-md-10">                                                                                       
+                                                <button data-module="item" data-access="write" data-id="itemreportexport" 
+                                                        onclick="PosnicPro.itemdetails.itemdetailsreportexport(this);"
+                                                        class="btn btn-primary-rgba pull-right"><lang class="lang_exportcsv_title">Export All To CSV</lang>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="card-body card-box no-padding loader-item-report">
+                                            <!-- Start table -->
+                                            <div class="table-responsive">
+                                                <table id="view_itemdetails" class="table table-borderless" cellspacing="0"
+                                                       width="100%">
+                                                    <div class="col-sm-6 col-md-12 col-lg-12" id="itemactivity_img_hide" style="display:none;"> 
+                                                        <img src="static/images/general/nodata.svg" class="img-fluid" style="opacity: 0.6;width: 100%;height: 250px;" alt="">
+                                                        <div class="text-center text-dark"> <p>No Records </p></div>
+                                                    </div>
+                                                    <thead class="report-thead-tfoot table-header itemactivity_content"></thead>
+                                                    <tbody class="report-thead-tfoot table-body itemactivity_content"></tbody>
+                                                </table>
+                                            </div>
+                                            <!-- End table -->
+                                        </div>
+                                        <div class="card m-b-30 itemactivity_content">
+                                            <div class="card-body ecommerce-pagination">
+                                                <div class="row align-items-center">
+                                                    <div class="col-8">
+                                                        <div class="hint-text">
+                                                            Showing 
+                                                            <b><span id="view_itemdetails_page_total"></span></b> 
+                                                            to 
+                                                            <b><span id="view_itemdetails_page_perpage_total"></span></b> 
+                                                            of 
+                                                            <b><span id="view_itemdetails_total"></span></b>
+                                                            entries 
+                                                            <span class="showing-hide-show-itemdetails" style="display:none;"> &nbsp;&nbsp;&nbsp;&nbsp; 
+                                                                <span class="showing-value-itemdetails text-dark"> 0 </span>&nbsp;
+                                                                rows selected  
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-4">
+                                                        <nav aria-label="Page navigation example">
+                                                            <ul class="pagination mb-0">
+                                                                <button class="btn previous page-item text-dark-gradient f-w-7" data-id="itemdetails" onclick="PosnicPro.previousPage(this, 'Table')"> <i class="fa fa-step-backward fa fa-angle-left font-20"></i> </button>
+                                                                <button class="btn next page-item text-dark-gradient f-w-7" data-id="itemdetails" onclick="PosnicPro.nextPage(this, 'Table')"> <i class="fa fa-step-forward fa fa-angle-right font-20"></i> </button>
+                                                            </ul>
+                                                        </nav>
+                                                    </div>
+                                                </div>                                
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="description_detail" role="tabpanel" aria-labelledby="item-description-tab">
+                        <div class="row">
+                            <div class="row">
+                                <div class="col-lg-12 col-xl-12">
+                                    <div class="invoice-address">
+                                        <div id="item_view_description_value" style="display: none;"></div>
+                                        <div id="item_description_value"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="item_image" role="tabpanel" aria-labelledby="item-image-tab">
+                        <div class="row">
+                            <div class="col-lg-12 col-xl-12">
+                                <div class="row" id="show_product_image">
+                                    <div class="col-md-12">
+                                        <div class="invoice-address">
+                                            <ul class="list-unstyled">
+                                                <li><a id="item_view_image" href="javascript:void(0)"></a></li> 
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div> 
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- A way out at the bottom, like every other dialog has.
+         This panel is read only, so it had nothing to press except the small
+         X in the header - and when that header slid under the window title bar
+         the panel could be opened and not closed at all. The X is still there;
+         this is the second way out, and the one people look for. Same class and
+         data-id as the header link, so it uses the existing close handler. -->
+    <div class="infobar-settings-sidebar-foot">
+        <a href="javascript:void(0)" class="btn btn-outline-danger infobar-settings-close" data-id="item">
+            <i class="feather icon-x-circle mr-2"></i><lang class="lang_close_title"> Close</lang>
+        </a>
+    </div>
+</div>

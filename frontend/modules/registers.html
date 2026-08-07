@@ -1,0 +1,212 @@
+<div class="vertical-layout page_loader" id="registers" style="display: none">
+    <!-- Start Containerbar -->
+    <div id="containerbar">
+        <div class="breadcrumbbar crumbbar_padding">
+            <div class="row align-items-center row_filter">
+                <div class="col-lg-3 col-xl-3">
+                    <h4 class="page-title"> <lang class="lang_register_history">Register list </lang></h4>
+                </div>               
+                <div class="col-md-7 col-lg-7 show-button-action"></div>                  
+                <div class="col-lg-3 col-xl-2 hide-button-action tb_filter" style="display:none;">
+                    <div id="view_registers_daterange" class="form-control pull-right daterange-timepicker-all daterange-style date-align">
+                        <i class="feather icon-calendar"></i>&nbsp;
+                        <span></span>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-xl-2 hide-button-action tb_filter" style="display:none;">
+                    <select class="custom-select border-control" id="view_registers_fields" data-id="registers" onchange="PosnicPro.changePlaceholder(this)">
+                        <option value="sales_id" selected>
+                        <lang class="lang_name_title">Sale Id</lang>
+                        </option>
+                        <option value="created_by">
+                        <lang class="lang_usernamee_title">user Name</lang>
+                        </option>
+                    </select>
+                </div>
+                <div class="col-lg-2 col-xl-2 hide-button-action tb_filter" style="display:none;">
+                    <input type="text" class="form-control border-control custom_search_input" id="view_registers_input"
+                           placeholder="Enter Name" data-id="registers" maxlength="25"  autocomplete="off">
+                </div>
+                <div class="col-md-1 col-lg-1 col-xl-1 tb_search hide-button-action" style="display:none;">
+                    <button type="button" class="btn btn-primary-rgba" data-id="registers" onclick="PosnicPro.search(this, 'Table')">
+                        <lang class="lang_filter_title">Apply</lang>
+                    </button>
+                </div>
+                <div class="col-lg-12 col-xl-2 tb_widget">
+                    <div class="widgetbar">
+                        <button type="button" class="btn btn-round btn-primary-rgba click-action-button adjuce_left" data-toggle="tooltip" title="Filter"><i class="feather icon-filter" aria-hidden="true"></i></button>
+                    </div>
+                </div>                        
+            </div> 
+            <div class="row">
+                <div class="col-md-3"></div>
+                <div class="col-md-6 col-xl-9 mobile-hide tb_date_range">
+                    <p>
+                        <span class="badge badge-secondary-inverse hide_date_filetr" style="display:none;">
+                            <span class="view_registers_date_filter_value"></span>
+                        </span>
+                        <span class="badge badge-secondary-inverse hide_value_filetr" style="display:none;">
+                            <span class="view_registers_filter_value"></span>
+                        </span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Start Contentbar -->
+    <div class="contentbar">
+        <!-- Start row -->
+        <div class="row">
+            <!-- Start col -->
+            <div class="col-lg-12">
+                <div class="card m-b-30">
+                    <div class="card-header">
+                        <div class="row align-items-center">
+                            <div class="col-4">
+                                <ul class="list-inline-group text-left mb-0 pl-0">
+                                    <li class="list-inline-item">
+                                        <div class="form-group mb-0 amount-spent-select selecct-align">
+                                            <select class="form-control select_page" id="view_registers_per_page" data-id="registers" onChange="PosnicPro.setPerPage(this, 'Table');">
+                                                <option value="5" selected>5</option>
+                                                <option value="10">10</option>
+                                                <option value="25">25</option>
+                                                <option value="50">50</option>
+                                                <option value="100">100</option>
+                                            </select>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <div class="col-8">
+                                <div class="email-rightbar">
+                                    <div class="card-header header_icon">
+                                        <ul class="list-inline mb-0 pl-0 float-right">
+                                            <li class="list-inline-item email_320">
+                                                <a data-module="user" data-access="delete" href="#/registers" id="registers_deletebtn" class="sale_color" onclick="PosnicPro.registers.deleteSelectedRegisters();" data-toggle="tooltip" title="Delete">
+                                                    <i class="feather icon-trash font-20"></i>
+                                                </a>
+                                            </li>
+                                            <li class="list-inline-item">
+                                                <a href="javascript:PosnicPro.refreshDatatable('registers')" data-id="registers" data-toggle="tooltip" title="Refresh">
+                                                    <i class="feather icon-refresh-cw font-20"></i>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-borderless" id="view_registers">
+                                <thead class="datatable-thead-tbody table-header"></thead>
+                                <tbody class="datatable-thead-tbody table-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="card m-b-30">
+                    <div class="card-body ecommerce-pagination page_padding">
+                        <div class="row align-items-center">
+                            <div class="col-8">
+                                <div class="hint-text">
+                                    Showing 
+                                    <b><span id="view_registers_page_total"></span></b>
+                                    to 
+                                    <b><span id="view_registers_page_perpage_total"></span></b> 
+                                    of
+                                    <b><span id="view_registers_total"></span></b> 
+                                    entries
+                                    <span class="showing-hide-show-registers" style="display:none;"> &nbsp;&nbsp;&nbsp;&nbsp;
+                                        <span class="showing-value-registers text-dark"> 0 </span>&nbsp;
+                                        rows selected  
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <nav aria-label="Page navigation example">
+                                    <ul class="pagination mb-0">
+                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="registers" onclick="PosnicPro.previousPage(this, 'Table')"> <i class="fa fa-angle-left font-20"></i> </button>
+                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="registers" onclick="PosnicPro.nextPage(this, 'Table')"> <i class="fa fa-angle-right font-20"></i> </button>
+                                    </ul>
+                                </nav>
+                            </div>
+                        </div>                                
+                    </div>
+                </div>
+            </div>
+            <!-- End col -->
+        </div>
+        <!-- End row -->
+    </div>
+    <!-- End Contentbar -->
+</div>
+<!-- End Containerbar -->
+
+
+<div class="modal fade close_on_esc" id="registers_view" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content" loader-view-register>
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <lang class="lang_registerdetail_title">Register Details</lang>
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row justify-content-center">
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <h4><span class="text-primary" id="register_view_name"></span></h4>
+                            <div class="table-responsive">
+                                <table class="table table-borderless mb-0">
+                                    <tbody>
+                                        <tr>
+                                            <th scope="row"><lang class="lang_registeramount_title"> Register amount</lang> :</th>
+                                    <td class="address-text-wrap"><span id="register_view_amount"></span></td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row"><lang class="lang_branch_title"> Branch </lang> :</th>
+                                    <td class="address-text-wrap"><span id="register_view_branch_name"></span></td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row"><lang class="lang_date_title"> Date </lang> :</th>
+                                    <td class="address-text-wrap"><span id="register_view_date"></span></td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row"><lang class="lang_usernamee_title"> User name</lang> :</th>
+                                    <td class="address-text-wrap"><span id="register_view_created_by"></span></td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row"><lang class="lang_salesid_title"> Sales id </lang> :</th>
+                                    <td><span id="register_view_sale_id"></span></td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-danger" data-dismiss="modal">
+                    <i class="feather icon-x-circle mr-2"></i>
+                    <lang class="lang_close_title">Close</lang>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- end  -->
+
+
+
+
+
+
+

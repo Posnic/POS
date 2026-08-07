@@ -1,0 +1,70 @@
+name: CodeQL
+
+# Static analysis for the classes of bug that reading does not reliably catch:
+# injection, unsafe deserialisation, path traversal, prototype pollution.
+#
+# Added when this repository was prepared for publication. The pre-publication
+# audit found seven routes reachable with no credential and three signing
+# secrets that fell back to string literals, all by hand. This is the standing
+# version of that: it runs on every push and every pull request, so the next one
+# is caught by a machine rather than by someone happening to look.
+#
+# The weekly run matters as much as the per-push one. CodeQL's queries improve
+# over time, so code that was clean when it merged can be reported later without
+# anything in it having changed.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Mondays, early. Far enough from a working day that a red result is seen
+    # before anyone starts building on top of it.
+    - cron: '17 5 * * 1'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyse:
+    name: Analyse JavaScript
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    # Code scanning is free on a public repository and a paid GitHub Advanced
+    # Security feature on a private one. While this repository is still private
+    # the analysis runs to completion and then fails on the upload with
+    # "Advanced Security must be enabled for this repository" - a red tick that
+    # says nothing about the code.
+    #
+    # So it skips while private and starts running by itself the moment the
+    # repository is published. Nothing to remember to turn on, which matters
+    # because publication day is exactly when the results are wanted.
+    if: github.event.repository.private == false
+
+    permissions:
+      # Writing the results to the Security tab is the whole point.
+      security-events: write
+      contents: read
+      actions: read
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Initialise CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: javascript-typescript
+          # security-extended adds queries with a higher false-positive rate.
+          # Worth it here: this handles money and runs a database on a shop's
+          # counter, and a false positive costs a few minutes of reading.
+          queries: security-extended
+
+      - name: Analyse
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: /language:javascript-typescript

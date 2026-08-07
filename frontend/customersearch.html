@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>Posnic - POS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta content="Posnic - Point of Sale" name="description" />
+    <meta content="Posnic" name="author" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <link rel="shortcut icon" href="static/images/favicon/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="static/images/favicon/favicon.ico" type="image/x-icon">
+    <link crossorigin="anonymous" media="all" rel="stylesheet" href="style/customersearch.css" />
+
+    <script>
+        if (window.location.hostname === 'frontend-ace.pages.dev') {
+            window.location.replace("https://www.posnic.io");
+        }
+    </script>
+    <script>
+        // Posnic (desktop/self-hosted): the API is always the origin that
+            // served this page - Electron window, LAN device, or self-hosted server.
+            // Cloud sync runs in a separate background process, never in the browser.
+            let API_URL = window.location.protocol.startsWith('http')
+                ? window.location.origin + '/'
+                : 'http://localhost:5555/';
+    </script>
+</head>
+
+<body class="vertical-layout">
+    <!-- Start Containerbar -->
+    <div id="containerbar">
+        <!-- Start Leftbar -->
+        <div class="leftbar">
+            <!-- Start Sidebar -->
+            <div class="sidebar">
+                <!-- Start Navigationbar -->
+                <div class="navigationbar">
+                    <div class="vertical-menu-icon">
+                        <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist"
+                            aria-orientation="vertical">
+                            <div class="logobar">
+                                <a href="#" class="logo logo-small"><img src="static/images/logo/posnic-logo.svg"
+                                        class="img-fluid" alt="logo"></a>
+                            </div>
+                            <a class="nav-link active" id="v-pills-ecommerce-tab" data-toggle="pill" href="#" role="tab"
+                                aria-controls="v-pills-ecommerce" aria-selected="false"><img
+                                    src="static/images/svg-icon/category.svg" class="img-fluid" alt="Catalog Display"
+                                    data-toggle="tooltip" data-placement="top" title="Catalog Display"></a>
+                        </div>
+                    </div>
+                    <div class="vertical-menu-detail">
+                        <div class="logobar">
+                            <h1 class="title_h2">Posnic</h1>
+                        </div>
+                        <div class="tab-content" id="v-pills-tabContent">
+                            <div class="tab-pane fade show active" id="v-pills-ecommerce" role="tabpanel"
+                                aria-labelledby="v-pills-ecommerce-tab">
+                                <ul class="vertical-menu">
+                                    <li>
+                                        <h5 class="menu-title">
+                                            <lang class="lang_customersearch_title">Catalog Display</lang>
+                                        </h5>
+                                    </li>
+                                    <li class="active"><a href="javascript:void(0)"
+                                            onclick="return PosnicPro.customersearch.productListFunction();"><img
+                                                src="static/images/svg-icon/dashboard.svg" class="img-fluid"
+                                                alt="dashboard">All Product</a></li>
+                                </ul>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <!-- End Navigationbar -->
+            </div>
+            <!-- End Sidebar -->
+        </div>
+        <!-- End Leftbar -->
+        <!-- Start Rightbar -->
+        <div class="rightbar">
+            <!-- Start Topbar Mobile -->
+            <div class="topbar-mobile">
+                <div class="row align-items-center">
+                    <div class="col-md-12">
+                        <div class="mobile-logobar">
+                            <h1 class="title_h2">Posnic</h1>
+                        </div>
+                        <div class="mobile-togglebar">
+                            <ul class="list-inline mb-0">
+                                <li class="list-inline-item">
+                                    <div class="menubar">
+                                        <a class="menu-hamburger" href="javascript:void(0)">
+                                            <img src="static/images/svg-icon/menu.svg"
+                                                class="img-fluid menu-hamburger-collapse" alt="collapse">
+                                            <img src="static/images/svg-icon/close.svg"
+                                                class="img-fluid menu-hamburger-close" alt="close">
+                                        </a>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Start Topbar -->
+            <div class="topbar">
+                <!-- Start row -->
+                <div class="row align-items-center">
+                    <!-- Start col -->
+                    <div class="col-md-12 align-self-center">
+                        <div class="togglebar">
+                            <ul class="list-inline mb-0">
+                                <li class="list-inline-item">
+                                    <div class="menubar">
+                                        <a class="menu-hamburger" href="javascript:void(0)">
+                                            <img src="static/images/svg-icon/menu.svg"
+                                                class="img-fluid menu-hamburger-collapse" alt="menu">
+                                            <img src="static/images/svg-icon/horizontal.svg"
+                                                class="img-fluid menu-hamburger-close" alt="close">
+                                        </a>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <!-- End col -->
+                </div>
+                <!-- End row -->
+            </div>
+            <!-- End Topbar -->
+
+            <!-- Start Breadcrumbbar -->
+            <div class="breadcrumbbar">
+                <div class="row align-items-center">
+                    <div class="col-md-8 col-lg-8">
+                        <div class="breadcrumb-list">
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-lg-4">
+                    </div>
+                </div>
+            </div>
+            <!-- End Breadcrumbbar -->
+            <!-- Start Contentbar -->
+            <div class="contentbar" style="margin-top: 100px;">
+                <!-- Start row -->
+                <div class="row">
+                    <!-- Start col -->
+                    <div class="col-lg-12 col-xl-12 loader-customer-search">
+                        <div class="card m-b-30">
+                            <div class="card-body">
+                                <!-- Start row -->
+                                <div class="row align-items-center ecommerce-sortby">
+                                    <!-- Start col -->
+                                    <div class="col-md-12 col-lg-12 col-xl-4">
+                                        <div class="button-list">
+                                            <div class="chat-list" style="padding-bottom: 0px; margin-bottom: 0px;">
+                                                <div class="chat-search" style="border-bottom: none; padding:0px;">
+                                                    <form>
+                                                        <div class="input-group">
+                                                            <input type="search" class="form-control"
+                                                                id="sales_new_item_name" placeholder="Search"
+                                                                aria-label="Search" aria-describedby="button-addon3">
+                                                            <div class="input-group-append">
+                                                                <i class="btn"><i class="feather icon-search"></i></i>
+                                                            </div>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-12 col-lg-12 col-xl-4">
+                                        <div class="card m-b-30">
+                                            <div class="card-body">
+                                                <input id="range-slider">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-12 col-lg-12 col-xl-4">
+                                        <select class="form-control" id="filter_customer_search">
+                                            <option value="new">
+                                                <lang class="lang_new_search">Newest</lang>
+                                            </option>
+                                            <option value="low">
+                                                <lang class="lang_low_search">Price - Low to High</lang>
+                                            </option>
+                                            <option value="high">
+                                                <lang class="lang_high_search">Price - High to Low</lang>
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <!-- End col -->
+                                    <!-- Start col -->
+                                    <div class="col-md-12 col-lg-12 col-xl-4">
+
+                                    </div>
+                                    <!-- End col -->
+                                </div>
+                                <!-- End row -->
+                                <!-- Start row -->
+                                <div class="row" id="list-item">
+                                    <!-- Start col -->
+
+                                    <!-- End col -->
+                                </div>
+                                <!-- Start row -->
+                            </div>
+                        </div>
+                        <div class="card m-b-30">
+                            <div class="card-body ecommerce-pagination">
+                                <div class="row align-items-center">
+
+                                    <div class="col-lg-12 col-xl-6">
+                                        <div class="hint-text">
+                                            Pages
+                                            <b><span id="view_customersearch_page_total"></span></b>
+                                            total of
+                                            <input type="hidden" id="view_customersearch_total_pages">
+                                            <b><span id="view_customersearch_total"></span></b>
+                                            entries
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <nav aria-label="Page navigation example">
+                                            <ul class="pagination mb-0">
+                                                <button class="btn previous page-item text-dark-gradient f-w-7"
+                                                    onclick="PosnicPro.customersearch.previousPage()"> <i
+                                                        class="fa fa-angle-left font-20"></i> </button>
+                                                <button class="btn next page-item text-dark-gradient f-w-7"
+                                                    onclick="PosnicPro.customersearch.nextPage()"> <i
+                                                        class="fa fa-angle-right font-20"></i> </button>
+                                            </ul>
+                                        </nav>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                    <!-- End col -->
+                </div>
+                <!-- End row -->
+            </div>
+            <!-- End Contentbar -->
+
+            <!-- Start Footerbar -->
+            <div class="footerbar" style="position: relative;
+                     left: 0;
+                     bottom: 0;">
+                <footer class="footer">
+                    <p class="mb-0">
+                        <script>document.write(new Date().getFullYear());</script> © <a href="http://www.posnic.com/"
+                            class="text-secondary mb-0" target="_blank">Posnic Innovations Pvt
+                            Ltd - All Rights Reserved</a>
+                </footer>
+            </div>
+            <!-- End Footerbar -->
+
+        </div>
+        <!-- End Rightbar -->
+    </div>
+    <!-- End Containerbar -->
+
+    <div class="modal fade" id="view_item_details" tabindex="-1" role="dialog" aria-modal="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-body loader-customer-search-view">
+                    <div class="col-md-12 col-lg-12 col-xl-12">
+                        <div class="card m-b-30">
+                            <div class="card-body">
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                                <div class="row">
+                                    <div class="col-lg-6 col-xl-5" id="list_scroll_image">
+
+                                        <div class="product-slider-box product-box-for" id="item_display_preview_for">
+                                        </div>
+                                        <div id="item_display_preview_for_parent"></div>
+
+                                        <div class="product-slider-box product-box-nav" id="item_display_preview_nav">
+                                        </div>
+                                        <div id="item_display_preview_nav_parent"></div>
+
+                                    </div>
+                                    <div class="col-lg-6 col-xl-7">
+                                        <p><span class="badge badge-light font-16" id="item_view_category"></span></p>
+                                        <h2 class="font-22" id="customer_item_name"></h2>
+                                        <p class="text-primary font-26 f-w-7 my-3"><span
+                                                class="hide-total-customer-search"><strike><sup class="font-16"><span
+                                                            class="current-currency">₹</span>&nbsp;</sup><span
+                                                        id="item_view_sellingprice"
+                                                        class="font-18 text-dark-gradient"></span></strike> <span
+                                                    class="text-dark font-18">Just</span></span> <sup
+                                                class="font-16"><span class="current-currency">₹</span>&nbsp;</sup><span
+                                                id="item_view_sellingprice_discount"></span></p>
+
+                                        <div class="button-list mt-5 mb-5">
+                                            <span class="badge badge-success-inverse font-17"
+                                                id="available_stock_display">In Stock</span>
+                                            <span class="badge badge-danger-inverse font-17" id="no_stock_display"
+                                                style="display:none;">Sold Out</span>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-12">
+                        <div class="card m-b-30">
+                            <div class="card-header">
+                                <h5 class="card-title">Product Details</h5>
+                            </div>
+                            <div class="card-body">
+                                <ul class="nav nav-tabs custom-tab-line mb-3" id="defaultTabLine" role="tablist">
+                                    <li class="nav-item">
+                                        <a class="nav-link active" id="description-tab-line" data-toggle="tab"
+                                            href="#description-line" role="tab" aria-controls="description-line"
+                                            aria-selected="true"><i
+                                                class="feather icon-file-text mr-2"></i>Description</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" id="guide-tab-line" data-toggle="tab" href="#guide-line"
+                                            role="tab" aria-controls="guide-line" aria-selected="false"><i
+                                                class="feather icon-book-open mr-2"></i>Branch</a>
+                                    </li>
+                                </ul>
+                                <div class="tab-content" id="defaultTabContentLine">
+                                    <div class="tab-pane fade active show" id="description-line" role="tabpanel"
+                                        aria-labelledby="description-tab-line">
+
+                                        <span id="item_view_discription" style="display:none"></span>
+                                        <span id="item_view_discriptions"></span>
+
+                                    </div>
+                                    <div class="tab-pane fade" id="guide-line" role="tabpanel"
+                                        aria-labelledby="guide-tab-line">
+
+                                        <div class="button-list">
+                                            <p>click branch details</p>
+                                            <span class="show-branch-list">
+                                            </span>
+                                        </div>
+
+                                        <div class="col-sm-6 col-md-12 col-lg-12 loader-branch-search-view">
+                                            <div class="invoice-address">
+                                                <h6 class="mb-3"><span class="search-branch-name"></span></h6>
+                                                <h6 class="text-muted"><span class="search-branch-no"></span></h6>
+                                                <ul class="list-unstyled">
+                                                    <li><span class="search-branch-address"></span></li>
+                                                    <li><span class="search-branch-mobile"></span></li>
+                                                    <li><span class="search-branch-email"></span></li>
+                                                </ul>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-danger" data-dismiss="modal"><i
+                            class="feather icon-x-circle mr-2"></i> Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Start js -->
+    <script type="application/javascript" src="script/customersearch.js"></script>
+    <!-- End js -->
+</body>
+
+</html>

@@ -1,0 +1,25 @@
+<svg id="Small_Icons" data-name="Small Icons" xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #fff;
+        opacity: 0.25;
+      }
+
+      .cls-1, .cls-2 {
+        fill-rule: evenodd;
+      }
+
+      .cls-2 {
+        fill: none;
+        stroke: #fff;
+        stroke-linecap: round;
+        stroke-width: 3px;
+      }
+    </style>
+  </defs>
+  <g id="Search">
+    <path class="cls-1" d="M5,22l28-7s4.625,13.125-10,18S5,22,5,22Z"/>
+    <path class="cls-2" d="M19.288,4.742A14.624,14.624,0,1,1,4.735,19.365,14.588,14.588,0,0,1,19.288,4.742Zm11.2,24.646,15.3,15.389"/>
+  </g>
+</svg>

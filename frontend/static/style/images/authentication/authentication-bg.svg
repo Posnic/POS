@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <defs>
+    <style>
+      .cls-1, .cls-2, .cls-7, .cls-9 {
+        fill: #506ee4;
+      }
+
+      .cls-1 {
+        opacity: 0.03;
+      }
+
+      .cls-10, .cls-2, .cls-3, .cls-4, .cls-5, .cls-7, .cls-8 {
+        fill-rule: evenodd;
+      }
+
+      .cls-10, .cls-2 {
+        opacity: 0.25;
+      }
+
+      .cls-3 {
+        fill: #f9616d;
+        opacity: 0.55;
+      }
+
+      .cls-4 {
+        fill: #f7ba4d;
+      }
+
+      .cls-5, .cls-6 {
+        fill: #fff;
+      }
+
+      .cls-8 {
+        fill: #43d187;
+      }
+
+      .cls-10 {
+        fill: none;
+        stroke: #506ee4;
+        stroke-linecap: round;
+        stroke-width: 15px;
+      }
+    </style>
+  </defs>
+  <ellipse id="Ellipse_4_copy_2" data-name="Ellipse 4 copy 2" class="cls-1" cx="1735" cy="-23.5" rx="544" ry="544.5"/>
+  <ellipse id="Ellipse_4_copy_3" data-name="Ellipse 4 copy 3" class="cls-1" cx="-220" cy="589.5" rx="385" ry="385.5"/>
+  <path id="Rectangle_1_copy_2" data-name="Rectangle 1 copy 2" class="cls-2" d="M145,941h45v45H145V941Zm45,0h45v45H190V941Zm0-45h45v45H190V896Zm90,0h45v45H280V896Zm-45,45h45v45H235V941Z"/>
+  <path id="Rectangle_1_copy_3" data-name="Rectangle 1 copy 3" class="cls-3" d="M1784,808.333h24.67V833H1784V808.333Zm24.67,0h24.66V833h-24.66V808.333Zm0-24.666h24.66v24.666h-24.66V783.667Zm0-24.667h24.66v24.667h-24.66V759Zm24.66,49.333H1858V833h-24.67V808.333ZM1784,783.667h24.67v24.666H1784V783.667Z"/>
+  <path class="cls-4" d="M1781.68,88.829l76.05,33.264-4.41,10.078-76.05-33.264Z"/>
+  <path id="Rectangle_1_copy" data-name="Rectangle 1 copy" class="cls-5" d="M96.266,831.956l36.69-35.69,7.778,7.778-36.69,35.69Z"/>
+  <circle class="cls-6" cx="1792.5" cy="186.5" r="17.5"/>
+  <path class="cls-7" d="M1726,880l8,32,24-24Z"/>
+  <path class="cls-8" d="M86.5,701.651L101.349,716.5,86.5,731.349,71.651,716.5Z"/>
+  <circle class="cls-9" cx="303.047" cy="78.047" r="11.953"/>
+  <path class="cls-10" d="M202.344-112.69A89.108,89.108,0,0,1,291.4-23.528a89.108,89.108,0,0,1-89.054,89.162A89.108,89.108,0,0,1,113.29-23.528,89.108,89.108,0,0,1,202.344-112.69Z"/>
+</svg>

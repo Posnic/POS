@@ -1,0 +1,168 @@
+/*
+ * The shop's theme, applied over the settings windows.
+ *
+ * These four windows were each written with their own fixed palette - a blue to
+ * purple gradient header, a white page, dark text - which was fine when every
+ * install looked the same and wrong the moment a shop chose a dark theme. This
+ * maps the tokens window-theme.js publishes onto the shapes those windows
+ * already use, so they follow the till instead of contradicting it.
+ *
+ * Written as overrides on top of each window's own stylesheet rather than as a
+ * rewrite of it. Rewriting 2,400 lines of Hardware Manager to change its colours
+ * would risk its behaviour for no benefit; this changes only what is seen.
+ *
+ * Every rule falls back to the value that was there before, so a window opened
+ * before the palette arrives - or one that cannot reach it at all - looks
+ * exactly as it always did rather than unstyled.
+ */
+
+:root {
+  --w-body-bg: #f5f6fa;
+  --w-card-bg: #ffffff;
+  --w-header-bg: #ffffff;
+  --w-text: #1f2937;
+  --w-muted: #6b7280;
+  --w-border: #e5e7eb;
+  --w-accent: #4e6ddf;
+  --w-raised: #f3f4f6;
+}
+
+body {
+  background: var(--w-body-bg) !important;
+  color: var(--w-text) !important;
+}
+
+/*
+ * The header.
+ *
+ * It was a blue-to-purple gradient in every install, which is the single thing
+ * that made these windows look like a template. A flat surface in the shop's
+ * own top bar colour reads as part of the application - the same decision made
+ * for the title bar, for the same reason.
+ */
+.header,
+.app-header,
+.modal-header,
+.hardware-header,
+[class*="gradient-header"] {
+  background: var(--w-header-bg) !important;
+  background-image: none !important;
+  color: var(--w-text) !important;
+  border-bottom: 1px solid var(--w-border) !important;
+}
+
+.header h1, .header h2, .header p,
+.app-header h1, .app-header h2, .app-header p {
+  color: var(--w-text) !important;
+}
+.header p, .app-header p { color: var(--w-muted) !important; }
+
+/* Panels and cards */
+.card, .panel, .section, .box, .tab-content, .settings-card {
+  background: var(--w-card-bg) !important;
+  color: var(--w-text) !important;
+  border-color: var(--w-border) !important;
+}
+
+/* Tabs: the selected one is marked with the accent, not with a colour of its own. */
+.tabs, .nav-tabs, .tab-bar {
+  background: var(--w-card-bg) !important;
+  border-bottom: 1px solid var(--w-border) !important;
+}
+.tab, .nav-tabs .nav-link, .tab-button {
+  color: var(--w-muted) !important;
+  background: transparent !important;
+  border: none !important;
+}
+.tab.active, .nav-tabs .nav-link.active, .tab-button.active {
+  color: var(--w-text) !important;
+  background: var(--w-card-bg) !important;
+  border-bottom: 2px solid var(--w-accent) !important;
+}
+
+/* Form controls, including the native ones a dark theme otherwise leaves white. */
+input, select, textarea {
+  background: var(--w-card-bg) !important;
+  color: var(--w-text) !important;
+  border: 1px solid var(--w-border) !important;
+}
+input::placeholder, textarea::placeholder { color: var(--w-muted) !important; }
+
+/*
+ * Text colour, but only where we know what is behind it.
+ *
+ * These rules set a colour and not a background, which is safe on the surfaces
+ * this file paints and unsafe anywhere else: an element carrying its own inline
+ * background could be handed text the same colour as it. The :not() skips
+ * anything whose background was set by hand, on the grounds that markup which
+ * chose its own background almost certainly chose readable text to go with it.
+ */
+label:not([style*="background"]),
+.form-label:not([style*="background"]),
+.field-label:not([style*="background"]) { color: var(--w-text) !important; }
+
+small:not([style*="background"]),
+.hint:not([style*="background"]),
+.help-text:not([style*="background"]),
+.muted:not([style*="background"]) { color: var(--w-muted) !important; }
+
+/*
+ * Buttons.
+ *
+ * The primary action takes the accent; everything else is a quiet surface.
+ *
+ * There is one rule here, learned the hard way: never take a background away
+ * without putting one back. This file used to open with
+ *
+ *     button, .btn { background-image: none !important; }
+ *
+ * to strip the template gradients. Several buttons in these windows are styled
+ * inline as `background: linear-gradient(...); color: #fff`, and the shorthand
+ * sets background-COLOR to transparent - the gradient is the whole background.
+ * An !important rule in a stylesheet beats a plain inline style, so those
+ * buttons lost their only background, kept their white text, and rendered as
+ * white text on a white card. What shops saw was an empty white box with an
+ * emoji floating in it, on every theme, because this file loads on all of them.
+ *
+ * So gradients are only replaced by selectors that set a colour in the same
+ * declaration. A button this file does not recognise keeps the look it had
+ * before this file existed, which is the correct fallback: a template-looking
+ * button is a small complaint, an unreadable one is a broken window.
+ */
+.btn-primary, button.primary, .primary-button, .save-button, .test-button {
+  /* The shorthand clears background-image itself; no separate rule needed. */
+  background: var(--w-accent) !important;
+  color: #ffffff !important;
+  border: 1px solid var(--w-accent) !important;
+}
+.btn-secondary, button.secondary, .secondary-button {
+  background: var(--w-raised) !important;
+  color: var(--w-text) !important;
+  border: 1px solid var(--w-border) !important;
+}
+
+/* Status strips keep their meaning - green is still good news - but sit on a
+   surface that belongs to the theme rather than on a fixed pastel. */
+.status, .alert, .notice, .found-printers {
+  background: var(--w-raised) !important;
+  color: var(--w-text) !important;
+  border: 1px solid var(--w-border) !important;
+}
+.alert-success, .status-ok { border-left: 3px solid #22c55e !important; }
+.alert-danger, .status-error { border-left: 3px solid #ef4444 !important; }
+.alert-warning, .status-warn { border-left: 3px solid #f59e0b !important; }
+
+hr, .divider { border-color: var(--w-border) !important; }
+
+/* Same caution as the labels above: a cell that painted itself keeps its text. */
+table th:not([style*="background"]) { color: var(--w-muted) !important; border-color: var(--w-border) !important; }
+table td:not([style*="background"]) { color: var(--w-text) !important; border-color: var(--w-border) !important; }
+tbody tr:hover { background: var(--w-raised) !important; }
+
+/* On a dark theme the scrollbars and any remaining white panel would stand out
+   like a hole in the window. */
+[data-window-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: var(--w-border);
+  border-radius: 4px;
+}
+[data-window-theme="dark"] ::-webkit-scrollbar-track { background: transparent; }

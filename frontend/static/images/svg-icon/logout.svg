@@ -1,0 +1,26 @@
+<svg id="Small_Icons" data-name="Small Icons" xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: none;
+        stroke: #fff;
+        stroke-linecap: round;
+        stroke-width: 3px;
+      }
+
+      .cls-1, .cls-2 {
+        fill-rule: evenodd;
+      }
+
+      .cls-2 {
+        fill: #fff;
+        opacity: 0.25;
+      }
+    </style>
+  </defs>
+  <g id="Logout">
+    <path class="cls-1" d="M34.607,13.394a17.609,17.609,0,1,1-19.951.506"/>
+    <path class="cls-2" d="M8,33l34-8a15.185,15.185,0,0,1-8,17C23.008,47.969,11.9,44.789,8,33Z"/>
+    <path class="cls-1" d="M25,18.524V4.476"/>
+  </g>
+</svg>

@@ -1,0 +1,138 @@
+# Deploys the shop UI to the tenant instance whenever frontend/ changes.
+#
+# Until this existed nothing shipped frontend/ anywhere: deploy-api.yml covers
+# api/ only, so the 17 shops ran whatever snapshot was last copied across by
+# hand. They were months behind the repo and nobody could tell, because the
+# pages still worked -- they were simply the wrong ones.
+#
+# The pages are gulp output. layouts/, modules/ and modals/ are assembled into
+# frontend/public/, and that is what the tenants actually serve, so the build
+# has to run here rather than relying on whatever public/ someone happened to
+# commit or leave lying around.
+#
+# Uses the same switches as deploy-api.yml:
+#   variable DEPLOY_ENABLED = true
+#   secrets  DEPLOY_SSH_KEY / DEPLOY_HOST / DEPLOY_USER
+name: Deploy frontend (tenant shops)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/deploy-frontend.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-frontend
+  cancel-in-progress: true
+
+# Least privilege for GITHUB_TOKEN.
+#
+# Without this the token takes the repository default, which on a public repo
+# is more than any of these jobs needs. None of them writes to GitHub - they
+# build, test, upload an artifact or deploy outward - so read is the ceiling.
+# Releases are created by release.yml, which asks for contents: write there.
+permissions:
+  contents: read
+jobs:
+  deploy:
+    if: vars.DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build the pages
+        working-directory: frontend
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build:assets
+
+      # A gulp failure can leave public/ half written, and rsync would then
+      # happily publish a broken shop to every tenant. Refuse to deploy
+      # anything that does not look like a complete build.
+      - name: Check the build produced something usable
+        run: |
+          set -e
+          for f in \
+            frontend/public/dashboard.html \
+            frontend/public/login.html \
+            frontend/public/style/dashboard.css \
+            frontend/public/script/dashboard.js
+          do
+            test -s "$f" || { echo "missing or empty after build: $f"; exit 1; }
+          done
+          echo "build looks complete: $(find frontend/public -type f | wc -l) files"
+
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy.pem
+          chmod 600 ~/.ssh/deploy.pem
+          ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts
+
+      # --delete is safe again, and was not when this workflow first ran.
+      #
+      # Back then copyStatic reported success before its copies finished, and
+      # built its glob from path.sep, so a Linux build emitted a different
+      # tree from a Windows one. CI produced a partial layout, --delete took
+      # the difference as intent, and every font and icon disappeared from all
+      # 17 tenants at once. Both bugs are fixed, and a build now emits exactly
+      # what an instance should hold - verified file for file, 539 either side,
+      # nothing extra in either direction.
+      #
+      # Keeping it means an instance is a mirror of a known build rather than
+      # a pile of whatever any deploy ever left behind, which is what made the
+      # original failure so hard to see.
+      - name: Sync to the tenant instance
+        run: |
+          rsync -az --delete \
+            --exclude node_modules --exclude .git --exclude '.gitignore' \
+            --exclude 'public/all.zip' \
+            -e "ssh -i ~/.ssh/deploy.pem" \
+            frontend/ "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:~/apps/tenants/app/frontend/"
+
+      # No pm2 restart on purpose: these are static files read from disk per
+      # request, so the tenants pick them up with no interruption to a shop
+      # that is mid-sale.
+      # Checks assets, not just pages. When the first run of this workflow
+      # deleted every font and icon, all four pages still returned 200 and the
+      # deploy looked clean; the shops were only visibly broken once someone
+      # opened one. Assert the things a page depends on, not the page.
+      - name: Confirm the shops can still load what the pages need
+        run: |
+          ssh -i ~/.ssh/deploy.pem "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" '
+            set -e
+            cd ~/apps/tenants/app/frontend
+            fail=0
+
+            # The pages themselves, by name: these do not move.
+            for f in public/dashboard.html public/style/dashboard.css public/script/dashboard.js; do
+              if [ -s "$f" ]; then echo "  ok       $f"; else echo "  MISSING  $f"; fail=1; fi
+            done
+
+            # Assets by category, not by filename. The first version of this
+            # check named individual files under public/static/static, and when
+            # the build stopped writing that directory the check failed on every
+            # run while the deploy itself was fine. A directory that should have
+            # files in it either does or does not, and that stays true when a
+            # font or an icon is renamed.
+            for d in fonts images json pages; do
+              n=$(find "public/static/$d" -type f 2>/dev/null | wc -l)
+              if [ "$n" -gt 0 ]; then echo "  ok       public/static/$d ($n files)";
+              else echo "  EMPTY    public/static/$d"; fail=1; fi
+            done
+
+            total=$(find public -type f | wc -l)
+            echo "  pages and assets: $total files"
+            # A sane floor. A deploy that leaves a handful of files behind has
+            # gone wrong even if every check above happens to pass.
+            if [ "$total" -lt 200 ]; then echo "  too few files to be a complete build"; fail=1; fi
+            exit $fail
+          '

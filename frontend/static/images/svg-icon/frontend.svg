@@ -1,0 +1,28 @@
+<svg id="Small_Icons" data-name="Small Icons" xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: none;
+        stroke: #fff;
+        stroke-linecap: round;
+        stroke-width: 3px;
+      }
+
+      .cls-1, .cls-2 {
+        fill-rule: evenodd;
+      }
+
+      .cls-2 {
+        fill: #fff;
+        opacity: 0.25;
+      }
+    </style>
+  </defs>
+  <g id="Front_End" data-name="Front End">
+    <path class="cls-1" d="M3.407,44.5H46.577"/>
+    <path id="Rounded_Rectangle_8" data-name="Rounded Rectangle 8" class="cls-1" d="M24.5,31.412h1a5,5,0,0,1,5,5v8.176h-11V36.412A5,5,0,0,1,24.5,31.412Z"/>
+    <path id="Rounded_Rectangle_8_copy" data-name="Rounded Rectangle 8 copy" class="cls-1" d="M7.5,42.813V25.188m34.99,0V42.813"/>
+    <path id="Rounded_Rectangle_8_copy_2" data-name="Rounded Rectangle 8 copy 2" class="cls-1" d="M46.444,21.061l-3-12.39c0-1.755-2.362-3.178-5.275-3.178H11.8c-2.913,0-5.275,1.423-5.275,3.178l-3,12.39S3.677,24.5,9.975,24.5c3.1,0,5.769-2.261,6.952-4.032A10.416,10.416,0,0,0,24.985,24.5,8.2,8.2,0,0,0,32,21s2.334,3.5,7.995,3.5S46.444,21.061,46.444,21.061Z"/>
+    <path class="cls-2" d="M5,15l38-5,3,11s0.862,3.361-6,3-8-4-8-4a7.744,7.744,0,0,1-7,4c-5.215.094-9-4-9-4s-0.735,4.843-5,5-7-4-7-4Z"/>
+  </g>
+</svg>

@@ -1,0 +1,301 @@
+# Runs on every push and pull request.
+#
+# The suite already had 8,296 tests when this was added, and 19 of them were
+# failing because nothing ever ran them. Tests that no machine runs are
+# documentation, and stale documentation at that. This is the gate that keeps
+# a contributor's pull request honest without a maintainer having to check by
+# hand.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # Release calls this so a tag is gated on exactly what a pull request meets.
+  # It used to run the API unit suite alone, which meant a release could ship
+  # with drifted API docs, a lint error, or - worst - a module missing from the
+  # packaged app, because the check that catches that only ran here.
+  workflow_call:
+
+# A second push to the same branch makes the first run irrelevant.
+#
+# The caller is part of the group, and has to be. This workflow runs both on
+# its own and as a called workflow - release.yml and beta.yml both use it so a
+# tag or a test build is gated on exactly what a pull request meets. A called
+# workflow keeps the caller's ref, so with the ref alone the standalone run and
+# the called one landed in the same group and cancelled each other: pushing to
+# main killed CI four seconds in, every time, and the run that survived was
+# whichever started second.
+#
+# github.workflow is the caller's name - "CI" when this runs on its own,
+# "Test build (main)" when beta.yml calls it - so this separates them while
+# still cancelling a superseded push within each.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# The clock the suite runs on, set before Node starts.
+#
+# A runner is in UTC and the people writing these tests are not, so an
+# assertion like "14:05 UTC formats as 07:35 pm" passed for its author and
+# failed here, saying nothing about the code. Pinned to the timezone this
+# product assumes everywhere else - the documented default for a branch that
+# has not set one.
+#
+# It has to be here rather than in a Jest setup file. Node caches the zone when
+# a process starts in UTC and will not re-resolve it afterwards, so setting
+# process.env.TZ from inside the suite works on a developer's machine and
+# silently does nothing on the runner - which is the one place it was needed.
+env:
+  TZ: Asia/Kolkata
+
+# Least privilege for GITHUB_TOKEN.
+#
+# Without this the token takes the repository default, which on a public repo
+# is more than any of these jobs needs. None of them writes to GitHub - they
+# build, test, upload an artifact or deploy outward - so read is the ceiling.
+# Releases are created by release.yml, which asks for contents: write there.
+permissions:
+  contents: read
+jobs:
+  api-tests:
+    name: API unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: api/package-lock.json
+
+      - name: Install
+        working-directory: api
+        run: npm ci
+
+      # --forceExit because a few suites leave handles open; that is worth
+      # fixing, but it should not be what blocks the suite from running at all.
+      #
+      # jest.ci.config.js skips the suites listed in jest.known-failures.js,
+      # which are failing today and not yet fixed. Everything else still has to
+      # pass, so a new break still fails the build - the quarantine covers
+      # today's failures and nothing more. `npm run test:known-failures` shows
+      # where those stand.
+      - name: Unit tests
+        working-directory: api
+        run: |
+          npx jest -c jest.ci.config.js --ci --forceExit             --coverageReporters=text-summary --coverage 2>&1 | tee ../.jest-api.log
+          exit ${PIPESTATUS[0]}
+
+      # The README carries a test count, a coverage figure and an endpoint
+      # count. All three are hardcoded and all three drift; the readiness audit
+      # found the test badge already stale. This checks them against what just
+      # ran, so a public number cannot quietly become untrue. The test claim is
+      # a floor, so it fails when a suite silently stops running rather than
+      # every time a test is added.
+      - name: README numbers are still true
+        run: |
+          api_passed=$(grep -oE 'Tests:.*[0-9]+ passed' .jest-api.log             | grep -oE '[0-9]+ passed' | grep -oE '[0-9]+' | tail -1)
+          echo "API passed: ${api_passed}"
+          node scripts/check-badges.js --api="${api_passed}"             --coverage-from=.jest-api.log
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: api-coverage
+          path: api/coverage
+          retention-days: 14
+          if-no-files-found: ignore
+
+  rest-api:
+    name: REST API against a real database
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: api/package-lock.json
+
+      - name: Install
+        working-directory: api
+        run: npm ci
+
+      # The rest of the suite mocks the database, which is why a unique index
+      # could stop a shop creating its second branch without a single test
+      # noticing: a mocked collection has no indexes, so the collision it
+      # exists to cause cannot happen. These boot the real server against a
+      # real MongoDB and talk to it over HTTP.
+      #
+      # The URI is a secret and never appears in this file. Without it the
+      # tests skip and say why, rather than passing quietly - a green tick
+      # that means nothing is worse than a job that is not there.
+      #
+      # On a release tag that is not good enough. A skip is invisible in the
+      # summary, so the one job that talks to a real database could quietly not
+      # run on the only build that reaches shops. Releases fail instead, and
+      # say what to do about it.
+      #
+      # Checking the secret is non-empty is not enough either. A cluster whose
+      # allowlist excludes the runner, a user scoped to one database, or a free
+      # cluster that has auto-paused all pass that check and then fail as
+      # something that reads like a code problem. The preflight connects,
+      # writes, reads back and drops - the same things the tests do - and names
+      # the setting to change.
+      - name: A release must not skip this
+        if: startsWith(github.ref, 'refs/tags/v')
+        working-directory: api
+        env:
+          CI_MONGODB_URI: ${{ secrets.CI_MONGODB_URI }}
+        run: node scripts/check-ci-database.js
+
+      - name: REST smoke tests
+        working-directory: api
+        env:
+          CI_MONGODB_URI: ${{ secrets.CI_MONGODB_URI }}
+        run: npx jest tests/api --ci --forceExit --runInBand
+
+  api-docs:
+    name: API docs are current
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: api/package-lock.json
+      - name: Install
+        working-directory: api
+        run: npm ci
+
+      # Generated documentation is only worth having if it cannot drift. This
+      # regenerates and fails if the result differs from what was committed, so
+      # a new endpoint cannot land undocumented.
+      - name: Regenerate and compare
+        working-directory: api
+        run: npm run docs:check
+
+      - name: Validate the OpenAPI spec
+        working-directory: api
+        run: npm run docs:lint
+
+  lint:
+    name: Lint (reporting only)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: api/package-lock.json
+      - name: Install
+        working-directory: api
+        run: npm ci
+
+      # This reported without gating while roughly 400 errors sat in the tree -
+      # a check that is red on every pull request teaches people to ignore every
+      # check. The errors are at zero now, so it gates: a new one fails the
+      # build on the pull request that introduced it, which is the only moment
+      # it is cheap to fix.
+      #
+      # Warnings still do not fail. There are around 1,600, almost all
+      # no-console, and they are tracked in eslint.config.js rather than here.
+      - name: ESLint
+        working-directory: api
+        run: npx eslint src tests
+
+      # Formatting gates now that it is clean. It could not before: 348 files
+      # disagreed with the formatter, so a contributor who ran `npm run format`
+      # produced an unreviewable diff and one who did not produced drift. The
+      # one-off reformat is its own commit; from here the check keeps it clean.
+      - name: Prettier
+        working-directory: api
+        run: npm run format:check
+
+  desktop-tests:
+    name: Desktop tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      # These once needed no dependencies, which is why nothing was installed
+      # here. The lock screen and the item-entry tests drive real markup in
+      # jsdom, so they do - and without this the whole job failed in seconds on
+      # "Cannot find module" while every test passed locally.
+      #
+      # --omit=optional skips the Electron download, which none of these need.
+      - name: Install
+        run: npm ci --omit=optional --ignore-scripts
+
+      - name: Startup, hardware, printing and lock tests
+        run: npm test
+
+  packaging:
+    name: Packaging checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      # A module that is required but never packaged produces "Cannot find
+      # module" on a user's machine and nowhere else. This has happened, so it
+      # is checked here rather than after an installer ships.
+      - name: Every required module is packaged
+        run: node scripts/check-packaged-modules.js
+
+      - name: Install API dependencies
+        working-directory: api
+        run: npm ci
+
+      # The shipped archive leaves development packages out. This asserts that
+      # nothing the API requires at runtime is among them, because that failure
+      # only appears on a customer machine.
+      - name: No runtime require depends on a dev package
+        run: node scripts/check-runtime-deps.js
+
+      # And nothing depends on a package it never declared. `mongodb` was
+      # required by 56 API files and declared by none of them - it resolved only
+      # because mongoose hoists it, so a mongoose upgrade could have changed the
+      # driver underneath the API without a line of this repo changing.
+      - name: Every required package is declared
+        run: node scripts/check-declared-deps.js
+
+      # npm audit reports two moderate advisories that cannot be reached from
+      # any code path here, so the command is permanently non-zero - and a check
+      # that is always red is one nobody reads. This fails only on an advisory
+      # nobody has judged yet, and on an accepted one whose review date has
+      # passed, so an exception cannot become permanent by neglect.
+      - name: No unreviewed production advisories
+        run: node scripts/check-advisories.js
+
+  secrets:
+    name: No secrets in history
+    runs-on: ubuntu-latest
+    steps:
+      # The whole history, not the checked-out tip. Publishing a repository
+      # publishes every commit at once, and a password added in one commit and
+      # removed in the next is still in the pack every clone receives. It cannot
+      # be recalled afterwards - people fork and mirror within minutes.
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Scan every blob ever committed
+        run: node scripts/scan-git-history.js

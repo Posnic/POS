@@ -1,0 +1,508 @@
+/* 
+-------------------------------
+    : Custom - Topbar css :
+-------------------------------
+*/
+.toggle-menu {
+  .leftbar {
+    position: fixed;
+    width: 250px;
+    margin-left: 0;
+    transition: all 0.3s ease;    
+  }
+  .rightbar {
+    margin-left: 60px;
+    .topbar {
+      left: 60px;
+    }
+  }
+}
+.topbar-mobile {
+    display: none;
+    background-color: $white;
+    padding: 15px 25px;
+    border-bottom: 1px solid $border-color;
+    z-index: 9;
+    .mobile-logobar {
+      display: inline-block;  
+      img {
+        width: 100px;
+        height: 40px;
+      }
+    }
+    .mobile-togglebar {
+      display: inline-block;
+      float: right;
+      margin-top: 8px;
+      li {
+        margin-right: 0;
+        margin-left: 5px;
+      }
+      a.topbar-toggle-hamburger {
+          padding: 6px 10px;
+          border-radius: 50%;
+          background-color: $light;
+          img {
+              width: 18px;
+              filter: invert(0.6) sepia(1) saturate(1) hue-rotate(185deg);
+              &.menu-hamburger-vertical {
+                display: none;
+              }
+          }
+          &:hover {
+            background-color: $primary;
+            img {
+              filter: invert(0) sepia(0) saturate(14) hue-rotate(195deg);
+            }
+          } 
+      }      
+      .menu-hamburger {
+          padding: 6px 10px;
+          border-radius: 50%;
+          background-color: $light;
+          img {
+            width: 18px;
+            filter: invert(0.6) sepia(1) saturate(1) hue-rotate(185deg);
+            &.menu-hamburger-close {
+              display: none;
+            }
+          } 
+          &:hover {
+            background-color: $primary;;
+            img {
+              filter: invert(0) sepia(0) saturate(14) hue-rotate(195deg);
+            } 
+          }         
+      }
+    }
+}
+.topbar {
+    background-color: $topbar-bg-color;
+    padding: 15px 30px;
+    position: fixed;
+    z-index: 9;
+    left: 250px;
+    right: 0;
+    border-bottom: 1px solid $border-color;
+    .dropdown-toggle {
+      &::after {
+        display: none;
+      }
+    }
+    .searchbar {
+      width: 215px;
+      margin-left: 5px;
+      input[type="search"] {
+        background-color: $secondary-rgba;
+        color: $dark;
+        font-size: 16px;
+        padding-left: 10px;
+        border: none;
+        border-radius: 0 3px 3px 0;
+      }
+      ::placeholder {
+        color: #717C99;
+      }
+      .input-group-append {
+        margin-left: 0px;
+      }
+      .btn {
+        background-color: $secondary-rgba;
+        color: $dark;
+        font-weight: 700;
+        font-size: 18px;
+        font-weight: 700;
+        border-radius: 3px 0 0 3px;
+        padding: 3px 5px 3px 10px;
+        box-shadow: none;
+        img {
+          width: 18px;
+          margin-top: 0;
+          filter: invert(0.6) sepia(1) saturate(1) hue-rotate(185deg);
+        }
+      }
+    }
+    .togglebar {
+      display: inline-block;
+      padding-top: 1px;
+      li {
+        margin-right: 0;
+      }
+      .menu-hamburger {
+          padding: 6px 10px;
+          border-radius: 50%;
+          background-color: $light;
+          img {
+            filter: invert(0.6) sepia(1) saturate(1) hue-rotate(185deg);
+            width: 18px;
+            &.menu-hamburger-close {
+              display: none;
+            }
+          } 
+          &:hover {
+            background-color: $primary;
+            img {
+              filter: invert(0) sepia(0) saturate(14) hue-rotate(195deg);
+            }
+          }         
+      }
+    }
+    .infobar {
+      display: inline-block;
+      float: right;
+      > ul > li {
+          margin-left: 5px;
+          margin-right: 0;
+          &:first-child {
+            margin-left: 0;
+          }
+      }
+      .infobar-icon {          
+          color: $primary;
+          border-radius: 20px;
+          display: flex;
+          line-height: 40px;
+          width: 60px;
+          height: 40px;
+          padding: 10px;
+          background-color: $light;
+          img {
+            filter: invert(0.6) sepia(1) saturate(1) hue-rotate(185deg);
+            width: 25px;
+          }
+          i {
+            padding: 12px;
+          }
+          .live-icon {
+              margin: 0 0 0 5px;
+              vertical-align: middle;
+              line-height: 20px;
+              font-size: 14px;
+              font-weight: 400;
+          }
+          &:hover {
+            background-color: $primary;
+            color: $white;
+            img {
+              filter: invert(0) sepia(0) saturate(14) hue-rotate(195deg);
+            }
+          }
+      }
+      .languagebar {
+          .live-icon {
+            font-size: 15px;
+          }
+          a {
+            padding: 6px 0 7px 0;
+            border-radius: 3px;
+            vertical-align: super;
+            font-weight: 300;
+            &:hover {
+              color: $primary; 
+            }
+          }
+      }
+      .flag {
+          display: inline-block;
+          font-size: 16px;
+          width: 20px;
+          height: 20px;
+          line-height: 20px;
+          vertical-align: middle;
+          text-align: center;
+          background-color: $white;
+          border-radius: 3px;
+          background-size: cover;
+          background-position: center;
+          margin-top: -1px;
+      }
+    }
+}
+.breadcrumbbar {
+    margin: 100px 30px 0 30px;
+    .page-title {
+      font-size: 18px;
+      color: $heading-color;
+      margin-bottom: 5px;
+      margin-top: 0;
+    }
+    .breadcrumb-list {
+      text-align: left;
+    }
+    .breadcrumb {
+      margin: 0;
+      padding: 0;
+      display: inline-flex;
+      background-color: transparent;
+      .breadcrumb-item {
+        a {
+          color: $muted;
+        }
+      }
+      .breadcrumb-item.active {
+        color: $heading-color;
+      }
+    }   
+    .breadcrumb-item+.breadcrumb-item {
+        padding-left: .2rem;
+    } 
+    .breadcrumb-item+.breadcrumb-item::before {
+        content: "\e844";
+        font-family: "feather" !important;
+        font-size: 14px;
+        padding-right: .2rem;
+    }
+    .widgetbar {
+      text-align: right;
+    }
+}
+.notifybar {
+  .dropdown-menu {
+      top: 14px !important;
+      border-radius: 3px;
+      padding: 0;
+      .notification-dropdown-title {
+        text-align: center;
+        padding: 15px;
+        border-bottom: 1px solid $border-color;
+        h4 {
+          color: $primary;
+          font-size: 18px;
+          margin-bottom: 0;
+        }
+      }
+      .dropdown-item {
+        padding: 1rem;
+        border-bottom: 1px solid $border-color;
+      }
+  }
+  .action-icon {
+    width: 40px;
+    height: 40px;
+    line-height: 36px;
+    font-weight: 600;
+    border-radius: 3px;
+    font-size: 16px;
+    text-align: center;
+    margin-right: 15px;
+  }
+  h5 {
+    font-size: 16px;
+    color: $dark;
+    margin-top: 0;
+    margin-bottom: 5px;
+  }
+  p {
+    margin-bottom: 0;
+  }
+  .timing {
+    color: $muted;
+    font-size: 13px;
+    margin-top: 3px;
+  }
+}
+.infobar-settings-sidebar {
+  height: 100%;
+  width: 0;
+  position: fixed;
+  z-index: 1001;
+  top: 0;
+  right: 0;
+  background-color: $white;
+  overflow-x: hidden;
+  transition: 0.5s;
+  &.sidebarshow {
+    width: 420px;
+  }
+  .infobar-settings-sidebar-head {
+      padding: 14px 30px;
+      h4 {
+        margin-bottom: 0;
+        line-height: 40px;
+        font-size: 18px;
+        color: $primary;
+      }
+      .infobar-settings-close {
+        padding: 4px 0;
+        color: $white;
+        font-size: 20px;
+        border-radius: 3px;
+        &:hover {
+          background-color: transparent;
+        }
+        img {
+          width: 20px;
+          filter: invert(0.6) sepia(1) saturate(14) hue-rotate(215deg);
+        }
+    }
+  }  
+  .infobar-settings-sidebar-body {
+    /* Clearance for the pinned close button, so the last row of a detail view
+       is not sitting underneath it. Harmless on panels that have no footer. */
+    padding-bottom: 64px;   
+    .custom-color-setting {
+      padding: 30px;
+    }   
+    .custom-mode-setting {
+        padding: 30px;
+        border-top: 1px solid $border-color;;
+        border-bottom: 1px solid $border-color;
+    }
+    .custom-layout-setting {
+      padding: 30px;
+    }
+  }
+}
+.infobar-settings-sidebar-overlay {
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    overflow: hidden;
+    z-index: 1000;
+}
+/* Bottom close for the read-only panels. Pinned to the foot of the panel so it
+   is reachable without scrolling a long detail view to the end, and outside the
+   scrolling body so it stays put. */
+.infobar-settings-sidebar-foot {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 12px 30px;
+    background-color: $white;
+    border-top: 1px solid $border-color;
+    text-align: right;
+}
+.languagebar {
+  .dropdown-menu {
+    top: 14px !important;
+    border-radius: 3px;
+    padding: 0;
+    .dropdown-item {
+      padding: 10px 15px !important;
+      color: $muted;
+      &:focus {
+        color: $black;
+        background-color: $border-color;
+      }
+      &:hover {
+        color: $dark;
+        background-color: $border-color;
+      }
+    }
+    i {
+      margin-right: 10px;
+    }
+    .flag {
+      width: 20px;
+      height: 20px;
+      line-height: 20px;
+      margin-top: -1px;
+    }
+  }
+}
+.account-box {
+  background-color: $light;
+  border-radius: 3px;
+  text-align: center;
+  padding: 20px 0;
+  margin-bottom: 30px;
+  h5 {
+    color: $heading-color;
+    margin: 15px 0 5px;
+  }
+  p {
+    margin-bottom: 0;
+  }
+  &.active {
+    background-color: $primary;
+    h5 {
+      color: $white;
+    }
+    p {
+      color: $white;
+    }
+  }
+  &:hover {
+    background-color: $primary;
+    h5 {
+      color: $white;
+    }
+    p {
+      color: $white;
+    }
+  }
+}
+.profilebar {
+    a.dropdown-toggle {
+      padding: 6px 0 7px 0;
+      border-radius: 20px;
+      vertical-align: super;
+      &:hover {
+        color: $primary;
+      }
+    }
+    img {
+      width: 36px;
+      margin-right: 5px;
+    }
+    .dropdown-menu {
+      top: 14px !important;
+      border-radius: 3px;
+      text-align: center;      
+      padding: 0;
+      .dropdown-item {
+        border-bottom: 1px solid $border-color;
+        &:last-child {
+          border-bottom: none;
+        }
+        &:hover {
+          background-color: $card-bg;
+        }
+      }
+    }
+    .live-icon {
+      vertical-align: middle;
+      font-size: 15px;
+    }
+}
+.profilename {
+    padding: 5px 0;    
+    h5 {
+      margin-bottom: 0;
+      font-size: 18px;
+      color: $primary;
+    }
+    p {
+      color: $muted;
+      margin-bottom: 0;
+      font-size: 15px;
+    }
+}
+.userbox {
+  margin-top: 7px;
+  margin-bottom: 5px;
+  .profile-icon {
+    padding: 0;
+    color: $dark;
+    border-radius: 3px;
+    font-weight: 300;
+    &:hover {
+      background-color: transparent;
+      color: $primary;
+      img {
+        filter: invert(0.6) sepia(1) saturate(14) hue-rotate(215deg);
+      }
+    }
+    img {
+      width: 18px;
+      margin-top: -3px;
+      margin-right: 10px;
+      filter: invert(0.6) sepia(1) saturate(1) hue-rotate(185deg)
+    }
+  }  
+  .list-inline-item {
+    margin-right: 0;
+  }
+}

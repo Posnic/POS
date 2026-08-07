@@ -1,0 +1,257 @@
+# Test builds, straight from main.
+#
+# Every push to main produces installers and publishes them as a GitHub
+# pre-release. An installation whose update channel is set to "Test builds"
+# picks them up on its next check; every other installation cannot see them at
+# all, because electron-updater with allowPrerelease false does not merely
+# decline a pre-release, it never learns one exists.
+#
+# That is the whole safety mechanism, and it is worth being clear about why it
+# is enough: the separation between a tester and a shop is enforced by the
+# updater rather than by anyone remembering which build went where. There is no
+# step here that could accidentally offer a shop a build from main - it would
+# take changing the channel on that machine, by hand, on the Updates screen,
+# past a warning.
+#
+# Releases are the other pipeline. This one never writes a v* tag that
+# release.yml would recognise, and never publishes anything that is not a
+# pre-release.
+name: Test build (main)
+
+on:
+  push:
+    branches: [main]
+    # Documentation and licence changes do not need three installers built.
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'LICENSE'
+  workflow_dispatch:
+
+# Two pushes to main in quick succession should produce the newer build, not
+# race each other to publish. The in-progress one is cancelled rather than
+# left to finish and overwrite.
+concurrency:
+  group: beta-build
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  # A red main should not produce a build people are asked to trust, even a
+  # test one - a tester who cannot tell "this is broken because it is a beta"
+  # from "this is broken because main is broken" is not giving useful feedback.
+  verify:
+    name: Full CI
+    uses: ./.github/workflows/ci.yml
+    secrets: inherit
+
+  version:
+    name: Work out the version
+    needs: verify
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      tag: ${{ steps.v.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v5
+      - id: v
+        run: |
+          set -euo pipefail
+          BASE=$(node -p "require('./package.json').version")
+          # The run number rather than a timestamp: it always increases, it is
+          # readable, and it points straight back at the run that built it.
+          # Semver orders 2.0.2-beta.7 below 2.0.2, so a tester on a beta is
+          # picked up by the real release when it lands.
+          VERSION="${BASE}-beta.${{ github.run_number }}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION"    >> "$GITHUB_OUTPUT"
+          echo "Building $VERSION from $(git rev-parse --short HEAD)"
+
+  build:
+    name: ${{ matrix.name }}
+    needs: version
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: windows-latest, name: Windows, flag: '--win --x64' }
+          - { os: macos-latest,   name: macOS,   flag: '--mac' }
+          - { os: ubuntu-latest,  name: Linux,   flag: '--linux --x64' }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-node@v5
+        with: { node-version: 22 }
+
+      # The installs come before the version is stamped. `npm ci` refuses to
+      # run when package.json and package-lock.json disagree, and the version
+      # is one of the fields it compares - so stamping first would fail every
+      # build here with a message about the lockfile being out of sync.
+      - name: Install
+        run: npm ci
+
+      - name: Install the frontend build toolchain
+        working-directory: frontend
+        run: npm ci
+
+      - name: Install the API dependencies
+        working-directory: api
+        run: npm ci
+
+      # `npm version` writes both package.json and the lockfile, so the two
+      # stay in agreement for anything downstream that reads them.
+      #
+      # Nothing is committed. This version exists only inside the build, which
+      # is why main never carries a -beta version and release.yml is unaffected.
+      - name: Stamp the beta version
+        run: npm version "${{ needs.version.outputs.version }}" --no-git-tag-version --allow-same-version
+
+      - name: Fetch the bundled MongoDB
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION=$(grep -oE 'set MONGODB_VERSION=[0-9.]+' download-mongodb.bat | cut -d= -f2)
+          echo "MongoDB $VERSION, the version download-mongodb.bat pins"
+
+          fetch_tgz() {   # url, destination bin directory
+            curl -fsSL -o mongo.tgz "$1"
+            mkdir -p "$2"
+            if tar --version 2>/dev/null | grep -qi 'gnu tar'; then
+              tar -xzf mongo.tgz --wildcards --strip-components=2 -C "$2" '*/bin/mongod'
+            else
+              tar -xzf mongo.tgz --strip-components=2 -C "$2" '*/bin/mongod'
+            fi
+            chmod +x "$2/mongod"
+            rm -f mongo.tgz
+          }
+
+          case "${{ matrix.name }}" in
+            Windows)
+              curl -fsSL -o mongodb.zip "https://fastdl.mongodb.org/windows/mongodb-windows-x86_64-${VERSION}.zip"
+              7z x -bso0 mongodb.zip -omongodb-temp
+              mkdir -p mongodb/bin
+              cp "mongodb-temp/mongodb-win32-x86_64-windows-${VERSION}/bin/mongod.exe" mongodb/bin/
+              for dll in msvcp140.dll vcruntime140.dll vcruntime140_1.dll; do
+                cp "/c/Windows/System32/$dll" mongodb/bin/
+              done
+              rm -rf mongodb.zip mongodb-temp
+              node scripts/check-mongodb-binaries.js
+              ;;
+            macOS)
+              fetch_tgz "https://fastdl.mongodb.org/osx/mongodb-macos-x86_64-${VERSION}.tgz" mongodb-x64/bin
+              fetch_tgz "https://fastdl.mongodb.org/osx/mongodb-macos-arm64-${VERSION}.tgz"  mongodb-arm64/bin
+              ;;
+            Linux)
+              fetch_tgz "https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-ubuntu2204-${VERSION}.tgz" mongodb/bin
+              ;;
+          esac
+
+      - name: Prepare everything the installer bundles
+        run: npm run prepare:bundle
+
+      - name: Build
+        run: npx electron-builder ${{ matrix.flag }} --publish never
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Native binaries can load on a clean Windows
+        if: matrix.name == 'Windows'
+        run: node scripts/check-native-runtime.js
+
+      # electron-builder names the update manifest after the version's
+      # prerelease tag: 2.0.2-beta.7 produces beta.yml, not latest.yml. An
+      # installed copy asks for latest.yml unless its channel says otherwise,
+      # so a build published with only beta.yml would be invisible to the
+      # testers it was built for - and would look exactly like a network
+      # failure on their Updates screen.
+      #
+      # Rather than reason about which name the client will ask for, publish
+      # both. They are a few hundred bytes and the failure they prevent is
+      # silent.
+      - name: Publish the manifest under both names
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          for f in dist/beta*.yml; do
+            cp -v "$f" "dist/$(basename "$f" | sed 's/^beta/latest/')"
+          done
+          echo "manifests present:"
+          ls -1 dist/*.yml || echo "  NONE - the update path cannot work"
+
+      - name: Upload installers
+        uses: actions/upload-artifact@v5
+        with:
+          name: ${{ matrix.name }}
+          path: |
+            dist/*.exe
+            dist/*.dmg
+            dist/*.zip
+            dist/*.AppImage
+            dist/*.deb
+            # Without these an installed tester is never offered the build, and
+            # the Updates screen reports that it cannot reach the update server.
+            dist/*.yml
+            dist/*.blockmap
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    name: Publish test build
+    needs: [version, build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v6
+        with: { path: artifacts }
+
+      - name: Collect and checksum
+        run: |
+          mkdir -p release
+          find artifacts -type f \( -name '*.exe' -o -name '*.dmg' -o -name '*.zip' \
+            -o -name '*.AppImage' -o -name '*.deb' -o -name '*.yml' \
+            -o -name '*.blockmap' \) -exec mv {} release/ \;
+          cd release
+          sha256sum $(ls | grep -vE 'latest.*\.yml$|\.blockmap$') > SHA256SUMS.txt
+          echo "Publishing:"; ls -lh
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.version.outputs.tag }}
+          name: ${{ needs.version.outputs.tag }} (test build)
+          files: release/*
+          # Published rather than drafted, because a draft has no assets a
+          # tester's updater can fetch - and the point of this pipeline is that
+          # nobody has to press anything for a test build to reach a tester.
+          draft: false
+          # Never negotiable here. This flag is the only thing standing between
+          # a build from main and every installed till, so it is written as a
+          # literal rather than read from a variable that could be set wrong
+          # once and quietly stay that way.
+          prerelease: true
+          body: |
+            ## Test build from `main`
+
+            Built from ${{ github.sha }}.
+
+            **This is not a release.** It has not been release tested, and it may
+            be broken in ways an ordinary build is not. Do not put it on a till
+            that takes real money.
+
+            You are seeing this because *Updates → Which builds* is set to
+            **Test builds (from main)** on this machine. Set it back to
+            **Stable releases only** to stop receiving them.
+
+            Note that switching back does not undo an update already installed.
+            Posnic only ever moves forwards, so this machine stays on this build
+            until a stable release passes it. To go back sooner, download the
+            latest stable installer from the releases page and run it over the
+            top - your data is kept.
+
+            The installers are unsigned, so Windows and macOS will warn about an
+            unknown publisher.

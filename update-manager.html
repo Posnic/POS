@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Software Updates | Posnic</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 32px 20px;
+        }
+
+        .shell {
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+            width: 100%;
+            max-width: 560px;
+            overflow: hidden;
+        }
+
+        /* ── Header ── */
+        .hdr {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 28px 30px 24px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .hdr-icon { font-size: 36px; line-height: 1; }
+        .hdr-text h1 { font-size: 20px; font-weight: 700; }
+        .hdr-text p  { font-size: 13px; opacity: .85; margin-top: 3px; }
+
+        /* ── Version row ── */
+        .ver-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 28px;
+            border-bottom: 1px solid #f0f2f5;
+            background: #fafbfc;
+        }
+        .ver-label { font-size: 12px; color: #6b7280; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+        .ver-value { font-size: 15px; font-weight: 700; color: #111827; font-family: monospace; }
+        .last-check { font-size: 12px; color: #9ca3af; margin-top: 2px; }
+
+        /* ── Status card ── */
+        .status-card {
+            margin: 20px 24px;
+            border-radius: 14px;
+            padding: 20px 22px;
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            border: 1.5px solid #e5e7eb;
+            transition: all .3s;
+        }
+        .status-card.idle         { background: #f9fafb; border-color: #e5e7eb; }
+        .status-card.checking     { background: #eff6ff; border-color: #bfdbfe; }
+        .status-card.not-available{ background: #f0fdf4; border-color: #bbf7d0; }
+        .status-card.available    { background: #fffbeb; border-color: #fde68a; }
+        .status-card.downloading  { background: #eff6ff; border-color: #bfdbfe; }
+        .status-card.downloaded   { background: #f0fdf4; border-color: #6ee7b7; }
+        .status-card.error        { background: #fef2f2; border-color: #fecaca; }
+        .status-card.dev-mode     { background: #f5f3ff; border-color: #ddd6fe; }
+
+        .status-icon { font-size: 30px; line-height: 1; flex-shrink: 0; margin-top: 2px; }
+        .status-body { flex: 1; min-width: 0; }
+        .status-title { font-size: 15px; font-weight: 700; color: #111827; }
+        .status-sub   { font-size: 13px; color: #6b7280; margin-top: 4px; line-height: 1.5; word-break: break-word; overflow-wrap: anywhere; }
+        .status-ver   { display: inline-block; margin-top: 6px; font-size: 12px; font-weight: 700;
+                        background: #667eea; color: #fff; border-radius: 20px; padding: 2px 10px; }
+
+        /* ── Progress bar ── */
+        .progress-wrap { margin: 0 24px 4px; display: none; }
+        .progress-track {
+            height: 8px; background: #e5e7eb; border-radius: 99px; overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%; width: 0%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 99px;
+            transition: width .4s ease;
+        }
+        .progress-meta {
+            display: flex; justify-content: space-between;
+            font-size: 11px; color: #9ca3af; margin-top: 5px;
+        }
+
+        /* ── Action buttons ── */
+        .actions {
+            display: flex; gap: 10px; flex-wrap: wrap;
+            padding: 4px 24px 20px;
+        }
+        .btn {
+            padding: 10px 20px; border: none; border-radius: 10px;
+            font-size: 13px; font-weight: 700; cursor: pointer;
+            transition: all .2s; white-space: nowrap;
+        }
+        .btn:disabled { opacity: .45; cursor: not-allowed; }
+        .btn-check    { background: linear-gradient(135deg,#667eea,#764ba2); color:#fff; }
+        .btn-check:hover:not(:disabled)  { box-shadow: 0 4px 14px rgba(102,126,234,.45); transform: translateY(-1px); }
+        .btn-dl       { background: #2563eb; color: #fff; }
+        .btn-dl:hover:not(:disabled)     { background: #1d4ed8; }
+        .btn-install  { background: #16a34a; color: #fff; }
+        .btn-install:hover:not(:disabled){ background: #15803d; }
+        .btn-later    { background: #f3f4f6; color: #374151; }
+        .btn-later:hover:not(:disabled)  { background: #e5e7eb; }
+
+        /* Going back is deliberately not styled as a primary action - it is the
+           right answer sometimes, not the expected one. */
+        .btn-revert   { background: #fff; color:#b45309; border:1px solid #fcd34d; width:100%; }
+        .btn-revert:hover:not(:disabled) { background:#fffbeb; border-color:#f59e0b; }
+
+        /* panels */
+        .panel {
+            margin-top: 18px;
+            padding: 16px 18px;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            background: #fff;
+        }
+
+        .panel-head { margin-bottom: 10px; }
+
+        .panel-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #111827;
+            letter-spacing: .01em;
+        }
+
+        .panel-note {
+            font-size: 13px;
+            color: #4b5563;
+            margin: 0 0 12px;
+            line-height: 1.5;
+        }
+
+        .panel-hint {
+            font-size: 12px;
+            color: #6b7280;
+            margin: 10px 0 0;
+            line-height: 1.5;
+        }
+
+        .switch-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .switch-row input { margin-top: 3px; width: 16px; height: 16px; cursor: pointer; }
+        .switch-row strong { display:block; font-size:13px; font-weight:600; color:#111827; }
+        .switch-row em     { display:block; font-size:12px; color:#6b7280; font-style:normal; margin-top:2px; }
+
+        .field-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 14px;
+            padding-left: 26px;
+        }
+
+        .field-row label { font-size: 13px; color:#374151; }
+
+        .field-row select {
+            flex: 1;
+            padding: 7px 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 13px;
+            background: #fff;
+            color: #111827;
+        }
+
+        /* Dimmed rather than removed when automatic checking is off, so the
+           setting it belongs to stays visible. */
+        .field-row.disabled { opacity: .45; pointer-events: none; }
+
+        /* Release notes. A <pre> because the text arrives with its own line
+           breaks and bullet characters, and re-flowing it loses the list
+           structure the person is trying to read. */
+        .release-notes {
+            margin: 0;
+            max-height: 220px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+            font-family: inherit;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #374151;
+            background: #f9fafb;
+            border: 1px solid #f0f1f3;
+            border-radius: 8px;
+            padding: 12px 14px;
+        }
+
+        /* toast */
+        .toast {
+            position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(80px);
+            background:#1f2937; color:#fff; padding:10px 20px; border-radius:10px;
+            font-size:13px; font-weight:600; opacity:0; transition:all .3s; white-space:nowrap; z-index:999;
+        }
+        .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+        .spin {
+            display:inline-block; width:13px; height:13px; border:2px solid rgba(255,255,255,.4);
+            border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite; margin-right:6px; vertical-align:middle;
+        }
+        @keyframes spin { to { transform:rotate(360deg); } }
+    </style>
+  <!-- The shop's theme, applied over this window's own styles. See window-theme.js. -->
+  <link rel="stylesheet" href="window-theme.css">
+  <script src="window-theme.js"></script>
+</head>
+<body>
+<div class="shell">
+
+    <!-- Header -->
+    <div class="hdr">
+        <div class="hdr-icon">🔄</div>
+        <div class="hdr-text">
+            <h1>Software Updates</h1>
+            <p>Posnic, Keep your system up to date</p>
+        </div>
+    </div>
+
+    <!-- Version row -->
+    <div class="ver-row">
+        <div>
+            <div class="ver-label">Installed Version</div>
+            <div class="ver-value" id="verNum">, </div>
+        </div>
+        <div style="text-align:right;">
+            <div class="ver-label">Last checked</div>
+            <div class="last-check" id="lastCheckEl">Never</div>
+        </div>
+    </div>
+
+    <!-- Status card -->
+    <div class="status-card idle" id="statusCard">
+        <div class="status-icon" id="statusIcon">💤</div>
+        <div class="status-body">
+            <div class="status-title" id="statusTitle">Ready to check</div>
+            <div class="status-sub"  id="statusSub">Click "Check Now" to look for updates.</div>
+        </div>
+    </div>
+
+    <!-- Progress bar (shown during download) -->
+    <div class="progress-wrap" id="progressWrap">
+        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="progress-meta">
+            <span id="progressPct">0%</span>
+            <span id="progressBytes"></span>
+        </div>
+    </div>
+
+    <!-- Action buttons -->
+    <div class="actions">
+        <button class="btn btn-check" id="btnCheck" onclick="doCheck()">🔍 Check Now</button>
+        <button class="btn btn-dl"      id="btnDl"      onclick="doDownload()" style="display:none;">⬇️ Download Update</button>
+        <button class="btn btn-install" id="btnInstall" onclick="doInstall()"  style="display:none;">🚀 Restart &amp; Install</button>
+        <button class="btn btn-later"   id="btnLater"   onclick="window.close()"style="display:none;">Later</button>
+    </div>
+
+    <!--
+      What is actually in the update.
+
+      A shop that has turned automatic updates off is being asked to decide,
+      and "a new version is available" is not enough to decide on. Shown for
+      both an available and a downloaded update, because the question "what am
+      I about to install" is the same either way.
+    -->
+    <div class="panel" id="notesPanel" style="display:none;">
+        <div class="panel-head">
+            <span class="panel-title">What's new in <span id="notesVersion"></span></span>
+        </div>
+        <pre class="release-notes" id="releaseNotes"></pre>
+    </div>
+
+    <!--
+      Going back, kept beside the button that applied the update.
+      Hidden entirely when there is nothing to go back to, so it never offers
+      an action that would fail.
+    -->
+    <div class="panel" id="revertPanel" style="display:none;">
+        <div class="panel-head">
+            <span class="panel-title">Something wrong with this version?</span>
+        </div>
+        <p class="panel-note" id="revertNote"></p>
+        <button class="btn btn-revert" id="btnRevert" onclick="doRevert()">↩️ Go back to the previous version</button>
+        <p class="panel-hint">
+            Only the application files change. Sales, items, customers and
+            settings are not touched. This works without internet.
+        </p>
+    </div>
+
+    <!-- Settings -->
+    <div class="panel">
+        <div class="panel-head">
+            <span class="panel-title">Update settings</span>
+        </div>
+
+        <label class="switch-row" for="setAutoCheck">
+            <input type="checkbox" id="setAutoCheck">
+            <span>
+                <strong>Check for updates automatically</strong>
+                <em>Turn this off and Posnic will only look when you press Check Now.</em>
+            </span>
+        </label>
+
+        <div class="field-row" id="frequencyRow">
+            <label for="setFrequency">How often</label>
+            <select id="setFrequency">
+                <option value="daily">Every day</option>
+                <option value="weekly">Once a week</option>
+            </select>
+        </div>
+
+        <label class="switch-row" for="setInstallOnQuit" style="margin-top:16px;">
+            <input type="checkbox" id="setInstallOnQuit">
+            <span>
+                <strong>Install updates when I close Posnic</strong>
+                <em>The update is applied as the till shuts down, so it never
+                    interrupts a sale. A backup is taken first.</em>
+            </span>
+        </label>
+
+        <!--
+          Opting in to the builds cut from main.
+
+          A selector rather than a switch, because "off" is not a neutral state
+          here - every installation is on a channel, and the one it is on should
+          be readable without working out what the absence of a tick means.
+
+          The warning about not going back is stated plainly. It is the one
+          consequence a tester cannot undo from this screen, and finding it out
+          afterwards is how people end up stuck on a build they did not want.
+        -->
+        <div class="field-row" id="channelRow" style="margin-top:16px;">
+            <label for="setChannel">Which builds</label>
+            <select id="setChannel">
+                <option value="stable">Stable releases only</option>
+                <option value="beta">Test builds (from main)</option>
+            </select>
+        </div>
+        <p class="panel-hint" id="channelHint"></p>
+
+        <p class="panel-hint" id="settingsSaved"></p>
+    </div>
+
+    <!--
+      Going back a whole version is a reinstall, not a pointer move, so it is
+      described rather than automated. Pretending to a capability that does not
+      exist is worse than telling someone where the installer is.
+    -->
+    <div class="panel" id="downgradePanel" style="display:none;">
+        <div class="panel-head">
+            <span class="panel-title">Going back to an earlier release</span>
+        </div>
+        <p class="panel-note" id="downgradeNote"></p>
+        <button class="btn btn-later" id="btnReleases" onclick="openReleases()">Open the releases page</button>
+        <p class="panel-hint">
+            Download the earlier installer and run it over this one. Your sales,
+            items, customers and settings stay where they are. Turn off
+            automatic updates first, or it will update again.
+        </p>
+    </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+    const upd = window.electron.update;
+    let _autoCheckInterval = null;
+
+    // ── Init ────────────────────────────────────────────────────────────────
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        // Subscribe to live events from main process
+        upd.onStatus(applyStatus);
+        upd.onProgress(applyProgress);
+
+        // Load initial state
+        try {
+            const s = await upd.getStatus();
+            console.log('[UpdateManager] Initial status:', s);
+            
+            // Always apply status, even if error
+            if (s) {
+                applyStatus(s);
+                if (s.currentVersion) {
+                    document.getElementById('verNum').textContent = s.currentVersion;
+                    showDowngrade(s.currentVersion);
+                }
+            } else {
+                // Fallback to idle state if no status
+                applyStatus({ status: 'idle' });
+            }
+        } catch (e) { 
+            console.error('[UpdateManager] Failed to load initial status:', e);
+            // Show idle state on error
+            applyStatus({ status: 'idle' });
+        }
+
+        // Load config: last check time, and whether we may check at all
+        let autoCheck = true;
+        try {
+            const r = await upd.getConfig();
+            if (r.success && r.config) {
+                if (r.config.lastCheck) {
+                    document.getElementById('lastCheckEl').textContent = fmtDate(r.config.lastCheck);
+                }
+                autoCheck = r.config.autoCheck !== false;
+                applySettings(r.config);
+            }
+        } catch (e) { /* ignore */ }
+
+        await refreshRevert();
+
+        /*
+         * Only check on our own if the shop has left automatic checking on.
+         *
+         * This window used to check on open and then every thirty seconds
+         * regardless, so turning the setting off changed the background
+         * schedule and nothing else - open the Updates screen and it went
+         * looking anyway. A setting that is quietly ignored is worse than no
+         * setting, because it is believed.
+         */
+        if (!autoCheck) {
+            console.log('[UpdateManager] Automatic checking is off; waiting for Check Now.');
+            return;
+        }
+
+        console.log('[UpdateManager] Starting auto-check on window open...');
+        setTimeout(() => doCheck(), 1000); // Check after 1 second
+
+        // Start periodic check every 30 seconds
+        _autoCheckInterval = setInterval(() => {
+            const s = document.getElementById('statusCard').className;
+            // Only auto-check if idle or error (not during download/install)
+            if (s.includes('idle') || s.includes('error') || s.includes('not-available')) {
+                console.log('[UpdateManager] Running periodic check (30s interval)...');
+                doCheck();
+            }
+        }, 30 * 1000);
+    });
+
+    // ── Settings ────────────────────────────────────────────────────────────
+
+    function applySettings(config) {
+        const auto = config.autoCheck !== false;
+        document.getElementById('setAutoCheck').checked = auto;
+        document.getElementById('setFrequency').value =
+            config.checkFrequency === 'weekly' ? 'weekly' : 'daily';
+        document.getElementById('frequencyRow').classList.toggle('disabled', !auto);
+        document.getElementById('setInstallOnQuit').checked = config.installOnQuit !== false;
+
+        const channel = config.channel === 'beta' ? 'beta' : 'stable';
+        document.getElementById('setChannel').value = channel;
+        describeChannel(channel);
+    }
+
+    function describeChannel(channel) {
+        document.getElementById('channelHint').textContent = channel === 'beta'
+            ? 'This machine receives test builds from the main branch as soon as they '
+            + 'are built. They are not release tested. Do not use this on a till that '
+            + 'takes real money. Switching back to stable does not undo an update '
+            + 'already installed — Posnic only moves forwards, so this machine stays '
+            + 'on the test build until a stable release passes it.'
+            : 'The normal setting. This machine is only ever offered published '
+            + 'releases, and never sees a test build.';
+    }
+
+    async function saveSettings() {
+        const auto = document.getElementById('setAutoCheck').checked;
+        const frequency = document.getElementById('setFrequency').value;
+        const installOnQuit = document.getElementById('setInstallOnQuit').checked;
+        const channel = document.getElementById('setChannel').value === 'beta' ? 'beta' : 'stable';
+        document.getElementById('frequencyRow').classList.toggle('disabled', !auto);
+        describeChannel(channel);
+
+        const note = document.getElementById('settingsSaved');
+        try {
+            const r = await upd.saveConfig({ autoCheck: auto, checkFrequency: frequency, installOnQuit, channel });
+            if (r && r.success === false) throw new Error(r.error || 'could not save');
+
+            /* Stop checking immediately rather than at the next restart. The
+               shop turned it off for a reason and this window is the one thing
+               still asking. */
+            if (!auto && _autoCheckInterval) {
+                clearInterval(_autoCheckInterval);
+                _autoCheckInterval = null;
+            }
+
+            note.textContent = auto
+                ? `Saved. Posnic will check ${frequency === 'weekly' ? 'once a week' : 'every day'}. A restart applies the new schedule.`
+                : 'Saved. Posnic will not check on its own — use Check Now.';
+        } catch (e) {
+            note.textContent = 'Could not save that setting: ' + e.message;
+        }
+    }
+
+    document.getElementById('setAutoCheck').addEventListener('change', saveSettings);
+    document.getElementById('setFrequency').addEventListener('change', saveSettings);
+    document.getElementById('setInstallOnQuit').addEventListener('change', saveSettings);
+    document.getElementById('setChannel').addEventListener('change', saveSettings);
+
+    // ── What is in the update ───────────────────────────────────────────────
+
+    function showNotes(status, info) {
+        const panel = document.getElementById('notesPanel');
+        const relevant = status === 'available' || status === 'downloaded';
+
+        if (!relevant || !info || !info.releaseNotes) {
+            panel.style.display = 'none';
+            return;
+        }
+
+        document.getElementById('notesVersion').textContent = info.version || '';
+        /*
+         * textContent, never innerHTML. These notes are written by us but they
+         * travel from github.com, and this window can reach the updater through
+         * its preload - so a release body is treated as text that arrived over
+         * the network, which is what it is.
+         */
+        document.getElementById('releaseNotes').textContent = info.releaseNotes;
+        panel.style.display = '';
+    }
+
+    // ── Going back a whole version ──────────────────────────────────────────
+
+    function showDowngrade(currentVersion) {
+        document.getElementById('downgradeNote').textContent =
+            `This machine is running ${currentVersion}. Earlier releases stay `
+            + 'available, and installing one over this keeps your data.';
+        document.getElementById('downgradePanel').style.display = '';
+    }
+
+    function openReleases() {
+        /* Through the main process rather than window.open: this window has no
+           node integration and navigation is confined to the app's own pages,
+           which is exactly what should not be relaxed for a convenience link.
+
+           preload.js exposes two bridges. `update` is on window.electron and
+           `desktop` is on window.electronAPI, so window.electron.desktop.open
+           threw a TypeError before any IPC was attempted - and the catch
+           reported "Could not open the releases page", which reads as the link
+           being unreachable rather than the wrong object being asked.
+
+           This is the one route out of the application offered to a shop that
+           needs to reinstall an earlier version, which is to say the one route
+           offered to a shop whose till is already broken. */
+        const bridge = (window.electronAPI && window.electronAPI.desktop)
+                    || (window.electron    && window.electron.desktop);
+
+        if (!bridge || typeof bridge.open !== 'function') {
+            toast('Could not open the releases page');
+            return;
+        }
+
+        /* open() returns a promise, so a failure inside the main process would
+           reject rather than throw here - a try/catch alone would report
+           success on a link that never opened. */
+        Promise.resolve(bridge.open('releases'))
+            .then((ok) => { if (ok === false) toast('Could not open the releases page'); })
+            .catch(() => toast('Could not open the releases page'));
+    }
+
+    // ── Going back ──────────────────────────────────────────────────────────
+
+    async function refreshRevert() {
+        try {
+            const r = await upd.revertStatus();
+            const panel = document.getElementById('revertPanel');
+            if (!r || !r.success || !r.available) {
+                panel.style.display = 'none';
+                return;
+            }
+            document.getElementById('revertNote').textContent =
+                `Currently running ${r.active}. You can go back to ${r.previous}.`;
+            panel.style.display = '';
+        } catch (e) {
+            document.getElementById('revertPanel').style.display = 'none';
+        }
+    }
+
+    async function doRevert() {
+        const btn = document.getElementById('btnRevert');
+        if (!confirm('Go back to the previous version and restart now?\n\n'
+            + 'Sales, items, customers and settings are not affected.')) return;
+
+        btn.disabled = true;
+        btn.textContent = 'Going back…';
+        try {
+            const r = await upd.revert();
+            if (!r || !r.success) throw new Error((r && r.error) || 'could not revert');
+            btn.textContent = 'Restarting…';
+        } catch (e) {
+            btn.disabled = false;
+            btn.textContent = '↩️ Go back to the previous version';
+            toast('Could not go back: ' + e.message);
+        }
+    }
+
+    // Clean up interval when window closes
+    window.addEventListener('beforeunload', () => {
+        if (_autoCheckInterval) {
+            clearInterval(_autoCheckInterval);
+        }
+    });
+
+    // ── Status renderer ─────────────────────────────────────────────────────
+
+    const STATE = {
+        'idle':          { cls:'idle',          icon:'💤', title:'Ready to check',            sub:'Click "Check Now" to look for updates.' },
+        'checking':      { cls:'checking',      icon:'🔍', title:'Checking for updates…',      sub:'Connecting to update server…' },
+        'not-available': { cls:'not-available', icon:'✅', title:'You\'re up to date!',         sub:'Posnic is running the latest version.' },
+        'available':     { cls:'available',     icon:'🆕', title:'Update available',            sub:'A new version is ready to download.' },
+        'downloading':   { cls:'downloading',   icon:'⬇️', title:'Downloading update…',         sub:'Please wait while the update downloads.' },
+        /* The sub-line is filled in at render time: what happens next depends
+           on whether the shop has left "install when I close Posnic" on, and
+           saying "restart to apply" when it will apply itself is the kind of
+           small untruth that makes people stop reading the screen. */
+        'downloaded':    { cls:'downloaded',    icon:'✅', title:'Update ready',                sub:'Restart the app to apply the update.' },
+        'error':         { cls:'error',         icon:'❌', title:'Update check failed',          sub:'Could not reach the update server.' },
+    };
+
+    function applyStatus(s) {
+        const st = s.status || 'idle';
+        const def = STATE[st] || STATE['idle'];
+        const card = document.getElementById('statusCard');
+
+        card.className = 'status-card ' + def.cls;
+        document.getElementById('statusIcon').textContent  = def.icon;
+        document.getElementById('statusTitle').textContent = def.title;
+
+        let sub = def.sub;
+        if (st === 'available' && s.updateInfo) {
+            sub = `Version <strong>${s.updateInfo.version}</strong> is available.`;
+            if (s.updateInfo.releaseDate) sub += ` Released ${fmtDate(s.updateInfo.releaseDate)}.`;
+        }
+        if (st === 'downloaded' && s.updateInfo) {
+            /* Two genuinely different outcomes, so two different sentences.
+               Telling a shop to restart when the update will apply itself the
+               next time they close up is the kind of small untruth that
+               teaches people to ignore the screen. */
+            sub = document.getElementById('setInstallOnQuit').checked
+                ? `Version <strong>${s.updateInfo.version}</strong> is ready. It will be `
+                  + 'installed when you close Posnic — no need to stop what you are doing. '
+                  + 'A backup is taken first.'
+                : `Version <strong>${s.updateInfo.version}</strong> downloaded. Restart to apply.`;
+        }
+        showNotes(st, s.updateInfo);
+
+        if (st === 'error' && s.error) {
+            let e = String(s.error);
+            // Strip raw HTTP headers/cookie dump
+            e = e.replace(/\s*"?Headers?\s*"?\s*:\s*\{[\s\S]*/i, '');
+            // Strip everything after literal \n in the string
+            e = e.replace(/\\n[\s\S]*/g, '');
+            // Extract just status + URL if HttpError / numeric prefix
+            const m = e.match(/(?:HttpError[:\s]+)?(\d{3})\s*(.*)/s);
+            if (m) {
+                const code = m[1];
+                const urlM = e.match(/url:\s*(https?:\/\/[^\s\\"]+)/i);
+                const host = urlM ? (() => { try { return new URL(urlM[1]).hostname; } catch(_){ return urlM[1]; } })() : 'update server';
+                if (code === '404') e = `No releases found on update server (${host}).<br><small>Upload <b>latest.yml</b> + installer to your GitHub Release.</small>`;
+                else if (code === '401' || code === '403') e = `Access denied (${code}). Check your GitHub token.`;
+                else e = `Update server error (HTTP ${code}).`;
+            } else {
+                e = e.trim().substring(0, 160) + (e.length > 160 ? '…' : '');
+            }
+            sub = e;
+        }
+        document.getElementById('statusSub').innerHTML = sub;
+
+        // Button visibility
+        show('btnCheck',   !['checking','downloading'].includes(st));
+        show('btnDl',      st === 'available');
+        show('btnInstall', st === 'downloaded');
+        show('btnLater',   ['available','downloaded'].includes(st));
+
+        // Progress
+        if (st !== 'downloading') {
+            document.getElementById('progressWrap').style.display = 'none';
+        }
+
+        // Update "last check" if provided
+        if (s.lastCheck) {
+            document.getElementById('lastCheckEl').textContent = fmtDate(s.lastCheck);
+        }
+    }
+
+    function applyProgress(p) {
+        const wrap = document.getElementById('progressWrap');
+        wrap.style.display = 'block';
+        document.getElementById('progressFill').style.width = p.percent + '%';
+        document.getElementById('progressPct').textContent  = p.percent + '%';
+        document.getElementById('progressBytes').textContent =
+            fmtBytes(p.transferred) + ' / ' + fmtBytes(p.total) +
+            (p.speed ? '  •  ' + fmtBytes(p.speed) + '/s' : '');
+    }
+
+    // ── Actions ─────────────────────────────────────────────────────────────
+
+    async function doCheck() {
+        const btn = document.getElementById('btnCheck');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spin"></span> Checking…';
+        try {
+            const r = await upd.check();
+            if (r && !r.success && r.error) {
+                applyStatus({ status: 'error', error: r.error });
+            }
+            // status events will come in via onStatus listener
+        } catch (e) {
+            applyStatus({ status: 'error', error: e.message });
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '🔍 Check Now';
+        }
+    }
+
+    async function doDownload() {
+        const btn = document.getElementById('btnDl');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spin"></span> Starting…';
+        try {
+            const r = await upd.download();
+            if (r && !r.success) toast('Download error: ' + (r.error || 'Unknown'), 4000);
+        } catch (e) {
+            toast('Error: ' + e.message, 4000);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '⬇️ Download Update';
+        }
+    }
+
+    async function doInstall() {
+        const btn = document.getElementById('btnInstall');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spin"></span> Restarting…';
+        try {
+            const r = await upd.install();
+            if (r && !r.success) {
+                toast('Install stopped: ' + (r.error || 'Backup failed'), 5000);
+                btn.disabled = false;
+                btn.innerHTML = 'ðŸš€ Restart &amp; Install';
+                return;
+            }
+            // App will relaunch, nothing more to do
+        } catch (e) {
+            toast('Error: ' + e.message, 4000);
+            btn.disabled = false;
+            btn.innerHTML = '🚀 Restart &amp; Install';
+        }
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    function show(id, visible) {
+        document.getElementById(id).style.display = visible ? '' : 'none';
+    }
+
+    function fmtDate(iso) {
+        if (!iso) return 'Never';
+        try { return new Date(iso).toLocaleString(); } catch (_) { return iso; }
+    }
+
+    function fmtBytes(b) {
+        if (!b) return '0 B';
+        const k = 1024, s = ['B','KB','MB','GB'];
+        const i = Math.floor(Math.log(b) / Math.log(k));
+        return (b / Math.pow(k, i)).toFixed(1) + ' ' + s[i];
+    }
+
+    let _toastTimer;
+    function toast(msg, ms = 2500) {
+        const el = document.getElementById('toast');
+        el.textContent = msg;
+        el.classList.add('show');
+        clearTimeout(_toastTimer);
+        _toastTimer = setTimeout(() => el.classList.remove('show'), ms);
+    }
+</script>
+</body>
+</html>

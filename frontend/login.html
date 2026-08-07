@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <script type="application/javascript" src="script/login.js"></script>
+
+        <script>
+            if (window.location.hostname === 'frontend-ace.pages.dev') {
+                window.location.replace("https://www.posnic.io");
+            }
+        </script>
+        <script>
+            // Posnic (desktop/self-hosted): the API is always the origin that
+            // served this page - Electron window, LAN device, or self-hosted server.
+            // Cloud sync runs in a separate background process, never in the browser.
+            let API_URL = window.location.protocol.startsWith('http')
+                ? window.location.origin + '/'
+                : 'http://localhost:5555/';
+        </script>
+
+        <title> <lang class="lang_login_title"> Login Here </lang> </title>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        <!-- App favicon -->
+        <link rel="shortcut icon" href="static/images/favicon/favicon.ico" type="image/x-icon">
+        <link rel="icon" href="static/images/favicon/favicon.ico" type="image/x-icon">
+        <link crossorigin="anonymous" media="all" rel="stylesheet" href="style/login.css">
+        <style>
+            .error{
+                color: #f9616d;
+                float: left;
+                padding-bottom: 10px;
+                padding-top: 5px;
+            }
+            .border-control{
+                border: 1px solid #eae8e8;
+            }
+            .loadingSpinner {
+                position: absolute;
+                left: 0px;
+                top: 0px;
+                width: 100%;
+                height: 100%;
+                z-index: 1052;
+                background: url('../../../static/images/loader/sunglass.gif') 50% 50% no-repeat rgb(249,249,249);
+                opacity: .8;
+                background-size: 100%;
+            }
+            .right-inner-addon {
+                position: relative;
+            }
+            .right-inner-addon input {
+                padding-right: 35px !important;
+            }
+            .addon_btnview {
+                position: absolute;
+                right: 0px;
+                padding: 10px 12px;
+                pointer-events: auto;
+            }
+            .form-group{
+                margin-bottom: 2.5rem !important;
+            }
+        </style>
+    </head>
+    <body class="vertical-layout">
+        <div id="containerbar" class="containerbar authenticate-bg">
+            <!-- Start Container -->
+            <div class="container">
+                <div class="auth-box login-box">
+                    <!-- Start row -->
+                    <div class="row no-gutters align-items-center justify-content-center">
+                        <!-- Start col -->
+                        <div class="col-md-6 col-lg-5">
+                            <!-- Start Auth Box -->
+                            <div class="auth-box-right">
+                                <div class="card loginform_card">
+                                    <div class="card-body">
+                                        <div class="form-head">
+                                            <a href="javascript:void(0)" class="logo"><img src="static/images/logo/posnic.svg" class="img-fluid" alt="logo"></a>
+                                        </div>
+
+                                        <form id="Branch_selection_form" enctype="multipart/form-data" style="display:none;">
+                                            <h4 class="text-primary my-4">Select branch </h4>
+                                            <div class="custom-layout-setting">
+                                                <div class="row align-items-center pb-3 multi_branch_selection">
+
+                                                </div>
+                                            </div>
+                                        </form>
+
+                                        <form id="login_form" method="post">
+                                            <h4 class="text-primary my-4"><lang class="lang_login">Login</lang></h4>
+                                            <div class="form-group loader-login">
+                                                <input type="text" class="form-control border-control" id="username" name="username" minlength="3" maxlength="250" placeholder="Enter username (or) email here" required>
+                                            </div>
+
+                                            <div class="form-group right-inner-addon input-container">
+                                                <span class="btn addon_btnview current-show_hide_password"> <i class="fa fa-eye-slash"></i></span>
+                                                <input type="password" class="form-control border-control" id="password" name="password" minlength="5" maxlength="20" placeholder="Enter password here" required autocomplete="on">
+                                            </div>    
+                                            <div class="form-row mb-3">
+                                                <div class="col-sm-6">
+                                                    <div class="custom-control custom-checkbox text-left">
+                                                        <input type="checkbox" class="custom-control-input" id="rememberme">
+                                                        <label class="custom-control-label font-14" for="rememberme"><lang class="lang_remember">Remember Me</lang></label>
+                                                    </div>                                
+                                                </div>
+                                                <div class="col-sm-6">
+                                                    <div class="forgot-psw"> 
+                                                        <a id="forgotslide" href="#" class="font-14"><lang class="lang_forgot_title">Forgot Password?</lang></a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div id="login_error" class="alert alert-danger text-left" style="display:none;padding:10px 12px;font-size:14px;margin-bottom:12px;"></div>
+                                            <button type="button" id="login_button" class="btn btn-success btn-lg btn-block font-18"><lang class="lang_login_title">Log in</lang></button>
+                                        </form>
+
+                                        <form id="forget_form" style="display:none;"> 
+                                            <h4 class="text-primary my-4"><lang class="lang_forgot">Forgot Password !</lang> </h4>
+                                            <p class="mb-4" style="font-weight: 510;"><lang class="lang_forget_description">Enter the email address below to receive reset password instructions.</lang></p>
+                                            <div class="form-group">
+                                                <input type="email" class="form-control border-control" id="email" name="email" placeholder="Enter email here" required>
+                                            </div>                          
+                                            <button type="submit" class="btn btn-success btn-lg btn-block font-18"><lang class="lang_foget_mail">Reset Password</lang></button>
+                                            <p class="mb-0 mt-3"><lang class="lang_remeber_password">Already have a POSNIC account? </lang><a id="Loginslide" href="#"><lang class="lang_login_title">Log in </lang></a></p>
+                                        </form>
+
+
+                                        <form id="registerselect_form" style="display:none;"> 
+                                            <h4 class="text-primary my-4">Select Register </h4>
+                                            <div id="form_regsiter_selction">                                                                            
+                                                <div class="form-group col-md-12 text-center">
+                                                    <select id="choose_register_model" class="custom-select border-control choose_register_model" data-placedataholder="Select Register" style="width: 100%;border: 1px solid #eae8e8;">
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            <div class="form-group col-md-12 text-left">
+                                                <label for="opening_float" class="text_white">Opening Float </label>
+                                                <input type="text" class="form-control border-control allow_decimal text-right" id="opening_float" name="opening_float" minlength="1" maxlength="10" value="0.00" placeholder="0.00">
+                                            </div> 
+                                            <div class="form-group col-md-12">
+                                                <div class="text-center">
+                                                    <button type="button" id="open_register_log" class="btn btn-primary-rgba select_Button_col" onclick="PosnicPro.users.loginregisterSelectFormSubmit()"><lang class="lang_openregbutton">Open Register</lang></button>
+                                                </div>
+                                            </div> 
+                                        </form>
+
+                                        <div class="row">
+                                            <div class="col-sm-12">                                        
+                                                <div id="user_error_slide" style="display:none;">
+                                                    <h4 class="text-primary my-4">Sign-in is blocked ! </h4>
+                                                    <p class="text-danger text-left"> You've tried to sign in too many times with an incorrect account or password. </p>
+                                                    <p class="text-left"> Sign-in with <span class="user-text-update text-success font-18">satheesh</span> entered the wrong password too many times. </p>
+                                                    <p id="redirect_slide" style="color:#3a5de1; cursor:pointer ;margin-top:-15px;">Reset your password? </p>
+                                                    <p> Another posnic account ?<a id="redirect_login" href="#">Log in</a> </p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- End Auth Box -->
+                        </div>
+                        <!-- End col -->
+                    </div>
+                    <!-- End row -->
+                </div>
+            </div>
+            <!-- End Container -->
+        </div>
+        <!-- End Container bar -->
+    </body>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            let loader = $(".loader-login");
+            loader.find(".loadingSpinner:first").remove();
+            window.history.pushState(null, "", window.location.href);
+            window.onpopstate = function () {
+                window.history.pushState(null, "", window.location.href);
+            };
+        });
+        /*
+         * The name comes back; the password never does.
+         *
+         * This used to fill the password box from a cookie that held it in the
+         * clear. Any machine that still has that cookie gets it removed here,
+         * so the change cleans up after the old behaviour rather than only
+         * stopping it.
+         */
+        /*
+         * Say why they are back here.
+         *
+         * Being returned to sign-in with no explanation is the moment people
+         * assume the till is broken. Logout has always redirected with
+         * ?msg=..., and nothing ever read it, so the reason was thrown away
+         * every time - and a session that expired looked identical to one that
+         * was never valid, which sends the person to different places: one
+         * waits, the other calls somebody.
+         */
+        (function showRedirectReason() {
+            try {
+                var params = new URLSearchParams(window.location.search);
+                var msg = params.get('msg');
+                if (!msg) return;
+                var type = params.get('type') || 'information';
+                setTimeout(function () { PosnicPro.alert(type, msg); }, 150);
+                // Drop it from the address bar so a refresh does not repeat it.
+                if (window.history && window.history.replaceState) {
+                    window.history.replaceState({}, '', window.location.pathname);
+                }
+            } catch (e) { /* an old browser: the sign-in form still works */ }
+        }());
+
+        PosnicPro.users.createCookie('password', '', -1);
+        if (PosnicPro.users.readCookie('username') !== null) {
+            $('#username').val(PosnicPro.users.readCookie('username'));
+            $('#password').val('');
+            $("#rememberme").prop('checked', 'checked');
+            // Straight to the password, since the name is already filled in.
+            setTimeout(function () { $('#password').focus(); }, 50);
+        } else {
+            $('#username,#password').val('');
+            $('#rememberme').removeAttr('disabled', 'disabled');
+        }
+
+        if (PosnicPro.users.readCookie('loginuser') !== null) {
+            window.location = 'dashboard.html#/dashboard';
+        }
+
+        $('#forgotslide').click(function () {
+            $('#forget_form,#Loginslide').show();
+            $('#login_form,#forgotslide,#user_error_slide,#Branch_selection_form').hide();
+            $('.formhead').html('forgot password');
+        });
+        $('#Loginslide,#redirect_login').click(function () {
+            $('#forget_form,#Loginslide,#user_error_slide,#Branch_selection_form').hide();
+            $('#login_form,#forgotslide').show();
+            $('.formhead').html('log In');
+        });
+        $('#redirect_slide').click(function () {
+            $('#forget_form,#Loginslide').show();
+            $('#login_form,#forgotslide,#user_error_slide,#Branch_selection_form').hide();
+        });
+
+        $("select.userBranchList").change(function () {
+            var selectedBranch = $("#userBranchList option:selected").val();
+            PosnicPro.users.selectedUserBranchDisplay(selectedBranch);
+        });
+
+        $("#login_form").validate({
+            highlight: function (element, errorClass) {
+                $(element).css("border-color", "#f9616d");
+            },
+            unhighlight: function (element, errorClass) {
+                $(element).css("border-color", "#eae8e8");
+            },
+            rules: {
+                username: {
+                    required: true,
+                    minlength: 3,
+                    maxlength: 250
+
+                },
+                password: {
+                    required: true,
+                    minlength: 5,
+                    maxlength: 20
+                }
+            },
+            messages: {
+                username: {
+                    required: "Please enter a username",
+                    minlength: "Must be at least 3 Characters",
+                    maxlength: "Should not be more than 100 characters"
+                },
+                password: {
+                    required: "Please enter a password",
+                    minlength: "Must be at least 5 characters",
+                    maxlength: "Should not be more than 20 characters"
+                }
+            }
+        });
+        $("#login_button").click(function (event) {
+            event.preventDefault();
+            if ($('#login_form').valid()) {            // checks form for validity
+                PosnicPro.users.loginCheck();
+            }
+        });
+        $(document).bind("keydown", '#logInBtn', function (e) {
+            if (e.keyCode === 13) {
+                $('#login_button').click();
+                return false;
+            }
+        });
+        $("#forget_form").validate({
+            highlight: function (element, errorClass) {
+                $(element).css("border-color", "#f9616d");
+            },
+            unhighlight: function (element, errorClass) {
+                $(element).css("border-color", "#eae8e8");
+            },
+            rules: {
+                email: {
+                    required: true,
+                    email: true,
+                    maxlength: 250,
+                    emailExt: true
+                }
+            },
+            messages: {
+                email: {
+                    required: "Please enter a email address",
+                    email: "Please enter a valid email",
+                    maxlength: "Email should not be more than 250 Characters"
+                }
+            }
+        });
+        $("#forget_form").submit(function (event) {
+            event.preventDefault();
+            if ($('#forget_form').valid()) {            // checks form for validity
+                PosnicPro.users.forgotPassword();
+            }
+        });
+        $(".current-show_hide_password").on('click', function (event) {
+            event.preventDefault();
+            if ($('#password').attr("type") === "text") {
+                $('#password').attr('type', 'password');
+                $('.current-show_hide_password i').addClass("fa-eye-slash").removeClass("fa-eye");
+            } else {
+                $('#password').attr('type', 'text');
+                $('.current-show_hide_password i').removeClass("fa-eye-slash").addClass("fa-eye");
+            }
+        });
+    </script>
+    <script>
+    // Cloud web access: gently steer to the desktop app (faster, offline,
+    // hardware support). Shows once per browser unless dismissed for good.
+    (function () {
+      if (!/.posnic.io$/.test(location.hostname)) return;
+      if (localStorage.getItem('posnic_web_ok') === '1') return;
+      var el = document.createElement('div');
+      el.id = 'appNudge';
+      el.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;font-family:sans-serif;';
+      el.innerHTML = '<div style="background:#fff;border-radius:14px;max-width:430px;padding:28px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.25);">' +
+        '<h3 style="margin:0 0 10px;">Use the Posnic desktop app</h3>' +
+        '<p style="color:#5b6b7f;font-size:14px;line-height:1.5;margin:0 0 16px;">The desktop app is faster, works fully offline and connects printers, scanners and cash drawers. For daily billing, install it on the shop computer.</p>' +
+        '<button id="nudgeApp" style="width:100%;padding:12px;border:0;border-radius:9px;background:#3D85C6;color:#fff;font-size:15px;font-weight:600;cursor:pointer;">Open the desktop app</button>' +
+        '<a href="https://web.posnic.com/download.html" style="display:block;margin-top:10px;font-size:13.5px;">Download the app</a>' +
+        '<a href="#" id="nudgeWeb" style="display:block;margin-top:12px;font-size:12.5px;color:#8a97a8;">continue in browser this time</a>' +
+        '<a href="#" id="nudgeNever" style="display:block;margin-top:6px;font-size:12px;color:#b3bcc8;">I mainly use the web version, do not ask again</a></div>';
+      document.body.appendChild(el);
+      document.getElementById('nudgeApp').onclick = function () { location.href = 'posnic://open'; };
+      document.getElementById('nudgeWeb').onclick = function () { el.remove(); return false; };
+      document.getElementById('nudgeNever').onclick = function () { localStorage.setItem('posnic_web_ok','1'); el.remove(); return false; };
+    })();
+    </script>
+</html>

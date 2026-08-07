@@ -1,0 +1,81 @@
+name: Deploy to Lightsail
+
+# Deploys automatically on every push to main, and can be triggered manually
+# from the GitHub Actions tab (Run workflow button).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Prevent overlapping deploys; a newer push cancels an in-flight one.
+concurrency:
+  group: deploy-lightsail
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build & deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.LIGHTSAIL_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.LIGHTSAIL_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Sync code to server
+        # --delete keeps the server in sync with the repo, but the --exclude'd
+        # paths are runtime state that lives ONLY on the server and must survive
+        # deploys: WhatsApp sessions, uploaded files, and installed node_modules.
+        run: |
+          rsync -az --delete \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='node_modules' \
+            --exclude='.env' \
+            --exclude='.wwebjs_auth' \
+            --exclude='.wwebjs_cache' \
+            --exclude='uploads' \
+            --exclude='logs' \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            ./ ubuntu@${{ secrets.LIGHTSAIL_HOST }}:/home/ubuntu/apiv2/
+
+      - name: Write .env from secret
+        # The .env is maintained in GitHub (Settings > Secrets > ENV_FILE) and
+        # written to the server on every deploy, so the box always has the
+        # current environment without manual SSH edits.
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            ubuntu@${{ secrets.LIGHTSAIL_HOST }} \
+            "cat > /home/ubuntu/apiv2/.env" <<'ENVEOF'
+          ${{ secrets.ENV_FILE }}
+          ENVEOF
+
+      - name: Install dependencies & (re)start with PM2
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            ubuntu@${{ secrets.LIGHTSAIL_HOST }} bash -s <<'REMOTE'
+            set -e
+            export PATH=$PATH:/usr/bin:/usr/local/bin
+            cd /home/ubuntu/apiv2
+            mkdir -p logs
+            # Reproducible install; fall back to npm install if no lockfile committed yet.
+            if [ -f package-lock.json ]; then
+              npm ci --omit=dev
+            else
+              npm install --omit=dev
+            fi
+            # Reload if already running (zero-downtime), otherwise start fresh.
+            if pm2 describe apiv2 > /dev/null 2>&1; then
+              pm2 reload ecosystem.config.js --update-env
+            else
+              pm2 start ecosystem.config.js
+            fi
+            pm2 save
+            pm2 status
+          REMOTE

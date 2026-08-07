@@ -1,0 +1,356 @@
+<div class="vertical-layout page_loader" id="receivings_new" style="display: none">
+    <!-- Start Containerbar -->
+    <div id="containerbar">
+        <!-- Start Breadcrumbbar -->                    
+        <div class="breadcrumbbar crumbbar_padding">
+            <div class="row align-items-center">
+                <div class="col-md-8 col-lg-8">
+                    <h4 class="page-title break_title"><span class="purchase-tittle-change">New</span> <lang class="lang_purchase"> Purchase </lang> </h4>
+                </div>
+            </div>          
+        </div>
+        <!-- End Breadcrumbbar -->
+
+        <!-- Start Contentbar -->    
+        <div class="contentbar"> 
+            <form class='receiving_page' enctype="multipart/form-data" method="post" name="receiving_image_upload_form"
+                  id="receiving_add">
+                <!-- Start row -->
+                <div class="row">
+                    <!-- Start col -->
+                    <div class="col-lg-7 col-xl-7">
+                        <div class="tab-content loader-edit-receiving loader-add-receiving loader-low_stock" id="v-pills-tabContent">
+                            <!-- My Wallet Start -->
+                            <div class="card m-b-30">
+                                <div class="chat-list">
+                                    <div class="chat-search">
+                                        <div class="input-group">
+                                            <input type="search" class="form-control osk-trigger" placeholder="Find item name,sku or barcode" name="receiving_add_item_name" id="receiving_add_item_name" aria-label="Search" aria-describedby="button-addon3">
+                                            <div class="input-group-append">
+                                                <span class="btn" id="button-addon3"><i class="feather icon-search"></i></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!--start row-->
+                                <div class="col-sm-6 col-md-12 col-lg-12" id="receiviing_img_hide">
+                                    <img src="static/images/general/wallet.svg" class="img-fluid" style="opacity: 0.6;width: 100%;height: 250px;" alt="wallet">
+                                </div>
+                                <!-- My Wishlist Start -->
+                                <div class="wishlist-box">
+                                    <div class="table-responsive">
+
+                                        <table class="table table-borderless" id="receiving_print">
+                                            <thead id="receving_tab_list">
+                                                <tr>
+                                                    <th scope="col" id="return_show_text" style="display: none;"><lang class="lang_selectreturn">Select To Return</lang></th>
+                                            <th scope="col"><lang class="lang_item_title">Items</lang></th>
+                                            <th scope="col" class="text-center"><lang class="lang_qty_title">Qty</lang></th>
+                                            <th scope="col" class="text-center"><lang class="lang_unit_title">Unit</lang></th>
+                                            <th scope="col" class="text-center"><lang class="lang_price_title">Company price</lang></th>
+                                            <th scope="col" class="text-center show-hide-exc-tax" style="display:none;"><lang class="lang_tax_title">Exclusive (Tax)</lang></th>
+                                            <th scope="col" class="text-right"><lang class="lang_total_title">Total</lang></th>
+                                            <th scope="col" id="return_hide_text" style="display: none;"><lang class="lang_action_title">Action</lang></th>
+
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr class="cart_content_area" id='cart_content_area'>
+                                                    <td colspan='5'>
+                                                        <div class='text-center'>
+                                                            <h2 class="text-primary"><lang class="lang_receive_empty">Receiving Order Empty</lang></h2>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                        <h4 class="text-center" id="show-already-return-table" style="display: none;"><hr>Already Returned</h4>
+                                        <div id="receiving_return_view_table">
+
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- My Wishlist End -->
+                            </div>
+                            <!-- My Wallet End -->
+                        </div>                        
+                    </div>
+                    <!-- End col -->
+                    <!--start col-->
+                    <div class="col-lg-5 col-xl-5">
+                        <!--start checkout--> 
+                        <div class="card m-b-5 receving-return-hide">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="form-group col-lg-12 col-xl-12 clear-supplier-error">
+                                        <label class="form-control-placeholder" for="receiving_add_supplier_name">
+                                            <lang class="lang_itemname_title">Supplier</lang>
+                                            <span class="text-danger">*</span> 
+                                        </label>
+
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" placeholder="Choose a Supplier" id="receiving_add_supplier_name"
+                                                   name="receiving_add_supplier_name" minlength="3" maxlength="20" aria-label="Search" aria-describedby="button-addon3" autocomplete="off">
+                                            <div class="input-group-append">
+                                                <a data-module="supplier" data-access="write" id="button-addon3" class="btn btn-success-rgba" href="#/receivings/suppliers/new"><i class="feather icon-plus" data-toggle="tooltip" title="Add new supplier easily"></i>
+                                                </a>
+                                            </div>
+
+                                            <input type="hidden" class="form-control clear-receiving-text"
+                                                   id="receiving_add_supplier_id"
+                                                   name="receiving_add_supplier_id">
+                                            <input type="hidden" class="form-control clear-receiving-text"
+                                                   id="receiving_add_supplier_address"
+                                                   name="receiving_add_supplier_address">
+                                            <input type="hidden" class="form-control clear-receiving-text"
+                                                   id="receiving_add_supplier_phone"
+                                                   name="receiving_add_supplier_phone">
+                                            <input type="hidden" class="form-control clear-receiving-text"
+                                                   id="receiving_add_supplier_email"
+                                                   name="receiving_add_supplier_email">
+                                            <input type="hidden" class="form-control clear-receiving-text"
+                                                   id="receiving_add_supplier_state"
+                                                   name="receiving_add_supplier_state">
+                                            <input type="hidden" class="form-control clear-receiving-text"
+                                                   id="receiving_add_supplier_gst_type"
+                                                   name="receiving_add_supplier_gst_type">
+                                            <input type="hidden" class="form-control clear-receiving-text"
+                                                   id="receiving_add_supplier_gst_number"
+                                                   name="receiving_add_supplier_gst_number">
+                                        </div>
+                                    </div> 
+                                </div> 
+
+                                <div class="row">
+                                    <div class="form-group col-lg-6 col-xl-6">
+                                        <label class="form-control-placeholder" for="receiving_add_date">
+                                            <lang class="lang_date_title">Date</lang> 
+                                            <span class="text-danger">*</span> 
+                                        </label>
+                                        <input type="text" class="form-control border-control commonDate" placeholder="Enter the date"
+                                               id="receiving_add_date" name="receiving_add_date">
+                                    </div>
+
+                                    <div class="form-group col-lg-6 col-xl-6" style="margin-top: 30px;">
+                                        <input type="checkbox" class="custom-control-input" id="exclusive_tax" name="exclusive_tax">
+                                        <label class="custom-control-label" for="exclusive_tax">
+                                            Exclusive Tax
+                                        </label>
+                                    </div>
+
+
+
+                                    <!--                                    <div class="form-group col-lg-6 col-xl-6">
+                                                                            <label class="form-control-placeholder" for="receiving_tax">
+                                                                                <lang class="lang_tax_title"> Tax Rate </lang>
+                                                                            </label>
+                                                                            <div class="input-group">
+                                                                                <select class="form-control border-control custom-select pricing-field items_tax" name="receiving_tax" id="receiving_tax"
+                                                                                        onchange="return PosnicPro.receivings.addReceivingTableRowCalc();">
+                                                                                </select>
+                                                                            </div>
+                                                                        </div>-->
+                                </div>
+
+                                <div class="row">
+                                    <!--                                    <div class="form-group col-lg-6 col-xl-6">
+                                                                            <label class="custom-radio" style="margin-bottom: .1rem;">
+                                                                                <label for="radio_receiving_discount_amount"
+                                                                                       class="control custom-radio">
+                                                                                    <input type="radio" class="radio_discount" name="radio_discount"
+                                                                                           id="radio_receiving_discount_amount" checked="checked">&nbsp; <lang class="lang_discount_title">Disc</lang> <span class="display-currency"></span>
+                                                                                </label>
+                                                                            </label>
+                                                                            <label class="custom-radio pull-right discount_tamil_right" style="margin-bottom: .1rem;">
+                                                                                <label for="radio_receiving_discount_percentage"
+                                                                                       class="control custom-radio"> 
+                                                                                    <input type="radio" class="radio_discount" name="radio_discount"
+                                                                                           id="radio_receiving_discount_percentage">&nbsp; <lang class="lang_discount_title">Disc </lang>%
+                                                                                </label>
+                                                                            </label>
+                                                                            <div class="floating-label">
+                                                                                <input name="receiving_discount_amount" id="receiving_discount_amount"
+                                                                                       type="text" min="0" minlength="1" maxlength="5" class="form-control border-control allow_decimal text-right display-discount-amount-value"
+                                                                                       onkeyup="return PosnicPro.receivings.addReceivingTableRowCalc();">
+                                    
+                                                                                <input name="receiving_discount_percentage"
+                                                                                       id="receiving_discount_percentage" type="number"
+                                                                                       class="form-control border-control text-right display-discount-percentage-value"
+                                                                                       min="0" max="100" onkeypress="return PosnicPro.isNumber(event)" onkeypress="this.value = PosnicPro.minmax(this.value, 0, 100)" onkeyup="return PosnicPro.receivings.addReceivingTableRowCalc();">
+                                                                            </div>
+                                                                        </div>-->
+
+                                </div>
+
+                                <div class="row">
+                                    <div class="form-group col-lg-6 col-xl-6">
+                                        <label class="form-control-placeholder" for="receiving_add_payment_mode">
+                                            <lang class="lang_paymentmode">Payment Mode</lang>  
+                                        </label>
+                                        <select class="form-control border-control custom-select" name="receiving_add_payment_mode"
+                                                id='receiving_add_payment_mode'>
+                                        </select>
+                                    </div>
+                                    <div class="form-group col-lg-6 col-xl-6">
+                                        <label class="form-control-placeholder" for="receiving_add_payment_description">
+                                            <lang class="lang_paymentnote_title">Payment Note</lang>    
+                                        </label>
+                                        <textarea name="receiving_add_payment_description"
+                                                  id='receiving_add_payment_description' maxlength="500" rows="1"
+                                                  class="form-control border-control" placeholder="Enter payment note"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>  
+                        <!--end checkout-->
+
+                        <div class="row receving-return-hide">
+                            <div class="col-12">
+                                <div class="btn-group-toggle d-flex" data-toggle="buttons">
+                                    <div class="btn btn-payment-mode open_status_active active flex-fill mr-2">   
+                                        <label>
+                                            <input type="radio" class="receiving-status" name="receiving_status" id="Open" value="Open" checked/><lang class="lang_open">Open</lang></label> 
+                                    </div>
+                                    <div class="btn btn-payment-mode flex-fill">
+                                        <label>
+                                            <input type="radio" class="receiving-status" name="receiving_status" id="Received" value="Received"><lang class="lang_receive">Received</lang></label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Start col -->
+                        <div class="card doctor-box m-b-10 receving-return-hide">
+                            <div class="card-footer">  
+                                <input type="hidden" id="item_upload_receiving_status" value="no">
+                                <div class="row">                                    
+                                    <div class="input-group mb-3">
+                                        <div class="custom-file">
+                                            <input type="file" name="ImageReceiving[]" class="custom-file-input" id="receiving_upload_image" onchange="PosnicPro.receivings.receiving_image_preview(this)" accept=".gif, .jpg, .png, .jpeg, .bmp, .pdf" multiple>
+                                            <label class="custom-file-label btn-primary-rgba" for="receiving_upload_image"><lang class="lang_file">Choose file</lang></label>
+                                            <input type="hidden" name="receiving_logo" id="receiving_logo">
+                                        </div>
+                                    </div>                                   
+                                </div>                                
+                            </div>
+                            <div class="col-lg-12 col-xl-12">
+                                <div id="display-preview"></div>
+                                <div id="receving_image_count" style="display: none;">0</div>
+                            </div>  
+                        </div>
+                        <!-- End col --> 
+
+
+
+                        <!--start col-->
+                        <div class="card">
+                            <!--start row col-->
+                            <div class="cart-body loader-receiving">
+                                <div class="cart-container">
+                                    <div class="row">
+                                        <div class="col-md-12 col-lg-12 col-xl-12">
+                                            <div class="order-total table-responsive ">
+                                                <table class="table table-borderless text-center">
+                                                    <tbody>
+                                                        <tr>
+                                                            <td class="text-left font-17"><b><lang class="lang_subtotal_title">Sub Total :</lang></b></td>
+                                                            <td class="text-right font-17">
+                                                                <b><span class="display-currency"></span> <span class="add-sales-clear-text" id="receiving_add_subtotal_amount">0.00</span></b>
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="text-left"><lang class="lang_tax_title">Tax :</lang></td>
+                                                    <td class="text-right"> + <span class="tax-receiving-value">0.00</span></td>
+                                                    </tr>                                                      
+                                                    <tr>
+                                                        <td class="f-w-7 font-18 text-left"><b><lang class="lang_grandamount">Grand Total :</lang></b></td>
+                                                        <td class="f-w-7 font-18 text-right"><b><span class="display-currency"></span> <span class="add-sales-clear-text" id='receiving_add_total_amount'>0.00</span></b></td>
+                                                    </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="cart-footer text-center">                                        
+                                        <button type="button" class="btn btn-outline-secondary my-1" id="clearReceiving" onclick="return PosnicPro.resetForm('receiving');" style="display: none;"><i class="feather icon-refresh-ccw mr-2"></i><lang class="lang_clear_title"> Clear</lang>                                           
+                                        </button>  
+                                        <a href='#/receivings' class="btn btn-outline-danger my-1"><i class="feather icon-x-circle mr-2"></i><lang class="lang_close_title"> Close</lang></a>
+                                        <button type="submit" id="receiving_submit" name="receiving_submit" class="btn btn-outline-primary my-1"><i class="feather icon-save mr-2"></i><span id="returnn_button" class="changeReceivingText"><lang class="lang_save_title"> Save</lang></span>
+                                        </button>
+                                    </div>
+                                    <div class="row mt-5" id="show_last_created_receiving" style="display: none;">
+                                        <div class="col-md-12 col-lg-12 col-xl-12">
+                                            <div class="text-center">
+                                                <h6>Last Created Record <a href="#" id="last_created_receiving">View</a></h6>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>                              
+                            <!--end row col-->
+                        </div>
+                        <!--end col-->
+                    </div>
+                    <!--end col-->
+
+                    <input type="hidden" id="row_id" name="row_id" value="">
+                    <input type="hidden" id="sale_return_item_id" name="row_id" value="">
+                    <input type="hidden" id="return_from_sales" name="return_from_sales" value="no">
+                    <input type='hidden' name='receiving_total' id='receiving_total'>
+                    <input type="hidden" class="form-control input-lg" id="receiving_add_selling_price"
+                           name="receiving_add_selling_price">
+                    <input type="hidden" class="form-control" id="receiving_add_available_stock" name="receiving_add_available_stock">
+                    <input type="hidden" class="form-control input-lg writeblock" id="receiving_add_line_total"
+                           name="receiving_add_line_total">
+
+                </div>
+                <!-- End row -->    
+            </form>
+            <!--end form-->
+        </div>
+        <!-- End Contentbar -->
+    </div>
+    <!-- End Containerbar -->
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

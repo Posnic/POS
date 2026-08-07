@@ -1,0 +1,35 @@
+{
+  "name": "posnic-frontend",
+  "version": "1.0.0",
+  "description": "Build pipeline for the Posnic web assets (gulp: sass, JS, HTML).",
+  "main": "index.js",
+  "scripts": {
+    "build": "gulp build && node zip-build.js",
+    "build:assets": "gulp build",
+    "build:dev": "npm install && cross-env NODE_ENV=dev gulp build && node zip-build.js",
+    "test": "node -e \"console.log('no tests here - the frontend is a build pipeline; the app suite is in ../tests and ../api/tests')\"",
+    "setup": "npm ci"
+  },
+  "author": "Posnic",
+  "license": "AGPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Posnic/POS.git"
+  },
+  "keywords": [
+    "pos"
+  ],
+  "bugs": {
+    "url": "https://github.com/Posnic/POS/issues"
+  },
+  "homepage": "https://github.com/Posnic/POS#readme",
+  "devDependencies": {
+    "archiver": "^5.3.0",
+    "cross-env": "^7.0.3",
+    "gulp": "^4.0.2",
+    "html-minifier": "^4.0.0",
+    "sass": "^1.70.0",
+    "yargs": "^15.4.1"
+  },
+  "private": true
+}

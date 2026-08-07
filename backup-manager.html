@@ -1,0 +1,1461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backup Manager</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f4f8;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: #506fe4;
+            color: white;
+            padding: 25px 30px;
+            text-align: center;
+        }
+
+        .header h1 { font-size: 32px; margin-bottom: 8px; }
+        .header p { opacity: 0.95; font-size: 16px; }
+
+        .tabs {
+            display: flex;
+            flex-wrap: wrap;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .tab {
+            flex: 1 1 auto;
+            min-width: 150px;
+            padding: 15px 20px;
+            text-align: center;
+            cursor: pointer;
+            background: white;
+            border: none;
+            border-bottom: 3px solid transparent;
+            font-size: 15px;
+            font-weight: 600;
+            transition: all 0.2s;
+            color: #6c757d;
+        }
+
+        .tab:hover {
+            background: rgba(80,111,228,.05);
+            border-bottom-color: #506fe4;
+            color: #506fe4;
+        }
+
+        .tab.active {
+            background: white;
+            color: #506fe4;
+            border-bottom-color: #506fe4;
+        }
+
+        .content {
+            padding: 30px;
+            min-height: 500px;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+
+        .tab-content.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* === OVERVIEW CARDS === */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .stat-card .icon { font-size: 32px; margin-bottom: 10px; }
+        .stat-card .label { font-size: 13px; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+        .stat-card .value { font-size: 22px; font-weight: 700; color: #333; }
+        .stat-card .sub { font-size: 12px; color: #6c757d; margin-top: 4px; }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-idle { background: #e9ecef; color: #495057; }
+        .status-success { background: #d4edda; color: #155724; }
+        .status-running { background: #cce5ff; color: #004085; }
+        .status-failed { background: #f8d7da; color: #721c24; }
+        .status-disabled { background: #fff3cd; color: #856404; }
+
+        /* === BUTTONS === */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .btn-primary { background: #506fe4; color: white; }
+        .btn-primary:hover:not(:disabled) {
+            background: #3d5dc7;
+            box-shadow: 0 4px 12px rgba(80,111,228,0.3);
+            transform: translateY(-1px);
+        }
+
+        .btn-success { background: #28a745; color: white; }
+        .btn-success:hover:not(:disabled) {
+            background: #218838;
+            box-shadow: 0 4px 12px rgba(40,167,69,0.3);
+        }
+
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-danger:hover:not(:disabled) {
+            background: #c82333;
+            box-shadow: 0 4px 12px rgba(220,53,69,0.3);
+        }
+
+        .btn-warning { background: #ffc107; color: #212529; }
+        .btn-warning:hover:not(:disabled) {
+            background: #e0a800;
+            box-shadow: 0 4px 12px rgba(255,193,7,0.3);
+        }
+
+        .btn-secondary { background: #6c757d; color: white; }
+        .btn-secondary:hover:not(:disabled) {
+            background: #5a6268;
+        }
+
+        .btn-sm { padding: 8px 14px; font-size: 12px; }
+
+        .actions-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        /* === FORM === */
+        .form-group { margin-bottom: 20px; }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #506fe4;
+            box-shadow: 0 0 0 3px rgba(80,111,228,0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .help-text {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 4px;
+        }
+
+        .input-with-button {
+            display: flex;
+            gap: 8px;
+        }
+
+        .schedule-note {
+            font-size: 13px;
+            line-height: 1.6;
+            color: #475569;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-left: 3px solid #3D85C6;
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin-bottom: 14px;
+        }
+
+        /* The command is copied, not read, so it must be selectable and must not
+           wrap in a way that breaks it when pasted. */
+        .schedule-output {
+            font-family: Consolas, 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+            color: #e2e8f0;
+            background: #1e293b;
+            border-radius: 8px;
+            padding: 14px 16px;
+            margin: 0 0 8px;
+            overflow-x: auto;
+            white-space: pre;
+            user-select: text;
+        }
+
+        .input-with-button input { flex: 1; }
+
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .checkbox-row input { width: 18px; height: 18px; cursor: pointer; }
+        .checkbox-row label { font-weight: 600; cursor: pointer; margin: 0; }
+
+        /* === TABLE === */
+        .backup-table, .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        }
+
+        .backup-table th, .history-table th {
+            background: #506fe4;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .backup-table td, .history-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e9ecef;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .backup-table tr:hover, .history-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .backup-table .row-actions {
+            display: flex;
+            gap: 6px;
+            justify-content: flex-end;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+
+        .empty-state .icon { font-size: 64px; margin-bottom: 16px; opacity: 0.5; }
+        .empty-state .title { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+
+        /* === ALERTS === */
+        .alert {
+            padding: 14px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid;
+            font-size: 14px;
+        }
+
+        .alert-info { background: #d1ecf1; border-color: #17a2b8; color: #0c5460; }
+        .alert-success { background: #d4edda; border-color: #28a745; color: #155724; }
+        .alert-warning { background: #fff3cd; border-color: #ffc107; color: #856404; }
+        .alert-danger { background: #f8d7da; border-color: #dc3545; color: #721c24; }
+
+        /* === TOAST === */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            min-width: 280px;
+            max-width: 400px;
+            padding: 14px 18px;
+            border-radius: 8px;
+            background: white;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+            border-left: 4px solid #506fe4;
+            animation: slideIn 0.3s ease;
+        }
+
+        .toast.toast-success { border-color: #28a745; }
+        .toast.toast-error { border-color: #dc3545; }
+        .toast.toast-warning { border-color: #ffc107; }
+
+        .toast .toast-icon { font-size: 20px; }
+        .toast .toast-msg { flex: 1; color: #333; }
+        .toast .toast-close { cursor: pointer; color: #6c757d; font-size: 16px; }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* === MODAL === */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-backdrop.show { display: flex; }
+
+        .modal {
+            background: white;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+
+        .modal h2 { margin-bottom: 14px; color: #333; }
+        .modal p { color: #555; margin-bottom: 16px; line-height: 1.5; }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid #fff;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+  <!-- The shop's theme, applied over this window's own styles. See window-theme.js. -->
+  <link rel="stylesheet" href="window-theme.css">
+  <script src="window-theme.js"></script>
+</head>
+<body>
+    <div class="toast-container" id="toastContainer"></div>
+
+    <div class="container">
+        <div class="header">
+            <h1>💾 Backup Manager</h1>
+            <p>Protect your business data with scheduled backups</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" data-tab="overview">📊 Overview</button>
+            <button class="tab" data-tab="backups">📦 Backups</button>
+            <button class="tab" data-tab="settings">⚙️ Settings</button>
+            <button class="tab" data-tab="history">📜 History</button>
+        </div>
+
+        <div class="content">
+            <!-- ============ OVERVIEW TAB ============ -->
+            <div class="tab-content active" id="tab-overview">
+                <div class="section-title">📊 Backup Overview</div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="icon">🟢</div>
+                        <div class="label">Status</div>
+                        <div class="value" id="ovStatus">
+                            <span class="status-badge status-idle">Loading...</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="icon">🕒</div>
+                        <div class="label">Last Backup</div>
+                        <div class="value" id="ovLastBackup">, </div>
+                        <div class="sub" id="ovLastBackupSize"></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="icon">📅</div>
+                        <div class="label">Next Scheduled</div>
+                        <div class="value" id="ovNextBackup">, </div>
+                        <div class="sub" id="ovFrequency"></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="icon">📦</div>
+                        <div class="label">Total Backups</div>
+                        <div class="value" id="ovTotalBackups">0</div>
+                        <div class="sub" id="ovTotalSize">, </div>
+                    </div>
+                </div>
+
+                <div class="actions-bar">
+                    <button class="btn btn-success" id="btnBackupNow">
+                        🚀 Run Backup Now
+                    </button>
+                    <button class="btn btn-secondary" id="btnRefreshOverview">
+                        🔄 Refresh
+                    </button>
+                </div>
+
+                <div class="alert alert-info" id="overviewInfo">
+                    <strong>💡 Tip:</strong> Backups are automatically deduplicated. If your data hasn't changed,
+                    the new backup is skipped to save disk space.
+                </div>
+
+                <div id="overviewPath" class="alert alert-info" style="display: none;">
+                    <strong>📁 Backup Location:</strong> <span id="ovPathText"></span>
+                </div>
+            </div>
+
+            <!-- ============ BACKUPS TAB ============ -->
+            <div class="tab-content" id="tab-backups">
+                <div class="section-title">📦 All Backups</div>
+
+                <div class="actions-bar">
+                    <button class="btn btn-success btn-sm" id="btnBackupNow2">
+                        🚀 New Backup
+                    </button>
+                    <button class="btn btn-secondary btn-sm" id="btnRefreshBackups">
+                        🔄 Refresh List
+                    </button>
+                </div>
+
+                <div id="backupsListContainer">
+                    <div class="empty-state">
+                        <div class="icon">📦</div>
+                        <div class="title">Loading backups...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============ SETTINGS TAB ============ -->
+            <div class="tab-content" id="tab-settings">
+                <div class="section-title">⚙️ Backup Settings</div>
+
+                <div class="checkbox-row">
+                    <input type="checkbox" id="setEnabled">
+                    <label for="setEnabled">Enable Automatic Backups</label>
+                </div>
+
+                <div class="form-group">
+                    <label>Backup Folder Location</label>
+                    <div class="input-with-button">
+                        <input type="text" id="setPath" readonly>
+                        <button class="btn btn-secondary btn-sm" id="btnBrowseSet">📁 Browse</button>
+                    </div>
+                    <div class="help-text">Backups are stored here. Choose a location with enough free space.</div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Frequency</label>
+                        <select id="setFrequency">
+                            <option value="hourly">⏱️ Every Hour</option>
+                            <option value="daily">📅 Daily</option>
+                            <option value="weekly">📆 Weekly</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="setTimeGroup">
+                        <label>Time (24h)</label>
+                        <input type="time" id="setTime" value="02:00">
+                    </div>
+                </div>
+
+                <div class="form-group" id="setDayGroup" style="display: none;">
+                    <label>Day of Week</label>
+                    <select id="setDayOfWeek">
+                        <option value="0">Sunday</option>
+                        <option value="1">Monday</option>
+                        <option value="2">Tuesday</option>
+                        <option value="3">Wednesday</option>
+                        <option value="4">Thursday</option>
+                        <option value="5">Friday</option>
+                        <option value="6">Saturday</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Retention Period (Days)</label>
+                    <input type="number" id="setRetention" min="1" max="365" value="30">
+                    <div class="help-text">Older backups will be auto-deleted. Range: 1-365 days.</div>
+                </div>
+
+                <div class="actions-bar">
+                    <button class="btn btn-primary" id="btnSaveSettings">💾 Save Settings</button>
+                    <button class="btn btn-secondary" id="btnReloadSettings">🔄 Reload</button>
+                </div>
+
+                <!--
+                  Everything above only runs while Posnic is open. A till that is
+                  shut down at nine gets no overnight backup, and the morning
+                  that matters is the one where the disk does not come back.
+                  This hands over the exact command for the operating system's
+                  own scheduler, with the real paths already filled in.
+                -->
+                <div class="section-title" style="margin-top: 34px;">🕒 Backups when Posnic is closed</div>
+
+                <div class="schedule-note">
+                    The settings above run <strong>while Posnic is open</strong>. If you
+                    shut the till down at night, ask Windows to run the backup instead —
+                    one command, nothing to install.
+                </div>
+
+                <div class="actions-bar">
+                    <button class="btn btn-secondary" id="btnShowSchedule">📋 Show me the command</button>
+                    <button class="btn btn-secondary" id="btnCopySchedule" style="display: none;">📄 Copy</button>
+                </div>
+
+                <pre class="schedule-output" id="scheduleOutput" style="display: none;"></pre>
+
+                <div class="help-text" id="scheduleHelp" style="display: none;">
+                    Run it in <strong>Command Prompt as administrator</strong>. It must run
+                    as the same Windows user Posnic normally runs as — the database
+                    password is tied to that account. You do <strong>not</strong> need to
+                    install Node.js.
+                </div>
+            </div>
+
+            <!-- ============ HISTORY TAB ============ -->
+            <div class="tab-content" id="tab-history">
+                <div class="section-title">📜 Backup History</div>
+
+                <div class="actions-bar">
+                    <button class="btn btn-secondary btn-sm" id="btnRefreshHistory">🔄 Refresh</button>
+                </div>
+
+                <div id="historyContainer">
+                    <div class="empty-state">
+                        <div class="icon">📜</div>
+                        <div class="title">Loading history...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Restore Confirmation -->
+    <div class="modal-backdrop" id="restoreModal">
+        <div class="modal">
+            <h2>⚠️ Confirm Restore</h2>
+            <p id="restoreModalText">Are you sure you want to restore this backup? This will replace existing data.</p>
+            <div class="checkbox-row">
+                <input type="checkbox" id="restoreDropExisting" checked>
+                <label for="restoreDropExisting">Drop existing collections before restore (recommended)</label>
+            </div>
+            <div class="alert alert-warning">
+                <strong>⚠️ Warning:</strong> Existing data will be replaced. We recommend running a fresh backup before restoring.
+            </div>
+            <div class="alert alert-info">
+                <strong>� Note:</strong> After restore, the application will automatically restart to ensure all data and sessions are refreshed cleanly. Please log in again afterwards.
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="restoreCancelBtn">Cancel</button>
+                <button class="btn btn-danger" id="restoreConfirmBtn">🔄 Restore Now</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Delete Confirmation -->
+    <div class="modal-backdrop" id="deleteModal">
+        <div class="modal">
+            <h2>🗑️ Delete Backup?</h2>
+            <p id="deleteModalText">Are you sure you want to permanently delete this backup?</p>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="deleteCancelBtn">Cancel</button>
+                <button class="btn btn-danger" id="deleteConfirmBtn">🗑️ Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============== UTILITIES ==============
+        const api = window.electron;
+
+        function showToast(message, type = 'info', duration = 4000) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            
+            const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️';
+            
+            toast.innerHTML = `
+                <span class="toast-icon">${icon}</span>
+                <span class="toast-msg">${message}</span>
+                <span class="toast-close">✕</span>
+            `;
+            
+            toast.querySelector('.toast-close').addEventListener('click', () => toast.remove());
+            container.appendChild(toast);
+            
+            if (duration > 0) {
+                setTimeout(() => {
+                    toast.style.animation = 'slideIn 0.3s ease reverse';
+                    setTimeout(() => toast.remove(), 300);
+                }, duration);
+            }
+        }
+
+        function formatBytes(bytes) {
+            if (!bytes || bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
+        }
+
+        function formatDate(iso) {
+            if (!iso) return ', ';
+            try {
+                const d = new Date(iso);
+                const pad = (n) => String(n).padStart(2, '0');
+                return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+            } catch (e) {
+                return iso;
+            }
+        }
+
+        function formatRelative(iso) {
+            if (!iso) return ', ';
+            const d = new Date(iso);
+            const diff = Date.now() - d.getTime();
+            const minutes = Math.floor(diff / 60000);
+            if (minutes < 1) return 'just now';
+            if (minutes < 60) return `${minutes} min ago`;
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+            const days = Math.floor(hours / 24);
+            if (days < 30) return `${days} day${days > 1 ? 's' : ''} ago`;
+            return formatDate(iso);
+        }
+
+        function statusBadge(status) {
+            const labels = {
+                idle: 'Idle',
+                success: 'Healthy',
+                running: 'Running',
+                failed: 'Failed',
+                disabled: 'Disabled'
+            };
+            return `<span class="status-badge status-${status}">${labels[status] || status}</span>`;
+        }
+
+        // ============== TAB SWITCHING ==============
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
+                
+                // Load data for the active tab
+                const tabName = tab.dataset.tab;
+                if (tabName === 'overview') loadOverview();
+                else if (tabName === 'backups') loadBackups();
+                else if (tabName === 'settings') loadSettings();
+                else if (tabName === 'history') loadHistory();
+            });
+        });
+
+        // ============== OVERVIEW TAB ==============
+        let cachedConfig = null;
+
+        async function loadOverview() {
+            try {
+                const [configRes, backupsRes] = await Promise.all([
+                    api.getBackupConfig(),
+                    api.listBackups()
+                ]);
+
+                const config = configRes.success ? configRes.config : null;
+                const backups = backupsRes.success ? backupsRes.backups : [];
+                cachedConfig = config;
+
+                if (!config) {
+                    showToast('Failed to load backup config', 'error');
+                    return;
+                }
+
+                // Status
+                const statusEl = document.getElementById('ovStatus');
+                if (!config.enabled) {
+                    statusEl.innerHTML = statusBadge('disabled');
+                } else {
+                    statusEl.innerHTML = statusBadge(config.status || 'idle');
+                }
+
+                // Last backup
+                document.getElementById('ovLastBackup').textContent = 
+                    config.lastBackup ? formatRelative(config.lastBackup) : 'Never';
+                document.getElementById('ovLastBackupSize').textContent = 
+                    config.lastBackup ? formatDate(config.lastBackup) : '';
+
+                // Next scheduled
+                const nextStr = computeNextBackup(config);
+                document.getElementById('ovNextBackup').textContent = nextStr;
+                document.getElementById('ovFrequency').textContent = 
+                    config.enabled ? `${config.frequency} backup` : 'Disabled';
+
+                // Total backups
+                document.getElementById('ovTotalBackups').textContent = backups.length;
+                const totalSize = backups.reduce((sum, b) => sum + (b.size || 0), 0);
+                document.getElementById('ovTotalSize').textContent = formatBytes(totalSize);
+
+                // Path
+                document.getElementById('overviewPath').style.display = '';
+                document.getElementById('ovPathText').textContent = config.path;
+            } catch (err) {
+                console.error('Failed to load overview:', err);
+                showToast(`Error: ${err.message}`, 'error');
+            }
+        }
+
+        function computeNextBackup(config) {
+            if (!config.enabled) return 'Disabled';
+            
+            const now = new Date();
+            
+            switch (config.frequency) {
+                case 'hourly': {
+                    const next = new Date(now.getTime() + 60 * 60 * 1000);
+                    return formatDate(next.toISOString());
+                }
+                case 'daily': {
+                    const [hh, mm] = (config.time || '02:00').split(':').map(Number);
+                    const today = new Date(now);
+                    today.setHours(hh, mm, 0, 0);
+                    if (now >= today) {
+                        today.setDate(today.getDate() + 1);
+                    }
+                    return formatDate(today.toISOString());
+                }
+                case 'weekly': {
+                    const [hh, mm] = (config.time || '02:00').split(':').map(Number);
+                    const targetDow = config.dayOfWeek || 0;
+                    const next = new Date(now);
+                    next.setHours(hh, mm, 0, 0);
+                    
+                    let daysToAdd = (targetDow - next.getDay() + 7) % 7;
+                    if (daysToAdd === 0 && now >= next) daysToAdd = 7;
+                    next.setDate(next.getDate() + daysToAdd);
+                    
+                    return formatDate(next.toISOString());
+                }
+                default: return ', ';
+            }
+        }
+
+        // Manual backup
+        async function runBackupNow() {
+            const btn = document.getElementById('btnBackupNow');
+            const btn2 = document.getElementById('btnBackupNow2');
+            
+            const buttons = [btn, btn2].filter(Boolean);
+            buttons.forEach(b => {
+                b.disabled = true;
+                b.dataset.original = b.innerHTML;
+                b.innerHTML = '<span class="spinner"></span> Running backup...';
+            });
+            
+            showToast('Backup started...', 'info');
+            
+            try {
+                const result = await api.runBackupNow(false);
+                
+                if (result.success) {
+                    if (result.skipped) {
+                        showToast('No data changes - backup skipped (deduplication)', 'warning');
+                    } else {
+                        showToast(`✅ Backup complete! ${result.collections} collections, ${formatBytes(result.size)}`, 'success');
+                    }
+                    // Refresh
+                    loadOverview();
+                    if (document.querySelector('.tab.active').dataset.tab === 'backups') loadBackups();
+                } else {
+                    showToast(`Backup failed: ${result.error}`, 'error', 6000);
+                }
+            } catch (err) {
+                showToast(`Error: ${err.message}`, 'error', 6000);
+            } finally {
+                buttons.forEach(b => {
+                    b.disabled = false;
+                    b.innerHTML = b.dataset.original;
+                });
+            }
+        }
+
+        document.getElementById('btnBackupNow').addEventListener('click', runBackupNow);
+        document.getElementById('btnBackupNow2').addEventListener('click', runBackupNow);
+        document.getElementById('btnRefreshOverview').addEventListener('click', loadOverview);
+
+        // ============== BACKUPS TAB ==============
+        let _allBackups = [];
+        let _backupPage = 1;
+        const _backupsPerPage = 10;
+        let _selectedPaths = new Set(); // persists across page navigation
+
+        function clearBackupSelection() {
+            _selectedPaths.clear();
+            renderBackupsPage(_backupPage);
+        }
+
+        function deleteSelectedBackups() {
+            if (_selectedPaths.size === 0) return;
+            const count = _selectedPaths.size;
+            document.getElementById('deleteModalText').innerHTML =
+                `Permanently delete <strong>${count} backup${count > 1 ? 's' : ''}</strong>? This cannot be undone.`;
+            _pendingBulkDelete = true;
+            currentDeletePath = null;
+            document.getElementById('deleteModal').classList.add('show');
+        }
+
+        function renderBackupsPage(page) {
+            const container = document.getElementById('backupsListContainer');
+            const total = _allBackups.length;
+            const totalPages = Math.ceil(total / _backupsPerPage);
+            _backupPage = Math.max(1, Math.min(page, totalPages));
+
+            const start = (_backupPage - 1) * _backupsPerPage;
+            const slice = _allBackups.slice(start, start + _backupsPerPage);
+
+            const pageSelectedCount = slice.filter(b => _selectedPaths.has(b.path)).length;
+            const allPageSelected = pageSelectedCount === slice.length && slice.length > 0;
+            const somePageSelected = pageSelectedCount > 0 && !allPageSelected;
+
+            const rows = slice.map(b => {
+                const checked = _selectedPaths.has(b.path);
+                return `
+                <tr style="${checked ? 'background:#eff6ff;' : ''}">
+                    <td style="padding:10px 14px;text-align:center;width:36px;">
+                        <input type="checkbox" class="backup-cb" data-path="${encodeURIComponent(b.path)}"
+                            ${checked ? 'checked' : ''}
+                            style="width:15px;height:15px;cursor:pointer;accent-color:#3b82f6;">
+                    </td>
+                    <td>
+                        <strong>${formatDate(b.timestamp)}</strong>
+                        <div style="font-size: 11px; color: #6c757d;">${b.name}</div>
+                    </td>
+                    <td>${b.collections}</td>
+                    <td>${b.totalDocuments?.toLocaleString() || 0}</td>
+                    <td>${formatBytes(b.size)}</td>
+                    <td>
+                        <div class="row-actions">
+                            <button class="btn btn-success btn-sm" data-action="restore" data-path="${encodeURIComponent(b.path)}" data-ts="${b.timestamp}">
+                                🔄 Restore
+                            </button>
+                            <button class="btn btn-danger btn-sm" data-action="delete" data-path="${encodeURIComponent(b.path)}" data-ts="${b.timestamp}">
+                                🗑️
+                            </button>
+                        </div>
+                    </td>
+                </tr>`;
+            }).join('');
+
+            // Build page number buttons
+            let pageButtons = '';
+            for (let i = 1; i <= totalPages; i++) {
+                pageButtons += `<button onclick="renderBackupsPage(${i})"
+                    style="min-width:32px;height:32px;padding:0 8px;border:1.5px solid ${i === _backupPage ? '#3b82f6' : '#dee2e6'};
+                    border-radius:6px;background:${i === _backupPage ? '#3b82f6' : '#fff'};
+                    color:${i === _backupPage ? '#fff' : '#374151'};font-weight:600;font-size:13px;cursor:pointer;">${i}</button>`;
+            }
+
+            const selectionBar = _selectedPaths.size > 0 ? `
+                <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:8px;margin-bottom:10px;">
+                    <span style="font-size:13px;font-weight:600;color:#1d4ed8;">🗂 ${_selectedPaths.size} backup${_selectedPaths.size > 1 ? 's' : ''} selected</span>
+                    <button onclick="deleteSelectedBackups()"
+                        style="padding:5px 14px;border:none;border-radius:6px;background:#dc2626;color:#fff;font-weight:700;font-size:12px;cursor:pointer;">
+                        🗑️ Delete Selected
+                    </button>
+                    <button onclick="clearBackupSelection()"
+                        style="padding:5px 12px;border:1.5px solid #cbd5e1;border-radius:6px;background:#fff;color:#64748b;font-weight:600;font-size:12px;cursor:pointer;">
+                        ✕ Clear
+                    </button>
+                </div>` : '';
+
+            container.innerHTML = `
+                ${selectionBar}
+                <table class="backup-table">
+                    <thead>
+                        <tr>
+                            <th style="width:36px;text-align:center;">
+                                <input type="checkbox" id="selectAllCb" ${allPageSelected ? 'checked' : ''}
+                                    style="width:15px;height:15px;cursor:pointer;accent-color:#3b82f6;">
+                            </th>
+                            <th>Date / Name</th>
+                            <th>Collections</th>
+                            <th>Documents</th>
+                            <th>Size</th>
+                            <th style="text-align: right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+                ${totalPages > 1 ? `
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 4px 4px;">
+                    <span style="font-size:12px;color:#6c757d;">
+                        Showing ${start + 1}–${Math.min(start + _backupsPerPage, total)} of ${total} backups
+                    </span>
+                    <div style="display:flex;gap:6px;align-items:center;">
+                        <button onclick="renderBackupsPage(${_backupPage - 1})" ${_backupPage <= 1 ? 'disabled' : ''}
+                            style="height:32px;padding:0 12px;border:1.5px solid #dee2e6;border-radius:6px;background:#fff;
+                            color:${_backupPage <= 1 ? '#adb5bd' : '#374151'};font-weight:600;font-size:13px;cursor:${_backupPage <= 1 ? 'default' : 'pointer'};">
+                            ‹ Prev
+                        </button>
+                        ${pageButtons}
+                        <button onclick="renderBackupsPage(${_backupPage + 1})" ${_backupPage >= totalPages ? 'disabled' : ''}
+                            style="height:32px;padding:0 12px;border:1.5px solid #dee2e6;border-radius:6px;background:#fff;
+                            color:${_backupPage >= totalPages ? '#adb5bd' : '#374151'};font-weight:600;font-size:13px;cursor:${_backupPage >= totalPages ? 'default' : 'pointer'};">
+                            Next ›
+                        </button>
+                    </div>
+                </div>` : ''}
+            `;
+
+            // Select All checkbox, set indeterminate via JS
+            const selectAllCb = container.querySelector('#selectAllCb');
+            if (selectAllCb) {
+                selectAllCb.indeterminate = somePageSelected;
+                selectAllCb.addEventListener('change', () => {
+                    slice.forEach(b => {
+                        if (selectAllCb.checked) _selectedPaths.add(b.path);
+                        else _selectedPaths.delete(b.path);
+                    });
+                    renderBackupsPage(_backupPage);
+                });
+            }
+
+            // Individual row checkboxes
+            container.querySelectorAll('.backup-cb').forEach(cb => {
+                cb.addEventListener('change', () => {
+                    const p = decodeURIComponent(cb.dataset.path);
+                    if (cb.checked) _selectedPaths.add(p);
+                    else _selectedPaths.delete(p);
+                    renderBackupsPage(_backupPage);
+                });
+            });
+
+            // Row action buttons
+            container.querySelectorAll('[data-action]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const action = btn.dataset.action;
+                    const path = decodeURIComponent(btn.dataset.path);
+                    const ts = btn.dataset.ts;
+                    if (action === 'restore') openRestoreModal(path, ts);
+                    else if (action === 'delete') openDeleteModal(path, ts);
+                });
+            });
+        }
+
+        async function loadBackups() {
+            const container = document.getElementById('backupsListContainer');
+            container.innerHTML = '<div class="empty-state"><div class="icon">⏳</div><div class="title">Loading...</div></div>';
+            
+            try {
+                const result = await api.listBackups();
+                if (!result.success) throw new Error(result.error || 'Unknown error');
+                
+                _allBackups = result.backups || [];
+                _selectedPaths.clear();
+
+                if (_allBackups.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="icon">📦</div>
+                            <div class="title">No backups yet</div>
+                            <p>Run a backup to see it here</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                renderBackupsPage(1);
+            } catch (err) {
+                showToast(`Error: ${err.message}`, 'error');
+                container.innerHTML = `<div class="empty-state"><div class="icon">❌</div><div class="title">Failed to load</div><p>${err.message}</p></div>`;
+            }
+        }
+
+        document.getElementById('btnRefreshBackups').addEventListener('click', loadBackups);
+
+        // ============== RESTORE MODAL ==============
+        let currentRestorePath = null;
+
+        function openRestoreModal(path, timestamp) {
+            currentRestorePath = path;
+            document.getElementById('restoreModalText').innerHTML = 
+                `Restore backup from <strong>${formatDate(timestamp)}</strong>?`;
+            document.getElementById('restoreModal').classList.add('show');
+        }
+
+        document.getElementById('restoreCancelBtn').addEventListener('click', () => {
+            document.getElementById('restoreModal').classList.remove('show');
+            currentRestorePath = null;
+        });
+
+        document.getElementById('restoreConfirmBtn').addEventListener('click', async () => {
+            if (!currentRestorePath) return;
+            
+            const confirmBtn = document.getElementById('restoreConfirmBtn');
+            const dropExisting = document.getElementById('restoreDropExisting').checked;
+            
+            confirmBtn.disabled = true;
+            confirmBtn.innerHTML = '<span class="spinner"></span> Restoring...';
+            showToast('Restore started... do not close the app', 'info');
+            
+            try {
+                const result = await api.restoreBackup(currentRestorePath, { dropExisting });
+                
+                if (result.success) {
+                    const restoredCount = (result.restored || []).filter(r => !r.error).length;
+                    const sizeMB = (result.size / 1024 / 1024).toFixed(2);
+                    const durationSec = (result.durationMs / 1000).toFixed(1);
+                    showToast(`✅ Restored ${restoredCount} collections, ${result.totalDocuments} docs (${sizeMB} MB, ${durationSec}s)! App will restart in 2 seconds...`, 'success', 10000);
+                    document.getElementById('restoreModal').classList.remove('show');
+                } else {
+                    showToast(`Restore failed: ${result.error}`, 'error', 6000);
+                }
+            } catch (err) {
+                showToast(`Error: ${err.message}`, 'error', 6000);
+            } finally {
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = '🔄 Restore Now';
+                currentRestorePath = null;
+            }
+        });
+
+        // ============== DELETE MODAL ==============
+        let currentDeletePath = null;
+        let _pendingBulkDelete = false;
+
+        function openDeleteModal(path, timestamp) {
+            currentDeletePath = path;
+            _pendingBulkDelete = false;
+            document.getElementById('deleteModalText').innerHTML = 
+                `Permanently delete backup from <strong>${formatDate(timestamp)}</strong>?`;
+            document.getElementById('deleteModal').classList.add('show');
+        }
+
+        document.getElementById('deleteCancelBtn').addEventListener('click', () => {
+            document.getElementById('deleteModal').classList.remove('show');
+            currentDeletePath = null;
+            _pendingBulkDelete = false;
+        });
+
+        document.getElementById('deleteConfirmBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('deleteConfirmBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Deleting...';
+
+            try {
+                if (_pendingBulkDelete) {
+                    // Bulk delete
+                    const paths = [..._selectedPaths];
+                    let failed = 0;
+                    for (const p of paths) {
+                        try {
+                            const r = await api.deleteBackup(p);
+                            if (r.success) _selectedPaths.delete(p);
+                            else failed++;
+                        } catch { failed++; }
+                    }
+                    document.getElementById('deleteModal').classList.remove('show');
+                    if (failed === 0) showToast(`${paths.length} backup${paths.length > 1 ? 's' : ''} deleted`, 'success');
+                    else showToast(`Deleted ${paths.length - failed}, failed ${failed}`, 'error');
+                    _pendingBulkDelete = false;
+                    const pageToRestore = _backupPage;
+                    await loadBackups();
+                    renderBackupsPage(pageToRestore);
+                    loadOverview();
+                } else {
+                    // Single delete
+                    if (!currentDeletePath) return;
+                    const result = await api.deleteBackup(currentDeletePath);
+                    if (result.success) {
+                        showToast('Backup deleted', 'success');
+                        document.getElementById('deleteModal').classList.remove('show');
+                        _selectedPaths.delete(currentDeletePath);
+                        const pageToRestore = _backupPage;
+                        await loadBackups();
+                        renderBackupsPage(pageToRestore);
+                        loadOverview();
+                    } else {
+                        showToast(`Delete failed: ${result.error}`, 'error');
+                    }
+                    currentDeletePath = null;
+                }
+            } catch (err) {
+                showToast(`Error: ${err.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '🗑️ Delete';
+                currentDeletePath = null;
+            }
+        });
+
+        // ============== SETTINGS TAB ==============
+        async function loadSettings() {
+            try {
+                const result = await api.getBackupConfig();
+                if (!result.success) throw new Error(result.error);
+                
+                const config = result.config;
+                document.getElementById('setEnabled').checked = !!config.enabled;
+                document.getElementById('setPath').value = config.path || '';
+                document.getElementById('setFrequency').value = config.frequency || 'daily';
+                document.getElementById('setTime').value = config.time || '02:00';
+                document.getElementById('setDayOfWeek').value = String(config.dayOfWeek ?? 0);
+                document.getElementById('setRetention').value = config.retentionDays || 30;
+                
+                updateSettingsFrequencyUI();
+            } catch (err) {
+                showToast(`Error: ${err.message}`, 'error');
+            }
+        }
+
+        function updateSettingsFrequencyUI() {
+            const freq = document.getElementById('setFrequency').value;
+            document.getElementById('setTimeGroup').style.display = freq === 'hourly' ? 'none' : '';
+            document.getElementById('setDayGroup').style.display = freq === 'weekly' ? '' : 'none';
+        }
+
+        document.getElementById('setFrequency').addEventListener('change', updateSettingsFrequencyUI);
+
+        document.getElementById('btnBrowseSet').addEventListener('click', async () => {
+            try {
+                const folder = await api.browseBackupFolder();
+                if (folder) {
+                    document.getElementById('setPath').value = folder;
+                }
+            } catch (err) {
+                showToast(`Browse failed: ${err.message}`, 'error');
+            }
+        });
+
+        document.getElementById('btnSaveSettings').addEventListener('click', async () => {
+            const config = {
+                enabled: document.getElementById('setEnabled').checked,
+                path: document.getElementById('setPath').value.trim(),
+                frequency: document.getElementById('setFrequency').value,
+                time: document.getElementById('setTime').value,
+                dayOfWeek: parseInt(document.getElementById('setDayOfWeek').value, 10),
+                retentionDays: parseInt(document.getElementById('setRetention').value, 10) || 30
+            };
+            
+            if (config.enabled && !config.path) {
+                showToast('Please select a backup folder', 'warning');
+                return;
+            }
+            if (config.retentionDays < 1 || config.retentionDays > 365) {
+                showToast('Retention must be between 1 and 365 days', 'warning');
+                return;
+            }
+            
+            const btn = document.getElementById('btnSaveSettings');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Saving...';
+            
+            try {
+                const result = await api.saveBackupConfig(config);
+                if (result.success) {
+                    showToast('✅ Settings saved! Scheduler updated.', 'success');
+                } else {
+                    showToast(`Failed: ${result.error}`, 'error');
+                }
+            } catch (err) {
+                showToast(`Error: ${err.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '💾 Save Settings';
+            }
+        });
+
+        document.getElementById('btnReloadSettings').addEventListener('click', loadSettings);
+
+        // ============== SCHEDULING WITH THE OS ==============
+        /*
+         * The command is generated in the main process rather than assembled
+         * here, because it has to contain this machine's real executable path
+         * and the shop's own backup folder. A command with a wrong path in it
+         * is worse than no command: it runs, reports nothing, and the shop
+         * believes the backups are happening.
+         */
+        let _scheduleText = '';
+
+        document.getElementById('btnShowSchedule').addEventListener('click', async () => {
+            const out = document.getElementById('scheduleOutput');
+            const help = document.getElementById('scheduleHelp');
+            const copyBtn = document.getElementById('btnCopySchedule');
+
+            out.style.display = 'block';
+            out.textContent = 'Working out the command for this machine…';
+
+            try {
+                /* Match whatever is on screen, even if it has not been saved
+                   yet - otherwise the printed schedule contradicts the form
+                   directly above it. */
+                const result = await window.electronAPI.getScheduleInstructions({
+                    frequency: document.getElementById('setFrequency').value,
+                    time: document.getElementById('setTime').value,
+                });
+
+                if (!result || !result.success) {
+                    out.textContent =
+                        'Could not build the command: ' +
+                        ((result && result.error) || 'unknown error');
+                    return;
+                }
+
+                _scheduleText = result.text;
+                out.textContent = result.text;
+                help.style.display = 'block';
+                copyBtn.style.display = '';
+            } catch (err) {
+                out.textContent = 'Could not build the command: ' + err.message;
+            }
+        });
+
+        document.getElementById('btnCopySchedule').addEventListener('click', async () => {
+            const btn = document.getElementById('btnCopySchedule');
+            try {
+                await navigator.clipboard.writeText(_scheduleText);
+                btn.innerHTML = '✅ Copied';
+            } catch {
+                /* Clipboard permission can be refused. The text is selectable,
+                   so say so rather than failing silently. */
+                btn.innerHTML = '⚠️ Select and copy it';
+            }
+            setTimeout(() => { btn.innerHTML = '📄 Copy'; }, 2500);
+        });
+
+        // ============== HISTORY TAB ==============
+        let _allHistory = [];
+        let _historyPage = 1;
+        const _historyPerPage = 10;
+
+        function _buildHistoryRow(h) {
+            let statusHtml = '';
+            if (h.status === 'success') statusHtml = '<span class="status-badge status-success">Success</span>';
+            else if (h.status === 'failed') statusHtml = '<span class="status-badge status-failed">Failed</span>';
+            else if (h.status === 'skipped') statusHtml = '<span class="status-badge status-disabled">Skipped (Dedup)</span>';
+            else if (h.status === 'restored') statusHtml = '<span class="status-badge status-running">Restored</span>';
+            else statusHtml = `<span class="status-badge status-idle">${h.status}</span>`;
+
+            const details = h.error
+                ? `<span style="color: #dc3545;">${h.error}</span>`
+                : h.status === 'skipped'
+                ? h.reason || ', '
+                : h.status === 'restored'
+                ? `Restored ${h.collections} collection(s), ${(h.totalDocuments || 0).toLocaleString()} docs from backup`
+                : `${h.collections || 0} collections, ${(h.totalDocuments || 0).toLocaleString()} docs`;
+
+            return `
+                <tr>
+                    <td>${formatDate(h.timestamp)}</td>
+                    <td>${statusHtml}</td>
+                    <td>${details}</td>
+                    <td>${h.size ? formatBytes(h.size) : ', '}</td>
+                    <td>${h.duration ? (h.duration / 1000).toFixed(1) + 's' : ', '}</td>
+                </tr>
+            `;
+        }
+
+        function renderHistoryPage(page) {
+            const container = document.getElementById('historyContainer');
+            const total = _allHistory.length;
+            const totalPages = Math.ceil(total / _historyPerPage);
+            _historyPage = Math.max(1, Math.min(page, totalPages));
+
+            const start = (_historyPage - 1) * _historyPerPage;
+            const slice = _allHistory.slice(start, start + _historyPerPage);
+
+            let pageButtons = '';
+            for (let i = 1; i <= totalPages; i++) {
+                pageButtons += `<button onclick="renderHistoryPage(${i})"
+                    style="min-width:32px;height:32px;padding:0 8px;border:1.5px solid ${i === _historyPage ? '#3b82f6' : '#dee2e6'};
+                    border-radius:6px;background:${i === _historyPage ? '#3b82f6' : '#fff'};
+                    color:${i === _historyPage ? '#fff' : '#374151'};font-weight:600;font-size:13px;cursor:pointer;">${i}</button>`;
+            }
+
+            container.innerHTML = `
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Status</th>
+                            <th>Details</th>
+                            <th>Size</th>
+                            <th>Duration</th>
+                        </tr>
+                    </thead>
+                    <tbody>${slice.map(_buildHistoryRow).join('')}</tbody>
+                </table>
+                ${totalPages > 1 ? `
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 4px 4px;">
+                    <span style="font-size:12px;color:#6c757d;">
+                        Showing ${start + 1}–${Math.min(start + _historyPerPage, total)} of ${total} entries
+                    </span>
+                    <div style="display:flex;gap:6px;align-items:center;">
+                        <button onclick="renderHistoryPage(${_historyPage - 1})" ${_historyPage <= 1 ? 'disabled' : ''}
+                            style="height:32px;padding:0 12px;border:1.5px solid #dee2e6;border-radius:6px;background:#fff;
+                            color:${_historyPage <= 1 ? '#adb5bd' : '#374151'};font-weight:600;font-size:13px;cursor:${_historyPage <= 1 ? 'default' : 'pointer'};">
+                            ‹ Prev
+                        </button>
+                        ${pageButtons}
+                        <button onclick="renderHistoryPage(${_historyPage + 1})" ${_historyPage >= totalPages ? 'disabled' : ''}
+                            style="height:32px;padding:0 12px;border:1.5px solid #dee2e6;border-radius:6px;background:#fff;
+                            color:${_historyPage >= totalPages ? '#adb5bd' : '#374151'};font-weight:600;font-size:13px;cursor:${_historyPage >= totalPages ? 'default' : 'pointer'};">
+                            Next ›
+                        </button>
+                    </div>
+                </div>` : ''}
+            `;
+        }
+
+        async function loadHistory() {
+            const container = document.getElementById('historyContainer');
+            container.innerHTML = '<div class="empty-state"><div class="icon">⏳</div><div class="title">Loading...</div></div>';
+            
+            try {
+                const result = await api.getBackupHistory();
+                if (!result.success) throw new Error(result.error || 'Unknown error');
+                
+                _allHistory = result.history || [];
+                
+                if (_allHistory.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="icon">📜</div>
+                            <div class="title">No history yet</div>
+                            <p>Backup activities will appear here</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                renderHistoryPage(1);
+            } catch (err) {
+                showToast(`Error: ${err.message}`, 'error');
+                container.innerHTML = `<div class="empty-state"><div class="icon">❌</div><div class="title">Failed to load</div><p>${err.message}</p></div>`;
+            }
+        }
+
+        document.getElementById('btnRefreshHistory').addEventListener('click', loadHistory);
+
+        // ============== SCHEDULED BACKUP EVENTS ==============
+        // Listen for scheduled backups completing in the background
+        if (api.onBackupResult) {
+            api.onBackupResult((result) => {
+                if (result.success) {
+                    if (result.skipped) {
+                        showToast('📦 Scheduled backup skipped (no data changes)', 'warning', 5000);
+                    } else {
+                        showToast(`📦 Scheduled backup complete: ${result.collections} collections, ${formatBytes(result.size)}`, 'success', 5000);
+                    }
+                } else {
+                    showToast(`📦 Scheduled backup failed: ${result.error}`, 'error', 8000);
+                }
+                
+                // Refresh active tab
+                const activeTab = document.querySelector('.tab.active')?.dataset.tab;
+                if (activeTab === 'overview') loadOverview();
+                else if (activeTab === 'backups') loadBackups();
+                else if (activeTab === 'history') loadHistory();
+            });
+        }
+
+        // ============== INITIAL LOAD ==============
+        loadOverview();
+    </script>
+</body>
+</html>

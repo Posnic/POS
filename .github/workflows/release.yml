@@ -1,0 +1,302 @@
+# Tagged public releases for Windows, macOS and Linux.
+#
+#   git tag v1.4.0 && git push origin v1.4.0
+#
+# Builds the stock Posnic app on each platform, attaches the installers to a
+# GitHub Release and writes the checksums people need to verify what they
+# downloaded. White-label builds are a different pipeline (Posnic/build) and
+# deliberately never publish here.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to build (for re-running a failed release)"
+        required: true
+
+permissions:
+  contents: write   # needed to create the release and upload assets
+
+jobs:
+  # A tag that fails its own tests should never reach a download page.
+  #
+  # This used to be a single job running the API unit suite and nothing else.
+  # A release could therefore ship with drifted API docs, a lint error, or a
+  # module required at runtime but missing from the packaged app - the check
+  # that catches that last one is in CI, and a release never ran it. A release
+  # gate should be at least as strict as a pull request, not weaker than one.
+  #
+  # Calling ci.yml rather than copying its jobs means the two cannot drift.
+  #
+  # One limit worth knowing: a reusable workflow always runs against the ref
+  # that triggered it. On the normal path - pushing a v* tag - that is the tag,
+  # which is what we want. On a workflow_dispatch re-run it is the default
+  # branch, so the tag's own build is still gated, but by main's tests. Re-run
+  # the tag push itself if that distinction matters.
+  verify:
+    name: Full CI
+    uses: ./.github/workflows/ci.yml
+    secrets: inherit
+
+  gate:
+    name: Safe to publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      # verifyUpdateCodeSignature has to stay false while builds are unsigned -
+      # turning it on with no signature to check makes every update fail. The
+      # risk is not the flag; it is that the certificate arrives, signing gets
+      # configured, and nobody remembers this one line. Then the update channel
+      # is live, public and unverified, and nothing says so.
+      #
+      # So a release that would publish public installers fails here unless
+      # verification is on, or the run is explicitly marked as a deliberate
+      # unsigned pre-release.
+      - name: Update trust and version format
+        env:
+          POSNIC_ALLOW_UNSIGNED_RELEASE: ${{ vars.POSNIC_ALLOW_UNSIGNED_RELEASE }}
+        run: node scripts/check-release-gate.js
+
+  build:
+    name: ${{ matrix.name }}
+    needs: [verify, gate]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: windows-latest, name: Windows, flag: '--win --x64' }
+          - { os: macos-latest,   name: macOS,   flag: '--mac' }
+          - { os: ubuntu-latest,  name: Linux,   flag: '--linux --x64' }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: '${{ inputs.tag || github.ref }}'
+          submodules: recursive
+
+      - uses: actions/setup-node@v5
+        with: { node-version: 22 }
+
+      - name: Install
+        run: npm ci
+
+      # The frontend is a separate package with its own lockfile, and gulp lives
+      # only in its node_modules. prepare:bundle below runs that gulp build, so
+      # without this the release build fails on a runner and works on every
+      # machine that happens to have installed the frontend once.
+      - name: Install the frontend build toolchain
+        working-directory: frontend
+        run: npm ci
+
+      # The API's dependencies, because prepare:api-runtime zips them into the
+      # installer. It wants the full tree rather than a production one: it works
+      # out which top-level packages are dev-only with `npm ls --omit=dev` and
+      # drops those itself, so --omit=dev here would leave it unable to tell.
+      #
+      # ci.yml has always installed these. release.yml never did, which is why
+      # every platform failed in prepare:bundle rather than at a build step.
+      - name: Install the API dependencies
+        working-directory: api
+        run: npm ci
+
+      # MongoDB ships inside the installer and its binaries are not in git -
+      # they are 90 MB of someone else's build output. A developer gets them
+      # from download-mongodb.bat; a runner has to fetch them itself, and
+      # without this the packaged app has no database to start.
+      # The database, for whichever machine this is.
+      #
+      # This step used to run only on Windows, so the macOS and Linux packages
+      # shipped with no database at all and could not open. Every platform gets
+      # its own mongod now, from the same pinned version.
+      #
+      # macOS builds both architectures from one runner, so both binaries are
+      # fetched and electron-builder picks per-arch through ${arch} below.
+      - name: Fetch the bundled MongoDB
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION=$(grep -oE 'set MONGODB_VERSION=[0-9.]+' download-mongodb.bat | cut -d= -f2)
+          echo "MongoDB $VERSION, the version download-mongodb.bat pins"
+
+          fetch_tgz() {   # url, destination bin directory
+            curl -fsSL -o mongo.tgz "$1"
+            mkdir -p "$2"
+            # --strip-components drops the versioned top directory the archive
+            # carries, so the binary lands where the app looks for it.
+            # GNU tar needs --wildcards for a glob and BSD tar rejects the
+            # flag, so ask tar which it is rather than guessing by platform.
+            if tar --version 2>/dev/null | grep -qi 'gnu tar'; then
+              tar -xzf mongo.tgz --wildcards --strip-components=2 -C "$2" '*/bin/mongod'
+            else
+              tar -xzf mongo.tgz --strip-components=2 -C "$2" '*/bin/mongod'
+            fi
+            chmod +x "$2/mongod"
+            rm -f mongo.tgz
+          }
+
+          case "${{ matrix.name }}" in
+            Windows)
+              curl -fsSL -o mongodb.zip                 "https://fastdl.mongodb.org/windows/mongodb-windows-x86_64-${VERSION}.zip"
+              7z x -bso0 mongodb.zip -omongodb-temp
+              mkdir -p mongodb/bin
+              cp "mongodb-temp/mongodb-win32-x86_64-windows-${VERSION}/bin/mongod.exe" mongodb/bin/
+              # mongod links against the Visual C++ runtime. A runner has it in
+              # System32; a shop's clean Windows may not, so the three DLLs
+              # travel with it - the same ones bundle-vc-runtime.js collects.
+              for dll in msvcp140.dll vcruntime140.dll vcruntime140_1.dll; do
+                cp "/c/Windows/System32/$dll" mongodb/bin/
+              done
+              rm -rf mongodb.zip mongodb-temp
+              node scripts/check-mongodb-binaries.js
+              ;;
+            macOS)
+              fetch_tgz "https://fastdl.mongodb.org/osx/mongodb-macos-x86_64-${VERSION}.tgz"  mongodb-x64/bin
+              fetch_tgz "https://fastdl.mongodb.org/osx/mongodb-macos-arm64-${VERSION}.tgz"   mongodb-arm64/bin
+              ls -l mongodb-x64/bin/mongod mongodb-arm64/bin/mongod
+              ;;
+            Linux)
+              fetch_tgz "https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-ubuntu2204-${VERSION}.tgz" mongodb/bin
+              ls -l mongodb/bin/mongod
+              ;;
+          esac
+
+      # Everything the installer packages beyond source: the API's node_modules
+      # zip, the built frontend, the sync agent, the VC++ runtime. All of it is
+      # generated and all of it is gitignored, so a fresh checkout has none of
+      # it.
+      #
+      # This step did not exist. `npx electron-builder` was called directly,
+      # skipping the prebuild hook that produces these locally - so a release
+      # built an installer whose extraResources were simply absent. The apps
+      # this workflow produced were not the app anyone had ever tested.
+      - name: Prepare everything the installer bundles
+        run: npm run prepare:bundle
+
+      # electron-builder would publish to the release by itself; it is turned
+      # off here so that a half-finished matrix never leaves a release with
+      # only one platform attached.
+      - name: Build
+        run: npx electron-builder ${{ matrix.flag }} --publish never
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Windows does not include the Visual C++ runtime. A binary that needs it
+      # and cannot find one runs on every machine we test and dies with
+      # 0xC0000135 on a customer's clean install, before it can log anything.
+      # Checked here because that is the last point where the answer is still
+      # cheap.
+      - name: Native binaries can load on a clean Windows
+        if: matrix.name == 'Windows'
+        run: node scripts/check-native-runtime.js
+
+      - name: Upload installers
+        uses: actions/upload-artifact@v5
+        with:
+          name: ${{ matrix.name }}
+          path: |
+            dist/*.exe
+            dist/*.dmg
+            dist/*.zip
+            dist/*.AppImage
+            dist/*.deb
+            # The update manifest, without which auto-update cannot work at all:
+            # electron-updater fetches latest.yml - latest-mac.yml, latest-linux.yml
+            # on the others - to learn what the newest version is. It was built on
+            # every run and then thrown away, so every update check 404'd.
+            dist/latest*.yml
+            # Blockmaps let an update fetch only the changed parts of an installer
+            # rather than the whole 159 MB.
+            dist/*.blockmap
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    name: Publish release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with: { ref: '${{ inputs.tag || github.ref }}' }
+
+      - uses: actions/download-artifact@v6
+        with: { path: artifacts }
+
+      # Anyone downloading a point-of-sale binary should be able to check it
+      # arrived intact. One file, one line per installer.
+      - name: Collect and checksum
+        run: |
+          mkdir -p release
+          find artifacts -type f \( -name '*.exe' -o -name '*.dmg' -o -name '*.zip' \
+            -o -name '*.AppImage' -o -name '*.deb' -o -name 'latest*.yml' \
+            -o -name '*.blockmap' \) -exec mv {} release/ \;
+          cd release
+          # The checksum file lists what a person downloads. latest.yml carries its
+          # own hashes for the updater and a blockmap is an implementation detail, so
+          # listing them would only add noise to the thing the release notes tell
+          # people to check.
+          sha256sum $(ls | grep -vE 'latest.*\.yml$|\.blockmap$') > SHA256SUMS.txt
+          echo "Publishing:"; ls -lh
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.tag || github.ref_name }}
+          files: release/*
+          generate_release_notes: true
+          draft: true          # a human decides when it goes public
+          # A pre-release by default, until the installers are signed: with
+          # allowPrerelease false, electron-updater ignores pre-releases, so no
+          # existing installation is pushed a beta it did not ask for.
+          #
+          # That is also why an update cannot be tested against one. Set the
+          # repository variable POSNIC_PRERELEASE to "no" for a release that
+          # should be offered to installed copies - which is what verifying the
+          # update path requires.
+          prerelease: ${{ vars.POSNIC_PRERELEASE != 'no' }}
+          body: |
+            ## Beta - please read before installing
+
+            This is an early public build. It works, it is tested, and it is **not
+            finished**. Expect rough edges, and please report them.
+
+            ### The installers are not signed yet
+
+            A code signing certificate is on the way. Until it arrives:
+
+            - **Windows** will say *"Windows protected your PC"* and name an unknown
+              publisher. Choose **More info -> Run anyway**.
+            - **macOS** will refuse to open it. Right-click the app -> **Open**, or use
+              *System Settings -> Privacy & Security -> Open Anyway*.
+
+            That warning is accurate. You are trusting the download rather than a
+            certificate, so **check `SHA256SUMS.txt` against your file before installing**,
+            and download only from this releases page.
+
+            Automatic updates are not signature-verified in this build either. Posnic
+            checks the download against the hash it was told to expect, but nothing yet
+            proves that hash came from us.
+
+            ### What to expect
+
+            - Your data stays on your own computer. No account, and no internet needed.
+            - **Take your own backups.** *Backup Manager -> Backup Now*, and keep a copy on
+              another machine or a USB drive. This is a beta holding your sales.
+            - Printing, scales and cash drawers are tested, but not on every model. Test
+              your hardware from *Config -> Device Setup* before a trading day.
+            - First launch takes a few minutes while the database is prepared. Later
+              launches take seconds.
+
+            ### If something goes wrong
+
+            Open an issue with what you did, what happened, and your log file attached -
+            `%APPDATA%\posnic\app.log` on Windows. For an urgent problem where a shop
+            cannot trade: **+91 94941 11161**, answered any hour.
+
+            Free and open source under AGPL-3.0-only. Posnic Cloud (sync, off-site backups,
+            remote dashboard) is a separate paid service, and nothing here needs it.

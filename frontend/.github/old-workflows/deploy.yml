@@ -1,0 +1,46 @@
+name: Custom Deployment
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment [test || production]'
+        required: true
+        default: 'test'
+jobs:
+  # test:
+  #   ...
+  deploy:
+    name: "Deploy"
+    runs-on: ubuntu-latest
+    if: github.event.inputs.environment == 'test' || github.event.inputs.environment == 'production'
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@master
+      # Sets up node
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 12
+      - run: npm ci
+      - run: gulp build
+
+      - uses: jakejarvis/s3-sync-action@master
+        if: github.event.inputs.environment == 'test'
+        with:
+          args: --acl public-read --follow-symlinks --delete
+        env:
+          AWS_S3_BUCKET: ${{ secrets.FRONTEND_TEST_S3_BUCKET }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.FRONTEND_TEST_S3_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.FRONTEND_TEST_S3_KEY }}
+          AWS_REGION: 'ap-south-1'   # optional: defaults to us-east-1
+          SOURCE_DIR: 'public'      # optional: defaults to entire repository
+      
+      - uses: jakejarvis/s3-sync-action@master
+        if: github.event.inputs.environment == 'production'
+        with:
+          args: --acl public-read --follow-symlinks --delete
+        env:
+          AWS_S3_BUCKET: ${{ secrets.FRONTEND_PRODUCTION_S3_BUCKET }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.FRONTEND_PRODUCTION_S3_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.FRONTEND_PRODUCTION_S3_KEY }}
+          AWS_REGION: 'ap-south-1'   # optional: defaults to us-east-1
+          SOURCE_DIR: 'public'      # optional: defaults to entire repository

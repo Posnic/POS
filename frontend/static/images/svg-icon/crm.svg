@@ -1,0 +1,25 @@
+<svg id="Big_Icons" data-name="Big Icons" xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50">
+  <defs>
+    <style>
+      .cls-1, .cls-2 {
+        fill: none;
+        stroke: #fff;
+        stroke-width: 3px;
+      }
+
+      .cls-1, .cls-3 {
+        fill-rule: evenodd;
+      }
+
+      .cls-3 {
+        fill: #fff;
+        opacity: 0.25;
+      }
+    </style>
+  </defs>
+  <g id="CRM">
+    <path class="cls-1" d="M5.673,47a19.327,19.327,0,1,1,38.654,0"/>
+    <circle class="cls-2" cx="25" cy="15.734" r="10"/>
+    <path id="Ellipse_3_copy" data-name="Ellipse 3 copy" class="cls-3" d="M16.78,21.468a10.028,10.028,0,1,1,18.234-5.741"/>
+  </g>
+</svg>

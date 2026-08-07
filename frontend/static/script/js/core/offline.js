@@ -1,0 +1,3 @@
+PosnicPro.handleOffline = function() {
+
+}

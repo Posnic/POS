@@ -1,0 +1,52 @@
+<div id="infobar-settings-sidebar-customercategory" class="infobar-settings-sidebar scroll_width" style="z-index: 1005">
+    <div class="infobar-settings-sidebar-head d-flex w-100 justify-content-between">
+        <h4 id="exampleModalCenterTitle"><span id="customercategory_title">Add</span>&nbsp;<lang class="lang_customer_category_title">Customer Category</lang></h4>
+        <a href="javascript:void(0)" class="infobar-settings-close" data-id="customercategory">
+            <img src="static/images/svg-icon/close.svg" class="img-fluid menu-hamburger-close" alt="close">
+        </a>
+    </div>
+    <div class="infobar-settings-sidebar-body">
+        <div class="custom-mode-setting  loader-customercategory">
+            <!--<form id='customercategory_add'>-->
+            <form class='customercategory_add'>
+
+                <div class="form-row">
+                    <div class="form-group col-md-12">
+                        <label for="customercategory_name">
+                            <lang class="lang_name_title"> Name </lang> 
+                            <span class="text-danger">*</span> 
+                        </label>
+                        <input type="text" class="form-control border-control" name="name" id="customercategory_name" minlength="3" maxlength="50" placeholder="Enter the name"  autocomplete="off" required>
+                        <input type="hidden" name="id" id="customercategory_id">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-12">
+                        <label for="customercategory_description">
+                            <lang class="lang_description_title"> Description </lang>
+                        </label>
+                        <textarea name="description" id="customercategory_description" class="form-control border-control" minlength="3" maxlength="500" placeholder="Enter the Description"></textarea>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-12">
+                        <div class="pull-right">
+                            <button type="button" class="btn btn-outline-secondary infobar-settings-reset" id="customercategory_reset" onclick="PosnicPro.customercategory.categoryClearForm();"><i class="feather icon-refresh-ccw mr-2"></i><lang class="lang_clear_title"> Clear</lang></button>
+                            <button type="button" class="btn btn-outline-secondary infobar-settings-reset customercategory_edit_reset" id="customercategory_edit_reset" onclick="PosnicPro.customercategory.resetEditButton(this.id);"><i class="feather icon-refresh-ccw mr-2"></i><lang class="lang_reset_title"> Reset</lang></button>
+                            <button type="button" class="btn btn-outline-danger infobar-settings-close" data-id="customercategory"><i class="feather icon-x-circle mr-2"></i><lang class="lang_close_title"> Close</lang>
+                            </button>
+                            <button type="submit" class="btn btn-outline-primary" id="customercategorySubmitForm"><i class="feather icon-save mr-2"></i><span id="customercategory_button_title"><lang class="lang_save_title">Save</lang></span></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row" id="show_last_created_customercategory" style="display:none;">
+                    <div class="form-group col-md-12">
+                        <div class="pull-right">
+                            <h6>Last Created Record <a href="#" id="last_created_customercategory">View</a></h6>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

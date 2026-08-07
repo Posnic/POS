@@ -1,0 +1,28 @@
+<svg id="Big_Icons" data-name="Big Icons" xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50">
+  <defs>
+    <style>
+      .cls-1, .cls-2 {
+        fill: none;
+        stroke: #fff;
+        stroke-width: 3px;
+      }
+
+      .cls-1, .cls-3 {
+        fill-rule: evenodd;
+      }
+
+      .cls-3 {
+        fill: #fff;
+        opacity: 0.25;
+      }
+    </style>
+  </defs>
+  <g id="eCommerce">
+    <path id="Rounded_Rectangle_1" data-name="Rounded Rectangle 1" class="cls-1" d="M13.153,11.123H37.847A2.86,2.86,0,0,1,40.7,13.994l2.849,29.669A2.86,2.86,0,0,1,40.7,46.534H10.3a2.86,2.86,0,0,1-2.849-2.871L10.3,13.994A2.86,2.86,0,0,1,13.153,11.123Z"/>
+    <circle class="cls-2" cx="19.391" cy="19.25" r="2.484"/>
+    <path id="Ellipse_1_copy" data-name="Ellipse 1 copy" class="cls-1" d="M31.6,16.845a2.414,2.414,0,1,1-2.479,2.413A2.447,2.447,0,0,1,31.6,16.845Zm-3.725-6.722"/>
+    <path id="Rounded_Rectangle_2" data-name="Rounded Rectangle 2" class="cls-1" d="M18.852,16.865V6.337A2.86,2.86,0,0,1,21.7,3.466h7.6a2.86,2.86,0,0,1,2.849,2.871V16.865"/>
+    <path class="cls-1" d="M6.505,44.62"/>
+    <path class="cls-3" d="M10.3,36.006l31.341-4.785,0.95,13.4L8.4,45.577Z"/>
+  </g>
+</svg>

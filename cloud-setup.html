@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Posnic Cloud</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f6fa;
+            padding: 24px;
+            color: #333;
+        }
+        h1 { font-size: 22px; margin-bottom: 4px; }
+        .subtitle { color: #64748b; font-size: 13px; margin-bottom: 18px; }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 18px 20px;
+            margin-bottom: 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .card h3 { font-size: 14px; margin-bottom: 10px; color: #444; }
+        .status-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 13.5px; }
+        .status-row .value { font-weight: 600; text-align: right; }
+        .ok { color: #16a34a; }
+        .bad { color: #dc2626; }
+        .warn { color: #d97706; }
+        .muted { color: #94a3b8; font-weight: 400; }
+        label { display: block; font-size: 13px; font-weight: 600; margin: 12px 0 6px; color: #555; }
+        input {
+            width: 100%; padding: 10px 12px; border: 2px solid #e0e0e0;
+            border-radius: 8px; font-size: 14px;
+        }
+        input:focus { outline: none; border-color: #3D85C6; }
+        .btn {
+            width: 100%; margin-top: 14px; padding: 12px; border: none;
+            border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;
+            background: #3D85C6; color: white;
+        }
+        .btn.secondary { background: #eef0ff; color: #4f46e5; border: 1px solid #d7dbff; }
+        .btn.danger { background: #fff1f1; color: #dc2626; border: 1px solid #ffd7d7; }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn-row { display: flex; gap: 10px; }
+        .btn-row .btn { margin-top: 10px; }
+        .error-box {
+            background: #fef2f2; border: 1px solid #ffdada; color: #b91c1c;
+            border-radius: 8px; padding: 10px 12px; font-size: 12.5px; margin-top: 10px;
+            word-break: break-word;
+        }
+        .error { color: #dc2626; font-size: 13px; margin-top: 10px; display: none; }
+        .progress { color: #475569; font-size: 13px; margin-top: 10px; display: none; }
+        .links { text-align: center; margin-top: 12px; font-size: 13px; }
+        .links a { color: #3D85C6; text-decoration: none; font-weight: 600; }
+        #connectedView, #disconnectedView { display: none; }
+    </style>
+  <!-- The shop's theme, applied over this window's own styles. See window-theme.js. -->
+  <link rel="stylesheet" href="window-theme.css">
+  <script src="window-theme.js"></script>
+</head>
+<body>
+    <h1>☁️ Posnic Cloud</h1>
+    <div class="subtitle">Offline-safe sync between this shop and your cloud account.</div>
+
+    <!-- Connected: status + management -->
+    <div id="connectedView">
+        <div class="card">
+            <h3>Sync Status</h3>
+            <div class="status-row"><span>Connection</span><span class="value" id="connState">checking…</span></div>
+            <div class="status-row"><span>Sync</span><span class="value" id="syncState">, </span></div>
+            <div class="status-row"><span>Initial data download</span><span class="value" id="initialSync">, </span></div>
+            <div class="status-row"><span>Last successful sync</span><span class="value" id="lastSync">, </span></div>
+            <div class="status-row"><span>Waiting to upload</span><span class="value" id="pending">, </span></div>
+            <div class="status-row"><span>Live lane (sales/stock)</span><span class="value muted" id="laneRealtime">, </span></div>
+            <div class="status-row"><span>Batch lane (masters)</span><span class="value muted" id="laneBatch">, </span></div>
+            <div class="error-box" id="lastErrorBox" style="display:none"></div>
+        </div>
+        <div class="card">
+            <h3>Manage</h3>
+            <div class="btn-row">
+                <button class="btn secondary" id="viewLogBtn">View Sync Log</button>
+                <button class="btn secondary" id="refreshBtn">Refresh</button>
+            </div>
+            <button class="btn danger" id="disconnectBtn">Disconnect this device from Cloud</button>
+        </div>
+    </div>
+
+    <!-- Not connected: connect form + subscription link -->
+    <div id="disconnectedView">
+        <div class="card">
+            <h3>Connect this machine to Posnic Cloud</h3>
+            <label>Cloud Server</label>
+            <input type="text" id="server" value="https://gateway.posnic.com">
+            <label>Email</label>
+            <input type="email" id="email" autocomplete="username">
+            <label>Password</label>
+            <input type="password" id="password" autocomplete="current-password">
+            <button class="btn" id="connectBtn">Connect &amp; Start Sync</button>
+            <div class="error" id="error"></div>
+            <div class="progress" id="progress"></div>
+        </div>
+        <div class="links">
+            Don't have a subscription yet?
+            <a href="#" id="signup">Create your Posnic Cloud account →</a>
+        </div>
+    </div>
+
+    <script>
+        const $ = (id) => document.getElementById(id);
+        const fmtTime = (t) => t ? new Date(t).toLocaleString() : ', ';
+        const fmtLane = (l) => l ? `${fmtTime(l.at)} (↑${l.pushed || 0} ↓${l.pulled || 0})` : ', ';
+
+        async function refreshStatus() {
+            if (!window.electronAPI?.cloud) return;
+            const status = await window.electronAPI.cloud.status();
+
+            $('connectedView').style.display = status.connected ? 'block' : 'none';
+            $('disconnectedView').style.display = status.connected ? 'none' : 'block';
+            if (!status.connected) return;
+
+            const sync = status.sync;
+            $('connState').textContent = 'Activated';
+            $('connState').className = 'value ok';
+
+            if (!sync) {
+                $('syncState').textContent = 'Agent starting…';
+                $('syncState').className = 'value warn';
+                return;
+            }
+            $('syncState').textContent = sync.online ? 'Online, syncing' : 'Offline, retrying automatically';
+            $('syncState').className = 'value ' + (sync.online ? 'ok' : 'bad');
+            $('initialSync').textContent = sync.initialSyncComplete
+                ? 'Complete'
+                : (sync.initialProgress
+                    ? 'Downloading… ' + sync.initialProgress.percent + '% (' + sync.initialProgress.localDocs.toLocaleString() + ' / ' + sync.initialProgress.cloudDocs.toLocaleString() + ')'
+                    : 'In progress…');
+            $('initialSync').className = 'value ' + (sync.initialSyncComplete ? 'ok' : 'warn');
+            $('lastSync').textContent = fmtTime(sync.lastSuccessAt);
+            $('pending').textContent = sync.pending == null ? ', ' : `${sync.pending} record(s)`;
+            $('pending').className = 'value ' + (sync.pending > 0 ? 'warn' : 'ok');
+            $('laneRealtime').textContent = fmtLane(sync.last_realtime);
+            $('laneBatch').textContent = fmtLane(sync.last_batch);
+
+            const showError = sync.lastError && !sync.online;
+            $('lastErrorBox').style.display = showError ? 'block' : 'none';
+            if (showError) {
+                $('lastErrorBox').textContent =
+                    `Last error (${fmtTime(sync.lastErrorAt)}): ${sync.lastError}, ` +
+                    'billing continues normally; sync resumes when the connection returns.';
+            }
+        }
+
+        $('signup').addEventListener('click', (e) => {
+            e.preventDefault();
+            window.electronAPI?.cloud?.signup();
+        });
+        $('viewLogBtn').addEventListener('click', () => window.electronAPI?.desktop?.open('log'));
+        $('refreshBtn').addEventListener('click', refreshStatus);
+
+        $('disconnectBtn').addEventListener('click', async () => {
+            const sure = confirm(
+                'Disconnect this device from Posnic Cloud?\n\n' +
+                'Local data stays untouched and the app keeps working offline. ' +
+                'Sync stops until you connect again.'
+            );
+            if (!sure) return;
+            const result = await window.electronAPI.cloud.disconnect();
+            if (!result.ok) alert('Could not disconnect: ' + (result.error || 'unknown error'));
+            refreshStatus();
+        });
+
+        $('connectBtn').addEventListener('click', async () => {
+            const btn = $('connectBtn');
+            $('error').style.display = 'none';
+            const details = {
+                serverUrl: $('server').value.trim(),
+                email: $('email').value.trim(),
+                password: $('password').value
+            };
+            if (!details.email || !details.password) {
+                $('error').textContent = 'Please enter your cloud email and password.';
+                $('error').style.display = 'block';
+                return;
+            }
+            btn.disabled = true;
+            $('progress').textContent = 'Connecting…';
+            $('progress').style.display = 'block';
+
+            const result = await window.electronAPI.cloud.activate(details);
+            btn.disabled = false;
+            if (!result.ok) {
+                $('progress').style.display = 'none';
+                $('error').textContent = result.error || 'Activation failed.';
+                $('error').style.display = 'block';
+                return;
+            }
+            $('progress').style.display = 'none';
+            refreshStatus();
+        });
+
+        // Enter connects, the way it would if these inputs were in a form.
+        // They are not, so the browser had nothing to submit and Enter did
+        // nothing after typing a password.
+        for (const id of ['server', 'email', 'password']) {
+            const field = document.getElementById(id);
+            if (!field) continue;
+            field.addEventListener('keydown', (event) => {
+                if (event.key !== 'Enter' || event.isComposing) return;
+                const button = document.getElementById('connectBtn');
+                if (!button || button.disabled) return;
+                event.preventDefault();
+                button.click();
+            });
+        }
+
+        refreshStatus();
+        setInterval(refreshStatus, 5000);
+    </script>
+</body>
+</html>

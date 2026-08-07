@@ -1,0 +1,4 @@
+name,phone,email,address,country,state,city
+"Sunrise Wholesale","9000000101","orders@example.com","18 Industrial Estate","India","Karnataka","Bengaluru"
+"Coastal Traders","9000000102","sales@example.com","5 Harbour Road","India","Kerala","Kochi"
+"Anonymous","","","","","",""

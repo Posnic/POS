@@ -1,0 +1,117 @@
+<div id="infobar-settings-sidebar-category" class="infobar-settings-sidebar scroll_width" style="z-index: 1005">
+    <div class="infobar-settings-sidebar-head d-flex w-100 justify-content-between">
+        <h4 id="exampleModalCenterTitle"><span id="category_title">Add</span>&nbsp;<lang class="lang_category_title">Category</lang></h4>
+        <a href="javascript:void(0)" class="infobar-settings-close" data-id="category">
+            <img src="static/images/svg-icon/close.svg" class="img-fluid menu-hamburger-close" alt="close">
+        </a>
+    </div>
+    <div class="infobar-settings-sidebar-body">
+        <div class="custom-mode-setting  loader-category">
+            <!--<form id='category_add'>-->
+            <form class='category_add' name="category_image_upload_form" id="category_image_upload_form" method = "POST" enctype = "multipart/form-data">
+
+                <div class="profilebox text-center">
+                    <div class="form-row">
+                        <div class="col-md-12 itemImageSize">
+                            <ul class="list-inline">
+                                <li class="list-inline-item">
+                                    <img src="static/images/default/category.svg" class="img_upload_temp_view" id="category_image_upload" alt="NoImg">
+                                    <div class="profilename">
+                                        <label for="upload_file_category">
+                                            <span class="btn btn-success-rgba font-18 category-image-label-title" style="cursor:pointer"><i class="feather icon-edit"></i></span>
+                                         </label>
+                                         <label for="delete_file_category">
+                                            <a href="javascript:void(0)" class="btn btn-danger-rgba font-18" style="cursor:pointer" onclick="PosnicPro.categories.removeCategoryImage()"><i class="feather icon-trash"></i></a>
+                                        </label>
+                                    </div>
+                                    <input type="file" name="ImageCategory" id="upload_file_category" class="inputfile inputfile-1" onchange="PosnicPro.imageReadURL(this, 'category', '205', '160');"
+                                           accept=".gif, .jpg, .png, .jpeg, .bmp" data-placeholder="No file" data-btnclass="btn-light"
+                                           tabindex="-1" style="position: absolute; clip: rect(0px, 0px, 0px, 0px);" hidden>
+                                    <input type="hidden" name="category_image" id="category_image">
+                                    <input type="hidden" name="get_category_image_value" id="get_category_image_value">
+                                    <input type="hidden" name="category_value_check" id="category_value_check">
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-md-12">
+                        <label for="category_name">
+                            <lang class="lang_name_title"> Name </lang> 
+                            <span class="text-danger">*</span> 
+                        </label>
+                        <input type="text" class="form-control border-control" name="name" id="category_name" minlength="3" maxlength="50" placeholder="Enter the name"  autocomplete="off" required>
+                        <input type="hidden" name="id" id="category_id">
+                        <input type="hidden" name="image" id="category_logo">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <div class="custom-control custom-radio custom-control-inline">
+                            <input type="radio" id="radio_category_discount_amount" name="radio_discount" class="custom-control-input" checked="checked">
+                            <label class="custom-control-label" for="radio_category_discount_amount">
+                                <lang class="lang_discount_title">Discount</lang> <span class="display-currency"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group col-md-5">
+                        <div class="custom-control custom-radio custom-control-inline">
+                            <input type="radio" id="radio_category_discount_percentage" name="radio_discount" class="custom-control-input">
+                            <label class="custom-control-label" for="radio_category_discount_percentage">
+                                <lang class="lang_discount_title">Discount</lang> %
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group col-md-3" id="category_discount" style="text-align:right;"> 
+                       <span class="summary_toolsize" data-toggle="tooltip" data-placement="top" title="" data-original-title="This changes does not apply to Existing products">
+                          <i class="feather icon-help-circle"></i>
+                       </span>
+                </div>  
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-12">
+                        <div class="floating-label">
+                            <input name="discount_amount" id="category_discount_amount" type="text"
+                                   aria-describedby="basic-addon1" class="form-control border-control allow_decimal text-right" min="0"
+                                   minlength="1" maxlength="10" value="0" >
+
+                            <input name="discount_percentage" id="category_discount_percentage"
+                                   type="number" aria-describedby="basic-addon1"
+                                   class="form-control border-control text-right" min="0" max="100" maxlength="4"
+                                   onkeyup="this.value = PosnicPro.minmax(this.value, 0, 100)"
+                                   onkeypress="return PosnicPro.isNumber(event)" value="0">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-12">
+                        <label for="category_description">
+                            <lang class="lang_description_title"> Description </lang>
+                        </label>
+                        <textarea name="description" id="category_description" class="form-control border-control" minlength="3" maxlength="500" placeholder="Enter the Description"></textarea>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-12">
+                        <div class="pull-right">
+                            <button type="button" class="btn btn-outline-secondary infobar-settings-reset" id="category_reset" onclick="PosnicPro.categories.categoryClearForm();"><i class="feather icon-refresh-ccw mr-2"></i><lang class="lang_clear_title"> Clear</lang></button>
+                            <button type="button" class="btn btn-outline-secondary infobar-settings-reset category_edit_reset" id="category_edit_reset" onclick="PosnicPro.categories.resetEditButton(this.id);"><i class="feather icon-refresh-ccw mr-2"></i><lang class="lang_reset_title"> Reset</lang></button>
+                            <button type="button" class="btn btn-outline-danger infobar-settings-close" data-id="category"><i class="feather icon-x-circle mr-2"></i><lang class="lang_close_title"> Close</lang>
+                            </button>
+                            <button type="submit" class="btn btn-outline-primary" id="categorySubmitForm"><i class="feather icon-save mr-2"></i><span id="category_button_title"><lang class="lang_save_title">Save</lang></span></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row" id="show_last_created_category" style="display:none;">
+                    <div class="form-group col-md-12">
+                        <div class="pull-right">
+                            <h6>Last Created Record <a href="#" id="last_created_category">View</a></h6>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

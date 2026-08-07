@@ -1,0 +1,291 @@
+@media print {
+    /*
+     * A real margin, rather than none.
+     *
+     * This asked for margin 0, which is not a design choice a sheet printer
+     * can honour: a laser or inkjet cannot fire to the edge of the paper and
+     * reserves 4-6mm it physically cannot reach. Anything laid out into that
+     * band is lost, and the page has no visual margin either - an invoice with
+     * text against the cut edge reads as a misprint.
+     *
+     * 14mm top and bottom, 12mm sides, which is a conventional business
+     * document margin and comfortably clears every hardware limit.
+     */
+    @page {
+        size: A4;
+        margin: 14mm 12mm;
+    }
+
+    /* Main */
+    html {
+        overflow-x: visible !important;
+    }
+
+    body {
+        overflow-x: visible !important;
+        overflow-y: visible !important;
+    }
+
+    * {
+        -webkit-transition: none !important;
+        -moz-transition: none !important;
+        -ms-transition: none !important;
+        -o-transition: none !important;
+        transition: none !important;
+    }
+
+    .footer_body{
+        margin-top:-14px;
+    }
+}
+/*end*/
+
+.print-deatils-size-family{
+    font-size: 12px; 
+    font-family: 'Open Sans', sans-serif;
+}
+.print-details-align{
+    line-height: 18px; 
+    vertical-align: top;
+    padding:10px 0;
+}
+.print-footer-align{
+    color: #646a6e; 
+    line-height: 22px; 
+    vertical-align: top; 
+    text-align:right;
+}
+.image-detail-canvas {
+    text-align: center !important;
+    position: relative;
+    max-width: 100%;
+    max-height: 100%;
+    padding-left:35px;
+}
+@media print {
+  /* Main */
+  html {
+    overflow-x: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  body {
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  body .receipt_small * {
+    font-size: 9px !important;
+  }
+  body .receipt_small * .invoice-con .invoice-content {
+    font-size: 9px !important;
+  }
+  body .receipt_medium * {
+    font-size: 12px !important;
+  }
+  body .receipt_medium * .invoice-con .invoice-content {
+    font-size: 10px !important;
+  }
+  body .receipt_large * {
+    font-size: 14px !important;
+  }
+  body .receipt_large * .invoice-con .invoice-content {
+    font-size: 12px !important;
+  }
+  body .receipt_extra_large * {
+    font-size: 16px !important;
+  }
+  body .receipt_extra_large * .invoice-con .invoice-content {
+    font-size: 14px !important;
+  }
+  * {
+    -webkit-transition: none !important;
+    -moz-transition: none !important;
+    -ms-transition: none !important;
+    -o-transition: none !important;
+    transition: none !important;
+  }
+  body #receipt_wrapper {
+    width: 92%  !important;
+    font-size: 10px;
+    margin: 7px auto auto auto !important;
+    padding: 0 !important;
+  }
+  body #receipt_wrapper_inner {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  body .wrapper,
+  body .wrapper.min-bar {
+    min-height: 0 !important;
+  }
+  body .main-content {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  body .wrapper .content {
+    margin-left: 0px !important;
+  }
+  body .wrapper.mini-bar .content {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  body .wrapper .left-bar,
+  body .wrapper.mini-bar.sales-bar .left-bar {
+    display: none !important;
+  }
+  body .wrapper .content {
+    margin-left: 0px !important;
+  }
+  body .wrapper .left-bar {
+    display: none !important;
+  }
+
+  /* A4 payment block alignment: method on the left, amount on the right */
+  .print-invoice-payment-mode {
+    display: block;
+    margin-top: 4px;
+  }
+
+  .print-invoice-payment-mode .payment-line {
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+  }
+
+  .print-invoice-payment-mode .payment-method {
+    -webkit-box-flex: 1;
+        -ms-flex: 1 1 auto;
+            flex: 1 1 auto;
+    text-align: left;
+  }
+
+  .print-invoice-payment-mode .payment-amount {
+    text-align: right;
+    min-width: 60px;
+    margin-left: auto;
+  }
+
+  /* Only bold the Payment label row in A4, not the Cash/Upi lines */
+  .print-payment-block-wrapper > *:not(.print-invoice-payment-mode) {
+    font-weight: 600;
+  }
+
+  .print-payment-block-wrapper .print-invoice-payment-mode,
+  .print-payment-block-wrapper .print-invoice-payment-mode * {
+    font-weight: normal;
+  }
+
+  /* A4-only barcode centering */
+  .invoice-policy {
+    width: 600px;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .invoice-policy img {
+    display: block;
+    margin: 0 auto;
+  }
+}
+/*
+ * ---------------------------------------------------------------------------
+ * A4 as a sheet of paper, not as an email.
+ *
+ * The stored invoice template is an email layout: nested tables pinned to
+ * width="600", which is the classic HTML-email width and about 60% of an A4
+ * page. Printed, it sits in a small block with the rest of the sheet empty,
+ * and the line items are squeezed into 480px while the paper has room to
+ * spare.
+ *
+ * The template itself is per-branch data (branches.print_a4_html), so changing
+ * it would reach only new shops and need a migration for everyone else. These
+ * rules reach every shop at once, and they match on the stock widths only - a
+ * shop that has customised its template to different widths keeps exactly what
+ * it has today.
+ * ---------------------------------------------------------------------------
+ */
+@media print {
+  body #receipt_wrapper {
+    /* The @page margin now owns the white space around the invoice, so the
+       wrapper no longer needs to inset itself by a percentage. */
+    width: 100% !important;
+    margin: 0 !important;
+  }
+
+  body #receipt_wrapper table[width="600"],
+  body #receipt_wrapper table[width="480"] {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /*
+   * The paired half-width blocks: store details against invoice details,
+   * billed-to against totals. They are floated left and right inside the
+   * container above, so they have to grow with it - left at 240px while the
+   * item table below spans the sheet is worse than either width alone,
+   * because the mismatch reads as a broken layout rather than a narrow one.
+   * 48% each leaves a gutter between the two columns.
+   */
+  body #receipt_wrapper table[width="240"] {
+    width: 48% !important;
+    max-width: 48% !important;
+  }
+
+  /*
+   * Repeat the column headings on every page.
+   *
+   * A till roll is one continuous strip, but an A4 invoice with forty lines
+   * genuinely runs to a second sheet - and today that sheet arrives as a bare
+   * column of numbers with nothing saying which column is the price and which
+   * the tax. table-header-group is what makes a browser reprint a thead after
+   * each page break.
+   */
+  body #receipt_wrapper thead {
+    display: table-header-group;
+  }
+
+  /* A line item split down the middle by a page break is unreadable, and the
+     half-row left behind looks like a printing fault. */
+  body #receipt_wrapper tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /*
+   * Keep the totals with something above them.
+   *
+   * The worst A4 break is the one that leaves the grand total alone at the top
+   * of a second sheet: a page with a number and no invoice on it invites a
+   * question about whether it is the same document.
+   */
+  body #receipt_wrapper .print-payment-block-wrapper,
+  body #receipt_wrapper .taxgst_print_hide,
+  body #receipt_wrapper .tax-print-hideshow,
+  body #receipt_wrapper .invoice-policy {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /*
+   * Print-weight text.
+   *
+   * The template sets its labels in #5b5b5b and #646a6e, which are chosen for
+   * a backlit screen. Toner is not backlit, and mid-grey at 10px on white
+   * paper comes out weak - worse on a printer running low. Darkening the
+   * labels costs nothing and is the difference between an invoice that
+   * photocopies and one that does not.
+   */
+  body #receipt_wrapper .print-deatils-size-family,
+  body #receipt_wrapper .print-footer-align,
+  body #receipt_wrapper th {
+    color: #333 !important;
+  }
+
+  /* A rule under the column headings, so the items read as a table rather
+     than as a list of numbers that happens to be aligned. */
+  body #receipt_wrapper .print-invoice-a4-table-content thead th {
+    border-bottom: 1px solid #999;
+  }
+}

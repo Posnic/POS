@@ -1,0 +1,49 @@
+/* 
+--------------------------------
+    : Custom - Pricing css :
+--------------------------------
+*/
+.pricing {
+	> p {
+		span {
+			padding: 8px 20px;
+    		border-radius: 0 0 3px 3px;
+		}	
+	}
+  .pricing-top {
+  	padding-top: 30px;
+  	padding-bottom: 20px;
+  	img {
+  		width: 120px;
+  		&.price-pro-image {
+  			width: 150px;
+  		}
+  	}
+    &.pricing-top-enterprise {
+      img {
+        width: 85px;
+      }
+    }
+
+  }	   
+  .pricing-middle {    
+    .list-group-item {
+      border: none;  
+      padding: 5px 0;
+    }
+  } 
+  .pricing-bottom {
+  	&.pricing-bottom-basic {
+  		padding-top: 30px;
+  		padding-bottom: 30px;
+  	}
+  	&.pricing-bottom-professional {
+      padding-top: 30px;
+  		padding-bottom: 30px;
+  	}
+  	&.pricing-bottom-enterprise {
+  		padding-top: 30px;
+  		padding-bottom: 30px;
+  	}
+  }
+}

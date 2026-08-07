@@ -1,0 +1,24 @@
+<svg id="Small_Icons" data-name="Small Icons" xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: none;
+        stroke: #fff;
+        stroke-linecap: round;
+        stroke-width: 3px;
+        fill-rule: evenodd;
+      }
+
+      .cls-2 {
+        fill: #fff;
+        opacity: 0.25;
+      }
+    </style>
+  </defs>
+  <g id="vertical">
+    <path id="Rounded_Rectangle_20" data-name="Rounded Rectangle 20" class="cls-1" d="M24.333,3.48h2.334a5.52,5.52,0,1,1,0,11.04H24.333A5.52,5.52,0,1,1,24.333,3.48Z"/>
+    <path id="Rounded_Rectangle_20_copy" data-name="Rounded Rectangle 20 copy" class="cls-1" d="M23.99,19.493H27.01a5.507,5.507,0,1,1,0,11.013H23.99A5.507,5.507,0,0,1,23.99,19.493Z"/>
+    <path id="Rounded_Rectangle_20_copy_2" data-name="Rounded Rectangle 20 copy 2" class="cls-1" d="M23.867,35.493h3.267a5.507,5.507,0,1,1,0,11.013H23.867A5.507,5.507,0,1,1,23.867,35.493Z"/>
+    <rect id="Rounded_Rectangle_20_copy_3" data-name="Rounded Rectangle 20 copy 3" class="cls-2" x="19" y="36" width="13" height="11" rx="5.5" ry="5.5"/>
+  </g>
+</svg>

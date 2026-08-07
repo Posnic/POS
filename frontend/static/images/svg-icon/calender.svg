@@ -1,0 +1,24 @@
+<svg id="calendar" xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50">
+  <defs>
+    <style>
+      .cls-1, .cls-2 {
+        fill: none;
+        stroke: #fff;
+        stroke-width: 3px;
+      }
+
+      .cls-1, .cls-3 {
+        fill-rule: evenodd;
+      }
+
+      .cls-3 {
+        fill: #fff;
+        opacity: 0.25;
+      }
+    </style>
+  </defs>
+  <path id="Rounded_Rectangle_5" data-name="Rounded Rectangle 5" class="cls-1" d="M36.486,11.488h6.277a2.861,2.861,0,0,1,2.8,2.914V41.6a2.861,2.861,0,0,1-2.8,2.914H7.237a2.861,2.861,0,0,1-2.8-2.914V14.4a2.861,2.861,0,0,1,2.8-2.914h5.548m8.532,0h6.417"/>
+  <rect id="Rounded_Rectangle_5_copy_4" data-name="Rounded Rectangle 5 copy 4" class="cls-2" x="12" y="4" width="9" height="16" rx="3" ry="3"/>
+  <rect id="Rounded_Rectangle_5_copy_5" data-name="Rounded Rectangle 5 copy 5" class="cls-2" x="28" y="4" width="9" height="16" rx="3" ry="3"/>
+  <path class="cls-3" d="M3.983,33.059l42.012-6.073V44H3.983V33.059Z"/>
+</svg>

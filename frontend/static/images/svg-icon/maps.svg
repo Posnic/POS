@@ -1,0 +1,27 @@
+<svg id="Small_Icons" data-name="Small Icons" xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50">
+  <defs>
+    <style>
+      .cls-1, .cls-3 {
+        fill: none;
+        stroke: #fff;
+        stroke-linecap: round;
+        stroke-width: 3px;
+      }
+
+      .cls-2 {
+        fill: #fff;
+        opacity: 0.25;
+      }
+
+      .cls-2, .cls-3 {
+        fill-rule: evenodd;
+      }
+    </style>
+  </defs>
+  <g id="Maps">
+    <circle class="cls-1" cx="25" cy="23" r="19.406"/>
+    <path class="cls-2" d="M6.953,29.37L44.109,18.754S45.186,39.07,29.246,42.109,6.953,29.37,6.953,29.37Z"/>
+    <path class="cls-3" d="M34.555,7.076s-4.255,4.98-1.062,10.616,10.616,4.247,10.616,4.247"/>
+    <path class="cls-3" d="M6.953,17.692a64.432,64.432,0,0,1,6.37,1.062c2.674,0.642,3.29.738,3.185,5.308s2.717,5.234,6.37,5.308,8.812,8.427-2.123,11.678"/>
+  </g>
+</svg>

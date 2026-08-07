@@ -1,0 +1,57 @@
+<svg id="Grupa_21" data-name="Grupa 21" xmlns="http://www.w3.org/2000/svg" width="300" height="218" viewBox="0 0 300 218">
+  <metadata><?xpacket begin="﻿" id="W5M0MpCehiHzreSzNTczkc9d"?>
+<x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="Adobe XMP Core 5.6-c142 79.160924, 2017/07/13-01:06:39        ">
+   <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+      <rdf:Description rdf:about=""/>
+   </rdf:RDF>
+</x:xmpmeta>
+
+<?xpacket end="w"?></metadata>
+<defs>
+    <style>
+      .cls-1 {
+        fill: #f2f5fb;
+      }
+
+      .cls-2, .cls-5, .cls-6, .cls-7 {
+        fill: #fff;
+        stroke-width: 2px;
+      }
+
+      .cls-2, .cls-3, .cls-5 {
+        stroke: #9BA5B5;
+      }
+
+      .cls-2, .cls-3, .cls-5, .cls-6, .cls-7 {
+        stroke-linejoin: round;
+      }
+
+      .cls-3 {
+        fill: #f2f5fb;
+        stroke-width: 1px;
+      }
+
+      .cls-4 {
+        fill: #9BA5B5;
+      }
+
+      .cls-4, .cls-5, .cls-7 {
+        fill-rule: evenodd;
+      }
+
+      .cls-6, .cls-7 {
+        stroke: #1991EE;
+      }
+    </style>
+  </defs>
+  <circle id="Elipsa_1_kopia_18" data-name="Elipsa 1 kopia 18" class="cls-1" cx="150" cy="109" r="109"/>
+  <rect id="Prostokąt_zaokrąglony_2_kopia_19" data-name="Prostokąt zaokrąglony 2 kopia 19" class="cls-2" x="52" y="42" width="196" height="140" rx="12" ry="12"/>
+  <rect id="Prostokąt_2_kopia_21" data-name="Prostokąt 2 kopia 21" class="cls-3" x="63" y="54" width="174" height="128"/>
+  <path id="Prostokąt_2_kopia_21-2" data-name="Prostokąt 2 kopia 21" class="cls-4" d="M1230,3398h260v2H1230v-2Zm-20,0h10v2h-10v-2Zm290,0h10v2h-10v-2Z" transform="translate(-1210 -3217)"/>
+  <path id="Prostokąt_zaokrąglony_3_kopia_10" data-name="Prostokąt zaokrąglony 3 kopia 10" class="cls-5" d="M1466.5,3399h-213a8.506,8.506,0,0,1-8.5-8.5V3382h89.21a5.5,5.5,0,0,0,5.29,4h41a5.5,5.5,0,0,0,5.29-4H1475v8.5A8.506,8.506,0,0,1,1466.5,3399Z" transform="translate(-1210 -3217)"/>
+  <rect id="Prostokąt_6_kopia_35" data-name="Prostokąt 6 kopia 35" class="cls-2" x="115" y="105" width="70" height="42"/>
+  <rect id="Prostokąt_6_kopia_36" data-name="Prostokąt 6 kopia 36" class="cls-2" x="111" y="91" width="78" height="16"/>
+  <rect id="Prostokąt_6_kopia_37" data-name="Prostokąt 6 kopia 37" class="cls-6" x="142" y="91" width="16" height="56"/>
+  <path id="Prostokąt_zaokrąglony_6_kopia_2" data-name="Prostokąt zaokrąglony 6 kopia 2" class="cls-7" d="M1360.01,3308.01l0.06-8.97a9.131,9.131,0,0,1,9.03-9.03,8.835,8.835,0,0,1,8.91,8.91h0a9.124,9.124,0,0,1-9.03,9.03Z" transform="translate(-1210 -3217)"/>
+  <path id="Prostokąt_zaokrąglony_6_kopia_3" data-name="Prostokąt zaokrąglony 6 kopia 3" class="cls-7" d="M1359.99,3308.01l-0.06-8.97a9.131,9.131,0,0,0-9.03-9.03,8.835,8.835,0,0,0-8.91,8.91h0a9.124,9.124,0,0,0,9.03,9.03Z" transform="translate(-1210 -3217)"/>
+</svg>

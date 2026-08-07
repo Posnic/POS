@@ -1,0 +1,13 @@
+nbproject/*
+.idea/*
+backend/src/vendor/*
+.netbeans.xml
+/composer.lock
+!/upload/category_images/default.png
+!/upload/item_images/default.png
+!/upload/store_images/default.png
+!/upload/user_images/default.png
+/upload/*
+/cache/*
+node_modules/*
+public/*

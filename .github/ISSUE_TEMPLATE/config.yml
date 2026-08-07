@@ -1,0 +1,23 @@
+# Questions and security reports do not belong in the issue tracker: an issue is
+# a piece of work with an end, a question is a conversation, and a security
+# report must not be public before there is a fix. Offering the right
+# destination on the "New issue" screen is more effective than asking people to
+# read a policy first.
+blank_issues_enabled: false
+
+contact_links:
+  - name: Question or help using Posnic
+    url: https://github.com/Posnic/POS/discussions/categories/q-a
+    about: How do I do X, is this normal, hardware advice. Faster than an issue.
+
+  - name: Security vulnerability
+    url: https://github.com/Posnic/POS/security/policy
+    about: Report privately. Never open a public issue for a security problem.
+
+  - name: Posnic Cloud, billing or a commercial licence
+    url: mailto:info@posnic.com
+    about: Subscriptions, invoices, white label, custom work and paid support.
+
+  - name: Show what you built
+    url: https://github.com/Posnic/POS/discussions/categories/show-and-tell
+    about: Forks, translations, integrations, or your shop running Posnic.

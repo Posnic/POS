@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loading Posnic...</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --brand: #3D85C6;
+            --brand-dark: #2F6EA8;
+            --ink: #1e293b;
+            --ink-soft: #64748b;
+            --line: #e5eaf1;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            color: var(--ink);
+        }
+
+        .loading-container {
+            text-align: center;
+            animation: fadeIn 0.4s ease-in;
+            width: 420px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .logo { margin-bottom: 34px; }
+        .logo img { width: 150px; height: auto; }
+
+        .spinner-container {
+            position: relative;
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 26px;
+        }
+
+        .spinner {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 3px solid var(--line);
+            border-top-color: var(--brand);
+            border-radius: 50%;
+            animation: spin 0.9s linear infinite;
+        }
+
+        .spinner-inner {
+            position: absolute;
+            top: 9px; left: 9px; right: 9px; bottom: 9px;
+            border: 2px solid transparent;
+            border-bottom-color: var(--brand-dark);
+            border-radius: 50%;
+            animation: spin 1.4s linear infinite reverse;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .status-text {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            min-height: 24px;
+        }
+
+        .status-details {
+            font-size: 13px;
+            color: var(--ink-soft);
+            margin-bottom: 26px;
+            min-height: 18px;
+        }
+
+        .progress-bar {
+            width: 320px;
+            height: 4px;
+            background: var(--line);
+            border-radius: 2px;
+            margin: 0 auto;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--brand);
+            border-radius: 2px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .dots::after { content: ''; animation: dots 1.5s steps(4, end) infinite; }
+        @keyframes dots {
+            0%, 20% { content: ''; }
+            40% { content: '.'; }
+            60% { content: '..'; }
+            80%, 100% { content: '...'; }
+        }
+
+        .status-list {
+            margin-top: 26px;
+            text-align: left;
+            display: inline-block;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            margin: 7px 0;
+            font-size: 13px;
+            color: var(--ink-soft);
+            transition: color 0.3s;
+        }
+
+        .status-item.active { color: var(--ink); font-weight: 600; }
+        .status-item.complete { color: #94a3b8; }
+
+        .status-icon {
+            width: 18px;
+            height: 18px;
+            margin-right: 10px;
+            border-radius: 50%;
+            border: 2px solid #cbd5e1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+        }
+
+        .status-item.active .status-icon {
+            border-color: var(--brand);
+            color: var(--brand);
+            animation: pulse-icon 1s ease-in-out infinite;
+        }
+
+        .status-item.complete .status-icon {
+            background: var(--brand);
+            border-color: var(--brand);
+            color: #fff;
+        }
+
+        @keyframes pulse-icon {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.12); }
+        }
+
+        .error-actions {
+            display: none;
+            margin-top: 26px;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        body.has-error .error-actions { display: flex; }
+        body.has-error .spinner-container { display: none; }
+        body.has-error .progress-bar { display: none; }
+        body.has-error .status-text { color: #dc2626; }
+
+        .error-actions button {
+            border: 1px solid var(--line);
+            background: #fff;
+            color: var(--ink);
+            padding: 10px 22px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .error-actions button.primary {
+            background: var(--brand);
+            border-color: var(--brand);
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .error-actions button:hover { filter: brightness(0.96); }
+    </style>
+</head>
+<body>
+    <div class="loading-container">
+        <div class="logo"><img src="512-posnic.png" alt="Posnic"></div>
+
+        <div class="spinner-container">
+            <div class="spinner"></div>
+            <div class="spinner-inner"></div>
+        </div>
+
+        <div class="status-text" id="statusText">Starting application<span class="dots"></span></div>
+        <div class="status-details" id="statusDetails">Please wait...</div>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <div class="error-actions" id="errorActions">
+            <button class="primary" id="btnRetry">Restart App</button>
+            <button id="btnOpenLog">Open Log File</button>
+        </div>
+
+        <div class="status-list">
+            <div class="status-item active" id="status-mongo">
+                <div class="status-icon">○</div>
+                <span>Connecting to database</span>
+            </div>
+            <div class="status-item" id="status-api">
+                <div class="status-icon">○</div>
+                <span>Starting services</span>
+            </div>
+            <div class="status-item" id="status-ready">
+                <div class="status-icon">○</div>
+                <span>Loading interface</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let progress = 0;
+        let hasRealProgress = false;
+        const progressFill = document.getElementById('progressFill');
+        const statusText = document.getElementById('statusText');
+        const statusDetails = document.getElementById('statusDetails');
+
+        window.updateStartupStatus = function (stage, text, details, nextProgress) {
+            if (stage === 'error') {
+                clearInterval(progressInterval);
+                document.body.classList.add('has-error');
+                statusText.textContent = text || 'Something went wrong during startup';
+                statusDetails.textContent = details || 'Restart the app. If this repeats, open the log file and contact support.';
+                return;
+            }
+
+            const stages = ['mongo', 'api', 'ready'];
+            const activeIndex = stages.indexOf(stage);
+
+            stages.forEach((name, index) => {
+                const item = document.getElementById('status-' + name);
+                if (!item) return;
+                item.classList.toggle('active', index === activeIndex);
+                item.classList.toggle('complete', index < activeIndex);
+                item.querySelector('.status-icon').textContent =
+                    index < activeIndex ? '✓' : '○';
+            });
+
+            if (text) statusText.textContent = text;
+            if (details) statusDetails.textContent = details;
+            if (typeof nextProgress === 'number') {
+                // Real numbers win: stop the placeholder crawl for good, so the
+                // bar tracks actual work instead of fighting the animation.
+                hasRealProgress = true;
+                clearInterval(progressInterval);
+                progress = nextProgress;
+                progressFill.style.width = progress + '%';
+            }
+        };
+
+        document.getElementById('btnRetry').addEventListener('click', () => {
+            window.electronAPI?.startup?.retry();
+        });
+        document.getElementById('btnOpenLog').addEventListener('click', () => {
+            window.electronAPI?.startup?.openLog();
+        });
+
+        // Before the backend reports real numbers there is nothing to measure,
+        // so creep slowly to a modest ceiling. Overstating progress and then
+        // snapping backwards reads as a stuck or broken app.
+        const progressInterval = setInterval(() => {
+            if (hasRealProgress) { clearInterval(progressInterval); return; }
+            if (progress < 20) {
+                progress += 0.6;
+                progressFill.style.width = progress + '%';
+            }
+        }, 250);
+    </script>
+</body>
+</html>

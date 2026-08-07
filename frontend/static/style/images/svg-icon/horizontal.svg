@@ -1,0 +1,27 @@
+<svg id="Small_Icons" data-name="Small Icons" xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: none;
+        stroke: #fff;
+        stroke-linecap: round;
+        stroke-width: 3px;
+      }
+
+      .cls-1, .cls-2 {
+        fill-rule: evenodd;
+      }
+
+      .cls-2 {
+        fill: #fff;
+        opacity: 0.25;
+      }
+    </style>
+  </defs>
+  <g id="horizontal">
+    <path id="Rounded_Rectangle_20" data-name="Rounded Rectangle 20" class="cls-1" d="M9.5,18.3H9.527a5.52,5.52,0,0,1,5.52,5.52v2.335a5.52,5.52,0,0,1-5.52,5.52H9.5a5.52,5.52,0,0,1-5.52-5.52V23.817A5.52,5.52,0,0,1,9.5,18.3Z"/>
+    <path id="Rounded_Rectangle_20_copy" data-name="Rounded Rectangle 20 copy" class="cls-1" d="M25.516,17.953a5.5,5.5,0,0,1,5.5,5.5v3.063a5.5,5.5,0,0,1-11,0V23.453A5.5,5.5,0,0,1,25.516,17.953Z"/>
+    <path id="Rounded_Rectangle_20_copy_2" data-name="Rounded Rectangle 20 copy 2" class="cls-1" d="M41.516,17.859a5.5,5.5,0,0,1,5.5,5.5v3.25a5.5,5.5,0,0,1-11,0v-3.25A5.5,5.5,0,0,1,41.516,17.859Z"/>
+    <path id="Rounded_Rectangle_20_copy_3" data-name="Rounded Rectangle 20 copy 3" class="cls-2" d="M42.016,18.484a5.5,5.5,0,0,1,5.5,5.5v2a5.5,5.5,0,0,1-11,0v-2A5.5,5.5,0,0,1,42.016,18.484Z"/>
+  </g>
+</svg>

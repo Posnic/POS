@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Contact Support | Posnic</title>
+  <link rel="stylesheet" href="window-theme.css">
+  <script src="window-theme.js"></script>
+  <style>
+    /*
+      Reporting a problem from inside the till.
+      Everything technical is gathered for them and shown before it is sent -
+      a support form that quietly collects things is not one anybody should
+      trust, and a shop that can see what is attached is a shop that will
+      actually attach it.
+    */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f5f7fa; color: #16233b;
+      height: 100vh; overflow-y: auto; padding: 22px; }
+    .wrap { max-width: 660px; margin: 0 auto; }
+    h1 { font-size: 19px; margin-bottom: 3px; }
+    .sub { color: #5b6b82; font-size: 13px; margin-bottom: 16px; }
+    .card { background: #fff; border: 1px solid #e3e9f1; border-radius: 12px; padding: 18px; margin-bottom: 14px; }
+    label { display: block; font-size: 12.5px; font-weight: 600; color: #43536b; margin: 12px 0 5px; }
+    label:first-child { margin-top: 0; }
+    input, select, textarea { width: 100%; padding: 9px 12px; border: 1.5px solid #d5dde8;
+      border-radius: 8px; font-size: 14px; font-family: inherit; color: #16233b; background: #fff; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: #3D85C6; }
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+    .btn { border: 1px solid #d5dde8; background: #fff; border-radius: 8px; padding: 9px 16px;
+      font-size: 14px; cursor: pointer; color: #16233b; }
+    .btn.primary { background: #3D85C6; border-color: #3D85C6; color: #fff; font-weight: 600; }
+    .btn:disabled { opacity: .55; cursor: not-allowed; }
+    .attach { display: flex; align-items: flex-start; gap: 10px; padding: 9px 0; font-size: 13.5px; }
+    .attach input[type=checkbox] { width: 15px; height: 15px; margin-top: 3px; flex: none; accent-color: #3D85C6; }
+    .attach small { display: block; color: #5b6b82; font-size: 12.5px; }
+    .peek { max-height: 150px; overflow: auto; background: #f7fafd; border: 1px solid #e3e9f1;
+      border-radius: 8px; padding: 9px 11px; font-family: ui-monospace, Consolas, monospace;
+      font-size: 11.5px; white-space: pre-wrap; color: #43536b; margin-top: 8px; }
+    .msg { display: none; padding: 10px 13px; border-radius: 8px; font-size: 13.5px; margin-top: 12px; }
+    .msg.err { display: block; background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+    .msg.ok { display: block; background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+    .files { font-size: 12.5px; color: #5b6b82; margin-top: 6px; }
+    .to { font-size: 12px; color: #5b6b82; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1 id="title">Contact support</h1>
+    <p class="sub" id="sub">Tell us what happened. Everything technical is gathered for you below —
+      have a look before you send it.</p>
+
+    <!--
+      Community Edition has no support contract, so its reports go to the
+      public issue tracker rather than into an inbox nobody has promised to
+      read. Shown instead of the email form, not alongside it: two routes with
+      different answers is how somebody picks the one that will not be
+      answered.
+    -->
+    <div class="card" id="communityNote" style="display:none;border-left:4px solid #3D85C6;">
+      <b style="font-size:14px;">You are running the free Community Edition</b>
+      <p style="font-size:13.5px;color:#5b6b82;margin:6px 0 0;">
+        Report it on the issue tracker and it becomes public and searchable — which means the
+        next person with the same problem finds your answer, and so do we. It is the same place
+        we fix things from.</p>
+      <p style="font-size:13.5px;color:#5b6b82;margin:8px 0 0;">
+        Fill in the two boxes below and the issue opens with your version, platform and system
+        details already filled in. Use <b>Copy log</b> and paste it into the issue as well —
+        it is usually the thing that identifies the cause.</p>
+      <p style="font-size:12.5px;color:#5b6b82;margin:10px 0 0;">
+        Subscribed to Posnic Cloud? Connect this till to your account and this window will email
+        support directly instead.</p>
+    </div>
+
+    <div class="card">
+      <div class="two">
+        <div><label for="name">Your name</label><input id="name" autocomplete="name"></div>
+        <div><label for="email">Email to reply to *</label><input id="email" type="email" autocomplete="email"></div>
+      </div>
+      <div class="two">
+        <div><label for="phone">Phone <span style="font-weight:400;color:#5b6b82;">(optional)</span></label><input id="phone" inputmode="tel"></div>
+        <div><label for="kind">What kind of problem</label>
+          <select id="kind">
+            <option value="bug">Something is not working</option>
+            <option value="question">A question about how to do something</option>
+            <option value="hardware">Printer, scanner or drawer</option>
+            <option value="sync">Cloud sync or backups</option>
+            <option value="billing">Billing or subscription</option>
+            <option value="other">Something else</option>
+          </select>
+        </div>
+      </div>
+
+      <label for="subject">Short summary *</label>
+      <input id="subject" placeholder="e.g. Receipt printer stopped working after the update">
+
+      <label for="detail">What happened? *</label>
+      <textarea id="detail" rows="5" placeholder="What were you doing, what did you expect, and what happened instead? If it happens at a particular time of day or with a particular item, say so — it usually points straight at the cause."></textarea>
+    </div>
+
+    <div class="card">
+      <b style="font-size:14px;">What we will send with it</b>
+
+      <label class="attach" for="incSystem" style="margin-top:10px;">
+        <input type="checkbox" id="incSystem" checked>
+        <span><b>This computer's details</b>
+          <small id="sysSummary">Loading…</small></span>
+      </label>
+
+      <label class="attach" for="incLog">
+        <input type="checkbox" id="incLog" checked>
+        <span><b>The last few hundred lines of the log</b>
+          <small>What the application recorded while the problem happened. Passwords are
+            removed before anything is written to it.</small></span>
+      </label>
+      <div class="peek" id="logPeek">Loading…</div>
+
+      <label for="files" style="margin-top:14px;">Screenshots or files <span style="font-weight:400;color:#5b6b82;">(optional, up to 8 MB)</span></label>
+      <input type="file" id="files" multiple accept="image/*,.pdf,.txt,.log">
+      <div class="files" id="fileList"></div>
+
+      <p class="to" id="destination"></p>
+    </div>
+
+    <div class="msg" id="msg"></div>
+    <div style="display:flex;gap:10px;margin-top:4px;flex-wrap:wrap;">
+      <button class="btn primary" id="send">Send to support</button>
+      <button class="btn primary" id="issue" style="display:none;">Open an issue on GitHub</button>
+      <button class="btn" id="copyLog" style="display:none;">Copy log</button>
+      <button class="btn" id="close">Close</button>
+    </div>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    let CTX = null;
+    let FILES = [];
+
+    function say(text, cls) { const m = $('msg'); m.textContent = text; m.className = 'msg ' + cls; }
+
+    (async () => {
+      try {
+        CTX = await window.electronAPI.support.context();
+        const s = CTX.system;
+        $('sysSummary').textContent =
+          `Posnic ${s.app} · ${s.osName} ${s.platform} · ${s.memoryGB} GB · `
+          + (s.cloud ? `cloud ${new URL(s.cloud.gatewayUrl).hostname}` : 'no cloud connected');
+        $('logPeek').textContent = CTX.logTail.length
+          ? CTX.logTail.slice(-40).join('\n')
+          : 'The log is empty.';
+        /* Say where it is going. On a white-label install this is their own
+           supplier, not us, and they should be able to see that. */
+        if (CTX.isCloud) {
+          $('destination').textContent = 'This goes to ' + CTX.baseUrl
+            + (CTX.baseUrl.includes('posnic.com') ? ' (Posnic support)' : ' — your Posnic provider');
+        } else {
+          /* No cloud: the email route is not offered at all, because nobody
+             has undertaken to answer it. */
+          $('title').textContent = 'Report a problem';
+          $('sub').textContent = 'Community Edition reports go to the public issue tracker.';
+          $('communityNote').style.display = 'block';
+          $('send').style.display = 'none';
+          $('issue').style.display = 'inline-block';
+          $('copyLog').style.display = 'inline-block';
+          /* The email fields are for a reply we will not be sending. */
+          for (const id of ['name', 'email', 'phone']) $(id).closest('div').style.display = 'none';
+          $('destination').textContent = 'This opens github.com/Posnic/POS/issues in your browser.';
+        }
+      } catch (e) {
+        say('Could not gather the details: ' + e.message, 'err');
+      }
+    })();
+
+    $('files').onchange = async (ev) => {
+      FILES = [];
+      let total = 0;
+      for (const f of ev.target.files) {
+        total += f.size;
+        if (total > 8 * 1024 * 1024) { say('Those files add up to more than 8 MB. Please attach fewer.', 'err'); return; }
+        FILES.push({
+          name: f.name,
+          type: f.type || 'application/octet-stream',
+          size: f.size,
+          data: await new Promise((res) => {
+            const r = new FileReader();
+            r.onload = () => res(String(r.result).split(',')[1] || '');
+            r.readAsDataURL(f);
+          }),
+        });
+      }
+      $('fileList').textContent = FILES.length
+        ? FILES.map((f) => f.name).join(', ') + ` — ${Math.round(total / 1024)} KB`
+        : '';
+      say('', '');
+    };
+
+    $('close').onclick = () => window.close();
+
+    $('copyLog').onclick = async () => {
+      await navigator.clipboard.writeText((CTX.logTail || []).join('\n'));
+      $('copyLog').textContent = 'Copied — paste it into the issue';
+      setTimeout(() => { $('copyLog').textContent = 'Copy log'; }, 2600);
+    };
+
+    $('issue').onclick = async () => {
+      const subject = $('subject').value.trim();
+      const detail = $('detail').value.trim();
+      if (!subject) { say('Please give it a short summary — that becomes the issue title.', 'err'); return; }
+      if (!detail) { say('Please describe what happened.', 'err'); return; }
+      const r = await window.electronAPI.support.openIssue({ subject, detail });
+      if (!r.ok) { say(r.error || 'Could not open the browser.', 'err'); return; }
+      say('Opened in your browser, with your system details already filled in. '
+        + 'Press Copy log and paste it in as well before you submit.', 'ok');
+    };
+
+    $('send').onclick = async () => {
+      const email = $('email').value.trim();
+      const subject = $('subject').value.trim();
+      const detail = $('detail').value.trim();
+
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { say('Please enter an email address we can reply to.', 'err'); return; }
+      if (!subject) { say('Please give it a short summary.', 'err'); return; }
+      if (!detail) { say('Please describe what happened.', 'err'); return; }
+
+      $('send').disabled = true;
+      say('Sending…', 'ok');
+      try {
+        const r = await window.electronAPI.support.submit({
+          name: $('name').value.trim(),
+          email, phone: $('phone').value.trim(),
+          kind: $('kind').value,
+          subject, detail,
+          system: $('incSystem').checked ? CTX.system : null,
+          logTail: $('incLog').checked ? CTX.logTail : null,
+          attachments: FILES,
+        });
+        if (!r.ok) throw new Error(r.error);
+        say('Sent. We will reply to ' + email + (r.reference ? ' — reference ' + r.reference : '')
+          + '. If your shop cannot trade, call the helpline as well rather than waiting.', 'ok');
+        $('send').textContent = 'Sent';
+      } catch (e) {
+        say(e.message, 'err');
+        $('send').disabled = false;
+      }
+    };
+  </script>
+</body>
+</html>

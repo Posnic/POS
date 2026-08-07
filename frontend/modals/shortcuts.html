@@ -1,0 +1,571 @@
+<!-- start Shortcut modal -->
+
+<div class="modal fade close_on_esc" id="shortcutkey" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg shortcut_model_lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><lang class="lang_shortcut_title">Shortcut Keys</lang></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row"> 
+                    <!-- Start col -->
+                    <div class="col-lg-6 col-xl-4">
+
+                        <div class="card m-b-30">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0"><lang class="lang_salecut_title">Sales</lang></h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="kanban-board-one">
+
+                                    <div class="card bg-primary-rgba">
+                                        <div class="card-body">
+                                            <div class="row align-items-center">
+                                                <div class="col-4">
+                                                    <div class="kanban-tag">
+                                                        <h6 class="mb-0">New</h6>
+                                                    </div>
+                                                </div>
+                                                <div class="col-8">
+                                                    <span class="badge badge-primary badge_size">s</span>
+                                                     <span class="or_class_font">&nbsp;(or)</span>
+                                                    <span class="badge badge-primary badge_size">CTRL + 1</span> 
+                                                    
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="card bg-primary-rgba">
+                                        <div class="card-body">
+                                            <div class="row align-items-center">
+                                                <div class="col-4">
+                                                    <div class="kanban-tag">
+                                                        <h6 class="mb-0">List</h6>
+                                                    </div>
+                                                </div>
+                                                <div class="col-8">
+                                                    <span class="badge badge-primary badge_size">a</span>
+                                                    <span class="or_class_font">&nbsp;(or)</span>
+                                                    <span class="badge badge-primary badge_size">CTRL + 2</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="card bg-primary-rgba">
+                                        <div class="card-body">
+                                            <div class="row align-items-center">
+                                                <div class="col-4">
+                                                    <div class="kanban-tag">
+                                                        <h6 class="mb-0">Report</h6>
+                                                    </div>
+                                                </div>
+                                                <div class="col-8">
+                                                     <span class="badge badge-primary badge_size">f</span>
+                                                     <span class="or_class_font">&nbsp;(or)</span>
+                                                    <span class="badge badge-primary badge_size">CTRL + 3 </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>                                    
+
+                                </div>                                
+                            </div>
+                        </div>
+
+                        <!-- Items -->
+
+                        <div class="card m-b-30">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0"><lang class="lang_itemcut_title">Items</lang></h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="kanban-board-three">
+
+                                    <div class="card bg-warning-rgba">
+                                        <div class="card-body">
+                                            <div class="row align-items-center">
+                                                <div class="col-4">
+                                                    <div class="kanban-tag">
+                                                        <h6 class="mb-0">New</h6>
+                                                    </div>
+                                                </div>
+                                                <div class="col-8">
+                                                     <span class="badge badge-warning badge_size"> i </span>
+                                                     <span class="or_class_font">&nbsp;(or)</span>
+                                                    <span class="badge badge-warning badge_size"> CTRL + SHIFT + 1</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="card bg-warning-rgba">
+                                        <div class="card-body">
+                                            <div class="row align-items-center">
+                                                <div class="col-4">
+                                                    <div class="kanban-tag">
+                                                        <h6 class="mb-0">List</h6>
+                                                    </div>
+                                                </div>
+                                                <div class="col-8">
+                                                     <span class="badge badge-warning badge_size"> m </span>
+                                                     <span class="or_class_font">&nbsp;(or)</span>
+                                                    <span class="badge badge-warning badge_size"> CTRL + SHIFT + 2 </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="card bg-warning-rgba">
+                                        <div class="card-body">
+                                            <div class="row align-items-center">
+                                                <div class="col-4">
+                                                    <div class="kanban-tag">
+                                                        <h6 class="mb-0">Report</h6>
+                                                    </div>
+                                                </div>
+                                                <div class="col-8">
+                                                     <span class="badge badge-warning badge_size"> n</span>
+                                                     <span class="or_class_font">&nbsp;(or)</span>
+                                                    <span class="badge badge-warning badge_size"> CTRL + SHIFT + 3</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>                              
+                            </div>
+                        </div>
+
+                        <!-- Expenses -->
+                        <div class="card m-b-30">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0"><lang class="lang_userscut_title">Users</lang></h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="kanban-board-one">
+
+                                    <div class="card bg-success-rgba">
+                                        <div class="card-body">
+                                            <div class="row align-items-center">
+                                                <div class="col-4">
+                                                    <div class="kanban-tag">
+                                                        <h6 class="mb-0">New</h6>
+                                                    </div>
+                                                </div>
+                                                <div class="col-8">
+                                                    <span class="badge badge-success badge_size">u</span>
+                                                    <span class="or_class_font">&nbsp;(or)</span>
+                                                     <span class="badge badge-success badge_size">CTRL + SHIFT + 7</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="card bg-success-rgba">
+                                        <div class="card-body">
+                                            <div class="row align-items-center">
+                                                <div class="col-4">
+                                                    <div class="kanban-tag">
+                                                        <h6 class="mb-0">List</h6>
+                                                    </div>
+                                                </div>
+                                                <div class="col-8">
+                                                    <span class="badge badge-success badge_size">w</span>
+                                                    <span class="or_class_font">&nbsp;(or)</span>
+                                                      <span class="badge badge-success badge_size">CTRL + SHIFT + 8</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="card bg-success-rgba">
+                                        <div class="card-body">
+                                            <div class="row align-items-center">
+                                                <div class="col-4">
+                                                    <div class="kanban-tag">
+                                                        <h6 class="mb-0">Report</h6>
+                                                    </div>
+                                                </div>
+                                                <div class="col-8">
+                                                    <span class="badge badge-success badge_size"> t</span>
+                                                    <span class="or_class_font">&nbsp;(or)</span>
+                                                     <span class="badge badge-success badge_size"> CTRL + SHIFT + 9 </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>                                
+                            </div>
+                        </div>
+
+                    </div> 
+                    <!-- End col --> 
+                    <!-- Start col -->
+                    <div class="col-lg-6 col-xl-4">
+                        <div class="card m-b-30">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0"><lang class="lang_receivecut_title">Receivings</lang></h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="kanban-board-one">
+
+                                    <div class="card bg-success-rgba">
+                                        <div class="card-body">
+                                            <div class="row align-items-center">
+                                                <div class="col-4">
+                                                    <div class="kanban-tag">
+                                                        <h6 class="mb-0">New</h6>
+                                                    </div>
+                                                </div>
+                                                <div class="col-8">
+                                                     <span class="badge badge-success badge_size">p</span>
+                                                     <span class="or_class_font">&nbsp;(or)</span>
+                                                    <span class="badge badge-success badge_size">CTRL + 4 </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="card bg-success-rgba">
+                                        <div class="card-body">
+                                            <div class="row align-items-center">
+                                                <div class="col-4">
+                                                    <div class="kanban-tag">
+                                                        <h6 class="mb-0">List</h6>
+                                                    </div>
+                                                </div>
+                                                <div class="col-8">
+                                                    <span class="badge badge-success badge_size">z</span>
+                                                    <span class="or_class_font">&nbsp;(or)</span>
+                                                     <span class="badge badge-success badge_size">CTRL + 5</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="card bg-success-rgba">
+                                        <div class="card-body">
+                                            <div class="row align-items-center">
+                                                <div class="col-4">
+                                                    <div class="kanban-tag">
+                                                        <h6 class="mb-0">Report</h6>
+                                                    </div>
+                                                </div>
+                                                <div class="col-8">
+                                                    <span class="badge badge-success badge_size">h</span>
+                                                    <span class="or_class_font">&nbsp;(or)</span>
+                                                    <span class="badge badge-success badge_size">CTRL + 6</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>               
+                                </div>                                
+                            </div>
+                        </div>
+
+                        <!-- Suppliers -->
+                        <div class="card m-b-30">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0"><lang class="lang_suppliercut_title">Suppliers</lang></h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="kanban-board-one">
+
+                                    <div class="card bg-success-rgba">
+                                        <div class="card-body">
+                                            <div class="row align-items-center">
+                                                <div class="col-4">
+                                                    <div class="kanban-tag">
+                                                        <h6 class="mb-0">New</h6>
+                                                    </div>
+                                                </div>
+                                                <div class="col-8">
+                                                    <span class="badge badge-success badge_size">y</span>
+                                                    <span class="or_class_font">&nbsp;(or)</span>
+                                                    <span class="badge badge-success badge_size">CTRL + SHIFT + 4</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="card bg-success-rgba">
+                                        <div class="card-body">
+                                            <div class="row align-items-center">
+                                                <div class="col-4">
+                                                    <div class="kanban-tag">
+                                                        <h6 class="mb-0">List</h6>
+                                                    </div>
+                                                </div>
+                                                <div class="col-8">
+                                                    <span class="badge badge-success badge_size">o</span>
+                                                    <span class="or_class_font">&nbsp;(or)</span>
+                                                     <span class="badge badge-success badge_size">CTRL + SHIFT + 5</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="card bg-success-rgba">
+                                        <div class="card-body">
+                                            <div class="row align-items-center">
+                                                <div class="col-4">
+                                                    <div class="kanban-tag">
+                                                        <h6 class="mb-0">Report</h6>
+                                                    </div>
+                                                </div>
+                                                <div class="col-8">
+                                                    <span class="badge badge-success badge_size">q</span>
+                                                    <span class="or_class_font">&nbsp;(or)</span>
+                                                      <span class="badge badge-success badge_size"> CTRL + SHIFT + 6 </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>                                
+                            </div>
+                        </div>
+
+                        <!-- Users -->
+                        <div class="card m-b-30">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0"><lang class="lang_expensecut_title">Expenses</lang></h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="kanban-board-one">
+
+                                    <div class="card bg-primary-rgba">
+                                        <div class="card-body">
+                                            <div class="row align-items-center">
+                                                <div class="col-4">
+                                                    <div class="kanban-tag">
+                                                        <h6 class="mb-0">New</h6>
+                                                    </div>
+                                                </div>
+                                                <div class="col-8">
+                                                    <span class="badge badge-primary badge_size">e</span>
+                                                    <span class="or_class_font">&nbsp;(or)</span>
+                                                      <span class="badge badge-primary badge_size">CTRL + d</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="card bg-primary-rgba">
+                                        <div class="card-body">
+                                            <div class="row align-items-center">
+                                                <div class="col-4">
+                                                    <div class="kanban-tag">
+                                                        <h6 class="mb-0">List</h6>
+                                                    </div>
+                                                </div>
+                                                <div class="col-8">
+                                                    <span class="badge badge-primary badge_size">l</span>
+                                                    <span class="or_class_font">&nbsp;(or)</span>
+                                                     <span class="badge badge-primary badge_size">CTRL + L </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>                                    
+
+                                </div>                                
+                            </div>
+                        </div>
+
+                    </div> 
+                    <!-- End col -->
+                    <!-- Start col -->
+                    <div class="col-lg-6 col-xl-4">
+
+
+                        <div class="card m-b-30">
+                            <div class="card-header">
+                                <h6 class="card-title mb-0"><lang class="lang_customercut_title">Customers</lang></h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="kanban-board-one">
+
+                                    <div class="card bg-primary-rgba">
+                                        <div class="card-body">
+                                            <div class="row align-items-center">
+                                                <div class="col-4">
+                                                    <div class="kanban-tag">
+                                                        <h6 class="mb-0">New</h6>
+                                                    </div>
+                                                </div>
+                                                <div class="col-8">
+                                                    <span class="badge badge-primary badge_size">c</span>
+                                                    <span class="or_class_font">&nbsp;(or)</span>
+                                                     <span class="badge badge-primary badge_size">CTRL + 7</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="card bg-primary-rgba">
+                                        <div class="card-body">
+                                            <div class="row align-items-center">
+                                                <div class="col-4">
+                                                    <div class="kanban-tag">
+                                                        <h6 class="mb-0">List</h6>
+                                                    </div>
+                                                </div>
+                                                <div class="col-8">
+                                                    <span class="badge badge-primary badge_size">j</span>
+                                                    <span class="or_class_font">&nbsp;(or)</span>
+                                                    <span class="badge badge-primary badge_size">CTRL + 8</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="card bg-primary-rgba">
+                                        <div class="card-body">
+                                            <div class="row align-items-center">
+                                                <div class="col-4">
+                                                    <div class="kanban-tag">
+                                                        <h6 class="mb-0">Report</h6>
+                                                    </div>
+                                                </div>
+                                                <div class="col-8">
+                                                    <span class="badge badge-primary badge_size">v</span>
+                                                    <span class="or_class_font">&nbsp;(or)</span>
+                                                     <span class="badge badge-primary badge_size"> CTRL + 9 </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>                                
+                            </div>
+                        </div>
+
+
+
+                        <div class="card m-b-30">
+                            <div class="card-header">
+                                <h6 class="card-title mb-0"><lang class="lang_othercut_title">Others</lang></h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="kanban-board-three">
+
+                                    <div class="card bg-warning-rgba">
+                                        <div class="card-body">
+                                            <div class="row align-items-center">
+                                                <div class="col-5">
+                                                    <div class="kanban-tag">
+                                                        <h6 class="mb-0">List Branch</h6>
+                                                    </div>
+                                                </div>
+                                                <div class="col-7">
+                                                    <span class="badge badge-warning badge_size"> b </span>
+                                                    <span class="or_class_font">&nbsp;(or)</span>
+                                                      <span class="badge badge-warning badge_size"> CTRL + b</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="card bg-warning-rgba">
+                                        <div class="card-body">
+                                            <div class="row align-items-center">
+                                                <div class="col-5">
+                                                    <div class="kanban-tag">
+                                                        <h6 class="mb-0">List Category</h6>
+                                                    </div>
+                                                </div>
+                                                <div class="col-7">
+                                                    <span class="badge badge-warning badge_size">r </span>
+                                                    <span class="or_class_font">&nbsp;(or)</span>
+                                                    <span class="badge badge-warning badge_size"> CTRL + r </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="card bg-warning-rgba">
+                                        <div class="card-body">
+                                            <div class="row align-items-center">
+                                                <div class="col-5">
+                                                    <div class="kanban-tag">
+                                                        <h6 class="mb-0">List Stock</h6>
+                                                    </div>
+                                                </div>
+                                                <div class="col-7">
+                                                    <span class="badge badge-warning badge_size"> k </span>
+                                                    <span class="or_class_font">&nbsp;(or)</span>
+                                                     <span class="badge badge-warning badge_size"> CTRL + k </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="card bg-warning-rgba">
+                                        <div class="card-body">
+                                            <div class="row align-items-center">
+                                                <div class="col-5">
+                                                    <div class="kanban-tag">
+                                                        <h6 class="mb-0">Setting</h6>
+                                                    </div>
+                                                </div>
+                                                <div class="col-7">
+                                                    <span class="badge badge-warning badge_size"> g </span>
+                                                    <span class="or_class_font">&nbsp;(or)</span>
+                                                    <span class="badge badge-warning badge_size"> CTRL + g </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>                                    
+
+                                    <div class="card bg-warning-rgba">
+                                        <div class="card-body">
+                                            <div class="row align-items-center">
+                                                <div class="col-5">
+                                                    <div class="kanban-tag">
+                                                        <h6 class="mb-0">Dashboard</h6>
+                                                    </div>
+                                                </div>
+                                                <div class="col-7">
+                                                    <span class="badge badge-warning badge_size"> d </span>
+                                                    <span class="or_class_font">&nbsp;(or)</span>
+                                                    <span class="badge badge-warning badge_size"> Home</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="card bg-warning-rgba">
+                                        <div class="card-body">
+                                            <div class="row align-items-center">
+                                                <div class="col-6">
+                                                    <div class="kanban-tag">
+                                                        <h6 class="mb-0">Save Sale</h6>
+                                                    </div>
+                                                </div>
+                                                <div class="col-4">
+                                                    <span class="badge badge-warning badge_size"> CTRL + Enter </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>                              
+                            </div>
+                        </div>
+
+                    </div> 
+                    <!-- End col -->                                   
+                </div>                
+            </div>
+            <div class="modal-footer">               
+                <button type="button" class="btn btn-outline-danger" data-dismiss="modal">
+                    <i class="feather icon-x-circle mr-2"></i><lang class="lang_close_title"> Close</lang>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- end Shortcut modals -->

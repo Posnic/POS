@@ -1,0 +1,492 @@
+<div class="vertical-layout page_loader" id="items" style="display: none">
+    <!-- Start Containerbar -->
+    <div id="containerbar">
+        <div class="breadcrumbbar crumbbar_padding">
+            <div class="row align-items-center row_filter">
+                <div class="col-lg-2 col-xl-2">
+                    <h4 class="page-title"> <lang class="lang_itemdetail_title">Item List</lang></h4>
+                </div>
+                <div class="col-md-8 col-lg-8 show-button-action"></div>
+                <div class="col-lg-3 col-xl-2 hide-button-action tb_filter" style="display:none;">
+                    <div id="view_items_daterange" class="form-control pull-right daterange-timepicker-all daterange-style date-align">
+                        <i class="feather icon-calendar"></i>&nbsp;
+                        <span></span>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-xl-2 hide-button-action tb_filter" style="display:none;">
+                    <select class="custom-select border-control" id="view_items_fields"  data-id="items" onchange="PosnicPro.changePlaceholder(this)">
+                        <option value="name" selected><lang class="lang_name_title">Name</lang></option>
+                        <option value="category_name">Category</option>
+                        <option value="itemid"><lang class="lang_sku_title">SKU</lang></option>
+                    </select>
+                </div>
+                <div class="col-lg-2 col-xl-2 hide-button-action tb_filter" style="display:none;">
+                    <input type="text" class="form-control border-control custom_search_input" id="view_items_input"
+                           placeholder="Enter Name" data-id="items" maxlength="25" autocomplete="off">
+                </div>
+                <div class="col-md-2 col-lg-2 col-xl-2 adjuce_left tb_search hide-button-action" style="display:none;">
+                    <button type="button" class="btn btn-danger-rgba" data-id="items" onclick="PosnicPro.dateRangefilterClear(this)">
+                        <lang class="lang_clear_title">Clear</lang>
+                    </button>
+                    <button type="button" class="btn btn-primary-rgba" data-id="items" onclick="PosnicPro.search(this, 'Table')">
+                        <lang class="lang_filter_title">Apply</lang>
+                    </button>
+                </div>
+
+                <div class="col-lg-12 col-xl-2 tb_widget">
+                    <div class="widgetbar">
+                        <button type="button" class="btn btn-round btn-primary-rgba click-action-button adjuce_left add_new_tooltip" data-toggle="tooltip" title="Filter"><i class="feather icon-filter" aria-hidden="true"></i></button>
+                        <a data-module="category" data-access="write" href='#/items/new' onClick="PosnicPro.items.addItemButton();" class="btn btn-primary-rgba dash_sale_count add_new_tooltip" data-toggle="tooltip" title="New Item">
+                            <i class="feather icon-plus mr-2"></i>
+                            <lang class="lang_addvariant_title">New</lang>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3"></div>
+                <div class="col-md-6 col-xl-9 mobile-hide tb_date_range">
+                    <p>
+                        <span class="badge badge-secondary-inverse hide_date_filetr" style="display:none;"><span class="view_items_date_filter_value"></span></span>
+                        <span class="badge badge-secondary-inverse hide_value_filetr" style="display:none;"><span class="view_items_filter_value"></span></span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="contentbar">
+        <!-- Start row -->
+        <div class="row">
+            <!-- Start col -->
+            <div class="col-lg-12">
+                <div class="card m-b-30">
+                    <div class="card-header item_header">
+                        <div class="row align-items-center">
+                            <div class="col-4">
+                                <ul class="list-inline-group text-left mb-0 pl-0">
+                                    <li class="list-inline-item">
+                                        <div class="form-group mb-0 amount-spent-select selecct-align">
+                                            <select class="form-control select_page" id="view_items_per_page" data-id="items" onChange="PosnicPro.setPerPage(this, 'Table');">
+                                                <option value="5" selected>5</option>
+                                                <option value="10">10</option>
+                                                <option value="25">25</option>
+                                                <option value="50">50</option>
+                                                <option value="100">100</option>
+                                            </select>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <div class="col-8">
+                                <div class="email-rightbar">
+                                    <div class="card-header header_icon">
+                                        <ul class="list-inline mb-0 pl-0 float-right">
+                                            <li class="list-inline-item email_320">
+                                                <a data-module="item" data-access="write" href="#/items" id="items_import" class="sale_color" onclick="PosnicPro.importTableFile('items');" data-action="item" data-toggle="tooltip" title="Import">
+                                                    <i class="feather icon-download font-20"></i>
+                                                </a>
+                                            </li>
+                                            <li class="list-inline-item email_320">
+                                                <a data-module="item" data-access="read" href="#/items" id="items_exportbtn" class="sale_color" onClick="PosnicPro.items.exportItems();" data-toggle="tooltip" title="Export Selected">
+                                                    <i class="feather icon-share font-20"></i>
+                                                </a>
+                                            </li>
+                                            <li class="list-inline-item email_320">
+                                                <a data-module="item" data-access="delete" href="#/items" id="items_deletebtn" class="sale_color" onclick="PosnicPro.items.deleteSelectedItems();" data-toggle="tooltip" title="Delete">
+                                                    <i class="feather icon-trash font-20"></i>
+                                                </a>
+                                            </li>
+                                            <li class="list-inline-item email_320">
+                                                <a href="javascript:PosnicPro.refreshDatatable('items')" data-id="items" class="add_new_tooltip" data-toggle="tooltip" title="Refresh">
+                                                    <i class="feather icon-refresh-cw font-20"></i>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body loader-table-item">
+                        <div class="table-responsive">
+                            <table class="table table-borderless" id="view_items">
+                                <div class="col-sm-6 col-md-12 col-lg-12 text-center" id="item_img_hide" style="display:none; padding:56px 20px;">
+                                    <!--
+                                        Nothing here yet.
+
+                                        This used to be a 200px download icon labelled "Import CSV" and
+                                        nothing else, so an empty list looked like a page that had failed
+                                        to load, and the only thing on offer was a bulk import to somebody
+                                        who almost certainly wanted to add one record. The primary action
+                                        is now the obvious one, with the import kept as the quieter second
+                                        option it should always have been.
+                                    -->
+                                    <i class="feather icon-inbox" style="font-size:56px; opacity:.25;"></i>
+                                    <p style="margin:14px 0 4px; font-size:16px; font-weight:600;">No items yet</p>
+                                    <p class="text-muted" style="margin:0 0 18px; font-size:13px;">
+                                        Add your first item with the New button above.
+                                    </p>
+                                    <a data-module="item" data-access="write" href="javascript:void(0)"
+                                       class="sale_color" style="font-size:13px;" onclick="PosnicPro.importTableFile('items');">
+                                        or import items from a CSV file
+                                    </a>
+                                </div>
+                                <div class="item_norecord col-sm-6 col-md-12 col-lg-12" style="display:none;">
+                                </div>
+
+                                <thead class="datatable-thead-tbody table-header item_header"></thead>
+                                <tbody class="datatable-thead-tbody table-body item_header"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="card m-b-30 item_header">
+                    <div class="card-body ecommerce-pagination page_padding">
+                        <div class="row align-items-center">
+                            <div class="col-8">
+                                <div class="hint-text">
+                                    Showing
+                                    <b><span id="view_items_page_total"></span></b>
+                                    to
+                                    <b><span id="view_items_page_perpage_total"></span></b>
+                                    of
+                                    <b><span id="view_items_total"></span></b>
+                                    entries
+                                    <span class="showing-hide-show-items" style="display:none;">&nbsp;&nbsp;&nbsp;&nbsp;
+                                        <span class="showing-value-items text-dark">0</span>&nbsp;
+                                        rows selected
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <nav aria-label="Page navigation example">
+                                    <ul class="pagination mb-0">
+                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="items" onclick="PosnicPro.previousPage(this, 'Table')"> <i class="fa fa-angle-left font-20"></i> </button>
+                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="items" onclick="PosnicPro.nextPage(this, 'Table')"> <i class="fa fa-angle-right font-20"></i> </button>
+                                    </ul>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- End col -->
+        </div>
+        <!-- End row -->
+    </div>
+    <!-- End Contentbar -->
+</div>
+<!-- Barcode label printing uses the vendored copy so tills do not need internet access. -->
+<script src="script/vendor/print-js/print.min.js"></script>
+<link rel="stylesheet" href="script/vendor/print-js/print.min.css">
+
+<!-- 2. MODIFIED HTML MODAL (Replace your existing view_print_lable modal) -->
+<div class="modal fade close_on_esc" id="view_print_lable" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content loader-label-item">
+            <!--Start print label form-->
+            <form method='post' onsubmit='return PosnicPro.items.printLabelBarcode();'>
+                <div class="modal-header">
+                    <h5 class="modal-title"><lang class="lang_printbarcode"> Print<span class="barcodeHeading">  </span> Barcode</lang></h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <!--start modal-body-->
+                <div class="modal-body" style="padding:0px;">
+                    <!-- Sticky Preview -->
+                    <div style="position: sticky; top: 0; z-index: 10; background: #fff; padding: 10px; border-bottom: 1px solid #ddd;">
+                        <div class="barcode-container" id="barcode-container">
+                            <div class="row m-t-10">
+                                <div class="col-md-12">
+                                    <div class="pull-right m-r-10">
+                                        <button class="btn btn-primary hidden-print" onclick="return PosnicPro.items.printLabelBarcode();">
+                                            <span class="glyphicon glyphicon-print" aria-hidden="true"></span> Print
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Preview Container with Visual Size Indicator -->
+                            <div style="text-align: center; padding: 20px;">
+                                <div style="margin-bottom: 10px;">
+                                    <small id="label-dimensions" style="color: #666; font-weight: bold;">
+                                        Label Size: <span id="preview-width">1.96</span>" × <span id="preview-height">1.96</span>"
+                                    </small>
+                                </div>
+
+                                <!-- Scaled Preview Container (NO BLUE BORDERS) -->
+                                <div id="preview-container" style="
+                display: inline-block;
+                background: #f8f9fa;
+                position: relative;
+                margin: 0 auto;
+            ">
+                                    <!-- Actual Preview Content -->
+                                    <div id="print-preview" style="
+                    width: 100%;
+                    height: 100%;
+                    padding: 4px;
+                    box-sizing: border-box;
+                    background: white;
+                    border: 1px solid #ddd;
+                    font-size: 10px;
+                ">
+                                        <div style="width:100%; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+                                            <p class="text-align fontfamily" style="font-size:0.9em; text-align:center; margin: 1px 0; line-height: 1.1;">
+                                                <span id="branch-name">posnic innovation pvt ltd.</span>
+                                            </p>
+                                            <div style="flex: 1; display: flex; align-items: center; justify-content: center; max-height: 60%;">
+                                                <svg id="labelBarcode" style="max-width:95%; max-height:100%; display: block;"></svg>
+                                            </div>
+                                            <div style="margin-top: 2px;">
+                                                <p class="text-align fontfamily" style="font-size:0.8em; margin: 1px 0; line-height: 1.1;">
+                                                    <span id="mrp-price"></span>&nbsp;&nbsp;<span id="price-name"></span>
+                                                </p>
+                                                <p class="text-align fontfamily" style="font-size:0.8em; margin: 1px 0; line-height: 1.1;">
+                                                    <span id="mfg-date"></span>
+                                                </p>
+                                                <p class="text-align fontfamily" style="font-size:0.8em; margin: 1px 0; line-height: 1.1;">
+                                                    <span id="exp-date"></span>
+                                                </p>
+                                                <p class="text-align fontfamily" style="font-size:0.7em; text-align:center; margin: 1px 0; line-height: 1.1;">
+                                                    <span id="address-name"></span>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div style="margin-top: 10px;">
+                                    <small style="color: #666;">Preview scaled to fit screen (actual print size indicated above)</small>
+                                </div>
+                            </div>
+
+                            <span id="invalid" style="display:none; color: red; text-align: center;">Not valid data for this barcode type!</span>
+                        </div>
+                    </div>
+
+                    <div class="container">
+                        <div class="row search-bar">
+                            <div class="col-md-8">
+                                <div class="input-group margin-bottom-sm">
+                                    <span class="input-group-addon"><i class="barcode_icons fa fa-barcode fa-fw"></i></span>
+                                    <input class="form-control" id="userInput" type="text" value="Example 12345" placeholder="Barcode" autofocus>
+                                    <span class="input-group-btn">
+                                        <select class="form-control border-control barcode-select" id="barcodeLabelType" title="CODE128">
+                                            <option value="CODE128">CODE128 auto</option>
+                                            <option value="CODE128A">CODE128 A</option>
+                                            <option value="CODE128B">CODE128 B</option>
+                                            <option value="CODE128C">CODE128 C</option>
+                                            <option value="EAN13">EAN13</option>
+                                            <option value="EAN8">EAN8</option>
+                                            <option value="UPC">UPC</option>
+                                            <option value="CODE39">CODE39</option>
+                                            <option value="ITF14">ITF14</option>
+                                            <option value="ITF">ITF</option>
+                                            <option value="MSI">MSI</option>
+                                            <option value="MSI10">MSI10</option>
+                                            <option value="MSI11">MSI11</option>
+                                            <option value="MSI1010">MSI1010</option>
+                                            <option value="MSI1110">MSI1110</option>
+                                            <option value="pharmacode">Pharmacode</option>
+                                        </select>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Name -->
+                        <div class="row">
+                            <div class="col-md-12 col-xs-12 col-md-offset-1">
+                                <label><lang class="lang_name_title">Name </lang></label>
+                            </div>
+                            <div class="col-md-8 col-xs-12 input-container">
+                                <input id="branch-value" class="form-control border-control" type="text" value="posnic innovation pvt ltd."/>
+                            </div>
+                        </div>
+
+                        <!-- Price -->
+                        <div class="row">
+                            <div class="col-md-4 col-xs-12 col-md-offset-1 form-group">
+                                <label><lang class="lang_price_title">Price </lang></label>
+                                <input id="price-value" class="form-control border-control" type="text"/>
+                            </div>
+                            <div class="col-md-4 col-xs-12 col-md-offset-1 form-group">
+                                <label><lang class="lang_price_title">MRP Price </lang></label>
+                                <input id="mrp-price-value" class="form-control border-control" type="text"/>
+                            </div>
+                        </div>
+
+                        <!-- Exp Date -->
+                        <div class="row">
+                            <div class="col-md-4 col-xs-12 col-md-offset-1 form-group">
+                                <label  for="mfg_checkbox">Mfg Date</label>
+                                <input  type="checkbox" id="mfg_checkbox" onclick="PosnicPro.items.mfgCheckbox(this.checked);">
+                                <input id="mfg-date-value" class="form-control border-control" type="text"/>
+                            </div>
+                            <div class="col-md-4 col-xs-12 col-md-offset-1 form-group">
+                                <label  for="exp_checkbox">Exp Date</label>
+                                <input  type="checkbox" id="exp_checkbox" onclick="PosnicPro.items.expCheckbox(this.checked);">
+                                <input id="exp-date-value" class="form-control border-control" type="text"/>
+                            </div>
+                        </div>
+
+                        <!-- Address -->
+                        <div class="row">
+                            <div class="col-md-12 col-xs-12 col-md-offset-1">
+                                <label><lang class="lang_address_title">Address </lang></label>
+                            </div>
+                            <div class="col-md-8 col-xs-12 input-container">
+                                <textarea id="address-value" class="form-control border-control"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-8 accordion" id="bracodeLableExpand">
+                                <div class="card">
+                                    <div class="card-header" id="bracodeLableheading">
+                                        <h2 class="mb-0">
+                                            <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne"><lang class="lang_stylecontrol">Style Control </lang> <span data-toggle="tooltip" data-placement="top" title="" data-original-title="Label style control"><i class="feather icon-help-circle"></i></span></button>
+                                        </h2>
+                                    </div>
+                                    <div id="collapseOne" class="collapse" aria-labelledby="bracodeLableheading" data-parent="#bracodeLableExpand">
+                                        <div class="card-body">
+                                            <div class="panel-body">
+
+                                                <!-- Document width & Document height-->
+                                                <div class="row">
+                                                    <div class="col-md-5 col-xs-12 col-md-offset-1 form-group">
+                                                        <label>Document width</label>
+                                                        <input id="document_width" name="document_width" class="form-control" type="number" value="1.96"/>
+                                                    </div>
+                                                    <div class="col-md-5 col-xs-12 col-md-offset-1 form-group">
+                                                        <label>Document height</label>
+                                                        <input id="document_height" class="form-control" type="number" value="1.18"/>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Margin Top & Margin Bottom-->
+                                                <div class="row">
+                                                    <div class="col-md-5 col-xs-12 col-md-offset-1 form-group">
+                                                        <label>Margin Top</label>
+                                                        <input id="margin_top" class="form-control border-control" type="number" value=0 />
+                                                    </div>
+                                                    <div class="col-md-5 col-xs-12 col-md-offset-1 form-group">
+                                                        <label>Margin Bottom</label>
+                                                        <input id="margin_bottom" class="form-control border-control" type="number" value=0 />
+                                                    </div>
+                                                </div>
+
+                                                <!-- Margin Left & Margin Right-->
+                                                <div class="row">
+                                                    <div class="col-md-5 col-xs-12 col-md-offset-1 form-group">
+                                                        <label>Margin Left</label>
+                                                        <input id="margin_left" class="form-control border-control" type="number" value=0 />
+                                                    </div>
+                                                    <div class="col-md-5 col-xs-12 col-md-offset-1 form-group">
+                                                        <label>Margin Right</label>
+                                                        <input id="margin_right" class="form-control border-control" type="number" value=0 />
+                                                    </div>
+                                                </div>
+
+                                                <!-- Bar width -->
+                                                <div class="row">
+                                                    <div class="col-md-12 col-xs-12 col-md-offset-1 description-text"><label><lang class="lang_barwidth">Bar Width</lang></label></div>
+                                                    <div class="col-md-7 col-xs-11 slider-container"><input id="bar-width" class="range-type" type="range" min="1" max="3.5" step="0.01" value="2.11"/></div>
+                                                    <div class="col-md-2 col-xs-2 value-text"><p><span id="bar-width-display"></span></p></div>
+                                                </div>
+                                                <!-- Height -->
+                                                <div class="row">
+                                                    <div class="col-md-12 col-xs-12 col-md-offset-1 description-text"><label><lang class="lang_barheight">Bar Height</lang></label></div>
+                                                    <div class="col-md-7 col-xs-11 slider-container"><input id="bar-height" class="range-type" type="range" min="10" max="120" step="1" value="43" /></div>
+                                                    <div class="col-md-2 col-xs-2 value-text"><p><span id="bar-height-display"></span></p></div>
+                                                </div>
+                                                <!-- Margin -->
+                                                <div class="row">
+                                                    <div class="col-md-12 col-xs-12 col-md-offset-1 description-text"><label><lang class="lang_margin">Margin</lang></label></div>
+                                                    <div class="col-md-7 col-xs-11 slider-container"><input id="bar-margin" class="range-type" type="range" min="0" max="25" step="0.01" value="1"/></div>
+                                                    <div class="col-md-2 col-xs-2 value-text"><p><span id="bar-margin-display"></span></p></div>
+                                                </div>
+                                                <!-- Background (color) -->
+                                                <div class="row">
+                                                    <div class="col-md-12 col-xs-12 col-md-offset-1 description-text"><label><lang class="lang_background">Background</lang></label></div>
+                                                    <div class="col-md-8 col-xs-12 input-container"><input id="background-color" class="form-control border-control color" value="#FFFFFF"/></div>
+                                                </div>
+                                                <!-- Line color -->
+                                                <div class="row">
+                                                    <div class="col-md-12 col-xs-12 col-md-offset-1 description-text"><label><lang class="lang_linecolor">Line Color</lang></label></div>
+                                                    <div class="col-md-8 col-xs-12 input-container"><input id="line-color" class="form-control border-control color" value="#000000"/></div>
+                                                </div>
+                                                <div id="font-options" style="margin-top: 10px;">
+                                                    <!-- Text align -->
+                                                    <div class="row checkbox-options">
+                                                        <div class="col-md-12 col-md-offset-1 col-xs-12 col-xs-offset-0 description-text"><label><lang class="lang_textalign">Text Align</lang></label></div>
+                                                        <div class="col-md-8 center-text">
+                                                            <div class="btn-group btn-group-md" role="toolbar" style="border:1px solid;">
+                                                                <button type="button" class="btn text-align" value="left">Left</button>
+                                                                <button type="button" class="btn btn-primary text-align" value="center">Center</button>
+                                                                <button type="button" class="btn text-align" value="right">Right</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <!-- Font -->
+                                                    <div class="row">
+                                                        <div class="col-md-12 col-md-offset-1 col-xs-12 col-xs-offset-0 description-text"><label><lang class="lang_font">Font</lang></label></div>
+                                                        <div class="col-md-8 center-text">
+                                                            <select class="form-control border-control" id="font" style="font-family: monospace">
+                                                                <option value="monospace" style="font-family: monospace" selected="selected">Monospace</option>
+                                                                <option value="sans-serif" style="font-family: sans-serif">Sans-serif</option>
+                                                                <option value="serif" style="font-family: serif">Serif</option>
+                                                                <option value="fantasy" style="font-family: fantasy">Fantasy</option>
+                                                                <option value="cursive" style="font-family: cursive">Cursive</option>
+                                                                <option value="Arial" style="font-family: Arial">Arial</option>
+                                                                <option value="Georgia" style="font-family: Georgia">Georgia</option>
+                                                                <option value="Times New Roman" style="font-family: 'Times New Roman'">Times New Roman</option>
+                                                                <option value="Verdana" style="font-family: Verdana">Verdana</option>
+                                                                <option value="Tahoma" style="font-family: Tahoma">Tahoma</option>
+                                                                <option value="Courier New" style="font-family: 'Courier New'">Courier New</option>
+                                                                <option value="Trebuchet MS" style="font-family: 'Trebuchet MS'">Trebuchet MS</option>
+                                                                <option value="Impact" style="font-family: Impact">Impact</option>
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-md-1"></div>
+                                                    </div>
+                                                    <!-- Font size -->
+                                                    <div class="row">
+                                                        <div class="col-md-12 col-md-offset-1 col-xs-12 col-xs-offset-0 description-text"><label><lang class="lang_fontsize">Font Size</lang></label></div>
+                                                        <div class="col-md-7 col-xs-11 slider-container"><input id="bar-fontSize" class="range-type" type="range" min="3" max="22" step="1" value="12"/></div>
+                                                        <div class="col-md-2 col-xs-2 value-text"><p><span id="bar-fontSize-display"></span></p></div>
+                                                    </div>
+                                                    <!-- Text margin -->
+                                                    <div class="row">
+                                                        <div class="col-md-12 col-md-offset-1 col-xs-12 col-xs-offset-0 description-text"><label><lang class="lang_textmargin">Text Margin</lang></label></div>
+                                                        <div class="col-md-7 col-xs-11 slider-container"><input id="bar-text-margin" class="range-type" type="range" min="-2" max="40" step="0.5" value="1"/></div>
+                                                        <div class="col-md-2 col-xs-2 col-xs-11 value-text"><p><span id="bar-text-margin-display"></span></p></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-danger" data-dismiss="modal">
+                        <i class="feather icon-x-circle mr-2"></i><lang class="lang_close_title"> Close</lang>
+                    </button>
+                    <button type="submit" id='label-print-button' class="btn btn-outline-primary">
+                        <i class="feather icon-send mr-2"></i><lang class="lang_printed"> Print</lang>
+                    </button>
+                </div>
+                <!--End modal-body-->
+            </form>
+            <!--End print label form-->
+        </div>
+    </div>
+</div>
+<!-- end Item Print model -->

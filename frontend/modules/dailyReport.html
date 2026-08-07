@@ -1,0 +1,483 @@
+<div class="vertical-layout page_loader" id="dailyreport_new" style="display: none">
+    <!-- Start Containerbar -->
+    <div id="containerbar">
+        <!-- Start Breadcrumbbar -->
+        <div class="breadcrumbbar crumbbar_padding">
+
+            <!--  filter-->
+            <div class="row align-items-center row_filter hide-sale-filter">
+                <div class="col-lg-2 col-xl-2">
+                    <h4 class="page-title break_title">Quick Sale Reports</h4>
+                </div>
+                <div class="col-md-9 col-lg-9 show-button-action"></div>
+                <div class="col-lg-2 col-xl-2 hide-button-action tb_filter" style="display:none;">
+                    <div class="form-control pull-right daterange-style date-align view_dailysale_report_daterange"
+                        id="view_dailysale_report_daterange">
+                        <i class="feather icon-calendarfeather icon-calendar"></i>&nbsp;
+                        <span></span>
+                    </div>
+                </div>
+                <div class="col-lg-6 col-xl-6 hide-button-action tb_filter" style="display:none;">
+                    <select class="floating-input select2 load-select-branch display-current-branch"
+                        data-placeholder="Select Branch" name="dailysale_branch_value[]" id="dailysale_branch_value">
+                        <option class="allbranch_name" value=''>All</option>
+                    </select>
+                </div>
+                <div class="col-md-1 col-lg-1 hide-button-action" style="display:none;">
+                    <button type="button" class="btn btn-primary-rgba"
+                        onclick="PosnicPro.quickreport.salereportTable();">
+                        <lang class="lang_filter_title">Apply</lang>
+                    </button>
+                </div>
+                <div class="col-lg-1 col-xl-1 tb_widget">
+                    <div class="widgetbar">
+                        <button type="button"
+                            class="btn btn-round btn-primary-rgba click-action-button adjuce_left add_new_tooltip"
+                            data-toggle="tooltip" title="Filter">
+                            <i class="feather icon-filter" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Start Contentbar -->
+    <div class="contentbar">
+        <!-- Start row -->
+        <div class="row">
+            <div class="col-md-12 col-lg-12 col-xl-12 m-t-10">
+                <div class="card m-b-30">
+                    <div class="card-body loader-dailysale-report">
+                        <!-- <ul class="nav nav-tabs custom-tab-line mb-3" id="defaultTabLine" role="tablist">                            
+                            <li class="nav-item">
+                                <a class="nav-link active report_tab_font custom-daily-sale-nav-menu" id="dailysale-view-tab-line" data-toggle="tab" href="#dailysale-view-line" role="tab" aria-controls="dailysale-view-line" aria-selected="true" onClick="PosnicPro.quickreport.salereportTable('Daily');">Daily</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link report_tab_font" id="dailysale-view-tab-line" data-toggle="tab" href="#dailysale-view-line" role="tab" aria-controls="dailysale-view-line" aria-selected="true" onClick="PosnicPro.quickreport.salereportTable('Weekly');">Weekly</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link report_tab_font" id="dailysale-view-tab-line" data-toggle="tab" href="#dailysale-view-line" role="tab" aria-controls="dailysale-view-line" aria-selected="true" onClick="PosnicPro.quickreport.salereportTable('Monthly');">Monthly</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link report_tab_font" id="dailysale-view-tab-line" data-toggle="tab" href="#dailysale-view-line" role="tab" aria-controls="dailysale-view-line" aria-selected="true" onClick="PosnicPro.quickreport.salereportTable('Yearly');">Yearly</a>
+                            </li>
+                        </ul> -->
+                        <div class="tab-content" id="defaultTabContentLine">
+                            <div id="dailysale_upgrade" class="text-center mt-4">
+                                <p class="font-weight-bold">You're currently on the Free Plan. Upgrade to Premium for
+                                    full access to all features.</p>
+                                <a href="javascript:void(0)"
+                                    onclick="return PosnicPro.users.accountGoToWebsiteURL(this);"
+                                    class="btn btn-primary">Upgrade to Premium</a>
+                            </div>
+                            <div class="tab-pane fade show active" id="dailysale-view-line" role="tabpanel"
+                                aria-labelledby="dailysale-view-tab-line">
+
+
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="row justify-content-center">
+                                            <div class="col-lg-12 col-xl-10">
+                                                <div class="cart-head hide-show-dailyimgreport" style="display: none;">
+
+                                                    <div class="row">
+                                                        <div class="col-sm-6 col-md-12 col-lg-12">
+                                                            <img src="static/images/general/nodata.svg"
+                                                                class="img-fluid"
+                                                                style="opacity: 0.6;width: 100%;height: 250px;" alt="">
+                                                        </div>
+                                                        <div class="col-sm-6 col-md-12 col-lg-12">
+                                                            <div class="text-center text-dark">
+                                                                <p>No Records </p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="cart-head hide-show-dailyreport">
+
+                                                    <div class="row">
+                                                        <div class="col-lg-12">
+                                                            <!--
+                                                                On a thermal roll this prints a cash-up slip
+                                                                rather than the whole report: sales, the
+                                                                payment split, and lines to sign at handover.
+                                                                On A4 it prints the full page.
+                                                            -->
+                                                            <button class="btn btn-primary-rgba pull-right blur_val"
+                                                                onclick="return PosnicPro.quickreport.printDailyReport();"
+                                                                data-toggle="tooltip" data-placement="top"
+                                                                title="Print" type="button"
+                                                                style="margin-right: 5px;font-size: 20px;">
+                                                                <i class="fa fa-print"></i>
+                                                            </button>
+                                                            <button class="btn btn-danger-rgba pull-right blur_val"
+                                                                onclick="return PosnicPro.quickreport.dailyReportPdf();"
+                                                                data-toggle="tooltip" data-placement="top"
+                                                                title="Download PDF" type="button"
+                                                                style="margin-right: 5px;font-size: 20px;">
+                                                                <i class="fa fa-file-pdf-o"></i>
+                                                            </button>
+                                                            <button class="btn btn-primary-rgba pull-right blur_val"
+                                                                onclick="return PosnicPro.quickreport.dailyReportEmail();"
+                                                                data-toggle="tooltip" data-placement="top" title="Email"
+                                                                style="margin-right: 5px;font-size: 20px;">
+                                                                <i class="fa fa-envelope-o"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+
+                                                    <div id="export_daily_report">
+                                                        <table
+                                                            class="col-12 table table-borderless table-bordered-padding m-t-50"
+                                                            id="daily_report_date_details">
+                                                            <tbody class="pull-right">
+                                                                <tr>
+                                                                    <th><span class="f-w-3 font-21">From :
+                                                                            &nbsp;&nbsp;</span><span
+                                                                            class="f-w-3 font-21"
+                                                                            id="daily_report_fromdate"></span></th>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                        <table
+                                                            class="col-12 table table-borderless table-bordered-padding m-t-10"
+                                                            id="daily_report_todate_details">
+                                                            <tbody class="pull-right">
+                                                                <tr>
+                                                                    <th><span class="f-w-3 font-21">To :
+                                                                            &nbsp;&nbsp;</span><span
+                                                                            class="f-w-3 font-21"
+                                                                            id="daily_report_todate"></span></th>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                        <table
+                                                            class="col-12 table table-borderless table-bordered-padding m-b-50"
+                                                            id="daily_report_branch_details">
+                                                            <tbody>
+                                                                <tr>
+                                                                    <th id="" class="f-w-7 font-30 text-left">Quick Sale
+                                                                        Report</th>
+                                                                </tr>
+                                                                <tr>
+                                                                    <th></th>
+                                                                </tr>
+                                                                <tr>
+                                                                    <th>
+                                                                        <address>
+                                                                            <span class="f-w-3 font-13"
+                                                                                id="daily_report_date"></span></br>
+                                                                            <span class="f-w-6 font-13"
+                                                                                id="daily_report_branchname"></span></br>
+                                                                            <span class="f-w-3 font-13"
+                                                                                id="daily_report_branchaddress"></span></br>
+                                                                            <span class="f-w-3 font-13"
+                                                                                id="daily_report_branchphone"></span></br>
+                                                                            <span class="f-w-3 font-13"
+                                                                                id="daily_report_branchemail"></span>
+                                                                        </address>
+                                                                    </th>
+                                                                </tr>
+                                                                <tr style="border-style:hidden !important;">
+                                                                    <th style="border-style:hidden !important;"></th>
+                                                                </tr>
+                                                                <tr style="border-style:hidden !important;">
+                                                                    <th style="border-style:hidden !important;"></th>
+                                                                </tr>
+                                                                <tr style="border-style:hidden !important;">
+                                                                    <th style="border-style:hidden !important;"></th>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+
+                                                        <h5 class="f-w-6 m-t-30 m-b-20">Items</h5>
+                                                        <div class="table-responsive">
+                                                            <table class="table table-bordered table-bordered-padding"
+                                                                cellspacing="0" width="100%"
+                                                                id="daily_report_product_details">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <td class="f-w-6 font-13 text-center"
+                                                                            width="5%">S.No</td>
+                                                                        <td class="f-w-6 font-13 text-left" width="30%">
+                                                                            Description</td>
+                                                                        <td class="f-w-6 font-13 text-left" width="10%">
+                                                                            Sku</td>
+                                                                        <td class="f-w-6 font-13 text-center"
+                                                                            width="5%">Qty</td>
+                                                                        <td class="f-w-6 font-13 text-center"
+                                                                            width="10%">Price</td>
+                                                                        <td class="f-w-6 font-13 text-center"
+                                                                            width="10%">Extra Discount</td>
+                                                                        <td class="f-w-6 font-13 text-center"
+                                                                            width="10%">Tax</td>
+                                                                        <td class="f-w-6 font-13 text-center"
+                                                                            width="10%">Total</td>
+                                                                        <!-- <td class="f-w-6 font-13 text-center" width="10%">Profit</td> -->
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+
+                                                                </tbody>
+
+                                                                <tfoot>
+                                                                    <tr>
+                                                                        <td></td>
+                                                                        <td class="font-13 text-center f-w-6"
+                                                                            style="border-left-style:hidden !important;">
+                                                                            Total</td>
+                                                                        <td class="font-12 text-left"> </td>
+                                                                        <td class="font-12 text-center"><b><span
+                                                                                    class="daily_report_qty_price"></span></b>
+                                                                        </td>
+                                                                        <td class="font-12 text-right"><b><span
+                                                                                    class="display-currency"></span>&nbsp;<span
+                                                                                    class="daily_report_product_price"></span></b>
+                                                                        </td>
+                                                                        <td class="font-12 text-right"> </td>
+                                                                        <td class="font-12 text-right"> </td>
+                                                                        <td class="font-12 text-right"><b><span
+                                                                                    class="display-currency"></span>&nbsp;<span
+                                                                                    class="daily_report_product_total"></span></b>
+                                                                        </td>
+                                                                        <!-- <td class="font-12 text-right"><b><span class="display-currency"></span>&nbsp;<span class="daily_report_product_profit"></span></b></td> -->
+                                                                    </tr>
+                                                                </tfoot>
+                                                            </table>
+                                                        </div>
+                                                        <h5 class="f-w-6 m-t-50 m-b-20" id="extra_discount_heading">Extra Discount</h5>
+                                                        <div class="row m-t-20">
+                                                            <div class="col-sm-12 m-b-20">
+                                                                <table class="table table-bordered"
+                                                                    id="daily_report_extra_discount_details">
+                                                                    <thead>
+                                                                        <tr>
+                                                                            <td class="f-w-6 font-13 text-center"
+                                                                                width="75%">Extra Discount</td>
+                                                                            <td class="f-w-6 font-13 text-center"
+                                                                                width="25%">Amount</td>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                    </tbody>
+                                                                    <tfoot>
+                                                                        <tr>
+                                                                            <th class="text-center">
+                                                                                Total </th>
+                                                                            <td class="text-right"><b><span
+                                                                                        class="display-currency"></span>&nbsp;<span
+                                                                                        class="daily_report_extra_discount_total"></span></b>
+                                                                            </td>
+                                                                        </tr>
+                                                                    </tfoot>
+                                                                </table>
+                                                            </div>
+                                                        </div>
+                                                        <h5 class="f-w-6 m-t-50 m-b-20" id="tender_type_heading">Tender Type</h5>
+                                                        <div class="row m-t-20">
+                                                            <div class="col-sm-12 m-b-20">
+                                                                <table class="table table-bordered"
+                                                                    id="daily_report_tender_details">
+                                                                    <thead>
+                                                                        <tr>
+                                                                            <td class="f-w-6 font-13 text-center"
+                                                                                width="5%">S.No</td>
+                                                                            <td class="f-w-6 font-13 text-left"
+                                                                                width="75%">Tender Type</td>
+                                                                            <td class="f-w-6 font-13 text-center"
+                                                                                width="20%">Amount</td>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+
+                                                                    </tbody>
+                                                                    <tfoot>
+                                                                        <tr>
+                                                                            <th></th>
+                                                                            <th class="text-center"
+                                                                                style="border-left-style:hidden !important;">
+                                                                                Total </th>
+                                                                            <td class="text-right"><b><span
+                                                                                        class="display-currency"></span>&nbsp;<span
+                                                                                        class="daily_report_product_tender_total"></span></b>
+                                                                            </td>
+                                                                        </tr>
+                                                                    </tfoot>
+                                                                </table>
+                                                            </div>
+                                                        </div>
+                                                        <h5 class="f-w-6 m-t-50 m-b-20" id="tax_type_heading">Tax Type</h5>
+                                                        <div class="row m-t-20">
+                                                            <div class="col-sm-12 m-b-20">
+                                                                <table class="table table-bordered"
+                                                                    id="daily_report_tax_details">
+                                                                    <thead>
+                                                                        <tr>
+                                                                            <td class="f-w-6 font-13 text-center"
+                                                                                width="5%">S.No</td>
+                                                                            <td class="f-w-6 font-13 text-left"
+                                                                                width="75%">Tax Type</td>
+                                                                            <td class="f-w-6 font-13 text-center"
+                                                                                width="20%">Amount</td>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+
+                                                                    </tbody>
+                                                                    <tfoot>
+                                                                        <tr>
+                                                                            <th></th>
+                                                                            <th class="text-center"
+                                                                                style="border-left-style:hidden !important;">
+                                                                                Total</th>
+                                                                            <td class="text-right"><b><span
+                                                                                        class="display-currency"></span>&nbsp;<span
+                                                                                        class="daily_report_product_tax_total"></span></b>
+                                                                            </td>
+                                                                        </tr>
+                                                                    </tfoot>
+                                                                </table>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <div class="row m-t-20 table-dine-summary-section">
+                                                            <h5 class="f-w-6 m-t-50 m-b-20">Dine & Table Summary</h5>
+                                                            <div class="col-sm-12 m-b-20">
+                                                                <table class="table table-bordered"
+                                                                    id="daily_report_dine_details">
+                                                                    <thead>
+                                                                        <tr>
+                                                                            <td class="f-w-6 font-13 text-center"
+                                                                                width="5%">S.No</td>
+                                                                            <td class="f-w-6 font-13 text-left"
+                                                                                width="55%">Dine Type</td>
+                                                                            <td class="f-w-6 font-13 text-center"
+                                                                                width="15%">Count</td>
+                                                                            <td class="f-w-6 font-13 text-center"
+                                                                                width="15%">Pax</td>
+                                                                            <td class="f-w-6 font-13 text-center"
+                                                                                width="15%">Amount</td>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+
+                                                                    </tbody>
+                                                                    <tfoot>
+                                                                        <tr>
+                                                                            <th></th>
+                                                                            <th class="text-center"
+                                                                                style="border-left-style:hidden !important;">
+                                                                                Total </th>
+                                                                            <td class="text-center"><b>
+                                                                                <!-- <span class="display-currency"></span>&nbsp; -->
+                                                                                    <span class="daily_report_dine_count"></span></b>
+                                                                            </td>
+                                                                            <td class="text-center"><b>
+                                                                                    <span class="daily_report_dine_pax"></span></b>
+                                                                            </td>
+                                                                            <td class="text-right"><b><span
+                                                                                        class="display-currency"></span>&nbsp;<span
+                                                                                        class="daily_report_dine_total"></span></b>
+                                                                            </td>
+                                                                        </tr>
+                                                                    </tfoot>
+                                                                </table>
+                                                            </div>
+                                                            <div class="col-sm-12">
+                                                                <table class="table table-bordered"
+                                                                    id="daily_report_table_summary">
+                                                                    <thead>
+                                                                        <tr>
+                                                                            <td class="f-w-6 font-13 text-center"
+                                                                                width="5%">S.No</td>
+                                                                            <td class="f-w-6 font-13 text-left"
+                                                                                width="55%">Tables</td>
+                                                                            <td class="f-w-6 font-13 text-center"
+                                                                                width="15%">Pax</td>
+                                                                            <td class="f-w-6 font-13 text-center"
+                                                                                width="25%">Total</td>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                    </tbody>
+                                                                    <tfoot>
+                                                                        <tr>
+                                                                            <th></th>
+                                                                            <th class="text-center"
+                                                                                style="border-left-style:hidden !important;">
+                                                                                Total
+                                                                            </th>
+                                                                            <td class="text-center">
+                                                                                <b>
+                                                                                    <span class="daily_report_table_pax"></span>
+                                                                                </b>
+                                                                            </td>
+                                                                            <td class="text-right">
+                                                                                <b>
+                                                                                    <span
+                                                                                        class="display-currency"></span>&nbsp;
+                                                                                    <span
+                                                                                        class="daily_report_table_total"></span>
+                                                                                </b>
+                                                                            </td>
+                                                                        </tr>
+                                                                    </tfoot>
+                                                                </table>
+                                                            </div>
+                                                        </div>
+
+                                                    </div>
+
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- End col -->
+        </div>
+    </div>
+</div>
+
+
+<!-- start mail modal -->
+<div class="modal fade close_on_esc" id="to_email_modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Email Address</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="to_email_form" method="POST">
+                    <div class="form-row">
+                        <div class="form-group col-md-12">
+                            <label for="to_email_value"> To email address <span class="text-danger">*</span></label>
+                            <input id="to_email_value" type="email" maxlength="250" name="to_email_value"
+                                class="form-control border-control" required="">
+                        </div>
+                    </div>
+                    <div class="form-row pull-right">
+                        <div class="form-group col-md-12">
+                            <button type="button" class="btn btn-outline-danger" data-dismiss="modal">
+                                <lang class="lang_close_title"> <i class="feather icon-x-circle mr-2"></i>Close </lang>
+                            </button>
+                            <button type="submit" class="btn btn-outline-primary"><i class="feather icon-send mr-2"></i>
+                                <lang class="lang_yes_title"> Proceed </lang>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- end mail modal -->

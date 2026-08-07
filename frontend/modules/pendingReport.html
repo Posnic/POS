@@ -1,0 +1,736 @@
+<div class="vertical-layout page_loader" id="pendingreport_new" style="display: none">
+    <!-- Start Containerbar --> 
+    <div id="containerbar">
+        <!-- Start Breadcrumbbar -->
+        <div class="breadcrumbbar crumbbar_padding">
+            <div class="row align-items-center row_filter">
+                <div class="col-lg-2 col-xl-2">
+                    <h4 class="page-title break_title"><lang class="lang_pending_report">Partialy Paid</lang></h4>
+                </div>               
+                <div class="col-md-9 col-lg-9 show-button-action"></div>                  
+                <div class="col-lg-3 col-xl-2 hide-button-action tb_filter" style="display:none;">
+                    <div class="form-control pull-right daterange-timepicker-all daterange-style date-align view_pending_report_daterange">
+                        <i class="feather icon-calendarfeather icon-calendar"></i>&nbsp;
+                        <span></span>
+                    </div>
+                </div>
+                <div class="col-lg-5 col-xl-5 hide-button-action tb_filter" style="display:none;">
+                    <select class="floating-input select2 load-branch display-current-branch pending_branch_value" multiple="multiple"
+                            data-placeholder="Select Branch" name="pending_branch_value[]" id="pending_branch_value">
+                        <option class="allbranch_name" value=''>All</option>
+                    </select>
+                </div>
+                <div class="col-md-2 col-lg-2 adjuce_left hide-button-action" style="display:none;">
+                    <button type="button" class="btn btn-danger-rgba" data-id="pending" onclick="PosnicPro.dateRangeAllfilterClear(this)">
+                        <lang class="lang_clear_title">Clear</lang>
+                    </button>
+                    <button type="button" class="btn btn-primary-rgba" id='change_pending_view' data-id="tableView" onclick="PosnicPro.pendingroot.viewPage(this);">
+                        <lang class="lang_filter_title">Apply</lang>
+                    </button>
+                </div>
+                <div class="col-lg-1 col-xl-1 tb_widget">
+                    <div class="widgetbar">
+                        <button type="button" class="btn btn-round btn-primary-rgba click-action-button adjuce_left add_new_tooltip" data-toggle="tooltip" title="Filter">
+                            <i class="feather icon-filter" aria-hidden="true"></i>
+                        </button>                       
+                    </div>
+                </div>  
+            </div>            
+        </div>
+    </div>
+
+    <!-- Start Contentbar -->
+    <div class="contentbar">
+        <!-- Start row -->
+        <div class="row"> 
+            <div class="col-md-12 col-lg-12 col-xl-12 m-t-10">
+                <div class="card m-b-30">
+                    <div class="card-body">
+                        <ul class="nav nav-tabs custom-tab-line mb-3" id="defaultTabLine" role="tablist">
+                            <li class="nav-item">
+                                <a class="nav-link active report_tab_font" id="pending-tab-line" data-toggle="tab" href="#pending-line" role="tab" aria-controls="pending-line" aria-selected="true" onClick="PosnicPro.pendingreport.pendingTableTabClick();"><lang class="lang_pending_sale_detail">Sale Details</lang> </a>
+                            </li>
+                            <!--                            <li class="nav-item">
+                                                            <a class="nav-link report_tab_font" id="pending-receiving-tab-line" data-toggle="tab" href="#pending-receiving-line" role="tab" aria-controls="pending-receiving-line" aria-selected="false" onClick="PosnicPro.pendingreceivingreport.pendingreceivingTableTabClick();"><lang class="lang_pending_receiving_detail">Pending Receiving Details</lang></a>
+                                                        </li>-->
+                            <li class="nav-item"> 
+                                <a class="nav-link report_tab_font" id="pending-customer-tab-line" data-toggle="tab" href="#pending-customer-line" role="tab" aria-controls="pending-customer-line" aria-selected="false" onClick="PosnicPro.pendingcustomerreport.pendingcustomerTableTabClick();"><lang class="lang_pending_customer_detail">Customer Details</lang></a>
+                            </li>
+                            <!--                            <li class="nav-item"> 
+                                                            <a class="nav-link report_tab_font" id="pending-supplier-tab-line" data-toggle="tab" href="#pending-supplier-line" role="tab" aria-controls="pending-supplier-line" aria-selected="false" onClick="PosnicPro.pendingsupplierreport.pendingsupplierTableTabClick();"><lang class="lang_pending_supplier_detail">Pending Supplier Details</lang></a>
+                                                        </li>-->
+                            <li class="nav-item"> 
+                                <a class="nav-link report_tab_font" id="pending-customercategory-tab-line" data-toggle="tab" href="#pending-customercategory-line" role="tab" aria-controls="pending-customercategory-line" aria-selected="false" onClick="PosnicPro.pendingcustomercategoryreport.pendingcustomercategoryTableTabClick();"><lang class="lang_customercategory_detail">Customer Category Details</lang></a>
+                            </li>
+                        </ul>
+                        <div class="tab-content" id="defaultTabContentLine">
+                            <div id="pending_upgrade" class="text-center mt-4">
+                                <p class="font-weight-bold">You're currently on the Free Plan. Upgrade to Premium for full access to all features.</p>
+                                <a href="javascript:void(0)" onclick="return PosnicPro.users.accountGoToWebsiteURL(this);" class="btn btn-primary">Upgrade to Premium</a>
+                            </div>
+                            <div class="tab-pane fade show active" id="pending-line" role="tabpanel" aria-labelledby="pending-tab-line">
+                                <!-- start table -->
+                                <div class="row reportpending_header">
+                                    <div class="col-lg-1 col-md-1 col-md-2 form-group mb-0 amount-spent-select selecct-align">
+                                        <select class="form-control select_page" id="view_pendingreport_per_page" data-id="pendingreport" onChange="PosnicPro.setPerPage(this, 'Table');">
+                                            <option value="5" selected>5</option>
+                                            <option value="10">10</option>
+                                            <option value="25">25</option>
+                                            <option value="50">50</option>
+                                            <option value="100">100</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-lg-11 col-md-11">                                                                                       
+                                        <div class="email-rightbar">
+                                            <div class="card-header header_icon">
+                                                <ul class="list-inline mb-0 pl-0 float-right">
+                                                    <li class="list-inline-item email_320">
+                                                        <a href="javascript:void(0);" data-module="report" data-access="read" data-id="pendingreport" onclick="PosnicPro.refreshReportDatatable(this);" class="add_new_tooltip" data-toggle="tooltip" title="Refresh">
+                                                            <i class="feather icon-refresh-cw font-20"></i>
+                                                        </a>
+                                                    </li>
+                                                    <li class="list-inline-item email_320">
+                                                        <a href="javascript:void(0);" data-module="report" data-access="read" id="pendingreport_exportbtn"
+                                                           data-id="pendingreportexport" onclick="PosnicPro.pendingreport.pendingReportExport(this);" class="sale_color dash_sale_count" data-toggle="tooltip" title="Export All To CSV">
+                                                            <i class="feather icon-share font-20"></i>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-body card-box no-padding loader-pending-report">
+                                    <!-- Start table -->
+                                    <div class="table-responsive">
+                                        <table id="view_pendingreport" class="table table-borderless" cellspacing="0"
+                                               width="100%">
+                                            <div class="col-sm-6 col-md-12 col-lg-12" id="reportpending_img_hide" style="display:none;">
+                                                <img src="static/images/general/nodata.svg" class="img-fluid" style="opacity: 0.6;width: 100%;height: 250px;" alt="">
+                                                <div class="text-center text-dark"> <p class="report-partialy-paid-sales-details-no-records"></p></div>
+                                            </div>
+                                            <thead class="report-thead-tfoot table-header reportpending_header"></thead>
+                                            <tbody class="report-thead-tfoot table-body reportpending_header"></tbody>
+                                        </table>
+                                    </div>
+                                    <!-- End table -->
+                                </div>
+                                <!-- start pagination -->
+                                <div class="card m-b-30 reportpending_header">
+                                    <div class="card-body ecommerce-pagination">
+                                        <div class="row align-items-center">
+                                            <div class="col-8">
+                                                <div class="hint-text">
+                                                    Showing 
+                                                    <b><span id="view_pendingreport_page_total"></span></b>
+                                                    to 
+                                                    <b><span id="view_pendingreport_page_perpage_total"></span></b> 
+                                                    of 
+                                                    <b><span id="view_pendingreport_total"></span></b>
+                                                    entries 
+                                                    <span class="showing-hide-show-pendingreport" style="display:none;"> &nbsp;&nbsp;&nbsp;&nbsp; 
+                                                        <span class="showing-value-pendingreport text-dark"> 0 </span>&nbsp; 
+                                                        rows selected  
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <nav aria-label="Page navigation example">
+                                                    <ul class="pagination mb-0">
+                                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="pendingreport" onclick="PosnicPro.previousPage(this, 'Table')"> <i class="fa fa-angle-left font-20"></i> </button>
+                                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="pendingreport" onclick="PosnicPro.nextPage(this, 'Table')"> <i class="fa fa-angle-right font-20"></i> </button>
+                                                    </ul>
+                                                </nav>
+                                            </div>
+                                        </div>                                
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="tab-pane fade" id="pending-receiving-line" role="tabpanel" aria-labelledby="pending-receiving-tab-line" style="display: none;">
+                                <!-- start table -->
+                                <div class="row reportpendingrecev_header">
+                                    <div class="col-lg-1 col-md-1 col-md-2 form-group mb-0 amount-spent-select selecct-align">
+                                        <select class="form-control select_page" id="view_pendingreceivingreport_per_page" data-id="pendingreceivingreport" onChange="PosnicPro.setPerPage(this, 'Table');">
+                                            <option value="5" selected>5</option>
+                                            <option value="10">10</option>
+                                            <option value="25">25</option>
+                                            <option value="50">50</option>
+                                            <option value="100">100</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-lg-11 col-md-11">                                                                                       
+                                        <div class="email-rightbar">
+                                            <div class="card-header header_icon">
+                                                <ul class="list-inline mb-0 pl-0 float-right">
+                                                    <li class="list-inline-item email_320">
+                                                        <a href="javascript:void(0);" data-module="report" data-access="read" data-id="pendingreceivingreport" onclick="PosnicPro.refreshReportDatatable(this);" class="add_new_tooltip" data-toggle="tooltip" title="Refresh">
+                                                            <i class="feather icon-refresh-cw font-20"></i>
+                                                        </a>
+                                                    </li>
+                                                    <li class="list-inline-item email_320">
+                                                        <a href="javascript:void(0);" data-module="report" data-access="read" id="pendingreceivingreport_exportbtn"
+                                                           data-id="pendingreceivingreportexport" onclick="PosnicPro.pendingreceivingreport.pendingreceivingReportExport(this);" class="sale_color dash_sale_count" data-toggle="tooltip" title="Export All To CSV">
+                                                            <i class="feather icon-share font-20"></i>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-body card-box no-padding loader-pending-report">
+                                    <!-- Start table -->
+                                    <div class="table-responsive">
+                                        <table id="view_pendingreceivingreport" class="table table-borderless" cellspacing="0"
+                                               width="100%">
+                                            <div class="col-sm-6 col-md-12 col-lg-12" id="reportpendpurchase_img_hide" style="display:none;">
+                                                <img src="static/images/general/nodata.svg" class="img-fluid" style="opacity: 0.6;width: 100%;height: 250px;" alt="">
+                                                <div class="text-center text-dark"> <p>No Records </p></div>
+                                            </div>
+                                            <thead class="report-thead-tfoot table-header reportpendingrecev_header"></thead>
+                                            <tbody class="report-thead-tfoot table-body reportpendingrecev_header"></tbody>
+                                        </table>
+                                    </div>
+                                    <!-- End table -->
+                                </div>
+                                <!-- start pagination -->
+                                <div class="card m-b-30 reportpendingrecev_header">
+                                    <div class="card-body ecommerce-pagination">
+                                        <div class="row align-items-center">
+                                            <div class="col-8">
+                                                <div class="hint-text">
+                                                    Showing 
+                                                    <b><span id="view_pendingreceivingreport_page_total"></span></b> 
+                                                    to 
+                                                    <b><span id="view_pendingreceivingreport_page_perpage_total"></span></b> 
+                                                    of 
+                                                    <b><span id="view_pendingreceivingreport_total"></span></b>
+                                                    entries 
+                                                    <span class="showing-hide-show-pendingreceivingreport" style="display:none;"> &nbsp;&nbsp;&nbsp;&nbsp; 
+                                                        <span class="showing-value-pendingreceivingreport text-dark"> 0 </span>&nbsp;
+                                                        rows selected  
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <nav aria-label="Page navigation example">
+                                                    <ul class="pagination mb-0">
+                                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="pendingreceivingreport" onclick="PosnicPro.previousPage(this, 'Table')"> <i class="fa fa-angle-left font-20"></i> </button>
+                                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="pendingreceivingreport" onclick="PosnicPro.nextPage(this, 'Table')"> <i class="fa fa-angle-right font-20"></i> </button>
+                                                    </ul>
+                                                </nav>
+                                            </div>
+                                        </div>                                
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="tab-pane fade" id="pending-customer-line" role="tabpanel" aria-labelledby="pending-customer-tab-line">
+                                <!-- start table -->
+                                <div class="row reportpendingcust_header">
+                                    <div class="col-lg-1 col-md-1 col-md-2 form-group mb-0 amount-spent-select selecct-align">
+                                        <select class="form-control select_page" id="view_pendingcustomerreport_per_page" data-id="pendingcustomerreport" onChange="PosnicPro.setPerPage(this, 'Table');">
+                                            <option value="5" selected>5</option>
+                                            <option value="10">10</option>
+                                            <option value="25">25</option>
+                                            <option value="50">50</option>
+                                            <option value="100">100</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-lg-11 col-md-11">                                                                                       
+                                        <div class="email-rightbar">
+                                            <div class="card-header header_icon">
+                                                <ul class="list-inline mb-0 pl-0 float-right">
+                                                    <li class="list-inline-item email_320">
+                                                        <a href="javascript:void(0);" data-module="report" data-access="read" data-id="pendingcustomerreport" onclick="PosnicPro.refreshReportDatatable(this);" class="add_new_tooltip" data-toggle="tooltip" title="Refresh">
+                                                            <i class="feather icon-refresh-cw font-20"></i>
+                                                        </a>
+                                                    </li>
+                                                    <li class="list-inline-item email_320">
+                                                        <a href="javascript:void(0);" data-module="report" data-access="read" id="pendingcustomerreport_exportbtn"
+                                                           data-id="pendingcustomerreportexport" onclick="PosnicPro.pendingcustomerreport.pendingcustomerReportExport(this);" class="sale_color dash_sale_count" data-toggle="tooltip" title="Export All To CSV">
+                                                            <i class="feather icon-share font-20"></i>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-body card-box no-padding loader-pending-report">
+                                    <!-- Start table -->
+                                    <div class="table-responsive">
+                                        <table id="view_pendingcustomerreport" class="table table-borderless" cellspacing="0"
+                                               width="100%">
+                                            <div class="col-sm-6 col-md-12 col-lg-12" id="reportpendcustomer_img_hide" style="display:none;">
+                                                <img src="static/images/general/nodata.svg" class="img-fluid" style="opacity: 0.6;width: 100%;height: 250px;" alt="">
+                                            </div>
+                                            <div class="reportpendcustomer_norecord col-sm-6 col-md-12 col-lg-12" style="display:none;">
+                                            </div>
+                                            <thead class="reportpendingcust_header">
+                                                <tr><th>#</th><th>Name</th><th>phone</th><th>Referred by</th><th class="text-center">No.of product</th><th class="text-right">Total</th><th class="text-right">Partialy</th><th class="text-right">Due</th></tr>
+                                            </thead>
+                                            <tbody class="report-thead-tfoot table-body reportpendingcust_header"></tbody>
+                                        </table>
+                                    </div>
+                                    <!-- End table -->
+                                </div>
+                                <!-- start pagination -->
+                                <div class="card m-b-30 reportpendingcust_header">
+                                    <div class="card-body ecommerce-pagination">
+                                        <div class="row align-items-center">
+                                            <div class="col-8">
+                                                <div class="hint-text">
+                                                    Showing 
+                                                    <b><span id="view_pendingcustomerreport_page_total"></span></b> 
+                                                    to 
+                                                    <b><span id="view_pendingcustomerreport_page_perpage_total"></span></b> 
+                                                    of 
+                                                    <b><span id="view_pendingcustomerreport_total"></span></b>
+                                                    entries 
+                                                    <span class="showing-hide-show-pendingcustomerreport" style="display:none;"> &nbsp;&nbsp;&nbsp;&nbsp; 
+                                                        <span class="showing-value-pendingcustomerreport text-dark"> 0 </span>&nbsp;
+                                                        rows selected  
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <nav aria-label="Page navigation example">
+                                                    <ul class="pagination mb-0">
+                                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="pendingcustomerreport" onclick="PosnicPro.previousPage(this, 'Table')"> <i class="fa fa-angle-left font-20"></i> </button>
+                                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="pendingcustomerreport" onclick="PosnicPro.nextPage(this, 'Table')"> <i class="fa fa-angle-right font-20"></i> </button>
+                                                    </ul>
+                                                </nav>
+                                            </div>
+                                        </div>                                
+                                    </div>
+                                </div>
+                            </div>
+
+
+                            <div class="tab-pane fade" id="pending-supplier-line" role="tabpanel" aria-labelledby="pending-supplier-tab-line" style="display: none;">
+                                <!-- start table -->
+                                <div class="row reportpendingsupply_header">
+                                    <div class="col-lg-1 col-md-1 col-md-2 form-group mb-0 amount-spent-select selecct-align">
+                                        <select class="form-control select_page" id="view_pendingsupplierreport_per_page" data-id="pendingsupplierreport" onChange="PosnicPro.setPerPage(this, 'Table');">
+                                            <option value="5" selected>5</option>
+                                            <option value="10">10</option>
+                                            <option value="25">25</option>
+                                            <option value="50">50</option>
+                                            <option value="100">100</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-lg-11 col-md-11">                                                                                       
+                                        <div class="email-rightbar">
+                                            <div class="card-header header_icon">
+                                                <ul class="list-inline mb-0 pl-0 float-right">
+                                                    <li class="list-inline-item email_320">
+                                                        <a href="javascript:void(0);" data-module="report" data-access="read" data-id="pendingsupplierreport" onclick="PosnicPro.refreshReportDatatable(this);" class="add_new_tooltip" data-toggle="tooltip" title="Refresh">
+                                                            <i class="feather icon-refresh-cw font-20"></i>
+                                                        </a>
+                                                    </li>
+                                                    <li class="list-inline-item email_320">
+                                                        <a href="javascript:void(0);" data-module="report" data-access="read" id="pendingsupplierreport_exportbtn"
+                                                           data-id="pendingsupplierreportexport" onclick="PosnicPro.pendingsupplierreport.pendingsupplierReportExport(this);" class="sale_color dash_sale_count" data-toggle="tooltip" title="Export All To CSV">
+                                                            <i class="feather icon-share font-20"></i>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-body card-box no-padding loader-pending-report">
+                                    <!-- Start table -->
+                                    <div class="table-responsive">
+                                        <table id="view_pendingsupplierreport" class="table table-borderless" cellspacing="0"
+                                               width="100%">
+                                            <div class="col-sm-6 col-md-12 col-lg-12" id="reportpendsupply_img_hide" style="display:none;">
+                                                <img src="static/images/general/nodata.svg" class="img-fluid" style="opacity: 0.6;width: 100%;height: 250px;" alt="">
+                                            </div>
+                                            <div class="reportpendsupply_norecord col-sm-6 col-md-12 col-lg-12" style="display:none;">
+                                            </div>
+                                            <thead class="reportpendingsupply_header">
+                                                <tr><th>#</th><th>Date</th><th>Name</th><th>phone</th><th class="text-center">No. of product</th><th class="text-right">Total Amount</th></tr>
+                                            </thead>
+                                            <tbody class="report-thead-tfoot table-body reportpendingsupply_header"></tbody>
+                                        </table>
+                                    </div>
+                                    <!-- End table -->
+                                </div>
+                                <!-- start pagination -->
+                                <div class="card m-b-30 reportpendingsupply_header">
+                                    <div class="card-body ecommerce-pagination">
+                                        <div class="row align-items-center">
+                                            <div class="col-8">
+                                                <div class="hint-text">
+                                                    Showing 
+                                                    <b><span id="view_pendingsupplierreport_page_total"></span></b> 
+                                                    to 
+                                                    <b><span id="view_pendingsupplierreport_page_perpage_total"></span></b> 
+                                                    of 
+                                                    <b><span id="view_pendingsupplierreport_total"></span></b>
+                                                    entries 
+                                                    <span class="showing-hide-show-pendingsupplierreport" style="display:none;"> &nbsp;&nbsp;&nbsp;&nbsp; 
+                                                        <span class="showing-value-pendingsupplierreport text-dark"> 0 </span>&nbsp;
+                                                        rows selected  
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <nav aria-label="Page navigation example">
+                                                    <ul class="pagination mb-0">
+                                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="pendingsupplierreport" onclick="PosnicPro.previousPage(this, 'Table')"> <i class="fa fa-angle-left font-20"></i> </button>
+                                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="pendingsupplierreport" onclick="PosnicPro.nextPage(this, 'Table')"> <i class="fa fa-angle-right font-20"></i> </button>
+                                                    </ul>
+                                                </nav>
+                                            </div>
+                                        </div>                                
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="tab-pane fade" id="pending-customercategory-line" role="tabpanel" aria-labelledby="pending-customercategory-tab-line">
+                                <!-- start table -->
+                                <div class="row reportpendingcust_header">
+                                    <div class="col-lg-1 col-md-1 col-md-2 form-group mb-0 amount-spent-select selecct-align">
+                                        <select class="form-control select_page" id="view_pendingcustomercategoryreport_per_page" data-id="pendingcustomercategoryreport" onChange="PosnicPro.setPerPage(this, 'Table');">
+                                            <option value="5" selected>5</option>
+                                            <option value="10">10</option>
+                                            <option value="25">25</option>
+                                            <option value="50">50</option>
+                                            <option value="100">100</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-lg-11 col-md-11">                                                                                       
+                                        <div class="email-rightbar">
+                                            <div class="card-header header_icon">
+                                                <ul class="list-inline mb-0 pl-0 float-right">
+                                                    <li class="list-inline-item email_320">
+                                                        <a href="javascript:void(0);" data-module="report" data-access="read" data-id="pendingcustomercategoryreport" onclick="PosnicPro.refreshReportDatatable(this);" class="add_new_tooltip" data-toggle="tooltip" title="Refresh">
+                                                            <i class="feather icon-refresh-cw font-20"></i>
+                                                        </a>
+                                                    </li>
+                                                    <li class="list-inline-item email_320">
+                                                        <a href="javascript:void(0);" data-module="report" data-access="read" id="pendingcustomercategoryreport_exportbtn"
+                                                           data-id="pendingcustomercategoryreportexport" onclick="PosnicPro.pendingcustomercategoryreport.pendingcustomercategoryReportExport(this);" class="sale_color dash_sale_count" data-toggle="tooltip" title="Export All To CSV">
+                                                            <i class="feather icon-share font-20"></i>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-body card-box no-padding loader-pending-report">
+                                    <!-- Start table -->
+                                    <div class="table-responsive">
+                                        <table id="view_pendingcustomercategoryreport" class="table table-borderless" cellspacing="0"
+                                               width="100%">
+                                            <div class="col-sm-6 col-md-12 col-lg-12" id="reportpendcustomercategory_img_hide" style="display:none;">
+                                                <img src="static/images/general/nodata.svg" class="img-fluid" style="opacity: 0.6;width: 100%;height: 250px;" alt="">
+                                            </div>
+                                            <div class="reportpendcustomercategory_norecord col-sm-6 col-md-12 col-lg-12" style="display:none;">
+                                            </div>
+                                            <thead class="reportpendingcust_header">
+                                                <tr><th>#</th><th>Name</th><th class="text-center">No.of product</th><th class="text-right">Total</th><th class="text-right">Partialy</th><th class="text-right">Due</th></tr>
+                                            </thead>
+                                            <tbody class="report-thead-tfoot table-body reportpendingcust_header"></tbody>
+                                        </table>
+                                    </div>
+                                    <!-- End table -->
+                                </div>
+                                <!-- start pagination -->
+                                <div class="card m-b-30 reportpendingcust_header">
+                                    <div class="card-body ecommerce-pagination">
+                                        <div class="row align-items-center">
+                                            <div class="col-8">
+                                                <div class="hint-text">
+                                                    Showing 
+                                                    <b><span id="view_pendingcustomercategoryreport_page_total"></span></b> 
+                                                    to 
+                                                    <b><span id="view_pendingcustomercategoryreport_page_perpage_total"></span></b> 
+                                                    of 
+                                                    <b><span id="view_pendingcustomercategoryreport_total"></span></b>
+                                                    entries 
+                                                    <span class="showing-hide-show-pendingcustomercategoryreport" style="display:none;"> &nbsp;&nbsp;&nbsp;&nbsp; 
+                                                        <span class="showing-value-pendingcustomercategoryreport text-dark"> 0 </span>&nbsp;
+                                                        rows selected  
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <nav aria-label="Page navigation example">
+                                                    <ul class="pagination mb-0">
+                                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="pendingcustomercategoryreport" onclick="PosnicPro.previousPage(this, 'Table')"> <i class="fa fa-angle-left font-20"></i> </button>
+                                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="pendingcustomercategoryreport" onclick="PosnicPro.nextPage(this, 'Table')"> <i class="fa fa-angle-right font-20"></i> </button>
+                                                    </ul>
+                                                </nav>
+                                            </div>
+                                        </div>                                
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- End col -->
+        </div>
+    </div>   
+</div>
+
+<div id="infobar-settings-sidebar-pendingreport-details" class="infobar-settings-sidebar">
+    <div class="infobar-settings-sidebar-head d-flex w-100 justify-content-between">
+        <h4 id="exampleModalCenterTitle">#<span class="pending_product_view_name"> </span></h4>
+        <a href="javascript:void(0)" class="infobar-settings-close" data-id="pendingreport">
+            <img src="static/images/svg-icon/close.svg" class="img-fluid menu-hamburger-close" alt="close">
+        </a>
+    </div>
+    <div class="infobar-settings-sidebar-body">
+        <div class="custom-mode-setting loader-item">            
+
+            <div class="slider-modal-body">
+                <div class="row">
+                    <div class="col-xs-12 col-sm-4">
+                        <div class="portlet light slider-portlet-vh">
+                            <div class="portlet-body">
+                                <div class="row">
+                                    <div class="col-lg-12 col-xl-12">
+
+                                        <table class="table mb-1">
+                                            <tbody>
+                                                <tr>
+                                                    <th scope="row" class="p-3">Branch : <span class="branch_view_name_pending text-info"></span> </th>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                        <table class="table mb-1">
+                                            <thead class="header_blue"><tr><th colspan="4">Customer Details</th></tr></thead>
+                                            <tbody>
+                                                <tr>
+                                                    <th scope="row" class="p-2">Name : <span class="customer_view_name_pending text-info"></span> </th>
+                                                </tr>
+                                                <tr>
+                                                    <th scope="row" class="p-2">phone : <span class="customer_view_phone_pending text-info"></span>&nbsp;<a class="customer_view_phone_icon_pending"><i class="feather icon-phone mr-2"></i></a></th>
+                                                </tr>
+                                                <tr>
+                                                    <th scope="row" class="p-2">email : <span class="customer_view_email_pending text-info"></span>&nbsp;<a class="customer_view_email_icon_pending"><i class="feather icon-message-square mr-2 pointer"></i></a></th>
+                                                </tr>
+                                                <tr>
+                                                    <th scope="row" class="p-2">Address : <span class="customer_view_address_pending text-info"></span></th>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+
+                                    </div>                                    
+                                </div> 
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xs-12 col-sm-8">
+                        <div class="portlet light slider-portlet-vh">
+                            <div class="portlet-title margin-bottom-0">
+                                <div class="caption caption-basic font-green-meadow">
+                                    <span class="caption-subject bold uppercase">Product history</span>
+                                </div>
+                                <div class="actions">
+                                    <div class="inline-block text-left">
+                                        <div class="form-md-line-input form-md-floating-label custom-select2-ui">
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="portlet-body padding-top-0">
+                                <div class="row">
+                                    <div class="col-lg-2 col-md-2 form-group mb-0 amount-spent-select selecct-align">
+                                        <select class="form-control select_page" id="view_pendingproductdetails_per_page" data-id="pendingproductdetails" onChange="PosnicPro.setPerPage(this, 'Table');">
+                                            <option value="5" selected>5</option>
+                                            <option value="10">10</option>
+                                            <option value="25">25</option>
+                                            <option value="50">50</option>
+                                            <option value="100">100</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-lg-10 col-md-10">                                                                                       
+
+                                    </div>
+                                </div>
+                                <div class="card-body card-box no-padding loader-item-report">
+                                    <!-- Start table -->
+                                    <div class="table-responsive">
+                                        <table id="view_pendingproductdetails" class="table table-borderless" cellspacing="0"
+                                               width="100%">
+                                            <thead class="report-thead-tfoot table-header"></thead>
+                                            <tbody class="report-thead-tfoot table-body"></tbody>
+                                        </table>
+                                    </div>
+                                    <!-- End table -->
+                                </div>
+                                <div class="card m-b-30">
+                                    <div class="card-body ecommerce-pagination">
+                                        <div class="row align-items-center">
+                                            <div class="col-8">
+                                                <div class="hint-text">
+                                                    Showing 
+                                                    <b><span id="view_pendingproductdetails_page_total"></span></b> 
+                                                    to 
+                                                    <b><span id="view_pendingproductdetails_page_perpage_total"></span></b> 
+                                                    of 
+                                                    <b><span id="view_pendingproductdetails_total"></span></b>
+                                                    entries 
+                                                    <span class="showing-hide-show-pendingproductdetails" style="display:none;"> &nbsp;&nbsp;&nbsp;&nbsp; 
+                                                        <span class="showing-value-pendingproductdetails text-dark"> 0 </span>&nbsp;
+                                                        rows selected  
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <nav aria-label="Page navigation example">
+                                                    <ul class="pagination mb-0">
+                                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="pendingproductdetails" onclick="PosnicPro.previousPage(this, 'Table')"> <i class="fa fa-angle-left font-20"></i> </button>
+                                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="pendingproductdetails" onclick="PosnicPro.nextPage(this, 'Table')"> <i class="fa fa-angle-right font-20"></i> </button>
+                                                    </ul>
+                                                </nav>
+                                            </div>
+                                        </div>                                
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div id="infobar-settings-sidebar-pendingreceivingreport-details" class="infobar-settings-sidebar">
+    <div class="infobar-settings-sidebar-head d-flex w-100 justify-content-between">
+        <h4 id="exampleModalCenterTitle">#<span class="pending_product_view_name"> </span></h4>
+        <a href="javascript:void(0)" class="infobar-settings-close" data-id="pendingreceivingreport">
+            <img src="static/images/svg-icon/close.svg" class="img-fluid menu-hamburger-close" alt="close">
+        </a>
+    </div>
+    <div class="infobar-settings-sidebar-body">
+        <div class="custom-mode-setting loader-item">            
+
+            <div class="slider-modal-body">
+                <div class="row">
+                    <div class="col-xs-12 col-sm-4">
+                        <div class="portlet light slider-portlet-vh">
+                            <div class="portlet-body">
+                                <div class="row">
+                                    <div class="col-lg-12 col-xl-12">
+
+                                        <table class="table mb-1">
+                                            <tbody>
+                                                <tr>
+                                                    <th scope="row" class="p-3">Branch : <span class="branch_view_name_pending text-info"></span> </th>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                        <table class="table mb-1">
+                                            <thead class="header_blue"><tr><th colspan="4">Supplier Details</th></tr></thead>
+                                            <tbody>
+                                                <tr>
+                                                    <th scope="row" class="p-2">Name : <span class="supplier_view_name_pending text-info"></span> </th>
+                                                </tr>
+                                                <tr>
+                                                    <th scope="row" class="p-2">phone : <span class="supplier_view_phone_pending text-info"></span>&nbsp;<a class="supplier_view_phone_icon_pending"><i class="feather icon-phone mr-2"></i></a></th>
+                                                </tr>
+                                                <tr>
+                                                    <th scope="row" class="p-2">email : <span class="supplier_view_email_pending text-info"></span>&nbsp;<a class="supplier_view_email_icon_pending"><i class="feather icon-message-square mr-2 pointer"></i></a></th>
+                                                </tr>
+                                                <tr>
+                                                    <th scope="row" class="p-2">Address : <span class="supplier_view_address_pending text-info"></span></th>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+
+                                    </div>                                    
+                                </div> 
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xs-12 col-sm-8">
+                        <div class="portlet light slider-portlet-vh">
+                            <div class="portlet-title margin-bottom-0">
+                                <div class="caption caption-basic font-green-meadow">
+                                    <span class="caption-subject bold uppercase">Product history</span>
+                                </div>
+                                <div class="actions">
+                                    <div class="inline-block text-left">
+                                        <div class="form-md-line-input form-md-floating-label custom-select2-ui">
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="portlet-body padding-top-0">
+                                <div class="row">
+                                    <div class="col-lg-2 col-md-2 form-group mb-0 amount-spent-select selecct-align">
+                                        <select class="form-control select_page" id="view_pendingreceivingproductdetails_per_page" data-id="pendingreceivingproductdetails" onChange="PosnicPro.setPerPage(this, 'Table');">
+                                            <option value="5" selected>5</option>
+                                            <option value="10">10</option>
+                                            <option value="25">25</option>
+                                            <option value="50">50</option>
+                                            <option value="100">100</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-lg-10 col-md-10">                                                                                       
+
+                                    </div>
+                                </div>
+                                <div class="card-body card-box no-padding loader-item-report">
+                                    <!-- Start table -->
+                                    <div class="table-responsive">
+                                        <table id="view_pendingreceivingproductdetails" class="table table-borderless" cellspacing="0"
+                                               width="100%">
+                                            <thead class="report-thead-tfoot table-header"></thead>
+                                            <tbody class="report-thead-tfoot table-body"></tbody>
+                                        </table>
+                                    </div>
+                                    <!-- End table -->
+                                </div>
+                                <div class="card m-b-30">
+                                    <div class="card-body ecommerce-pagination">
+                                        <div class="row align-items-center">
+                                            <div class="col-8">
+                                                <div class="hint-text">
+                                                    Showing 
+                                                    <b><span id="view_pendingreceivingproductdetails_page_total"></span></b> 
+                                                    to 
+                                                    <b><span id="view_pendingreceivingproductdetails_page_perpage_total"></span></b> 
+                                                    of 
+                                                    <b><span id="view_pendingreceivingproductdetails_total"></span></b>
+                                                    entries 
+                                                    <span class="showing-hide-show-pendingreceivingproductdetails" style="display:none;"> &nbsp;&nbsp;&nbsp;&nbsp; 
+                                                        <span class="showing-value-pendingreceivingproductdetails text-dark"> 0 </span>&nbsp;
+                                                        rows selected  
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <nav aria-label="Page navigation example">
+                                                    <ul class="pagination mb-0">
+                                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="pendingreceivingproductdetails" onclick="PosnicPro.previousPage(this, 'Table')"> <i class="fa fa-angle-left font-20"></i> </button>
+                                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="pendingreceivingproductdetails" onclick="PosnicPro.nextPage(this, 'Table')"> <i class="fa fa-angle-right font-20"></i> </button>
+                                                    </ul>
+                                                </nav>
+                                            </div>
+                                        </div>                                
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,471 @@
+<!-- start sales view modal -->
+<div class="modal fade close_on_esc" id="sales_view" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content loader-view-sale">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <span id="salestitleText">
+                        <lang class="lang_salesdetail_title"><span class="sale-view-heading">Sale</span> Details</lang>
+                    </span>
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row justify-content-center">
+                    <!-- Start col -->
+                    <div class="col-md-12 col-lg-10 col-xl-10">
+                        <div class="card m-b-30">
+                            <div class="card-body">
+                                <div class="invoice">
+                                    <div class="invoice-head">
+                                        <div class="row">
+                                            <div class="col-12 col-md-4 col-lg-4">
+                                                <h4>
+                                                    <lang class="lang_customerdetails_title">Customer Details</lang>
+                                                </h4>
+                                                <p class="sale_view_customer_name sale_view_hide"><span
+                                                        class="font-weight-bold">Name : </span><span
+                                                        class="text-primary" id="sale_view_customer_name"></span></p>
+                                                <p class="sale_view_customer_address sale_view_hide"><span
+                                                        class="font-weight-bold">Address : </span><span
+                                                        id="sale_view_customer_address"></span></p>
+                                                <p class="sale_view_customer_phone sale_view_hide"><span
+                                                        class="font-weight-bold">Phone : </span><span
+                                                        id="sale_view_customer_phone"></span></p>
+                                                <p class="sale_view_customer_email sale_view_hide"><span
+                                                        class="font-weight-bold">Email : </span><span
+                                                        id="sale_view_customer_email"></span></p>
+
+                                            </div>
+
+                                            <div class="col-12 col-md-4 col-lg-4">
+                                                <!--                                                <div class="invoice-name sale_view_Transaction_show">
+                                                                                                    <h4>Transaction Details</h4>
+                                                                                                    <p class="sale_view_partial_balance sale_view_hide text-left"><span class="font-weight-bold sale_view_partial_balance">partial balance : </span><span class="text-" id="sale_view_partial_balance"></span></p> 
+                                                                                                    <p class="sale_view_payment_status sale_view_hide text-left"><span class="font-weight-bold">payment status : </span><span class="text-danger" id="sale_view_payment_status"></span></p> 
+                                                                                                    <p class="sale_view_payment_pending sale_view_hide text-left"><span class="font-weight-bold">pending payment : </span><span class="text-danger" id="sale_view_payment_pending"></span></p>
+                                                                                                </div>-->
+                                            </div>
+
+                                            <div class="col-12 col-md-4 col-lg-4">
+                                                <div class="invoice-name">
+                                                    <p class="mb">Status : <span id="payment_status"></span></p>
+                                                    <p class="mb-1">
+                                                        <lang class="lang_no_title">Sale No :</lang> <span
+                                                            class="badge badge-primary-inverse">#<span
+                                                                id="sale_view_sales_id"></span></span>
+                                                    </p>
+                                                    <p class="mb-0"><span id="date_view"></span></p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="invoice-summary">
+                                        <div class="table-responsive">
+                                            <table id="viewsale_edit_print_view"
+                                                class="table table-borderless items-show-backup view_det_print">
+                                                <h4><span id="salesitemtitleText">
+                                                        <lang class="lang_salesdetail_title">Line Item</lang>
+                                                    </span></h4>
+                                                <thead>
+                                                    <tr class="row100 head">
+                                                        <th>#</th>
+                                                        <th>
+                                                            <lang class="lang_name_title">Name</lang>
+                                                        </th>
+                                                        <th>
+                                                            <lang class="lang_price_title">Price</lang>
+                                                        </th>
+                                                        <th>
+                                                            <lang class="lang_qty_title">Qty</lang>
+                                                        </th>
+                                                        <th>
+                                                            <lang class="lang_discount_title">Discount</lang>
+                                                        </th>
+                                                        <th>
+                                                            <lang class="lang_tax_title">Tax</lang>
+                                                        </th>
+                                                        <th class="text-center">
+                                                            <lang class="lang_total_title">Total</lang>
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    <div class="invoice-summary-total">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="order-total table-responsive ">
+                                                    <table class="table table-borderless text-left"
+                                                        id="detailed_sale_item_tax">
+                                                        <thead>
+                                                            <th>
+                                                                <lang class="lang_tax_detail"> Tax Details</lang> :
+                                                            </th>
+                                                        </thead>
+                                                        <tbody>
+                                                        </tbody>
+                                                    </table>
+                                                    <table class="table table-borderless text-left"
+                                                        id="detailed_sale_item_gsttax">
+                                                        <thead>
+                                                            <th> Gst Tax Details : </th>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr class="indian-gstr hide-show-igst"
+                                                                style="display: none;">
+                                                                <td>
+                                                                    <lang class="lang_igst_tax_sale">IGST</lang>:
+                                                                </td>
+                                                                <td class="pull-right"><span
+                                                                        class="sign display-currency"></span>&nbsp;<span
+                                                                        class="sale_igst_tax_view"></span></td>
+                                                            </tr>
+                                                            <tr class="indian-gstr hide-show-scgst"
+                                                                style="display: none;">
+                                                                <td>
+                                                                    <lang class="lang_cgst_tax_sale">CGST</lang>:
+                                                                </td>
+                                                                <td class="pull-right"><span
+                                                                        class="sign display-currency"></span>&nbsp;<span
+                                                                        class="sale_csgst_tax_view"></span></td>
+                                                            </tr>
+                                                            <tr class="indian-gstr hide-show-scgst"
+                                                                style="display: none;">
+                                                                <td>
+                                                                    <lang class="lang_sgst_tax_sale">SGST</lang>:
+                                                                </td>
+                                                                <td class="pull-right"><span
+                                                                        class="sign display-currency"></span>&nbsp;<span
+                                                                        class="sale_csgst_tax_view"></span></td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div id="sales-total-hide">
+                                                    <div class="order-total table-responsive">
+                                                        <table class="table table-borderless">
+                                                            <tbody>
+
+                                                                <tr>
+                                                                    <td>
+                                                                        <lang class="lang_subtotal_title">Sub Total :
+                                                                        </lang>
+                                                                    </td>
+                                                                    <td class="pull-right"><span
+                                                                            class="sign display-currency"></span>&nbsp;<span
+                                                                            id="subtotal_amount_view">0.00</span></td>
+                                                                </tr>
+                                                                <tr class="percentage-print-hideshow discount_adjust">
+                                                                    <td>
+                                                                        <lang class="lang_discount_title">Discount :
+                                                                        </lang>
+                                                                    </td>
+                                                                    <td class="pull-right"><span
+                                                                            class="sign display-currency"></span>&nbsp;<span
+                                                                            class="sales-discount-text">0.00</span></td>
+                                                                </tr>
+                                                                <tr class="hide-sales-tax">
+                                                                    <td>
+                                                                        <lang class="lang_tax_title">Tax :</lang>
+                                                                    </td>
+                                                                    <td class="pull-right"><span
+                                                                            class="sign display-currency"></span>&nbsp;<span
+                                                                            id="sale_view_tax"></span></td>
+                                                                </tr>
+
+                                                                <tr id="round_off_view"> </tr>
+                                                                <tr id="extra_discount_view"> </tr>
+
+                                                                <tr>
+                                                                    <td class="f-w-7 font-18">
+                                                                        <h5>
+                                                                            <lang class="lang_grandamount">Grand Total :
+                                                                            </lang>
+                                                                        </h5>
+                                                                    </td>
+                                                                    <td class="f-w-7 font-18 pull-right">
+                                                                        <h5><span
+                                                                                class="sign display-currency"></span>&nbsp;<span
+                                                                                id="total_amount_view">0.00</span></h5>
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                        <table class="table table-borderless"
+                                                            id="sale_view_Transaction_show">
+                                                            <tbody>
+                                                                <tr>
+                                                                    <td>Payments/Credits :</td>
+                                                                    <td class="pull-right"><span
+                                                                            class="sign display-currency"></span>&nbsp;<span
+                                                                            class="number"
+                                                                            id="sale_view_partial_balance">0.00</span>
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td>Balance Due :</td>
+                                                                    <td class="pull-right"><span
+                                                                            class="sign display-currency"></span>&nbsp;<span
+                                                                            class="number"
+                                                                            id="sale_view_payment_pending">0.00</span>
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td>Payment Status :</td>
+                                                                    <td class="pull-right"><span
+                                                                            class="badge badge-success-inverse"
+                                                                            id="sale_view_payment_status"></span></td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="invoice-summary hide-sale-return" style="display:none;">
+                                        <h4>
+                                            <lang class="lang_returnitemdetail_title">Return Line Item</lang>
+                                        </h4>
+                                        <div id="viewsale_return_print_view">
+
+                                        </div>
+                                    </div>
+                                    <div class="invoice-summary-total hide-sale-return" style="display:none;">
+                                        <div class="row" id="return-total-hide">
+                                            <div class="col-md-6">
+                                                <div class="order-total table-responsive ">
+                                                    <table class="table table-borderless text-left"
+                                                        id="detailed_sale_itemreturn_tax">
+                                                        <thead>
+                                                            <th> Tax Details : </th>
+                                                        </thead>
+                                                        <tbody>
+                                                        </tbody>
+                                                    </table>
+                                                    <table class="table table-borderless text-left"
+                                                        id="detailed_sale_itemreturn_gsttax">
+                                                        <thead>
+                                                            <th> Gst Tax Details : </th>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr class="return-indian-gstr hide-show-igst"
+                                                                style="display: none;">
+                                                                <td>
+                                                                    <lang class="lang_igst_tax_return">IGST</lang>:
+                                                                </td>
+                                                                <td class="pull-right"><span
+                                                                        class="sign display-currency"></span>&nbsp;<span
+                                                                        class="return_igst_tax_view"></span></td>
+                                                            </tr>
+                                                            <tr class="return-indian-gstr hide-show-scgst"
+                                                                style="display: none;">
+                                                                <td>
+                                                                    <lang class="lang_cgst_tax_return">CGST</lang>:
+                                                                </td>
+                                                                <td class="pull-right"><span
+                                                                        class="sign display-currency"></span>&nbsp;<span
+                                                                        class="return_csgst_tax_view"></span></td>
+                                                            </tr>
+                                                            <tr class="return-indian-gstr hide-show-scgst"
+                                                                style="display: none;">
+                                                                <td>
+                                                                    <lang class="lang_sgst_tax_return">SGST</lang>:
+                                                                </td>
+                                                                <td class="pull-right"><span
+                                                                        class="sign display-currency"></span>&nbsp;<span
+                                                                        class="return_csgst_tax_view"></span></td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div>
+                                                    <div class="order-total table-responsive">
+                                                        <table class="table table-borderless">
+                                                            <tbody>
+
+                                                                <tr>
+                                                                    <td>
+                                                                        <lang class="lang_subtotal_title">Sub Total :
+                                                                        </lang>
+                                                                    </td>
+                                                                    <td class="pull-right"><span
+                                                                            class="sign display-currency"></span>&nbsp;<span
+                                                                            id="return_subtotal_amount_view">0.00</span>
+                                                                    </td>
+                                                                </tr>
+                                                                <tr
+                                                                    class="return-percentage-print-hideshow discount_adjust">
+                                                                    <td>
+                                                                        <lang class="lang_discount_title">Discount
+                                                                        </lang> :
+                                                                    </td>
+                                                                    <td class="pull-right"> <span
+                                                                            class="sign display-currency"></span>&nbsp;
+                                                                        <span
+                                                                            class="sales-return-discount-value">0.00</span>
+                                                                    </td>
+                                                                </tr>
+                                                                <tr class="hide-sale-return-tax" style="display: none;">
+                                                                    <td>
+                                                                        <lang class="lang_tax_title">Tax</lang> :
+                                                                    </td>
+                                                                    <td class="pull-right"> <span
+                                                                            class="sign display-currency"></span>&nbsp;
+                                                                        <span id="return_tax_view">0.00</span>
+                                                                    </td>
+                                                                </tr>
+
+                                                                <tr id="return_round_off_view"> </tr>
+                                                                <tr id="return_extra_discount_view"> </tr>
+
+                                                                <tr>
+                                                                    <td class="f-w-7 font-18">
+                                                                        <h5>
+                                                                            <lang class="lang_grandamount">Grand Total :
+                                                                            </lang>
+                                                                        </h5>
+                                                                    </td>
+                                                                    <td class="f-w-7 font-18 pull-right">
+                                                                        <h5><span
+                                                                                class="sign display-currency"></span>&nbsp;<span
+                                                                                id="return_total_amount_view">0.00</span>
+                                                                        </h5>
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="invoice-billing">
+                                        <div class="row">
+                                            <div class="col-sm-6 col-md-4 col-lg-4 salenote_hide">
+                                                <div class="invoice-address">
+                                                    <h6 class="mb-3">
+                                                        <lang class="lang_saledescription_title">Sale Note</lang>
+                                                    </h6>
+                                                    <ul class="list-unstyled">
+                                                        <li><span id="sale_view_sales_description"></span></li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-12 col-md-4 col-lg-4">
+                                                <div class="invoice-address">
+                                                    <h6>
+                                                        <lang class="lang_paymentmethod">Payment Method</lang>
+                                                    </h6>
+                                                    <span id="sale_view_payment_mode"></span>
+                                                </div>
+                                            </div>
+                                            <div
+                                                class="col-sm-12 col-md-4 col-lg-4 sale_view_table_number sale_view_hide">
+                                                <div class="invoice-address">
+                                                    <h6>Table</h6>
+                                                    <span id="sale_view_table_number"></span>
+                                                </div>
+                                            </div>
+                                            <div
+                                                class="col-sm-12 col-md-4 col-lg-4 sale_view_dine_type sale_view_hide">
+                                                <div class="invoice-address">
+                                                    <h6>Order Type</h6>
+                                                    <span id="sale_view_dine_type"></span>
+                                                </div>
+                                            </div>
+                                            <div
+                                                class="col-sm-12 col-md-4 col-lg-4 sale_view_discount_description sale_view_hide">
+                                                <div class="invoice-address">
+                                                    <h6>Discount Note</h6>
+                                                    <span id="sale_view_discount_description"></span>
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-6 col-md-4 col-lg-4 paynote_hide">
+                                                <div class="invoice-address">
+                                                    <h6 class="mb-3">
+                                                        <lang class="lang_paymentdescription_title">Payment Note</lang>
+                                                    </h6>
+                                                    <ul class="list-unstyled">
+                                                        <li><span id="sale_view_payment_description"></span></li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- End col -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-danger" data-dismiss="modal"><i
+                            class="feather icon-x-circle mr-2"></i>
+                        <lang class="lang_close_title"> Close</lang>
+                    </button>
+                    <button class="btn btn-primary sales_id_print" type="button" data-id="sale" id="hide_sales_print"
+                        style="display:none;">
+                        <i class="feather icon-printer mr-2"></i>
+                        <lang class="lang_saleprint"> Sale Print</lang>
+                    </button>
+                    <button class="btn btn-primary sales_id_print" type="button" data-id="return" id="hide_return_print"
+                        style="display:none;">
+                        <i class="feather icon-printer mr-2"></i>
+                        <lang class="lang_returnprint"> Return Print</lang>
+                    </button>
+                    <div class="single-dropdown" id="show_sales_print">
+                        <div class="dropdown">
+                            <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton"
+                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="feather icon-printer mr-2"></i>
+                                <lang class="lang_printed">Print</lang>
+                            </button>
+                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                <a class="dropdown-item sales_id_print" id="sale_print_view" href="#"
+                                    data-id="sale">Sale Print</a>
+                                <a class="dropdown-item sales_id_print" id="return_print_view" href="#"
+                                    data-id="return">Return Print</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End view sale model -->
+<!-- Qr Code View Model -->
+<div class="modal fade close_on_esc" id="qr_view" data-backdrop="static" data-keyboard="false" tabindex="-1"
+    role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-md loader-qrimg loader-qrsimg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <lang class="lang_qrcode_title">QR Payment </lang>
+                </h5>
+            </div>
+            <div class="modal-body">
+            </div>
+            <div class="modal-footer">
+                <input type="hidden" id="qrcode_id">
+                <button type="button" id="qr_done" class="btn btn-danger" data-dismiss="modal"
+                    onclick="return PosnicPro.sales.qr.qrClose();">Cancel Payment</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Qr Code View Model -->

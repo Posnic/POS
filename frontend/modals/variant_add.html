@@ -1,0 +1,61 @@
+<div id="infobar-settings-sidebar-variant" class="infobar-settings-sidebar">
+    <div class="infobar-settings-sidebar-head d-flex w-100 justify-content-between">
+        <h4 id="exampleModalCenterTitle"><span id="variant_title"><lang class="lang_Addvariants">Add</lang></span>&nbsp;<lang class="lang_variants">Variant</lang> </h4>
+      
+        <a href="javascript:void(0)" class="infobar-settings-close" data-id="variant">
+            <img src="static/images/svg-icon/close.svg" class="img-fluid menu-hamburger-close" alt="close">
+        </a>
+    </div>
+    <div class="infobar-settings-sidebar-body">
+        <div class="custom-mode-setting  loader-variant">
+            <!--<form id='variant_add'>-->
+            <form class='variant_add'>
+                <div class="form-row">
+                    <div class="form-group col-md-12">
+                        <label for="variant_name">
+                            <lang class="lang_name_title"> Name </lang> 
+                            <a href="variant_add.html"></a>
+                            <span class="text-danger">*</span> 
+                        </label>
+                        <input type="text" class="form-control border-control" name="name" id="variant_name" minlength="3" maxlength="20" placeholder="Enter the name" autocomplete="off" required>
+                        <input type="hidden" name="id" id="variant_id">
+                    </div>
+                </div>
+
+                <div class="form-row">                                                                            
+                    <div class="form-group col-md-9">
+                        <label class="form-control-placeholder" for="variant_fields"> <lang class="lang_addfield">Add Fields</lang>   <span class="text-danger">*</span> </label>
+                        <div class="variant-wrapper">
+                            <div class="variant-fields">
+                                <div class="variant-input">
+                                    <input type="text" id="variant_fields[0]" name="variantfield[0]" oninput="validate(this)" class="form-control border-control variant_list" minlength="1" maxlength="20" autocomplete="off" required> 
+                                    <span class="remove-variant-field btn-round btn-danger-rgba"><i class="feather icon-trash"></i></span>
+                                    <span class="add-variant-field btn-round btn-success-rgba"><i class="feather icon-plus mr-2"></i></span>
+                                </div>                                
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-md-12">
+                        <div class="pull-right">
+                            <button type="button" class="btn btn-outline-secondary infobar-settings-reset" id="variant_reset" onclick="PosnicPro.variants.variantClearForm();"><i class="feather icon-refresh-ccw mr-2"></i><lang class="lang_clear_title"> Clear</lang></button>
+                            <button type="button" class="btn btn-outline-secondary infobar-settings-reset variant_edit_reset" id="variant_edit_reset" onclick="PosnicPro.variants.resetEditButton(this.id);"><i class="feather icon-refresh-ccw mr-2"></i><lang class="lang_reset_title"> Reset</lang></button>
+                            <button type="button" class="btn btn-outline-danger infobar-settings-close" data-id="variant"><i class="feather icon-x-circle mr-2"></i><lang class="lang_close_title"> Close</lang>
+                            </button>
+                            <button type="submit" class="btn btn-outline-primary"><i class="feather icon-save mr-2"></i><span id="variant_button_title"><lang class="lang_save_title">Save</lang></span></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row" id="show_last_created_variant" style="display:none;">
+                    <div class="form-group col-md-12">
+                        <div class="pull-right">
+                            <h6>Last Created Record <a href="#" id="last_created_variant">View</a></h6>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

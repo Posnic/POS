@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8"/>
+        <title> <lang class="lang_posnic_title"> Posnic - POS </lang> </title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+        <meta content="Posnic - Point of Sale" name="description"/>
+        <meta content="Posnic" name="author"/>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+        <link rel="shortcut icon" href="static/images/favicon/favicon.ico" type="image/x-icon">
+        <link rel="icon" href="static/images/favicon/favicon.ico" type="image/x-icon">
+        <!-- css -->
+        <link crossorigin="anonymous" media="all" rel="stylesheet" href="style/customersMailPrint.css" />
+        <style>
+            /* Center the receipt horizontally on screen with a clean backdrop.
+               Flex justify-content:center gives equal gaps on both sides;
+               align-items:flex-start keeps a tall receipt from clipping at top.
+               overflow-x:hidden prevents a too-wide child (barcode, dates) from
+               widening the page and shoving the receipt off-centre to the left. */
+            html, body { overflow-x: hidden; }
+            body {
+                margin: 0;
+                min-height: 100vh;
+                display: flex;
+                justify-content: center;
+                align-items: flex-start;
+                padding: 24px 12px;
+                box-sizing: border-box;
+                background: #f2f3f5;
+            }
+
+            .receipt { max-width: 100%; }
+            /* Never let an image or the generated barcode exceed the receipt width */
+            .receipt img,
+            #barcodeTarget svg,
+            #barcodeTarget img,
+            #barcodeTarget canvas { max-width: 100%; height: auto; }
+
+            .receipt {
+                font-family: "Courier New", Courier, monospace; /* Classic receipt font */
+                width: 80mm;
+                background: #fff;
+                padding: 15px;
+                margin: 0 auto;
+                border: 1px solid #ddd;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+                border-radius: 6px;
+                color:#373535;
+            }
+
+            /* #receipt is a <span> wrapping block content. Force block layout so
+               it has a correct full-width box — otherwise html2canvas measures it
+               too narrow and clips the right edge of the downloaded PDF. */
+            #receipt {
+                display: block;
+                width: 100%;
+                box-sizing: border-box;
+            }
+
+            .header, .info, .summary, .footer {
+                text-align: center;
+            }
+
+            .logo {
+                max-width: 50px;
+                margin: 0 auto 10px;
+            }
+
+            h1, h2 {
+                font-size: 18px;
+                margin: 5px 0;
+            }
+
+            p {
+                margin: 5px 0;
+                font-size: 12px;
+            }
+
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 12px;
+                margin-bottom: 10px;
+                /* fixed layout so a long item name can't push the PRICE column
+                   past the right edge (which clipped it in the PDF capture) */
+                table-layout: fixed;
+            }
+
+            table th, table td {
+                border: 1px solid #ddd;
+                padding: 5px;
+                text-align: left;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+            }
+
+            table thead th {
+                background: #f1f1f1;
+            }
+
+            /* Column widths: item name wraps, QTY narrow centered, PRICE right */
+            #customer_item_list th:nth-child(1),
+            #customer_item_list td:nth-child(1) { width: 56%; }
+            #customer_item_list th:nth-child(2),
+            #customer_item_list td:nth-child(2) { width: 16%; text-align: center; }
+            #customer_item_list th:nth-child(3),
+            #customer_item_list td:nth-child(3) { width: 28%; text-align: right; }
+
+            .summary p {
+                text-align: left;
+                margin: 5px 0;
+            }
+
+            .footer {
+                font-family: "Times New Roman", Times, serif;
+                font-size: 12px;
+            }
+
+            /* Totals: label on the left, amount right-aligned on the same line */
+            .summary .sum-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: baseline;
+                gap: 10px;
+                margin: 4px 0;
+                font-size: 12px;
+                text-align: left;
+            }
+            .summary .sum-row .lbl { flex: 0 1 auto; }
+            .summary .sum-row .amt {
+                text-align: right;
+                white-space: nowrap;
+                font-variant-numeric: tabular-nums;
+            }
+            .summary .sum-heading {
+                text-align: left;
+                margin: 8px 0 4px;
+                font-size: 12px;
+            }
+            .summary .sum-total {
+                font-weight: bold;
+                font-size: 14px;
+                border-top: 1px solid #373535;
+                margin-top: 8px;
+                padding-top: 6px;
+            }
+            /* Dynamic per-tax rows inherit the same two-column layout */
+            #tax_details_customerprint p {
+                display: flex;
+                justify-content: space-between;
+                gap: 10px;
+                margin: 3px 0;
+                font-size: 12px;
+                text-align: left;
+            }
+        </style>
+    </head>
+    <body>
+
+        <div class="receipt">
+            <button id="downloadPDF" class="btn btn-outline-danger btn-sm pull-right"><i class="feather icon-download"></i></button>
+            <span id="receipt">
+                <div class="header">
+
+                    <img src="/" alt="Company Logo" class="branch_image logo">
+                    <h1><span class="branch-name"></span></h1>
+                    <p><span class="branch-address"></span></p>
+                    <p>
+                        EMAIL: <span class="branch-email"></span><br>
+                        PHONE: <span class="branch-phone"></span></p>
+                </div>
+                <hr>
+                <div class="info">
+                    <p class="text-center"><span class="customer_name_view"></span></p>
+                    <p><span class="pull-left">PAYMENT MODE: <strong><span class="customer_payment_mode_view"></span></strong></span> <span class="pull-right">DATE: <strong><span class="customer_date_view"></span></strong></span></p>
+                    <p><span class="pull-left">BILL NO: <strong><span class="sales_id"></span></strong></span><span class="pull-right">TIME: <strong><span class="customer_time_view"></span></strong></span></p><br>
+                </div>
+                <hr>
+                <table id="customer_item_list">
+                    <thead>
+                        <tr>
+                            <th>ITEM NAME</th>
+                            <th>QTY</th>
+                            <th>PRICE</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                    </tbody>
+                </table>
+                <hr>
+                <div class="summary">
+                    <p class="sum-row"><span class="lbl">ITEMS / QTY</span><span class="amt"><span class="customer_itemlength_view"></span> / <span class="customer_itemqty_view"></span></span></p>
+                    <p class="sum-row"><span class="lbl">SUBTOTAL</span><span class="amt customer_subtotal_view"></span></p>
+                    <p class="sum-row" id="customer_discount_view"><span class="lbl">DISCOUNT</span><span class="amt customer_discount_view"></span></p>
+                    <div class="customer_indian-gstr customer_hide-show-scgst" style="border-bottom: 1px dashed #c9d0df; border-top: 1px dashed #c9d0df;">
+                        <p class="sum-heading"><strong>GST Details</strong></p>
+                        <div class="customer_indian-gstr customer_hide-show-igst" style="display: none;">
+                            <p class="sum-row"><span class="lbl">IGST(<span class="customer_gst-text-value"></span>)</span><span class="amt print_igst_tax_view"></span></p>
+                        </div>
+
+                        <div class="customer_indian-gstr customer_hide-show-scgst" style="display: none;">
+                            <p class="sum-row"><span class="lbl">CGST(<span class="customer_cgst-text-value"></span>)</span><span class="amt print_csgst_tax_view"></span></p>
+                        </div>
+
+                        <div class="customer_indian-gstr customer_hide-show-scgst" style="display: none;">
+                            <p class="sum-row"><span class="lbl">SGST(<span class="customer_cgst-text-value"></span>)</span><span class="amt print_csgst_tax_view"></span></p>
+                        </div>
+                    </div>
+
+                    <div class="customer_tax_print_hide" style="border-bottom: 1px dashed #c9d0df; border-top: 1px dashed #c9d0df;">
+                        <p class="sum-heading"><strong>Tax Details</strong></p>
+                        <div id="tax_details_customerprint">
+
+                        </div>
+                    </div>
+                    <p class="sum-row" id="customer_tax_value"><span class="lbl">TAX</span><span class="amt customer_tax_value"></span></p>
+                    <p class="sum-row" id="customer_roundoff_view"><span class="lbl">ROUND OFF</span><span class="amt customer_roundoff_view"></span></p>
+                    <p class="sum-row sum-total"><span class="lbl">TOTAL AMOUNT</span><span class="amt customer_total_view"></span></p>
+                    <div class="partial-check-hide">
+                        <p class="sum-row"><span class="lbl">Payments/Credits</span><span class="amt customer_Credits_view"></span></p>
+                        <p class="sum-row"><span class="lbl">Balance Due</span><span class="amt customer_BalanceDue_view"></span></p>
+                        <p class="sum-row"><span class="lbl">Payment Status</span><span class="amt customer_PaymentStatus_view"></span></p>
+                    </div>
+                </div>
+                <hr>
+                <div>
+                    <input type="hidden" class="barcodeValue" id="barcodeValue" name="barcodeValue">
+                    <div id="barcodeTarget"></div>
+                    <canvas id="canvasTarget" style="margin-left: 80px; margin-bottom: -70px;"></canvas>
+                </div>
+                <div class="footer">
+                    <p>THANK YOU FOR SHOPPING WITH US<br>THANK YOU VISIT AGAIN!</p>
+                    <p>Powered by Posnic, <a href="https://posnic.com">https://posnic.com</a></p>
+                </div>
+            </span>
+        </div>
+        <script type="text/javascript">
+            if (window.location.hostname === 'frontend-ace.pages.dev') {
+                window.location.replace("https://www.posnic.io");
+            }
+
+            // Posnic (desktop/self-hosted): the API is always the origin that
+            // served this page - Electron window, LAN device, or self-hosted server.
+            // Cloud sync runs in a separate background process, never in the browser.
+            let API_URL = window.location.protocol.startsWith('http')
+                ? window.location.origin + '/'
+                : 'http://localhost:5555/';
+        </script>
+        <script type="application/javascript" src="script/customersMailPrint.js"></script>
+    </body>
+</html>

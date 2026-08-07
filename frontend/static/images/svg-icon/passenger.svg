@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.com/svgjs" version="1.1" width="512" height="512" x="0" y="0" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512" xml:space="preserve" class=""><g>
+<g xmlns="http://www.w3.org/2000/svg">
+	<path d="M377,130c35.841,0,65-29.159,65-65S412.841,0,377,0s-65,29.159-65,65S341.159,130,377,130z M377,30   c19.299,0,35,15.701,35,35s-15.701,35-35,35s-35-15.701-35-35S357.701,30,377,30z" fill="#ffffff" data-original="#000000" style="" class=""/>
+	<path d="M437,160H302.001L302,512h150V367.43c4.693,1.664,9.743,2.57,15,2.57c24.813,0,45-20.187,45-45v-90   C512,193.645,478.355,160,437,160z M482,325c0,8.271-6.729,15-15,15s-15-6.729-15-15V220h-30v262h-30V325h-30v157h-30l0.001-292   H437c24.813,0,45,20.187,45,45V325z" fill="#ffffff" data-original="#000000" style="" class=""/>
+	<path d="M182,100H90v60H0v195h272V160h-90V100z M120,130h32v30h-32V130z M182,190v135H90V190H182z M30,190h30v135H30V190z M242,325   h-30V190h30V325z" fill="#ffffff" data-original="#000000" style="" class=""/>
+</g>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</g></svg>

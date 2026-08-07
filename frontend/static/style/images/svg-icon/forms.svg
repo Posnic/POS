@@ -1,0 +1,28 @@
+<svg id="Small_Icons" data-name="Small Icons" xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: none;
+        stroke: #fff;
+        stroke-width: 3px;
+      }
+
+      .cls-1, .cls-2 {
+        fill-rule: evenodd;
+      }
+
+      .cls-2 {
+        fill: #fff;
+        opacity: 0.25;
+      }
+    </style>
+  </defs>
+  <g id="Forms">
+    <path id="Rounded_Rectangle_13_copy" data-name="Rounded Rectangle 13 copy" class="cls-1" d="M18.4,8.629V6.255A2.811,2.811,0,0,1,21.19,3.427H39.81A2.811,2.811,0,0,1,42.6,6.255v25.49a2.811,2.811,0,0,1-2.793,2.828H36.552"/>
+    <path id="Rounded_Rectangle_13" data-name="Rounded Rectangle 13" class="cls-1" d="M9.5,13.482h20a3,3,0,0,1,3,3V43.518a3,3,0,0,1-3,3H9.5a3,3,0,0,1-3-3V16.482A3,3,0,0,1,9.5,13.482Z"/>
+    <path class="cls-2" d="M7,36l25-7V45H7V36Z"/>
+    <path class="cls-1" d="M14,23.5H25"/>
+    <path id="Shape_22_copy" data-name="Shape 22 copy" class="cls-1" d="M14,29.5H25"/>
+    <path id="Shape_22_copy_2" data-name="Shape 22 copy 2" class="cls-1" d="M14,35.5H25"/>
+  </g>
+</svg>

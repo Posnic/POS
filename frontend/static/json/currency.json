@@ -1,0 +1,537 @@
+[
+    {
+      "id":"1",
+      "value": "&#76;&#101;&#107;",
+      "text": "Albania Lek &nbsp;&#76;&#101;&#107;"
+    },
+    {
+      "id":"2",
+      "value": "&#1547;",
+      "text": "Afghanistan Afghani &nbsp; &#1547;"
+    },
+    {
+      "id":"3",
+      "value": "&#36;",
+      "text": "Argentina Peso &nbsp; &#36;"
+    },
+    {
+      "id":"4",
+      "value": "&#402;",
+      "text": "Aruba Guilder &nbsp; &#402;"
+    },
+    {
+      "id":"5",
+      "value": "&#36;",
+      "text": "Australia Dollar &nbsp; &#36;"
+    },
+    {
+      "id":"6",
+      "value": "&#8380;",
+      "text": "Azerbaijan Manat &nbsp;&#8380;"
+    },
+    {
+      "id":"7",
+      "value": "&#36;",
+      "text": "Bahamas Dollar &nbsp;&#36;"
+    },
+    {
+      "id":"8",
+      "value": "&#36;",
+      "text": "Barbados Dollar &nbsp;&#36;"
+    },
+    {
+      "id":"9",
+      "value": "&#66;&#114;",
+      "text": "Belarus Ruble &nbsp;&#66;&#114;"
+    },
+    {
+      "id":"10",
+      "value": "&#66;&#90;&#36;",
+      "text": "SBelize Dollar &nbsp;&#66;&#90;&#36;"
+    },
+    {
+      "id":"11",
+      "value": "&#36;",
+      "text": "Bermuda Dollar &nbsp;&#36;"
+    },
+    {
+      "id":"12",
+      "value": "&#36;&#98;",
+      "text": "Bolivia Bolíviano &nbsp;&#36;&#98;"
+    },
+    {
+      "id":"13",
+      "value": "&#75;&#77;",
+      "text": "Bosnia and Herzegovina Convertible Marka &nbsp;&#75;&#77;"
+    },
+    {
+      "id":"14",
+      "value": "&#80;",
+      "text": "Botswana Pula &nbsp;&#80;"
+    },
+    {
+      "id":"15",
+      "value": "&#1083;&#1074;",
+      "text": "Bulgaria Lev &nbsp;&#1083;&#1074;"
+    },
+    {
+      "id":"16",
+      "value": "&#82;&#36;",
+      "text": "Brazil Real &nbsp;&#82;&#36;"
+    },
+    {
+      "id":"17",
+      "value": "&#36;",
+      "text": "Brunei Darussalam Dollar &nbsp;&#36;"
+    },
+    {
+      "id":"18",
+      "value": "&#6107;",
+      "text": "Cambodia Riel &nbsp;&#6107;"
+    },
+    {
+      "id":"19",
+      "value": "&#36;",
+      "text": "Canada Dollar &nbsp;&#36;"
+    },
+    {
+      "id":"20",
+      "value": "&#36;",
+      "text": "Cayman Islands Dollar &nbsp;&#36;"
+    },
+    {
+      "id":"21",
+      "value": "&#36;",
+      "text": "Chile Peso &nbsp;&#36;"
+    },
+    {
+      "id":"22",
+      "value": "&#165;",
+      "text": "China Yuan Renminbi &nbsp;&#165;"
+    },
+    {
+      "id":"23",
+      "value": "&#107;&#110;",
+      "text": "Croatia Kuna &nbsp;&#107;&#110;"
+    },
+    {
+      "id":"24",
+      "value": "&#8369;",
+      "text": "Cuba Peso &nbsp;&#8369;"
+    },
+    {
+      "id":"25",
+      "value": "&#75;&#269;",
+      "text": "Czech Republic Koruna &nbsp;&#75;&#269;"
+    },
+    {
+      "id":"26",
+      "value": "&#107;&#114;",
+      "text": "Denmark Krone &nbsp;&#107;&#114;"
+    },
+    {
+      "id":"27",
+      "value": "&#82;&#68;&#36;",
+      "text": "Dominican Republic Peso &nbsp;&#82;&#68;&#36;"
+    },
+    {
+      "id":"28",
+      "value": "&#36;",
+      "text": "East Caribbean Dollar &nbsp;&#36;"
+    },
+    {
+      "id":"29",
+      "value": "&#163;",
+      "text": "Egypt Pound &nbsp;&#163;"
+    },
+    {
+      "id":"30",
+      "value": "&#36;",
+      "text": "El Salvador Colon &nbsp;&#36;"
+    },
+    {
+      "id":"31",
+      "value": "&#8364;",
+      "text": "Euro Member Countries &nbsp;&#8364;"
+    },
+    {
+      "id":"32",
+      "value": "&#163;",
+      "text": "Falkland Islands (Malvinas) Pound &nbsp;&#163;"
+    },
+    {
+      "id":"33",
+      "value": "&#36;",
+      "text": "Fiji Dollar &nbsp;&#36;"
+    },
+    {
+      "id":"34",
+      "value": "&#162;",
+      "text": "Ghana Cedi &nbsp;&#162;"
+    },
+    {
+      "id":"35",
+      "value": "&#163;",
+      "text": "Gibraltar Pound &nbsp;&#163;"
+    },
+    {
+      "id":"36",
+      "value": "&#81;",
+      "text": "Guatemala Quetzal &nbsp;&#81;"
+    },
+    {
+      "id":"37",
+      "value": "&#163;",
+      "text": "Guernsey Pound &nbsp;&#163;"
+    },
+    {
+      "id":"38",
+      "value": "&#36;",
+      "text": "Guyana Dollar &nbsp;&#36;"
+    },
+    {
+      "id":"39",
+      "value": "&#76;",
+      "text": "Honduras Lempira &nbsp;&#76;"
+    },
+    {
+      "id":"40",
+      "value": "&#36;",
+      "text": "Hong Kong Dollar &nbsp;&#36;"
+    },
+    {
+      "id":"41",
+      "value": "&#70;&#116;",
+      "text": "Hungary Forint &nbsp;&#70;&#116;"
+    },
+    {
+      "id":"42",
+      "value": "&#107;&#114;",
+      "text": "Iceland Krona &nbsp;&#107;&#114;"
+    },
+    {
+      "id":"43",
+      "value": "&#8377;",
+      "text": "India Rupee &nbsp;&#8377;"
+    },
+    {
+    "id":"44",
+    "value": "&#82;&#112;",
+    "text": "Indonesia Rupiah &nbsp;&#82;&#112;"
+    },
+    {
+    "id":"45",
+    "value": "&#65020;",
+    "text": "Iran Rial &nbsp;&#65020;"
+    },
+    {
+    "id":"46",
+    "value": "&#163;",
+    "text": "Isle of Man Pound &nbsp;&#163;"
+    },
+    {
+    "id":"47",
+    "value": "&#8362;",
+    "text": "Israel Shekel &nbsp;&#8362;"
+    },
+    {
+    "id":"48",
+    "value": "&#74;&#36;",
+    "text": "Jamaica Dollar &nbsp;&#74;&#36;"
+    },
+    {
+    "id":"49",
+    "value": "&#165;",
+    "text": "Japan Yen &nbsp;&#165;"
+    },
+    {
+    "id":"50",
+    "value": "&#163;",
+    "text": "Jersey Pound &nbsp;&#163;"
+    },
+    {
+    "id":"51",
+    "value": "&#1083;&#1074;",
+    "text": "Kazakhstan Tenge &nbsp;&#1083;&#1074;"
+    },
+    {
+    "id":"52",
+    "value": "&#8361;",
+    "text": "Korea (North) Won &nbsp;&#8361;"
+    },
+    {
+    "id":"53",
+    "value": "&#8361;",
+    "text": "Korea (South) Won &nbsp;&#8361;"
+    },
+    {
+    "id":"54",
+    "value": "&#1083;&#1074;",
+    "text": "Kyrgyzstan Som &nbsp;&#1083;&#1074;"
+    },
+    {
+    "id":"55",
+    "value": "&#8365;",
+    "text": "Laos Kip &nbsp;&#8365;"
+    },
+    {
+    "id":"56",
+    "value": "&#163;",
+    "text": "Lebanon Pound &nbsp;&#163;"
+    },
+    {
+    "id":"57",
+    "value": "&#36;",
+    "text": "Liberia Dollar &nbsp;&#36;"
+    },
+    {
+    "id":"58",
+    "value": "&#1076;&#1077;&#1085;",
+    "text": "Macedonia Denar &nbsp;&#1076;&#1077;&#1085;"
+    },
+    {
+    "id":"59",
+    "value": "&#82;&#77;",
+    "text": "Malaysia Ringgit &nbsp;&#82;&#77;"
+    },
+    {
+    "id":"60",
+    "value": "&#8360;",
+    "text": "Mauritius Rupee &nbsp;&#8360;"
+    },
+  {
+    "id":"61",
+    "value": "&#36;",
+    "text": "Mexico Peso &nbsp;&#36;"
+  },
+  {
+    "id":"62",
+    "value": "&#8366;",
+    "text": "Mongolia Tughrik &nbsp;&#8366;"
+  },
+  {
+    "id":"63",
+    "value": "&#77;&#84;",
+    "text": "Mozambique Metical &nbsp;&#77;&#84;"
+  },
+  {
+    "id":"64",
+    "value": "&#36;",
+    "text": "Namibia Dollar &nbsp;&#36;"
+  },
+  {
+    "id":"65",
+    "value": "&#8360",
+    "text": "Nepal Rupee &nbsp;&#8360"
+  },
+  {
+    "id":"66",
+    "value": "&#402;",
+    "text": "Netherlands Antilles Guilder &nbsp;&#402;"
+  },
+  {
+    "id":"67",
+    "value": "&#36;",
+    "text": "New Zealand Dollar &nbsp;&#36;"
+  },
+  {
+    "id":"68",
+    "value": "&#67;&#36;",
+    "text": "Nicaragua Cordoba &nbsp;&#67;&#36;"
+  },
+  {
+    "id":"69",
+    "value": "&#8358;",
+    "text": "Nigeria Naira &nbsp;&#8358;"
+  },
+  {
+    "id":"70",
+    "value": "&#107;&#114;",
+    "text": "Norway Krone &nbsp;&#107;&#114;"
+  },
+  {
+    "id":"71",
+    "value": "&#65020;",
+    "text": "Oman Rial &nbsp;&#65020;"
+  },
+  {
+    "id":"72",
+    "value": "&#8360;",
+    "text": "Pakistan Rupee &nbsp;&#8360;"
+  },
+  {
+    "id":"73",
+    "value": "&#66;&#47;&#46;",
+    "text": "Panama Balboa &nbsp;&#66;&#47;&#46;"
+  },
+  {
+    "id":"74",
+    "value": "&#71;&#115;",
+    "text": "Paraguay Guarani &nbsp;&#71;&#115;"
+  },
+  {
+    "id":"75",
+    "value": "&#83;&#47;&#46;",
+    "text": "Peru Sol &nbsp;&#83;&#47;&#46;"
+  },
+  {
+    "id":"76",
+    "value": "&#8369;",
+    "text": "Philippines Peso &nbsp;&#8369;"
+  },
+  {
+    "id":"77",
+    "value": "&#122;&#322;",
+    "text": "Poland Zloty &nbsp;&#122;&#322;"
+  },
+  {
+    "id":"78",
+    "value": "&#65020;",
+    "text": "Qatar Riyal &nbsp;&#65020;"
+  },
+  {
+    "id":"79",
+    "value": "&#108;&#101;&#105;",
+    "text": "Romania Leu &nbsp;&#108;&#101;&#105;"
+  },
+  {
+    "id":"80",
+    "value": "&#8381;",
+    "text": "Russia Ruble &nbsp;&#8381;"
+  },
+  {
+    "id":"81",
+    "value": "&#163;",
+    "text": "Saint Helena Pound &nbsp;&#163;"
+  },
+  {
+    "id":"82",
+    "value": "&#65020;",
+    "text": "Saudi Arabia Riyal &nbsp;&#65020;"
+  },
+  {
+    "id":"83",
+    "value": "&#1044;&#1080;&#1085;&#46;",
+    "text": "Serbia Dinar &nbsp;&#1044;&#1080;&#1085;&#46;"
+  },
+  {
+    "id":"84",
+    "value": "&#8360;",
+    "text": "Seychelles Rupee &nbsp; &#8360;"
+  },
+  {
+    "id":"85",
+    "value": "&#36;",
+    "text": "Singapore Dollar &nbsp;&#36;"
+  },
+  {
+    "id":"86",
+    "value": "&#36;",
+    "text": "Solomon Islands Dollar &nbsp;&#36;"
+  },
+  {
+    "id":"87",
+    "value": "&#83;",
+    "text": "Somalia Shilling &nbsp;&#83;"
+  },
+  {
+    "id":"88",
+    "value": "&#82;",
+    "text": "South Africa Rand &nbsp;&#82;"
+  },
+  {
+    "id":"89",
+    "value": "&#8360;",
+    "text": "Sri Lanka Rupee &nbsp;&#8360;"
+  },
+  {
+    "id":"90",
+    "value": "&#107;&#114;",
+    "text": "Sweden Krona &nbsp;&#107;&#114;"
+  },
+  {
+    "id":"91",
+    "value": "&#67;&#72;&#70;",
+    "text": "Switzerland Franc &nbsp;&#67;&#72;&#70;"
+  },
+  {
+    "id":"92",
+    "value": "&#36;",
+    "text": "Suriname Dollar &nbsp;&#36;"
+  },
+  {
+    "id":"93",
+    "value": "&#163;",
+    "text": "Syria Pound &nbsp;&#163;"
+  },
+  {
+    "id":"94",
+    "value": "&#78;&#84;&#36;",
+    "text": "Taiwan New Dollar &nbsp;&#78;&#84;&#36;"
+  },
+  {
+    "id":"95",
+    "value": "&#3647;",
+    "text": "Thailand Baht &nbsp; &#3647;"
+  },
+  {
+    "id":"96",
+    "value": "&#84;&#84;&#36;",
+    "text": "Trinidad and Tobago Dollar &nbsp;&#84;&#84;&#36;"
+  },
+  {
+    "id":"97",
+    "value": "&#8378;",
+    "text": "Turkey Lira &nbsp;&#8378;"
+  },
+  {
+    "id":"98",
+    "value": "&#36;",
+    "text": "Tuvalu Dollar &nbsp;&#36;"
+  },
+  {
+    "id":"99",
+    "value": "&#8372;",
+    "text": "Ukraine Hryvnia &nbsp;&#8372;"
+  },
+  {
+    "id":"100",
+    "value": "&#163;",
+    "text": "United Kingdom Pound &nbsp;&#163;"
+  },
+  {
+    "id":"101",
+    "value": "&#36;",
+    "text": "United States Dollar &nbsp;&#36;"
+  },
+  {
+    "id":"102",
+    "value": "&#36;&#85;",
+    "text": "Uruguay Peso &nbsp;&#36;&#85;"
+  },
+  {
+    "id":"103",
+    "value": "&#1083;&#1074;",
+    "text": "Uzbekistan Som &nbsp;&#1083;&#1074;"
+  },
+  {
+    "id":"104",
+    "value": "&#66;&#115;",
+    "text": "Venezuela Bolívar &nbsp;&#66;&#115;"
+  },
+  {
+    "id":"105",
+    "value": "&#8363;",
+    "text": "Viet Nam Dong &nbsp;&#8363;"
+  },
+  {
+    "id":"106",
+    "value": "&#65020;",
+    "text": "Yemen Rial &nbsp;&#65020;"
+  },
+  {
+    "id":"107",
+    "value": "&#90;&#36;",
+    "text": "Zimbabwe Dollar &nbsp;&#90;&#36;"
+  }
+]

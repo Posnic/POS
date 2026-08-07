@@ -1,0 +1,283 @@
+<div class="col-md-12" id="receipt_wrapper_inner">
+   <div class="panel panel-piluku">
+      <div class="panel-body panel-pad">
+         <div class="row">
+            <!-- from address-->
+            <div class="col-md-4 col-sm-4 col-xs-12">
+               <ul class="list-unstyled text-center">
+                  <li>
+                     <span class="header-content"></span>
+                  </li>
+               </ul>
+            </div>
+            <div class="col-md-12 col-sm-12 col-xs-12 receipt-store-header">
+               <ul class="list-unstyled invoice-address">
+                  <li class="company-title item-name-bold pad_fields">
+                     <span class="print_store_name" style="font-weight: 900;"></span>
+                  </li>
+                  <li class="row" style="text-align:center;">
+                     <div class="col-md-12 col-sm-12 col-xs-12 branch_image" style="display: none;">
+                        <span class="printlogoimage" id="printlogoimage">
+                        <img src="" style="width:42px;height:42px;">
+                        </span>
+                     </div>
+                  </li>
+                  <li class="add_pad_fields gst_hide_show">GSTIN: &nbsp;<span class="print_store_gst" style="font-weight: bold;"></span></li>
+                  <li class="add_pad_fields"><span class="print_store_address"></span></li>
+                  <li class="add_pad_fields">Tel: &nbsp;<span class="print_store_telephone"></span> &nbsp;<span class="print_store_alternativephone"></span></li>
+                  <li class="add_pad_fields"><span class="print_store_email"></span></li>
+               </ul>
+            </div>
+            <!-- Customer Details-->
+            <div class="col-md-4 col-sm-4 col-xs-12 hide_customer_details">
+               <ul class="list-unstyled pull-left">
+                  <li class="company-title item-name-bold">
+                     <span class="print-custom-title"> </span>
+                  </li>
+                  <li>
+                     <span class="print-name"></span>
+                  </li>
+                  <li>
+                     <span class="print-phone"></span>
+                  </li>
+                  <li>
+                     <span class="print-email"></span>
+                  </li>
+                  <li>
+                     <span class="print-address"></span>
+                  </li>
+               </ul>
+            </div>
+            <!--  sales-->
+            <div class="col-md-12 col-sm-12 col-xs-12 sales-receipt-detail">
+               <ul class="list-unstyled invoice-detail">
+                  <li><span class="print-title">Receipt</span></li>
+                  <li class="add_pad_fields">                                                                
+                     <strong>
+                     <span class="print_date"></span>
+                     </strong>
+                  </li>
+                  <li class="add_pad_fields">
+                     <span class='print_view_id'></span>
+                  </li>
+               </ul>
+            </div>
+         </div>
+         <!-- invoice heading-->
+         <div class="invoice-table">
+            <div class="row">
+               <div class="col-md-5 col-sm-5 col-xs-5">
+                  <div class="invoice-head text-left item-name"><strong>Product</strong></div>
+               </div>
+               <div class="col-md-3 col-sm-3 col-xs-3">
+                  <div class="invoice-head text-left item-qty"><strong>Qty.</strong></div>
+               </div>
+               <div class="col-md-4 col-sm-4 col-xs-4">
+                  <div class="invoice-head pull-right item-total gift_receipt_element"><strong>Price</strong></div>
+               </div>
+            </div>
+         </div>
+         <!-- invoice items-->
+         <div class="invoice-table-content print-invoice-table-content">
+         </div>
+         <div class="footer-align">
+            <div class="invoice-footer gift_receipt_element">
+               <div class="row">
+                  <div class="col-md-offset-2 col-sm-offset-2 col-xs-offset-2 col-md-8 col-sm-8 col-xs-8">
+                     <div class="invoice-footer-heading"></div>
+                  </div>
+                  <div class="col-md-8 col-sm-8 col-xs-6">
+                     <div class="invoice-footer-value">Payment</div>
+                  </div>
+                  <div class="col-md-4 col-sm-4 col-xs-6">
+                     <div class="invoice-footer-value invoice-payment print-invoice-payment-mode">
+                     </div>
+                  </div>
+               </div>
+               <div class="row thermal-partial-row">
+                  <div class="col-md-offset-2 col-sm-offset-2 col-xs-offset-2 col-md-8 col-sm-8 col-xs-8">
+                     <div class="invoice-footer-heading"></div>
+                  </div>
+                  <div class="col-md-8 col-sm-8 col-xs-6">
+                     <div class="invoice-footer-value">Payments/Credits</div>
+                  </div>
+                  <div class="col-md-4 col-sm-4 col-xs-6">
+                     <div class="invoice-footer-value invoice-payment print-payment-balance">
+                     </div>
+                  </div>
+               </div>
+               <div class="row thermal-partial-row">
+                  <div class="col-md-offset-2 col-sm-offset-2 col-xs-offset-2 col-md-8 col-sm-8 col-xs-8">
+                     <div class="invoice-footer-heading"></div>
+                  </div>
+                  <div class="col-md-8 col-sm-8 col-xs-6">
+                     <div class="invoice-footer-value">Balance Due</div>
+                  </div>
+                  <div class="col-md-4 col-sm-4 col-xs-6">
+                     <div class="invoice-footer-value invoice-payment print-payment-pending">
+                     </div>
+                  </div>
+               </div>
+               <div class="row">
+                  <div class="col-md-offset-2 col-sm-offset-2 col-xs-offset-2 col-md-8 col-sm-8 col-xs-8">
+                     <div class="invoice-footer-heading"></div>
+                  </div>
+                  <div class="col-md-8 col-sm-8 col-xs-6">
+                     <div class="invoice-footer-value">Payment Status</div>
+                  </div>
+                  <div class="col-md-4 col-sm-4 col-xs-6">
+                     <div class="invoice-footer-value invoice-payment print-payment-status">
+                     </div>
+                  </div>
+               </div>
+               <div class="row">
+                  <div class="col-md-offset-2 col-sm-offset-2 col-xs-offset-2 col-md-8 col-sm-8 col-xs-8">
+                     <div class="invoice-footer-heading"></div>
+                  </div>
+                  <div class="col-md-8 col-sm-8 col-xs-6">
+                     <div class="invoice-footer-value">Total Qty</div>
+                  </div>
+                  <div class="col-md-4 col-sm-4 col-xs-6">
+                     <div class="invoice-footer-value invoice-payment total-noof-item">
+                     </div>
+                  </div>
+               </div>
+               <div class="row">
+                  <div class="col-md-offset-2 col-sm-offset-2 col-xs-offset-2 col-md-8 col-sm-8 col-xs-8">
+                     <div class="invoice-footer-heading"></div>
+                  </div>
+                  <div class="col-md-8 col-sm-8 col-xs-6">
+                     <div class="invoice-footer-value">Sub Total</div>
+                  </div>
+                  <div class="col-md-4 col-sm-4 col-xs-6">
+                     <div class="invoice-footer-value invoice-payment print-subtotal">
+                     </div>
+                  </div>
+               </div>
+               <div class="row amount-print-hideshow">
+                  <div class="col-md-offset-2 col-sm-offset-2 col-xs-offset-2 col-md-8 col-sm-8 col-xs-8">
+                     <div class="invoice-footer-heading"></div>
+                  </div>
+                  <div class="col-md-8 col-sm-8 col-xs-6">
+                     <div class="invoice-footer-value">Discount</div>
+                  </div>
+                  <div class="col-md-4 col-sm-4 col-xs-6">
+                     <div class="invoice-footer-value invoice-payment view_sales_discount">
+                     </div>
+                  </div>
+               </div>
+               <div class="indian-gstr hide-show-scgst" style="border-bottom: 1px dashed #c9d0df; border-top: 1px dashed #c9d0df;">
+                  <div class="invoice-head item-name heading-gsttax-name">
+                     <strong>GST Details</strong>
+                  </div>
+                  <div class="taxgst_print_hide">
+                  </div>
+               </div>
+               <div class="taxgst_print_hide" style="border-bottom: 1px dashed #c9d0df; border-top: 1px dashed #c9d0df;">
+                  <div class="row indian-gstr hide-show-igst" style="display: none;">
+                     <div class="col-md-offset-2 col-sm-offset-2 col-xs-offset-2 col-md-8 col-sm-8 col-xs-8">
+                        <div class="invoice-footer-heading"></div>
+                     </div>
+                     <div class="col-md-8 col-sm-8 col-xs-6">
+                        <div class="invoice-footer-value">IGST ( <span class="gst-text-value" style="font-size: 6px;"></span>)</div>
+                     </div>
+                     <div class="col-md-4 col-sm-4 col-xs-6">
+                        <div class="invoice-footer-value print_igst_tax_view">
+                        </div>
+                     </div>
+                  </div>
+                  <div class="row indian-gstr hide-show-scgst" style="display: none;">
+                     <div class="col-md-offset-2 col-sm-offset-2 col-xs-offset-2 col-md-8 col-sm-8 col-xs-8">
+                        <div class="invoice-footer-heading"></div>
+                     </div>
+                     <div class="col-md-8 col-sm-8 col-xs-6">
+                        <div class="invoice-footer-value">CGST ( <span class="cgst-text-value" style="font-size: 6px;"></span>)</div>
+                     </div>
+                     <div class="col-md-4 col-sm-4 col-xs-6">
+                        <div class="invoice-footer-value print_csgst_tax_view">
+                        </div>
+                     </div>
+                  </div>
+                  <div class="row indian-gstr hide-show-scgst" style="display: none;">
+                     <div class="col-md-offset-2 col-sm-offset-2 col-xs-offset-2 col-md-8 col-sm-8 col-xs-8">
+                        <div class="invoice-footer-heading"></div>
+                     </div>
+                     <div class="col-md-8 col-sm-8 col-xs-6">
+                        <div class="invoice-footer-value">SGST ( <span class="cgst-text-value" style="font-size: 6px;"></span>)</div>
+                     </div>
+                     <div class="col-md-4 col-sm-4 col-xs-6">
+                        <div class="invoice-footer-value print_csgst_tax_view">
+                        </div>
+                     </div>
+                  </div>
+               </div>
+               <div class="tax_detail_print_hideShow" style="border-bottom: 1px dashed #c9d0df; border-top: 1px dashed #c9d0df;">
+                  <div id="heading_chnge" class="invoice-head item-name heading-tax-name text-hide-gst">
+                     <strong>Tax Details</strong>
+                  </div>
+                  <div class="tax_print_hide">
+                  </div>
+               </div>
+               <div class="row tax-print-hideshow">
+                  <div class="col-md-offset-2 col-sm-offset-2 col-xs-offset-2 col-md-8 col-sm-8 col-xs-8">
+                     <div class="invoice-footer-heading"></div>
+                  </div>
+                  <div class="col-md-8 col-sm-8 col-xs-6">
+                     <div class="invoice-footer-value">Tax Total</div>
+                  </div>
+                  <div class="col-md-4 col-sm-4 col-xs-6">
+                     <div class="invoice-footer-value view_sales_tax">
+                     </div>
+                  </div>
+               </div>
+               <div class="row" id="extra_disc_standard_print"> </div>
+               <div class="row" id="roundoff_standard_print">  </div>
+               <div class="row">
+                  <div class="col-md-offset-2 col-sm-offset-2 col-xs-offset-2 col-md-8 col-sm-8 col-xs-8">
+                     <div class="invoice-footer-heading"></div>
+                  </div>
+                  <div class="col-md-8 col-sm-8 col-xs-6">
+                     <div class="invoice-footer-value"><strong>Grand Total</strong></div>
+                  </div>
+                  <div class="col-md-4 col-sm-4 col-xs-6">
+                     <div class="invoice-footer-value invoice-payment print-total text-dark">
+                     </div>
+                  </div>
+               </div>
+               <div class="row print-sale-notes-hide" style="margin-top: 10px;">
+                  <div class="col-md-12 col-sm-12 col-xs-12">
+                     <div class="invoice-footer-value" style="text-align: center;">
+                        <strong>SALE NOTES</strong>
+                     </div>
+                     <div class="invoice-footer-value" style="text-align: center; margin-top: 5px;">
+                        <span class="print-sale-notes"></span>
+                     </div>
+                  </div>
+               </div>
+            </div>
+            <div class="col-md-4 col-sm-4 col-xs-12 hide-receiving-print" style="display:none;">
+               <ul class="list-unstyled text-center">
+                  <li>
+                     <span class="footer-content"></span>
+                  </li>
+               </ul>
+            </div>
+            <!-- invoice footer-->
+            <div class="row" style="display: none;">
+               <div class="col-md-12 col-sm-12 col-xs-12 borcode-border">
+                  <div style="display: none;" class="invoice-policy">
+                     <div class="invoice-policy">
+                        <input type="hidden" class="barcodeValue" id="barcodeValue" name="barcodeValue">
+                        <input type="hidden" name="btype" value="code128">
+                        <input type="hidden" name="renderer" value="canvas">
+                        <div id="barcodeTarget"></div>
+                     </div>
+                     <canvas id="canvasTarget"></canvas>
+                     <img src="" alt="">                                                                
+                  </div>
+               </div>
+            </div>
+         </div>
+      </div>
+   </div>
+</div>

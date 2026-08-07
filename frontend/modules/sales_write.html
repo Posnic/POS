@@ -1,0 +1,1145 @@
+<div class="vertical-layout page_loader" id="sales_new" style="display: none">
+    <!-- Start Containerbar -->
+    <div id="containerbar">
+        <!-- Start Breadcrumbbar -->
+        <div class="breadcrumbbar">
+        </div>
+    </div>
+    <div class="contentbar">
+        <div class="breadcrumbbar" style="margin-left: -0px;margin-top: -20px !important;">
+            <div class="row text-left">
+                <div class="col-md-8 col-lg-8">
+                    <h4 class="page-title break_title"><span id="sales-text-change">New</span>
+                        <lang class="lang_printsale">&nbsp;Sale</lang>
+                    </h4>
+                </div>
+            </div>
+        </div>
+        <div class="row align-items-center">
+            <!-- Start Touch Sale Form -->
+            <div class="col-12">
+                <!-- Start Touch Sale Form -->
+                <form class="touchsales_page" id="touchsales_page">
+                    <!-- start -->
+                    <div class="row" style="margin-top: -35px;">
+                        <div class="col-xs-2 col-md-6 col-lg-6 col-xl-6">
+                        </div>
+                        <div class="col-xs-5 col-md-3 col-lg-3 col-xl-3 pull-right" style="padding-right: 5px; display: none;" id="weight_machine_container">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <a href="javascript:void(0)" id="sales_read_weight_btn_top"
+                                    class="btn btn-info-rgba open_register_disabled"
+                                    style="height:38px;border: transparent;border-radius: 4px; flex: 1; min-width: 0;"
+                                    onclick="PosnicPro.sales.readWeightFromMachine()">
+                                    <i class="feather icon-anchor"></i> Weight
+                                </a>
+                                <div id="live_weight_display" style="background: #f0f0f0; padding: 8px 12px; border-radius: 4px; font-weight: bold; text-align: center; height: 38px; display: flex; align-items: center; justify-content: center; flex: 1; min-width: 0;">
+                                    <span id="live_weight_value">--</span> <small style="margin-left: 4px;">kg</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xs-5 col-md-3 col-lg-3 col-xl-3 input-group bootstrap-touchspin  pull-right">
+                            <input type="text" id="time-format" name="date"
+                                data-bts-button-down-class="btn btn-secondary"
+                                data-bts-button-up-class="btn btn-secondary"
+                                class="form-control commonDate text-right text-muted" readonly />
+                        </div>
+                    </div>
+                    <div class="row">
+
+                        <div class=" col-xs-12 col-md-6 col-lg-6 col-xl-6 return_sale_only_show"
+                            id="table_return_page_parent" style="display: none;">
+                            <div class="col-12">
+                                <div class="row">
+                                    <div class="wishlist-box">
+                                        <div id="table_return_page"></div>
+
+                                    </div>
+                                </div>
+
+                                <div id="sale_return_view_table">
+
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <div class="row" id="return_view_hide" style="width: 50%;">
+                            <div class="col-12">
+                                <div class="wishlist-box">
+                                    <div id="return_table">
+                                        <div class="table-responsive">
+                                            <table class="table table-borderless">
+                                                <!--Start thead -->
+                                                <thead class="btn-primary">
+                                                    <tr class="sales_new_class">
+                                                        <th scope="col">
+                                                            <lang class="lang_item_title"> <span
+                                                                    class="return_table_head_hide">Returning</span>
+                                                                Items </lang>
+                                                        </th>
+                                                        <th scope="col" class="text-center">
+                                                            <lang class="lang_qty_title">Qty</lang>
+                                                        </th>
+                                                        <th scope="col" class="text-center">
+                                                            <lang class="">Unit</lang>
+                                                        </th>
+                                                        <th scope="col" class="text-center kot-hide">
+                                                            <lang class="lang_price_title">Price</lang>
+                                                        </th>
+                                                        <th scope="col" class="text-center kot-hide">
+                                                            <lang class="lang_discount_title">Disc</lang>
+                                                        </th>
+                                                        <th scope="col" class="text-center kot-hide">
+                                                            <lang class="lang_tax_title">Tax</lang>
+                                                        </th>
+                                                        <th scope="col" class="text-center kot-hide">
+                                                            <lang class="lang_total_title">Total</lang>
+                                                        </th>
+                                                        <th scope="col" class="text-center"></th>
+                                                        <th scope="col" class="text-left">
+                                                            <lang class="lang_action_title"><span
+                                                                    class="return_table_head_text">Action</span></lang>
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="register-item-content touch-table-tbody"
+                                                    style="background:#fff;">
+                                                    <tr class="sales_new_tablerow_content_area"
+                                                        id='sales_new_tablerow_content_area'>
+                                                        <td colspan="7">
+                                                            <div class='text-center text-dark'>
+                                                                <p class="table_cart_content">
+                                                                    <lang class="lang_returnsale_empty">Return Sale
+                                                                        Order Empty</lang>
+                                                                </p>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-xs-12 col-md-6 col-lg-6 col-xl-6 mobile-hide" id="items_view_hide">
+                            <div class="row">
+                                <div class="col-12 input-group bootstrap-touchspin" style="padding-right: 18px;">
+                                    <input type="text" placeholder="Find item name, sku or barcode"
+                                        name="sales_new_item_name" id="sales_new_item_name"
+                                        class="form-control border-control osk-trigger open_register_disabled">
+
+                                    <a data-module="item" data-access="write" href="#/sales/instant/new"
+                                        id="instance_newitem"
+                                        style="height:38px;border: transparent;border-radius: 0px;"
+                                        class="btn btn-success-rgba open_register_disabled">
+                                        <lang class="lang_instant">Instant</lang>
+                                        <span data-toggle="tooltip" title="Instant item add easily">
+                                            <i class="feather icon-plus-square"></i>
+                                        </span>
+                                    </a>
+                                    <span class="input-group-btn" id="employee_box">
+                                        <span data-toggle="tooltip" data-placement="top"
+                                            data-original-title="Open customer">
+                                            <span
+                                                style="height:38px;border: transparent;border-radius: 0px;font-size: 18px;"
+                                                class="btn btn-primary-rgba toggle-user-input open_register_disabled">
+                                                <i class="feather icon-more-vertical"> </i>
+                                            </span>
+                                        </span>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="row toggle-customer-user" style="display:none;">
+                                <div class="col-12 input-group bootstrap-touchspin" style="padding-right: 18px;">
+                                    <input type="text" id="sales_new_customer_name" placeholder="Enter Customer Name"
+                                        class="form-control border-control osk-trigger clear-sale-text" required>
+                                    <a data-module="customer" data-access="write" href="#/sales/customers/new"
+                                        class="btn btn-payment-mode active"
+                                        style="height:38px;border: transparent;border-radius: 0px;">
+                                        <i class="feather icon-plus" data-toggle="tooltip"
+                                            title="Add new customer easily"></i>
+                                    </a>
+                                </div>
+                                <!--                                <div class="col-6 input-group bootstrap-touchspin" style="padding-left: 0px; max-width: 100%;display:none;">
+                                
+                                                                    <input type="text" placeholder="Find User" name="search_user_name" id="search_user_name" class="form-control user-name" readonly>
+                                                                    <button type="button" class="btn btn-payment-mode active" style="height:38px;border: transparent;border-radius: 0px; cursor: context-menu;">
+                                                                        User
+                                                                    </button>
+                                                                </div>-->
+                            </div>
+                            <div>
+
+                                <ul class="nav nav-tabs nav-justified mb-3" id="defaultTabJustified" role="tablist"
+                                    style="background: #f9fbfc;">
+                                    <li class="nav-item">
+                                        <a class="nav-link active open_register_disabled items_head"
+                                            id="home-tab-justified" data-toggle="tab" href="#home-justified" role="tab"
+                                            aria-controls="home" aria-selected="true"
+                                            onclick="PosnicPro.sales.itemsMenu.onlineProductList();">
+                                            <lang class="lang_item_title">Items</lang>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link open_register_disabled items_head" id="profile-tab-justified"
+                                            data-toggle="tab" href="#profile-justified" role="tab"
+                                            aria-controls="profile" aria-selected="false"
+                                            onclick="PosnicPro.sales.categoryMenu.listCategories();">
+                                            <lang class="lang_category_title">Categories</lang>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link open_register_disabled items_head" id="contact-tab-justified"
+                                            data-toggle="tab" href="#contact-justified" role="tab"
+                                            aria-controls="contact" aria-selected="false"
+                                            onclick="PosnicPro.sales.recentMenu.salesList();">
+                                            <lang class="lang_recentsale_title">Recent Sales</lang>
+                                        </a>
+                                    </li>
+                                </ul>
+
+                                <div id="sales_new_productList" class="loader-product scroll_width">
+                                    <!-- product list section -->
+
+                                </div>
+                                <div id="sales_new_categoryList" class="loader-category scroll_width"
+                                    style="display: none;">
+                                    <!-- category list section -->
+
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-xs-12 col-md-6 col-lg-6 col-xl-6 loader-sales-balance loader-edit-sale loader-add-item"
+                            id="instance-view">
+                            <!--Start table -->
+                            <div class="wishlist-box return_sale_only_show" id="table_sale_page_parent"
+                                style="display: none;">
+                                <div id="table_sale_page">
+
+                                </div>
+                            </div>
+                            <div class="wishlist-box" id="viewtest">
+
+                                <div id="sales_table">
+                                    <div class="table-responsive">
+                                        <table class="table table-borderless customer-display-hide loader-return-sale">
+                                            <!--Start thead -->
+                                            <thead class="btn-primary">
+                                                <tr class="sales_new_class">
+                                                    <th scope="col">
+                                                        <lang class="lang_item_title"><span
+                                                                class="sale_table_head_hide">Sold</span> Items</lang>
+                                                    </th>
+                                                    <th scope="col" class="text-center">
+                                                        <lang class="lang_qty_title">Qty</lang>
+                                                    </th>
+                                                    <th scope="col" class="text-center">
+                                                        <lang class="">Unit</lang>
+                                                    </th>
+                                                    <th scope="col" class="kot-hide">
+                                                        <lang class="lang_price_title">Price</lang>
+                                                    </th>
+                                                    <th scope="col" class="kot-hide">
+                                                        <lang class="lang_discount_title">Disc</lang>
+                                                    </th>
+                                                    <th scope="col" class="kot-hide">
+                                                        <lang class="lang_tax_title">Tax</lang>
+                                                    </th>
+                                                    <th scope="col" class="kot-hide">
+                                                        <lang class="lang_total_title">Total</lang>
+                                                    </th>
+                                                    <th scope="col">
+                                                        <lang class="lang_action_title"><span
+                                                                class="sale_table_head_text">Action</span></lang>
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="register-item-content touch-table-tbody"
+                                                style="background:#fff;" id="sales_new_items_tbody">
+                                                <tr class="sales_new_tablerow_content_area"
+                                                    id='sales_new_tablerow_content_area'>
+                                                    <td colspan="7">
+                                                        <div class='text-center text-dark'>
+                                                            <p class="table_cart_content">
+                                                                <lang class="lang_sale_empty">Sale Order Empty</lang>
+                                                            </p>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <!--End table -->
+                            </div>
+
+                            <div class="row kot-hide">
+                                <div class="col-12">
+                                    <table class="table keysale-borderless customer-display-hide" id="paymentdisplay"
+                                        style="margin-bottom:0px; background: white;">
+                                        <td class="customer-display-hide pay_amount_total" id="button_return">
+                                            <button type="button"
+                                                onclick="PosnicPro.sales.quantity.removeReturnAllLineRowItems();"
+                                                class="col-md-12 btn btn-success-rgba customer-display-hide pay_amount_total"
+                                                id="return_button">
+                                                <lang class="lang_returnall_title">Return All</lang>
+                                            </button>
+                                        </td>
+                                        <tbody>
+                                            <tr>
+                                                <td class="payment_note items_head" id="payment_note">
+
+                                                    <lang class="lang_paymentnote_title">Payment Note </lang> &nbsp;<a
+                                                        href="#" id="click_payment_description">[<i
+                                                            class="feather icon-edit-1"></i>]</a>
+                                                    <a href="#" id="payment_description"
+                                                        class="payment_description customer-display-hide"
+                                                        style="display:none;"></a>
+                                                </td>
+                                                <td class="payable-total pay_amount_total" id="sub_hide">
+                                                    <lang class="lang_subtotal_title">Sub Total </lang>
+                                                </td>
+
+                                                <td class="payable-total" id="sub_total_hide">
+                                                    <span class="pull-right"><span
+                                                            class="display-currency"></span>&nbsp;<span
+                                                            class="sales_price_fields"
+                                                            id="sales_new_subtotal">0.00</span></span>
+                                                </td>
+                                                <td class="payable-total customer-display-hide pay_amount_total"
+                                                    id="refund_sub_hide">
+                                                    <lang class="lang_subtotal_title">Sub Total</lang>
+                                                </td>
+                                                <td class="payable-total customer-display-hide" id="refund_sub_total">
+                                                    <span class="pull-right"><span
+                                                            class="display-currency"></span>&nbsp;<span
+                                                            class="sales_price_fields"
+                                                            id="refund_subtotal">0.00</span></span>
+                                                </td>
+                                            </tr>
+
+                                            <tr>
+                                                <td class="sale_dcription customer-display-hide items_head"
+                                                    id="sale_dcrption">
+                                                    <lang class="lang_saledescription_title">Sale Note </lang> &nbsp;<a
+                                                        href="#" id="click_sales_description">[<i
+                                                            class="feather icon-edit-1"></i>]</a>
+                                                    <a href="#" id="sales_description"
+                                                        class="sales_description customer-display-hide"
+                                                        style="display:none;"></a>
+                                                </td>
+                                                <td class="return_discount_show pay_amount_total"
+                                                    style="display:none;border: 0.5px dashed lightgrey">
+                                                    <lang class="lang_discount_title"> Discount</lang> <span
+                                                        class="pull-right"> - <span
+                                                            class="sales_discount_return_value">0.00</span></span>
+                                                </td>
+                                                <td class="discount-percentage-line-heigth return_discount_hide pay_amount_total"
+                                                    id="return_discount"> 
+                                                    <lang class="lang_discount_title">Discount </lang>
+                                                    <span class="pull-right"> - <span
+                                                            id="discount_sale_amount">0.00</span></span>
+                                                </td>
+
+                                                <td class="discount-percentage-line-heigth sale-display-hide pay_amount_total"
+                                                    id="return_disc" style="border: 0.5px dashed lightgrey;">
+                                                    <div class="discount_amount_display">
+                                                        <lang class="lang_discount_title"> Disc </lang> [ <span
+                                                            id="discountSign" class="display-currency"></span>]
+                                                        <span id="sales_new_radio_discountpercent"
+                                                            class="sales_discountamount display-discount-amount-text"></span>
+                                                    </div>
+                                                    <div class="discount_percentage_display">
+                                                        <lang class="lang_discount_title"> Disc </lang>[ <span
+                                                            id="percentSign">%</span>]
+                                                        <span id="sales_new_radio_discountamount"
+                                                            class="sales_discountpercentage display-discount-percentage-text"></span>
+                                                    </div>
+                                                </td>
+
+                                                <!-- Return tax -->
+                                                <td class="return_discount_show pay_amount_total">
+                                                    <lang class="lang_tax_title">Tax </lang><span class="pull-right">+
+                                                        <span id="sales_tax_return_value">0.00</span></span>
+                                                </td>
+                                                <!--                                        <td class="return_discount_show">
+                                                                                    <span class="pull-right">+ <span id="sales_tax_return_value">0.00</span></span>
+                                                                                </td>-->
+
+                                                <!-- New / Edit sale tax-->
+                                                <td class="discount-percentage-line-heigth return_discount_hide pay_amount_total"
+                                                    id="return_tax">
+                                                    <lang class="lang_tax_title">Tax </lang>
+                                                    <span class="pull-right">+ <span id="tax">0.00</span></span>
+                                                </td>
+                                            </tr>
+
+                                            <tr class="add-disc-row addDisc-hide-show">
+                                                <!-- LEFT: Discount Note -->
+                                                <td class="discount_dcription items_head" id="discount_note">
+                                                    Discount Note &nbsp;
+                                                    <a href="#" id="click_discount_description">[<i
+                                                            class="feather icon-edit-1"></i>]</a>
+                                                    <a href="#" id="discount_description"
+                                                        class="discount_description customer-display-hide"
+                                                        style="display:none;"></a>
+                                                </td>
+
+                                                <!-- MIDDLE: Extra Discount label -->
+                                                <td class="discount-label text-center">
+                                                    <span class="label-text">Extra Discount</span>
+                                                </td>
+
+                                                <!-- RIGHT: Extra Discount input -->
+                                                <td class="discount-input">
+                                                    <div class="inline-container pull-right">
+                                                        <span id="percentIcon"
+                                                            class="icon text-danger toggle-icon d-none"
+                                                            title="Change to percentage discount"
+                                                            style="cursor: pointer;" aria-hidden="true">
+                                                            %
+                                                        </span>
+                                                        <span id="rupeeIcon" class="icon text-danger toggle-icon"
+                                                            title="Change to rupee discount" style="cursor: pointer;"
+                                                            aria-hidden="true">
+                                                            <span class="display-currency">₹</span>
+                                                        </span>
+                                                        <a href="#" id="extraDisc" name="extraDiscVal"
+                                                            title="Edit Discount" class="text-danger">
+                                                            0.00
+                                                        </a>
+                                                    </div>
+                                                </td>
+                                            </tr>
+
+                                            <tr style="display: none" class="RoundOff-hide-show">
+                                                <td class="customer-display-hide">
+                                                </td>
+                                                <td class="discount-percentage-line-heigth"> Round Off
+                                                </td>
+                                                <td class="discount-percentage-line-heigth">
+                                                    <span class="pull-right" id="RoundOff"></span>
+                                                </td>
+                                            </tr>
+
+
+                                            <tr>
+                                                <td class="customer-display-hide" id="edit_style_button">
+                                                    <span data-toggle="tooltip" data-placement="top"
+                                                        data-original-title="Hold">
+                                                        <button type="button"
+                                                            class="col-xs-12 col-md-12 col-lg-2 btn btn-warning-rgba open_register_disabled"
+                                                            id="holdSaleButton"
+                                                            onclick="return PosnicPro.sales.holdSale.holdOrderSubmit();">
+                                                            <span class="feather icon-pause"
+                                                                style="margin-left:-5px;"></span>
+                                                        </button>
+                                                    </span>
+                                                    <span data-toggle="tooltip" data-placement="top"
+                                                        data-original-title="Clear Sale">
+                                                        <button type="button" id="clearSaleButton"
+                                                            class="col-xs-12 col-md-12 col-lg-2 btn btn-secondary-rgba open_register_disabled"
+                                                            onclick="return PosnicPro.resetForm('sale');"
+                                                            style="display: none;"><i class="feather icon-refresh-ccw"
+                                                                style="margin-left:-5px;"></i>
+                                                        </button>
+                                                    </span>
+                                                    <a href='#/sales' id="closeSaleButton"
+                                                        class="col-xs-12 col-md-12 col-lg-5 btn btn-danger-rgba open_register_disabled"
+                                                        style="display: none;"><i
+                                                            class="feather icon-x-circle mr-2"></i>
+                                                        <lang class="lang_close_title"> Close</lang>
+                                                    </a>
+                                                    <a href='#/sales' id="closeEditButton"
+                                                        class="col-xs-12 col-md-12 col-lg-5 btn btn-danger-rgba open_register_disabled"
+                                                        style="display: none;"><i
+                                                            class="feather icon-x-circle mr-2"></i>
+                                                        <lang class="lang_close_title"> Close</lang>
+                                                    </a>
+                                                    <button type="button"
+                                                        onclick="if (PosnicPro.sales && PosnicPro.sales.SaleAction === 'return') { PosnicPro.sales.editSale.cartOrderSubmit(); } else { PosnicPro.sales.openTenderModel(); }"
+                                                        class="col-sm-12 col-xs-12 col-md-12 col-lg-5 btn btn-primary-rgba changeSales customer-display-hide"
+                                                        id="check_button"><i class="feather icon-share"></i>
+                                                        <lang class="lang_return_title"> &nbsp;&nbsp;Return</lang>
+                                                    </button>
+
+                                                    <span id="sales_save_button" style="display:none;">
+                                                        <button type="button" name="submit"
+                                                            class="col-xs-12 col-md-12 col-lg-6 btn btn-success-rgba wav_pad save_return_submit open_register_disabled"
+                                                            onclick="PosnicPro.sales.addSale.cartOrderSubmit();"
+                                                            style="display:none;"><i class="feather icon-save mr-2"></i>
+                                                            <span class="changeSalesBtnText"></span>
+                                                            <span class="save_text" style="display: none;">
+                                                                <lang class="lang_save_title"> Save</lang>
+                                                            </span>
+                                                        </button>
+                                                    </span>
+                                                    <span class="salesBalanceAmount" style="display:none;">
+                                                        <a href="javascript:void(0)"
+                                                            class="col-xs-12 col-md-12 col-lg-6 btn btn-success-rgba custom_balance change-pay-text"
+                                                            onclick="PosnicPro.sales.openTenderModel()">PAY</a>
+                                                    </span>
+
+                                                </td>
+                                                <td class="payable-total pay_amount_total pay_amount_total"
+                                                    id="pay_hide">
+                                                    <lang class="lang_paytotal_title">Pay Total</lang>
+                                                </td>
+                                                <td class="payable-total text-warning total-amount-size"
+                                                    id="pay_total_hide">
+                                                    <span class="pull-right"><span
+                                                            class="sign display-currency"></span>&nbsp;<span
+                                                            class="sales_price_fields"
+                                                            id='sales_new_grand_total'>0.00</span></span>
+                                                </td>
+
+                                                <td class="payable-total customer-display-hide pay_amount_total"
+                                                    id="refund_pay_hide">
+                                                    <lang class="lang_refundpaytotal_title">Return Total</lang>
+                                                </td>
+                                                <td class="payable-total text-warning total-amount-size customer-display-hide"
+                                                    id="refund_pay_total">
+                                                    <span class="pull-right"><span
+                                                            class="sign display-currency"></span>&nbsp;<span
+                                                            class="sales_price_fields"
+                                                            id='refund_grand_total'>0.00</span></span>
+                                                </td>
+                                            </tr>
+                                            <!--                                        <tr class="salesBalanceAmount">
+                                                                                    <td class="row displayamount tenderbadge-class">
+                                                                                        <span class="font-text pay_amount_total"><b><lang class="lang_tendered_title">Received</lang></b></span>
+                                        
+                                                                                        <div class="col-md-6">
+                                                                                            <input type="text" class="form-control allow_decimal keyboard-numinput sales_price_fields pull-right"
+                                                                                                   id="sales_new_given_amount" name="sales_new_given_amount" maxlength="20" onkeypress="return PosnicPro.isNumber(event)"
+                                                                                                   style="height:30px;width:100px; color:#489ee7;border: 1px solid #ccc;">
+                                                                                        </div>
+                                                                                        <div class="col-md-1">
+                                                                                            <button type="button" class="btn btn-success button_pading btn-sm" onclick="PosnicPro.sales.customerBalanceCheck()"><i class="feather icon-check"></i></button>
+                                        
+                                                                                        </div>
+                                                                                        <div class="col-md-1">
+                                                                                            <a href="javascript:void(0)" class="btn btn-success button_pading btn-sm" onclick="PosnicPro.sales.openTenderModel()">PAY</a>
+                                        
+                                                                                        </div>
+                                                                                    </td>
+                                        
+                                        
+                                                                                    <td class="customer-view-amount-field"> <b class="font-text pay_amount_total"><lang class="lang_change_title">Balance </lang></b> </td>
+                                                                                    <td class=" text-warning total-amount-size">
+                                                                                        <span class="form-control sales_price_fields text-right"
+                                                                                              id="sales_new_balance_amount" name="sales_new_balance_amount"
+                                                                                              style="border: none; font-size: 25px; color: #0b5aea; font-weight: 700;"></span>
+                                                                                    </td>
+                                                                                </tr>-->
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="mt-2" id="show_last_created_sale" style="display: none;">
+                                    <div class="col-md-12 col-lg-12 col-xl-12">
+                                        <div class="text-center">
+                                            <h6>Last Created Record <a href="#" id="last_created_sale">View</a></h6>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-2 customer-display-hide" id="paymentreturnhistory"
+                                    style="display: none;">
+                                    <div class="col-md-12 col-lg-12 col-xl-12">
+                                        <div class="text-center">
+                                            <h6>
+                                                Wallet : <span class="display-currency">₹</span>
+                                                &nbsp;<span class="walletreturnamount">0.00</span> &nbsp;&nbsp;&nbsp;
+
+                                                <span class="payreturntext">Cash</span> : <span
+                                                    class="display-currency">₹</span>
+                                                &nbsp;<span class="payreturnamount">0.00</span> &nbsp;&nbsp;
+                                                <span class="font-11 text-dark">(Note: Wallet payment can not be
+                                                    edited.)</span>&nbsp;
+
+                                                Due : <span class="display-currency">₹</span>
+                                                &nbsp;<span class="duebalance">0.00</span> &nbsp;&nbsp;
+
+                                            </h6>
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="text-right kot-save-hide">
+                                <button type="button" name="cancel" id="kot_cancel_btn"
+                                    class="col-4 btn btn-outline-secondary"
+                                    onclick="PosnicPro.kotorder.cancelKotSales()">Cancel</button>
+                                <button type="button" name="submit" id="kot_sales_btn"
+                                    class="col-4 btn btn-outline-success"
+                                    onclick="PosnicPro.sales.openTenderModel()">Save</button>
+                            </div>
+
+                            <!-- end row -->
+                        </div>
+                    </div>
+
+
+
+                    <input type="hidden" id="search_register_id">
+                    <input type="hidden" id="search_register_name">
+                    <input type="hidden" id="payment_type_input" name="payment_type" value="" />
+                    <input type="hidden" id="payment_type_id" name="payment_type_id" value="" />
+                    <input type='hidden' name='sales_total' class="sales_price_fields" id='sales_total' />
+                    <input type='hidden' name='sales_total_company_price' class="sales_price_fields"
+                        id='sales_total_company_price' />
+                    <input type="hidden" name="grand_total" id="grand_total"
+                        class=" form-control amount-input sales_price_fields" disabled="disabled" />
+                    <input name="sales_new_customer_id" id="sales_new_customer_id" type="hidden">
+                    <input name="sales_new_customer_phone" id="sales_new_customer_phone" type="hidden">
+                    <input name="sales_new_customer_address" id="sales_new_customer_address" type="hidden">
+                    <input name="sales_new_customer_email" id="sales_new_customer_email" type="hidden">
+                    <input name="sales_new_customer_state" id="sales_new_customer_state" type="hidden" />
+                    <input name="sales_new_customer_country" id="sales_new_customer_country" type="hidden" />
+                    <input name="sales_new_customer_gst_type" id="sales_new_customer_gst_type" type="hidden" />
+                    <input name="sales_new_customer_gst_number" id="sales_new_customer_gst_number" type="hidden" />
+                    <input name="customer_current_balance" id="customer_current_balance" type="hidden" />
+                    <input name="sales_new_customer_partial_balance" id="sales_new_customer_partial_balance"
+                        type="hidden" />
+                    <input type="hidden" name="sales_new_total_amount"
+                        class="required  form-control amount-input sales_price_fields" id="sales_new_total_amount"
+                        disabled="disabled" />
+                    <input type="hidden" id="sale_dine_type" name="sale_dine_type" value="Dine-in" />
+
+                </form>
+
+
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Tendered amount -->
+<div id="infobar-settings-sidebar-tender-details" class="infobar-settings-sidebar">
+    <div class="infobar-settings-sidebar-head" style="position: fixed;">
+
+        <a href="javascript:void(0)" class="infobar-tender-close">
+            <img src="static/images/svg-icon/close.svg" class="img-fluid menu-hamburger-close" alt="close">
+        </a>
+    </div>
+    <div class="infobar-settings-sidebar-body" style="background: #f2f3f7;">
+
+        <div class="custom-mode-setting">
+            <div class="slider-modal-body">
+                <div class="contentbar-new loader-qrimg">
+                    <!-- Start row -->
+                    <div class="row">
+                        <!-- Start col -->
+                        <div class="col-lg-4">
+                            <div class="email-leftbar">
+                                <div class="card m-b-10">
+                                    <div class="card-header text-center">
+                                        <strong>DENOMINATION</strong>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row btn-group-toggle" data-toggle="buttons" id="render_amount">
+                                            <!-- tender related amount -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="email-leftbar">
+                                <div class="card m-b-30">
+                                    <div class="card-body">
+                                        <ul class="list-group">
+                                            <li
+                                                class="list-group-item d-flex justify-content-between align-items-center">
+                                                <div class="input-group col-md-12">
+                                                    <input type="text"
+                                                        class="form-control border-control allow_decimal text-right"
+                                                        name="tendered_amount" id="tendered_amount" minlength="1"
+                                                        maxlength="100" placeholder="" required>
+                                                    <div class="input-group-append">
+                                                        <button type="button" class="btn btn-info" style="height:38px;">
+                                                            Tender
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </li>
+
+                                            <li
+                                                class="list-group-item d-flex justify-content-between align-items-center">
+                                                <span id="tendered_payment_method"></span>
+                                                <span class="pull-right"><span
+                                                        class="display-currency"></span>&nbsp;<span
+                                                        id="tendered_payment"></span></span>
+                                            </li>
+                                            <li
+                                                class="list-group-item d-flex justify-content-between align-items-center">
+                                                Return balance
+                                                <h3><span class="badge badge-secondary-inverse pull-right"><span
+                                                            class="display-currency"></span>&nbsp;<span
+                                                            id="tendered_balance">0.00</span></span></h3>
+                                            </li>
+                                        </ul>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="email-leftbar kot-payment-info" style="display:none;">
+                                <div class="card m-b-30">
+                                    <div class="card-header text-center">
+                                        <strong>KOT Details</strong>
+                                    </div>
+                                    <div class="card-body">
+                                        <ul class="list-group">
+                                            <li
+                                                class="list-group-item d-flex justify-content-between align-items-center">
+                                                <span>Table</span>
+                                                <span id="kot_payment_table_no"></span>
+                                            </li>
+                                            <li
+                                                class="list-group-item d-flex justify-content-between align-items-center">
+                                                <span>No. of Pax</span>
+                                                <span id="kot_payment_pax"></span>
+                                            </li>
+                                            <li
+                                                class="list-group-item d-flex justify-content-between align-items-center">
+                                                <span>Order Type</span>
+                                                <span id="kot_payment_order_type"></span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- <div class="email-leftbar">
+                                <div class="card m-b-30 tender-tables-card">
+                                    <div class="card-header text-center">
+                                        <strong>Tables</strong>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row mb-2 justify-content-center" id="dine_type_toggle">
+                                            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                                                <label class="btn btn-outline-info active" id="dinein_label">
+                                                    <input type="radio" name="dine_type" id="dine_type_dinein"
+                                                        autocomplete="off" value="Dine-in" checked> Dine-in
+                                                </label>
+                                                <label class="btn btn-outline-info" id="takeaway_label">
+                                                    <input type="radio" name="dine_type" id="dine_type_takeaway"
+                                                        autocomplete="off" value="Take away"> Take away
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="card-header text-center">
+                                            <strong>Tables No</strong>
+                                        </div>
+                                        <div class="row btn-group-toggle justify-content-center tables-list-hide-show"
+                                            data-toggle="buttons" id="tables_list"> -->
+                            <!-- tender related amount -->
+                            <!-- </div>
+                                        <div class="card-header text-center">
+                                            <strong>PAX</strong>
+                                        </div>
+                                        <div class="row btn-group-toggle justify-content-center tables-list-hide-show"
+                                            data-toggle="buttons" id="persons_list"> -->
+                            <!-- tender related amount -->
+                            <!-- </div>
+                                    </div>
+                                </div>
+                            </div> -->
+
+                            <div class="email-leftbar">
+                                <div class="card m-b-30">
+                                    <div class="card-header text-center">
+                                        <strong>SALE SUMMARY</strong>
+                                    </div>
+                                    <div class="card-body">
+                                        <ul class="list-group">
+                                            <li
+                                                class="list-group-item d-flex justify-content-between align-items-center">
+                                                Sub Total
+                                                <span class="pull-right"><span
+                                                        class="display-currency"></span>&nbsp;<span
+                                                        id="tendered_subtotal"></span></span>
+                                            </li>
+                                            <li
+                                                class="list-group-item d-flex justify-content-between align-items-center">
+                                                Discount
+                                                <span class="pull-right"><span
+                                                        class="display-currency"></span>&nbsp;<span
+                                                        id="tendered_discount"></span></span>
+                                            </li>
+                                            <li
+                                                class="list-group-item d-flex justify-content-between align-items-center">
+                                                Tax
+                                                <span class="pull-right"><span
+                                                        class="display-currency"></span>&nbsp;<span
+                                                        id="tendered_tax"></span></span>
+                                            </li>
+                                            <li
+                                                class="list-group-item d-flex justify-content-between align-items-center">
+                                                Grand Total
+                                                <strong>
+                                                    <h3><span class="badge badge-success-inverse badge_font_type"><span
+                                                                class="display-currency"></span>&nbsp;<span
+                                                                class="tendered_total"></span></span></h3>
+                                                </strong>
+                                            </li>
+                                        </ul>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- End col -->
+
+                        <!-- Start col -->
+                        <div class="col-lg-4">
+                            <div class="email-rightbar">
+                                <div class="card m-b-30" id="tenderpage">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <strong class="mb-0">PAYMENT</strong>
+
+                                        <div class="d-inline-flex align-items-center">
+                                            <span id="payment_status_label" class="text-warning"
+                                                style="font-size:14px; margin-right:6px;font-weight: 700;">Unpaid</span>
+                                            <label class="switch mb-0">
+                                                <input type="checkbox" id="unpaid_payment_toggle">
+                                                <span class="slider round"></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="card-body payment-lockable">
+                                        <div class="profilebox text-center">
+                                            <div class="row mb-3">
+                                                <div class="col-lg-12">
+                                                    <h1 class="text-center badge badge-success-inverse"
+                                                        style="font-size: 32px;"><strong><span
+                                                                class="display-currency"></span>&nbsp;<span
+                                                                class="tendered_total"></span></strong></h1>
+                                                </div>
+                                            </div>
+                                            <div class="row mt-3 mb-4">
+                                                <div class="col-lg-8 offset-md-2">
+                                                    <div class="input-group">
+                                                        <div class="input-group-prepend"><span
+                                                                class="input-group-text">Pay amount</span></div>
+                                                        <input type="text" name="Partial_amount" id="Partial_amount"
+                                                            class="form-control partial_amount allow_decimal">
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="row mt-3 mb-4 showhidDue">
+                                                <div class="col-lg-8 offset-md-2">
+                                                    <p class="font-weight-bold">Due : <span
+                                                            class="display-currency"></span>&nbsp;<span
+                                                            class="balanceDue font-18">0.00</span></p>
+                                                </div>
+                                            </div>
+
+                                            <div class="row mt-3 mb-4 showhidewallet" style="display:none;">
+                                                <div class="form-group col-md-12">
+                                                    <input type="checkbox" class="custom-control-input"
+                                                        id="wallet_balance" name="wallet_balance">
+                                                    <label class="custom-control-label" for="wallet_balance">Use wallet
+                                                        ( <span class="display-currency"></span>&nbsp;<span
+                                                            class="walletbalance"></span> )</label>
+                                                </div>
+                                            </div>
+                                            <div class="row mt-3 mb-4 showhidewalletamount" style="display:none;">
+                                                <div class="form-group col-md-12">
+
+                                                    <h6>
+                                                        Wallet : <span class="display-currency">₹</span>
+                                                        &nbsp;<span class="walleteditamount">0.00</span>
+                                                        &nbsp;&nbsp;&nbsp;
+
+                                                        <span class="payedittext">Cash</span> : <span
+                                                            class="display-currency">₹</span>
+                                                        &nbsp;<span class="payeditamount">0.00</span> &nbsp;&nbsp;&nbsp;
+                                                    </h6>
+                                                    <span class="font-11 text-dark">(Note: Wallet payment can not be
+                                                        edited.)</span>
+
+                                                </div>
+                                            </div>
+
+                                            <div class="row btn-group-toggle" data-toggle="buttons" id="payment_id">
+                                                <!--  payment methods fields -->
+                                            </div>
+
+                                            <!--                                            <div class="row btn-group-toggle qrhide" data-toggle="buttons"  id="payment_id">
+                                                                                            <div class="col-lg-4 col-md-2 col-xs-12">
+                                                                                                <label class="btn btn-block btn-payment-mode Cash_active payment_detail active save_enable cash_active">
+                                                                                                    <input type="radio" class="payment_mode" name="payment_mode" id="Cash" value="Cash"
+                                                                                                           checked="checked" style="display: none;"> <lang class="lang_cash_title">Cash</lang>
+                                                                                                </label>
+                                                                                            </div>
+                                                                                            <div class="col-lg-4 col-md-2 col-xs-12">
+                                                                                                <label class="btn btn-block btn-payment-mode Upi-Pay_active payment_detail change_active save_enable">
+                                                                                                    <input type="radio" class="payment_mode" name="payment_mode" id="Upi-Pay" value="Upi-Pay" style="display: none;"/><lang class="lang_creditcard_title"> UPI-Pay</lang>
+                                                                                                </label>
+                                                                                            </div>
+                                                                                            <div class="col-lg-4 col-md-2 col-xs-12">
+                                                                                                <label class="btn btn-block btn-payment-mode Cheque_active payment_detail change_active save_enable">
+                                                                                                    <input type="radio" class="payment_mode" name="payment_mode" id="Cheque" value="Cheque" style="display: none;"/><lang class="lang_cheque_title"> Cheque </lang>
+                                                                                                </label>
+                                                                                            </div>
+                                                                                            <div class="col-lg-4 col-md-2 col-xs-12">
+                                                                                                <label class="btn btn-block btn-payment-mode CreditCard_active payment_detail change_active save_enable">
+                                                                                                    <input type="radio" class="payment_mode" name="payment_mode" id="CreditCard" value="CreditCard" style="display: none;"/><lang class="lang_creditcard_title"> Card </lang>
+                                                                                                </label>
+                                                                                            </div>
+                                                                                            <div class="col-lg-4 col-md-2 col-xs-12">
+                                                                                                <label class="btn btn-block btn-payment-mode Qrpay_active payment_detail change_active save_enable qr_active qr_btn">
+                                                                                                    <input type="radio" class="payment_mode" name="payment_mode" id="Qrpay" value="Qrpay" style="display: none;"/><lang class="lang_qrcode_title"> Razorpay </lang>
+                                                                                                </label>
+                                                                                            </div>
+                                                                                        </div>                                      -->
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="email-rightbar" id="newsalespage" style="display:none">
+                                    <div class="card m-b-30">
+                                        <div class="card-body">
+                                            <div class="row mt-5 mb-3">
+                                                <div class="col-3"></div>
+                                                <div class="col-5">
+                                                    <div class="text-center">
+                                                        <i class="feather icon-shopping-cart font-40"></i>
+                                                    </div>
+                                                </div>
+                                                <div class="col-4"></div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-12">
+                                                    <div class="alert alert-success text-center" role="alert">
+                                                        <i class="feather icon-check-circle mr-2"></i>Successfully
+                                                        Completed
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row mt-3 mb-5">
+                                                <div class="col-md-12">
+                                                    <div class="form-row">
+                                                        <a href=""
+                                                            class="printSalesReceipt btn seven btn-lg btn-block col-md-12"><i
+                                                                class="feather icon-printer mr-2"></i>
+                                                            <span>Print Receipt</span>
+                                                        </a>
+                                                        <a href=""
+                                                            class="smsSalesReceipt btn seven btn-lg btn-block col-md-12"><i
+                                                                class="feather icon-message-square mr-2"></i>
+                                                            <span>SMS Receipt</span>
+                                                        </a>
+                                                        <a href="" class="printSalesWhatsappReceipt btn seven btn-lg btn-block col-md-12"><i 
+                                                                class="feather icon-message-circle mr-2"></i> 
+                                                            <span>WhatsApp Receipt</span> 
+                                                        </a>
+                                                        <a href="#/sales/new"
+                                                            class="btn seven btn-lg infobar-tender-close btn-block col-md-12"><i
+                                                                class="feather icon-plus mr-2"></i>
+                                                            <span>New sale</span>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-right cancel-save-hide-show">
+                                <button type="button"
+                                    class="col-4 btn btn-outline-secondary infobar-tender-close">Cancel</button>
+                                <button type="button" name="submit" id="save_btn"
+                                    class="col-4 save_btn btn btn-outline-success wav_pad save_return_submit open_register_disabled"
+                                    onclick="return PosnicPro.sales.addSale.cartOrderSubmit()">
+                                    <span class="changeSalesBtnText">Save</span>
+                                    <span class="save_text" style="display:none">Save</span>
+                                </button>
+                            </div>
+                        </div>
+                        <!-- End col -->
+                    </div>
+                    <!-- End row -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Start table selection -->
+<div id="infobar-settings-sidebar-table-selection" class="infobar-settings-sidebar">
+    <div class="infobar-settings-sidebar-head" style="position: fixed;">
+
+        <a href="javascript:void(0)" class="infobar-tender-close table-selection-close">
+            <img src="static/images/svg-icon/close.svg" class="img-fluid menu-hamburger-close" alt="close">
+        </a>
+    </div>
+    <div class="infobar-settings-sidebar-body" style="background: #f2f3f7;">
+
+        <div class="custom-mode-setting">
+            <div class="slider-modal-body">
+                <div class="contentbar-new loader-qrimg">
+                    <!-- Start row -->
+                    <div class="row">
+                        <!-- Start col -->
+                        <div class="col-lg-6 loader-kot-order-tables-list">
+                            <div class="email-leftbar tables-list-hide">
+                                <div class="card m-b-30">
+                                    <div class="card-body">
+                                        <div class="card-header text-center">
+                                            <strong>Order Type</strong>
+                                        </div>
+                                        <div class="row mb-2 justify-content-center" id="kot_dine_type_toggle">
+                                            <div class="btn-group btn-group-toggle" data-toggle="buttons" style="width: 100%; max-width: 400px;">
+                                                <label class="btn btn-outline-info active" id="kot_dinein_label" style="flex: 1; padding: 15px 10px;">
+                                                    <input type="radio" name="kot_dine_type" id="kot_dine_type_dinein"
+                                                        autocomplete="off" value="Dine-in" checked>
+                                                    <i class="feather icon-home" style="font-size: 24px; display: block; margin-bottom: 5px;"></i>
+                                                    <span style="font-size: 14px; font-weight: 600;">Dine-in</span>
+                                                </label>
+                                                <label class="btn btn-outline-info" id="kot_takeaway_label" style="flex: 1; padding: 15px 10px;">
+                                                    <input type="radio" name="kot_dine_type" id="kot_dine_type_takeaway"
+                                                        autocomplete="off" value="Take away">
+                                                    <i class="feather icon-shopping-bag" style="font-size: 24px; display: block; margin-bottom: 5px;"></i>
+                                                    <span style="font-size: 14px; font-weight: 600;">Take away</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="card-header text-center">
+                                            <strong>Tables</strong>
+                                        </div>
+                                        <div class="row btn-group-toggle justify-content-center"
+                                            id="kot_order_tables_list">
+                                            <!-- tender related amount -->
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                        <!-- End col -->
+
+                        <!-- Start col -->
+                        <div class="col-lg-6">
+                            <div class="email-leftbar tables-list-hide">
+                                <div class="card m-b-30">
+                                    <div class="card-header text-center">
+                                        <strong>PAX</strong>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row btn-group-toggle justify-content-center"
+                                            id="kot_order_persons_list">
+                                            <!-- tender related amount -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <button type="button"
+                                    class="col-4 btn btn-outline-secondary infobar-tender-close table-selection-close">Cancel</button>
+                                <button type="button" name="submit" id="kot_order_next_btn"
+                                    class="col-4 btn btn-outline-success">Next</button>
+                            </div>
+                        </div>
+                        <!-- End col -->
+                    </div>
+                    <!-- End row -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End table selection -->
+
+<!-- SMS Modal -->
+<div class="modal fade" id="smsModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <lang class="lang_autosmsaftersales_title">SMS Receipt</lang>
+                </h5>
+                <button type="button" class="close sms-modal-close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="sms_form">
+                <div class="modal-body">
+                    <input type="hidden" id="customer_sms_id" name="customer_sms_id">
+                    <input type="hidden" id="customer_sms_name" name="customer_sms_name">
+                    <div class="card-body loader-view-emailsetting" data-select2-id="2240">
+                        <div class="form-row">
+                            <div class="form-group col-12">
+                                <label class="form-control-placeholder" for="customer_sms_phone">Customer phone <span
+                                        class="text-danger">*</span></label>
+                                <input type="tel" id="customer_sms_phone" name="customer_sms_phone"
+                                    class="form-control border-control def-txt-input" minlength="3" maxlength="20"
+                                    placeholder="Enter a Customer Phone" autocomplete="off" required="">
+                                <input type="hidden" id="customer_sms_fullphone" name="customer_sms_fullphone">
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary sms-modal-close" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Send</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Register Selection Modal -->
+<div class="modal fade" id="salesRegisterModal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 500px;">
+        <div class="modal-content" style="border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); border: none;">
+            <div class="modal-header text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-top-left-radius: 12px; border-top-right-radius: 12px; border-bottom: none; padding: 1.5rem;">
+                <h5 class="modal-title mb-0" style="font-weight: 600; font-size: 1.25rem;">
+                    <i class="feather icon-box mr-2" style="font-size: 1.5rem; vertical-align: middle;"></i>
+                    <lang class="lang_register_selection">Register Selection</lang>
+                </h5>
+            </div>
+            <div class="modal-body" style="padding: 2rem;">
+                <div class="text-center mb-4">
+                    <div style="width: 80px; height: 80px; margin: 0 auto 1rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
+                        <i class="feather icon-monitor" style="font-size: 2.5rem; color: white;"></i>
+                    </div>
+                    <p class="text-muted mb-0" style="font-size: 0.95rem; line-height: 1.6;">
+                        <lang class="lang_select_register_to_open">Please select a register to open before creating sales</lang>
+                    </p>
+                </div>
+                <div class="form-group mb-4">
+                    <label for="sales_choose_register_model" style="font-weight: 600; color: #495057; margin-bottom: 0.75rem; font-size: 0.95rem;">
+                        <i class="feather icon-monitor mr-1" style="color: #667eea;"></i> 
+                        <lang class="lang_choose_register">Choose Register</lang>
+                    </label>
+                    <select id="sales_choose_register_model" class="custom-select border-control choose_register_model" style="width: 100%; padding: 0.875rem 1rem; border: 2px solid #e0e6ed; border-radius: 8px; font-size: 1rem; transition: all 0.3s ease; background-color: #f8f9fa;">
+                        <option value="">-- Select Register --</option>
+                    </select>
+                </div>
+                <div class="form-group mb-0">
+                    <label for="sales_opening_float" style="font-weight: 600; color: #495057; margin-bottom: 0.75rem; font-size: 0.95rem;">
+                        <i class="feather icon-dollar-sign mr-1" style="color: #667eea;"></i> 
+                        <lang class="lang_opening_float">Opening Float</lang>
+                    </label>
+                    <input type="text" class="form-control allow_decimal text-right" id="sales_opening_float" name="sales_opening_float" value="0.00" placeholder="0.00" style="padding: 0.875rem 1rem; border: 2px solid #e0e6ed; border-radius: 8px; font-size: 1rem; font-weight: 500; background-color: #f8f9fa;">
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid #e9ecef; padding: 1.5rem 2rem; background-color: #f8f9fa; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px;">
+                <button type="button" class="btn btn-block" onclick="PosnicPro.sales.openRegisterFromSales();" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 0.875rem 1.5rem; font-weight: 600; font-size: 1rem; border: none; border-radius: 8px; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3); transition: all 0.3s ease;">
+                    <i class="feather icon-unlock mr-2"></i> 
+                    <lang class="lang_registeredopen">Open Register</lang>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

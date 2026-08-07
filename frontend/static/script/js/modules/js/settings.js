@@ -1,0 +1,4373 @@
+PosnicPro.settings = {
+    store_telephone: null,
+    showDetails: function (id) {
+        var loader = $(".loader-view-recyclebin");
+        loader.find(".loadingSpinner:first").remove();
+        PosnicPro.settings.viewRecycleBinDetails(id);
+    },
+    showShortcut: function () {
+        $('#shortcutkey').modal('show');
+        $(document).ready(function () {
+            $("#shortcutkey").on("keypress", function (e) {
+                if ((e.keyCode <= '122')) {
+                    $('#shortcutkey').modal('hide');
+                }
+            });
+        });
+    },
+    restoreDetails: function (id) {
+        PosnicPro.settings.restoreTableData(id);
+    },
+    /*** restore Document Backup ***/
+    restoreTableData: function (id) {
+        var arr = [];
+        var obj = {};
+        obj = id;
+        arr.push(obj);
+        var params = {
+            url: 'setting/restoreBackup',
+            data: JSON.stringify({ data: arr })
+        };
+        PosnicPro.post(params, function (response) {
+            if (response.type === 'success') {
+                PosnicPro.settings.settingsTable();
+                PosnicPro.items.loadSelectCategory();
+                PosnicPro.stocklogs.viewLowStockDashboard();
+                hasher.setHash('settings');
+            }
+            PosnicPro.alert(response.type, response.message);
+        }, function (xhr) {
+            var response = jQuery.parseJSON(xhr.responseText);
+            PosnicPro.alert(response.type, response.message);
+        });
+    },
+    triggerDefault: function (name) {
+        $('.customer_edit_reset').hide();
+        $('default' + name).val('');
+        $('#' + name + '_title').text('Add');
+        $('#' + name + '_button_title').text('Save');
+        $('.' + name + '-trigger').val('');
+        $(".infobar-settings-sidebar-overlay").css({ "background": "rgba(0,0,0,0.4)", "position": "fixed" });
+        $("#infobar-settings-sidebar-" + name).addClass("sidebarshow");
+        let default_name = $('.default-' + name + '-name').val();
+        $('#' + name + '_name').val(default_name);
+    },
+    viewRecycleBinDetails: function (id) {
+        var module_name = $('#backuptablelist :selected').val();
+        $(".setting-heading").text(module_name);
+        var loader = $(".loader-view-recyclebin");
+        $("<div class='loadingSpinner'></div>").appendTo(loader);
+        var params = {
+            url: 'setting/getRecycleBin',
+            data: { id: id }
+        };
+        PosnicPro.get(params, function (response) {
+            if (response.type === 'success') {
+                var data = response.data;
+                var module = $('#backuptablelist').val();
+                if (module === 'customers') {
+                    PosnicPro.customers.viewCustomerData(response);
+                } else if (module === 'suppliers') {
+                    PosnicPro.suppliers.viewSupplierData(response);
+                } else if (module === 'categories') {
+                    PosnicPro.categories.viewCategoryData(response);
+                } else if (module === 'expenses') {
+                    PosnicPro.expenses.viewExpensesData(response);
+                } else if (module === 'items') {
+                    PosnicPro.items.viewItemData(response);
+                } else if (module === 'branches') {
+                    PosnicPro.branches.viewBranchData(response);
+                } else if (module === 'users') {
+                    PosnicPro.users.viewUserData(response);
+                } else if (module === 'sales') {
+                    $('#sales-total-hide,#viewsale_edit_print_view,#salesitemtitleText,#sale_print_view,#return_print_view').show();
+                    $('#hide_sales_print,#hide_return_print').show();
+                    var data = response.data;
+                    if (data.payment_description === '') {
+                        $('.paynote_hide').hide();
+                    } else {
+                        $('.paynote_hide').show();
+                    }
+                    if (data.sales_description === '') {
+                        $('.salenote_hide').hide();
+                    } else {
+                        $('.salenote_hide').show();
+                    }
+                    if (data.sale_process === 'Add' || data.sale_process === 'Edit' || data.sale_process === 'Hold') {
+                        $('.sale-view-heading').html('Sale');
+                        $('.hide-sale-return,#salesreturntitleText,#return_print_view,#hide_return_print,#show_sales_print').hide();
+                    } else if (data.sale_process === 'FullReturn') {
+                        $('.sale-view-heading').html('Return');
+                        $('.hide-sale-return,#salesreturntitleText,#return_print_view,#hide_return_print').show();
+                        $('#viewsale_edit_print_view,#salesitemtitleText,#sales-total-hide,#sale_print_view,#hide_sales_print,#show_sales_print').hide();
+                    } else {
+                        $('.sale-view-heading').html('Sale');
+                        $('#sales-total-hide,.hide-sale-return,#salesreturntitleText,#return_print_view,#hide_return_print,#show_sales_print').show();
+                        $('#hide_sales_print,#hide_return_print').hide();
+                    }
+                    var saleId = data._id || data.id || id;
+                    PosnicPro.record_id = saleId;
+                    PosnicPro.sales.view.viewSaleData(response, saleId);
+                } else if (module === 'stocklogs') {
+                    PosnicPro.stocklogs.viewStockData(response);
+                } else {
+                    $('#receiving_button_print_view,#receiving_return_print_view').show();
+                    $('#hide_receiving_print,#hide_receiving_return_print').show();
+                    if (data.receiving_status === 'FullReturn') {
+                        $('.hide-receiving-return,#receiving_return_print_view,#hide_receiving_return_print').show();
+                        $('.hide-receiving-table,#receiving_button_print_view,#show_receiving_print,#hide_receiving_print').hide();
+                    } else if (data.receiving_status === 'Open' || data.receiving_status === 'Received') {
+                        $('.hide-receiving-table,#receiving_button_print_view,#hide_receiving_print').show();
+                        $('.hide-receiving-return,#receiving_return_print_view,#show_receiving_print,#hide_receiving_return_print').hide();
+                    } else {
+                        $('.hide-receiving-table,.hide-receiving-return,#receiving_button_print_view,#receiving_return_print_view,#show_receiving_print').show();
+                        $('#hide_receiving_print,#hide_receiving_return_print').hide();
+                    }
+
+                    $('#receivingtitelText').html('Receiving Details (' + data.receiving_status + ')');
+                    PosnicPro.receivings.view.viewReceivingData(response);
+                }
+            } else {
+                PosnicPro.alert(response.type, response.message);
+            }
+        }, function (xhr) {
+            var response = jQuery.parseJSON(xhr.responseText);
+            PosnicPro.alert(response.type, response.message);
+        });
+    },
+    settingsTable: function () {
+        PosnicPro.HideSideBarModal();
+        let branchId = $("#Select_backup_Branch").val().toString();
+        if (branchId !== '') {
+            $("#backup_report_selecter").hide();
+            $("#backup_report_table_div").show();
+            let tableName = $('#backuptablelist').val();
+            (tableName === 'branches') ? $('#hide_branch_recyclebin,#Select_backup_Branch').hide() : $('#hide_branch_recyclebin,#Select_backup_Branch').show();
+            let loader = $(".loader-table-recyclebin,.loader-table-setting");
+            $("<div class='loadingSpinner'></div>").appendTo(loader);
+            PosnicPro.appendRecyclebinDataTableBody(tableName);
+            $("#view_settings").show();
+            let daterange = $("#view_backup_daterange").val();
+            let fields = daterange.split('-');
+            let first_date = fields[0];
+            let last_date = fields[1];
+            let field_select = $("#view_recycle_bin_fields option:selected").val();
+            let field_input = $("#view_recycle_bin_input").val();
+            let table = $('#view_settings');
+            $('#card_recycle').css({ "background-color": "transparent", "margin-bottom": "0px" });
+            let data = {
+                page: table.data('current_page'),
+                limit: parseInt($('#view_settings_per_page  option:selected').text()),
+                table: tableName,
+                starting_date: first_date,
+                ending_date: last_date,
+                branch: $("#Select_backup_Branch").val(),
+                field_select: field_select,
+                field_input: field_input
+            };
+            let params = {
+                url: 'setting/backupTable',
+                data: data
+            };
+            PosnicPro.get(params, function (response) {
+                if (response.type === 'success') {
+                    table.data('total', response.data.total);
+                    table.data('total_pages', response.data.total_pages);
+                    table.data('current_page', response.data.current_page);
+                    table.data('per_page', response.data.per_page);
+                    PosnicPro.paging(response.data.total_pages, response.data.current_page);
+                    table.children('tbody').text('');
+                    $('#view_settings_total').text(response.data.total);
+                    var row_total = (table.data('current_page') - 1) * table.data('per_page') + 1;
+                    $('#view_settings_page_total').text(row_total);
+                    var page_totals = (table.data('current_page') - 1) * table.data('per_page');
+                    $('#view_settings_page_perpage_total').text(page_totals + response.data.list.length);
+                    var currency = PosnicPro.local.get('currencySign');
+                    for (var i = 0; i < response.data.list.length; i++) {
+                        var row = response.data.list[i];
+                        var row_no = (table.data('current_page') - 1) * table.data('per_page') + i + 1;
+                        var action = '<div id="onclick-toolbar-options_' + i + '" class="hidden">' +
+                            '<a data-module = "branch" data-access = "read"  href="#/settings/' + row._id + '" data-id="settings/' + row._id + '"  data-toggle="tooltip" title="View" class="point-cursor mobile_tooltip"><i class="feather icon-eye"></i></a>' +
+                            '<a data-module = "branch" data-access = "write" data-toggle="tooltip" title="Restore" href="#/settings/' + row._id + '/restore" data-id="settings/' + row._id + '/restore" class="point-cursor mobile_tooltip"><i class="feather icon-repeat"></i></a>' +
+                            '</div>' +
+                            '<div data-toolbar="user-options" class="btn btn-round btn-primary-rgba round-pad" id="onclick-toolbar_' + i + '"><i class="feather icon-more-vertical-"></i></div>';
+                        var updateDate = PosnicPro.convertDate(row.string_date);
+                        if (tableName === 'sales') {
+                            var trow = '<tr> <td><input type="checkbox" class="sales-row-id" id="' + row._id + '" name="id[]" value="' + row._id + '" onclick="PosnicPro.checkboxSelectOne(this,\'sales\');"></td> <td scope="row">' + row_no + '</td>  <td>' + row.sales_id + '</td> <td>' + updateDate + '</td> <td>' + row.customer_name + '</td> <td class="text-center"><span class="badge badge-success-inverse">' + row.sale_process + '</span></td> <td class="text-right">' + currency + '&nbsp;<span class="number">' + row.sales_total + '</span></td> <td><span>' + action + ' </span></td> </tr>';
+                        } else if (tableName === 'receivings') {
+                            var receiving_status = '';
+                            if (row.receiving_status === 'open') {
+                                receiving_status = row.receiving_status;
+                            } else {
+                                if (row.items.length === 0 && row.items_return.length > 0) {
+                                    receiving_status = 'FullReturn';
+                                } else if (row.items_return.length === 0 && row.items.length > 0) {
+                                    receiving_status = row.receiving_status;
+                                } else {
+                                    receiving_status = 'PartialReturn';
+                                }
+                            }
+
+                            var trow = '<tr> <td><input type="checkbox" class="receivings-row-id" id="' + row._id + '" name="id[]" value="' + row._id + '" onclick="PosnicPro.checkboxSelectOne(this,\'receivings\');"></td> <td scope="row">' + row_no + '</td>  <td>' + row.receiving_id + '</td> <td>' + updateDate + '</td> <td>' + row.supplier_name + '</td> <td class="text-center"><span class="badge badge-success-inverse">' + receiving_status + '</span></td> <td class="text-right">' + currency + '&nbsp;<span class="number">' + row.total_amount + '</span></td>  <td><span>' + action + ' </span></td> </tr>';
+                        } else if (tableName === 'branches') {
+                            var trow = '<tr> <td><input type="checkbox" class="branches-row-id" id="' + row._id + '" name="id[]" value="' + row._id + '" onclick="PosnicPro.checkboxSelectOne(this,\'branches\');"></td> <td scope="row">' + row_no + '</td>  <td>' + row.branch_name + '</td> <td><a class="sale_color" href="tel:' + row.store_telephone + '">' + row.store_telephone + '</a></td> <td><a class="sale_color" href="mailto:' + row.store_email + '">' + row.store_email + '</a></td> <td>' + row.store_address + '</td>' + '<td>' + row.state + '</td>' + '<td>' + row.country + '</td>' + '<td><span>' + action + ' </span></td> </tr>';
+                        } else if (tableName === 'categories') {
+                            var discountSign = (row.discount_amount > 0) ? '$' : '%';
+                            if (row.discount_amount > 0) {
+                                var discount = row.discount_amount;
+                            } else {
+                                discount = row.discount_percentage;
+                            }
+                            var image_path = (row.image !== "category.svg") ? row.image : 'static/images/default/' + row.image;
+                            var trow = '<tr> <td><input type="checkbox" class="categories-row-id" id="' + row._id + '" name="id[]" value="' + row._id + '" onclick="PosnicPro.checkboxSelectOne(this,\'categories\');"></td> <td scope="row">' + row_no + '</td>  <td>' + row.name + '</td> <td><img src=' + image_path + ' width=30 height=20 class="imagezoom" id="' + row.image + '" onclick="PosnicPro.viewImage(this.id,\'category\');"></td> <td>' + discount + '' + discountSign + '</td> <td>' + row.description + '</td> <td><span>' + action + ' </span></td> </tr>';
+                        } else if (tableName === 'customers') {
+                            var trow = '<tr> <td><input type="checkbox" class="customers-row-id" id="' + row._id + '" name="id[]" value="' + row._id + '" onclick="PosnicPro.checkboxSelectOne(this,\'customers\');"></td> <td scope="row">' + row_no + '</td>  <td>' + row.name + '</td> <td><a class="sale_color" href="tel:' + row.phone + '">' + row.phone + '</a></td> <td><a class="sale_color" href="mailto:' + row.email + '">' + row.email + '</a></td> <td>' + row.address + '</td><td><span>' + action + ' </span></td> </tr>';
+                        } else if (tableName === 'expenses') {
+                            var trow = '<tr> <td><input type="checkbox" class="expenses-row-id" id="' + row._id + '" name="id[]" value="' + row._id + '" onclick="PosnicPro.checkboxSelectOne(this,\'expenses\');"></td> <td scope="row">' + row_no + '</td>  <td>' + currency + '&nbsp;<span class="number">' + row.amount + '</span></td> <td>' + row.type + '</td> <td>' + row.category + '</td>  <td>' + row.recipientname + '</td> <td>' + row.approvedby + '</td> <td>' + row.description + '</td><td><span>' + action + ' </span></td> </tr>';
+                        } else if (tableName === 'items') {
+                            var image_path = (row.image !== "item.svg") ? row.image : 'static/images/default/' + row.image;
+                            var trow = '<tr> <td><input type="checkbox" class="items-row-id" id="' + row._id + '" name="id[]" value="' + row._id + '" onclick="PosnicPro.checkboxSelectOne(this,\'items\');"></td> <td scope="row">' + row_no + '</td>  <td>' + row.name + '</td> <td><img src=' + image_path + ' width=30 height=20 class="imagezoom" id="' + row.image + '" onclick="PosnicPro.viewImage(this.id,\'image\');"></td> <td>' + row.itemid + '</td> <td>' + currency + '&nbsp;<span class="number">' + row.selling_price + '</span></td> <td>' + row.available_quantity + '</td> <td><span>' + action + ' </span></td> </tr>';
+                        } else if (tableName === 'suppliers') {
+                            var trow = '<tr> <td><input type="checkbox" class="suppliers-row-id" id="' + row._id + '" name="id[]" value="' + row._id + '" onclick="PosnicPro.checkboxSelectOne(this,\'suppliers\');"></td> <td scope="row">' + row_no + '</td>  <td>' + row.name + '</td> <td><a class="sale_color" href="tel:' + row.phone + '">' + row.phone + '</a></td> <td><a class="sale_color" href="mailto:' + row.email + '">' + row.email + '</a></td> <td>' + row.address + '</td> <td><span>' + action + ' </span></td> </tr>';
+                        } else if (tableName === 'registers') {
+                            var trow = '<tr> <td data-module="user" data-access="delete"><input type="checkbox" class="registers-row-id" id="' + row._id + '" name="id[]" value="' + row._id + '" onclick="PosnicPro.checkboxSelectOne(this,\'registers\');"></td> <td scope="row">' + row_no + '</td> <td>' + row.register_name + '</td><td>' + updateDate + '</td><td>' + row.sales_id + '</td><td>' + row.created_by + '</td><td>' + row.branch_name + '</td><td class="text-right">' + currency + '&nbsp;<span class="number">' + row.register_amount + '</span></td> <td><span>' + action + ' </span></td> </tr>';
+                        } else if (tableName === 'stocklogs') {
+                            var trow = '<tr> <td data-module="user" data-access="write"><input type="checkbox" class="stocklogs-row-id" id="' + row._id + '" name="id[]" value="' + row._id + '" onclick="PosnicPro.checkboxSelectOne(this,\'stocklogs\');"></td> <td scope="row">' + row_no + '</td>  <td class="text-center">' + row.item_barcode_id + '</td> <td>' + row.item_name + '</td><td>' + updateDate + '</td> <td class="text-center"><span class="badge badge-success-inverse">' + row.process + '</span></td><td class="text-right">' + currency + '&nbsp;<span class="number">' + row.opening_balance + '</span></td><td class="text-right">' + currency + '&nbsp;<span class="number">' + row.closing_balance + '</span></td> <td><span>' + action + ' </span></td> </tr>';
+                        } else {
+                            var image_path = (row.image !== "user.svg") ? row.image : 'static/images/default/' + row.image;
+                            var trow = '<tr> <td><input type="checkbox" class="users-row-id" id="' + row._id + '" name="id[]" value="' + row._id + '" onclick="PosnicPro.checkboxSelectOne(this,\'users\');"></td> <td scope="row">' + row_no + '</td>  <td>' + row.username + '</td> <td><img src=' + image_path + ' width=30 height=20 class="imagezoom" id="' + row.image + '" onclick="PosnicPro.viewImage(this.id,\'user\');"></td> <td><a class="sale_color" href="mailto:' + row.email + '">' + row.email + '</a></td> <td>' + row.usertype + '</td><td><span>' + action + ' </span></td> </tr>';
+                        }
+                        $('#view_settings').children('tbody').append(trow);
+                    }
+                    $('span.number').number(true, 2);
+                    $(document).ready(function () {
+                        for (var i = 0; i < response.data.list.length; i++) {
+                            $('#onclick-toolbar_' + i).toolbar({
+                                content: '#onclick-toolbar-options_' + i,
+                                event: 'click',
+                                style: 'primary',
+                                hideOnClick: true
+                            });
+                            $('#onclick-toolbar_' + i).on('toolbarItemClick', function (event, element) {
+                                hasher.setHash($(element).data('id'));
+                                $(this).trigger('click');
+                                $('.mobile_tooltip').tooltip('hide');
+                            });
+                        }
+                    });
+                    PosnicPro.setSelectedCheckbox(PosnicPro[tableName + "_checkbox"], tableName);
+                    loader.find(".loadingSpinner:first").remove();
+                } else {
+                    PosnicPro.alert(response.type, response.message);
+                }
+            }, function (xhr) {
+                var response = jQuery.parseJSON(xhr.responseText);
+                PosnicPro.alert(response.type, response.message);
+            });
+        } else {
+            $('#card_recycle').css({ "display": "block", "background-color": "#fff", "margin-bottom": "30px" });
+            $("#Select_backup_Branch").select2('focus');
+            var branch_id = PosnicPro.local.get('branch_id_set');
+            $('.display-current-branch').select2('val', [branch_id]);
+        }
+    },
+    showDataTablePage: function () {
+        $('.print_url').hide();
+        if (PosnicPro.local.get('userplan') !== 'free') {
+            $('.print_url').show();
+        }
+        PosnicPro.HideSideBarModal();
+        PosnicPro.dashboard.datePicker();
+        $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
+        $(".vertical-layout").removeClass("toggle-menu");
+        $(".vertical-menu li a").removeClass("active");
+        $('.dropdown-item').removeClass('active');
+        $('.page_loader,#osk-container,#danger_zone').hide();
+        $('.page-title-box,#settings,#dangerZone,#dangetzoneUserverify').show();
+        $('#v-pills-manage-tab,#view_config_page').addClass('active');
+        $('#v-pills-manage').addClass('show active');
+        $('.dashboard_img_menu').hide();
+        $('#image_sidebar_config').show();
+        if ($('a#v-pills-recyclebin-tab').hasClass('active')) {
+            PosnicPro.settings.settingsTable();
+        }
+    },
+    settingImageFormSubmit: function () {
+        if ($('#setting_image_value').val() !== '') {
+            var data = new FormData(document.getElementById("setting_image_add"));
+            PosnicPro.requestImage('POST', "setting/updateBranchLogo", data, false, function (response) {
+                if (response.type === 'success') {
+                    var imgdata = response.data.replace(/\s/g, '');
+                    $('#setting_logo_value').val(imgdata);
+                    var image_path = (imgdata !== "store.png") ? imgdata : 'static/images/default/' + imgdata;
+                    $('#previewing,#store_image').attr('src', image_path);
+                    PosnicPro.settings.updatedImage();
+                } else {
+                    PosnicPro.alert(response.type, response.message);
+                }
+            });
+        } else {
+            PosnicPro.alert('success', 'Image update successfully');
+        }
+        return false;
+    },
+    updatedImage: function () {
+        var params = {
+            url: 'setting/storedImageData',
+            data: JSON.stringify(PosnicPro.getFormData($('#setting_image_add')))
+        };
+        PosnicPro.put(params, function (response) {
+            if (response.type === 'success') {
+                PosnicPro.local.set('branchimage', response.data);
+                PosnicPro.alert(response.type, response.message);
+            }
+        }, function (xhr) {
+            var response = jQuery.parseJSON(xhr.responseText);
+            PosnicPro.alert(response.type, response.message);
+        });
+    },
+    /*store details Add/Update function*/
+    generalSetting: function (value) {
+        if ($('#store_name').val() !== '' && $('#store_telephone').val() !== '' && PosnicPro.validateEmail($('#store_email').val()) && $('#setting_country').val() !== '' && $('#setting_state').val() !== '' && $('#currency').val() !== '' && $('#time_zone').val() !== '' && $('#storedate').val() !== '' && $('#store_address').val() !== '' && $('#printing_address').val() !== '') {
+            var loader = $(".loader-view-generalsetting");
+            $("<div class='loadingSpinner'></div>").appendTo(loader);
+            var currency = $('#currency_type').val();
+            var timeZone = $("#time_zone").select2("data");
+            var currencyText = $('#currencyText').val();
+            var currencyTextname = $('#currencyTextname').val();
+            var timezoneValue = {
+                time_zone: timeZone[0].element.attributes['data-timezone-name'].value
+            };
+            let countryValue = $("#setting_country").select2("data");
+            let countryId = {
+                country_id: countryValue[0].element.attributes['data-setting-id'].value
+            };
+            var formData = PosnicPro.getFormData($('#setting_add'));
+            var params = {
+                url: 'setting/updateGeneralSetting',
+                data: JSON.stringify(Object.assign(formData, timezoneValue, countryId))
+            };
+            PosnicPro.put(params, function (response) {
+                if (response.type === 'success') {
+                    $('.print_store_address').html(response.data['printing_address']);
+                    $('.print_store_telephone').html(response.data['store_telephone']);
+                    $('.print_store_alternativephone').html(response.data['store_alternativephone']);
+                    $('.print_store_email').html(response.data['store_email']);
+                    $('.print_store_gst').html(response.data['branch_gstin_number']);
+                    $('.print_store_name').html(response.data['branch_name']);
+                    $('.display-currency').html(currency);
+                    $('#setting_status').val("Yes");
+                    PosnicPro.local.set("country_setting", response.data.country);
+                    PosnicPro.local.set('countryid', response.data['country_id']);
+                    PosnicPro.local.set('countryname', '');
+                    PosnicPro.local.set('statename', '');
+                    PosnicPro.local.set('countryname', response.data['country']);
+                    PosnicPro.local.set('statename', response.data['state']);
+                    PosnicPro.local.set('dateformatset', response.data['clientdate']);
+                    PosnicPro.local.set('setdateformat', response.data['serverdate']);
+                    PosnicPro.local.set('timezone', response.data['time_zone']);
+                    PosnicPro.local.set('timeformat', response.data['time_format']);
+                    PosnicPro.local.set('currencySign', currency);
+                    $(".branch-name").html(response.data['branch_name']);
+                    PosnicPro.local.set('branchname', response.data['branch_name']);
+                    PosnicPro.local.set('branchemail', response.data['store_email']);
+                    PosnicPro.local.set('branchphone', response.data['store_telephone']);
+                    PosnicPro.local.set('branchaddress', response.data['store_address']);
+                    
+                    // Store general settings including hardware_weight_machine_enable
+                    var generalSettings = {
+                        hardware_weight_machine_enable: response.data['hardware_weight_machine_enable'] || false,
+                        till_lock_enable: response.data['till_lock_enable'] || false,
+                        till_lock_idle_minutes: response.data['till_lock_idle_minutes'] || 0
+                    };
+                    PosnicPro.local.set('general_settings', JSON.stringify(generalSettings));
+                    
+                    let branchRecord = [];
+                    branchRecord.push({ name: response.data['branch_name'], phone: response.data['store_telephone'], email: response.data['store_email'], address: response.data['store_address'], image: response.data['branch_image'] });
+                    db.customerDisplay.put({ id: '2', 'clear': 'no', 'get': 'no', branch: branchRecord });
+                    PosnicPro.commonDate();
+                    $('.hide_indian_gst').hide();
+                    $('.indian-gstr').hide();
+                    PosnicPro.local.set('gst_action', 'disable');
+                    if (response.data['country'] === 'India') {
+                        $('.hide_indian_gst').show();
+                        $('.indian-gstr').show();
+                        if ($('#indian_gst').val() === 'gst_on') {
+                            $('.disable_indian_gst').show();
+                            PosnicPro.local.set('gst_action', 'enable');
+                        } else {
+                            $('.disable_indian_gst').hide();
+                            PosnicPro.local.set('gst_action', 'disable');
+                        }
+                    } else {
+                        $('.hide_indian_gst').hide();
+                        $('.indian-gstr').hide();
+                        PosnicPro.local.set('gst_action', 'disable');
+                    }
+                    loader.find(".loadingSpinner:first").remove();
+                }
+                PosnicPro.alert(response.type, response.message);
+            }, function (xhr) {
+                var response = jQuery.parseJSON(xhr.responseText);
+                PosnicPro.alert(response.type, response.message);
+            });
+            return false;
+        }
+    },
+    emailPhpStoreSettings: function () {
+        if (PosnicPro.validateEmail($('#smtp_php_mail').val())) {
+            var loader = $(".loader-view-mail");
+            $("<div class='loadingSpinner'></div>").appendTo(loader);
+            var params = {
+                url: 'setting/updatePhpEmailSetting',
+                data: JSON.stringify(PosnicPro.getFormData($('#php_setting_add')))
+            };
+            PosnicPro.put(params, function (response) {
+                if (response.type === 'success') {
+                    PosnicPro.alert(response.type, response.message);
+                    $('#setting_status').val("Yes");
+                    loader.find(".loadingSpinner:first").remove();
+                } else {
+                    PosnicPro.alert(response.type, response.message);
+                }
+            }, function (xhr) {
+                var response = jQuery.parseJSON(xhr.responseText);
+                PosnicPro.alert(response.type, response.message);
+            });
+            return false;
+        }
+    },
+    /* update offline settings */
+    offlineStoreSettings: function (data) {
+        var params = {
+            url: 'setting/updateOfflineSetting',
+            data: JSON.stringify(data)
+        };
+        PosnicPro.put(params, function (response) {
+            PosnicPro.alert(response.type, response.message);
+        }, function (xhr) {
+            var response = jQuery.parseJSON(xhr.responseText);
+            PosnicPro.alert(response.type, response.message);
+        });
+        return false;
+    },
+    way2smsSettings: function () {
+        var loader = $(".loader-view-sms");
+        $("<div class='loadingSpinner'></div>").appendTo(loader);
+        var params = {
+            url: 'setting/updateWay2SmsSetting',
+            data: JSON.stringify(PosnicPro.getFormData($('#sms_setting')))
+        };
+        PosnicPro.put(params, function (response) {
+            PosnicPro.alert(response.type, response.message);
+            loader.find(".loadingSpinner:first").remove();
+        }, function (xhr) {
+            var response = jQuery.parseJSON(xhr.responseText);
+            PosnicPro.alert(response.type, response.message);
+        });
+        return false;
+    },
+    textlocalsmsSettings: function () {
+        var loader = $(".loader-view-sms");
+        $("<div class='loadingSpinner'></div>").appendTo(loader);
+        var params = {
+            url: 'setting/updateTextLocalSmsSetting',
+            data: JSON.stringify(PosnicPro.getFormData($('#textlocal_setting')))
+        };
+        PosnicPro.put(params, function (response) {
+            PosnicPro.alert(response.type, response.message);
+            loader.find(".loadingSpinner:first").remove();
+        }, function (xhr) {
+            var response = jQuery.parseJSON(xhr.responseText);
+            PosnicPro.alert(response.type, response.message);
+        });
+        return false;
+    },
+    getDefaultCustomerDetails: function (customer) {
+        var params = {
+            url: 'setting/getDefaultCustomer',
+            data: { data: { customer: customer } }
+        };
+        PosnicPro.get(params, function (response) {
+            if (response.type === 'success') {
+                $('#default_customer').append('<option value="' + response.data['customer_id'] + '">' + response.data['customer_name'] + '</option>');
+                PosnicPro.local.set('defaultcustomer', JSON.stringify(response.data['customer']));
+                $('.default-customer-id').val(response.data['customer_id']);
+                $('.default-customer-name').val(response.data['customer_name']);
+            } else {
+                PosnicPro.alert(response.type, response.message);
+            }
+
+        }, function (xhr) {
+            var response = jQuery.parseJSON(xhr.responseText);
+            PosnicPro.alert(response.type, response.message);
+        });
+    },
+    getDefaultSupplierDetails: function (supplier) {
+        var params = {
+            url: 'setting/getDefaultSupplier',
+            data: { data: { supplier: supplier } }
+        };
+        PosnicPro.get(params, function (response) {
+            if (response.type === 'success') {
+                $('#default_supplier').append('<option value="' + response.data['supplier_id'] + '">' + response.data['supplier_name'] + '</option>');
+                PosnicPro.local.set('defaultsupplier', JSON.stringify(response.data['supplier']));
+                $('.default-supplier-id').val(response.data['supplier_id']);
+                $('.default-supplier-name').val(response.data['supplier_name']);
+            } else {
+                PosnicPro.alert(response.type, response.message);
+            }
+
+        }, function (xhr) {
+            var response = jQuery.parseJSON(xhr.responseText);
+            PosnicPro.alert(response.type, response.message);
+        });
+    },
+    /*To display the setting details*/
+    viewSettings: function (id) {
+        var params = {
+            url: 'branches/getOneStore',
+            data: 'id=' + id
+        };
+        $('#footer_print,#header_print').html('').text('');
+        $('#footer_print,#header_print').summernote('code', '');
+        let loader = $(".loader-table-setting");
+        $("<div class='loadingSpinner'></div>").appendTo(loader);
+        PosnicPro.get(params, function (response) {
+            if (response.type === 'success') {
+                loader.find(".loadingSpinner:first").remove();
+                var data = response.data;
+                let country_id = data.country_id;
+                PosnicPro.local.set('countryid', country_id);
+                PosnicPro.settings.loadSelectSettingState(country_id);
+                PosnicPro.record_id = id;
+                PosnicPro.roundoff = data.roundOff;
+                (data.register.length === 0) ? $('.cashRegisterModule').css('display', 'none') : $('.cashRegisterModule').css('display', 'block');
+                $('#id').val(PosnicPro.record_id);
+                $('#razor_key').text(data.razorKey);
+                $('#razor_url').text(data.razorUrl);
+                $('#store_name').val(data.branch_name);
+                $('#store_address').val(data.store_address);
+                $('#address').val(data.address);
+                $('#store_email').val(data.store_email);
+                $('#store_telephone').val(data.store_telephone);
+                $('#store_alternativephone').val(data.store_alternativephone);
+                $('#place').val(data.place);
+                $('#city').val(data.city);
+                $('#pincode').val(data.pincode);
+                $('#website').val(data.website);
+                $('#languge').val(data.languge);
+                $('#printing_address').val(data.printing_address);
+                $('#smtp_username').val(data.smtp_username);
+                $('#smtp_hostname').val(data.smtp_hostname);
+                $('#smtp_password').val(data.smtp_password);
+                $('#smtp_port').val(data.smtp_port);
+                $('.from_mail').val(data.from_mail);
+                $('#smtp_php_to_mail').val(data.to_mail);
+                $('#sms_type').val(data.smstype);
+                $('#notification_value').val(data.notification_range);
+                localStorage.setItem("notificationrange", data.notification_range);
+                $('#serverdate').val(data.server_dateformat);
+                $('#dateText').val(data.dateformat_text);
+                $('#way2sms_api').val(data.way2sms_api);
+                $('#way2sms_userid').val(data.way2sms_userid);
+                $('#way2sms_password').val(data.way2sms_password);
+                $('#textlocal_sender').val(data.textlocal_sender);
+                $('#textlocal_api').val(data.textlocal_api);
+                $('#sales_prefix').val(data.sales_prefix);
+                $('#receiving_prefix').val(data.receiving_prefix);
+                const dbValue = data.sms_auto_send_time; // Replace with your actual database value
+                let [time, period] = dbValue.split(' '); // Split into time and AM/PM
+                let [hour, minute] = time.split(':'); // Split into hour and minute
+
+                hour = parseInt(hour, 10);
+                if (period === 'PM' && hour < 12) {
+                    hour += 12;
+                } else if (period === 'AM' && hour === 12) {
+                    hour = 0; // Midnight case
+                }
+                const formattedTime = hour.toString().padStart(2, '0') + ':' + minute;
+                $("#sms_auto_send_time").val(formattedTime);
+                $("#sms_auto_send_period").val(data.sms_auto_send_time);
+                $("#sms_retry_period option[value='" + data.sms_retry_period + "']").prop("selected", true);
+                $("#sms_max_retries option[value='" + data.sms_max_retries + "']").prop("selected", true);
+                $("#print_type option[value='" + data.print_type + "']").prop("selected", true);
+                let print_size = (typeof (data.print_size) !== "undefined" && data.print_size !== null) ? data.print_size : 'receipt_medium';
+                $("#print_size option[value='" + print_size + "']").prop("selected", true);
+                PosnicPro.local.set('printing_size', print_size);
+                let print_character = (typeof (data.print_character) !== "undefined" && data.print_character !== null) ? data.print_character : 'default';
+                $("#print_character option[value='" + print_character + "']").prop("selected", true);
+                PosnicPro.local.set('printing_max_char', print_character);
+                
+                // Set hardware weight machine enable dropdown
+                if (data.hardware_weight_machine_enable === true) {
+                    $('#hardware_weight_machine_enable').val('true');
+                } else {
+                    $('#hardware_weight_machine_enable').val('false');
+                }
+
+                // The PIN lock, which is a shop-wide choice rather than a
+                // per-machine one.
+                $('#till_lock_enable').val(data.till_lock_enable === true ? 'true' : 'false');
+                $('#till_lock_idle_minutes').val(String(data.till_lock_idle_minutes || 0));
+                
+                // Store general settings including hardware_weight_machine_enable
+                var generalSettings = {
+                    hardware_weight_machine_enable: data.hardware_weight_machine_enable || false,
+                    till_lock_enable: data.till_lock_enable || false,
+                    till_lock_idle_minutes: data.till_lock_idle_minutes || 0
+                };
+                PosnicPro.local.set('general_settings', JSON.stringify(generalSettings));
+                
+                $('.display-branch-name').html(data.branch_name);
+                $('.display-tax-value').html(data.tax_percentage);
+                $('.display-tax-text').html(data.tax_percentage);
+                $('.display-discount-amount-text').html(data.discount_amount);
+                $('.display-discount-amount-value').val(data.discount_amount);
+                $('.display-discount-percentage-text').html(data.discount_percentage);
+                $('.display-discount-percentage-value').val(data.discount_percentage);
+                PosnicPro.local.set('setting-discount-amount', data.discount_amount);
+                PosnicPro.local.set('currencySign', data.currency_type);
+                PosnicPro.local.set('setting-discount-percentage', data.discount_percentage);
+                (data.discount_amount === '0') ? data.discount_percentage : data.discount_amount;
+                var image_path = (data.logo !== "store.png") ? data.logo : 'static/images/default/' + data.logo;
+                $('#previewing,#store_image').attr('src', image_path);
+                $('#setting_logo_value').val(data.logo);
+                // Ensure kiosk array exists and has at least one object
+                // Ensure kiosk array exists and has at least one object
+var kioskData = (data.kiosk && data.kiosk.length > 0) ? data.kiosk[0] : {};
+
+// Extract values with fallback to empty strings
+var store_id = kioskData.store_id || "";
+$("#kioskstore_id").val(store_id);
+
+// ----- Kiosk printers: build rows from array -----
+var printers = [];
+
+// Prefer new array field from DB
+if ($.isArray(kioskData.printer_names) && kioskData.printer_names.length) {
+    printers = kioskData.printer_names;
+} else if (kioskData.printer_name) {
+    // Backward‑compat: old single value
+    printers = [kioskData.printer_name];
+}
+
+// Find wrapper and template row
+var $wrapper = $('.printer-wrapper .printer-fields');
+if ($wrapper.length) {
+    var $template = $wrapper.find('.printer-input:first').clone(true);
+
+    // Clear all existing rows
+    $wrapper.empty();
+
+    // If no data, still show one empty row
+    if (!printers.length) {
+        printers = [''];
+    }
+
+    $.each(printers, function (idx, name) {
+        var $row = $template.clone(true);
+
+        var $input = $row.find('input');
+        $input
+            .attr('id', 'printer_name_' + idx)
+            .attr('name', 'printer_name[' + idx + ']')
+            .val(name || '');
+
+        $wrapper.append($row);
+    });
+
+    // Only last row shows "+" button
+    var $rows = $wrapper.find('.printer-input');
+    $rows.find('.add-printer-field').hide();
+    $rows.last().find('.add-printer-field').show();
+}
+                var logo = kioskData.logo || "";
+                var banner = kioskData.banner || "";
+                var homebanner = kioskData.homebanner || "";
+                var advertisement = kioskData.advertisement || "";
+
+                // Default kiosk images for each slot, used only when
+                // there is no saved image URL in the kiosk data.
+                var defaultHomeBanner = 'static/images/kiosk-default/home.png';
+                var defaultLogo = 'static/images/kiosk-default/logo.png';
+                var defaultBanner = 'static/images/kiosk-default/banner.jpg';
+                var defaultAdvertisement = 'static/images/kiosk-default/banner1.jpg';
+
+                var payment_cod = kioskData.payment_cod === 'true' || kioskData.payment_cod === true;
+                var payment_razorpay = kioskData.payment_razorpay === 'true' || kioskData.payment_razorpay === true;
+                var payment_number = kioskData.payment_number === 'true' || kioskData.payment_number === true;
+                // Set checkbox status
+                $('#payment_cod').prop('checked', payment_cod);
+                $('#payment_razorpay').prop('checked', payment_razorpay);
+                $('#payment_number').prop('checked', payment_number);
+
+                // Update Image Previews
+                var logoSrc = logo || defaultLogo;
+                $("#preview_logo").attr("src", logoSrc).css("display", "block");
+
+                var bannerSrc = banner || defaultBanner;
+                $("#preview_banner").attr("src", bannerSrc).css("display", "block");
+
+                var homebannerSrc = homebanner || defaultHomeBanner;
+                $("#preview_homebanner").attr("src", homebannerSrc).css("display", "block");
+
+                var advertisementSrc = advertisement || defaultAdvertisement;
+                $("#preview_advertisement").attr("src", advertisementSrc).css("display", "block");
+
+                $('#indian_gst option[value="' + data.indian_gst + '"]').attr("selected", true);
+                $('#branch_gstin_number').val(data.branch_gstin_number);
+                (data.sales_sms === true) ? $('#sales_sms').prop("checked", true).attr('checked', 'checked') : $('#sales_sms').prop("checked", false).attr('unchecked', 'unchecked');
+                (data.auto_sms === true) ? $('#auto_sms').prop("checked", true).attr('checked', 'checked') : $('#auto_sms').prop("checked", false).attr('unchecked', 'unchecked');
+                (data.roundOff === true) ? $('#decimal_Round').prop("checked", true).attr('checked', 'checked') : $('#decimal_Round').prop("checked", false).attr('unchecked', 'unchecked');
+                (data.printall === true) ? $('#printall').prop("checked", true).attr('checked', 'checked') : $('#printall').prop("checked", false).attr('unchecked', 'unchecked');
+                //                (data.print_logo === true) ? $('#printall').attr('checked', 'checked') : $('#printall').attr('unchecked', 'unchecked');
+
+                if (data.keyboard_view === true) {
+                    $('#keyboard_view').prop("checked", true).attr('checked', 'checked');
+                    PosnicPro.local.set('keyboard_view', 'true');
+                    keyboard_view();
+                } else {
+                    $('#keyboard_view').prop("checked", false).attr('unchecked', 'unchecked');
+                    PosnicPro.local.set('keyboard_view', 'false');
+                    keyboard_view();
+                }
+                PosnicPro.local.set('balance_view', 'true');
+                if (data.customer_checkbox === true) {
+                    $("#default_customer_enable_disable").prop("checked", true);
+                    PosnicPro.local.set('default_customer_enable_disable', "true");
+                    $('#default_customer').removeAttr('disabled');
+                    $(".customer-text-disable").css("color", '#20a83b');
+                    $(".customer-text-enable").css("color", '#141d46');
+                } else {
+                    $("#default_customer_enable_disable").prop("checked", false);
+                    PosnicPro.local.set('default_customer_enable_disable', "false");
+                    $('#default_customer').attr('disabled', 'disabled');
+                    $(".customer-text-disable").css("color", '#141d46');
+                    $(".customer-text-enable").css("color", '#20a83b');
+                }
+
+                if (data.supplier_checkbox === true) {
+                    $("#default_supplier_enable_disable").prop("checked", true);
+                    PosnicPro.local.set('default_supplier_enable_disable', "true");
+                    $('#default_supplier').removeAttr('disabled');
+                    $(".supplier-text-disable").css("color", '#20a83b');
+                    $(".supplier-text-enable").css("color", '#141d46');
+                } else {
+                    $("#default_supplier_enable_disable").prop("checked", false);
+                    PosnicPro.local.set('default_supplier_enable_disable', "false");
+                    $('#default_supplier').attr('disabled', 'disabled');
+                    $(".supplier-text-disable").css("color", '#141d46');
+                    $(".supplier-text-enable").css("color", '#20a83b');
+                }
+
+                if (data.tax_checkbox === true) {
+                    $("#default_tax_enable_disable").prop("checked", true);
+                    PosnicPro.local.set('default_tax_enable_disable', "true");
+                    $('#tax_percentage').removeAttr('disabled');
+                    $(".tax-text-disable").css("color", '#20a83b');
+                    $(".tax-text-enable").css("color", '#141d46');
+                } else {
+                    $("#default_tax_enable_disable").prop("checked", false);
+                    PosnicPro.local.set('default_tax_enable_disable', "false");
+                    $('#tax_percentage').attr('disabled', 'disabled');
+                    $(".tax-text-disable").css("color", '#141d46');
+                    $(".tax-text-enable").css("color", '#20a83b');
+                }
+                let print_url = (typeof (data.print_url) !== "undefined" && data.print_url !== null) ? data.print_url : false;
+                (print_url === true) ? $('#print_url').prop("checked", true).attr('checked', 'checked') : $('#print_url').prop("checked", false).attr('unchecked', 'unchecked');
+                PosnicPro.local.set('print_url', print_url);
+                if (data.sale_inline_editor === true) {
+                    $('.sales-inline-hide').show();
+                    $('#sale_inline_editor').prop("checked", true).attr('checked', 'checked');
+                    PosnicPro.local.set('inline_sale', 'enable');
+                } else {
+                    $('.sales-inline-hide').hide();
+                    $('#sale_inline_editor').prop("checked", false).attr('unchecked', 'unchecked');
+                    PosnicPro.local.set('inline_sale', 'disable');
+                }
+                if (data.enable_multi_payment === true) {
+                    $('#enable_multi_payment').prop("checked", true).attr('checked', 'checked');
+                    PosnicPro.local.set('enable_multi_payment', 'enable');
+                } else {
+                    $('#enable_multi_payment').prop("checked", false).attr('unchecked', 'unchecked');
+                    PosnicPro.local.set('enable_multi_payment', 'disable');
+                }
+                var $kotLi = $('#view_kot_page').closest('li');
+                var $kotOrderLi = $('#view_kotorder_page').closest('li');
+                var $kotHistoryLi = $('#view_kothistory_page').closest('li');
+                var $kotReportLi = $('#viewkotreport_page').closest('li');
+                var $newSaleLi = $('#view_touchsales_page').closest('li');
+                if (data.table_options === true) {
+                    $('#table_options').prop("checked", true).attr('checked', 'checked');
+                    PosnicPro.local.set('table_options', 'enable');
+                    $kotLi.show();
+                    $kotOrderLi.show();
+                    $kotHistoryLi.show();
+                    $kotReportLi.show();
+                    $newSaleLi.hide();
+                    $('#image_sidebar_newsale').hide();
+                    $('#item_master_menu').show();
+                    PosnicPro.applyKotVisibility(true);
+                } else {
+                    $('#table_options').prop("checked", false).attr('unchecked', 'unchecked');
+                    PosnicPro.local.set('table_options', 'disable');
+                    PosnicPro.applyKotVisibility(false);
+                    $kotLi.hide();
+                    $kotOrderLi.hide();
+                    $kotHistoryLi.hide();
+                    $kotReportLi.hide();
+                    $newSaleLi.show();
+                    $('#item_master_menu').hide();
+                }
+
+                (data.stock_management === true) ? $('#stock_management').prop("checked", true).attr('checked', 'checked') : $('#stock_management').removeAttr('checked');
+                (data.stock_management_log === true) ? $('#stock_log_management').prop("checked", true).attr('checked', 'checked') : $('#stock_log_management').removeAttr('checked');
+                (data.sales_mail === true) ? $('#sales_mail').prop("checked", true).attr('checked', 'checked') : $('#sales_mail').prop("checked", false).attr('unchecked', 'unchecked');
+                (data.customer_print === true) ? $('#customer_print').prop("checked", true).attr('checked', 'checked') : $('#customer_print').prop("checked", false).attr('unchecked', 'unchecked');
+                (data.print_logoimg === true) ? $('#print_logoimg').prop("checked", true).attr('checked', 'checked') : $('#print_logoimg').prop("checked", false).attr('unchecked', 'unchecked');
+                (data.print_sale_notes === true) ? $('#print_sale_notes').prop("checked", true).attr('checked', 'checked') : $('#print_sale_notes').prop("checked", false).attr('unchecked', 'unchecked');
+                (data.whatsapp_receipt === true) ? $('#whatsapp_receipt').prop("checked", true).attr('checked', 'checked') : $('#whatsapp_receipt').prop("checked", false).attr('unchecked', 'unchecked');
+                if (data.country === 'India') {
+                    $('.branch-gstin-hide-show').show();
+                    $('.hide_indian_gst').show();
+                    if (data.indian_gst === 'gst_on') {
+                        $('.disable_indian_gst').show();
+                        PosnicPro.local.set('gst_action', 'enable');
+                    } else {
+                        $('.disable_indian_gst').hide();
+                        PosnicPro.local.set('gst_action', 'disable');
+                    }
+                } else {
+                    $('.branch-gstin-hide-show').hide();
+                    $('.hide_indian_gst').hide();
+                    PosnicPro.local.set('gst_action', 'disable');
+                }
+
+                $('#setting_country,#customer_country,#supplier_country,#branch_country').val(data.country);
+                $('#client_dateformat').val(data.client_dateformat);
+                $('#dateformat_text').val(data.dateformat_text);
+                $('#server_dateformat').val(data.server_dateformat);
+                PosnicPro.local.set("dateformatset", data.client_dateformat);
+                var settingStateOPtion = '<option id="' + data.state + '" value="' + data.state + '" selected>' + data.state + '</option>';
+                $('#setting_state,#customer_state,#supplier_state,#branch_state').html(settingStateOPtion);
+                $('#storedate').val(data.client_dateformat).trigger('change.select2');
+                $('#storetime').val(data.time_format).trigger('change.select2');
+                PosnicPro.local.set('timeformat', data.time_format);
+                $('#currency').val(data.currency_text);
+                PosnicPro.local.set('timezone', data.time_zone);
+                $("#time_zone").val(data.time_zone).trigger("change");
+                localStorage.setItem("payment_gateway", 'false');
+                $('.qr_btn').hide();
+                $('#payment_gateway').prop("checked", false).attr('unchecked', 'unchecked');
+                if (data.payment_gateway['status'] === 'true') {
+                    localStorage.setItem("payment_gateway", 'true');
+                    $('.qr_btn').show();
+                    $('#payment_gateway').prop("checked", true).attr('checked', 'checked');
+                }
+                $('#site_key,#secret_key').val('');
+                $('#site_key').val(data.payment_gateway['key']);
+                $('#secret_key').val(data.payment_gateway['secret']);
+
+                if (data.phonepe_payment_gateway) {
+                    $('#phonepe_merchant_id').val(data.phonepe_payment_gateway['merchantId']);
+                    $('#phonepe_salt_key').val(data.phonepe_payment_gateway['saltKey']);
+                } else {
+                    $('#phonepe_merchant_id').val('');
+                    $('#phonepe_salt_key').val('');
+                }
+
+                var viewcurrencyOPtion = "";
+                $.each(data.currency_value, function (key, value) {
+                    $('#currencyText').val(value.currency_sign);
+                    $('#currencyTextname').val(value.currency_text);
+                    $("#currency_type option:selected").remove();
+                    $('#currency_type').find('option').remove();
+                    if (data.currency_type === value.currency_text) {
+                        viewcurrencyOPtion += "<option id=" + data.currency_type + '" value="' + data.currency_type + '">Text( ' + data.currency_type + ' )</option>' +
+                            " <option id=" + value.currency_sign + '" value="' + value.currency_sign + '">Symbol( ' + value.currency_sign + ' )</option>';
+                    } else {
+                        viewcurrencyOPtion += "<option id=" + value.currency_text + '" value="' + value.currency_text + '">Text( ' + value.currency_text + ' )</option>' +
+                            " <option id=" + data.currency_type + '" value="' + data.currency_type + '">Symbol( ' + data.currency_type + ' )</option>';
+                    }
+
+                });
+                $('#currency_type').append(viewcurrencyOPtion);
+                $('#currency_type').val(data.currency_type).trigger('change.select2');
+                $('.display-currency').html(data.currency_type);
+                $('#setting_status').val("Yes");
+                if (data.country !== 'India') {
+                    $('.indian-Gst').css({ "display": "none" });
+                }
+                var discountamountradionbutton = $('#discount_amount').val();
+                if (discountamountradionbutton > 0) {
+                    $("#radio_discount_amount").prop('checked', 'checked');
+                    $('#discount_percentage').attr('disabled', 'disabled').addClass('bg-white').hide();
+                    $('#discount_amount').removeAttr('disabled', 'disabled').show();
+                } else {
+                    $("#radio_discount_percentage").prop('checked', 'checked');
+                    $('#discount_amount').attr('disabled', 'disabled').addClass('bg-white').hide();
+                    $('#discount_percentage').removeAttr('disabled', 'disabled').show();
+                }
+                /*Call For get Default Customer SupplierDtails*/
+                PosnicPro.settings.getDefaultCustomerDetails(data.default_customer);
+                PosnicPro.settings.getDefaultSupplierDetails(data.default_supplier);
+                /*Set Default Tax*/
+                if (data.default_tax) { 
+                    $("#tax_percentage").val(data.default_tax).trigger("change");
+                    PosnicPro.local.set('default_tax_id', data.default_tax);
+                }
+                if ((data.branch_gstin_number !== "undefined" && data.branch_gstin_number !== "")) {
+                    $('.gst_hide_show').show();
+                } else {
+                    $('.gst_hide_show').hide();
+                }
+                $('#setting_image_value').val('');
+
+                $('.import-print').html('');
+                if (data.regular_body_print != null) {
+                    $('.import-print').html(data.regular_body_print);
+                } else {
+                    $('.import-print').append(data.print_a4html);
+                }
+
+                if (data.thermal_body_print != null) {
+                    $('.import-standard-print').html(data.thermal_body_print);
+                } else {
+                    $('.import-standard-print').append(data.print_standard_html);
+                }
+
+                var controls = [
+                    'lineitem_hsn',
+                    'lineitem_price',
+                    'lineitem_qty',
+                    'lineitem_tax',
+                    'lineitem_total',
+                    'print_qty',
+                    'print_roundoff'
+                ];
+                var defaultControlValue = 'on';
+                if (data.print_controls != null) {
+                    $(controls).each(function (key, controlKey) {
+                        PosnicPro.local.set(controlKey, data.print_controls.a4[controlKey]);
+                    });
+                    PosnicPro.local.set('receiving_title', data.print_controls['receiving_title']);
+                    PosnicPro.local.set('receiving_return_title', data.print_controls['receiving_return_title']);
+                    PosnicPro.local.set('sale_title', data.print_controls['sale_title']);
+                    PosnicPro.local.set('sale_return_title', data.print_controls['sale_return_title']);
+                } else {
+                    $(controls).each(function (key, controlKey) {
+                        PosnicPro.local.set(controlKey, defaultControlValue);
+                    });
+                    PosnicPro.local.set('receiving_title', "<span style=\"font-size: 14px !important; font-weight: 900;\">Purchase Invoice</span>");
+                    PosnicPro.local.set('receiving_return_title', "<span style=\"font-size: 14px !important; font-weight: 900;\">Purchase Return Invoice</span>");
+                    PosnicPro.local.set('sale_title', "<span style=\"font-size: 14px !important; font-weight: 900;\">Sales Receipt</span>");
+                    PosnicPro.local.set('sale_return_title', "<span style=\"font-size: 14px !important; font-weight: 900;\">Sales Return Receipt</span>");
+                }
+
+                let headerContent = (data.header_print !== '') ? data.header_print : '';
+                $('#header_print').append(headerContent);
+                var htmlHeaderView = $('#header_print').text();
+                $('#header_print').summernote('code', htmlHeaderView);
+                $('.header-content').html(htmlHeaderView);
+
+                let footerContent = (data.footer_print !== '') ? data.footer_print : 'Thank you for shopping...!';
+                $('#footer_print').append(footerContent);
+                var htmlView = $('#footer_print').text();
+                $('#footer_print').summernote('code', htmlView);
+                $('.footer-content').html(htmlView);
+
+                $('.print_store_name').html(data.branch_name);
+                $('.print_store_gst').html(data.branch_gstin_number);
+                $('.print_store_address').html(data.printing_address);
+                $('.print_store_city').html(data.city);
+                $('.print_store_email').html(data.store_email);
+                $('.print_store_telephone').html(data.store_telephone);
+                $('.print_store_alternativephone').html('');
+                if (data.store_alternativephone !== null && data.store_alternativephone !== undefined && data.store_alternativephone.trim() !== "") {
+                    $('.print_store_alternativephone').html(data.store_alternativephone);
+                }
+                $('.print_store_country').html(data.country);
+                $('.print_store_state').html(data.state);
+                $('.print_store_pincode').html(data.pincode);
+                $("#receiving_tax option[value='" + data.tax_percentage + "']").prop("selected", true);
+                PosnicPro.local.set("country_value", data.country);
+                PosnicPro.local.set("country_setting", data.country);
+                PosnicPro.local.set("state_setting", data.state);
+                $('#setting_country').val(data.country).trigger('change.select2');
+                let stateId = $("#setting_country option[value='" + data.country + "']").data("setting-id");
+                PosnicPro.local.set("currency_setting", data.currency);
+                $('#currency_setting').val(data.currency_text).trigger('change.select2');
+                let $test = $('.email-input:parent');
+                $('.add-email-field', $test).hide();
+                $.each(data.email_fields, function (key, value) {
+                    $('.email-wrapper .email-fields .email-input:nth-child(n+2)').remove();
+                    $.each(value.email_address, function (index, value) {
+                        var i = 0;
+                        $('.email-wrapper').each(function () {
+                            i++;
+                            var $wrapper = $('.email-fields', this);
+                            $('.email-input:first-child', $wrapper).clone(true).appendTo($wrapper).find('input').attr('id', 'emailaddress[' + i + ']').attr('name', 'emailaddress[' + i + ']').removeClass('edit-email-class').val(value.email);
+                        });
+                    });
+                    let $newtest = $('.email-input:last-child');
+                    $('.add-email-field', $newtest).show();
+                    $('.email-wrapper .email-fields .email-input:nth-child(1)').remove();
+                    $('#report_type').val(value.report_type).trigger('change.select2');
+                    $('#send_mail').val(value.send_mail).trigger('change.select2');
+                    $('.error').remove();
+                    var $firstChild = $('.email-input:first-child');
+                    $('.add-email-field', $firstChild).show();
+                });
+                PosnicPro.stocklogs.viewLowStockDashboard();
+                PosnicPro.getBranchDropdownOption();
+                PosnicPro.denom.denomTable();
+                PosnicPro.tableOrders.tableOrdersTable();
+                if (!data.payment_gateway || typeof data.payment_gateway.key === "undefined" || data.payment_gateway.key.trim() === '') {
+                    $('#payment_razorpay').prop('disabled', true);
+                } else {
+                    $('#payment_razorpay').prop('disabled', false);
+                }             
+
+                //var countryDetail = $('#setting_country').select2("data");
+                //PosnicPro.settings.loadSelectSettingState(countryDetail[0].element.attributes['data-setting-id'].value);
+                // updating offline settings
+                //                if (data.settings.offline)
+                //                    $.each(data.settings.offline, function (key, value) {
+                //                        var text = key.split('_');
+                //                        var module = text[0];
+                //                        var type = text[1];
+                //                        if (type === 'action') {
+                //                            var element = $('#offline_' + module + '_support');
+                //                            if (value) {
+                //                                element.prop('checked', false).trigger("click");
+                //                            } else {
+                //                                element.prop('checked', true).trigger("click");
+                //                            }
+                //                        } else {
+                //                            var element = $('#offline_data_' + module);
+                //                            if (value) {
+                //                                element.prop('checked', false).trigger("click");
+                //                            } else {
+                //                                element.prop('checked', true).trigger("click");
+                //                            }
+                //                        }
+                //                    });
+            } else {
+                $('#setting_status').val("No");
+            }
+        }, function (xhr) {
+            var response = jQuery.parseJSON(xhr.responseText);
+            PosnicPro.alert(response.type, response.message);
+        });
+    },
+    resetEditButton: function (id) {
+        var branch_id = PosnicPro.local.get('branch_id_set');
+        PosnicPro.settings.viewSettings(branch_id);
+    },
+    resetEmailSetting: function () {
+        var params = {
+            url: 'branches/resetEmailSetting',
+            data: {}
+        };
+        PosnicPro.get(params, function (response) {
+            if (response.type === 'success') {
+                let $test = $('.email-input:parent');
+                $('.add-email-field', $test).hide();
+                $.each(response.data, function (key, value) {
+                    $('.email-wrapper .email-fields .email-input:nth-child(n+2)').remove();
+                    $.each(value.email_address, function (index, value) {
+                        var i = 0;
+                        $('.email-wrapper').each(function () {
+                            i++;
+                            var $wrapper = $('.email-fields', this);
+                            $('.email-input:first-child', $wrapper).clone(true).appendTo($wrapper).find('input').attr('id', 'emailaddress[' + i + ']').attr('name', 'emailaddress[' + i + ']').removeClass('edit-email-class').val(value.email);
+                        });
+                    });
+                    let $newtest = $('.email-input:last-child');
+                    $('.add-email-field', $newtest).show();
+                    $('.email-wrapper .email-fields .email-input:nth-child(1)').remove();
+                    $('#report_type').val(value.report_type).trigger('change.select2');
+                    $('#send_mail').val(value.send_mail).trigger('change.select2');
+                    $('.error').remove();
+                    var $firstChild = $('.email-input:first-child');
+                    $('.add-email-field', $firstChild).show();
+                });
+            } else {
+                PosnicPro.alert(response.type, response.message);
+            }
+
+        }, function (xhr) {
+            var response = jQuery.parseJSON(xhr.responseText);
+            PosnicPro.alert(response.type, response.message);
+        });
+
+    },
+    resetPaymentGateway: function () {
+        var params = {
+            url: 'branches/resetPaymentGateway',
+            data: {}
+        };
+        PosnicPro.get(params, function (response) {
+            if (response.type === 'success') {
+                $('#site_key').val(response.data['key']);
+                $('#secret_key').val(response.data['secret']);
+                (response.data['status'] === 'true') ? $('#payment_gateway').prop("checked", true).attr('checked', 'checked')
+                    : $('#payment_gateway').prop("checked", false).attr('unchecked', 'unchecked');
+            } else {
+                PosnicPro.alert(response.type, response.message);
+            }
+
+        }, function (xhr) {
+            var response = jQuery.parseJSON(xhr.responseText);
+            PosnicPro.alert(response.type, response.message);
+        });
+
+    },
+    resetPhonepePaymentGateway: function () {
+        var params = {
+            url: 'branches/resetPhonepePaymentGateway',
+            data: {}
+        };
+        PosnicPro.get(params, function (response) {
+            if (response.type === 'success') {
+                $('#phonepe_merchant_id').val(response.data['merchantId']);
+                $('#phonepe_salt_key').val(response.data['saltKey']);
+                (response.data['status'] === 'true') ? $('#phonepe_payment_gateway').prop("checked", true).attr('checked', 'checked')
+                    : $('#phonepe_payment_gateway').prop("checked", false).attr('unchecked', 'unchecked');
+            } else {
+                PosnicPro.alert(response.type, response.message);
+            }
+
+        }, function (xhr) {
+            var response = jQuery.parseJSON(xhr.responseText);
+            PosnicPro.alert(response.type, response.message);
+        });
+
+    },
+    verifyViewDangerZoneConfirmed: function () {
+        var regexPassword = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{5,20}$/;
+        var password = $('#verifyPassword').val();
+        if (password !== '' && (regexPassword.test(password))) {
+            var params = {
+                url: 'users/userVerify',
+                data: { password: password }
+            };
+            PosnicPro.get(params, function (response) {
+                if (response.type === 'success') {
+                    $('#verifyPassword').val('');
+                    PosnicPro.settings.getAllCollection();
+                } else {
+                    $('#danger_zone').hide();
+                    $('#dangerZone').show();
+                }
+                PosnicPro.alert(response.type, response.message);
+            }, function (xhr) {
+                var response = jQuery.parseJSON(xhr.responseText);
+                PosnicPro.alert(response.type, response.message);
+            });
+        }
+    },
+    emailSetting: function () {
+
+        var email = $(".email_list")
+            .map(function () {
+                return $(this).val();
+            }).get();
+        var emailValues = {
+            email_value: email
+        }
+        var formData = PosnicPro.getFormData($('#email_add'));
+        var loader = $(".loader-view-emailsetting");
+        $("<div class='loadingSpinner'></div>").appendTo(loader);
+        var params = {
+            url: 'setting/emailSetting',
+            data: JSON.stringify(Object.assign(formData, emailValues))
+        };
+        PosnicPro.put(params, function (response) {
+            if (response.type === 'success') {
+                PosnicPro.alert(response.type, response.message);
+                loader.find(".loadingSpinner:first").remove();
+            } else {
+                PosnicPro.alert(response.type, response.message);
+            }
+        }, function (xhr) {
+            var response = jQuery.parseJSON(xhr.responseText);
+            PosnicPro.alert(response.type, response.message);
+        });
+        return false;
+    },
+    kioskAccountSettings: function () {
+        const storeId = $('#kioskstore_id').val().trim();
+        // const secretKey = $('#kiosksecret_key').val().trim();
+        const loader = $(".loader-view-kiosksetting");
+
+        // Clear old loader if exists
+        loader.find(".loadingSpinner").remove();
+        $("<div class='loadingSpinner'></div>").appendTo(loader);
+
+        // Basic frontend validation
+        const isValid = /^[A-Za-z0-9]{3,6}$/.test(storeId);
+        if (!isValid) {
+            loader.find(".loadingSpinner").remove();
+            PosnicPro.alert('error', 'Store ID and Secret Key must be 3–6 letters/numbers only');
+            return false;
+        }
+
+        const data = {
+            store_id: storeId,
+            // secret_key: secretKey
+        };
+
+        const params = {
+            url: 'setting/kioskAccountSettings',
+            data: JSON.stringify(data)
+        };
+
+        PosnicPro.put(params, function (response) {
+            loader.find(".loadingSpinner").remove();
+
+            if (response.type === 'success') {
+                PosnicPro.alert('success', response.message || 'Settings saved successfully');
+            } else {
+                PosnicPro.alert('error', response.message || 'Failed to save settings');
+            }
+        }, function (xhr) {
+            loader.find(".loadingSpinner").remove();
+
+            try {
+                const response = JSON.parse(xhr.responseText);
+                PosnicPro.alert(response.type || 'error', response.message || 'Unexpected server error');
+            } catch (e) {
+                PosnicPro.alert('error', 'Unexpected error occurred');
+            }
+        });
+
+        return false;
+    },
+    kioskPrinterSettings: function () {
+        // collect all printer_name[*] values
+        const printers = $('input[name^="printer_name["]')
+            .map(function () {
+                return $.trim($(this).val());
+            })
+            .get()
+            .filter(function (v, idx, arr) {
+                return v !== '' && arr.indexOf(v) === idx;   // remove empty + duplicates
+            });
+
+        const loader = $(".loader-view-kioskprintersetting");
+
+        loader.find(".loadingSpinner").remove();
+        $("<div class='loadingSpinner'></div>").appendTo(loader);
+
+        const data = {
+            printer_names: printers        // <-- ARRAY
+        };
+
+        const params = {
+            url: 'setting/kioskPrinterSettings',
+            data: JSON.stringify(data)
+        };
+
+        PosnicPro.put(params, function (response) {
+            loader.find(".loadingSpinner").remove();
+
+            if (response.type === 'success') {
+                PosnicPro.alert('success', response.message || 'Settings saved successfully');
+            } else {
+                PosnicPro.alert('error', response.message || 'Failed to save settings');
+            }
+        }, function (xhr) {
+            loader.find(".loadingSpinner").remove();
+
+            try {
+                const response = JSON.parse(xhr.responseText);
+                PosnicPro.alert(response.type || 'error', response.message || 'Unexpected server error');
+            } catch (e) {
+                PosnicPro.alert('error', 'Unexpected error occurred');
+            }
+        });
+    },
+    verifyDeleteCollections: function () {
+        var regexPassword = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{5,20}$/;
+        if ((regexPassword.test($('#verify_password').val()))) {
+            var password = ($('#verify_password').val() !== '') ? $('#verify_password').val() : $('#user_verify_password').val();
+            var params = {
+                url: 'users/userVerify',
+                data: { password: password }
+            };
+            PosnicPro.get(params, function (response) {
+                if (response.type === 'success') {
+                    $('.hideconfirm').show();
+                    PosnicPro.collectionDeleteConfirmed();
+                }
+                PosnicPro.alert(response.type, response.message);
+            }, function (xhr) {
+                var response = jQuery.parseJSON(xhr.responseText);
+                PosnicPro.alert(response.type, response.message);
+            });
+        }
+    },
+    changeInputFieldsValueBackupTable: function (index) {
+        var field_name = $('#backuptablelist :selected').val();
+        $('.hide-recyclebin').hide();
+        $('.' + field_name + '-recyclebin').show().prop('selected', 'selected');
+        $('.' + field_name + '-recyclebin').attr('selected', 'selected');
+        var module = $(index).data('id');
+        var field_name = $('#view_' + module + '_fields :selected').text();
+        if (module === 'recycle_bin' && typeof field_name === 'string') {
+            field_name = field_name.replace(/\s+/g, ' ').trim();
+            $('#view_' + module + '_input').prop('placeholder', 'Enter ' + field_name);
+            ($(index).val() === 'branches') ? $('#hide_branch_recyclebin,#Select_backup_Branch').hide() : $('#hide_branch_recyclebin,#Select_backup_Branch').show();
+        }
+        $('#view_' + module + '_input').prop('placeholder', 'Enter ' + field_name);
+        ($(index).val() === 'branches') ? $('#hide_branch_recyclebin,#Select_backup_Branch').hide() : $('#hide_branch_recyclebin,#Select_backup_Branch').show();
+    },
+    printDetail: function () {
+        var id = PosnicPro.local.get('sid');
+        PosnicPro.get('users/' + id, function (response) {
+            if (response.type === 'success') {
+                var data = response.data;
+                $.each(data.preference, function (key, val) {
+                    $("#print_type option[value='" + val + "']").prop("selected", true);
+                });
+            } else {
+                PosnicPro.alert(response.type, response.message);
+            }
+        });
+    },
+    settingImageReadURL: function (e) {
+        $("#file").css("color", "green");
+        $('#previewing').attr('src', e.target.result);
+        $('#previewing').attr('width', '200px');
+        $('#previewing').attr('height', '200px');
+    },
+    updateCommonSetting: function () {
+        var loader = $(".loader-view-mystore");
+        $("<div class='loadingSpinner'></div>").appendTo(loader);
+        var taxDetail = $("#tax_percentage").select2("data");
+        var content = $('textarea[name="footer_print"]').html($('#footer_print').summernote('code'));
+        var contentHeader = $('textarea[name="header_print"]').html($('#header_print').summernote('code'));
+        var params = {
+            url: 'setting/updateCommonSettings',
+            data: JSON.stringify({
+                default_customer: $('#customers_default_value').val(),
+                default_supplier: $('#suppliers_default_value').val(),
+                default_tax: taxDetail[0].element.attributes['data-tax-id'].value,
+                notification_value: $('#notification_value').val(),
+                discount_percentage: $('#discount_percentage').val(),
+                discount_amount: $('#discount_amount').val(),
+                sales_prefix: $('#sales_prefix').val(),
+                receiving_prefix: $('#receiving_prefix').val(),
+                indian_gst: $('#indian_gst').val(),
+                branch_gstin_number: $('#branch_gstin_number').val(),
+                print_type: $('#print_type').val(),
+                print_size: $('#print_size').val(),
+                print_character: $('#print_character').val(),
+                header_print: contentHeader.html(),
+                footer_print: content.html(),
+                stock_log_management: ($('#stock_log_management').is(":checked")) ? 'true' : 'false',
+                stock_management: ($('#stock_management').is(":checked")) ? 'true' : 'false',
+                printall: ($('#printall').is(":checked")) ? 'true' : 'false',
+                roundOff: ($('#decimal_Round').is(":checked")) ? 'true' : 'false',
+                receipt_barcode: ($('#receipt_barcode').is(":checked")) ? 'true' : 'false',
+                sales_sms: ($('#sales_sms').is(":checked")) ? 'true' : 'false',
+                auto_sms: ($('#auto_sms').is(":checked")) ? 'true' : 'false',
+                sales_mail: ($('#sales_mail').is(":checked")) ? 'true' : 'false',
+                customer_print: ($('#customer_print').is(":checked")) ? 'true' : 'false',
+                print_url: ($('#print_url').is(":checked")) ? 'true' : 'false',
+                print_logoimg: ($('#print_logoimg').is(":checked")) ? 'true' : 'false',
+                print_sale_notes: ($('#print_sale_notes').is(":checked")) ? 'true' : 'false',
+                keyboard_view: ($('#keyboard_view').is(":checked")) ? 'true' : 'false',
+                whatsapp_receipt: ($('#whatsapp_receipt').is(":checked")) ? 'true' : 'false',
+                balance_view: true,
+                customer_checkbox: ($('#default_customer_enable_disable').is(":checked")) ? 'true' : 'false',
+                supplier_checkbox: ($('#default_supplier_enable_disable').is(":checked")) ? 'true' : 'false',
+                tax_checkbox: ($('#default_tax_enable_disable').is(":checked")) ? 'true' : 'false',
+                sale_inline_editor: ($('#sale_inline_editor').is(":checked")) ? 'true' : 'false',
+                enable_multi_payment: ($('#enable_multi_payment').is(":checked")) ? 'true' : 'false',
+                table_options: ($('#table_options').is(":checked")) ? 'true' : 'false',
+                enable_notification_reminders: ($('#enable_notification_reminders').is(":checked")) ? 'true' : 'false',
+                enable_email_reminders: ($('#enable_email_reminders').is(":checked")) ? 'true' : 'false',
+                enable_sms_reminders: ($('#enable_sms_reminders').is(":checked")) ? 'true' : 'false',
+                enable_sms_auto_send: ($('#enable_sms_auto_send').is(":checked")) ? 'true' : 'false',
+                sms_auto_send_time: $('#sms_auto_send_period').val(),
+                sms_retry_period: $('#sms_retry_period').val(),
+                sms_max_retries: $('#sms_max_retries').val(),
+                hardware_weight_machine_enable: ($('#hardware_weight_machine_enable').val() === 'true'),
+                    till_lock_enable: ($('#till_lock_enable').val() === 'true'),
+                    till_lock_idle_minutes: parseInt($('#till_lock_idle_minutes').val(), 10) || 0 ? 'true' : 'false',
+                till_lock_enable: ($('#till_lock_enable').val() === 'true') ? 'true' : 'false',
+                till_lock_idle_minutes: $('#till_lock_idle_minutes').val() || '0',
+            })
+        };
+        PosnicPro.put(params, function (response) {
+            if (response.type === 'success') {
+                let htmlView = $('#footer_print').text();
+                $('.footer-content').html(htmlView);
+                let htmlHeaderView = $('#header_print').text();
+                $('.header-content').html(htmlHeaderView);
+                $(".items_tax").val(taxDetail[0].element.attributes['data-tax-id'].value).trigger("change");
+                PosnicPro.local.set('default_tax_id', taxDetail[0].element.attributes['data-tax-id'].value);
+                var roundOff = ($('#decimal_Round').is(":checked")) ? true : false;
+                PosnicPro.roundoff = roundOff;
+                $("#tax_percentage").val(taxDetail[0].element.attributes['data-tax-id'].value).trigger("change");
+                var print_value = $('#print_type').val(); 
+                PosnicPro.local.set('print_type', print_value);
+                PosnicPro.local.set('printing_size', $('#print_size').val());
+                PosnicPro.local.set('printing_max_char', $('#print_character').val());
+                PosnicPro.local.set('print_url', response.data.url);
+                PosnicPro.settings.getDefaultCustomerDetails(response.data.customer);
+                PosnicPro.settings.getDefaultSupplierDetails(response.data.supplier);
+                var discount_percentage = $('#discount_percentage').val();
+                var discount_amount = $('#discount_amount').val();
+                PosnicPro.local.set('setting-discount-amount', discount_amount);
+                PosnicPro.local.set('setting-discount-percentage', discount_percentage);
+                if ($('#indian_gst').val() === 'gst_on') {
+                    $('.indian-gstr').show();
+                    PosnicPro.local.set('gst_action', 'enable');
+                } else {
+                    $('.indian-gstr').hide();
+                    PosnicPro.local.set('gst_action', 'disable');
+                }
+
+                if ($("#sale_inline_editor").is(":checked")) {
+                    $('.sales-inline-hide').show();
+                    PosnicPro.local.set('inline_sale', 'enable');
+                } else {
+                    $('.sales-inline-hide').hide();
+                    PosnicPro.local.set('inline_sale', 'disable');
+                }
+                if ($("#enable_multi_payment").is(":checked")) {
+                    PosnicPro.local.set('enable_multi_payment', 'enable');
+                } else {
+                    PosnicPro.local.set('enable_multi_payment', 'disable');
+                }
+                var $kotLi = $('#view_kot_page').closest('li');
+                var $kotOrderLi = $('#view_kotorder_page').closest('li');
+                var $kotHistoryLi = $('#view_kothistory_page').closest('li');
+                var $kotReportLi = $('#viewkotreport_page').closest('li');
+                var $newSaleLi = $('#view_touchsales_page').closest('li');
+                if ($("#table_options").is(":checked")) {
+                    PosnicPro.local.set('table_options', 'enable');
+                    PosnicPro.applyKotVisibility(true);
+                    $kotLi.show();
+                    $kotOrderLi.show();
+                    $kotHistoryLi.show();
+                    $kotReportLi.show();
+                    $newSaleLi.hide();
+                    $('#image_sidebar_newsale').hide();
+                    $('#kot_menu').show();
+                    $('#item_master_menu').show();
+                } else {
+                    PosnicPro.local.set('table_options', 'disable');
+                    $kotLi.hide();
+                    $kotOrderLi.hide();
+                    $kotHistoryLi.hide();
+                    $kotReportLi.hide();
+                    $newSaleLi.show();
+                    $('#kot_menu').hide();
+                    $('#item_master_menu').hide();
+                }
+
+                if ($("#keyboard_view").is(":checked")) {
+                    PosnicPro.local.set('keyboard_view', 'true');
+                    keyboard_view();
+                } else {
+                    PosnicPro.local.set('keyboard_view', 'false');
+                    keyboard_view();
+                }
+
+                PosnicPro.local.set('balance_view', 'true');
+                ($('#default_customer_enable_disable').is(":checked")) ? PosnicPro.local.set('default_customer_enable_disable', "true") : PosnicPro.local.set('default_customer_enable_disable', "false");
+                ($('#default_supplier_enable_disable').is(":checked")) ? PosnicPro.local.set('default_supplier_enable_disable', "true") : PosnicPro.local.set('default_supplier_enable_disable', "false");
+                ($('#default_tax_enable_disable').is(":checked")) ? PosnicPro.local.set('default_tax_enable_disable', "true") : PosnicPro.local.set('default_tax_enable_disable', "false");
+                localStorage.setItem("notificationrange", $('#notification_value').val());
+                $("#low_item_stock_count").text($('#notification_value').val());
+                PosnicPro.stocklogs.viewLowStockDashboard();
+                
+                // Save weight machine toggle to localStorage
+                var generalSettings = {
+                    hardware_weight_machine_enable: ($('#hardware_weight_machine_enable').val() === 'true'),
+                    till_lock_enable: ($('#till_lock_enable').val() === 'true'),
+                    till_lock_idle_minutes: parseInt($('#till_lock_idle_minutes').val(), 10) || 0
+                };
+                PosnicPro.local.set('general_settings', JSON.stringify(generalSettings));
+            }
+            PosnicPro.alert(response.type, response.message);
+            loader.find(".loadingSpinner:first").remove();
+        }, function (xhr) {
+            var response = jQuery.parseJSON(xhr.responseText);
+            PosnicPro.alert(response.type, response.message);
+        });
+    },
+    changeBranch: function (branch_no) {
+        if (branch_no === 'addbranch') {
+            var branch_id_set = PosnicPro.local.get('branch_id_set');
+            $("#branch_name option[value='" + branch_id_set + "']").prop("selected", "selected");
+            hasher.setHash('branches/new/addbranch');
+        } else {
+            var params = {
+                url: 'users/changeBranch',
+                data: JSON.stringify({ branch_no: branch_no })
+            };
+            PosnicPro.post(params, function (response) {
+                if (response.type === 'Success') {
+                    $("#branch_name option[value='" + branch_no + "']").prop("selected", "selected");
+                    PosnicPro.local.set("branch_id_set", branch_no);
+                    PosnicPro.settings.viewSettings(branch_no);
+                }
+            }, function (xhr) {
+                var response = jQuery.parseJSON(xhr.responseText);
+                PosnicPro.alert(response.type, response.message);
+            });
+        }
+    },
+    getRestoreAccess: function () {
+        var module = $('#backuptablelist :selected').val();
+        var restore = PosnicPro[module + "_checkbox"];
+        if (restore.length > 0) {
+            $('#restoreModal').modal('show');
+            $('.restoreCountValue').html(restore.length);
+        } else {
+            PosnicPro.alert('warning', 'Please selected atleast one row!!.');
+        }
+    },
+    setRestoreAccess: function () {
+        var module = $('#backuptablelist :selected').val();
+        var restore = PosnicPro[module + "_checkbox"];
+        var arr = [];
+        var obj = {};
+        $(restore).each(function (key, id) {
+            obj = id;
+            arr.push(obj);
+        });
+        var params = {
+            url: 'setting/restoreBackup',
+            data: JSON.stringify({ data: arr })
+        };
+        PosnicPro.post(params, function (response) {
+            if (response.type === 'success') {
+                PosnicPro.settings.settingsTable();
+            }
+            $('#restoreModal').modal('hide');
+            $('.restoreCountValue').html('');
+            $('.showing-hide-show-' + module).hide();
+            PosnicPro[module + "_checkbox"] = [];
+            PosnicPro.alert(response.type, response.message);
+        }, function (xhr) {
+            var response = jQuery.parseJSON(xhr.responseText);
+            PosnicPro.alert(response.type, response.message);
+        });
+    },
+    listBranchName: function (id) {
+        var params = {
+            url: 'users/changeBranch',
+            data: JSON.stringify({ branch_no: id })
+        };
+        PosnicPro.post(params, function (response) {
+            if (response.type === 'success') {
+                $("#v-pills-dashboard-tab,#v-pills-sales-tab,#v-pills-inventory-tab,#v-pills-purchase-tab,#v-pills-customer-tab,#v-pills-report-tab,#v-pills-manage-tab,#v-pills-branch-tab").removeClass("active");
+                PosnicPro.getBranchTaxList();
+                PosnicPro.local.set("branch_id_set", id);
+                //PosnicPro.users.emptyRegisterbrachListuser(id);
+                var branchOption = [];
+                branchOption.push(id);
+                let data = response.data;
+                $('.display-current-branch').select2('val', [branchOption]);
+                PosnicPro.local.set('branchname', data.branch_name);
+                PosnicPro.local.set('branchemail', data.branch_email);
+                PosnicPro.local.set('branchphone', data.branch_phone);
+                PosnicPro.local.set('branchaddress', data.branch_address);
+                PosnicPro.local.set('branchimage', data.branch_logo);
+                var branchRecord = [];
+                branchRecord.push({ name: data.branch_name, phone: data.branch_phone, email: data.branch_email, address: data.branch_address, image: data.branch_logo });
+                db.customerDisplay.put({ id: '2', 'clear': 'no', 'get': 'no', branch: branchRecord });
+                var userid = PosnicPro.local.get('userid');
+                db.currentbranch.put({ id: '1', branch_id: id, branch_name: data.branch_name, user_id: userid });
+                PosnicPro.settings.viewSettings(id);
+                PosnicPro.items.itemClearForm();
+                PosnicPro.categories.categoryClearForm();
+                PosnicPro.variants.variantClearForm();
+                PosnicPro.suppliers.supplierClearForm();
+                PosnicPro.customers.customerClearForm();
+                PosnicPro.tax.taxClearForm();
+                PosnicPro.taxgroup.taxgroupClearForm();
+                PosnicPro.users.userClearForm();
+                PosnicPro.branches.branchClearform();
+                PosnicPro.expenses.expenseClearForm();
+                PosnicPro.sales.clear.cartItems();
+                PosnicPro.receivings.resetReceivingsForm();
+                setLocalValue();
+                
+                // Check if there's an open register for this branch in database
+                var registerParams = {
+                    url: 'branches/userRegisterBranchSelect',
+                    data: {id: id}
+                };
+                PosnicPro.get(registerParams, function (registerResponse) {
+                    if (registerResponse.type === 'success' && registerResponse.data.open_register && registerResponse.data.open_register.register_status === 'Opened') {
+                        // Load existing open register
+                        PosnicPro.local.set('cash_register_id', registerResponse.data.open_register.cash_register_id);
+                        PosnicPro.local.set('register_id', registerResponse.data.open_register.register_id);
+                        PosnicPro.local.set('register_name', registerResponse.data.open_register.register_name);
+                        PosnicPro.local.set('userRegisterStatus', 'Open');
+                        PosnicPro.local.set('branch_has_no_registers', '');
+                        
+                        db.currentregister.put({
+                            id: '1', 
+                            register_id: registerResponse.data.open_register.register_id, 
+                            register_name: registerResponse.data.open_register.register_name, 
+                            register_status: 'open'
+                        });
+                        
+                        PosnicPro.alert('success', 'Successfully Changed Branch - Continuing with open register: ' + registerResponse.data.open_register.register_name);
+                    } else {
+                        // No open register - clear register data
+                        PosnicPro.local.set('userRegisterStatus', 'Closed');
+                        PosnicPro.local.set('cash_register_id', '');
+                        PosnicPro.local.set('register_id', '');
+                        PosnicPro.local.set('register_name', '');
+                        PosnicPro.local.set('branch_has_no_registers', '');
+                        
+                        db.currentregister.put({id: '1', register_id: '', register_name: '', register_status: 'close'});
+                        
+                        PosnicPro.alert('success', 'Successfully Changed Branch - Please select a register before creating sales');
+                    }
+                });
+                
+                PosnicPro.stocklogs.viewLowStockDashboard();
+                PosnicPro.sales.itemsMenu.onlineProductList();
+                $("#dashboardModule a").addClass('active');
+                $("#view_config_page").removeClass('active');
+                $("#v-pills-dashboard-tab").addClass('active');
+                $("#v-pills-dashboard-tab").addClass('active show');
+                hasher.setHash('branches');
+                PosnicPro.alert('success', 'Successfully Changed Branch');
+            }
+            return false;
+        }, function (xhr) {
+            var response = jQuery.parseJSON(xhr.responseText);
+            PosnicPro.alert(response.type, response.message);
+        });
+    },
+    removePopupBranchImage: function () {
+        $('#deleteImagePopup').modal('show');
+    },
+    removeBranchImage: function () {
+        var image_value = $('#setting_logo_value').val();
+        var params = {
+            url: 'setting/branchImageDelete',
+            data: JSON.stringify({ data: image_value })
+        };
+        PosnicPro.delete(params, function (response) {
+            if (response.type === 'success') {
+                var image_path = 'static/images/default/store.png';
+                $('#previewing,#store_image').attr('src', image_path);
+                $('#setting_image_value').val('');
+                $('#deleteImagePopup').modal('hide');
+            }
+            PosnicPro.alert(response.type, response.message);
+        }, function (xhr) {
+            var response = jQuery.parseJSON(xhr.responseText);
+            PosnicPro.alert(response.type, response.message);
+        });
+    },
+    defaultCustomerData: function (checked) {
+        if (checked) {
+            $("#default_customer_enable_disable").prop("checked", true);
+            $('#default_customer').removeAttr('disabled');
+            $(".customer-text-disable").css("color", '#20a83b');
+            $(".customer-text-enable").css("color", '#141d46');
+        } else {
+            $("#default_customer_enable_disable").prop("checked", false);
+            $('#default_customer').attr('disabled', 'disabled');
+            $(".customer-text-disable").css("color", '#141d46');
+            $(".customer-text-enable").css("color", '#20a83b');
+        }
+    },
+    defaultSupplierData: function (checked) {
+        if (checked) {
+            $("#default_supplier_enable_disable").prop("checked", true);
+            $('#default_supplier').removeAttr('disabled');
+            $(".supplier-text-disable").css("color", '#20a83b');
+            $(".supplier-text-enable").css("color", '#141d46');
+        } else {
+            $("#default_supplier_enable_disable").prop("checked", false);
+            $('#default_supplier').attr('disabled', 'disabled');
+            $(".supplier-text-disable").css("color", '#141d46');
+            $(".supplier-text-enable").css("color", '#20a83b');
+        }
+    },
+    defaultTaxData: function (checked) {
+        if (checked) {
+            $("#default_tax_enable_disable").prop("checked", true);
+            $('#tax_percentage').removeAttr('disabled');
+            $(".tax-text-disable").css("color", '#20a83b');
+            $(".tax-text-enable").css("color", '#141d46');
+        } else {
+            $("#default_tax_enable_disable").prop("checked", false);
+            $('#tax_percentage').attr('disabled', 'disabled');
+            $(".tax-text-disable").css("color", '#141d46');
+            $(".tax-text-enable").css("color", '#20a83b');
+        }
+    },
+    loadSelectSettingCountry: function () {
+        var countrySelect = $('.setCountry');
+        var params = {
+            url: 'setting/getJSONCountry',
+            data: { name: 'countries' }
+        };
+        PosnicPro.get(params, function (response) {
+            countrySelect.empty();
+            suggestions: $.map(response.data['countries'], function (dataItem) {
+                var option;
+                option += '<option value="' + dataItem.value + '" data-setting-id="' + dataItem.id + '">' + dataItem.value + ' </option>';
+                countrySelect.append(option).select2();
+            });
+            countrySelect.val(PosnicPro.local.get("country_setting")).trigger('change.select2');
+        }, function (xhr) {
+            var response = jQuery.parseJSON(xhr.responseText);
+            PosnicPro.alert(response.type, response.message);
+        });
+    },
+    loadSelectSettingState: function (id) {
+        var stateSelect = $('#setting_state');
+        var params = {
+            url: 'setting/getJSONState',
+            data: { id: id }
+        };
+        PosnicPro.get(params, function (response) {
+            stateSelect.empty();
+            suggestions: $.map(response.data['stateJsonArray'], function (dataItem) {
+                var options;
+                options += '<option value="' + dataItem + '">' + dataItem + ' </option>';
+                stateSelect.append(options).trigger('change');
+            });
+            if (PosnicPro.local.get("country_setting") === PosnicPro.local.get("country_value")) {
+                stateSelect.val(PosnicPro.local.get('state_setting')).trigger('change.select2');
+            } else {
+                $('#setting_state option:eq(0)').prop('selected', true);
+            }
+            window.intlTelInputGlobals.getInstance(document.querySelector("#store_telephone")).setCountry(response.data['countrySortName']);
+        }, function (xhr) {
+            var response = jQuery.parseJSON(xhr.responseText);
+            PosnicPro.alert(response.type, response.message);
+        });
+    },
+    loadSelectSettingCurrency: function () {
+        var currencySelect = $('#currency_setting');
+        var params = {
+            url: 'setting/getJSONCurrency'
+        };
+        PosnicPro.get(params, function (response) {
+            currencySelect.empty();
+            suggestions: $.map(response.data['currency'], function (dataItem) {
+                var option;
+                option += '<option value="' + dataItem.value + '" data-currency-id="' + dataItem.id + '" data-currency-text="' + dataItem.text + '" data-currency-symbol="' + dataItem.symbol + '">' + dataItem.value + ' </option>';
+                currencySelect.append(option).trigger('change');
+            });
+            currencySelect.val(PosnicPro.local.get("currency_setting")).trigger('change.select2');
+            currencySelect.trigger({
+                type: 'select2:select',
+                params: {
+                    data: response
+                }
+            }).on('select2:select', function (e) {
+                let data = e.params.data;
+                $('#currencyText').val(data.element.attributes['data-currency-symbol'].value);
+                $('#currencyTextname').val(data.element.attributes['data-currency-text'].value);
+                var currencyDataOPtion = "";
+                $('#currency_type').empty();
+                currencyDataOPtion += "<option id=" + data.element.attributes['data-currency-text'].value + '" value="' + data.element.attributes['data-currency-text'].value + '" selected>Text( ' + data.element.attributes['data-currency-text'].value + ' )</option>' +
+                    " <option id=" + data.element.attributes['data-currency-symbol'].value + '" value="' + data.element.attributes['data-currency-symbol'].value + '">Symbol( ' + data.element.attributes['data-currency-symbol'].value + ' )</option>';
+                $('#currency_type').append(currencyDataOPtion);
+            });
+        }, function (xhr) {
+            var response = jQuery.parseJSON(xhr.responseText);
+            PosnicPro.alert(response.type, response.message);
+        });
+    },
+    timeZone: function () {
+        var timezoneSelect = $('#time_zone');
+        var params = {
+            url: 'setting/getJSONTimeZone'
+        };
+        PosnicPro.get(params, function (response) {
+            timezoneSelect.empty();
+            suggestions: $.map(response.data, function (dataItem) {
+                var options;
+                options += '<option value="' + dataItem.text + '" data-timezone-name="' + dataItem.text + '">' + dataItem.value + ' </option>';
+                timezoneSelect.append(options).trigger('change');
+            });
+            let timezone = PosnicPro.local.get('timezone');
+            timezoneSelect.val(timezone).trigger('change.select2');
+        }, function (xhr) {
+            var response = jQuery.parseJSON(xhr.responseText);
+            PosnicPro.alert(response.type, response.message);
+        });
+    },
+    paymentKey: function () {
+        var loader = $(".loader-qrsetting");
+        $("<div class='loadingSpinner'></div>").appendTo(loader);
+        var params = {
+            url: 'setting/paymentsKey',
+            data: JSON.stringify({
+                key: $('#site_key').val(),
+                secret: $('#secret_key').val(),
+                status: ($('#payment_gateway').is(":checked")) ? 'true' : 'false'
+            })
+        };
+        PosnicPro.post(params, function (response) {
+            if (response.type === 'success') {
+                $('#payment_razorpay').prop('disabled', true);
+                localStorage.setItem("payment_gateway", response.data);
+                (response.data === 'true') ? $('.qr_btn').show() : $('.qr_btn').hide();
+                loader.find(".loadingSpinner:first").remove();
+            } else {
+                $('#payment_razorpay').prop('disabled', false);
+            }
+            PosnicPro.alert(response.type, response.message);
+        }, function (xhr) {
+            var response = jQuery.parseJSON(xhr.responseText);
+            PosnicPro.alert(response.type, response.message);
+        });
+    },
+    toggleInputs: function () {
+        const isChecked = $('#enable_sms_auto_send').is(':checked');
+        $('#sms_auto_send_time, #sms_retry_period, #sms_max_retries').prop('disabled', !isChecked);
+
+    },
+
+    phonepePaymentKey: function () {
+        var loader = $(".loader-qrsetting");
+        $("<div class='loadingSpinner'></div>").appendTo(loader);
+        var params = {
+            url: 'setting/phonepepaymentsKey',
+            data: JSON.stringify({
+                merchantId: $('#phonepe_merchant_id').val(),
+                saltKey: $('#phonepe_salt_key').val(),
+                status: ($('#phonepe_payment_gateway').is(":checked")) ? 'true' : 'false'
+            })
+        };
+        PosnicPro.post(params, function (response) {
+            if (response.type === 'success') {
+                PosnicPro.alert(response.type, response.message);
+                loader.find(".loadingSpinner:first").remove();
+            } else {
+                PosnicPro.alert(response.type, response.message);
+            }
+        }, function (xhr) {
+            var response = jQuery.parseJSON(xhr.responseText);
+            PosnicPro.alert(response.type, response.message);
+        });
+
+    }
+};
+PosnicPro.tax = {
+    triggerModules: function () {
+        PosnicPro.showAddModal('tax');
+        $('#tax_id').val('');
+        if (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') {
+            $('#tax-heading').text('புதிய');
+            $('#tax_text_change').text('சேமி');
+        } else {
+            $('#tax-heading').html('Add');
+            $('#tax_text_change').text('Save');
+        }
+        var loader = $(".loader-tax");
+        loader.find(".loadingSpinner:first").remove();
+        $('#tax_reset').show();
+        $('.tax_edit_reset').hide();
+    },
+    triggerTaxEdit: function (id) {
+        var module = $('#setting_tax_edit_' + id);
+        PosnicPro.showAddModal('tax');
+        $('#tax_id').val(id);
+        $('#tax_name').val(module.data('taxname'));
+        $('#tax_value').val(module.data('taxvalue'));
+        (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('#tax-heading').text('திருத்தப்பட்ட') : $('#tax-heading').html('Edit');
+        if (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') {
+            $('#tax-heading').text('திருத்தப்பட்ட');
+            $('#tax_text_change').text('புதுப்பி');
+        } else {
+            $('#tax-heading').html('Edit');
+            $('#tax_text_change').text('Update');
+        }
+        $('#tax_reset').hide();
+        $('.tax_edit_reset').show();
+        $('.tax_edit_reset').attr("id", id);
+        $('.mobile_tooltip').tooltip('hide');
+    },
+    triggerTaxDelete: function (id) {
+        var module = $('#setting_tax_delete_' + id);
+        $('#tax_id').val(id);
+        $('#tax_name').val(module.data('taxname'));
+        $('#tax_value').val(module.data('taxvalue'));
+        PosnicPro.tax.deleteTaxData(id);
+    },
+    taxTable: function () {
+        var loader = $(".loader-table-tax");
+        $("<div class='loadingSpinner'></div>").appendTo(loader);
+        PosnicPro.HideSideBarModal();
+        var table = $('#view_tax');
+        var data = {
+            tax_group: 'no'
+        };
+        var params = {
+            url: 'setting/getTaxAll',
+            data: data
+        };
+        PosnicPro.get(params, function (response) {
+            if (response.type === 'success') {
+
+                table.children('tbody').text('');
+                data = response.data;
+                let currency = PosnicPro.local.get('currencySign');
+                for (var i = 0; i < data.length; i++) {
+                    let row = data[i];
+                    let edit = '<a href="#/settings/tax/' + row.tax_id + '/edit" id="setting_tax_edit_' + row.tax_id + '" data-toggle="tooltip" title="Edit Tax" class="btn btn-primary-rgba mb-1 mr-1 mobile_tooltip" data-module = "branch" data-access = "write" data-taxname="' + row.tax_name + '" data-taxvalue="' + row.tax_value + '" ><i class="feather icon-edit"></i></a>';
+                    let deleted = '<a href="#/settings/tax/' + row.tax_id + '/delete" id="setting_tax_delete_' + row.tax_id + '" data-toggle="tooltip" title="Delete Tax" class="btn btn-danger-rgba mb-1 mr-1 mobile_tooltip" data-module = "branch" data-access = "delete" data-taxname="' + row.tax_name + '" data-taxvalue="' + row.tax_value + '" ><i class="feather icon-trash"></i></a>';
+                    let trow = '<tr> <td scope="row" width="10%">' + (i + 1) + '</td>  <td width="40%">' + row.tax_name + '</td> <td width="10%" class="text-right">' + currency + '&nbsp;<span class="number">' + row.tax_value + '</span></td><td width="40%" class="text-center">' + edit + ' ' + deleted + '</td> </tr>';
+                    $('#view_tax').children('tbody').append(trow);
+                }
+                $('span.number').number(true, 2);
+                loader.find(".loadingSpinner:first").remove();
+            } else {
+                PosnicPro.alert(response.type, response.message);
+            }
+        }, function (xhr) {
+            var response = jQuery.parseJSON(xhr.responseText);
+            PosnicPro.alert(response.type, response.message);
+        });
+    },
+    addTaxRates: function () {
+        if ($('#tax_name').val() !== '' && $('#tax_value').val() !== '') {
+            var loader = $(".loader-tax");
+            $("<div class='loadingSpinner'></div>").appendTo(loader);
+            var params = {
+                url: 'setting/addTax',
+                data: JSON.stringify(PosnicPro.getFormData($('#tax_add_form')))
+            };
+            PosnicPro.post(params, function (response) {
+                if (response.type === 'success') {
+                    $("#tax_add_form").trigger("reset");
+                    $('#tax_name').focus();
+                    PosnicPro.tax.taxTable();
+                    PosnicPro.getBranchTaxList();
+                    hasher.setHash('settings');
+                    loader.find(".loadingSpinner:first").remove();
+                }
+                PosnicPro.alert(response.type, response.message);
+            }, function (xhr) {
+                var response = jQuery.parseJSON(xhr.responseText);
+                PosnicPro.alert(response.type, response.message);
+            });
+        }
+    },
+    editTaxRates: function () {
+        var loader = $(".loader-tax");
+        $("<div class='loadingSpinner'></div>").appendTo(loader);
+        var params = {
+            url: 'setting/editTax',
+            data: JSON.stringify(PosnicPro.getFormData($('#tax_add_form')))
+        };
+        PosnicPro.put(params, function (response) {
+            if (response.type === 'success') {
+                PosnicPro.tax.taxTable();
+                PosnicPro.getBranchTaxList();
+                $(".infobar-settings-sidebar-overlay").css({ "background": "transparent", "position": "initial" });
+                $("#infobar-settings-sidebar-tax").removeClass("sidebarshow");
+                hasher.setHash('settings');
+            }
+            loader.find(".loadingSpinner:first").remove();
+            PosnicPro.alert(response.type, response.message);
+        }, function (xhr) {
+            var response = jQuery.parseJSON(xhr.responseText);
+            PosnicPro.alert(response.type, response.message);
+        });
+        $('.mobile_tooltip').tooltip('hide');
+    },
+    resetEditButton: function (id) {
+        PosnicPro.tax.triggerTaxEdit(id);
+    },
+    deleteTaxData: function (id) {
+        if (PosnicPro.deleteConfirmation) {
+            PosnicPro.callbackRegistry = {};
+            PosnicPro.delete('setting/deleteTax?id=' + id, function (response) {
+                if (response.type === 'success') {
+                    PosnicPro.deleteConfirmation = false;
+                    $("#tax_add_form").trigger("reset");
+                    PosnicPro.tax.taxTable();
+                    PosnicPro.getBranchTaxList();
+                    $(".infobar-settings-sidebar-overlay").css({ "background": "transparent", "position": "initial" });
+                    $("#infobar-settings-sidebar-tax").removeClass("sidebarshow");
+                    hasher.setHash('settings');
+                }
+                PosnicPro.alert(response.type, response.message);
+            });
+        } else {
+            PosnicPro.callbackRegistry = {
+                name: 'deleteTaxData',
+                arguments: id
+            };
+            $('#delete_tax_modal').modal('show');
+            $('#show_hide_tax').show();
+            $('#show_hide_taxgroup').hide();
+        }
+        $('.mobile_tooltip').tooltip('hide');
+    },
+    /*delete tax confirmation*/
+    deleteTaxConfirmed: function () {
+        $('#delete_tax_modal').modal('hide');
+        PosnicPro.deleteConfirmation = true;
+        window['PosnicPro']['tax']['' + PosnicPro.callbackRegistry.name](PosnicPro.callbackRegistry.arguments);
+    },
+    taxClearForm: function () {
+        $("#tax_add_form").trigger("reset");
+        $('.error_tax').css('display', 'none');
+    }
+
+};
+PosnicPro.unit = {
+    triggerModules: function () {
+        PosnicPro.showAddModal('unit');
+        $('#unit_id').val('');
+        $('#unit_name').val('');
+        $('#unit_value').val('');
+        $('.error_unit').css('display', 'none');
+        if (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') {
+            $('#unit-heading').text('புதிய');
+            $('#unit_text_change').text('சேமி');
+        } else {
+            $('#unit-heading').html('Add');
+            $('#unit_text_change').text('Save');
+        }
+        var loader = $(".loader-tax");
+        loader.find(".loadingSpinner:first").remove();
+        $('#unit_reset').show();
+        $('.unit_edit_reset').hide();
+    },
+    unitTable: function () {
+        var table = $('#view_unit');
+        var params = {
+            url: 'setting/getUnitAll'
+        };
+        PosnicPro.get(params, function (response) {
+            if (response.type === 'success') {
+                table.children('tbody').text('');
+                var data = response.data;
+                for (var i = 0; i < data.length; i++) {
+                    let row = data[i];
+                    let edit = '<a href="#/settings/unit/' + row.unit_id + '/edit" id="setting_unit_edit_' + row.unit_id + '" data-toggle="tooltip" title="Edit Unit" class="btn btn-primary-rgba mb-1 mr-1 mobile_tooltip" data-module = "branch" data-access = "write" data-unitname="' + row.unit_name + '" data-unitvalue="' + row.unit_value + '" ><i class="feather icon-edit"></i></a>';
+                    let deleted = '<a href="#/settings/unit/' + row.unit_id + '/delete" id="setting_unit_delete_' + row.unit_id + '" data-toggle="tooltip" title="Delete Unit" class="btn btn-danger-rgba mb-1 mr-1 mobile_tooltip" data-module = "branch" data-access = "delete" data-unitname="' + row.unit_name + '" data-unitvalue="' + row.unit_value + '" ><i class="feather icon-trash"></i></a>';
+                    let trow = '<tr> <td scope="row" width="10%">' + (i + 1) + '</td>  <td width="40%">' + row.unit_name + '</td> <td width="10%" class="text-right"><span>' + row.unit_value + '</span></td><td width="40%" class="text-center">' + edit + ' ' + deleted + '</td> </tr>';
+                    $('#view_unit').children('tbody').append(trow);
+                }
+                $('span.number').number(true, 2);
+            } else {
+                PosnicPro.alert(response.type, response.message);
+            }
+        }, function (xhr) {
+            var response = jQuery.parseJSON(xhr.responseText);
+            PosnicPro.alert(response.type, response.message);
+        });
+    },
+    triggerUnitEdit: function (id) {
+        var module = $('#setting_unit_edit_' + id);
+        PosnicPro.showAddModal('unit');
+        $('#unit_id').val(id);
+        $('#unit_name').val(module.data('unitname'));
+        $('#unit_value').val(module.data('unitvalue'));
+        (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('#tax-heading').text('திருத்தப்பட்ட') : $('#tax-heading').html('Edit');
+        if (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') {
+            $('#unit-heading').text('திருத்தப்பட்ட');
+            $('#unit_text_change').text('புதுப்பி');
+        } else {
+            $('#unit-heading').html('Edit');
+            $('#unit_text_change').text('Update');
+        }
+        $('#unit_reset').hide();
+        $('.unit_edit_reset').show();
+        $('.unit_edit_reset').attr("id", id);
+        $('.mobile_tooltip').tooltip('hide');
+    },
+    editUnitRates: function () {
+        var params = {
+            url: 'setting/editUnit',
+            data: JSON.stringify(PosnicPro.getFormData($('#unit_add_form')))
+        };
+        PosnicPro.put(params, function (response) {
+            if (response.type === 'success') {
+                $("#unit_add_form").trigger("reset");
+                PosnicPro.unit.unitTable();
+                $(".infobar-settings-sidebar-overlay").css({ "background": "transparent", "position": "initial" });
+                $("#infobar-settings-sidebar-tax").removeClass("sidebarshow");
+                PosnicPro.items.loadSelectUnit();
+                hasher.setHash('settings');
+            }
+            PosnicPro.alert(response.type, response.message);
+        }, function (xhr) {
+            var response = jQuery.parseJSON(xhr.responseText);
+            PosnicPro.alert(response.type, response.message);
+        });
+        $('.mobile_tooltip').tooltip('hide');
+    },
+    triggerUnitDelete: function (id) {
+        var module = $('#setting_unit_delete_' + id);
+        $('#unit_id').val(id);
+        $('#unit_name').val(module.data('unitname'));
+        $('#unit_value').val(module.data('unitvalue'));
+        PosnicPro.unit.deleteUnitData(id);
+    },
+    deleteUnitData: function (id) {
+        if (PosnicPro.deleteConfirmation) {
+            PosnicPro.callbackRegistry = {};
+            PosnicPro.delete('setting/deleteUnit?id=' + id, function (response) {
+                if (response.type === 'success') {
+                    PosnicPro.deleteConfirmation = false;
+                    $("#unit_add_form").trigger("reset");
+                    PosnicPro.unit.unitTable();
+                    PosnicPro.items.loadSelectUnit();
+                    $(".infobar-settings-sidebar-overlay").css({ "background": "transparent", "position": "initial" });
+                    $("#infobar-settings-sidebar-tax").removeClass("sidebarshow");
+                    hasher.setHash('settings');
+                }
+                PosnicPro.alert(response.type, response.message);
+            });
+        } else {
+            PosnicPro.callbackRegistry = {
+                name: 'deleteUnitData',
+                arguments: id
+            };
+            $('#delete_unit_modal').modal('show');
+            $('#show_hide_unit').show();
+            hasher.setHash('settings');
+        }
+        $('.mobile_tooltip').tooltip('hide');
+    },
+    deleteUnitConfirmed: function () {
+        $('#delete_unit_modal').modal('hide');
+        PosnicPro.deleteConfirmation = true;
+        window['PosnicPro']['unit']['' + PosnicPro.callbackRegistry.name](PosnicPro.callbackRegistry.arguments);
+    },
+    addUnitRates: function () {
+        if ($('#unit_name').val() !== '' && $('#unit_value').val() !== '') {
+            var params = {
+                url: 'setting/addUnit',
+                data: JSON.stringify(PosnicPro.getFormData($('#unit_add_form')))
+            };
+            PosnicPro.post(params, function (response) {
+                if (response.type === 'success') {
+                    $("#unit_add_form").trigger("reset");
+                    $('#unit_name').focus();
+                    PosnicPro.unit.unitTable();
+                    PosnicPro.items.loadSelectUnit();
+                    hasher.setHash('settings');
+                }
+                PosnicPro.alert(response.type, response.message);
+            }, function (xhr) {
+                var response = jQuery.parseJSON(xhr.responseText);
+                PosnicPro.alert(response.type, response.message);
+            });
+        }
+    },
+    resetEditButton: function (id) {
+        PosnicPro.unit.triggerUnitEdit(id);
+    },
+    unitClearForm: function () {
+        $("#unit_add_form").trigger("reset");
+        $('.error_unit').css('display', 'none');
+    }
+};
+PosnicPro.denom = {
+    triggerModules: function () {
+        PosnicPro.showAddModal('denomcash');
+        $('#denom_id').val('');
+        if (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') {
+            $('#denom-heading').text('புதிய');
+            $('#denom_text_change').text('சேமி');
+        } else {
+            $('#denom-heading').html('Add');
+            $('#denom_text_change').text('Save');
+        }
+        var loader = $(".loader-tax");
+        loader.find(".loadingSpinner:first").remove();
+        $('#denom_reset').show();
+        $('.denom_edit_reset').hide();
+    },
+    triggerTaxEdit: function (id) {
+        var module = $('#setting_denom_edit_' + id);
+        PosnicPro.showAddModal('denomcash');
+        $('#denom_id').val(id);
+        $('#denom_value').val(module.data('denomvalue'));
+        (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('#tax-heading').text('திருத்தப்பட்ட') : $('#tax-heading').html('Edit');
+        if (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') {
+            $('#denom-heading').text('திருத்தப்பட்ட');
+            $('#denom_text_change').text('புதுப்பி');
+        } else {
+            $('#denom-heading').html('Edit');
+            $('#denom_text_change').text('Update');
+        }
+        $('#denom_reset').hide();
+        $('.denom_edit_reset').show();
+        $('.denom_edit_reset').attr("id", id);
+        $('.mobile_tooltip').tooltip('hide');
+    },
+    triggerTaxDelete: function (id) {
+        PosnicPro.denom.deleteDenomField(id);
+    },
+    denomTable: function () {
+        var loader = $(".loader-table-tax");
+        $("<div class='loadingSpinner'></div>").appendTo(loader);
+        PosnicPro.HideSideBarModal();
+        var table = $('#view_denom');
+        var params = {
+            url: 'setting/getDenomAll'
+        };
+        PosnicPro.get(params, function (response) {
+            if (response.type === 'success') {
+                table.children('tbody').text('');
+                var data = response.data;
+                let currency = PosnicPro.local.get('currencySign');
+                // Reset cached sale denomination list before repopulating
+                if (PosnicPro.sales) {
+                    PosnicPro.sales.SaleDenomination = [];
+                }
+                for (var i = 0; i < data.length; i++) {
+                    let row = data[i];
+                    let edit = '<a href="#/settings/denom/' + row.denom_id + '/edit" id="setting_denom_edit_' + row.denom_id + '" data-toggle="tooltip" title="Edit Denom" class="btn btn-primary-rgba mobile_tooltip mb-1 mr-1" data-module = "branch" data-access = "write" data-denomvalue="' + row.denom_value + '" ><i class="feather icon-edit"></i></a>';
+                    let deleted = '<a href="#/settings/denom/' + row.denom_id + '/delete" id="setting_denom_delete_' + row.denom_id + '" data-toggle="tooltip" title="Delete Denom" class="btn btn-danger-rgba mobile_tooltip mb-1 mr-1" data-module = "branch" data-access = "delete" data-denomvalue="' + row.denom_value + '" ><i class="feather icon-trash"></i></a>';
+                    let trow = '<tr> <td scope="row" width="10%">' + (i + 1) + '</td><td width="10%" class="text-right">' + currency + '&nbsp;<span class="number">' + row.denom_value + '</span></td><td width="40%" class="text-center">' + edit + ' ' + deleted + '</td> </tr>';
+                    $('#view_denom').children('tbody').append(trow);
+                    PosnicPro.sales.SaleDenomination[i] = {
+                        id: row.denom_id,
+                        amount: row.denom_value
+                    };
+
+                }
+                $('span.number').number(true, 2);
+                loader.find(".loadingSpinner:first").remove();
+            } else {
+                PosnicPro.alert(response.type, response.message);
+            }
+        }, function (xhr) {
+            var response = jQuery.parseJSON(xhr.responseText);
+            PosnicPro.alert(response.type, response.message);
+        });
+    },
+    addDenomField: function () {
+        if ($('#denom_value').val() !== '') {
+            var loader = $(".loader-tax");
+            $("<div class='loadingSpinner'></div>").appendTo(loader);
+            var params = {
+                url: 'setting/addDenomData',
+                data: JSON.stringify(PosnicPro.getFormData($('#denom_add_form')))
+            };
+            PosnicPro.post(params, function (response) {
+                if (response.type === 'success') {
+                    PosnicPro.denom.denomClearForm();
+                    PosnicPro.denom.denomTable();
+                    hasher.setHash('settings');
+                    loader.find(".loadingSpinner:first").remove();
+                }
+                PosnicPro.alert(response.type, response.message);
+            }, function (xhr) {
+                var response = jQuery.parseJSON(xhr.responseText);
+                PosnicPro.alert(response.type, response.message);
+            });
+        }
+    },
+    editDenomField: function () {
+        var loader = $(".loader-tax");
+        $("<div class='loadingSpinner'></div>").appendTo(loader);
+        var params = {
+            url: 'setting/editDenomForm',
+            data: JSON.stringify(PosnicPro.getFormData($('#denom_add_form')))
+        };
+        PosnicPro.put(params, function (response) {
+            if (response.type === 'success') {
+                PosnicPro.denom.denomTable();
+                PosnicPro.getBranchTaxList();
+                $(".infobar-settings-sidebar-overlay").css({ "background": "transparent", "position": "initial" });
+                $("#infobar-settings-sidebar-tax").removeClass("sidebarshow");
+                hasher.setHash('settings');
+            }
+            loader.find(".loadingSpinner:first").remove();
+            PosnicPro.alert(response.type, response.message);
+            $('.mobile_tooltip').tooltip('hide');
+        }, function (xhr) {
+            var response = jQuery.parseJSON(xhr.responseText);
+            PosnicPro.alert(response.type, response.message);
+        });
+    },
+    deleteDenomField: function (id) {
+        if (PosnicPro.deleteConfirmation) {
+            PosnicPro.callbackRegistry = {};
+            PosnicPro.delete('setting/deleteDenom?id=' + id, function (response) {
+                if (response.type === 'success') {
+                    PosnicPro.deleteConfirmation = false;
+                    $("#denom_add_form").trigger("reset");
+                    PosnicPro.denom.denomTable();
+                    PosnicPro.getBranchTaxList();
+                    $(".infobar-settings-sidebar-overlay").css({ "background": "transparent", "position": "initial" });
+                    $("#infobar-settings-sidebar-tax").removeClass("sidebarshow");
+                    hasher.setHash('settings');
+                }
+                PosnicPro.alert(response.type, response.message);
+            });
+        } else {
+            PosnicPro.callbackRegistry = {
+                name: 'deleteDenomField',
+                arguments: id
+            };
+            $('#delete_denom_modal').modal('show');
+        }
+        $('.mobile_tooltip').tooltip('hide');
+    },
+    deleteDenomConfirmed: function () {
+        $('#delete_denom_modal').modal('hide');
+        PosnicPro.deleteConfirmation = true;
+        window['PosnicPro']['denom']['' + PosnicPro.callbackRegistry.name](PosnicPro.callbackRegistry.arguments);
+    },
+    denomClearForm: function () {
+        $("#denom_add_form").trigger("reset");
+    },
+    resetEditButton: function (id) {
+        PosnicPro.denom.triggerTaxEdit(id);
+    }
+
+};
+
+PosnicPro.tableOrders = {
+    currentPage: 1,
+    perPage: 10,
+    totalItems: 0,
+    totalPages: 0,
+    allData: [],
+    
+    showAdd: function () {
+        PosnicPro.tableOrders.triggerModules();
+    },
+    triggerModules: function () {
+        PosnicPro.showAddModal('tableorder');
+        $('#tableorder_id').val('');
+        if (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') {
+            $('#tableorder-heading').text('புதிய');
+            $('#tableorder_text_change').text('சேமி');
+        } else {
+            $('#tableorder-heading').html('Add');
+            $('#tableorder_text_change').text('Save');
+        }
+        var loader = $(".loader-tax");
+        loader.find(".loadingSpinner:first").remove();
+        $('#tableorder_reset').show();
+        $('.tableorder_edit_reset').hide();
+    },
+    triggerTaxEdit: function (id) {
+        var module = $('#setting_tableorder_edit_' + id);
+        PosnicPro.showAddModal('tableorder');
+        $('#tableorder_id').val(id);
+        $('#tableorder_value').val(module.data('tableordervalue'));
+        if (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') {
+            $('#tableorder-heading').text('திருத்தப்பட்ட');
+            $('#tableorder_text_change').text('புதுப்பி');
+        } else {
+            $('#tableorder-heading').html('Edit');
+            $('#tableorder_text_change').text('Update');
+        }
+        $('#tableorder_reset').hide();
+        $('.tableorder_edit_reset').show();
+        $('.tableorder_edit_reset').attr("id", id);
+        $('.mobile_tooltip').tooltip('hide');
+    },
+    triggerTaxDelete: function (id) {
+        PosnicPro.tableOrders.deleteTableOrderField(id);
+    },
+    tableOrdersTable: function () {
+        var loader = $(".loader-table-tableorder");
+        $("<div class='loadingSpinner'></div>").appendTo(loader);
+        PosnicPro.HideSideBarModal();
+        var table = $('#view_tableorder');
+        var params = {
+            url: 'setting/getTableOrderAll'
+        };
+        PosnicPro.get(params, function (response) {
+            if (response.type === 'success') {
+                PosnicPro.tableOrders.allData = response.data;
+                PosnicPro.tableOrders.totalItems = response.data.length;
+                PosnicPro.tableOrders.perPage = parseInt($('#view_tableorder_per_page').val()) || 10;
+                PosnicPro.tableOrders.renderPage();
+                loader.find(".loadingSpinner:first").remove();
+            } else {
+                PosnicPro.alert(response.type, response.message);
+                loader.find(".loadingSpinner:first").remove();
+            }
+        }, function (xhr) {
+            var response = jQuery.parseJSON(xhr.responseText);
+            PosnicPro.alert(response.type, response.message);
+            loader.find(".loadingSpinner:first").remove();
+        });
+    },
+    
+    renderPage: function() {
+        var table = $('#view_tableorder');
+        table.children('tbody').text('');
+        
+        var perPage = PosnicPro.tableOrders.perPage;
+        var currentPage = PosnicPro.tableOrders.currentPage;
+        var totalItems = PosnicPro.tableOrders.totalItems;
+        var data = PosnicPro.tableOrders.allData;
+        
+        // Calculate pagination values
+        var totalPages = Math.ceil(totalItems / perPage);
+        PosnicPro.tableOrders.totalPages = totalPages;
+        
+        var startIndex = (currentPage - 1) * perPage;
+        var endIndex = Math.min(startIndex + perPage, totalItems);
+        
+        // Update pagination info
+        $('#view_tableorder_showing_from').text(totalItems > 0 ? startIndex + 1 : 0);
+        $('#view_tableorder_showing_to').text(endIndex);
+        $('#view_tableorder_total').text(totalItems);
+        
+        // Render table rows for current page
+        for (var i = startIndex; i < endIndex; i++) {
+            let row = data[i];
+            let edit = '<a href="#/settings/tableorder/' + row.tableorder_id + '/edit" id="setting_tableorder_edit_' + row.tableorder_id + '" data-toggle="tooltip" title="Edit Table Order" class="btn btn-primary-rgba mobile_tooltip mb-1 mr-1" data-module="branch" data-access="write" data-tableordervalue="' + row.tableorder_value + '" ><i class="feather icon-edit"></i></a>';
+            let deleted = '<a href="#/settings/tableorder/' + row.tableorder_id + '/delete" id="setting_tableorder_delete_' + row.tableorder_id + '" data-toggle="tooltip" title="Delete Table Order" class="btn btn-danger-rgba mobile_tooltip mb-1 mr-1" data-module="branch" data-access="delete" data-tableordervalue="' + row.tableorder_value + '" ><i class="feather icon-trash"></i></a>';
+            let trow = '<tr><td scope="row" width="10%">' + (i + 1) + '</td><td width="10%" class="text-right">' + row.tableorder_value + '</td><td width="40%" class="text-center">' + edit + ' ' + deleted + '</td></tr>';
+            table.children('tbody').append(trow);
+        }
+        
+        // Store tables list for sales module
+        PosnicPro.sales.tablesList = data.map(function(row) {
+            return {
+                id: row.tableorder_id,
+                tableNumber: row.tableorder_value
+            };
+        });
+        
+        // Update pagination buttons
+        PosnicPro.tableOrders.updatePaginationButtons();
+        
+        // Initialize tooltips
+        $('[data-toggle="tooltip"]').tooltip();
+        $('span.number').number(true, 2);
+    },
+    
+    updatePaginationButtons: function() {
+        var currentPage = PosnicPro.tableOrders.currentPage;
+        var totalPages = PosnicPro.tableOrders.totalPages;
+        
+        // Update prev/next button states
+        if (currentPage <= 1) {
+            $('#tableorder_prev_page').addClass('disabled');
+        } else {
+            $('#tableorder_prev_page').removeClass('disabled');
+        }
+        
+        if (currentPage >= totalPages) {
+            $('#tableorder_next_page').addClass('disabled');
+        } else {
+            $('#tableorder_next_page').removeClass('disabled');
+        }
+        
+        // Generate page number buttons
+        var pagination = $('#view_tableorder_pagination');
+        pagination.find('.page-number').remove();
+        
+        var maxButtons = 5;
+        var startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+        var endPage = Math.min(totalPages, startPage + maxButtons - 1);
+        
+        if (endPage - startPage < maxButtons - 1) {
+            startPage = Math.max(1, endPage - maxButtons + 1);
+        }
+        
+        for (var i = startPage; i <= endPage; i++) {
+            var activeClass = (i === currentPage) ? 'active' : '';
+            var pageBtn = '<li class="page-item page-number ' + activeClass + '">' +
+                          '<a class="page-link" href="javascript:void(0)" onclick="PosnicPro.tableOrders.goToPage(' + i + ')">' + i + '</a>' +
+                          '</li>';
+            $(pageBtn).insertBefore('#tableorder_next_page');
+        }
+    },
+    
+    changePerPage: function() {
+        PosnicPro.tableOrders.perPage = parseInt($('#view_tableorder_per_page').val());
+        PosnicPro.tableOrders.currentPage = 1;
+        PosnicPro.tableOrders.renderPage();
+    },
+    
+    previousPage: function() {
+        if (PosnicPro.tableOrders.currentPage > 1) {
+            PosnicPro.tableOrders.currentPage--;
+            PosnicPro.tableOrders.renderPage();
+        }
+    },
+    
+    nextPage: function() {
+        if (PosnicPro.tableOrders.currentPage < PosnicPro.tableOrders.totalPages) {
+            PosnicPro.tableOrders.currentPage++;
+            PosnicPro.tableOrders.renderPage();
+        }
+    },
+    
+    goToPage: function(page) {
+        if (page >= 1 && page <= PosnicPro.tableOrders.totalPages) {
+            PosnicPro.tableOrders.currentPage = page;
+            PosnicPro.tableOrders.renderPage();
+        }
+    },
+    addTableOrderField: function () {
+        if ($('#tableorder_value').val() !== '') {
+            var loader = $(".loader-tax");
+            $("<div class='loadingSpinner'></div>").appendTo(loader);
+            var params = {
+                url: 'setting/addTableOrderData',
+                data: JSON.stringify(PosnicPro.getFormData($('#tableorder_add_form')))
+            };
+            PosnicPro.post(params, function (response) {
+                if (response.type === 'success') {
+                    PosnicPro.tableOrders.tableOrdersClearForm();
+                    PosnicPro.tableOrders.currentPage = 1;
+                    PosnicPro.tableOrders.tableOrdersTable();
+                    hasher.setHash('settings');
+                    loader.find(".loadingSpinner:first").remove();
+                }
+                PosnicPro.alert(response.type, response.message);
+            }, function (xhr) {
+                var response = jQuery.parseJSON(xhr.responseText);
+                PosnicPro.alert(response.type, response.message);
+            });
+        }
+    },
+    editTableOrderField: function () {
+        var loader = $(".loader-tax");
+        $("<div class='loadingSpinner'></div>").appendTo(loader);
+        var params = {
+            url: 'setting/editTableOrderForm',
+            data: JSON.stringify(PosnicPro.getFormData($('#tableorder_add_form')))
+        };
+        PosnicPro.put(params, function (response) {
+            if (response.type === 'success') {
+                PosnicPro.tableOrders.tableOrdersTable();
+                $(".infobar-settings-sidebar-overlay").css({ "background": "transparent", "position": "initial" });
+                $("#infobar-settings-sidebar-tableorder").removeClass("sidebarshow");
+                hasher.setHash('settings');
+            }
+            loader.find(".loadingSpinner:first").remove();
+            PosnicPro.alert(response.type, response.message);
+            $('.mobile_tooltip').tooltip('hide');
+        }, function (xhr) {
+            var response = jQuery.parseJSON(xhr.responseText);
+            PosnicPro.alert(response.type, response.message);
+        });
+    },
+    deleteTableOrderField: function (id) {
+        if (PosnicPro.deleteConfirmation) {
+            PosnicPro.callbackRegistry = {};
+            PosnicPro.delete('setting/deleteTableOrder?id=' + id, function (response) {
+                if (response.type === 'success') {
+                    PosnicPro.deleteConfirmation = false;
+                    $("#tableorder_add_form").trigger("reset");
+                    PosnicPro.tableOrders.currentPage = 1;
+                    PosnicPro.tableOrders.tableOrdersTable();
+                    $(".infobar-settings-sidebar-overlay").css({ "background": "transparent", "position": "initial" });
+                    $("#infobar-settings-sidebar-tableorder").removeClass("sidebarshow");
+                    hasher.setHash('settings');
+                }
+                PosnicPro.alert(response.type, response.message);
+            });
+        } else {
+            PosnicPro.callbackRegistry = {
+                name: 'deleteTableOrderField',
+                arguments: id
+            };
+            $('#delete_table_order_modal').modal('show');
+        }
+        $('.mobile_tooltip').tooltip('hide');
+    },
+    deleteTableOrderConfirmed: function () {
+        $('#delete_table_order_modal').modal('hide');
+        PosnicPro.deleteConfirmation = true;
+        window['PosnicPro']['tableOrders']['' + PosnicPro.callbackRegistry.name](PosnicPro.callbackRegistry.arguments);
+    },
+    tableOrdersClearForm: function () {
+        $("#tableorder_add_form").trigger("reset");
+    },
+    resetEditButton: function (id) {
+        PosnicPro.tableOrders.triggerTaxEdit(id);
+    }
+
+};
+
+PosnicPro.tableorder = PosnicPro.tableOrders;
+
+PosnicPro.payment = {
+    triggerModules: function () {
+        PosnicPro.showAddModal('payment');
+        $('.payment_id').val('');
+        if (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') {
+            $('#payment-heading').text('புதிய');
+            $('#payment_text_change').text('சேமி');
+        } else {
+            $('#payment-heading').html('Add');
+            $('#payment_text_change').text('Save');
+        }
+        var loader = $(".loader-tax");
+        loader.find(".loadingSpinner:first").remove();
+        $('#payment_reset').show();
+        $('.payment_edit_reset').hide();
+    },
+    triggerTaxEdit: function (id) {
+        var module = $('#setting_payment_edit_' + id);
+        PosnicPro.showAddModal('payment');
+        $('.payment_id').val(id);
+        $('#payment_value').val(module.data('paymentvalue'));
+        (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('#tax-heading').text('திருத்தப்பட்ட') : $('#tax-heading').html('Edit');
+        if (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') {
+            $('#payment-heading').text('திருத்தப்பட்ட');
+            $('#payment_text_change').text('புதுப்பி');
+        } else {
+            $('#payment-heading').html('Edit');
+            $('#payment_text_change').text('Update');
+        }
+        $('#payment_reset').hide();
+        $('.payment_edit_reset').show();
+        $('.payment_edit_reset').attr("id", id);
+        $('.mobile_tooltip').tooltip('hide');
+    },
+    triggerTaxDelete: function (id) {
+        PosnicPro.payment.deletePaymentField(id);
+    },
+    paymentTable: function () {
+        PosnicPro.configPaymentType = [];
+        var loader = $(".loader-table-tax");
+        $("<div class='loadingSpinner'></div>").appendTo(loader);
+        var table = $('#view_payment');
+        var params = {
+            url: 'setting/getPaymentAll'
+        };
+        PosnicPro.get(params, function (response) {
+            if (response.type === 'success') {
+                table.children('tbody').text('');
+                var data = response.data;
+                for (var i = 0; i < data.length; i++) {
+                    let row = data[i];
+                    let edit = '<a href="#/settings/payment/' + row.payment_id + '/edit" id="setting_payment_edit_' + row.payment_id + '" data-toggle="tooltip" title="Edit Payment" class="btn btn-primary-rgba mobile_tooltip mb-1 mr-1" data-module = "branch" data-access = "write" data-paymentvalue="' + row.payment_value + '" ><i class="feather icon-edit"></i></a>';
+                    let deleted = '<a href="#/settings/payment/' + row.payment_id + '/delete" id="setting_payment_delete_' + row.payment_id + '" data-toggle="tooltip" title="Delete Payment" class="btn btn-danger-rgba mobile_tooltip mb-1 mr-1" data-module = "branch" data-access = "delete" data-paymentvalue="' + row.payment_value + '" ><i class="feather icon-trash"></i></a>';
+                    let trow = '<tr> <td scope="row" width="10%">' + (i + 1) + '</td><td width="10%" class="text-right">' + row.payment_value + '</td><td width="40%" class="text-center">' + edit + ' ' + deleted + '</td> </tr>';
+                    $('#view_payment').children('tbody').append(trow);
+                    PosnicPro.configPaymentType[i] = {
+                        payment_value: row.payment_value
+                    };
+                }
+                // Only refresh payment UI if we're on the sales page
+                var currentHash = window.location.hash;
+                if (currentHash && currentHash.includes('sales')) {
+                    const multi_payment = PosnicPro.sales.EditRecentSaleParams.multi_payment || {};
+                    var enableMulti = (PosnicPro.local.get('enable_multi_payment') === 'enable' || Object.keys(multi_payment).length !== 0);
+                    if (enableMulti) {
+                        PosnicPro.sales.showMultiPaymentMode();
+                    } else {
+                        PosnicPro.sales.showPaymentMode();
+                    }
+                }
+                $('span.number').number(true, 2);
+                loader.find(".loadingSpinner:first").remove();
+            } else {
+                PosnicPro.alert(response.type, response.message);
+            }
+        }, function (xhr) {
+            var response = jQuery.parseJSON(xhr.responseText);
+            PosnicPro.alert(response.type, response.message);
+        });
+    },
+    addPaymentField: function () {
+        if ($('#payment_value').val() !== '') {
+            var loader = $(".loader-tax");
+            $("<div class='loadingSpinner'></div>").appendTo(loader);
+            var params = {
+                url: 'setting/addPaymentData',
+                data: JSON.stringify(PosnicPro.getFormData($('#payment_add_form')))
+            };
+            PosnicPro.post(params, function (response) {
+                if (response.type === 'success') {
+                    PosnicPro.payment.paymentTable();
+                    PosnicPro.payment.paymentClearForm();
+                    
+                    // Check if tender sidebar is open (sales page context)
+                    var isTenderOpen = $('#infobar-settings-sidebar-tender-details').hasClass('sidebarview');
+                    
+                    if (isTenderOpen) {
+                        // Close only the payment modal, keep tender sidebar open
+                        $('#infobar-settings-sidebar-payment').removeClass('sidebarshow');
+                        $('.infobar-settings-sidebar-overlay').hide();
+                    } else {
+                        // Close the settings sidebar (settings page context)
+                        $(".infobar-settings-close").trigger("click");
+                    }
+                    
+                    loader.find(".loadingSpinner:first").remove();
+                }
+                PosnicPro.alert(response.type, response.message);
+            }, function (xhr) {
+                var response = jQuery.parseJSON(xhr.responseText);
+                PosnicPro.alert(response.type, response.message);
+            });
+        }
+    },
+    editPaymentField: function () {
+        var loader = $(".loader-tax");
+        $("<div class='loadingSpinner'></div>").appendTo(loader);
+        var params = {
+            url: 'setting/editPaymentForm',
+            data: JSON.stringify(PosnicPro.getFormData($('#payment_add_form')))
+        };
+        PosnicPro.put(params, function (response) {
+            if (response.type === 'success') {
+                PosnicPro.payment.paymentClearForm();
+                PosnicPro.payment.paymentTable();
+                $(".infobar-settings-sidebar-overlay").css({ "background": "transparent", "position": "initial" });
+                $("#infobar-settings-sidebar-tax").removeClass("sidebarshow");
+                hasher.setHash('settings');
+            }
+            loader.find(".loadingSpinner:first").remove();
+            PosnicPro.alert(response.type, response.message);
+            $('.mobile_tooltip').tooltip('hide');
+        }, function (xhr) {
+            var response = jQuery.parseJSON(xhr.responseText);
+            PosnicPro.alert(response.type, response.message);
+        });
+    },
+    deletePaymentField: function (id) {
+        if (PosnicPro.deleteConfirmation) {
+            PosnicPro.callbackRegistry = {};
+            PosnicPro.delete('setting/deletePayment?id=' + id, function (response) {
+                if (response.type === 'success') {
+                    PosnicPro.deleteConfirmation = false;
+                    PosnicPro.payment.paymentTable();
+                    $(".infobar-settings-sidebar-overlay").css({ "background": "transparent", "position": "initial" });
+                    $("#infobar-settings-sidebar-tax").removeClass("sidebarshow");
+                    hasher.setHash('settings');
+                }
+                PosnicPro.alert(response.type, response.message);
+            });
+        } else {
+            PosnicPro.callbackRegistry = {
+                name: 'deletePaymentField',
+                arguments: id
+            };
+            $('#delete_payment_modal').modal('show');
+        }
+        $('.mobile_tooltip').tooltip('hide');
+    },
+    deletePaymentConfirmed: function () {
+        $('#delete_payment_modal').modal('hide');
+        PosnicPro.deleteConfirmation = true;
+        window['PosnicPro']['payment']['' + PosnicPro.callbackRegistry.name](PosnicPro.callbackRegistry.arguments);
+    },
+    paymentClearForm: function () {
+        $("#payment_add_form").trigger("reset");
+    },
+    resetEditButton: function (id) {
+        PosnicPro.payment.triggerTaxEdit(id);
+    }
+};
+
+PosnicPro.taxgroup = {
+    triggerModules: function () {
+        (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('#taxgroup-heading').text('புதிய') : $('#taxgroup-heading').html('Add');
+        PosnicPro.showAddModal('taxgroup');
+        $('#taxgroup_id').val('');
+        //        $('#taxgroup_text_change').text('Save');
+        (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('#taxgroup_text_change').text('சேமி') : $('#taxgroup_text_change').text('Save');
+        $('#taxgroup_reset').show();
+        $('.taxgroup_edit_reset').hide();
+        var loader = $(".loader-taxgroup");
+        loader.find(".loadingSpinner:first").remove();
+        var table = $('#list_tax_rates');
+        var data = {
+            tax_group: 'no'
+        };
+        var params = {
+            url: 'setting/getTaxAll',
+            data: data
+        };
+        PosnicPro.get(params, function (response) {
+            if (response.type === 'success') {
+                data = response.data;
+                table.children('tbody').html('');
+                for (var i = 0; i < data.length; i++) {
+                    var row = data[i];
+                    var trow = '<tr><td><input type="checkbox" class="tax_rates" name="tax_rates[' + row.tax_id + ']" data-taxid="' + row.tax_id + '" data-taxname="' + row.tax_name + '" data-taxvalue="' + row.tax_value + '"></td><td>' + row.tax_name + '</td><td>' + row.tax_value + '</td></tr>';
+                    table.children('tbody').append(trow);
+                }
+
+            }
+        });
+    },
+    triggerTaxEdit: function (id) {
+        (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('#taxgroup-heading').text('திருத்தப்பட்ட') : $('#taxgroup-heading').html('Edit');
+        PosnicPro.showAddModal('taxgroup');
+        $('#taxgroup_id').val(id);
+        //        $('#taxgroup_text_change').text('Update');
+        (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('#taxgroup_text_change').text('புதுப்பி') : $('#taxgroup_text_change').text('Update');
+        var loader = $(".loader-taxgroup");
+        loader.find(".loadingSpinner:first").remove();
+        $('#taxgroup_reset').hide();
+        $('.taxgroup_edit_reset').show();
+        $('.taxgroup_edit_reset').attr("id", id);
+        var table = $('#list_tax_rates');
+        var data = {
+            tax_id: id
+        };
+        var params = {
+            url: 'setting/getTaxGroup',
+            data: data
+        };
+        PosnicPro.get(params, function (response) {
+            if (response.type === 'success') {
+                $('#taxgroup_name').val(response.data.name);
+                data = response.data.getall;
+                table.children('tbody').html('');
+                for (var i = 0; i < data.length; i++) {
+                    var row = data[i];
+                    var trow = '<tr><td><input type="checkbox" id="tax_checked_id_' + row.tax_id + '" class="tax_rates" name="tax_rates[' + row.tax_id + ']" data-taxid="' + row.tax_id + '" data-taxname="' + row.tax_name + '" data-taxvalue="' + row.tax_value + '"></td><td>' + row.tax_name + '</td><td>' + row.tax_value + '</td></tr>';
+                    table.children('tbody').append(trow);
+                }
+                var checkedid = response.data.checked;
+                $(document).ready(function () {
+                    for (var i = 0; i < checkedid.length; i++) {
+                        var row = checkedid[i];
+                        $('#tax_checked_id_' + row.checked_tax).prop('checked', true);
+                        $('.mobile_tooltip').tooltip('hide');
+                    }
+                });
+            }
+        }, function (xhr) {
+            var response = jQuery.parseJSON(xhr.responseText);
+            PosnicPro.alert(response.type, response.message);
+        });
+    },
+    resetEditButton: function (id) {
+        PosnicPro.taxgroup.triggerTaxEdit(id);
+    },
+    triggerTaxDelete: function (id) {
+        PosnicPro.record_id = id;
+        PosnicPro.taxgroup.deleteTaxGroupData(id);
+    },
+    taxgroupTable: function () {
+        var loader = $(".loader-table-taxgroup");
+        $("<div class='loadingSpinner'></div>").appendTo(loader);
+        PosnicPro.HideSideBarModal();
+        var table = $('#view_taxgroup');
+        var data = {
+            tax_group: 'yes'
+        };
+        var params = {
+            url: 'setting/getTaxAll',
+            data: data
+        };
+        PosnicPro.get(params, function (response) {
+            if (response.type === 'success') {
+                table.children('tbody').text('');
+                data = response.data;
+                let currency = PosnicPro.local.get('currencySign');
+                for (var i = 0; i < data.length; i++) {
+                    let row = data[i];
+                    let edit = '<a href="#/settings/taxgroup/' + row.tax_id + '/edit" id="setting_taxgroup_edit_' + row.tax_id + '" data-toggle="tooltip" title="Edit Tax" class="btn btn-primary-rgba mobile_tooltip mb-1 mr-1" data-module = "branch" data-access = "write"><i class="feather icon-edit"></i></a>';
+                    let deleted = '<a href="#/settings/taxgroup/' + row.tax_id + '/delete" id="setting_taxgroup_delete_' + row.tax_id + '" data-toggle="tooltip" title="Delete Tax" class="btn btn-danger-rgba mobile_tooltip mb-1 mr-1" data-module = "branch" data-access = "delete"><i class="feather icon-trash"></i></a>';
+                    let trow = '<tr> <td scope="row" width="10%">' + (i + 1) + '</td>  <td width="40%">' + row.tax_name + '</td> <td width="10%" class="text-right">' + currency + '&nbsp;<span class="number">' + row.tax_value + '</span></td><td width="40%" class="text-center">' + edit + ' ' + deleted + '</td> </tr>';
+                    table.children('tbody').append(trow);
+                }
+                $('span.number').number(true, 2);
+                loader.find(".loadingSpinner:first").remove();
+            } else {
+                PosnicPro.alert(response.type, response.message);
+            }
+        }, function (xhr) {
+            var response = jQuery.parseJSON(xhr.responseText);
+            PosnicPro.alert(response.type, response.message);
+        });
+    },
+    addTaxgroupRates: function () {
+        if ($('#taxgroup_name').val() !== '') {
+            var loader = $(".loader-taxgroup");
+            $("<div class='loadingSpinner'></div>").appendTo(loader);
+            var taxData = [];
+            var el = $('.tax_rates');
+            for (var i = 0; i < el.length; i++) {
+                if ($(el[i]).is(":checked")) {
+                    var taxid = $(el[i]).data("taxid");
+                    var taxname = $(el[i]).data("taxname");
+                    var taxvalue = $(el[i]).data("taxvalue");
+                    taxData.push({ tax_id: taxid, tax_name: taxname, tax_value: taxvalue });
+                }
+            }
+
+            var params = {
+                url: 'setting/addTaxGroup',
+                data: JSON.stringify({
+                    tax_id: $('#taxgroup_id').val(),
+                    tax_name: $('#taxgroup_name').val(),
+                    tax_fields: taxData
+                })
+            };
+            PosnicPro.post(params, function (response) {
+                if (response.type === 'success') {
+                    $("#taxgroup_add_form").trigger("reset");
+                    $('#taxgroup_name').focus();
+                    PosnicPro.taxgroup.taxgroupTable();
+                    PosnicPro.getBranchTaxList();
+                    hasher.setHash('settings');
+                    loader.find(".loadingSpinner:first").remove();
+                }
+                PosnicPro.alert(response.type, response.message);
+            }, function (xhr) {
+                var response = jQuery.parseJSON(xhr.responseText);
+                PosnicPro.alert(response.type, response.message);
+            });
+        }
+    },
+    editTaxgroupRates: function () {
+        var loader = $(".loader-taxgroup");
+        $("<div class='loadingSpinner'></div>").appendTo(loader);
+        var taxData = [];
+        var el = $('.tax_rates');
+        for (var i = 0; i < el.length; i++) {
+            if ($(el[i]).is(":checked")) {
+                var taxid = $(el[i]).data("taxid");
+                var taxname = $(el[i]).data("taxname");
+                var taxvalue = $(el[i]).data("taxvalue");
+                taxData.push({ tax_id: taxid, tax_name: taxname, tax_value: taxvalue });
+            }
+        }
+
+        var params = {
+            url: 'setting/editTaxGroup',
+            data: JSON.stringify({
+                tax_id: $('#taxgroup_id').val(),
+                tax_name: $('#taxgroup_name').val(),
+                tax_fields: taxData
+            })
+        };
+        PosnicPro.put(params, function (response) {
+            if (response.type === 'success') {
+                PosnicPro.taxgroup.taxgroupTable();
+                PosnicPro.getBranchTaxList();
+                $(".infobar-settings-sidebar-overlay").css({ "background": "transparent", "position": "initial" });
+                $("#infobar-settings-sidebar-taxgroup").removeClass("sidebarshow");
+                hasher.setHash('settings');
+            }
+            loader.find(".loadingSpinner:first").remove();
+            PosnicPro.alert(response.type, response.message);
+        }, function (xhr) {
+            var response = jQuery.parseJSON(xhr.responseText);
+            PosnicPro.alert(response.type, response.message);
+        });
+    },
+    deleteTaxGroupData: function (id) {
+        if (PosnicPro.deleteConfirmation) {
+            PosnicPro.callbackRegistry = {};
+            PosnicPro.delete('setting/deleteTaxGroup?id=' + id, function (response) {
+                if (response.type === 'success') {
+                    PosnicPro.deleteConfirmation = false;
+                    PosnicPro.taxgroup.taxgroupTable();
+                    PosnicPro.getBranchTaxList();
+                    $(".infobar-settings-sidebar-overlay").css({ "background": "transparent", "position": "initial" });
+                    $("#infobar-settings-sidebar-taxgroup").removeClass("sidebarshow");
+                    hasher.setHash('settings');
+                }
+                PosnicPro.alert(response.type, response.message);
+            });
+        } else {
+            PosnicPro.callbackRegistry = {
+                name: 'deleteTaxGroupData',
+                arguments: id
+            };
+            $('#delete_tax_modal').modal('show');
+            $('#show_hide_tax').hide();
+            $('#show_hide_taxgroup').show();
+        }
+        $('.mobile_tooltip').tooltip('hide');
+    },
+    /*delete tax confirmation*/
+    deleteTaxConfirmed: function () {
+        $('#delete_tax_modal').modal('hide');
+        PosnicPro.deleteConfirmation = true;
+        window['PosnicPro']['taxgroup']['' + PosnicPro.callbackRegistry.name](PosnicPro.callbackRegistry.arguments);
+    },
+    taxgroupClearForm: function () {
+        $("#taxgroup_add_form").trigger("reset");
+        $('.error_taxgroup').css('display', 'none');
+    }
+};
+
+PosnicPro.kiosk = {
+    // Function to handle file input change and preview
+    handleFileChange: function (inputId, previewId) {
+        $("#" + inputId).change(function () {
+            var file = this.files[0];
+            var fileSize = file.size;
+            var validExtensions = ['gif', 'jpg', 'png', 'jpeg', 'bmp'];
+            var fileName = file.name;
+            var fileNameExt = fileName.substr(fileName.lastIndexOf('.') + 1).toLowerCase();
+
+            if (fileSize < 5242880) { // 5MB limit
+                if ($.inArray(fileNameExt, validExtensions) === -1) {
+                    $("#" + inputId).val(''); // Clear the input
+                    PosnicPro.alert('error', "Only these file types are accepted: " + validExtensions.join(', '));
+                } else {
+                    // Show image preview
+                    var reader = new FileReader();
+                    reader.onload = function (e) {
+                        $("#" + previewId).attr("src", e.target.result).show();
+                    };
+                    reader.readAsDataURL(file);
+                }
+            } else {
+                $("#" + inputId).val(''); // Clear the input
+                PosnicPro.alert('error', "File size should be less than 5MB!");
+            }
+        });
+    },
+    submitKioskImages: function () {
+        var logoValue = $('#kiosk_logo').val();
+        var bannerValue = $('#kiosk_banner').val();
+        var homeBannerValue = $('#kiosk_homebanner').val();
+        var advertisementValue = $('#kiosk_advertisement').val();
+
+        if (logoValue || bannerValue || homeBannerValue || advertisementValue) {
+            var loader = $(".loader-view-kioskimage");
+            $("<div class='loadingSpinner'></div>").appendTo(loader);
+            var formData = new FormData(document.getElementById("kiosk_settings_form"));
+
+            PosnicPro.requestImage('POST', "setting/updateKioskImages", formData, false, function (response) {
+                if (response.type === 'success') {
+                    // Update the image preview dynamically based on the response data
+                    if (response.data.logo) {
+                        $('#preview_logo').attr('src', response.data.logo).show();
+                    }
+                    if (response.data.banner) {
+                        $('#preview_banner').attr('src', response.data.banner).show();
+                    }
+                    if (response.data.homebanner) {
+                        $('#preview_homebanner').attr('src', response.data.homebanner).show();
+                    }
+                    if (response.data.advertisement) {
+                        $('#preview_advertisement').attr('src', response.data.advertisement).show();
+                    }
+
+                    PosnicPro.alert('success', response.message);
+                } else {
+                    PosnicPro.alert(response.type, response.message);
+                }
+                loader.find(".loadingSpinner:first").remove();
+            });
+        }
+    },
+    removeImage: function (type) {
+        let imageUrl = "";
+
+        if (type === "logo") {
+            imageUrl = $("#preview_logo").attr("src");
+        } else if (type === "banner") {
+            imageUrl = $("#preview_banner").attr("src");
+        } else if (type === "advertisement") {
+            imageUrl = $("#preview_advertisement").attr("src");
+        } else {
+            imageUrl = $("#preview_homebanner").attr("src");
+        }
+
+        // Check if an actual image URL is there before deleting
+        if (imageUrl) {
+            var params = {
+                url: 'setting/branchImageDelete',
+                data: JSON.stringify({ data: image_value })
+            };
+            PosnicPro.delete(params, function (response) {
+                if (response.type === 'success') {
+                    PosnicPro.kiosk.removeImagePreview(type); // Hide preview after deletion
+                }
+                PosnicPro.alert(response.type, response.message);
+            }, function (xhr) {
+                var response = jQuery.parseJSON(xhr.responseText);
+                PosnicPro.alert(response.type, response.message);
+            });
+        } else {
+            PosnicPro.kiosk.removeImagePreview(type);
+        }
+    },
+    // Function to remove image preview
+    removeImagePreview: function (type) {
+        if (type === 'logo') {
+            $("#preview_logo").attr("src", "//:0").hide();
+        } else if (type === 'banner') {
+            $("#preview_banner").attr("src", "//:0").hide();
+        } else if (type === 'advertisement') {
+            $("#preview_advertisement").attr("src", "//:0").hide();
+        } else {
+            $("#preview_homebanner").attr("src", "//:0").hide();
+        }
+    }
+
+};
+$("#kiosk_settings_form").submit(function (event) {
+    event.preventDefault();
+    PosnicPro.kiosk.submitKioskImages();
+});
+$("#radio_discount_amount, #radio_discount_percentage").change(function () {
+    if ($("#radio_discount_amount").is(":checked")) {
+        $('#discount_percentage').attr('disabled', 'disabled').addClass('bg-white').val('0').hide();
+        $('#discount_amount').removeAttr('disabled', 'disabled').show().focus().select();
+    } else {
+        $('#discount_amount').attr('disabled', 'disabled').addClass('bg-white').val('0').hide();
+        $('#discount_percentage').removeAttr('disabled', 'disabled').show().focus().select();
+    }
+});
+$(function () {
+    $('.hide-recyclebin').hide();
+    var $backupSelect = $('#backuptablelist');
+    if ($backupSelect.length) {
+        PosnicPro.settings.changeInputFieldsValueBackupTable($backupSelect[0]);
+    }
+    $('.offline_checkbox').on('change', function () {
+        if ($(this).data('offmodule') === 'sales' && $(this).data('type') === 'action' && $(this).is(':checked')) {
+            $('#offline_data_customers').prop('checked', false).trigger("click");
+            $('#offline_data_items').prop('checked', false).trigger("click");
+        }
+        if ($(this).data('offmodule') === 'customers' && !$(this).is(':checked') && $(this).data('type') === 'cache') {
+            $('#offline_sales_support').prop('checked', true).trigger("click");
+        }
+
+        if ($(this).data('offmodule') === 'items' && !$(this).is(':checked') && $(this).data('type') === 'cache') {
+            $('#offline_sales_support').prop('checked', true).trigger("click");
+            $('#offline_receivings_support').prop('checked', true).trigger("click");
+        }
+
+        if ($(this).data('offmodule') === 'receivings' && $(this).data('type') === 'action' && $(this).is(':checked')) {
+            $('#offline_data_suppliers').prop('checked', false).trigger("click");
+            $('#offline_data_items').prop('checked', false).trigger("click");
+        }
+
+        if (($(this).data('offmodule') === 'suppliers' || $(this).data('offmodule') === 'items') && !$(this).is(':checked') && $(this).data('type') === 'cache') {
+            $('#offline_receivings_support').prop('checked', true).trigger("click");
+        }
+    });
+    /*
+     * Test print, using whatever is selected right now.
+     *
+     * Delegated, because the settings page is loaded into the shell after this
+     * script runs and a direct binding would find nothing to bind to.
+     *
+     * The width is taken from the form rather than from saved settings, so
+     * somebody can try 58 and 80 and keep the one that fits without saving a
+     * wrong value in between.
+     */
+
+    // The printer and paper controls moved to Hardware Manager, a separate
+    // window the desktop app owns. This is the way through to it.
+    $(document).on('click', '#open_hardware_manager', function () {
+        if (window.electronAPI && window.electronAPI.desktop) {
+            window.electronAPI.desktop.open('hardware');
+        } else {
+            PosnicPro.alert('warning',
+                'Hardware Manager is part of the desktop app. Open Posnic on the till to set the printer.');
+        }
+    });
+
+    $('#saveOfflineSettings').on('click', function () {
+        var data = {};
+        $(".offline_checkbox").each(function () {
+            data[$(this).data('offmodule') + '_' + $(this).data('type')] = $(this).is(':checked');
+        });
+        PosnicPro.settings.offlineStoreSettings(data);
+    });
+    $('.custom_default_value_search').on('keydown.autocomplete', function () {
+        var module = $(this).data('id');
+        $(this).autocomplete({
+            lookup: function (query, done) {
+                var result = {};
+                var suggestions = [];
+                var params = {
+                    url: 'base/getDefaultSuggest',
+                    data: 'query=' + query + '&module=' + module
+                };
+                PosnicPro.get(params, function (response) {
+                    if (response.suggestions.length > 0) {
+                        suggestions: $.map(response.suggestions, function (dataItem) {
+                            suggestions.push({ "value": dataItem.name, "data": dataItem });
+                        });
+                    } else {
+                        suggestions.push({ value: query + ' ', data: -1 });
+                    }
+
+                    result["suggestions"] = suggestions;
+                    done(result);
+                }, function (xhr) {
+                    var response = jQuery.parseJSON(xhr.responseText);
+                    PosnicPro.alert(response.type, response.message);
+                });
+            },
+            onSelect: function (suggestion) {
+
+                if (suggestion.data !== -1) {
+                    $('#' + module + '_default_value').val(suggestion.data.id);
+                } else {
+                    if (module === 'customers') {
+                        hasher.setHash('settings/default/customer');
+                    } else {
+                        hasher.setHash('settings/default/supplier');
+                    }
+
+                }
+            },
+            autoSelectFirst: true,
+            triggerSelectOnValidInput: false,
+            formatResult: function (suggestion) {
+                var phone = suggestion.data.phone;
+                if (suggestion.data === -1 || typeof suggestion.phone === undefined) {
+                    phone = "( Add new )";
+                }
+                return '<div>' +
+                    $.Autocomplete.formatResult(suggestion) +
+                    '</div><span class="pull-right" style="margin-top:-20px;">' + phone + '</span>';
+            }
+        });
+    });
+});
+// validate submit
+$("#sms_setting").validate({
+    highlight: function (element, errorClass) {
+        $(element).css("border-color", "#f9616d");
+    },
+    unhighlight: function (element, errorClass) {
+        $(element).css("border-color", "#eae8e8");
+    },
+    rules: {
+
+        way2sms_userid: {
+            required: true,
+            phone: true,
+            minlength: 3,
+            maxlength: 20
+        },
+        way2sms_password: {
+            required: true,
+            maxlength: 50
+        },
+        way2sms_api: {
+            required: true,
+            maxlength: 100
+        }
+
+    },
+    messages: {
+
+        way2sms_userid: {
+            required: "Please Enter a user id",
+            maxlength: "User id should not be more than 20 digits"
+        },
+        way2sms_password: {
+            required: "Please Enter a password",
+            maxlength: "Password should not be more than 50 digits"
+        },
+        way2sms_api: {
+            required: "Please Enter a api key",
+            maxlength: "API should not be more than 100 characters"
+        }
+    }
+});
+$("#sms_setting").submit(function (event) {
+    event.preventDefault();
+    if ($('#sms_setting').valid()) {            // checks form for validity
+        PosnicPro.settings.way2smsSettings();
+    }
+});
+// validate submit
+$("#textlocal_setting").validate({
+    highlight: function (element, errorClass) {
+        $(element).css("border-color", "#f9616d");
+    },
+    unhighlight: function (element, errorClass) {
+        $(element).css("border-color", "#eae8e8");
+    },
+    rules: {
+
+        textlocal_sender: {
+            required: true,
+            maxlength: 20
+        },
+        textlocal_api: {
+            required: true,
+            maxlength: 100
+        }
+
+    },
+    messages: {
+
+        textlocal_sender: {
+            required: "Please Enter a sender name",
+            maxlength: "Sender name should not be more than 20 characters"
+        },
+        textlocal_api: {
+            required: "Please Enter a api key",
+            maxlength: "API should not be more than 100 characters"
+        }
+    }
+});
+$("#textlocal_setting").submit(function (event) {
+    event.preventDefault();
+    if ($('#textlocal_setting').valid()) {            // checks form for validity
+        PosnicPro.settings.textlocalsmsSettings();
+    }
+});
+$("#setting_add").validate({
+    highlight: function (element, errorClass) {
+        $(element).css("border-color", "#f9616d");
+    },
+    unhighlight: function (element, errorClass) {
+        $(element).css("border-color", "#eae8e8");
+    },
+    rules: {
+        store_name: {
+            required: true,
+            minlength: 3,
+            maxlength: 250
+        },
+        store_telephone: {
+            required: true,
+            minlength: 3,
+            maxlength: 20,
+            setting_phone_number: true
+        },
+        store_email: {
+            required: true,
+            email: true,
+            emailExt: true,
+            maxlength: 250
+        },
+        store_address: {
+            required: true,
+            minlength: 3,
+            maxlength: 500
+        },
+        printing_address: {
+            required: true,
+            minlength: 3,
+            maxlength: 500
+        },
+        website: {
+            url: true,
+            minlength: 3,
+            maxlength: 50
+        },
+        city: {
+            maxlength: 50
+        },
+        pincode: {
+            maxlength: 15
+        },
+        branch_gstin_number: {
+            gst: true,
+            minlength: 15,
+            maxlength: 15
+        }
+    },
+    messages: {
+        store_name: {
+            required: "Please enter the store name",
+            maxlength: "Store name should not be more than 250 characters"
+        },
+        store_telephone: {
+            required: "Please enter the phone number",
+            setting_phone_number: "Please enter a valid phone number.",
+            minlength: "Please enter at least 3 characters.",
+            maxlength: "Please enter no more than 20 characters."
+        },
+        store_email: {
+            required: "Please enter the valid email address",
+            maxlength: "Email should not be more than 250 digits"
+        },
+        store_address: {
+            required: "Please enter the store address",
+            minlength: "Store Address must be Atleast 3 Characters long",
+            maxlength: "Address is too Long !"
+        },
+        printing_address: {
+            required: "Please enter the printing address",
+            minlength: "Printing Address must be Atleast 3 Characters long",
+            maxlength: "Address is too Long !"
+        },
+        website: {
+            required: "Please enter the valid url address",
+            minlength: "Website must be Atleast 3 Characters long",
+            maxlength: "Website should not be more than 50 digits"
+        },
+        city: {
+            maxlength: "Place should not be more than 50 digits"
+        },
+        pincode: {
+            maxlength: "Place should not be more than 15 digits"
+        },
+        branch_gstin_number: {
+            minlength: "Gstr must be Atleast 15 Characters long",
+            maxlength: "Gstr should not be more than 15 digits"
+        }
+    }
+});
+jQuery.validator.addMethod("setting_phone_number", function (phone_number, element) {
+    let valid = PosnicPro.settings.store_telephone.isValidNumber();
+    let num = PosnicPro.settings.store_telephone.getNumber();
+    if (valid === true) {
+        $('#store_telephone').val(num);
+        return true;
+    } else {
+        return false;
+    }
+
+}, "Enter a valid phone number");
+jQuery.validator.addMethod("gst", function (value, element) {
+    if (value !== '') {
+        return /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(value);
+    }
+    return true;
+}, "Please Enter a Valid GSTR Number");
+$("#setting_add").submit(function (event) {
+    event.preventDefault();
+    if ($('#setting_add').valid()) {          // checks form for validity
+        PosnicPro.settings.generalSetting();
+    }
+});
+$("#setting_image_add").submit(function (event) {
+    event.preventDefault();
+    PosnicPro.settings.settingImageFormSubmit();
+});
+$("#tax_add_form").validate({
+    errorClass: 'error error_tax',
+    highlight: function (element, errorClass) {
+        $(element).css("border-color", "#f9616d");
+    },
+    unhighlight: function (element, errorClass) {
+        $(element).css("border-color", "#eae8e8");
+    },
+    rules: {
+        tax_name: {
+            required: true,
+            minlength: 3,
+            maxlength: 20
+        },
+        tax_value: {
+            required: true,
+            minlength: 1,
+            maxlength: 5
+        }
+    },
+    messages: {
+        tax_name: {
+            required: "Please enter a tax name",
+            minlength: "Tax name must be at least 3 characters",
+            maxlength: "Tax name should not be more than 100 characters"
+        },
+        tax_value: {
+            required: "Please enter a tax value",
+            minlength: "Tax value must be at least 1 characters",
+            maxlength: "Tax value should not be more than 5 characters"
+        }
+    }
+});
+$("#unit_add_form").validate({
+    errorClass: 'error error_unit',
+    highlight: function (element, errorClass) {
+        $(element).css("border-color", "#f9616d");
+    },
+    unhighlight: function (element, errorClass) {
+        $(element).css("border-color", "#eae8e8");
+    },
+    rules: {
+        unit_name: {
+            required: true,
+            minlength: 1,
+            maxlength: 10,
+            lettersonly: true
+        },
+        unit_value: {
+            required: true,
+            minlength: 1,
+            maxlength: 10,
+            lettersonly: true
+        }
+    },
+    messages: {
+        unit_name: {
+            required: "Please enter a unit name",
+            minlength: "Unit name must be at least 1 characters",
+            maxlength: "Unit name should not be more than 10 characters"
+        },
+        unit_value: {
+            required: "Please enter a unit value",
+            minlength: "Unit value must be at least 1 characters",
+            maxlength: "Unit value should not be more than 10 characters"
+        }
+    }
+});
+jQuery.validator.addMethod("lettersonly", function (value, element) {
+    return this.optional(element) || /^[a-z\s]+$/i.test(value);
+}, "Please Enter a Only Letters");
+$("#denom_add_form").validate({
+    highlight: function (element, errorClass) {
+        $(element).css("border-color", "#f9616d");
+    },
+    unhighlight: function (element, errorClass) {
+        $(element).css("border-color", "#eae8e8");
+    },
+    rules: {
+        denom_value: {
+            required: true,
+            minlength: 1
+        }
+    },
+    messages: {
+        denom_value: {
+            required: "Please enter a cash value",
+            minlength: "value must be at least 1 characters"
+        }
+    }
+});
+$("#payment_add_form").validate({
+    highlight: function (element, errorClass) {
+        $(element).css("border-color", "#f9616d");
+    },
+    unhighlight: function (element, errorClass) {
+        $(element).css("border-color", "#eae8e8");
+    },
+    rules: {
+        payment_value: {
+            required: true,
+            minlength: 1,
+            maxlength: 12
+        }
+    },
+    messages: {
+        payment_value: {
+            required: "Please enter a payment value",
+            minlength: "value must be at least 1 characters",
+            maxlength: "value should not be more than 12 characters"
+        }
+    }
+});
+$("#tax_add_form").submit(function (event) {
+    event.preventDefault();
+    if ($('#tax_add_form').valid()) {            // checks form for validity
+        if ($('#tax_id').val() !== '') {
+            PosnicPro.tax.editTaxRates();
+        } else {
+            PosnicPro.tax.addTaxRates();
+        }
+    }
+});
+$("#unit_add_form").submit(function (event) {
+    event.preventDefault();
+    if ($('#unit_add_form').valid()) {            // checks form for validity
+        if ($('#unit_id').val() !== '') {
+            PosnicPro.unit.editUnitRates();
+        } else {
+            PosnicPro.unit.addUnitRates();
+        }
+    }
+});
+$("#denom_add_form").submit(function (event) {
+    event.preventDefault();
+    if ($('#denom_add_form').valid()) {            // checks form for validity
+        if ($('#denom_id').val() !== '') {
+            PosnicPro.denom.editDenomField();
+        } else {
+            PosnicPro.denom.addDenomField();
+        }
+    }
+});
+$("#payment_add_form").submit(function (event) {
+    event.preventDefault();
+    if ($('#payment_add_form').valid()) {            // checks form for validity
+        if ($('.payment_id').val() !== '') {
+            PosnicPro.payment.editPaymentField();
+        } else {
+            PosnicPro.payment.addPaymentField();
+        }
+    }
+});
+$('#tableorder_value').on('input', function () {
+    // remove anything that is not A–Z, a–z, 0–9
+    this.value = this.value.replace(/[^A-Za-z0-9]/g, '').slice(0, 6);
+});
+$("#tableorder_add_form").validate({
+    highlight: function (element, errorClass) {
+        $(element).css("border-color", "#f9616d");
+    },
+    unhighlight: function (element, errorClass) {
+        $(element).css("border-color", "#eae8e8");
+    },
+    rules: {
+        tableorder_value: {
+            required: true,
+            minlength: 1,
+            maxlength: 6
+        }
+    },
+    errorClass: 'error error_tableorder',
+    messages: {
+        tableorder_value: {
+            required: "Please enter a table order value",
+            minlength: "value must be at least 1 characters",
+            maxlength: "value should not be more than 6 characters"
+        }
+    }
+});
+$("#tableorder_add_form").submit(function (event) {
+    event.preventDefault();
+    if ($('#tableorder_add_form').valid()) {            // checks form for validity
+        if ($('#tableorder_id').val() !== '') {
+            PosnicPro.tableOrders.editTableOrderField();
+        } else {
+            PosnicPro.tableOrders.addTableOrderField();
+        }
+    }
+});
+$("#taxgroup_add_form").validate({
+    errorClass: 'error error_taxgroup',
+    highlight: function (element, errorClass) {
+        $(element).css("border-color", "#f9616d");
+    },
+    unhighlight: function (element, errorClass) {
+        $(element).css("border-color", "#eae8e8");
+    },
+    rules: {
+        taxgroup_name: {
+            required: true,
+            minlength: 3,
+            maxlength: 20
+        },
+        'tax_rates[]': {
+            required: true
+        }
+    },
+    messages: {
+        taxgroup_name: {
+            required: "Please enter a tax name",
+            minlength: "Tax name must be at least 3 characters",
+            maxlength: "Tax name should not be more than 100 characters"
+        },
+        'tax_rates[]': {
+            required: "You must check at least 1 box"
+        }
+    }
+});
+$("#taxgroup_add_form").submit(function (event) {
+    event.preventDefault();
+    if ($('#taxgroup_add_form').valid()) {            // checks form for validity
+        var checked = $(".tax_rates:checked").length;
+        if (checked > 0) {
+            $("#error_tax_checkbox").text("").removeClass('error');
+            if ($('#taxgroup_id').val() !== '') {
+                PosnicPro.taxgroup.editTaxgroupRates();
+            } else {
+                PosnicPro.taxgroup.addTaxgroupRates();
+            }
+        } else {
+            $("#error_tax_checkbox").text("You must check at least 1 box").addClass('error');
+        }
+    }
+});
+$("#eraseForm").validate({
+    highlight: function (element, errorClass) {
+        $(element).css("border-color", "#f9616d");
+    },
+    unhighlight: function (element, errorClass) {
+        $(element).css("border-color", "#eae8e8");
+    },
+    rules: {
+        verifyPassword: {
+            required: true,
+            minlength: 5,
+            strong_password: true,
+            maxlength: 20
+        }
+    },
+    messages: {
+        verifyPassword: {
+            required: "Enter the password",
+            minlength: "Password must be at least 5 characters",
+            maxlength: "Password should not be more than 20 characters"
+        }
+    }
+});
+$("#eraseForm").submit(function (event) {
+    event.preventDefault();
+    if ($('#eraseForm').valid()) {            // checks form for validity
+        PosnicPro.settings.verifyViewDangerZoneConfirmed();
+    }
+});
+// Email setting validate submit
+$("#email_add").validate({
+    highlight: function (element, errorClass) {
+        $(element).css("border-color", "#f9616d");
+    },
+    unhighlight: function (element, errorClass) {
+        $(element).css("border-color", "#eae8e8");
+    },
+    rules: {
+        report_type: {
+            required: true
+        },
+        "emailaddress[0]": {
+            required: true,
+            maxlength: 250,
+            email: true,
+            emailExt: true
+        }
+    },
+    messages: {
+        report_type: {
+            required: "Please choose a report type"
+        },
+        "emailaddress[0]": {
+            required: "Please Enter a email address",
+            email: "Please Enter a valid email address",
+            maxlength: "Email should not be more than 250 Characters"
+        }
+    }
+});
+$("#email_add").submit(function (event) {
+    event.preventDefault();
+    if ($('#email_add').valid()) {
+        PosnicPro.settings.emailSetting();
+    }
+});
+// Kiosk account validate submit
+$("#kioskaccount_form").validate({
+    highlight: function (element) {
+        $(element).css("border-color", "#f9616d");
+    },
+    unhighlight: function (element) {
+        $(element).css("border-color", "#eae8e8");
+    },
+    rules: {
+        kioskstore_id: {
+            required: true,
+            minlength: 3,
+            maxlength: 6,
+            pattern: /^[A-Za-z0-9]+$/
+        }
+        // kiosksecret_key: {
+        //     required: true,
+        //     minlength: 3,
+        //     maxlength: 6,
+        //     pattern: /^[A-Za-z0-9]+$/
+        // }
+    },
+    messages: {
+        kioskstore_id: {
+            required: "Please enter store ID",
+            minlength: "Minimum 3 characters",
+            maxlength: "Maximum 6 characters",
+            pattern: "Only letters and numbers allowed"
+        }
+
+        // kiosksecret_key: {
+        //     required: "Please enter secret key",
+        //     minlength: "Minimum 3 characters",
+        //     maxlength: "Maximum 6 characters",
+        //     pattern: "Only letters and numbers allowed"
+        // }
+    }
+});
+// Add pattern rule support if not already available
+$.validator.addMethod("pattern", function (value, element, pattern) {
+    if (this.optional(element)) return true;
+    if (typeof pattern === "string") {
+        pattern = new RegExp(pattern);
+    }
+    return pattern.test(value);
+}, "Invalid format.");
+
+$("#kioskaccount_form").submit(function (event) {
+    event.preventDefault();
+    if ($(this).valid()) {
+        PosnicPro.settings.kioskAccountSettings();
+    }
+});
+
+$("#kioskprint_form").validate({
+    highlight: function (element) {
+        $(element).css("border-color", "#f9616d");
+    },
+    unhighlight: function (element) {
+        $(element).css("border-color", "#eae8e8");
+    },
+    rules: {
+        kioskprinter_name: {
+            required: true
+        }
+    },
+    messages: {
+        kioskprinter_name: {
+            required: "Please enter printer name"
+        }
+    }
+});
+
+$("#kioskprint_form").submit(function (event) {
+    event.preventDefault();
+    if ($(this).valid()) {
+        PosnicPro.settings.kioskPrinterSettings();
+    }
+});
+
+$('.custom_recyclebin_search_input').on('keypress keydown.autocomplete', function () {
+    var module = $('#backuptablelist').val();
+    var field_name = $('#view_recycle_bin_fields').val();
+    $(this).autocomplete({
+        lookup: function (query, done) {
+            var result = {};
+            var suggestions = [];
+            var params = {
+                url: 'setting/autoSuggestionRecycleBinTableField',
+                data: 'query=' + query + '&field=' + field_name + '&module=' + module
+            };
+            PosnicPro.get(params, function (response) {
+                suggestions: $.map(response.suggestions, function (dataItem) {
+                    suggestions.push({ "value": dataItem, "data": dataItem });
+                });
+                result["suggestions"] = suggestions;
+                done(result);
+            });
+        },
+        autoSelectFirst: true
+    });
+});
+$("#click_filter_btn,#v-pills-recyclebin-tab").click(function () {
+    if ($('#show_recycle').css('display') == 'none') {
+        $('#card_recycle').css({ "display": "block", "background-color": "#fff", "margin-bottom": "30px" });
+    } else if ($('.hide-button-action').css('display') == 'none') {
+        $('#card_recycle').css({ "display": "none", "background-color": "transparent", "margin-bottom": "0px" });
+    }
+});
+$('.custom_default_value_search').click(function () {
+    PosnicPro.selectAllText(jQuery(this));
+});
+$(document).on('change', '#indian_gst', function () {
+    var gst_status = $(this).val();
+    if (gst_status === 'gst_on') {
+        $('.disable_indian_gst').show();
+        PosnicPro.local.set('gst_action', 'enable');
+    } else {
+        $('.disable_indian_gst').hide();
+        PosnicPro.local.set('gst_action', 'disable');
+    }
+});
+$(document).ready(function () {
+    $('#discount_amount').keyup(function () {
+        if ($('#discount_amount').val() === '')
+            $('#discount_amount').val('0');
+    });
+    $("#setting_country").change(function () {
+        if (this.value === 'India') {
+            $(".branch-gstin-hide-show").show();
+        } else {
+            $('#branch_gstin_number').val('');
+            $(".branch-gstin-hide-show").hide();
+        }
+    });
+});
+$("#decimal_Round").click(function () {
+    if ($(this).is(":checked")) {
+        $('#decimal_Round').attr('checked', 'checked');
+    } else {
+        $('#decimal_Round').attr('unchecked', 'unchecked');
+    }
+});
+$("#receipt_barcode").click(function () {
+    if ($(this).is(":checked")) {
+        $('#receipt_barcode').attr('checked', 'checked');
+    } else {
+        $('#receipt_barcode').attr('unchecked', 'unchecked');
+    }
+});
+$("#backup_table_data").click(function () {
+    $('.storeSetting').removeClass('active');
+    $('#backup_table_data').addClass('active');
+    $(".backupReportTable").css({ "display": "none" });
+    PosnicPro.settings.settingsTable();
+});
+$('#branch_name').change(function () {
+    var branch_no = $('#branch_name').find(":selected").val();
+    PosnicPro.settings.changeBranch(branch_no);
+});
+$(function () {
+    $("#radio_discount_amount, #radio_discount_percentage").change(function () {
+        if ($("#radio_discount_amount").is(":checked")) {
+            $('#discount_percentage').attr('disabled', 'disabled').addClass('bg-white').val('0');
+            $('#discount_amount').removeAttr('disabled', 'disabled').focus().select();
+        } else if ($("#radio_discount_percentage").is(":checked")) {
+            $('#discount_amount').attr('disabled', 'disabled').addClass('bg-white').val('0');
+            $('#discount_percentage').removeAttr('disabled', 'disabled').focus().select();
+        }
+    });
+});
+function resize() {
+    if ($(window).width() < 768) {
+        $('#vertical_nav').addClass('tabs-horizantal');
+        $('#vertical_nav').removeClass('tabs-vertical');
+    } else {
+        $('#vertical_nav').addClass('tabs-vertical');
+    }
+}
+
+$(document).ready(function () {
+    $('#v-pills-manage').addClass('show active');
+    $(window).resize(resize);
+    resize();
+});
+// Function to preview image after validation
+$(function () {
+    PosnicPro.settings.loadSelectSettingCountry();
+    PosnicPro.settings.loadSelectSettingCurrency();
+    PosnicPro.settings.timeZone();
+    PosnicPro.commonDate();
+    $("#file").change(function () {
+        var fileSize = this.files[0].size;
+        if (fileSize < 5242880) {
+            var validExtensions = ['gif', 'jpg', 'png', 'jpeg', 'bmp'];
+            var fileName = this.files[0].name;
+            $('#setting_image_value').val(this.files[0].name);
+            var fileNameExt = fileName.substr(fileName.lastIndexOf('.') + 1);
+            if ($.inArray(fileNameExt, validExtensions) === -1) {
+                this.type = ''
+                this.type = 'file'
+                PosnicPro.alert('error', "Only these file types are accepted : " + validExtensions.join(', '));
+            } else {
+                var reader = new FileReader();
+                reader.onload = PosnicPro.settings.settingImageReadURL;
+                reader.readAsDataURL(this.files[0]);
+            }
+        } else {
+            PosnicPro.alert('error', "size should be less than 5MB !");
+        }
+    });
+    /*Date Select Dropdown*/
+    $('#storedate').on({
+        change: function () {
+            var selectedDate = $('#storedate').val();
+            $('#storedate option[value="' + selectedDate + '"]').attr("selected", true);
+            var serverDate = $('#storedate option[value="' + selectedDate + '"]').data('id');
+            var serverText = $('#storedate option[value="' + selectedDate + '"]').text();
+            $('#serverdate').val(serverDate);
+            $('#dateText').val(serverText);
+            $('#storedate').off('click');
+        }
+    });
+    ($('#backuptablelist').val() === 'branches') ? $('#hide_branch_recyclebin,#Select_backup_Branch').hide() : $('#hide_branch_recyclebin,#Select_backup_Branch').show();
+});
+$("#Select_backup_Branch").change("change", function () {
+    $("#select_backup_value_set").val($(this).find("option:selected").attr("value"));
+});
+// validate submit
+$("#tax_discount_add").validate({
+    highlight: function (element, errorClass) {
+        $(element).css("border-color", "#f9616d");
+    },
+    unhighlight: function (element, errorClass) {
+        $(element).css("border-color", "#eae8e8");
+    },
+    rules: {
+        default_customer: {
+            required: true,
+            minlength: 3,
+            maxlength: 100
+        },
+        default_supplier: {
+            required: true,
+            minlength: 3,
+            maxlength: 100
+        },
+        sales_prefix: {
+            required: true,
+            lettersonly: true,
+            minlength: 3,
+            maxlength: 3
+        },
+        receiving_prefix: {
+            required: true,
+            lettersonly: true,
+            minlength: 3,
+            maxlength: 3
+        },
+        notification_value: {
+            required: true
+        },
+        header_print: {
+            minlength: 3,
+            maxlength: 1000
+        },
+        footer_print: {
+            minlength: 3,
+            maxlength: 1000
+        }
+    },
+    messages: {
+        default_customer: {
+            required: "Please choose Customer Name",
+            minlength: "Customer name must be at least 3 characters",
+            maxlength: "Customer name should not be more than 100 characters"
+        },
+        default_supplier: {
+            required: "Please choose Supplier Name",
+            minlength: "Supplier name must be at least 3 characters",
+            maxlength: "Supplier name should not be more than 100 characters"
+        },
+        sales_prefix: {
+            required: "Please Enter a sales prefix value",
+            minlength: "Must be at least 3 characters",
+            maxlength: "Should not be more than 3 characters"
+        },
+        receiving_prefix: {
+            required: "Please Enter a receiving prefix value",
+            minlength: "Must be at least 3 characters",
+            maxlength: "Should not be more than 3 characters"
+        },
+        notification_value: {
+            required: "Please Enter a notification value"
+        },
+        header_print: {
+            minlength: "Header content must be at least 3 characters",
+            maxlength: "Header content should not be more than 1000 characters"
+        },
+        footer_print: {
+            minlength: "Footer content must be at least 3 characters",
+            maxlength: "Footer content should not be more than 1000 characters"
+        }
+    }
+});
+jQuery.validator.addMethod("lettersonly", function (value, element) {
+    return this.optional(element) || /^[a-z\s]+$/i.test(value);
+}, "Please Enter a Only Letters");
+$("#tax_discount_add").submit(function (event) {
+    event.preventDefault();
+    if ($('#tax_discount_add').valid()) {            // checks form for validity
+        PosnicPro.settings.updateCommonSetting();
+    }
+});
+$("#tax_checked_all").click(function () {
+    if ($("#tax_checked_all").is(":checked")) {
+        $('.tax_rates').prop('checked', true);
+        $("#error_tax_checkbox").text("").removeClass('error');
+    } else {
+        $('.tax_rates').prop('checked', false);
+    }
+});
+//start cash denom
+$('.cashregisters-wrapper').each(function () {
+    var $wrapper = $('.cashregisters-fields', this);
+    var i = 0;
+    $(".add-field", $(this)).click(function (e) {
+        i++;
+        if ($(this).parent('.cashregisters-input').find('input').val() !== '')
+            $('.cashregisters-input:first-child', $wrapper).clone(true).appendTo($wrapper).find('input').attr('id', 'denom[' + i + ']').attr('name', 'cashdenom[' + i + ']').val('').focus();
+    });
+    $('.cashregisters-input .remove-field', $wrapper).click(function () {
+        if ($('.cashregisters-input', $wrapper).length > 1)
+            $(this).parent('.cashregisters-input').remove();
+    });
+});
+$('.email-wrapper').each(function () {
+    var $wrapper = $('.email-fields', this);
+    var i = 0;
+    $(".add-email-field", $(this)).click(function (e) {
+        i++;
+        if ($(this).parent('.email-input').find('input').val() !== '' && PosnicPro.validateEmail($(this).parent('.email-input').find('input').val())) {
+            var $test = $('.email-input:parent', $wrapper);
+            var $newField = $('.email-input:first-child', $wrapper).clone(true);
+            $newField.appendTo($wrapper).find('input').attr('id', 'emailaddress[' + i + ']').attr('name', 'emailaddress[' + i + ']').val('').focus();
+            $('.add-email-field', $test).hide();
+            $('.add-email-field', $newField).show();
+        }
+    });
+    $('.email-input .remove-email-field', $wrapper).click(function () {
+        var $emailInput = $(this).closest('.email-input');
+        $('input', $emailInput).val('');
+        if ($('.email-input', $wrapper).length > 1)
+            $(this).parent('.email-input').remove();
+    });
+});
+$('.remove-email-field').click(function () {
+    var $text = $('.email-input:last-child');
+    $('.add-email-field', $text).show();
+});
+$('.printer-wrapper').each(function () {
+    var $wrapper = $('.printer-fields', this);
+    var i = 0;
+
+    $(".add-printer-field", $(this)).click(function (e) {
+        e.preventDefault();
+        i++;
+
+        var $newField = $('.printer-input:first-child', $wrapper).clone(true);
+        $newField.appendTo($wrapper)
+            .find('input')
+            .attr('id', 'printer_name_' + i)
+            .attr('name', 'printer_name[' + i + ']')
+            .val('')
+            .focus();
+
+        // only last row shows "+"
+        var $rows = $('.printer-input:parent', $wrapper);
+        $('.add-printer-field', $rows).hide();
+        $('.add-printer-field', $newField).show();
+    });
+
+    $('.printer-input .remove-printer-field', $wrapper).click(function (e) {
+        e.preventDefault();
+        var $row = $(this).closest('.printer-input');
+        if ($('.printer-input', $wrapper).length > 1) {
+            $row.remove();
+            var $last = $('.printer-input:last-child', $wrapper);
+            $('.add-printer-field', $last).show();
+        } else {
+            $('input', $row).val('');
+        }
+    });
+});
+$("#v-pills-store-tab").click(function () {
+    PosnicPro.HideSideBarModal();
+});
+$("#v-pills-general-tab").click(function () {
+    PosnicPro.HideSideBarModal();
+});
+$("#v-pills-email-tab").click(function () {
+    PosnicPro.HideSideBarModal();
+});
+$("#setting_image_add").click(function () {
+    PosnicPro.HideSideBarModal();
+});
+$(document).ready(function () {
+    if (window.matchMedia("(pointer: coarse)").matches) {
+        $('#shortcut').hide();
+    } else {
+        $('#shortcut').show();
+    }
+});
+$('#setting_country').one('change', function () {
+    var countrySelect = $('#setting_country');
+    countrySelect.on('select2:select', function (e) {
+        var data = e.params.data;
+        PosnicPro.settings.loadSelectSettingState(data.element.attributes['data-setting-id'].value);
+        PosnicPro.local.set("country_value", data.id);
+    });
+});
+
+// Initialize form validation
+
+$("#phonepe_qr_code_form").validate({
+    rules: {
+        phonepe_merchant_id: {
+            required: true
+        },
+        phonepe_salt_key: {
+            required: true
+        }
+    },
+    messages: {
+        phonepe_merchant_id: {
+            required: "Merchant Id is required."
+        },
+        phonepe_salt_key: {
+            required: "Salt key is required."
+        }
+    }
+});
+$("#phonepe_qr_code_form").submit(function (event) {
+    event.preventDefault();
+    if ($('#phonepe_qr_code_form').valid()) {
+        PosnicPro.settings.phonepePaymentKey();
+    }
+});
+
+$("#qr_code_form").validate({
+    rules: {
+        site_key: {
+            required: true
+        },
+        secret_key: {
+            required: true
+        }
+    },
+    messages: {
+        site_key: {
+            required: "Site key is required."
+        },
+        secret_key: {
+            required: "Secret key is required."
+        }
+    }
+});
+$("#qr_code_form").submit(function (event) {
+    event.preventDefault();
+    if ($('#qr_code_form').valid()) {
+        PosnicPro.settings.paymentKey();
+    }
+});
+$("#payment_gateway").on('change', function (event) {
+    event.preventDefault();
+    if ($('#payment_gateway').is(":checked")) {
+        if ($('#site_key').val() === '' || $('#secret_key').val() === '') {
+            $('#payment_gateway').prop("checked", false).attr('unchecked', 'unchecked');
+            PosnicPro.alert('warning', 'Please fill out this field for all empty fields');
+        }
+    }
+});
+$('#footer_print,#header_print').summernote({
+    height: 120,
+    toolbar: [
+        ['style', ['style']],
+        ['font', ['bold', 'underline', 'clear']],
+        ['color', ['color']],
+        ['para', ['ul', 'ol', 'paragraph']],
+        ['table', ['table']],
+        ['view', ['fullscreen', 'help']],
+        ['height', ['height']],
+        ['fontsize', ['fontsize']],
+        ['fontname', ['fontname']]
+    ],
+    placeholder: 'Enter a content ...',
+    focus: true,
+    callbacks: {
+        onKeydown: function (e) {
+            var t = e.currentTarget.innerText;
+            if (t.trim().length === 0) {
+                $('#footer_print,#header_print').summernote('code', '');
+            }
+            if (t.trim().length >= 1000) {
+                //delete keys, arrow keys, copy, cut, select all
+                if (e.keyCode != 8 && !(e.keyCode >= 37 && e.keyCode <= 40) && e.keyCode != 46 && !(e.keyCode == 88 && e.ctrlKey) && !(e.keyCode == 67 && e.ctrlKey) && !(e.keyCode == 65 && e.ctrlKey))
+                    e.preventDefault();
+            }
+        },
+        onKeyup: function (e) {
+            var t = e.currentTarget.innerText;
+            if (t.trim().length === 0) {
+                $('#footer_print,#header_print').summernote('code', '');
+            }
+            $('#footer_print,#header_print').text(1000 - t.trim().length);
+        },
+        onPaste: function (e) {
+            var t = e.currentTarget.innerText;
+            var bufferText = ((e.originalEvent || e).clipboardData || window.clipboardData).getData('Text');
+            e.preventDefault();
+            var maxPaste = bufferText.length;
+            if (t.length + bufferText.length > 1000) {
+                maxPaste = 1000 - t.length;
+            }
+            if (maxPaste > 0) {
+                document.execCommand('insertText', false, bufferText.substring(0, maxPaste));
+            }
+            $('#footer_print,#header_print').text(1000 - t.length);
+        }
+    }
+});
+
+$(function () {
+    PosnicPro.settings.store_telephone = window.intlTelInput(document.querySelector("#store_telephone"), {
+        separateDialCode: true,
+        preferredCountries: ['in'],
+        hiddenInput: "full",
+        utilsScript: "../static/script/js/utils.js"
+    });
+    $('#enable_email_reminders, #enable_sms_reminders').on('change', function () {
+        if ($('#enable_email_reminders').prop('checked') || $('#enable_sms_reminders').prop('checked')) {
+            $('#enable_sms_auto_send').prop('disabled', false);  // Enable the Auto Send checkbox        
+        } else {
+            $('#enable_sms_auto_send').prop('disabled', true);   // Disable Auto Send checkbox
+            $('#enable_sms_auto_send').prop('checked', false);   // Uncheck Auto Send checkbox
+            PosnicPro.settings.toggleInputs();
+        }
+    });
+    $('#enable_sms_auto_send').on('change', function () {
+        PosnicPro.settings.toggleInputs();
+    });
+    $('#sms_auto_send_time').on('change', function () {
+        const time = $(this).val(); // Get 24-hour format (e.g., "14:30")
+        const [hour, minute] = time.split(':'); // Split into hour and minute
+        let period = 'am';
+        let formattedHour = parseInt(hour, 10);
+
+        if (formattedHour >= 12) {
+            period = 'pm';
+            if (formattedHour > 12) {
+                formattedHour -= 12; // Convert to 12-hour format
+            }
+        } else if (formattedHour === 0) {
+            formattedHour = 12; // Convert midnight to 12 AM
+        }
+        // Update hidden input for AM/PM
+        $('#sms_auto_send_period').val(formattedHour + ':' + minute + ' ' + period);
+    });
+    PosnicPro.kiosk.handleFileChange("kiosk_logo", "preview_logo");
+    PosnicPro.kiosk.handleFileChange("kiosk_banner", "preview_banner");
+    PosnicPro.kiosk.handleFileChange("kiosk_homebanner", "preview_homebanner");
+    PosnicPro.kiosk.handleFileChange("kiosk_advertisement", "preview_advertisement");
+
+    // read setting stored by settings.js
+    var kotEnabled = (PosnicPro.local.get('table_options') === 'enable');
+
+    var $kotLi = $('#view_kot_page').closest('li');
+    var $kotOrderLi = $('#view_kotorder_page').closest('li');
+    var $kotHistoryLi = $('#view_kothistory_page').closest('li');
+    var $kotReportLi = $('#viewkotreport_page').closest('li');
+
+    if (kotEnabled) {
+        $kotLi.show();
+        $kotOrderLi.show();
+        $kotHistoryLi.show();
+        $kotReportLi.show();
+    } else {
+        $kotLi.hide();
+        $kotOrderLi.hide();
+        $kotHistoryLi.hide();
+        $kotReportLi.hide();
+    }
+});
+
+$('#kiosk_payment_form').on('submit', function (e) {
+    // Prevent form submission
+    e.preventDefault();
+
+    // Initialize default values
+    var paymentParams = {
+        payment_cod: false,
+        payment_razorpay: false,
+        payment_number: false
+    };
+
+    // Update based on enabled and checked checkboxes
+    $('input[name="payment_methods[]"]:enabled').each(function () {
+        const id = $(this).attr('id'); // like 'payment_cod' or 'payment_razorpay', or 'payment_number'
+        paymentParams[id] = $(this).is(':checked');
+    });
+    var params = {
+        url: 'setting/kioskPayment', // change to your endpoint
+        data: JSON.stringify(paymentParams)
+    };
+
+    PosnicPro.post(params, function (response) {
+        if (response.type === 'success') {
+            PosnicPro.alert(response.type, response.message);
+        }
+    }, function (xhr) {
+        var response = jQuery.parseJSON(xhr.responseText);
+        PosnicPro.alert(response.type, response.message);
+    });
+});

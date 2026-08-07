@@ -1,0 +1,31 @@
+<svg id="Small_Icons" data-name="Small Icons" xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: none;
+        stroke: #fff;
+        stroke-linecap: round;
+        stroke-width: 3px;
+      }
+
+      .cls-1, .cls-2 {
+        fill-rule: evenodd;
+      }
+
+      .cls-2 {
+        fill: #fff;
+        opacity: 0.25;
+      }
+    </style>
+  </defs>
+  <g id="Back_End" data-name="Back End">
+    <path id="Rounded_Rectangle_9" data-name="Rounded Rectangle 9" class="cls-1" d="M9.461,3.534H40.539a3,3,0,0,1,3,3V45.466L39,43l-4.687,2.466L26,42l-8,3.466L13,43,6.461,45.466V6.534A3,3,0,0,1,9.461,3.534Z"/>
+    <path class="cls-2" d="M6,32l38-8V44l-5-1-5,3-8-4-8,4-5-3L6,46V32Z"/>
+    <path class="cls-1" d="M22.5,14.5h13"/>
+    <path id="Shape_14_copy" data-name="Shape 14 copy" class="cls-1" d="M22.5,22.5h13"/>
+    <path id="Shape_14_copy_2" data-name="Shape 14 copy 2" class="cls-1" d="M22.5,29.5h13"/>
+    <path id="Shape_14_copy_3" data-name="Shape 14 copy 3" class="cls-1" d="M15.094,14.5h0.813"/>
+    <path id="Shape_14_copy_3-2" data-name="Shape 14 copy 3" class="cls-1" d="M15.094,22.5h0.813"/>
+    <path id="Shape_14_copy_3-3" data-name="Shape 14 copy 3" class="cls-1" d="M15.094,29.5h0.813"/>
+  </g>
+</svg>
