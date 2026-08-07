@@ -103,7 +103,20 @@ function ciDatabaseName(prefix = 'ci') {
  * underneath it. GITHUB_RUN_ID is monotonic, so a name carrying a much older
  * id is finished by definition.
  */
-const SWEEP_PATTERN = /^ci(_routes)?_(\d+|local)_\d+_[a-z0-9]{6}$/;
+/*
+ * The run-attempt segment is optional because it was added to ciDatabaseName
+ * after databases had already been created without it. Names from before that
+ * change look like ci_routes_30800121481_72rd5i - run id, then straight to the
+ * random tail - and a pattern that insisted on the attempt matched none of
+ * them. Nineteen of them accumulated on the test cluster, invisible to the
+ * sweeper that existed to remove exactly that, until the 100-database limit
+ * started failing builds again.
+ *
+ * A sweeper is only as good as its ability to recognise its own past output,
+ * so this has to keep matching every format we have ever generated, not just
+ * the current one. Adding a segment to ciDatabaseName means widening this too.
+ */
+const SWEEP_PATTERN = /^ci(_routes)?_(\d+|local)(_\d+)?_[a-z0-9]{6}$/;
 
 async function sweepStaleDatabases(client, { keepRunId } = {}) {
   const dropped = [];

@@ -8,7 +8,7 @@
  * afterwards.
  */
 
-const { withDatabase, ciDatabaseName } = require('../api/ci-database');
+const { withDatabase, ciDatabaseName, SWEEP_PATTERN } = require('../api/ci-database');
 
 describe('pointing a connection string at a run of its own', () => {
   test('the shape Atlas actually puts on the clipboard', () => {
@@ -95,6 +95,82 @@ describe('the generated name', () => {
     } finally {
       if (prev === undefined) delete process.env.GITHUB_RUN_ID;
       else process.env.GITHUB_RUN_ID = prev;
+    }
+  });
+});
+
+/*
+ * The sweeper and the generator have to agree, and nothing used to check that.
+ *
+ * They drifted: a run-attempt segment was added to ciDatabaseName, and
+ * SWEEP_PATTERN was written for the new shape only. Every database created
+ * before the change - ci_routes_30800121481_72rd5i, run id straight to the
+ * random tail - stopped matching, so the sweeper walked past nineteen of its
+ * own leftovers on the test cluster while reporting nothing to clean.
+ *
+ * That failure is silent by construction. The sweeper is housekeeping; it
+ * never fails a build, so a pattern matching nothing looks exactly like a
+ * cluster that was already tidy, right up until the 100-database limit starts
+ * failing every build for a reason unrelated to the change being tested.
+ *
+ * The first test is the one that matters: it feeds the generator's own output
+ * back to the pattern. Add a segment to ciDatabaseName without widening
+ * SWEEP_PATTERN and it fails here, in the ordinary suite, with no database
+ * needed - rather than months later on a cluster nobody is looking at.
+ */
+describe('the sweeper recognises its own leftovers', () => {
+  test('whatever the generator produces today is matched', () => {
+    const prev = { id: process.env.GITHUB_RUN_ID, attempt: process.env.GITHUB_RUN_ATTEMPT };
+    try {
+      process.env.GITHUB_RUN_ID = '30800121481';
+      process.env.GITHUB_RUN_ATTEMPT = '2';
+      for (const prefix of ['ci', 'ci_routes']) {
+        expect(ciDatabaseName(prefix)).toMatch(SWEEP_PATTERN);
+      }
+      /* A developer running the suite locally has neither variable set. */
+      delete process.env.GITHUB_RUN_ID;
+      delete process.env.GITHUB_RUN_ATTEMPT;
+      for (const prefix of ['ci', 'ci_routes']) {
+        expect(ciDatabaseName(prefix)).toMatch(SWEEP_PATTERN);
+      }
+    } finally {
+      if (prev.id === undefined) delete process.env.GITHUB_RUN_ID;
+      else process.env.GITHUB_RUN_ID = prev.id;
+      if (prev.attempt === undefined) delete process.env.GITHUB_RUN_ATTEMPT;
+      else process.env.GITHUB_RUN_ATTEMPT = prev.attempt;
+    }
+  });
+
+  test('names from before the attempt segment existed are still matched', () => {
+    /* Taken from the test cluster, where they had accumulated unswept. */
+    for (const name of [
+      'ci_routes_30800121481_72rd5i',
+      'ci_routes_30805722908_1oynco',
+      'ci_routes_30978880948_iitnxz',
+      'ci_30822742650_0bldsp',
+    ]) {
+      expect(name).toMatch(SWEEP_PATTERN);
+    }
+  });
+
+  test('nothing that is not ours is ever matched', () => {
+    /* The cost of a false positive here is a dropped production database, so
+       this list is deliberately blunt: tenant databases, the databases every
+       MongoDB deployment has, and near-misses that merely start with "ci". */
+    for (const name of [
+      'posnic_t_bala',
+      'posnic_t_kiranastore',
+      'PosnicPro',
+      'Web',
+      'admin',
+      'local',
+      'config',
+      'ci',
+      'ci_routes',
+      'citybank_prod',
+      'ci_routes_30800121481_toolongtail',
+    ]) {
+      expect(name).not.toMatch(SWEEP_PATTERN);
     }
   });
 });
