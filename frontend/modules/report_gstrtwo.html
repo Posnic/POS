@@ -1,0 +1,374 @@
+<div class="vertical-layout page_loader" id="gstr_two" style="display: none">
+    <!-- Start Containerbar -->
+    <div id="containerbar">
+        <!-- Start Breadcrumbbar -->
+        <div class="breadcrumbbar crumbbar_padding">
+
+            <!--  filter-->            
+            <div class="row align-items-center">
+                <div class="col-lg-1 col-xl-1">
+                    <h4 class="page-title break_title">GSTR2</h4>
+                </div>    
+                <div class="col-lg-3 col-xl-3">
+                    <div class="input-group">
+                        <div class="input-group-append">
+                            <span class="input-group-text text-primary">
+                                From
+                            </span>
+                        </div>
+                        <input type="text" id="gst_form_two_daterange_one" class="form-control" />
+                    </div>
+                </div> 
+                <div class="col-lg-3 col-xl-3">
+                    <div class="input-group">
+                        <div class="input-group-append">
+                            <span class="input-group-text text-primary">
+                                To
+                            </span>
+                        </div>
+                        <input type="text" id="gst_form_two_daterange_two" class="form-control" />
+                    </div>
+                </div>
+
+                <div class="col-md-1 col-lg-1 ">
+                    <button type="button" class="btn btn-primary-rgba" onclick="PosnicPro.gstrTwo.gsttworeportTable();">
+                        <lang class="lang_filter_title">Apply</lang>
+                    </button>
+                </div>
+
+                <div class="col-lg-2 col-xl-2 float-right">
+                    <!-- <button type="button" class="btn btn-round btn-primary-rgba adjuce_left" data-toggle="tooltip" title="xls"
+                            data-id="gstr_two" onclick="PosnicPro.gstrXls(this, 'GSTR2');">
+                        <i class="feather icon-file-text" aria-hidden="true"></i>
+                    </button> -->
+                    <button type="button" class="btn btn-round btn-primary-rgba adjuce_left" data-toggle="tooltip" title="json"
+                            data-id="gstr_jsonone" onclick="PosnicPro.gstrTwo.gstrJson();">
+                        <i class="feather icon-file-text" aria-hidden="true"></i>
+                    </button>
+
+                </div>  
+            </div>
+        </div>
+    </div>
+
+    <!-- Start Contentbar -->
+    <div class="contentbar" id="gstr2">
+        <!-- Start row -->
+        <div class="row"> 
+            <div class="col-md-12 col-lg-12 col-xl-12 m-t-10">
+                <div class="card m-b-30 loader-gstr-two">
+                    <div class="card-body">
+
+
+                        <div class="table-responsive" style="font-size: 14px;">
+                            <h2 class="m-t-20 m-b-20 text-center">GSTR 2A Report</h2>
+                            <table class="col-6 float-right table table-bordered table-bordered-padding m-t-50 m-b-50 from_year_form">
+                                <tbody>
+                                    <tr>
+                                        <th>Year</th>
+                                        <td><span class="from-year"></span></td>                                        
+                                    </tr>
+                                    <tr>
+                                        <th>Month</th>
+                                        <td><span class="from-month"></span></td>                                        
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <table class="table table-bordered table-bordered-padding m-t-50 m-b-50">
+                                <tbody>
+                                    <tr>
+                                        <th width="5%">1.</th>
+                                        <th width="5%"></th>
+                                        <th width="40%">GSTIN</th>
+                                        <td><span class="company_gstin"></span></td>
+                                    </tr>
+                                    <tr>
+                                        <th width="5%">2.</th>
+                                        <th width="5%">(a)</th>
+                                        <th width="40%">Legal name of the registered person</th>
+                                        <td><span class="legal-name"></span></td>
+                                    </tr>
+                                    <tr>
+                                        <th width="5%"></th>
+                                        <th width="5%">(b)</th>
+                                        <th width="40%">Trade name, if any</th>
+                                        <td></td>
+                                    </tr>                                   
+                                </tbody>
+                            </table>
+
+                            <table class="table table-bordered table-bordered-padding m-t-50 m-b-50 register_sale_person" id="traffic">
+                                <thead>
+                                    <tr>
+                                        <th class="caption_style" colspan="11">3. Inward supplies received from a registered person other than the supplies attracting reverse charge</th>
+                                    </tr>
+                                    <tr style="background-color:lightgrey">
+                                        <th class="text-center" rowspan="2"><span>GSTIN of supplier</span></th>
+                                        <th class="text-center" colspan="3"><span>Invoice details</span></th>
+                                        <th class="text-center" rowspan="2"><span>Rate</span></th>
+                                        <th class="text-center" rowspan="2"><span>Taxable Value</span></th>
+                                        <th class="text-center" colspan="4"><span>Amount of tax</span></th>
+                                        <th class="text-center" rowspan="2"><span>Place of Supply(Name of State)</span></th>
+                                    </tr>
+                                    <tr style="background-color:lightgrey">
+                                        <th class="text-center">No</th>
+                                        <th class="text-center">Date</th>
+                                        <th class="text-center">Value</th>
+                                        <th class="text-center">Integrated Tax</th>
+                                        <th class="text-center">Central Tax</th>
+                                        <th class="text-center">State/UT Tax</th>
+                                        <th class="text-center">Cess</th>
+                                    </tr>
+                                    <tr>
+                                        <th class="text-center">1</th>
+                                        <th class="text-center">2</th>
+                                        <th class="text-center">3</th>
+                                        <th class="text-center">4</th>
+                                        <th class="text-center">5</th>
+                                        <th class="text-center">6</th>
+                                        <th class="text-center">7</th>
+                                        <th class="text-center">8</th>
+                                        <th class="text-center">9</th>
+                                        <th class="text-center">10</th>
+                                        <th class="text-center">11</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody> </tbody>
+                                
+                            </table>
+
+                            <table class="table table-bordered table-bordered-padding m-t-50 m-b-50">
+                                <thead>
+                                    <tr>
+                                        <th class="caption_style" colspan="11">4. Inward supplies received from a registered person on which tax is to be paid on reverse charge</th>
+                                    </tr>
+                                    <tr style="background-color:lightgrey">
+                                        <th class="text-center" rowspan="2">GSTIN of supplier</th>
+                                        <th class="text-center" colspan="3">Invoice details</th>
+                                        <th class="text-center" rowspan="2">Rate</th>
+                                        <th class="text-center" rowspan="2">Taxable Value</th>
+                                        <th class="text-center" colspan="4">Amount of tax</th>
+                                        <th class="text-center" rowspan="2">Place of Supply(Name of State)</th>
+
+                                    </tr>
+                                    <tr style="background-color:lightgrey">
+                                        <th class="text-center">No</th>
+                                        <th class="text-center">Date</th>
+                                        <th class="text-center">Value</th>
+                                        <th class="text-center">Integrated Tax</th>
+                                        <th class="text-center">Central Tax</th>
+                                        <th class="text-center">State/UT Tax</th>
+                                        <th class="text-center">Cess</th>
+                                    </tr>
+                                    <tr>
+                                        <th class="text-center">1</th>
+                                        <th class="text-center">2</th>
+                                        <th class="text-center">3</th>
+                                        <th class="text-center">4</th>
+                                        <th class="text-center">5</th>
+                                        <th class="text-center">6</th>
+                                        <th class="text-center">7</th>
+                                        <th class="text-center">8</th>
+                                        <th class="text-center">9</th>
+                                        <th class="text-center">10</th>
+                                        <th class="text-center">11</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>    </tbody>
+                                
+                            </table>
+
+                            <table class="table table-bordered table-bordered-padding m-t-50 m-b-50">
+                                <thead>
+                                    <tr>
+                                        <th class="caption_style" colspan="14">5. Debit / Credit notes (including amendments thereof) received during current tax period</th>
+                                    </tr>
+                                    <tr style="background-color:lightgrey">
+                                        <th class="text-center" colspan="3">Details of original document</th>
+                                        <th class="text-center" colspan="4">Revised details of document <br> or details of original Debit /Credit note</th>
+                                        <th class="text-center" rowspan="2">Rate</th>
+                                        <th class="text-center" rowspan="2">Taxable value</th>
+                                        <th class="text-center" colspan="4">Amount of tax</th>
+                                        <th class="text-center" rowspan="2">Place of <br> supply <br> (Name of <br> State)</th>
+                                        
+                                    </tr>
+                                    <tr style="background-color:lightgrey">
+                                        <th class="text-center">GSTIN</th>
+                                        <th class="text-center">No</th>
+                                        <th class="text-center">Date</th>
+                                        <th class="text-center">GSTIN</th>
+                                        <th class="text-center">No.</th>
+                                        <th class="text-center">Date</th>
+                                        <th class="text-center">Value</th>
+                                        <th class="text-center">Integrated Tax</th>
+                                        <th class="text-center">Central Tax</th>
+                                        <th class="text-center">State/UT Tax</th>
+                                        <th class="text-center">Cess</th>
+                                        <th></th>
+                                    </tr>
+                                    <tr>
+                                        <th class="text-center">1</th>
+                                        <th class="text-center">2</th>
+                                        <th class="text-center">3</th>
+                                        <th class="text-center">4</th>
+                                        <th class="text-center">5</th>
+                                        <th class="text-center">6</th>
+                                        <th class="text-center">7</th>
+                                        <th class="text-center">8</th>
+                                        <th class="text-center">9</th>
+                                        <th class="text-center">10</th>
+                                        <th class="text-center">11</th>
+                                        <th class="text-center">12</th>
+                                        <th class="text-center">13</th>
+                                        <th class="text-center">14</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>  </tbody>
+                                
+                            </table>
+
+                            <table class="table table-bordered table-bordered-padding m-t-50 m-b-50 interstate_sale">
+                                <thead>
+                                    <tr>
+                                        <th class="caption_style" colspan="7">6. ISD credit (including amendments thereof) received</th>
+                                    </tr>
+                                    <tr style="background-color:lightgrey">
+                                        <th class="text-center" rowspan="2" style="display:none;"><span>Place</span></th>
+                                        <th class="text-center" rowspan="2"><span>GSTIN of ISD</span></th>
+                                        <th class="text-center" colspan="2"><span>ISD document details</span></th>
+                                        <th class="text-center" colspan="4">ITC amount involved</th>
+                                    </tr>                                     
+                                    <tr style="background-color:lightgrey">
+                                        <th class="text-center"><span>No</span></th>
+                                        <th class="text-center"><span>Date</span></th>
+                                        <th class="text-center"><span>Integrated</span></th>
+                                        <th class="text-center"><span>Central Tax</span></th>
+                                        <th class="text-center"><span>State Tax/UT Tax</span></th>
+                                        <th class="text-center"><span>Cess</span></th>
+                                    </tr>
+                                    <tr>
+                                        <th class="text-center">1</th>
+                                        <th class="text-center">2</th>
+                                        <th class="text-center">3</th>
+                                        <th class="text-center">4</th>
+                                        <th class="text-center">5</th>
+                                        <th class="text-center">6</th>
+                                        <th class="text-center">7</th>                                        
+
+                                    </tr>
+                                </thead>
+
+                                <tbody>                                   
+                                    
+                                    
+                                    <tr>
+                                        <td style="color:blue !important;font-weight:500">ISD Invoice –eligible ITC </td>
+                                        <td class="text-right">0</td>
+                                        <td class="text-right">0</td>
+                                        <td class="text-right">0</td>
+                                        <td class="text-right">0</td>
+                                        <td class="text-right">0</td>
+                                        <td class="text-right">0</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="color:blue !important;font-weight:500">ISD Invoice –ineligible ITC </td>
+                                        <td class="text-right">0</td>
+                                        <td class="text-right">0</td>
+                                        <td class="text-right">0</td>
+                                        <td class="text-right">0</td>
+                                        <td class="text-right">0</td>
+                                        <td class="text-right">0</td>
+                                    </tr>
+
+                                    <tr>
+                                        <td style="color:blue !important;font-weight:500">ISD Credit note –eligible ITC</td>
+                                        <td class="text-right">0</td>
+                                        <td class="text-right">0</td>
+                                        <td class="text-right">0</td>
+                                        <td class="text-right">0</td>
+                                        <td class="text-right">0</td>
+                                        <td class="text-right">0</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="color:blue !important;font-weight:500">ISD Credit note –ineligible ITC</td>
+                                        <td class="text-right">0</td>
+                                        <td class="text-right">0</td>
+                                        <td class="text-right">0</td>
+                                        <td class="text-right">0</td>
+                                        <td class="text-right">0</td>
+                                        <td class="text-right">0</td>
+                                    </tr>                       
+                                </tbody>
+                            </table>
+
+                            <table class="table table-bordered table-bordered-padding m-t-50 m-b-50">
+                                <thead>
+                                    <tr>
+                                        <th class="caption_style" colspan="7">7. TDS and TCS Credit (including amendments thereof) received</th>
+                                    </tr>
+                                    <tr style="background-color:lightgrey">
+                                        <th class="text-center" rowspan="2">GSTIN of Deductor /<br> GSTIN of e- <br> Commerce Operator</th>
+                                        <th class="text-center" rowspan="2">Amount <br> received / <br> Gross <br> Value</th>
+                                        <th class="text-center" rowspan="2">Sales Return </th>
+                                        <th class="text-center" rowspan="2">Net Value</th>
+                                        <th class="text-center" colspan="3">Amount</th>
+                                    </tr>
+                                    <tr style="background-color:lightgrey">
+                                        <th class="text-center"><span>Integrated Tax</span></th>
+                                        <th class="text-center"><span>Central Tax</span></th>
+                                        <th class="text-center"><span>State Tax /UT Tax</span></th>
+                                    </tr>
+                                    <tr>
+                                        <th class="text-center">1</th>
+                                        <th class="text-center">2</th>
+                                        <th class="text-center">3</th>
+                                        <th class="text-center">4</th>
+                                        <th class="text-center">5</th>
+                                        <th class="text-center">6</th>
+                                        <th class="text-center">7</th>                                        
+
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td style="color:blue !important;font-weight:500" colspan="7">
+                                            7A . TDS
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-center" colspan="1">Total</td>
+                                        <td class="text-right"><i class="fa fa-inr" aria-hidden="true"></i> 0.00</td>
+                                        <td class="text-right"><i class="fa fa-inr" aria-hidden="true"></i> 0.00</td>
+                                        <td class="text-right"><i class="fa fa-inr" aria-hidden="true"></i> 0.00</td>
+                                        <td class="text-right"><i class="fa fa-inr" aria-hidden="true"></i> 0.00</td>
+                                        <td class="text-right"><i class="fa fa-inr" aria-hidden="true"></i> 0.00</td>
+                                        <td class="text-right"><i class="fa fa-inr" aria-hidden="true"></i> 0.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="color:blue !important;font-weight:500" colspan="7">
+                                            7B . TCS
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-center" colspan="1">Total</td>
+                                        <td class="text-right"><i class="fa fa-inr" aria-hidden="true"></i> 0.00</td>
+                                        <td class="text-right"><i class="fa fa-inr" aria-hidden="true"></i> 0.00</td>
+                                        <td class="text-right"><i class="fa fa-inr" aria-hidden="true"></i> 0.00</td>
+                                        <td class="text-right"><i class="fa fa-inr" aria-hidden="true"></i> 0.00</td>
+                                        <td class="text-right"><i class="fa fa-inr" aria-hidden="true"></i> 0.00</td>
+                                        <td class="text-right"><i class="fa fa-inr" aria-hidden="true"></i> 0.00</td>
+                                    </tr>
+                                </tbody>
+                            </table>  
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- End col -->
+        </div>
+    </div>
+</div>

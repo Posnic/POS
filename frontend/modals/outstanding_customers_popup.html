@@ -1,0 +1,90 @@
+<style>
+    .outstanding-customers-modal .modal-content {
+        border-radius: 20px;
+        overflow: hidden;
+        border: none;
+    }
+    .outstanding-customers-modal .modal-header {
+        background: linear-gradient(135deg, #6f42c1, #007bff);
+        color: white;
+        padding: 2rem;
+        position: relative;
+    }
+    .outstanding-customers-modal .modal-header::after {
+        content: '';
+        position: absolute;
+        bottom: -30px;
+        left: 0;
+        width: 100%;
+        height: 30px;
+        background: white;
+        border-top-left-radius: 50%;
+        border-top-right-radius: 50%;
+    }
+    .outstanding-customers-modal .modal-title {
+        font-size: 1.75rem;
+        font-weight: bold;
+    }
+    .outstanding-customers-modal .customer-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 15px;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .outstanding-customers-modal .customer-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 25px rgba(0, 0, 0, 0.1);
+    }
+    .outstanding-customers-modal .customer-name {
+        background: #007bff;
+        color: white;
+        padding: 0.75rem 1.25rem;
+        border-radius: 50px;
+        font-weight: 600;
+        margin-right: 1.5rem;
+        min-width: 100px;
+        text-align: center;
+    }
+    .outstanding-customers-modal .balance-text {
+        color: #495057;
+        margin: 0;
+        font-size: 1rem;
+    }
+    .outstanding-customers-modal .positive-balance {
+        color: #28a745; /* Green for positive balances */
+        font-weight: 600;
+    }
+    .outstanding-customers-modal .negative-balance {
+        color: #dc3545; /* Red for negative balances */
+        font-weight: 600;
+    }
+    .outstanding-customers-modal .btn-primary {
+        background: linear-gradient(135deg, #6f42c1, #007bff);
+        border: none;
+    }
+    .outstanding-customers-modal .btn-primary:hover {
+        background: linear-gradient(135deg, #5a32a3, #0069d9);
+    }
+</style>
+
+<!-- Modal -->
+<div class="modal fade outstanding-customers-modal" id="outstandingCustomersModal" tabindex="-1" aria-labelledby="balanceModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Outstanding Customers</h5>    
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">X</span></button>
+            </div>
+            <div id="OutstandingCustomersView" class="modal-body">
+
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-secondary btn-lg" onclick="PosnicPro.dashboard.outstandingCustomerViewAllClick()">View All</button>
+            </div>
+        </div>
+    </div>
+</div>

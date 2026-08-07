@@ -1,0 +1,116 @@
+<!-- start supplier modal -->
+<div id="infobar-settings-sidebar-expense" class="infobar-settings-sidebar scroll_width">
+    <div class="infobar-settings-sidebar-head d-flex w-100 justify-content-between">
+        <h4 id="exampleModalCenterTitle"><span id="expenses_title"><lang class="lang_Addexpensing">Add</lang></span>&nbsp;<lang class="lang_expensing">Expense</lang></h4>
+        <a href="javascript:void(0)" class="infobar-settings-close" data-id="expense">
+            <img src="static/images/svg-icon/close.svg" class="img-fluid menu-hamburger-close" alt="close">
+        </a>
+    </div>
+    <div class="infobar-settings-sidebar-body">
+        <div class="custom-mode-setting loader-expense">            
+            <form id='expenses_add_list_form'>                
+                <div class="form-row">
+                    <div class="form-group col-md-12">
+                        <label for="expenses_date"> <lang class="lang_date_title"> Date </lang> </label> <span class="text-danger">*</span>
+                        <input type="text" class="form-control border-control commonDate" id="expenses_date" name="date" placeholder="Enter the Date" required>
+                        <input type="hidden" name="id" id="expenses_id">
+                    </div>
+                </div>
+                <div class="form-row">                        
+                    <div class="form-group col-md-6">
+                        <label for="expenses_amount">
+                            <lang class="lang_amount_title"> Amount </lang>
+                            <span class="text-danger">*</span>
+                        </label>
+                        <input type="number" class="form-control border-control text-right"  id="expenses_amount" name="amount" onkeypress="return PosnicPro.isNumber(event)" min="0" minlength="1" maxlength="10" placeholder="Enter the Amount">
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="expenses_type">
+                            <lang class="lang_type_title"> Type </lang>
+                            <span class="text-danger">*</span>
+                        </label>
+                        <select class="custom-select border-control" name='type' id='expenses_type' data-minimum-results-for-search="Infinity">
+                            <option value="credit" selected="selected">
+                            <lang class="lang_credit_title">Credit </lang>
+                            </option>
+                            <option value="debit">
+                            <lang class="lang_debit_title">Debit </lang>
+                            </option>
+                        </select>
+                    </div> 
+                </div>
+                <div class="form-row">                                                                            
+                    <div class="form-group col-md-12">
+                        <label for="expenses_category">
+                            <lang class="lang_category_title"> Category </lang>
+                        </label>
+                        <input type="text" id="expenses_category" name="category" class="form-control border-control" minlength="3" maxlength="20" placeholder="Enter the category">
+                    </div>
+                </div>
+                <div class="form-row">                                                                            
+                    <div class="form-group col-md-12">
+                        <label for="expenses_recipientname">
+                            <lang class="lang_recipientname_title"> Recipient Name </lang>
+                        </label>
+                        <input type="text" id="expenses_recipientname" name="recipientname" class="form-control border-control" minlength="3" maxlength="20" placeholder="Enter the receipt name">
+                    </div>
+                </div>
+                <div class="form-row">                                                                            
+                    <div class="form-group col-md-12">
+                        <label for="expenses_approvedby">
+                            <lang class="lang_approvedby_title"> Approved-by </lang>
+                        </label>
+                        <input type="text" data-id="users" id="expenses_approvedby" name="approvedby" class="form-control border-control"  minlength="3" maxlength="20" placeholder="Enter approved by">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-12">
+                        <label for="expenses_expensesnote">
+                            <lang class="lang_description_title">Expense Note </lang>
+                            <span class="text-danger">*</span>
+                        </label>
+                        <textarea name="description" id="expenses_expensesnote" class="form-control border-control supplier-trigger" minlength="3" maxlength="500" placeholder="Enter the expense note" required></textarea>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-12">
+                        <div class="pull-right">
+                            <button type="button" class="btn btn-outline-secondary infobar-settings-reset" id="expense_reset" onclick="PosnicPro.expenses.expenseClearForm();"><i class="feather icon-refresh-ccw mr-2"></i><lang class="lang_clear_title"> Clear</lang></button>
+                            <button type="button" class="btn btn-outline-secondary infobar-settings-reset expense_edit_reset" id="expense_edit_reset" onclick="PosnicPro.expenses.resetEditButton(this.id);"><i class="feather icon-refresh-ccw mr-2"></i><lang class="lang_reset_title"> Reset</lang></button>
+                            <button type="button" class="btn btn-outline-danger infobar-settings-close" data-id="expense">
+                                <i class="feather icon-x-circle mr-2"></i>
+                                <lang class="lang_close_title"> Close</lang>
+                            </button>
+                            <button type="submit" class="btn btn-outline-primary" id="expenseSubmitForm">
+                                <i class="feather icon-save mr-2"></i>
+                                <span id="expenses_button_title">
+                                    <lang class="lang_save_title">Save</lang>
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row" id="show_last_created_expense" style="display:none;">
+                    <div class="form-group col-md-12">
+                        <div class="pull-right">
+                            <h6>Last Created Record <a href="#" id="last_created_expense">View</a></h6>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- end supplier modal -->
+
+
+
+
+
+
+
+
+
+
+
+

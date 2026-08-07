@@ -1,0 +1,192 @@
+{
+    "documents": [
+        {
+            "categories": [
+                {            
+                    "name": "Beauty stores",
+                    "description": "A beauty store, beauty supply store or cosmetics store is a specialty retail business that sells cosmetics, hair-care products and/or beauty tools.",
+                    "image": "https://prod-upload-pro.s3.ap-south-1.amazonaws.com/2024-05-30-07-52-00-posnic_category-665830203975e5.48756347.jpg"
+                },
+                {            
+                    "name": "Electronics",
+                    "description": "Consumer electronics are products used in a domestic or personal context, in contrast to items used for business, industrial, or professional recording purposes. These can include television sets, video players and recorders (VHS, DVD, Blu-ray), videocams, audio equipment, mobile telephones and pagers, portable devices and computers and related devices",
+                    "image": "https://prod-upload-pro.s3.ap-south-1.amazonaws.com/2024-05-30-07-47-55-posnic_category-66582f2b35e644.01988618.png"
+                },
+                {            
+                    "name": "Supermarkets",
+                    "description": "A supermarket is a self-service shop offering a wide variety of food, beverages and household products, organized into sections. This kind of store is larger and has a wider selection than earlier grocery stores, but is smaller and more limited in the range of merchandise than a hypermarket or big-box market",
+                    "image": "https://prod-upload-pro.s3.ap-south-1.amazonaws.com/2024-05-30-07-54-46-posnic_category-665830c6dbbdd9.83743128.png"
+                }
+            ],
+            "items": [
+                {      
+                    "name": "Aiyima metal A01 Tpa3116 Power Amplifier",
+                    "mrp_price": 6999.00,
+                    "company_price": 6000.00,
+                    "selling_price": 5999.00,
+                    "available_quantity": 100,
+                    "sort_order": 15,
+                    "description": "2.0/2.1 Ch Stereo Hi-Fi Amplifier Class D Integrated Amp For Home Speaker 100W Mini Amplificador With Bass Alto Treble Control",
+                    "image": "https://prod-upload-pro.s3.ap-south-1.amazonaws.com/2024-05-28-12-57-12-posnic_item_image-6655d4a86e8e34.99202617.jpg",
+                    "category_name": "Electronics"
+                },
+                {      
+                    "name": "Instant Pot Air Fryer",
+                    "mrp_price": 20999.00,
+                    "company_price": 8000.00,
+                    "selling_price": 8998.00,
+                    "available_quantity": 50,
+                    "sort_order": 14,
+                    "description": "Vortex 6 Litre,Touch Control Panel,360° Evencrisp Technology,Uses 95 % Less Oil,6-In-1 Appliance: Air Fry,Roast,Broil,Bake,Reheat,And Dehydrate(Vortex 6 Litre)1500 Watts,Silver",
+                    "image": "https://prod-upload-pro.s3.ap-south-1.amazonaws.com/2024-05-28-13-03-44-posnic_item_image-6655d6302125a5.00812600.jpg",
+                    "category_name": "Electronics"
+                },
+                {      
+                    "name": "AGARO Marvel 9 Liters Oven Toaster Griller Cake Baking Otg (Black) 800 Watts",
+                    "mrp_price": 1999.00,
+                    "company_price": 1500.00,
+                    "selling_price": 1899.00,
+                    "available_quantity": 100,
+                    "sort_order": 13,
+                    "description": "1 Year Manufacturer's Warranty Automatic Thermostat I Auto Shut Off I Ready Bell. Cavity Material: Stainless Steel Heat resistant tempered glass window with Cool Touch Handle Adjustable temperature from 100°C to 250°C.",
+                    "image": "https://prod-upload-pro.s3.ap-south-1.amazonaws.com/2024-05-28-13-18-02-posnic_item_image-6655d98aedeed3.85449412.jpg",
+                    "category_name": "Electronics"
+                },
+                {      
+                    "name": "Abhjata Automatic Water Dispenser Pump",
+                    "mrp_price": 2699.00,
+                    "company_price": 1000.00,
+                    "selling_price": 1099.00,
+                    "available_quantity": 100,
+                    "sort_order": 12,
+                    "description": "Water Pump With Led Display,Foldable Usb Rechargeable Mini Water Pump For Home,No Toxic-1200Mah - Black",
+                    "image": "https://prod-upload-pro.s3.ap-south-1.amazonaws.com/2024-05-28-13-18-02-posnic_item_image-6655d98aedeed3.85449412.jpg",
+                    "category_name": "Electronics"
+                },
+                {
+                    "name": "Agaro Classic Portable Yogurt Maker",
+                    "mrp_price": 1295.00,
+                    "company_price": 500.00,
+                    "selling_price": 539.00,
+                    "available_quantity": 30,
+                    "sort_order": 11,
+                    "description": "Microcomputer system with 304 stainless inner pot can create the constant and equal heat transamission, maintaining the activation of yogurt. Make it more mellow and thick.",
+                    "image": "https://prod-upload-pro.s3.ap-south-1.amazonaws.com/2024-05-30-07-37-45-posnic_item_image-66582cc9a17759.81739595.jpg",
+                    "category_name": "Electronics"
+                },
+                {
+
+                    "name": "Nayantara Clear Lash Brow Serum",
+                    "mrp_price": 1495.00,
+                    "company_price": 1400.00,
+                    "selling_price": 1495.00,
+                    "available_quantity": 60,
+                    "sort_order": 6,
+                    "description": "Naturally Fuller Eye Lashes & Eye Brows Hair Growth Serum | Organic & Natural Makeup | 8.5 ml",
+                    "image": "https://prod-upload-pro.s3.ap-south-1.amazonaws.com/2024-05-28-13-47-09-posnic_item_image-6655e05dd910f3.55646495.jpg",
+                    "category_name": "Beauty stores"
+                },
+                {
+                    "name": "PONDS Natural Glow Face Matte Powder",
+                    "mrp_price": 125.00,
+                    "company_price": 100.00,
+                    "selling_price": 100.00,
+                    "available_quantity": 100,
+                    "sort_order": 7,
+                    "description": "Instantly Brighten skin,Get Silky smooth skin,Gives Even Skin Tone,Helps control Oil,Dermatologically tested,Covers Dark Spots.",
+                    "image": "https://prod-upload-pro.s3.ap-south-1.amazonaws.com/2024-05-28-13-52-07-posnic_item_image-6655e187e573a9.94390722.jpg",
+                    "category_name": "Beauty stores"
+                },
+                {
+                    "name": "RENEE Glass Glow Pre Makeup Oil",
+                    "mrp_price": 450.00,
+                    "company_price": 300.00,
+                    "selling_price": 346.00,
+                    "available_quantity": 42,
+                    "sort_order": 8,
+                    "description": "Hydrates instantly without being sticky: Made with a unique combination of nourishing oils, this multipurpose oil hydrates your skin instantly without being sticky or greasy. It is lightweight and gets easily absorbed by the skin leaving a natural and dewy glow.",
+                    "image": "https://prod-upload-pro.s3.ap-south-1.amazonaws.com/2024-05-28-13-54-02-posnic_item_image-6655e1fa631671.29569246.jpg",
+                    "category_name": "Beauty stores"
+                },
+                {
+                    "name": "Swiss Beauty Natural Makeup Fixer",
+                    "mrp_price": 249.00,
+                    "company_price": 200.00,
+                    "selling_price": 210.00,
+                    "available_quantity": 50,
+                    "sort_order": 9,
+                    "description": "Swiss Beauty's Makeup Fixer is a weightless spray that effortlessly locks in your makeup without any melting, fading, or settling into fine lines.",
+                    "image": "https://prod-upload-pro.s3.ap-south-1.amazonaws.com/2024-05-28-13-55-42-posnic_item_image-6655e25ec7f809.12483784.jpg",
+                    "category_name": "Beauty stores"
+                },
+                {
+
+                    "name": "Dabur Gulabari Premium Rose Water",
+                    "mrp_price": 129.00,
+                    "company_price": 100.00,
+                    "selling_price": 90.45,
+                    "available_quantity": 60,
+                    "sort_order": 10,
+                    "description": "100% PURE AND NATURAL: Experience the purity of rose water with our Dabur Gulabari Rose Water, crafted without any added preservatives. Our formula ensures a truly authentic rose water experience, perfect for your skincare routine.",
+                    "image": "https://prod-upload-pro.s3.ap-south-1.amazonaws.com/2024-05-28-13-57-19-posnic_item_image-6655e2bf17da81.80325899.jpg",
+                    "category_name": "Beauty stores"
+                },
+                {
+                    "name": "PrettyNutty Healthy Nutmix",
+                    "mrp_price": 499.00,
+                    "company_price": 160.00,
+                    "selling_price": 164.00,
+                    "available_quantity": 60,
+                    "sort_order": 5,
+                    "description": "Almonds, cashews nuts, cranberries, pumpkin seeds,sunflower seeds, green raisins, black raisins, We almost ran out of breath. Take things to the next level with this superfood mix! ",
+                    "image": "https://prod-upload-pro.s3.ap-south-1.amazonaws.com/2024-05-30-07-40-55-posnic_item_image-66582d87dba6c8.07660789.jpg",
+                    "category_name": "Supermarkets"
+                },
+                {
+                    "name": "Dettol Antiseptic Liquid",
+                    "mrp_price": 470.00,
+                    "company_price": 420.00,
+                    "selling_price": 443.00,
+                    "available_quantity": 63,
+                    "sort_order": 4,
+                    "description": "DISINFECTANT LIQUID: Antiseptic Liquid used to disinfect household items and surfaces",
+                    "image": "https://prod-upload-pro.s3.ap-south-1.amazonaws.com/2024-05-28-14-11-15-posnic_item_image-6655e60352cf11.50586967.jpg",
+                    "category_name": "Supermarkets"
+                },
+                {
+                    "name": "VIM Dishwash Bar",
+                    "mrp_price": 86.00,
+                    "company_price": 80.00,
+                    "selling_price": 86.00,
+                    "available_quantity": 500,
+                    "sort_order": 3,
+                    "description": "Vim Dishwash Bar has the power of 100 lemons(power refers to the cleaning benefits of lemons) which helps in the fastest removal of burnt food(as per the independent lab test conducted on burnt food s",
+                    "image": "https://prod-upload-pro.s3.ap-south-1.amazonaws.com/2024-05-28-14-12-54-posnic_item_image-6655e666d1a760.39163952.jpg",
+                    "category_name": "Supermarkets"
+                },
+                {
+                    "name": "Fortune Sunlite Refined Sunflower Oil 1L",
+                    "mrp_price": 190.00,
+                    "company_price": 130.00,
+                    "selling_price": 138.00,
+                    "available_quantity": 600,
+                    "sort_order": 2,
+                    "description": "Fortune Sunlite Oil is refined sunflower oil that is healthy and tasty. Its high boiling point implies that sunflower oil holds onto its nutritional content even at higher temperatures, making it an excellent choice for the Indian cooking style.",
+                    "image": "https://prod-upload-pro.s3.ap-south-1.amazonaws.com/2024-05-28-14-14-19-posnic_item_image-6655e6bb4a8f63.57072679.jpg",
+                    "category_name": "Supermarkets"
+                },
+                {
+                    "name": "Parachute Coconut Oil 300 ml",
+                    "mrp_price": 128.00,
+                    "company_price": 120.00,
+                    "selling_price": 128.00,
+                    "available_quantity": 60,
+                    "sort_order": 1,
+                    "description": "Made with the finest hand-picked coconuts.Ideal For Men & Women",
+                    "image": "https://prod-upload-pro.s3.ap-south-1.amazonaws.com/2024-05-28-14-15-30-posnic_item_image-6655e702e894b8.78108411.jpg",
+                    "category_name": "Supermarkets"
+                }
+            ]
+        }
+    ]
+}

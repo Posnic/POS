@@ -1,0 +1,59 @@
+# Sync the POS frontend's static assets to the posnic-frontend S3 bucket
+# whenever frontend/ changes on main. Pages and /public/* stay with the
+# tenant app origin; only pure assets (/static, /fonts, /images, /style,
+# /script) are CDN-served. See scripts/build-cdn-frontend.js.
+# Needs (repo Settings > Secrets and variables > Actions):
+#   variable CDN_DEPLOY_ENABLED = true
+#   secrets  AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY
+#            (IAM user with s3 sync rights on posnic-frontend
+#             + cloudfront:CreateInvalidation)
+name: Deploy frontend assets to CDN
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "frontend/**"
+      - "scripts/build-cdn-frontend.js"
+      - ".github/workflows/deploy-frontend-cdn.yml"
+
+concurrency:
+  group: cdn-frontend
+  cancel-in-progress: true
+
+# Least privilege for GITHUB_TOKEN.
+#
+# Without this the token takes the repository default, which on a public repo
+# is more than any of these jobs needs. None of them writes to GitHub - they
+# build, test, upload an artifact or deploy outward - so read is the ceiling.
+# Releases are created by release.yml, which asks for contents: write there.
+permissions:
+  contents: read
+jobs:
+  deploy:
+    if: vars.CDN_DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Assemble CDN asset tree
+        run: node scripts/build-cdn-frontend.js
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-south-1
+
+      - name: Sync to S3
+        run: |
+          aws s3 sync builds/cdn-frontend/ s3://posnic-frontend \
+            --delete --cache-control 'public, max-age=86400'
+
+      - name: Invalidate CloudFront
+        if: vars.CDN_DISTRIBUTION_ID != ''
+        run: aws cloudfront create-invalidation --distribution-id ${{ vars.CDN_DISTRIBUTION_ID }} --paths "/*"

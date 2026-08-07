@@ -1,0 +1,249 @@
+<!-- start Delete modal -->
+<div class="modal fade close_on_esc" id="delete_collection_modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><lang class="lang_deletecollectrecord_title">Delete Collection Record </lang></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row justify-content-center">
+                    <!-- Start col -->
+                    <h6><lang class="lang_yourselecteddetails_title"> Selected details will be deleted </lang></h6>
+                    <h6><lang class="lang_areyousure_title">Are you sure you want to delete this record </lang>?</h6>
+                </div>
+            </div>
+            <div class="modal-footer hideconfirm text-center">
+                <button type="button" class="btn btn-outline-danger" data-dismiss="modal">
+                    <lang class="lang_close_title"> <i class="feather icon-x-circle mr-2"></i>Close </lang>
+                </button>
+                <button type="button" onclick="PosnicPro.users.userVerify();"
+                        class="btn btn-outline-primary"><i class="feather icon-send mr-2"></i><lang class="lang_yes_title"> Proceed </lang>
+                </button>
+
+            </div>
+            <div class="modal-body user_verify" style="display: none">
+                <div class="form-row">
+                    <div class="form-group col-md-12">
+                        <label for="verify_password"><lang class="lang_entermobilenumber_title">Enter the password </lang> <span class="text-danger">*</span></label>
+                        <input type="password" name="verify_password" id="verify_password" class="form-control border-control"
+                               placeholder="Password" aria-describedby="basic-addon2" required autocomplete="on">
+                    </div>
+                </div>               
+            </div>
+            <div class="modal-footer user_verify" style="display: none">
+                <button type="button" class="btn btn-outline-danger" data-dismiss="modal">
+                    <lang class="lang_close_title"> <i class="feather icon-x-circle mr-2"></i>Close </lang>
+                </button>
+                <button type="button" class="btn btn-outline-primary"
+                        onclick="PosnicPro.settings.verifyDeleteCollections();"><i class="feather icon-send mr-2"></i><lang class="lang_verify_title">Verify </lang>
+                </button>
+            </div>
+        </div>
+    </div>       
+</div>
+<!-- end Delete modal -->
+
+<!-- start Delete Tax modal -->
+<div class="modal fade close_on_esc" id="delete_tax_modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><lang class="lang_deletetaxrecord_title">Delete Tax Record</lang></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row justify-content-center">
+                    <h6><lang class="lang_areyousure_title">Are you sure you want to delete this record </lang>?</h6>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-danger" data-dismiss="modal">
+                    <lang class="lang_close_title"> <i class="feather icon-x-circle mr-2"></i>Close </lang>
+                </button>
+                <button type="button" id="show_hide_tax" onclick="PosnicPro.tax.deleteTaxConfirmed();"
+                        class="btn btn-outline-primary"><i class="feather icon-send mr-2"></i><lang class="lang_yes_title"> Proceed </lang>
+                </button>
+                <button type="button" id="show_hide_taxgroup" onclick="PosnicPro.taxgroup.deleteTaxConfirmed();"
+                        class="btn btn-outline-primary" style="display:none;"><i class="feather icon-send mr-2"></i><lang class="lang_yes_title"> Proceed </lang>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- end Delete Tax modal -->
+
+<!-- start WhatsApp Template Delete modal -->
+<div class="modal fade close_on_esc" id="whatsapp_delete_template_modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete WhatsApp Template</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row justify-content-center">
+                    <h6>Are you sure you want to delete this WhatsApp template?</h6>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-danger" onclick="PosnicPro.whatsapp.closeDeleteModal();">
+                    <i class="feather icon-x-circle mr-2"></i> Close
+                </button>
+                <button type="button" onclick="PosnicPro.whatsapp.deleteTemplateConfirmed();" class="btn btn-outline-primary">
+                    <i class="feather icon-send mr-2"></i> Proceed
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- end WhatsApp Template Delete modal -->
+
+<!-- start Delete transaction modal -->
+<div class="modal fade close_on_esc" id="delete_transaction_modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><lang class="lang_deletetaxrecord_title">Delete Transaction Record</lang></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row justify-content-center">
+                    <h6><lang class="lang_areyousure_title">Are you sure you want to delete this record </lang>?</h6>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-danger" data-dismiss="modal">
+                    <lang class="lang_close_title"> <i class="feather icon-x-circle mr-2"></i>Close </lang>
+                </button>
+                <button type="button" id="show_hide_tax" onclick="PosnicPro.transactiondetails.deleteConfirmed();" 
+                        class="btn btn-outline-primary"><i class="feather icon-send mr-2"></i><lang class="lang_yes_title"> Proceed </lang>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- end Delete transaction modal -->
+
+<!-- start Delete Unit modal -->
+<div class="modal fade close_on_esc" id="delete_unit_modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><lang class="lang_deletetaxrecord_title">Delete Unit Record</lang></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row justify-content-center">
+                    <h6><lang class="lang_areyousure_title">Are you sure you want to delete this record </lang>?</h6>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-danger" data-dismiss="modal">
+                    <lang class="lang_close_title"> <i class="feather icon-x-circle mr-2"></i>Close</lang>
+                </button>
+                <button type="button" id="show_hide_unit" onclick="PosnicPro.unit.deleteUnitConfirmed();"
+                        class="btn btn-outline-primary"><i class="feather icon-send mr-2"></i><lang class="lang_yes_title"> Proceed </lang>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- end Delete Unit modal -->
+
+<!-- start Delete Tax modal -->
+<div class="modal fade close_on_esc" id="delete_denom_modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><lang class="lang_deletetaxrecord_title">Delete Field</lang></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row justify-content-center">
+                    <h6><lang class="lang_areyousure_title">Are you sure you want to delete this record </lang>?</h6>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-danger" data-dismiss="modal">
+                    <lang class="lang_close_title"> <i class="feather icon-x-circle mr-2"></i>Close </lang>
+                </button>
+                <button type="button" id="denominated" onclick="PosnicPro.denom.deleteDenomConfirmed();"
+                        class="btn btn-outline-primary"><i class="feather icon-send mr-2"></i><lang class="lang_yes_title"> Proceed </lang>
+                </button>
+
+            </div>
+        </div>
+    </div>
+</div>
+<!-- end Delete Tax modal -->
+
+<!-- start Delete Payment modal -->
+<div class="modal fade close_on_esc" id="delete_payment_modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><lang class="lang_deletetaxrecord_title">Delete Field</lang></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row justify-content-center">
+                    <h6><lang class="lang_areyousure_title">Are you sure you want to delete this record </lang>?</h6>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-danger" data-dismiss="modal">
+                    <lang class="lang_close_title"> <i class="feather icon-x-circle mr-2"></i>Close </lang>
+                </button>
+                <button type="button" onclick="PosnicPro.payment.deletePaymentConfirmed();"
+                        class="btn btn-outline-primary"><i class="feather icon-send mr-2"></i><lang class="lang_yes_title"> Proceed </lang>
+                </button>
+
+            </div>
+        </div>
+    </div>
+</div>
+<!-- end Delete Payment modal -->
+
+<!-- start Delete Table Order modal -->
+<div class="modal fade close_on_esc" id="delete_table_order_modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><lang class="lang_deletetaxrecord_title">Delete Table Order Field</lang></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row justify-content-center">
+                    <h6><lang class="lang_areyousure_title">Are you sure you want to delete this record </lang>?</h6>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-danger" data-dismiss="modal">
+                    <lang class="lang_close_title"> <i class="feather icon-x-circle mr-2"></i>Close </lang>
+                </button>
+                <button type="button" onclick="PosnicPro.tableOrders.deleteTableOrderConfirmed();"
+                        class="btn btn-outline-primary"><i class="feather icon-send mr-2"></i><lang class="lang_yes_title"> Proceed </lang>
+                </button>
+
+            </div>
+        </div>
+    </div>
+</div>
+<!-- end Delete Table Order modal -->

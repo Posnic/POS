@@ -1,0 +1,2 @@
+name,itemid,barcode_id,category_name,supplier_name,discount_amount,discount_percentage,hsncode,hsndescription,tax_name,tax,tax_type,mrp_price,company_price,selling_price,available_quantity,unit,sort_order
+"vivo2 v23H","v23","v23","mobiles","Anonymous",0,0,"","","gst6%",6,"exclusive","100","120","100",0,"qty","0"

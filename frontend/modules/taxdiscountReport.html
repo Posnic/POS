@@ -1,0 +1,109 @@
+<div class="vertical-layout page_loader" id="taxdiscountreport_new" style="display: none">
+    <!-- Start Containerbar -->
+    <div id="containerbar">
+        <!-- Start Breadcrumbbar -->
+        <div class="breadcrumbbar crumbbar_padding">
+            <div class="row align-items-center row_filter">
+                <div class="col-lg-2 col-xl-2">
+                    <h4 class="page-title break_title"><lang class="lang_taxdis_report">Tax Reports</lang></h4>
+                </div>               
+                <div class="col-md-9 col-lg-9 show-button-action"></div>                  
+                <div class="col-lg-3 col-xl-2 hide-button-action tb_filter" style="display:none;">
+                    <div class="form-control pull-right daterange-timepicker-all daterange-style date-align view_tax_sales_report_daterange">
+                        <i class="feather icon-calendarfeather icon-calendar"></i>&nbsp;
+                        <span></span>
+                    </div>
+                </div>
+                <div class="col-lg-5 col-xl-5 hide-button-action tb_filter" style="display:none;">
+                    <select class="floating-input select2 load-branch display-current-branch tax_sales_branch_value" multiple="multiple"
+                            data-placeholder="Select Branch" name="tax_sales_branch_value[]">
+                        <option class="allbranch_name" value=''>All</option>
+                    </select>
+                </div>
+                <div class="col-md-2 col-lg-2 adjuce_left hide-button-action" style="display:none;">
+                    <button type="button" class="btn btn-danger-rgba" data-id="tax" onclick="PosnicPro.dateRangeAllfilterClear(this)">
+                        <lang class="lang_clear_title">Clear</lang>
+                    </button>
+                    <button type="button" class="btn btn-primary-rgba" id='change_tax_view' data-id="tableView" onclick="PosnicPro.taxroot.viewPage(this);">
+                        <lang class="lang_filter_title">Apply</lang>
+                    </button>
+                </div>
+                <div class="col-lg-1 col-xl-1 tb_widget">
+                    <div class="widgetbar">
+                        <button type="button" class="btn btn-round btn-primary-rgba click-action-button adjuce_left add_new_tooltip" data-toggle="tooltip" title="Filter">
+                            <i class="feather icon-filter" aria-hidden="true"></i>
+                        </button>                       
+                    </div>
+                </div>  
+            </div>
+        </div>
+    </div>
+
+    <!-- Start Contentbar -->
+    <div class="contentbar">
+        <!-- Start row -->
+        <div class="row"> 
+            <div class="col-md-12 col-lg-12 col-xl-12 m-t-10">
+                <div class="card m-b-30">
+                    <div class="card-body">
+                        <ul class="nav nav-tabs custom-tab-line mb-3" id="defaultTabLine" role="tablist">
+                            <li class="nav-item">
+                                <a class="nav-link active report_tab_font" id="tax-tab-line" data-toggle="tab" href="#tax-line" role="tab" aria-controls="tax-line" aria-selected="true"><lang class="lang_salestaxdiscount_title"> Sales Tax Collected </lang></a>
+                            </li>
+                        </ul>
+                        <div class="tab-content" id="defaultTabContentLine">
+                            <div id="tax_upgrade" class="text-center mt-4">
+                                <p class="font-weight-bold">You're currently on the Free Plan. Upgrade to Premium for full access to all features.</p>
+                                <a href="javascript:void(0)" onclick="return PosnicPro.users.accountGoToWebsiteURL(this);" class="btn btn-primary">Upgrade to Premium</a>
+                            </div>
+                            <div class="tab-pane fade show active" id="tax-line" role="tabpanel" aria-labelledby="tax-tab-line">
+                                <!-- start table -->
+                                <div class="row reporttax_header">
+                                    <div class="col-lg-1 col-xl-1 form-group mb-0 amount-spent-select selecct-align">
+
+                                    </div>
+                                    <div class="col-lg-11 col-xl-11">                                                                                       
+                                        <div class="email-rightbar">
+                                            <div class="card-header header_icon">
+                                                <ul class="list-inline mb-0 pl-0 float-right">
+                                                    <li class="list-inline-item email_320">
+                                                        <a href="javascript:void(0);" data-module="report" data-access="read" data-id="taxreport" onclick="PosnicPro.refreshReportDatatable(this);" class="add_new_tooltip" data-toggle="tooltip" title="Refresh">
+                                                            <i class="feather icon-refresh-cw font-20"></i>
+                                                        </a>
+                                                    </li>
+                                                    <li class="list-inline-item email_320">
+                                                        <a href="javascript:void(0);" data-module="report" data-access="read" id="taxreport_exportbtn"
+                                                           data-id="taxreportexport" onclick="PosnicPro.taxreport.taxSalesReportExport(this);" class="sale_color dash_sale_count" data-toggle="tooltip" title="Export All To CSV">
+                                                            <i class="feather icon-share font-20"></i>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-body card-box no-padding loader-tax-sales-report">
+                                    <!-- Start table -->
+                                    <div class="table-responsive">
+                                        <table id="view_taxreport" class="table table-borderless taxreport" cellspacing="0"
+                                               width="100%">
+                                            <div class="col-sm-6 col-md-12 col-lg-12" id="reporttax_img_hide" style="display:none;">
+                                                <img src="static/images/general/nodata.svg" class="img-fluid" style="opacity: 0.6;width: 100%;height: 250px;" alt="">
+                                            </div>
+                                            <div class="reporttax_norecord col-sm-6 col-md-12 col-lg-12" style="display:none;">
+                                            </div>
+                                            <thead class="report-thead-tfoot table-header reporttax_header"></thead>
+                                            <tbody class="report-thead-tfoot table-body reporttax_header"></tbody>
+                                        </table>
+                                    </div>
+                                    <!-- End table -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- End col -->
+        </div>
+    </div>
+</div>

@@ -1,0 +1,159 @@
+/**
+ * User Module Constants
+ * Centralized constants for user-related operations
+ */
+
+// Default values
+const DEFAULTS = {
+  BRANCH_IMAGE: 'store.png',
+  PRINTING_DESIGN: 'standard',
+  PRINTING_MAX_CHAR: 'default',
+  CUSTOMER_NAME: '',
+  CUSTOMER_PHONE: '',
+  CUSTOMER_EMAIL: '',
+  CUSTOMER_ADDRESS: '',
+};
+
+// User statuses
+const USER_STATUS = {
+  ACTIVE: 'active',
+  INACTIVE: 'inactive',
+  SUSPENDED: 'suspended',
+  PENDING: 'pending',
+};
+
+// User types
+const USER_TYPES = {
+  SUPER_ADMIN: 'super_admin',
+  ADMIN: 'admin',
+  MANAGER: 'manager',
+  USER: 'user',
+  API: 'api',
+};
+
+// Authentication/Session
+const AUTH = {
+  JWT_COOKIE_EXPIRES_DAYS: 7,
+  PASSWORD_RESET_EXPIRE_MINUTES: 10,
+  SSO_TOKEN_EXPIRE_MINUTES: 10,
+  ACCOUNT_LOCK_MINUTES: 30,
+  MAX_LOGIN_ATTEMPTS: 5,
+  MIN_PASSWORD_LENGTH: 5,
+  MAX_PASSWORD_LENGTH: 20,
+  MIN_USERNAME_LENGTH: 3,
+  MAX_USERNAME_LENGTH: 250,
+};
+
+// Error messages
+const ERROR_MESSAGES = {
+  AUTH_REQUIRED: 'Authentication required',
+  USER_NOT_FOUND: 'User not found',
+  INVALID_CREDENTIALS: 'Incorrect username or password',
+  NO_BRANCHES: 'User Have not Any Branch',
+  INVALID_BRANCH: "User don't have valid branch. Please contact Administrator",
+  UNAUTHORIZED: 'Unauthorized',
+  VALIDATION_ERROR: 'Validation Error',
+  INVALID_BRANCH_ID: 'Invalid branch ID',
+  BRANCH_NOT_FOUND: 'Branch not found',
+  INVALID_PASSWORD: 'Invalid password',
+  PASSWORD_MISMATCH: 'Password mismatch',
+  USER_EXISTS: 'User already exists',
+  INVALID_USER_KEY: 'Invalid or expired reset link',
+  PLAN_LIMIT_REACHED: 'User limit reached for your plan',
+  ACCOUNT_LOCKED: 'Account is locked due to multiple failed login attempts',
+  INVALID_SSO_TOKEN: 'Invalid or expired SSO token',
+};
+
+// Success messages
+const SUCCESS_MESSAGES = {
+  LOGIN_SUCCESS: 'Successfully login',
+  LOGOUT_SUCCESS: 'User logout successfully',
+  BRANCH_CHANGED: 'branch changed successfully',
+  BRANCH_SET: 'branch choose successfully',
+  PROFILE_UPDATED: 'User details update successfully',
+  PASSWORD_UPDATED: 'Password updated successfully',
+  USER_CREATED: 'User created successfully',
+  USER_UPDATED: 'User updated successfully',
+  USER_DELETED: 'User deleted successfully',
+  VALID_ADMIN: 'Valid Admin',
+  DATA_LOADED: 'successfully loaded',
+};
+
+// HTTP Status codes (for clarity)
+const HTTP_STATUS = {
+  OK: 200,
+  CREATED: 201,
+  BAD_REQUEST: 400,
+  UNAUTHORIZED: 401,
+  FORBIDDEN: 403,
+  NOT_FOUND: 404,
+  NOT_ACCEPTABLE: 406,
+  CONFLICT: 409,
+  INTERNAL_ERROR: 500,
+};
+
+// Languages
+const LANGUAGES = {
+  ENGLISH: 'en',
+  SPANISH: 'es',
+  FRENCH: 'fr',
+  GERMAN: 'de',
+  HINDI: 'hi',
+  TAMIL: 'ta',
+  TELUGU: 'te',
+  KANNADA: 'kn',
+  MALAYALAM: 'ml',
+};
+
+// Theme preferences
+const THEMES = {
+  LIGHT: 'light',
+  DARK: 'dark',
+  SYSTEM: 'system',
+};
+
+// Response types
+const RESPONSE_TYPES = {
+  SUCCESS: 'success',
+  ERROR: 'error',
+  EXIST: 'exist',
+  NONE: 'none',
+  INCORRECT: 'incorrect',
+};
+
+// ACL Modules
+const ACL_MODULES = [
+  'dashboard',
+  'sales',
+  'receiving',
+  'customer',
+  'supplier',
+  'category',
+  'item',
+  'expense',
+  'branch',
+  'report',
+  'user',
+];
+
+// Permissions
+const PERMISSIONS = {
+  READ: 'read',
+  WRITE: 'write',
+  DELETE: 'delete',
+};
+
+module.exports = {
+  DEFAULTS,
+  USER_STATUS,
+  USER_TYPES,
+  AUTH,
+  ERROR_MESSAGES,
+  SUCCESS_MESSAGES,
+  HTTP_STATUS,
+  LANGUAGES,
+  THEMES,
+  RESPONSE_TYPES,
+  ACL_MODULES,
+  PERMISSIONS,
+};

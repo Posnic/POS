@@ -1,0 +1,13 @@
+/* @page {size:landscape}  */   
+@media print {
+  @page {
+    size: auto;
+    margin: 0px;
+  }
+  .name-size{
+      font-size:5px;
+  }
+
+}
+
+gulp html

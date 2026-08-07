@@ -1,0 +1,37 @@
+<div id="infobar-settings-sidebar-unit" class="infobar-settings-sidebar">
+    <div class="infobar-settings-sidebar-head d-flex w-100 justify-content-between">
+        <h4 id="exampleModalCenterTitle"><span id="unit-heading">Add</span>&nbsp;<lang class="lang_tax_title">Unit</lang> </h4><a href="javascript:void(0)" class="infobar-settings-close" data-id="unit"><img src="static/images/svg-icon/close.svg" class="img-fluid menu-hamburger-close" alt="close"></a>
+    </div>
+    <div class="infobar-settings-sidebar-body loader-tax">
+        <div class="custom-mode-setting">            
+            <form id='unit_add_form'>                
+                <div class="form-row">
+                    <div class="form-group col-md-12">
+                        <label for="unit_name"><lang class="lang_name_title"> Name </lang> <span class="text-danger">*</span> </label>
+                        <input name="unit_name" id="unit_name" type="text" aria-describedby="basic-addon1" class="form-control border-control" 
+                               minlength="1" maxlength="10">
+                        <input type="hidden" id="unit_id" name="unit_id">
+                    </div>
+                </div> 
+                <div class="form-row">
+                    <div class="form-group col-md-12">
+                        <label for="unit_value"><lang class="lang_value_title"> Value </lang> <span class="text-danger">*</span> </label>                                    
+                            <input id="unit_value" type="text" name="unit_value" class="form-control border-control" minlength="1" maxlength="10">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-12">
+                        <div class="pull-right">
+                            <button type="button" class="btn btn-outline-secondary infobar-settings-reset" id="unit_reset" onclick="PosnicPro.unit.unitClearForm();"><i class="feather icon-refresh-ccw mr-2"></i><lang class="lang_clear_title">Clear</lang></button>
+                            <button type="button" class="btn btn-outline-secondary infobar-settings-reset unit_edit_reset" id="unit_edit_reset" onclick="PosnicPro.unit.resetEditButton(this.id);"><i class="feather icon-refresh-ccw mr-2"></i><lang class="lang_reset_title">Reset</lang></button>
+                            <button type="button" class="btn btn-outline-danger infobar-settings-close" data-id="unit"><i class="feather icon-x-circle mr-2"></i><lang class="lang_close_title"> Close</lang></button>
+                            <button type="submit" class="btn btn-outline-primary">
+                                <i class="feather icon-save mr-2"></i><span id="unit_text_change"> <lang class="lang_save_title">Save</lang></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

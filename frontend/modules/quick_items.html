@@ -1,0 +1,228 @@
+<!--
+    Two faster ways to add items, alongside the full form rather than instead
+    of it. Anyone already using the full form keeps it, unchanged.
+
+    Quick Item Add is for entering a catalogue one item at a time: a name, a
+    price, Enter, repeat. Everything else an item can carry is behind "More
+    fields", because the full form's forty inputs are what makes adding a
+    hundred items an afternoon's work.
+
+    Bulk Item Add is for when the list already exists somewhere - a supplier's
+    sheet, a stocktake - and can be pasted in whole.
+-->
+<div class="vertical-layout page_loader" id="quickitems" style="display: none">
+    <div id="containerbar">
+        <div class="breadcrumbbar crumbbar_padding">
+            <div class="row align-items-center row_filter">
+                <div class="col-lg-6">
+                    <h4 class="page-title"><lang class="lang_item_quick">Quick Item Add</lang></h4>
+                </div>
+                <div class="col-lg-6 text-right">
+                    <a href="#/bulkitems" class="btn btn-primary-rgba">
+                        <i class="feather icon-grid mr-2"></i>Add many at once
+                    </a>
+                    <a href="#/items/new" class="btn btn-primary-rgba">
+                        <i class="feather icon-sliders mr-2"></i>Full form
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="contentbar">
+            <div class="row">
+                <div class="col-lg-7">
+                    <div class="card m-b-30">
+                        <div class="card-body">
+                            <form id="qa_form" autocomplete="off" onsubmit="return PosnicPro.quickitems.save();">
+                                <div class="form-group">
+                                    <label for="qa_name">Item name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="qa_name" maxlength="100"
+                                           placeholder="e.g. Sugar 1kg" autocomplete="off">
+                                    <small class="form-text text-muted" id="qa_name_hint"></small>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="form-group">
+                                            <label for="qa_selling_price">Selling price</label>
+                                            <input type="number" step="0.01" min="0" class="form-control"
+                                                   id="qa_selling_price" placeholder="0.00" autocomplete="off">
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="form-group">
+                                            <label for="qa_quantity">Quantity in stock</label>
+                                            <input type="number" step="0.001" min="0" class="form-control"
+                                                   id="qa_quantity" placeholder="0" autocomplete="off">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!--
+                                    Collapsed by default. An item needs a name to
+                                    exist and a price to sell; the rest can be
+                                    filled in later from the full form, and asking
+                                    for it up front is what slows the job down.
+                                -->
+                                <div class="form-group">
+                                    <a href="javascript:void(0);" id="qa_more_toggle"
+                                       onclick="PosnicPro.quickitems.toggleMore();">
+                                        <i class="feather icon-chevron-down mr-1"></i>More fields
+                                    </a>
+                                </div>
+
+                                <div id="qa_more" style="display:none;">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <div class="form-group">
+                                                <label for="qa_company_price">Cost price</label>
+                                                <input type="number" step="0.01" min="0" class="form-control"
+                                                       id="qa_company_price" placeholder="0.00">
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="form-group">
+                                                <label for="qa_mrp_price">MRP</label>
+                                                <input type="number" step="0.01" min="0" class="form-control"
+                                                       id="qa_mrp_price" placeholder="0.00">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <div class="form-group">
+                                                <label for="qa_barcode">Barcode</label>
+                                                <input type="text" class="form-control" id="qa_barcode"
+                                                       maxlength="100" placeholder="Scan or type">
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="form-group">
+                                                <label for="qa_sku">SKU</label>
+                                                <input type="text" class="form-control" id="qa_sku" maxlength="100">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <div class="form-group">
+                                                <label for="qa_category">Category</label>
+                                                <select class="form-control" id="qa_category"></select>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="form-group">
+                                                <label for="qa_unit">Unit</label>
+                                                <select class="form-control" id="qa_unit"></select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="qa_tax">Tax</label>
+                                        <select class="form-control" id="qa_tax"></select>
+                                    </div>
+                                    <div class="form-group">
+                                        <div class="custom-control custom-checkbox">
+                                            <input type="checkbox" class="custom-control-input"
+                                                   id="qa_track_inventory" checked>
+                                            <label class="custom-control-label" for="qa_track_inventory">
+                                                Track inventory
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group mb-0">
+                                    <button type="submit" class="btn btn-primary" id="qa_save">
+                                        <i class="feather icon-plus mr-2"></i>Add item
+                                    </button>
+                                    <span class="text-muted ml-3" style="font-size:12px;">
+                                        Enter saves and clears the form for the next one
+                                    </span>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-5">
+                    <div class="card m-b-30">
+                        <div class="card-body">
+                            <h5 class="card-title mb-3">
+                                Added just now <span class="text-muted" id="qa_count"></span>
+                            </h5>
+                            <!--
+                                A running list of what this sitting has produced.
+                                Entering fifty items with no feedback gives no way
+                                to notice the one that went in wrong, and no way to
+                                reach it afterwards without leaving the page.
+                            -->
+                            <div id="qa_recent" class="text-muted" style="max-height:520px;overflow:auto;">
+                                Nothing added yet.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="vertical-layout page_loader" id="bulkitems" style="display: none">
+    <div id="containerbar">
+        <div class="breadcrumbbar crumbbar_padding">
+            <div class="row align-items-center row_filter">
+                <div class="col-lg-5">
+                    <h4 class="page-title"><lang class="lang_item_bulk">Bulk Item Add</lang></h4>
+                </div>
+                <div class="col-lg-7 text-right">
+                    <button type="button" class="btn btn-primary-rgba" id="bulk_columns_toggle"
+                            onclick="PosnicPro.bulkitems.toggleColumns();">
+                        <i class="feather icon-columns mr-2"></i>More columns
+                    </button>
+                    <button type="button" class="btn btn-danger-rgba" onclick="PosnicPro.bulkitems.clear();">
+                        <i class="feather icon-trash-2 mr-2"></i>Clear
+                    </button>
+                    <button type="button" class="btn btn-primary" id="bulk_save"
+                            onclick="PosnicPro.bulkitems.saveAll();">
+                        <i class="feather icon-save mr-2"></i>Save all
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="contentbar">
+            <div class="card m-b-30">
+                <div class="card-body">
+                    <p class="text-muted" style="font-size:13px;">
+                        A name and a price is all an item needs. Type in the last row and the
+                        grid grows another. You can also paste a block of cells straight from
+                        a spreadsheet. If your list is already a file,
+                        <a href="#/items" onclick="PosnicPro.importTableFile('items');">import
+                        the CSV</a> instead - that takes the full set of fields.
+                    </p>
+
+                    <div id="bulk_status"></div>
+
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="bulk_table">
+                            <thead>
+                                <tr>
+                                    <th style="width:32px;">#</th>
+                                    <th>Item name <span class="text-danger">*</span></th>
+                                    <th style="width:130px;">Selling price</th>
+                                    <th class="bulk-extra" style="width:120px;display:none;">Cost price</th>
+                                    <th class="bulk-extra" style="width:110px;display:none;">Quantity</th>
+                                    <th class="bulk-extra" style="width:150px;display:none;">Barcode</th>
+                                    <th class="bulk-extra" style="width:150px;display:none;">Category</th>
+                                    <th style="width:150px;">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bulk_rows"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

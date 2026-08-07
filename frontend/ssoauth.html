@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8"/>
+        <title> <lang class="lang_posnic_title"> Posnic - POS </lang> </title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+        <meta content="Posnic - Point of Sale" name="description"/>
+        <meta content="Posnic" name="author"/>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+        <link rel="shortcut icon" href="static/images/favicon/favicon.ico" type="image/x-icon">
+        <link rel="icon" href="static/images/favicon/favicon.ico" type="image/x-icon">
+        <link crossorigin="anonymous" media="all" rel="stylesheet" href="style/ssoauth.css" />
+        <style>
+            bodY {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+            .center {
+                height: 100vh;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                background: #000;
+            }
+            .wave {
+                width: 5px;
+                height: 100px;
+                background: linear-gradient(45deg, cyan, #fff);
+                margin: 10px;
+                animation: wave 1s linear infinite;
+                border-radius: 20px;
+            }
+            .wave:nth-child(2) {
+                animation-delay: 0.1s;
+            }
+            .wave:nth-child(3) {
+                animation-delay: 0.2s;
+            }
+            .wave:nth-child(4) {
+                animation-delay: 0.3s;
+            }
+            .wave:nth-child(5) {
+                animation-delay: 0.4s;
+            }
+            .wave:nth-child(6) {
+                animation-delay: 0.5s;
+            }
+            .wave:nth-child(7) {
+                animation-delay: 0.6s;
+            }
+            .wave:nth-child(8) {
+                animation-delay: 0.7s;
+            }
+            .wave:nth-child(9) {
+                animation-delay: 0.8s;
+            }
+            .wave:nth-child(10) {
+                animation-delay: 0.9s;
+            }
+
+            @keyframes wave {
+                0% {
+                    transform: scale(0);
+                }
+                50% {
+                    transform: scale(1);
+                }
+                100% {
+                    transform: scale(0);
+                }
+            }
+            .wave1 {
+                height: 180px;
+                position: absolute;
+                width: 100%;
+                left: 0;
+                bottom: 0;
+                background-size: cover;
+                background: url("https://2.bp.blogspot.com/-1jSZdqj1ssE/Xn2hsqQogxI/AAAAAAAAU14/q7Tii6dbcJwO747sjQ1sfPeM6laFhvQVwCK4BGAYYCw/s1600/wave1.png")
+                    0 0 repeat-x;
+                -webkit-animation: wave-animation1 20s infinite linear; /* Safari 4+ */
+                -moz-animation: wave-animation1 20s infinite linear; /* Fx 5+ */
+                -o-animation: wave-animation1 20s infinite linear; /* Opera 12+ */
+                animation: wave-animation1 20s infinite linear; /* IE 10+ */
+            }
+
+
+            .wave2 {
+                height: 180px;
+                position: absolute;
+                width: 100%;
+                left: 0;
+                bottom: 0;
+                background-size: cover;
+                background: url("https://1.bp.blogspot.com/-4SEctsJEQBg/Xn2ifdzUbfI/AAAAAAAAU2A/BZTVE6JxDpkJq98VfNkCZMWj1e3jONjXQCLcBGAsYHQ/s1600/wavetrans.png")
+                    0 0 repeat-x;
+                -webkit-animation: wave-animation1 20s infinite linear; /* Safari 4+ */
+                -moz-animation: wave-animation1 20s infinite linear; /* Fx 5+ */
+                -o-animation: wave-animation1 20s infinite reverse linear; /* Opera 12+ */
+                animation: wave-animation1 20s infinite reverse linear; /* IE 10+ */
+            }
+
+            .wave3 {
+                height: 180px;
+                position: absolute;
+                width: 100%;
+                left: 0;
+                bottom: 0;
+                background-size: cover;
+                background: url("https://1.bp.blogspot.com/-OAiccVrQc0k/Xn2lrKcD6nI/AAAAAAAAU2M/uAvibBARzkcpmzHCsJyL5B5UDQNFU1YmgCLcBGAsYHQ/s1600/wave3.png")
+                    0 0 repeat-x;
+                -webkit-animation: wave-animation1 15s infinite reverse linear; /* Safari 4+ */
+                -moz-animation: wave-animation1  15s infinite reverse linear; /* Fx 5+ */
+                -o-animation: wave-animation1 15s infinite reverse linear; /* Opera 12+ */
+                animation: wave-animation1 15s infinite reverse linear; /* IE 10+ */
+            }
+
+
+            @-webkit-keyframes wave-animation1 {
+                0% {
+                    background-position: 0 0;
+                }
+                100% {
+                    background-position: 1601px 0;
+                }
+            }
+            @-moz-keyframes wave-animation1 {
+                0% {
+                    background-position: 0 0;
+                }
+                100% {
+                    background-position: 1601px 0;
+                }
+            }
+            @-o-keyframes wave-animation1 {
+                0% {
+                    background-position: 0 0;
+                }
+                100% {
+                    background-position: 1601px 0;
+                }
+            }
+            @keyframes wave-animation1 {
+                0% {
+                    background-position: 0 0;
+                }
+                100% {
+                    background-position: 1601px 0;
+                }
+            }
+        </style>
+    </head>
+    <body>
+
+        <div id="containerbar_sso" class="containerbar authenticate-bg" style="display:none;">
+            <!-- Start Container -->
+            <div class="container">
+                <div class="auth-box login-box">
+                    <!-- Start row -->
+                    <div class="row no-gutters align-items-center justify-content-center">
+                        <!-- Start col -->
+                        <div class="col-md-6 col-lg-5">
+                            <!-- Start Auth Box -->
+                            <div class="auth-box-right">
+                                <div class="card loginform_card">
+                                    <div class="card-body">
+                                        <div class="form-head">
+                                            <a href="javascript:void(0)" class="logo"><img src="static/images/logo/posnic.svg" class="img-fluid" alt="logo"></a>
+                                        </div>
+                                        <form id="Branch_selection_form" enctype="multipart/form-data" style="display:none;">
+                                            <h4 class="text-primary my-4">Select branch </h4>
+                                            <div class="custom-layout-setting">
+                                                <div class="row align-items-center pb-3 multi_branch_selection">
+
+                                                </div>
+                                            </div>
+                                        </form>
+                                        <form id="registerselect_form" style="display:none;"> 
+                                            <h4 class="text-primary my-4">Select Register </h4>
+                                            <div id="form_regsiter_selction">                                                                            
+                                                <div class="form-group col-md-12 text-center">
+                                                    <select id="choose_register_model" class="custom-select border-control choose_register_model" data-placedataholder="Select Register" style="width: 100%;border: 1px solid #eae8e8;">
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            <div class="form-group col-md-12 text-left">
+                                                <label for="opening_float" class="text_white">Opening Float </label>
+                                                <input type="text" class="form-control border-control allow_decimal text-right" id="opening_float" name="opening_float" minlength="1" maxlength="10" value="0.00" placeholder="0.00">
+                                            </div> 
+                                            <div class="form-group col-md-12">
+                                                <div class="text-center">
+                                                    <button type="button" id="open_register_log" class="btn btn-primary-rgba select_Button_col" onclick="PosnicPro.users.loginregisterSelectFormSubmit()"><lang class="lang_openregbutton">Open Register</lang></button>
+                                                </div>
+                                            </div> 
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="center" id="wave">
+            <div class="wave"></div>
+            <div class="wave"></div>
+            <div class="wave"></div>
+            <div class="wave"></div>
+            <div class="wave"></div>
+            <div class="wave"></div>
+            <div class="wave"></div>
+            <div class="wave"></div>
+            <div class="wave"></div>
+            <div class="wave"></div>
+        </div>
+
+        <script  type="application/javascript" src="script/ssoauth.js"></script>
+        <script type="text/javascript">
+            
+
+         if (window.location.hostname === 'frontend-ace.pages.dev') {
+           window.location.replace("https://www.posnic.io");
+            }
+            
+            // The API is whatever origin served this page: the Electron window,
+            // a LAN device, or the shop's own cloud address. This used to build
+            // "api." + hostname, which is a leftover from when one hosted API
+            // served every shop. On a per-shop subdomain it produces
+            // api.<shop>.posnic.io, a host that does not exist, so every
+            // impersonation died at the CSP before it even resolved.
+            let API_URL = window.location.protocol.startsWith('http')
+                ? window.location.origin + '/'
+                : 'http://localhost:5555/';
+
+        // Read the token as a parameter rather than "everything after the last
+        // equals sign": base64 tokens can end in padding, which that would eat.
+        let token = new URLSearchParams(window.location.search).get('token') || '';
+        var params = {
+            url: 'users/ssoAuth',
+            data: {
+                token: token
+            }
+        };
+        PosnicPro.get(params, function (response) {
+            if (response.type === 'success') {
+                $('#wave').hide();                
+                PosnicPro.users.createCookie('loginuser', '', -1);
+                PosnicPro.local.set('userid', response.data['sid']);
+                PosnicPro.local.set('userfirstname', response.data['firstname']);
+                PosnicPro.local.set('userlastname', response.data['lastname']);
+                PosnicPro.local.set('username', response.data['user_name']);
+                PosnicPro.local.set('userimage', response.data['user_image']);
+                PosnicPro.local.set('branchimage', response.data['branch_image']);
+                PosnicPro.local.set('branchname', response.data['branch_name']);
+                PosnicPro.local.set('branchphone', response.data['branch_phone']);
+                PosnicPro.local.set('branchemail', response.data['branch_email']);
+                PosnicPro.local.set('branchaddress', response.data['branch_address']);
+                PosnicPro.local.set('timezone', response.data['branch_timezone']);
+                PosnicPro.local.set('timeformat', response.data['branch_timeformat']);
+                PosnicPro.local.set('currencySign', response.data['currency_type']);
+                PosnicPro.users.insertLocalStorage(response);
+                PosnicPro.local.set('countryStateStorage', '');
+                PosnicPro.local.set('userplan', response.data['plan']);
+                PosnicPro.local.set('useBranchForm', true);
+                PosnicPro.local.set('language', '');
+                $("#body").addClass("body");
+                db.currentbranch.get('1').then(function (data) {
+                    if (data.user_id === response.data['sid']) {
+                        $(response.data['print_type']).each(function (index, val) {
+                            if (data.branch_id === val.branch_id.$oid) {
+                                PosnicPro.local.set('print_type', val.printing_design);
+                            }
+                        });
+                        PosnicPro.local.set("branch_id_set", data.branch_id);
+                        PosnicPro.local.set('branchname', data.branch_name);
+                        PosnicPro.users.selectedUserBranchDisplay(data.branch_id);
+                    } else {
+                        PosnicPro.users.selectedBranch(response);
+                    }
+                }).catch(function () {
+                    PosnicPro.users.selectedBranch(response);
+                });
+            } else {
+                PosnicPro.alert(response.type, response.message);
+            }
+        }, function (xhr) {
+            var response = jQuery.parseJSON(xhr.responseText);
+            PosnicPro.alert(response.type, response.message);
+        });
+        </script>
+
+    </body>
+</html>
+

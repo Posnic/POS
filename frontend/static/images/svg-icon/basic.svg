@@ -1,0 +1,30 @@
+<svg id="Small_Icons" data-name="Small Icons" xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: none;
+        stroke: #fff;
+        stroke-linecap: round;
+        stroke-width: 3px;
+      }
+
+      .cls-1, .cls-2 {
+        fill-rule: evenodd;
+      }
+
+      .cls-2 {
+        fill: #fff;
+        opacity: 0.25;
+      }
+    </style>
+  </defs>
+  <g id="basic">
+    <path id="Rounded_Rectangle_19" data-name="Rounded Rectangle 19" class="cls-1" d="M8.75,4.576h18.5a3,3,0,0,1,3,3V42.424a3,3,0,0,1-3,3H8.75a3,3,0,0,1-3-3V7.576A3,3,0,0,1,8.75,4.576Z"/>
+    <path class="cls-2" d="M6,30.06l23.986-8.045V45H7.142Z"/>
+    <path id="Rounded_Rectangle_19_copy" data-name="Rounded Rectangle 19 copy" class="cls-1" d="M39.481,4.619h1a3,3,0,0,1,3,3V40.593l-3.5,3.5-3.5-3.5V7.617A3,3,0,0,1,39.481,4.619Z"/>
+    <path class="cls-1" d="M42.646,14.611h-5.33"/>
+    <path id="Shape_49_copy" data-name="Shape 49 copy" class="cls-1" d="M20.659,18.608h-5.33"/>
+    <path id="Shape_49_copy_3" data-name="Shape 49 copy 3" class="cls-1" d="M20.659,30.6h-5.33"/>
+    <path id="Shape_49_copy_2" data-name="Shape 49 copy 2" class="cls-1" d="M24.657,24.6H15.329"/>
+  </g>
+</svg>

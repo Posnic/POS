@@ -1,0 +1,29 @@
+{
+  "apps": [
+    {
+      "name": "api",
+      "script": "/usr/bin/supervisord -n -c /etc/supervisord.conf",
+      "instances": "1",
+      "wait_ready": true,
+      "autorestart": true,
+      "error_file": "./storage/logs/pm2/api-err.log",
+      "out_file": "./storage/logs/pm2/api-out.log",
+      "log_file": "./storage/logs/pm2/api-combined.log",
+      "time": true
+    },
+    {
+      "name": "frontend",
+      "script": "gulp default",
+      "env": {
+        "NODE_ENV": "dev"
+      },
+      "instances": "1",
+      "wait_ready": true,
+      "autorestart": true,
+      "error_file": "./storage/logs/pm2/frontend-err.log",
+      "out_file": "./storage/logs/pm2/frontend-out.log",
+      "log_file": "./storage/logs/pm2/frontend-combined.log",
+      "time": true
+    }
+  ]
+}

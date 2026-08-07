@@ -1,0 +1,79 @@
+# Dependency updates, proposed as pull requests.
+#
+# There are three package trees here and they are not equally urgent, so they are
+# not treated equally. `api` holds what actually runs on a shop's till; the root
+# holds the desktop shell and the toolchain that builds installers; `frontend`
+# holds gulp and nothing that reaches a running application.
+#
+# Grouped deliberately. Ungrouped, this repository would open something like
+# thirty pull requests a week across three trees, which is how dependency updates
+# stop being read and start being rubber-stamped - the opposite of the point.
+version: 2
+
+updates:
+  # What runs on the till. Reviewed individually for anything major.
+  - package-ecosystem: npm
+    directory: /api
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    labels: [dependencies, api]
+    groups:
+      api-patch-and-minor:
+        patterns: ["*"]
+        update-types: [minor, patch]
+    # Mongoose and Express majors change behaviour that money depends on.
+    # Those should be deliberate pieces of work, not an overnight pull request.
+    ignore:
+      - dependency-name: mongoose
+        update-types: [version-update:semver-major]
+      - dependency-name: express
+        update-types: [version-update:semver-major]
+
+  # The desktop shell and the build toolchain.
+  #
+  # Electron is excluded on purpose: it is thirteen majors behind, the upgrade
+  # touches the title bar, the tray, printing and the native modules, and it
+  # needs its own branch with a full pass over the desktop app. An automated
+  # pull request would either sit open or be merged without that testing.
+  # See docs/SECURITY_AUDIT.md.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    labels: [dependencies, desktop]
+    groups:
+      desktop-patch-and-minor:
+        patterns: ["*"]
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: electron
+      - dependency-name: electron-builder
+        update-types: [version-update:semver-major]
+
+  # Build tooling only. Nothing here reaches a running application, so it moves
+  # monthly and all at once.
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 3
+    labels: [dependencies, build]
+    groups:
+      frontend-build-tools:
+        patterns: ["*"]
+
+  # Actions are worth watching closely: a compromised one runs with whatever the
+  # workflow's token can do, in a job that has the deploy secrets.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    labels: [dependencies, ci]
+    groups:
+      actions:
+        patterns: ["*"]

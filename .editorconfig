@@ -1,0 +1,37 @@
+# Matches what the code already does, rather than what it might ideally do.
+# A configuration that disagrees with the tree reformats every file somebody
+# opens and buries their change in whitespace.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+# Windows scripts keep CRLF - see .gitattributes.
+[*.{bat,cmd,ps1}]
+end_of_line = crlf
+
+[*.md]
+# Two trailing spaces are a line break in Markdown, so trimming them changes
+# the rendered text.
+trim_trailing_whitespace = false
+
+[*.{yml,yaml}]
+indent_size = 2
+
+[Makefile]
+indent_style = tab
+
+# Vendored, generated, or somebody else's formatting. Left alone.
+[{package-lock.json,docs/openapi.json}]
+insert_final_newline = unset
+trim_trailing_whitespace = unset
+
+[frontend/static/{style,script}/**]
+indent_style = unset
+indent_size = unset
+trim_trailing_whitespace = unset

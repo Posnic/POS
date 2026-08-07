@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8"/>
+        <title>Posnic - POS</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+        <meta content="Posnic - Point of Sale" name="description"/>
+        <meta content="Posnic" name="author"/>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+        <link rel="shortcut icon" href="static/images/favicon/favicon.ico">
+        <link crossorigin="anonymous" media="all" rel="stylesheet" href="style/customerview.css" />
+        <script>
+            // Posnic (desktop/self-hosted): the API is always the origin that
+            // served this page - Electron window, LAN device, or self-hosted server.
+            // Cloud sync runs in a separate background process, never in the browser.
+            let API_URL = window.location.protocol.startsWith('http')
+                ? window.location.origin + '/'
+                : 'http://localhost:5555/';
+        </script>
+    </head>
+    <style>
+        .blue-underline {
+            color: blue;
+            text-decoration: underline;
+        }
+    </style>
+    <body class="vertical-layout">
+        <div id="containerbar">
+            <!-- Start Breadcrumbbar -->                    
+            <div class="breadcrumbbar">
+                <div class="row align-items-center" style="margin-bottom: 20px;">
+                    <div class="col-md-8 col-lg-8">
+                        <h4 class="page-title"><img src="static/images/logo/posnic.svg" height="35px"></h4>
+                        <div class="breadcrumb-list">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a href="https://www.posnic.com" target="_blank">Powered by Posnic</a></li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-lg-4">
+                        <div class="widgetbar">
+                            <!-- Button trigger modal -->
+                            <span class="custom_view_date text-dark" style="font-weight: 900; font-size: 34px"></span>
+                            <!-- Modal -->                            
+                        </div>                        
+                    </div>
+                </div>          
+            </div>
+            <!-- End Breadcrumbbar -->
+            <!-- Start Contentbar -->    
+            <div class="contentbar">                
+                <!-- Start row -->
+                <div class="row">
+                    <!-- Start col -->
+                    <div class="col-lg-12 col-xl-3">
+                        <div class="card m-b-30" id="customer_view_details">
+                            <div class="card-header text-center branch_qr">                                
+                                <h5 class="card-title mb-0">Branch Details</h5>
+                            </div>
+                            <div class="card-body text-center branch_qr"> 
+                                    <img id="image_previewing" class="col-6 img-fluid align-self-center mr-2" src="/" height="400px" alt="image">
+                                    <div class="media-body">
+                                        <h3 class="mt-0"><span class="branch-name"></span></h3>
+                                        <p class="mb-0 font-14"><span class="branch-email"></span></p>
+                                        <p class="mb-0 font-14"><span class="badge badge-primary-inverse branch-phone"></span></p>
+                                    </div>
+                                <div class="button-list mt-4">
+                                    <address class="branch-address">
+                                        
+                                    </address>
+                                </div>
+                            </div>
+
+                            <div class="card-body text-center loader-qrview branch_hide">
+                                <img id="QR_image_previewing" src="/" height="100%" width="100%"  style="margin-top: -80px" alt="QR Image">
+                                <h1 class="amount-customer"></h1>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- End col --> 
+
+                    <!-- Start col -->
+                    <div class="col-lg-12 col-xl-9">
+                        <!-- Start row -->
+                        <div class="row"> 
+                            <!-- Start col -->
+                            <div class="col-lg-12 col-xl-7" id="list_linelitem_parent">
+                                <div id="list_linelitem"></div>
+                            </div>
+                            <!-- End col -->
+
+                            <!-- Start col -->
+                            <div class="col-lg-12 col-xl-5">
+                                <div class="card m-b-30" id="branch_customer_view_details">
+                                    <div class="card-header">                                
+                                        <h5 class="card-title mb-0">Customer Details</h5>
+                                    </div>
+                                    <div class="card-body"> 
+                                            <p><strong>Name:</strong> &nbsp;<u class="blue-underline"><span
+                                                class="customer-name"></span></u></p>
+                                            <p><strong>Email:</strong> &nbsp;<span
+                                                    class="customer-email font-14"></span></p>
+                                            <p><strong>Mobile No:</strong> &nbsp;<u class="blue-underline"><span
+                                                        class="customer-phone"></span></u></p>
+                                            <p><strong>Address:</strong> &nbsp;<u><span
+                                                        class="customer-address font-14"></span></u></p>
+                                    </div>
+                                    <hr style="border-top: 1px solid rgba(196, 194, 194, 0.1);">
+                                    <div class="card-body">
+                                        <div id="paymentdisplay" style="display:none;"></div>
+                                        <h5>Payment Details</h5>
+                                        <div class="card mt-4">
+                                            <div class="card-body"  style="padding: .7rem;">
+                                                <div class="row align-items-center">
+                                                    <div class="col-2">
+                                                        <h5 class="badge badge-primary-inverse font-16">Tax :</h5>
+                                                    </div>
+                                                    <div class="col-4">
+                                                        <h5 class="font-black font-16"><span class="tax_value">0.00</span></h5>
+                                                    </div>
+                                                    <div class="col-2">
+                                                        <h5 class="badge badge-primary-inverse font-16">Disc :</h5>
+                                                    </div>
+                                                    <div class="col-4 text-danger">
+                                                        <h5 class="font-black font-16"><span class="discount_value">0%</span><span class="sign_value"></span></h5>
+                                                    </div>
+                                                </div>
+
+                                                <div class="row align-items-center extra_discount_row" style="display:none;">
+                                                    <div class="col-2">
+                                                        <h5 class="badge badge-primary-inverse font-16">Extra Disc :</h5>
+                                                    </div>
+                                                    <div class="col-4">
+                                                    </div>
+                                                    <div class="col-2">
+                                                    </div>
+                                                    <div class="col-4 text-danger">
+                                                        <h5 class="font-black font-16"><span class="extra_discount_value">0.00</span><span class="extra_discount_sign"></span></h5>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
+
+
+                                    </div>
+                                    <div class="card-footer text-center dark_bgr">
+                                        <div class="row">
+                                            <div class="col-6 border-right">
+                                                <h4 class="text-white"><span class="current-currency">₹</span>&nbsp;<span class="sales_subtotal">0.00</span></h4>
+                                                <p class="my-2 amount_text">Sub Amount</p>
+                                            </div>
+                                            <div class="col-6">
+                                                <h4 class="text-white"><span class="current-currency">₹</span>&nbsp;<span class="sales_total">0.00</span></h4>
+                                                <p class="my- amount_text">Total Amount</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>            
+                            </div>
+                            <!-- End col --> 
+
+                        </div>
+                        <!-- End col --> 
+                    </div>
+                    <!-- End col --> 
+                    <!-- End row -->
+                </div>
+                <!-- End Contentbar -->
+            </div>
+            <!-- End Containerbar -->
+        </div>
+        <script type="application/javascript" src="script/customerview.js"></script>        
+    </body>
+</html>

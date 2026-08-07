@@ -1,0 +1,27 @@
+<svg id="Small_Icons" data-name="Small Icons" xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: none;
+        stroke: #fff;
+        stroke-linecap: round;
+        stroke-width: 3px;
+      }
+
+      .cls-1, .cls-2 {
+        fill-rule: evenodd;
+      }
+
+      .cls-2 {
+        fill: #fff;
+        opacity: 0.25;
+      }
+    </style>
+  </defs>
+  <g id="Advanced_Icons" data-name="Advanced Icons">
+    <path id="Rounded_Rectangle_10" data-name="Rounded Rectangle 10" class="cls-1" d="M21.6,13.926H32.57a2.719,2.719,0,0,1,2.687,2.751V28.607m6.27,5.55H18.18a2.719,2.719,0,0,1-2.687-2.751V7.508"/>
+    <path class="cls-2" d="M15.176,26.082l20.513-5.25V34.481H18.253l-3.077-3.15V26.082Z"/>
+    <path class="cls-1" d="M35.176,35.906v6.6"/>
+    <path id="Shape_15_copy" data-name="Shape 15 copy" class="cls-1" d="M14.7,14.008H8.471"/>
+  </g>
+</svg>

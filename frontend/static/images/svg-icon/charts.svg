@@ -1,0 +1,26 @@
+<svg id="Small_Icons" data-name="Small Icons" xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: none;
+        stroke: #fff;
+        stroke-linecap: round;
+        stroke-width: 3px;
+      }
+
+      .cls-1, .cls-2 {
+        fill-rule: evenodd;
+      }
+
+      .cls-2 {
+        fill: #fff;
+        opacity: 0.25;
+      }
+    </style>
+  </defs>
+  <g id="charts">
+    <path class="cls-1" d="M37.735,25.828A16.59,16.59,0,1,1,21.146,9.214L20.58,26.394Z"/>
+    <path class="cls-2" d="M4.745,33.191l32.8-4.531s0.636,7.292-9.049,12.46S8.986,40.2,4.745,33.191Z"/>
+    <path class="cls-1" d="M27.367,19.6V2.606s18.1-1.879,18.1,18.124Z"/>
+  </g>
+</svg>

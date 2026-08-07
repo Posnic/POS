@@ -1,0 +1,67 @@
+  /**
+   * PHP: edit()
+   * Update an existing receiving order
+   */
+  async update(req, res) {
+    try {
+      if (!this.checkPermission("receiving", "write", req.user)) {
+        return this.error(res, "Unauthorized", 401);
+      }
+
+      const id = req.params.id;
+      const data = req.body;
+      
+      if (!id) {
+        return this.error(res, "Receiving ID is required", 400);
+      }
+
+      if (!data.supplier_name || data.supplier_name.trim().length < 3) {
+        return this.error(res, "Validation Error", 400, {
+          supplier_name: "Supplier name is required and must be at least 3 characters"
+        });
+      }
+
+      const result = await Receiving.receivingInsertUpdate(data, id);
+      if (result.status === true) {
+        return this.success(res, result.data, result.message || 'Receiving updated successfully');
+      }
+
+      return this.error(res, result.message || 'Failed to update receiving', 404, result.data);
+    } catch (error) {
+      console.error("Error in update:", error);
+      return this.error(res, error.message, 500);
+    }
+  }
+
+  /**
+   * Get all receivings with filters
+   */
+  async getAll(req, res) {
+    try {
+      if (!this.checkPermission("receiving", "read", req.user)) {
+        return this.error(res, "Unauthorized", 401);
+      }
+
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
+      
+      const result = await Receiving.find({})
+        .sort({ created_date: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean();
+
+      const total = await Receiving.countDocuments({});
+
+      return this.success(res, {
+        list: result,
+        total,
+        current_page: page,
+        per_page: limit,
+        total_pages: Math.ceil(total / limit)
+      }, 'Get successfully');
+    } catch (error) {
+      console.error("Error in getAll:", error);
+      return this.error(res, error.message, 500);
+    }
+  }

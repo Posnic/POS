@@ -1,0 +1,31 @@
+<svg id="Small_Icons" data-name="Small Icons" xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50">
+  <defs>
+    <style>
+      .cls-1, .cls-3 {
+        fill: none;
+        stroke: #fff;
+        stroke-width: 3px;
+      }
+
+      .cls-1, .cls-2, .cls-3 {
+        fill-rule: evenodd;
+      }
+
+      .cls-2 {
+        fill: #fff;
+        opacity: 0.25;
+      }
+
+      .cls-3 {
+        stroke-linecap: round;
+      }
+    </style>
+  </defs>
+  <g id="Reports">
+    <path id="Rounded_Rectangle_6" data-name="Rounded Rectangle 6" class="cls-1" d="M6.408,17.406h10.3c1.758,0,3.571,5,5.37,5H43.592a3,3,0,0,1,3,3V41.594a3,3,0,0,1-3,3H6.408a3,3,0,0,1-3-3V20.406A3,3,0,0,1,6.408,17.406Z"/>
+    <path class="cls-2" d="M4,38l43-7V42l-3,3H6L3,42Z"/>
+    <path id="Rounded_Rectangle_7" data-name="Rounded Rectangle 7" class="cls-1" d="M8.5,17.872V8.615a3.039,3.039,0,0,1,3-3.077h28a3.039,3.039,0,0,1,3,3.077V23"/>
+    <path class="cls-3" d="M10.089,30.5H23.911"/>
+    <path id="Shape_11_copy" data-name="Shape 11 copy" class="cls-3" d="M10.089,36.5H23.911"/>
+  </g>
+</svg>

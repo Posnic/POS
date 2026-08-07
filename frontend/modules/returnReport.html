@@ -1,0 +1,469 @@
+<div class="vertical-layout page_loader" id="returnreport_new" style="display: none">
+    <!-- Start Containerbar --> 
+    <div id="containerbar">
+        <!-- Start Breadcrumbbar -->
+        <div class="breadcrumbbar crumbbar_padding">
+            <div class="row align-items-center row_filter">
+                <div class="col-lg-2 col-xl-2">
+                    <h4 class="page-title break_title"><lang class="lang_return_report">Return Reports</lang></h4>
+                </div>               
+                <div class="col-md-9 col-lg-9 show-button-action"></div>                  
+                <div class="col-lg-3 col-xl-2 hide-button-action tb_filter" style="display:none;">
+                    <div class="form-control pull-right daterange-timepicker-all daterange-style date-align view_return_report_daterange">
+                        <i class="feather icon-calendarfeather icon-calendar"></i>&nbsp;
+                        <span></span>
+                    </div>
+                </div>
+                <div class="col-lg-5 col-xl-5 hide-button-action tb_filter" style="display:none;">
+                    <select class="floating-input select2 load-branch display-current-branch return_branch_value" multiple="multiple"
+                            data-placeholder="Select Branch" name="return_branch_value[]" id="return_branch_value">
+                        <option class="allbranch_name" value=''>All</option>
+                    </select>
+                </div>
+                <div class="col-md-2 col-lg-2 adjuce_left hide-button-action" style="display:none;">
+                    <button type="button" class="btn btn-danger-rgba" data-id="return" onclick="PosnicPro.dateRangeAllfilterClear(this)">
+                        <lang class="lang_clear_title">Clear</lang>
+                    </button>
+                    <button type="button" class="btn btn-primary-rgba" id='change_return_view' data-id="tableView" onclick="PosnicPro.returnroot.viewPage(this);">
+                        <lang class="lang_filter_title">Apply</lang>
+                    </button>
+                </div>
+                <div class="col-lg-1 col-xl-1 tb_widget">
+                    <div class="widgetbar">
+                        <button type="button" class="btn btn-round btn-primary-rgba click-action-button adjuce_left add_new_tooltip" data-toggle="tooltip" title="Filter">
+                            <i class="feather icon-filter" aria-hidden="true"></i>
+                        </button>                       
+                    </div>
+                </div>  
+            </div>            
+        </div>
+    </div>
+
+    <!-- Start Contentbar -->
+    <div class="contentbar">
+        <!-- Start row -->
+        <div class="row"> 
+            <div class="col-md-12 col-lg-12 col-xl-12 m-t-10">
+                <div class="card m-b-30">
+                    <div class="card-body">
+                        <ul class="nav nav-tabs custom-tab-line mb-3" id="defaultTabLine" role="tablist">
+                            <li class="nav-item">
+                                <a class="nav-link active report_tab_font" id="return-tab-line" data-toggle="tab" href="#return-line" role="tab" aria-controls="return-line" aria-selected="true" onClick="PosnicPro.returnreport.returnTableTabClick();"><lang class="lang_return_detail">Return Details</lang> </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link report_tab_font" id="return-product-tab-line" data-toggle="tab" href="#return-product-line" role="tab" aria-controls="return-product-line" aria-selected="false" onClick="PosnicPro.returnproductreport.returnProductTabClick();"><lang class="lang_returnbased">Return Based Product</lang></a>
+                            </li>
+                        </ul>
+                        <div class="tab-content" id="defaultTabContentLine">
+                            <div id="salesreturn_upgrade" class="text-center mt-4">
+                                <p class="font-weight-bold">You're currently on the Free Plan. Upgrade to Premium for full access to all features.</p>
+                                <a href="javascript:void(0)" onclick="return PosnicPro.users.accountGoToWebsiteURL(this);" class="btn btn-primary">Upgrade to Premium</a>
+                            </div>
+                            <div class="tab-pane fade show active" id="return-line" role="tabpanel" aria-labelledby="return-tab-line">
+                                <!-- start table -->
+                                <div class="row reportresale_header">
+                                    <div class="col-lg-1 col-md-1 col-md-2 form-group mb-0 amount-spent-select selecct-align">
+                                        <select class="form-control select_page" id="view_returnreport_per_page" data-id="returnreport" onChange="PosnicPro.setPerPage(this, 'Table');">
+                                            <option value="5" selected>5</option>
+                                            <option value="10">10</option>
+                                            <option value="25">25</option>
+                                            <option value="50">50</option>
+                                            <option value="100">100</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-lg-11 col-md-11">                                                                                       
+                                        <div class="email-rightbar">
+                                            <div class="card-header header_icon">
+                                                <ul class="list-inline mb-0 pl-0 float-right">
+                                                    <li class="list-inline-item email_320">
+                                                        <a href="javascript:void(0);" data-module="report" data-access="read" data-id="returnreport" onclick="PosnicPro.refreshReportDatatable(this);" class="add_new_tooltip" data-toggle="tooltip" title="Refresh">
+                                                            <i class="feather icon-refresh-cw font-20"></i>
+                                                        </a>
+                                                    </li>
+                                                    <li class="list-inline-item email_320">
+                                                        <a href="javascript:void(0);" data-module="report" data-access="read" id="returnreport_exportbtn"
+                                                           data-id="returnreportexport" onclick="PosnicPro.returnreport.returnReportExport(this);" class="sale_color dash_sale_count" data-toggle="tooltip" title="Export All To CSV">
+                                                            <i class="feather icon-share font-20"></i>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-body card-box no-padding loader-return-report">
+                                    <!-- Start table -->
+                                    <div class="table-responsive">
+                                        <table id="view_returnreport" class="table table-borderless" cellspacing="0"
+                                               width="100%">
+                                            <div class="col-sm-6 col-md-12 col-lg-12" id="reportresale_img_hide" style="display:none;">
+                                                <img src="static/images/general/nodata.svg" class="img-fluid" style="opacity: 0.6;width: 100%;height: 250px;" alt="">
+                                                <div class="text-center text-dark"> <p class="report-sales-details-no-records"></p></div>
+                                            </div>
+                                            <thead class="report-thead-tfoot table-header reportresale_header"></thead>
+                                            <tbody class="report-thead-tfoot table-body reportresale_header"></tbody>
+                                        </table>
+                                    </div>
+                                    <!-- End table -->
+                                </div>
+                                <!-- start pagination -->
+                                <div class="card m-b-30 reportresale_header">
+                                    <div class="card-body ecommerce-pagination">
+                                        <div class="row align-items-center">
+                                            <div class="col-8">
+                                                <div class="hint-text">
+                                                    Showing 
+                                                    <b><span id="view_returnreport_page_total"></span></b>
+                                                    to 
+                                                    <b><span id="view_returnreport_page_perpage_total"></span></b> 
+                                                    of 
+                                                    <b><span id="view_returnreport_total"></span></b>
+                                                    entries 
+                                                    <span class="showing-hide-show-returnreport" style="display:none;"> &nbsp;&nbsp;&nbsp;&nbsp; 
+                                                        <span class="showing-value-returnreport text-dark"> 0 </span>&nbsp; 
+                                                        rows selected  
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <nav aria-label="Page navigation example">
+                                                    <ul class="pagination mb-0">
+                                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="returnreport" onclick="PosnicPro.previousPage(this, 'Table')"> <i class="fa fa-angle-left font-20"></i> </button>
+                                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="returnreport" onclick="PosnicPro.nextPage(this, 'Table')"> <i class="fa fa-angle-right font-20"></i> </button>
+                                                    </ul>
+                                                </nav>
+                                            </div>
+                                        </div>                                
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="tab-pane fade" id="return-product-line" role="tabpanel" aria-labelledby="return-product-tab-line">
+                                <!-- start table -->
+                                <div class="row reportresalepro_header">
+                                    <div class="col-lg-1 col-md-1 col-md-2 form-group mb-0 amount-spent-select selecct-align">
+                                        <select class="form-control select_page" id="view_returnproductreport_per_page" data-id="returnproductreport" onChange="PosnicPro.setPerPage(this, 'Table');">
+                                            <option value="5" selected>5</option>
+                                            <option value="10">10</option>
+                                            <option value="25">25</option>
+                                            <option value="50">50</option>
+                                            <option value="100">100</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-lg-11 col-md-11">                                                                                       
+                                        <div class="email-rightbar">
+                                            <div class="card-header header_icon">
+                                                <ul class="list-inline mb-0 pl-0 float-right">
+                                                    <li class="list-inline-item email_320">
+                                                        <a href="javascript:void(0);" data-module="report" data-access="read" data-id="returnproductreport" onclick="PosnicPro.refreshReportDatatable(this);" class="add_new_tooltip" data-toggle="tooltip" title="Refresh">
+                                                            <i class="feather icon-refresh-cw font-20"></i>
+                                                        </a>
+                                                    </li>
+                                                    <li class="list-inline-item email_320">
+                                                        <a href="javascript:void(0);" data-module="report" data-access="read" id="returnproductreport_exportbtn"
+                                                           data-id="returnproductreportexport" onclick="PosnicPro.returnproductreport.returnproductreportexport(this);" class="sale_color dash_sale_count" data-toggle="tooltip" title="Export All To CSV">
+                                                            <i class="feather icon-share font-20"></i>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-body card-box no-padding loader-return-report">
+                                    <!-- Start table -->
+                                    <div class="table-responsive">
+                                        <table id="view_returnproductreport" class="table table-borderless" cellspacing="0"
+                                               width="100%">
+                                            <div class="col-sm-6 col-md-12 col-lg-12" id="reportreproduct_img_hide" style="display:none;">
+                                                <img src="static/images/general/nodata.svg" class="img-fluid" style="opacity: 0.6;width: 100%;height: 250px;" alt="">
+                                            </div>
+                                            <div class="reportreproduct_norecord col-sm-6 col-md-12 col-lg-12" style="display:none;">
+                                            </div>
+                                            <thead class="reportresalepro_header">
+                                                <tr><th>#</th><th>Id</th><th>Date</th><th>Product Name</th><th>Supplier</th><th>Qty</th><th class="text-right">Total Amount</th></tr>
+                                            </thead>
+                                            <tbody class="report-thead-tfoot table-body reportresalepro_header"></tbody>
+                                        </table>
+                                    </div>
+                                    <!-- End table -->
+                                </div>
+                                <!-- start pagination -->
+                                <div class="card m-b-30 reportresalepro_header">
+                                    <div class="card-body ecommerce-pagination">
+                                        <div class="row align-items-center">
+                                            <div class="col-8">
+                                                <div class="hint-text">
+                                                    Showing 
+                                                    <b><span id="view_returnproductreport_page_total"></span></b> 
+                                                    to 
+                                                    <b><span id="view_returnproductreport_page_perpage_total"></span></b> 
+                                                    of 
+                                                    <b><span id="view_returnproductreport_total"></span></b>
+                                                    entries 
+                                                    <span class="showing-hide-show-returnproductreport" style="display:none;"> &nbsp;&nbsp;&nbsp;&nbsp; 
+                                                        <span class="showing-value-returnproductreport text-dark"> 0 </span>&nbsp;
+                                                        rows selected  
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <nav aria-label="Page navigation example"> 
+                                                    <ul class="pagination mb-0">
+                                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="returnproductreport" onclick="PosnicPro.previousPage(this, 'Table')"> <i class="fa fa-angle-left font-20"></i> </button>
+                                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="returnproductreport" onclick="PosnicPro.nextPage(this, 'Table')"> <i class="fa fa-angle-right font-20"></i> </button>
+                                                    </ul>
+                                                </nav>
+                                            </div>
+                                        </div>                                
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- End col -->
+        </div>
+    </div>   
+</div>
+
+<div id="infobar-settings-sidebar-returnreport-details" class="infobar-settings-sidebar">
+    <div class="infobar-settings-sidebar-head d-flex w-100 justify-content-between">
+        <h4 id="exampleModalCenterTitle">#<span class="return_product_view_name"> </span></h4>
+        <a href="javascript:void(0)" class="infobar-settings-close" data-id="returnreport">
+            <img src="static/images/svg-icon/close.svg" class="img-fluid menu-hamburger-close" alt="close">
+        </a>
+    </div>
+    <div class="infobar-settings-sidebar-body">
+        <div class="custom-mode-setting loader-item">            
+
+            <div class="slider-modal-body">
+                <div class="row">
+                    <div class="col-xs-12 col-sm-4">
+                        <div class="portlet light slider-portlet-vh">
+                            <div class="portlet-body">
+                                <div class="row">
+                                    <div class="col-lg-12 col-xl-12">
+
+                                        <table class="table mb-1">
+                                            <tbody>
+                                                <tr>
+                                                    <th scope="row" class="p-3">Branch : <span class="branch_view_name_return text-info"></span> </th>
+                                                </tr>
+                                                <tr>
+                                                    <th scope="row" class="p-3">User : <span class="user_view_name_return text-info"></span> </th>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                        <table class="table mb-1">
+                                            <thead class="header_blue"><tr><th colspan="4">Customer Details</th></tr></thead>
+                                            <tbody>
+                                                <tr>
+                                                    <th scope="row" class="p-2">Name : <span class="customer_view_name_return text-info"></span> </th>
+                                                </tr>
+                                                <tr id="customer_view_phone_return">
+                                                    <th scope="row" class="p-2">phone : <span class="customer_view_phone_return text-info"></span>&nbsp;<a class="customer_view_phone_icon_return"><i class="feather icon-phone mr-2"></i></a></th>
+                                                </tr>
+                                                <tr id="customer_view_email_return">
+                                                    <th scope="row" class="p-2">email : <span class="customer_view_email_return text-info"></span>&nbsp;<a class="customer_view_email_icon_return"><i class="feather icon-message-square mr-2 pointer"></i></a></th>
+                                                </tr>
+                                                <tr id="customer_view_address_return">
+                                                    <th scope="row" class="p-2">Address : <span class="customer_view_address_return text-info"></span></th>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+
+                                    </div>                                    
+                                </div> 
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xs-12 col-sm-8">
+                        <div class="portlet light slider-portlet-vh">
+                            <div class="portlet-title margin-bottom-0">
+                                <div class="caption caption-basic font-green-meadow">
+                                    <span class="caption-subject bold uppercase">Product history</span>
+                                </div>
+                                <div class="actions">
+                                    <div class="inline-block text-left">
+                                        <div class="form-md-line-input form-md-floating-label custom-select2-ui">
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="portlet-body padding-top-0">
+                                <div class="row">
+                                    <div class="col-lg-2 col-md-2 form-group mb-0 amount-spent-select selecct-align">
+                                        <select class="form-control select_page" id="view_returnproductdetails_per_page" data-id="returnproductdetails" onChange="PosnicPro.setPerPage(this, 'Table');">
+                                            <option value="5" selected>5</option>
+                                            <option value="10">10</option>
+                                            <option value="25">25</option>
+                                            <option value="50">50</option>
+                                            <option value="100">100</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-lg-10 col-md-10">                                                                                       
+
+                                    </div>
+                                </div>
+                                <div class="card-body card-box no-padding loader-item-report">
+                                    <!-- Start table -->
+                                    <div class="table-responsive">
+                                        <table id="view_returnproductdetails" class="table table-borderless" cellspacing="0"
+                                               width="100%">
+                                            <thead class="report-thead-tfoot table-header"></thead>
+                                            <tbody class="report-thead-tfoot table-body"></tbody>
+                                        </table>
+                                    </div>
+                                    <!-- End table -->
+                                </div>
+                                <div class="card m-b-30">
+                                    <div class="card-body ecommerce-pagination">
+                                        <div class="row align-items-center">
+                                            <div class="col-8">
+                                                <div class="hint-text">
+                                                    Showing 
+                                                    <b><span id="view_returnproductdetails_page_total"></span></b> 
+                                                    to 
+                                                    <b><span id="view_returnproductdetails_page_perpage_total"></span></b> 
+                                                    of 
+                                                    <b><span id="view_returnproductdetails_total"></span></b>
+                                                    entries 
+                                                    <span class="showing-hide-show-returnproductdetails" style="display:none;"> &nbsp;&nbsp;&nbsp;&nbsp; 
+                                                        <span class="showing-value-returnproductdetails text-dark"> 0 </span>&nbsp;
+                                                        rows selected  
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <nav aria-label="Page navigation example">
+                                                    <ul class="pagination mb-0">
+                                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="returnproductdetails" onclick="PosnicPro.previousPage(this, 'Table')"> <i class="fa fa-angle-left font-20"></i> </button>
+                                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="returnproductdetails" onclick="PosnicPro.nextPage(this, 'Table')"> <i class="fa fa-angle-right font-20"></i> </button>
+                                                    </ul>
+                                                </nav>
+                                            </div>
+                                        </div>                                
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade close_on_esc" id="return_product_view" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content loader-return-product">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <span id="salestitleText">
+                        <lang class="lang_returndetail_title">Return Details</lang>
+                    </span>
+                </h5>
+                <button type="button" class="close" data-id="returnproduct" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">                
+                <div class="row justify-content-center">
+                    <!-- Start col -->
+                    <div class="col-md-12 col-lg-10 col-xl-10">
+                        <div class="card m-b-30">
+                            <div class="card-body">
+                                <div class="invoice">
+                                    <div class="invoice-head">
+                                        <div class="row">
+                                            <div class="col-12 col-md-7 col-lg-7">
+                                                <h4> <lang class="lang_customerdetails_title">Customer Details</lang></h4>
+                                                <p><b><span class="text-primary" id="return_product_customer_name_view"></span></b></p>
+                                                <p><span id="return_product_customer_address_view"></span></p>
+                                                <p><span id="return_product_customer_phone_view"></span></p>
+                                                <p><span id="return_product_customer_email_view"></span></p>                                                
+                                            </div>
+                                            <div class="col-12 col-md-5 col-lg-5">
+                                                <div class="invoice-name">
+                                                    <p class="mb-1">No : <span class="badge badge-primary-inverse">#<span id="return_product_id_view"></span></span></p>
+                                                    <p class="mb-0"><span id="return_product_date_view"></span></p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-sm-12 col-md-4 col-lg-4">
+                                                <div class="invoice-address">
+                                                    <h6><lang class="lang_paymentmethod">Payment Method</lang></h6>
+                                                    <span id="return_product_payment_mode_view"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div> 
+
+                                    <div class="invoice-summary">
+                                        <div class="table-responsive">
+                                            <table id="return_product_table" class="table table-borderless"> 
+                                                <h4><span><lang class="lang_returnitemdetail_title">Item Details</lang></span></h4>
+                                                <thead>
+                                                    <tr class="row100 head">
+                                                        <th><lang class="lang_name_title">Name</lang></th>
+                                                <th class="text-right"><lang class="lang_price_title">Price</lang></th>
+                                                <th class="text-center"><lang class="lang_qty_title">Qty</lang></th>                                                
+                                                <th class="text-right"><lang class="lang_discount_title">Discount</lang></th>
+                                                <th class="text-right"><lang class="lang_tax_title">Tax</lang></th>
+                                                <th class="text-right"><lang class="lang_total_title">Total</lang></th>
+                                                </tr>
+                                                </thead>
+                                                <tbody>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-sm-12 col-md-6 col-lg-6"></div>
+                                        <div class="col-sm-12 col-md-6 col-lg-6">
+                                            <div class="order-total table-responsive">
+                                                <table class="table table-borderless">
+                                                    <tbody>
+                                                        <tr>
+                                                            <td>Sub Total :</td>
+                                                            <td class="text-right"><span class="sign display-currency"></span>&nbsp;<span id="return_product_subtotal_amount_view">0.00</span></td>
+                                                        </tr>
+                                                        <tr class="discount-print-hideshow">
+                                                            <td>Discount :</td>
+                                                            <td class="text-right"><span class="sign display-currency"></span>&nbsp;<span class="sales-return-discount-value">0.00</span></td>
+                                                        </tr>
+                                                        <tr class="tax-print-hideshow">
+                                                            <td>Tax :</td> 
+                                                            <td class="text-right"><span class="sign display-currency"></span>&nbsp;<span id="return_product_tax_view"></span></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="f-w-7 font-18"><h5>Total Amount :</h5></td>
+                                                            <td class="f-w-7 font-18 text-right"><h5><span class="sign display-currency"></span>&nbsp;<span id="return_product_total_amount_view">0.00</span></h5></td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- End col -->
+                </div>                
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-danger" data-dismiss="modal">
+                    <i class="feather icon-x-circle mr-2"></i> <lang class="lang_close_title"> Close </lang>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End view sale model -->

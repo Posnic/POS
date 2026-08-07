@@ -1,0 +1,241 @@
+<!-- start supplier modal -->
+<div id="infobar-settings-sidebar-branch" class="infobar-settings-sidebar scroll_width">
+    <div class="infobar-settings-sidebar-head d-flex w-100 justify-content-between">
+        <h4 id="exampleModalCenterTitle"><span id="branch_title">Add</span>&nbsp;<lang class="lang_branch_title">Branch</lang></h4>
+        <a href="javascript:void(0)" class="infobar-settings-close" data-id="branch">
+            <img src="static/images/svg-icon/close.svg" class="img-fluid menu-hamburger-close" alt="close">
+        </a>
+    </div>
+    <div class="infobar-settings-sidebar-body">
+        <div class="custom-mode-setting  loader-branch">            
+            <form id='branch_add_form'> 
+                <div class="form-row">
+                    <div class="form-group col-md-12">
+                        <label  for="name_branch">
+                            <lang class="lang_name_title"> Name </lang>
+                            <span class="text-danger">*</span> 
+                        </label>
+                        <input type="text" class="form-control border-control branch-trigger" name="name" id="name_branch" minlength="3" maxlength="250" placeholder="Enter the name" required>
+                        <input type="hidden" name="id" id="branch_id">
+                        <input type="hidden" name="logo" id="branch_logo">
+                    </div>
+                </div>
+                <div class="form-row">                        
+                    <div class="form-group col-md-6">
+                        <label for="branch_phone" class="control-label">
+                            <lang class="lang_phone_title"> Phone </lang>
+                            <span class="text-danger">*</span>
+                        </label>
+                        <input type="tel" class="form-control border-control branch-trigger allow_phone_validate"  name="phone" id="branch_phone" minlength="3" maxlength="20" placeholder="Enter the phone" required>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="branch_email">
+                            <lang class="lang_email_title"> Email </lang>
+                            <span class="text-danger">*</span>
+                        </label>
+                        <input type="email" class="form-control border-control branch-trigger" name="email" id="branch_email"  maxlength="50" placeholder="Enter the email" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-12">
+                        <label for="branch_address">
+                            <lang class="lang_address_title"> Address </lang>
+                            <span class="text-danger">*</span>
+                        </label>
+                        <textarea name="address" id="branch_address" 
+                                  class="form-control border-control branch-trigger" minlength="3" maxlength="500" placeholder="Enter the address"></textarea>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label for="branch_country">
+                            <lang class="lang_country_title"> Country </lang>
+                            <span class="text-danger">*</span>
+                        </label>
+                        <select class="select2 setCountry" name="country" data-page="branch_country"  id="branch_country" required></select>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="branch_state"><lang class="lang_state_title"> State </lang><span class="text-danger">*</span></label>
+                        <select class="select2 setState" name="state" data-page="branch_state" id="branch_state" required></select>
+                    </div>                                                    
+                </div> 
+                <div class="form-row">                                                                            
+                    <div class="form-group col-8">
+                        <label class="form-control-placeholder" for="register"><lang class="lang_addregister_title"> Add Register </lang> </label>
+                        <div class="register-wrapper">
+                            <div class="register-fields"> 
+                                <div class="register-input">
+                                    <input type="text" id="register[0]" name="branchregister[0]" oninput="validate(this)" class="form-control border-control register_list branch-trigger" minlength="3" maxlength="20">
+                                    <span class="remove-field btn-round btn-danger-rgba"><i class="feather icon-trash"></i></span>
+                                    <span class="add-field btn-round btn-success-rgba"><i class="feather icon-plus mr-2"></i></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-md-12">
+                        <div class="pull-right">
+                            <button type="button" class="btn btn-outline-secondary infobar-settings-reset" id="branch_reset" onclick="PosnicPro.branches.branchClearform();"><i class="feather icon-refresh-ccw mr-2"></i><lang class="lang_clear_title"> Clear</lang></button>
+                            <button type="button" class="btn btn-outline-secondary infobar-settings-reset branch_edit_reset" id="branch_edit_reset" onclick="PosnicPro.branches.resetEditButton(this.id);"><i class="feather icon-refresh-ccw mr-2"></i><lang class="lang_reset_title"> Reset</lang></button>
+                            <button type="button" class="btn btn-outline-danger infobar-settings-close" data-id="branch">
+                                <i class="feather icon-x-circle mr-2"></i>
+                                <lang class="lang_close_title"> Close</lang>
+                            </button>
+                            <button type="submit" class="btn btn-outline-primary" id="branchSubmitForm">
+                                <i class="feather icon-save mr-2"></i>
+                                <span id="branch_button_title">
+                                    <lang class="lang_save_title"> Save</lang>
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row" id="show_last_created_branch" style="display:none;">
+                    <div class="form-group col-md-12">
+                        <div class="pull-right">
+                            <h6>Last Created Record <a href="#" id="last_created_branch">View</a></h6>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- end supplier modal -->
+
+
+<!-- profile modal -->
+<div id="infobar-settings-sidebar-branches-details" class="infobar-settings-sidebar">
+    <div class="infobar-settings-sidebar-head d-flex w-100 justify-content-between">
+        <h4 id="exampleModalCenterTitle"><lang class="lang_branchdetail_title"> Branch Details </lang></h4>
+        <a href="javascript:void(0)" class="infobar-settings-close" data-id="branches">
+            <img src="static/images/svg-icon/close.svg" class="img-fluid menu-hamburger-close" alt="close">
+        </a>
+    </div>
+    <div class="infobar-settings-sidebar-body">
+        <div class="custom-mode-setting loader-profile">            
+            <div class="slider-modal-body scroll_width">
+                <div class="row">
+                    <div class="col-lg-6 col-sm-12" style="border-right:1px solid #ddd">
+                        <div class="table-responsive">
+                            <table class="table table-border table-striped mb-0">
+                                <tbody>
+                                <tr>
+                                    <th scope="row"><lang class="lang_image_title"> Branch Image </lang></th>
+                                    <td style="width: 70%;">
+                                        <a href="#"><img src='' class="branchimageview" width='40' height='40' alt="NoImg"></a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><lang class="lang_name_title"> Name </lang> :</th>
+                                <td><span id="branch_view_branch_name"></span></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><lang class="lang_phone_title"> Phone </lang> :</th>
+                                <td><span id="branch_view_store_telephone"></span>&nbsp;<a id="branch_view_store_telephone_icon"><i class="feather icon-phone mr-2"></i></a></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><lang class="lang_email_title"> Email </lang> :</th>
+                                <td><span id="branch_view_store_email"></span>&nbsp;<a id="branch_view_store_email_icon"><i class="feather icon-message-square mr-2 pointer"></i></a></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><lang class="lang_country_title"> Website  </lang> :</th>
+                                <td class="address-text-wrap"><span id="branch_view_website_value"></span></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><lang class="lang_state_title">Address   </lang> :</th>
+                                <td class="address-text-wrap"><span id="branch_view_store_address"></span></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><lang class="lang_address_title">Country   </lang> :</th>
+                                <td class="address-text-wrap"><span id="branch_view_country"></span></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><lang class="lang_customer_title">State   </lang> :</th>
+                                <td class="address-text-wrap"><span id="branch_view_state"></span></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><lang class="lang_supply_title">City  </lang> :</th>
+                                <td class="address-text-wrap"><span id="branch_view_city_value"></span></td>
+                                </tr>
+
+                                <tr>
+                                    <th scope="row"><lang class="lang_register_title">Pincode  </lang> :</th>
+                                <td class="address-text-wrap"><span id="branch_view_pincode_value"></span></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><lang class="lang_cratedate_title">  Created Date </lang> :</th>
+                                <td><span id="branch_view_created_date"></span></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><lang class="lang_update_title">  Updated Date </lang> :</th>
+                                <td><span id="branch_view_updated_date"></span></td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    
+                    <div class="col-lg-6 col-sm-12" style="border-right:1px solid #ddd">
+                        <div class="table-responsive">
+                            <table class="table table-border table-striped mb-0">
+                                <tbody>
+                                    <tr>
+                                        <th scope="row"><lang class="lang_name_title">Default  Customer</lang> :</th>
+                                <td><span id="branch_view_customername"></span></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><lang class="lang_phone_title">Default  Supplier</lang> :</th>
+                                <td><span id="branch_view_suppliername"></span>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><lang class="lang_email_title"> Register </lang> :</th>
+                                <td><span id="branch_view_register_value"></span>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><lang class="lang_country_title"> Currency </lang> :</th>
+                                <td class="address-text-wrap"><span id="branch_view_currency_text_value"></span></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><lang class="lang_state_title"> Currency Type  </lang> :</th>
+                                <td class="address-text-wrap"><span id="branch_view_currency_type_value"></span></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><lang class="lang_address_title"> Time Zone  </lang> :</th>
+                                <td class="address-text-wrap"><span id="branch_view_time_zone_value"></span></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><lang class="lang_customer_title"> Print Type </lang> :</th>
+                                <td class="address-text-wrap"><span id="branch_view_print_type_value"></span></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><lang class="lang_supply_title">  Printing Address  </lang> :</th>
+                                <td class="address-text-wrap"><span id="branch_view_printing_address_value"></span></td>
+                                </tr>
+
+                                <tr>
+                                    <th scope="row"><lang class="lang_register_title">  Low Stock Notification Range  </lang> :</th>
+                                <td class="address-text-wrap"><span id="branch_view_notification_range_value"></span></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><lang class="lang_cratedate_title"> Date Format </lang> :</th>
+                                <td><span id="branch_view_dateformat_text_value"></span></td>
+                                </tr>
+<!--                                <tr>
+                                    <th scope="row"><lang class="lang_update_title"> Time Format </lang> :</th>
+                                <td><span id="branch_view_time_format_value"></span></td>
+                                </tr>-->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

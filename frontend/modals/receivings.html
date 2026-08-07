@@ -1,0 +1,231 @@
+<!-- start sales view modal -->
+<div class="modal fade close_on_esc" id="receivings_view" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content loader-view-receiving">
+            <div class="modal-header">
+                <h5 class="modal-title"><span id="receivingtitelText"></span></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">                
+                <div class="row justify-content-center">
+                    <!-- Start col -->
+                    <div class="col-md-12 col-lg-10 col-xl-10">
+                        <div class="card m-b-30">
+                            <div class="card-body">
+                                <div class="invoice">
+                                    <div class="invoice-head">
+                                        <div class="row">
+                                            <div class="col-12 col-md-7 col-lg-7">
+                                                <h4><lang class="lang_supplydetails_title">Supplier Details</lang></h4>
+                                                <p><b><span class="text-primary" id="receiving_view_supplier_name"></span></b></p>
+                                                <p><span id="receiving_view_supplier_address"></span></p>
+                                                <p><span id="receiving_view_supplier_phone"></span></p>
+                                                <p><span id="receiving_view_supplier_email"></span></p>                                                
+                                            </div>
+                                            <div class="col-12 col-md-5 col-lg-5">
+                                                <div class="invoice-name">
+                                                    <p class="mb-1"><lang class="lang_number">No :</lang> <span class="badge badge-primary-inverse">#<span id="receiving_view_receiving_id"></span></span></p>
+                                                    <p class="mb-0"><span id="date_view_receiving"></span></p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div> 
+
+                                    <div class="invoice-summary hide-receiving-table" style="display:none;">
+                                        <div class="table-responsive">
+                                            <table id="receiving_print_view" class="table table-borderless items-show-backup view_det_print">
+                                                <h4><span id="receivingtitelText"></span><lang class="lang_receivereport_title">Line Item</lang></h4>
+                                                <thead>
+                                                    <tr class="row100 head">
+                                                        <th>#</th>
+                                                        <th><lang class="lang_name_title">Name </lang></th>
+                                                <th><lang class="lang_price_title">Price </lang></th>
+                                                <th><lang class="lang_qty_title">Qty </lang></th>
+                                                <th><lang class="lang_tax_title">Exclusive (Tax) </lang></th>
+                                                <th class="text-center"><lang class="lang_total_title">Total </lang></th>
+                                                </tr>
+                                                </thead>
+                                                <tbody>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    <div class="invoice-summary-total hide-receiving-table" style="display:none;">
+                                        <div class="row">
+                                            <div class="col-md-12 order-2 order-lg-1 col-lg-5 col-xl-6">
+                                                <div class="order-total table-responsive ">
+                                                    <table class="table table-borderless text-left" id="detailed_receiving_item_tax" style="display:none;">
+                                                        <thead>
+                                                        <th><lang class="lang_tax_detail">Tax Details </lang>  : </th>
+                                                        </thead>
+                                                        <tbody>
+                                                        </tbody>
+                                                    </table>
+                                                    <table class="table table-borderless text-left" id="detailed_receiving_item_gsttax" style="display:none;">
+                                                        <thead>
+                                                        <th> Gst Tax Details : </th>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr class="indian-gstr hide-show-igst" style="display: none;">
+                                                                <td><lang class="lang_igst_tax_receiving">IGST</lang>:</td>
+                                                        <td> <span class="display-currency"></span> <span class="receiving_igst_tax_view"></span></td>
+                                                        </tr>
+                                                        <tr class="indian-gstr hide-show-scgst" style="display: none;">
+                                                            <td><lang class="lang_cgst_tax_receiving">CGST</lang>:</td>
+                                                        <td> <span class="display-currency"></span> <span class="receiving_csgst_tax_view"></span></td>
+                                                        </tr>
+                                                        <tr class="indian-gstr hide-show-scgst" style="display: none;">
+                                                            <td><lang class="lang_sgst_tax_receiving">SGST</lang>:</td>
+                                                        <td> <span class="display-currency"></span> <span class="receiving_csgst_tax_view"></span></td>
+                                                        </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-12 order-1 order-lg-2 col-lg-7 col-xl-6">
+                                                <div class="order-total table-responsive ">
+                                                    <table class="table table-borderless text-right">
+                                                        <tbody>                                                           
+                                                            <tr>
+                                                                <td><lang class="lang_subtotal_title">Sub Total :</lang></td>
+                                                        <td><span class="sign display-currency"></span>&nbsp;<span id="receiving_subtotal_amount_view">0.00</span></td>
+                                                        </tr>
+                                                        <tr class="hide-receiving-discount" style="display: none;">
+                                                            <td><lang class="lang_discount_title">Discount</lang> :</td>
+                                                        <td><span class="sign display-currency"></span>&nbsp;<span class="receiving-discount-value">0.00</span></td>
+                                                        </tr>                                                        
+                                                        <tr class="hide-receiving-tax" style="display: none;">
+                                                            <td><lang class="lang_tax_title">Tax</lang> :</td> 
+                                                        <td><span class="sign display-currency"></span>&nbsp;<span class="receiving_tax_view"></span></td>
+                                                        </tr>                                                            
+                                                        <tr>
+                                                            <td class="f-w-7 font-18"><h5><lang class="lang_grandamount">Grand Total :</lang></h5></td>
+                                                            <td class="f-w-7 font-18"><h5><span class="sign display-currency"></span>&nbsp;<span id="receiving_view_totals">0.00</span></h5></td>
+                                                        </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="invoice-summary hide-receiving-return" style="display:none;">
+                                        <h4><lang class="lang_receiving_title">Return Line Item</lang></h4>
+                                        <div id="viewreceiving_return_print_view">
+
+                                        </div>
+                                    </div>
+                                    <div class="invoice-summary-total hide-receiving-return" style="display:none;">
+                                        <div class="row">
+                                            <div class="col-md-12 order-2 order-lg-1 col-lg-5 col-xl-6">
+                                                <div class="order-total table-responsive ">
+                                                    <table class="table table-borderless text-left" id="detailed_receiving_itemreturn_tax">
+                                                        <thead>
+                                                        <th> Tax Details : </th>
+                                                        </thead>
+                                                        <tbody>
+                                                        </tbody>
+                                                    </table>
+                                                    <table class="table table-borderless text-left" id="detailed_receiving_return_item_gsttax" style="display:none;">
+                                                        <thead>
+                                                        <th> Gst Tax Details : </th>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr class="return-indian-gstr hide-show-igst" style="display: none;">
+                                                                <td><lang class="lang_igst_tax_receiving">IGST</lang>:</td>
+                                                        <td> <span class="display-currency"></span> <span class="receiving_return_igst_tax_view"></span></td>
+                                                        </tr>
+                                                        <tr class="return-indian-gstr hide-show-scgst" style="display: none;">
+                                                            <td><lang class="lang_cgst_tax_receiving">CGST</lang>:</td>
+                                                        <td> <span class="display-currency"></span> <span class="receiving_return_csgst_tax_view"></span></td>
+                                                        </tr>
+                                                        <tr class="return-indian-gstr hide-show-scgst" style="display: none;">
+                                                            <td><lang class="lang_sgst_tax_receiving">SGST</lang>:</td>
+                                                        <td> <span class="display-currency"></span> <span class="receiving_return_csgst_tax_view"></span></td>
+                                                        </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-12 order-1 order-lg-2 col-lg-7 col-xl-6">
+                                                <div class="order-total table-responsive ">
+                                                    <table class="table table-borderless text-right">
+                                                        <tbody>
+                                                            <tr>
+                                                                <td><lang class="lang_subtotal_title">Sub Total :</lang></td>
+                                                        <td><span class="sign display-currency"></span>&nbsp;<span id="receiving_return_subtotal_amount_view">0.00</span></td>
+                                                        </tr>
+                                                        <tr class="hide-receiving-return-discount" style="display: none;">
+                                                            <td><lang class="lang_discount_title">Discount</lang> :</td>
+                                                        <td><span class="sign display-currency"></span>&nbsp;<span class="receiving-return-discount-value">0</span></td>
+                                                        </tr>                                                        
+                                                        <tr class="hide-receiving-return-tax" style="display: none;">
+                                                            <td><lang class="lang_tax_title">Tax</lang> :</td> 
+                                                        <td><span class="sign display-currency"></span>&nbsp;<span class="receiving_return_tax_view"></span></td>
+                                                        </tr>                                                            
+                                                        <tr>
+                                                            <td class="f-w-7 font-18"><h5><lang class="lang_grandamount">Grand Total :</lang></h5></td>
+                                                            <td class="f-w-7 font-18"><h5><span class="sign display-currency"></span>&nbsp;<span id="receiving_return_view_totals">0.00</span></h5></td>
+                                                        </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="invoice-billing">
+                                        <div class="row">                                                                                                                                    <div class="col-sm-12 col-md-4 col-lg-4">
+                                                <div class="invoice-address">
+                                                    <h6><lang class="lang_paymentmethod">Payment Method</lang></h6>
+                                                    <span id="receiving_view_payment_mode"></span>
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-6 col-md-4 col-lg-4 note_hide">
+                                                <div class="invoice-address">
+                                                    <h6 class="mb-3"><lang class="lang_paymentdescription_title">Payment Note</lang></h6>
+                                                    <ul class="list-unstyled">
+                                                        <li><span id="receiving_view_payment_description"></span></li>   
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div> 
+                                    <div class="row" id='receiving_view_image'>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- End col -->
+                </div>                
+            </div>
+            <div class="modal-footer">               
+                <button type="button" class="btn btn-outline-danger" data-dismiss="modal">
+                    <i class="feather icon-x-circle mr-2"></i>
+                    <lang class="lang_close_title"> Close</lang>
+                </button>
+                <button class="btn btn-primary receiving_id_print" type="button" data-id="receiving" id="hide_receiving_print" style="display:none;">
+                    <i class="feather icon-printer mr-2"></i>  <lang class="lang_purchaseprint"> Receiving Print</lang>
+                </button>
+                <button class="btn btn-primary receiving_id_print" type="button" data-id="return" id="hide_receiving_return_print" style="display:none;">
+                    <i class="feather icon-printer mr-2"></i>  <lang class="lang_returnprint"> Return Print</lang>
+                </button>
+                <div class="single-dropdown" id="show_receiving_print">
+                    <div class="dropdown">
+                        <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="feather icon-printer mr-2"></i><lang class="lang_printed">Print</lang> 
+                        </button>
+                        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                            <a class="dropdown-item receiving_id_print" id="receiving_button_print_view" href="javascript:void(0)"  data-id="receiving">Receiving Print</a>
+                            <a class="dropdown-item receiving_id_print" id="receiving_return_print_view" href="javascript:void(0)"  data-id="return">Return Print</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End view sale model -->

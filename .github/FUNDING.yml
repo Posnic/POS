@@ -1,0 +1,8 @@
+# The "Sponsor" button on the repository page.
+#
+# github: first, so the native GitHub Sponsors panel is the primary option -
+# it takes no fee and sponsors can pay through the account they already have.
+# The custom links stay for anyone who would rather pay directly, and Razorpay
+# is the one that matters for Indian shops paying in rupees.
+github: [Posnic]
+custom: ["https://razorpay.me/@posnic", "https://www.paypal.com/ncp/payment/QW9PHBM6YYSA4"]

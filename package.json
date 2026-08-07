@@ -1,0 +1,478 @@
+{
+  "name": "posnic",
+  "version": "1.0.0",
+  "description": "Offline-first point of sale for shops, restaurants and pharmacies. Runs its own database and API on the till, so a dropped connection is not an outage.",
+  "main": "main.js",
+  "scripts": {
+    "postinstall": "node scripts/enable-installer-extraction-details.js",
+    "start": "electron .",
+    "test:auth": "node --test tests/startup-auth.test.js",
+    "prepare:frontend": "node scripts/prepare-frontend.js",
+    "prepare:api-runtime": "node scripts/prepare-api-runtime.js",
+    "prepare:api-runtime:force": "node scripts/prepare-api-runtime.js --force",
+    "prepare:sync-agent": "node scripts/prepare-sync-agent.js",
+    "prepare:bundle": "node scripts/enable-installer-extraction-details.js && npm run prepare:vc-runtime && npm run prepare:frontend && npm run prepare:api-runtime && npm run prepare:sync-agent",
+    "prebuild": "npm run clear:brand-seed && npm run check:mongodb && npm run prepare:bundle",
+    "build": "electron-builder --win --x64",
+    "prebuild:fast": "npm run clear:brand-seed && npm run check:mongodb && npm run prepare:bundle",
+    "build:fast": "electron-builder --win --x64 --dir",
+    "prebuild:quick": "npm run clear:brand-seed && npm run check:mongodb && npm run prepare:bundle",
+    "build:quick": "cross-env ELECTRON_BUILDER_COMPRESSION_LEVEL=fast electron-builder --win --x64",
+    "prebuild:portable": "npm run clear:brand-seed && npm run check:mongodb && npm run prepare:bundle",
+    "build:portable": "electron-builder --win portable",
+    "prebuild:zip": "npm run clear:brand-seed && npm run check:mongodb && npm run prepare:bundle",
+    "build:zip": "electron-builder --win zip",
+    "publish": "electron-builder --win --x64 --publish always",
+    "prebuild:linux": "npm run clear:brand-seed && npm run check:mongodb && npm run prepare:bundle",
+    "build:linux": "electron-builder --linux --x64",
+    "prebuild:mac": "npm run clear:brand-seed && npm run check:mongodb && npm run prepare:bundle",
+    "build:mac": "electron-builder --mac",
+    "test:scale": "node --test tests/scale-parser.test.js",
+    "check:modules": "node scripts/check-packaged-modules.js",
+    "check:runtime-deps": "node scripts/check-runtime-deps.js",
+    "prepare:vc-runtime": "node scripts/bundle-vc-runtime.js",
+    "check:native-runtime": "node scripts/check-native-runtime.js",
+    "test:receipt": "node --test tests/escpos-receipt.test.js",
+    "test:items": "node --test tests/quick-items.test.js",
+    "tenant:audit": "node scripts/tenant-audit.js",
+    "check:mongodb": "node scripts/check-mongodb-binaries.js",
+    "test": "node --test \"tests/*.test.js\"",
+    "clear:brand-seed": "node scripts/clear-brand-seed.js",
+    "check:declared-deps": "node scripts/check-declared-deps.js",
+    "scan:secrets": "node scripts/scan-git-history.js",
+    "badges": "node scripts/check-badges.js",
+    "badges:fix": "node scripts/check-badges.js --fix",
+    "check:advisories": "node scripts/check-advisories.js",
+    "art": "node scripts/make-installer-art.js"
+  },
+  "build": {
+    "appId": "com.posnic.app",
+    "productName": "Posnic",
+    "protocols": [
+      {
+        "name": "Posnic",
+        "schemes": [
+          "posnic"
+        ]
+      }
+    ],
+    "asar": true,
+    "asarUnpack": [],
+    "npmRebuild": false,
+    "compression": "store",
+    "directories": {
+      "output": "dist",
+      "buildResources": "builds"
+    },
+    "files": [
+      "main.js",
+      "ipc-guard.js",
+      "splash.js",
+      "shutdown-state.js",
+      "scheduled-task.js",
+      "startup-auth.js",
+      "sync-agent-manager.js",
+      "asset-updater.js",
+      "window-chrome.js",
+      "window-theme.js",
+      "window-theme.css",
+      "cloud-setup.html",
+      "512-posnic.png",
+      "builds/icon-256.png",
+      "loading.html",
+      "install-wizard.html",
+      "install-mongodb.bat",
+      "download-mongodb.bat",
+      "start-bundled-mongodb.bat",
+      "mongodb-manager.js",
+      "local-ports.js",
+      "backup-manager.html",
+      "backup-manager.js",
+      "update-integration.js",
+      "update-service.js",
+      "update-manager.html",
+      "log-viewer.html",
+      "support-request.html",
+      "dev-app-update.yml",
+      "hardware-manager.html",
+      "hardware-manager.js",
+      "hardware-ipc.js",
+      "kot-manager.js",
+      "print-window-guard.js",
+      "escpos-receipt.js",
+      "escpos-report.js",
+      "preload.js",
+      "package.json",
+      "!**/*.md",
+      "THIRD-PARTY-NOTICES.md",
+      "LICENSE",
+      "!**/*.map",
+      "!**/test/**",
+      "!**/tests/**",
+      "!**/__tests__/**",
+      "!**/*.test.js",
+      "!**/*.spec.js",
+      "scale-parser.js",
+      "essae-weight-reader.js",
+      "pin-lock.js",
+      "pin-lock-ipc.js"
+    ],
+    "extraResources": [
+      {
+        "from": "builds/app.ico",
+        "to": "app.ico"
+      },
+      {
+        "from": "builds/icon-256.png",
+        "to": "app.png"
+      },
+      {
+        "from": "builds/brand-seed",
+        "to": "brand-seed",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "builds/sync-agent",
+        "to": "sync-agent",
+        "filter": [
+          "**/*",
+          "!.env"
+        ]
+      },
+      {
+        "from": "server.js",
+        "to": "server.js"
+      },
+      {
+        "from": "database-health.js",
+        "to": "database-health.js"
+      },
+      {
+        "from": "setup-mongodb.js",
+        "to": "setup-mongodb.js"
+      },
+      {
+        "from": "credentials-store.js",
+        "to": "credentials-store.js"
+      },
+      {
+        "from": "print-document-store.js",
+        "to": "print-document-store.js"
+      },
+      {
+        "from": "local-crypto.js",
+        "to": "local-crypto.js"
+      },
+      {
+        "from": "api",
+        "to": "api",
+        "filter": [
+          "**/*",
+          "!**/*.md",
+          "!**/*.log",
+          "!**/.git/**",
+          "!**/.github/**",
+          "!**/.vscode/**",
+          "!**/coverage/**",
+          "!**/*.map",
+          "!**/test/**",
+          "!**/tests/**",
+          "!**/__tests__/**",
+          "!**/*.test.js",
+          "!**/*.spec.js",
+          "!**/e2e/**",
+          "!scripts/**",
+          "!**/docs/**",
+          "!**/examples/**",
+          "!**/playwright/**",
+          "!playwright.config.*",
+          "!playwright.global-setup.*",
+          "!.env.example",
+          "!.gitignore",
+          "!.wwebjs_auth/**",
+          "!.wwebjs_cache/**",
+          "!backup/**",
+          "!cleanup-*.js",
+          "!drop-*.js",
+          "!enable-*.js",
+          "!refactor-*.js",
+          "!update-*.js",
+          "!temp_methods.txt",
+          "!*.png",
+          "!**/node_modules/**/*.md",
+          "!**/node_modules/**/*.ts",
+          "!**/node_modules/**/test/**",
+          "!**/node_modules/**/tests/**",
+          "!**/node_modules/**/example/**",
+          "!**/node_modules/**/examples/**",
+          "!**/node_modules/**/.bin/**",
+          "!**/node_modules/**/*.map",
+          "!**/node_modules/**/README*",
+          "!**/node_modules/**/LICENSE*",
+          "!**/node_modules/**/CHANGELOG*",
+          "!**/node_modules/**/*.d.ts",
+          "!**/node_modules/**/*.flow",
+          "!**/node_modules/**/.*",
+          "!**/node_modules/**/Makefile",
+          "!**/node_modules/**/*.yml",
+          "!**/node_modules/**/*.yaml",
+          "!node_modules/**"
+        ]
+      },
+      {
+        "from": "builds/api-runtime/node_modules.zip",
+        "to": "api/node_modules.zip"
+      },
+      {
+        "from": "api-runtime.js",
+        "to": "api-runtime.js"
+      },
+      {
+        "from": "builds/runtime-dirs/api",
+        "to": "api",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "builds/runtime-dirs/wwebjs_auth",
+        "to": "api/.wwebjs_auth",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "builds/runtime-dirs/wwebjs_cache",
+        "to": "api/.wwebjs_cache",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "frontend",
+        "to": "frontend",
+        "filter": [
+          "public/**/*",
+          "*.html",
+          "static/script/**/*",
+          "!public/all.zip",
+          "!node_modules/**/*",
+          "!src/**/*",
+          "!**/*.md",
+          "!**/*.log",
+          "!**/.git/**",
+          "!**/test/**",
+          "!**/tests/**",
+          "!gulpfile.js/**",
+          "!package.json",
+          "!package-lock.json",
+          "!zip-build.js",
+          "!worker.json",
+          "!*.json"
+        ]
+      }
+    ],
+    "win": {
+      "icon": "builds/app.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "verifyUpdateCodeSignature": false,
+      "signAndEditExecutable": true,
+      "signtoolOptions": {
+        "publisherName": "Posnic Team"
+      },
+      "extraResources": [
+        {
+          "from": "mongodb",
+          "to": "mongodb",
+          "filter": [
+            "bin/mongod.exe",
+            "bin/msvcp140.dll",
+            "bin/vcruntime140.dll",
+            "bin/vcruntime140_1.dll",
+            "!bin/*.pdb",
+            "!bin/*.exp",
+            "!bin/*.lib",
+            "!data/**/*",
+            "!log/**/*"
+          ]
+        },
+        {
+          "from": "node_modules/7zip-bin/win/x64/7za.exe",
+          "to": "tools/7za.exe"
+        }
+      ]
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "Posnic",
+      "repo": "POS",
+      "releaseType": "release",
+      "private": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowElevation": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": "always",
+      "createStartMenuShortcut": true,
+      "shortcutName": "Posnic",
+      "deleteAppDataOnUninstall": false,
+      "runAfterFinish": true,
+      "include": "builds/installer.nsh",
+      "installerIcon": "builds/app.ico",
+      "uninstallerIcon": "builds/app.ico",
+      "artifactName": "${productName}-${version}-windows-x64-installer.${ext}",
+      "warningsAsErrors": false,
+      "displayLanguageSelector": false,
+      "installerHeaderIcon": "builds/app.ico",
+      "differentialPackage": true,
+      "unicode": false,
+      "multiLanguageInstaller": false,
+      "installerSidebar": "builds/installerSidebar.bmp",
+      "uninstallerSidebar": "builds/uninstallerSidebar.bmp",
+      "installerHeader": "builds/installerHeader.bmp",
+      "license": "builds/installer-license.txt"
+    },
+    "mac": {
+      "icon": "512-posnic.png",
+      "category": "public.app-category.business",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "artifactName": "${productName}-${version}-macos-${arch}.${ext}",
+      "extraResources": [
+        {
+          "from": "mongodb-${arch}",
+          "to": "mongodb",
+          "filter": [
+            "bin/mongod"
+          ]
+        },
+        {
+          "from": "node_modules/7zip-bin/mac/${arch}/7za",
+          "to": "tools/7za"
+        }
+      ]
+    },
+    "linux": {
+      "icon": "512-posnic.png",
+      "category": "Office",
+      "maintainer": "info@posnic.com",
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "synopsis": "Free open-source point of sale",
+      "description": "Posnic POS: billing, inventory, restaurant mode and reports. Offline-first, free and open source.",
+      "extraResources": [
+        {
+          "from": "mongodb",
+          "to": "mongodb",
+          "filter": [
+            "bin/mongod"
+          ]
+        },
+        {
+          "from": "node_modules/7zip-bin/linux/x64/7za",
+          "to": "tools/7za"
+        }
+      ]
+    },
+    "portable": {
+      "artifactName": "${productName}-${version}-windows-x64-portable.${ext}"
+    },
+    "dmg": {
+      "artifactName": "${productName}-${version}-macos-${arch}.${ext}"
+    },
+    "appImage": {
+      "artifactName": "${productName}-${version}-linux-${arch}.${ext}"
+    },
+    "deb": {
+      "artifactName": "${name}_${version}_${arch}.${ext}"
+    },
+    "afterPack": "scripts/adhoc-sign-mac.js"
+  },
+  "author": "Posnic Team",
+  "license": "AGPL-3.0-only",
+  "devDependencies": {
+    "7zip-bin": "^5.2.0",
+    "electron": "^43.2.0",
+    "electron-builder": "^26.15.3",
+    "icon-gen": "^5.0.0",
+    "jquery": "^3.7.1",
+    "jsdom": "^30.0.1",
+    "png-to-ico": "^3.0.2",
+    "sharp": "^0.35.3",
+    "to-ico": "^1.1.5"
+  },
+  "dependencies": {
+    "@serialport/parser-readline": "^13.0.0",
+    "electron-log": "^5.4.4",
+    "electron-updater": "^6.8.9",
+    "mongodb": "7.5.0",
+    "pdf-to-printer": "^5.8.0",
+    "serialport": "^13.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Posnic/POS.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Posnic/POS/issues"
+  },
+  "homepage": "https://github.com/Posnic/POS#readme",
+  "keywords": [
+    "pos",
+    "point-of-sale",
+    "electron",
+    "offline-first",
+    "retail",
+    "restaurant",
+    "pharmacy",
+    "gst",
+    "invoicing",
+    "mongodb"
+  ],
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}

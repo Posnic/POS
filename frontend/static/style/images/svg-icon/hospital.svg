@@ -1,0 +1,29 @@
+<svg id="Big_Icons" data-name="Big Icons" xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #fff;
+        opacity: 0.25;
+      }
+
+      .cls-1, .cls-2 {
+        fill-rule: evenodd;
+      }
+
+      .cls-2 {
+        fill: none;
+        stroke: #fff;
+        stroke-width: 3px;
+      }
+    </style>
+  </defs>
+  <g id="Hospital">
+    <path class="cls-1" d="M14.342,30.187l21.317-6.3V44.9H14.342V30.187Z"/>
+    <path class="cls-2" d="M48,45.424H2"/>
+    <path id="Rounded_Rectangle_3_copy" data-name="Rounded Rectangle 3 copy" class="cls-2" d="M5.512,46.006V25.735a3.314,3.314,0,0,1,3.414-3.2h4.549V46.006"/>
+    <path id="Rounded_Rectangle_3_copy_2" data-name="Rounded Rectangle 3 copy 2" class="cls-2" d="M44.488,46V25.71A3.316,3.316,0,0,0,41.073,22.5h-4.55V46"/>
+    <path id="Rounded_Rectangle_3" data-name="Rounded Rectangle 3" class="cls-2" d="M13.556,45.008V8.378a3.62,3.62,0,0,1,3.317-3.86H33.127a3.62,3.62,0,0,1,3.317,3.86v36.63"/>
+    <path class="cls-2" d="M25,14.425v9.457"/>
+    <path id="Shape_4_copy" data-name="Shape 4 copy" class="cls-2" d="M30.049,19.153h-10.1"/>
+  </g>
+</svg>

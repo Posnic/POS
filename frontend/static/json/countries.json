@@ -1,0 +1,3233 @@
+{
+  "countries": [
+    {
+      "id": "1",
+      "sortname": "AF",
+      "value": "Afghanistan",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "2",
+      "sortname": "AL",
+      "value": "Albania",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "20% Tax",
+            "tax_value" : 20.0
+        },{            
+            "tax_name" : "6% Tax",
+            "tax_value" : 6.0
+        }]
+    },
+    {
+      "id": "3",
+      "sortname": "DZ",
+      "value": "Algeria",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "4",
+      "sortname": "AS",
+      "value": "American Samoa",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "5",
+      "sortname": "AD",
+      "value": "Andorra",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "6",
+      "sortname": "AO",
+      "value": "Angola",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "7",
+      "sortname": "AI",
+      "value": "Anguilla",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "8",
+      "sortname": "AQ",
+      "value": "Antarctica",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "9",
+      "sortname": "AG",
+      "value": "Antigua And Barbuda",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "10",
+      "sortname": "AR",
+      "value": "Argentina",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "21% Tax",
+            "tax_value" : 21.0
+        },{            
+            "tax_name" : "27% Tax",
+            "tax_value" : 27.0
+        },{            
+            "tax_name" : "10.5% Tax",
+            "tax_value" : 10.5
+        }]
+    },
+    {
+      "id": "11",
+      "sortname": "AM",
+      "value": "Armenia",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "20% Tax",
+            "tax_value" : 20.0
+        }]
+    },
+    {
+      "id": "12",
+      "sortname": "AW",
+      "value": "Aruba",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "13",
+      "sortname": "AU",
+      "value": "Australia",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "10% Tax",
+            "tax_value" : 10.0
+        }]
+    },
+    {
+      "id": "14",
+      "sortname": "AT",
+      "value": "Austria",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "19% Tax",
+            "tax_value" : 19.0
+        },{            
+            "tax_name" : "20% Tax",
+            "tax_value" : 20.0
+        },{            
+            "tax_name" : "13% Tax",
+            "tax_value" : 13.0
+        },{            
+            "tax_name" : "10% Tax",
+            "tax_value" : 10.0
+        }]
+    },
+    {
+      "id": "15",
+      "sortname": "AZ",
+      "value": "Azerbaijan",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "18% Tax",
+            "tax_value" : 18.0
+        }]
+    },
+    {
+      "id": "16",
+      "sortname": "BS",
+      "value": "Bahamas",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "7.5% Tax",
+            "tax_value" : 7.5
+        }]
+    },
+    {
+      "id": "17",
+      "sortname": "BH",
+      "value": "Bahrain",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "5% Tax",
+            "tax_value" : 5.0
+        }]
+    },
+    {
+      "id": "18",
+      "sortname": "BD",
+      "value": "Bangladesh",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "19",
+      "sortname": "BB",
+      "value": "Barbados",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "17.5% Tax",
+            "tax_value" : 17.5
+        },{            
+            "tax_name" : "22% Tax",
+            "tax_value" : 22.0
+        },{            
+            "tax_name" : "7.5% Tax",
+            "tax_value" : 7.5
+        }]
+    },
+    {
+      "id": "20",
+      "sortname": "BY",
+      "value": "Belarus",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "20% Tax",
+            "tax_value" : 20.0
+        },{            
+            "tax_name" : "25% Tax",
+            "tax_value" : 25.0
+        },{            
+            "tax_name" : "10% Tax",
+            "tax_value" : 10.0
+        }]
+    },
+    {
+      "id": "21",
+      "sortname": "BE",
+      "value": "Belgium",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "21% Tax",
+            "tax_value" : 21.0
+        },{            
+            "tax_name" : "12% Tax",
+            "tax_value" : 12.0
+        },{            
+            "tax_name" : "6% Tax",
+            "tax_value" : 6.0
+        }]
+    },
+    {
+      "id": "22",
+      "sortname": "BZ",
+      "value": "Belize",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "23",
+      "sortname": "BJ",
+      "value": "Benin",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "24",
+      "sortname": "BM",
+      "value": "Bermuda",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "25",
+      "sortname": "BT",
+      "value": "Bhutan",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "26",
+      "sortname": "BO",
+      "value": "Bolivia",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "13% Tax",
+            "tax_value" : 13.0
+        },{            
+            "tax_name" : "14.94% Tax",
+            "tax_value" : 14.94
+        }]
+    },
+    {
+      "id": "27",
+      "sortname": "BA",
+      "value": "Bosnia and Herzegovina",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "28",
+      "sortname": "BW",
+      "value": "Botswana",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "12% Tax",
+            "tax_value" : 12.0
+        }]
+    },
+    {
+      "id": "29",
+      "sortname": "BV",
+      "value": "Bouvet Island",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "30",
+      "sortname": "BR",
+      "value": "Brazil",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "31",
+      "sortname": "IO",
+      "value": "British Indian Ocean Territory",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "32",
+      "sortname": "BN",
+      "value": "Brunei",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "33",
+      "sortname": "BG",
+      "value": "Bulgaria",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "20% Tax",
+            "tax_value" : 20.0
+        },{            
+            "tax_name" : "9% Tax",
+            "tax_value" : 9.0
+        }]
+    },
+    {
+      "id": "34",
+      "sortname": "BF",
+      "value": "Burkina Faso",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "35",
+      "sortname": "BI",
+      "value": "Burundi",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "36",
+      "sortname": "KH",
+      "value": "Cambodia",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "37",
+      "sortname": "CM",
+      "value": "Cameroon",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "38",
+      "sortname": "CA",
+      "value": "Canada",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "5% Tax",
+            "tax_value" : 5.0
+        },{            
+            "tax_name" : "13% Tax",
+            "tax_value" : 13.0
+        },{            
+            "tax_name" : "15% Tax",
+            "tax_value" : 15.0
+        }]
+    },
+    {
+      "id": "39",
+      "sortname": "CV",
+      "value": "Cape Verde",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "40",
+      "sortname": "KY",
+      "value": "Cayman Islands",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "41",
+      "sortname": "CF",
+      "value": "Central African Republic",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "42",
+      "sortname": "TD",
+      "value": "Chad",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "43",
+      "sortname": "CL",
+      "value": "Chile",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "19% Tax",
+            "tax_value" : 19.0
+        },{            
+            "tax_name" : "15% Tax",
+            "tax_value" : 15.0
+        },{            
+            "tax_name" : "50% Tax",
+            "tax_value" : 50.0
+        }]
+    },
+    {
+      "id": "44",
+      "sortname": "CN",
+      "value": "China",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "6% Tax",
+            "tax_value" : 6.0
+        },{            
+            "tax_name" : "11% Tax",
+            "tax_value" : 11.0
+        },{            
+            "tax_name" : "17% Tax",
+            "tax_value" : 17.0
+        },{            
+            "tax_name" : "5% Tax",
+            "tax_value" : 5.0
+        },{            
+            "tax_name" : "3% Tax",
+            "tax_value" : 3.0
+        }]
+    },
+    {
+      "id": "45",
+      "sortname": "CX",
+      "value": "Christmas Island",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "46",
+      "sortname": "CC",
+      "value": "Cocos (Keeling) Islands",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "47",
+      "sortname": "CO",
+      "value": "Colombia",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "19% Tax",
+            "tax_value" : 19.0
+        },{            
+            "tax_name" : "5% Tax",
+            "tax_value" : 5.0
+        }]
+    },
+    {
+      "id": "48",
+      "sortname": "KM",
+      "value": "Comoros",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "49",
+      "sortname": "CG",
+      "value": "Congo",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "50",
+      "sortname": "CD",
+      "value": "Congo The Democratic Republic Of The",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "51",
+      "sortname": "CK",
+      "value": "Cook Islands",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "52",
+      "sortname": "CR",
+      "value": "Costa Rica",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "13% Tax",
+            "tax_value" : 13.0
+        },{            
+            "tax_name" : "10% Tax",
+            "tax_value" : 10.0
+        },{            
+            "tax_name" : "5% Tax",
+            "tax_value" : 5.0
+        }]
+    },
+    {
+      "id": "53",
+      "sortname": "CI",
+      "value": "Cote D''Ivoire (Ivory Coast)",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "54",
+      "sortname": "HR",
+      "value": "Croatia (Hrvatska)",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "25% Tax",
+            "tax_value" : 25.0
+        },{            
+            "tax_name" : "13% Tax",
+            "tax_value" : 13.0
+        },{            
+            "tax_name" : "5% Tax",
+            "tax_value" : 5.0
+        }]
+    },
+    {
+      "id": "55",
+      "sortname": "CU",
+      "value": "Curaçao",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "6% Tax",
+            "tax_value" : 6.0
+        },{            
+            "tax_name" : "9% Tax",
+            "tax_value" : 9.0
+        },{            
+            "tax_name" : "7% Tax",
+            "tax_value" : 7.0
+        }]
+    },
+    {
+      "id": "56",
+      "sortname": "CY",
+      "value": "Cyprus",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "19% Tax",
+            "tax_value" : 19.0
+        },{            
+            "tax_name" : "9% Tax",
+            "tax_value" : 9.0
+        },{            
+            "tax_name" : "5% Tax",
+            "tax_value" : 5.0
+        }]
+    },
+    {
+      "id": "57",
+      "sortname": "CZ",
+      "value": "Czech Republic",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "21% Tax",
+            "tax_value" : 21.0
+        },{            
+            "tax_name" : "15% Tax",
+            "tax_value" : 15.0
+        },{            
+            "tax_name" : "10% Tax",
+            "tax_value" : 10.0
+        }]
+    },
+    {
+      "id": "58",
+      "sortname": "DK",
+      "value": "Denmark",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "25% Tax",
+            "tax_value" : 25.0
+        }]
+    },
+    {
+      "id": "59",
+      "sortname": "DJ",
+      "value": "Djibouti",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "60",
+      "sortname": "DM",
+      "value": "Dominica",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "61",
+      "sortname": "DO",
+      "value": "Dominican Republic",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },
+        {            
+            "tax_name" : "18% Tax",
+            "tax_value" : 18.0
+        },{            
+            "tax_name" : "16% Tax",
+            "tax_value" : 16.0
+        }]
+    },
+    {
+      "id": "62",
+      "sortname": "TP",
+      "value": "East Timor",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "63",
+      "sortname": "EC",
+      "value": "Ecuador",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "12% Tax",
+            "tax_value" : 12.0
+        }]
+    },
+    {
+      "id": "64",
+      "sortname": "EG",
+      "value": "Egypt",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "14% Tax",
+            "tax_value" : 14.0
+        },{            
+            "tax_name" : "5% Tax",
+            "tax_value" : 5.0
+        }]
+    },
+    {
+      "id": "65",
+      "sortname": "SV",
+      "value": "El Salvador",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "13% Tax",
+            "tax_value" : 13.0
+        }]
+    },
+    {
+      "id": "66",
+      "sortname": "GQ",
+      "value": "Equatorial Guinea",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "67",
+      "sortname": "ER",
+      "value": "Eritrea",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "68",
+      "sortname": "EE",
+      "value": "Estonia",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "9% Tax",
+            "tax_value" : 9.0
+        },{            
+            "tax_name" : "20% Tax",
+            "tax_value" : 20.0
+        }]
+    },
+    {
+      "id": "69",
+      "sortname": "ET",
+      "value": "Ethiopia",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "70",
+      "sortname": "XA",
+      "value": "External Territories of Australia",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "71",
+      "sortname": "FK",
+      "value": "Falkland Islands",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "72",
+      "sortname": "FO",
+      "value": "Faroe Islands",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "73",
+      "sortname": "FJ",
+      "value": "Fiji Islands",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "74",
+      "sortname": "FI",
+      "value": "Finland",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "24% Tax",
+            "tax_value" : 24.0
+        },{            
+            "tax_name" : "14% Tax",
+            "tax_value" : 14.0
+        },{            
+            "tax_name" : "10% Tax",
+            "tax_value" : 10.0
+        }]
+    },
+    {
+      "id": "75",
+      "sortname": "FR",
+      "value": "France",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "20% Tax",
+            "tax_value" : 20.0
+        },{            
+            "tax_name" : "10% Tax",
+            "tax_value" : 10.0
+        },{            
+            "tax_name" : "5.5% Tax",
+            "tax_value" : 5.5
+        },{            
+            "tax_name" : "2.1% Tax",
+            "tax_value" : 2.1
+        }]
+    },
+    {
+      "id": "76",
+      "sortname": "GF",
+      "value": "French Guiana",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "77",
+      "sortname": "PF",
+      "value": "French Polynesia",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "78",
+      "sortname": "TF",
+      "value": "French Southern Territories",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "79",
+      "sortname": "GA",
+      "value": "Gabon",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "80",
+      "sortname": "GM",
+      "value": "Gambia The",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "81",
+      "sortname": "GE",
+      "value": "Georgia",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "18% Tax",
+            "tax_value" : 18.0
+        },{            
+            "tax_name" : "0.54% Tax",
+            "tax_value" : 0.54
+        }]
+    },
+    {
+      "id": "82",
+      "sortname": "DE",
+      "value": "Germany",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "19% Tax",
+            "tax_value" : 19.0
+        },{            
+            "tax_name" : "7% Tax",
+            "tax_value" : 7.0
+        }]
+    },
+    {
+      "id": "83",
+      "sortname": "GH",
+      "value": "Ghana",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "15% Tax",
+            "tax_value" : 15.0
+        },{            
+            "tax_name" : "17.5% Tax",
+            "tax_value" : 17.5
+        },{            
+            "tax_name" : "3% Tax",
+            "tax_value" : 3.0
+        },{            
+            "tax_name" : "2.5% Tax",
+            "tax_value" : 2.5
+        }]
+    },
+    {
+      "id": "84",
+      "sortname": "GI",
+      "value": "Gibraltar",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "85",
+      "sortname": "GR",
+      "value": "Greece",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "24% Tax",
+            "tax_value" : 24.0
+        },{            
+            "tax_name" : "13% Tax",
+            "tax_value" : 13.0
+        },{            
+            "tax_name" : "6% Tax",
+            "tax_value" : 6.0
+        }]
+    },
+    {
+      "id": "86",
+      "sortname": "GL",
+      "value": "Greenland",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "87",
+      "sortname": "GD",
+      "value": "Grenada",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "88",
+      "sortname": "GP",
+      "value": "Guadeloupe",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "89",
+      "sortname": "GU",
+      "value": "Guam",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "90",
+      "sortname": "GT",
+      "value": "Guatemala",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "12% Tax",
+            "tax_value" : 12.0
+        },{            
+            "tax_name" : "5% Tax",
+            "tax_value" : 5.0
+        }]
+    },
+    {
+      "id": "91",
+      "sortname": "XU",
+      "value": "Guernsey and Alderney",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "92",
+      "sortname": "GN",
+      "value": "Guinea",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "93",
+      "sortname": "GW",
+      "value": "Guinea-Bissau",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "94",
+      "sortname": "GY",
+      "value": "Guyana",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "95",
+      "sortname": "HT",
+      "value": "Haiti",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "96",
+      "sortname": "HM",
+      "value": "Heard and McDonald Islands",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "97",
+      "sortname": "HN",
+      "value": "Honduras",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "15% Tax",
+            "tax_value" : 15.0
+        },{            
+            "tax_name" : "18% Tax",
+            "tax_value" : 18.0
+        }]
+    },
+    {
+      "id": "98",
+      "sortname": "HK",
+      "value": "Hong Kong S.A.R.",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "99",
+      "sortname": "HU",
+      "value": "Hungary",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "27% Tax",
+            "tax_value" : 27.0
+        },{            
+            "tax_name" : "18% Tax",
+            "tax_value" : 18.0
+        },{            
+            "tax_name" : "5% Tax",
+            "tax_value" : 5.0
+        }]
+    },
+    {
+      "id": "100",
+      "sortname": "IS",
+      "value": "Iceland",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "24% Tax",
+            "tax_value" : 24.0
+        },{            
+            "tax_name" : "11% Tax",
+            "tax_value" : 11.0
+        }]
+    },
+    {
+      "id": "101",
+      "sortname": "IN",
+      "value": "India",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }, 
+        {          
+            "tax_name" : "5% Tax",
+            "tax_value" : 5.0
+        }, 
+        {            
+            "tax_name" : "12% Tax",
+            "tax_value" : 12.0
+        }, 
+        {           
+            "tax_name" : "18% Tax",
+            "tax_value" : 18.0
+        }, 
+        {           
+            "tax_name" : "28% Tax",
+            "tax_value" : 28.0
+        }, 
+        {           
+            "tax_name" : "3% Tax",
+            "tax_value" : 3.0
+        }, 
+        {           
+            "tax_name" : "0.25% Tax",
+            "tax_value" : 0.25
+        }]
+    },
+    {
+      "id": "102",
+      "sortname": "ID",
+      "value": "Indonesia",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "10% Tax",
+            "tax_value" : 10.0
+        }]
+    },
+    {
+      "id": "103",
+      "sortname": "IR",
+      "value": "Iran",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "104",
+      "sortname": "IQ",
+      "value": "Iraq",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "105",
+      "sortname": "IE",
+      "value": "Ireland",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "23% Tax",
+            "tax_value" : 23.0
+        },{            
+            "tax_name" : "13.5% Tax",
+            "tax_value" : 13.5
+        },{            
+            "tax_name" : "9% Tax",
+            "tax_value" : 9.0
+        }]
+    },
+    {
+      "id": "106",
+      "sortname": "IL",
+      "value": "Israel",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "17% Tax",
+            "tax_value" : 17.0
+        }]
+    },
+    {
+      "id": "107",
+      "sortname": "IT",
+      "value": "Italy",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "22% Tax",
+            "tax_value" : 22.0
+        },{            
+            "tax_name" : "10% Tax",
+            "tax_value" : 10.0
+        },{            
+            "tax_name" : "5% Tax",
+            "tax_value" : 5.0
+        },{            
+            "tax_name" : "4% Tax",
+            "tax_value" : 4.0
+        }]
+    },
+    {
+      "id": "108",
+      "sortname": "JM",
+      "value": "Jamaica",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "109",
+      "sortname": "JP",
+      "value": "Japan",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "8% Tax",
+            "tax_value" : 8.0
+        }]
+    },
+    {
+      "id": "110",
+      "sortname": "XJ",
+      "value": "Jersey",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "5% Tax",
+            "tax_value" : 5.0
+        }]
+    },
+    {
+      "id": "111",
+      "sortname": "JO",
+      "value": "Jordan",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "16% Tax",
+            "tax_value" : 16.0
+        },{            
+            "tax_name" : "10% Tax",
+            "tax_value" : 10.0
+        },{            
+            "tax_name" : "5% Tax",
+            "tax_value" : 5.0
+        },{            
+            "tax_name" : "4% Tax",
+            "tax_value" : 4.0
+        }]
+    },
+    {
+      "id": "112",
+      "sortname": "KZ",
+      "value": "Kazakhstan",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "12% Tax",
+            "tax_value" : 12.0
+        }]
+    },
+    {
+      "id": "113",
+      "sortname": "KE",
+      "value": "Kenya",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "16% Tax",
+            "tax_value" : 16.0
+        }]
+    },
+    {
+      "id": "114",
+      "sortname": "KI",
+      "value": "Kiribati",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "115",
+      "sortname": "KP",
+      "value": "Korea North",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "10% Tax",
+            "tax_value" : 10.0
+        }]
+    },
+    {
+      "id": "116",
+      "sortname": "KR",
+      "value": "Korea South",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "10% Tax",
+            "tax_value" : 10.0
+        }]
+    },
+    {
+      "id": "117",
+      "sortname": "KW",
+      "value": "Kuwait",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "5% Tax",
+            "tax_value" : 5.0
+        }]
+    },
+    {
+      "id": "118",
+      "sortname": "KG",
+      "value": "Kyrgyzstan",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "119",
+      "sortname": "LA",
+      "value": "Laos",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "120",
+      "sortname": "LV",
+      "value": "Latvia",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "21% Tax",
+            "tax_value" : 21.0
+        },{            
+            "tax_name" : "12% Tax",
+            "tax_value" : 12.0
+        }]
+    },
+    {
+      "id": "121",
+      "sortname": "LB",
+      "value": "Lebanon",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "11% Tax",
+            "tax_value" : 11.0
+        }]
+    },
+    {
+      "id": "122",
+      "sortname": "LS",
+      "value": "Lesotho",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "123",
+      "sortname": "LR",
+      "value": "Liberia",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "124",
+      "sortname": "LY",
+      "value": "Libya",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "125",
+      "sortname": "LI",
+      "value": "Liechtenstein",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "126",
+      "sortname": "LT",
+      "value": "Lithuania",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "21% Tax",
+            "tax_value" : 21.0
+        },{            
+            "tax_name" : "9% Tax",
+            "tax_value" : 9.0
+        },{            
+            "tax_name" : "5% Tax",
+            "tax_value" : 5.0
+        }]
+    },
+    {
+      "id": "127",
+      "sortname": "LU",
+      "value": "Luxembourg",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "17% Tax",
+            "tax_value" : 17.0
+        },{            
+            "tax_name" : "14% Tax",
+            "tax_value" : 14.0
+        },{            
+            "tax_name" : "8% Tax",
+            "tax_value" : 8.0
+        },{            
+            "tax_name" : "3% Tax",
+            "tax_value" : 3.0
+        }]
+    },
+    {
+      "id": "128",
+      "sortname": "MO",
+      "value": "Macau S.A.R.",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "129",
+      "sortname": "MK",
+      "value": "Macedonia",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "18% Tax",
+            "tax_value" : 18.0
+        },{            
+            "tax_name" : "5% Tax",
+            "tax_value" : 5.0
+        }]
+    },
+    {
+      "id": "130",
+      "sortname": "MG",
+      "value": "Madagascar",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "20% Tax",
+            "tax_value" : 20.0
+        }]
+    },
+    {
+      "id": "131",
+      "sortname": "MW",
+      "value": "Malawi",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "132",
+      "sortname": "MY",
+      "value": "Malaysia",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "6% Tax",
+            "tax_value" : 6.0
+        }]
+    },
+    {
+      "id": "133",
+      "sortname": "MV",
+      "value": "Maldives",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "6% Tax",
+            "tax_value" : 6.0
+        },{            
+            "tax_name" : "12% Tax",
+            "tax_value" : 12.0
+        }]
+    },
+    {
+      "id": "134",
+      "sortname": "ML",
+      "value": "Mali",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "135",
+      "sortname": "MT",
+      "value": "Malta",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "18% Tax",
+            "tax_value" : 18.0
+        },{            
+            "tax_name" : "7% Tax",
+            "tax_value" : 7.0
+        },{            
+            "tax_name" : "5% Tax",
+            "tax_value" : 5.0
+        }]
+    },
+    {
+      "id": "136",
+      "sortname": "XM",
+      "value": "Man (Isle of)",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "20% Tax",
+            "tax_value" : 20.0
+        },{            
+            "tax_name" : "5% Tax",
+            "tax_value" : 5.0
+        }]
+    },
+    {
+      "id": "137",
+      "sortname": "MH",
+      "value": "Marshall Islands",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "138",
+      "sortname": "MQ",
+      "value": "Martinique",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "139",
+      "sortname": "MR",
+      "value": "Mauritania",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "140",
+      "sortname": "MU",
+      "value": "Mauritius",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "15% Tax",
+            "tax_value" : 15.0
+        }]
+    },
+    {
+      "id": "141",
+      "sortname": "YT",
+      "value": "Mayotte",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "142",
+      "sortname": "MX",
+      "value": "Mexico",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "16% Tax",
+            "tax_value" : 16.0
+        }]
+    },
+    {
+      "id": "143",
+      "sortname": "FM",
+      "value": "Micronesia",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "144",
+      "sortname": "MD",
+      "value": "Moldova",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "20% Tax",
+            "tax_value" : 20.0
+        },{            
+            "tax_name" : "8% Tax",
+            "tax_value" : 8.0
+        }]
+    },
+    {
+      "id": "145",
+      "sortname": "MC",
+      "value": "Monaco",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "146",
+      "sortname": "MN",
+      "value": "Mongolia",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "10% Tax",
+            "tax_value" : 10.0
+        }]
+    },
+    {
+      "id": "147",
+      "sortname": "MS",
+      "value": "Montserrat",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "148",
+      "sortname": "MA",
+      "value": "Morocco",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "20% Tax",
+            "tax_value" : 20.0
+        },{            
+            "tax_name" : "14% Tax",
+            "tax_value" : 14.0
+        },{            
+            "tax_name" : "10% Tax",
+            "tax_value" : 10.0
+        },{            
+            "tax_name" : "7% Tax",
+            "tax_value" : 7.0
+        }]
+    },
+    {
+      "id": "149",
+      "sortname": "MZ",
+      "value": "Mozambique",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "150",
+      "sortname": "MM",
+      "value": "Myanmar",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "5% Tax",
+            "tax_value" : 5.0
+        },{            
+            "tax_name" : "3% Tax",
+            "tax_value" : 3.0
+        },{            
+            "tax_name" : "1% Tax",
+            "tax_value" : 1.0
+        }]
+    },
+    {
+      "id": "151",
+      "sortname": "NA",
+      "value": "Namibia",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "15% Tax",
+            "tax_value" : 15.0
+        }]
+    },
+    {
+      "id": "152",
+      "sortname": "NR",
+      "value": "Nauru",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "153",
+      "sortname": "NP",
+      "value": "Nepal",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "154",
+      "sortname": "AN",
+      "value": "Netherlands Antilles",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "21% Tax",
+            "tax_value" : 21.0
+        },{            
+            "tax_name" : "6% Tax",
+            "tax_value" : 6.0
+        }]
+    },
+    {
+      "id": "155",
+      "sortname": "NL",
+      "value": "Netherlands",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "21% Tax",
+            "tax_value" : 21.0
+        },{            
+            "tax_name" : "6% Tax",
+            "tax_value" : 6.0
+        }]
+    },
+    {
+      "id": "156",
+      "sortname": "NC",
+      "value": "New Caledonia",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "157",
+      "sortname": "NZ",
+      "value": "New Zealand",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "15% Tax",
+            "tax_value" : 15.0
+        }]
+    },
+    {
+      "id": "158",
+      "sortname": "NI",
+      "value": "Nicaragua",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "15% Tax",
+            "tax_value" : 15.0
+        }]
+    },
+    {
+      "id": "159",
+      "sortname": "NE",
+      "value": "Niger",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "160",
+      "sortname": "NG",
+      "value": "Nigeria",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "5% Tax",
+            "tax_value" : 5.0
+        }]
+    },
+    {
+      "id": "161",
+      "sortname": "NU",
+      "value": "Niue",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "162",
+      "sortname": "NF",
+      "value": "Norfolk Island",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "163",
+      "sortname": "MP",
+      "value": "Northern Mariana Islands",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "164",
+      "sortname": "NO",
+      "value": "Norway",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "25% Tax",
+            "tax_value" : 25.0
+        },{            
+            "tax_name" : "15% Tax",
+            "tax_value" : 15.0
+        },{            
+            "tax_name" : "12% Tax",
+            "tax_value" : 12.0
+        }]
+    },
+    {
+      "id": "165",
+      "sortname": "OM",
+      "value": "Oman",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "5% Tax",
+            "tax_value" : 5.0
+        }]
+    },
+    {
+      "id": "166",
+      "sortname": "PK",
+      "value": "Pakistan",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "17% Tax",
+            "tax_value" : 17.0
+        },{            
+            "tax_name" : "19.5% Tax",
+            "tax_value" : 19.5
+        },{            
+            "tax_name" : "10% Tax",
+            "tax_value" : 10.0
+        },{            
+            "tax_name" : "8% Tax",
+            "tax_value" : 8.0
+        },{            
+            "tax_name" : "6% Tax",
+            "tax_value" : 6.0
+        },{            
+            "tax_name" : "5% Tax",
+            "tax_value" : 5.0
+        },{            
+            "tax_name" : "4% Tax",
+            "tax_value" : 4.0
+        },{            
+            "tax_name" : "3% Tax",
+            "tax_value" : 3.0
+        },{            
+            "tax_name" : "2% Tax",
+            "tax_value" : 2.0
+        },{            
+            "tax_name" : "1% Tax",
+            "tax_value" : 1.0
+        }]
+    },
+    {
+      "id": "167",
+      "sortname": "PW",
+      "value": "Palau",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "168",
+      "sortname": "PS",
+      "value": "Palestinian Territory Occupied",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "169",
+      "sortname": "PA",
+      "value": "Panama",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "7% Tax",
+            "tax_value" : 7.0
+        },{            
+            "tax_name" : "10% Tax",
+            "tax_value" : 10.0
+        },{            
+            "tax_name" : "15% Tax",
+            "tax_value" : 15.0
+        }]
+    },
+    {
+      "id": "170",
+      "sortname": "PG",
+      "value": "Papua new Guinea",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "10% Tax",
+            "tax_value" : 10.0
+        }]
+    },
+    {
+      "id": "171",
+      "sortname": "PY",
+      "value": "Paraguay",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "10% Tax",
+            "tax_value" : 10.0
+        },{            
+            "tax_name" : "5% Tax",
+            "tax_value" : 5.0
+        }]
+    },
+    {
+      "id": "172",
+      "sortname": "PE",
+      "value": "Peru",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "18% Tax",
+            "tax_value" : 18.0
+        }]
+    },
+    {
+      "id": "173",
+      "sortname": "PH",
+      "value": "Philippines",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "12% Tax",
+            "tax_value" : 12.0
+        }]
+    },
+    {
+      "id": "174",
+      "sortname": "PN",
+      "value": "Pitcairn Island",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "175",
+      "sortname": "PL",
+      "value": "Poland",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "23% Tax",
+            "tax_value" : 23.0
+        },{            
+            "tax_name" : "8% Tax",
+            "tax_value" : 8.0
+        },{            
+            "tax_name" : "5% Tax",
+            "tax_value" : 5.0
+        }]
+    },
+    {
+      "id": "176",
+      "sortname": "PT",
+      "value": "Portugal",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "23% Tax",
+            "tax_value" : 23.0
+        },{            
+            "tax_name" : "13% Tax",
+            "tax_value" : 13.0
+        },{            
+            "tax_name" : "6% Tax",
+            "tax_value" : 6.0
+        },{            
+            "tax_name" : "22% Tax",
+            "tax_value" : 22.0
+        },{            
+            "tax_name" : "12% Tax",
+            "tax_value" : 12.0
+        },{            
+            "tax_name" : "5% Tax",
+            "tax_value" : 5.0
+        },{            
+            "tax_name" : "18% Tax",
+            "tax_value" : 18.0
+        },{            
+            "tax_name" : "9% Tax",
+            "tax_value" : 9.0
+        },{            
+            "tax_name" : "4% Tax",
+            "tax_value" : 4.0
+        }]
+    },
+    {
+      "id": "177",
+      "sortname": "PR",
+      "value": "Puerto Rico",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "10.5% Tax",
+            "tax_value" : 10.5
+        },{            
+            "tax_name" : "4% Tax",
+            "tax_value" : 4.0
+        },{            
+            "tax_name" : "1% Tax",
+            "tax_value" : 1.0
+        }]
+    },
+    {
+      "id": "178",
+      "sortname": "QA",
+      "value": "Qatar",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "5% Tax",
+            "tax_value" : 5.0
+        }]
+    },
+    {
+      "id": "179",
+      "sortname": "RE",
+      "value": "Reunion",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "180",
+      "sortname": "RO",
+      "value": "Romania",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "19% Tax",
+            "tax_value" : 19.0
+        },{            
+            "tax_name" : "9% Tax",
+            "tax_value" : 9.0
+        },{            
+            "tax_name" : "5% Tax",
+            "tax_value" : 5.0
+        }]
+    },
+    {
+      "id": "181",
+      "sortname": "RU",
+      "value": "Russian Federation",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "18% Tax",
+            "tax_value" : 18.0
+        },{            
+            "tax_name" : "10% Tax",
+            "tax_value" : 10.0
+        }]
+    },
+    {
+      "id": "182",
+      "sortname": "RW",
+      "value": "Rwanda",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "18% Tax",
+            "tax_value" : 18.0
+        }]
+    },
+    {
+      "id": "183",
+      "sortname": "SH",
+      "value": "Saint Helena",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "184",
+      "sortname": "KN",
+      "value": "Saint Kitts And Nevis",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "185",
+      "sortname": "LC",
+      "value": "Saint Lucia",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "12.5% Tax",
+            "tax_value" : 12.5
+        },{            
+            "tax_name" : "10% Tax",
+            "tax_value" : 10.0
+        }]
+    },
+    {
+      "id": "186",
+      "sortname": "PM",
+      "value": "Saint Pierre and Miquelon",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "187",
+      "sortname": "VC",
+      "value": "Saint Vincent And The Grenadines",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "188",
+      "sortname": "WS",
+      "value": "Samoa",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "189",
+      "sortname": "SM",
+      "value": "San Marino",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "190",
+      "sortname": "ST",
+      "value": "Sao Tome and Principe",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "191",
+      "sortname": "SA",
+      "value": "Saudi Arabia",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "5% Tax",
+            "tax_value" : 5.0
+        }]
+    },
+    {
+      "id": "192",
+      "sortname": "SN",
+      "value": "Senegal",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "193",
+      "sortname": "RS",
+      "value": "Serbia",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "20% Tax",
+            "tax_value" : 20.0
+        },{            
+            "tax_name" : "10% Tax",
+            "tax_value" : 10.0
+        }]
+    },
+    {
+      "id": "194",
+      "sortname": "SC",
+      "value": "Seychelles",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "15% Tax",
+            "tax_value" : 15.0
+        }]
+    },
+    {
+      "id": "195",
+      "sortname": "SL",
+      "value": "Sierra Leone",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "196",
+      "sortname": "SG",
+      "value": "Singapore",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "7% Tax",
+            "tax_value" : 7.0
+        }]
+    },
+    {
+      "id": "197",
+      "sortname": "SK",
+      "value": "Slovak Republic",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "20% Tax",
+            "tax_value" : 20.0
+        },{            
+            "tax_name" : "10% Tax",
+            "tax_value" : 10.0
+        }]
+    },
+    {
+      "id": "198",
+      "sortname": "SI",
+      "value": "Slovenia",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "22% Tax",
+            "tax_value" : 22.0
+        },{            
+            "tax_name" : "9.5% Tax",
+            "tax_value" : 9.5
+        }]
+    },
+    {
+      "id": "199",
+      "sortname": "XG",
+      "value": "Smaller Territories of the UK",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "200",
+      "sortname": "SB",
+      "value": "Solomon Islands",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "201",
+      "sortname": "SO",
+      "value": "Somalia",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "202",
+      "sortname": "ZA",
+      "value": "South Africa",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "14% Tax",
+            "tax_value" : 14.0
+        }]
+    },
+    {
+      "id": "203",
+      "sortname": "GS",
+      "value": "South Georgia",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "204",
+      "sortname": "SS",
+      "value": "South Sudan",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "205",
+      "sortname": "ES",
+      "value": "Spain",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "21% Tax",
+            "tax_value" : 21.0
+        },{            
+            "tax_name" : "10% Tax",
+            "tax_value" : 10.0
+        },{            
+            "tax_name" : "4% Tax",
+            "tax_value" : 4.0
+        }]
+    },
+    {
+      "id": "206",
+      "sortname": "LK",
+      "value": "Sri Lanka",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "207",
+      "sortname": "SD",
+      "value": "Sudan",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "208",
+      "sortname": "SR",
+      "value": "Suriname",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "10% Tax",
+            "tax_value" : 10.0
+        },{            
+            "tax_name" : "25% Tax",
+            "tax_value" : 25.0
+        },{            
+            "tax_name" : "8% Tax",
+            "tax_value" : 8.0
+        }]
+    },
+    {
+      "id": "209",
+      "sortname": "SJ",
+      "value": "Svalbard And Jan Mayen Islands",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "210",
+      "sortname": "SZ",
+      "value": "Swaziland",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "211",
+      "sortname": "SE",
+      "value": "Sweden",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "25% Tax",
+            "tax_value" : 25.0
+        },{            
+            "tax_name" : "12% Tax",
+            "tax_value" : 12.0
+        },{            
+            "tax_name" : "6% Tax",
+            "tax_value" : 6.0
+        }]
+    },
+    {
+      "id": "212",
+      "sortname": "CH",
+      "value": "Switzerland",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "7.7% Tax",
+            "tax_value" : 7.7
+        },{            
+            "tax_name" : "3.7% Tax",
+            "tax_value" : 3.7
+        },{            
+            "tax_name" : "2.5% Tax",
+            "tax_value" : 2.5
+        }]
+    },
+    {
+      "id": "213",
+      "sortname": "SY",
+      "value": "Syria",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "214",
+      "sortname": "TW",
+      "value": "Taiwan",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "5% Tax",
+            "tax_value" : 5
+        }]
+    },
+    {
+      "id": "215",
+      "sortname": "TJ",
+      "value": "Tajikistan",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "216",
+      "sortname": "TZ",
+      "value": "Tanzania",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "18% Tax",
+            "tax_value" : 18.0
+        }]
+    },
+    {
+      "id": "217",
+      "sortname": "TH",
+      "value": "Thailand",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "7% Tax",
+            "tax_value" : 7.0
+        }]
+    },
+    {
+      "id": "218",
+      "sortname": "TG",
+      "value": "Togo",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "219",
+      "sortname": "TK",
+      "value": "Tokelau",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "220",
+      "sortname": "TO",
+      "value": "Tonga",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "221",
+      "sortname": "TT",
+      "value": "Trinidad And Tobago",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "12.5% Tax",
+            "tax_value" : 12.5
+        }]
+    },
+    {
+      "id": "222",
+      "sortname": "TN",
+      "value": "Tunisia",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "19% Tax",
+            "tax_value" : 19.0
+        },{            
+            "tax_name" : "13% Tax",
+            "tax_value" : 13.0
+        },{            
+            "tax_name" : "7% Tax",
+            "tax_value" : 7.0
+        }]
+    },
+    {
+      "id": "223",
+      "sortname": "TR",
+      "value": "Turkey",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "18% Tax",
+            "tax_value" : 18.0
+        },{            
+            "tax_name" : "8% Tax",
+            "tax_value" : 8.0
+        },{            
+            "tax_name" : "1% Tax",
+            "tax_value" : 1.0
+        }]
+    },
+    {
+      "id": "224",
+      "sortname": "TM",
+      "value": "Turkmenistan",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "225",
+      "sortname": "TC",
+      "value": "Turks And Caicos Islands",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "226",
+      "sortname": "TV",
+      "value": "Tuvalu",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "227",
+      "sortname": "UG",
+      "value": "Uganda",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "18% Tax",
+            "tax_value" : 18.0
+        }]
+    },
+    {
+      "id": "228",
+      "sortname": "UA",
+      "value": "Ukraine",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "20% Tax",
+            "tax_value" : 20.0
+        },{            
+            "tax_name" : "7% Tax",
+            "tax_value" : 7.0
+        }]
+    },
+    {
+      "id": "229",
+      "sortname": "AE",
+      "value": "United Arab Emirates",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "5% Tax",
+            "tax_value" : 5.0
+        }]
+    },
+    {
+      "id": "230",
+      "sortname": "GB",
+      "value": "United Kingdom",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "20% Tax",
+            "tax_value" : 20.0
+        },{            
+            "tax_name" : "5% Tax",
+            "tax_value" : 5.0
+        }]
+    },
+    {
+      "id": "231",
+      "sortname": "US",
+      "value": "United States",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "7.25% Tax",
+            "tax_value" : 7.25
+        }]
+    },
+    {
+      "id": "232",
+      "sortname": "UM",
+      "value": "United States Minor Outlying Islands",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "7.25% Tax",
+            "tax_value" : 7.25
+        }]
+    },
+    {
+      "id": "233",
+      "sortname": "UY",
+      "value": "Uruguay",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "22% Tax",
+            "tax_value" : 22
+        },{            
+            "tax_name" : "10% Tax",
+            "tax_value" : 10
+        }]
+    },
+    {
+      "id": "234",
+      "sortname": "UZ",
+      "value": "Uzbekistan",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "235",
+      "sortname": "VU",
+      "value": "Vanuatu",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "236",
+      "sortname": "VA",
+      "value": "Vatican City State (Holy See)",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "237",
+      "sortname": "VE",
+      "value": "Venezuela",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "12% Tax",
+            "tax_value" : 12.0
+        },{            
+            "tax_name" : "8% Tax",
+            "tax_value" : 8.0
+        },{            
+            "tax_name" : "20% Tax",
+            "tax_value" : 20.0
+        }]
+    },
+    {
+      "id": "238",
+      "sortname": "VN",
+      "value": "Vietnam",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "10% Tax",
+            "tax_value" : 10.0
+        },{            
+            "tax_name" : "5% Tax",
+            "tax_value" : 5.0
+        }]
+    },
+    {
+      "id": "239",
+      "sortname": "VG",
+      "value": "Virgin Islands (British)",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "240",
+      "sortname": "VI",
+      "value": "Virgin Islands (US)",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "241",
+      "sortname": "WF",
+      "value": "Wallis And Futuna Islands",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "242",
+      "sortname": "EH",
+      "value": "Western Sahara",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "243",
+      "sortname": "YE",
+      "value": "Yemen",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "244",
+      "sortname": "YU",
+      "value": "Yugoslavia",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        }]
+    },
+    {
+      "id": "245",
+      "sortname": "ZM",
+      "value": "Zambia",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "16% Tax",
+            "tax_value" : 16.0
+        }]
+    },
+    {
+      "id": "246",
+      "sortname": "ZW",
+      "value": "Zimbabwe",
+      "tax" :  
+        [{            
+            "tax_name" : "0% Tax",
+            "tax_value" : 0.0
+        },{            
+            "tax_name" : "15% Tax",
+            "tax_value" : 15.0
+        }]
+    }
+  ]
+}

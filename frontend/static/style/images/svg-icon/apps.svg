@@ -1,0 +1,34 @@
+<svg id="Small_Icons" data-name="Small Icons" xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: none;
+        stroke: #fff;
+        stroke-linecap: round;
+        stroke-width: 3px;
+      }
+
+      .cls-1, .cls-2 {
+        fill-rule: evenodd;
+      }
+
+      .cls-2 {
+        fill: #fff;
+        opacity: 0.25;
+      }
+    </style>
+  </defs>
+  <g id="Apps">
+    <path id="Rounded_Rectangle_12" data-name="Rounded Rectangle 12" class="cls-1" d="M15.5,5.5h20a3,3,0,0,1,3,3v33a3,3,0,0,1-3,3h-20a3,3,0,0,1-3-3V8.5A3,3,0,0,1,15.5,5.5Z"/>
+    <path class="cls-2" d="M12,33l26-6V43l-2,2H15l-3-3V33Z"/>
+    <path class="cls-1" d="M20,38.5H31"/>
+    <path id="Shape_18_copy" data-name="Shape 18 copy" class="cls-1" d="M25.5,14.742v2.039"/>
+    <path id="Shape_18_copy_2" data-name="Shape 18 copy 2" class="cls-1" d="M25.5,22.219v2.039"/>
+    <path id="Shape_18_copy_3" data-name="Shape 18 copy 3" class="cls-1" d="M22.781,19.5H20.742"/>
+    <path id="Shape_18_copy_4" data-name="Shape 18 copy 4" class="cls-1" d="M30.258,19.5H28.219"/>
+    <path id="Shape_18_copy_5" data-name="Shape 18 copy 5" class="cls-1" d="M22.136,16.136l1.442,1.442"/>
+    <path id="Shape_18_copy_5-2" data-name="Shape 18 copy 5" class="cls-1" d="M27.423,21.423l1.442,1.442"/>
+    <path id="Shape_18_copy_5-3" data-name="Shape 18 copy 5" class="cls-1" d="M23.577,21.423l-1.442,1.442"/>
+    <path id="Shape_18_copy_5-4" data-name="Shape 18 copy 5" class="cls-1" d="M28.865,16.136l-1.442,1.442"/>
+  </g>
+</svg>

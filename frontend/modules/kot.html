@@ -1,0 +1,420 @@
+<div class="vertical-layout page_loader" id="kot" style="display: none">
+    <!--Start Containerbar-->
+    <div id="containerbar">
+        <div class="breadcrumbbar crumbbar_padding">
+            <div class="row align-items-center">
+                <div class="col-lg-6 col-xl-6">
+                    <h4 class="page-title">
+                        <lang class="lang_kot_title">KOT</lang>
+                    </h4>
+                </div>
+                <div class="col-lg-6 col-xl-6">
+                    <div class="widgetbar text-right">
+                        <button type="button" class="btn btn-primary-rgba mr-2" onclick="PosnicPro.kot.refreshTables()">
+                            <i class="feather icon-refresh-cw mr-2"></i>
+                            <lang class="lang_refresh_title">Refresh</lang>
+                        </button>
+                        <button type="button" class="btn btn-info-rgba mr-2"
+                            onclick="window.location.hash='#/kothistory'">
+                            <i class="feather icon-list mr-2"></i>
+                            KOT History
+                        </button>
+                        <button type="button" class="btn btn-success" onclick="PosnicPro.kot.openBlankKOT()">
+                            <i class="feather icon-plus mr-2"></i>
+                            Add KOT
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!--Start Contentbar-->
+    <div class="contentbar" style="position: relative;">
+        <div class="row" style="margin: 0;">
+            <!-- Left Sidebar - Table Grid -->
+            <div class="col-lg-6 col-md-7"
+                style="padding: 20px; border-right: 2px solid #e9ecef; min-height: 200px; overflow-y: auto; background: white;">
+                <div class="loader-table-kot">
+                    <h3 class="mb-4" style="font-weight: 700;">Tables</h3>
+                    <div id="kot_tables_grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px;">
+                        <!-- Table boxes will be loaded here -->
+                    </div>
+                    <div class="text-center" id="kot_no_tables" style="display:none; padding: 40px 20px;">
+                        <i class="feather icon-coffee"
+                            style="font-size: 64px; color: #dee2e6; margin-bottom: 20px;"></i>
+                        <h5 style="color: #6c757d; font-weight: 600; margin-bottom: 10px;">No Active Orders</h5>
+                        <p class="text-muted" style="font-size: 14px; line-height: 1.6;">
+                            Click the <strong style="color: #28a745;">+ Add KOT</strong> button above to start taking
+                            orders<br>
+                            and begin your service!
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel - Table Details -->
+            <div class="col-lg-6 col-md-5"
+                style="padding: 20px; min-height: 200px; overflow-y: auto; background: white;" id="kot_details_panel">
+                <div id="kot_table_details">
+                    <div class="text-center" style="padding: 60px 20px;">
+                        <i class="feather icon-arrow-left" style="font-size: 48px; color: #dee2e6;"></i>
+                        <p class="text-muted mt-3">Select a table from the left to view KOT details</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--End Contentbar-->
+</div>
+<!--End Containerbar-->
+
+<!--Start PAX Input Modal-->
+<div class="modal fade" id="kot_pax_modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <lang class="lang_addnewkot_title">Add New KOT</lang> - <span id="kot_pax_table_number"></span>
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="kot_pax_input">
+                        <lang class="lang_pax_title">Number of PAX</lang> <span class="text-danger">*</span>
+                    </label>
+                    <input type="number" class="form-control" id="kot_pax_input" min="1" max="50" value="2" required>
+                    <small class="form-text text-muted">Enter the number of people</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-danger" data-dismiss="modal">
+                    <i class="feather icon-x-circle mr-2"></i>
+                    <lang class="lang_cancel_title">Cancel</lang>
+                </button>
+                <button type="button" class="btn btn-primary" onclick="PosnicPro.kot.proceedToSales()">
+                    <i class="feather icon-arrow-right mr-2"></i>
+                    <lang class="lang_proceed_title">Proceed</lang>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--End PAX Input Modal-->
+
+<!--Start Table KOT Modal-->
+<div class="modal fade" id="table_kot_modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content loader-table-kot-detail">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <lang class="lang_table_title">Table</lang>: <span id="table_kot_number"></span>
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-12 text-right">
+                        <button type="button" class="btn btn-success-rgba" onclick="PosnicPro.kot.startNewKOT()">
+                            <i class="feather icon-plus mr-2"></i>
+                            <lang class="lang_addnewkot_title">Add New KOT</lang>
+                        </button>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="table-responsive">
+                            <table class="table table-bordered" id="table_kot_list">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th width="5%">#</th>
+                                        <th width="15%">
+                                            <lang class="lang_sid_title">SID</lang>
+                                        </th>
+                                        <th width="15%">
+                                            <lang class="lang_date_title">Date</lang>
+                                        </th>
+                                        <th width="10%">
+                                            <lang class="lang_ordertype_title">Order Type</lang>
+                                        </th>
+                                        <th width="10%" class="text-center">
+                                            <lang class="lang_pax_title">PAX</lang>
+                                        </th>
+                                        <th width="15%" class="text-center">
+                                            <lang class="lang_status_title">Status</lang>
+                                        </th>
+                                        <th width="30%" class="text-center">
+                                            <lang class="lang_action_title">Actions</lang>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table_kot_tbody">
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="text-center" id="table_kot_empty" style="display:none;">
+                            <p class="text-muted">
+                                <lang class="lang_nokot_title">No KOT orders for this table</lang>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-danger" data-dismiss="modal">
+                    <i class="feather icon-x-circle mr-2"></i>
+                    <lang class="lang_close_title">Close</lang>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--End Table KOT Modal-->
+
+<!--Start Discount Modal-->
+<div class="modal fade" id="kot_discount_modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <lang class="lang_discount_title">Apply Discount</lang>
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="kot_discount_form">
+                    <input type="hidden" id="kot_discount_sale_id">
+                    <div class="form-group">
+                        <label for="kot_discount_type">
+                            <lang class="lang_discounttype_title">Discount Type</lang>
+                        </label>
+                        <select class="form-control" id="kot_discount_type">
+
+                            <option value="percent">Percentage (%)</option>
+                            <option value="amount">Fixed Amount</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="kot_discount_value">
+                            <lang class="lang_discountvalue_title">Discount Value</lang> <span class="text-danger">*</span>
+                        </label>
+                        <input type="number" class="form-control" id="kot_discount_value" min="0" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label for="kot_discount_description">
+                            <lang class="lang_description_title">Description</lang> <span class="text-danger">*</span>
+                        </label>
+                        <textarea class="form-control" id="kot_discount_description" rows="3"></textarea>
+                    </div>
+                </form>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">
+                    <i class="feather icon-x-circle mr-2"></i>
+                    <lang class="lang_close_title">Close</lang>
+                </button>
+                <button type="button" class="btn btn-success" onclick="PosnicPro.kot.saveDiscount()">
+                    <i class="feather icon-save mr-2"></i>
+                    <lang class="lang_save_title">Save</lang>
+                </button>
+                <button type="button" class="btn btn-primary" onclick="PosnicPro.kot.saveAndPrintBill()">
+                    <i class="feather icon-printer mr-2"></i>
+                    <lang class="lang_proceedbillprint_title">Proceed to Bill Print</lang>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--End Discount Modal-->
+
+<!--Start View KOT Modal-->
+<div class="modal fade" id="kot_view_modal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content loader-view-kot">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <lang class="lang_kotdetails_title">KOT Details</lang> - <span id="kot_view_sales_id"></span>
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <p><strong>
+                                <lang class="lang_date_title">Date</lang>:
+                            </strong> <span id="kot_view_date"></span></p>
+                        <p><strong>
+                                <lang class="lang_ordertype_title">Order Type</lang>:
+                            </strong> <span id="kot_view_dine_type"></span></p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>
+                                <lang class="lang_table_title">Table</lang>:
+                            </strong> <span id="kot_view_table_number"></span></p>
+                        <p><strong>
+                                <lang class="lang_pax_title">PAX</lang>:
+                            </strong> <span id="kot_view_pax"></span></p>
+                    </div>
+                </div>
+                <div class="row mb-2" id="kot_view_discount_section" style="display: none;">
+                    <div class="col-12">
+                        <div class="alert alert-warning" style="padding: 8px 12px; margin-bottom: 0;">
+                            <strong><i class="feather icon-tag"></i> Discount Applied:</strong>
+                            <span id="kot_view_discount_text"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <h6>
+                            <lang class="lang_items_title">Items</lang>
+                        </h6>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-sm">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th width="10%">#</th>
+                                        <th width="60%">
+                                            <lang class="lang_item_title">Item</lang>
+                                        </th>
+                                        <th width="30%" class="text-center">
+                                            <lang class="lang_quantity_title">Quantity</lang>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody id="kot_view_items_tbody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">
+                    <i class="feather icon-x-circle mr-2"></i>
+                    <lang class="lang_close_title">Close</lang>
+                </button>
+                <button type="button" class="btn btn-success" onclick="PosnicPro.kot.showAddItemFromView()">
+                    <i class="feather icon-plus mr-2"></i>
+                    <lang class="lang_additem_title">Add Item</lang>
+                </button>
+                <button type="button" class="btn btn-warning" onclick="PosnicPro.kot.addDiscountFromView()">
+                    <i class="feather icon-percent mr-2"></i>
+                    <lang class="lang_adddiscount_title">Add Discount</lang>
+                </button>
+                <button type="button" class="btn btn-info" onclick="PosnicPro.kot.editKOT()">
+                    <i class="feather icon-edit mr-2"></i>
+                    <lang class="lang_edit_title">Edit</lang>
+                </button>
+                <button type="button" class="btn btn-danger" onclick="PosnicPro.kot.cancelKOT()">
+                    <i class="feather icon-x mr-2"></i>
+                    <lang class="lang_cancel_title">Cancel</lang>
+                </button>
+                <button type="button" class="btn btn-primary" onclick="PosnicPro.kot.printKOT()">
+                    <i class="feather icon-printer mr-2"></i>
+                    <lang class="lang_print_title">Print</lang>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--End View KOT Modal-->
+<!--Start Clear Discount Confirm Modal-->
+<div class="modal fade" id="kot_clear_discount_modal" tabindex="-1" role="dialog" aria-hidden="true"
+     data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#4e73df; color:#fff;">
+                <h5 class="modal-title">Delete Record</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color:#fff;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body text-center" style="padding: 30px 20px;">
+                <h5 style="font-weight:600; margin-bottom: 10px;">Are you sure want to delete this record ?</h5>
+            </div>
+
+            <div class="modal-footer" style="justify-content:center; gap: 12px;">
+                <button type="button" class="btn btn-outline-danger" data-dismiss="modal">
+                    <i class="feather icon-x mr-2"></i> Close
+                </button>
+                <button type="button" class="btn btn-outline-primary" onclick="PosnicPro.kot.confirmClearDiscount()">
+                    <i class="feather icon-send mr-2"></i> Proceed
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--End Clear Discount Confirm Modal-->
+
+<!--Start Delete Item Confirm Modal-->
+<div class="modal fade" id="kot_delete_item_modal" tabindex="-1" role="dialog" aria-hidden="true"
+     data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#e74a3b; color:#fff;">
+                <h5 class="modal-title">Delete Item</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color:#fff;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body text-center" style="padding: 30px 20px;">
+                <h5 style="font-weight:600; margin-bottom: 10px;">Are you sure want to delete this item?</h5>
+            </div>
+
+            <div class="modal-footer" style="justify-content:center; gap: 12px;">
+                <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">
+                    <i class="feather icon-x mr-2"></i> Close
+                </button>
+                <button type="button" class="btn btn-danger" onclick="PosnicPro.kot.confirmDeleteItem()">
+                    <i class="feather icon-trash-2 mr-2"></i> Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--End Delete Item Confirm Modal-->
+
+<!--Start Add Item Modal-->
+<div class="modal fade" id="kot_add_item_modal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static">
+    <div class="modal-dialog modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Item</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" style="padding-top: 0;">
+                <div style="position: sticky; top: 0; background: white; padding: 15px 0; z-index: 10; border-bottom: 1px solid #dee2e6;">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text"><i class="feather icon-search"></i></span>
+                        </div>
+                        <input type="text" class="form-control" id="kot_item_search" placeholder="Search items by name or code..." autocomplete="off">
+                    </div>
+                </div>
+                <div id="kot_item_search_results" class="list-group list-group-flush mt-2">
+                    <!-- Results will be loaded here -->
+                    <div class="text-center text-muted mt-4">
+                        <i class="feather icon-search" style="font-size: 32px; opacity: 0.2;"></i>
+                        <p class="mt-2">Type to search for items</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!--End Add Item Modal-->

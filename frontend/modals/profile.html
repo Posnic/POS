@@ -1,0 +1,208 @@
+<!-- profile modal -->
+<div id="infobar-settings-sidebar-profile-details" class="infobar-settings-sidebar">
+    <div class="infobar-settings-sidebar-head d-flex w-100 justify-content-between">
+        <h4 id="exampleModalCenterTitle"><lang class="lang_vieweditprofile_title"> Profile Details </lang></h4>
+        <a href="javascript:void(0)" class="infobar-tender-close">
+            <img src="static/images/svg-icon/close.svg" class="img-fluid menu-hamburger-close" alt="close">
+        </a>
+    </div>
+    <div class="infobar-settings-sidebar-body">
+        <div class="custom-mode-setting loader-profile">            
+            <div class="slider-modal-body scroll_width">
+                <form class="uploadprofileimage" name="uploadprofile" id="uploadprofile" method = "POST" enctype = "multipart/form-data">
+                    <div class="row">
+                        <div class="col-lg-12 col-xl-12">
+                            <div class="row justify-content-center">
+                                <div class="col-md-6" style="border-right: 1px solid #ddd;">
+                                    <div class="user-slider-item">
+                                        <div class="card-body text-center">
+                                            <div class="profilebox pt-4 text-center">
+                                                <ul class="list-inline">
+                                                    <li class="list-inline-item"> 
+                                                        <input type="file" id="profile_file" class="inputfile inputfile-1" onchange="PosnicPro.imageReadURL(this, 'profile', '205', '160');" 
+                                                               accept=".gif, .jpg, .png, .jpeg, .bmp" data-placeholder="No file" data-btnclass="btn-light"
+                                                               tabindex="-1" style="position: absolute; clip: rect(0px, 0px, 0px, 0px);"  hidden>
+                                                        <label for="profile_file" class="btn btn-success-rgba font-18"><i class="feather icon-edit"></i></label>
+                                                        <input type="hidden" name="get_profile_image_value" id="get_profile_image_value">
+                                                        <input type="hidden" name="profile_value_check" id="profile_value_check">
+                                                    </li>
+                                                    <li class="list-inline-item">
+                                                        <img src="static/images/default/user.svg" id="profile_image_upload" class="img-fluid" alt="profile">
+                                                    </li>
+                                                    <li class="list-inline-item">
+                                                        <a href="javascript:void(0)" class="btn btn-danger-rgba font-18" onclick="PosnicPro.users.removePopupUserImage()">
+                                                            <i class="feather icon-trash"></i>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                            <h5>
+
+                                                <div class="form-group col-md-12">
+                                                    <label for="editableusername" class="usersnamelabel">
+                                                        <lang class="lang_firstname">First Name </lang>
+                                                    </label>
+                                                    <a href="#" id="editableusername" class="editable editable-click profile_username"></a>
+                                                </div>
+                                                <div class="form-group col-md-12">
+                                                    <label for="editablelastname" class="usersnamelabel">
+                                                        <lang class="lang_lastname">Last Name </lang>
+                                                    </label>
+                                                    <a href="#" id="editablelastname" class="editable editable-click profile_lastname"></a>
+                                                </div>
+                                            </h5>
+                                            <p><span class="profile_useremail"></span></p>
+
+                                            <button type="submit" class="btn btn-lg btn-outline-primary"><i class="feather icon-save mr-2"></i>  <lang class="lang_refresh_title"> Update</lang></button>
+                                        </div>
+
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="card-body text-center">
+                                        <div class="form-row">
+                                            <div class="form-group col-md-12">
+                                                <div class="userdetail table-responsive">
+                                                    <table class="table table-borderless mb-0">
+                                                        <tbody>
+                                                            <tr>
+                                                                <td><lang class="lang_dashboard_title">Dashboard </lang></td>
+                                                        <td><span class="badge badge-danger badge-icon" id="dashboard_read_access"><i
+                                                                    class="fa fa-times" id="dashboard_read_chk"></i><span> R </span></span></td>                                                        
+                                                        </tr>
+                                                        <tr>
+                                                            <td><lang class="lang_sales_title">Sale </lang></td>
+                                                        <td><span class="badge badge-danger badge-icon" id="sales_read_access"><i
+                                                                    class="fa fa-times" id="sales_read_chk"></i><span> R </span></span></td>
+                                                        <td><span class="badge badge-danger badge-icon" id="sales_write_access"><i
+                                                                    class="fa fa-times" id="sales_write_chk"></i><span> W </span></span>
+                                                        </td>
+                                                        <td><span class="badge badge-danger badge-icon" id="sales_delete_access"><i
+                                                                    class="fa fa-times" id="sales_delete_chk"></i><span> D </span></span>
+                                                        </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td><lang class="lang_receiving_title">Receiving</lang></td>
+                                                        <td><span class="badge badge-danger badge-icon" id="receiving_read_access"><i
+                                                                    class="fa fa-times" id="receiving_read_chk"></i><span> R </span></span>
+                                                        </td>
+                                                        <td><span class="badge badge-danger badge-icon" id="receiving_write_access"><i
+                                                                    class="fa fa-times" id="receiving_write_chk"></i><span> W </span></span>
+                                                        </td>
+                                                        <td><span class="badge badge-danger badge-icon" id="receiving_delete_access"><i
+                                                                    class="fa fa-times"
+                                                                    id="receiving_delete_chk"></i><span> D </span></span></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td><lang class="lang_customer_title">Customer</lang></td>
+                                                        <td><span class="badge badge-danger badge-icon" id="customer_read_access"><i
+                                                                    class="fa fa-times" id="customer_read_chk"></i><span> R </span></span>
+                                                        </td>
+                                                        <td><span class="badge badge-danger badge-icon" id="customer_write_access"><i
+                                                                    class="fa fa-times"
+                                                                    id="customer_write_chk"></i><span> W </span></span></td>
+                                                        <td><span class="badge badge-danger badge-icon" id="customer_delete_access"><i
+                                                                    class="fa fa-times"
+                                                                    id="customer_delete_chk"></i><span> D </span></span></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td><lang class="lang_supply_title">Supplier</lang></td>
+                                                        <td><span class="badge badge-danger badge-icon" id="supplier_read_access"><i
+                                                                    class="fa fa-times" id="supplier_read_chk"></i><span> R </span></span>
+                                                        </td>
+                                                        <td><span class="badge badge-danger badge-icon" id="supplier_write_access"><i
+                                                                    class="fa fa-times"
+                                                                    id="supplier_write_chk"></i><span> W </span></span></td>
+                                                        <td><span class="badge badge-danger badge-icon" id="supplier_delete_access"><i
+                                                                    class="fa fa-times"
+                                                                    id="supplier_delete_chk"></i><span> D </span></span></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td><lang class="lang_category_title">Category </lang></td>
+                                                        <td><span class="badge badge-danger badge-icon" id="category_read_access"><i
+                                                                    class="fa fa-times" id="category_read_chk"></i><span> R </span></span>
+                                                        </td>
+                                                        <td><span class="badge badge-danger badge-icon" id="category_write_access"><i
+                                                                    class="fa fa-times"
+                                                                    id="category_write_chk"></i><span> W </span></span></td>
+                                                        <td><span class="badge badge-danger badge-icon" id="category_delete_access"><i
+                                                                    class="fa fa-times"
+                                                                    id="category_delete_chk"></i><span> D </span></span></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td><lang class="lang_item_title">Item </lang></td>
+                                                        <td><span class="badge badge-danger badge-icon" id="item_read_access"><i
+                                                                    class="fa fa-times" id="item_read_chk"></i><span> R </span></span></td>
+                                                        <td><span class="badge badge-danger badge-icon" id="item_write_access"><i
+                                                                    class="fa fa-times" id="item_write_chk"></i><span> W </span></span>
+                                                        </td>
+                                                        <td><span class="badge badge-danger badge-icon" id="item_delete_access"><i
+                                                                    class="fa fa-times" id="item_delete_chk"></i><span> D </span></span>
+                                                        </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td><lang class="lang_expense_title">Expense </lang></td>
+                                                        <td><span class="badge badge-danger badge-icon" id="expense_read_access"><i
+                                                                    class="fa fa-times" id="expense_read_chk"></i><span> R </span></span>
+                                                        </td>
+                                                        <td><span class="badge badge-danger badge-icon" id="expense_write_access"><i
+                                                                    class="fa fa-times"
+                                                                    id="expense_write_chk"></i><span> W </span></span></td>
+                                                        <td><span class="badge badge-danger badge-icon" id="expense_delete_access"><i
+                                                                    class="fa fa-times"
+                                                                    id="expense_delete_chk"></i><span> D </span></span></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td><lang class="lang_branch_title">Branch </lang></td>
+                                                        <td><span class="badge badge-danger badge-icon" id="branch_read_access"><i
+                                                                    class="fa fa-times" id="branch_read_chk"></i><span> R </span></span>
+                                                        </td>
+                                                        <td><span class="badge badge-danger badge-icon" id="branch_write_access"><i
+                                                                    class="fa fa-times" id="branch_write_chk"></i><span> W </span></span>
+                                                        </td>
+                                                        <td><span class="badge badge-danger badge-icon" id="branch_delete_access"><i
+                                                                    class="fa fa-times"
+                                                                    id="branch_delete_chk"></i><span> D </span></span></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td><lang class="lang_report_title">Report </lang></td>
+                                                        <td><span class="badge badge-danger badge-icon" id="report_read_access"><i
+                                                                    class="fa fa-times" id="report_read_chk"></i><span> R </span></span>
+                                                        </td>
+                                                        <td><span class="badge badge-danger badge-icon" id="report_write_access"><i
+                                                                    class="fa fa-times" id="report_write_chk"></i><span> W </span></span>
+                                                        </td>
+                                                        <td><span class="badge badge-danger badge-icon" id="report_delete_access"><i
+                                                                    class="fa fa-times"
+                                                                    id="report_delete_chk"></i><span> D </span></span></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td><lang class="lang_user_title">User </lang></td>
+                                                        <td><span class="badge badge-danger badge-icon" id="user_read_access"><i
+                                                                    class="fa fa-times" id="user_read_chk"></i><span> R </span></span>
+                                                        </td>
+                                                        <td><span class="badge badge-danger badge-icon" id="user_write_access"><i
+                                                                    class="fa fa-times" id="user_write_chk"></i><span> W </span></span>
+                                                        </td>
+                                                        <td><span class="badge badge-danger badge-icon" id="user_delete_access"><i
+                                                                    class="fa fa-times"
+                                                                    id="user_delete_chk"></i><span> D </span></span></td>
+                                                        </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+

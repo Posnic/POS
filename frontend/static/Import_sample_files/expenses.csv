@@ -1,0 +1,4 @@
+amount,type,category,recipientname,approvedby,description
+250,"debit","Utilities","State Electricity Board","Store Manager","Monthly electricity bill"
+1200,"debit","Rent","Landlord","Store Manager","Shop rent for the month"
+80,"debit","Supplies","Local Stationers","Store Manager","Receipt rolls"

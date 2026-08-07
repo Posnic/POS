@@ -1,0 +1,103 @@
+<div id="infobar-settings-sidebar-tax" class="infobar-settings-sidebar">
+    <div class="infobar-settings-sidebar-head d-flex w-100 justify-content-between">
+        <h4 id="exampleModalCenterTitle"><span id="tax-heading">Add</span>&nbsp;<lang class="lang_tax_title">Tax</lang> </h4><a href="javascript:void(0)" class="infobar-settings-close" data-id="tax"><img src="static/images/svg-icon/close.svg" class="img-fluid menu-hamburger-close" alt="close"></a>
+    </div>
+    <div class="infobar-settings-sidebar-body loader-tax">
+        <div class="custom-mode-setting">            
+            <form id='tax_add_form'>                
+                <div class="form-row">
+                    <div class="form-group col-md-12">
+                        <label for="tax_name"><lang class="lang_name_title"> Name </lang> <span class="text-danger">*</span> </label>
+                        <input name="tax_name" id="tax_name" type="text" aria-describedby="basic-addon1" class="form-control border-control" 
+                               minlength="3" maxlength="20" placeholder="Ex:- GST 1 %" required>
+                        <input type="hidden" id="tax_id" name="tax_id">
+                    </div>
+                </div> 
+                <div class="form-row">
+                    <div class="form-group col-md-12">
+                        <label for="tax_value"><lang class="lang_value_title"> Value </lang> <span class="text-danger">*</span> </label>
+                        <div class="input-group mb-3">                                    
+                            <input id="tax_value" type="text" minlength="1" maxlength="5" min="0" max="100" value="0" name="tax_value" class="form-control border-control text-right" 
+                                   style="display: block;" onkeypress="return PosnicPro.isNumber(event)" onkeyup="this.value = PosnicPro.minmax(this.value, 0, 100)" required>
+                            <div class="input-group-prepend">
+                                <span class="input-group-text" id="basic-addon1">%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-12">
+                        <div class="pull-right">
+                            <button type="button" class="btn btn-outline-secondary infobar-settings-reset" id="tax_reset" onclick="PosnicPro.tax.taxClearForm();"><i class="feather icon-refresh-ccw mr-2"></i><lang class="lang_clear_title"> Clear</lang></button>
+                            <button type="button" class="btn btn-outline-secondary infobar-settings-reset tax_edit_reset" id="tax_edit_reset" onclick="PosnicPro.tax.resetEditButton(this.id);"><i class="feather icon-refresh-ccw mr-2"></i><lang class="lang_reset_title"> Reset</lang></button>
+                           
+                            <button type="button" class="btn btn-outline-danger infobar-settings-close" data-id="tax"><i class="feather icon-x-circle mr-2"></i><lang class="lang_close_title"> Close</lang>
+                            </button>
+                            <button type="submit" class="btn btn-outline-primary">
+                                <i class="feather icon-save mr-2"></i><span id="tax_text_change"> <lang class="lang_save_title">Save</lang></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- Tax Tab End -->
+
+
+<div id="infobar-settings-sidebar-taxgroup" class="infobar-settings-sidebar">
+    <div class="infobar-settings-sidebar-head d-flex w-100 justify-content-between">
+        <h4 id="exampleModalCenterTitle"><span id="taxgroup-heading">Add</span>&nbsp;<lang class="lang_taxgroup">Tax Group</lang> </h4><a href="javascript:void(0)" class="infobar-settings-close" data-id="taxgroup"><img src="static/images/svg-icon/close.svg" class="img-fluid menu-hamburger-close" alt="close"></a>
+    </div>
+    <div class="infobar-settings-sidebar-body loader-taxgroup">
+        <div class="custom-mode-setting">            
+            <form id='taxgroup_add_form'>                
+                <div class="form-row">
+                    <div class="form-group col-md-12">
+                        <label for="taxgroup_name"><lang class="lang_name_title"> Name </lang> <span class="text-danger">*</span> </label>
+                        <input name="taxgroup_name" id="taxgroup_name" type="text" aria-describedby="basic-addon1" class="form-control border-control" 
+                               minlength="3" maxlength="20" placeholder="Ex:- GST 1 %" required>
+                        <input type="hidden" id="taxgroup_id" name="taxgroup_id">
+                    </div>
+                </div> 
+                <div class="form-row">
+                    <div class="form-group col-md-12">
+                        <h5><lang class="lang_taxes"> Taxes </lang></h5>
+                        <div class="table-responsive">
+                            <table id="list_tax_rates" class="table table-top-border margin-bottom-0">
+                                <thead>
+                                    <tr>
+                                        <th><input type="checkbox" id="tax_checked_all"></th>
+                                        <th>Tax name</th>
+                                        <th>Rate (%)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
+                        <span id="error_tax_checkbox"></span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-md-12">
+                        <div class="pull-right">
+                            <button type="button" class="btn btn-outline-secondary infobar-settings-reset" id="taxgroup_reset" onclick="PosnicPro.taxgroup.taxgroupClearForm();"><i class="feather icon-refresh-ccw mr-2"></i><lang class="lang_clear_title"> Clear</lang></button>
+
+                            <button type="button" class="btn btn-outline-secondary infobar-settings-reset taxgroup_edit_reset" id="taxgroup_edit_reset" onclick="PosnicPro.taxgroup.resetEditButton(this.id);"><i class="feather icon-refresh-ccw mr-2"></i><lang class="lang_reset_title"> Reset</lang></button>
+                          
+                            <button type="button" class="btn btn-outline-danger infobar-settings-close" data-id="taxgroup"><i class="feather icon-x-circle mr-2"></i> <lang class="lang_close_title"> Close</lang>
+                            </button>
+                            <button type="submit" class="btn btn-outline-primary">
+                                <i class="feather icon-save mr-2"></i><span id="taxgroup_text_change"><lang class="lang_save_title"> Save</lang></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- Taxgroup Tab End -->

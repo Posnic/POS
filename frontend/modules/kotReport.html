@@ -1,0 +1,630 @@
+<div class="vertical-layout page_loader" id="kotreport_new" style="display: none">
+    <div id="containerbar">
+        <div class="breadcrumbbar crumbbar_padding">
+            <div class="row align-items-center row_filter hide-sale-filter">
+                <div class="col-lg-2 col-xl-2">
+                    <h4 class="page-title break_title">KOT Reports</h4>
+                </div>
+
+                <div class="col-md-9 col-lg-9 show-button-action"></div>
+
+                <div class="col-lg-2 col-xl-2 hide-button-action tb_filter" style="display:none;">
+                    <div class="form-control pull-right daterange-timepicker-all daterange-style date-align view_kot_report_daterange"
+                        id="view_kot_report_daterange">
+                        <i class="feather icon-calendarfeather icon-calendar"></i>&nbsp;
+                        <span></span>
+                    </div>
+                </div>
+
+                <div class="col-lg-5 col-xl-5 hide-button-action tb_filter" style="display:none;">
+                    <div class="row">
+                        <div class="col-lg-8 col-md-8 col-sm-12">
+                            <select class="floating-input select2 load-branch display-current-branch kot_branch_value"
+                                multiple="multiple" data-placeholder="Select Branch" name="kot_branch_value[]"
+                                id="kot_branch_value">
+                                <option class="allbranch_name" value=''>All</option>
+                            </select>
+                        </div>
+                        <div class="col-lg-4 col-md-4 col-sm-12 kot_table_filter_container" style="display:none;">
+                            <select class="floating-input select2 kot_tablewise_table_value"
+                                multiple="multiple" data-placeholder="Select Table" name="kot_tablewise_table_value[]"
+                                id="kot_tablewise_table_value">
+                                <option class="alltable_name" value=''>All</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-2 col-lg-2 adjuce_left hide-button-action" style="display:none;">
+                    <button type="button" class="btn btn-danger-rgba" data-id="kot"
+                        onclick="PosnicPro.dateRangeAllfilterClear(this)">
+                        Clear
+                    </button>
+                    <button type="button" class="btn btn-primary-rgba" id="change_kot_view" data-id="tableView"
+                        onclick="PosnicPro.kotitemreport.applyFilter();">
+                        Apply
+                    </button>
+                </div>
+
+                <div class="col-lg-1 col-xl-1 tb_widget">
+                    <div class="widgetbar">
+                        <button type="button"
+                            class="btn btn-round btn-primary-rgba click-action-button adjuce_left add_new_tooltip"
+                            data-toggle="tooltip" title="Filter">
+                            <i class="feather icon-filter" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-2 col-xl-2"></div>
+                <div class="col-md-6 col-xl-10 mobile-hide tb_date_range">
+                    <p>
+                        <span class="badge badge-secondary-inverse hide_date_filetr" style="display:none;">
+                            <span class="view_kot_report_date_filter_value"></span>
+                        </span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="contentbar">
+        <div class="row">
+            <div class="col-md-12 col-lg-12 col-xl-12">
+                <div class="card m-b-30">
+                    <div class="card-body">
+                        <ul class="nav nav-tabs custom-tab-line mb-3" id="kotReportTab" role="tablist">
+                            <li class="nav-item">
+                                <a class="nav-link active report_tab_font" id="kot-sales-summary-tab" data-toggle="tab"
+                                    href="#kot-sales-summary" role="tab" aria-controls="kot-sales-summary"
+                                    aria-selected="true" onClick="PosnicPro.kotitemreport.salesSummaryTabClick();">
+                                    Sales Summary
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link report_tab_font" id="kot-itemwise-tab" data-toggle="tab"
+                                    href="#kot-itemwise" role="tab" aria-controls="kot-itemwise" aria-selected="false"
+                                    onClick="PosnicPro.kotitemreport.itemTableTabClick();">
+                                    Itemwise Sale
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link report_tab_font" id="kot-discount-tab" data-toggle="tab"
+                                    href="#kot-discount" role="tab" aria-controls="kot-discount" aria-selected="false"
+                                    onClick="PosnicPro.kotdiscountreport.discountTableTabClick();">
+                                    Discount Report
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link report_tab_font" id="kot-cancellation-tab" data-toggle="tab"
+                                    href="#kot-cancellation" role="tab" aria-controls="kot-cancellation"
+                                    aria-selected="false"
+                                    onClick="PosnicPro.kotitemreport.cancellationSummaryTabClick();">
+                                    Cancellation Report
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link report_tab_font" id="kot-open-item-tab" data-toggle="tab"
+                                    href="#kot-open-item" role="tab" aria-controls="kot-open-item" aria-selected="false"
+                                    onClick="PosnicPro.kotopenitemreport.itemTableTabClick();">
+                                    Open Item
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link report_tab_font" id="kot-tablewise-tab" data-toggle="tab"
+                                    href="#kot-tablewise" role="tab" aria-controls="kot-tablewise" aria-selected="false"
+                                    onClick="PosnicPro.kotitemreport.tablewiseTabClick();">
+                                    Tablewise Report
+                                </a>
+                            </li>
+                        </ul>
+                        <div class="tab-content" id="kotReportTabContent">
+                            <div class="tab-pane fade show active" id="kot-sales-summary" role="tabpanel"
+                                aria-labelledby="kot-sales-summary-tab">
+                                <div class="card-body card-box no-padding loader-kot-sales-summary">
+                                    <div class="table-responsive">
+                                        <table id="view_kotsalessummary" class="table table-bordered" cellspacing="0"
+                                            width="100%" style="font-size:13px;">
+
+                                            <div class="row kotsalessummary_actions">
+                                                <div class="col-12">
+                                                    <ul class="list-inline mb-0 float-right">
+                                                        <li class="list-inline-item">
+                                                            <button type="button"
+                                                                class="btn btn-danger-rgba blur_val" id="kotsalessummary_pdfbtn"
+                                                                onclick="PosnicPro.kotitemreport.kotSalesSummaryPdf();"
+                                                                data-toggle="tooltip" data-placement="top"
+                                                                title="Download PDF" style="margin-right: 5px;font-size: 20px;">
+                                                                <i class="fa fa-file-pdf-o"></i>
+                                                            </button>
+                                                        </li>
+                                                        <!-- <li class="list-inline-item">
+                                                            <button type="button"
+                                                                class="btn btn-success-rgba blur_val" id="kotsalessummary_pdfsummarybtn"
+                                                                onclick="PosnicPro.kotitemreport.kotSalesSummaryPdfSummary();"
+                                                                data-toggle="tooltip" data-placement="top"
+                                                                title="Download PDF Summary" style="margin-right: 5px;font-size: 20px;">
+                                                                <i class="fa fa-file-pdf-o"></i> Summary
+                                                            </button>
+                                                        </li> -->
+                                                        <li class="list-inline-item">
+                                                            <a href="javascript:void(0);" data-module="report"
+                                                                data-access="read" id="kotsalessummary_exportbtn"
+                                                                data-id="kotsalessummaryexport"
+                                                                onclick="PosnicPro.kotitemreport.exportSalesSummary(this);"
+                                                                class="sale_color dash_sale_count" data-toggle="tooltip"
+                                                                title="Export All To CSV">
+                                                                <i class="feather icon-share font-20"></i>
+                                                            </a>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                            <div class="row mb-2 kotsalessummary_header">
+                                                <div class="col-12">
+                                                    <h5 class="mb-0" style="font-size: 17px; font-weight: 600;">Kotsale Summary</h5>
+                                                </div>
+                                            </div>
+                                            <div class="row mb-2 kotsalessummary_daterange_row">
+                                                <div class="col-12 text-right">
+                                                    <span class="f-w-3 font-13">From :&nbsp;</span>
+                                                    <span class="f-w-3 font-13" id="kotsales_fromdate"></span>
+                                                    &nbsp;&nbsp;&nbsp;
+                                                    <span class="f-w-3 font-13">To :&nbsp;</span>
+                                                    <span class="f-w-3 font-13" id="kotsales_todate"></span>
+                                                </div>
+                                            </div>
+                                            <thead>
+                                                <tr>
+                                                    <th class="text-center" style="width:40px;"></th>
+                                                    <th style="width:60px;">#</th>
+                                                    <th style="width:200px;">Table No</th>
+                                                    <th class="text-center" style="width:80px;">Qty</th>
+                                                    <th class="text-right" style="width:120px;">Amount</th>
+                                                    <th class="text-right" style="width:120px;">Discount</th>
+                                                    <th class="text-right" style="width:120px;">Tax</th>
+                                                    <th class="text-right" style="width:120px;">Extra Discount</th>
+                                                    <th class="text-center" style="width:80px;">Pax</th>
+                                                    <th class="text-right" style="width:120px;">Total Amount</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody></tbody>
+                                        </table>
+                                        <div class="row mt-3 justify-content-center kotsalestender_container" style="display:none;">
+                                            <div class="col-sm-12 col-md-12 col-lg-12">
+                                                <h5 class="mb-2" style="font-size: 17px; font-weight: 600;">Payment Method Summary</h5>
+                                                <table class="table table-bordered" id="view_kotsalestender" style="font-size:13px;">
+                                                    <thead>
+                                                        <tr>
+                                                            <th class="text-center" style="width:60px;">S.No</th>
+                                                            <th class="text-left">Tender Type</th>
+                                                            <th class="text-right" style="width:160px;">Amount</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody></tbody>
+                                                    <tfoot>
+                                                        <tr>
+                                                            <th></th>
+                                                            <th class="text-center">Total</th>
+                                                            <th class="text-right"><b><span id="view_kotsalestender_total"></span></b></th>
+                                                        </tr>
+                                                    </tfoot>
+                                                </table>
+                                            </div>
+                                        </div>
+                                        <div class="row mt-3 justify-content-center kotsalesdine_container" style="display:none;">
+                                            <div class="col-sm-12 col-md-12 col-lg-12">
+                                                <h5 class="mb-2" style="font-size: 17px; font-weight: 600;">Order Type Summary</h5>
+                                                <table class="table table-bordered" id="view_kotsalesdine" style="font-size:13px;">
+                                                    <thead>
+                                                        <tr>
+                                                            <th class="text-center" style="width:60px;">S.No</th>
+                                                            <th class="text-left">Dine Type</th>
+                                                            <th class="text-center" style="width:80px;">Count</th>
+                                                            <th class="text-center" style="width:80px;">Pax</th>
+                                                            <th class="text-right" style="width:160px;">Amount</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody></tbody>
+                                                    <tfoot>
+                                                        <tr>
+                                                            <th></th>
+                                                            <th class="text-center">Total</th>
+                                                            <td class="text-center"><b><span id="view_kotsalesdine_count_total"></span></b></td>
+                                                            <td class="text-center"><b><span id="view_kotsalesdine_pax_total"></span></b></td>
+                                                            <td class="text-right"><b><span id="view_kotsalesdine_amount_total"></span></b></td>
+                                                        </tr>
+                                                    </tfoot>
+                                                </table>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6 col-md-12 col-lg-12" id="kotsalessummary_img_hide" style="display:none;">
+                                            <img src="static/images/general/nodata.svg" class="img-fluid"
+                                                style="opacity: 0.6;width: 100%;height: 250px;" alt="">
+                                        </div>
+                                        <div class="kotsalessummary_norecord col-sm-6 col-md-12 col-lg-12" style="display:none;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tab-pane fade" id="kot-itemwise" role="tabpanel"
+                                aria-labelledby="kot-itemwise-tab">
+                                <div class="card-body card-box no-padding loader-kot-itemwise-report">
+                                    <div class="table-responsive">
+                                        <div class="row kotitemreport_header">
+                                            <div
+                                                class="col-lg-1 col-md-1 col-md-2 form-group mb-0 amount-spent-select selecct-align">
+                                                <select class="form-control select_page"
+                                                    id="view_kotitemreport_per_page" data-id="kotitemreport"
+                                                    onChange="PosnicPro.setPerPage(this, 'Table');">
+                                                    <option value="5" selected>5</option>
+                                                    <option value="10">10</option>
+                                                    <option value="25">25</option>
+                                                    <option value="50">50</option>
+                                                    <option value="100">100</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <table id="view_kotitemreport" class="table table-borderless" cellspacing="0"
+                                            width="100%">
+                                            <div class="row">
+                                                <div class="col-12">
+                                                    <ul class="list-inline mb-0 float-right">
+                                                        <li class="list-inline-item">
+                                                            <a href="javascript:void(0);" data-module="report"
+                                                                data-access="read" id="kotitemreport_exportbtn"
+                                                                data-id="kotitemreportexport"
+                                                                onclick="PosnicPro.kotitemreport.exportItemwise(this);"
+                                                                class="sale_color dash_sale_count" data-toggle="tooltip"
+                                                                title="Export All To CSV">
+                                                                <i class="feather icon-share font-20"></i>
+                                                            </a>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                            <thead>
+                                                <tr>
+                                                    <th style="width:60px;">#</th>
+                                                    <th>Item Name</th>
+                                                    <th class="text-center" style="width:150px;">Sales Count</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody></tbody>
+                                        </table>
+                                        <div class="col-sm-6 col-md-12 col-lg-12" id="kotitemreport_img_hide" style="display:none;">
+                                            <img src="static/images/general/nodata.svg" class="img-fluid"
+                                                style="opacity: 0.6;width: 100%;height: 250px;" alt="">
+                                        </div>
+                                        <div class="kotitemreport_norecord col-sm-6 col-md-12 col-lg-12" style="display:none;"></div>
+                                        <div class="card m-b-30 kotitemreport_header">
+                                            <div class="card-body ecommerce-pagination">
+                                                <div class="row align-items-center">
+                                                    <div class="col-8">
+                                                        <div class="hint-text">
+                                                            Showing
+                                                            <b><span id="view_kotitemreport_page_total"></span></b>
+                                                            to
+                                                            <b><span
+                                                                    id="view_kotitemreport_page_perpage_total"></span></b>
+                                                            of
+                                                            <b><span id="view_kotitemreport_total"></span></b>
+                                                            entries
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-4">
+                                                        <nav aria-label="Page navigation example">
+                                                            <ul class="pagination mb-0">
+                                                                <button
+                                                                    class="btn previous page-item text-dark-gradient f-w-7"
+                                                                    data-id="kotitemreport"
+                                                                    onclick="PosnicPro.previousPage(this, 'Table')">
+                                                                    <i class="fa fa-angle-left font-20"></i>
+                                                                </button>
+                                                                <button
+                                                                    class="btn next page-item text-dark-gradient f-w-7"
+                                                                    data-id="kotitemreport"
+                                                                    onclick="PosnicPro.nextPage(this, 'Table')">
+                                                                    <i class="fa fa-angle-right font-20"></i>
+                                                                </button>
+                                                            </ul>
+                                                        </nav>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tab-pane fade" id="kot-discount" role="tabpanel"
+                                aria-labelledby="kot-discount-tab">
+                                <div class="card-body card-box no-padding loader-kot-discount-report">
+                                    <div class="table-responsive">
+                                        <div class="row kotdiscount_header">
+                                            <div
+                                                class="col-lg-1 col-md-1 col-md-2 form-group mb-0 amount-spent-select selecct-align">
+                                                <select class="form-control select_page"
+                                                    id="view_kotdiscountreport_per_page" data-id="kotdiscountreport"
+                                                    onChange="PosnicPro.setPerPage(this, 'Table');">
+                                                    <option value="5" selected>5</option>
+                                                    <option value="10">10</option>
+                                                    <option value="25">25</option>
+                                                    <option value="50">50</option>
+                                                    <option value="100">100</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <table id="view_kotdiscountreport" class="table table-bordered" cellspacing="0"
+                                            width="100%">
+                                            <div class="row">
+                                                <div class="col-12">
+                                                    <ul class="list-inline mb-0 float-right">
+                                                        <li class="list-inline-item">
+                                                            <a href="javascript:void(0);" data-module="report"
+                                                                data-access="read" id="kotdiscountreport_exportbtn"
+                                                                data-id="kotdiscountreportexport"
+                                                                onclick="PosnicPro.kotdiscountreport.exportDiscount(this);"
+                                                                class="sale_color dash_sale_count" data-toggle="tooltip"
+                                                                title="Export All To CSV">
+                                                                <i class="feather icon-share font-20"></i>
+                                                            </a>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                            <thead class="table-header">
+                                                <tr>
+                                                    <th style="width:60px;">#</th>
+                                                    <th>ID</th>
+                                                    <th>Date</th>
+                                                    <th class="text-center">Table</th>
+                                                    <th class="text-right">Total</th>
+                                                    <th class="text-right">Discount %</th>
+                                                    <th class="text-right">Discount (₹)</th>
+                                                    <th class="text-right">Discount Price</th>
+                                                    <th class="text-right">Net Amount</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody></tbody>
+                                        </table>
+                                        <div class="col-sm-6 col-md-12 col-lg-12" id="kotdiscountreport_img_hide" style="display:none;">
+                                            <img src="static/images/general/nodata.svg" class="img-fluid"
+                                                style="opacity: 0.6;width: 100%;height: 250px;" alt="">
+                                        </div>
+                                        <div class="kotdiscountreport_norecord col-sm-6 col-md-12 col-lg-12" style="display:none;"></div>
+                                        <div class="card m-b-30 kotdiscount_header mt-3 border-0">
+                                            <div class="card-body ecommerce-pagination">
+                                                <div class="row align-items-center">
+                                                    <div class="col-8">
+                                                        <div class="hint-text">
+                                                            Showing
+                                                            <b><span id="view_kotdiscountreport_page_total"></span></b>
+                                                            to
+                                                            <b><span
+                                                                    id="view_kotdiscountreport_page_perpage_total"></span></b>
+                                                            of
+                                                            <b><span id="view_kotdiscountreport_total"></span></b>
+                                                            entries
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-4">
+                                                        <nav aria-label="Page navigation example">
+                                                            <ul class="pagination mb-0">
+                                                                <button
+                                                                    class="btn previous page-item text-dark-gradient f-w-7"
+                                                                    data-id="kotdiscountreport"
+                                                                    onclick="PosnicPro.previousPage(this, 'Table')">
+                                                                    <i class="fa fa-angle-left font-20"></i>
+                                                                </button>
+                                                                <button
+                                                                    class="btn next page-item text-dark-gradient f-w-7"
+                                                                    data-id="kotdiscountreport"
+                                                                    onclick="PosnicPro.nextPage(this, 'Table')">
+                                                                    <i class="fa fa-angle-right font-20"></i>
+                                                                </button>
+                                                            </ul>
+                                                        </nav>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tab-pane fade" id="kot-cancellation" role="tabpanel"
+                                aria-labelledby="kot-cancellation-tab">
+                                <div class="card-body card-box no-padding loader-kot-cancellation">
+                                    <div class="table-responsive">
+                                        <div class="row kotcancellation_header">
+                                            <div
+                                                class="col-lg-1 col-md-1 col-md-2 form-group mb-0 amount-spent-select selecct-align">
+                                                <select class="form-control select_page"
+                                                    id="view_kotcancellation_per_page" data-id="kotcancellation"
+                                                    onChange="PosnicPro.setPerPage(this, 'Table');">
+                                                    <option value="5" selected>5</option>
+                                                    <option value="10">10</option>
+                                                    <option value="25">25</option>
+                                                    <option value="50">50</option>
+                                                    <option value="100">100</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <table id="view_kotcancellation" class="table table-borderless" cellspacing="0"
+                                            width="100%">
+                                            <div class="row">
+                                                <div class="col-12">
+                                                    <ul class="list-inline mb-0 float-right">
+                                                        <li class="list-inline-item">
+                                                            <a href="javascript:void(0);" data-module="report"
+                                                                data-access="read" id="kotcancellation_exportbtn"
+                                                                data-id="kotcancellationexport"
+                                                                onclick="PosnicPro.kotitemreport.exportCancellation(this);"
+                                                                class="sale_color dash_sale_count" data-toggle="tooltip"
+                                                                title="Export All To CSV">
+                                                                <i class="feather icon-share font-20"></i>
+                                                            </a>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                            <thead>
+                                                <tr>
+                                                    <th style="width:60px;">#</th>
+                                                    <th>Table No</th>
+                                                    <th>Item Name</th>
+                                                    <th class="text-center">Qty</th>
+                                                    <th class="text-right">Amount</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody></tbody>
+                                        </table>
+                                        <div class="col-sm-6 col-md-12 col-lg-12" id="kotcancellation_img_hide" style="display:none;">
+                                            <img src="static/images/general/nodata.svg" class="img-fluid"
+                                                style="opacity: 0.6;width: 100%;height: 250px;" alt="">
+                                        </div>
+                                        <div class="kotcancellation_norecord col-sm-6 col-md-12 col-lg-12" style="display:none;"></div>
+                                        <div class="card m-b-30 kotcancellation_header mt-3 border-0">
+                                            <div class="card-body ecommerce-pagination">
+                                                <div class="row align-items-center">
+                                                    <div class="col-8">
+                                                        <div class="hint-text">
+                                                            Showing
+                                                            <b><span id="view_kotcancellation_page_total"></span></b>
+                                                            to
+                                                            <b><span
+                                                                    id="view_kotcancellation_page_perpage_total"></span></b>
+                                                            of
+                                                            <b><span id="view_kotcancellation_total"></span></b>
+                                                            entries
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-4">
+                                                        <nav aria-label="Page navigation example">
+                                                            <ul class="pagination mb-0">
+                                                                <button
+                                                                    class="btn previous page-item text-dark-gradient f-w-7"
+                                                                    data-id="kotcancellation"
+                                                                    onclick="PosnicPro.previousPage(this, 'Table')">
+                                                                    <i class="fa fa-angle-left font-20"></i>
+                                                                </button>
+                                                                <button
+                                                                    class="btn next page-item text-dark-gradient f-w-7"
+                                                                    data-id="kotcancellation"
+                                                                    onclick="PosnicPro.nextPage(this, 'Table')">
+                                                                    <i class="fa fa-angle-right font-20"></i>
+                                                                </button>
+                                                            </ul>
+                                                        </nav>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tab-pane fade" id="kot-open-item" role="tabpanel"
+                                aria-labelledby="kot-open-item-tab">
+                                <div class="card-body card-box no-padding loader-kot-openitem-report">
+                                    <div class="table-responsive">
+                                        <div class="row kotopenitemreport_header">
+                                            <div
+                                                class="col-lg-1 col-md-1 col-md-2 form-group mb-0 amount-spent-select selecct-align">
+                                                <select class="form-control select_page"
+                                                    id="view_kotopenitemreport_per_page" data-id="kotopenitemreport"
+                                                    onChange="PosnicPro.setPerPage(this, 'Table');">
+                                                    <option value="5" selected>5</option>
+                                                    <option value="10">10</option>
+                                                    <option value="25">25</option>
+                                                    <option value="50">50</option>
+                                                    <option value="100">100</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <table id="view_kotopenitemreport" class="table table-borderless"
+                                            cellspacing="0" width="100%">
+                                            <div class="row">
+                                                <div class="col-12">
+                                                    <ul class="list-inline mb-0 float-right">
+                                                        <li class="list-inline-item">
+                                                            <a href="javascript:void(0);" data-module="report"
+                                                                data-access="read" id="kotopenitem_exportbtn"
+                                                                data-id="kotopenitemexport"
+                                                                onclick="PosnicPro.kotopenitemreport.exportOpenItem(this);"
+                                                                class="sale_color dash_sale_count" data-toggle="tooltip"
+                                                                title="Export All To CSV">
+                                                                <i class="feather icon-share font-20"></i>
+                                                            </a>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                            <thead>
+                                                <tr>
+                                                    <th style="width:60px;">#</th>
+                                                    <th>Item Name</th>
+                                                    <th class="text-center">Qty</th>
+                                                    <th class="text-right">Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody></tbody>
+                                        </table>
+                                        <div class="col-sm-6 col-md-12 col-lg-12" id="kotopenitemreport_img_hide" style="display:none;">
+                                            <img src="static/images/general/nodata.svg" class="img-fluid"
+                                                style="opacity: 0.6;width: 100%;height: 250px;" alt="">
+                                        </div>
+                                        <div class="kotopenitemreport_norecord col-sm-6 col-md-12 col-lg-12" style="display:none;"></div>
+                                        <div class="card m-b-30 kotopenitemreport_header">
+                                            <div class="card-body ecommerce-pagination">
+                                                <div class="row align-items-center">
+                                                    <div class="col-8">
+                                                        <div class="hint-text">
+                                                            Showing <b><span
+                                                                    id="view_kotopenitemreport_page_total"></span></b>
+                                                            to <b><span
+                                                                    id="view_kotopenitemreport_page_perpage_total"></span></b>
+                                                            of <b><span id="view_kotopenitemreport_total"></span></b>
+                                                            entries
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-4">
+                                                        <nav aria-label="Page navigation example">
+                                                            <ul class="pagination mb-0">
+                                                                <button
+                                                                    class="btn previous page-item text-dark-gradient f-w-7"
+                                                                    data-id="kotopenitemreport"
+                                                                    onclick="PosnicPro.previousPage(this, 'Table')">
+                                                                    <i class="fa fa-angle-left font-20"></i>
+                                                                </button>
+                                                                <button
+                                                                    class="btn next page-item text-dark-gradient f-w-7"
+                                                                    data-id="kotopenitemreport"
+                                                                    onclick="PosnicPro.nextPage(this, 'Table')">
+                                                                    <i class="fa fa-angle-right font-20"></i>
+                                                                </button>
+                                                            </ul>
+                                                        </nav>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tab-pane fade" id="kot-tablewise" role="tabpanel"
+                                aria-labelledby="kot-tablewise-tab">
+                                <div class="card-body card-box no-padding loader-kot-tablewise-report">
+                                    <div class="row" id="kot-tablewise-layout">
+                                     <div class="col-md-12" id="kot-tablewise-right"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,49 @@
+# Line endings, settled once, so a contributor on Linux and one on Windows do
+# not hand each other diffs where every line changed.
+#
+# Written after a session where nearly every commit carried "LF will be replaced
+# by CRLF" warnings for files nobody had touched.
+* text=auto eol=lf
+
+# Windows needs CRLF in these or they misbehave when run.
+*.bat  text eol=crlf
+*.cmd  text eol=crlf
+*.ps1  text eol=crlf
+
+# Binary, so git never tries to normalise or diff them as text.
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+*.ttf  binary
+*.eot  binary
+*.otf  binary
+*.pdf  binary
+*.zip  binary
+*.exe  binary
+*.dll  binary
+*.node binary
+*.apk  binary
+
+# Generated: collapsed in pull requests, so a lockfile bump does not bury the
+# change it belongs to. Still diffable with --text when it matters.
+package-lock.json  linguist-generated=true -diff
+docs/openapi.json  linguist-generated=true
+
+# Not the project's own code. Excluded from the language statistics so the
+# repository is not reported as being mostly somebody else's plugins.
+frontend/static/style/icons/**   linguist-vendored=true
+frontend/static/style/plugins/** linguist-vendored=true
+frontend/static/script/js/plugins/** linguist-vendored=true
+builds/cdn-frontend/**           linguist-generated=true
+
+# `git archive` builds a clean tarball from tracked content only, which is the
+# safe way to produce a source archive. These are excluded from it as well:
+# they are development scaffolding, not part of a release.
+/docs/*AUDIT*.md   export-ignore
+/docs/*REPORT*.md  export-ignore
+/.github           export-ignore

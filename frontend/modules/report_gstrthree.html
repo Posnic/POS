@@ -1,0 +1,370 @@
+<div class="vertical-layout page_loader" id="gstr_three" style="display: none">
+    <!-- Start Containerbar -->
+    <div id="containerbar">
+        <!-- Start Breadcrumbbar -->
+        <div class="breadcrumbbar crumbbar_padding">
+
+            <!--  filter-->            
+            <div class="row align-items-center">
+                <div class="col-lg-1 col-xl-1">
+                    <h4 class="page-title break_title">GSTR3B</h4>
+                </div>                    
+                <div class="col-lg-3 col-xl-3">
+                    <div class="input-group">
+                        <div class="input-group-append">
+                            <span class="input-group-text text-primary">
+                                From
+                            </span>
+                        </div>
+                        <input type="text" id="gst_form_three_daterange_one" class="form-control" />
+                    </div>
+                </div> 
+                <div class="col-lg-3 col-xl-3">
+                    <div class="input-group">
+                        <div class="input-group-append">
+                            <span class="input-group-text text-primary">
+                                To
+                            </span>
+                        </div>
+                        <input type="text" id="gst_form_three_daterange_two" class="form-control" />
+                    </div>
+                </div>                
+                <div class="col-md-1 col-lg-1 ">
+                    <button type="button" class="btn btn-primary-rgba" onclick="PosnicPro.gstrThree.gstthreereportTable();">
+                        <lang class="lang_filter_title">Apply</lang>
+                    </button>
+                </div>
+                <div class="col-lg-2 col-xl-2 float-right">
+                    <!-- <button type="button" class="btn btn-round btn-primary-rgba adjuce_left" data-toggle="tooltip" title="xls"
+                            data-id="gstr_three" onclick="PosnicPro.gstrXls(this, 'GSTR3');">
+                        <i class="feather icon-file-text" aria-hidden="true"></i>
+                    </button> -->
+
+                    <button type="button" class="btn btn-round btn-primary-rgba adjuce_left" data-toggle="tooltip" title="json"
+                            data-id="gstr_jsonone" onclick="PosnicPro.gstrThree.gstrJson();">
+                        <i class="feather icon-file-text" aria-hidden="true"></i>
+                    </button>
+                </div>  
+            </div>
+        </div>
+    </div>
+
+    <!-- Start Contentbar -->
+    <div class="contentbar" id="gstr3">
+        <!-- Start row -->
+        <div class="row"> 
+            <div class="col-md-12 col-lg-12 col-xl-12 m-t-10">
+                <div class="card m-b-30 loader-gstr-three">
+                    <div class="card-body">
+
+                        <div class="table-responsive" style="font-size: 14px;">
+                            <h2 class="m-t-20 m-b-20 text-center">GSTR 3B Report</h2>
+                            <table class="col-6 float-right table table-bordered table-bordered-padding m-t-50 m-b-50">
+                                <tbody>
+                                    <tr>
+                                        <th>Year</th>
+                                        <td><span class="from-year"></span></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Month</th>
+                                        <td><span class="from-month"></span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <table class="table table-bordered table-bordered-padding m-t-50 m-b-50">
+                                <tbody>
+
+
+                                    <tr>
+                                        <th width="5%">1.</th>
+                                        <th width="5%"></th>
+                                        <th width="40%">GSTIN</th>
+                                        <td><span class="company_gstin"></span></td>
+                                    </tr>
+                                    <tr>
+                                        <th width="5%">2.</th>
+                                        <th width="5%">(a)</th>
+                                        <th width="40%">Legal name of the registered person</th>
+                                        <td><span class="legal-name"></span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+
+                            <table class="table table-bordered table-bordered-padding outward_sales gstr_returnfill_nine" cellspacing="0"
+                                   width="100%">
+
+
+                                <thead>
+                                    <tr>
+                                        <th class="caption_style" colspan="6">3.1 Details of outward supplies and inward supplies liable to reverse charge</th>
+                                    </tr>
+                                    <tr>
+                                        <th class="text-center">Nature Of Supplies</th>
+                                        <th class="text-center"><span>Total Taxable Value</span></th>
+                                        <th class="text-center"><span>Integrated Tax</span></th>
+                                        <th class="text-center"><span>Central Tax</span></th>
+                                        <th class="text-center"><span>State/UT Tax</span></th>
+                                        <th class="text-center"><span>Cess</span></th>
+                                    </tr>
+                                    <tr class="btn-primary-rgba">
+                                        <th class="text-center">1</th>
+                                        <th class="text-center">2</th>
+                                        <th class="text-center">3</th>
+                                        <th class="text-center">4</th>
+                                        <th class="text-center">5</th>
+                                        <th class="text-center">6</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                     <tbody id="gstrthree_sale_outward">
+                                    <tr>
+                                        <th>(a) Outward taxable supplies (other than zero rated, nil rated and exempted)</th> 
+                                        <td  class="text-right" id="saletax_amount"></td>
+                                        <td class="text-right" id="sale_igst"></td> 
+                                      <td class="text-right" id="sale_cgst"></td>
+                                        <td class="text-right" id="sale_sgst"></td> 
+                                        <td class="text-right" id="sale_cess"></td>
+                                    </tr>
+                                     </tbody>
+                                    <tr>
+                                        <th>(b) Outward taxable supplies (zero rated)</th> 
+                                        <td></td>
+                                        <td></td> 
+                                        <td></td>
+                                        <td></td> 
+                                        <td></td>
+                                    </tr>
+                                      <tbody id="gstrthree_sale_nilrate">
+                                    <tr>
+                                       
+                                        <th>(c) Other outward supplies (nil rated, exempted)</th> 
+                                        <td  class="text-right" id="taxnil_amount"></td>
+                                        <td class="text-right" id="taxnil_igst"></td> 
+                                        <td class="text-right" id="taxnil_cgst"></td>
+                                        <td class="text-right" id="taxnil_sgst"></td> 
+                                        <td class="text-right" id="taxnil_cess"></td>
+                           
+                                    </tr>
+                                     </tbody>
+                                    <tr>
+                                        <th>(d) Inward supplies (liable to reverse charge)</th> 
+                                        <td></td>
+                                        <td></td> 
+                                        <td></td>
+                                        <td></td> 
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <th>(e) Non-GST outward supplies</th> 
+                                        <td></td>
+                                        <td></td> 
+                                        <td></td>
+                                        <td></td> 
+                                        <td></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <table class="table table-bordered table-bordered-padding interstate_sale_three gstr_returnfill_nine" cellspacing="0"
+                                   width="100%">
+                                <thead>
+                                    <tr>
+                                        <th class="caption_style" colspan="6">3.2 Of the Supplies shown in 3.1 (a) above, details of inter-State supplies made to unregistered persons, composition taxable and UIN holders</th>
+                                    </tr>
+                                    <tr>
+                                        <th class="text-center"></th>
+                                        <th class="text-center"><span>Place Of Supply (State/UT)</span></th>
+                                        <th class="text-center"><span>Total Taxable Value</span></th>
+                                        <th class="text-center"><span>Amount Of Integrated Tax</span></th>
+                                    </tr>
+                                    <tr class="btn-primary-rgba">
+                                        <th class="text-center">1</th>
+                                        <th class="text-center">2</th>
+                                        <th class="text-center">3</th>
+                                        <th class="text-center">4</th>
+                                    </tr>
+                                </thead>
+                                <thead>
+                                <th class="text-center" >Supplies Made To Unregistered Persons</th>
+                                </thead>
+                                <tbody>
+
+                                <tbody id="gstrthree_sale_interstate_sales"></tbody>
+                                <thead class="text-center">
+                                <th class="text-center" >Supplies made to Composition Taxable Persons</th>
+                                </thead>
+                                <tbody id="gstrthree_sale_interstate_composite"></tbody>
+                               
+                                <tr>
+                                    <th>Supplies made to UIN holders</th> 
+                                    <td></td>
+                                    <td></td> 
+                                    <td></td>
+                                </tr>                                    
+                                </tbody>
+                            </table>
+
+                            <table class="table table-bordered table-bordered-padding purchase_info_three gstr_returnfill_nine" cellspacing="0"
+                                   width="100%">
+                                <thead>
+                                    <tr>
+                                        <th class="caption_style" colspan="6">4. Details of eligible ITC (Input Tax Credit)</th>
+                                    </tr>
+
+                                    <tr>
+                                        <th class="text-center">Details</th>
+                                        <th class="text-center"><span>Integrated Tax</span></th>
+                                        <th class="text-center"><span>Central Tax</span></th>
+                                        <th class="text-center"><span>State/UT Tax</span></th>
+                                        <th class="text-center"><span>Cess</span></th>
+                                    </tr>
+                                    <tr class="btn-primary-rgba">
+                                        <th class="text-center">1</th>
+                                        <th class="text-center">2</th>
+                                        <th class="text-center">3</th>
+                                        <th class="text-center">4</th>
+                                        <th class="text-center">5</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="btn-secondary-rgba">
+                                        <th>(A) ITC Available (whether in full or part)</th> 
+                                        <td></td>
+                                        <td></td> 
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <th><span style="padding-right:30px"></span>(1) Import of goods</th> 
+                                        <td></td>
+                                        <td></td> 
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <th><span style="padding-right:30px"></span>(2) Import of services</th> 
+                                        <td></td>
+                                        <td></td> 
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <th><span style="padding-right:30px"></span>(3) Inward supplies liable to reverse charge (other than 1 & 2 above)</th> 
+                                        <td></td>
+                                        <td></td> 
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <th><span style="padding-right:30px"></span>(4) Inward supplies from ISD</th> 
+                                        <td></td>
+                                        <td></td> 
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                   <tbody id="purchase_detail_total"> 
+                                    <tr>
+                                        <th><span style="padding-right:30px"></span>(5) All other ITC</th> 
+                                        <td class="text-right" id="purchase_igst"></td> 
+                                        <td class="text-right" id="purchase_cgst"></td>
+                                        <td class="text-right" id="purchase_sgst"></td> 
+                                        <td class="text-right" id="purchase_cess"></td>
+                                    </tr>
+                                   </tbody>
+                                    <tr class="btn-secondary-rgba">
+                                        <th>(B) ITC Reversed</th> 
+                                        <td></td>
+                                        <td></td> 
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <th><span style="padding-right:30px"></span>(1) As per rules 42 & 43 of CGST Rules</th> 
+                                        <td></td>
+                                        <td></td> 
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <th><span style="padding-right:30px"></span>(2) Others</th> 
+                                        <td></td>
+                                        <td></td> 
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                     <tbody id="purchase_net_itc"> 
+                                    <tr class="btn-secondary-rgba">
+                                        <th>(C) Net ITC Available (A) - (B)</th> 
+                                        <td class="text-right" id="netitc_igst"></td> 
+                                        <td class="text-right" id="netitc_cgst"></td>
+                                        <td class="text-right" id="netitc_sgst"></td> 
+                                        <td class="text-right" id="netitc_cess"></td>
+                                    </tr> 
+                                     </tbody>
+                                    <tr class="btn-secondary-rgba">
+                                        <th>(D) Ineligible ITC</th> 
+                                        <td></td>
+                                        <td></td> 
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <th><span style="padding-right:30px"></span>(1) As per section 17(5)</th> 
+                                        <td></td>
+                                        <td></td> 
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <th><span style="padding-right:30px"></span>(2) Others</th> 
+                                        <td></td>
+                                        <td></td> 
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <table class="table table-bordered table-bordered-padding inter_intra_sales gstr_returnfill_nine" cellspacing="0"
+                                   width="100%">
+                                <thead>
+                                    <tr>
+                                        <th class="caption_style" colspan="6">5. Value of exempt, nil-rated and non-GST inward supplies</th>
+                                    </tr>
+                                    <tr>
+                                        <th class="text-center">Nature Of Supplies</th>
+                                        <th class="text-center"><span>Inter-State Supplies</span></th>
+                                        <th class="text-center"><span>Intra-State Supplies</span></th>
+                                    </tr>
+                                    <tr class="btn-primary-rgba">
+                                        <th class="text-center">1</th>
+                                        <th class="text-center">2</th>
+                                        <th class="text-center">3</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="inter_intra_sale_info">
+                                    <tr>
+                                        <th>From a supplier under composition scheme, Exempt and Nil rated supply</th> 
+                                        <td class="text-right" id="interstate_value"></td>
+                                        <td class="text-right" id="intrastate_value"></td> 
+                                    </tr>
+                                    </tbody>
+                                    <tr>
+                                        <th>Non GST supply</th> 
+                                        <td></td>
+                                        <td></td> 
+                                    </tr>                                    
+                                
+                            </table>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+<!--             End col -->
+        </div>
+    </div>
+
+</div>

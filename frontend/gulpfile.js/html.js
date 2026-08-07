@@ -1,0 +1,147 @@
+var fs = require('fs');
+var path = require('path')
+var minify = require('html-minifier').minify;
+const { publicDir, languages, langDir, s, isDir} = require('./config');
+const dir = process.cwd();
+const langContent = [];
+let html = [];
+let taskCount = 0;
+let skipLang = false;
+let pages = {};
+let htmls = [];
+
+function readLangJSON() {
+    languages.forEach(lang => {
+       if  (lang === 'en') {
+           return;
+       }
+       langContent[lang] = JSON.parse(fs.readFileSync(`${langDir}${s}${lang}.json`, 'utf8'));
+    });
+}
+
+function readPagesAndHtmls() {
+    const json = JSON.parse(fs.readFileSync(`pages_html_map.json`, 'utf8'));
+    pages = json.pages;
+    htmls = json.files;
+}
+
+function loadAllHtml() {
+    for (const [page, file] of Object.entries(pages)) {
+        taskCount = skipLang ? taskCount + 1 : taskCount + languages.length;
+        langReplace(file, file, file);
+    }
+
+    htmls.forEach(item => {
+        const split = item.split('/');
+        const dir = split[0];
+        const file = split[1];
+        const subItemUrl = item;
+        taskCount = skipLang ? taskCount + 1 : taskCount + languages.length;
+        langReplace(subItemUrl, dir, file);
+    });
+}
+
+function langReplace(url, dir, file) {
+    for (let lang of languages) {
+        // If Lang Skip We will not replace content
+        if (skipLang && lang !=='en') {
+            continue;
+        }
+        fs.readFile(url, 'utf8', function (err, data) {
+            let find = /<lang class="(.*?)">(.*?)<\/lang>/g;
+            if (lang === 'en') {
+                data = data.replace(find, '$2');
+            } else {
+                data = data.replace(find, (match, key) => {
+                    return langContent[lang][key];
+                });
+            }
+            html[lang] = html[lang] ? html[lang] : [];
+            if (dir === file) {
+                html[lang][file] = data;
+            } else {
+                html[lang][dir] = html[lang][dir] ? html[lang][dir] : [];
+                html[lang][dir][file] = data;
+            }
+            taskCount--;
+        });
+    }
+}
+
+function getLinkContent(data, lang) {
+    data = data.replace(/<link type='(.*?)' href='(.*?)' \/>/g, function (match, type, value) {
+        let dir = value.split('/');
+        let content = ''
+        if (type === 'directory') {
+            if (dir[1] && dir[1].length > 0) {
+                content = mergeDirectory(html[lang][dir[0]][dir[1]]);
+            } else {
+                content = mergeDirectory(html[lang][dir[0]]);
+            }
+        }
+        if (type === 'file') {
+            if (dir[2] && dir[2].length > 0 && dir[1] && dir[1].length > 0) {
+                content = html[lang][dir[0]][dir[1]][dir[2]];
+            } else if (dir[1] && dir[1].length > 0) {
+                content = html[lang][dir[0]][dir[1]];
+            } else {
+                content = html[lang][dir[0]];
+            }
+        }
+        return content;
+    });
+    return data;
+}
+
+
+function buildAllHtml(cb, skip) {
+    skipLang = skip;
+    if (!skipLang) {
+        readLangJSON(); // Loading All Language pairs into Memory
+    }
+    readPagesAndHtmls();
+    loadAllHtml(); // Loading All Html's into Memory and language replace
+    setInterval(function () {
+        // Disabled HTML minification for human readable output
+        let minifyOptions = {
+            minifyCSS: false,
+            minifyJS: false,
+            collapseWhitespace: false,
+            removeComments: false,
+            removeAttributeQuotes: false,
+            removeTagWhitespace: false
+        };
+        if (taskCount === 0) {
+            for (let lang of languages) {
+                if (skipLang && lang !=='en') {
+                    continue;
+                }
+                for (let item in html[lang]) {
+                    if (html[lang].hasOwnProperty(item) && typeof html[lang][item] === 'string') {
+                        let content = getLinkContent(html[lang][item], lang);
+                        // Keep HTML human readable - skip minification
+                        // content = minify(content, minifyOptions);
+                        if (!fs.existsSync(publicDir)) {
+                            fs.mkdirSync(publicDir, {recursive: true});
+                        }
+                        let fileName = lang === 'en' ? item : `${lang}_${item}`;
+                        fs.writeFileSync(`${publicDir}${s}${fileName}`, content, {encoding: 'utf8'})
+                    }
+                }
+
+            }
+            cb();
+            clearInterval(this);
+        }
+    }, 500);
+}
+
+function mergeDirectory(dir) {
+    let content = '';
+    for(let file in dir) {
+        content += dir[file];
+    }
+    return content;
+}
+
+exports.buildAllHtml = buildAllHtml;

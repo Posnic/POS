@@ -1,0 +1,45 @@
+.receive_footer{
+    padding-bottom: 10px !important;
+}
+.wallet-totalbox{
+    border: 1px solid rgba(0,0,0,0.03);
+    padding: 15px;
+    border-radius: 3px;
+
+}
+.td_pading{
+    padding:10px;
+}
+.receiving_file_name{
+    border: 1px solid #fff !important;
+}
+.btn-outline-prim{
+    color: #506fe4;
+    border-color: #506fe4;
+}
+
+.receiving_trash-hover-effect:hover{color:#f36270!important;cursor:pointer;-ms-transform:scale(2);-webkit-transform:scale(2);transform:scale(2)}.receiving-table-panel{height:370px!important;background:#fff;overflow-x:hidden;width:auto;border:1px solid #fff;margin-bottom:3px}span.suggestion-price{font-size:.830rem;margin-left: -60px;font-weight: 800;}.btn_size{width:100%}select{width:90px}textarea#receiving_add_payment_description,textarea#receiving_view_payment_description{min-height:40px}.receiving_page{margin-top:12px}#receiving_print_view{min-height:100px;max-height:150px}.tax-box-align{margin-top:20px}#receiving_discount_percentage{display:none;}#receiving_discount_amount{margin-top:-20px}.receiving_add_total_amount{font-size:20px}.receivingTotalCss{color:#f80;font-size:22px;font-weight:700}#receiving_view_view_receiving_table{min-height:480px;max-height:100%}#fullscreennewreceive{min-height:400px;max-height:400px!important}@media all and (display-mode:fullscreen){#fullscreennewreceive{min-height:550px!important;max-height:550px}.receiving_Reports{min-height:560px;max-height:100%;padding-top:70px}#receiving_view_view_receiving_table{min-height:620px;max-height:100%;padding-top:50px}#view_receivings_data_list{padding-top:40px}}
+
+
+.receiving-image-wrapper {
+	max-width:120px;
+	border: solid 1px #cbcbcb;
+	 background-color: #FFF;
+	 box-shadow: 0 0px 10px #cbcbcb;
+	-moz-box-shadow: 0 0px 10px #cbcbcb;
+	-webkit-box-shadow: 0 0px 10px #cbcbcb;
+	-webkit-border-radius: 10px;-moz-border-radius: 10px;border-radius: 10px;
+	text-align:center;
+	padding:10px;
+	font-family:Verdana, Geneva, sans-serif;
+	font-size:13px;
+	line-height:25px;
+	float:left;
+	margin-right:8px; 
+	margin-bottom:30px;
+	word-wrap: break-word;
+}
+.receiving-image-wrapper:hover{ text-decoration:none; color:#039;}
+
+.image_style{ width:100px; height:100px;-webkit-border-radius: 10px;-moz-border-radius: 10px;border-radius: 10px; border:0px solid;}
+.image_style img { width:100px; height:100px; border:0px solid;}

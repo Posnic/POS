@@ -1,0 +1,315 @@
+/*
+ * The lock screen.
+ *
+ * Built for a counter: a shop assistant reaching across a till with one hand,
+ * often a resistive touchscreen, often in daylight coming through a shop
+ * front. That decides nearly every value here - the key targets are 84px
+ * because a fingertip is about 45px and a hurried one is less accurate than a
+ * careful one; the contrast is high because the screen may be washed out; and
+ * nothing is placed near the edges of the screen, where a bezel and a
+ * mistouched taskbar live.
+ *
+ * It covers everything. A lock that leaves the till visible underneath is a
+ * screensaver, and invites someone to try to click past it.
+ */
+
+#posnic-lock {
+    position: fixed;
+    inset: 0;
+    z-index: 2147483000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+
+    /* Deep, slightly blue-black: reads as "put away" rather than "broken",
+       and keeps the keypad the brightest thing in the room. */
+    background: radial-gradient(120% 100% at 50% 0%, #1b2233 0%, #0d1017 60%, #080a0f 100%);
+    color: #eef1f7;
+
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+/*
+ * Three rows: clock, keypad, way out.
+ *
+ * They used to be a centred panel with the clock pinned to the top of the
+ * screen and the password link pinned to the corner - which is fine on a large
+ * screen and wrong on a middling one, because the panel is around 690px tall
+ * and the app opens smaller than that. The pinned things landed on the keypad.
+ *
+ * As rows they cannot overlap whatever the window does: the middle row takes
+ * the space the other two do not need, and scrolls if even that is not enough.
+ * Everything inside scales with the viewport (see the clamps below), so on a
+ * normal till it is the full-size keypad and on a small window it is a smaller
+ * one rather than a broken one.
+ */
+#posnic-lock.is-open {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    justify-items: center;
+    padding: clamp(10px, 2vh, 24px);
+    row-gap: clamp(4px, 1vh, 12px);
+}
+
+.lock-panel {
+    width: min(420px, calc(100vw - 32px));
+    max-height: 100%;
+    overflow-y: auto;
+    text-align: center;
+    padding: 4px 0;
+    align-self: center;
+}
+
+/* ---- who is unlocking ---- */
+
+.lock-brand {
+    height: clamp(24px, 4.5vh, 40px);
+    margin: 0 auto clamp(10px, 2.2vh, 22px);
+    display: block;
+    opacity: .9;
+}
+
+.lock-avatar {
+    width: clamp(52px, 9.5vh, 88px);
+    height: clamp(52px, 9.5vh, 88px);
+    margin: 0 auto clamp(8px, 1.5vh, 14px);
+    border-radius: 50%;
+    background: linear-gradient(160deg, #2f5fd0, #23407f);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    letter-spacing: .02em;
+    color: #fff;
+    box-shadow: 0 8px 28px rgba(47, 95, 208, .35);
+    overflow: hidden;
+    font-size: clamp(22px, 3.6vh, 34px);
+}
+.lock-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.lock-name {
+    font-size: clamp(17px, 2.6vh, 21px);
+    font-weight: 600;
+    margin: 0 0 4px;
+}
+
+.lock-hint {
+    font-size: 14px;
+    color: #97a1b5;
+    margin: 0 0 clamp(10px, 2.6vh, 26px);
+    min-height: 20px;
+}
+.lock-hint.is-error { color: #ff8a8a; }
+
+/* ---- the dots ---- */
+
+.lock-dots {
+    display: flex;
+    justify-content: center;
+    gap: 18px;
+    margin-bottom: clamp(12px, 3.4vh, 34px);
+    min-height: 18px;
+}
+
+.lock-dot {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    border: 2px solid #4a5468;
+    transition: transform .12s ease, background-color .12s ease, border-color .12s ease;
+}
+.lock-dot.is-filled {
+    background: #eef1f7;
+    border-color: #eef1f7;
+    transform: scale(1.14);
+}
+
+/* A wrong PIN shakes rather than announcing itself in red first: it is the
+   gesture people already read as "no", and it needs no reading time. */
+@keyframes lock-shake {
+    10%, 90% { transform: translateX(-2px); }
+    20%, 80% { transform: translateX(4px); }
+    30%, 50%, 70% { transform: translateX(-8px); }
+    40%, 60% { transform: translateX(8px); }
+}
+.lock-dots.is-wrong { animation: lock-shake .5s cubic-bezier(.36, .07, .19, .97); }
+.lock-dots.is-wrong .lock-dot { border-color: #ff8a8a; background: transparent; }
+
+@media (prefers-reduced-motion: reduce) {
+    .lock-dots.is-wrong { animation: none; }
+    .lock-dot { transition: none; }
+}
+
+/* ---- the keypad ---- */
+
+.lock-keys {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(7px, 1.7vh, 16px);
+    justify-items: center;
+    margin-bottom: clamp(8px, 2.6vh, 26px);
+}
+
+.lock-key {
+    width: clamp(54px, min(9.2vh, 19vw), 84px);
+    height: clamp(54px, min(9.2vh, 19vw), 84px);
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, .14);
+    background: rgba(255, 255, 255, .07);
+    color: #eef1f7;
+    font-size: clamp(19px, 3.4vh, 31px);
+    font-weight: 400;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* No transition on background: a press must register instantly, and an
+       eased highlight on a slow touchscreen reads as a missed tap. */
+    transition: transform .08s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.lock-key:hover { background: rgba(255, 255, 255, .13); }
+.lock-key:active, .lock-key.is-pressed {
+    background: rgba(255, 255, 255, .26);
+    transform: scale(.94);
+}
+.lock-key:focus-visible {
+    outline: 3px solid #7d9df0;
+    outline-offset: 3px;
+}
+
+/* The two utility keys carry no circle, so the digits stay the target the eye
+   lands on. */
+.lock-key.is-quiet {
+    background: none;
+    border-color: transparent;
+    font-size: 15px;
+    color: #97a1b5;
+}
+.lock-key.is-quiet:hover { background: rgba(255, 255, 255, .07); }
+
+.lock-key svg { width: 28px; height: 28px; fill: currentColor; }
+
+/* ---- the way out ---- */
+
+/*
+ * The way out lives in the bottom corner.
+ *
+ * It is the exception, not the alternative: a lock screen that offers the PIN
+ * and the password as two equal buttons in the middle invites the slower one,
+ * and the whole point of a four-digit PIN is that it is quicker than typing a
+ * password on a counter. In the corner it is findable by anyone who needs it
+ * and ignored by everyone who does not.
+ */
+.lock-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-end;
+
+    /* Its own row at the bottom, held to the right - a corner that cannot
+       land on the keypad, because it is not on the same layer as it. */
+    justify-self: end;
+    align-self: end;
+}
+
+/*
+ * Until somebody is clearly stuck. Three wrong PINs is not a fourth attempt
+ * away from working - it has been forgotten, or this is a colleague's till -
+ * so the corner stops being quiet and says where to go.
+ */
+.lock-link.is-suggested {
+    color: #eef1f7;
+    background: rgba(125, 157, 240, .18);
+    box-shadow: 0 0 0 1px rgba(125, 157, 240, .55);
+    animation: lock-nudge 1.4s ease-in-out 2;
+}
+
+@keyframes lock-nudge {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-3px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .lock-link.is-suggested { animation: none; }
+}
+
+/* Too narrow for a corner: centre it under the keypad instead. */
+@media (max-width: 520px) {
+    .lock-actions { justify-self: center; align-items: center; }
+}
+
+.lock-link {
+    background: none;
+    border: none;
+    color: #97a1b5;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 10px 16px;
+    border-radius: 8px;
+}
+.lock-link:hover { color: #eef1f7; background: rgba(255, 255, 255, .06); }
+.lock-link:focus-visible { outline: 2px solid #7d9df0; outline-offset: 2px; }
+
+.lock-clock {
+    /* A row of its own now. Pinned to the top of the screen it sat over the
+       panel as soon as the window was shorter than the panel is tall. */
+    text-align: center;
+    pointer-events: none;
+    padding-top: clamp(2px, 1.5vh, 20px);
+}
+.lock-time {
+    font-size: clamp(22px, 4.4vh, 40px);
+    font-weight: 200;
+    letter-spacing: -.01em;
+    font-variant-numeric: tabular-nums;
+    margin: 0;
+    color: #eef1f7;
+}
+.lock-date {
+    font-size: 14px;
+    color: #8590a5;
+    margin: 2px 0 0;
+}
+
+/*
+ * On a short window the clock goes, and only the clock.
+ *
+ * It used to also pin the avatar and the keys to fixed sizes, which was the
+ * first attempt at this overlap - and those fixed sizes now override the
+ * viewport-scaled ones above, which is worse than either on its own. The rows
+ * handle the overlap; the clamps handle the sizes; this only buys back the
+ * space the clock was using, because the time is the least useful thing on the
+ * screen to somebody trying to get into the till.
+ */
+@media (max-height: 720px) {
+    .lock-clock { display: none; }
+}
+
+/* ---- choosing between people ---- */
+
+.lock-users {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.lock-user {
+    background: rgba(255, 255, 255, .07);
+    border: 1px solid rgba(255, 255, 255, .14);
+    color: #eef1f7;
+    border-radius: 12px;
+    padding: 14px 18px;
+    font-size: 15px;
+    cursor: pointer;
+    min-width: 128px;
+    min-height: 56px;
+}
+.lock-user:hover { background: rgba(255, 255, 255, .13); }
+.lock-user:focus-visible { outline: 3px solid #7d9df0; outline-offset: 3px; }

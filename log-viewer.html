@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Application Log | Posnic</title>
+  <link rel="stylesheet" href="window-theme.css">
+  <script src="window-theme.js"></script>
+  <style>
+    /*
+      A log a shopkeeper can look at without being sent to Notepad.
+      "Open Log" handed the file to whatever the machine associates with .log -
+      Notepad on Windows, nothing at all on some Linux desktops - which put a
+      40,000 line file in front of somebody looking for the last thing that
+      went wrong. Here the newest lines are at the top, errors are visible at a
+      glance, and there is one button that copies what support actually needs.
+    */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f5f7fa;
+      color: #16233b; height: 100vh; display: flex; flex-direction: column; }
+    header { padding: 14px 18px; background: #fff; border-bottom: 1px solid #e3e9f1;
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    h1 { font-size: 16px; font-weight: 650; margin-right: auto; }
+    .btn { border: 1px solid #d5dde8; background: #fff; border-radius: 8px;
+      padding: 7px 13px; font-size: 13px; cursor: pointer; color: #16233b; }
+    .btn:hover { border-color: #3D85C6; color: #3D85C6; }
+    .btn.on { background: #e8f0fb; border-color: #3D85C6; color: #3D85C6; font-weight: 600; }
+    .btn.primary { background: #3D85C6; border-color: #3D85C6; color: #fff; }
+    input[type=search] { border: 1px solid #d5dde8; border-radius: 8px; padding: 7px 11px;
+      font-size: 13px; min-width: 190px; font-family: inherit; }
+    .meta { padding: 7px 18px; font-size: 12px; color: #5b6b82;
+      background: #fff; border-bottom: 1px solid #e3e9f1; }
+    #lines { flex: 1; overflow: auto; padding: 8px 0; }
+    .line { display: flex; gap: 10px; padding: 3px 18px; font-size: 12.5px;
+      font-family: ui-monospace, Consolas, monospace; white-space: pre-wrap;
+      word-break: break-word; border-left: 3px solid transparent; }
+    .line:hover { background: #eef3f9; }
+    .line .t { color: #8a97a8; flex: none; }
+    .line.error { background: #fef2f2; border-left-color: #dc2626; color: #991b1b; }
+    .line.warn  { background: #fffbeb; border-left-color: #f0a500; color: #92500a; }
+    .empty { padding: 40px; text-align: center; color: #5b6b82; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Application log</h1>
+    <input type="search" id="q" placeholder="Search…" autocomplete="off">
+    <button class="btn" id="fAll">All</button>
+    <button class="btn" id="fProblems">Problems only</button>
+    <button class="btn" id="copy">Copy for support</button>
+    <button class="btn" id="folder">Open folder</button>
+    <button class="btn primary" id="refresh">Refresh</button>
+  </header>
+  <div class="meta" id="meta">Loading…</div>
+  <div id="lines"><div class="empty">Loading…</div></div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    let ALL = [];
+    let problemsOnly = false;
+
+    /* A line's severity, from what the log actually writes. Anything that is
+       not clearly a problem is left plain rather than guessed at. */
+    function levelOf(text) {
+      if (/\[ERROR\]|✖|❌|\bERROR\b|failed|Error:/i.test(text)) return 'error';
+      if (/\[WARN\]|⚠|\bWARN(ING)?\b/i.test(text)) return 'warn';
+      return '';
+    }
+
+    /* Timestamps are written as [2026-08-07T10:02:10.283Z] at the start. */
+    function split(line) {
+      const m = /^\[([^\]]+)\]\s?(.*)$/.exec(line);
+      if (!m) return { time: '', rest: line };
+      const d = new Date(m[1]);
+      return { time: isNaN(d) ? m[1] : d.toLocaleTimeString(), rest: m[2] };
+    }
+
+    function render() {
+      const q = $('q').value.trim().toLowerCase();
+      const rows = ALL.filter((l) => {
+        if (problemsOnly && !levelOf(l)) return false;
+        return !q || l.toLowerCase().includes(q);
+      });
+
+      if (!rows.length) {
+        $('lines').innerHTML = '<div class="empty">Nothing matches.</div>';
+        return;
+      }
+
+      /* Newest first: somebody opening this is looking for the last thing that
+         happened, not the first. */
+      const frag = document.createDocumentFragment();
+      for (const line of rows.slice(-4000).reverse()) {
+        const { time, rest } = split(line);
+        const el = document.createElement('div');
+        el.className = 'line ' + levelOf(line);
+        const t = document.createElement('span');
+        t.className = 't';
+        t.textContent = time;
+        const b = document.createElement('span');
+        b.textContent = rest;          // textContent, never innerHTML
+        el.append(t, b);
+        frag.appendChild(el);
+      }
+      $('lines').replaceChildren(frag);
+    }
+
+    async function load() {
+      $('meta').textContent = 'Loading…';
+      try {
+        const r = await window.electronAPI.logs.read();
+        if (!r || !r.ok) throw new Error((r && r.error) || 'Could not read the log');
+        ALL = r.lines || [];
+        const errors = ALL.filter((l) => levelOf(l) === 'error').length;
+        const warns = ALL.filter((l) => levelOf(l) === 'warn').length;
+        $('meta').textContent =
+          `${ALL.length.toLocaleString()} lines · ${errors} errors · ${warns} warnings`
+          + (r.truncated ? ' · showing the most recent part of a large file' : '')
+          + ` · ${r.path}`;
+        render();
+      } catch (e) {
+        $('meta').textContent = e.message;
+        $('lines').innerHTML = '<div class="empty">' + e.message + '</div>';
+      }
+    }
+
+    $('q').oninput = render;
+    $('refresh').onclick = load;
+    $('fAll').onclick = () => { problemsOnly = false; $('fAll').classList.add('on'); $('fProblems').classList.remove('on'); render(); };
+    $('fProblems').onclick = () => { problemsOnly = true; $('fProblems').classList.add('on'); $('fAll').classList.remove('on'); render(); };
+    $('folder').onclick = () => window.electronAPI.logs.reveal();
+
+    /* The last 400 lines are what a support conversation needs; the whole file
+       is usually too large to paste and mostly not about the problem. */
+    $('copy').onclick = async () => {
+      const tail = ALL.slice(-400).join('\n');
+      await navigator.clipboard.writeText(tail);
+      $('copy').textContent = 'Copied';
+      setTimeout(() => { $('copy').textContent = 'Copy for support'; }, 1800);
+    };
+
+    $('fAll').classList.add('on');
+    load();
+  </script>
+</body>
+</html>

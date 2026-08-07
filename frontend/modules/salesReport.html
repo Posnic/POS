@@ -1,0 +1,695 @@
+<div class="vertical-layout page_loader" id="salereport_new" style="display: none">
+    <!-- Start Containerbar -->
+    <div id="containerbar">
+        <!-- Start Breadcrumbbar -->
+        <div class="breadcrumbbar crumbbar_padding">
+
+            <!--  filter-->
+            <div class="row align-items-center row_filter hide-sale-filter">
+                <div class="col-lg-2 col-xl-2">
+                    <h4 class="page-title break_title">
+                        <lang class="lang_salereport">Sale Reports</lang>
+                    </h4>
+                </div>
+                <div class="col-md-9 col-lg-9 show-button-action"></div>
+
+                <div class="col-lg-2 col-xl-2 hide-button-action tb_filter" style="display:none;">
+                    <div class="form-control pull-right daterange-timepicker-all daterange-style date-align view_sale_report_daterange"
+                        id="view_sale_report_daterange">
+                        <i class="feather icon-calendarfeather icon-calendar"></i>&nbsp;
+                        <span></span>
+                    </div>
+                </div>
+                <div class="col-lg-5 col-xl-5 hide-button-action tb_filter" style="display:none;">
+                    <select class="floating-input select2 load-branch display-current-branch sale_branch_value"
+                        multiple="multiple" data-placeholder="Select Branch" name="sale_branch_value[]"
+                        id="sale_branch_value">
+                        <option class="allbranch_name" value=''>All</option>
+                    </select>
+                </div>
+                <div class="col-md-2 col-lg-2 adjuce_left hide-button-action" style="display:none;">
+                    <button type="button" class="btn btn-danger-rgba" data-id="sale"
+                        onclick="PosnicPro.dateRangeAllfilterClear(this)">
+                        <lang class="lang_clear_title">Clear</lang>
+                    </button>
+                    <button type="button" class="btn btn-primary-rgba" id="change_sale_view" data-id='tableView'
+                        onclick="PosnicPro.saleroot.viewPage(this);">
+                        <lang class="lang_filter_title">Apply</lang>
+                    </button>
+                </div>
+                <div class="col-lg-1 col-xl-1 tb_widget">
+                    <div class="widgetbar">
+                        <button type="button"
+                            class="btn btn-round btn-primary-rgba click-action-button adjuce_left add_new_tooltip"
+                            data-toggle="tooltip" title="Filter">
+                            <i class="feather icon-filter" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-2 col-xl-2"></div>
+                <div class="col-md-6 col-xl-10 mobile-hide tb_date_range">
+                    <p>
+                        <span class="badge badge-secondary-inverse hide_date_filetr" style="display:none;">
+                            <span class="view_salesreport_date_filter_value"></span>
+                        </span>
+                    </p>
+                </div>
+
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Start Contentbar -->
+    <div class="contentbar">
+        <!-- Start row -->
+        <div class="row">
+            <div class="col-md-12 col-lg-12 col-xl-12">
+                <div class="card m-b-30">
+                    <div class="card-body">
+                        <ul class="nav nav-tabs custom-tab-line mb-3" id="defaultTabLine" role="tablist">
+                            <li class="nav-item">
+                                <a class="nav-link active report_tab_font" id="sale-view-tab-line" data-toggle="tab"
+                                    href="#sale-view-line" role="tab" aria-controls="sale-view-line"
+                                    aria-selected="true" onClick="PosnicPro.salereport.saleTableTabClick();">
+                                    <lang class="lang_salereport_title"> Detailed Sales </lang>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link report_tab_font" id="instant-tab-line" data-toggle="tab"
+                                    href="#instant-line" role="tab" aria-controls="instant-line" aria-selected="false"
+                                    onClick="PosnicPro.instantreport.instantTableTabClick();">
+                                    <lang class="lang_instancesale_title">Instant Sales</lang>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link report_tab_font" id="sale-summary-tab-line" data-toggle="tab"
+                                    href="#sale-summary-line" role="tab" aria-controls="sale-summary-line"
+                                    aria-selected="false" onClick="PosnicPro.salesummaryreport.saleSummaryTabClick();">
+                                    <lang class="lang_summaryreport_title">Summary Details</lang>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link report_tab_font" id="sale-graph-tab-line" data-toggle="tab"
+                                    href="#sale-graph-line" role="tab" aria-controls="sale-graph-line"
+                                    aria-selected="false" onClick="PosnicPro.salegraphicalreport.saleGraphTabClick();">
+                                    <lang class="lang_graphicreport_title">Graphical Details</lang>
+                                </a>
+                            </li>
+                        </ul>
+                        <div class="tab-content" id="defaultTabContentLine">
+                            <div id="sales_upgrade" class="text-center mt-4">
+                                <p class="font-weight-bold">You're currently on the Free Plan. Upgrade to Premium for
+                                    full access to all features.</p>
+                                <a href="javascript:void(0)"
+                                    onclick="return PosnicPro.users.accountGoToWebsiteURL(this);"
+                                    class="btn btn-primary">Upgrade to Premium</a>
+                            </div>
+                            <div class="tab-pane fade show active" id="sale-view-line" role="tabpanel"
+                                aria-labelledby="sale-view-tab-line">
+                                <div class="row reportsale_header">
+                                    <div
+                                        class="col-lg-1 col-md-1 col-md-2 form-group mb-0 amount-spent-select selecct-align">
+                                        <select class="form-control select_page" id="view_salereport_per_page"
+                                            data-id="salereport" onChange="PosnicPro.setPerPage(this, 'Table');">
+                                            <option value="5" selected>5</option>
+                                            <option value="10">10</option>
+                                            <option value="25">25</option>
+                                            <option value="50">50</option>
+                                            <option value="100">100</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-lg-11 col-md-11">
+                                        <div class="email-rightbar">
+                                            <div class="card-header header_icon">
+                                                <ul class="list-inline mb-0 pl-0 float-right">
+                                                    <li class="list-inline-item email_320">
+                                                        <a href="javascript:void(0);" data-module="report"
+                                                            data-access="read" data-id="salereport"
+                                                            onclick="PosnicPro.refreshReportDatatable(this);"
+                                                            class="add_new_tooltip" data-toggle="tooltip"
+                                                            title="Refresh">
+                                                            <i class="feather icon-refresh-cw font-20"></i>
+                                                        </a>
+                                                    </li>
+                                                    <li class="list-inline-item email_320">
+                                                        <a href="javascript:void(0);" data-module="report"
+                                                            data-access="read" id="salereport_exportbtn"
+                                                            data-id="salereportexport"
+                                                            onclick="PosnicPro.salereport.viewReportSaleExport(this);"
+                                                            class="sale_color dash_sale_count" data-toggle="tooltip"
+                                                            title="Export All To CSV">
+                                                            <i class="feather icon-share font-20"></i>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="detailed-report-sales loader-sale-report">
+                                    <div class="card-body card-box no-padding">
+                                        <!-- Start table -->
+                                        <div class="table-responsive">
+                                            <table id="view_salereport" class="table table-borderless" cellspacing="0"
+                                                width="100%">
+                                                <div class="col-sm-6 col-md-12 col-lg-12" id="reportsale_img_hide"
+                                                    style="display:none;">
+                                                    <img src="static/images/general/nodata.svg" class="img-fluid"
+                                                        style="opacity: 0.6;width: 100%;height: 250px;" alt="">
+                                                </div>
+                                                <div class="reportsale_norecord col-sm-6 col-md-12 col-lg-12"
+                                                    style="display:none;">
+                                                </div>
+
+                                                <thead class="table-header reportsale_header">
+                                                    <tr>
+                                                        <th></th>
+                                                        <th>#</th>
+                                                        <th>Id</th>
+                                                        <th>Date</th>
+                                                        <th>Customer</th>
+                                                        <th class="text-right">Customer Phone</th>
+                                                        <th class="text-center">No.of Item</th>
+                                                        <th class="text-right">Extra Discount</th>
+                                                        <th class="text-right">Total</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <!-- End table -->
+                                    </div>
+                                </div>
+
+                                <div class="card m-b-30 reportsale_header">
+                                    <div class="card-body ecommerce-pagination">
+                                        <div class="row align-items-center">
+                                            <div class="col-8">
+                                                <div class="hint-text">
+                                                    Showing
+                                                    <b><span id="view_salereport_page_total"></span></b>
+                                                    to
+                                                    <b><span id="view_salereport_page_perpage_total"></span></b>
+                                                    of
+                                                    <b><span id="view_salereport_total"></span></b>
+                                                    entries
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <nav aria-label="Page navigation example">
+                                                    <ul class="pagination mb-0">
+                                                        <button class="btn previous page-item text-dark-gradient f-w-7"
+                                                            data-id="salereport"
+                                                            onclick="PosnicPro.previousPage(this, 'Table')"> <i
+                                                                class="fa fa-angle-left font-20"></i> </button>
+                                                        <button class="btn next page-item text-dark-gradient f-w-7"
+                                                            data-id="salereport"
+                                                            onclick="PosnicPro.nextPage(this, 'Table')"> <i
+                                                                class="fa fa-angle-right font-20"></i> </button>
+                                                    </ul>
+                                                </nav>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="tab-pane fade" id="instant-line" role="tabpanel"
+                                aria-labelledby="instant-tab-line">
+                                <div class="row reportsale_instheader">
+                                    <div class="col-lg-1 col-md-1 form-group mb-0 amount-spent-select selecct-align">
+                                        <select class="form-control select_page" id="view_instantreport_per_page"
+                                            data-id="instantreport" onChange="PosnicPro.setPerPage(this, 'Table');">
+                                            <option value="5" selected>5</option>
+                                            <option value="10">10</option>
+                                            <option value="25">25</option>
+                                            <option value="50">50</option>
+                                            <option value="100">100</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-lg-11 col-md-11">
+                                        <div class="email-rightbar">
+                                            <div class="card-header header_icon">
+                                                <ul class="list-inline mb-0 pl-0 float-right">
+                                                    <li class="list-inline-item email_320">
+                                                        <a href="javascript:void(0);" data-module="report"
+                                                            data-access="read" data-id="instantreport"
+                                                            onclick="PosnicPro.refreshReportDatatable(this);"
+                                                            class="add_new_tooltip" data-toggle="tooltip"
+                                                            title="Refresh">
+                                                            <i class="feather icon-refresh-cw font-20"></i>
+                                                        </a>
+                                                    </li>
+                                                    <li class="list-inline-item email_320">
+                                                        <a href="javascript:void(0);" data-module="report"
+                                                            data-access="read" id="instantreport_exportbtn"
+                                                            data-id="instantreportexport"
+                                                            onclick="PosnicPro.instantreport.instantreportExport(this);"
+                                                            class="sale_color dash_sale_count" data-toggle="tooltip"
+                                                            title="Export All To CSV">
+                                                            <i class="feather icon-share font-20"></i>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="detailed-report-sales loader-instant-report">
+                                    <div class="card-body card-box no-padding">
+                                        <!-- Start table -->
+                                        <div class="table-responsive">
+                                            <table id="view_instantreport" class="table table-borderless"
+                                                cellspacing="0" width="100%">
+                                                <div class="col-sm-6 col-md-12 col-lg-12" id="reportinstance_img_hide"
+                                                    style="display:none;">
+                                                    <img src="static/images/general/nodata.svg" class="img-fluid"
+                                                        style="opacity: 0.6;width: 100%;height: 250px;" alt="">
+                                                </div>
+                                                <div class="reportinstance_norecord col-sm-6 col-md-12 col-lg-12"
+                                                    style="display:none;">
+                                                </div>
+                                                <thead class="reportsale_instheader">
+                                                    <tr>
+                                                        <th>#</th>
+                                                        <th>Sale id</th>
+                                                        <th>Date</th>
+                                                        <th>Customer</th>
+                                                        <th>User</th>
+                                                        <th>No. of item</th>
+                                                        <th class="text-right">Price</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="reportsale_instheader"></tbody>
+                                            </table>
+                                        </div>
+                                        <!-- End table -->
+                                    </div>
+                                </div>
+
+                                <div class="card m-b-30 reportsale_instheader">
+                                    <div class="card-body ecommerce-pagination">
+                                        <div class="row align-items-center">
+                                            <div class="col-8">
+                                                <div class="hint-text">
+                                                    Showing
+                                                    <b><span id="view_instantreport_page_total"></span></b>
+                                                    to
+                                                    <b><span id="view_instantreport_page_perpage_total"></span></b>
+                                                    of
+                                                    <b><span id="view_instantreport_total"></span></b>
+                                                    entries
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <nav aria-label="Page navigation example">
+                                                    <ul class="pagination mb-0">
+                                                        <button class="btn previous page-item text-dark-gradient f-w-7"
+                                                            data-id="instantreport"
+                                                            onclick="PosnicPro.previousPage(this, 'Table')"> <i
+                                                                class="fa fa-angle-left font-20"></i> </button>
+                                                        <button class="btn next page-item text-dark-gradient f-w-7"
+                                                            data-id="instantreport"
+                                                            onclick="PosnicPro.nextPage(this, 'Table')"> <i
+                                                                class="fa fa-angle-right font-20"></i> </button>
+                                                    </ul>
+                                                </nav>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="tab-pane fade" id="sale-graph-line" role="tabpanel"
+                                aria-labelledby="sale-graph-tab-line">
+                                <div class="loader-sales-graph-report">
+                                    <div class="col-md-12">
+                                        <div id="sales-report-apex-circle-chart-parent">
+                                            <div id="sales-report-apex-circle-chart"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="tab-pane fade loader-summary-report" id="sale-summary-line" role="tabpanel"
+                                aria-labelledby="sale-summary-tab-line">
+
+                                <div class="row">
+                                    <!-- Start col -->
+                                    <div class="col-lg-6 col-xl-3">
+                                        <div class="card-body">
+                                            <div id="kanban-board-one">
+                                                <div class="card bg-primary-rgba m-b-20">
+                                                    <div class="card-body">
+                                                        <div class="row align-items-center mb-3">
+                                                            <div class="col-12">
+                                                                <div class="kanban-tag">
+                                                                    <h5 class="mb-0 summary_font_blue summary_mb-10">
+                                                                        Sales (Include Tax)
+                                                                        <span class="summary_toolsize"
+                                                                            data-toggle="tooltip" data-placement="top"
+                                                                            title=""
+                                                                            data-original-title="Total value of all sales, including tax, for the selected date range.">
+                                                                            <i class="feather icon-help-circle"></i>
+                                                                        </span>
+                                                                    </h5>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row align-items-center">
+                                                            <div class="col-10">
+                                                                <div class="kanban-users">
+                                                                    <div class="avatar-group">
+                                                                        <h5 class="mb-0 summary_font_blue"><span
+                                                                                class="sign display-currency"></span>&nbsp;<span
+                                                                                id="sale_summary_incltaxval"></span>
+                                                                        </h5>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="card bg-primary-rgba m-b-20">
+                                                    <div class="card-body">
+                                                        <div class="row align-items-center mb-3">
+                                                            <div class="col-12">
+                                                                <div class="kanban-tag">
+                                                                    <h5 class="mb-0 summary_font_blue summary_mb-10">Net
+                                                                        Sales
+                                                                        <span class="summary_toolsize"
+                                                                            data-toggle="tooltip" data-placement="top"
+                                                                            title=""
+                                                                            data-original-title="Total sales amount after removing tax for the selected date range.">
+                                                                            <i class="feather icon-help-circle"></i>
+                                                                        </span>
+                                                                    </h5>
+                                                                </div>
+                                                            </div>
+
+                                                        </div>
+                                                        <div class="row align-items-center">
+
+                                                            <div class="col-10">
+                                                                <div class="kanban-users">
+                                                                    <div class="avatar-group">
+                                                                        <h5 class="mb-0 summary_font_blue"><span
+                                                                                class="sign display-currency"></span>&nbsp;<span
+                                                                                id="sale_summary_netsale"></span></h5>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+
+                                                <div class="card bg-primary-rgba m-b-20">
+                                                    <div class="card-body">
+                                                        <div class="row align-items-center mb-3">
+                                                            <div class="col-12">
+                                                                <div class="kanban-tag">
+                                                                    <h5 class="mb-0 summary_font_blue summary_mb-10">
+                                                                        Order Type - Dine-in</h5>
+                                                                </div>
+                                                            </div>
+
+                                                        </div>
+                                                        <div class="row align-items-center">
+                                                            <div class="col-10">
+                                                                 <h6 class="mb-1 summary_font_blue">Total Orders -
+                                                                        <span id="sale_summary_dinein_count"></span>
+                                                                    </h6>
+                                                                <div class="kanban-users">
+                                                                   <div class="avatar-group">
+                                                                        <h5 class="mb-0 summary_font_blue"><span
+                                                                                class="sign display-currency"></span>&nbsp;<span
+                                                                                id="sale_summary_dinein_total"></span>
+                                                                        </h5>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- End col -->
+                                    <!-- Start col -->
+                                    <div class="col-lg-6 col-xl-3">
+                                        <div class="card-body">
+                                            <div id="kanban-board-two">
+                                                <div class="card bg-primary-rgba m-b-20">
+                                                    <div class="card-body">
+                                                        <div class="row align-items-center mb-3">
+                                                            <div class="col-12">
+                                                                <div class="kanban-tag">
+                                                                    <h5 class="mb-0 summary_font_blue summary_mb-10">
+                                                                        Sales (Exclude Tax)
+                                                                        <span class="summary_toolsize"
+                                                                            data-toggle="tooltip" data-placement="top"
+                                                                            title=""
+                                                                            data-original-title="Total value of all sales before tax for the selected date range.">
+                                                                            <i class="feather icon-help-circle"></i>
+                                                                        </span>
+                                                                    </h5>
+                                                                </div>
+                                                            </div>
+
+                                                        </div>
+                                                        <div class="row align-items-center">
+
+                                                            <div class="col-10">
+                                                                <div class="kanban-users">
+                                                                    <div class="avatar-group">
+                                                                        <h5 class="mb-0 summary_font_blue"><span
+                                                                                class="sign display-currency"></span>&nbsp;<span
+                                                                                id="sale_summary_excltaxval"></span>
+                                                                        </h5>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="card bg-primary-rgba m-b-20">
+                                                    <div class="card-body">
+                                                        <div class="row align-items-center mb-3">
+                                                            <div class="col-12">
+                                                                <div class="kanban-tag">
+                                                                    <h5 class="mb-0 summary_font_blue summary_mb-10">Net
+                                                                        Sales Tax
+                                                                        <span class="summary_toolsize"
+                                                                            data-toggle="tooltip" data-placement="top"
+                                                                            title=""
+                                                                            data-original-title="Total tax amount charged on all sales for the selected date range.">
+                                                                            <i class="feather icon-help-circle"></i>
+                                                                        </span>
+                                                                    </h5>
+                                                                </div>
+                                                            </div>
+
+                                                        </div>
+                                                        <div class="row align-items-center">
+
+                                                            <div class="col-10">
+                                                                <div class="kanban-users">
+                                                                    <div class="avatar-group">
+                                                                        <h5 class="mb-0 summary_font_blue"><span
+                                                                                class="sign display-currency"></span>&nbsp;<span
+                                                                                id="sale_summary_netsaletax"></span>
+                                                                        </h5>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="card bg-primary-rgba m-b-20">
+                                                    <div class="card-body">
+                                                        <div class="row align-items-center mb-3">
+                                                            <div class="col-12">
+                                                                <div class="kanban-tag">
+                                                                    <h5 class="mb-0 summary_font_blue summary_mb-10">
+                                                                        Order Type - Take away</h5>
+                                                                </div>
+                                                            </div>
+
+                                                        </div>
+                                                        <div class="row align-items-center">
+                                                            <div class="col-10">
+                                                                <h6 class="mb-1 summary_font_blue">Total Orders -
+                                                                        <span id="sale_summary_takeaway_count"></span>
+                                                                    </h6>
+                                                                <div class="kanban-users">
+                                                                    <div class="avatar-group">
+                                                                        <h5 class="mb-0 summary_font_blue"><span
+                                                                                class="sign display-currency"></span>&nbsp;<span
+                                                                                id="sale_summary_takeaway_total"></span>
+                                                                        </h5>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                    <!-- End col -->
+                                    <!-- Start col -->
+                                    <div class="col-lg-6 col-xl-3">
+
+                                        <div class="card-body">
+                                            <div id="kanban-board-three">
+                                                <div class="card bg-primary-rgba m-b-20">
+                                                    <div class="card-body">
+                                                        <div class="row align-items-center mb-3">
+                                                            <div class="col-12">
+                                                                <div class="kanban-tag">
+                                                                    <h5 class="mb-0 summary_font_blue summary_mb-10">
+                                                                        Discounts
+                                                                        <span class="summary_toolsize"
+                                                                            data-toggle="tooltip" data-placement="top"
+                                                                            title=""
+                                                                            data-original-title="Total discount amount given on all sales for the selected date range.">
+                                                                            <i class="feather icon-help-circle"></i>
+                                                                        </span>
+                                                                    </h5>
+                                                                </div>
+                                                            </div>
+
+                                                        </div>
+                                                        <div class="row align-items-center">
+                                                            <div class="col-10">
+                                                                <div class="kanban-users">
+                                                                    <div class="avatar-group">
+                                                                        <h5 class="mb-0 summary_font_blue"><span
+                                                                                class="sign display-currency"></span>&nbsp;<span
+                                                                                id="sale_summary_discounts"></span></h5>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="card bg-primary-rgba m-b-20">
+                                                    <div class="card-body">
+                                                        <div class="row align-items-center mb-3">
+                                                            <div class="col-12">
+                                                                <div class="kanban-tag">
+                                                                    <h5 class="mb-0 summary_font_blue summary_mb-10">Gross Profit</h5>
+                                                                </div>
+                                                            </div>
+
+                                                        </div>
+                                                        <div class="row align-items-center">
+
+                                                            <div class="col-10">
+                                                                <div class="kanban-users">
+                                                                    <div class="avatar-group">
+                                                                        <h5 class="mb-0 summary_font_blue"><span
+                                                                                class="sign display-currency"></span>&nbsp;<span
+                                                                                id="sale_summary_profit"></span></h5>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                    <!-- End col -->
+                                    <!-- Start col -->
+                                    <div class="col-lg-6 col-xl-3">
+                                        <div class="card-body">
+                                            <div id="kanban-board-four">
+                                                <div class="card bg-primary-rgba m-b-20">
+                                                    <div class="card-body">
+                                                        <div class="row align-items-center mb-3">
+                                                            <div class="col-12">
+                                                                <div class="kanban-tag">
+                                                                    <h5 class="mb-0 summary_font_blue summary_mb-10">
+                                                                        Refunds
+                                                                        <span class="summary_toolsize"
+                                                                            data-toggle="tooltip" data-placement="top"
+                                                                            title=""
+                                                                            data-original-title="Total amount refunded to customers (full and partial returns) for the selected date range.">
+                                                                            <i class="feather icon-help-circle"></i>
+                                                                        </span>
+                                                                    </h5>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row align-items-center">
+                                                            <div class="col-10">
+                                                                <div class="kanban-users">
+                                                                    <div class="avatar-group">
+                                                                        <h5 class="mb-0 summary_font_blue"><span
+                                                                                class="sign display-currency"></span>&nbsp;<span
+                                                                                id="sale_summary_refund"></span></h5>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="card bg-primary-rgba m-b-20">
+                                                    <div class="card-body">
+                                                        <div class="row align-items-center mb-3">
+                                                            <div class="col-12">
+                                                                <div class="kanban-tag">
+                                                                    <h5 class="mb-0 summary_font_blue summary_mb-10">
+                                                                        COGS</h5>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row align-items-center">
+
+                                                            <div class="col-10">
+                                                                <div class="kanban-users">
+                                                                    <div class="avatar-group">
+                                                                        <h5 class="mb-0 summary_font_blue"><span
+                                                                                class="sign display-currency"></span>&nbsp;<span
+                                                                                id="sale_summary_companyprice"></span>
+                                                                        </h5>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                    <!-- End col -->
+                                </div>
+
+                            </div>
+
+
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- End col -->
+        </div>
+    </div>
+</div>

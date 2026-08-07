@@ -1,0 +1,450 @@
+<!--print register model-->
+<!--        start a4 print model-->
+<div class="modal fade"  id="printRegister_a4_form" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog">
+        <!-- start model-content -->
+        <div class="modal-content"> 
+            <div class="modal-body print-modal-a4-body">
+                <div class="row manage-table receipt_medium">
+                    <div class="col-md-12">
+                        <div class="panel">
+                            <div class="panel-body">
+                                <div class="col-md-12">
+                                    <!-- Header -->
+                                    <table width="100%" border="0" cellpadding="0" cellspacing="0" align="center" class="fullTable" bgcolor="#ffffff">
+                                        <tr>
+                                            <td>
+                                                <table width="600" border="0" cellpadding="0" cellspacing="0" align="center" class="fullTable" bgcolor="#ffffff">
+                                                    <tr>
+                                                        <td height="20"></td>
+                                                    </tr>
+                                                    <tbody>
+                                                        <tr>
+                                                            <td style="color: #000;font-size: 24px; font-weight: bold; line-height: 1.4;vertical-align: center; text-align: center; padding: 10px 0;">
+                                                                Register Summary
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td height="5"></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td style="color: #333;font-size: 12px; font-weight: normal; line-height: 1.5;vertical-align: center; text-align: center;">
+                                                                <span class="print_registeropendate"></span> to <span class="print_registerclosedate"></span>
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td height="15"></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td height="2" style="border-bottom:2px solid #000;"></td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </td>
+                                        </tr>    
+                                        <tr>
+                                            <td>
+                                                <table width="100%" border="0" cellpadding="10" cellspacing="0" align="center" class="fullPadding" bgcolor="#ffffff">
+                                                    <tbody>
+                                                        <tr>
+                                                            <td>
+                                                                <table width="100%" border="0" cellpadding="5" cellspacing="0">
+                                                                    <tbody>
+                                                                        <tr>
+                                                                            <td height="10"></td>
+                                                                        </tr>
+                                                                        <tr>
+                                                                            <td style="color: #333; font-size: 13px; line-height: 1.6; padding: 3px 0;">
+                                                                                <strong>Branch:</strong> <span class="print_store_name" style="text-transform: capitalize;"></span>
+                                                                            </td>
+                                                                        </tr>
+                                                                        <tr>
+                                                                            <td style="color: #333; font-size: 13px; line-height: 1.6; padding: 3px 0;">
+                                                                                <strong>User:</strong> <span class="currentUser" style="text-transform: capitalize;"></span>
+                                                                            </td>
+                                                                        </tr>
+                                                                        <tr>
+                                                                            <td style="color: #333; font-size: 13px; line-height: 1.6; padding: 3px 0;">
+                                                                                <strong>Register:</strong> <span class="print_register_name" style="text-transform: capitalize;"></span>
+                                                                            </td>
+                                                                        </tr>
+                                                                        <tr>
+                                                                            <td height="10"></td>
+                                                                        </tr>
+                                                                    </tbody>
+                                                                </table>
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </td>
+                                        </tr>    
+
+                                    </table>
+                                    <!-- /Header -->
+
+
+                                    <!-- Payment Tally Section -->
+                                    <table width="100%" border="0" cellpadding="0" cellspacing="0" align="center" class="fullTable" bgcolor="#ffffff">
+                                        <tbody>
+                                            <tr>
+                                                <td>
+                                                    <table width="100%" border="0" cellpadding="0" cellspacing="0" align="center" class="fullTable" bgcolor="#ffffff">
+                                                        <tbody>
+                                                            <tr>
+                                                                <td height="15"></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    <table width="100%" border="0" cellpadding="0" cellspacing="0" align="center" class="fullPadding print-invoice-a4-table-content">
+                                                                        <thead>
+                                                                            <tr>
+                                                                                <td height="10"></td>
+                                                                            </tr>
+                                                                            <tr style="background-color: #f5f5f5;">
+                                                                                <th class="print-deatils-size-family" style="color: #000;font-size: 14px; font-weight: bold; line-height: 1.4; vertical-align: middle; padding: 8px 5px; border-bottom: 2px solid #333;" width="40%" align="left">
+                                                                                    Payment Type
+                                                                                </th>
+                                                                                <th class="print-deatils-size-family" style="color: #000;font-size: 14px; font-weight: bold; line-height: 1.4; vertical-align: middle; padding: 8px 5px; border-bottom: 2px solid #333;" align="right">
+                                                                                    Expected
+                                                                                </th>
+                                                                                <th class="print-deatils-size-family" style="color: #000;font-size: 14px; font-weight: bold; line-height: 1.4; vertical-align: middle; padding: 8px 5px; border-bottom: 2px solid #333;" align="right">
+                                                                                    Counted
+                                                                                </th>
+                                                                                <th class="print-deatils-size-family" style="color: #000;font-size: 14px; font-weight: bold; line-height: 1.4; vertical-align: middle; padding: 8px 5px; border-bottom: 2px solid #333;" align="right">
+                                                                                    Difference
+                                                                                </th>
+                                                                            </tr>
+                                                                        </thead>
+                                                                        <tbody id="payment_types_print_tbody">
+                                                                            <!-- Payment types will be dynamically inserted here -->
+                                                                        </tbody>
+                                                                    </table>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td height="10"></td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    <!-- /Order Details -->
+
+                                    <!-- Payment Summary -->
+                                    <table width="100%" border="0" cellpadding="0" cellspacing="0" align="center" class="fullTable" bgcolor="#ffffff">
+                                        <tbody>
+                                            <tr>
+                                                <td>
+                                                    <table width="100%" border="0" cellpadding="10" cellspacing="0" align="right" class="fullTable" bgcolor="#ffffff">
+                                                        <tbody>
+                                                            <tr>
+                                                                <td>
+                                                                    <!-- Payment Summary Table -->
+                                                                    <table width="100%" border="0" cellpadding="5" cellspacing="0" align="right" class="fullPadding">
+                                                                        <tbody>
+                                                                            <tr>
+                                                                                <td height="10"></td>
+                                                                            </tr>
+                                                                            <tr style="border-bottom: 1px solid #eee;">
+                                                                                <td class="print-deatils-size-family" style="color: #333; font-size: 13px; line-height: 1.8; padding: 5px 0; text-align:right; ">
+                                                                                    Payment Received
+                                                                                </td>
+                                                                                <td class="print-deatils-size-family" style="color: #333; font-size: 13px; font-weight: 600; line-height: 1.8; padding: 5px 0; text-align:right; ">
+                                                                                    <span id="received_Amount"></span>
+                                                                                </td>
+                                                                            </tr>
+                                                                            <tr style="border-bottom: 1px solid #eee;">
+                                                                                <td class="print-deatils-size-family" style="color: #333; font-size: 13px; line-height: 1.8; padding: 5px 0; text-align:right; ">
+                                                                                    Refunds
+                                                                                </td>
+                                                                                <td class="print-deatils-size-family" style="color: #333; font-size: 13px; font-weight: 600; line-height: 1.8; padding: 5px 0; text-align:right; ">
+                                                                                    <span id="refund_Amount"></span>
+                                                                                </td>
+                                                                            </tr>
+                                                                            <tr style="border-bottom: 2px solid #333;">
+                                                                                <td class="print-deatils-size-family" style="color: #333; font-size: 13px; line-height: 1.8; padding: 5px 0; text-align:right; ">
+                                                                                    Net Receipts
+                                                                                </td>
+                                                                                <td class="print-deatils-size-family" style="color: #333; font-size: 13px; font-weight: 600; line-height: 1.8; padding: 5px 0; text-align:right; ">
+                                                                                    <span id="net_Amount"></span>
+                                                                                </td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td height="10"></td>
+                                                                            </tr>
+                                                                            <tr style="border-bottom: 1px solid #eee;">
+                                                                                <td class="print-deatils-size-family" style="color: #333; font-size: 14px; font-weight: bold; line-height: 1.8; padding: 5px 0; text-align:right; ">
+                                                                                    Total Sales
+                                                                                </td>
+                                                                                <td class="print-deatils-size-family" style="color: #333; font-size: 14px; font-weight: bold; line-height: 1.8; padding: 5px 0; text-align:right; ">
+                                                                                    <span id="total_sale"></span>
+                                                                                </td>
+                                                                            </tr>
+                                                                            <tr style="border-bottom: 1px solid #eee;">
+                                                                                <td class="print-deatils-size-family" style="color: #333; font-size: 13px; line-height: 1.8; padding: 5px 0; text-align:right; ">
+                                                                                    No Of Transactions
+                                                                                </td>
+                                                                                <td class="print-deatils-size-family" style="color: #333; font-size: 13px; font-weight: 600; line-height: 1.8; padding: 5px 0; text-align:right; ">
+                                                                                    <span id="total_transaction"></span>
+                                                                                </td>
+                                                                            </tr>
+                                                                        </tbody>
+                                                                    </table>
+                                                                    <!-- /Table Total -->
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    <!-- /Total --> 
+
+
+                                    <!-- Transaction Details -->
+                                    <table width="100%" border="0" cellpadding="0" cellspacing="0" align="center" class="fullTable" bgcolor="#ffffff">
+                                        <tbody>
+                                            <tr>
+                                                <td>
+                                                    <table width="100%" border="0" cellpadding="10" cellspacing="0" align="center" class="fullTable" bgcolor="#ffffff">
+                                                        <tbody>
+                                                            <tr>
+                                                                <td height="10"></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    <table width="100%" border="0" cellpadding="5" cellspacing="0" align="center" class="fullPadding print-invoice-a4-table-content">
+                                                                        <thead>
+                                                                            <tr>
+                                                                                <td height="10"></td>
+                                                                            </tr>
+                                                                            <tr style="background-color: #f5f5f5;">
+                                                                                <th class="print-deatils-size-family" style="color: #000;font-size: 14px; font-weight: bold; line-height: 1.4; vertical-align: middle; padding: 8px 5px; border-bottom: 2px solid #333;" width="60%" align="left">
+                                                                                    Transaction Type
+                                                                                </th>
+                                                                                <th class="print-deatils-size-family" style="color: #000;font-size: 14px; font-weight: bold; line-height: 1.4; vertical-align: middle; padding: 8px 5px; border-bottom: 2px solid #333;" align="right">
+                                                                                    Amount
+                                                                                </th>
+                                                                            </tr>
+                                                                        </thead>
+                                                                        <tbody>
+                                                                            <tr style="border-bottom: 1px solid #eee;">
+                                                                                <td style="color: #333; font-size: 13px; padding: 8px 5px; font-weight: 500;" class="article print-deatils-size-family" align="left">Opening Float</td>
+                                                                                <td class="print-deatils-size-family" id="opening_Amount" style="color: #333; font-size: 13px; padding: 8px 5px;" align="right"></td>
+                                                                            </tr>
+                                                                            <tr style="border-bottom: 1px solid #eee;">
+                                                                                <td style="color: #333; font-size: 13px; padding: 8px 5px; font-weight: 500;" class="article print-deatils-size-family" align="left">In Cash</td>
+                                                                                <td class="print-deatils-size-family" id="in_Amount" style="color: #333; font-size: 13px; padding: 8px 5px;" align="right"></td>
+                                                                            </tr>
+                                                                            <tr style="border-bottom: 1px solid #eee;">
+                                                                                <td style="color: #333; font-size: 13px; padding: 8px 5px; font-weight: 500;" class="article print-deatils-size-family" align="left">Out Cash</td>
+                                                                                <td class="print-deatils-size-family" id="out_Amount" style="color: #333; font-size: 13px; padding: 8px 5px;" align="right"></td>
+                                                                            </tr>
+                                                                        </tbody>
+                                                                    </table>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td height="10"></td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    <!-- /Transaction Details -->
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End print modal-content -->
+<!--end print model-->
+
+
+
+
+
+<div id="infobar-settings-sidebar-register-details" class="infobar-settings-sidebar">
+    <div class="infobar-settings-sidebar-head d-flex w-100 justify-content-between">
+        <h4 id="exampleModalCenterTitle"><span class="register_view_name"> </span></h4>
+        <a href="javascript:void(0)" class="infobar-settings-close" data-id="register">
+            <img src="static/images/svg-icon/close.svg" class="img-fluid menu-hamburger-close" alt="close">
+        </a>
+    </div>
+    <div class="infobar-settings-sidebar-body">
+        <div class="custom-mode-setting loader-register">            
+
+            <div class="slider-modal-body">
+                <div class="row">
+                    <div class="col-xs-12 col-sm-6">
+                        <div class="portlet light slider-portlet">
+                            <div class="portlet-title margin-bottom-0">
+                                <div class="caption caption-basic font-green-meadow">
+                                    <span class="caption-subject bold uppercase">Cash Drawer Info</span>
+                                </div>
+                            </div>
+                            <div class="portlet-body">
+                                <div class="row">
+                                    <div class="col-lg-12 col-xl-12">
+                                        <div class="card m-b-20">
+                                            <div class="card-body">
+                                                <div class="row align-items-center">
+                                                    <table class="table table-borderless mb-20">
+                                                        <tbody>
+                                                            <tr>
+                                                                <th scope="row" class="p-2">User &emsp;&emsp;&nbsp;:&nbsp; <span class="register_view_user text-info"></span> </th> 
+                                                            </tr>
+                                                            <tr>
+                                                                <th scope="row" class="p-2">Branch &emsp;: &nbsp;<span class="register_view_branch text-info"></span> </th> 
+                                                            </tr>
+                                                            <tr>
+                                                                <th scope="row" class="p-2">Opening &ensp;:&nbsp; <span class="register_view_opening text-info"></span> </th>
+                                                            </tr>
+                                                            <tr>
+                                                                <th scope="row" class="p-2">Closing&ensp;&ensp;:&nbsp; <span class="register_view_closing text-info"></span> </th>
+                                                            </tr>
+                                                            <tr>
+                                                                <th scope="row" class="p-2">Status &ensp;&ensp;:&nbsp; <span class="register_view_status text-info"></span> </th>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>                                                                                                       
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="portlet light slider-portlet">
+                            <div class="portlet-title margin-bottom-0">
+                                <div class="caption caption-basic font-green-meadow">
+                                    <span class="caption-subject bold uppercase">Payment Tally</span>
+                                </div>
+                            </div>
+                            <div class="portlet-body">
+                                <div class="row">
+                                    <div class="col-lg-12 col-xl-12">
+                                        <div class="card m-b-20">
+                                            <div class="card-body">
+                                                <div class="row align-items-center">          
+                                                    <table class="table table-borderless">
+                                                        <thead class="header_blue">
+                                                            <tr>
+                                                                <th>Payment Type</th>
+                                                                <th>Expected</th>
+                                                                <th>Counted</th>
+                                                                <th>difference</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody id="view_payment_tally_tbody">
+                                                            <!-- Payment tally rows will be dynamically generated here -->
+                                                        </tbody>
+                                                    </table>                                                    
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>                            
+
+                    </div>
+                    <div class="col-xs-12 col-sm-6">
+                        <div class="portlet light slider-portlet">
+                            <div class="portlet-title margin-bottom-0">
+                                <div class="caption caption-basic font-green-meadow">
+                                    <span class="caption-subject bold uppercase">Sales history</span>
+                                </div>
+                                <div class="actions">
+                                    <div class="inline-block text-left">
+                                        <div class="form-md-line-input form-md-floating-label custom-select2-ui">
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="portlet-body padding-top-0">
+                                <div class="row">
+                                    <div class="col-lg-2 col-md-2 form-group mb-0 amount-spent-select selecct-align">
+                                        <select class="form-control select_page" id="view_registerdetails_per_page" data-id="registerdetails" onChange="PosnicPro.setPerPage(this, 'Table');">
+                                            <option value="5" selected>5</option>
+                                            <option value="10">10</option>
+                                            <option value="25">25</option>
+                                            <option value="50">50</option>
+                                            <option value="100">100</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-lg-10 col-md-10">                                                                                       
+
+                                    </div>
+                                </div>
+                                <div class="card-body card-box no-padding loader-register-report">
+                                    <!-- Start table -->
+                                    <div class="table-responsive">
+                                        <table id="view_registerdetails" class="table table-borderless" cellspacing="0"
+                                               width="100%">
+                                            <thead class="report-thead-tfoot table-header"></thead>
+                                            <tbody class="report-thead-tfoot table-body"></tbody>
+                                        </table>
+                                    </div>
+                                    <!-- End table -->
+                                </div>
+                                <div class="card m-b-30">
+                                    <div class="card-body ecommerce-pagination">
+                                        <div class="row align-items-center">
+                                            <div class="col-8">
+                                                <div class="hint-text">
+                                                    Showing 
+                                                    <b><span id="view_registerdetails_page_total"></span></b> 
+                                                    to 
+                                                    <b><span id="view_registerdetails_page_perpage_total"></span></b> 
+                                                    of 
+                                                    <b><span id="view_registerdetails_total"></span></b>
+                                                    entries 
+                                                    <span class="showing-hide-show-registerdetails" style="display:none;"> &nbsp;&nbsp;&nbsp;&nbsp; 
+                                                        <span class="showing-value-registerdetails text-dark"> 0 </span>&nbsp;
+                                                        rows selected  
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <nav aria-label="Page navigation example">
+                                                    <ul class="pagination mb-0">
+                                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="registerdetails" onclick="PosnicPro.previousPage(this, 'Table')"> <i class="fa fa-angle-left font-20"></i> </button>
+                                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="registerdetails" onclick="PosnicPro.nextPage(this, 'Table')"> <i class="fa fa-angle-right font-20"></i> </button>
+                                                    </ul>
+                                                </nav>
+                                            </div>
+                                        </div>                                
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Same as the item detail panel: read only, so the header X was the only
+         way out, and that header sits under the window title bar on the desktop. -->
+    <div class="infobar-settings-sidebar-foot">
+        <a href="javascript:void(0)" class="btn btn-outline-danger infobar-settings-close" data-id="register">
+            <i class="feather icon-x-circle mr-2"></i><lang class="lang_close_title"> Close</lang>
+        </a>
+    </div>
+</div>

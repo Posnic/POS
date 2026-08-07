@@ -1,0 +1,255 @@
+[
+    {
+
+      "id":"1",
+      "value": "D mm/dd",
+      "text": "Sun 01/18 -- D mm/dd",
+      "servervalue": "D m/d"
+    },
+    {
+      "id":"2",
+      "value": "MM dd yyyy",
+      "text": "January 01 2018 -- MM dd yyyy",
+      "servervalue": "M d y"
+    },
+    {
+      "id":"3",
+      "value": "yyyy/mm/dd",
+      "text": "2018/01/01 -- yyyy/mm/dd",
+      "servervalue": "Y/m/d"
+    },
+    {
+      "id":"4",
+      "value": "d MM yy",
+      "text": "01 January 18 -- d MM yy",
+      "servervalue": "d M y"
+    },
+    {
+      "id":"5",
+      "value": "D d MM yy",
+      "text": "Thu 01 January 18 -- D d MM yy",
+      "servervalue": "D d M y"
+    },
+    {
+      "id":"6",
+      "value": "mm/dd/yyyy",
+      "text": "01/01/2018 -- mm/dd/yyyy",
+      "servervalue": "m/d/y"
+    },
+    {
+      "id":"7",
+      "value": "D mm/dd hh:ii",
+      "text": "Sun 01/18 20:53 -- D mm/dd 24HH:MM",
+      "servervalue": "D m/d h:i"
+    },
+    {
+      "id":"8",
+      "value": "D mm/dd hh:ii:ss",
+      "text": "Sun 01/18 20:05:53 -- D mm/dd 24HH:MM:SS",
+      "servervalue": "D m/d h:i:s"
+    },
+    {
+      "id":"9",
+      "value": "D mm/dd HH:ii",
+      "text": "Sun 01/18 20:53 -- D mm/dd 12HH:MM",
+      "servervalue": "D m/d H:i"
+    },
+    {
+      "id":"10",
+      "value": "D mm/dd HH:ii:ss",
+      "text": "Sun 01/18 20:05:53 -- D mm/dd 12HH:MM:SS",
+      "servervalue": "D m/d H:i:s"
+    },
+    {
+      "id":"11",
+      "value": "D mm/dd hh:ii p",
+      "text": "Sun 01/18 20:53 am,pm -- D mm/dd 24HH:MM [am,pm]",
+      "servervalue": "D m/d h:i A"
+    },
+    {
+      "id":"12",
+      "value": "D mm/dd HH:ii p",
+      "text": "Sun 01/18 20:53 am,pm -- D mm/dd 12HH:MM [am,pm]",
+      "servervalue": "D m/d H:i A"
+    },
+    {
+      "id":"13",
+      "value": "MM dd yy hh:ii",
+      "text": "January 01 2018 20:53 -- MM dd yyyy 24HH:MM",
+      "servervalue": "M d y h:i"
+    },
+    {
+      "id":"14",
+      "value": "MM dd yy hh:ii:ss",
+      "text": "January 01 2018 20:05:53 -- MM dd yyyy 24HH:MM:SS",
+      "servervalue": "M d y h:i:s"
+    },
+    {
+      "id":"15",
+      "value": "MM dd yy HH:ii",
+      "text": "January 01 2018 20:53 -- MM dd yyyy 12HH:MM",
+      "servervalue": "M d y H:i"
+    },
+    {
+      "id":"16",
+      "value": "MM dd yy HH:ii:ss",
+      "text": "January 01 2018 20:05:53 -- MM dd yyyy 12HH:MM:SS",
+      "servervalue": "M d y H:i:s"
+    },
+    {
+      "id":"17",
+      "value": "MM dd yy hh:ii p",
+      "text": "January 01 2018 20:53 am,pm -- MM dd yyyy 24HH:MM [am,pm]",
+      "servervalue": "M d y h:i A"
+    },
+    {
+      "id":"18",
+      "value": "MM dd yy HH:ii p",
+      "text": "January 01 2018 20:53 am,pm -- MM dd yyyy 12HH:MM [am,pm]",
+      "servervalue": "M d y H:i A"
+    },
+    {
+      "id":"19",
+      "value": "yyyy/mm/dd hh:ii",
+      "text": "2018/01/01 20:53 -- yyyy/mm/dd 24HH:MM",
+      "servervalue": "Y/m/d h:i"
+    },
+    {
+      "id":"20",
+      "value": "yyyy/mm/dd hh:ii:ss",
+      "text": "2018/01/01 20:05:53 -- yyyy/mm/dd 24HH:MM:SS",
+      "servervalue": "Y/m/d h:i:s"
+    },
+    {
+      "id":"21",
+      "value": "yyyy/mm/dd HH:ii",
+      "text": "2018/01/01 20:53 -- yyyy/mm/dd 12HH:MM",
+      "servervalue": "Y/m/d H:i"
+    },
+    {
+      "id":"22",
+      "value": "yyyy/mm/dd HH:ii:ss",
+      "text": "2018/01/01 20:05:53 -- yyyy/mm/dd 12HH:MM:SS",
+      "servervalue": "Y/m/d H:i:s"
+    },
+    {
+      "id":"23",
+      "value": "yyyy/mm/dd hh:ii p",
+      "text": "2018/01/01 20:53 am,pm -- yyyy/mm/dd 24HH:MM [am,pm]",
+      "servervalue": "Y/m/d h:i A"
+    },
+    {
+      "id":"24",
+      "value": "yyyy/mm/dd HH:ii p",
+      "text": "2018/01/01 20:53 am,pm -- yyyy/mm/dd 12HH:MM [am,pm]",
+      "servervalue": "Y/m/d H:i A"
+    },
+    {
+      "id":"25",
+      "value": "d MM yy hh:ii",
+      "text": "01 January 18 20:53 -- d MM yy 24HH:MM",
+      "servervalue": "d M y h:i"
+    },
+    {
+      "id":"26",
+      "value": "d MM yy hh:ii:ss",
+      "text": "01 January 18 20:05:53 -- d MM yy 24HH:MM:SS",
+      "servervalue": "d M y h:i:s"
+    },
+    {
+      "id":"27",
+      "value": "d MM yy HH:ii",
+      "text": "01 January 18 20:53 -- d MM yy 12HH:MM",
+      "servervalue": "d M y H:i"
+    },
+    {
+      "id":"28",
+      "value": "d MM yy HH:ii:s",
+      "text": "01 January 18 20:05:53 -- d MM yy 12HH:MM:SS",
+      "servervalue": "d M y H:i:s"
+    },
+    {
+      "id":"29",
+      "value": "d MM yy hh:ii p",
+      "text": "01 January 18 20:53 am,pm -- d MM yy 24HH:MM[am,pm]",
+      "servervalue": "d M y h:i A"
+    },
+    {
+      "id":"30",
+      "value": "d MM yy HH:ii p",
+      "text": "01 January 18 20:53 am,pm -- d MM yy 12HH:MM [am,pm]",
+      "servervalue": "d M y H:i A"
+    },
+    {
+      "id":"31",
+      "value": "D d MM yy hh:ii",
+      "text": "Thu 01 January 18 2000 20:53 -- D d MM yy 24HH:MM",
+      "servervalue": "D d M y h:i"
+    },
+    {
+      "id":"32",
+      "value": "D d MM yy hh:ii:ss",
+      "text": "Thu 01 January 18 20:05:53 -- D d MM yy 24HH:MM:SS",
+      "servervalue": "D d M y h:i:s"
+    },
+    {
+      "id":"33",
+      "value": "D d MM yy HH:ii",
+      "text": "Thu 01 January 18 20:53 -- D d MM yy 12HH:MM",
+      "servervalue": "D d M y H:i"
+    },
+    {
+      "id":"34",
+      "value": "D d MM yy HH:ii:ss",
+      "text": "Thu 01 January 18 20:05:53 -- D d MM yy 12HH:MM:SS",
+      "servervalue": "D d M y H:i:s"
+    },
+    {
+      "id":"35",
+      "value": "D d MM yy hh:ii p",
+      "text": "Thu 01 January 18 20:53 am,pm -- D d MM yy 24HH:MM [am,pm]",
+      "servervalue": "D d M y h:i A"
+    },
+    {
+      "id":"36",
+      "value": "D d MM yy HH:ii p",
+      "text": "Thu 01 January 18 20:53 am,pm -- D d MM yy 12HH:MM [am,pm]",
+      "servervalue": "D d M y H:i A"
+    },
+    {
+      "id":"37",
+      "value": "mm/dd/yyyy hh:ii",
+      "text": "01/01/2018 20:53 -- mm/dd/yyyy 24HH:MM",
+      "servervalue": "m/d/y h:i"
+    },
+    {
+      "id":"38",
+      "value": "mm/dd/yyyy hh:ii:ss",
+      "text": "01/01/2018 20:05:53 -- mm/dd/yyyy 24HH:MM:SS",
+      "servervalue": "m/d/y h:i:s"
+    },
+    {
+      "id":"39",
+      "value": "mm/dd/yyyy HH:ii",
+      "text": "01/01/2018 20:53 -- mm/dd/yyyy 12HH:MM",
+      "servervalue": "m/d/y H:i"
+    },
+    {
+      "id":"40",
+      "value": "mm/dd/yyyy HH:ii:ss",
+      "text": "01/01/2018 20:05:53 -- mm/dd/yyyy 12HH:MM:SS",
+      "servervalue": "m/d/y H:i:s"
+    },
+    {
+      "id":"41",
+      "value": "mm/dd/yyyy hh:ii p",
+      "text": "01/01/2018 20:53 am,pm -- mm/dd/yyyy 24HH:MM [am,pm]",
+      "servervalue": "m/d/y h:i A"
+    },
+    {
+      "id":"42",
+      "value": "mm/dd/yyyy HH:ii p",
+      "text": "01/01/2018 20:53 am,pm -- mm/dd/yyyy 12HH:MM [am,pm]",
+      "servervalue": "m/d/y H:i A"
+    }
+  ]

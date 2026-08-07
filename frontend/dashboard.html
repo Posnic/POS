@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <!--
+            The shop's theme, before the first paint.
+
+            themeManager applies it too, but it runs after five scripts and a
+            stylesheet have loaded - long enough that a dark till flashed the
+            default light theme on every navigation. The attribute is all the
+            CSS needs, and it is one synchronous read of a value that is
+            already on this machine.
+
+            Deliberately does nothing but set an attribute. themeManager
+            remains the only thing that decides what a theme means; this only
+            stops the wrong one being visible while it gets there.
+        -->
+        <script>
+            (function () {
+                try {
+                    var saved = JSON.parse(localStorage.getItem('posnic_theme_settings') || '{}');
+                    if (saved && saved.preset && saved.preset !== 'default' && saved.preset !== 'custom') {
+                        document.documentElement.setAttribute('data-theme', saved.preset);
+                    }
+                } catch (e) { /* the app applies it a moment later */ }
+            }());
+        </script>
+
+        <!--
+            Cover the till before it draws anything.
+
+            The lock used to go up after the page had loaded, so whoever picked
+            the machine up saw the dashboard - takings, customer names, the last
+            sale - for as long as the scripts took to run, and only then got
+            asked who they were. A lock you can read behind is not a lock.
+
+            This runs first, before any stylesheet or script, and decides from
+            localStorage alone: no network, no IPC, nothing to wait for. It is
+            deliberately pessimistic - it hides on what it knew last time and
+            lets lock-screen.js uncover once it has decided properly.
+
+            The timeout is the important part. If lock-screen.js never runs -
+            an error, a missing file, a shop that turned the lock off on
+            another machine - the cover comes off by itself. A till that will
+            not draw is worse than one that draws too early.
+        -->
+        <script>
+            (function () {
+                if (navigator.userAgent.indexOf('Electron') === -1) return;
+                try {
+                    var settings = JSON.parse(localStorage.getItem('general_settings') || '{}');
+                    if (settings.till_lock_enable !== true) return;
+                    if (localStorage.getItem('lock.enrolled') !== 'yes') return;
+                } catch (e) {
+                    return;
+                }
+                document.documentElement.className += ' lock-pending';
+                var style = document.createElement('style');
+                style.id = 'lock_pending_style';
+                style.textContent =
+                    'html.lock-pending body > *:not(#posnic-lock){visibility:hidden !important;}'
+                    + 'html.lock-pending{background:#101725;}';
+                document.head.appendChild(style);
+                window.__posnicUncover = function () {
+                    document.documentElement.className =
+                        document.documentElement.className.replace(/\s*lock-pending\b/, '');
+                };
+                setTimeout(window.__posnicUncover, 5000);
+            }());
+        </script>
+
+        <script>
+            if (window.location.hostname === 'frontend-ace.pages.dev') {
+                window.location.replace("https://www.posnic.io");
+            }
+        </script>
+        <script>
+            // Posnic (desktop/self-hosted): the API is always the origin that
+            // served this page - Electron window, LAN device, or self-hosted server.
+            // Cloud sync runs in a separate background process, never in the browser.
+            let API_URL = window.location.protocol.startsWith('http')
+                ? window.location.origin + '/'
+                : 'http://localhost:5555/';
+        </script>
+
+        <meta charset="utf-8"/>
+        <title>Posnic - POS</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+        <meta content="Posnic - Point of Sale" name="description"/>
+        <meta content="Posnic" name="author"/>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+        <link rel="shortcut icon" href="static/images/favicon/favicon.ico" type="image/x-icon">
+        <link rel="icon" href="static/images/favicon/favicon.ico" type="image/x-icon">
+        <link crossorigin="anonymous" media="all" rel="stylesheet" type="text/css" href="style/dashboard.css" />
+        <style>
+            /* Consistent header height at every window size (maximized
+               windows previously rendered a shorter topbar). */
+            .topbar { min-height: 68px; }
+            .topbar .infobar > ul { display: flex; align-items: center; }
+        </style>
+
+    </head>
+    <body class="vertical-layout">           
+        <!-- Start Infobar Setting Sidebar -->
+        <!--        <?php include_once 'sidebarright.php' ?>-->
+        <!-- End Infobar Setting Sidebar -->
+        <!-- Start Containerbar -->
+        <div id="containerbar">
+            <!-- Start Leftbar -->
+            <link type='file' href='layouts/sidebar.html' />
+            <!-- End Leftbar -->
+            <!-- Start Rightbar -->
+            <div class="rightbar">
+                <link type='file' href='layouts/header.html' />
+                <link type='directory' href='modules' />
+
+                <!--        start print model-->
+                <div class="modal fade"  id="print_form" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+                    <div class="modal-dialog">
+                        <!-- start model-content -->
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span>&times;</span>
+                                </button>
+                                <h4 class="modal-title">Print 
+                                    <span class="print-title">Posnic</span>
+                                </h4>
+                            </div>
+                            <div class="modal-body print-modal-body">
+                                <div class="row manage-table import-standard-print receipt_medium" id="receipt_wrapper">
+                                   <!-- standard print -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- End print modal-content -->
+
+                <!--        start a4 print model-->
+                <div class="modal fade"  id="print_a4_form" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+                    <div class="modal-dialog">
+                        <!-- start model-content -->
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span>&times;</span>
+                                </button>
+                                <h4 class="modal-title">Print 
+                                    <span class="print-title">Posnic</span>
+                                </h4>
+                            </div>
+                            <div class="modal-body print-modal-a4-body">
+                                <div class="row manage-table receipt_medium import-print" id="receipt_wrapper">
+                                    <!-- A4 print -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- End print modal-content -->
+
+                <div id="reset_modal" class="modal fade close_on_esc" tabindex="-1" role="dialog" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title"><lang class="lang_reset_form">Reset Form</lang></h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">                           
+                                <div class="row justify-content-center"> 
+                                    <h6><span><lang class="lang_reset_want">Do you want to reset cart and proceed to New <span id="resetHeading">Sale</span> ?</lang> </span></h6>
+
+                                </div>                            
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-outline-danger" data-dismiss="modal">
+                                    <i class="feather icon-x-circle mr-2"></i><lang class="lang_close_title"> Close</lang>
+                                </button>
+                                <button type="button" class="btn btn-outline-primary" id="resetSaleButton"
+                                        onclick="PosnicPro.sales.clear.cartItems();"><i class="feather icon-send mr-2"></i><lang class="lang_confirmed_title"> confirm</lang>
+                                </button>
+                                <button type="button" class="btn btn-outline-primary"
+                                        id="resetReceivingButton"
+                                        onclick="return PosnicPro.receivings.resetReceivingsForm();"><i class="feather icon-send mr-2"></i><lang class="lang_confirmed_title"> confirm</lang>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- start image view model-->
+                <div class="modal fade imageView" id="imageView" tabindex="-1" role="dialog" aria-hidden="true">
+                    <div class="modal-dialog modal-sm" role="document">
+                        <div class="modal-content">
+                            <div class="modal-body">
+                                <div class="row justify-content-center">
+                                    <img src='' class='image_view' width='200' height='200' alt="NoImg">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- end image view model -->  
+
+                <!-- start image view model-->
+                <div class="modal fade bd-example-modal-sm" id="deleteImagePopup" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-sm">
+                        <div class="modal-content">
+                            <div class="modal-body">                           
+                                <div class="row justify-content-center"> 
+                                    <h6><span> Do you want remove this image? </span></h6>
+                                </div>                            
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-outline-danger" data-dismiss="modal"><i class="feather icon-x-circle mr-2"></i> Close</button>
+                                <button type="button" onclick="PosnicPro.settings.removeBranchImage();" class="btn btn-outline-primary"><i class="feather icon-send mr-2"></i> Proceed</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- end image view model -->
+
+                <!-- start image view model-->
+                <div class="modal fade bd-example-modal-sm" id="deleteUserImagePopup" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-sm">
+                        <div class="modal-content">
+                            <div class="modal-body">                           
+                                <div class="row justify-content-center"> 
+                                    <h6><span> Do you want remove this image? </span></h6>
+                                </div>                            
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-outline-danger" data-dismiss="modal"><i class="feather icon-x-circle mr-2"></i> Close</button>
+                                <button type="button" onclick="PosnicPro.users.removeProfileImage();" class="btn btn-outline-primary"><i class="feather icon-send mr-2"></i> Proceed</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- end image view model -->
+
+            </div>
+            <!-- End Rightbar -->
+        </div>
+            <!-- End Containerbar -->
+            <link type='directory' href='modals' />
+            <!-- Start js -->
+            <script   type="application/javascript" src="script/dashboard.js"></script>
+            <!-- End js -->
+
+            <script type="text/javascript">
+                                                                        if (PosnicPro.users.readCookie('loginuser') === null) {
+                                        window.location = 'login.html';
+                                    }
+                                    $(document).ready(function () {
+                                        /*
+                                         * Lock the till before anything else is
+                                         * drawn. The app used to open straight
+                                         * onto the dashboard for a day after a
+                                         * login, with no idea who was holding
+                                         * it.
+                                         */
+                                        if (PosnicPro.lockScreen) {
+                                            PosnicPro.lockScreen.start();
+                                        }
+                                        $.sidebarMenu($('.vertical-menu'));
+                                        $(function () {
+                                            for (var a = window.location, abc = $(".vertical-menu a").filter(function () {
+                                                return this.href == a;
+                                            }).addClass("active").parent('a').addClass("active"); ; ) {
+                                                if (!abc.is("li"))
+                                                    break;
+                                                abc = abc.parent().addClass("in").parent('a').addClass("active");
+                                            }
+                                        });
+
+
+                                        PosnicPro.stocklogs.viewLowStockDashboard();
+                                        var branch_id = PosnicPro.local.get('branch_id_set');
+                                        $("#branch_name option[value='" + branch_id + "']").prop("selected", "selected");
+                                        PosnicPro.settings.viewSettings(branch_id);
+                                    });
+
+
+                                    PosnicPro.get('users/getUserAccessDetails', function (response) {
+                                        PosnicPro.userACL = response.data;
+                                        PosnicPro.ACLApplyForAll();
+                                        PosnicPro.dashboard.datePicker();
+                                        PosnicPro.redirectPage();
+                                    });
+                                    PosnicPro.configPaymentType = [];
+                                    PosnicPro.get('setting/getPaymentAll', function (response) {
+                                        var data = response.data;
+                                        for (var i = 0; i < data.length; i++) {
+                                            let row = data[i];
+                                            PosnicPro.configPaymentType[i] = {
+                                                payment_value: row.payment_value
+                                            };
+                                            let paymentMethod;
+                                            paymentMethod = '<option value="' + row.payment_value + '">' + row.payment_value + ' </option>';
+                                            $('#receiving_add_payment_mode, #payment_transaction_cash_mode').append(paymentMethod).trigger('change');
+                                        }
+                                    });
+            </script>
+        <script>
+            // Desktop tools quick-access (Electron only). Same actions as the
+            // File menu and tray - this is the discoverable, in-app door.
+            (function () {
+                if (!window.electronAPI || !window.electronAPI.desktop) return;
+                const style = document.createElement('style');
+                // Colors ride the app's theme variables (Config -> Appearance)
+                // with brand-blue fallbacks for pages without a theme.
+                style.textContent =
+                    '#posnic-desktop-fab{position:fixed;bottom:18px;right:18px;z-index:99990;font-family:inherit}' +
+                    '#posnic-desktop-fab .fab-btn{background:var(--theme-primary-color,#3D85C6);' +
+                    'color:var(--theme-btn-primary-text,#fff);border:none;border-radius:24px;' +
+                    'height:46px;min-width:46px;padding:0 14px;display:flex;align-items:center;justify-content:center;' +
+                    'font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.25)}' +
+                    '#posnic-desktop-fab .fab-label{max-width:0;overflow:hidden;white-space:nowrap;' +
+                    'transition:max-width .25s ease,margin-left .25s ease;margin-left:0}' +
+                    '#posnic-desktop-fab:hover .fab-label,#posnic-desktop-fab.open .fab-label{max-width:70px;margin-left:8px}' +
+                    '#posnic-desktop-fab .fab-btn:hover{background:var(--theme-primary-hover,var(--theme-primary-color,#2F6EA8))}' +
+                    '#posnic-desktop-fab .fab-menu{display:none;position:absolute;bottom:48px;right:0;' +
+                    'background:var(--theme-card-bg,#fff);border:1px solid var(--theme-border-color,#e6e6e6);' +
+                    'border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.25);overflow:hidden;min-width:190px}' +
+                    '#posnic-desktop-fab.open .fab-menu{display:block}' +
+                    '#posnic-desktop-fab .fab-menu button{display:block;width:100%;text-align:left;background:none;' +
+                    'border:none;padding:11px 16px;font-size:13px;color:var(--theme-menu-text,#333);cursor:pointer}' +
+                    '#posnic-desktop-fab .fab-menu button:hover{background:var(--theme-menu-active-bg,#f0f2ff);' +
+                    'color:var(--theme-menu-active-text,inherit)}';
+                document.head.appendChild(style);
+
+                const fab = document.createElement('div');
+                fab.id = 'posnic-desktop-fab';
+                fab.innerHTML = '<div class="fab-menu"></div><button class="fab-btn" title="Desktop tools">🖥️<span class="fab-label">Desktop</span><span id="posnic-sync-dot"></span></button>';
+                document.body.appendChild(fab);
+
+                const dotStyle = document.createElement('style');
+                dotStyle.textContent =
+                    '#posnic-sync-dot{display:none;width:9px;height:9px;border-radius:50%;margin-left:8px;' +
+                    'vertical-align:middle;display:inline-block}' +
+                    '#posnic-sync-dot.on{background:#4ade80;box-shadow:0 0 5px #4ade80}' +
+                    '#posnic-sync-dot.off{background:#f87171;box-shadow:0 0 5px #f87171}' +
+                    '#posnic-sync-dot.none{display:none}';
+                document.head.appendChild(dotStyle);
+
+                // Live cloud sync indicator on the button (only when activated)
+                const syncDot = fab.querySelector('#posnic-sync-dot');
+                const refreshSyncDot = async () => {
+                    try {
+                        const status = await window.electronAPI.cloud.status();
+                        if (!status.connected) { syncDot.className = 'none'; return; }
+                        syncDot.className = status.sync && status.sync.online ? 'on' : 'off';
+                    } catch (e) { syncDot.className = 'none'; }
+                };
+                refreshSyncDot();
+                setInterval(refreshSyncDot, 30000);
+
+                const menu = fab.querySelector('.fab-menu');
+                const addItem = (label, target) => {
+                    const b = document.createElement('button');
+                    b.textContent = label;
+                    b.addEventListener('click', () => {
+                        fab.classList.remove('open');
+                        window.electronAPI.desktop.open(target);
+                    });
+                    menu.appendChild(b);
+                };
+
+                window.electronAPI.desktop.capabilities().then((caps) => {
+                    addItem('🖨️ Hardware Manager', 'hardware');
+                    if (caps.backup) addItem('💾 Backup Manager', 'backup');
+                    addItem('🔄 Software Update', 'update');
+                    addItem('☁️ Cloud Sync', 'cloud');
+                }).catch(() => {});
+
+                fab.querySelector('.fab-btn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    fab.classList.toggle('open');
+                });
+                document.addEventListener('click', () => fab.classList.remove('open'));
+
+                // --- Tray branch switching ---------------------------------
+                // Mirror the header's branch dropdown into the tray menu, and
+                // run the app's own switch flow (incl. open-register guard)
+                // when a branch is picked from the tray.
+                if (window.electronAPI.tray) {
+                    const harvestBranches = () => {
+                        const items = document.querySelectorAll('#change_branch_list a[data-id]');
+                        if (!items.length) return;
+                        const branches = Array.from(items).map((a) => ({
+                            id: a.getAttribute('data-id'),
+                            name: (a.textContent || '').trim()
+                        })).filter((b) => b.id && b.name);
+                        const currentName = (document.querySelector('.branch-name, #current_branch_name')?.textContent || '').trim() || null;
+                        if (branches.length) {
+                            window.electronAPI.tray.setBranches({ branches, currentName });
+                        }
+                    };
+                    const list = () => document.getElementById('change_branch_list');
+                    const arm = () => {
+                        const el = list();
+                        if (!el) return setTimeout(arm, 2000);
+                        new MutationObserver(harvestBranches).observe(el, { childList: true, subtree: true });
+                        harvestBranches();
+                    };
+                    arm();
+
+                    window.electronAPI.tray.onSwitchBranch((id) => {
+                        if (window.PosnicPro?.branches?.showChange) {
+                            PosnicPro.branches.showChange(id);
+                        } else {
+                            window.location.hash = '#/branches/' + id + '/change';
+                        }
+                    });
+                }
+            })();
+        </script>
+    </body>       
+</html>

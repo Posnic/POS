@@ -1,0 +1,446 @@
+/* 
+--------------------------------
+    : Custom - General css :
+--------------------------------
+*/
+html {
+  position: relative;
+  min-height: 100%;
+}
+body {  
+  font-family: $font-primary;
+  margin: 0;
+  background: $bg-body;
+  font-size: $base-font;
+  font-weight: 300;
+  color: $muted;
+  line-height: 1.5;
+}
+.h1, .h2, .h3, .h4, .h5, .h6, h1, h2, h3, h4, h5, h6 {
+    font-weight: 500;
+    color: $heading-color;
+}
+h1 {
+  font-size: 38px; 
+}
+h2 {
+  font-size: 30px; 
+}
+h3 {
+  font-size: 26px; 
+}
+h4 {
+  font-size: 22px; 
+}
+h5 {
+  font-size: 18px; 
+}
+h6 {
+  font-size: 16px; 
+}
+b {
+  font-weight: 700;
+}
+strong {
+  font-weight: 700;
+}
+p {
+    line-height: 1.3;
+    margin-bottom: 10px;
+}
+label {
+    vertical-align: middle;
+}
+* {
+  outline: none !important;
+}
+a {
+  color: $primary;
+  &:hover {
+    color: darken($primary, 5%);
+    outline: 0;
+    text-decoration: none;
+  }
+  &:active {
+    color: darken($primary, 5%);
+    outline: 0;
+    text-decoration: none;
+  }
+  &:focus {
+    color: darken($primary, 5%);
+    outline: 0;
+    text-decoration: none;
+  }
+}
+code {
+  color: $primary;
+}
+.logobar {
+  padding: 15px 0;
+  margin-bottom: 0;
+  text-align: center;
+  border-bottom: 1px solid $border-color;
+  .logo {
+    &.logo-small {
+
+    }
+    // Was a hard 100x40, which is the stock wordmark's own ratio. Any other
+    // shape was stretched into it, and a white-label customer's square mark
+    // overflowed the 60px rail it sits in. Fix the height, let the width
+    // follow the image, and never exceed the bar it lives in.
+    img {
+      width: auto;
+      height: 40px;
+      max-width: 100%;
+      object-fit: contain;
+    }
+  }
+}
+.leftbar {
+  width: 280px;
+  height: 100%;
+  position: fixed;
+  background: $white;  
+  z-index: 99;
+  transition: all 0.3s ease;
+}
+.rightbar {
+  margin-left: 280px;
+  overflow: hidden;
+  min-height: 500px;
+  transition: all 0.3s ease;
+}
+.contentbar{
+    padding: 30px;
+    margin-bottom: 30px;
+}
+.footerbar {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  left: 280px;
+  padding: 20px 30px;
+  text-align: center;
+  background-color: $white;
+  background-color: $card-bg;
+}
+.toggle-menu .footerbar {
+    left: 0;
+}
+.slimScrollBar {
+    z-index: 0 !important;
+}
+.navigationbar {
+    height: calc(100vh - 0px);
+    overflow: auto;
+    -webkit-transition: 0.5s;
+    transition: 0.5s;
+}
+::-webkit-scrollbar {
+  width: 0;
+}
+::-webkit-scrollbar-track {
+  background: transparent; 
+}
+::-webkit-scrollbar-thumb {
+  background: transparent; 
+}
+::-webkit-scrollbar-thumb:hover {
+  background: transparent; 
+}
+
+.vertical-menu-detail {
+    border-right: 1px solid $border-color;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-flex: 1;
+    -webkit-flex-grow: 1;
+    -moz-box-flex: 1;
+    -ms-flex-positive: 1;
+    flex-grow: 1;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -webkit-flex-direction: column;
+    -moz-box-orient: vertical;
+    -moz-box-direction: normal;
+    -ms-flex-direction: column;
+    flex-direction: column;
+    .logobar {
+      margin-bottom: 5px;
+    }
+}
+
+.vertical-menu-icon {
+  height: 100%;
+  width: 60px;
+  float: left;
+  background-color: $primary;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -moz-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-direction: normal;
+  -webkit-flex-direction: column;
+  -moz-box-orient: vertical;
+  -moz-box-direction: normal;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  -webkit-box-pack: justify;
+  -webkit-justify-content: space-between;
+  -moz-box-pack: justify;
+  -ms-flex-pack: justify;
+  justify-content: space-between;
+  padding: 0;
+  overflow: hidden;
+  .nav-pills {
+      .nav-link {
+          padding: 7px 5px;
+          margin: 10px;
+          text-align: center;
+          border-radius: 3px;
+          img {
+              width: 25px;
+          }
+          /* Which section you are in.
+             A dark wash on a dark blue rail is nearly invisible, so the
+             current icon now also gets a bar down its leading edge and full
+             opacity, while the rest sit back slightly. Three quiet signals
+             together read at a glance without shouting. */
+          img { opacity: .88; transition: opacity .15s; }
+          &:hover img { opacity: 1; }
+          &.active {
+              background-color: rgba(255, 255, 255, 0.18);
+              box-shadow: inset 3px 0 0 rgba(255, 255, 255, .95);
+              img { opacity: 1; }
+          }
+      }
+      .logobar {
+        margin-bottom: 200px;
+      }
+  }
+  // This rail is 60px wide, so its logo has to be sized to the rail and not
+  // to the wide sidebar beside it, whatever shape the customer uploaded.
+  .logobar .logo img {
+    width: auto;
+    height: 34px;
+    max-width: 44px;
+    object-fit: contain;
+  }
+}
+.menu-title {
+    margin-bottom: 10px;
+    padding: 10px 15px;
+    font-size: 18px;
+    color: $black;
+    border-bottom: 1px solid $border-color;
+}
+
+/*
+ * Marking the section you are in.
+ *
+ * The rail carries a white bar down the leading edge of the current icon plus
+ * a lighter wash behind it - see .active above. That is the whole marker.
+ *
+ * There was also a rotated square at the right edge, meant to read as a notch
+ * bitten out of the rail. On screen it read as an arrow pointing away from the
+ * icon, so it was removed. Highlight only.
+ */
+.vertical-menu-icon .nav-pills .nav-link {
+  position: relative;
+}
+/* Sidebar menu links keep their trailing icon on the same line.
+   "Customer Display" and "Catalog Display" carry an open-in-new-window mark
+   after the label; without this the mark wrapped onto a line of its own and
+   read like a broken second menu item. */
+.sidebar .menu-content ul li a {
+  white-space: nowrap;
+}
+.sidebar .menu-content ul li a img[alt=""] {
+  display: inline;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+
+/* Desktop title bar.
+   Windows draws its own bar at whatever height it likes and shrinks it when
+   maximised, which no stylesheet can change. The app now hides it and draws
+   this one instead, with the window buttons overlaid on the right by Electron.
+   Everything here is scoped to .is-electron so a shop opened in a browser is
+   untouched. */
+html.is-electron {
+  --titlebar-h: 44px;
+
+  body { padding-top: var(--titlebar-h); }
+
+  .posnic-titlebar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: var(--titlebar-h);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-left: 16px;
+    /* The same colours the window controls are given.
+     *
+     * Windows paints only the small overlay holding minimise, maximise and
+     * close; everything else along this strip is drawn here. Themed one and not
+     * the other and the seam shows exactly where one stops - which is what a
+     * shop reported: colour by the buttons, white across the rest.
+     *
+     * The fallbacks are the previous fixed values, so a page that somehow loads
+     * without the theme variables looks as it always did rather than
+     * transparent. */
+    background: var(--theme-topbar-bg, #{$white});
+    /*
+     * The rule along the bottom runs the full width, including under the
+     * window buttons.
+     *
+     * It could not before: Windows paints its controls overlay across the
+     * right-hand end of this strip, and at the same height as the strip it
+     * covered the border - so the line ran from the logo and vanished under the
+     * minimise button. Removing it altogether was worse, because this bar and
+     * the content below it are different surfaces and the eye wants the join.
+     *
+     * The overlay is now told to be one pixel shorter than the bar (see
+     * TITLEBAR_HEIGHT in main.js), which leaves exactly the border row drawn by
+     * the page across the whole width. The seam is gone and the line is whole.
+     */
+    border-bottom: 1px solid var(--theme-border-color, #e9edf3);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--theme-text-primary, #3d4d63);
+    /* Below Bootstrap's modal layer (1050) and backdrop (1040) on purpose.
+       At 1200 this bar painted over open dialogs and took their close button
+       with it: the Sale Details and item detail dialogs could be opened but
+       not closed. Window chrome is never worth trapping someone in a dialog,
+       and the real window buttons are drawn by the OS above everything
+       regardless, so they stay clickable either way. */
+    z-index: 1030;
+    -webkit-app-region: drag;   /* the whole strip drags the window */
+    user-select: none;
+  }
+  /* Messages start below the bar, not underneath it.
+   *
+   * The toast sits 20px from the top of the window, which on the desktop is
+   * inside the 44px title bar - so a warning arrived with its top edge clipped,
+   * and in the right-hand corner it landed under the minimise and close
+   * buttons, which Windows draws above all web content and which no z-index
+   * here can rise above. Raising the bar's z-index would not fix it and would
+   * reintroduce the bug the comment above warns about: the bar painting over
+   * open dialogs and taking their close button with it.
+   *
+   * So the messages move down instead. They keep their own 20px gap, measured
+   * from the bottom of the bar rather than the top of the screen. */
+  .jq-toast-wrap.top-right,
+  .jq-toast-wrap.top-left {
+    top: calc(var(--titlebar-h) + 20px);
+  }
+
+  /* Fixed panels started at the top of the screen and would sit under the bar */
+  .leftbar { top: var(--titlebar-h); height: calc(100% - var(--titlebar-h)); }
+
+  /* The item, customer and supplier detail views are this panel, not a
+     Bootstrap modal, so the modal rules below never reached them. It is
+     position:fixed at top 0 with z-index 1001, under this bar at 1030, so its
+     header - and the close button living in that header - was covered. That is
+     why the detail view could be opened and not closed, and why fixing the
+     modals alone did not fix it. */
+  .infobar-settings-sidebar,
+  .infobar-settings-sidebar-overlay {
+    top: var(--titlebar-h);
+    height: calc(100% - var(--titlebar-h));
+  }
+
+  /* Overlays are position:fixed, so the padding on body does not move them.
+     Start them below the bar instead. Without this a dialog header lands in
+     the strip the OS draws its minimise/maximise/close buttons into, and the
+     dialog's own close button is unreachable underneath them. */
+  .modal,
+  .offcanvas.offcanvas-start,
+  .offcanvas.offcanvas-end {
+    top: var(--titlebar-h);
+    height: calc(100% - var(--titlebar-h));
+  }
+  .offcanvas.offcanvas-top { top: var(--titlebar-h); }
+  .modal-backdrop { top: var(--titlebar-h); height: calc(100% - var(--titlebar-h)); }
+}
+
+/* Our own window buttons, drawn by the page.
+ *
+ * Windows will draw these itself in an overlay, but that overlay is a separate
+ * surface it paints its own way - so the strip came out two shades, one for the
+ * bar and one behind the buttons, however carefully it was handed a single
+ * colour. Drawing them here makes the strip one element with one background,
+ * which is the only arrangement where the question cannot arise.
+ *
+ * Sized and ordered to Windows' own convention - 46x32, minimise, maximise,
+ * close, red on close - because a till is not the place to be inventive about
+ * where the close button is.
+ */
+html.is-electron {
+  .posnic-window-controls {
+    margin-left: auto;
+    display: flex;
+    align-self: stretch;
+    -webkit-app-region: no-drag;   /* the strip drags; these must stay clickable */
+  }
+
+  .posnic-window-control {
+    width: 46px;
+    border: 0;
+    background: transparent;
+    color: currentColor;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    opacity: .85;
+    transition: background-color .12s ease, opacity .12s ease;
+
+    &:hover { background: rgba(127, 127, 127, .22); opacity: 1; }
+    &:active { background: rgba(127, 127, 127, .32); }
+    &:focus-visible { outline: 2px solid var(--theme-primary-color, #4e6ddf); outline-offset: -2px; }
+
+    svg { pointer-events: none; }
+
+    /* Close is the one control that is allowed to shout, and only on hover. */
+    &.is-close:hover { background: #e81123; color: #ffffff; opacity: 1; }
+    &.is-close:active { background: #f1707a; color: #ffffff; }
+  }
+}
+
+/*
+ * A report with nothing to plot.
+ *
+ * The chart div has a fixed height, so an empty report used to be a grey
+ * rectangle the size of the chart - indistinguishable from one that had
+ * failed. This fills the same space with a sentence, in the theme's own
+ * colours rather than the fixed greys the old report pages used.
+ */
+.chart-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 260px;
+  height: 100%;
+  gap: 12px;
+  color: var(--theme-text-secondary, #6b7280);
+  text-align: center;
+
+  i {
+    font-size: 42px;
+    opacity: .4;
+    line-height: 1;
+  }
+
+  p {
+    margin: 0;
+    font-size: 14px;
+  }
+}

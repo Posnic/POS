@@ -1,0 +1,23 @@
+<svg id="Small_Icons" data-name="Small Icons" xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: none;
+        stroke: #fff;
+        stroke-width: 3px;
+      }
+
+      .cls-2 {
+        fill: #fff;
+        fill-rule: evenodd;
+        opacity: 0.25;
+      }
+    </style>
+  </defs>
+  <g id="Dashboard">
+    <rect id="Rounded_Rectangle_5" data-name="Rounded Rectangle 5" class="cls-1" x="5" y="6" width="14" height="13" rx="3" ry="3"/>
+    <rect id="Rounded_Rectangle_5_copy_5" data-name="Rounded Rectangle 5 copy 5" class="cls-1" x="24" y="6" width="21" height="13" rx="3" ry="3"/>
+    <rect id="Rounded_Rectangle_5_copy_4" data-name="Rounded Rectangle 5 copy 4" class="cls-1" x="5" y="25" width="40" height="20" rx="3" ry="3"/>
+    <path class="cls-2" d="M6.358,35.7l37.254-4.213v12.64H6.358V35.7Z"/>
+  </g>
+</svg>

@@ -1,0 +1,664 @@
+<div class="vertical-layout page_loader" id="gstr_twob" style="display: none">
+    <!-- Start Containerbar -->
+    <div id="containerbar">
+        <!-- Start Breadcrumbbar -->
+        <div class="breadcrumbbar crumbbar_padding">
+
+            <!--  filter-->            
+            <div class="row align-items-center">
+                <div class="col-lg-1 col-xl-1">
+                    <h4 class="page-title break_title">GSTR2B</h4>
+                </div>    
+                <div class="col-lg-3 col-xl-3">
+                    <div class="input-group">
+                        <div class="input-group-append">
+                            <span class="input-group-text text-primary">
+                                From
+                            </span>
+                        </div>
+                        <input type="text" id="gst_form_twob_daterange_one" class="form-control" />
+                    </div>
+                </div> 
+                <div class="col-lg-3 col-xl-3">
+                    <div class="input-group">
+                        <div class="input-group-append">
+                            <span class="input-group-text text-primary">
+                                To
+                            </span>
+                        </div>
+                        <input type="text" id="gst_form_twob_daterange_twob" class="form-control" />
+                    </div>
+                </div>
+
+                <div class="col-md-1 col-lg-1 ">
+                    <button type="button" class="btn btn-primary-rgba" onclick="PosnicPro.gstrTwob.gsttworeportTable();">
+                        <lang class="lang_filter_title">Apply</lang>
+                    </button>
+                </div>
+
+                <div class="col-lg-2 col-xl-2 float-right">
+                    <!-- <button type="button" class="btn btn-round btn-primary-rgba adjuce_left" data-toggle="tooltip" title="xls"
+                            data-id="gstr_two" onclick="PosnicPro.gstrXls(this, 'GSTR2');">
+                        <i class="feather icon-file-text" aria-hidden="true"></i>
+                    </button> -->
+                    <button type="button" class="btn btn-round btn-primary-rgba adjuce_left" data-toggle="tooltip" title="json"
+                            data-id="gstr_jsonone" onclick="PosnicPro.gstrTwob.gstrJson();">
+                        <i class="feather icon-file-text" aria-hidden="true"></i>
+                    </button>
+
+                </div>  
+            </div>
+        </div>
+    </div>
+
+    <!-- Start Contentbar -->
+    <div class="contentbar" id="gstr2">
+        <!-- Start row -->
+        <div class="row"> 
+            <div class="col-md-12 col-lg-12 col-xl-12 m-t-10">
+                <div class="card m-b-30 loader-gstr-twob">
+                    <div class="card-body">
+
+
+                        <div class="table-responsive" style="font-size: 14px;">
+                            <h2 class="m-t-20 m-b-20 text-center">GSTR 2B Report</h2>
+                            <table class="col-6 float-right table table-bordered table-bordered-padding m-t-50 m-b-50">
+                                <tbody>
+                                    <tr>
+                                        <th>Year</th>
+                                        <td><span class="from-year"></span></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Month</th>
+                                        <td><span class="from-month"></span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <table class="table table-bordered table-bordered-padding m-t-50 m-b-50">
+                                <tbody>
+                                    <tr>
+                                        <th width="5%">1.</th>
+                                        <th width="5%"></th>
+                                        <th width="40%">GSTIN</th>
+                                        <td><span class="company_gstin"></span></td>
+                                    </tr>
+                                    <tr>
+                                        <th width="5%">2.</th>
+                                        <th width="5%">(a)</th>
+                                        <th width="40%">Legal name of the registered person</th>
+                                        <td><span class="legal-name"></span></td>
+                                    </tr>
+                                    <tr>
+                                        <th width="5%"></th>
+                                        <th width="5%">(b)</th>
+                                        <th width="40%">Trade name, if any</th>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <th width="5%"></th>
+                                        <th width="5%">(c)</th>
+                                        <th width="40%">Date of generation :</th>
+                                        <td></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <table class="table table-bordered  table-bordered-padding m-t-50 m-b-50 inward_supply_twob">
+                                <thead>
+                                    <tr>
+                                        <th class="caption_style" colspan="16">3. ITC Available Summary</th>
+                                    </tr>
+                                    <tr style="background-color:lightgrey">
+                                        <th class="text-center" colspan="2">S.No</th>
+                                        <th class="text-center" colspan="2">Heading</th>
+                                        <th class="text-center" colspan="2">GSTR-3B table</th>
+                                        <th class="text-center" colspan="2">Integrated Tax (₹)</th>
+                                        <th class="text-center" colspan="2">Central Tax (₹)</span></th>
+                                        <th class="text-center" colspan="2">State/UT Tax (₹)</th>
+                                        <th class="text-center" colspan="2">Cess (₹)</th>
+                                        <th class="text-center" colspan="2">Advisory</th>  
+                                    </tr>
+                                    <tr>
+                                        <th class="text-center" colspan="2">1</th>
+                                        <th class="text-center" colspan="2">2</th>
+                                        <th class="text-center" colspan="2">3</th>
+                                        <th class="text-center" colspan="2">4</th>
+                                        <th class="text-center" colspan="2">5</th>
+                                        <th class="text-center" colspan="2">6</th>
+                                        <th class="text-center" colspan="2">7</th>
+                                        <th class="text-center" colspan="2">8</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    <tr>
+                                        <td style="color:blue !important;font-weight:500" colspan="16">Credit which may be availed under FORM GSTR-3B</td>
+                                    </tr>
+                                    <tr>
+                                        <th class="text-center caption_style" colspan="3">Part A</th>
+                                        <th class="caption_style" colspan="13">ITC Available - Credit may be claimed in relevant headings in GSTR-3B</th>
+                                    </tr>
+                                    <tr style="background-color:lightgrey">
+                                        <th class="text-center" colspan="3">I</th>
+                                        <th class="text-center" colspan="4">All other ITC - Supplies from registeredpersons other than reverse charge</th>
+                                        <th class="text-center">4(A)(5)</td>
+                                        <td></td >
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <th class="text-center" colspan="5">If this is positive, credit may be availed under
+                                            Table 4(A)(5) of FORM GSTR-3B.
+                                            If this is negative, credit shall be reversed
+                                            under Table 4(B)(2) of FORM GSTR-3B.</th>
+                                    </tr>
+                                    <tr>
+                                        <td style="font-weight:800" colspan="16">Details</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left" style="color:blue !important;font-weight:500" colspan="7">B2B - Invoices</td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="4"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left" style="color:blue !important;font-weight:500" colspan="7">B2B - Debit notes</td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="4"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left" style="color:blue !important;font-weight:500" colspan="7">B2B - Invoices (Amendment)</td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="4"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left" style="color:blue !important;font-weight:500" colspan="7">B2B - Debit notes (Amendment)</td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="4"></td>
+                                    </tr>
+                                    <tr style="background-color:lightgrey">
+                                        <th class="text-center" colspan="3">II</th>
+                                        <th class="text-center" colspan="4">Inward Supplies from ISD</th>
+                                        <th class="text-center">4(A)(4)</td>
+                                        <td></td >
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <th class="text-center" colspan="5">If this is positive, credit may be availed under
+                                            Table 4(A)(4) of FORM GSTR-3B.
+                                            If this is negative, credit shall be reversed
+                                            under Table 4(B)(2) of FORM GSTR-3B.</th>
+                                    </tr>
+                                    <tr>
+                                        <td style="font-weight:800" colspan="16">Details</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left" style="color:blue !important;font-weight:500" colspan="7">ISD - Invoices</td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="4"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left" style="color:blue !important;font-weight:500" colspan="7">ISD - Invoices (Amendment)</td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="4"></td>
+                                    </tr>
+                                    <tr style="background-color:lightgrey">
+                                        <th class="text-center" colspan="3">III</th>
+                                        <th class="text-center" colspan="4">Inward Supplies liable for reverse charge</th>
+                                        <th class="text-center">3.1(d)4(A)(3)</td>
+                                        <td></td >
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <th class="text-center" colspan="5">These supplies shall be declared in Table
+                                            3.1(d) of FORM GSTR-3B for payment of tax.
+                                            Credit may be availed under Table 4(A)(3) of
+                                            FORM GSTR-3B on payment of tax.</th>
+                                    </tr>
+                                    <tr>
+                                        <td style="font-weight:800" colspan="16">Details</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left" style="color:blue !important;font-weight:500" colspan="7">B2B - Invoices</td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="4"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left" style="color:blue !important;font-weight:500" colspan="7">B2B - Debit notes</td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="4"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left" style="color:blue !important;font-weight:500" colspan="7">B2B - Invoices (Amendment)</td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="4"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left" style="color:blue !important;font-weight:500" colspan="7">B2B - Debit notes (Amendment)</td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="4"></td>
+                                    </tr>
+                                    <tr style="background-color:lightgrey">
+                                        <th class="text-center" colspan="3">IV</th>
+                                        <th class="text-center" colspan="4">Import of Goods</th>
+                                        <th class="text-center">4(A)(1)</td>
+                                        <td></td >
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <th class="text-center" colspan="5">If this is positive, credit may be availed under
+                                            Table 4(A)(1) of FORM GSTR-3B.
+                                            If this is negative, credit shall be reversed
+                                            under Table 4(B)(2) of FORM GSTR-3B.</th>
+                                    </tr>
+                                    <tr>
+                                        <td style="font-weight:800" colspan="16">Details</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left" style="color:blue !important;font-weight:500" colspan="7">IMPG - Import of goods from overseas</td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="4"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left" style="color:blue !important;font-weight:500" colspan="7">IMPG (Amendment)</td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="4"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left" style="color:blue !important;font-weight:500" colspan="7">IMGSEZ - Import of goods from SEZ</td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="4"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left" style="color:blue !important;font-weight:500" colspan="7">IMGSEZ (Amendment)</td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="4"></td>
+                                    </tr>
+                                    <tr>
+                                        <th class="text-center caption_style" colspan="3">Part B</th>
+                                        <th class="caption_style" colspan="13">ITC Reversal - Credit shall be reversed in relevant headings in GSTR-3B</th>
+                                    </tr>
+                                    <tr style="background-color:lightgrey">
+                                        <th class="text-center" colspan="3">I</th>
+                                        <th class="text-center" colspan="4">Others</th>
+                                        <th class="text-center">4(B)(2)</td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <th class="text-center" colspan="5">IIf this is positive, Credit shall be reversed
+                                            under Table 4(B)(2) of FORM GSTR-3B.
+                                            If this is negative, then credit may be
+                                            reclaimed subject to reversal of the same on an
+                                            earlier instance.</th>
+                                    </tr>
+                                    <tr>
+                                        <td style="font-weight:800" colspan="16">Details</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left" style="color:blue !important;font-weight:500" colspan="7">B2B - Credit notes</td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="4"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left" style="color:blue !important;font-weight:500" colspan="7">B2B - Credit notes (Amendment)</td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="4"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left" style="color:blue !important;font-weight:500" colspan="7">B2B - Credit notes (Reverse charge)</td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="4"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left" style="color:blue !important;font-weight:500" colspan="7">B2B - Credit notes (Reverse charge)
+                                        (Amendment)</td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="4"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left" style="color:blue !important;font-weight:500" colspan="7">ISD - Credit notes</td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="4"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left" style="color:blue !important;font-weight:500" colspan="7">ISD - Credit notes (Amendment)</td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="4"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <table class="table table-bordered table-bordered-padding m-t-50 m-b-50">
+                                <thead>
+                                    <tr>
+                                        <th class="caption_style" colspan="16">4. ITC Not Available Summary</th>
+                                    </tr>
+                                    <tr style="background-color:lightgrey">
+                                        <th class="text-center" colspan="2">S.No</th>
+                                        <th class="text-center" colspan="2">Heading</th>
+                                        <th class="text-center" colspan="2">GSTR-3B table</th>
+                                        <th class="text-center" colspan="2">Integrated Tax (₹)</th>
+                                        <th class="text-center" colspan="2">Central Tax (₹)</span></th>
+                                        <th class="text-center" colspan="2">State/UT Tax (₹)</th>
+                                        <th class="text-center" colspan="2">Cess (₹)</th>
+                                        <th class="text-center" colspan="2">Advisory</th>  
+                                    </tr>
+                                    <tr>
+                                        <th class="text-center" colspan="2">1</th>
+                                        <th class="text-center" colspan="2">2</th>
+                                        <th class="text-center" colspan="2">3</th>
+                                        <th class="text-center" colspan="2">4</th>
+                                        <th class="text-center" colspan="2">5</th>
+                                        <th class="text-center" colspan="2">6</th>
+                                        <th class="text-center" colspan="2">7</th>
+                                        <th class="text-center" colspan="2">8</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    <tr>
+                                        <td style="color:blue !important;font-weight:500" colspan="16">Credit which may not be availed under FORM GSTR-3B</td>
+                                    </tr>
+                                    <tr>
+                                        <th class="text-center caption_style" colspan="3">Part A</th>
+                                        <th class="caption_style" colspan="13">ITC Not Available</th>
+                                    </tr>
+                                    <tr style="background-color:lightgrey">
+                                        <th class="text-center" colspan="3">I</th>
+                                        <th class="text-center" colspan="4">All other ITC - Supplies from registered
+                                            persons other than reverse charge</th>
+                                        <th class="text-center">NA</td>
+                                        <td></td >
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <th class="text-center" colspan="5">Such credit shall not be taken in FORM
+                                            GSTR-3B.</th>
+                                    </tr>
+                                    <tr>
+                                        <td style="font-weight:800" colspan="16">Details</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left" style="color:blue !important;font-weight:500" colspan="7">B2B - Invoices</td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="4"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left" style="color:blue !important;font-weight:500" colspan="7">B2B - Debit notes</td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="4"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left" style="color:blue !important;font-weight:500" colspan="7">B2B - Invoices (Amendment)</td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="4"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left" style="color:blue !important;font-weight:500" colspan="7">B2B - Debit notes (Amendment)</td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="4"></td>
+                                    </tr>
+                                    <tr style="background-color:lightgrey">
+                                        <th class="text-center" colspan="3">II</th>
+                                        <th class="text-center" colspan="4">Inward Supplies from ISD</th>
+                                        <th class="text-center">NA</td>
+                                        <td></td >
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <th class="text-center" colspan="5">Such credit shall not be taken in FORM
+                                            GSTR-3B.</th>
+                                    </tr>
+                                    <tr>
+                                        <td style="font-weight:800" colspan="16">Details</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left" style="color:blue !important;font-weight:500" colspan="7">ISD - Invoices</td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="4"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left" style="color:blue !important;font-weight:500" colspan="7">ISD - Invoices (Amendment)</td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="4"></td>
+                                    </tr>
+                                    <tr style="background-color:lightgrey">
+                                        <th class="text-center" colspan="3">III</th>
+                                        <th class="text-center" colspan="4">Inward Supplies liable for reverse charge</th>
+                                        <th class="text-center">3.1(d)</td>
+                                        <td></td >
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <th class="text-center" colspan="5">These supplies shall be declared in Table
+                                            3.1(d) of FORM GSTR-3B for payment of
+                                            tax. However, credit will not be available on
+                                            the same.</th>
+                                    </tr>
+                                    <tr>
+                                        <td style="font-weight:800" colspan="16">Details</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left" style="color:blue !important;font-weight:500" colspan="7">B2B - Invoices</td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="4"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left" style="color:blue !important;font-weight:500" colspan="7">B2B - Debit notes</td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="4"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left" style="color:blue !important;font-weight:500" colspan="7">B2B - Invoices (Amendment)</td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="4"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left" style="color:blue !important;font-weight:500" colspan="7">B2B - Debit notes (Amendment)</td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="4"></td>
+                                    </tr>
+                                    <tr>
+                                        <th class="text-center caption_style" colspan="3">Part B</th>
+                                        <th class="caption_style" colspan="13">ITC Reversal</th>
+                                    </tr>
+                                    <tr style="background-color:lightgrey">
+                                        <th class="text-center" colspan="3">I</th>
+                                        <th class="text-center" colspan="4">Others</th>
+                                        <th class="text-center">4(B)(2)</td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <th class="text-center" colspan="5">Credit shall be reversed under Table 4(B)(2)
+                                            of FORM GSTR-3B.</th>
+                                    </tr>
+                                    <tr>
+                                        <td style="font-weight:800" colspan="16">Details</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left" style="color:blue !important;font-weight:500" colspan="7">B2B - Credit notes</td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="4"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left" style="color:blue !important;font-weight:500" colspan="7">B2B - Credit notes (Amendment)</td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="4"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left" style="color:blue !important;font-weight:500" colspan="7">B2B - Credit notes (Reverse charge)</td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="4"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left" style="color:blue !important;font-weight:500" colspan="7">B2B - Credit notes (Reverse charge)
+                                        (Amendment)</td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="4"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left" style="color:blue !important;font-weight:500" colspan="7">ISD - Credit notes</td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="4"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left" style="color:blue !important;font-weight:500" colspan="7">ISD - Credit notes (Amendment)</td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="1"></td>
+                                        <td class="text-center" colspan="4"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            <!-- End col -->
+        </div>
+    </div>
+</div>
