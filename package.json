@@ -438,7 +438,7 @@
     "electron": "^43.2.0",
     "electron-builder": "^26.15.3",
     "icon-gen": "^5.0.0",
-    "jquery": "^3.7.1",
+    "jquery": "^4.0.0",
     "jsdom": "^30.0.1",
     "png-to-ico": "^3.0.2",
     "sharp": "^0.35.3",
