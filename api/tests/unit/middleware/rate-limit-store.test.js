@@ -67,7 +67,7 @@ describe('rate limit counters shared across processes', () => {
     expect((await store.increment('1.2.3.4')).totalHits).toBe(3);
   });
 
-  test('two stores sharing a database continue one another\'s count', async () => {
+  test("two stores sharing a database continue one another's count", async () => {
     /* This is the whole point: two workers, one tally. With the default store
        each would have started again at 1. */
     const db = fakeDb();
