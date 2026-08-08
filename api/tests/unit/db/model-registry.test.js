@@ -138,6 +138,38 @@ describe('multi-tenant - the model follows the request', () => {
     expect(() => modelFor('TestWidget')).toThrow(/no shop in context/);
   });
 
+  test('a schema static runs against the shop it was called for', async () => {
+    /*
+     * models/plugins.js adds a `paginate` static that calls this.find() and
+     * this.countDocuments(). It never mentions a connection, so whether it is
+     * tenant-safe depends entirely on what `this` is inside a static reached
+     * through the proxy. If that were the default model, every paginated list
+     * in the application would read the wrong shop while looking correct.
+     */
+    const probe = new mongoose.Schema({ name: String });
+    probe.statics.whichShop = function whichShop() {
+      return this.__shop || 'default';
+    };
+    const Probe = defineModel('TestProbe', probe);
+
+    const models = {};
+    const connection = {
+      models,
+      model(name, s) {
+        models[name] = {
+          modelName: name,
+          schema: s,
+          __shop: 'A',
+          whichShop: probe.statics.whichShop,
+        };
+        return models[name];
+      },
+    };
+    await runWithTenant({ db: {}, connection }, async () => {
+      expect(Probe.whichShop()).toBe('A');
+    });
+  });
+
   test('a model never registered through defineModel is refused', async () => {
     const connection = { models: {}, model: () => ({}) };
     await runWithTenant({ db: {}, connection }, async () => {
