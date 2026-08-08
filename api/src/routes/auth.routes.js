@@ -29,6 +29,22 @@ router.post('/verify', auth, authController.verifyToken);
 router.post('/forgot-password', passwordResetLimiter, authController.forgotPassword);
 router.patch('/reset-password/:token', authController.resetPassword);
 
+/*
+ * Support signing in as one of this shop's users, from the Posnic console.
+ *
+ * Necessarily above router.use(protect): its whole job is to establish a
+ * session, so requiring one first would make it unreachable. It is not
+ * unauthenticated - it requires a token signed with this shop's own
+ * JWT_SECRET, valid for a minute, spendable once. See the controller for why
+ * that adds no exposure the secret does not already carry.
+ *
+ * Rate limited with the same limiter as login. The token cannot be guessed, but
+ * an endpoint that does database work per request is worth not leaving open to
+ * being hammered.
+ */
+const { shadowLogin } = require('../controllers/shadow-login.controller');
+router.get('/shadow', loginLimiter, shadowLogin);
+
 // Protected routes (require authentication)
 router.use(protect);
 
