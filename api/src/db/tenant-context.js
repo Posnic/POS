@@ -102,10 +102,48 @@ function currentDb(fallback) {
   return fallback;
 }
 
+/**
+ * The mongoose Connection the caller should be reading through.
+ *
+ * The counterpart to currentDb() for the parts of the API that went through
+ * mongoose rather than BaseModel - forty-two places across controllers, models
+ * and repositories reached `mongoose.connection.db` or
+ * `mongoose.connection.collection(...)` directly. Each of those is a process-wide
+ * handle, so in a process serving several shops each one is a request reading
+ * whichever database the process connected to.
+ *
+ * Same rule as currentDb: the tenant's connection when there is one, the
+ * process-wide connection in standalone, and an error rather than a guess when
+ * the mode is on and nothing is in scope.
+ *
+ * This is for *reading data*. Connection management - readyState, connect,
+ * close, admin().ping() - is genuinely per process and must keep using
+ * mongoose.connection directly.
+ *
+ * @param {object} [fallback] usually mongoose.connection
+ */
+function currentConnection(fallback) {
+  const tenant = storage.getStore();
+  if (tenant && tenant.connection) return tenant.connection;
+  /* A scope opened with only a Db still answers for data access, so callers
+     that just want a collection are served without needing both. */
+  if (tenant && tenant.db && !multiTenant) return fallback;
+
+  if (multiTenant) {
+    if (tenant && tenant.connection) return tenant.connection;
+    throw new Error(
+      'no shop in context: this process serves several shops, so the ' +
+        'connection cannot be chosen for you. Wrap the work in runWithTenant().'
+    );
+  }
+  return fallback;
+}
+
 module.exports = {
   enableMultiTenant,
   isMultiTenant,
   runWithTenant,
   currentTenant,
   currentDb,
+  currentConnection,
 };

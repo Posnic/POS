@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { currentConnection } = require('../db/tenant-context');
 const { ObjectId } = require('mongodb');
 const crypto = require('crypto');
 const BaseModel = require('../models/base.model');
@@ -5741,7 +5742,7 @@ class SalesRepository {
         ],
       };
 
-      const salesCollection = mongoose.connection.collection('sales');
+      const salesCollection = currentConnection(mongoose.connection).collection('sales');
 
       // 1. Sales details (registered customers)
       const salesList = await salesCollection
@@ -5984,8 +5985,8 @@ class SalesRepository {
       const FromDate = new Date(starting_date);
       const ToDate = new Date(ending_date);
 
-      const salesCollection = mongoose.connection.collection('sales');
-      const receivingsCollection = mongoose.connection.collection('receivings');
+      const salesCollection = currentConnection(mongoose.connection).collection('sales');
+      const receivingsCollection = currentConnection(mongoose.connection).collection('receivings');
 
       const filters = {
         $and: [
@@ -6328,7 +6329,7 @@ class SalesRepository {
         ],
       };
 
-      const salesCollection = mongoose.connection.collection('sales');
+      const salesCollection = currentConnection(mongoose.connection).collection('sales');
 
       // Sales details aggregation
       const salesList = await salesCollection

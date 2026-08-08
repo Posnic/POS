@@ -1,5 +1,6 @@
 // src/models/sale_model.js
 const mongoose = require('mongoose');
+const { currentConnection } = require('../db/tenant-context');
 const { toJSON, paginate } = require('./plugins');
 const { PAYMENT_STATUS } = require('../constants');
 const { SALE_PROCESS_VALUES } = require('../constants/sales.constants');
@@ -1287,13 +1288,13 @@ Sale.generateQrCodeModel = async function (amount) {
     console.log('Querying branch with _id:', queryId);
 
     // Try 'branches' collection first (plural)
-    let branchCollection = mongoose.connection.collection('branches');
+    let branchCollection = currentConnection(mongoose.connection).collection('branches');
     let branch = await branchCollection.findOne({ _id: queryId });
 
     // If not found, try 'branch' (singular)
     if (!branch) {
       console.log('Not found in branches, trying branch collection');
-      branchCollection = mongoose.connection.collection('branch');
+      branchCollection = currentConnection(mongoose.connection).collection('branch');
       branch = await branchCollection.findOne({ _id: queryId });
     }
 
@@ -1361,7 +1362,7 @@ Sale.generateQrCodeModel = async function (amount) {
     });
 
     // Store QR data in payment collection
-    const Payment = mongoose.connection.collection('payment');
+    const Payment = currentConnection(mongoose.connection).collection('payment');
     const qrData = {
       id: qrCodeResponse.id,
       entity: qrCodeResponse.entity,
@@ -1413,7 +1414,7 @@ const resolveKioskBranch = async (branchId) => {
   const collections = ['branches', 'branch'];
 
   for (const name of collections) {
-    const collection = mongoose.connection.collection(name);
+    const collection = currentConnection(mongoose.connection).collection(name);
     const query = queryId
       ? { $or: [{ 'kiosk.store_id': branchId }, { _id: queryId }] }
       : { 'kiosk.store_id': branchId };
@@ -1525,14 +1526,14 @@ Sale.qrCodeCloseModel = async function (id) {
     }
 
     // Get branch settings to retrieve Razorpay credentials
-    let branchCollection = mongoose.connection.collection('branches');
+    let branchCollection = currentConnection(mongoose.connection).collection('branches');
     const ObjectId = mongoose.Types.ObjectId;
     const queryId = branchId instanceof ObjectId ? branchId : new ObjectId(branchId);
 
     let branch = await branchCollection.findOne({ _id: queryId });
 
     if (!branch) {
-      branchCollection = mongoose.connection.collection('branch');
+      branchCollection = currentConnection(mongoose.connection).collection('branch');
       branch = await branchCollection.findOne({ _id: queryId });
     }
 
@@ -1605,14 +1606,14 @@ Sale.qrCodeCloseModel = async function (id) {
  */
 Sale.getQrStatusModel = async function (id) {
   try {
-    const RazorpayWebhook = mongoose.connection.collection('razorpay_webhook');
+    const RazorpayWebhook = currentConnection(mongoose.connection).collection('razorpay_webhook');
 
     const responseData = await RazorpayWebhook.findOne(
       { 'payload.qr_code.entity.id': id },
       { sort: { _id: -1 } }
     );
 
-    const Payment = mongoose.connection.collection('payment');
+    const Payment = currentConnection(mongoose.connection).collection('payment');
     const paymentDoc = await Payment.findOne({ id });
     const paymentTransactionId = paymentDoc?._id?.toString() || null;
 
@@ -1661,14 +1662,14 @@ Sale.getQrStatusModel = async function (id) {
     }
 
     // Get branch settings to retrieve Razorpay credentials
-    let branchCollection = mongoose.connection.collection('branches');
+    let branchCollection = currentConnection(mongoose.connection).collection('branches');
     const ObjectId = mongoose.Types.ObjectId;
     const queryId = branchId instanceof ObjectId ? branchId : new ObjectId(branchId);
 
     let branch = await branchCollection.findOne({ _id: queryId });
 
     if (!branch) {
-      branchCollection = mongoose.connection.collection('branch');
+      branchCollection = currentConnection(mongoose.connection).collection('branch');
       branch = await branchCollection.findOne({ _id: queryId });
     }
 
@@ -1749,7 +1750,7 @@ Sale.getQrStatusModel = async function (id) {
 Sale.kioskOrderModel = async function (data) {
   try {
     const ObjectId = mongoose.Types.ObjectId;
-    const branchCollection = mongoose.connection.collection('branches');
+    const branchCollection = currentConnection(mongoose.connection).collection('branches');
     const branchDoc = await branchCollection.findOne({
       'kiosk.store_id': data.branch,
     });
@@ -1766,7 +1767,7 @@ Sale.kioskOrderModel = async function (data) {
     const tax_data = [];
     const subtotal_data = [];
 
-    const itemCollection = mongoose.connection.collection('items');
+    const itemCollection = currentConnection(mongoose.connection).collection('items');
 
     for (const item of items) {
       let itemSubTaxTotalCalculation = 0.0;
@@ -2010,7 +2011,7 @@ Sale.kioskOrderModel = async function (data) {
     const mongoDate = now;
 
     // Generate sales_id
-    const saleCollection = mongoose.connection.collection('sales');
+    const saleCollection = currentConnection(mongoose.connection).collection('sales');
     const lastRecord = await saleCollection.findOne(
       { branch_id: branchDoc._id, license: branchDoc.license },
       { sort: { _id: -1 }, limit: 1 }
@@ -2051,7 +2052,7 @@ Sale.kioskOrderModel = async function (data) {
     // Find or create customer
     const mobile = data.customerMobile || '';
     const last10 = mobile.replace(/\D/g, '').slice(-10);
-    const customerCollection = mongoose.connection.collection('customers');
+    const customerCollection = currentConnection(mongoose.connection).collection('customers');
     let customerDetails = null;
     if (last10) {
       customerDetails = await customerCollection.findOne({

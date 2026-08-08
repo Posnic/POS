@@ -1,5 +1,6 @@
 // src/models/receiving_model.js
 const mongoose = require('mongoose');
+const { currentConnection } = require('../db/tenant-context');
 const { ObjectId } = require('mongodb');
 // Use ApiV2 model filenames; BaseModel here refers to the legacy static
 // context helper (currentBranch, license, etc.), not the simple
@@ -2691,8 +2692,8 @@ Receiving.gstNineReportPage = async function (data) {
     const FromDate = new Date(starting_date);
     const ToDate = new Date(ending_date);
 
-    const salesCollection = mongoose.connection.collection('sales');
-    const receivingsCollection = mongoose.connection.collection('receivings');
+    const salesCollection = currentConnection(mongoose.connection).collection('sales');
+    const receivingsCollection = currentConnection(mongoose.connection).collection('receivings');
 
     // Unregister sales details (consumer)
     const filters = {

@@ -10,6 +10,7 @@
  * trading because a limits file was unreadable.
  */
 const fs = require('fs');
+const { currentConnection } = require('../db/tenant-context');
 const path = require('path');
 
 const TTL_MS = 30_000;
@@ -26,7 +27,9 @@ async function getLimits() {
     } else {
       const mongoose = require('mongoose');
       if (mongoose.connection && mongoose.connection.readyState === 1) {
-        limits = await mongoose.connection.db.collection('app_limits').findOne({ _id: 'limits' });
+        limits = await currentConnection(mongoose.connection)
+          .db.collection('app_limits')
+          .findOne({ _id: 'limits' });
       }
     }
   } catch (err) {

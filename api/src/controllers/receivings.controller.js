@@ -1,5 +1,6 @@
 // src/controllers/receivings_controller.js
 const mongoose = require('mongoose');
+const { currentConnection } = require('../db/tenant-context');
 const fs = require('fs');
 const path = require('path');
 const BaseController = require('./base.controller');
@@ -1073,7 +1074,7 @@ class ReceivingsController extends BaseController {
         license: BaseModel.license,
       };
 
-      const receivingsCollection = mongoose.connection.collection('receivings');
+      const receivingsCollection = currentConnection(mongoose.connection).collection('receivings');
 
       // Get total count
       const total = await receivingsCollection.countDocuments(filter);
@@ -1285,7 +1286,7 @@ class ReceivingsController extends BaseController {
         filter.supplier_id = new ObjectId(req.query.supplier_id);
       }
 
-      const receivingsCollection = mongoose.connection.collection('receivings');
+      const receivingsCollection = currentConnection(mongoose.connection).collection('receivings');
 
       // Aggregate to group by supplier
       const receivingList = await receivingsCollection
@@ -1398,7 +1399,7 @@ class ReceivingsController extends BaseController {
         ],
       };
 
-      const receivingsCollection = mongoose.connection.collection('receivings');
+      const receivingsCollection = currentConnection(mongoose.connection).collection('receivings');
 
       // 1. Receiving details (registered suppliers)
       const receivingList = await receivingsCollection
@@ -1645,7 +1646,7 @@ class ReceivingsController extends BaseController {
         return this.error(res, 'item_price must be a valid positive number', 400);
       }
 
-      const db = mongoose.connection.db;
+      const db = currentConnection(mongoose.connection).db;
       const itemsCollection = db.collection('items');
 
       const result = await itemsCollection.updateOne(

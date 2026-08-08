@@ -1,4 +1,5 @@
 const { redact } = require('../utils/redact');
+const { currentConnection } = require('../db/tenant-context');
 const { searchPattern } = require('../utils/safe-search');
 const BaseController = require('./base.controller');
 const UserModel = require('../models/user.model');
@@ -352,7 +353,7 @@ class UsersController extends BaseController {
       let actualRegisterStatus = 'Closed';
       try {
         const mongoose = require('mongoose');
-        const db = mongoose.connection.db;
+        const db = currentConnection(mongoose.connection).db;
         const cashregisterCollection = db.collection('cashregister');
 
         const openRegister = await cashregisterCollection.findOne({
@@ -373,7 +374,7 @@ class UsersController extends BaseController {
       let outstandingCustomers = [];
       try {
         const mongoose = require('mongoose');
-        const db = mongoose.connection.db;
+        const db = currentConnection(mongoose.connection).db;
         const transactionCollection = db.collection('transaction');
         const { ObjectId } = require('mongodb');
 
@@ -2151,7 +2152,7 @@ class UsersController extends BaseController {
   async ssoAuth(req, res) {
     const mongoose = require('mongoose');
     const jwt = require('jsonwebtoken');
-    const db = mongoose.connection.db;
+    const db = currentConnection(mongoose.connection).db;
 
     try {
       const { token } = req.query;
@@ -2324,7 +2325,7 @@ class UsersController extends BaseController {
    */
   async mobileLogin(req, res) {
     const mongoose = require('mongoose');
-    const db = mongoose.connection.db;
+    const db = currentConnection(mongoose.connection).db;
     const loginCheckCollection = db.collection('login_check');
 
     try {
@@ -2442,7 +2443,7 @@ class UsersController extends BaseController {
    */
   async kioskMobileLogin(req, res) {
     const mongoose = require('mongoose');
-    const db = mongoose.connection.db;
+    const db = currentConnection(mongoose.connection).db;
     const loginCheckCollection = db.collection('login_check');
 
     try {
@@ -2636,7 +2637,7 @@ class UsersController extends BaseController {
     const mongoose = require('mongoose');
     const crypto = require('crypto');
     const config = require('../config/config');
-    const db = mongoose.connection.db;
+    const db = currentConnection(mongoose.connection).db;
 
     try {
       // This endpoint requires posnic_key/posnic_secret headers

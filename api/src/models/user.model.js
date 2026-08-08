@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { currentConnection } = require('../db/tenant-context');
 const bcrypt = require('bcryptjs');
 const { toJSON, paginate } = require('./plugins');
 
@@ -778,7 +779,7 @@ userSchema.statics.userstatusReportPage = async function (data, options = {}) {
       StaffActivity = mongoose.model('StaffActivity');
     } catch (err) {
       // Model doesn't exist, use raw collection
-      const db = mongoose.connection.db;
+      const db = currentConnection(mongoose.connection).db;
       if (!db) {
         throw new Error('Database connection not established', { cause: err });
       }

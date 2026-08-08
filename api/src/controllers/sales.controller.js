@@ -1,5 +1,6 @@
 // src/controllers/sales_controller.js
 const BaseController = require('./base.controller');
+const { currentConnection } = require('../db/tenant-context');
 const Sale = require('../models/sale.model');
 const BaseModel = require('../models/base.model');
 const mongoose = require('mongoose');
@@ -2493,8 +2494,8 @@ class SalesController extends BaseController {
        */
       let branch = null;
       try {
-        branch = await mongoose.connection.db
-          .collection('branches')
+        branch = await currentConnection(mongoose.connection)
+          .db.collection('branches')
           .findOne(
             { _id: branchObjectIds[0] },
             { projection: { client_dateformat: 1, time_zone: 1 } }

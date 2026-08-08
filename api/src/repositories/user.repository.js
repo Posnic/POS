@@ -1,4 +1,5 @@
 const User = require('../models/user.model');
+const { currentConnection } = require('../db/tenant-context');
 const Branch = require('../models/branch.model');
 const { ObjectId } = require('mongodb');
 const bcrypt = require('bcryptjs');
@@ -110,7 +111,7 @@ class UsersRepository {
   async getUserAjaxList(query, currentBranch, license) {
     try {
       const mongoose = require('mongoose');
-      const db = mongoose.connection.db;
+      const db = currentConnection(mongoose.connection).db;
       const usersCollection = db.collection('users');
 
       const where = {
@@ -199,7 +200,7 @@ class UsersRepository {
   async getUserRegisterList(currentBranch, license) {
     try {
       const mongoose = require('mongoose');
-      const db = mongoose.connection.db;
+      const db = currentConnection(mongoose.connection).db;
       const branchCollection = db.collection('branches');
 
       const filters = {
@@ -523,7 +524,7 @@ class UsersRepository {
   async findCustomerById(customerId, context = {}) {
     try {
       const mongoose = require('mongoose');
-      const db = mongoose.connection.db;
+      const db = currentConnection(mongoose.connection).db;
       const customersCollection = db.collection('customers');
       return await customersCollection.findOne({
         _id: new ObjectId(String(customerId)),
@@ -540,7 +541,7 @@ class UsersRepository {
   async findActiveSsoToken(token) {
     try {
       const mongoose = require('mongoose');
-      const db = mongoose.connection.db;
+      const db = currentConnection(mongoose.connection).db;
       const ssoCollection = db.collection('sso');
       return await ssoCollection.findOne({ token, status: 'active' });
     } catch (error) {
@@ -560,7 +561,7 @@ class UsersRepository {
   async deactivateSsoToken(token) {
     try {
       const mongoose = require('mongoose');
-      const db = mongoose.connection.db;
+      const db = currentConnection(mongoose.connection).db;
       const ssoCollection = db.collection('sso');
       return await ssoCollection.updateOne(
         { token, status: 'active' },
@@ -575,7 +576,7 @@ class UsersRepository {
   async createSsoToken(ssoData) {
     try {
       const mongoose = require('mongoose');
-      const db = mongoose.connection.db;
+      const db = currentConnection(mongoose.connection).db;
       const ssoCollection = db.collection('sso');
       const result = await ssoCollection.insertOne(ssoData);
       return result.insertedId;
@@ -587,7 +588,7 @@ class UsersRepository {
   async findBranchesWithKiosk(branchIds) {
     try {
       const mongoose = require('mongoose');
-      const db = mongoose.connection.db;
+      const db = currentConnection(mongoose.connection).db;
       const branchCollection = db.collection('branches');
       return await branchCollection
         .find({
