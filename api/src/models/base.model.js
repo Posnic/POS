@@ -2,6 +2,21 @@ const { MongoClient, ObjectId } = require('mongodb');
 require('dotenv').config({ quiet: true });
 const { formatDate } = require('../utils/helpers');
 const { getRequestContext } = require('../utils/request-context');
+/*
+ * Which shop's database this call belongs to.
+ *
+ * BaseModel.database is a process-wide static, set once when the process
+ * connects - correct for a till or a self-hosted server, which have one shop.
+ * A process serving several shops needs the handle to follow the request, and
+ * currentDb() is what makes that true without threading a database argument
+ * through twelve controllers and twelve repositories.
+ *
+ * In standalone it returns the static and nothing changes. In multi-tenant mode
+ * it throws when there is no shop in scope rather than falling back, because
+ * falling back is precisely the silent leak: the query would succeed and return
+ * another shop's data.
+ */
+const { currentDb } = require('../db/tenant-context');
 
 /**
  * BaseModel - MongoDB Native Driver Infrastructure
@@ -287,7 +302,7 @@ class BaseModel {
       );
     }
 
-    return BaseModel.database.collection(targetCollection);
+    return currentDb(BaseModel.database).collection(targetCollection);
   }
 
   /**
@@ -295,7 +310,7 @@ class BaseModel {
    */
   static async getDb() {
     await new BaseModel().initializeDB();
-    return BaseModel.database;
+    return currentDb(BaseModel.database);
   }
 
   /**
@@ -303,7 +318,7 @@ class BaseModel {
    */
   async getDB() {
     await this.initializeDB();
-    return BaseModel.database;
+    return currentDb(BaseModel.database);
   }
 
   setCollectionName(name) {
@@ -727,7 +742,7 @@ class BaseModel {
     try {
       await this.initializeDB();
 
-      const collection = BaseModel.database.collection('data_change_log');
+      const collection = currentDb(BaseModel.database).collection('data_change_log');
 
       const doc = {
         module,
@@ -765,7 +780,7 @@ class BaseModel {
     try {
       await this.initializeDB();
 
-      const changeLogCollection = BaseModel.database.collection('data_change_log');
+      const changeLogCollection = currentDb(BaseModel.database).collection('data_change_log');
 
       const query = {
         module: collectionName,
@@ -833,7 +848,7 @@ class BaseModel {
         backupTable.license = BaseModel.license;
       }
 
-      const collection = BaseModel.database.collection('recycle_bin');
+      const collection = currentDb(BaseModel.database).collection('recycle_bin');
       const insertData = await collection.insertOne(backupTable);
 
       return {
