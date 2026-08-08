@@ -217,6 +217,14 @@ if (process.env.NODE_ENV === 'development') {
 
 // Limit requests from same API
 // Increased limits for development - frontend makes many requests on page load
+//
+// Left in process memory on purpose, unlike the sign-in limiters in
+// middleware/auth-rate-limit.js. This one sees every request, so a shared store
+// would mean a database write per request to guard a threshold of 1000 - real
+// load in exchange for very little. It also guards abuse rather than
+// credentials: if several workers each allow 1000, the effective ceiling rises
+// with worker count, which is an acceptable outcome here and is not for a
+// limiter counting password attempts.
 const limiter = rateLimit({
   // `max` was renamed `limit` in express-rate-limit 7; the old name still
   // works and warns.

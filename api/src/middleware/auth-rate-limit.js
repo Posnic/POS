@@ -1,4 +1,15 @@
 const rateLimit = require('express-rate-limit');
+const { MongoRateLimitStore } = require('./rate-limit-store');
+
+/*
+ * Counters in the database, not in this process's memory.
+ *
+ * The default store is per process, which is correct while each shop has a
+ * process of its own. As soon as shops share a pool of workers it silently
+ * multiplies every limit by the number of workers - twenty sign-in attempts
+ * becomes eighty across four - with the configuration still reading "limit: 20".
+ * Each limiter gets its own prefix so their keys cannot collide.
+ */
 
 /*
  * A tighter limit on the handful of routes that guess at credentials.
@@ -26,6 +37,7 @@ const rateLimit = require('express-rate-limit');
    locking lets anybody lock a shop out of their own till by guessing badly at
    their email, which turns a nuisance into an outage. */
 const loginLimiter = rateLimit({
+  store: new MongoRateLimitStore({ prefix: 'login' }),
   windowMs: 10 * 60 * 1000,
   limit: 20,
   message: {
@@ -49,6 +61,7 @@ const loginLimiter = rateLimit({
  * exactly the one that sent it.
  */
 const passwordResetLimiter = rateLimit({
+  store: new MongoRateLimitStore({ prefix: 'pwreset' }),
   windowMs: 60 * 60 * 1000,
   limit: 5,
   message: {
@@ -63,6 +76,7 @@ const passwordResetLimiter = rateLimit({
  * Creating an account, which also sends mail and claims a name.
  */
 const registerLimiter = rateLimit({
+  store: new MongoRateLimitStore({ prefix: 'register' }),
   windowMs: 60 * 60 * 1000,
   limit: 10,
   message: {
