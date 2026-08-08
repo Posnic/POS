@@ -20,6 +20,7 @@
  */
 
 const crypto = require('crypto');
+const { currentSecret } = require('../db/tenant-context');
 
 /*
  * Read inside the function, not at module load.
@@ -30,7 +31,9 @@ const crypto = require('crypto');
  * which meant every Posnic in the world accepted the same one.
  */
 function kioskApiKey() {
-  return process.env.KIOSK_API_KEY || null;
+  /* Per shop. One process serving several shops must not accept a kiosk key
+     issued to a different customer's installation. */
+  return currentSecret('KIOSK_API_KEY', process.env.KIOSK_API_KEY) || null;
 }
 
 /*

@@ -5,6 +5,7 @@ const { AppError } = require('../utils/appError');
 // UnauthorizedError was thrown on the failure path of protect() without being
 // imported, so an invalid token produced a ReferenceError instead of a 401.
 const { UnauthorizedError } = require('./errorHandler');
+const { currentSecret } = require('../db/tenant-context');
 const httpStatus = require('http-status');
 const tokenService = require('../services/token.service');
 require('../config/tokens');
@@ -45,9 +46,21 @@ const continueWithTenant = async (req, res, next, currentUser) => {
   }
 };
 
-// Shared secret used for JWT payloads. Prefer env, but fall back to the
-// central config default so local/dev startup cannot produce unsigned tokens.
-const getJwtSecret = () => process.env.JWT_SECRET || config.jwt.secret;
+/*
+ * The secret used for JWT payloads, resolved per request.
+ *
+ * It used to prefer the environment and fall back to the central config so a
+ * local start could not produce unsigned tokens. Both of those are process-wide
+ * values, which is right for a process serving one shop and wrong for one
+ * serving several: every request would be verified against whichever shop
+ * happened to start the process, so a token minted for one customer would be
+ * accepted for another.
+ *
+ * currentSecret keeps the old behaviour exactly when there is no tenant scope -
+ * the environment, then the config default - and in multi-tenant mode raises
+ * rather than falling back, because the fallback is the leak.
+ */
+const getJwtSecret = () => currentSecret('JWT_SECRET', process.env.JWT_SECRET || config.jwt.secret);
 
 // Encrypt session ID similar in spirit to PHP's openssl_encrypt(AES-256-CBC).
 // This is internal to Node and is NOT expected to interoperate with PHP tokens;

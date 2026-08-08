@@ -1,9 +1,12 @@
 const jwt = require('jsonwebtoken');
 const { promisify } = require('util');
 const { authCookieOptions } = require('../utils/auth-cookie');
+/* Per request. A signing key read once at module load is the process's key,
+   and in a process serving several shops that is some other customer's. */
+const { currentSecret } = require('../db/tenant-context');
 
 const signToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
+  return jwt.sign({ id }, currentSecret('JWT_SECRET'), {
     expiresIn: process.env.JWT_EXPIRES_IN,
   });
 };
@@ -27,7 +30,7 @@ const createSendToken = (user, statusCode, res) => {
 };
 
 const verifyToken = async (token) => {
-  return await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+  return await promisify(jwt.verify)(token, currentSecret('JWT_SECRET'));
 };
 
 const getTokenFromRequest = (req) => {

@@ -25,6 +25,7 @@
  */
 
 const crypto = require('crypto');
+const { currentSecret } = require('../db/tenant-context');
 
 const ALGORITHM = 'aes-256-gcm';
 const IV_BYTES = 12;
@@ -35,7 +36,11 @@ const VERSION = 1;
 const PREFIX = 'enc:v1:';
 
 function key() {
-  const material = process.env.ENCRYPTION_KEY;
+  /* Per shop, resolved per call. Reading this from the environment in a process
+     serving several shops would encrypt one customer's records with another's
+     key - and, worse, decrypt them with it, so the damage would be invisible
+     until the two were separated again. */
+  const material = currentSecret('ENCRYPTION_KEY');
   if (!material) {
     throw new Error(
       'ENCRYPTION_KEY is not set, so secret fields cannot be encrypted. ' +

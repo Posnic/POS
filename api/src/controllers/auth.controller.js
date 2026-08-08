@@ -6,6 +6,9 @@ const User = require('../models/user.model');
 const { AppError } = require('../utils/appError');
 const { Email } = require('../utils/email');
 const { createAndSendToken } = require('./auth-utils.controller');
+/* Per request: in a shared process the environment holds whichever shop
+   started it, so verifying against it would accept another shop's token. */
+const { currentSecret } = require('../db/tenant-context');
 require('../utils/findUserByIdentifier');
 
 // Helper function to filter object fields
@@ -91,7 +94,7 @@ exports.protect = async (req, res, next) => {
     }
 
     // 2) Verification token
-    const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+    const decoded = await promisify(jwt.verify)(token, currentSecret('JWT_SECRET'));
 
     // 3) Check if user still exists
     const currentUser = await User.findById(decoded.id);
@@ -430,7 +433,7 @@ exports.verifyToken = async (req, res, next) => {
     }
 
     // Verify token
-    const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+    const decoded = await promisify(jwt.verify)(token, currentSecret('JWT_SECRET'));
 
     // Check if user still exists
     const currentUser = await User.findById(decoded.id);

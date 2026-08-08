@@ -1,5 +1,6 @@
 // src/controllers/items_controller.js
 const BaseController = require('./base.controller');
+const { currentSecret } = require('../db/tenant-context');
 const ItemService = require('../services/item.service');
 const { safeJsonParse, formatDate } = require('../utils/helpers');
 const { ERROR_MESSAGES, SUCCESS_MESSAGES } = require('../constants/items.constants');
@@ -460,7 +461,7 @@ class ItemsController extends BaseController {
       // key and reading the source was enough to call this endpoint on any of
       // them. Read at call time, since main.js sets it while starting.
       const kioskKey = req.headers['kioskkey'];
-      const expected = process.env.KIOSK_API_KEY || null;
+      const expected = currentSecret('KIOSK_API_KEY', process.env.KIOSK_API_KEY) || null;
       if (!expected || kioskKey !== expected) {
         return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
       }

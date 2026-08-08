@@ -139,10 +139,61 @@ function currentConnection(fallback) {
   return fallback;
 }
 
+/**
+ * A per-shop secret.
+ *
+ * The same problem as the database, one layer up, and the reason a shared
+ * worker is not simply a routing change.
+ *
+ * JWT_SECRET, ENCRYPTION_KEY and the rest are per shop. Today that works
+ * because each shop owns a process and its own environment, so
+ * `process.env.JWT_SECRET` is unambiguous. In a process serving several shops
+ * it becomes whichever shop started the process - which means a token minted
+ * for one shop verifies in another, and a record encrypted for one shop is
+ * decrypted with another's key.
+ *
+ * That is worse than the database leak. A wrong database returns another
+ * shop's data and can at least be noticed; a shared signing key means the
+ * authentication boundary between two customers has quietly stopped existing,
+ * and nothing about the failure is visible from inside either shop.
+ *
+ * So: the shop's own value when there is one, and in multi-tenant mode an
+ * error rather than the environment. Falling back to `process.env` there is
+ * precisely the leak - it would return a value belonging to some other shop
+ * while looking like it worked.
+ *
+ * Standalone is unchanged: no context, no multi-tenant, the environment is
+ * correct and is used.
+ *
+ * @param {string} name      e.g. 'JWT_SECRET'
+ * @param {string} [fallback] defaults to process.env[name]
+ */
+function currentSecret(name, fallback) {
+  const tenant = storage.getStore();
+  if (tenant && tenant.secrets && tenant.secrets[name] != null) {
+    return tenant.secrets[name];
+  }
+
+  if (multiTenant) {
+    /* Deliberately fatal, and deliberately not falling through to the
+       environment. A missing per-shop secret in a shared process is not a
+       configuration gap to paper over - it is a request that would be signed
+       or decrypted with the wrong customer's key. */
+    throw new Error(
+      `no ${name} for the shop in context: this process serves several shops, so ` +
+        'a per-shop secret cannot be taken from the environment. It must come ' +
+        'from the tenant scope.'
+    );
+  }
+
+  return fallback === undefined ? process.env[name] : fallback;
+}
+
 module.exports = {
   enableMultiTenant,
   isMultiTenant,
   runWithTenant,
+  currentSecret,
   currentTenant,
   currentDb,
   currentConnection,

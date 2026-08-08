@@ -31,7 +31,7 @@
 const jwt = require('jsonwebtoken');
 const { promisify } = require('util');
 const { authCookieOptions } = require('../utils/auth-cookie');
-const { currentDb } = require('../db/tenant-context');
+const { currentDb, currentSecret } = require('../db/tenant-context');
 const BaseModel = require('../models/base.model');
 
 /* The shop is the one that decides how long is acceptable, not the caller. A
@@ -45,7 +45,7 @@ async function shadowLogin(req, res) {
 
   let claims;
   try {
-    claims = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+    claims = await promisify(jwt.verify)(token, currentSecret('JWT_SECRET'));
   } catch (e) {
     /* Not distinguished for the caller. "Expired" versus "bad signature" tells
        someone probing exactly which half to work on. */
@@ -124,7 +124,7 @@ async function shadowLogin(req, res) {
    */
   const authToken = jwt.sign(
     { id: user._id, shadow: true, by: claims.by || null },
-    process.env.JWT_SECRET,
+    currentSecret('JWT_SECRET'),
     { expiresIn: '2h' }
   );
 
