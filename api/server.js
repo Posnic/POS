@@ -24,10 +24,27 @@ process.on("uncaughtException", (err) => {
 // Get MongoDB URI from environment
 const DB_URI = config.database.uri || process.env.MONGODB_URI || "mongodb://localhost:27017/PosnicPro";
 
+/*
+ * Pool size, applied here because here is where the connection is actually made.
+ *
+ * src/config/database.js has carried a considered set of options - maxPoolSize
+ * from MAX_POOL_SIZE, timeouts, retry settings - since before this file existed,
+ * and nothing has ever required it. So MAX_POOL_SIZE=5 was set in twenty tenant
+ * env files and changed nothing: both connections below used the driver default
+ * of 100, giving each shop a ceiling of 200 sockets. Twenty shops idling held
+ * 1,052 open connections against the server.
+ *
+ * A till serves one shop and a handful of devices. Five is generous for that,
+ * and the number matters more than it looks: when many shops share one machine,
+ * the pool is per-process, so the ceiling is multiplied by however many are
+ * running.
+ */
+const POOL_SIZE = parseInt(process.env.MAX_POOL_SIZE, 10) || 5;
+
 // Connect to database
 const connectDB = async () => {
   try {
-    await mongoose.connect(DB_URI);
+    await mongoose.connect(DB_URI, { maxPoolSize: POOL_SIZE });
     console.log("✅ MongoDB Connected Successfully!");
     console.log(`📊 Database: ${mongoose.connection.name}`);
     console.log(`🔗 Host: ${mongoose.connection.host}`);
@@ -50,7 +67,9 @@ const startServer = async () => {
 
     // Add MongoDB client to app.locals for session management
     const { MongoClient } = require('mongodb');
-    const mongoClient = new MongoClient(DB_URI);
+    /* Sessions only. A second pool of 100 alongside mongoose's own was most of
+       the socket count above, for a workload of one lookup per request. */
+    const mongoClient = new MongoClient(DB_URI, { maxPoolSize: POOL_SIZE });
     await mongoClient.connect();
     app.locals.mongoClient = mongoClient;
     console.log("✅ MongoDB Client added to app.locals for session management");
