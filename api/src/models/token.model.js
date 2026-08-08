@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { defineModel } = require('../db/model-registry');
 const { toJSON } = require('./plugins');
 const { tokenTypes } = require('../config/tokens');
 
@@ -39,6 +40,6 @@ tokenSchema.plugin(toJSON);
 /**
  * @typedef Token
  */
-const Token = mongoose.model('Token', tokenSchema);
+const Token = defineModel('Token', tokenSchema);
 
 module.exports = Token;

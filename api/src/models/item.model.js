@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { defineModel } = require('../db/model-registry');
 const { toJSON, paginate } = require('./plugins');
 
 // Mongoose-based Item model used by new code (sales, inventory, categories)
@@ -43,7 +44,7 @@ const itemSchema = new mongoose.Schema(
 itemSchema.plugin(toJSON);
 itemSchema.plugin(paginate);
 
-const Item = mongoose.models.Item || mongoose.model('Item', itemSchema);
+const Item = defineModel('Item', itemSchema);
 
 // Attach the legacy BaseModel-based implementation so callers can import
 // both the Mongoose model and the legacy class from a single module

@@ -1,5 +1,6 @@
 // src/models/receiving_model.js
 const mongoose = require('mongoose');
+const { defineModel, getModel } = require('../db/model-registry');
 const { currentConnection } = require('../db/tenant-context');
 const { ObjectId } = require('mongodb');
 // Use ApiV2 model filenames; BaseModel here refers to the legacy static
@@ -225,8 +226,8 @@ receivingSchema.pre('validate', async function () {
 // Update inventory and supplier balance
 receivingSchema.post('save', async function (doc) {
   if (doc.status === 'received') {
-    const Item = mongoose.model('Item');
-    const Supplier = mongoose.model('Supplier');
+    const Item = getModel('Item');
+    const Supplier = getModel('Supplier');
 
     // Update item quantities
     for (const item of doc.items) {
@@ -2667,7 +2668,7 @@ receivingSchema.statics.returnPrintDetailsPage = async function (id) {
   }
 };
 
-const Receiving = mongoose.model('Receiving', receivingSchema);
+const Receiving = defineModel('Receiving', receivingSchema);
 Receiving.returnReceivingProductReportPage =
   receivingSchema.statics.returnReceivingProductReportPage;
 Receiving.productBasedReceivingReturnReportPage =

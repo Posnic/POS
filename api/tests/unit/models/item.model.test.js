@@ -736,8 +736,23 @@ describe('Item › singleton model registration', () => {
   });
 
   test('model is registered in mongoose.models as "Item"', () => {
+    /*
+     * The export is no longer the model object itself; it is a proxy that
+     * resolves to the model for the shop the request belongs to. A proxy can
+     * never satisfy `===` against its target, so the old assertion cannot hold
+     * and asserting it would only be asserting that the resolution does not
+     * exist.
+     *
+     * What the test was actually guarding is unchanged and still checked: the
+     * model is registered exactly once under this name, and the export leads to
+     * that registration rather than to a second copy - which is what would
+     * cause mongoose's OverwriteModelError, and what a duplicate registration
+     * would look like.
+     */
     expect(mongoose.models.Item).toBeDefined();
-    expect(mongoose.models.Item).toBe(Item);
+    expect(Item.modelName).toBe('Item');
+    expect(Item.schema).toBe(mongoose.models.Item.schema);
+    expect(Item.collection.name).toBe(mongoose.models.Item.collection.name);
   });
 });
 

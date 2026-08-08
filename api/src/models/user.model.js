@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { defineModel, getModel } = require('../db/model-registry');
 const { currentConnection } = require('../db/tenant-context');
 const bcrypt = require('bcryptjs');
 const { toJSON, paginate } = require('./plugins');
@@ -776,7 +777,7 @@ userSchema.statics.userstatusReportPage = async function (data, options = {}) {
     // Try to get existing model, otherwise use raw collection
     let StaffActivity;
     try {
-      StaffActivity = mongoose.model('StaffActivity');
+      StaffActivity = getModel('StaffActivity');
     } catch (err) {
       // Model doesn't exist, use raw collection
       const db = currentConnection(mongoose.connection).db;
@@ -1207,7 +1208,7 @@ userSchema.statics.userInsertUpdate = async function (data, id, context) {
 };
 
 // Create the User model
-const User = mongoose.model('User', userSchema);
+const User = defineModel('User', userSchema);
 
 console.log('[USER_MODEL] Module loaded at:', new Date().toISOString());
 

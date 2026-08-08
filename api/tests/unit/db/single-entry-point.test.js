@@ -84,6 +84,43 @@ describe('every read of shop data goes through one accessor', () => {
     }
   });
 
+  test('no model is bound to the default connection', () => {
+    /*
+     * mongoose.model('Sale', schema) compiles against whichever connection
+     * exists at import. Eighteen models did this, used from forty-nine files,
+     * and every one of them read the process's database rather than the
+     * request's - the same silent leak as a direct connection, arriving by a
+     * different route.
+     *
+     * defineModel() registers the schema so the model can be compiled onto a
+     * shop's connection on demand; getModel() looks one up. A one-argument
+     * mongoose.model('Item') is just as wrong as the two-argument form: it
+     * returns the default-connection model.
+     */
+    const allowed = new Set([path.join('db', 'model-registry.js')]);
+    const offenders = [];
+    for (const file of walk(SRC)) {
+      const relative = path.relative(SRC, file);
+      if (allowed.has(relative)) continue;
+      const lines = fs.readFileSync(file, 'utf8').split('\n');
+      lines.forEach((line, i) => {
+        if (line.trim().startsWith('*') || line.trim().startsWith('//')) return;
+        if (/mongoose\.model\(/.test(line)) {
+          offenders.push(`${relative}:${i + 1}  ${line.trim().slice(0, 80)}`);
+        }
+      });
+    }
+    if (offenders.length) {
+      throw new Error(
+        'These bind a model to the default connection, so it reads the same ' +
+          'database whichever shop the request is for.\n' +
+          'Use defineModel(name, schema) to register, or getModel(name) to look one up.\n\n' +
+          offenders.join('\n')
+      );
+    }
+    expect(offenders).toEqual([]);
+  });
+
   test('nothing outside install and the connection helpers opens its own client', () => {
     const allowed = new Set([
       path.join('models', 'base.model.js'),

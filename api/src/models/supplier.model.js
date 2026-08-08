@@ -1,5 +1,6 @@
 // src/models/Supplier.js
 const mongoose = require('mongoose');
+const { defineModel, getModel } = require('../db/model-registry');
 const validator = require('validator');
 const { toJSON, paginate } = require('./plugins');
 
@@ -90,11 +91,11 @@ supplierSchema.statics.isEmailTaken = async function (email, excludeSupplierId) 
 // Instance method to check if supplier can be deleted
 supplierSchema.methods.canBeDeleted = async function () {
   // Check if supplier has any associated purchases
-  const Purchase = mongoose.model('Purchase');
+  const Purchase = getModel('Purchase');
   const purchaseCount = await Purchase.countDocuments({ supplier: this._id });
   return purchaseCount === 0;
 };
 
-const Supplier = mongoose.model('Supplier', supplierSchema);
+const Supplier = defineModel('Supplier', supplierSchema);
 
 module.exports = Supplier;

@@ -7,6 +7,7 @@
  */
 
 const mongoose = require('mongoose');
+const { getModel } = require('../db/model-registry');
 const BaseModel = require('../models/base.model');
 const { safeJsonParse, toObjectId } = require('../utils/helpers');
 const User = require('../models/user.model');
@@ -1124,7 +1125,7 @@ const isValidObjectId = (value) => {
 
 const tryGetModel = (name) => {
   try {
-    return mongoose.model(name);
+    return getModel(name);
   } catch (error) {
     if (error.name !== 'MissingSchemaError') {
       // eslint-disable-next-line no-console

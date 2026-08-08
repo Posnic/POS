@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 
+const { defineModel } = require('../db/model-registry');
 // Subdocument schema for individual variant values (matches legacy `fields`)
 const variantFieldSchema = new mongoose.Schema(
   {
@@ -91,6 +92,6 @@ variantSchema.pre('save', function () {
 // Index name + branch for faster lookups and uniqueness checks
 variantSchema.index({ name: 1, branch_id: 1 });
 
-const VariantModel = mongoose.model('Variant', variantSchema);
+const VariantModel = defineModel('Variant', variantSchema);
 
 module.exports = VariantModel;

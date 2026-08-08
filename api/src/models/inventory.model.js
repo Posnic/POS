@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { defineModel } = require('../db/model-registry');
 const toJSON = require('./plugins/toJSON.plugin');
 const paginate = require('./plugins/paginate.plugin');
 
@@ -69,7 +70,7 @@ const stockMovementSchema = new mongoose.Schema(
 stockMovementSchema.plugin(toJSON);
 stockMovementSchema.plugin(paginate);
 
-const StockMovement = mongoose.model('StockMovement', stockMovementSchema);
+const StockMovement = defineModel('StockMovement', stockMovementSchema);
 
 const inventoryItemSchema = new mongoose.Schema(
   {
@@ -325,7 +326,7 @@ inventoryItemSchema.statics.getLowStockItems = async function (branchId) {
     .sort({ availableQuantity: 1 });
 };
 
-const InventoryItem = mongoose.model('InventoryItem', inventoryItemSchema);
+const InventoryItem = defineModel('InventoryItem', inventoryItemSchema);
 
 module.exports = {
   InventoryItem,

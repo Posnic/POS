@@ -1,5 +1,6 @@
 // src/models/Category.js
 const mongoose = require('mongoose');
+const { defineModel } = require('../db/model-registry');
 const BaseModel = require('./base.model');
 
 const categorySchema = new mongoose.Schema(
@@ -332,4 +333,4 @@ categorySchema.methods = {
   },
 };
 
-module.exports = mongoose.model('Category', categorySchema);
+module.exports = defineModel('Category', categorySchema);

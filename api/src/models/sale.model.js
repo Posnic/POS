@@ -1,5 +1,6 @@
 // src/models/sale_model.js
 const mongoose = require('mongoose');
+const { defineModel } = require('../db/model-registry');
 const { currentConnection } = require('../db/tenant-context');
 const { toJSON, paginate } = require('./plugins');
 const { PAYMENT_STATUS } = require('../constants');
@@ -864,7 +865,7 @@ saleSchema.index(
   }
 );
 
-const Sale = mongoose.model('Sale', saleSchema);
+const Sale = defineModel('Sale', saleSchema);
 
 class LegacySaleModel {
   static collectionName = 'sales';

@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 
+const { defineModel } = require('../db/model-registry');
 const easyTableSchema = new mongoose.Schema(
   {
     // Add specific fields for EasyTable
@@ -40,6 +41,6 @@ const easyTableSchema = new mongoose.Schema(
 
 easyTableSchema.index({ tableNumber: 1 }, { unique: true });
 
-const EasyTable = mongoose.model('EasyTable', easyTableSchema);
+const EasyTable = defineModel('EasyTable', easyTableSchema);
 
 module.exports = EasyTable;

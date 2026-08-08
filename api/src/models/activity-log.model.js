@@ -1,4 +1,9 @@
 const mongoose = require('mongoose');
+/* Registered through defineModel rather than mongoose.model, so the model
+   resolves to the shop the request belongs to. mongoose.model binds to the
+   connection that exists at import, which in a process serving several shops is
+   whichever database it happened to connect to first. */
+const { defineModel } = require('../db/model-registry');
 
 const activityLogSchema = new mongoose.Schema(
   {
@@ -78,6 +83,6 @@ activityLogSchema.statics.logActivity = async function (activityData) {
 const mongoosePaginate = require('mongoose-paginate-v2');
 activityLogSchema.plugin(mongoosePaginate);
 
-const ActivityLog = mongoose.model('ActivityLog', activityLogSchema);
+const ActivityLog = defineModel('ActivityLog', activityLogSchema);
 
 module.exports = ActivityLog;
