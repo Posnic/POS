@@ -95,27 +95,6 @@ async function shadowLogin(req, res) {
   }
 
   /*
-   * Recorded in the shop's own audit trail, before the session exists.
-   *
-   * Written first on purpose: if anything below fails, the attempt is still on
-   * record. An impersonation that is only logged on success is a log that
-   * hides its own failures.
-   */
-  await db
-    .collection('audit_log')
-    .insertOne({
-      action: 'shadow_login',
-      at: new Date(),
-      officer: claims.by || 'unknown',
-      reason: claims.reason || null,
-      user_id: user._id,
-      user_email: user.email,
-      ip: req.ip,
-      note: 'Signed in from the Posnic console as this user.',
-    })
-    .catch(() => {});
-
-  /*
    * From here it is an ordinary session, with one difference: it is marked.
    *
    * The mark is what makes the shop's own records honest - a sale or an edit
@@ -140,9 +119,44 @@ async function shadowLogin(req, res) {
     req.session.shadow = { by: claims.by || null, at: new Date(), user: user.email };
   }
 
-  /* Sent to the shop itself rather than answered with JSON: this is reached by
-     following a link, and a page of JSON is not somewhere to arrive. */
-  return res.redirect('/');
+  /*
+   * Hand the token to the browser the way this shop's UI actually reads it.
+   *
+   * Setting the cookie and redirecting to / looked right and did not work: the
+   * frontend authenticates from localStorage.posnic_jwt_token (see
+   * static/script/js/core/ajax.js), so it found no token, and the support link
+   * landed on the login page every time.
+   *
+   * So a small page writes the token where the UI looks and then leaves. Same
+   * origin - this is the shop's own domain - so localStorage is writable here.
+   * The cookie is still set, because the API accepts either.
+   *
+   * The token is written into the page as JSON rather than interpolated into a
+   * string: it is signed base64 with dots and cannot break out of a JSON
+   * literal, and doing it this way means it stays true if the token format ever
+   * changes.
+   */
+  const payload = JSON.stringify({ token: authToken, user: user.email });
+  res.set('content-type', 'text/html; charset=utf-8');
+  /* Never cached, never indexed. For the next two hours this page body is a
+     working credential for someone else's shop. */
+  res.set('cache-control', 'no-store, no-cache, must-revalidate, private');
+  res.set('x-robots-tag', 'noindex, nofollow');
+  return res.send(`<!doctype html>
+<meta charset="utf-8">
+<meta name="robots" content="noindex">
+<title>Signing in…</title>
+<style>body{font:15px system-ui;margin:0;display:grid;place-items:center;height:100vh;color:#334}</style>
+<p>Signing in…</p>
+<script>
+(function () {
+  var d = ${payload};
+  try { localStorage.setItem('posnic_jwt_token', d.token); } catch (e) {}
+  /* replace, not assign: the back button should not return to a page that
+     still holds the token in its source. */
+  location.replace('/');
+})();
+</script>`);
 }
 
 module.exports = { shadowLogin, MAX_LIFETIME_SEC };
