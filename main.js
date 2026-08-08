@@ -1160,7 +1160,25 @@ ipcMain.handle('cloud:activate', async (_event, { serverUrl, email, password } =
         : `Cloud server error (${response.status})`;
       return { ok: false, error: msg };
     }
-    const { deviceToken, deviceId } = await response.json();
+    const { deviceToken, deviceId, syncUrl } = await response.json();
+
+    /*
+     * Where this till syncs is decided by the server, not by what was typed
+     * here.
+     *
+     * With one gateway the address entered at activation is the address to sync
+     * with, and that is what this stored. With several machines it stops being
+     * true: a shop lives on one of them and only the server knows which. It now
+     * says so, and the till believes it.
+     *
+     * Falling back to what was typed keeps every existing installation working,
+     * and keeps activation possible against an estate that has not been told
+     * its own addresses yet.
+     */
+    const gatewayUrl = syncUrl ? String(syncUrl).replace(/\/+$/, '') : base;
+    if (syncUrl && gatewayUrl !== base) {
+      console.log(`[Cloud] this shop syncs with ${gatewayUrl}`);
+    }
 
     // Local installs enable MongoDB auth during setup; the agent must use
     // the same credentials. Fresh cloud-mode installs have no auth yet.
@@ -1176,7 +1194,7 @@ ipcMain.handle('cloud:activate', async (_event, { serverUrl, email, password } =
     }
 
     fs.writeFileSync(CLOUD_CONFIG_FILE, JSON.stringify({
-      gatewayUrl: base,
+      gatewayUrl,
       deviceToken,
       deviceId,
       localUri,
