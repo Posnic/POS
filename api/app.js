@@ -31,6 +31,7 @@ const config = require('./src/config/config');
 const { isProduction } = require('./src/utils/auth-cookie');
 
 // Import generated routes
+const { attachDb } = require('./src/db/request-db');
 const apiRouter = require('./src/routes');
 const suppliersRoutes = require('./src/routes/suppliers.routes');
 
@@ -854,6 +855,11 @@ if (process.env.NODE_ENV !== 'production') {
     // Not installed, which is the normal case outside development.
   }
 }
+
+/* Every request gets req.db before any route sees it. Mounted here rather than
+   inside the routers so there is one answer to "which database is this request
+   for", which is what makes serving more than one shop from a process safe. */
+app.use(attachDb);
 
 // Mount API routes under /api
 app.use('/api', apiRouter);
