@@ -46,8 +46,25 @@ jobs:
           # this SSH session's environment, which has none of the per-tenant
           # PORT or MONGODB_URI values. That has taken tenants down before.
           # A code-only deploy does not need it.
+          #
+          # Reloaded one at a time, in a loop. `pm2 reload a b c` acts on the
+          # first name only and exits 0, so this step passed every deploy while
+          # reloading one shop of twenty: the code was rsynced and then never
+          # loaded, and the shops went on running whatever they had started
+          # with - in one case for five days. A deploy that reports success
+          # having applied nothing is worse than one that fails.
+          #
+          # The count is printed and compared, so a partial reload is visible
+          # rather than silent.
           ssh -i ~/.ssh/deploy.pem "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
             'set -e
              cd ~/apps/tenants/app/api && npm ci --omit=dev --silent
-             pm2 reload $(pm2 jlist | node -e "let d=\"\";process.stdin.on(\"data\",c=>d+=c).on(\"end\",()=>console.log(JSON.parse(d).filter(p=>/^posnic-tenant-/.test(p.name)).map(p=>p.name).join(\" \")))")
-             pm2 save'
+             names=$(pm2 jlist | node -e "let d=\"\";process.stdin.on(\"data\",c=>d+=c).on(\"end\",()=>console.log(JSON.parse(d).filter(p=>/^posnic-tenant-/.test(p.name)).map(p=>p.name).join(\"\\n\")))")
+             total=0; ok=0
+             for n in $names; do
+               total=$((total+1))
+               if pm2 reload "$n" --silent >/dev/null 2>&1; then ok=$((ok+1)); else echo "::warning::reload failed for $n"; fi
+             done
+             echo "reloaded $ok of $total tenants"
+             pm2 save
+             test "$ok" -eq "$total"'
