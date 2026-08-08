@@ -1145,15 +1145,22 @@ function osMachineId() {
   const run = (cmd, args) =>
     execFileSync(cmd, args, { encoding: 'utf8', timeout: 5000, windowsHide: true });
 
+  /* Read into a local rather than compared inline against process.platform.
+     macos-chrome.test.js finds the window-chrome block by searching main.js for
+     that comparison written out in full, and a second occurrence earlier in the
+     file sent it to the wrong block - including, at one point, this comment
+     describing the problem. Not writing it twice is cheaper than making the
+     test cleverer about which match it wants. */
+  const plat = process.platform;
   try {
-    if (process.platform === 'win32') {
+    if (plat === 'win32') {
       /* Written at install time by Windows and unchanged by anything we do.
          Read via reg.exe rather than a native module so nothing has to be
          compiled or bundled per architecture. */
       const out = run('reg', ['query', 'HKLM\\SOFTWARE\\Microsoft\\Cryptography', '/v', 'MachineGuid']);
       const m = out.match(/MachineGuid\s+REG_SZ\s+([0-9a-f-]{36})/i);
       if (m) return m[1].toLowerCase();
-    } else if (process.platform === 'darwin') {
+    } else if (plat === 'darwin') {
       const out = run('ioreg', ['-rd1', '-c', 'IOPlatformExpertDevice']);
       const m = out.match(/"IOPlatformUUID"\s*=\s*"([^"]+)"/);
       if (m) return m[1].toLowerCase();
