@@ -113,4 +113,4 @@ jobs:
                echo "::warning::smoke.js not present - deploy the console to enable this gate"
                exit 0
              fi
-             node provisioning/smoke.js'
+             SMOKE_WRITE_TENANT="${SMOKE_WRITE_TENANT:-tech}" node provisioning/smoke.js'
