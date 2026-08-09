@@ -128,8 +128,22 @@ async function attachTenantContext(req, user) {
     return null;
   }
 
+  /*
+   * The shop in context, not the process's connection.
+   *
+   * This read mongoose.connection?.db, which is correct while a process serves
+   * one shop and wrong the moment it serves several: in a shard that handle is
+   * the control connection, so a branch lookup ran against the control database,
+   * found nothing, and refused every request with "not available for the current
+   * user and license" - a permission error for what was really a wrong-database
+   * error.
+   *
+   * The single-entry-point test did not catch it because the optional chaining
+   * slipped past its pattern; it does now.
+   */
   const mongoose = require('mongoose');
-  const db = mongoose.connection?.db;
+  const { currentConnection } = require('../db/tenant-context');
+  const db = currentConnection(mongoose.connection)?.db;
   if (!db) {
     // Unit/startup environments may authenticate before a DB handle exists.
     req.tenantContext = {

@@ -41,7 +41,11 @@ const ALLOWED = new Set([
 ]);
 
 /* .db.admin() is a server command, not a shop's data. */
-const OFFENDING = /mongoose\.connection\.(collection\(|db(?!\.admin\())/;
+/* The optional-chained form counts too. mongoose.connection?.db slipped past
+   the original pattern and sat in tenant-context.js reading the process's
+   database while every other path read the shop's - which surfaced as a
+   permission error rather than as a wrong-database one. */
+const OFFENDING = /mongoose\.connection\??\.(collection\(|db(?!\.admin\())/;
 
 function walk(dir, out = []) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
