@@ -154,4 +154,17 @@ jobs:
              fi
              echo "shops answering after ${i} attempt(s); running smoke test"
 
-             SMOKE_WRITE_TENANT="${SMOKE_WRITE_TENANT:-tech}" node provisioning/smoke.js'
+             # --quiet, because THIS LOG IS PUBLIC.
+             #
+             # POS is an open-source repository, so every workflow run here is
+             # readable by anyone on the internet. The full smoke output prints
+             # one line per shop with that shop's name beside its inventory and
+             # branch counts - which is a named customer's business data on a
+             # public page, published by us, without them being asked.
+             #
+             # Quiet mode reports the same verdict and the same failing checks
+             # with no customer named. Anyone who needs to know WHICH shop runs
+             # it from the console, where the answer belongs and where the
+             # people entitled to it already are.
+             SMOKE_QUIET=true SMOKE_WRITE_TENANT="${SMOKE_WRITE_TENANT:-tech}" \
+               node provisioning/smoke.js --quiet'
