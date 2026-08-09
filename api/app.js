@@ -2,6 +2,7 @@ require('dotenv').config({ quiet: true });
 const express = require('express');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const { perShopKey } = require('./src/middleware/rate-limit-key');
 const helmet = require('helmet');
 const { filterXSS } = require('xss');
 const hpp = require('hpp');
@@ -280,16 +281,30 @@ if (process.env.NODE_ENV === 'development') {
 // Left in process memory on purpose, unlike the sign-in limiters in
 // middleware/auth-rate-limit.js. This one sees every request, so a shared store
 // would mean a database write per request to guard a threshold of 1000 - real
-// load in exchange for very little. It also guards abuse rather than
-// credentials: if several workers each allow 1000, the effective ceiling rises
-// with worker count, which is an acceptable outcome here and is not for a
-// limiter counting password attempts.
+// load in exchange for very little. It guards abuse rather than credentials,
+// and a per-process counter is the cheap way to do that.
+//
+// The key is what makes that safe once one process serves many shops.
+//
+// It used to default to req.ip alone. With a process per shop that was a
+// thousand requests per address per shop, because the process only ever saw one
+// shop. Sharing a process turned the same line into a thousand requests per
+// address for *all* shops at once - one busy till could exhaust the allowance
+// and the next shop's cashier got "Too many requests" for something they had no
+// part in. Measured, not theorised: a load test against twenty shops produced
+// 429s on shops it had not touched yet.
+//
+// So the shop is part of the key. Each one keeps the allowance it had before,
+// and no shop can spend another's.
 const limiter = rateLimit({
   // `max` was renamed `limit` in express-rate-limit 7; the old name still
   // works and warns.
   limit: 1000,
   windowMs: 15 * 60 * 1000, // Reduced window to 15 minutes (from 1 hour)
   message: 'Too many requests from this IP, please try again later!',
+  // Per shop, per client - see src/middleware/rate-limit-key.js for why this
+  // one includes the shop and the sign-in limiters deliberately do not.
+  keyGenerator: perShopKey,
   // Skip rate limiting for GET requests to JSON endpoints
   skip: (req) => {
     // Allow GET requests to JSON data endpoints

@@ -1,5 +1,6 @@
 const rateLimit = require('express-rate-limit');
 const { MongoRateLimitStore } = require('./rate-limit-store');
+const { perClientKey } = require('./rate-limit-key');
 
 /*
  * Counters in the database, not in this process's memory.
@@ -38,6 +39,13 @@ const { MongoRateLimitStore } = require('./rate-limit-store');
    their email, which turns a nuisance into an outage. */
 const loginLimiter = rateLimit({
   store: new MongoRateLimitStore({ prefix: 'login' }),
+  /* Per address across every shop on the machine, not per shop. Somebody
+     working through a password list against twenty shops from one address is
+     one attacker and gets one budget - which is why this differs from the
+     general limiter in app.js, and why it is written out rather than left to
+     a default that used to mean per-shop only because each shop had its own
+     process. */
+  keyGenerator: perClientKey,
   windowMs: 10 * 60 * 1000,
   limit: 20,
   message: {
@@ -62,6 +70,13 @@ const loginLimiter = rateLimit({
  */
 const passwordResetLimiter = rateLimit({
   store: new MongoRateLimitStore({ prefix: 'pwreset' }),
+  /* Per address across every shop on the machine, not per shop. Somebody
+     working through a password list against twenty shops from one address is
+     one attacker and gets one budget - which is why this differs from the
+     general limiter in app.js, and why it is written out rather than left to
+     a default that used to mean per-shop only because each shop had its own
+     process. */
+  keyGenerator: perClientKey,
   windowMs: 60 * 60 * 1000,
   limit: 5,
   message: {
@@ -77,6 +92,13 @@ const passwordResetLimiter = rateLimit({
  */
 const registerLimiter = rateLimit({
   store: new MongoRateLimitStore({ prefix: 'register' }),
+  /* Per address across every shop on the machine, not per shop. Somebody
+     working through a password list against twenty shops from one address is
+     one attacker and gets one budget - which is why this differs from the
+     general limiter in app.js, and why it is written out rather than left to
+     a default that used to mean per-shop only because each shop had its own
+     process. */
+  keyGenerator: perClientKey,
   windowMs: 60 * 60 * 1000,
   limit: 10,
   message: {
