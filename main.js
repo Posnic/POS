@@ -4364,6 +4364,26 @@ function startServer() {
   process.env.POSNIC_BRAND_DIR = BRAND_DIR;
 
   /*
+   * Record urgent sync work as it happens.
+   *
+   * When a sale changes stock the API writes a marker into a local collection,
+   * so the agent can push that row within seconds instead of waiting for its
+   * lane timer - 15 seconds for the sale, 60 for the item whose quantity
+   * changed. See api/src/sync/outbox.js.
+   *
+   * Set here because this process is a till. The same API code also runs in the
+   * cloud serving many shops from one process, where there is nobody to upload
+   * to and the markers would be noise - that side is already refused by
+   * multi-tenant mode, so this is the second of two independent reasons it
+   * stays off there.
+   *
+   * Left overridable so support can switch it off on one machine without
+   * waiting for an installer. Turning it off costs only speed: the periodic
+   * scan still finds every change, which is exactly how every till works today.
+   */
+  process.env.SYNC_OUTBOX_ENABLED = process.env.SYNC_OUTBOX_ENABLED || 'true';
+
+  /*
    * Decide which frontend to serve, before the API starts serving it.
    *
    * beginBoot counts this start. A version that has already failed to reach a
