@@ -16,7 +16,9 @@
  *   - code that escapes the request scope fails loudly instead of silently
  *     picking whichever shop the process last touched.
  */
-const test = require('node:test');
+/* Jest's global test(), not node:test - this suite is run by jest, and a file
+   that registers its cases with node's own runner shows jest zero tests and
+   fails the suite while quietly passing on its own. */
 const assert = require('node:assert');
 
 /* Required once. The mode is a module-level flag and every test turns it off
