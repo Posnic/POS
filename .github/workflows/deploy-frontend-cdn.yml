@@ -4,9 +4,11 @@
 # /script) are CDN-served. See scripts/build-cdn-frontend.js.
 # Needs (repo Settings > Secrets and variables > Actions):
 #   variable CDN_DEPLOY_ENABLED = true
-#   secrets  AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY
+#   secrets  CDN_AWS_ACCESS_KEY_ID / CDN_AWS_SECRET_ACCESS_KEY
 #            (IAM user with s3 sync rights on posnic-frontend
-#             + cloudfront:CreateInvalidation)
+#             + cloudfront:CreateInvalidation; dedicated to this
+#             workflow so it can never be confused with the
+#             pos-media-app image-upload key)
 name: Deploy frontend assets to CDN
 
 on:
@@ -16,6 +18,7 @@ on:
       - "frontend/**"
       - "scripts/build-cdn-frontend.js"
       - ".github/workflows/deploy-frontend-cdn.yml"
+  workflow_dispatch:
 
 concurrency:
   group: cdn-frontend
@@ -45,8 +48,8 @@ jobs:
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-access-key-id: ${{ secrets.CDN_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.CDN_AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-south-1
 
       - name: Sync to S3
