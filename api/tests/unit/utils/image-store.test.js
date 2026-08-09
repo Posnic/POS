@@ -175,10 +175,24 @@ describe('nothing unsafe reaches the filesystem', () => {
     expect(store.localPathFor(null)).toBeNull();
   });
 
-  test('a legacy filename may not contain a directory separator', () => {
-    expect(store.isLegacyFile('../x.jpg')).toBe(false);
-    expect(store.isLegacyFile('a/b.jpg')).toBe(false);
+  test('legacy paths may have directories, because the real ones do', () => {
+    /*
+     * This test previously asserted the opposite, on the assumption that old
+     * uploads were flat. They are not: live shops serve
+     * uploads/item_images/<date>-..._item_image-<id>.jpg. Refusing the
+     * separator refused the actual data, and resolve() returned '' for every
+     * image a real shop has.
+     */
+    expect(store.isLegacyFile('item_images/2026-08-09-20-41-40-x_item_image-abc.jpg')).toBe(true);
     expect(store.isLegacyFile('item-1.jpg')).toBe(true);
+  });
+
+  test('but never one that climbs out of the uploads directory', () => {
+    /* Every segment must start with an alphanumeric, so ".." cannot be one. */
+    expect(store.isLegacyFile('../x.jpg')).toBe(false);
+    expect(store.isLegacyFile('a/../../etc/passwd.jpg')).toBe(false);
+    expect(store.isLegacyFile('.ssh/id_rsa.jpg')).toBe(false);
+    expect(store.isLegacyFile('/etc/passwd.jpg')).toBe(false);
   });
 
   test('only image extensions are accepted as legacy files', () => {

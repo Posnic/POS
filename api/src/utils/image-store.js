@@ -157,8 +157,21 @@ async function saveLocal(key, buffer) {
  * for as long as they last.
  */
 
-/** The old flat filenames. No directory part, which is what distinguishes them. */
-const LEGACY_FILE_RE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,180}\.(jpg|jpeg|png|webp)$/i;
+/*
+ * The paths that were in use before this.
+ *
+ * These are NOT flat, which is what I assumed and got wrong. Live shops serve
+ * things like uploads/item_images/2026-08-09-20-41-40-..._item_image-xxx.jpg,
+ * so a pattern that refused a directory separator rejected the actual data.
+ * Nothing broke, because express.static answers these before the fallback
+ * route ever sees them - but resolve() returned '' for them, and wiring that
+ * into the controllers would have blanked every existing image at once.
+ *
+ * Each segment must begin with an alphanumeric, so ".." can never appear and
+ * the path cannot climb out of uploads/.
+ */
+const LEGACY_FILE_RE =
+  /^(?:[A-Za-z0-9][A-Za-z0-9._-]{0,80}\/){0,4}[A-Za-z0-9][A-Za-z0-9._-]{0,180}\.(jpg|jpeg|png|webp)$/i;
 
 function isLegacyFile(name) {
   return typeof name === 'string' && LEGACY_FILE_RE.test(name);
