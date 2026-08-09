@@ -1,5 +1,16 @@
 const { searchPattern } = require('../utils/safe-search');
-const { Schema, model, Types } = require('mongoose');
+const { Schema, Types } = require('mongoose');
+/*
+ * Registered through defineModel rather than mongoose.model, so the model
+ * resolves against the shop in context.
+ *
+ * A model compiled with mongoose.model is bound to the default connection. In a
+ * process serving one shop that is the shop; in a shard it is whatever database
+ * the URI happened to name - `test`, in practice. Branch.findOne then searched
+ * an empty database, found nothing, and every item list answered "Item Details
+ * Not Found": a missing-data error for what was really a wrong-database one.
+ */
+const { defineModel } = require('../db/model-registry');
 const BaseModel = require('./base.model');
 const User = require('./user.model');
 const CustomerModel = require('./customer.model');
@@ -139,7 +150,7 @@ const branchSchema = new Schema(
   }
 );
 
-const Branch = model('Branch', branchSchema);
+const Branch = defineModel('Branch', branchSchema);
 
 const simplifyDocument = (document) => {
   if (Array.isArray(document)) {

@@ -1,4 +1,8 @@
-const { Schema, model } = require('mongoose');
+const { Schema } = require('mongoose');
+/* Through defineModel for the same reason as every other model here: one
+   compiled with mongoose.model is bound to the default connection, which in a
+   shard is not any shop's database. */
+const { defineModel } = require('../db/model-registry');
 
 const whatsappTemplateSchema = new Schema({
   branch_id: {
@@ -48,4 +52,4 @@ whatsappTemplateSchema.pre('save', function () {
   this.updated_at = new Date();
 });
 
-module.exports = model('WhatsAppTemplate', whatsappTemplateSchema);
+module.exports = defineModel('WhatsAppTemplate', whatsappTemplateSchema);

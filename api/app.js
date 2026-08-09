@@ -19,6 +19,65 @@ const session = require('express-session');
  * store is only constructed against a real database.
  */
 const { MongoStore } = require('connect-mongo');
+
+/*
+ * A session store that follows the shop.
+ *
+ * express-session is built once, at load, and given one store - which is right
+ * for a process serving one shop and wrong for a shard, where every shop would
+ * share a collection. The store interface is small (get/set/destroy/touch), so
+ * this delegates each call to a store bound to the shop in context, built once
+ * per shop and kept.
+ *
+ * Standalone is unchanged: no shop in context means the process's own
+ * connection, which is what it was before.
+ */
+function tenantAwareSessionStore() {
+  const { currentTenant, isMultiTenant } = require('./src/db/tenant-context');
+  const config = require('./src/config/config');
+
+  const base = MongoStore.create({ mongoUrl: config.database.uri });
+  const perShop = new Map();
+
+  function storeFor() {
+    if (!isMultiTenant()) return base;
+    const t = currentTenant();
+    /* No shop in scope: a timer, a shutdown hook, something outside a request.
+       The base store is the honest answer - it is not any shop's, and nothing
+       tenant-specific should be reaching a session there anyway. */
+    if (!t || !t.tenantDb) return base;
+
+    let s = perShop.get(t.tenantDb);
+    if (!s) {
+      /* Same cluster, the shop's own database. Built from the connection the
+         shard already holds rather than a second client per shop. */
+      s = MongoStore.create({
+        clientPromise: Promise.resolve(t.db.client ? t.db.client : undefined),
+        client: t.db.client,
+        dbName: t.tenantDb,
+        collectionName: 'sessions',
+      });
+      perShop.set(t.tenantDb, s);
+    }
+    return s;
+  }
+
+  /* Delegation rather than inheritance: connect-mongo's class does work in its
+     constructor that should happen once per shop, not once per call. */
+  return {
+    get: (sid, cb) => storeFor().get(sid, cb),
+    set: (sid, sess, cb) => storeFor().set(sid, sess, cb),
+    destroy: (sid, cb) => storeFor().destroy(sid, cb),
+    touch: (sid, sess, cb) => storeFor().touch(sid, sess, cb),
+    all: (cb) => storeFor().all(cb),
+    clear: (cb) => storeFor().clear(cb),
+    length: (cb) => storeFor().length(cb),
+    on: () => {},
+    once: () => {},
+    emit: () => {},
+    removeListener: () => {},
+  };
+}
 const { responseMiddleware } = require('./src/middleware/response');
 
 const {
@@ -591,42 +650,41 @@ const BUILT_STATIC = path.join(__dirname, '..', 'frontend', 'public', 'static');
 
 app.use('/static', express.static(BUILT_STATIC, { fallthrough: true }));
 
-  /*
-   * Print documents, served from this origin so they need no exception.
-   *
-   * The receipt window used to load its HTML as a data: URL, whose origin is
-   * opaque - and the invoice markup links print.css and the shop's logo from
-   * this server. An opaque origin may not load either, so that window ran with
-   * web security disabled, and every audit flagged it.
-   *
-   * Serving the document from here makes the page, the stylesheet and the logo
-   * same-origin, so nothing is cross-origin and the exception is unnecessary.
-   *
-   * Loopback only, single use, and gone in a minute. The document is a
-   * customer's invoice: it is held in memory rather than written to a temporary
-   * file, because a file would outlive the print job.
-   */
-  app.get('/print/:token', (req, res) => {
-    const remote = req.socket.remoteAddress || '';
-    const isLoopback =
-      remote === '127.0.0.1' || remote === '::1' || remote === '::ffff:127.0.0.1';
-    if (!isLoopback) return res.status(403).end();
+/*
+ * Print documents, served from this origin so they need no exception.
+ *
+ * The receipt window used to load its HTML as a data: URL, whose origin is
+ * opaque - and the invoice markup links print.css and the shop's logo from
+ * this server. An opaque origin may not load either, so that window ran with
+ * web security disabled, and every audit flagged it.
+ *
+ * Serving the document from here makes the page, the stylesheet and the logo
+ * same-origin, so nothing is cross-origin and the exception is unnecessary.
+ *
+ * Loopback only, single use, and gone in a minute. The document is a
+ * customer's invoice: it is held in memory rather than written to a temporary
+ * file, because a file would outlive the print job.
+ */
+app.get('/print/:token', (req, res) => {
+  const remote = req.socket.remoteAddress || '';
+  const isLoopback = remote === '127.0.0.1' || remote === '::1' || remote === '::ffff:127.0.0.1';
+  if (!isLoopback) return res.status(403).end();
 
-    let store;
-    try {
-      store = require('../print-document-store');
-    } catch (e) {
-      return res.status(503).end();
-    }
+  let store;
+  try {
+    store = require('../print-document-store');
+  } catch (e) {
+    return res.status(503).end();
+  }
 
-    const html = store.take(req.params.token);
-    if (!html) return res.status(404).end();
+  const html = store.take(req.params.token);
+  if (!html) return res.status(404).end();
 
-    res.set('Content-Type', 'text/html; charset=utf-8');
-    res.set('Cache-Control', 'no-store');
-    res.set('X-Content-Type-Options', 'nosniff');
-    return res.send(html);
-  });
+  res.set('Content-Type', 'text/html; charset=utf-8');
+  res.set('Cache-Control', 'no-store');
+  res.set('X-Content-Type-Options', 'nosniff');
+  return res.send(html);
+});
 
 // The compiled stylesheets reference ../fonts, which resolves to /fonts.
 app.use('/fonts', express.static(path.join(BUILT_STATIC, 'fonts'), { fallthrough: true }));
@@ -667,15 +725,28 @@ app.use(cookieParser());
 app.use(
   session({
     // Never a literal - see config/signing-secret for why.
-    secret:
+    /* Per shop where there is one. A single secret across a shard would let a
+       cookie minted for one customer be accepted for another. */
+    secret: [
       process.env.SESSION_SECRET ||
-      require('./src/config/signing-secret').ephemeralSecret('SESSION_SECRET'),
+        require('./src/config/signing-secret').ephemeralSecret('SESSION_SECRET'),
+    ],
     resave: false,
     saveUninitialized: false,
     proxy: isProduction(),
-    store: MongoStore.create({
-      mongoUrl: config.database.uri,
-    }),
+    /*
+     * Sessions land in the shop's own database, not the process's.
+     *
+     * config.database.uri is the connection this process was started with. For
+     * a shop serving itself that is the shop; in a shard it is the control
+     * cluster, so every shop's sessions would share one collection - and the
+     * signing secret above is process-wide too, so a cookie minted for one shop
+     * would validate on another.
+     *
+     * The store is therefore resolved per request from the shop in context. The
+     * secret is handled the same way a few lines up.
+     */
+    store: tenantAwareSessionStore(),
     cookie: {
       secure: isProduction(),
       sameSite: isProduction() ? 'none' : 'lax',
