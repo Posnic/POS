@@ -91,15 +91,16 @@ test('concurrent requests do not bleed across awaits', async () => {
         return seen;
       });
 
-    const [a, b] = await Promise.all([
-      work(shopA, [5, 1, 8, 1]),
-      work(shopB, [1, 7, 1, 4]),
-    ]);
+    const [a, b] = await Promise.all([work(shopA, [5, 1, 8, 1]), work(shopB, [1, 7, 1, 4])]);
 
-    assert.ok(a.every((v) => v === 'posnic_t_alpha' || v === 'alpha-secret'),
-      'a request saw another shop: ' + a.join(', '));
-    assert.ok(b.every((v) => v === 'posnic_t_beta' || v === 'beta-secret'),
-      'a request saw another shop: ' + b.join(', '));
+    assert.ok(
+      a.every((v) => v === 'posnic_t_alpha' || v === 'alpha-secret'),
+      'a request saw another shop: ' + a.join(', ')
+    );
+    assert.ok(
+      b.every((v) => v === 'posnic_t_beta' || v === 'beta-secret'),
+      'a request saw another shop: ' + b.join(', ')
+    );
   } finally {
     ctx.enableMultiTenant(false);
   }

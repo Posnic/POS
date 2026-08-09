@@ -36,10 +36,7 @@ const mongoose = require('mongoose');
 const { MongoClient } = require('mongodb');
 
 const app = require('./app');
-const {
-  enableMultiTenant,
-  runWithTenant,
-} = require('./src/db/tenant-context');
+const { enableMultiTenant, runWithTenant } = require('./src/db/tenant-context');
 
 const PORT = Number(process.env.SHARD_PORT || process.env.PORT || 6000);
 const HOST = process.env.SHARD_HOST || '127.0.0.1';
@@ -127,7 +124,9 @@ async function loadRegistry() {
       /* A shop whose secrets cannot be opened is not served. Serving it with
          the wrong keys would encrypt its records unreadably and sign tokens
          nothing can verify - both silent, both permanent. */
-      console.error(`[shard] ${t.subdomain}: secrets could not be opened (${e.message}); not served`);
+      console.error(
+        `[shard] ${t.subdomain}: secrets could not be opened (${e.message}); not served`
+      );
       continue;
     }
 
@@ -159,7 +158,9 @@ async function loadRegistry() {
 
 /** The shop a request belongs to, or null. */
 async function resolve(hostHeader) {
-  const host = String(hostHeader || '').toLowerCase().split(':')[0];
+  const host = String(hostHeader || '')
+    .toLowerCase()
+    .split(':')[0];
   if (!host) return null;
 
   let hit = byHost.get(host);
