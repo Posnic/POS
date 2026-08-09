@@ -2,9 +2,9 @@
 /*
  * The name this installation goes by.
  *
- * Most of this product is sold white-label. A shop running as GSHCL should
- * never see the word "Posnic" - not in an error, not on a printed receipt, not
- * on a sign-in failure. It leaked in all three places, and the one that matters
+ * Most of this product is sold white-label. A shop trading under its own name
+ * should never see ours - not in an error, not on a printed receipt, not on a
+ * sign-in failure. It leaked in all three places, and the one that matters
  * most is the receipt, because that is a document the shop hands to its own
  * customers.
  *
