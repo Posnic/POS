@@ -672,6 +672,21 @@ app.use(
   express.static(path.join(__dirname, 'uploads'))
 );
 
+/*
+ * Anything express.static could not find on this machine.
+ *
+ * Images are stored as a key rather than a URL, and the same relative path is
+ * rendered by the till and by the web app - each resolves it against its own
+ * origin. This handles the case where the bytes are not on THIS machine yet:
+ * it pulls them from S3 once and keeps a copy, so a new or reinstalled till
+ * heals itself the first time somebody looks at each image.
+ *
+ * Mounted after the static handler on purpose. Files that are already on disk
+ * never reach it, which keeps the common case - a shop serving its own images
+ * with the line down - exactly as fast as it was.
+ */
+app.use('/uploads', require('./src/routes/uploads.route'));
+
 // Cookie parser middleware - MUST be before session middleware so that
 // req.cookies is populated when session and auth middleware run.
 app.use(cookieParser());
