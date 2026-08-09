@@ -1647,6 +1647,87 @@ class ItemsController extends BaseController {
       return this.error(res, error.message || 'Error retrieving items report', 500);
     }
   }
+
+  /**
+   * GET /api/items/search?q=&limit=&page=
+   *
+   * Find an item by what somebody would actually type: part of its name, its
+   * SKU, or a barcode off the packet.
+   *
+   * The route has existed since the API was written and was bound to a method
+   * that did not, so `bindController` substituted a stub answering 501 to every
+   * caller. Nothing failed loudly - a 501 is a well-formed response - and the
+   * only reason it surfaced is that a smoke test started asking.
+   *
+   * Deliberately not `itemSearchPage`, despite the name: that one's
+   * `filterValue` is a sort mode ('new' | 'low' | 'high'), not a search term,
+   * and reusing it would have quietly returned a price-sorted page for any
+   * query at all.
+   */
+  async search(req, res) {
+    try {
+      await this.ensureContext(req);
+
+      if (req.user?.access?.item?.read === false) {
+        return this.sendError(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+      }
+
+      const term = String(req.query.q ?? req.query.search ?? req.query.term ?? '').trim();
+      if (!term) {
+        return this.error(res, 'A search term is required', 400);
+      }
+
+      const limitParam = parseInt(req.query.limit, 10);
+      const limit = Number.isFinite(limitParam) && limitParam > 0 ? Math.min(limitParam, 100) : 20;
+
+      /* service.searchItems(query, context) already existed - this route was
+         the only thing missing. Scoped to the branch and licence so a cashier
+         is offered stock they can actually sell. */
+      const result = await this.service.searchItems(term, {
+        branchId: this.model?.branchId || null,
+        licenseId: this.model?.licenseId || null,
+        limit,
+      });
+
+      if (result.status === true) {
+        const list = Array.isArray(result.data) ? result.data : [];
+        return this.success(res, { total: list.length, per_page: limit, list }, 'Get Successfully');
+      }
+      return this.error(res, result.message || ERROR_MESSAGES.ITEM_DETAILS_NOT_FOUND, 404);
+    } catch (error) {
+      console.error('Error in ItemsController.search:', error);
+      return this.error(res, error.message, 500);
+    }
+  }
+
+  /**
+   * GET /api/items/getDataChanges?from=
+   *
+   * The change feed the frontend polls for every module - see
+   * `{module}/getDataChanges` in Frontend core/PosnicPro.js. Nine controllers
+   * implement it; items did not, so the one module a till polls hardest
+   * answered 501.
+   */
+  async getDataChanges(req, res) {
+    try {
+      await this.ensureContext(req);
+      /* Required here rather than at module scope, matching the rest of this
+         file - the class is constructed at import and pulling the model in at
+         the top creates a cycle. */
+      const BaseModel = require('../models/base.model');
+      const from = req.query.from || '';
+      const baseModel = new BaseModel('items');
+      const result = await baseModel.getAllDataChanges('items', null, from);
+
+      if (result.status === true) {
+        return this.success(res, result.data, result.message);
+      }
+      return this.error(res, 'Not valid Input', 200, result.data);
+    } catch (error) {
+      console.error('Error in ItemsController.getDataChanges:', error);
+      return this.error(res, error.message, 500);
+    }
+  }
 }
 
 module.exports = new ItemsController();

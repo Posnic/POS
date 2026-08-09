@@ -412,9 +412,15 @@ class ItemService {
     }
   }
 
-  async searchItems(query) {
+  /**
+   * @param {string} query
+   * @param {object} [context]  branchId / licenseId / limit - see the
+   *                            repository. Optional and additive, so the
+   *                            one-argument form is unchanged.
+   */
+  async searchItems(query, context = {}) {
     try {
-      const items = await this.repository.searchItems(query);
+      const items = await this.repository.searchItems(query, context);
       return {
         status: true,
         data: items,

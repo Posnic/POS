@@ -517,14 +517,53 @@ class ItemRepository extends BaseModel {
     return items.map((doc) => BaseModel.simplifyFields(doc));
   }
 
-  async searchItems(query) {
+  /**
+   * Items matching what somebody typed: part of a name, or a barcode.
+   *
+   * `context` is optional and additive, so the existing one-argument form keeps
+   * working. Both of the things it adds matter once a real till uses this:
+   *
+   *   scope   without a branch and licence filter a cashier at one outlet is
+   *           shown every outlet's stock. One shop here has 250 items across 8
+   *           branches with 126 in the admin branch and none in six of the
+   *           sale centres, so unscoped results are not a rounding error -
+   *           they are mostly items that cashier cannot sell.
+   *
+   *   limit   an unbounded regex is a full catalogue in one response. A query
+   *           of "a" against the largest shop here returns 4,732 items, built
+   *           into an array and serialised, for a search box that shows ten.
+   *
+   * @param {string} query
+   * @param {object} [context]
+   * @param {string|ObjectId} [context.branchId]
+   * @param {string|ObjectId} [context.licenseId]
+   * @param {number} [context.limit]
+   */
+  async searchItems(query, context = {}) {
     const collection = await this.getCollection(this.collectionName);
 
-    const searchQuery = {
-      $or: [{ name: { $regex: searchPattern(query), $options: 'i' } }, { barcode_id: query }],
-    };
+    const clauses = [
+      { $or: [{ name: { $regex: searchPattern(query), $options: 'i' } }, { barcode_id: query }] },
+    ];
 
-    const items = await collection.find(searchQuery).toArray();
+    const { branchId, licenseId } = context;
+    if (branchId) {
+      const branchObjectId = ObjectId.isValid(branchId) ? new ObjectId(branchId) : branchId;
+      clauses.push({
+        $or: [{ 'branch_access.branch_id': branchObjectId }, { branch_id: branchObjectId }],
+      });
+    }
+    if (licenseId) {
+      clauses.push({ license: ObjectId.isValid(licenseId) ? new ObjectId(licenseId) : licenseId });
+    }
+
+    const searchQuery = clauses.length === 1 ? clauses[0] : { $and: clauses };
+
+    let cursor = collection.find(searchQuery);
+    const limit = parseInt(context.limit, 10);
+    if (Number.isFinite(limit) && limit > 0) cursor = cursor.limit(Math.min(limit, 100));
+
+    const items = await cursor.toArray();
     return items.map((doc) => BaseModel.simplifyFields(doc));
   }
   async getItemTableRow(id, context = {}) {

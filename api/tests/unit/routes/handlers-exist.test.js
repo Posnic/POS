@@ -37,20 +37,7 @@ const ROUTES = path.join(__dirname, '..', '..', '..', 'src', 'routes');
  * Each entry is a debt, not an exemption. The first is being paid by a
  * customer today.
  */
-const KNOWN_UNIMPLEMENTED = new Set([
-  /* The cashier's search box. Access logs show real users hitting this and
-     receiving 501 - a till with 4,000 products and no working search cannot
-     sell at counter speed. This one should be fixed first. */
-  'items.routes.js:search',
-  /* Change feed for the desktop sync agent. */
-  'items.routes.js:getDataChanges',
-  'receivings.routes.js:getDataChanges',
-  /* Stock-in screens. No evidence in the access logs that anything calls
-     these, which is the likeliest reason nobody has noticed. */
-  'receivings.routes.js:getSummary',
-  'receivings.routes.js:pendingReceivingProductDetails',
-  'receivings.routes.js:updateStatus',
-]);
+const KNOWN_UNIMPLEMENTED = new Set([]);
 
 /** `const xController = require('../controllers/…')` → the module it names. */
 function controllersOf(source, file) {

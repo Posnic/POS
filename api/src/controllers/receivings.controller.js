@@ -1672,7 +1672,194 @@ class ReceivingsController extends BaseController {
     }
   }
 
-  // Add other necessary methods here...
+  /**
+   * GET /api/receivings/summary
+   *
+   * Counts and totals for the receivings list header. Read-only, and scoped to
+   * the branch when one is supplied.
+   *
+   * Grouped on `status` rather than `receiving_status` because `status` carries
+   * the schema's enum (draft | received | cancelled) while `receiving_status`
+   * is a free-text label derived from it. Existing rows have neither set - the
+   * aggregate reports those under `unset` rather than silently dropping them,
+   * which is the honest answer for 54 of supermarket's 54 receipts.
+   */
+  async getSummary(req, res) {
+    try {
+      if (!this.checkPermission('receiving', 'read', req.user)) {
+        return this.error(res, 'Unauthorized', 401);
+      }
+
+      const collection = currentConnection(mongoose.connection).db.collection('receivings');
+      const match = {};
+      if (req.query.branch) match.branch_id = req.query.branch;
+
+      const rows = await collection
+        .aggregate([
+          { $match: match },
+          {
+            $group: {
+              _id: { $ifNull: ['$status', 'unset'] },
+              count: { $sum: 1 },
+              total: { $sum: { $ifNull: ['$grand_total', 0] } },
+            },
+          },
+        ])
+        .toArray();
+
+      const byStatus = {};
+      let count = 0;
+      let total = 0;
+      for (const r of rows) {
+        byStatus[r._id] = { count: r.count, total: r.total };
+        count += r.count;
+        total += r.total;
+      }
+
+      return this.success(res, { count, total, byStatus }, 'Get Successfully');
+    } catch (error) {
+      console.error('Error in ReceivingsController.getSummary:', error);
+      return this.error(res, error.message, 500);
+    }
+  }
+
+  /**
+   * PATCH /api/receivings/:id/status  { status }
+   *
+   * Moves one receipt between draft, received and cancelled.
+   *
+   * The status is checked against the schema's own enum rather than a list
+   * written out here, so the two cannot drift apart - a route that accepted
+   * "recieved" would write a value nothing else in the product recognises, and
+   * nothing would complain until a report came out short.
+   */
+  async updateStatus(req, res) {
+    try {
+      if (!this.checkPermission('receiving', 'edit', req.user)) {
+        return this.error(res, 'Unauthorized', 401);
+      }
+
+      const id = String(req.params.id || '').trim();
+      const status = String(req.body?.status || '').trim();
+      if (!ObjectId.isValid(id)) return this.error(res, 'A valid receiving id is required', 400);
+
+      const allowed = Receiving?.schema?.path?.('status')?.enumValues || [
+        'draft',
+        'received',
+        'cancelled',
+      ];
+      if (!allowed.includes(status)) {
+        return this.error(res, `status must be one of: ${allowed.join(', ')}`, 400);
+      }
+
+      const collection = currentConnection(mongoose.connection).db.collection('receivings');
+      const result = await collection.findOneAndUpdate(
+        { _id: new ObjectId(id) },
+        {
+          $set: {
+            status,
+            /* Kept in step with the label the rest of the product reads, using
+               the same mapping the model applies on save. */
+            receiving_status:
+              status === 'received' ? 'Received' : status === 'cancelled' ? 'Cancelled' : 'Open',
+            updated_date: new Date(),
+            updated_by: req.user?.name || req.user?.email || 'system',
+          },
+        },
+        { returnDocument: 'after' }
+      );
+
+      const doc = result && result.value ? result.value : result;
+      if (!doc || !doc._id) return this.error(res, 'Receiving not found', 404);
+
+      return this.success(res, doc, 'Status updated successfully');
+    } catch (error) {
+      console.error('Error in ReceivingsController.updateStatus:', error);
+      return this.error(res, error.message, 500);
+    }
+  }
+
+  /**
+   * GET /api/receivings/getDataChanges?from=
+   *
+   * The change feed the frontend polls per module - see
+   * `{module}/getDataChanges` in Frontend core/PosnicPro.js. Nine controllers
+   * implement it; receivings did not, so the poll answered 501.
+   */
+  async getDataChanges(req, res) {
+    try {
+      const from = req.query.from || '';
+      const baseModel = new BaseModel('receivings');
+      const result = await baseModel.getAllDataChanges('receivings', null, from);
+
+      if (result.status === true) {
+        return this.success(res, result.data, result.message);
+      }
+      return this.error(res, 'Not valid Input', 200, result.data);
+    } catch (error) {
+      console.error('Error in ReceivingsController.getDataChanges:', error);
+      return this.error(res, error.message, 500);
+    }
+  }
+
+  /**
+   * GET /api/receivings/pendingReceivingProductDetails?receiving_id=&branch=&page=&limit=
+   *
+   * The line items of one pending stock receipt, paged.
+   *
+   * This one has a caller: Frontend report_pending.js opens it from the pending
+   * receivings report and reads total / total_pages / current_page / per_page
+   * off the response, so the shape below is the shape that page already
+   * expects rather than one invented here.
+   */
+  async pendingReceivingProductDetails(req, res) {
+    try {
+      if (!this.checkPermission('receiving', 'read', req.user)) {
+        return this.error(res, 'Unauthorized', 401);
+      }
+
+      const receivingId = String(req.query.receiving_id || '').trim();
+      if (!receivingId) {
+        return this.error(res, 'A receiving_id is required', 400);
+      }
+
+      const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+      const limit = Math.min(Math.max(1, parseInt(req.query.limit, 10) || 10), 100);
+
+      const collection = currentConnection(mongoose.connection).db.collection('receivings');
+      const query = ObjectId.isValid(receivingId)
+        ? { $or: [{ _id: new ObjectId(receivingId) }, { receiving_id: receivingId }] }
+        : { receiving_id: receivingId };
+      if (req.query.branch) query.branch_id = req.query.branch;
+
+      const doc = await collection.findOne(query);
+      if (!doc) {
+        return this.error(res, 'Receiving not found', 404);
+      }
+
+      /* Paged in memory: the line items live inside the receiving document, so
+         there is nothing to page in the database - and a stock receipt has tens
+         of lines, not thousands. */
+      const all = Array.isArray(doc.items) ? doc.items : [];
+      const total = all.length;
+      const list = all.slice((page - 1) * limit, page * limit);
+
+      return this.success(
+        res,
+        {
+          total,
+          current_page: page,
+          total_pages: Math.max(1, Math.ceil(total / limit)),
+          per_page: limit,
+          list,
+        },
+        'Get Successfully'
+      );
+    } catch (error) {
+      console.error('Error in ReceivingsController.pendingReceivingProductDetails:', error);
+      return this.error(res, error.message, 500);
+    }
+  }
 }
 
 module.exports = new ReceivingsController();

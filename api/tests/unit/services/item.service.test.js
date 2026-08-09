@@ -1037,7 +1037,7 @@ describe('ItemService', () => {
 
       await service.searchItems('keyword');
 
-      expect(repo.searchItems).toHaveBeenCalledWith('keyword');
+      expect(repo.searchItems).toHaveBeenCalledWith('keyword', expect.any(Object));
     });
 
     test('returns empty array for empty keyword', async () => {
@@ -1054,7 +1054,7 @@ describe('ItemService', () => {
 
       await service.searchItems('Item & Co. <special>');
 
-      expect(repo.searchItems).toHaveBeenCalledWith('Item & Co. <special>');
+      expect(repo.searchItems).toHaveBeenCalledWith('Item & Co. <special>', expect.any(Object));
     });
 
     test('returns error when repository throws', async () => {
@@ -2329,7 +2329,7 @@ describe('ItemService', () => {
 
       await service.searchItems(undefined);
 
-      expect(repo.searchItems).toHaveBeenCalledWith(undefined);
+      expect(repo.searchItems).toHaveBeenCalledWith(undefined, expect.any(Object));
     });
 
     test('quantityCount with undefined match uses empty object', async () => {
