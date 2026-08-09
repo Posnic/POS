@@ -113,4 +113,31 @@ jobs:
                echo "::warning::smoke.js not present - deploy the console to enable this gate"
                exit 0
              fi
+
+             # Wait for a shop to answer before testing shops.
+             #
+             # The step above proves pm2 says "online". That is not the same as
+             # "listening": pm2 reports online the moment it has started the
+             # process, while node is still building routes and connecting to
+             # MongoDB. The first run of this gate failed every check with 502
+             # against a deploy that was completely fine.
+             #
+             # Polled, not slept, because how long a reload takes depends on the
+             # machine and a fixed pause is either too short or wasted. Tested
+             # for success rather than for failure - `curl || echo 000` prints
+             # 000 from -w AND 000 from the fallback, and "000000" is not equal
+             # to "000", so a check written that way reads a dead port as alive.
+             host=$(grep -oP "^[a-z0-9-]+\.posnic\.io" /etc/nginx/tenants.map | head -1)
+             ready=""
+             for i in $(seq 1 60); do
+               code=$(curl -s -o /dev/null -m 5 -w "%{http_code}" -H "Host: $host" http://127.0.0.1/ 2>/dev/null)
+               if [ "$code" = "200" ]; then ready=yes; break; fi
+               sleep 2
+             done
+             if [ -z "$ready" ]; then
+               echo "::error::no shop answered within 120s of the reload"
+               exit 1
+             fi
+             echo "shops answering after ${i} attempt(s); running smoke test"
+
              SMOKE_WRITE_TENANT="${SMOKE_WRITE_TENANT:-tech}" node provisioning/smoke.js'
