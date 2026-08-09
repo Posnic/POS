@@ -83,6 +83,20 @@ class SyncAgentManager {
       STATUS_PORT: String(cfg.statusPort || 5055),
       // lets the agent answer support "upload logs" requests
       POSNIC_LOG_FILE: path.join(this.app.getPath('userData'), 'app.log'),
+      /*
+       * Which build this till is running.
+       *
+       * The agent is a separate process and has no idea what version the app
+       * around it is - its own package.json says 0.1.0 and always has. So the
+       * app tells it, and the agent puts it on every sync.
+       *
+       * The gateway has always stored this (auth.js reads x-app-version into
+       * lastSeenVersion) and the console has always had a column for it. Both
+       * showed nothing for every till in the estate, because nobody ever sent
+       * it - which is why "what version is that shop on?" has been unanswerable
+       * while the answer was one header away.
+       */
+      POSNIC_APP_VERSION: this.app.getVersion(),
     };
 
     console.log('[SyncAgent] starting from', agentDir);
