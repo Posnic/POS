@@ -136,6 +136,30 @@ async function shadowLogin(req, res) {
    * literal, and doing it this way means it stays true if the token format ever
    * changes.
    */
+  /*
+   * Both halves of a session, not just the token.
+   *
+   * This page used to set localStorage.posnic_jwt_token and nothing else, and
+   * support kept reporting that "sign in as user" just lands on the login
+   * page. It was not a permissions problem or a bad token - the token was
+   * fine, and the API accepted it.
+   *
+   * The frontend decides whether somebody is signed in from TWO things. Every
+   * real sign-in path sets both (see users.js around lines 606-752, and
+   * lock-screen.js restore()):
+   *
+   *     localStorage.posnic_jwt_token = <jwt>
+   *     document.cookie loginuser=yes
+   *
+   * With the token but no `loginuser`, the app treats the visit as
+   * unauthenticated and redirects to login.html - carrying a perfectly valid
+   * credential it has decided not to use. Nothing errors, which is why this
+   * survived several rounds of "it still does not work".
+   *
+   * The cookie is written here the way createCookie writes it: encoded, path=/,
+   * and dated. One day, because that is what a normal sign-in uses and a
+   * support session has no business outliving it.
+   */
   const payload = JSON.stringify({ token: authToken, user: user.email });
   res.set('content-type', 'text/html; charset=utf-8');
   /* Never cached, never indexed. For the next two hours this page body is a
@@ -152,6 +176,13 @@ async function shadowLogin(req, res) {
 (function () {
   var d = ${payload};
   try { localStorage.setItem('posnic_jwt_token', d.token); } catch (e) {}
+  /* The other half a real sign-in sets. Without it the app has the token and
+     still redirects to login.html - see the comment above this template. */
+  try {
+    var until = new Date();
+    until.setTime(until.getTime() + 24 * 60 * 60 * 1000);
+    document.cookie = 'loginuser=yes; expires=' + until.toGMTString() + '; path=/';
+  } catch (e) {}
   /* replace, not assign: the back button should not return to a page that
      still holds the token in its source. */
   location.replace('/');

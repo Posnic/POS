@@ -94,7 +94,7 @@ PosnicPro.customers = {
                             '</div>' +
                             '<div data-toolbar="user-options" class="btn btn-round btn-primary-rgba round-pad" id="onclick-toolbar_' + i + '"><i class="feather icon-more-vertical-"></i></div>';
 
-                    var trow = '<tr><th><input type="checkbox" class="customers-row-id" id="' + row._id + '" name="id[]" value="' + row._id + '" onclick="PosnicPro.checkboxSelectOne(this,\'customers\');"></th><th scope="row">' + row_no + '</th><td width="30%"><a href="#/customers/' + row._id + '"><i class="table_model_item">' + row.name + '</i></a></td> <td class="text-right"><a class="sale_color" href="tel:' + row.phone + '">' + row.phone + '</a></td> <td width="15%"><a class="sale_color" href="mailto:' + row.email + '">' + row.email + '</a></td> <td width="40%">' + row.address + '</td>' +
+                    var trow = '<tr><th><input type="checkbox" class="customers-row-id" id="' + row._id + '" name="id[]" value="' + row._id + '" onclick="PosnicPro.checkboxSelectOne(this,\'customers\');"></th><th scope="row">' + row_no + '</th><td width="30%"><a href="#/customers/' + row._id + '"><i class="table_model_item">' + row.name + '</i></a></td> <td class="text-right"><a class="sale_color" href="tel:' + (row.phone || '') + '">' + (row.phone || '') + '</a></td> <td width="15%"><a class="sale_color" href="mailto:' + (row.email || '') + '">' + (row.email || '') + '</a></td> <td width="40%">' + (row.address || '') + '</td>' +
                             '<td class="text-center"><span>' + action + '</span></td>' +
                             '</tr>';
                     $('#view_customers').children('tbody').append(trow);
@@ -852,7 +852,7 @@ PosnicPro.transactiondetails = {
                                 : '<span class="badge badge-warning-inverse">Sale - Due</span>';
                         let trash = (row.sale_id !== '') ? deleteSaleTransaction : deleteTransaction;
                         let connect = (row.sale_id !== '') ? '<span class="badge badge-secondary">Sale Bill</span>' : '';
-                        let trow = '<tr> <td scope="row">' + row_no + '</td><td>' + row.string_date + '<br>' + connect + '</td><td class="text-center">' + row.description + '</td>\n\
+                        let trow = '<tr> <td scope="row">' + row_no + '</td><td>' + row.string_date + '<br>' + connect + '</td><td class="text-center">' + (row.description || '') + '</td>\n\
                                     <td class="text-left">' + type + '</td><td class="text-center">' +
                                 (row.type === 'out' ? '-' : '+') + currency + '&nbsp;' + row.amount + '</td>\n\
                                     <td class="text-center">' + currency + '&nbsp;' + (saleTotal - salesPending) + '</td>\n\

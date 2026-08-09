@@ -88,7 +88,7 @@ PosnicPro.expensesreport = {
                             var row = response.data.list[i];
                             var row_no = (table.data('current_page') - 1) * table.data('per_page') + i + 1;
 
-                            var trow = '<tr> <th scope="row">' + row_no + '</th> <td class="export-amount">' + currency + '&nbsp;<span class="number">' + row.amount + '</span></td> <td class="export-expenses-type">' + row.type + '</td> <td class="export-expenses-category"><i>' + row.category + '</i></td> <td class="export-recipient">' + row.recipientname + '</td> <td class="export-approved">' + row.approvedby + '</td> <td class="export-note">' + row.description + '</td> </tr>';
+                            var trow = '<tr> <th scope="row">' + row_no + '</th> <td class="export-amount">' + currency + '&nbsp;<span class="number">' + row.amount + '</span></td> <td class="export-expenses-type">' + row.type + '</td> <td class="export-expenses-category"><i>' + row.category + '</i></td> <td class="export-recipient">' + row.recipientname + '</td> <td class="export-approved">' + row.approvedby + '</td> <td class="export-note">' + (row.description || '') + '</td> </tr>';
                             $('#view_expensesreport').children('tbody').append(trow);
                             $('span.number').number(true, 2);
                         }
