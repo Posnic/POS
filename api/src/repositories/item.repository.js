@@ -3533,14 +3533,35 @@ class ItemRepository extends BaseModel {
    * @param {string|ObjectId} itemId
    * @param {number} quantityChange - Positive or negative delta
    */
-  async updateStock(itemId, quantityChange) {
+  /**
+   * @param {string|ObjectId} itemId
+   * @param {number} quantityChange
+   * @param {object} [options]
+   * @param {string} [options.reason] why the stock moved - see sync/outbox REASONS
+   */
+  async updateStock(itemId, quantityChange, options = {}) {
     const collection = await this.getCollection(this.collectionName);
     const objectId = this.toObjectId(itemId);
 
-    return collection.updateOne(
+    const result = await collection.updateOne(
       { _id: objectId },
       { $inc: { available_quantity: quantityChange } }
     );
+
+    /*
+     * Mark the row for priority sync, after the write and never before.
+     *
+     * Every stock-changing path in the product - sale, return, cancellation,
+     * receiving, adjustment - reaches this method or deductStockIfAvailable
+     * below, which is what makes two hooks enough to cover all of them.
+     *
+     * Awaited but never able to throw: the outbox swallows its own errors, so a
+     * shop can still trade if it is unwritable. The periodic scan remains the
+     * mechanism of record; this only makes the change arrive sooner.
+     */
+    await require('../sync/outbox').enqueueInventory(objectId, options.reason);
+
+    return result;
   }
 
   /**
@@ -3563,7 +3584,15 @@ class ItemRepository extends BaseModel {
       { $inc: { available_quantity: -qty } },
       { returnDocument: 'after' }
     );
-    return result?.value || result || null;
+
+    const deducted = result?.value || result || null;
+    /* Only when stock actually moved. The filter above can match nothing -
+       insufficient stock, or an item that does not track it - and marking a row
+       that did not change would push an unchanged document for no reason. */
+    if (deducted) {
+      await require('../sync/outbox').enqueueInventory(objectId, 'sale_inventory');
+    }
+    return deducted;
   }
 
   /**
