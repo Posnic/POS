@@ -88,3 +88,29 @@ jobs:
                  echo "$n online"
                ;; esac
              done'
+
+      # Does the product actually work, for every shop, after this deploy.
+      #
+      # This step exists because a deploy once passed every check above -
+      # rsync fine, reload fine, shard online, 7,865 unit tests green - while
+      # nobody could sign in to any shop. The session store had lost
+      # createSession(), which express-session only calls when a request
+      # arrives carrying a cookie for a session that already exists. A fresh
+      # curl worked; a real person did not.
+      #
+      # So this signs in for real, comes back with the cookie, and reads the
+      # data, against the running server, for every shop. It is the only step
+      # here that would have caught it.
+      #
+      # Fails the deploy. A red deploy is recoverable; a green one that broke
+      # sign-in is discovered by a customer.
+      - name: Smoke test every shop
+        run: |
+          ssh -i ~/.ssh/deploy.pem "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
+            'set -a; . ~/apps/admin/.env; set +a
+             cd ~/apps/admin
+             if [ ! -f provisioning/smoke.js ]; then
+               echo "::warning::smoke.js not present - deploy the console to enable this gate"
+               exit 0
+             fi
+             node provisioning/smoke.js'
