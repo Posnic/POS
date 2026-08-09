@@ -38,4 +38,67 @@ const upload = multer({
   fileFilter: fileFilter,
 });
 
+/*
+ * Turn what multer just wrote into a content-addressed key.
+ *
+ * Runs AFTER multer, and deliberately leaves req.file.path and .filename alone
+ * so every controller that reads them today keeps working untouched. The only
+ * addition is req.file.imageKey, which new code stores on the document instead
+ * of a URL.
+ *
+ * The file moves from its random temporary name to uploads/<key>. Local first,
+ * always: the person who just took the photo sees it on the item immediately,
+ * with or without a working line. S3 comes later, on the background lane,
+ * because an image is never worth delaying a sale for.
+ *
+ * A failure here does not fail the request. The upload already succeeded and
+ * the old flat filename still resolves - so the worst case is an image that
+ * did not get re-keyed, not a shop that cannot add a product.
+ */
+async function attachImageKey(req, res, next) {
+  const files = req.file ? [req.file] : Array.isArray(req.files) ? req.files : [];
+  if (!files.length) return next();
+
+  const store = require('../utils/image-store');
+  const fsp = require('fs/promises');
+
+  for (const file of files) {
+    try {
+      if (!file || !file.path) continue;
+      const buffer = await fsp.readFile(file.path);
+
+      /* Cloud requests carry a tenant; a till does not, and keys under
+         "local". Never taken from the request body - see keyFor(). */
+      const tenantId =
+        (req.tenant && (req.tenant._id || req.tenant.id)) || req.tenantId || null;
+
+      const key = store.keyFor({
+        tenantId,
+        kind: req.imageKind || 'items',
+        buffer,
+        mimeType: file.mimetype,
+      });
+
+      await store.saveLocal(key, buffer);
+      file.imageKey = key;
+      file.imageUrl = store.urlFor(key);
+
+      /* The temporary copy is now redundant - the same bytes live under the
+         key. Left in place if it cannot be removed; a stray file is harmless
+         next to a request that otherwise worked. */
+      try {
+        await fsp.unlink(file.path);
+      } catch (e) {
+        /* nothing */
+      }
+    } catch (e) {
+      /* Keyed storage is an improvement on the flat filename, not a
+         precondition for it. The upload stands either way. */
+    }
+  }
+
+  return next();
+}
+
 module.exports = upload;
+module.exports.attachImageKey = attachImageKey;

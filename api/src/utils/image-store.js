@@ -40,7 +40,17 @@ const path = require('path');
 
 /* Deliberately narrow. This value reaches fs.join and a URL, and the only
    thing that should ever produce it is keyFor() below. */
-const KEY_RE = /^[a-f0-9]{24}\/[a-z]+\/[a-f0-9]{64}\.(jpg|jpeg|png|webp)$/;
+/*
+ * The prefix is a tenant's ObjectId in the cloud, and the literal "local" on a
+ * till - which is not multi-tenant and has no tenant record to be keyed by.
+ *
+ * A till's images are only ever read by that till, so "local" collides with
+ * nothing. If one is later pushed to S3 it is re-keyed under the tenant it
+ * syncs into, because by then there is a tenant to name.
+ */
+const KEY_RE = /^(?:[a-f0-9]{24}|local)\/[a-z]+\/[a-f0-9]{64}\.(jpg|jpeg|png|webp)$/;
+
+const LOCAL_PREFIX = 'local';
 
 const EXT_FOR = {
   'image/jpeg': 'jpg',
@@ -60,9 +70,16 @@ function keyFor({ tenantId, kind, buffer, mimeType }) {
    * The tenant comes from the authenticated session, never from the request
    * body. It is the whole of the isolation between one shop's images and
    * another's, so it is not something a caller gets to pass in.
+   *
+   * A till has no tenant record, so it keys under "local". Passing an
+   * unrecognised value is a bug rather than a reason to guess, and guessing
+   * here would file one shop's images under another.
    */
-  const tid = String(tenantId || '');
-  if (!/^[a-f0-9]{24}$/.test(tid)) throw new Error('an image needs a tenant to belong to');
+  const raw = String(tenantId || '').trim();
+  const tid = raw && /^[a-f0-9]{24}$/.test(raw) ? raw : LOCAL_PREFIX;
+  if (raw && tid === LOCAL_PREFIX && raw !== LOCAL_PREFIX) {
+    throw new Error('tenant id for an image must be an ObjectId');
+  }
 
   const safeKind = String(kind || 'items').toLowerCase();
   if (!/^[a-z]+$/.test(safeKind)) throw new Error('bad image kind');
