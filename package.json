@@ -1,6 +1,6 @@
 {
   "name": "posnic",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Offline-first point of sale for shops, restaurants and pharmacies. Runs its own database and API on the till, so a dropped connection is not an outage.",
   "main": "main.js",
   "scripts": {
