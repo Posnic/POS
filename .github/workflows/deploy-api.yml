@@ -57,6 +57,20 @@ jobs:
           # The count is printed and compared, so a partial reload is visible
           # rather than silent.
           #
+          # ONLY processes that are currently online.
+          #
+          # `pm2 reload` on a stopped process STARTS it. Shops now serve from
+          # the shard and their own processes are stopped deliberately - they
+          # are the rollback - so every deploy resurrected all twenty-one of
+          # them. Three deploys in one day each silently undid the
+          # consolidation, and 2.6GB went back to processes serving nobody. The
+          # only symptom was memory; every check in this workflow passed.
+          #
+          # It is the same mistake the watchdog made and had fixed hours
+          # earlier: something helpfully restarting processes that were stopped
+          # on purpose. A stopped process needs no code loaded into it - it
+          # reads whatever is on disk when it is next started.
+          #
           # posnic-shard-* is matched as well as posnic-tenant-*, and that is
           # not a tidy-up. Shops are being moved onto a shared process, and
           # nginx sends their traffic there; a deploy that reloaded only the
@@ -69,7 +83,7 @@ jobs:
           ssh -i ~/.ssh/deploy.pem "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
             'set -e
              cd ~/apps/tenants/app/api && npm ci --omit=dev --silent
-             names=$(pm2 jlist | node -e "let d=\"\";process.stdin.on(\"data\",c=>d+=c).on(\"end\",()=>console.log(JSON.parse(d).filter(p=>/^posnic-(tenant|shard)-/.test(p.name)).map(p=>p.name).join(\"\\n\")))")
+             names=$(pm2 jlist | node -e "let d=\"\";process.stdin.on(\"data\",c=>d+=c).on(\"end\",()=>console.log(JSON.parse(d).filter(p=>/^posnic-(tenant|shard)-/.test(p.name)&&p.pm2_env.status===\"online\").map(p=>p.name).join(\"\\n\")))")
              total=0; ok=0
              for n in $names; do
                total=$((total+1))
