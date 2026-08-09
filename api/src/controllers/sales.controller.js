@@ -1554,7 +1554,16 @@ class SalesController extends BaseController {
             .fontSize(10)
             .font('Helvetica')
             .fillColor('#0066CC')
-            .text('Posnic', margins.left, footerContentY + 2, {
+            /*
+             * The brand this installation goes by, never the product name.
+             *
+             * This is a receipt the shop hands to its own customers, so a
+             * white-labelled install printing "Posnic" here is the most visible
+             * leak there is - worse than an error message, because it leaves
+             * the building. Blank when there is no brand: an empty space is
+             * right for every brand, and a wrong name is right for none.
+             */
+            .text(require('../helpers/brand').brandName(), margins.left, footerContentY + 2, {
               lineBreak: false,
             });
         }

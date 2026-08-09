@@ -567,7 +567,11 @@ function generateInvoicePDF(options) {
     doc.image(posnicLogoPath, 50, footerY + 8, { width: 35, height: 15 });
   } catch (err) {
     // Fallback to text only if image fails
-    doc.fontSize(10).font('Helvetica').fillColor('#0066CC').text('Posnic', 50, footerTextY);
+    doc
+      .fontSize(10)
+      .font('Helvetica')
+      .fillColor('#0066CC')
+      .text(require('../helpers/brand').brandName(), 50, footerTextY);
   }
 
   // Page number on right corner - same line
@@ -1013,7 +1017,11 @@ function generateReceivingPDF(options) {
   try {
     doc.image(posnicLogoPath, 50, footerY + 8, { width: 35, height: 15 });
   } catch (err) {
-    doc.fontSize(10).font('Helvetica').fillColor('#0066CC').text('Posnic', 50, footerTextY);
+    doc
+      .fontSize(10)
+      .font('Helvetica')
+      .fillColor('#0066CC')
+      .text(require('../helpers/brand').brandName(), 50, footerTextY);
   }
 
   // Page number on right corner - same line

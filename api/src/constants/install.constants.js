@@ -78,7 +78,7 @@ const ERROR_MESSAGES = {
 
 // Success messages
 const SUCCESS_MESSAGES = {
-  ACCOUNT_CREATED: 'Posnic Account Created Successfully',
+  ACCOUNT_CREATED: 'Account created successfully',
   CLEANUP_SUCCESS: 'Successfully deleted records across all collections',
   INSTALLATION_COMPLETE: 'Installation completed successfully',
   DEMO_DATA_LOADED: 'Demo data loaded successfully',

@@ -454,7 +454,7 @@ class InstallModel extends BaseModel {
       return {
         status: true,
         data: '',
-        message: 'Posnic Account Created Successfully',
+        message: 'Account created successfully',
       };
     } catch (error) {
       console.error('Error in installInsertDocument:', error);

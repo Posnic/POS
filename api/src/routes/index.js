@@ -33,7 +33,7 @@ const whatsappRoutes = require('./whatsapp.routes');
 router.get('/', (req, res) => {
   res.status(200).json({
     type: 'success',
-    message: 'Posnic API v2',
+    message: 'API v2',
     data: null,
   });
 });

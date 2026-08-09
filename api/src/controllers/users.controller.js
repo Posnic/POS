@@ -237,7 +237,7 @@ class UsersController extends BaseController {
       if (!user) {
         return res.status(404).json({
           type: 'error',
-          message: 'Invalid Posnic Account , Please contact your branch Manager',
+          message: 'Invalid account. Please contact your branch manager.',
           data: 'incorrect',
         });
       }
@@ -263,7 +263,7 @@ class UsersController extends BaseController {
 
         return res.status(404).json({
           type: 'error',
-          message: 'Invalid Posnic Account , Please contact your branch Manager',
+          message: 'Invalid account. Please contact your branch manager.',
           data: 'incorrect',
         });
       }
@@ -2423,7 +2423,7 @@ class UsersController extends BaseController {
 
         return res.status(404).json({
           type: 'error',
-          message: 'Invalid Posnic Account , Please contact your branch Manager',
+          message: 'Invalid account. Please contact your branch manager.',
           data: null,
         });
       }
@@ -2615,7 +2615,7 @@ class UsersController extends BaseController {
 
         return res.status(404).json({
           type: 'error',
-          message: 'Invalid Posnic Account , Please contact your branch Manager',
+          message: 'Invalid account. Please contact your branch manager.',
           data: null,
         });
       }
@@ -2820,7 +2820,7 @@ class UsersController extends BaseController {
       // but fall back to a friendly string if it's missing.
       const message =
         (error && error.message) ||
-        'Unable to connect to Posnic billing server. Please try again later.';
+        'Unable to connect to the billing server. Please try again later.';
 
       return res.status(200).json({
         type: 'error',
