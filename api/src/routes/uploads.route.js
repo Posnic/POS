@@ -63,9 +63,9 @@ async function fetchFromOrigin(key) {
       if (!process.env.AWS_S3_BUCKET) return null;
 
       const { GetObjectCommand } = require('@aws-sdk/client-s3');
-      const res = await s3.getS3Client().send(
-        new GetObjectCommand({ Bucket: process.env.AWS_S3_BUCKET, Key: key })
-      );
+      const res = await s3
+        .getS3Client()
+        .send(new GetObjectCommand({ Bucket: process.env.AWS_S3_BUCKET, Key: key }));
 
       const chunks = [];
       for await (const c of res.Body) chunks.push(c);
@@ -111,12 +111,13 @@ router.get(/^\/(.+)$/, async (req, res) => {
 
   /* Legacy files live flat in uploads/, not under a tenant directory. path.basename
      is belt and braces - the regex already refused anything with a separator. */
-  const local = legacy
-    ? path.join(store.UPLOAD_DIR, path.basename(key))
-    : store.localPathFor(key);
+  const local = legacy ? path.join(store.UPLOAD_DIR, path.basename(key)) : store.localPathFor(key);
 
   if (local && fs.existsSync(local)) {
-    return fs.createReadStream(local).on('error', () => res.status(404).end()).pipe(res);
+    return fs
+      .createReadStream(local)
+      .on('error', () => res.status(404).end())
+      .pipe(res);
   }
 
   /* An old flat file has no S3 counterpart to fall back to - it only ever

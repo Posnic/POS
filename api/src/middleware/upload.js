@@ -69,8 +69,7 @@ async function attachImageKey(req, res, next) {
 
       /* Cloud requests carry a tenant; a till does not, and keys under
          "local". Never taken from the request body - see keyFor(). */
-      const tenantId =
-        (req.tenant && (req.tenant._id || req.tenant.id)) || req.tenantId || null;
+      const tenantId = (req.tenant && (req.tenant._id || req.tenant.id)) || req.tenantId || null;
 
       const key = store.keyFor({
         tenantId,

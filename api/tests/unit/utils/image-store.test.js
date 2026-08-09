@@ -23,13 +23,23 @@ const bytes = Buffer.from('pretend this is a jpeg');
 
 describe('image keys', () => {
   test('a cloud image is keyed by its tenant', () => {
-    const key = store.keyFor({ tenantId: TENANT, kind: 'items', buffer: bytes, mimeType: 'image/jpeg' });
+    const key = store.keyFor({
+      tenantId: TENANT,
+      kind: 'items',
+      buffer: bytes,
+      mimeType: 'image/jpeg',
+    });
     expect(key.startsWith(`${TENANT}/items/`)).toBe(true);
     expect(store.isValidKey(key)).toBe(true);
   });
 
   test('a till has no tenant and keys under local', () => {
-    const key = store.keyFor({ tenantId: null, kind: 'items', buffer: bytes, mimeType: 'image/png' });
+    const key = store.keyFor({
+      tenantId: null,
+      kind: 'items',
+      buffer: bytes,
+      mimeType: 'image/png',
+    });
     expect(key.startsWith('local/items/')).toBe(true);
     expect(store.isValidKey(key)).toBe(true);
   });
@@ -37,22 +47,52 @@ describe('image keys', () => {
   test('the same bytes always produce the same key', () => {
     /* What makes a retry after a dropped connection a no-op rather than a
        duplicate, and what dedupes the same photo uploaded twice. */
-    const a = store.keyFor({ tenantId: TENANT, kind: 'items', buffer: bytes, mimeType: 'image/jpeg' });
-    const b = store.keyFor({ tenantId: TENANT, kind: 'items', buffer: bytes, mimeType: 'image/jpeg' });
+    const a = store.keyFor({
+      tenantId: TENANT,
+      kind: 'items',
+      buffer: bytes,
+      mimeType: 'image/jpeg',
+    });
+    const b = store.keyFor({
+      tenantId: TENANT,
+      kind: 'items',
+      buffer: bytes,
+      mimeType: 'image/jpeg',
+    });
     expect(a).toBe(b);
   });
 
   test('different bytes produce different keys', () => {
-    const a = store.keyFor({ tenantId: TENANT, kind: 'items', buffer: bytes, mimeType: 'image/jpeg' });
-    const b = store.keyFor({ tenantId: TENANT, kind: 'items', buffer: Buffer.from('other'), mimeType: 'image/jpeg' });
+    const a = store.keyFor({
+      tenantId: TENANT,
+      kind: 'items',
+      buffer: bytes,
+      mimeType: 'image/jpeg',
+    });
+    const b = store.keyFor({
+      tenantId: TENANT,
+      kind: 'items',
+      buffer: Buffer.from('other'),
+      mimeType: 'image/jpeg',
+    });
     expect(a).not.toBe(b);
   });
 
   test('two tenants never share a path for identical bytes', () => {
     /* The whole of the isolation between one shop's images and another's. */
     const other = '507f1f77bcf86cd799439012';
-    const a = store.keyFor({ tenantId: TENANT, kind: 'items', buffer: bytes, mimeType: 'image/jpeg' });
-    const b = store.keyFor({ tenantId: other, kind: 'items', buffer: bytes, mimeType: 'image/jpeg' });
+    const a = store.keyFor({
+      tenantId: TENANT,
+      kind: 'items',
+      buffer: bytes,
+      mimeType: 'image/jpeg',
+    });
+    const b = store.keyFor({
+      tenantId: other,
+      kind: 'items',
+      buffer: bytes,
+      mimeType: 'image/jpeg',
+    });
     expect(a).not.toBe(b);
   });
 
@@ -73,7 +113,12 @@ describe('image keys', () => {
 
 describe('resolving what is stored on a document', () => {
   test('a key becomes a relative path, so both apps can render it', () => {
-    const key = store.keyFor({ tenantId: TENANT, kind: 'items', buffer: bytes, mimeType: 'image/jpeg' });
+    const key = store.keyFor({
+      tenantId: TENANT,
+      kind: 'items',
+      buffer: bytes,
+      mimeType: 'image/jpeg',
+    });
     const url = store.resolve(key);
     expect(url).toBe(`/uploads/${key}`);
     /* Relative is the entire point - an absolute URL would be correct on
