@@ -11,73 +11,13 @@ const cookieParser = require('cookie-parser');
 const path = require('path');
 const fs = require('fs');
 const session = require('express-session');
-/*
- * connect-mongo 6 stopped putting the store on module.exports itself.
- * `require("connect-mongo")` used to be the class with a static create(); now
- * it is a namespace and the class is the named MongoStore export. The old form
- * left MongoStore.create undefined, so the session store threw at startup and
- * nobody could log in - and every mocked unit test still passed, because the
- * store is only constructed against a real database.
- */
-const { MongoStore } = require('connect-mongo');
+/* A session store that follows the shop. It extends session.Store, lives in its
+   own file, and is tested there - see src/session/tenant-session-store.js for
+   why each of those three things matters. */
+const { TenantAwareSessionStore } = require('./src/session/tenant-session-store');
 
-/*
- * A session store that follows the shop.
- *
- * express-session is built once, at load, and given one store - which is right
- * for a process serving one shop and wrong for a shard, where every shop would
- * share a collection. The store interface is small (get/set/destroy/touch), so
- * this delegates each call to a store bound to the shop in context, built once
- * per shop and kept.
- *
- * Standalone is unchanged: no shop in context means the process's own
- * connection, which is what it was before.
- */
 function tenantAwareSessionStore() {
-  const { currentTenant, isMultiTenant } = require('./src/db/tenant-context');
-  const config = require('./src/config/config');
-
-  const base = MongoStore.create({ mongoUrl: config.database.uri });
-  const perShop = new Map();
-
-  function storeFor() {
-    if (!isMultiTenant()) return base;
-    const t = currentTenant();
-    /* No shop in scope: a timer, a shutdown hook, something outside a request.
-       The base store is the honest answer - it is not any shop's, and nothing
-       tenant-specific should be reaching a session there anyway. */
-    if (!t || !t.tenantDb) return base;
-
-    let s = perShop.get(t.tenantDb);
-    if (!s) {
-      /* Same cluster, the shop's own database. Built from the connection the
-         shard already holds rather than a second client per shop. */
-      s = MongoStore.create({
-        clientPromise: Promise.resolve(t.db.client ? t.db.client : undefined),
-        client: t.db.client,
-        dbName: t.tenantDb,
-        collectionName: 'sessions',
-      });
-      perShop.set(t.tenantDb, s);
-    }
-    return s;
-  }
-
-  /* Delegation rather than inheritance: connect-mongo's class does work in its
-     constructor that should happen once per shop, not once per call. */
-  return {
-    get: (sid, cb) => storeFor().get(sid, cb),
-    set: (sid, sess, cb) => storeFor().set(sid, sess, cb),
-    destroy: (sid, cb) => storeFor().destroy(sid, cb),
-    touch: (sid, sess, cb) => storeFor().touch(sid, sess, cb),
-    all: (cb) => storeFor().all(cb),
-    clear: (cb) => storeFor().clear(cb),
-    length: (cb) => storeFor().length(cb),
-    on: () => {},
-    once: () => {},
-    emit: () => {},
-    removeListener: () => {},
-  };
+  return new TenantAwareSessionStore();
 }
 const { responseMiddleware } = require('./src/middleware/response');
 
@@ -1012,3 +952,7 @@ app.use(globalErrorHandler);
 
 // Export app only (server.js handles starting the server)
 module.exports = app;
+/* Named alongside the app so the store's contract with express-session can be
+   asserted directly. It shipped broken once because nothing could reach it to
+   check, and the failure only appeared for signed-in users. */
+module.exports.TenantAwareSessionStore = TenantAwareSessionStore;
