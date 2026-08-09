@@ -56,15 +56,35 @@ jobs:
           #
           # The count is printed and compared, so a partial reload is visible
           # rather than silent.
+          #
+          # posnic-shard-* is matched as well as posnic-tenant-*, and that is
+          # not a tidy-up. Shops are being moved onto a shared process, and
+          # nginx sends their traffic there; a deploy that reloaded only the
+          # per-shop processes would rsync the new code and reload the very
+          # processes no longer serving anyone, while every live request went
+          # on being answered by the shard running the old build. It would
+          # report success having changed nothing a customer can see - the same
+          # failure as the `pm2 reload a b c` bug above, arriving by a different
+          # route, and just as invisible.
           ssh -i ~/.ssh/deploy.pem "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
             'set -e
              cd ~/apps/tenants/app/api && npm ci --omit=dev --silent
-             names=$(pm2 jlist | node -e "let d=\"\";process.stdin.on(\"data\",c=>d+=c).on(\"end\",()=>console.log(JSON.parse(d).filter(p=>/^posnic-tenant-/.test(p.name)).map(p=>p.name).join(\"\\n\")))")
+             names=$(pm2 jlist | node -e "let d=\"\";process.stdin.on(\"data\",c=>d+=c).on(\"end\",()=>console.log(JSON.parse(d).filter(p=>/^posnic-(tenant|shard)-/.test(p.name)).map(p=>p.name).join(\"\\n\")))")
              total=0; ok=0
              for n in $names; do
                total=$((total+1))
                if pm2 reload "$n" --silent >/dev/null 2>&1; then ok=$((ok+1)); else echo "::warning::reload failed for $n"; fi
              done
-             echo "reloaded $ok of $total tenants"
+             echo "reloaded $ok of $total processes"
              pm2 save
-             test "$ok" -eq "$total"'
+             test "$ok" -eq "$total"
+             # A shard reloaded but not answering is a whole machine down, so
+             # it is checked here rather than discovered by a shopkeeper.
+             for n in $names; do
+               case "$n" in posnic-shard-*)
+                 sleep 2
+                 p=$(pm2 jlist | node -e "let d=\"\";process.stdin.on(\"data\",c=>d+=c).on(\"end\",()=>{const x=JSON.parse(d).find(y=>y.name===process.argv[1]);console.log(x?x.pm2_env.status:\"missing\")})" "$n")
+                 test "$p" = "online" || { echo "::error::$n is $p after reload"; exit 1; }
+                 echo "$n online"
+               ;; esac
+             done'
