@@ -210,19 +210,27 @@ function resolve(stored) {
     }
 
     /*
-     * A loopback URL is the one shape that is actively wrong. It was written
-     * by whichever machine created the item and means "me" on every machine
-     * that reads it afterwards - so on the cloud it points the browser at the
-     * customer's own computer. Keep the path, drop the origin, and let it
-     * resolve against wherever it is actually being viewed.
+     * Any URL whose path is under /uploads/ is one of OUR images, wherever
+     * its origin happens to point - a till wrote http://localhost, the cloud
+     * wrote https://<shop>.posnic.io or a custom domain like
+     * https://pos.gshcl-gov.net. Every one of those means "this shop's
+     * uploads", and every one is wrong on a different machine than the one
+     * that wrote it: on a till the cloud URL is blocked by the same-origin
+     * image policy and never loads offline, and on the cloud the loopback URL
+     * points at the reader's own computer. Drop the origin and keep the path,
+     * so it resolves against wherever it is actually being viewed and always
+     * loads from that machine's own disk.
      */
+    if (u.pathname.startsWith('/uploads/')) return u.pathname;
+
     const host = u.hostname;
     if (host === 'localhost' || host === '127.0.0.1' || host === '[::1]' || host === '::1') {
-      return u.pathname.startsWith('/uploads/') ? u.pathname : `/uploads${u.pathname}`;
+      return `/uploads${u.pathname}`;
     }
 
-    /* Any other absolute URL is a real origin - a CDN, an S3 bucket, an image
-       somebody pasted in from elsewhere. Not ours to reinterpret. */
+    /* A real foreign origin with a path that is not ours - the old public S3
+       bucket (prod-upload-pro/<file> at the root), a CDN, an image pasted in
+       from elsewhere. Not ours to reinterpret. */
     return v;
   }
 
