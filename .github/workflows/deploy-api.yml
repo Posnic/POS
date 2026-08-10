@@ -189,9 +189,13 @@ jobs:
              #
              # POS is an open-source repository, so every workflow run here is
              # readable by anyone on the internet. The full smoke output prints
-             # one line per shop with that shop's name beside its inventory and
-             # branch counts - which is a named customer's business data on a
+             # one line per shop with the shop name beside its inventory and
+             # branch counts - which is named customer business data on a
              # public page, published by us, without them being asked.
+             #
+             # (No apostrophes in these comments: the whole block is one
+             # single-quoted ssh argument, and an apostrophe ends it early -
+             # the gate then silently tests nothing and fails at EOF.)
              #
              # Quiet mode reports the same verdict and the same failing checks
              # with no customer named. Anyone who needs to know WHICH shop runs
