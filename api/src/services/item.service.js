@@ -243,6 +243,19 @@ class ItemService {
         const filename = `${timestamp}-posnic_item_image-${uniqueId}.${ext}`;
 
         const buffer = Buffer.from(data, 'base64');
+
+        // A request that arrives with no image data used to be written out
+        // faithfully as a zero-byte file, stored on the item, and served as a
+        // broken picture. Refuse it here, where the caller still gets told.
+        if (!buffer.length) {
+          return {
+            status: false,
+            data: null,
+            message: ERROR_MESSAGES.NO_FILES_UPLOADED,
+            code: 400,
+          };
+        }
+
         const fullPath = path.join(itemImagesDir, filename);
 
         fs.writeFileSync(fullPath, buffer);
