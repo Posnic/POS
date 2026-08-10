@@ -325,6 +325,10 @@ class ItemService {
         });
       }
 
+      /* Poke the sync agent so the new image crosses to the cloud now, not on
+         the next poll. Best effort - see nudge.js. */
+      try { require('../sync/nudge').nudgeSyncAgent(); } catch (e) { /* never fail an upload on this */ }
+
       return {
         status: true,
         data: returnNames,
