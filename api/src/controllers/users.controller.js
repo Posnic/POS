@@ -1708,10 +1708,11 @@ class UsersController extends BaseController {
       if (storageType === 's3') {
         // S3 upload (matches PHP line 578-590)
         try {
+          // No ACL: the bucket has ACLs disabled and rejects any PutObject
+          // that carries one. Public readability is the bucket policy's call.
           const result = await require('../utils/s3').uploadObject({
             key: filename,
             filePath: req.file.path,
-            acl: 'public-read',
             contentType: req.file.mimetype,
           });
           // Delete temp file after S3 upload
