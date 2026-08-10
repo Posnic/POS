@@ -1,0 +1,4 @@
+#!/bin/sh
+# Security audit on what is staged. See security-audit.js for what it catches
+# and why. Installed per clone with: git config core.hooksPath .githooks
+exec node "$(dirname "$0")/security-audit.js"
