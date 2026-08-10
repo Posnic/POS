@@ -99,33 +99,51 @@ router.get(/^\/(.+)$/, async (req, res) => {
    * and validating against the exact expected shape is a stronger guarantee
    * than trying to strip the dangerous parts out.
    */
+  /*
+   * A miss must NOT be cached. This route is fronted by Cloudflare, and the
+   * one-year immutable header used to be set before the file was known to
+   * exist - so an image requested before its file had synced returned a 404
+   * carrying "cache for a year", Cloudflare stored the 404, and the picture
+   * stayed broken for everyone long after the file arrived. Every 404 here
+   * says no-store, so the very next request after the file lands is a fresh
+   * miss that finds it.
+   */
+  const miss = (res) => {
+    res.set('Cache-Control', 'no-store');
+    return res.status(404).end();
+  };
+
   const legacy = !store.isValidKey(key) && store.isLegacyFile(key);
   if (!store.isValidKey(key) && !legacy) {
-    return res.status(404).end();
+    return miss(res);
   }
 
-  res.set('Access-Control-Allow-Origin', '*');
-  res.set('Cross-Origin-Resource-Policy', 'cross-origin');
-  res.set('Content-Type', contentTypeFor(key));
-  res.set('Cache-Control', CACHE);
+  /* Legacy files keep their own sub-path (item_images/<file>); the regex
+     guarantees every segment starts alphanumeric, so no traversal. */
+  const local = legacy ? path.join(store.UPLOAD_DIR, key) : store.localPathFor(key);
 
-  /* Legacy files live flat in uploads/, not under a tenant directory. path.basename
-     is belt and braces - the regex already refused anything with a separator. */
-  const local = legacy ? path.join(store.UPLOAD_DIR, path.basename(key)) : store.localPathFor(key);
+  const hit = (stream) => {
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Cross-Origin-Resource-Policy', 'cross-origin');
+    res.set('Content-Type', contentTypeFor(key));
+    res.set('Cache-Control', CACHE); // only now, when the bytes are real
+    return stream;
+  };
 
   if (local && fs.existsSync(local)) {
     return fs
       .createReadStream(local)
-      .on('error', () => res.status(404).end())
-      .pipe(res);
+      .on('error', () => miss(res))
+      .pipe(hit(res));
   }
 
   /* An old flat file has no S3 counterpart to fall back to - it only ever
      existed on the machine that received the upload. */
-  if (legacy) return res.status(404).end();
+  if (legacy) return miss(res);
 
   const buffer = await fetchFromOrigin(key);
-  if (!buffer) return res.status(404).end();
+  if (!buffer) return miss(res);
+  hit(res);
   return res.end(buffer);
 });
 
