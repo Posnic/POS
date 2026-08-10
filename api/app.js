@@ -74,6 +74,13 @@ const cspDirectives = {
   'img-src': [
     "'self'",
     'data:',
+    // Product images are normalised to same-origin /uploads/ paths, so 'self'
+    // covers the common case. https: is the safety net for any row still
+    // holding a full cloud URL (a shop's own posnic.io/custom domain) that a
+    // read path has not yet normalised: online it loads instead of being
+    // blocked; offline the normalised relative path serves from disk. Images
+    // only - this does not widen script-src or anything executable.
+    'https:',
     'https://dev-upload-pro.s3.ap-south-1.amazonaws.com',
     'https://prod-upload-pro.s3.ap-south-1.amazonaws.com',
     'https://rzp.io',
