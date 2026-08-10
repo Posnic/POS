@@ -40,6 +40,37 @@ jobs:
             --exclude .wwebjs_auth --exclude .wwebjs_cache \
             -e "ssh -i ~/.ssh/deploy.pem" \
             api/ "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:~/apps/tenants/app/api/"
+      # The processes read api/.env at boot (dotenv), and rsync above
+      # deliberately never touches it. The S3 credentials were put in GitHub
+      # secrets, which the server itself never reads - this is the step that
+      # actually delivers them. Without it every upload silently falls back to
+      # local disk, which is exactly what happened for a week.
+      #
+      # dotenv does not override variables pm2 already holds, so each process
+      # keeps its own PORT and MONGODB_URI; this file only supplies what the
+      # saved environment lacks. Written before the reload so the same deploy
+      # applies it.
+      - name: Write storage env
+        env:
+          STORAGE_TYPE: ${{ secrets.STORAGE_TYPE }}
+          AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          if [ -z "$AWS_ACCESS_KEY_ID" ] || [ -z "$AWS_SECRET_ACCESS_KEY" ] || [ -z "$AWS_S3_BUCKET" ]; then
+            echo "::warning::S3 secrets not set in this repo; skipping env write - uploads will keep falling back to local disk"
+            exit 0
+          fi
+          {
+            echo "STORAGE_TYPE=${STORAGE_TYPE:-s3}"
+            echo "AWS_S3_BUCKET=$AWS_S3_BUCKET"
+            echo "AWS_REGION=${AWS_REGION:-ap-south-1}"
+            echo "AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID"
+            echo "AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY"
+          } | ssh -i ~/.ssh/deploy.pem "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
+            'umask 077; cat > ~/apps/tenants/app/api/.env && echo "storage env written ($(grep -c = ~/apps/tenants/app/api/.env) keys)"'
+
       - name: Install deps and reload tenants
         run: |
           # No --update-env: pm2 would overwrite each tenant's cached env with

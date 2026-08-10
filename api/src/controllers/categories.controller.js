@@ -1049,10 +1049,12 @@ class CategoriesController extends BaseController {
 
     if (storageType === 's3') {
       try {
+        // No ACL: the bucket has ACLs disabled and rejects any PutObject that
+        // carries one. Whether the object is publicly readable is the bucket
+        // policy's decision.
         const result = await require('../utils/s3').uploadObject({
           key: filename,
           filePath: req.file.path,
-          acl: 'public-read',
           contentType: req.file.mimetype,
         });
         fs.unlinkSync(req.file.path);
