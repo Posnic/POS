@@ -25,6 +25,33 @@ class ItemService {
     return (process.env.STORAGE_TYPE || 'local') === 's3' && process.env.AWS_S3_BUCKET;
   }
 
+  /*
+   * Display-time image normalisation. Never persisted.
+   *
+   * resolve() turns a loopback URL - true only on the machine that wrote it -
+   * into the relative path every origin can serve, and leaves foreign
+   * CDN/S3 URLs alone. Anything it does NOT recognise passes through
+   * untouched: blanking unknowns is exactly the mistake that once nearly
+   * wiped every legacy image at a stroke, and a wrong-but-visible URL beats
+   * a silently vanished picture.
+   */
+  normalizeItemImages(item) {
+    if (!item || typeof item !== 'object') return item;
+    const { resolve } = require('../utils/image-store');
+    const fix = (v) => {
+      if (typeof v !== 'string' || !v) return v;
+      return resolve(v) || v;
+    };
+    const out = { ...(typeof item.toObject === 'function' ? item.toObject() : item) };
+    out.image = fix(out.image);
+    if (Array.isArray(out.multi_image)) {
+      out.multi_image = out.multi_image.map((m) =>
+        m && typeof m === 'object' ? { ...m, name: fix(m.name) } : m
+      );
+    }
+    return out;
+  }
+
   getPublicBaseUrl({ protocol, host } = {}) {
     const configuredUrl = config.urls?.publicServer || config.cliHost || '';
     const baseUrl = configuredUrl || (protocol && host ? `${protocol}://${host}` : '');
@@ -132,7 +159,7 @@ class ItemService {
           current_page: result.page,
           total_pages: result.totalPages,
           per_page: result.limit,
-          list: result.items,
+          list: (result.items || []).map((it) => this.normalizeItemImages(it)),
         },
         message: 'success',
       };
@@ -272,19 +299,24 @@ class ItemService {
           fs.copyFileSync(fullPath, publicPath);
         }
 
-        // Build the same public URL shape the controller previously used.
+        // Store the RELATIVE path, never a full URL.
         //
-        // The S3 result deliberately does NOT replace the URL any more. The
-        // API serves /uploads/<path> from disk on every domain the shop uses,
-        // whatever the bucket's public/private setting is; a bucket-direct URL
-        // bakes today's bucket into the row and breaks the moment the bucket
-        // goes private. S3 is the durable copy behind the disk, not the origin
-        // the browser reads. s3Result is still awaited so an upload failure is
-        // logged before the response goes out.
-        const publicUrlPath = `/uploads/item_images/${filename}`;
-        const publicBaseUrl = this.getPublicBaseUrl({ protocol, host });
-        const publicUrl = publicBaseUrl ? `${publicBaseUrl}${publicUrlPath}` : publicUrlPath;
+        // A full URL is only ever true on the machine that wrote it: a till
+        // stores http://localhost:42397/... and the moment that row syncs,
+        // every other reader's browser is pointed at its own computer. The
+        // relative path means "this shop's uploads" on whichever origin is
+        // serving - till, subdomain or custom domain - which is what lets one
+        // string survive sync in both directions.
+        //
+        // The S3 result deliberately does not replace the URL either: a
+        // bucket-direct URL bakes today's bucket into the row. S3 is the
+        // durable copy behind the disk, not the origin the browser reads.
+        // s3Result is still awaited so an upload failure is logged before the
+        // response goes out.
+        const publicUrl = `/uploads/item_images/${filename}`;
         void s3Result;
+        void protocol;
+        void host;
 
         returnNames.push({
           name: publicUrl,
