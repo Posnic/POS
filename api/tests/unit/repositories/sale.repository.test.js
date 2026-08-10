@@ -41,6 +41,8 @@ const collections = {};
 const mkCol = () => ({
   findOne: jest.fn().mockResolvedValue(null),
   find: jest.fn().mockReturnValue({ toArray: jest.fn().mockResolvedValue([]) }),
+  findOneAndUpdate: jest.fn().mockResolvedValue(null),
+  createIndex: jest.fn().mockResolvedValue('ok'),
   updateOne: jest.fn().mockResolvedValue({ matchedCount: 1, modifiedCount: 1 }),
   updateMany: jest.fn().mockResolvedValue({ matchedCount: 1, modifiedCount: 1 }),
   deleteMany: jest.fn().mockResolvedValue({ deletedCount: 1 }),
@@ -53,6 +55,8 @@ jest.mock('../../../src/models/base.model', () => {
   const mkColLocal = () => ({
     findOne: jest.fn().mockResolvedValue(null),
     find: jest.fn().mockReturnValue({ toArray: jest.fn().mockResolvedValue([]) }),
+    findOneAndUpdate: jest.fn().mockResolvedValue(null),
+    createIndex: jest.fn().mockResolvedValue('ok'),
     updateOne: jest.fn().mockResolvedValue({ matchedCount: 1, modifiedCount: 1 }),
     updateMany: jest.fn().mockResolvedValue({ matchedCount: 1, modifiedCount: 1 }),
     deleteMany: jest.fn().mockResolvedValue({ deletedCount: 1 }),
@@ -389,26 +393,57 @@ describe('SalesRepository', () => {
     test('generates first sales id', async () => {
       if (!collections.branches) collections.branches = mkCol();
       if (!collections.sales) collections.sales = mkCol();
+      if (!collections.counters) collections.counters = mkCol();
       collections.branches.findOne.mockResolvedValue(null);
-      collections.sales.findOne.mockResolvedValue(null);
+      collections.counters.findOne.mockResolvedValue(null);
+      collections.sales.find.mockReturnValue({ toArray: jest.fn().mockResolvedValue([]) });
+      collections.counters.findOneAndUpdate.mockResolvedValue({ seq: 1 });
       const r = await salesRepository.generateSalesIdForBranch(FAKE_BRANCH);
       expect(r).toBe('SID000001');
     });
-    test('increments existing sales id', async () => {
+    test('seeds from the highest issued number, not the last inserted sale', async () => {
+      // The merge case that produced real duplicates: an older-numbered sale
+      // inserted last. The seed scans for the maximum, so insertion order is
+      // irrelevant.
       if (!collections.branches) collections.branches = mkCol();
       if (!collections.sales) collections.sales = mkCol();
+      if (!collections.counters) collections.counters = mkCol();
       collections.branches.findOne.mockResolvedValue(null);
-      collections.sales.findOne.mockResolvedValue({ sales_id: 'SID000042' });
+      collections.counters.findOne.mockResolvedValue(null);
+      collections.sales.find.mockReturnValue({
+        toArray: jest.fn().mockResolvedValue([{ sales_id: 'SID000042' }, { sales_id: 'SID000007' }]),
+      });
+      collections.counters.findOneAndUpdate.mockResolvedValue({ seq: 43 });
       const r = await salesRepository.generateSalesIdForBranch(FAKE_BRANCH);
+      expect(collections.counters.updateOne).toHaveBeenCalledWith(
+        expect.objectContaining({ kind: 'sales_id' }),
+        { $setOnInsert: { seq: 42 } },
+        { upsert: true }
+      );
       expect(r).toBe('SID000043');
     });
     test('uses custom prefix', async () => {
       if (!collections.branches) collections.branches = mkCol();
-      if (!collections.sales) collections.sales = mkCol();
+      if (!collections.counters) collections.counters = mkCol();
       collections.branches.findOne.mockResolvedValue({ sales_prefix: 'SAL' });
-      collections.sales.findOne.mockResolvedValue({ sales_id: 'SAL000001' });
+      collections.counters.findOne.mockResolvedValue({ seq: 7 });
+      collections.counters.findOneAndUpdate.mockResolvedValue({ seq: 8 });
       const r = await salesRepository.generateSalesIdForBranch(FAKE_BRANCH);
-      expect(r).toMatch(/^SAL/);
+      expect(r).toBe('SAL000008');
+    });
+    test('two simultaneous callers get distinct numbers', async () => {
+      if (!collections.branches) collections.branches = mkCol();
+      if (!collections.counters) collections.counters = mkCol();
+      collections.branches.findOne.mockResolvedValue(null);
+      collections.counters.findOne.mockResolvedValue({ seq: 4 });
+      collections.counters.findOneAndUpdate
+        .mockResolvedValueOnce({ seq: 5 })
+        .mockResolvedValueOnce({ seq: 6 });
+      const [a, b] = await Promise.all([
+        salesRepository.generateSalesIdForBranch(FAKE_BRANCH),
+        salesRepository.generateSalesIdForBranch(FAKE_BRANCH),
+      ]);
+      expect([a, b].sort()).toEqual(['SID000005', 'SID000006']);
     });
   });
 

@@ -41,6 +41,7 @@ jest.mock('../../../src/repositories/sale.repository', () => ({
   getLegacyDetails: jest.fn(),
   deleteSales: jest.fn(),
   getLastSaleForBranch: jest.fn(),
+  nextSalesNumberForBranch: jest.fn(),
   updateWalletAmount: jest.fn(),
 }));
 
@@ -125,6 +126,7 @@ describe('SalesService', () => {
     consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
     consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
     salesRepository.getLastSaleForBranch.mockResolvedValue(null);
+    salesRepository.nextSalesNumberForBranch.mockResolvedValue(1);
     salesRepository.create.mockResolvedValue({ _id: 'newSaleId' });
     salesRepository.save.mockResolvedValue({ _id: 'savedId' });
     mockCustomerRepositoryInstance.findById.mockResolvedValue(null);
@@ -250,19 +252,23 @@ describe('SalesService', () => {
     });
 
     test('generates INV-prefixed sales_id for new sale', async () => {
-      salesRepository.getLastSaleForBranch.mockResolvedValue(null);
+      salesRepository.nextSalesNumberForBranch.mockResolvedValue(1);
       await salesService.processSale(makeSaleData(), '', 'Add', makeContext());
       expect(salesRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({ sales_id: 'INV000001' })
       );
     });
 
-    test('increments sales_id based on last record', async () => {
-      salesRepository.getLastSaleForBranch.mockResolvedValue({ sales_id: 'INV000005' });
+    test('takes its number from the atomic branch counter', async () => {
+      // The counter allocated 6, so the bill is INV000006 - the service does
+      // not read previous sales at all; that read-then-add-one is what used
+      // to mint duplicate bill numbers under concurrency and after merges.
+      salesRepository.nextSalesNumberForBranch.mockResolvedValue(6);
       await salesService.processSale(makeSaleData(), '', 'Add', makeContext());
       expect(salesRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({ sales_id: 'INV000006' })
       );
+      expect(salesRepository.getLastSaleForBranch).not.toHaveBeenCalled();
     });
 
     test('payment_status is Paid when payment_mode provided', async () => {

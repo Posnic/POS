@@ -8834,33 +8834,98 @@ class SalesRepository {
       (branchDoc?.sales_prefix || branchDoc?.salesPrefix || 'SID').toString().trim() || 'SID';
     const prefixLength = prefix.length;
 
-    const filter = { branch_id: branchId };
-    if (BaseModel.license) {
-      filter.license = BaseModel.license;
-    }
+    void prefixLength;
+    void salesCollection;
+    const n = await this.nextSalesNumberForBranch(branchId, BaseModel.license);
+    return prefix + String(n).padStart(6, '0');
+  }
 
-    const lastRecord = await salesCollection.findOne(filter, {
-      projection: { sales_id: 1 },
-      sort: { _id: -1 },
-      limit: 1,
-    });
+  /*
+   * The next bill number for a branch, atomically.
+   *
+   * The old way read the LAST INSERTED sale and added one, which minted
+   * duplicate bill numbers two different ways: two simultaneous saves both
+   * read the same "last" and both got the same next number, and a sync merge
+   * can insert an older-numbered sale last, so the next bill reused a number
+   * the branch had already issued. Both have happened on live data.
+   *
+   * A per-branch counter moved with $inc is atomic in MongoDB: every caller
+   * gets a distinct number no matter how many save at once. It is seeded once
+   * from the highest number the branch ever issued - set-if-absent, so two
+   * concurrent seeders cannot regress it - and it lives in a counters
+   * collection that does not ride the sync wire, so each side numbers its own
+   * writes and never inherits a counter that went backwards.
+   */
+  async nextSalesNumberForBranch(branchIdRaw, licenseRaw) {
+    const db = await BaseModel.getDb();
+    const counters = db.collection('counters');
+    const key = {
+      kind: 'sales_id',
+      branch_key: String(branchIdRaw || ''),
+      license_key: String(licenseRaw || ''),
+    };
 
-    let incrementVal;
-    if (lastRecord && lastRecord.sales_id) {
-      const lastSalesId = lastRecord.sales_id.toString();
-      const subStringValue = lastSalesId.substring(prefixLength);
-
-      if (subStringValue.length <= 6 && /^\d+$/.test(subStringValue)) {
-        const countValue = parseInt(subStringValue, 10) + 1;
-        incrementVal = String(countValue).padStart(6, '0');
-      } else {
-        incrementVal = '000001';
+    /* Idempotent and cheap; the unique index is what makes the concurrent
+       seed below safe, so it is ensured before first use rather than hoped
+       for. A failure leaves the flag unset so the next call tries again. */
+    if (!this.constructor._countersIndexEnsured) {
+      this.constructor._countersIndexEnsured = true;
+      try {
+        await counters.createIndex(
+          { kind: 1, branch_key: 1, license_key: 1 },
+          { unique: true, name: 'one_counter_per_scope' }
+        );
+      } catch (e) {
+        this.constructor._countersIndexEnsured = false;
       }
-    } else {
-      incrementVal = '000001';
     }
 
-    return prefix + incrementVal;
+    const existing = await counters.findOne(key);
+    if (!existing) {
+      const seed = await this.maxIssuedSalesNumber(branchIdRaw, licenseRaw);
+      /* With the unique index, one of two concurrent seeders inserts and the
+         other's upsert errors; both then increment the same row. */
+      await counters
+        .updateOne(key, { $setOnInsert: { seq: seed } }, { upsert: true })
+        .catch(() => {});
+    }
+
+    const res = await counters.findOneAndUpdate(
+      key,
+      { $inc: { seq: 1 } },
+      { returnDocument: 'after' }
+    );
+    const doc = res && typeof res.seq === 'number' ? res : res && res.value;
+    if (!doc || typeof doc.seq !== 'number') {
+      throw new Error('could not allocate a sales number for this branch');
+    }
+    return doc.seq;
+  }
+
+  /*
+   * The highest number this branch has ever put on a bill, whatever the
+   * prefix was at the time. Runs once per branch, to seed its counter.
+   */
+  async maxIssuedSalesNumber(branchIdRaw, licenseRaw) {
+    const db = await BaseModel.getDb();
+    const asObjectId = (v) =>
+      v instanceof mongoose.Types.ObjectId
+        ? v
+        : mongoose.Types.ObjectId.isValid(String(v))
+          ? new mongoose.Types.ObjectId(String(v))
+          : v;
+    const filter = { branch_id: asObjectId(branchIdRaw) };
+    if (licenseRaw) filter.license = asObjectId(licenseRaw);
+    const rows = await db
+      .collection('sales')
+      .find(filter, { projection: { sales_id: 1 } })
+      .toArray();
+    let max = 0;
+    for (const r of rows) {
+      const m = /(\d+)\s*$/.exec(String((r && r.sales_id) || ''));
+      if (m) max = Math.max(max, parseInt(m[1], 10));
+    }
+    return max;
   }
 
   async getLastSaleForBranch(branchId, licenseId, { SaleModel } = {}) {

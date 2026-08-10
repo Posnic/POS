@@ -792,18 +792,18 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
       });
     }
 
-    // Generate Sales ID if New
+    // Generate Sales ID if New.
+    //
+    // Allocated from the atomic per-branch counter rather than by reading the
+    // last sale and adding one: two simultaneous saves used to both read the
+    // same "last" and mint the same bill number, and the old parse also
+    // assumed every prefix was three characters, which corrupted the sequence
+    // for any shop with a custom prefix of another length.
     let prefixId = '';
     if (id === '') {
       const prefixValue = context.salesPrefix || 'INV';
-      const lastRecord = await salesRepository.getLastSaleForBranch(branchId, licenseId);
-      let incrementVal = '000001';
-      if (lastRecord && lastRecord.sales_id) {
-        const subStringValue = lastRecord.sales_id.substring(3); // Assuming 3 char prefix
-        const countValue = parseInt(subStringValue) + 1;
-        incrementVal = String(countValue).padStart(6, '0');
-      }
-      prefixId = prefixValue + incrementVal;
+      const n = await salesRepository.nextSalesNumberForBranch(branchId, licenseId);
+      prefixId = prefixValue + String(n).padStart(6, '0');
     }
 
     // Extra Discount & Round Off
