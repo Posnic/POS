@@ -26,6 +26,51 @@ class ItemRepository extends BaseModel {
     super('items');
   }
 
+  /*
+   * Every read through this repository excludes tombstoned items, in one
+   * place. Deletes stopped being hard deletes the day sync arrived: a row
+   * that vanishes locally cannot tell the other side it is gone, which is
+   * how items deleted on the web kept living on every till and the other
+   * way round. A delete now writes del_status and rides sync like any other
+   * change, and this wrapper keeps the tombstones out of every list,
+   * search, count and lookup without thirty hand-edited queries.
+   *
+   * Writes pass through untouched, and other collections this repository
+   * borrows (branches, grouptax) are not filtered - only items carry this
+   * lifecycle.
+   */
+  async getCollection(collectionName = null) {
+    const coll = await super.getCollection(collectionName);
+    const target = collectionName || this.collectionName;
+    if (target !== this.collectionName) return coll;
+    return ItemRepository.withoutTombstones(coll);
+  }
+
+  static withoutTombstones(coll) {
+    const NOT_DELETED = { del_status: { $nin: [1, '1', true] } };
+    const merge = (f) => {
+      if (!f || typeof f !== 'object' || Array.isArray(f)) return { ...NOT_DELETED };
+      /* A filter already using $or at the top level (the branch filters do)
+         must compose through $and, or the tombstone condition would be one
+         more alternative instead of a requirement. */
+      if (f.$or || f.$and) return { $and: [f, NOT_DELETED] };
+      return { ...f, ...NOT_DELETED };
+    };
+    return new Proxy(coll, {
+      get(t, prop) {
+        if (prop === 'find' || prop === 'findOne' || prop === 'countDocuments') {
+          return (filter, ...rest) => t[prop](merge(filter), ...rest);
+        }
+        if (prop === 'aggregate') {
+          return (pipeline = [], ...rest) =>
+            t.aggregate([{ $match: { ...NOT_DELETED } }, ...pipeline], ...rest);
+        }
+        const v = t[prop];
+        return typeof v === 'function' ? v.bind(t) : v;
+      },
+    });
+  }
+
   /**
    * Find items with pagination and filters (equivalent to itemPage)
    *
@@ -500,8 +545,14 @@ class ItemRepository extends BaseModel {
         }
       }
 
-      const result = await collection.deleteMany(filter);
-      return { status: true, data: result.deletedCount, message: 'success' };
+      /* A tombstone, not a removal: the flag rides sync to every device,
+         which a vanished row never can. updated_date is what makes the
+         scanner carry it. */
+      const deletedAt = new Date();
+      const result = await collection.updateMany(filter, {
+        $set: { del_status: 1, deleted_date: deletedAt, updated_date: deletedAt },
+      });
+      return { status: true, data: result.modifiedCount, message: 'success' };
     } catch (error) {
       console.error('Error in ItemRepository.deleteItems:', error);
       return { status: false, data: null, message: error.message };
@@ -1237,11 +1288,15 @@ class ItemRepository extends BaseModel {
         return { status: false, message: ERROR_MESSAGES.ITEM_NOT_FOUND };
       }
 
-      const deleteResult = await collection.deleteOne(filter);
+      /* Tombstoned, not removed - see deleteItems above. */
+      const now = new Date();
+      const deleteResult = await collection.updateOne(filter, {
+        $set: { del_status: 1, deleted_date: now, updated_date: now },
+      });
 
       return {
         status: true,
-        data: deleteResult.deletedCount,
+        data: deleteResult.modifiedCount,
         message: 'success',
       };
     } catch (error) {
