@@ -81,6 +81,17 @@ class SyncAgentManager {
       DEVICE_TOKEN: cfg.deviceToken,
       DEVICE_ID: cfg.deviceId,
       STATUS_PORT: String(cfg.statusPort || 5055),
+      /*
+       * Where this till keeps its uploaded images, so the agent's file lane
+       * can reconcile them with the cloud. Same resolution server.js uses for
+       * the API itself; without it the agent skips file sync entirely rather
+       * than guessing at a directory.
+       */
+      UPLOADS_DIR: path.join(
+        this.app.isPackaged ? process.resourcesPath : __dirname,
+        'api',
+        'uploads'
+      ),
       // lets the agent answer support "upload logs" requests
       POSNIC_LOG_FILE: path.join(this.app.getPath('userData'), 'app.log'),
       /*
