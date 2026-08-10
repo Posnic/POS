@@ -371,6 +371,7 @@ class ItemRepository extends BaseModel {
           );
         }
 
+        try { require('../sync/nudge').nudgeSyncAgent(); } catch (e) { /* latency hint only */ }
         return {
           status: true,
           data: { id: result.insertedId.toString(), ...updateData },
@@ -448,6 +449,7 @@ class ItemRepository extends BaseModel {
         await stockLogsRepository.updateItemNameInStockLogs(id, updateData.name);
       }
 
+      try { require('../sync/nudge').nudgeSyncAgent(); } catch (e) { /* latency hint only */ }
       return {
         status: true,
         data: { id, ...updateData },
