@@ -169,6 +169,29 @@ class ItemRepository extends BaseModel {
    * @param {string} [context.loggedUserName]
    * @param {string|ObjectId} [context.loggedUserId]
    */
+  /*
+   * A unique itemid for a branch. A non-empty SKU that clashes with nothing
+   * else in the branch is kept as given; anything empty or colliding becomes
+   * one past the highest numeric itemid the branch has. Not a global counter,
+   * but per branch and enough to stop the form's default "1" from stacking up.
+   */
+  async resolveUniqueItemId(collection, branchId, provided, selfId) {
+    const filter = { branch_id: branchId };
+    if (provided) {
+      const clash = { ...filter, itemid: provided };
+      if (selfId && ObjectId.isValid(String(selfId))) clash._id = { $ne: new ObjectId(String(selfId)) };
+      const exists = await collection.findOne(clash, { projection: { _id: 1 } });
+      if (!exists) return provided; // genuinely unique - honour it
+    }
+    const rows = await collection.find(filter, { projection: { itemid: 1 } }).toArray();
+    let max = 0;
+    for (const r of rows) {
+      const n = Number(r && r.itemid);
+      if (Number.isFinite(n)) max = Math.max(max, n);
+    }
+    return String(max + 1);
+  }
+
   async upsertItem(data, id = '', context = {}) {
     try {
       const collection = await this.getCollection(this.collectionName);
@@ -252,13 +275,21 @@ class ItemRepository extends BaseModel {
       const loggedUserName = context.loggedUserName || context.loggedUser || 'System';
       const loggedUserId = context.loggedUserId !== undefined ? context.loggedUserId : null;
 
+      /* Give the item a unique itemid within its branch. The form defaults the
+         SKU to "1", so left alone every new item collided with the first one -
+         which is what kept raising the duplicate-id health warning. A SKU the
+         user genuinely made unique is kept; an empty or colliding one becomes
+         the next free number for that branch. */
+      const resolvedItemId = await this.resolveUniqueItemId(
+        collection, branchObjectId, (data.sku_id || '').trim(), id);
+
       const updateData = {
         branch_id: branchObjectId,
         branch_name: branchName,
         branch_access: [{ branch_id: branchObjectId, branch_name: branchName }],
         name: (data.name || '').trim(),
         date: now,
-        itemid: (data.sku_id || '').trim(),
+        itemid: resolvedItemId,
         barcode_id: (data.barcode_id || '').trim(),
         supplier_name: (data.supplier_name || '').trim(),
         supplier_id:
