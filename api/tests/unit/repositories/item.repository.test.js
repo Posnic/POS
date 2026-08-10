@@ -107,6 +107,7 @@ describe('ItemRepository', () => {
       insertOne: jest.fn().mockResolvedValue({ insertedId: FAKE_ID }),
       insertMany: jest.fn().mockResolvedValue({ insertedIds: [FAKE_ID] }),
       updateOne: jest.fn().mockResolvedValue({ modifiedCount: 1 }),
+      updateMany: jest.fn().mockResolvedValue({ matchedCount: 1, modifiedCount: 1 }),
       deleteOne: jest.fn().mockResolvedValue({ deletedCount: 1 }),
       deleteMany: jest.fn().mockResolvedValue({ deletedCount: 1 }),
       countDocuments: jest.fn().mockResolvedValue(0),
