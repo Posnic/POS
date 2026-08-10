@@ -61,10 +61,13 @@ class ItemService {
     if (!s3 || !fs.existsSync(filePath)) return null;
 
     try {
+      /* No ACL. The bucket enforces bucket-owner ownership with ACLs disabled,
+         and S3 rejects any PutObject that carries one - the upload would fail
+         and fall back to local disk with nothing but a console line to show
+         for it. Public or private is the bucket policy's decision, not ours. */
       const result = await require('../utils/s3').uploadObject({
         key: filename,
         filePath,
-        acl: 'public-read',
         contentType: this.getImageContentType(filename),
       });
       this.s3UploadedCache.add(filename);
@@ -256,13 +259,19 @@ class ItemService {
           fs.copyFileSync(fullPath, publicPath);
         }
 
-        // Build the same public URL shape the controller previously used
+        // Build the same public URL shape the controller previously used.
+        //
+        // The S3 result deliberately does NOT replace the URL any more. The
+        // API serves /uploads/<path> from disk on every domain the shop uses,
+        // whatever the bucket's public/private setting is; a bucket-direct URL
+        // bakes today's bucket into the row and breaks the moment the bucket
+        // goes private. S3 is the durable copy behind the disk, not the origin
+        // the browser reads. s3Result is still awaited so an upload failure is
+        // logged before the response goes out.
         const publicUrlPath = `/uploads/item_images/${filename}`;
         const publicBaseUrl = this.getPublicBaseUrl({ protocol, host });
-        let publicUrl = publicBaseUrl ? `${publicBaseUrl}${publicUrlPath}` : publicUrlPath;
-        if (s3Result?.Location) {
-          publicUrl = s3Result.Location;
-        }
+        const publicUrl = publicBaseUrl ? `${publicBaseUrl}${publicUrlPath}` : publicUrlPath;
+        void s3Result;
 
         returnNames.push({
           name: publicUrl,
