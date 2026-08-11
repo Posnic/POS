@@ -126,9 +126,17 @@ const runDatabaseHealthCheck = async (mongoClient) => {
         report.errors.push(`Index ${index.options.name}: ${error.message}`);
       }
     }
+    /*
+     * Only the identifiers the SYSTEM issues are checked for duplicates:
+     * sales_id and barcode_id are generated and must be unique, so a
+     * duplicate there is a real fault. itemid is the shop's own SKU - a
+     * person types it, the item form even defaults it to "1", and two
+     * products sharing a SKU is a data-entry choice, not corruption. Flagging
+     * it raised a health warning on every start for something that is not
+     * wrong, so it is no longer treated as a database-health problem.
+     */
     report.duplicates = (await Promise.all([
       duplicateCheck(db, 'sales', 'sales_id'),
-      duplicateCheck(db, 'items', 'itemid'),
       duplicateCheck(db, 'items', 'barcode_id'),
     ])).flat();
     if (report.duplicates.length) report.warnings.push(`${report.duplicates.length} duplicate ID group(s) require review`);
