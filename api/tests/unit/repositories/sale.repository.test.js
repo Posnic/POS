@@ -411,7 +411,9 @@ describe('SalesRepository', () => {
       collections.branches.findOne.mockResolvedValue(null);
       collections.counters.findOne.mockResolvedValue(null);
       collections.sales.find.mockReturnValue({
-        toArray: jest.fn().mockResolvedValue([{ sales_id: 'SID000042' }, { sales_id: 'SID000007' }]),
+        toArray: jest
+          .fn()
+          .mockResolvedValue([{ sales_id: 'SID000042' }, { sales_id: 'SID000007' }]),
       });
       collections.counters.findOneAndUpdate.mockResolvedValue({ seq: 43 });
       const r = await salesRepository.generateSalesIdForBranch(FAKE_BRANCH);

@@ -179,7 +179,8 @@ class ItemRepository extends BaseModel {
     const filter = { branch_id: branchId };
     if (provided) {
       const clash = { ...filter, itemid: provided };
-      if (selfId && ObjectId.isValid(String(selfId))) clash._id = { $ne: new ObjectId(String(selfId)) };
+      if (selfId && ObjectId.isValid(String(selfId)))
+        clash._id = { $ne: new ObjectId(String(selfId)) };
       const exists = await collection.findOne(clash, { projection: { _id: 1 } });
       if (!exists) return provided; // genuinely unique - honour it
     }
@@ -281,7 +282,11 @@ class ItemRepository extends BaseModel {
          user genuinely made unique is kept; an empty or colliding one becomes
          the next free number for that branch. */
       const resolvedItemId = await this.resolveUniqueItemId(
-        collection, branchObjectId, (data.sku_id || '').trim(), id);
+        collection,
+        branchObjectId,
+        (data.sku_id || '').trim(),
+        id
+      );
 
       const updateData = {
         branch_id: branchObjectId,
@@ -402,7 +407,11 @@ class ItemRepository extends BaseModel {
           );
         }
 
-        try { require('../sync/nudge').nudgeSyncAgent(); } catch (e) { /* latency hint only */ }
+        try {
+          require('../sync/nudge').nudgeSyncAgent();
+        } catch (e) {
+          /* latency hint only */
+        }
         return {
           status: true,
           data: { id: result.insertedId.toString(), ...updateData },
@@ -480,7 +489,11 @@ class ItemRepository extends BaseModel {
         await stockLogsRepository.updateItemNameInStockLogs(id, updateData.name);
       }
 
-      try { require('../sync/nudge').nudgeSyncAgent(); } catch (e) { /* latency hint only */ }
+      try {
+        require('../sync/nudge').nudgeSyncAgent();
+      } catch (e) {
+        /* latency hint only */
+      }
       return {
         status: true,
         data: { id, ...updateData },
