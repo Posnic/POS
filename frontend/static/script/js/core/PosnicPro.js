@@ -786,6 +786,19 @@ PosnicPro = {
         return text.slice(0, count) + (((text.length > count) && insertDots) ? "..." : text);
     },
     exportTableData: function (selectedTableRow, table) {
+        // "Select all N" mode: export the whole filtered set, not the ticked
+        // page. The count shown is the real total; the row ids are ignored, the
+        // server re-derives the set from the same filter the list is using.
+        if (PosnicPro.selectAllMatching === table) {
+            var total = parseInt($('#view_' + table + '_total').text(), 10) || 0;
+            $('.exportCountValue').text(total);
+            $('#exportHeading').text(table);
+            $('#exportHeading').css('textTransform', 'capitalize');
+            $('.export_modal').modal('show');
+            $('#selectrow').val('');
+            $('#table_row').val(table);
+            return;
+        }
         if (selectedTableRow.length > 0) {
             $('.exportCountValue').text(selectedTableRow.length);
             $('#exportHeading').text(table);
@@ -812,9 +825,19 @@ PosnicPro = {
     /*Export modal show*/
 
     getExportValue: function (selectedTableRow, table) {
+        var payload;
+        if (PosnicPro.selectAllMatching === table) {
+            // Send the same filter the list is using so the export matches what
+            // the shop was looking at. data('filters') is the stringified Mongo
+            // filter the list already sends to the items endpoint.
+            var filters = $('#view_' + table).data('filters');
+            payload = JSON.stringify({ all: true, filters: filters || {} });
+        } else {
+            payload = JSON.stringify(selectedTableRow);
+        }
         var params = {
             url: '' + table + '/export' + table,
-            data: JSON.stringify(selectedTableRow)
+            data: payload
         };
         PosnicPro.post(params, function (response) {
             if (response.type === 'success') {
@@ -2087,6 +2110,55 @@ PosnicPro = {
         });
     },
 
+    /*
+     * "Select all N", the Gmail way.
+     *
+     * The table only ever holds one page of rows, so ticking the header box
+     * selects that page - never the thousands behind it. Export could then
+     * only ever write what was on screen, and a shop with 4000 items got a
+     * file of 100 with nothing to say the rest were missing.
+     *
+     * When the page is fully ticked and there is more behind it, we offer to
+     * select the whole filtered set. Taking that offer does not try to tick
+     * rows that were never loaded - it raises a flag the export reads, and the
+     * server exports every item under the same filter the list is showing.
+     *
+     * selectAllMatching holds the module name while that flag is up, and only
+     * that module. It is dropped the moment the selection stops being "all":
+     * a row unticked, a search changed, a page turned.
+     */
+    selectAllMatching: null,
+
+    maybeOfferSelectAll: function (module) {
+        var total = parseInt($('#view_' + module + '_total').text(), 10) || 0;
+        var loaded = (PosnicPro[module + '_checkbox'] || []).length;
+        if (total > loaded && loaded > 0) {
+            $('.select-all-loaded-' + module).text(loaded);
+            $('.select-all-total-' + module).text(total);
+            $('.select-all-offer-' + module).show();
+            $('.select-all-active-' + module).hide();
+            $('.select-all-banner-' + module).show();
+        } else {
+            $('.select-all-banner-' + module).hide();
+        }
+    },
+
+    activateSelectAllMatching: function (module) {
+        PosnicPro.selectAllMatching = module;
+        var total = parseInt($('#view_' + module + '_total').text(), 10) || 0;
+        $('.select-all-total-' + module).text(total);
+        $('.select-all-offer-' + module).hide();
+        $('.select-all-active-' + module).show();
+        $('.select-all-banner-' + module).show();
+    },
+
+    clearSelectAllMatching: function (module) {
+        if (PosnicPro.selectAllMatching === module) {
+            PosnicPro.selectAllMatching = null;
+        }
+        $('.select-all-banner-' + module).hide();
+    },
+
     checkboxSelectAll: function (element, module) {
 
         if (element.checked) {
@@ -2106,6 +2178,8 @@ PosnicPro = {
             $('.' + module + '-row-id').prop("checked", true);
             $('.' + module + '-row-id').closest('tr').addClass('dangerzoneBgColor');
             $('.' + module + '-row-id').closest('.dangerzoneBgColor').css({ 'background': '#edf0fc', 'border-bottom': '1px dotted #ccc' });
+            // The page is fully ticked - offer to select everything behind it.
+            PosnicPro.maybeOfferSelectAll(module);
         } else {
             $('.' + module + '-row-id').closest('.dangerzoneBgColor').css({ 'background': '#fff', 'border-bottom': '1px dotted #fff' });
             $("#" + module + "_exportbtn").addClass("disabled");
@@ -2128,6 +2202,8 @@ PosnicPro = {
             $('.showing-value-' + module).html(PosnicPro[module + "_checkbox"].length);
             ((PosnicPro[module + "_checkbox"].length) === 0) ? $('.showing-hide-show-' + module).hide() : $('.showing-hide-show-' + module).show();
             $('.variantcheckbox').css({ 'background': '#fff', 'border-bottom': '1px dotted #fff' });
+            // Header box cleared - the selection is no longer "all".
+            PosnicPro.clearSelectAllMatching(module);
         }
     },
     setSelectedCheckbox: function (total, module) {
@@ -2202,6 +2278,8 @@ PosnicPro = {
 
             // Uncheck select-all checkbox when any individual checkbox is unchecked
             $('input:checkbox[name="' + module + '-select-all"]').prop("checked", false);
+            // One row dropped means the selection is no longer the whole set.
+            PosnicPro.clearSelectAllMatching(module);
         }
 
         // Update the count display

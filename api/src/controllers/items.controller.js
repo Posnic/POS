@@ -1175,11 +1175,22 @@ class ItemsController extends BaseController {
 
       let result;
       if (wantsAll) {
+        // The client sends the same `filters` object the item list uses, so the
+        // export matches the filtered list exactly. It may arrive as an object
+        // or a JSON string (the list stores it stringified).
+        let filters = body.filters;
+        if (typeof filters === 'string') {
+          filters = safeJsonParse(filters, {});
+        }
+        if (!filters || typeof filters !== 'object' || Array.isArray(filters)) {
+          filters = {};
+        }
+
         result = await this.service.exportItems(
           {
             all: true,
+            filters,
             categoryId: body.category_id || body.categoryId || null,
-            search: body.search || body.searchWord || '',
           },
           { licenseId, branchId }
         );
