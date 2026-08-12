@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "Posnic API",
-    "version": "1.1.6",
+    "version": "1.1.7",
     "description": "REST API for the Posnic point of sale.\n\nGenerated from the route table and express-validator chains by `npm run docs:api`. Do not edit by hand.\n\nRequest schemas are present for endpoints that carry validation middleware. The rest are listed with their path, method and handler but no body schema, because inventing one would be worse than the gap.",
     "license": {
       "name": "AGPL-3.0-only",
