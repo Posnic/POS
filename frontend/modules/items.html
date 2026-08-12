@@ -94,6 +94,11 @@
                                                 </a>
                                             </li>
                                             <li class="list-inline-item email_320">
+                                                <a data-module="item" data-access="write" href="#/items" id="items_bulkpricebtn" class="sale_color" onClick="PosnicPro.items.openBulkPrice(); return false;" data-toggle="tooltip" title="Bulk price update">
+                                                    <i class="feather icon-trending-up font-20"></i>
+                                                </a>
+                                            </li>
+                                            <li class="list-inline-item email_320">
                                                 <a data-module="item" data-access="delete" href="#/items" id="items_deletebtn" class="sale_color" onclick="PosnicPro.items.deleteSelectedItems();" data-toggle="tooltip" title="Delete">
                                                     <i class="feather icon-trash font-20"></i>
                                                 </a>
@@ -504,3 +509,89 @@
     </div>
 </div>
 <!-- end Item Print model -->
+
+<!-- Bulk price update -->
+<div class="modal fade close_on_esc" id="bulk_price_modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="feather icon-trending-up mr-2"></i>Bulk price update</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form onsubmit="return PosnicPro.items.submitBulkPrice();">
+                <div class="modal-body">
+                    <p class="text-muted" style="font-size:13px; margin-bottom:14px;">
+                        Raise or lower prices for many items at once. Every change is kept in each item's price history.
+                    </p>
+
+                    <div class="form-group">
+                        <label class="f-w-6">Which items</label>
+                        <div>
+                            <label class="mr-4" style="font-weight:normal;">
+                                <input type="radio" name="bulk_price_scope" value="all" checked onclick="PosnicPro.items.toggleBulkCategory();"> All items
+                            </label>
+                            <label style="font-weight:normal;">
+                                <input type="radio" name="bulk_price_scope" value="category" onclick="PosnicPro.items.toggleBulkCategory();"> One category
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group bulk-price-category-row" style="display:none;">
+                        <label class="f-w-6">Category</label>
+                        <select class="form-control" id="bulk_price_category" style="width:100%;"></select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="f-w-6">Price to change</label>
+                        <select class="form-control" id="bulk_price_field">
+                            <option value="selling_price" selected>Selling price</option>
+                            <option value="mrp_price">MRP price</option>
+                            <option value="company_price">Company price</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="f-w-6">Change by</label>
+                        <div class="row">
+                            <div class="col-4">
+                                <select class="form-control" id="bulk_price_direction">
+                                    <option value="increase" selected>Increase</option>
+                                    <option value="decrease">Decrease</option>
+                                </select>
+                            </div>
+                            <div class="col-4">
+                                <select class="form-control" id="bulk_price_op" onchange="PosnicPro.items.bulkPriceOpChanged();">
+                                    <option value="percent" selected>by %</option>
+                                    <option value="amount">by amount</option>
+                                </select>
+                            </div>
+                            <div class="col-4">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text bulk-price-unit">%</span>
+                                    </div>
+                                    <input type="number" min="0" step="0.01" class="form-control" id="bulk_price_value" placeholder="0" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning" style="font-size:12px; padding:8px 12px; margin-bottom:0;">
+                        This changes every matching item and is not undone in one click. Prices never drop below zero.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-danger" data-dismiss="modal">
+                        <i class="feather icon-x-circle mr-2"></i>Cancel
+                    </button>
+                    <button type="submit" id="bulk_price_submit" class="btn btn-outline-primary">
+                        <i class="feather icon-check-circle mr-2"></i>Update prices
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- end Bulk price update -->

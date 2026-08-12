@@ -871,6 +871,97 @@ PosnicPro.items = {
     deleteSelectedItems: function () {
         PosnicPro.deleteTableData(PosnicPro.items_checkbox, 'items');
     },
+
+    /*
+     * Bulk price update.
+     *
+     * A shop that changes prices often should not have to open every item, or
+     * export a file and re-import it (which is how images were being lost). It
+     * raises or lowers one price field across all items, or one category, by a
+     * percentage or a flat amount. The server does the arithmetic and records
+     * every change in price history - this is only the form.
+     */
+    openBulkPrice: function () {
+        $('input[name="bulk_price_scope"][value="all"]').prop('checked', true);
+        $('.bulk-price-category-row').hide();
+        $('#bulk_price_field').val('selling_price');
+        $('#bulk_price_direction').val('increase');
+        $('#bulk_price_op').val('percent');
+        $('.bulk-price-unit').text('%');
+        $('#bulk_price_value').val('');
+        $('#bulk_price_submit').prop('disabled', false);
+        PosnicPro.items.loadBulkPriceCategories();
+        $('#bulk_price_modal').modal('show');
+    },
+
+    toggleBulkCategory: function () {
+        var scope = $('input[name="bulk_price_scope"]:checked').val();
+        (scope === 'category') ? $('.bulk-price-category-row').show() : $('.bulk-price-category-row').hide();
+    },
+
+    bulkPriceOpChanged: function () {
+        var op = $('#bulk_price_op').val();
+        var currency = PosnicPro.local.get('currencySign') || '';
+        $('.bulk-price-unit').text(op === 'percent' ? '%' : (currency || 'Amt'));
+    },
+
+    loadBulkPriceCategories: function () {
+        var sel = $('#bulk_price_category');
+        var params = { url: 'categories/getCategoryAjaxList', data: 'query=' };
+        PosnicPro.get(params, function (response) {
+            sel.empty();
+            $.map(response.suggestions || [], function (dataItem) {
+                sel.append('<option value="' + dataItem.id + '">' + dataItem.name + '</option>');
+            });
+            // Keep the dropdown inside the modal so it is not clipped or lost
+            // behind it (a known select2-in-modal quirk).
+            sel.select2({ placeholder: 'Choose a category', dropdownParent: $('#bulk_price_modal') });
+        });
+    },
+
+    submitBulkPrice: function () {
+        var scope = $('input[name="bulk_price_scope"]:checked').val();
+        var field = $('#bulk_price_field').val();
+        var op = $('#bulk_price_op').val();
+        var direction = $('#bulk_price_direction').val();
+        var value = $('#bulk_price_value').val();
+        var category_id = (scope === 'category') ? $('#bulk_price_category').val() : null;
+
+        if (value === '' || isNaN(value) || Number(value) < 0) {
+            PosnicPro.alert('warning', 'Enter a valid amount.');
+            return false;
+        }
+        if (scope === 'category' && !category_id) {
+            PosnicPro.alert('warning', 'Choose a category.');
+            return false;
+        }
+
+        $('#bulk_price_submit').prop('disabled', true);
+        var params = {
+            url: 'items/bulkUpdatePrices',
+            data: JSON.stringify({
+                scope: scope,
+                category_id: category_id,
+                field: field,
+                op: op,
+                value: value,
+                direction: direction
+            })
+        };
+        PosnicPro.post(params, function (response) {
+            $('#bulk_price_submit').prop('disabled', false);
+            if (response.type === 'success') {
+                $('#bulk_price_modal').modal('hide');
+                PosnicPro.alert('success', response.message);
+                PosnicPro.items.itemsTable();
+            } else {
+                PosnicPro.alert(response.type, response.message);
+            }
+        }, function () {
+            $('#bulk_price_submit').prop('disabled', false);
+        });
+        return false;
+    },
     itemImageFormSubmit: function () {
 
         if ($('#item_value_check').val('') !== '' && $('#items_name').val() !== '') {
@@ -1879,6 +1970,72 @@ PosnicPro.itemdetails = {
             PosnicPro.alert(response.type, response.message);
         });
     },
+
+    /*
+     * A single item's price trail.
+     *
+     * Inventory was already tracked; price was not, and shops that reprice
+     * often had no way to see what a product used to cost or who changed it.
+     * Every price change - a manual edit, a re-import, a bulk update - is
+     * recorded server-side; this reads it back, newest first.
+     */
+    priceHistory: function () {
+        var item_id = currentHash.split('/')[1];
+        if (!item_id) { return false; }
+
+        var fieldLabel = {
+            selling_price: 'Selling',
+            mrp_price: 'MRP',
+            company_price: 'Company'
+        };
+        var currency = PosnicPro.local.get('currencySign') || '';
+        var loader = $('.loader-item-pricehistory');
+        $('#item_pricehistory_body').empty();
+        $("<div class='loadingSpinner'></div>").appendTo(loader);
+
+        PosnicPro.get({ url: 'items/priceHistory/' + item_id, data: '' }, function (response) {
+            loader.find('.loadingSpinner:first').remove();
+            var rows = (response && response.data) ? response.data : [];
+            if (!rows.length) {
+                $('#item_pricehistory_wrap').hide();
+                $('#item_pricehistory_empty').show();
+                return;
+            }
+            $('#item_pricehistory_empty').hide();
+            $('#item_pricehistory_wrap').show();
+
+            var html = '';
+            for (var i = 0; i < rows.length; i++) {
+                var r = rows[i];
+                var oldV = Number(r.old_value) || 0;
+                var newV = Number(r.new_value) || 0;
+                var up = newV >= oldV;
+                var arrow = up
+                    ? '<span class="text-success"><i class="feather icon-arrow-up"></i> ' + (newV - oldV).toFixed(2) + '</span>'
+                    : '<span class="text-danger"><i class="feather icon-arrow-down"></i> ' + (oldV - newV).toFixed(2) + '</span>';
+                var rawDate = r.date || r.created_date || r.updated_date;
+                var when = rawDate ? PosnicPro.convertDate(rawDate) : '';
+                var source = r.process || 'Edit';
+                var by = r.changed_by || '';
+                html += '<tr>'
+                    + '<td>' + when + '</td>'
+                    + '<td>' + (fieldLabel[r.field] || r.field || '') + '</td>'
+                    + '<td class="text-right">' + currency + '&nbsp;' + oldV.toFixed(2) + '</td>'
+                    + '<td class="text-right f-w-6">' + currency + '&nbsp;' + newV.toFixed(2) + '</td>'
+                    + '<td class="text-center">' + arrow + '</td>'
+                    + '<td><span class="badge badge-info-inverse">' + source + '</span></td>'
+                    + '<td>' + by + '</td>'
+                    + '</tr>';
+            }
+            $('#item_pricehistory_body').html(html);
+        }, function (xhr) {
+            loader.find('.loadingSpinner:first').remove();
+            $('#item_pricehistory_wrap').hide();
+            $('#item_pricehistory_empty').show();
+        });
+        return false;
+    },
+
     itemdetailsreportexport: function (index) {
         var type = $(index).data('id');
         PosnicPro.itemdetails.itemdetailsTable(type);

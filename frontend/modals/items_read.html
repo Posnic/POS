@@ -17,6 +17,9 @@
             <li class="nav-item" onclick="return PosnicPro.itemdetails.itemdetailsTable();">
                 <a class="nav-link" id="item-sale-tab" data-toggle="tab" href="#item_sale" role="tab" aria-controls="item_sale" aria-selected="false"><lang class="lang_activity"> Activities</lang></a>
             </li>
+            <li class="nav-item" onclick="return PosnicPro.itemdetails.priceHistory();">
+                <a class="nav-link" id="item-pricehistory-tab" data-toggle="tab" href="#item_price_history" role="tab" aria-controls="item_price_history" aria-selected="false">Price history</a>
+            </li>
             <li class="nav-item">
                 <a class="nav-link" id="item-image-tab" data-toggle="tab" href="#item_image" role="tab" aria-controls="item_image" aria-selected="true"><lang class="lang_images"> Images</lang></a>
             </li>
@@ -310,6 +313,43 @@
                                                     </div>
                                                 </div>                                
                                             </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="item_price_history" role="tabpanel" aria-labelledby="item-pricehistory-tab">
+                        <div class="row">
+                            <div class="col-lg-12 col-xl-12">
+                                <div class="portlet light slider-portlet-vh">
+                                    <div class="portlet-title margin-bottom-0">
+                                        <div class="caption caption-basic font-green-meadow">
+                                            <span class="caption-subject bold uppercase">Price history</span>
+                                        </div>
+                                    </div>
+                                    <div class="portlet-body loader-item-pricehistory">
+                                        <div id="item_pricehistory_empty" class="text-center text-muted" style="display:none; padding:40px 10px;">
+                                            <i class="feather icon-trending-up" style="font-size:40px; opacity:.25;"></i>
+                                            <p style="margin:12px 0 0; font-size:14px;">No price changes recorded yet.</p>
+                                            <p style="margin:2px 0 0; font-size:12px;">Every future price change - from an edit, an import or a bulk update - will show here.</p>
+                                        </div>
+                                        <div class="table-responsive" id="item_pricehistory_wrap">
+                                            <table class="table table-borderless">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Date</th>
+                                                        <th>Price</th>
+                                                        <th class="text-right">Old</th>
+                                                        <th class="text-right">New</th>
+                                                        <th class="text-center">Change</th>
+                                                        <th>Source</th>
+                                                        <th>By</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="item_pricehistory_body"></tbody>
+                                            </table>
                                         </div>
                                     </div>
                                 </div>
