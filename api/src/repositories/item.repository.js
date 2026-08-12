@@ -2895,6 +2895,12 @@ class ItemRepository extends BaseModel {
       // Step 3: Check for existing items in DB (name + itemid + branch + license)
       const alreadyData = [];
       const documentsToInsert = [];
+      /* A matched row is UPDATED, not skipped, so a re-import that changed only
+         prices actually changes them. The matched document is remembered so the
+         update below can touch just the columns the CSV carries and leave the
+         image and everything else the CSV omits exactly as it was - which is
+         what the export/re-import round trip used to destroy. */
+      const existingByRow = new Map();
 
       for (const item of uniqueCSVRecords.values()) {
         const name = item.name || '';
@@ -2913,16 +2919,18 @@ class ItemRepository extends BaseModel {
 
         if (existing) {
           alreadyData.push({ name, itemid: itemId });
-        } else {
-          documentsToInsert.push(item);
+          existingByRow.set(item, existing);
         }
+        // Matched and new rows alike go through the resolution loop below;
+        // matched ones update in place, new ones insert.
+        documentsToInsert.push(item);
       }
 
       if (!documentsToInsert.length) {
         return {
           status: false,
           data: null,
-          message: 'All items are already imported',
+          message: 'No rows to import',
         };
       }
 
@@ -2937,6 +2945,7 @@ class ItemRepository extends BaseModel {
       const unitCollection = await this.getCollection('unit');
 
       const insertedIds = [];
+      const updatedIds = [];
 
       for (const items of documentsToInsert) {
         const availableQuantity = items.available_quantity ? Number(items.available_quantity) : 0;
@@ -3387,26 +3396,71 @@ class ItemRepository extends BaseModel {
           unit: unitName,
         };
 
-        const itemDocument = { ...insertData, ...updateData };
-        const insertOneResult = await collection.insertOne(itemDocument);
-        insertedIds.push(insertOneResult.insertedId);
+        const matched = existingByRow.get(items);
+        if (matched) {
+          /* Update only the columns the CSV carries. Deliberately excluded:
+             image/multi_image (the export has no image column, so a CSV can
+             never carry one - overwriting them is exactly the bug), the
+             created_* provenance, and the behaviour flags (track_inventory,
+             item_status, sales_channel, ecommerce, negative_stock,
+             description) which the CSV does not include and must not be reset
+             to their insert-time defaults. */
+          const setFields = {
+            name: updateData.name,
+            itemid: updateData.itemid,
+            barcode_id: updateData.barcode_id,
+            supplier_name: updateData.supplier_name,
+            ...(updateData.supplier_id ? { supplier_id: updateData.supplier_id } : {}),
+            category_name: updateData.category_name,
+            ...(updateData.category_id ? { category_id: updateData.category_id } : {}),
+            discount_amount: updateData.discount_amount,
+            discount_percentage: updateData.discount_percentage,
+            hsncode: updateData.hsncode,
+            hsndescription: updateData.hsndescription,
+            tax_method: updateData.tax_method,
+            tax_name: updateData.tax_name,
+            tax_id: updateData.tax_id,
+            tax: updateData.tax,
+            tax_type: updateData.tax_type,
+            tax_fields: updateData.tax_fields,
+            mrp_price: updateData.mrp_price,
+            company_price: updateData.company_price,
+            selling_price: updateData.selling_price,
+            available_quantity: updateData.available_quantity,
+            sort_order: updateData.sort_order,
+            unit_id: updateData.unit_id,
+            unit: updateData.unit,
+            updated_date: now,
+            updated_by: userName,
+            updated_by_id: userId,
+          };
+          await collection.updateOne({ _id: matched._id }, { $set: setFields });
+          updatedIds.push(matched._id);
+        } else {
+          const itemDocument = { ...insertData, ...updateData };
+          const insertOneResult = await collection.insertOne(itemDocument);
+          insertedIds.push(insertOneResult.insertedId);
+        }
       }
 
-      if (insertedIds.length > 0) {
-        const inserted = await collection
-          .find({ _id: { $in: insertedIds }, license: licenseObjectId })
+      if (insertedIds.length > 0 || updatedIds.length > 0) {
+        const touched = await collection
+          .find({ _id: { $in: [...insertedIds, ...updatedIds] }, license: licenseObjectId })
           .toArray();
+        const parts = [];
+        if (insertedIds.length) parts.push(`${insertedIds.length} added`);
+        if (updatedIds.length) parts.push(`${updatedIds.length} updated`);
         return {
           status: true,
-          data: inserted.map((i) => BaseModel.simplifyFields(i)),
-          message: 'Item Data Imported Successfully',
+          data: touched.map((i) => BaseModel.simplifyFields(i)),
+          message: `Import complete: ${parts.join(', ')}`,
         };
       }
 
       return {
         status: false,
         data: null,
-        message: 'All items are already imported',
+        message: 'No rows to import',
       };
     } catch (error) {
       console.error('Error in ItemRepository.importItems:', error);
