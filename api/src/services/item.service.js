@@ -1227,6 +1227,14 @@ class ItemService {
     }
   }
 
+  async bulkUpdatePrices(params = {}, context = {}) {
+    return this.repository.bulkUpdatePrices(params, context);
+  }
+
+  async getPriceHistory(itemId, opts = {}) {
+    return this.repository.getPriceHistory(itemId, opts);
+  }
+
   async exportItems(ids = [], context = {}) {
     try {
       const result = await this.repository.exportItems(ids, context);
