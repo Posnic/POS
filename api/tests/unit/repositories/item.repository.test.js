@@ -857,6 +857,77 @@ describe('ItemRepository', () => {
     });
   });
 
+  describe('logItemChanges', () => {
+    const withDb = () => {
+      const inserted = [];
+      const db = {
+        collection: () => ({
+          insertMany: (rows) => {
+            inserted.push(...rows);
+            return Promise.resolve({ insertedIds: rows.map((_, i) => i) });
+          },
+        }),
+      };
+      BaseModel.getDb = jest.fn().mockResolvedValue(db);
+      return inserted;
+    };
+
+    test('records only the fields that changed, tagged with label and value_type', async () => {
+      const inserted = withDb();
+      const n = await repo.logItemChanges(
+        { _id: FAKE_ID, name: 'Pen', branch_id: FAKE_BRANCH },
+        { name: 'Pen', selling_price: 10, category_name: 'Stationery' },
+        { name: 'Pencil', selling_price: 12, category_name: 'Stationery' },
+        { userName: 'admin' },
+        'Edit'
+      );
+
+      // name and selling_price moved; category did not.
+      expect(n).toBe(2);
+      expect(inserted.map((r) => r.field).sort()).toEqual(['name', 'selling_price']);
+      expect(inserted.find((r) => r.field === 'category_name')).toBeUndefined();
+
+      const name = inserted.find((r) => r.field === 'name');
+      expect(name.value_type).toBe('text');
+      expect(name.old_value).toBe('Pen');
+      expect(name.new_value).toBe('Pencil');
+      expect(name.process).toBe('Edit');
+
+      const price = inserted.find((r) => r.field === 'selling_price');
+      expect(price.value_type).toBe('money');
+      expect(price.new_value).toBe(12);
+    });
+
+    test('writes nothing when no tracked field changed', async () => {
+      const inserted = withDb();
+      const n = await repo.logItemChanges(
+        { _id: FAKE_ID, name: 'Pen' },
+        { name: 'Pen', selling_price: 10 },
+        { name: 'Pen', selling_price: 10 },
+        {},
+        'Edit'
+      );
+      expect(n).toBe(0);
+      expect(inserted).toHaveLength(0);
+    });
+
+    test('a field only present in the new doc is not a change on its own', async () => {
+      const inserted = withDb();
+      // oldDoc lacks unit entirely; newDoc sets it - that is a real change.
+      // But a field absent from newDoc must never be logged.
+      const n = await repo.logItemChanges(
+        { _id: FAKE_ID, name: 'Pen' },
+        { name: 'Pen', unit: 'qty' },
+        { name: 'Pen', selling_price: 8 },
+        {},
+        'Edit'
+      );
+      // Only selling_price is being set and it changed from absent(0)->8.
+      expect(inserted.map((r) => r.field)).toEqual(['selling_price']);
+      expect(n).toBe(1);
+    });
+  });
+
   describe('getDataChanges', () => {
     test('delegates to BaseModel', async () => {
       await repo.getDataChanges('items', '2026-01-01');
