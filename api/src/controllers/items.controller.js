@@ -1161,14 +1161,35 @@ class ItemsController extends BaseController {
         return [];
       };
 
-      const ids = normalizeIds(req.body);
-      if (!Array.isArray(ids) || ids.length === 0) {
-        return this.error(res, ERROR_MESSAGES.NO_ITEM_IDS_PROVIDED, 400);
+      const ctx = req.itemContext || {};
+      const licenseId =
+        ctx.licenseId || this.model?.licenseId || req.user?.license || req.user?.license_id || null;
+      const branchId = ctx.branchId || null;
+
+      // "Select all N": the client sends { all: true } (with the active
+      // category/search) instead of a page's worth of ids, so we export every
+      // matching item, not just the ~100 rows the grid had loaded.
+      const body = req.body;
+      const wantsAll =
+        body && typeof body === 'object' && !Array.isArray(body) && body.all === true;
+
+      let result;
+      if (wantsAll) {
+        result = await this.service.exportItems(
+          {
+            all: true,
+            categoryId: body.category_id || body.categoryId || null,
+            search: body.search || body.searchWord || '',
+          },
+          { licenseId, branchId }
+        );
+      } else {
+        const ids = normalizeIds(body);
+        if (!Array.isArray(ids) || ids.length === 0) {
+          return this.error(res, ERROR_MESSAGES.NO_ITEM_IDS_PROVIDED, 400);
+        }
+        result = await this.service.exportItems(ids, { licenseId, branchId });
       }
-
-      const licenseId = this.model?.licenseId || req.user?.license || req.user?.license_id || null;
-
-      const result = await this.service.exportItems(ids, { licenseId });
 
       if (result && result.status === true) {
         return this.success(res, result.data, result.message || 'Item Data Exported');

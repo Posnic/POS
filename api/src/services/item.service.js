@@ -1235,9 +1235,11 @@ class ItemService {
     return this.repository.getPriceHistory(itemId, opts);
   }
 
-  async exportItems(ids = [], context = {}) {
+  async exportItems(selection = [], context = {}) {
     try {
-      const result = await this.repository.exportItems(ids, context);
+      // `selection` is either the array of selected row ids, or an options
+      // object like { all: true, categoryId, search } for "select all N".
+      const result = await this.repository.exportItems(selection, context);
       return result;
     } catch (error) {
       console.error('Error in ItemService.exportItems:', error);
