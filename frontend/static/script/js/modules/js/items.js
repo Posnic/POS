@@ -80,6 +80,9 @@ PosnicPro.items = {
         PosnicPro.items.printLableView(id);
     },
     itemsTable: function () {
+        // A fresh page/search/refresh ends any "select all N" - the set behind
+        // the list has changed, so the old whole-set selection no longer holds.
+        PosnicPro.clearSelectAllMatching('items');
         var loader = $(".loader-table-item");
         $("<div class='loadingSpinner'></div>").appendTo(loader);
         PosnicPro.appendViewDataTableBody('items');

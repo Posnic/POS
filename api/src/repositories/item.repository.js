@@ -3654,27 +3654,42 @@ class ItemRepository extends BaseModel {
       return filter;
     }
 
-    const and = [];
-    if (licenseClause) and.push(licenseClause);
+    // "Select all N" mirrors the item list exactly: the client sends the same
+    // `filters` object the list uses, we run it through the same sanitiser and
+    // force the same branch + licence scope, so the export is precisely the set
+    // of rows the filtered list was showing - no more, no less.
+    const clientFilters = this.assignFilterObjects(
+      { ...(opts.filters || {}) },
+      LegacyItemModel.fields
+    );
+    for (const key of [
+      'branch_id',
+      'branchId',
+      'branch_name',
+      'branch_access',
+      'branch_access.branch_id',
+      'license',
+      'license_id',
+      'licenseId',
+    ]) {
+      delete clientFilters[key];
+    }
+
+    // A category picked in the export dialog, when the list itself was not
+    // already filtered by one.
+    if (opts.categoryId && ObjectId.isValid(opts.categoryId) && !clientFilters.category_id) {
+      clientFilters.category_id = new ObjectId(opts.categoryId);
+    }
+
+    const filter = { ...clientFilters };
 
     const branchId = context.branchId || null;
     if (branchId && ObjectId.isValid(branchId)) {
-      const b = new ObjectId(branchId);
-      and.push({ $or: [{ 'branch_access.branch_id': b }, { branch_id: b }] });
+      filter['branch_access.branch_id'] = new ObjectId(branchId);
     }
+    if (licenseClause) filter.license = licenseClause.license;
 
-    if (opts.categoryId && ObjectId.isValid(opts.categoryId)) {
-      and.push({ category_id: new ObjectId(opts.categoryId) });
-    }
-
-    const search = (opts.search || '').toString().trim();
-    if (search) {
-      const safe = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const rx = new RegExp(safe, 'i');
-      and.push({ $or: [{ name: rx }, { itemid: rx }, { barcode_id: rx }] });
-    }
-
-    return and.length ? { $and: and } : {};
+    return filter;
   }
 
   _normalizeExportRow(i) {
