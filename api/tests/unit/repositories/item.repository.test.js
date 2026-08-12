@@ -767,6 +767,41 @@ describe('ItemRepository', () => {
       const r = await repo.importItems([item], { branchId: FAKE_BRANCH, licenseId: FAKE_LICENSE });
       expect(r.status).toBe(true);
     });
+    test('a matched item is updated, never re-inserted, and its image is preserved', async () => {
+      const item = {
+        name: 'A',
+        itemid: 'SKU1',
+        barcode_id: 'B1',
+        supplier_name: 'S',
+        category_name: 'C',
+        discount_amount: 0,
+        discount_percentage: 0,
+        tax: 0,
+        tax_type: 'inclusive',
+        mrp_price: 10,
+        company_price: 5,
+        selling_price: 12, // changed price on re-import
+        available_quantity: 100,
+        unit: 'qty',
+        sort_order: 0,
+      };
+      // The FIRST findOne is the existence check and finds a match; the later
+      // supplier/category/tax/unit lookups fall through to the null default.
+      col.findOne.mockResolvedValueOnce({ _id: FAKE_ID, name: 'A', itemid: 'SKU1', image: 'kept.jpg' });
+      const r = await repo.importItems([item], { branchId: FAKE_BRANCH, licenseId: FAKE_LICENSE });
+      expect(r.status).toBe(true);
+      // Updated in place, not inserted as a duplicate.
+      expect(col.updateOne).toHaveBeenCalled();
+      const [, update] = col.updateOne.mock.calls[col.updateOne.mock.calls.length - 1];
+      // The new price is written...
+      expect(update.$set.selling_price).toBe(12);
+      // ...but image and multi_image are never touched.
+      expect(update.$set).not.toHaveProperty('image');
+      expect(update.$set).not.toHaveProperty('multi_image');
+      // ...and the insert-time behaviour defaults are not reset.
+      expect(update.$set).not.toHaveProperty('track_inventory');
+      expect(update.$set).not.toHaveProperty('item_status');
+    });
     test('returns error when no data', async () => {
       const r = await repo.importItems([]);
       expect(r.status).toBe(false);
