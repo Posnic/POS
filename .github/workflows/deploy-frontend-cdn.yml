@@ -37,16 +37,16 @@ jobs:
     if: vars.CDN_DEPLOY_ENABLED == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
 
       - name: Assemble CDN asset tree
         run: node scripts/build-cdn-frontend.js
 
-      - uses: aws-actions/configure-aws-credentials@v4
+      - uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-access-key-id: ${{ secrets.CDN_AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.CDN_AWS_SECRET_ACCESS_KEY }}
