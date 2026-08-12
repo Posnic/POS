@@ -1983,12 +1983,29 @@ PosnicPro.itemdetails = {
         var item_id = currentHash.split('/')[1];
         if (!item_id) { return false; }
 
-        var fieldLabel = {
-            selling_price: 'Selling',
-            mrp_price: 'MRP',
-            company_price: 'Company'
+        // A field's label now comes from the server (row.label); this only
+        // covers older price-only rows written before that field existed.
+        var legacyLabel = {
+            selling_price: 'Selling price',
+            mrp_price: 'MRP price',
+            company_price: 'Company price'
         };
         var currency = PosnicPro.local.get('currencySign') || '';
+        // Values can be item names or categories a person typed, so anything
+        // shown as text is escaped before it reaches the DOM.
+        var esc = function (v) {
+            return String(v === undefined || v === null ? '' : v)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        };
+        // Render one value the way its type wants to be read.
+        var show = function (v, type) {
+            if (type === 'money') return currency + '&nbsp;' + (Number(v) || 0).toFixed(2);
+            if (type === 'percent') return (Number(v) || 0) + '%';
+            var t = esc(v);
+            return t === '' ? '<span class="text-muted">-</span>' : t;
+        };
+
         var loader = $('.loader-item-pricehistory');
         $('#item_pricehistory_body').empty();
         $("<div class='loadingSpinner'></div>").appendTo(loader);
@@ -2007,22 +2024,30 @@ PosnicPro.itemdetails = {
             var html = '';
             for (var i = 0; i < rows.length; i++) {
                 var r = rows[i];
-                var oldV = Number(r.old_value) || 0;
-                var newV = Number(r.new_value) || 0;
-                var up = newV >= oldV;
-                var arrow = up
-                    ? '<span class="text-success"><i class="feather icon-arrow-up"></i> ' + (newV - oldV).toFixed(2) + '</span>'
-                    : '<span class="text-danger"><i class="feather icon-arrow-down"></i> ' + (oldV - newV).toFixed(2) + '</span>';
+                var type = r.value_type || 'money';
+                var label = r.label || legacyLabel[r.field] || r.field || '';
+
+                // The up/down arrow only means something for a number. A name
+                // going from "Pen" to "Pencil" gets a neutral dash instead.
+                var change = '<span class="text-muted">-</span>';
+                if (type === 'money' || type === 'percent') {
+                    var oldN = Number(r.old_value) || 0;
+                    var newN = Number(r.new_value) || 0;
+                    change = (newN >= oldN)
+                        ? '<span class="text-success"><i class="feather icon-arrow-up"></i> ' + (newN - oldN).toFixed(2) + '</span>'
+                        : '<span class="text-danger"><i class="feather icon-arrow-down"></i> ' + (oldN - newN).toFixed(2) + '</span>';
+                }
+
                 var rawDate = r.date || r.created_date || r.updated_date;
                 var when = rawDate ? PosnicPro.convertDate(rawDate) : '';
-                var source = r.process || 'Edit';
-                var by = r.changed_by || '';
+                var source = esc(r.process || 'Edit');
+                var by = esc(r.changed_by || '');
                 html += '<tr>'
                     + '<td>' + when + '</td>'
-                    + '<td>' + (fieldLabel[r.field] || r.field || '') + '</td>'
-                    + '<td class="text-right">' + currency + '&nbsp;' + oldV.toFixed(2) + '</td>'
-                    + '<td class="text-right f-w-6">' + currency + '&nbsp;' + newV.toFixed(2) + '</td>'
-                    + '<td class="text-center">' + arrow + '</td>'
+                    + '<td>' + esc(label) + '</td>'
+                    + '<td class="text-right">' + show(r.old_value, type) + '</td>'
+                    + '<td class="text-right f-w-6">' + show(r.new_value, type) + '</td>'
+                    + '<td class="text-center">' + change + '</td>'
                     + '<td><span class="badge badge-info-inverse">' + source + '</span></td>'
                     + '<td>' + by + '</td>'
                     + '</tr>';

@@ -16,6 +16,44 @@ const StockLogsRepository = require('./stock-log.repository');
 // Use the legacy BaseModel-based implementation for field metadata and helpers
 const LegacyItemModel = Item.LegacyItemModel;
 
+/*
+ * The item fields worth keeping a history of, and how to read each one.
+ *
+ * This is the whole of the "what changed" story for an item, in one list, so
+ * the change log stays one honest thing rather than a pile of special cases.
+ * It is deliberately a curated set, not every field:
+ *
+ *   - available_quantity is left out. It moves on every single sale, and its
+ *     real record already lives in stocklogs; putting it here would bury the
+ *     handful of edits a person actually made under a wall of stock movement.
+ *   - updated_date, images and behaviour flags are left out too - machine
+ *     churn and toggles, not the business facts a shopkeeper asks "who changed
+ *     this?" about.
+ *
+ * Prices are in this list, not a list of their own: a price change is a field
+ * change like any other, and keeping them together is what lets one History
+ * tab tell the whole story instead of two tabs telling half of it each.
+ *
+ * type decides how a value is compared and shown: 'money' and 'percent' are
+ * numeric, 'text' is a trimmed string.
+ */
+const TRACKED_FIELDS = [
+  { field: 'name', label: 'Name', type: 'text' },
+  { field: 'category_name', label: 'Category', type: 'text' },
+  { field: 'supplier_name', label: 'Supplier', type: 'text' },
+  { field: 'itemid', label: 'SKU', type: 'text' },
+  { field: 'barcode_id', label: 'Barcode', type: 'text' },
+  { field: 'unit', label: 'Unit', type: 'text' },
+  { field: 'hsncode', label: 'HSN code', type: 'text' },
+  { field: 'tax_name', label: 'Tax', type: 'text' },
+  { field: 'tax', label: 'Tax rate', type: 'percent' },
+  { field: 'discount_amount', label: 'Discount amount', type: 'money' },
+  { field: 'discount_percentage', label: 'Discount', type: 'percent' },
+  { field: 'mrp_price', label: 'MRP price', type: 'money' },
+  { field: 'company_price', label: 'Company price', type: 'money' },
+  { field: 'selling_price', label: 'Selling price', type: 'money' },
+];
+
 /**
  * Item Repository
  * Handles all database operations for items
@@ -200,24 +238,50 @@ class ItemRepository extends BaseModel {
    * mrp_price, company_price, selling_price. Best effort by design - a logging
    * failure must never fail the save it is describing.
    */
-  async logPriceChanges(itemRef, oldDoc = {}, newDoc = {}, context = {}, process = 'Edit') {
-    const fields = ['mrp_price', 'company_price', 'selling_price'];
+  /*
+   * Record which of an item's tracked fields actually changed.
+   *
+   * One choke point for the whole change log: a single edit, a re-import or the
+   * bulk price tool all pass through here, so nothing that changes a price or a
+   * name can forget to write its history. Only fields that really moved are
+   * written - an edit that re-saves the same values leaves no rows - and it is
+   * best-effort by design: the history must never be the reason a save fails.
+   *
+   * Rows still land in the price_history collection. The name is now a slight
+   * misnomer - it holds every tracked change, not only prices - but it is an
+   * already-syncing collection, and renaming it would strand the rows written
+   * before this change and force a new build onto every till for nothing a
+   * user would see. The label and value_type on each row are what the History
+   * view reads.
+   */
+  async logItemChanges(itemRef, oldDoc = {}, newDoc = {}, context = {}, process = 'Edit') {
+    const textVal = (v) => (v === undefined || v === null ? '' : String(v).trim());
     const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
+
     const changes = [];
-    for (const f of fields) {
-      if (newDoc[f] === undefined) continue; // not being set - not a change
-      const oldV = num(oldDoc[f]);
-      const newV = num(newDoc[f]);
-      if (oldV !== newV) changes.push({ field: f, old_value: oldV, new_value: newV });
+    for (const { field, label, type } of TRACKED_FIELDS) {
+      if (newDoc[field] === undefined) continue; // not being set - not a change
+      if (type === 'text') {
+        const oldV = textVal(oldDoc[field]);
+        const newV = textVal(newDoc[field]);
+        if (oldV !== newV) changes.push({ field, label, type, old_value: oldV, new_value: newV });
+      } else {
+        const oldV = num(oldDoc[field]);
+        const newV = num(newDoc[field]);
+        if (oldV !== newV) changes.push({ field, label, type, old_value: oldV, new_value: newV });
+      }
     }
     if (!changes.length) return 0;
+
     const db = await BaseModel.getDb();
     const now = new Date();
     const rows = changes.map((c) => ({
       item_id: itemRef._id,
-      item_name: itemRef.name || oldDoc.name || '',
+      item_name: itemRef.name || oldDoc.name || newDoc.name || '',
       branch_id: itemRef.branch_id || oldDoc.branch_id || null,
       field: c.field,
+      label: c.label,
+      value_type: c.type, // 'money' | 'percent' | 'text'
       old_value: c.old_value,
       new_value: c.new_value,
       process, // 'Edit' | 'Bulk' | 'Import'
@@ -232,7 +296,7 @@ class ItemRepository extends BaseModel {
     return rows.length;
   }
 
-  /** Recent price changes for one item, newest first. */
+  /** Recent tracked changes for one item, newest first. */
   async getPriceHistory(itemId, { limit = 200 } = {}) {
     try {
       const db = await BaseModel.getDb();
@@ -287,6 +351,12 @@ class ItemRepository extends BaseModel {
 
     const now = new Date();
     const db = await BaseModel.getDb();
+    // Same label/value_type the single-edit path writes, so the History view
+    // renders a bulk change identically to a hand edit.
+    const fieldMeta = TRACKED_FIELDS.find((f) => f.field === field) || {
+      label: field,
+      type: 'money',
+    };
     const priceRows = [];
     let updated = 0;
     for (const it of items) {
@@ -312,6 +382,8 @@ class ItemRepository extends BaseModel {
         item_name: it.name || '',
         branch_id: it.branch_id || null,
         field,
+        label: fieldMeta.label,
+        value_type: fieldMeta.type,
         old_value: oldV,
         new_value: newV,
         process: 'Bulk',
@@ -576,8 +648,8 @@ class ItemRepository extends BaseModel {
         { $set: updateData }
       );
 
-      // Record any price change against the item's history. Best effort.
-      await this.logPriceChanges(
+      // Record any tracked change against the item's history. Best effort.
+      await this.logItemChanges(
         { _id: itemObjectId, name: updateData.name, branch_id: branchObjectId },
         existingItem || {},
         updateData,
@@ -3588,8 +3660,8 @@ class ItemRepository extends BaseModel {
           };
           await collection.updateOne({ _id: matched._id }, { $set: setFields });
           updatedIds.push(matched._id);
-          // A re-import that changed a price is a price change like any other.
-          await this.logPriceChanges(
+          // A re-import that changed any tracked field is history like any other.
+          await this.logItemChanges(
             { _id: matched._id, name: setFields.name, branch_id: branchObjectId },
             matched,
             setFields,
