@@ -261,8 +261,10 @@ class ItemRepository extends BaseModel {
     const allowedFields = ['mrp_price', 'company_price', 'selling_price'];
     if (!allowedFields.includes(field)) return { status: false, message: 'Unknown price field' };
     const amount = Number(value);
-    if (!Number.isFinite(amount) || amount < 0) return { status: false, message: 'Enter a valid amount' };
-    if (op !== 'percent' && op !== 'amount') return { status: false, message: 'Choose percent or amount' };
+    if (!Number.isFinite(amount) || amount < 0)
+      return { status: false, message: 'Enter a valid amount' };
+    if (op !== 'percent' && op !== 'amount')
+      return { status: false, message: 'Choose percent or amount' };
     const sign = direction === 'decrease' ? -1 : 1;
 
     const collection = await this.getCollection(this.collectionName);
@@ -280,7 +282,8 @@ class ItemRepository extends BaseModel {
     const items = await collection
       .find(filter, { projection: { [field]: 1, name: 1, branch_id: 1 } })
       .toArray();
-    if (!items.length) return { status: true, data: { updated: 0, total: 0 }, message: 'No items matched' };
+    if (!items.length)
+      return { status: true, data: { updated: 0, total: 0 }, message: 'No items matched' };
 
     const now = new Date();
     const db = await BaseModel.getDb();
@@ -321,7 +324,10 @@ class ItemRepository extends BaseModel {
       });
     }
     if (priceRows.length) {
-      await db.collection('price_history').insertMany(priceRows).catch(() => {});
+      await db
+        .collection('price_history')
+        .insertMany(priceRows)
+        .catch(() => {});
     }
     return {
       status: true,
@@ -3622,22 +3628,109 @@ class ItemRepository extends BaseModel {
     }
   }
 
-  async exportItems(ids, context = {}) {
+  /**
+   * Build the Mongo filter for an export.
+   *
+   * `selection` is either the legacy array of selected row ids, or an options
+   * object. When `{ all: true }` is passed we export every item the caller can
+   * see - the same branch + licence scope the item list itself uses - honouring
+   * an optional category and search so "select all N" matches exactly what the
+   * filtered list showed, not just the 100 rows on the current page.
+   */
+  _buildExportFilter(selection, context = {}) {
+    const licenseId = context.licenseId || null;
+    const licenseClause = licenseId
+      ? { license: ObjectId.isValid(licenseId) ? new ObjectId(licenseId) : licenseId }
+      : null;
+
+    const opts = Array.isArray(selection) ? { ids: selection } : selection || {};
+
+    if (!opts.all) {
+      const ids = Array.isArray(opts.ids) ? opts.ids : [];
+      if (ids.length === 0) return null;
+      const objectIds = ids.filter((id) => ObjectId.isValid(id)).map((id) => new ObjectId(id));
+      const filter = { _id: { $in: objectIds } };
+      if (licenseClause) Object.assign(filter, licenseClause);
+      return filter;
+    }
+
+    const and = [];
+    if (licenseClause) and.push(licenseClause);
+
+    const branchId = context.branchId || null;
+    if (branchId && ObjectId.isValid(branchId)) {
+      const b = new ObjectId(branchId);
+      and.push({ $or: [{ 'branch_access.branch_id': b }, { branch_id: b }] });
+    }
+
+    if (opts.categoryId && ObjectId.isValid(opts.categoryId)) {
+      and.push({ category_id: new ObjectId(opts.categoryId) });
+    }
+
+    const search = (opts.search || '').toString().trim();
+    if (search) {
+      const safe = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const rx = new RegExp(safe, 'i');
+      and.push({ $or: [{ name: rx }, { itemid: rx }, { barcode_id: rx }] });
+    }
+
+    return and.length ? { $and: and } : {};
+  }
+
+  _normalizeExportRow(i) {
+    const doc = BaseModel.simplifyFields(i);
+
+    // Normalise HSN-related fields for export so that rows without a
+    // real HSN code don't show placeholder values like 0.
+    const rawHsn = doc.hsncode;
+    const hsnStr = rawHsn === undefined || rawHsn === null ? '' : String(rawHsn).trim();
+
+    if (!hsnStr || hsnStr === '0') {
+      // No real HSN value: keep both cells empty.
+      doc.hsncode = '';
+      doc.hsndescription = '';
+    } else {
+      // Real HSN present: export the trimmed code, and ensure
+      // description is at least an empty string.
+      doc.hsncode = hsnStr;
+      if (doc.hsndescription === undefined || doc.hsndescription === null) {
+        doc.hsndescription = '';
+      } else {
+        doc.hsndescription = String(doc.hsndescription).trim();
+      }
+
+      // For HSN-based tax rows, we do not want to export any tax_name.
+      // The business rule is: when HSN code is present, the CSV should
+      // only carry HSN Code and HSN Description, and the Tax Name
+      // column must be empty.
+      doc.tax_name = '';
+    }
+
+    // Ensure tax_name is only exported when it has a real value,
+    // but only for NON-HSN rows. For HSN rows, doc.tax_name has
+    // already been forced to "" above.
+    if (!hsnStr || hsnStr === '0') {
+      let taxNameStr =
+        doc.tax_name === undefined || doc.tax_name === null ? '' : String(doc.tax_name).trim();
+
+      if (!taxNameStr || taxNameStr === '0') {
+        taxNameStr = '';
+      }
+
+      doc.tax_name = taxNameStr;
+    }
+
+    return doc;
+  }
+
+  async exportItems(selection, context = {}) {
     try {
-      if (!Array.isArray(ids) || ids.length === 0) {
+      const filter = this._buildExportFilter(selection, context);
+      if (!filter) {
         return { status: false, data: null, message: 'No IDs provided' };
       }
 
       const collection = await this.getCollection(this.collectionName);
-
-      const objectIds = ids.filter((id) => ObjectId.isValid(id)).map((id) => new ObjectId(id));
-
-      const filter = { _id: { $in: objectIds } };
-
-      const licenseId = context.licenseId || null;
-      if (licenseId) {
-        filter.license = ObjectId.isValid(licenseId) ? new ObjectId(licenseId) : licenseId;
-      }
 
       const items = await collection
         .find(filter, {
@@ -3668,53 +3761,7 @@ class ItemRepository extends BaseModel {
 
       return {
         status: true,
-        data: items.map((i) => {
-          const doc = BaseModel.simplifyFields(i);
-
-          // Normalise HSN-related fields for export so that rows without a
-          // real HSN code don't show placeholder values like 0.
-          const rawHsn = doc.hsncode;
-          const hsnStr = rawHsn === undefined || rawHsn === null ? '' : String(rawHsn).trim();
-
-          if (!hsnStr || hsnStr === '0') {
-            // No real HSN value: keep both cells empty.
-            doc.hsncode = '';
-            doc.hsndescription = '';
-          } else {
-            // Real HSN present: export the trimmed code, and ensure
-            // description is at least an empty string.
-            doc.hsncode = hsnStr;
-            if (doc.hsndescription === undefined || doc.hsndescription === null) {
-              doc.hsndescription = '';
-            } else {
-              doc.hsndescription = String(doc.hsndescription).trim();
-            }
-
-            // For HSN-based tax rows, we do not want to export any tax_name.
-            // The business rule is: when HSN code is present, the CSV should
-            // only carry HSN Code and HSN Description, and the Tax Name
-            // column must be empty.
-            doc.tax_name = '';
-          }
-
-          // Ensure tax_name is only exported when it has a real value,
-          // but only for NON-HSN rows. For HSN rows, doc.tax_name has
-          // already been forced to "" above.
-          if (!hsnStr || hsnStr === '0') {
-            let taxNameStr =
-              doc.tax_name === undefined || doc.tax_name === null
-                ? ''
-                : String(doc.tax_name).trim();
-
-            if (!taxNameStr || taxNameStr === '0') {
-              taxNameStr = '';
-            }
-
-            doc.tax_name = taxNameStr;
-          }
-
-          return doc;
-        }),
+        data: items.map((i) => this._normalizeExportRow(i)),
         message: 'Item Data Exported',
       };
     } catch (error) {
