@@ -75,6 +75,10 @@ router.post('/itemsImport', bindController(itemsController.itemsImport));
 // PHP: exportItems() - Excel export
 router.post('/exportItems', bindController(itemsController.exportItems));
 
+// Raise/lower prices across many items at once; and a per-item price history.
+router.post('/bulkUpdatePrices', bindController(itemsController.bulkUpdatePrices));
+router.get('/priceHistory/:id', bindController(itemsController.getPriceHistory));
+
 // PHP: categoryItemsReportTable() - Category report
 router.get('/categoryItemsReportTable', bindController(itemsController.categoryItemsReportTable));
 

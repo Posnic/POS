@@ -193,6 +193,143 @@ class ItemRepository extends BaseModel {
     return String(max + 1);
   }
 
+  /*
+   * Record price changes to the price_history collection, one row per price
+   * field that actually changed. Powers the per-item Price history tab and the
+   * price-changes report. Only the three item-level prices exist to track:
+   * mrp_price, company_price, selling_price. Best effort by design - a logging
+   * failure must never fail the save it is describing.
+   */
+  async logPriceChanges(itemRef, oldDoc = {}, newDoc = {}, context = {}, process = 'Edit') {
+    const fields = ['mrp_price', 'company_price', 'selling_price'];
+    const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
+    const changes = [];
+    for (const f of fields) {
+      if (newDoc[f] === undefined) continue; // not being set - not a change
+      const oldV = num(oldDoc[f]);
+      const newV = num(newDoc[f]);
+      if (oldV !== newV) changes.push({ field: f, old_value: oldV, new_value: newV });
+    }
+    if (!changes.length) return 0;
+    const db = await BaseModel.getDb();
+    const now = new Date();
+    const rows = changes.map((c) => ({
+      item_id: itemRef._id,
+      item_name: itemRef.name || oldDoc.name || '',
+      branch_id: itemRef.branch_id || oldDoc.branch_id || null,
+      field: c.field,
+      old_value: c.old_value,
+      new_value: c.new_value,
+      process, // 'Edit' | 'Bulk' | 'Import'
+      changed_by: context.userName || context.loggedUserName || '',
+      changed_by_id: context.userId || context.loggedUserId || null,
+      date: now,
+      created_date: now,
+      updated_date: now,
+      license: BaseModel.license || null,
+    }));
+    await db.collection('price_history').insertMany(rows);
+    return rows.length;
+  }
+
+  /** Recent price changes for one item, newest first. */
+  async getPriceHistory(itemId, { limit = 200 } = {}) {
+    try {
+      const db = await BaseModel.getDb();
+      const filter = { item_id: this.toObjectId(itemId) };
+      if (BaseModel.license) filter.license = BaseModel.license;
+      const rows = await db
+        .collection('price_history')
+        .find(filter)
+        .sort({ date: -1 })
+        .limit(Math.min(1000, Number(limit) || 200))
+        .toArray();
+      return { status: true, data: rows };
+    } catch (error) {
+      return { status: false, data: [], message: error.message };
+    }
+  }
+
+  /*
+   * Raise or lower prices across many items at once - all items, or one
+   * category - by a percentage or a flat amount, on any one price field. Every
+   * item that actually changes is written to price_history with process
+   * 'Bulk', so the change is auditable exactly like a single edit. Prices are
+   * clamped at zero and rounded to two decimals.
+   */
+  async bulkUpdatePrices({ scope, categoryId, field, op, value, direction } = {}, context = {}) {
+    const allowedFields = ['mrp_price', 'company_price', 'selling_price'];
+    if (!allowedFields.includes(field)) return { status: false, message: 'Unknown price field' };
+    const amount = Number(value);
+    if (!Number.isFinite(amount) || amount < 0) return { status: false, message: 'Enter a valid amount' };
+    if (op !== 'percent' && op !== 'amount') return { status: false, message: 'Choose percent or amount' };
+    const sign = direction === 'decrease' ? -1 : 1;
+
+    const collection = await this.getCollection(this.collectionName);
+    const filter = {};
+    if (BaseModel.license) filter.license = BaseModel.license;
+    if (context.branchId) {
+      const b = this.toObjectId(context.branchId);
+      filter.$or = [{ 'branch_access.branch_id': b }, { branch_id: b }];
+    }
+    if (scope === 'category') {
+      if (!categoryId) return { status: false, message: 'Choose a category' };
+      filter.category_id = this.toObjectId(categoryId);
+    }
+
+    const items = await collection
+      .find(filter, { projection: { [field]: 1, name: 1, branch_id: 1 } })
+      .toArray();
+    if (!items.length) return { status: true, data: { updated: 0, total: 0 }, message: 'No items matched' };
+
+    const now = new Date();
+    const db = await BaseModel.getDb();
+    const priceRows = [];
+    let updated = 0;
+    for (const it of items) {
+      const oldV = Number(it[field]) || 0;
+      const delta = op === 'percent' ? (oldV * amount) / 100 : amount;
+      let newV = oldV + sign * delta;
+      newV = Math.max(0, Math.round(newV * 100) / 100);
+      if (newV === oldV) continue;
+      await collection.updateOne(
+        { _id: it._id },
+        {
+          $set: {
+            [field]: newV,
+            updated_date: now,
+            updated_by: context.userName || '',
+            updated_by_id: context.userId || null,
+          },
+        }
+      );
+      updated += 1;
+      priceRows.push({
+        item_id: it._id,
+        item_name: it.name || '',
+        branch_id: it.branch_id || null,
+        field,
+        old_value: oldV,
+        new_value: newV,
+        process: 'Bulk',
+        changed_by: context.userName || '',
+        changed_by_id: context.userId || null,
+        date: now,
+        created_date: now,
+        updated_date: now,
+        license: BaseModel.license || null,
+      });
+    }
+    if (priceRows.length) {
+      await db.collection('price_history').insertMany(priceRows).catch(() => {});
+    }
+    return {
+      status: true,
+      data: { updated, total: items.length },
+      message: `Updated ${updated} of ${items.length} item(s)`,
+    };
+  }
+
   async upsertItem(data, id = '', context = {}) {
     try {
       const collection = await this.getCollection(this.collectionName);
@@ -432,6 +569,15 @@ class ItemRepository extends BaseModel {
         { _id: itemObjectId, license: licenseObjectId },
         { $set: updateData }
       );
+
+      // Record any price change against the item's history. Best effort.
+      await this.logPriceChanges(
+        { _id: itemObjectId, name: updateData.name, branch_id: branchObjectId },
+        existingItem || {},
+        updateData,
+        context,
+        'Edit'
+      ).catch(() => {});
 
       // Get branch to check stock_management setting (PHP line 268)
       const branchesCollection = await this.getCollection('branches');
@@ -3436,6 +3582,14 @@ class ItemRepository extends BaseModel {
           };
           await collection.updateOne({ _id: matched._id }, { $set: setFields });
           updatedIds.push(matched._id);
+          // A re-import that changed a price is a price change like any other.
+          await this.logPriceChanges(
+            { _id: matched._id, name: setFields.name, branch_id: branchObjectId },
+            matched,
+            setFields,
+            { userName, userId },
+            'Import'
+          ).catch(() => {});
         } else {
           const itemDocument = { ...insertData, ...updateData };
           const insertOneResult = await collection.insertOne(itemDocument);

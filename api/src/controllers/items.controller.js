@@ -1187,6 +1187,48 @@ class ItemsController extends BaseController {
   }
 
   /**
+   * Raise or lower prices across many items at once (all, or one category),
+   * by a percentage or a flat amount, on one price field. Body:
+   * { scope: 'all'|'category', category_id?, field, op: 'percent'|'amount',
+   *   value, direction: 'increase'|'decrease' }.
+   */
+  async bulkUpdatePrices(req, res) {
+    try {
+      if (req.user?.access?.item?.write === false) {
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+      }
+      await this.ensureContext(req);
+      const ctx = req.itemContext || {};
+      const { scope, category_id, field, op, value, direction } = req.body || {};
+      const result = await this.service.bulkUpdatePrices(
+        { scope, categoryId: category_id, field, op, value, direction },
+        { branchId: ctx.branchId, userName: ctx.loggedUserName, userId: ctx.loggedUserId }
+      );
+      if (result && result.status) return this.success(res, result.data, result.message);
+      return this.error(res, result?.message || 'Bulk price update failed', 400);
+    } catch (error) {
+      console.error('Error in bulkUpdatePrices:', error);
+      return this.error(res, error.message, 500);
+    }
+  }
+
+  /** Price-change history for one item, newest first. */
+  async getPriceHistory(req, res) {
+    try {
+      if (req.user?.access?.item?.read === false) {
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+      }
+      await this.ensureContext(req);
+      const itemId = req.params.id || req.params.itemId;
+      const result = await this.service.getPriceHistory(itemId, { limit: req.query.limit });
+      return this.success(res, result.data || [], 'Price history');
+    } catch (error) {
+      console.error('Error in getPriceHistory:', error);
+      return this.error(res, error.message, 500);
+    }
+  }
+
+  /**
    * PHP: itemsImport() - Bulk import items from CSV/Excel
    * Frontend posts to `items/itemsImport` with body { result: [...] }.
    */
