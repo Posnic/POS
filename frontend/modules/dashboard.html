@@ -29,13 +29,23 @@
                 </div>
             </div>
 
-            <!-- Greeting first: a warm line every user sees. The wish is worked
-                 out on the client from the time of day - no extra request. -->
+            <!-- Greeting + quick links in one compact bar. The greeting is worked
+                 out on the client from the time of day (no request); the links are
+                 one click to the pages people use most, each carrying the same ACL
+                 as its menu item so a user only sees the ones they can open. -->
             <div class="row">
                 <div class="col-lg-12">
                     <div class="card bg-primary-rgba m-b-30">
-                        <div class="card-body">
-                            <h5 class="text-primary mb-0" id="dashboard_greeting">Welcome</h5>
+                        <div class="card-body" style="padding:14px 18px;">
+                            <div class="d-flex flex-wrap align-items-center justify-content-between" style="gap:10px;">
+                                <h5 class="text-primary mb-0" id="dashboard_greeting">Welcome</h5>
+                                <div class="d-flex flex-wrap" style="gap:8px;">
+                                    <a href="#/sales/new" data-module="sales" data-access="write" class="btn btn-primary btn-sm"><i class="feather icon-plus-circle mr-1"></i>New Sale</a>
+                                    <a href="#/sales" data-module="sales" data-access="read||write||delete" class="btn btn-light btn-sm"><i class="feather icon-shopping-bag mr-1"></i>Sales History</a>
+                                    <a href="#/quickreport" data-module="report" data-access="read" class="btn btn-light btn-sm"><i class="feather icon-bar-chart-2 mr-1"></i>Daily Report</a>
+                                    <a href="#/items" data-module="item" data-access="read" class="btn btn-light btn-sm"><i class="feather icon-package mr-1"></i>Items</a>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -129,15 +139,18 @@
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="card m-b-30 recent_card" style="overflow: hidden;">
+                    <div class="card m-b-30 recent_card" style="overflow: hidden; min-height:auto;">
                         <div class="card-header">
                             <div class="row align-items-center">
                                 <div class="col-9">
-                                    <h5 class="card-title mb-0"><lang class="lang_pending_payment">Outstanding Customers</lang></h5>
+                                    <h5 class="card-title mb-0"><lang class="lang_pending_payment">Customer Dues (money owed to you)</lang></h5>
                                 </div>
                             </div>
                         </div>
-                        <div class="card-body recentBody">
+                        <!-- Height fits its content and caps at a sane max with its own
+                             scroll, so an empty or long dues list never stretches the
+                             whole page into a scroll. -->
+                        <div class="card-body recentBody" style="min-height:auto; height:auto; max-height:320px; overflow-y:auto;">
                             <div class="ecom-notification-box">
                                 <ul class="list-unstyled" id="lstRecentActivities">
                                     <li class="text-muted" style="padding:12px 4px;">No customer owes money right now.</li>
