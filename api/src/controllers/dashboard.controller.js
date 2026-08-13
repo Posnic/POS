@@ -503,14 +503,18 @@ class DashboardController extends BaseController {
 
       // Financial visibility is the real boundary, enforced here so a
       // salesperson cannot reach profit, cost or margin even by calling this
-      // directly. The owner (role 'admin') always qualifies - which also
-      // grandfathers shops upgraded before the flag existed; everyone else
-      // needs it granted explicitly via access.dashboard.financials.
+      // directly - the model is never run and no figures are returned.
+      //
+      // But withholding is not an error. A user who may not see profit simply
+      // has no profit card (the client removes it by ACL), so this must not
+      // shout "access denied" as a red toast on their dashboard - it just
+      // returns nothing, quietly, and the client renders nothing.
       if (!this.canSeeFinancials(req.user)) {
-        return res.status(403).json({
-          type: 'error',
-          message: 'You do not have access to financial figures',
+        return res.status(200).json({
+          type: 'success',
+          message: '',
           data: null,
+          financials: false,
         });
       }
 

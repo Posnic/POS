@@ -1192,7 +1192,7 @@ describe('getProfitSummary — financial ACL gate', () => {
     expect(mdl.getProfitSummaryModel).toHaveBeenCalled();
   });
 
-  test('a salesperson without the flag is refused (403) and the model is never called', async () => {
+  test('a salesperson without the flag is withheld silently (200, no data, no error) and the model is never called', async () => {
     const staff = {
       _id: VALID_ID,
       usertype: 'staff',
@@ -1203,8 +1203,13 @@ describe('getProfitSummary — financial ACL gate', () => {
     };
     const res = mockRes();
     await controller.getProfitSummary(mockReq({ user: staff }), res);
-    expect(res.status).toHaveBeenCalledWith(403);
+    // Withheld, not errored: no figures leak (model never runs, data is null),
+    // but the client sees success and quietly renders nothing - no red toast.
+    expect(res.status).toHaveBeenCalledWith(200);
     expect(mdl.getProfitSummaryModel).not.toHaveBeenCalled();
+    const payload = res.json.mock.calls[0][0];
+    expect(payload.data).toBeNull();
+    expect(payload.type).not.toBe('error');
   });
 
   test('a manager granted access.dashboard.financials gets it', async () => {
