@@ -146,7 +146,7 @@ class InstallModel extends BaseModel {
         discount: '',
         discount_amount: '0',
         discount_percentage: '0.00',
-        sales_prefix: 'SID',
+        sales_prefix: 'S',
         receiving_prefix: 'RID',
         sales_sms: false,
         enable_notification_reminders: false,
