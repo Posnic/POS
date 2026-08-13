@@ -130,6 +130,7 @@
             "static/script/js/modules/js/report_payment.js",
             "static/script/js/modules/js/report_receivings.js",
             "static/script/js/modules/js/report_sales.js",
+            "static/script/js/modules/js/report_pricesettings.js",
             "static/script/js/modules/js/report_kot.js",
             "static/script/js/modules/js/report_suppliers.js",
             "static/script/js/modules/js/report_taxdiscount.js",
