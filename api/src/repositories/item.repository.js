@@ -466,7 +466,7 @@ class ItemRepository extends BaseModel {
     let skipped = 0;
     for (const it of items) {
       const oldV = Number(it[field]) || 0;
-      let newV = parts.compute(oldV);
+      const newV = parts.compute(oldV);
       if (newV === oldV) continue;
       // When asked, leave alone any item this change would push over MRP or
       // under cost, and count it, rather than writing a price that breaks a rule.
