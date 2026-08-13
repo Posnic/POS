@@ -2785,6 +2785,38 @@
 [data-theme="comfort"] .text-dark { color: #453F34; }
 [data-theme="comfort"] .text-muted,
 [data-theme="comfort"] .dim { color: #8A8069 !important; }
+/* Form fields, dropdowns and modals - warm, not white. */
+[data-theme="comfort"] .form-control,
+[data-theme="comfort"] textarea,
+[data-theme="comfort"] .custom-select,
+[data-theme="comfort"] .select2-container--default .select2-selection--single,
+[data-theme="comfort"] .select2-container--default .select2-selection--multiple,
+[data-theme="comfort"] .select2-dropdown,
+[data-theme="comfort"] .dropdown-menu { background-color: #FBF6EA !important; border-color: #E2D7BF !important; color: #3A352B !important; }
+[data-theme="comfort"] .form-control::placeholder { color: #A99E86 !important; }
+/* Top-bar icon buttons (fullscreen, shortcut, alerts, menu toggle) - no grey
+   chip on the warm bar; a soft warm tint only on hover. */
+[data-theme="comfort"] .infobar-icon,
+[data-theme="comfort"] .topbar-toggle-hamburger { background-color: transparent !important; }
+[data-theme="comfort"] .infobar-icon:hover { background-color: #EFE7D3 !important; }
+/* Light buttons + the dashboard period buttons (Today / This Week ...) */
+[data-theme="comfort"] .btn-light,
+[data-theme="comfort"] .btn-round { background-color: #EFE7D3 !important; border-color: #E2D7BF !important; color: #4A4433 !important; }
+[data-theme="comfort"] .btn-light:hover { background-color: #E6DAC0 !important; }
+[data-theme="comfort"] .shop_buttons .btn.active,
+[data-theme="comfort"] .btn-light.active { background-color: #4F7A69 !important; border-color: #4F7A69 !important; color: #fff !important; }
+/* Loading overlays */
+[data-theme="comfort"] .preloader,
+[data-theme="comfort"] .loading,
+[data-theme="comfort"] .loader { background-color: #F3ECDB !important; }
+/* Menu / top-bar icons are light-background images: they blend on a white
+   sidebar but show as separate chips on a warm one. multiply blends their white
+   into the warm surface so only the icon shows, sitting within the background. */
+[data-theme="comfort"] .vertical-menu li a img,
+[data-theme="comfort"] .leftbar img,
+[data-theme="comfort"] .metismenu li a img,
+[data-theme="comfort"] .infobar-icon img,
+[data-theme="comfort"] .menu-hamburger img { mix-blend-mode: multiply; }
 
 [data-theme="blue"] {
     --theme-primary-color: #2196F3;
