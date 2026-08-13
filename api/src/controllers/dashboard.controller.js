@@ -121,7 +121,12 @@ class DashboardController extends BaseController {
    */
   canSeeFinancials(user) {
     if (!user) return false;
-    const isOwner = user.role === 'admin' || user.usertype === 'admin';
+    // The account owner is 'super_admin' on a fresh install and 'admin' on older
+    // ones - either way they own the shop and see its money. The role can live on
+    // either field depending on how the account was made, so both are checked.
+    // A manager or anyone else still needs the flag granted explicitly.
+    const OWNER_ROLES = ['admin', 'super_admin'];
+    const isOwner = OWNER_ROLES.includes(user.role) || OWNER_ROLES.includes(user.usertype);
     return isOwner || user.access?.dashboard?.financials === true;
   }
 
