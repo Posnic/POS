@@ -1073,6 +1073,70 @@ describe('ItemRepository', () => {
     });
   });
 
+  describe('bulkSetMargin', () => {
+    const ctx = { branchId: FAKE_BRANCH, userName: 'admin', userId: 'u1' };
+    const withDb = () => {
+      BaseModel.getDb = jest.fn().mockResolvedValue({
+        collection: () => ({
+          insertMany: () => Promise.resolve({}),
+          insertOne: () => Promise.resolve({}),
+        }),
+      });
+    };
+
+    test('margin mode sets selling = cost / (1 - margin)', async () => {
+      withDb();
+      col.find.mockReturnValue(
+        mkChain([{ _id: FAKE_ID, name: 'A', company_price: 60, selling_price: 0, mrp_price: 200 }])
+      );
+      const r = await repo.bulkSetMargin({ scope: 'all', margin: 40, mode: 'margin' }, ctx);
+      expect(r.data.updated).toBe(1);
+      expect(col.updateOne.mock.calls[0][1].$set.selling_price).toBe(100); // 60 / 0.6
+    });
+
+    test('markup mode sets selling = cost * (1 + margin)', async () => {
+      withDb();
+      col.find.mockReturnValue(
+        mkChain([{ _id: FAKE_ID, name: 'A', company_price: 40, selling_price: 0, mrp_price: 200 }])
+      );
+      const r = await repo.bulkSetMargin({ scope: 'all', margin: 40, mode: 'markup' }, ctx);
+      expect(r.data.updated).toBe(1);
+      expect(col.updateOne.mock.calls[0][1].$set.selling_price).toBe(56); // 40 * 1.4
+    });
+
+    test('items with no cost are left alone and counted', async () => {
+      withDb();
+      col.find.mockReturnValue(
+        mkChain([{ _id: 'z', name: 'Z', company_price: 0, selling_price: 10, mrp_price: 100 }])
+      );
+      const r = await repo.bulkSetMargin({ scope: 'all', margin: 40, mode: 'margin' }, ctx);
+      expect(r.data.updated).toBe(0);
+      expect(r.data.noCost).toBe(1);
+      expect(col.updateOne).not.toHaveBeenCalled();
+    });
+
+    test('skipViolations skips items whose margin price would exceed MRP', async () => {
+      withDb();
+      col.find.mockReturnValue(
+        mkChain([
+          { _id: '1', name: 'overMrp', company_price: 90, selling_price: 0, mrp_price: 100 }, // 150 > 100
+          { _id: '2', name: 'ok', company_price: 60, selling_price: 0, mrp_price: 200 }, // 100 <= 200
+        ])
+      );
+      const r = await repo.bulkSetMargin(
+        { scope: 'all', margin: 40, mode: 'margin', skipViolations: true },
+        ctx
+      );
+      expect(r.data.updated).toBe(1);
+      expect(r.data.skipped).toBe(1);
+    });
+
+    test('rejects a margin of 100% or more in margin mode', async () => {
+      const r = await repo.bulkSetMargin({ scope: 'all', margin: 100, mode: 'margin' }, ctx);
+      expect(r.status).toBe(false);
+    });
+  });
+
   describe('previewBulkUpdatePrices', () => {
     test('flags items an increase would push over MRP, without writing', async () => {
       col.find.mockReturnValue(

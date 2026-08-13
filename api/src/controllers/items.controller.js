@@ -1276,6 +1276,54 @@ class ItemsController extends BaseController {
     }
   }
 
+  /** Set the selling price from a target margin across items or a category. */
+  async bulkSetMargin(req, res) {
+    try {
+      if (req.user?.access?.item?.write === false) {
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+      }
+      await this.ensureContext(req);
+      const ctx = req.itemContext || {};
+      const { scope, category_id, margin, mode, skipViolations } = req.body || {};
+      const result = await this.service.bulkSetMargin(
+        {
+          scope,
+          categoryId: category_id,
+          margin,
+          mode,
+          skipViolations: skipViolations === true || skipViolations === 'true',
+        },
+        { branchId: ctx.branchId, userName: ctx.loggedUserName, userId: ctx.loggedUserId }
+      );
+      if (result && result.status) return this.success(res, result.data, result.message);
+      return this.error(res, result?.message || 'Could not set margin', 400);
+    } catch (error) {
+      console.error('Error in bulkSetMargin:', error);
+      return this.error(res, error.message, 500);
+    }
+  }
+
+  /** Dry-run a margin change before applying it. */
+  async marginPreview(req, res) {
+    try {
+      if (req.user?.access?.item?.read === false) {
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+      }
+      await this.ensureContext(req);
+      const ctx = req.itemContext || {};
+      const { scope, category_id, margin, mode } = req.body || {};
+      const result = await this.service.previewSetMargin(
+        { scope, categoryId: category_id, margin, mode },
+        { branchId: ctx.branchId }
+      );
+      if (result && result.status) return this.success(res, result.data, result.message);
+      return this.error(res, result?.message || 'Could not check margin', 400);
+    } catch (error) {
+      console.error('Error in marginPreview:', error);
+      return this.error(res, error.message, 500);
+    }
+  }
+
   /** Price-change history for one item, newest first. */
   async getPriceHistory(req, res) {
     try {
