@@ -36,6 +36,7 @@ jest.mock('../../../src/repositories/sale.repository', () => ({
   create: jest.fn(),
   createSaleUnique: jest.fn(),
   buildSalesId: jest.fn(),
+  buildDocNumber: jest.fn(),
   deviceTag: jest.fn(),
   getById: jest.fn(),
   save: jest.fn(),
@@ -137,6 +138,12 @@ describe('SalesService', () => {
     salesRepository.deviceTag.mockResolvedValue('TEST');
     salesRepository.buildSalesId.mockImplementation(
       async (prefix, n) => `${prefix}-TEST-${String(n).padStart(6, '0')}`
+    );
+    // No branch/device codes in the unit context, so buildDocNumber returns the
+    // till-tagged fallback - the same shape the assertions already expect.
+    salesRepository.buildDocNumber.mockImplementation(
+      async (type, branchId, n, opts) =>
+        `${(opts && opts.fallbackPrefix) || 'INV'}-TEST-${String(n).padStart(6, '0')}`
     );
     salesRepository.createSaleUnique.mockImplementation((data) => salesRepository.create(data));
     salesRepository.save.mockResolvedValue({ _id: 'savedId' });

@@ -8837,7 +8837,7 @@ class SalesRepository {
     void prefixLength;
     void salesCollection;
     const n = await this.nextSalesNumberForBranch(branchId, BaseModel.license);
-    return this.buildSalesId(prefix, n);
+    return this.buildDocNumber('S', branchId, n, { fallbackPrefix: prefix });
   }
 
   /*
@@ -8961,6 +8961,88 @@ class SalesRepository {
     const num = String(n).padStart(6, '0');
     const tag = await this.deviceTag();
     return tag ? `${prefix}-${tag}-${num}` : `${prefix}${num}`;
+  }
+
+  /*
+   * The gateway-assigned code for this till, like "D1" - unique per shop
+   * because only the gateway sees every device. The sync agent writes it into
+   * device_meta when the till checks in. Empty until then, which is why the
+   * readable format keeps the till-tag fallback: numbering must never wait on
+   * the gateway. Only a real code is cached, so it is picked up the moment it
+   * arrives, without a restart.
+   */
+  async deviceCode() {
+    if (this.constructor._deviceCode) return this.constructor._deviceCode;
+    try {
+      const db = await BaseModel.getDb();
+      const doc = await db.collection('device_meta').findOne({ _id: 'device_code' });
+      const code = (doc && doc.code) || '';
+      if (code) this.constructor._deviceCode = code;
+      return code;
+    } catch (e) {
+      return '';
+    }
+  }
+
+  /*
+   * A short, stable code for a branch, like "B1" - its position among this
+   * licence's branches ordered by when they were created. Deterministic, so
+   * every till derives the same code without coordinating, and stable, because
+   * a newer branch only ever appends. It is a label only: the device code is
+   * what makes a number unique, so a rare mid-sync disagreement is cosmetic.
+   */
+  async branchCode(branchId) {
+    if (!branchId) return '';
+    const id = String(branchId);
+    const cached = this.constructor._branchCodes;
+    if (cached && cached[id]) return cached[id];
+    try {
+      const db = await BaseModel.getDb();
+      const branches = db.collection('branches');
+      const filter = {};
+      if (BaseModel.license) filter.license = BaseModel.license;
+      const rows = await branches
+        .find(filter, { projection: { _id: 1, created_date: 1 } })
+        .toArray();
+      rows.sort((a, b) => {
+        const ca = a.created_date ? new Date(a.created_date).getTime() : 0;
+        const cb = b.created_date ? new Date(b.created_date).getTime() : 0;
+        if (ca !== cb) return ca - cb;
+        return String(a._id).localeCompare(String(b._id));
+      });
+      const map = {};
+      rows.forEach((r, i) => {
+        map[String(r._id)] = 'B' + (i + 1);
+      });
+      this.constructor._branchCodes = map;
+      return map[id] || '';
+    } catch (e) {
+      return '';
+    }
+  }
+
+  /*
+   * A document number in the readable scheme, when the pieces are there:
+   *
+   *   <R->? <type> <branch> <device> - <number>
+   *   SB1D1-000045   a sale        PB1D1-000008   a purchase
+   *   R-SB1D1-000012 a sales return  R-PB1D1-000003 a purchase return
+   *
+   * Until this till has BOTH a branch code and a gateway-assigned device code
+   * it falls back to the till-tagged number (SID-A3F9-000045), which is already
+   * collision-free - so the visible format changes exactly once, cleanly, and
+   * a sale never waits on the gateway.
+   */
+  async buildDocNumber(typeLetter, branchId, n, { isReturn = false, fallbackPrefix = 'SID' } = {}) {
+    const num = String(n).padStart(6, '0');
+    const [branchCode, deviceCode] = await Promise.all([
+      this.branchCode(branchId),
+      this.deviceCode(),
+    ]);
+    if (branchCode && deviceCode) {
+      return `${isReturn ? 'R-' : ''}${typeLetter}${branchCode}${deviceCode}-${num}`;
+    }
+    return this.buildSalesId(fallbackPrefix, n);
   }
 
   /*
