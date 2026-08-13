@@ -34,8 +34,12 @@
                     </select>
                 </div>
                 <div class="col-lg-2 col-xl-2 hide-button-action tb_filter" style="display:none;">
+                    <!-- readonly-until-focus stops Chrome force-filling this (the
+                         first text field on the page) with a saved username/password,
+                         which it does even with autocomplete="off". -->
                     <input type="text" class="form-control border-control custom_search_input" id="view_sales_input"
-                        placeholder="Enter Id" data-id="sales" maxlength="25" autocomplete="off">
+                        placeholder="Enter Id" data-id="sales" maxlength="25" autocomplete="off"
+                        readonly onfocus="this.removeAttribute('readonly');">
                 </div>
                 <div class="col-md-2 col-lg-2 col-xl-2 tb_search hide-button-action adjuce_left" style="display:none;">
                     <button type="button" class="btn btn-danger-rgba" data-id="sales"
