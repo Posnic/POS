@@ -928,6 +928,116 @@ describe('ItemRepository', () => {
     });
   });
 
+  describe('bulkUpdatePrices', () => {
+    const ctx = { branchId: FAKE_BRANCH, userName: 'admin', userId: 'u1' };
+    const withDb = () => {
+      const db = { collection: () => ({ insertMany: () => Promise.resolve({}) }) };
+      BaseModel.getDb = jest.fn().mockResolvedValue(db);
+    };
+
+    test('rejects an unknown field, a negative amount, or a bad operation', async () => {
+      expect((await repo.bulkUpdatePrices({ field: 'nope', op: 'percent', value: 5 })).status).toBe(
+        false
+      );
+      expect(
+        (await repo.bulkUpdatePrices({ field: 'selling_price', op: 'percent', value: -1 })).status
+      ).toBe(false);
+      expect(
+        (await repo.bulkUpdatePrices({ field: 'selling_price', op: 'bad', value: 5 })).status
+      ).toBe(false);
+    });
+
+    test('increases selling price by percent, only where it actually changes', async () => {
+      withDb();
+      col.find.mockReturnValue(
+        mkChain([
+          { _id: FAKE_ID, name: 'A', selling_price: 100, mrp_price: 200, company_price: 50 },
+          { _id: 'zero', name: 'B', selling_price: 0, mrp_price: 0, company_price: 0 },
+        ])
+      );
+      const r = await repo.bulkUpdatePrices(
+        { scope: 'all', field: 'selling_price', op: 'percent', value: 10, direction: 'increase' },
+        ctx
+      );
+      expect(r.status).toBe(true);
+      expect(r.data.total).toBe(2);
+      expect(r.data.updated).toBe(1); // only A (100 -> 110); B stays 0
+      expect(col.updateOne).toHaveBeenCalledTimes(1);
+      expect(col.updateOne.mock.calls[0][1].$set.selling_price).toBe(110);
+    });
+
+    test('a decrease never takes a price below zero', async () => {
+      withDb();
+      col.find.mockReturnValue(
+        mkChain([{ _id: FAKE_ID, name: 'A', selling_price: 5, mrp_price: 100, company_price: 0 }])
+      );
+      await repo.bulkUpdatePrices(
+        { scope: 'all', field: 'selling_price', op: 'amount', value: 20, direction: 'decrease' },
+        ctx
+      );
+      expect(col.updateOne.mock.calls[0][1].$set.selling_price).toBe(0); // 5 - 20 clamped
+    });
+
+    test('skipViolations leaves items that would exceed MRP or fall below cost', async () => {
+      withDb();
+      col.find.mockReturnValue(
+        mkChain([
+          // +10% -> 110, over its 105 MRP: skipped
+          { _id: '1', name: 'overMrp', selling_price: 100, mrp_price: 105, company_price: 10 },
+          // +10% -> 110, under its 200 MRP: updated
+          { _id: '2', name: 'ok', selling_price: 100, mrp_price: 200, company_price: 10 },
+        ])
+      );
+      const r = await repo.bulkUpdatePrices(
+        {
+          scope: 'all',
+          field: 'selling_price',
+          op: 'percent',
+          value: 10,
+          direction: 'increase',
+          skipViolations: true,
+        },
+        ctx
+      );
+      expect(r.data.updated).toBe(1);
+      expect(r.data.skipped).toBe(1);
+      expect(col.updateOne).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('previewBulkUpdatePrices', () => {
+    test('flags items an increase would push over MRP, without writing', async () => {
+      col.find.mockReturnValue(
+        mkChain([
+          { name: 'a', selling_price: 100, mrp_price: 105, company_price: 10 }, // -> 110 > 105
+          { name: 'b', selling_price: 100, mrp_price: 200, company_price: 10 }, // -> 110 ok
+        ])
+      );
+      const r = await repo.previewBulkUpdatePrices(
+        { scope: 'all', field: 'selling_price', op: 'percent', value: 10, direction: 'increase' },
+        {}
+      );
+      expect(r.status).toBe(true);
+      expect(r.data.willChange).toBe(2);
+      expect(r.data.exceedsMrpCount).toBe(1);
+      expect(r.data.exceedsMrp[0].name).toBe('a');
+      expect(r.data.belowCostCount).toBe(0);
+      expect(col.updateOne).not.toHaveBeenCalled(); // dry run
+    });
+
+    test('flags items a decrease would drop below cost', async () => {
+      col.find.mockReturnValue(
+        mkChain([{ name: 'c', selling_price: 100, mrp_price: 200, company_price: 95 }]) // -10% -> 90 < 95
+      );
+      const r = await repo.previewBulkUpdatePrices(
+        { scope: 'all', field: 'selling_price', op: 'percent', value: 10, direction: 'decrease' },
+        {}
+      );
+      expect(r.data.belowCostCount).toBe(1);
+      expect(r.data.belowCost[0].name).toBe('c');
+    });
+  });
+
   describe('getDataChanges', () => {
     test('delegates to BaseModel', async () => {
       await repo.getDataChanges('items', '2026-01-01');

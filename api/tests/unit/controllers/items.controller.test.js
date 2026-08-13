@@ -56,6 +56,9 @@ jest.mock('../../../src/services/item.service', () =>
     getHsnCodes: jest.fn(),
     uploadItemImages: jest.fn(),
     itemReportTable: jest.fn(),
+    bulkUpdatePrices: jest.fn(),
+    previewBulkUpdatePrices: jest.fn(),
+    getPriceHistory: jest.fn(),
   }))
 );
 
@@ -1713,5 +1716,94 @@ describe('deleteInstant — reads id from body._id', () => {
     const res = mockRes();
     await ctrl.deleteInstant(req, res);
     expect(svc.deleteInstantItem).toHaveBeenCalledWith(expect.objectContaining({ id: VALID_ID }));
+  });
+});
+
+// =============================================================================
+// bulkUpdatePrices
+// =============================================================================
+
+describe('bulkUpdatePrices', () => {
+  const body = {
+    scope: 'all',
+    field: 'selling_price',
+    op: 'percent',
+    value: 10,
+    direction: 'increase',
+    skipViolations: true,
+  };
+
+  test('returns 200 and forwards params, incl. skipViolations, to the service', async () => {
+    svc.bulkUpdatePrices.mockResolvedValue({
+      status: true,
+      data: { updated: 3, total: 5, skipped: 1 },
+      message: 'ok',
+    });
+    const req = mockReq({ body, user: adminUser() });
+    const res = mockRes();
+    await ctrl.bulkUpdatePrices(req, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    const [params] = svc.bulkUpdatePrices.mock.calls[0];
+    expect(params.field).toBe('selling_price');
+    expect(params.skipViolations).toBe(true);
+  });
+
+  test('returns 401 when access.item.write is explicitly false', async () => {
+    const req = mockReq({ body, user: adminUser({ access: { item: { write: false } } }) });
+    const res = mockRes();
+    await ctrl.bulkUpdatePrices(req, res);
+    expect(svc.bulkUpdatePrices).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(401);
+  });
+
+  test('returns 400 when the service rejects the request', async () => {
+    svc.bulkUpdatePrices.mockResolvedValue({ status: false, message: 'Unknown price field' });
+    const req = mockReq({ body: { field: 'x' }, user: adminUser() });
+    const res = mockRes();
+    await ctrl.bulkUpdatePrices(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+});
+
+// =============================================================================
+// bulkPricePreview
+// =============================================================================
+
+describe('bulkPricePreview', () => {
+  test('returns 200 with the feasibility numbers', async () => {
+    svc.previewBulkUpdatePrices.mockResolvedValue({
+      status: true,
+      data: {
+        total: 5,
+        willChange: 5,
+        exceedsMrpCount: 2,
+        belowCostCount: 0,
+        exceedsMrp: [],
+        belowCost: [],
+      },
+      message: 'Preview ready',
+    });
+    const req = mockReq({
+      body: {
+        scope: 'all',
+        field: 'selling_price',
+        op: 'percent',
+        value: 10,
+        direction: 'increase',
+      },
+      user: adminUser(),
+    });
+    const res = mockRes();
+    await ctrl.bulkPricePreview(req, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json.mock.calls[0][0].data.exceedsMrpCount).toBe(2);
+  });
+
+  test('returns 401 when access.item.read is explicitly false', async () => {
+    const req = mockReq({ body: {}, user: adminUser({ access: { item: { read: false } } }) });
+    const res = mockRes();
+    await ctrl.bulkPricePreview(req, res);
+    expect(svc.previewBulkUpdatePrices).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(401);
   });
 });
