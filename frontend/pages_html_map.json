@@ -26,6 +26,7 @@
         "modules/dashboard.html",
         "modules/expenses.html",
         "modules/expensesReport.html",
+        "modules/priceSettings.html",
         "modules/itemReport.html",
         "modules/items.html",
         "modules/quick_items.html",

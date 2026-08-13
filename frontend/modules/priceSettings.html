@@ -1,0 +1,137 @@
+<div class="vertical-layout page_loader" id="pricesettings_new" style="display: none">
+    <div id="containerbar">
+        <div class="breadcrumbbar crumbbar_padding">
+            <div class="row align-items-center row_filter">
+                <div class="col-lg-8"><h4 class="page-title break_title">Price Settings</h4></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="contentbar">
+        <div class="row">
+            <div class="col-md-12 m-t-10">
+                <div class="card m-b-30">
+                    <div class="card-body">
+                        <ul class="nav nav-tabs custom-tab-line mb-3" role="tablist">
+                            <li class="nav-item"><a class="nav-link active report_tab_font" id="ps-margin-tab" data-toggle="tab" href="#ps-margin" role="tab">Set Margin</a></li>
+                            <li class="nav-item"><a class="nav-link report_tab_font" id="ps-custom-tab" data-toggle="tab" href="#ps-custom" role="tab">Custom Change</a></li>
+                            <li class="nav-item"><a class="nav-link report_tab_font" id="ps-history-tab" data-toggle="tab" href="#ps-history" role="tab" onclick="PosnicPro.pricesettings.loadHistory(1);">History</a></li>
+                        </ul>
+
+                        <div class="tab-content">
+                            <!-- ============ Set Margin ============ -->
+                            <div class="tab-pane fade show active" id="ps-margin" role="tabpanel">
+                                <p class="text-muted" style="font-size:13.5px;">Set the selling price from a target profit margin &mdash; worked out from each item's cost, not nudged from an unknown base. Items with no cost price are left alone.</p>
+                                <div class="row">
+                                    <div class="col-md-3 form-group">
+                                        <label>Which items</label>
+                                        <select class="form-control" id="ps_margin_scope" onchange="PosnicPro.pricesettings.scopeToggle('margin');">
+                                            <option value="all">All items</option>
+                                            <option value="category">One category</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 form-group" id="ps_margin_cat_wrap" style="display:none;">
+                                        <label>Category</label>
+                                        <select class="form-control" id="ps_margin_category"></select>
+                                    </div>
+                                    <div class="col-md-2 form-group">
+                                        <label>Margin</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="ps_margin_value" min="0" step="0.5" placeholder="40">
+                                            <div class="input-group-append"><span class="input-group-text">%</span></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 form-group">
+                                        <label>What 40% means</label>
+                                        <div style="padding-top:6px;">
+                                            <label class="mr-3" style="font-weight:400;"><input type="radio" name="ps_margin_mode" value="margin" checked> Margin <span class="text-muted">(% of selling)</span></label>
+                                            <label style="font-weight:400;"><input type="radio" name="ps_margin_mode" value="markup"> Markup <span class="text-muted">(% on cost)</span></label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group"><label style="font-weight:400;"><input type="checkbox" id="ps_margin_skip" checked> Skip items whose new price would go above MRP</label></div>
+                                <div id="ps_margin_result" style="display:none;"></div>
+                                <div style="margin-top:8px;">
+                                    <button class="btn btn-light" onclick="PosnicPro.pricesettings.checkMargin();"><i class="feather icon-search mr-1"></i>Check</button>
+                                    <button class="btn btn-primary" id="ps_margin_apply" onclick="PosnicPro.pricesettings.applyMargin();"><i class="feather icon-check-circle mr-1"></i>Apply margin</button>
+                                </div>
+                            </div>
+
+                            <!-- ============ Custom Change ============ -->
+                            <div class="tab-pane fade" id="ps-custom" role="tabpanel">
+                                <p class="text-muted" style="font-size:13.5px;">Raise or lower a price for many items at once, by a percentage or a flat amount. Every change is kept in each item's history.</p>
+                                <div class="row">
+                                    <div class="col-md-3 form-group">
+                                        <label>Which items</label>
+                                        <select class="form-control" id="ps_custom_scope" onchange="PosnicPro.pricesettings.scopeToggle('custom');">
+                                            <option value="all">All items</option>
+                                            <option value="category">One category</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 form-group" id="ps_custom_cat_wrap" style="display:none;">
+                                        <label>Category</label>
+                                        <select class="form-control" id="ps_custom_category"></select>
+                                    </div>
+                                    <div class="col-md-3 form-group">
+                                        <label>Price to change</label>
+                                        <select class="form-control" id="ps_custom_field">
+                                            <option value="selling_price">Selling price</option>
+                                            <option value="mrp_price">MRP</option>
+                                            <option value="company_price">Cost price</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 form-group">
+                                        <label>Direction</label>
+                                        <select class="form-control" id="ps_custom_direction">
+                                            <option value="increase">Increase</option>
+                                            <option value="decrease">Decrease</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 form-group">
+                                        <label>By</label>
+                                        <select class="form-control" id="ps_custom_op">
+                                            <option value="percent">by %</option>
+                                            <option value="amount">by amount</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 form-group">
+                                        <label>Value</label>
+                                        <input type="number" class="form-control" id="ps_custom_value" min="0" step="0.5" placeholder="0">
+                                    </div>
+                                </div>
+                                <div class="form-group"><label style="font-weight:400;"><input type="checkbox" id="ps_custom_skip" checked> Skip items that would end up above MRP or below cost</label></div>
+                                <div id="ps_custom_result" style="display:none;"></div>
+                                <div style="margin-top:8px;">
+                                    <button class="btn btn-light" onclick="PosnicPro.pricesettings.checkCustom();"><i class="feather icon-search mr-1"></i>Check</button>
+                                    <button class="btn btn-primary" id="ps_custom_apply" onclick="PosnicPro.pricesettings.applyCustom();"><i class="feather icon-check-circle mr-1"></i>Update prices</button>
+                                </div>
+                            </div>
+
+                            <!-- ============ History ============ -->
+                            <div class="tab-pane fade" id="ps-history" role="tabpanel">
+                                <p class="text-muted" style="font-size:13.5px;">Every bulk price change &mdash; who ran it, when, what it did, and how many items it touched.</p>
+                                <div class="table-responsive">
+                                    <table class="table table-borderless">
+                                        <thead>
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>By</th>
+                                                <th>Change</th>
+                                                <th class="text-right">Items changed</th>
+                                                <th class="text-right">Skipped</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="ps_history_body">
+                                            <tr><td colspan="5" class="text-center text-muted" style="padding:16px;">Loading&hellip;</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div id="ps_history_pager" class="d-flex justify-content-between align-items-center" style="font-size:13px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
