@@ -889,9 +889,80 @@ PosnicPro.items = {
         $('#bulk_price_op').val('percent');
         $('.bulk-price-unit').text('%');
         $('#bulk_price_value').val('');
+        $('#bulk_price_skip').prop('checked', true);
+        $('#bulk_price_check_result').hide().empty();
         $('#bulk_price_submit').prop('disabled', false);
         PosnicPro.items.loadBulkPriceCategories();
         $('#bulk_price_modal').modal('show');
+    },
+
+    // Read + validate the bulk-price form once, for both Check and Update.
+    readBulkPriceForm: function () {
+        var scope = $('input[name="bulk_price_scope"]:checked').val();
+        var value = $('#bulk_price_value').val();
+        if (value === '' || isNaN(value) || Number(value) < 0) {
+            PosnicPro.alert('warning', 'Enter a valid amount.');
+            return null;
+        }
+        var category_id = (scope === 'category') ? $('#bulk_price_category').val() : null;
+        if (scope === 'category' && !category_id) {
+            PosnicPro.alert('warning', 'Choose a category.');
+            return null;
+        }
+        return {
+            scope: scope,
+            category_id: category_id,
+            field: $('#bulk_price_field').val(),
+            op: $('#bulk_price_op').val(),
+            value: value,
+            direction: $('#bulk_price_direction').val()
+        };
+    },
+
+    // Dry-run the change and show what it would do - how many change, and how
+    // many would end up over MRP or under cost - before anything is written.
+    checkBulkPrice: function () {
+        var form = PosnicPro.items.readBulkPriceForm();
+        if (!form) return false;
+        var currency = PosnicPro.local.get('currencySign') || '';
+        var box = $('#bulk_price_check_result');
+        box.html('<span class="dim">Checking...</span>').show();
+
+        PosnicPro.post({ url: 'items/bulkPricePreview', data: JSON.stringify(form) }, function (response) {
+            if (response.type !== 'success') {
+                box.hide();
+                PosnicPro.alert(response.type, response.message);
+                return;
+            }
+            var d = response.data || {};
+            var esc = function (v) { return $('<div>').text(v == null ? '' : v).html(); };
+            var line = function (rows, label, limitLabel) {
+                if (!rows || !rows.length) return '';
+                var sample = rows.slice(0, 5).map(function (r) {
+                    return '<li>' + esc(r.name) + ': ' + currency + Number(r.new_value).toFixed(2) +
+                        ' <span class="dim">(' + limitLabel + ' ' + currency + Number(r.limit).toFixed(2) + ')</span></li>';
+                }).join('');
+                var more = rows.length > 5 ? '<li class="dim">and ' + (rows.length - 5) + ' more</li>' : '';
+                return '<div style="margin-top:6px;"><b>' + label + '</b><ul style="margin:4px 0 0; padding-left:18px;">' + sample + more + '</ul></div>';
+            };
+
+            var hasIssue = (d.exceedsMrpCount || 0) + (d.belowCostCount || 0) > 0;
+            var head = '<b>' + (d.willChange || 0) + '</b> of ' + (d.total || 0) + ' item(s) would change.';
+            var body = '';
+            if (hasIssue) {
+                body += line(d.exceedsMrp, (d.exceedsMrpCount || 0) + ' would go ABOVE MRP', 'MRP');
+                body += line(d.belowCost, (d.belowCostCount || 0) + ' would sell BELOW cost', 'cost');
+                body += '<div class="dim" style="margin-top:6px; font-size:12px;">With "skip" ticked, these are left unchanged.</div>';
+            } else {
+                body = '<div class="text-success" style="margin-top:4px;"><i class="feather icon-check"></i> No item would break MRP or cost.</div>';
+            }
+            box.attr('class', hasIssue ? 'alert alert-warning' : 'alert alert-success')
+                .css({ 'font-size': '12.5px', 'padding': '8px 12px' })
+                .html(head + body).show();
+        }, function () {
+            box.hide();
+        });
+        return false;
     },
 
     toggleBulkCategory: function () {
@@ -920,33 +991,14 @@ PosnicPro.items = {
     },
 
     submitBulkPrice: function () {
-        var scope = $('input[name="bulk_price_scope"]:checked').val();
-        var field = $('#bulk_price_field').val();
-        var op = $('#bulk_price_op').val();
-        var direction = $('#bulk_price_direction').val();
-        var value = $('#bulk_price_value').val();
-        var category_id = (scope === 'category') ? $('#bulk_price_category').val() : null;
-
-        if (value === '' || isNaN(value) || Number(value) < 0) {
-            PosnicPro.alert('warning', 'Enter a valid amount.');
-            return false;
-        }
-        if (scope === 'category' && !category_id) {
-            PosnicPro.alert('warning', 'Choose a category.');
-            return false;
-        }
+        var form = PosnicPro.items.readBulkPriceForm();
+        if (!form) return false;
+        form.skipViolations = $('#bulk_price_skip').is(':checked');
 
         $('#bulk_price_submit').prop('disabled', true);
         var params = {
             url: 'items/bulkUpdatePrices',
-            data: JSON.stringify({
-                scope: scope,
-                category_id: category_id,
-                field: field,
-                op: op,
-                value: value,
-                direction: direction
-            })
+            data: JSON.stringify(form)
         };
         PosnicPro.post(params, function (response) {
             $('#bulk_price_submit').prop('disabled', false);
