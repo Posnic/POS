@@ -350,19 +350,22 @@ PosnicPro.dashboard = {
         PosnicPro.get(params, function (response) {
             if (response.type === 'success') {
                 var data = response.data;
-                
-                // Debug: Log payment mode data
-                console.log('Payment Mode Data:', data);
-                console.log('Paymode Data Array:', data.paymode_data);
-                console.log('Percentage Series:', data.percentage_series);
-                console.log('Pay Mode Series:', data.pay_mode_series);
-                
-                // Clear previous chart
+
+                /*
+                 * The payment data arrives asynchronously. If the operator has
+                 * already left the dashboard for another screen, its
+                 * #apex-circle-chart element is gone - and handing ApexCharts a
+                 * null container is exactly what threw "Cannot read properties
+                 * of null (reading 'offsetWidth')". There is nothing to draw
+                 * into, so stop here rather than crash.
+                 */
                 var chartContainer = document.querySelector("#apex-circle-chart");
-                if (chartContainer) {
-                    chartContainer.innerHTML = '';
+                if (!chartContainer) {
+                    loader.find(".loadingSpinner:first").remove();
+                    return;
                 }
-                
+                chartContainer.innerHTML = '';
+
                 // Check if we have data to display
                 if (!data.percentage_series || data.percentage_series.length === 0) {
                     chartContainer.innerHTML = '<div style="text-align: center; padding: 50px; color: #999;">No payment data available</div>';
@@ -885,10 +888,14 @@ PosnicPro.dashboard = {
                 }
             }
         }
-        var sales_chart = new ApexCharts(
-                document.querySelector("#" + data['chart_id']),
-                options
-                );
+        // Same guard as the payment-mode chart: this can be called after the
+        // operator has left the dashboard, and rendering into a missing
+        // container throws on offsetWidth.
+        var salesChartEl = document.querySelector("#" + data['chart_id']);
+        if (!salesChartEl) {
+            return;
+        }
+        var sales_chart = new ApexCharts(salesChartEl, options);
         sales_chart.render();
     },
 
