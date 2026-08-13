@@ -112,8 +112,8 @@ const branchSchema = new Schema(
     thermal_body_print: { type: String },
     print_controls: { type: Object },
 
-    client_dateformat: { type: String, default: 'yyyy/mm/dd' },
-    server_dateformat: { type: String, default: 'Y/m/d' },
+    client_dateformat: { type: String, default: 'dd/mm/yyyy' },
+    server_dateformat: { type: String, default: 'd/m/Y' },
     payment_gateway: { type: Array, default: [] },
     phonepe_payment_gateway: { type: Object, default: null },
 
@@ -884,9 +884,9 @@ class BranchModel {
           },
         },
         notification_range: '5',
-        client_dateformat: 'yyyy/mm/dd',
-        server_dateformat: 'Y/m/d',
-        dateformat_text: '2018/01/01 -- yyyy/mm/dd',
+        client_dateformat: 'dd/mm/yyyy',
+        server_dateformat: 'd/m/Y',
+        dateformat_text: '01/01/2018 -- dd/mm/yyyy',
         time_format: 'enable',
         payment_gateway: [],
         kiosk: [],

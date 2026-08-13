@@ -688,7 +688,17 @@ PosnicPro.quickreport = {
     // either. Both go through the page path that already exists.
     if (width === 'a4' || !window.electronAPI || !window.electronAPI.printer
         || !window.electronAPI.printer.printReport) {
-      window.print();
+      // Web / A4: print exactly the on-screen report (never the whole page,
+      // which prints blank through the app's print stylesheets).
+      PosnicPro.quickreport._captureReport(function (canvas) {
+        var img = canvas.toDataURL('image/png');
+        var w = window.open('', '_blank');
+        if (!w) { PosnicPro.alert('warning', 'Allow pop-ups so the report can print.'); return; }
+        w.document.write('<html><head><title>Quick Sale Report</title>'
+          + '<style>@page{margin:12mm;}body{margin:0;}img{width:100%;display:block;}</style></head>'
+          + '<body><img src="' + img + '" onload="setTimeout(function(){window.focus();window.print();},60);"></body></html>');
+        w.document.close();
+      });
       return false;
     }
 
@@ -776,36 +786,55 @@ PosnicPro.quickreport = {
     return false;
   },
 
+  // Shared: render the on-screen report body (#export_daily_report) to a canvas
+  // so Print and Download produce the SAME thing the user sees - no separate
+  // server template, no blank page. White background keeps it print-clean on
+  // any theme (dark themes included).
+  _captureReport: function (onCanvas) {
+    var el = document.getElementById('export_daily_report');
+    if (!el) { PosnicPro.alert('warning', 'Run the report first, then try again.'); return; }
+    if (!window.html2canvas) { PosnicPro.alert('error', 'Report tools not loaded - refresh and retry.'); return; }
+    var scale = Math.min(3, Math.max(2, (window.devicePixelRatio || 1) * 1.5));
+    window.html2canvas(el, {
+      scale: scale,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      width: el.scrollWidth,
+      height: el.scrollHeight,
+      windowWidth: el.scrollWidth,
+      logging: false
+    }).then(function (canvas) {
+      onCanvas(canvas);
+    }).catch(function (err) {
+      PosnicPro.alert('error', 'Could not render the report: ' + (err && err.message ? err.message : err));
+    });
+  },
+
   dailyReportPdf: function () {
-    var id = $("#dailysale_branch_value").val();
-
-    // Get daterange from tooltip
-    var daterangeText = $(
-      '#view_dailysale_report_daterange span[data-toggle="tooltip"]'
-    ).attr("data-original-title");
-    var type = $("#view_dailysale_report_daterange span:first").text();
-    type = $.trim(type); // Trim spaces
-
-    var fields = daterangeText.split(" - ");
-
-    // Replace / with - in date parts
-    var startingDate = fields[0].replace(/\//g, "/");
-    var endingDate = fields[1].replace(/\//g, "/");
-
-    var url =
-      API_URL +
-      "sales/dailyReportPdf?branch=" +
-      id +
-      "&type=" +
-      type +
-      "&starting_date=" +
-      startingDate +
-      "&ending_date=" +
-      endingDate;
-
-    window.open(url, "_blank");
-
-    hasher.setHash("quickreport");
+    var report = PosnicPro.quickreport.lastReport;
+    if (!report) { PosnicPro.alert('warning', 'Run the report first, then download it.'); return false; }
+    if (!window.jspdf) { PosnicPro.alert('error', 'PDF tools not loaded - refresh and retry.'); return false; }
+    PosnicPro.quickreport._captureReport(function (canvas) {
+      var jsPDF = window.jspdf.jsPDF;
+      var imgData = canvas.toDataURL('image/png');
+      var pageW = 210, pageH = 297, margin = 8;         // A4 portrait, mm
+      var contentW = pageW - margin * 2;
+      var imgH = (canvas.height * contentW) / canvas.width;
+      var pageContentH = pageH - margin * 2;
+      var pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+      var position = margin;
+      var heightLeft = imgH;
+      pdf.addImage(imgData, 'PNG', margin, position, contentW, imgH, undefined, 'FAST');
+      heightLeft -= pageContentH;
+      while (heightLeft > 0) {
+        position = margin - (imgH - heightLeft);
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', margin, position, contentW, imgH, undefined, 'FAST');
+        heightLeft -= pageContentH;
+      }
+      pdf.save('quick-sale-report.pdf');
+    });
+    return false;
   },
 
   dailyReportEmail: function () {

@@ -2169,9 +2169,9 @@
                                                             </span>
                                                         </label>
                                                         <input type="text" name="sales_prefix" id="sales_prefix"
-                                                            class="form-control border-control" minlength="3"
-                                                            maxlength="3" pattern="[A-Za-z]+"
-                                                            placeholder="Ex :- sales(SID)">
+                                                            class="form-control border-control"
+                                                            maxlength="6" pattern="[A-Za-z0-9]*"
+                                                            placeholder="Ex :- S (or leave blank)">
                                                     </div>
                                                 </div>
 
@@ -3047,102 +3047,32 @@
                                                 </div>
                                             </div>
                                             <div class="col-6 col-md-4 col-lg-2 mb-3">
+                                                <div class="card theme-preset-card text-center p-3" data-preset="cleanlight">
+                                                    <div class="d-flex justify-content-center mb-2">
+                                                        <div style="width:20px;height:20px;background:#fbfbfb;border:1px solid #e7e7ea;border-radius:3px;margin-right:3px;"></div>
+                                                        <div style="width:20px;height:20px;background:#5b5bd6;border-radius:3px;"></div>
+                                                    </div>
+                                                    <small class="font-weight-bold">Clean Light</small>
+                                                    <small class="text-muted d-block" style="font-size:10px;line-height:1.2;">minimal &middot; office</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-6 col-md-4 col-lg-2 mb-3">
+                                                <div class="card theme-preset-card text-center p-3" data-preset="macos">
+                                                    <div class="d-flex justify-content-center mb-2">
+                                                        <div style="width:20px;height:20px;background:#ececec;border:1px solid #d2d2d7;border-radius:3px;margin-right:3px;"></div>
+                                                        <div style="width:20px;height:20px;background:#007aff;border-radius:3px;"></div>
+                                                    </div>
+                                                    <small class="font-weight-bold">macOS</small>
+                                                    <small class="text-muted d-block" style="font-size:10px;line-height:1.2;">clean &middot; light</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-6 col-md-4 col-lg-2 mb-3">
                                                 <div class="card theme-preset-card text-center p-3" data-preset="default">
                                                     <div class="d-flex justify-content-center mb-2">
                                                         <div style="width:20px;height:20px;background:#f2f3f7;border:1px solid #ddd;border-radius:3px;margin-right:3px;"></div>
                                                         <div style="width:20px;height:20px;background:#506fe4;border-radius:3px;"></div>
                                                     </div>
                                                     <small class="font-weight-bold">Default</small>
-                                                </div>
-                                            </div>
-                                            <div class="col-6 col-md-4 col-lg-2 mb-3">
-                                                <div class="card theme-preset-card text-center p-3" data-preset="blue">
-                                                    <div class="d-flex justify-content-center mb-2">
-                                                        <div style="width:20px;height:20px;background:#e3f2fd;border:1px solid #ddd;border-radius:3px;margin-right:3px;"></div>
-                                                        <div style="width:20px;height:20px;background:#2196F3;border-radius:3px;"></div>
-                                                    </div>
-                                                    <small class="font-weight-bold">Blue</small>
-                                                </div>
-                                            </div>
-                                            <div class="col-6 col-md-4 col-lg-2 mb-3">
-                                                <div class="card theme-preset-card text-center p-3" data-preset="green">
-                                                    <div class="d-flex justify-content-center mb-2">
-                                                        <div style="width:20px;height:20px;background:#E8F5E9;border:1px solid #ddd;border-radius:3px;margin-right:3px;"></div>
-                                                        <div style="width:20px;height:20px;background:#4CAF50;border-radius:3px;"></div>
-                                                    </div>
-                                                    <small class="font-weight-bold">Green</small>
-                                                </div>
-                                            </div>
-                                            <div class="col-6 col-md-4 col-lg-2 mb-3">
-                                                <div class="card theme-preset-card text-center p-3" data-preset="purple">
-                                                    <div class="d-flex justify-content-center mb-2">
-                                                        <div style="width:20px;height:20px;background:#F3E5F5;border:1px solid #ddd;border-radius:3px;margin-right:3px;"></div>
-                                                        <div style="width:20px;height:20px;background:#9C27B0;border-radius:3px;"></div>
-                                                    </div>
-                                                    <small class="font-weight-bold">Purple</small>
-                                                </div>
-                                            </div>
-                                            <div class="col-6 col-md-4 col-lg-2 mb-3">
-                                                <div class="card theme-preset-card text-center p-3" data-preset="orange">
-                                                    <div class="d-flex justify-content-center mb-2">
-                                                        <div style="width:20px;height:20px;background:#FFF3E0;border:1px solid #ddd;border-radius:3px;margin-right:3px;"></div>
-                                                        <div style="width:20px;height:20px;background:#FF9800;border-radius:3px;"></div>
-                                                    </div>
-                                                    <small class="font-weight-bold">Orange</small>
-                                                </div>
-                                            </div>
-                                            <div class="col-6 col-md-4 col-lg-2 mb-3">
-                                                <div class="card theme-preset-card text-center p-3" data-preset="teal">
-                                                    <div class="d-flex justify-content-center mb-2">
-                                                        <div style="width:20px;height:20px;background:#E0F2F1;border:1px solid #ddd;border-radius:3px;margin-right:3px;"></div>
-                                                        <div style="width:20px;height:20px;background:#009688;border-radius:3px;"></div>
-                                                    </div>
-                                                    <small class="font-weight-bold">Teal</small>
-                                                </div>
-                                            </div>
-                                            <div class="col-6 col-md-4 col-lg-2 mb-3">
-                                                <div class="card theme-preset-card text-center p-3" data-preset="pink">
-                                                    <div class="d-flex justify-content-center mb-2">
-                                                        <div style="width:20px;height:20px;background:#FCE4EC;border:1px solid #ddd;border-radius:3px;margin-right:3px;"></div>
-                                                        <div style="width:20px;height:20px;background:#E91E63;border-radius:3px;"></div>
-                                                    </div>
-                                                    <small class="font-weight-bold">Pink</small>
-                                                </div>
-                                            </div>
-                                            <div class="col-6 col-md-4 col-lg-2 mb-3">
-                                                <div class="card theme-preset-card text-center p-3" data-preset="amber">
-                                                    <div class="d-flex justify-content-center mb-2">
-                                                        <div style="width:20px;height:20px;background:#FFF8E1;border:1px solid #ddd;border-radius:3px;margin-right:3px;"></div>
-                                                        <div style="width:20px;height:20px;background:#FFC107;border-radius:3px;"></div>
-                                                    </div>
-                                                    <small class="font-weight-bold">Amber</small>
-                                                </div>
-                                            </div>
-                                            <div class="col-6 col-md-4 col-lg-2 mb-3">
-                                                <div class="card theme-preset-card text-center p-3" data-preset="indigo">
-                                                    <div class="d-flex justify-content-center mb-2">
-                                                        <div style="width:20px;height:20px;background:#E8EAF6;border:1px solid #ddd;border-radius:3px;margin-right:3px;"></div>
-                                                        <div style="width:20px;height:20px;background:#3F51B5;border-radius:3px;"></div>
-                                                    </div>
-                                                    <small class="font-weight-bold">Indigo</small>
-                                                </div>
-                                            </div>
-                                            <div class="col-6 col-md-4 col-lg-2 mb-3">
-                                                <div class="card theme-preset-card text-center p-3" data-preset="lime">
-                                                    <div class="d-flex justify-content-center mb-2">
-                                                        <div style="width:20px;height:20px;background:#F9FBE7;border:1px solid #ddd;border-radius:3px;margin-right:3px;"></div>
-                                                        <div style="width:20px;height:20px;background:#CDDC39;border-radius:3px;"></div>
-                                                    </div>
-                                                    <small class="font-weight-bold">Lime</small>
-                                                </div>
-                                            </div>
-                                            <div class="col-6 col-md-4 col-lg-2 mb-3">
-                                                <div class="card theme-preset-card text-center p-3" data-preset="cyan">
-                                                    <div class="d-flex justify-content-center mb-2">
-                                                        <div style="width:20px;height:20px;background:#E0F7FA;border:1px solid #ddd;border-radius:3px;margin-right:3px;"></div>
-                                                        <div style="width:20px;height:20px;background:#00BCD4;border-radius:3px;"></div>
-                                                    </div>
-                                                    <small class="font-weight-bold">Cyan</small>
                                                 </div>
                                             </div>
                                             <div class="col-6 col-md-4 col-lg-2 mb-3">
@@ -3159,111 +3089,52 @@
                                         <h6 class="theme-section-title mt-4"><i class="feather icon-moon mr-2"></i>Dark Themes</h6>
                                         <div class="row">
                                             <div class="col-6 col-md-4 col-lg-2 mb-3">
+                                                <div class="card theme-preset-card text-center p-3" data-preset="softdark" style="background:#1d2026;border-color:#2c3038;">
+                                                    <div class="d-flex justify-content-center mb-2">
+                                                        <div style="width:20px;height:20px;background:#16181d;border:1px solid #2c3038;border-radius:3px;margin-right:3px;"></div>
+                                                        <div style="width:20px;height:20px;background:#4aa3ff;border-radius:3px;"></div>
+                                                    </div>
+                                                    <small class="font-weight-bold" style="color:#e6e6e6;">Soft Dark</small>
+                                                    <small class="d-block" style="color:#a7adba;font-size:10px;line-height:1.2;">dimmed &middot; all-day</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-6 col-md-4 col-lg-2 mb-3">
+                                                <div class="card theme-preset-card text-center p-3" data-preset="warmnight" style="background:#252119;border-color:#3a3327;">
+                                                    <div class="d-flex justify-content-center mb-2">
+                                                        <div style="width:20px;height:20px;background:#1c1a17;border:1px solid #3a3327;border-radius:3px;margin-right:3px;"></div>
+                                                        <div style="width:20px;height:20px;background:#e0a458;border-radius:3px;"></div>
+                                                    </div>
+                                                    <small class="font-weight-bold" style="color:#ede4d3;">Warm Night</small>
+                                                    <small class="d-block" style="color:#b8ab97;font-size:10px;line-height:1.2;">warm &middot; late-night</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-6 col-md-4 col-lg-2 mb-3">
+                                                <div class="card theme-preset-card text-center p-3" data-preset="terminal" style="background:#0c0c0c;border-color:#3a3a3a;">
+                                                    <div class="d-flex justify-content-center mb-2">
+                                                        <div style="width:20px;height:20px;background:#0c0c0c;border:1px solid #555;border-radius:3px;margin-right:3px;"></div>
+                                                        <div style="width:20px;height:20px;background:#e8e8e8;border-radius:3px;"></div>
+                                                    </div>
+                                                    <small class="font-weight-bold" style="color:#e8e8e8;font-family:monospace;">Terminal</small>
+                                                    <small class="d-block" style="color:#888;font-size:10px;line-height:1.2;">B&amp;W &middot; cmd</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-6 col-md-4 col-lg-2 mb-3">
+                                                <div class="card theme-preset-card text-center p-3" data-preset="dosblue" style="background:#0000aa;border-color:#5555ff;">
+                                                    <div class="d-flex justify-content-center mb-2">
+                                                        <div style="width:20px;height:20px;background:#0000aa;border:1px solid #5555ff;border-radius:3px;margin-right:3px;"></div>
+                                                        <div style="width:20px;height:20px;background:#ffff55;border-radius:3px;"></div>
+                                                    </div>
+                                                    <small class="font-weight-bold" style="color:#ffff55;font-family:monospace;">Turbo C</small>
+                                                    <small class="d-block" style="color:#b8b8e0;font-size:10px;line-height:1.2;">DOS &middot; retro</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-6 col-md-4 col-lg-2 mb-3">
                                                 <div class="card theme-preset-card text-center p-3" data-preset="dark" style="background:#252526;border-color:#3c3c3c;">
                                                     <div class="d-flex justify-content-center mb-2">
                                                         <div style="width:20px;height:20px;background:#1e1e1e;border:1px solid #3c3c3c;border-radius:3px;margin-right:3px;"></div>
                                                         <div style="width:20px;height:20px;background:#569cd6;border-radius:3px;"></div>
                                                     </div>
                                                     <small class="font-weight-bold" style="color:#cccccc;">VS Code</small>
-                                                </div>
-                                            </div>
-                                            <div class="col-6 col-md-4 col-lg-2 mb-3">
-                                                <div class="card theme-preset-card text-center p-3" data-preset="nord" style="background:#3b4252;border-color:#4c566a;">
-                                                    <div class="d-flex justify-content-center mb-2">
-                                                        <div style="width:20px;height:20px;background:#2e3440;border:1px solid #4c566a;border-radius:3px;margin-right:3px;"></div>
-                                                        <div style="width:20px;height:20px;background:#88c0d0;border-radius:3px;"></div>
-                                                    </div>
-                                                    <small class="font-weight-bold" style="color:#d8dee9;">Nord</small>
-                                                </div>
-                                            </div>
-                                            <div class="col-6 col-md-4 col-lg-2 mb-3">
-                                                <div class="card theme-preset-card text-center p-3" data-preset="monokai" style="background:#3e3d32;border-color:#49483e;">
-                                                    <div class="d-flex justify-content-center mb-2">
-                                                        <div style="width:20px;height:20px;background:#272822;border:1px solid #49483e;border-radius:3px;margin-right:3px;"></div>
-                                                        <div style="width:20px;height:20px;background:#a6e22e;border-radius:3px;"></div>
-                                                    </div>
-                                                    <small class="font-weight-bold" style="color:#f8f8f2;">Monokai</small>
-                                                </div>
-                                            </div>
-                                            <div class="col-6 col-md-4 col-lg-2 mb-3">
-                                                <div class="card theme-preset-card text-center p-3" data-preset="ocean" style="background:#0d2137;border-color:#1e3a5f;">
-                                                    <div class="d-flex justify-content-center mb-2">
-                                                        <div style="width:20px;height:20px;background:#0a1929;border:1px solid #1e3a5f;border-radius:3px;margin-right:3px;"></div>
-                                                        <div style="width:20px;height:20px;background:#00bcd4;border-radius:3px;"></div>
-                                                    </div>
-                                                    <small class="font-weight-bold" style="color:#b3e5fc;">Ocean</small>
-                                                </div>
-                                            </div>
-                                            <div class="col-6 col-md-4 col-lg-2 mb-3">
-                                                <div class="card theme-preset-card text-center p-3" data-preset="sunset" style="background:#16213e;border-color:#2a2a4a;">
-                                                    <div class="d-flex justify-content-center mb-2">
-                                                        <div style="width:20px;height:20px;background:#1a1a2e;border:1px solid #2a2a4a;border-radius:3px;margin-right:3px;"></div>
-                                                        <div style="width:20px;height:20px;background:#ff7043;border-radius:3px;"></div>
-                                                    </div>
-                                                    <small class="font-weight-bold" style="color:#ffd6cc;">Sunset</small>
-                                                </div>
-                                            </div>
-                                            <div class="col-6 col-md-4 col-lg-2 mb-3">
-                                                <div class="card theme-preset-card text-center p-3" data-preset="midnight" style="background:#121212;border-color:#2d2d2d;">
-                                                    <div class="d-flex justify-content-center mb-2">
-                                                        <div style="width:20px;height:20px;background:#000000;border:1px solid #2d2d2d;border-radius:3px;margin-right:3px;"></div>
-                                                        <div style="width:20px;height:20px;background:#bb86fc;border-radius:3px;"></div>
-                                                    </div>
-                                                    <small class="font-weight-bold" style="color:#e0e0e0;">Midnight</small>
-                                                </div>
-                                            </div>
-                                            <div class="col-6 col-md-4 col-lg-2 mb-3">
-                                                <div class="card theme-preset-card text-center p-3" data-preset="dracula" style="background:#44475a;border-color:#6272a4;">
-                                                    <div class="d-flex justify-content-center mb-2">
-                                                        <div style="width:20px;height:20px;background:#282a36;border:1px solid #6272a4;border-radius:3px;margin-right:3px;"></div>
-                                                        <div style="width:20px;height:20px;background:#bd93f9;border-radius:3px;"></div>
-                                                    </div>
-                                                    <small class="font-weight-bold" style="color:#f8f8f2;">Dracula</small>
-                                                </div>
-                                            </div>
-                                            <div class="col-6 col-md-4 col-lg-2 mb-3">
-                                                <div class="card theme-preset-card text-center p-3" data-preset="solarized" style="background:#073642;border-color:#586e75;">
-                                                    <div class="d-flex justify-content-center mb-2">
-                                                        <div style="width:20px;height:20px;background:#002b36;border:1px solid #586e75;border-radius:3px;margin-right:3px;"></div>
-                                                        <div style="width:20px;height:20px;background:#268bd2;border-radius:3px;"></div>
-                                                    </div>
-                                                    <small class="font-weight-bold" style="color:#93a1a1;">Solarized</small>
-                                                </div>
-                                            </div>
-                                            <div class="col-6 col-md-4 col-lg-2 mb-3">
-                                                <div class="card theme-preset-card text-center p-3" data-preset="gruvbox" style="background:#3c3836;border-color:#504945;">
-                                                    <div class="d-flex justify-content-center mb-2">
-                                                        <div style="width:20px;height:20px;background:#282828;border:1px solid #504945;border-radius:3px;margin-right:3px;"></div>
-                                                        <div style="width:20px;height:20px;background:#fe8019;border-radius:3px;"></div>
-                                                    </div>
-                                                    <small class="font-weight-bold" style="color:#ebdbb2;">Gruvbox</small>
-                                                </div>
-                                            </div>
-                                            <div class="col-6 col-md-4 col-lg-2 mb-3">
-                                                <div class="card theme-preset-card text-center p-3" data-preset="onedark" style="background:#21252b;border-color:#3e4451;">
-                                                    <div class="d-flex justify-content-center mb-2">
-                                                        <div style="width:20px;height:20px;background:#282c34;border:1px solid #3e4451;border-radius:3px;margin-right:3px;"></div>
-                                                        <div style="width:20px;height:20px;background:#61afef;border-radius:3px;"></div>
-                                                    </div>
-                                                    <small class="font-weight-bold" style="color:#abb2bf;">One Dark</small>
-                                                </div>
-                                            </div>
-                                            <div class="col-6 col-md-4 col-lg-2 mb-3">
-                                                <div class="card theme-preset-card text-center p-3" data-preset="material" style="background:#1e1e1e;border-color:#2c2c2c;">
-                                                    <div class="d-flex justify-content-center mb-2">
-                                                        <div style="width:20px;height:20px;background:#121212;border:1px solid #2c2c2c;border-radius:3px;margin-right:3px;"></div>
-                                                        <div style="width:20px;height:20px;background:#03dac6;border-radius:3px;"></div>
-                                                    </div>
-                                                    <small class="font-weight-bold" style="color:#e1e1e1;">Material</small>
-                                                </div>
-                                            </div>
-                                            <div class="col-6 col-md-4 col-lg-2 mb-3">
-                                                <div class="card theme-preset-card text-center p-3" data-preset="forest" style="background:#263526;border-color:#2e4a2e;">
-                                                    <div class="d-flex justify-content-center mb-2">
-                                                        <div style="width:20px;height:20px;background:#1b2b1b;border:1px solid #2e4a2e;border-radius:3px;margin-right:3px;"></div>
-                                                        <div style="width:20px;height:20px;background:#4caf50;border-radius:3px;"></div>
-                                                    </div>
-                                                    <small class="font-weight-bold" style="color:#c8e6c9;">Forest</small>
                                                 </div>
                                             </div>
                                         </div>
