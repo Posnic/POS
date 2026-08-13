@@ -313,12 +313,12 @@ describe('Branch schema — default values', () => {
     expect(sp('header_print').defaultValue).toBe('default');
   });
 
-  test('client_dateformat defaults to yyyy/mm/dd', () => {
-    expect(sp('client_dateformat').defaultValue).toBe('yyyy/mm/dd');
+  test('client_dateformat defaults to dd/mm/yyyy', () => {
+    expect(sp('client_dateformat').defaultValue).toBe('dd/mm/yyyy');
   });
 
-  test('server_dateformat defaults to Y/m/d', () => {
-    expect(sp('server_dateformat').defaultValue).toBe('Y/m/d');
+  test('server_dateformat defaults to d/m/Y', () => {
+    expect(sp('server_dateformat').defaultValue).toBe('d/m/Y');
   });
 
   test('phonepe_payment_gateway defaults to null', () => {
