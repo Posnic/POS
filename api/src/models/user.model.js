@@ -1015,7 +1015,13 @@ userSchema.statics.userInsertUpdate = async function (data, id, context) {
     });
 
     const access = {
-      dashboard: { read: 'dashboard_read' in data && data.dashboard_read ? true : false },
+      dashboard: {
+        read: 'dashboard_read' in data && data.dashboard_read ? true : false,
+        // The money-health layer - profit, cost, margin, expenses, cash, dues.
+        // Off by default; granted per user so a salesperson sees they sold well
+        // without seeing what the owner keeps after every other cost.
+        financials: 'dashboard_financials' in data && data.dashboard_financials ? true : false,
+      },
       sales: constructAccess('sales_read', 'sales_write', 'sales_delete'),
       receiving: constructAccess('receiving_read', 'receiving_write', 'receiving_delete'),
       customer: constructAccess('customer_read', 'customer_write', 'customer_delete'),
