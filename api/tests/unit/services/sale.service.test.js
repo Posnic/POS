@@ -34,6 +34,9 @@ jest.mock('../../../src/repositories/branch.repository', () => ({
 
 jest.mock('../../../src/repositories/sale.repository', () => ({
   create: jest.fn(),
+  createSaleUnique: jest.fn(),
+  buildSalesId: jest.fn(),
+  deviceTag: jest.fn(),
   getById: jest.fn(),
   save: jest.fn(),
   aggregate: jest.fn(),
@@ -128,6 +131,14 @@ describe('SalesService', () => {
     salesRepository.getLastSaleForBranch.mockResolvedValue(null);
     salesRepository.nextSalesNumberForBranch.mockResolvedValue(1);
     salesRepository.create.mockResolvedValue({ _id: 'newSaleId' });
+    // Each till stamps its own code into the bill number; here that code is
+    // "TEST". createSaleUnique delegates to create so create-call assertions
+    // still hold.
+    salesRepository.deviceTag.mockResolvedValue('TEST');
+    salesRepository.buildSalesId.mockImplementation(
+      async (prefix, n) => `${prefix}-TEST-${String(n).padStart(6, '0')}`
+    );
+    salesRepository.createSaleUnique.mockImplementation((data) => salesRepository.create(data));
     salesRepository.save.mockResolvedValue({ _id: 'savedId' });
     mockCustomerRepositoryInstance.findById.mockResolvedValue(null);
     mockItemRepositoryInstance.updateStock.mockResolvedValue({});
@@ -251,22 +262,24 @@ describe('SalesService', () => {
       expect(salesRepository.create).toHaveBeenCalledTimes(1);
     });
 
-    test('generates INV-prefixed sales_id for new sale', async () => {
+    test('generates a till-tagged INV sales_id for new sale', async () => {
       salesRepository.nextSalesNumberForBranch.mockResolvedValue(1);
       await salesService.processSale(makeSaleData(), '', 'Add', makeContext());
+      // The bill number now carries this till's code so two tills in one branch
+      // can never mint the same one. Format: <prefix>-<tag>-<number>.
       expect(salesRepository.create).toHaveBeenCalledWith(
-        expect.objectContaining({ sales_id: 'INV000001' })
+        expect.objectContaining({ sales_id: 'INV-TEST-000001' })
       );
     });
 
     test('takes its number from the atomic branch counter', async () => {
-      // The counter allocated 6, so the bill is INV000006 - the service does
-      // not read previous sales at all; that read-then-add-one is what used
-      // to mint duplicate bill numbers under concurrency and after merges.
+      // The counter allocated 6, so the bill is INV-TEST-000006 - the service
+      // does not read previous sales at all; that read-then-add-one is what
+      // used to mint duplicate bill numbers under concurrency and after merges.
       salesRepository.nextSalesNumberForBranch.mockResolvedValue(6);
       await salesService.processSale(makeSaleData(), '', 'Add', makeContext());
       expect(salesRepository.create).toHaveBeenCalledWith(
-        expect.objectContaining({ sales_id: 'INV000006' })
+        expect.objectContaining({ sales_id: 'INV-TEST-000006' })
       );
       expect(salesRepository.getLastSaleForBranch).not.toHaveBeenCalled();
     });

@@ -803,7 +803,9 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
     if (id === '') {
       const prefixValue = context.salesPrefix || 'INV';
       const n = await salesRepository.nextSalesNumberForBranch(branchId, licenseId);
-      prefixId = prefixValue + String(n).padStart(6, '0');
+      // The till's own code is baked into the number so two tills in one branch
+      // can never mint the same bill number - see buildSalesId / deviceTag.
+      prefixId = await salesRepository.buildSalesId(prefixValue, n);
     }
 
     // Extra Discount & Round Off
@@ -1164,7 +1166,13 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
       // ADD: create a new Sale document so that the pre-save hook can
       // normalize the payload into a PHP-style 1:1 document.
       try {
-        result = await salesRepository.create(finalSaleData);
+        // If the unique bill-number index catches a one-in-a-million clash,
+        // take the next number and retry rather than fail the sale.
+        result = await salesRepository.createSaleUnique(finalSaleData, async () => {
+          const pv = context.salesPrefix || 'INV';
+          const nn = await salesRepository.nextSalesNumberForBranch(branchId, licenseId);
+          return salesRepository.buildSalesId(pv, nn);
+        });
       } catch (error) {
         for (const reservation of stockReservations.values()) {
           await itemRepository.updateStock(reservation.itemId, reservation.quantity);
