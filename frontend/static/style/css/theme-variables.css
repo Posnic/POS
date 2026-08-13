@@ -2809,14 +2809,33 @@
 [data-theme="comfort"] .preloader,
 [data-theme="comfort"] .loading,
 [data-theme="comfort"] .loader { background-color: #F3ECDB !important; }
-/* Menu / top-bar icons are light-background images: they blend on a white
-   sidebar but show as separate chips on a warm one. multiply blends their white
-   into the warm surface so only the icon shows, sitting within the background. */
-[data-theme="comfort"] .vertical-menu li a img,
-[data-theme="comfort"] .leftbar img,
-[data-theme="comfort"] .metismenu li a img,
-[data-theme="comfort"] .infobar-icon img,
-[data-theme="comfort"] .menu-hamburger img { mix-blend-mode: multiply; }
+/* Broad warm coverage for surfaces that are otherwise hard-coded white across
+   pages: modals, tables and the datatable loading overlay (the white flash on
+   refresh), file-upload boxes, input add-ons, and any bg-white utility. */
+[data-theme="comfort"] .modal-content,
+[data-theme="comfort"] .modal-header,
+[data-theme="comfort"] .modal-footer,
+[data-theme="comfort"] .bg-white,
+[data-theme="comfort"] .input-group-text,
+[data-theme="comfort"] .custom-file-label,
+[data-theme="comfort"] .dropzone,
+[data-theme="comfort"] .fileupload,
+[data-theme="comfort"] .image-upload,
+[data-theme="comfort"] .dataTables_wrapper,
+[data-theme="comfort"] table.dataTable,
+[data-theme="comfort"] .dataTable td,
+[data-theme="comfort"] .dataTables_processing { background-color: #FBF6EA !important; color: #3A352B; border-color: #E2D7BF; }
+/* The datatable refresh overlay is often opaque white - warm it. */
+[data-theme="comfort"] .dataTables_processing { background-color: #F3ECDB !important; }
+/* Checkboxes/radios: warm the box, keep the sage tick. */
+[data-theme="comfort"] input[type=checkbox],
+[data-theme="comfort"] input[type=radio] { accent-color: #4F7A69; }
+/* Softer top-bar icon hover (the previous one read as harsh). */
+[data-theme="comfort"] .infobar-icon:hover { background-color: #E7DCC6 !important; border-radius: 6px; }
+/* The +Add / menu-toggle chip - no grey. */
+[data-theme="comfort"] .topbar-toggle-hamburger,
+[data-theme="comfort"] .menu-hamburger,
+[data-theme="comfort"] .navbar-toggle { background-color: transparent !important; }
 
 [data-theme="blue"] {
     --theme-primary-color: #2196F3;
