@@ -1177,6 +1177,21 @@ describe('getProfitSummary — financial ACL gate', () => {
     expect(mdl.getProfitSummaryModel).toHaveBeenCalled();
   });
 
+  test('owner (usertype super_admin) gets the profit summary', async () => {
+    const owner = {
+      _id: VALID_ID,
+      usertype: 'super_admin',
+      role: 'super_admin',
+      license: VALID_ID,
+      settings: {},
+      access: {},
+    };
+    const res = mockRes();
+    await controller.getProfitSummary(mockReq({ user: owner }), res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(mdl.getProfitSummaryModel).toHaveBeenCalled();
+  });
+
   test('a salesperson without the flag is refused (403) and the model is never called', async () => {
     const staff = {
       _id: VALID_ID,
