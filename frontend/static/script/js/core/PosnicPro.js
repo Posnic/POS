@@ -2443,11 +2443,45 @@ PosnicPro = {
             suppliers: ['name', 'phone', 'email', 'address'],
             categories: ['name', 'discount_amount', 'discount_percentage', 'description'],
             customercategory: ['name', 'description'],
-            items: ['name', 'itemid', 'barcode_id', 'supplier_name', 'category_name', 'discount_amount', 'discount_percentage', 'tax', 'tax_type', 'mrp_price', 'company_price', 'selling_price', 'available_quantity', 'unit', 'sort_order'],
+            // hsncode/hsndescription/tax_name are accepted by the server import;
+            // they were missing here, which silently dropped them on re-import.
+            items: ['name', 'itemid', 'barcode_id', 'supplier_name', 'category_name', 'discount_amount', 'discount_percentage', 'tax', 'tax_type', 'tax_name', 'hsncode', 'hsndescription', 'mrp_price', 'company_price', 'selling_price', 'available_quantity', 'unit', 'sort_order'],
             expenses: ['amount', 'type', 'category', 'recipientname', 'approvedby', 'description'],
             employees: ['Id', 'Name', 'Phone', 'Email', 'Address', 'Country', 'State', 'City']
         };
         return headersMap[table] || [];
+    },
+
+    /*
+     * Smart column matching for imports. Shops migrate from other POS systems
+     * whose headers never match ours exactly - "Product Name", "MRP", "Rate",
+     * "SKU", "GST%". This maps common header names (lower-cased) to our field,
+     * so those columns land correctly instead of being silently dropped.
+     */
+    importHeaderAlias: function (table) {
+        var maps = {
+            items: {
+                'name': 'name', 'item name': 'name', 'product name': 'name', 'product': 'name', 'item': 'name', 'description': 'name', 'item description': 'name', 'title': 'name', 'particulars': 'name',
+                'itemid': 'itemid', 'sku': 'itemid', 'item code': 'itemid', 'itemcode': 'itemid', 'code': 'itemid', 'item id': 'itemid', 'product code': 'itemid', 'article': 'itemid', 'article no': 'itemid', 'ref': 'itemid',
+                'barcode_id': 'barcode_id', 'barcode': 'barcode_id', 'bar code': 'barcode_id', 'ean': 'barcode_id', 'upc': 'barcode_id',
+                'category_name': 'category_name', 'category': 'category_name', 'group': 'category_name', 'department': 'category_name', 'item group': 'category_name',
+                'supplier_name': 'supplier_name', 'supplier': 'supplier_name', 'vendor': 'supplier_name', 'brand': 'supplier_name', 'manufacturer': 'supplier_name',
+                'mrp_price': 'mrp_price', 'mrp': 'mrp_price', 'max price': 'mrp_price', 'maximum retail price': 'mrp_price', 'list price': 'mrp_price', 'm.r.p': 'mrp_price', 'm.r.p.': 'mrp_price',
+                'company_price': 'company_price', 'cost': 'company_price', 'cost price': 'company_price', 'purchase price': 'company_price', 'buy price': 'company_price', 'buying price': 'company_price', 'purchase rate': 'company_price', 'cp': 'company_price', 'landing cost': 'company_price',
+                'selling_price': 'selling_price', 'selling price': 'selling_price', 'sale price': 'selling_price', 'sales price': 'selling_price', 'price': 'selling_price', 'rate': 'selling_price', 'sell price': 'selling_price', 'unit price': 'selling_price', 'sp': 'selling_price', 'retail price': 'selling_price',
+                'tax': 'tax', 'gst': 'tax', 'tax %': 'tax', 'tax percent': 'tax', 'tax percentage': 'tax', 'vat': 'tax', 'gst %': 'tax', 'gst percentage': 'tax', 'tax rate': 'tax',
+                'tax_type': 'tax_type', 'tax type': 'tax_type',
+                'tax_name': 'tax_name', 'tax name': 'tax_name',
+                'hsncode': 'hsncode', 'hsn': 'hsncode', 'hsn code': 'hsncode', 'hsn/sac': 'hsncode', 'hsn sac': 'hsncode', 'hsncode/sac': 'hsncode',
+                'hsndescription': 'hsndescription', 'hsn description': 'hsndescription',
+                'available_quantity': 'available_quantity', 'quantity': 'available_quantity', 'qty': 'available_quantity', 'stock': 'available_quantity', 'opening stock': 'available_quantity', 'available quantity': 'available_quantity', 'stock qty': 'available_quantity', 'in stock': 'available_quantity', 'current stock': 'available_quantity',
+                'unit': 'unit', 'uom': 'unit', 'units': 'unit', 'measure': 'unit', 'unit of measure': 'unit',
+                'discount_amount': 'discount_amount', 'discount amount': 'discount_amount', 'discount': 'discount_amount', 'disc': 'discount_amount', 'disc amount': 'discount_amount',
+                'discount_percentage': 'discount_percentage', 'discount %': 'discount_percentage', 'discount percent': 'discount_percentage', 'discount percentage': 'discount_percentage', 'disc %': 'discount_percentage',
+                'sort_order': 'sort_order', 'sort order': 'sort_order', 'sort': 'sort_order', 'order': 'sort_order'
+            }
+        };
+        return maps[table] || {};
     }
 };
 
@@ -2583,6 +2617,10 @@ $(".files").on('change', function (e) {
                     var normalizedTableHead = $.map(TableHead, function (h) {
                         return String(h).trim().toLowerCase();
                     });
+                    // Smart aliases, so a migrating shop's headers ("Product Name",
+                    // "MRP", "Rate", "SKU"...) land on the right field instead of
+                    // being dropped.
+                    var importAliasMap = PosnicPro.importHeaderAlias(PosnicPro.importAction);
 
                     for (var i = 1; i < lines.length; i++) {
                         var obj = {};
@@ -2603,16 +2641,17 @@ $(".files").on('change', function (e) {
 
                                 var lookupTitle = headTitle.toLowerCase();
                                 var headerIndex = $.inArray(lookupTitle, normalizedTableHead);
+                                // Exact header match first; if that misses, fall back to
+                                // the smart alias map so common variants still map.
+                                var keyName = headerIndex !== -1
+                                    ? TableHead[headerIndex]
+                                    : (importAliasMap[lookupTitle] || null);
 
-                                if (headerIndex !== -1) {
-                                    // Use the canonical key from TableHead so that
-                                    // data always maps to the expected field name.
-                                    var keyName = TableHead[headerIndex];
+                                if (keyName) {
                                     obj[keyName] = String(currentline[j]).replace(/\"/g, "");
                                 } else {
-                                    // Ignore unknown / extra columns gracefully. The server-side
-                                    // import model will validate presence of required fields and
-                                    // report any CSV issues row-by-row.
+                                    // Unknown / extra column - ignored gracefully; the server
+                                    // validates required fields and reports issues row-by-row.
                                     continue;
                                 }
                             }
