@@ -2759,6 +2759,32 @@
 [data-theme="comfort"] .checkbox input[type=checkbox]:checked:after,
 [data-theme="comfort"] .custom-radio .custom-control-input:checked~.custom-control-label::before,
 [data-theme="comfort"] .custom-control-input:checked~.custom-control-label::before { background-color: #4F7A69 !important; border-color: #4F7A69 !important; }
+/* Warm the surfaces that were still hard-coded white: table headers, title and
+   breadcrumb bars, and the datatable/page loading overlays. */
+[data-theme="comfort"] .table thead th,
+[data-theme="comfort"] thead th,
+[data-theme="comfort"] .BestSellingitem,
+[data-theme="comfort"] .Expireditem,
+[data-theme="comfort"] .BestSellingitem th,
+[data-theme="comfort"] .dataTables_scrollHead { background-color: #EFE7D3 !important; color: #3A352B !important; }
+[data-theme="comfort"] .breadcrumbbar,
+[data-theme="comfort"] .crumbbar_padding,
+[data-theme="comfort"] .page-title-box { background-color: #F3ECDB !important; }
+[data-theme="comfort"] .dataTables_processing,
+[data-theme="comfort"] .page_loader,
+[data-theme="comfort"] .preloader,
+[data-theme="comfort"] .loader-login { background-color: #F3ECDB !important; }
+/* Smoother, warmer text throughout - antialiased, warm dark-grey not black, so
+   it reads easily over a long shift without harshness. */
+[data-theme="comfort"] { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+[data-theme="comfort"] body,
+[data-theme="comfort"] p,
+[data-theme="comfort"] td,
+[data-theme="comfort"] label,
+[data-theme="comfort"] .table,
+[data-theme="comfort"] .text-dark { color: #453F34; }
+[data-theme="comfort"] .text-muted,
+[data-theme="comfort"] .dim { color: #8A8069 !important; }
 
 [data-theme="blue"] {
     --theme-primary-color: #2196F3;
