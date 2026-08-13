@@ -989,9 +989,18 @@ PosnicPro.dashboard = {
         return { day: 'Today', week: 'This Week', month: 'This Month', year: 'This Year' }[filter] || 'Today';
     },
 
+    // Time-of-day greeting, worked out on the client so it costs no request.
+    greeting: function () {
+        var h = new Date().getHours();
+        var wish = h < 12 ? 'Good Morning' : h < 17 ? 'Good Afternoon' : h < 21 ? 'Good Evening' : 'Good Night';
+        var name = ($('.branch-name').first().text() || '').trim();
+        $('#dashboard_greeting').text(wish + (name ? ', ' + name : ''));
+    },
+
     KPI_IDS: '#kpi_sales,#kpi_purchase,#kpi_expenses,#kpi_tax,#kpi_upi,#kpi_cash',
 
     loadOverview: function (filter) {
+        PosnicPro.dashboard.greeting();
         $(PosnicPro.dashboard.KPI_IDS).text('…');
         $('#kpi_period_label').text('(' + PosnicPro.dashboard.periodLabel(filter) + ')');
 
