@@ -45,7 +45,6 @@
                                     <a href="#/quickreport" data-module="report" data-access="read" class="btn btn-light btn-sm"><i class="feather icon-bar-chart-2 mr-1"></i>Daily Report</a>
                                     <a href="#/items" data-module="item" data-access="read" class="btn btn-light btn-sm"><i class="feather icon-package mr-1"></i>Items</a>
                                     <a href="#/items" data-module="item" data-access="write" class="btn btn-light btn-sm"><i class="feather icon-plus mr-1"></i>Add Item</a>
-                                    <a href="#/bulkitems" data-module="item" data-access="write" class="btn btn-light btn-sm"><i class="feather icon-upload mr-1"></i>Bulk Import</a>
                                 </div>
                             </div>
                         </div>
@@ -104,8 +103,11 @@
                 </div>
             </div>
 
-            <!-- Everyone: what's selling, and who owes money -->
-            <div class="row">
+            <!-- Everyone: what's selling, and who owes money. align-items-start so
+                 the short Customer Dues card fits its content instead of stretching
+                 to match Best Sellers (Bootstrap rows equalise column height by
+                 default), which was making the page tall and scroll. -->
+            <div class="row align-items-start">
                 <div class="col-md-8">
                     <div class="card m-b-30">
                         <div class="card-header">
