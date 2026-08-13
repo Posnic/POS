@@ -103,11 +103,10 @@
                 </div>
             </div>
 
-            <!-- Everyone: what's selling, and who owes money. align-items-start so
-                 the short Customer Dues card fits its content instead of stretching
-                 to match Best Sellers (Bootstrap rows equalise column height by
-                 default), which was making the page tall and scroll. -->
-            <div class="row align-items-start">
+            <!-- Everyone: what's selling, and who owes money. When there are no
+                 dues, JS (syncDuesHeight) sizes the empty card to match Best
+                 Sellers so the page fits one screen; with dues it grows. -->
+            <div class="row">
                 <div class="col-md-8">
                     <div class="card m-b-30">
                         <div class="card-header">
@@ -151,10 +150,7 @@
                                 </div>
                             </div>
                         </div>
-                        <!-- Height fits its content and caps at a sane max with its own
-                             scroll, so an empty or long dues list never stretches the
-                             whole page into a scroll. -->
-                        <div class="card-body recentBody" style="min-height:auto; height:auto; max-height:320px; overflow-y:auto;">
+                        <div class="card-body recentBody" style="min-height:auto;">
                             <div class="ecom-notification-box">
                                 <ul class="list-unstyled" id="lstRecentActivities">
                                     <li class="text-muted" style="padding:12px 4px;">No customer owes money right now.</li>
