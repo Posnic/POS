@@ -35,6 +35,34 @@
                     </div>
                 </div>
             </div>
+            <!-- Profit summary for the selected period -->
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="card m-b-30">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h5 class="mb-0 text-secondary"><i class="feather icon-trending-up mr-1"></i> Profit <span class="text-muted" style="font-size:12px;" id="profit_period_label"></span></h5>
+                                <span class="text-muted" id="profit_sales_count" style="font-size:12px;"></span>
+                            </div>
+                            <div class="row text-center align-items-center" style="font-size:13.5px;">
+                                <div class="col-6 col-md mb-2"><div class="text-muted">Sales</div><div class="f-w-6" id="profit_revenue">-</div></div>
+                                <div class="col-6 col-md mb-2"><div class="text-muted">Cost of goods</div><div class="f-w-6" id="profit_cogs">-</div></div>
+                                <div class="col-6 col-md mb-2"><div class="text-muted">Gross profit</div><div class="f-w-6 text-success" id="profit_gross">-</div></div>
+                                <div class="col-6 col-md mb-2"><div class="text-muted">Expenses</div><div class="f-w-6 text-danger" id="profit_expenses">-</div></div>
+                                <div class="col-12 col-md mb-2" style="border-left:1px solid #eef0f3;">
+                                    <div class="text-muted">Net profit</div>
+                                    <div style="font-size:22px; font-weight:700;" id="profit_net" class="text-success">-</div>
+                                    <div class="text-muted" style="font-size:12px;" id="profit_margin"></div>
+                                </div>
+                            </div>
+                            <div class="text-muted" style="font-size:11.5px; margin-top:6px;">
+                                Net profit = sales &minus; cost of goods sold &minus; expenses, using the cost recorded on each sale.
+                                <span id="profit_cashflow_note"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div class="row">
                 <!-- Start col -->
                 <div class="col-md-9">

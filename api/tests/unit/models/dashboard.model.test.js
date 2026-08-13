@@ -253,6 +253,53 @@ describe('DashboardModel — sumCollectionField()', () => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// 4b. getProfitSummaryModel()
+// ═══════════════════════════════════════════════════════════════════════════════
+describe('DashboardModel — getProfitSummaryModel()', () => {
+  const range = { starting_date: '2026-01-01', ending_date: '2026-01-31', filter: 'month' };
+
+  test('computes gross/net profit, margin and cash flow from the period totals', async () => {
+    // revenue, COGS, returns, purchases, expenses - keyed by collection.field.
+    const sums = {
+      'sales.items_total': 1000,
+      'sales.total_companyprice': 600,
+      'sales.items_return_total': 50,
+      'receivings.items_total': 400,
+      'expenses.amount': 150,
+    };
+    jest
+      .spyOn(dm, 'sumCollectionField')
+      .mockImplementation((coll, _m, field) => Promise.resolve(sums[`${coll}.${field}`] || 0));
+    jest
+      .spyOn(dm, 'getCollection')
+      .mockResolvedValue({ countDocuments: jest.fn().mockResolvedValue(12) });
+
+    const r = await dm.getProfitSummaryModel(range);
+
+    expect(r.status).toBe(true);
+    expect(r.data.revenue).toBe(1000);
+    expect(r.data.cogs).toBe(600);
+    expect(r.data.gross_profit).toBe(400); // revenue - COGS
+    expect(r.data.expenses).toBe(150);
+    expect(r.data.net_profit).toBe(250); // gross - expenses
+    expect(r.data.purchases).toBe(400);
+    expect(r.data.cash_flow).toBe(450); // revenue - purchases - expenses
+    expect(r.data.margin_percent).toBe(25); // 250/1000
+    expect(r.data.sales_count).toBe(12);
+  });
+
+  test('margin is 0 with no revenue, and never divides by zero', async () => {
+    jest.spyOn(dm, 'sumCollectionField').mockResolvedValue(0);
+    jest
+      .spyOn(dm, 'getCollection')
+      .mockResolvedValue({ countDocuments: jest.fn().mockResolvedValue(0) });
+    const r = await dm.getProfitSummaryModel(range);
+    expect(r.data.margin_percent).toBe(0);
+    expect(r.data.net_profit).toBe(0);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // 5. getDashboardPaymentModeDataModel()
 // ═══════════════════════════════════════════════════════════════════════════════
 describe('DashboardModel — getDashboardPaymentModeDataModel()', () => {

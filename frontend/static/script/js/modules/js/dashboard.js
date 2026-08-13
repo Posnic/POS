@@ -930,6 +930,41 @@ PosnicPro.dashboard = {
     },
 
     //Day, Week, Month, Year
+    /*
+     * The profit summary for the selected period: what came in, what the goods
+     * cost, what else was spent, and what is left. The server does the sums off
+     * the cost recorded on each sale, so the margin is real, not estimated.
+     */
+    getProfitSummary: function (filter) {
+        var params = { url: 'dashboard/getProfitSummary', data: { filter: filter } };
+        PosnicPro.get(params, function (response) {
+            if (response.type !== 'success') { return; }
+            var d = response.data || {};
+            var cur = PosnicPro.local.get('currencySign') || '';
+            var money = function (v) {
+                return cur + ' ' + (Number(v) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            };
+            var period = filter || 'month';
+
+            $('#profit_revenue').text(money(d.revenue));
+            $('#profit_cogs').text(money(d.cogs));
+            $('#profit_gross').text(money(d.gross_profit));
+            $('#profit_expenses').text(money(d.expenses));
+
+            var net = Number(d.net_profit) || 0;
+            $('#profit_net').text(money(net))
+                .removeClass('text-success text-danger')
+                .addClass(net >= 0 ? 'text-success' : 'text-danger');
+            $('#profit_margin').text((Number(d.margin_percent) || 0) + '% margin');
+            $('#profit_period_label').text('(' + period + ')');
+            $('#profit_sales_count').text((d.sales_count || 0) + ' sale' + (d.sales_count === 1 ? '' : 's'));
+            $('#profit_cashflow_note').text(
+                ' Stock bought this ' + period + ': ' + money(d.purchases) +
+                '. Cash in minus out: ' + money(d.cash_flow) + '.'
+            );
+        }, function () { });
+    },
+
     activeInActiveFilterButtons: function (filter, obj) {
         var arrBtns = ['btnDashboardCountYear', 'btnDashboardCountMonth', 'btnDashboardCountWeek', 'btnDashboardCountDay'];
 
@@ -939,6 +974,7 @@ PosnicPro.dashboard = {
         }
         $("#" + obj.id).addClass("active");
         //Call All other corresponding Functions
+        PosnicPro.dashboard.getProfitSummary(filter);
         PosnicPro.dashboard.getDashboardSalesPaymentModeData(filter);
         PosnicPro.dashboard.getDashboardTotalAmounts(filter);
         PosnicPro.dashboard.getDashboardSalesPurchase(filter);

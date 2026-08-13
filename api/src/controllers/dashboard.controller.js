@@ -12,6 +12,7 @@ class DashboardController extends BaseController {
     this.getDashboardTopPerformers = this.getDashboardTopPerformers.bind(this);
     this.getDashboardTotalAmounts = this.getDashboardTotalAmounts.bind(this);
     this.getDashboardSalesPurchase = this.getDashboardSalesPurchase.bind(this);
+    this.getProfitSummary = this.getProfitSummary.bind(this);
     this.getDashboardBestSellingProducts = this.getDashboardBestSellingProducts.bind(this);
     this.getDashboardExpiredProducts = this.getDashboardExpiredProducts.bind(this);
     this.debugSessionFilter = this.debugSessionFilter.bind(this);
@@ -417,6 +418,50 @@ class DashboardController extends BaseController {
       return res.status(500).json({
         type: 'error',
         message: 'An error occurred while fetching dashboard totals',
+        data: null,
+      });
+    }
+  }
+
+  async getProfitSummary(req, res) {
+    try {
+      if (!req.user) {
+        return res
+          .status(401)
+          .json({ type: 'error', message: 'Authentication required', data: null });
+      }
+
+      await this.ensureContext(req);
+
+      const { filter = 'month' } = req.query;
+      const timeZone = req.user?.settings?.time_zone || 'Asia/Kolkata';
+      const originalDateRange = this.getDatesBasedOnFilter(filter, timeZone);
+      const filteredDateRange = await sessionFilterUtil.applySessionFilter(req, originalDateRange);
+
+      const result = await req.dashboardModel.getProfitSummaryModel({
+        starting_date: filteredDateRange.start_date,
+        ending_date: filteredDateRange.end_date,
+        filter,
+      });
+
+      if (result?.status) {
+        return res.status(200).json({
+          type: 'success',
+          message: result.message || 'Profit summary',
+          data: result.data,
+        });
+      }
+
+      return res.status(400).json({
+        type: 'error',
+        message: result?.message || 'Failed to compute profit',
+        data: null,
+      });
+    } catch (error) {
+      console.error('Error in getProfitSummary:', error);
+      return res.status(500).json({
+        type: 'error',
+        message: 'An error occurred while computing profit',
         data: null,
       });
     }

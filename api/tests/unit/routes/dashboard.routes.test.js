@@ -8,6 +8,7 @@ jest.mock('../../../src/controllers/dashboard.controller', () => ({
   getDashboardBestSellingProducts: jest.fn(),
   getDashboardTotalAmounts: jest.fn(),
   getDashboardSalesPurchase: jest.fn(),
+  getProfitSummary: jest.fn(),
   getDashboardExpiredProducts: jest.fn(),
   debugSessionFilter: jest.fn(),
 }));
