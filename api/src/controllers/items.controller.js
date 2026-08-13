@@ -1292,6 +1292,27 @@ class ItemsController extends BaseController {
     }
   }
 
+  async getBulkPriceUpdates(req, res) {
+    try {
+      if (req.user?.access?.item?.read === false) {
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+      }
+      await this.ensureContext(req);
+      const result = await this.service.getBulkPriceUpdates({
+        limit: req.query.limit,
+        skip: req.query.skip,
+      });
+      return this.success(
+        res,
+        { runs: result.data || [], total: result.total || 0 },
+        'Bulk price history'
+      );
+    } catch (error) {
+      console.error('Error in getBulkPriceUpdates:', error);
+      return this.error(res, error.message, 500);
+    }
+  }
+
   /**
    * PHP: itemsImport() - Bulk import items from CSV/Excel
    * Frontend posts to `items/itemsImport` with body { result: [...] }.
