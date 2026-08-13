@@ -332,6 +332,18 @@
                                     <p class="text-muted" style="font-size:12px; margin:4px 0 10px;">
                                         Changes to this item - price, name, category, tax, SKU and more. Sales and returns are under <b>Activities</b>; stock movement is in the stock log.
                                     </p>
+                                    <div id="item_history_filter_row" style="display:none; margin-bottom:10px;">
+                                        <label style="font-size:12px; margin-right:6px;">Show</label>
+                                        <select id="item_history_filter" class="form-control" style="display:inline-block; width:auto; font-size:13px; padding:2px 8px;" onchange="PosnicPro.itemdetails.renderHistory();">
+                                            <option value="all">All changes</option>
+                                            <option value="price">Price changes</option>
+                                            <option value="name">Name</option>
+                                            <option value="category">Category</option>
+                                            <option value="tax">Tax</option>
+                                            <option value="sku">SKU / Barcode</option>
+                                        </select>
+                                        <span id="item_history_filter_count" class="text-muted" style="font-size:12px; margin-left:8px;"></span>
+                                    </div>
                                     <div class="portlet-body loader-item-pricehistory">
                                         <div id="item_pricehistory_empty" class="text-center text-muted" style="display:none; padding:40px 10px;">
                                             <i class="feather icon-clock" style="font-size:40px; opacity:.25;"></i>
