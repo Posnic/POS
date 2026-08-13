@@ -72,6 +72,86 @@ const repairBranchSettings = async (db) => {
   return repaired;
 };
 
+/*
+ * Give every duplicated bill number a proper, unique one - the self-healing
+ * half of the cross-device fix.
+ *
+ * Two tills in a branch used to hand out the same SID000005 (each ran its own
+ * local counter), and sync kept both. New sales can no longer collide - each
+ * till now stamps its own code into the number - but the ones already minted
+ * are still doubled. This repairs them where they sit: for each clashing number
+ * it keeps the earliest document and renumbers the rest, taking fresh numbers
+ * from the same atomic counter the app uses and tagging them with this till's
+ * code so the new numbers are unique too.
+ *
+ * Safe to run on every till at startup: all tills sort the same way (earliest
+ * first) so they agree on which document keeps the number; a renumbered
+ * document is no longer a duplicate, so a second pass leaves it alone; and every
+ * change is copied to database_repair_backup first. A renumber that loses a sync
+ * race just settles on one unique number - never two sales sharing one.
+ */
+const renumberDuplicateSales = async (db) => {
+  const sales = db.collection('sales');
+  const backup = db.collection('database_repair_backup');
+  const counters = db.collection('counters');
+
+  const groups = await sales.aggregate([
+    { $match: { sales_id: { $exists: true, $nin: [null, ''] } } },
+    { $group: { _id: { license: '$license', branch: { $ifNull: ['$branch_id', '$branch'] }, value: '$sales_id' }, count: { $sum: 1 }, docs: { $push: { id: '$_id', created: '$created_date' } } } },
+    { $match: { count: { $gt: 1 } } },
+    { $limit: 500 },
+  ]).toArray();
+  if (!groups.length) return 0;
+
+  // This till's code, from the same place the app keeps it. Absent on a till
+  // that has not run the new app yet: fall back to an untagged number, still
+  // unique because the counter keeps advancing.
+  let tag = '';
+  try {
+    const m = await db.collection('device_meta').findOne({ _id: 'device_tag' });
+    tag = (m && m.tag) || '';
+  } catch (e) { /* untagged fallback */ }
+
+  const nextNumber = async (branchVal, licenseVal) => {
+    const key = { kind: 'sales_id', branch_key: String(branchVal || ''), license_key: String(licenseVal || '') };
+    const existing = await counters.findOne(key);
+    if (!existing) {
+      // Seed from the highest number this branch ever issued, as the app does,
+      // so a renumber never restarts low.
+      const rows = await sales.find({ $or: [{ branch_id: branchVal }, { branch: branchVal }], license: licenseVal }, { projection: { sales_id: 1 } }).toArray();
+      let max = 0;
+      for (const r of rows) { const mm = /(\d+)\s*$/.exec(String((r && r.sales_id) || '')); if (mm) max = Math.max(max, parseInt(mm[1], 10)); }
+      await counters.updateOne(key, { $setOnInsert: { seq: max } }, { upsert: true }).catch(() => {});
+    }
+    const res = await counters.findOneAndUpdate(key, { $inc: { seq: 1 } }, { returnDocument: 'after' });
+    const doc = res && (typeof res.seq === 'number' ? res : res.value);
+    return doc && typeof doc.seq === 'number' ? doc.seq : null;
+  };
+
+  let renumbered = 0;
+  for (const g of groups) {
+    const docs = g.docs.slice().sort((a, b) => {
+      const ca = a.created ? new Date(a.created).getTime() : 0;
+      const cb = b.created ? new Date(b.created).getTime() : 0;
+      if (ca !== cb) return ca - cb;
+      return String(a.id).localeCompare(String(b.id));
+    });
+    const basePrefix = String(g._id.value).replace(/-?\d+\s*$/, '') || 'SID';
+    // Keep the earliest; renumber the rest.
+    for (let i = 1; i < docs.length; i++) {
+      const d = docs[i];
+      const seq = await nextNumber(g._id.branch, g._id.license);
+      if (!seq) continue;
+      const num = String(seq).padStart(6, '0');
+      const newId = tag ? `${basePrefix}-${tag}-${num}` : `${basePrefix}${num}`;
+      await backup.insertOne({ source_collection: 'sales', source_id: d.id, reason: 'duplicate_sales_id_renumber', original_sales_id: g._id.value, new_sales_id: newId, repaired_at: new Date() }).catch(() => {});
+      await sales.updateOne({ _id: d.id }, { $set: { sales_id: newId, invoice_number: newId, sale_no: newId, updated_date: new Date() } });
+      renumbered += 1;
+    }
+  }
+  return renumbered;
+};
+
 const runDatabaseHealthCheck = async (mongoClient) => {
   const startedAt = Date.now();
   const report = { status: 'healthy', connection: 'ok', indexes: [], duplicates: [], repairs: [], warnings: [], errors: [] };
@@ -135,6 +215,19 @@ const runDatabaseHealthCheck = async (mongoClient) => {
      * it raised a health warning on every start for something that is not
      * wrong, so it is no longer treated as a database-health problem.
      */
+    /*
+     * Repair duplicate bill numbers before checking for them, so a shop that
+     * carried the old cross-device duplicates is fixed on this launch instead
+     * of being warned about them again. New sales already cannot collide.
+     */
+    let renumberedSales = 0;
+    try {
+      renumberedSales = await renumberDuplicateSales(db);
+    } catch (error) {
+      report.errors.push(`Duplicate bill-number repair: ${error.message}`);
+    }
+    report.repairs.push({ type: 'duplicate_sales_id', repaired: renumberedSales });
+
     report.duplicates = (await Promise.all([
       duplicateCheck(db, 'sales', 'sales_id'),
       duplicateCheck(db, 'items', 'barcode_id'),
@@ -165,4 +258,4 @@ const runDatabaseHealthCheck = async (mongoClient) => {
   return report;
 };
 
-module.exports = { runDatabaseHealthCheck };
+module.exports = { runDatabaseHealthCheck, renumberDuplicateSales };
