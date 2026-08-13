@@ -2170,8 +2170,8 @@ body {
 /* --- Clean Light: minimal off-white (Linear/Notion feel), indigo accent,
    subtle grey pill selections. Light base needs few overrides. --- */
 [data-theme="cleanlight"] {
-    --theme-primary-color: #5b5bd6;
-    --theme-primary-hover: #4d4dbf;
+    --theme-primary-color: #52525b;
+    --theme-primary-hover: #3f3f46;
     --theme-body-bg: #fbfbfb;
     --theme-card-bg: #ffffff;
     --theme-sidebar-bg: #fbfbfb;
@@ -2186,12 +2186,12 @@ body {
     --theme-menu-text: #3f3f46;
     --theme-menu-active-bg: #eef0f4;
     --theme-menu-active-text: #18181b;
-    --theme-btn-primary-bg: #5b5bd6;
+    --theme-btn-primary-bg: #52525b;
     --theme-btn-primary-text: #ffffff;
     --theme-success-color: #16a34a;
     --theme-warning-color: #d97706;
     --theme-danger-color: #dc2626;
-    --theme-info-color: #2563eb;
+    --theme-info-color: #52525b;
 }
 [data-theme="cleanlight"] .card { border: 1px solid #ececee !important; box-shadow: none !important; }
 [data-theme="cleanlight"] .vertical-menu > li > a { border-radius: 7px !important; margin: 1px 8px; padding: 7px 12px !important; }
@@ -2308,3 +2308,109 @@ body {
 [data-theme="cleanlight"] .vertical-menu-icon { background-color: #e8e8ec !important; }
 [data-theme="cleanlight"] .vertical-menu-icon .nav-link img { filter: brightness(0) invert(0.4) !important; }
 [data-theme="cleanlight"] .vertical-menu-icon .nav-pills .nav-link.active { background-color: #d6d6da !important; }
+
+/* Narrow icon rail (all themes): the logo had a 200px bottom margin that pushed
+   the first icon far below the expanded menu's first item. Bring the icons up
+   near the top, and add a hairline separation from the expanded menu. */
+.vertical-menu-icon .nav-pills .logobar { margin-bottom: 20px !important; }
+.vertical-menu-icon { border-right: 1px solid rgba(128,128,128,0.25) !important; }
+/* Monospace themes: smaller font + no-wrap + tighter spacing so long items like
+   "Customer Category" fit on one line in the expanded menu. */
+[data-theme="terminal"] .vertical-menu > li > a,
+[data-theme="dosblue"] .vertical-menu > li > a { font-size: 13px !important; white-space: nowrap !important; padding-left: 10px !important; padding-right: 6px !important; }
+[data-theme="terminal"] .vertical-menu > li > a > img,
+[data-theme="dosblue"] .vertical-menu > li > a > img { margin-right: 5px !important; }
+/* macOS: grey Finder-style rail (not the blue primary) so it reads distinct from
+   Default and matches the Mac look. */
+[data-theme="macos"] .vertical-menu-icon { background-color: #e8e8ec !important; }
+[data-theme="macos"] .vertical-menu-icon .nav-link img { filter: brightness(0) invert(0.4) !important; }
+[data-theme="macos"] .vertical-menu-icon .nav-pills .nav-link.active { background-color: #d6d6da !important; }
+/* Clean Light: grey the expanded-menu icons too (fully monochrome). */
+[data-theme="cleanlight"] .vertical-menu > li > a img { filter: brightness(0) invert(0.4) !important; }
+/* Hardcoded-blue text (report summary card titles + amounts, and the shop-name
+   logo) made theme-aware so Clean Light greys them and every theme colours them
+   correctly. */
+[data-theme] .summary_font_blue,
+[data-theme] .title_h2 { color: var(--theme-primary-color) !important; }
+/* Modal header (Sale Details etc.) was hardcoded #506fe4 for every theme. Theme
+   it with the primary bg + a CONTRASTING title/close (--theme-btn-primary-text
+   is dark on light-accent themes like Turbo C/Terminal/Warm Night, white else).
+   Also theme the custom infobar detail-panel title. */
+[data-theme] .modal-header { background-color: var(--theme-primary-color) !important; border-color: var(--theme-primary-color) !important; }
+[data-theme] .modal-title,
+[data-theme] .modal-header .close,
+[data-theme] .modal-header .close span { color: var(--theme-btn-primary-text, #ffffff) !important; text-shadow: none !important; opacity: 1 !important; }
+[data-theme] .infobar-settings-sidebar .infobar-settings-sidebar-head h4 { color: var(--theme-primary-color) !important; }
+/* Detail-panel close X is an <img> tinted blue by the base filter. Neutralise it
+   per theme: a dark X on light themes, a light X on dark themes. */
+[data-theme="cleanlight"] .infobar-settings-close img,
+[data-theme="macos"] .infobar-settings-close img,
+[data-theme="brown"] .infobar-settings-close img,
+[data-theme="default"] .infobar-settings-close img { filter: brightness(0) opacity(0.5) !important; }
+[data-theme="dark"] .infobar-settings-close img { filter: brightness(0) invert(1) !important; }
+/* New Sale tabs (nav-justified): active tab was a white box on the dark themes.
+   Theme it (underline style) for EVERY theme, not just terminal/dosblue. */
+[data-theme] .nav-tabs.nav-justified,
+[data-theme] .nav-tabs.nav-justified .nav-item,
+[data-theme] #defaultTabJustified,
+[data-theme] #defaultTabJustified .nav-item { background: transparent !important; }
+[data-theme] .nav-tabs.nav-justified .nav-link,
+[data-theme] #defaultTabJustified .nav-link { color: var(--theme-text-secondary) !important; background: transparent !important; }
+[data-theme] .nav-tabs.nav-justified .nav-link.active,
+[data-theme] #defaultTabJustified .nav-link.active { color: var(--theme-primary-color) !important; background: transparent !important; border-bottom: 3px solid var(--theme-primary-color) !important; }
+
+/* Detail-panel close X for Terminal + Turbo C (was still blue) - light X. */
+[data-theme="terminal"] .infobar-settings-close img,
+[data-theme="dosblue"] .infobar-settings-close img { filter: brightness(0) invert(1) !important; }
+/* Primary badges (Shortcut Keys etc.): contrasting text so a light-accent theme
+   (Terminal white / Turbo C yellow) doesn't render white-on-white. */
+[data-theme] .badge-primary { color: var(--theme-btn-primary-text, #ffffff) !important; }
+/* Dark character themes: theme the modal content + body so popups (Shortcut
+   Keys, Sale Details) are light text on a dark surface, not dark-on-dark. */
+[data-theme="terminal"] .modal-content, [data-theme="dosblue"] .modal-content,
+[data-theme="softdark"] .modal-content, [data-theme="warmnight"] .modal-content { background-color: var(--theme-card-bg) !important; }
+[data-theme="terminal"] .modal-body, [data-theme="dosblue"] .modal-body,
+[data-theme="softdark"] .modal-body, [data-theme="warmnight"] .modal-body { color: var(--theme-text-primary) !important; }
+/* Clean Light: subtle light-grey top-bar icon hover (not a solid dark chip), dark
+   icon on hover (not the blue tint). */
+[data-theme="cleanlight"] .topbar .infobar .infobar-icon:hover,
+[data-theme="cleanlight"] .topbar .togglebar .menu-hamburger:hover { background-color: #e4e4e7 !important; }
+[data-theme="cleanlight"] .topbar .infobar .infobar-icon:hover img { filter: brightness(0) invert(0.3) !important; }
+
+/* ===== Soft Dark + Warm Night: the remaining dark-surface spots the other dark
+   character themes already had (rail, top-bar icon chips, hamburger, profile
+   menu, striped rows, item-details popup, row-action toolbar). ===== */
+/* Narrow rail: dark (not the blue primary) with light icons. */
+[data-theme="softdark"] .vertical-menu-icon,
+[data-theme="warmnight"] .vertical-menu-icon { background-color: var(--theme-sidebar-bg) !important; }
+[data-theme="softdark"] .vertical-menu-icon .nav-link img,
+[data-theme="warmnight"] .vertical-menu-icon .nav-link img,
+[data-theme="softdark"] .vertical-menu > li > a img,
+[data-theme="warmnight"] .vertical-menu > li > a img { filter: brightness(0) invert(1) !important; }
+/* Top-bar utility icons + hamburger toggle: drop the white circle chip. */
+[data-theme="softdark"] .topbar .infobar .infobar-icon,
+[data-theme="warmnight"] .topbar .infobar .infobar-icon,
+[data-theme="softdark"] .topbar .togglebar .menu-hamburger,
+[data-theme="warmnight"] .topbar .togglebar .menu-hamburger,
+[data-theme="softdark"] .topbar-mobile .mobile-togglebar .menu-hamburger,
+[data-theme="warmnight"] .topbar-mobile .mobile-togglebar .menu-hamburger { background-color: transparent !important; }
+/* Profile dropdown items were dark navy - invisible on a dark menu. */
+[data-theme="softdark"] .userbox .profile-icon,
+[data-theme="warmnight"] .userbox .profile-icon { color: var(--theme-text-primary) !important; }
+/* Striped rows (item-details values etc.) had white odd rows. */
+[data-theme="softdark"] .table-striped tbody tr:nth-of-type(odd),
+[data-theme="warmnight"] .table-striped tbody tr:nth-of-type(odd) { background-color: var(--theme-table-row-hover) !important; color: var(--theme-text-primary) !important; }
+[data-theme="softdark"] input[type=checkbox]:checked:after,
+[data-theme="warmnight"] input[type=checkbox]:checked:after { background-color: var(--theme-primary-color) !important; border-color: var(--theme-primary-color) !important; }
+/* Item-details / detail popup (custom infobar panel): title + close X. */
+[data-theme="softdark"] .infobar-settings-sidebar .infobar-settings-sidebar-head h4,
+[data-theme="warmnight"] .infobar-settings-sidebar .infobar-settings-sidebar-head h4 { color: var(--theme-text-primary) !important; }
+[data-theme="softdark"] .infobar-settings-sidebar .infobar-settings-sidebar-head .infobar-settings-close img,
+[data-theme="warmnight"] .infobar-settings-sidebar .infobar-settings-sidebar-head .infobar-settings-close img { filter: brightness(0) invert(1) !important; }
+/* Row-action toolbar: raised dark chip (not a bright blue bar), white icons. */
+[data-theme="softdark"] .toolbar-primary .tool-item,
+[data-theme="warmnight"] .toolbar-primary .tool-item { background: var(--theme-menu-active-bg) !important; }
+[data-theme="softdark"] .toolbar-primary .tool-item:hover, [data-theme="softdark"] .toolbar-primary .tool-item.selected,
+[data-theme="warmnight"] .toolbar-primary .tool-item:hover, [data-theme="warmnight"] .toolbar-primary .tool-item.selected { background: var(--theme-primary-color) !important; }
+[data-theme="softdark"] .toolbar-primary.tool-top .arrow,
+[data-theme="warmnight"] .toolbar-primary.tool-top .arrow { border-top-color: var(--theme-menu-active-bg) !important; }
