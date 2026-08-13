@@ -2881,7 +2881,8 @@
 [data-theme="comfort"] .nav-tabs { border-bottom-color: #E2D7BF !important; }
 [data-theme="comfort"] .nav-tabs .nav-link { color: #5B5545 !important; }
 [data-theme="comfort"] .nav-tabs .nav-link.active,
-[data-theme="comfort"] .custom-tab-line .nav-link.active { background-color: #FBF6EA !important; color: #4F7A69 !important; border-color: #E2D7BF !important; }
+[data-theme="comfort"] .custom-tab-line .nav-link.active { background-color: #F7EFDD !important; color: #4F7A69 !important; border-color: #E2D7BF !important; border-bottom: 3px solid #4F7A69 !important; font-weight: 600; }
+[data-theme="comfort"] .nav-tabs .nav-link:hover { color: #4F7A69 !important; }
 [data-theme="comfort"] .white-box,
 [data-theme="comfort"] .box,
 [data-theme="comfort"] .panel,
