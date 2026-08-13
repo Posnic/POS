@@ -42,6 +42,31 @@ PosnicPro.themeManager = {
 
     presets: {
         // Light Themes
+        // Eye Comfort - built with real care for people at this screen 8+ hours a
+        // day. The two biggest drivers of screen eye-strain are glare (pure-white
+        // backgrounds) and blue light, so the background is a warm, low-blue
+        // "paper" tone, not white. Text is a warm charcoal rather than pure black,
+        // keeping contrast strong (~9:1, above WCAG AAA) without the harsh 21:1 of
+        // black-on-white that tires the eye. The accent is a muted sage-teal:
+        // green sits at the eye's peak sensitivity (~555nm) and is the most restful
+        // hue to look at all day. Same evidence base as e-reader sepia and the
+        // Solarized palette, tuned for a POS that is open from morning to night.
+        comfort: {
+            name: 'Eye Comfort',
+            type: 'light',
+            primaryColor: '#4F7A69',
+            bodyBg: '#F3ECDB',
+            cardBg: '#FBF6EA',
+            sidebarBg: '#EAE1CE',
+            topbarBg: '#FBF6EA',
+            textPrimary: '#3A352B',
+            textSecondary: '#5B5545',
+            borderColor: '#E2D7BF',
+            menuBg: '#EAE1CE',
+            menuText: '#4A4433',
+            menuActiveBg: '#4F7A69',
+            menuActiveText: '#FFFFFF'
+        },
         default: {
             name: 'Default',
             type: 'light',
