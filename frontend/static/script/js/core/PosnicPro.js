@@ -1214,8 +1214,8 @@ PosnicPro = {
                 }
             }
         } else {
-            let objMonth = document.getElementById('btnDashboardCountMonth');
-            PosnicPro.dashboard.activeInActiveFilterButtons('month', objMonth);
+            let objDay = document.getElementById('btnDashboardCountDay');
+            PosnicPro.dashboard.activeInActiveFilterButtons('day', objDay);
         }
     },
 

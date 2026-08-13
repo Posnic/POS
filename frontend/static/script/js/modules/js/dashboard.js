@@ -1056,12 +1056,32 @@ PosnicPro.dashboard = {
         $('#profit_cogs').html(money(profit.cogs));
         $('#profit_gross').html(money(profit.gross_profit));
         $('#profit_expenses').html(money(profit.expenses));
-        var net = Number(profit.net_profit) || 0;
-        $('#profit_net').html(money(net)).removeClass('text-success text-danger').addClass(net >= 0 ? 'text-success' : 'text-danger');
         $('#profit_margin').text((Number(profit.margin_percent) || 0) + '% margin');
         $('#profit_period_label').text('(' + (filter || 'month') + ')');
         $('#profit_sales_count').text((profit.sales_count || 0) + ' sale' + (profit.sales_count === 1 ? '' : 's'));
-        $('#profit_cashflow_note').text(' Stock bought this ' + (filter || 'period') + ': ' + money(profit.purchases) + '. Cash in minus out: ' + money(profit.cash_flow) + '.');
+
+        // Profit is only as honest as the cost data behind it. When cost prices
+        // are missing or implausible (cost above sales), show the figure as an
+        // estimate - not a confident green profit or an alarming red loss - and
+        // say plainly what to fix, so a data gap never reads as a real loss.
+        var reliable = profit.cost_reliable !== false;
+        var netEl = $('#profit_net').removeClass('text-success text-danger text-muted');
+        if (reliable) {
+            var net = Number(profit.net_profit) || 0;
+            netEl.attr('title', '').html(money(net)).addClass(net >= 0 ? 'text-success' : 'text-danger');
+            $('#profit_gross').attr('title', '').html(money(profit.gross_profit));
+            $('#profit_cashflow_note').text(' Stock bought this ' + (filter || 'period') + ': ' + money(profit.purchases) + '. Cash in minus out: ' + money(profit.cash_flow) + '.');
+        } else {
+            // Profit that cannot be worked out honestly is shown as N/A, never as
+            // a number - a missing purchase price must never read as a real loss.
+            // Hovering the figure says why (some items have no purchase price).
+            var why = Number(profit.cost_missing_sales) > 0
+                ? profit.cost_missing_sales + ' of ' + (profit.sales_count || 0) + " sales include items with no purchase price recorded, so profit can't be worked out yet."
+                : "The recorded cost is higher than sales - check the items' cost (company) prices.";
+            netEl.attr('title', why).html('N/A').addClass('text-muted');
+            $('#profit_gross').attr('title', why).html('N/A');
+            $('#profit_cashflow_note').text('⚠ ' + why);
+        }
     },
 
     activeInActiveFilterButtons: function (filter, obj) {
@@ -1139,8 +1159,8 @@ $('#view_customersearch').click(function () {
     $('#image_sidebar_customsearch').show();
 });
 $('#dashboard_page').click(function () {
-    let objMonth = document.getElementById('btnDashboardCountMonth');
-    PosnicPro.dashboard.activeInActiveFilterButtons('month', objMonth);
+    let objDay = document.getElementById('btnDashboardCountDay');
+    PosnicPro.dashboard.activeInActiveFilterButtons('day', objDay);
 });
 /* -- Sweet Alert - Warning -- */
 $("#logout").on("click", function () {
