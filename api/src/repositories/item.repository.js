@@ -321,17 +321,43 @@ class ItemRepository extends BaseModel {
    * 'Bulk', so the change is auditable exactly like a single edit. Prices are
    * clamped at zero and rounded to two decimals.
    */
-  async bulkUpdatePrices({ scope, categoryId, field, op, value, direction } = {}, context = {}) {
-    const allowedFields = ['mrp_price', 'company_price', 'selling_price'];
-    if (!allowedFields.includes(field)) return { status: false, message: 'Unknown price field' };
-    const amount = Number(value);
-    if (!Number.isFinite(amount) || amount < 0)
-      return { status: false, message: 'Enter a valid amount' };
-    if (op !== 'percent' && op !== 'amount')
-      return { status: false, message: 'Choose percent or amount' };
-    const sign = direction === 'decrease' ? -1 : 1;
+  /*
+   * The price rules a bulk change must not quietly break.
+   *
+   * After a proposed change sets `field` to `newV`, the selling price must not
+   * end up ABOVE the MRP (an increase gone too far) nor BELOW the company/cost
+   * price (a decrease that sells at a loss). Each is only judged when the
+   * reference price is actually set - an item with no MRP or no cost recorded
+   * is not a violation, just unconfigured. Returns the broken rule, or null.
+   */
+  _priceRuleViolation(item, field, newV) {
+    let sell = Number(item.selling_price) || 0;
+    let mrp = Number(item.mrp_price) || 0;
+    let cost = Number(item.company_price) || 0;
+    if (field === 'selling_price') sell = newV;
+    else if (field === 'mrp_price') mrp = newV;
+    else if (field === 'company_price') cost = newV;
+    if (mrp > 0 && sell > mrp) return { rule: 'exceeds_mrp', selling: sell, limit: mrp };
+    if (cost > 0 && sell < cost) return { rule: 'below_cost', selling: sell, limit: cost };
+    return null;
+  }
 
-    const collection = await this.getCollection(this.collectionName);
+  // Validate + normalise a bulk-price request. Returns { error } or the parts.
+  _bulkPriceParams({ field, op, value, direction }) {
+    const allowedFields = ['mrp_price', 'company_price', 'selling_price'];
+    if (!allowedFields.includes(field)) return { error: 'Unknown price field' };
+    const amount = Number(value);
+    if (!Number.isFinite(amount) || amount < 0) return { error: 'Enter a valid amount' };
+    if (op !== 'percent' && op !== 'amount') return { error: 'Choose percent or amount' };
+    const sign = direction === 'decrease' ? -1 : 1;
+    const compute = (oldV) => {
+      const delta = op === 'percent' ? (oldV * amount) / 100 : amount;
+      return Math.max(0, Math.round((oldV + sign * delta) * 100) / 100);
+    };
+    return { amount, sign, compute };
+  }
+
+  _bulkPriceFilter({ scope, categoryId }, context) {
     const filter = {};
     if (BaseModel.license) filter.license = BaseModel.license;
     if (context.branchId) {
@@ -339,15 +365,93 @@ class ItemRepository extends BaseModel {
       filter.$or = [{ 'branch_access.branch_id': b }, { branch_id: b }];
     }
     if (scope === 'category') {
-      if (!categoryId) return { status: false, message: 'Choose a category' };
+      if (!categoryId) return { error: 'Choose a category' };
       filter.category_id = this.toObjectId(categoryId);
     }
+    return { filter };
+  }
+
+  /*
+   * Dry-run a bulk price change: compute what it would do WITHOUT writing, and
+   * report how many items would change and which would break a price rule
+   * (selling above MRP, or selling below cost). This is the "check feasible"
+   * step - the shop sees the damage before it happens, including on a decrease
+   * that would sell below cost, not just an increase past MRP.
+   */
+  async previewBulkUpdatePrices(
+    { scope, categoryId, field, op, value, direction } = {},
+    context = {}
+  ) {
+    const parts = this._bulkPriceParams({ field, op, value, direction });
+    if (parts.error) return { status: false, message: parts.error };
+    const built = this._bulkPriceFilter({ scope, categoryId }, context);
+    if (built.error) return { status: false, message: built.error };
+
+    const collection = await this.getCollection(this.collectionName);
+    const items = await collection
+      .find(built.filter, {
+        projection: { name: 1, mrp_price: 1, company_price: 1, selling_price: 1 },
+      })
+      .toArray();
+
+    let willChange = 0;
+    const exceedsMrp = [];
+    const belowCost = [];
+    for (const it of items) {
+      const oldV = Number(it[field]) || 0;
+      const newV = parts.compute(oldV);
+      if (newV !== oldV) willChange += 1;
+      const v = this._priceRuleViolation(it, field, newV);
+      if (!v) continue;
+      const row = { name: it.name || '', old_value: oldV, new_value: newV, limit: v.limit };
+      if (v.rule === 'exceeds_mrp' && exceedsMrp.length < 100) exceedsMrp.push(row);
+      if (v.rule === 'below_cost' && belowCost.length < 100) belowCost.push(row);
+    }
+
+    return {
+      status: true,
+      data: {
+        total: items.length,
+        willChange,
+        exceedsMrpCount: exceedsMrp.length,
+        belowCostCount: belowCost.length,
+        exceedsMrp,
+        belowCost,
+      },
+      message: 'Preview ready',
+    };
+  }
+
+  async bulkUpdatePrices(
+    { scope, categoryId, field, op, value, direction, skipViolations } = {},
+    context = {}
+  ) {
+    const parts = this._bulkPriceParams({ field, op, value, direction });
+    if (parts.error) return { status: false, message: parts.error };
+    const built = this._bulkPriceFilter({ scope, categoryId }, context);
+    if (built.error) return { status: false, message: built.error };
+
+    const collection = await this.getCollection(this.collectionName);
+    const filter = built.filter;
 
     const items = await collection
-      .find(filter, { projection: { [field]: 1, name: 1, branch_id: 1 } })
+      .find(filter, {
+        projection: {
+          [field]: 1,
+          name: 1,
+          branch_id: 1,
+          mrp_price: 1,
+          company_price: 1,
+          selling_price: 1,
+        },
+      })
       .toArray();
     if (!items.length)
-      return { status: true, data: { updated: 0, total: 0 }, message: 'No items matched' };
+      return {
+        status: true,
+        data: { updated: 0, total: 0, skipped: 0 },
+        message: 'No items matched',
+      };
 
     const now = new Date();
     const db = await BaseModel.getDb();
@@ -359,12 +463,17 @@ class ItemRepository extends BaseModel {
     };
     const priceRows = [];
     let updated = 0;
+    let skipped = 0;
     for (const it of items) {
       const oldV = Number(it[field]) || 0;
-      const delta = op === 'percent' ? (oldV * amount) / 100 : amount;
-      let newV = oldV + sign * delta;
-      newV = Math.max(0, Math.round(newV * 100) / 100);
+      let newV = parts.compute(oldV);
       if (newV === oldV) continue;
+      // When asked, leave alone any item this change would push over MRP or
+      // under cost, and count it, rather than writing a price that breaks a rule.
+      if (skipViolations && this._priceRuleViolation(it, field, newV)) {
+        skipped += 1;
+        continue;
+      }
       await collection.updateOne(
         { _id: it._id },
         {
@@ -403,8 +512,10 @@ class ItemRepository extends BaseModel {
     }
     return {
       status: true,
-      data: { updated, total: items.length },
-      message: `Updated ${updated} of ${items.length} item(s)`,
+      data: { updated, total: items.length, skipped },
+      message:
+        `Updated ${updated} of ${items.length} item(s)` +
+        (skipped ? `, skipped ${skipped} that would break MRP or cost` : ''),
     };
   }
 

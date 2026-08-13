@@ -1231,15 +1231,47 @@ class ItemsController extends BaseController {
       }
       await this.ensureContext(req);
       const ctx = req.itemContext || {};
-      const { scope, category_id, field, op, value, direction } = req.body || {};
+      const { scope, category_id, field, op, value, direction, skipViolations } = req.body || {};
       const result = await this.service.bulkUpdatePrices(
-        { scope, categoryId: category_id, field, op, value, direction },
+        {
+          scope,
+          categoryId: category_id,
+          field,
+          op,
+          value,
+          direction,
+          skipViolations: skipViolations === true || skipViolations === 'true',
+        },
         { branchId: ctx.branchId, userName: ctx.loggedUserName, userId: ctx.loggedUserId }
       );
       if (result && result.status) return this.success(res, result.data, result.message);
       return this.error(res, result?.message || 'Bulk price update failed', 400);
     } catch (error) {
       console.error('Error in bulkUpdatePrices:', error);
+      return this.error(res, error.message, 500);
+    }
+  }
+
+  /**
+   * Dry-run a bulk price change: what would change, and which items it would
+   * push over MRP or under cost. The "check feasible" button before applying.
+   */
+  async bulkPricePreview(req, res) {
+    try {
+      if (req.user?.access?.item?.read === false) {
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+      }
+      await this.ensureContext(req);
+      const ctx = req.itemContext || {};
+      const { scope, category_id, field, op, value, direction } = req.body || {};
+      const result = await this.service.previewBulkUpdatePrices(
+        { scope, categoryId: category_id, field, op, value, direction },
+        { branchId: ctx.branchId }
+      );
+      if (result && result.status) return this.success(res, result.data, result.message);
+      return this.error(res, result?.message || 'Could not check prices', 400);
+    } catch (error) {
+      console.error('Error in bulkPricePreview:', error);
       return this.error(res, error.message, 500);
     }
   }
