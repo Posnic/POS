@@ -79,6 +79,7 @@ router.post('/exportItems', bindController(itemsController.exportItems));
 router.post('/bulkUpdatePrices', bindController(itemsController.bulkUpdatePrices));
 router.post('/bulkPricePreview', bindController(itemsController.bulkPricePreview));
 router.get('/priceHistory/:id', bindController(itemsController.getPriceHistory));
+router.get('/bulkPriceHistory', bindController(itemsController.getBulkPriceUpdates));
 
 // PHP: categoryItemsReportTable() - Category report
 router.get('/categoryItemsReportTable', bindController(itemsController.categoryItemsReportTable));

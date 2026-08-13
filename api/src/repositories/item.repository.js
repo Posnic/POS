@@ -314,6 +314,26 @@ class ItemRepository extends BaseModel {
     }
   }
 
+  /** Recent bulk price runs, newest first, paginated - the pricing tab's audit
+   *  list of who raised or lowered what, when, and on how many items. */
+  async getBulkPriceUpdates({ limit = 20, skip = 0 } = {}) {
+    try {
+      const db = await BaseModel.getDb();
+      const filter = {};
+      if (BaseModel.license) filter.license = BaseModel.license;
+      const col = db.collection('bulk_price_updates');
+      const lim = Math.min(100, Math.max(1, Number(limit) || 20));
+      const sk = Math.max(0, Number(skip) || 0);
+      const [rows, total] = await Promise.all([
+        col.find(filter).sort({ date: -1 }).skip(sk).limit(lim).toArray(),
+        col.countDocuments(filter),
+      ]);
+      return { status: true, data: rows, total };
+    } catch (error) {
+      return { status: false, data: [], total: 0, message: error.message };
+    }
+  }
+
   /*
    * Raise or lower prices across many items at once - all items, or one
    * category - by a percentage or a flat amount, on any one price field. Every
@@ -455,6 +475,9 @@ class ItemRepository extends BaseModel {
 
     const now = new Date();
     const db = await BaseModel.getDb();
+    // One id for this whole run: stamped on every item row it writes and on the
+    // batch record below, so the run and the items it touched link both ways.
+    const batchId = new ObjectId();
     // Same label/value_type the single-edit path writes, so the History view
     // renders a bulk change identically to a hand edit.
     const fieldMeta = TRACKED_FIELDS.find((f) => f.field === field) || {
@@ -496,6 +519,7 @@ class ItemRepository extends BaseModel {
         old_value: oldV,
         new_value: newV,
         process: 'Bulk',
+        batch_id: batchId, // links this item row to the bulk run below
         changed_by: context.userName || '',
         changed_by_id: context.userId || null,
         date: now,
@@ -510,9 +534,35 @@ class ItemRepository extends BaseModel {
         .insertMany(priceRows)
         .catch(() => {});
     }
+    // Batch-level audit: one row per bulk run, so "who changed what, when, to how
+    // many items" reads as a single event rather than being reconstructed from
+    // the item rows. Only written when something actually changed.
+    if (updated > 0) {
+      await db
+        .collection('bulk_price_updates')
+        .insertOne({
+          _id: batchId,
+          field,
+          label: fieldMeta.label,
+          scope: scope === 'category' ? 'category' : 'all',
+          category_id: scope === 'category' ? this.toObjectId(categoryId) : null,
+          op, // 'percent' | 'amount'
+          direction, // 'increase' | 'decrease'
+          value: Number(value) || 0,
+          items_changed: updated,
+          items_matched: items.length,
+          items_skipped: skipped,
+          changed_by: context.userName || '',
+          changed_by_id: context.userId || null,
+          date: now,
+          created_date: now,
+          license: BaseModel.license || null,
+        })
+        .catch(() => {});
+    }
     return {
       status: true,
-      data: { updated, total: items.length, skipped },
+      data: { updated, total: items.length, skipped, batch_id: batchId },
       message:
         `Updated ${updated} of ${items.length} item(s)` +
         (skipped ? `, skipped ${skipped} that would break MRP or cost` : ''),

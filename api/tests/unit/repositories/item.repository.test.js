@@ -931,7 +931,12 @@ describe('ItemRepository', () => {
   describe('bulkUpdatePrices', () => {
     const ctx = { branchId: FAKE_BRANCH, userName: 'admin', userId: 'u1' };
     const withDb = () => {
-      const db = { collection: () => ({ insertMany: () => Promise.resolve({}) }) };
+      const db = {
+        collection: () => ({
+          insertMany: () => Promise.resolve({}),
+          insertOne: () => Promise.resolve({}), // bulk_price_updates batch record
+        }),
+      };
       BaseModel.getDb = jest.fn().mockResolvedValue(db);
     };
 
@@ -1002,6 +1007,69 @@ describe('ItemRepository', () => {
       expect(r.data.updated).toBe(1);
       expect(r.data.skipped).toBe(1);
       expect(col.updateOne).toHaveBeenCalledTimes(1);
+    });
+
+    test('writes a batch audit record (who/what/how many) and returns its id', async () => {
+      const batchInsert = jest.fn().mockResolvedValue({});
+      BaseModel.getDb = jest.fn().mockResolvedValue({
+        collection: (name) => ({
+          insertMany: () => Promise.resolve({}),
+          insertOne: name === 'bulk_price_updates' ? batchInsert : () => Promise.resolve({}),
+        }),
+      });
+      col.find.mockReturnValue(
+        mkChain([
+          { _id: FAKE_ID, name: 'A', selling_price: 100, mrp_price: 200, company_price: 10 },
+        ])
+      );
+      const r = await repo.bulkUpdatePrices(
+        { scope: 'all', field: 'selling_price', op: 'percent', value: 10, direction: 'increase' },
+        ctx
+      );
+      expect(r.data.updated).toBe(1);
+      expect(r.data.batch_id).toBeDefined();
+      expect(batchInsert).toHaveBeenCalledTimes(1);
+      const rec = batchInsert.mock.calls[0][0];
+      expect(rec.items_changed).toBe(1);
+      expect(rec.field).toBe('selling_price');
+      expect(rec.direction).toBe('increase');
+      expect(rec.changed_by).toBe('admin');
+    });
+
+    test('writes no batch record when nothing actually changes', async () => {
+      const batchInsert = jest.fn().mockResolvedValue({});
+      BaseModel.getDb = jest.fn().mockResolvedValue({
+        collection: (name) => ({
+          insertMany: () => Promise.resolve({}),
+          insertOne: name === 'bulk_price_updates' ? batchInsert : () => Promise.resolve({}),
+        }),
+      });
+      col.find.mockReturnValue(
+        mkChain([{ _id: 'z', name: 'Z', selling_price: 0, mrp_price: 0, company_price: 0 }])
+      );
+      const r = await repo.bulkUpdatePrices(
+        { scope: 'all', field: 'selling_price', op: 'percent', value: 10, direction: 'increase' },
+        ctx
+      );
+      expect(r.data.updated).toBe(0);
+      expect(batchInsert).not.toHaveBeenCalled();
+    });
+
+    test('getBulkPriceUpdates lists runs newest first with a total', async () => {
+      const runs = [{ _id: 'b1', items_changed: 3, field: 'selling_price' }];
+      const chain = {
+        find: () => chain,
+        sort: () => chain,
+        skip: () => chain,
+        limit: () => chain,
+        toArray: () => Promise.resolve(runs),
+        countDocuments: () => Promise.resolve(7),
+      };
+      BaseModel.getDb = jest.fn().mockResolvedValue({ collection: () => chain });
+      const r = await repo.getBulkPriceUpdates({ limit: 20, skip: 0 });
+      expect(r.status).toBe(true);
+      expect(r.data).toEqual(runs);
+      expect(r.total).toBe(7);
     });
   });
 

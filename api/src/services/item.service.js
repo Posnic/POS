@@ -1235,6 +1235,10 @@ class ItemService {
     return this.repository.previewBulkUpdatePrices(params, context);
   }
 
+  async getBulkPriceUpdates(opts = {}) {
+    return this.repository.getBulkPriceUpdates(opts);
+  }
+
   async getPriceHistory(itemId, opts = {}) {
     return this.repository.getPriceHistory(itemId, opts);
   }
