@@ -3995,6 +3995,48 @@
         }
       }
     },
+    "/dashboard/getOverview": {
+      "get": {
+        "summary": "getOverview",
+        "operationId": "get_dashboard_getOverview",
+        "tags": [
+          "Dashboard"
+        ],
+        "parameters": [
+          {
+            "name": "filter",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "day",
+                "today",
+                "yesterday",
+                "week",
+                "month",
+                "year"
+              ]
+            },
+            "description": "Invalid filter value. Must be one of: day, today, yesterday, week, month, year"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
     "/dashboard/debug-session-filter": {
       "get": {
         "summary": "debugSessionFilter",

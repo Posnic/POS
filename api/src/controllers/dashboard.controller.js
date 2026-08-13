@@ -13,6 +13,7 @@ class DashboardController extends BaseController {
     this.getDashboardTotalAmounts = this.getDashboardTotalAmounts.bind(this);
     this.getDashboardSalesPurchase = this.getDashboardSalesPurchase.bind(this);
     this.getProfitSummary = this.getProfitSummary.bind(this);
+    this.getOverview = this.getOverview.bind(this);
     this.getDashboardBestSellingProducts = this.getDashboardBestSellingProducts.bind(this);
     this.getDashboardExpiredProducts = this.getDashboardExpiredProducts.bind(this);
     this.debugSessionFilter = this.debugSessionFilter.bind(this);
@@ -122,6 +123,57 @@ class DashboardController extends BaseController {
     if (!user) return false;
     const isOwner = user.role === 'admin' || user.usertype === 'admin';
     return isOwner || user.access?.dashboard?.financials === true;
+  }
+
+  /*
+   * The whole dashboard in one request. Every user lands here first, so instead
+   * of eight calls firing at once this returns the period trend, payment mix,
+   * top items and low-stock together - and includes money-health only for a
+   * user who may see it. Lighter on the network, and one round trip on a phone.
+   */
+  async getOverview(req, res) {
+    try {
+      if (!req.user) {
+        return res
+          .status(401)
+          .json({ type: 'error', message: 'Authentication required', data: null });
+      }
+
+      await this.ensureContext(req);
+
+      const { filter = 'month' } = req.query;
+      const timeZone = req.user?.settings?.time_zone || 'Asia/Kolkata';
+      const originalDateRange = this.getDatesBasedOnFilter(filter, timeZone);
+      const filteredDateRange = await sessionFilterUtil.applySessionFilter(req, originalDateRange);
+
+      const result = await req.dashboardModel.getOverviewModel(
+        {
+          starting_date: filteredDateRange.start_date,
+          ending_date: filteredDateRange.end_date,
+          filter,
+        },
+        { financials: this.canSeeFinancials(req.user) }
+      );
+
+      if (result?.status) {
+        return res
+          .status(200)
+          .json({ type: 'success', message: result.message || 'Overview', data: result.data });
+      }
+
+      return res.status(400).json({
+        type: 'error',
+        message: result?.message || 'Failed to load overview',
+        data: null,
+      });
+    } catch (error) {
+      console.error('Error in getOverview:', error);
+      return res.status(500).json({
+        type: 'error',
+        message: 'An error occurred while loading the dashboard',
+        data: null,
+      });
+    }
   }
 
   /**

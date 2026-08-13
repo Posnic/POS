@@ -768,3 +768,69 @@ describe('DashboardModel — getPendingActivitiesModel()', () => {
     expect(r.message).toBe('pa fail');
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// getOverviewModel() — the one-call dashboard
+// ═══════════════════════════════════════════════════════════════════════════════
+describe('DashboardModel — getOverviewModel()', () => {
+  const range = { starting_date: '2026-01-01', ending_date: '2026-01-31', filter: 'month' };
+
+  test('assembles totals, payment mix, top items and low-stock in one call; profit for a financial user', async () => {
+    jest.spyOn(dm, 'getDashboardTotalAmountsModel').mockResolvedValue({
+      status: true,
+      data: {
+        total_data: { Total_Sales_Amount: 12 },
+        list_data: { sales_x_axis: ['a', 'b'], sales_y_axis: [100, 200] },
+      },
+    });
+    jest.spyOn(dm, 'getDashboardPaymentModeDataModel').mockResolvedValue({
+      status: true,
+      data: {
+        pay_mode_series: ['Cash', 'Card'],
+        percentage_series: [70, 30],
+        paymode_data: [{ amount: 700 }, { amount: 300 }],
+      },
+    });
+    jest.spyOn(dm, 'getDashboardBestSellingProductsModel').mockResolvedValue({
+      status: true,
+      data: { best_selling_products: [{ item_name: 'X' }] },
+    });
+    jest.spyOn(dm, 'getLowStockSummary').mockResolvedValue({ count: 3, items: [] });
+    jest
+      .spyOn(dm, 'getProfitSummaryModel')
+      .mockResolvedValue({ status: true, data: { net_profit: 250 } });
+
+    const r = await dm.getOverviewModel(range, { financials: true });
+    expect(r.status).toBe(true);
+    expect(r.data.totals.sales_count).toBe(12);
+    expect(r.data.totals.sales_amount).toBe(300);
+    expect(r.data.paymentMix[0]).toEqual({ mode: 'Cash', pct: 70, amount: 700 });
+    expect(r.data.topItems).toHaveLength(1);
+    expect(r.data.lowStock.count).toBe(3);
+    expect(r.data.profit).toEqual({ net_profit: 250 });
+  });
+
+  test('hides profit and rupee amounts from a non-financial user, and never runs the profit query', async () => {
+    jest.spyOn(dm, 'getDashboardTotalAmountsModel').mockResolvedValue({ status: true, data: {} });
+    jest.spyOn(dm, 'getDashboardPaymentModeDataModel').mockResolvedValue({
+      status: true,
+      data: {
+        pay_mode_series: ['Cash'],
+        percentage_series: [100],
+        paymode_data: [{ amount: 700 }],
+      },
+    });
+    jest.spyOn(dm, 'getDashboardBestSellingProductsModel').mockResolvedValue({
+      status: true,
+      data: { best_selling_products: [] },
+    });
+    jest.spyOn(dm, 'getLowStockSummary').mockResolvedValue({ count: 0, items: [] });
+    const profitSpy = jest.spyOn(dm, 'getProfitSummaryModel');
+
+    const r = await dm.getOverviewModel(range, { financials: false });
+    expect(r.data.profit).toBeNull();
+    expect(r.data.paymentMix[0].pct).toBe(100);
+    expect(r.data.paymentMix[0].amount).toBeUndefined();
+    expect(profitSpy).not.toHaveBeenCalled();
+  });
+});
