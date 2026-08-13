@@ -644,6 +644,37 @@ class DashboardModel extends BaseModel {
       const grossProfit = revenue - cogs;
       const netProfit = grossProfit - expenses;
 
+      /*
+       * How much of this rests on real cost data.
+       *
+       * Profit only means something when the goods' cost was recorded on the
+       * sale. A sale that has value but no company price is not a zero-cost
+       * sale - its cost is simply unknown, and counting it as pure margin (or,
+       * when the recorded cost is wrong, as a loss) turns a data gap into a
+       * confident-looking number the owner may act on. So sales without a
+       * recorded cost are counted rather than assumed, and cogs > revenue -
+       * selling below cost across a whole period, which a real shop does not do
+       * - is treated as a sign the cost prices are missing or wrong. The client
+       * uses these to say "profit is an estimate, set your cost prices" instead
+       * of presenting a hard loss.
+       */
+      const missingCost = await salesCol.countDocuments(
+        this.getContextMatch({
+          ...inRange,
+          sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] },
+          items_total: { $gt: 0 },
+          $or: [
+            { total_companyprice: { $exists: false } },
+            { total_companyprice: null },
+            { total_companyprice: 0 },
+          ],
+        })
+      );
+      const costCoverage = salesCount
+        ? round(((salesCount - missingCost) / salesCount) * 100)
+        : 100;
+      const costReliable = missingCost === 0 && cogs <= revenue;
+
       return {
         status: true,
         data: {
@@ -658,6 +689,10 @@ class DashboardModel extends BaseModel {
           cash_flow: round(revenue - purchases - expenses),
           margin_percent: revenue ? round((netProfit / revenue) * 100) : 0,
           sales_count: salesCount || 0,
+          // Trust signals for the client (see the block above).
+          cost_missing_sales: missingCost,
+          cost_coverage: costCoverage,
+          cost_reliable: costReliable,
         },
         message: 'profit summary',
       };

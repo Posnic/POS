@@ -270,9 +270,10 @@ describe('DashboardModel — getProfitSummaryModel()', () => {
     jest
       .spyOn(dm, 'sumCollectionField')
       .mockImplementation((coll, _m, field) => Promise.resolve(sums[`${coll}.${field}`] || 0));
-    jest
-      .spyOn(dm, 'getCollection')
-      .mockResolvedValue({ countDocuments: jest.fn().mockResolvedValue(12) });
+    // Two countDocuments calls: total sales, then sales with no recorded cost.
+    jest.spyOn(dm, 'getCollection').mockResolvedValue({
+      countDocuments: jest.fn().mockResolvedValueOnce(12).mockResolvedValueOnce(0),
+    });
 
     const r = await dm.getProfitSummaryModel(range);
 
@@ -286,6 +287,10 @@ describe('DashboardModel — getProfitSummaryModel()', () => {
     expect(r.data.cash_flow).toBe(450); // revenue - purchases - expenses
     expect(r.data.margin_percent).toBe(25); // 250/1000
     expect(r.data.sales_count).toBe(12);
+    // Every sale had a recorded cost and cost <= revenue: fully trustworthy.
+    expect(r.data.cost_missing_sales).toBe(0);
+    expect(r.data.cost_coverage).toBe(100);
+    expect(r.data.cost_reliable).toBe(true);
   });
 
   test('margin is 0 with no revenue, and never divides by zero', async () => {
@@ -296,6 +301,43 @@ describe('DashboardModel — getProfitSummaryModel()', () => {
     const r = await dm.getProfitSummaryModel(range);
     expect(r.data.margin_percent).toBe(0);
     expect(r.data.net_profit).toBe(0);
+  });
+
+  test('marks profit unreliable when some sales have no recorded cost', async () => {
+    const sums = {
+      'sales.items_total': 1000,
+      'sales.total_companyprice': 300,
+      'receivings.items_total': 0,
+      'expenses.amount': 0,
+    };
+    jest
+      .spyOn(dm, 'sumCollectionField')
+      .mockImplementation((coll, _m, field) => Promise.resolve(sums[`${coll}.${field}`] || 0));
+    jest.spyOn(dm, 'getCollection').mockResolvedValue({
+      countDocuments: jest.fn().mockResolvedValueOnce(10).mockResolvedValueOnce(4), // 4 of 10 have no cost
+    });
+    const r = await dm.getProfitSummaryModel(range);
+    expect(r.data.cost_missing_sales).toBe(4);
+    expect(r.data.cost_coverage).toBe(60);
+    expect(r.data.cost_reliable).toBe(false);
+  });
+
+  test('marks profit unreliable when recorded cost exceeds sales', async () => {
+    const sums = {
+      'sales.items_total': 5000,
+      'sales.total_companyprice': 6000, // cost above sales - implausible, likely bad data
+      'receivings.items_total': 0,
+      'expenses.amount': 0,
+    };
+    jest
+      .spyOn(dm, 'sumCollectionField')
+      .mockImplementation((coll, _m, field) => Promise.resolve(sums[`${coll}.${field}`] || 0));
+    jest.spyOn(dm, 'getCollection').mockResolvedValue({
+      countDocuments: jest.fn().mockResolvedValueOnce(8).mockResolvedValueOnce(0), // none missing, but cost > sales
+    });
+    const r = await dm.getProfitSummaryModel(range);
+    expect(r.data.cost_missing_sales).toBe(0);
+    expect(r.data.cost_reliable).toBe(false);
   });
 });
 
