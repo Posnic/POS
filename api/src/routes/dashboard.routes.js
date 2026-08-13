@@ -55,6 +55,12 @@ router.get(
   handleValidationErrors,
   bindController(dashboardController.getDashboardExpiredProducts)
 );
+router.get(
+  '/getProfitSummary',
+  validateDashboardFilter,
+  handleValidationErrors,
+  bindController(dashboardController.getProfitSummary)
+);
 
 // Debug endpoint for session filter testing
 router.get('/debug-session-filter', bindController(dashboardController.debugSessionFilter));

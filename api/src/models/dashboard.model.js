@@ -603,6 +603,70 @@ class DashboardModel extends BaseModel {
     }
   }
 
+  /*
+   * A period's profit, the way a shop owner asks it: what came in, what the
+   * goods actually cost, what else was spent, and what is left.
+   *
+   * Cost of goods sold is total_companyprice - the cost captured on each sale
+   * as it happened - so this is real historical margin, not today's cost
+   * applied to last month's sales. Net profit is the accounting figure,
+   * revenue - COGS - expenses. Purchases (stock bought this period) is reported
+   * alongside as cash out, and a cash-flow line (sales - purchases - expenses)
+   * too, because the two answer different questions and an owner wants both.
+   */
+  async getProfitSummaryModel(data) {
+    try {
+      const from = new Date(BaseModel.startingDate(data.starting_date, this.timeZone) || 0);
+      const to = new Date(BaseModel.endingDate(data.ending_date, this.timeZone) || Date.now());
+      const inRange = { date: { $gte: from, $lte: to } };
+
+      const salesMatch = this.getContextMatch({
+        ...inRange,
+        sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] },
+      });
+      const purchaseMatch = this.getContextMatch({
+        ...inRange,
+        receiving_status: { $in: ['Received', 'PartialReturn'] },
+      });
+      const expenseMatch = this.getContextMatch({ ...inRange });
+
+      const salesCol = await this.getCollection('sales');
+      const [revenue, cogs, returns, purchases, expenses] = await Promise.all([
+        this.sumCollectionField('sales', salesMatch, 'items_total'),
+        this.sumCollectionField('sales', salesMatch, 'total_companyprice'),
+        this.sumCollectionField('sales', salesMatch, 'items_return_total'),
+        this.sumCollectionField('receivings', purchaseMatch, 'items_total'),
+        this.sumCollectionField('expenses', expenseMatch, 'amount'),
+      ]);
+      const salesCount = await salesCol.countDocuments(salesMatch);
+
+      const round = (v) => Math.round((Number(v) || 0) * 100) / 100;
+      const grossProfit = revenue - cogs;
+      const netProfit = grossProfit - expenses;
+
+      return {
+        status: true,
+        data: {
+          filter: data.filter || 'month',
+          revenue: round(revenue),
+          cogs: round(cogs),
+          gross_profit: round(grossProfit),
+          returns: round(returns),
+          expenses: round(expenses),
+          net_profit: round(netProfit),
+          purchases: round(purchases),
+          cash_flow: round(revenue - purchases - expenses),
+          margin_percent: revenue ? round((netProfit / revenue) * 100) : 0,
+          sales_count: salesCount || 0,
+        },
+        message: 'profit summary',
+      };
+    } catch (error) {
+      console.error('Error in getProfitSummaryModel:', error);
+      return { status: false, data: null, message: error.message };
+    }
+  }
+
   /**
    * Get expired products for dashboard
    * Mirrors PHP getDashboardExpiredProductsModel()
