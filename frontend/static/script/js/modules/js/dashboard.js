@@ -985,25 +985,41 @@ PosnicPro.dashboard = {
      * screen: if the call fails, the figures fall back to a dash, not a made-up
      * amount in the wrong currency.
      */
+    periodLabel: function (filter) {
+        return { day: 'Today', week: 'This Week', month: 'This Month', year: 'This Year' }[filter] || 'Today';
+    },
+
+    KPI_IDS: '#kpi_sales,#kpi_purchase,#kpi_expenses,#kpi_tax,#kpi_upi,#kpi_cash',
+
     loadOverview: function (filter) {
-        $('#dashboard_sales_count').text('…');
-        $('#dashboard_sales_amount').html('…');
+        $(PosnicPro.dashboard.KPI_IDS).text('…');
+        $('#kpi_period_label').text('(' + PosnicPro.dashboard.periodLabel(filter) + ')');
 
         PosnicPro.get({ url: 'dashboard/getOverview', data: { filter: filter } }, function (response) {
             if (response.type !== 'success' || !response.data) {
-                $('#dashboard_sales_count,#dashboard_sales_amount').html('&mdash;');
+                $(PosnicPro.dashboard.KPI_IDS).html('&mdash;');
                 return;
             }
             var d = response.data;
-            var t = d.totals || {};
-            $('#dashboard_sales_count').text(t.sales_count || 0);
-            $('#dashboard_sales_amount').html(PosnicPro.dashboard.money(t.sales_amount));
+            var m = PosnicPro.dashboard.money;
+            var k = d.kpis;
+            if (k) {
+                $('#kpi_sales').html(m(k.total_sales));
+                $('#kpi_purchase').html(m(k.total_purchase));
+                $('#kpi_expenses').html(m(k.total_expenses));
+                $('#kpi_tax').html(m(k.total_tax));
+                $('#kpi_upi').html(m(k.total_upi));
+                $('#kpi_cash').html(m(k.total_cash));
+            } else {
+                // No financial layer for this user - the tiles are ACL-removed
+                // anyway; leave nothing behind if the block is somehow present.
+                $(PosnicPro.dashboard.KPI_IDS).html('&mdash;');
+            }
 
             PosnicPro.dashboard.renderBestSellers(d.topItems || []);
-            PosnicPro.dashboard.renderPaymentMix(d.paymentMix || [], !!d.financials);
             PosnicPro.dashboard.renderProfit(d.profit, filter);
         }, function () {
-            $('#dashboard_sales_count,#dashboard_sales_amount').html('&mdash;');
+            $(PosnicPro.dashboard.KPI_IDS).html('&mdash;');
         });
     },
 
@@ -1057,7 +1073,7 @@ PosnicPro.dashboard = {
         $('#profit_gross').html(money(profit.gross_profit));
         $('#profit_expenses').html(money(profit.expenses));
         $('#profit_margin').text((Number(profit.margin_percent) || 0) + '% margin');
-        $('#profit_period_label').text('(' + (filter || 'month') + ')');
+        $('#profit_period_label').text('(' + PosnicPro.dashboard.periodLabel(filter) + ')');
         $('#profit_sales_count').text((profit.sales_count || 0) + ' sale' + (profit.sales_count === 1 ? '' : 's'));
 
         // Profit is only as honest as the cost data behind it. When cost prices

@@ -1,20 +1,14 @@
-<style>
-    #chartdiv {
-        width: 100%;
-        height: 500px;
-    }
-</style>
 <div class="vertical-layout page_loader" id="dashboard" style="display: none">
     <div id="containerbar" class="blur-dashboard">
         <div class="breadcrumbbar">
           <div class="col-md-12 loader-login spin">
+            <!-- Header: shop name + the period this whole screen answers for -->
             <div class="row">
-                <!--Start col--> 
                 <div class="col-lg-12">
                     <div class="card m-b-30">
                         <div class="row card-body">
                             <div class="col-xs-12 col-sm-6 col-lg-1 mb-1 shop_img">
-                                <img src="static/images/default/store.png" id="store_image" onerror="this.onerror=null;this.src='static/images/default/store.png';" class="img-fluid rounded text-center" style="width: 63px; margin: 0 auto;" alt="profile">
+                                <img src="static/images/default/store.png" id="store_image" onerror="this.onerror=null;this.src='static/images/default/store.png';" class="img-fluid rounded text-center" style="width: 63px; margin: 0 auto;" alt="shop">
                             </div>
                             <div class="col-xs-12 col-sm-6 col-lg-3 mb-1 shop_name">
                                 <h3 class="text-secondary title_h2 branch-name mt-0 mb-1">Goldwins</h3>
@@ -29,12 +23,34 @@
                                         <button type="button" class="btn btn-light" id="btnDashboardCountYear" onclick="PosnicPro.dashboard.activeInActiveFilterButtons('year', this)"> <lang class="lang_year">This Year </lang></button>
                                     </div>
                                 </div>
-
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <!-- The six numbers a manager reads, for the chosen period. Financial
+                 layer: a salesperson never sees the shop's money totals. -->
+            <div class="row" data-module="dashboard" data-access="financials">
+                <div class="col-lg-12">
+                    <div class="card m-b-30">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0 text-secondary"><i class="feather icon-bar-chart-2 mr-1"></i> Totals <span class="text-muted" style="font-size:12px;" id="kpi_period_label"></span></h5>
+                            </div>
+                            <div class="row text-center">
+                                <div class="col-6 col-md-4 col-lg-2 mb-2"><div class="text-muted" style="font-size:12.5px;">Total Sales</div><h4 class="mb-0" id="kpi_sales">&mdash;</h4></div>
+                                <div class="col-6 col-md-4 col-lg-2 mb-2"><div class="text-muted" style="font-size:12.5px;">Total Purchase</div><h4 class="mb-0" id="kpi_purchase">&mdash;</h4></div>
+                                <div class="col-6 col-md-4 col-lg-2 mb-2"><div class="text-muted" style="font-size:12.5px;">Total Expenses</div><h4 class="mb-0" id="kpi_expenses">&mdash;</h4></div>
+                                <div class="col-6 col-md-4 col-lg-2 mb-2"><div class="text-muted" style="font-size:12.5px;">Total Tax</div><h4 class="mb-0" id="kpi_tax">&mdash;</h4></div>
+                                <div class="col-6 col-md-4 col-lg-2 mb-2"><div class="text-muted" style="font-size:12.5px;">Total UPI</div><h4 class="mb-0" id="kpi_upi">&mdash;</h4></div>
+                                <div class="col-6 col-md-4 col-lg-2 mb-2"><div class="text-muted" style="font-size:12.5px;">Total Cash</div><h4 class="mb-0" id="kpi_cash">&mdash;</h4></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Profit summary - financial layer, hidden from non-management users -->
             <div class="row" data-module="dashboard" data-access="financials">
                 <div class="col-lg-12">
@@ -63,214 +79,46 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Everyone: what's selling, and who owes money -->
             <div class="row">
-                <!-- Start col -->
-                <div class="col-md-9">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="card bg-primary-rgba m-b-30">
-                                <div class="card-body">
-                                    <div class="row align-items-center">
-                                        <div class="col-12">
-                                            <h5><span id="current_wish" class="card-title text-primary mb-1">Good Morning,</span> <span class="user-name card-title text-primary mb-1 text-capitalize">admin</span></h5>
-                                            <p id="current_quote" class="mb-0 text-primary font-14"></p>
-                                        </div>
-                                    </div>
+                <div class="col-md-8">
+                    <div class="card m-b-30">
+                        <div class="card-header">
+                            <div class="row align-items-center">
+                                <div class="col-9">
+                                    <h5 class="card-title mb-0"><lang class="lang_best_sale">Best Selling Products</lang></h5>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-8">
-                            <div class="card m-b-30">
-                                <div class="card-body">
-                                    <div class="progress my-3" style="height: 8px;">
-                                        <div class="progress-bar" role="progressbar" style="width: 25%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
-                                        <div class="progress-bar bg-success" role="progressbar" style="width: 25%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
-                                        <div class="progress-bar bg-warning" role="progressbar" style="width: 25%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
-                                        <div class="progress-bar bg-secondary" role="progressbar" style="width: 25%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-6 col-md-6 col-lg-3">
-                                            <h5 id="dashboard_sales_count" class="mb-0"></h5>
-                                            <p class="sales_count_font"><lang class="lang_no_sale">No. of Sales </lang></p>
-                                        </div>
-                                        <div class="col-6 col-md-6 col-lg-3">
-                                            <h5 id="dashboard_purchase_count" class="mb-0">&mdash;</h5>
-                                            <p class="sales_count_font"><lang class="lang_purchase">No. of Purchase </lang></p>
-                                        </div>
-                                        <div class="col-6 col-md-6 col-lg-3">
-                                            <h5 id="dashboard_return_count" class="mb-0">&mdash;</h5>
-                                            <p class="sales_count_font"><lang class="lang_return">No. of Return Sales </lang></p>
-                                        </div>
-                                        <div class="col-6 col-md-6 col-lg-3">
-                                            <h5 id="dashboard_return_purchase_count" class="mb-0">&mdash;</h5>
-                                            <p class="sales_count_font"><lang class="lang_purchase_return">No.of Purchase Return </lang></p>
-                                        </div>
-                                    </div>
-                                </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table id="tblBestSellingProducts" class="table table-borderless">
+                                    <thead class="BestSellingitem">
+                                        <tr>
+                                            <th style="width: 5%">#</th>
+                                            <th style="width: 65%"><lang class="lang_name_title">Name</lang></th>
+                                            <th style="width: 10%"><lang class="lang_quantity_title">Qty</lang></th>
+                                            <th style="width: 20%"><lang class="lang_amount_title">Amount</lang></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td colspan="4">
+                                                <div class='text-center text-dark'>
+                                                    <div class="table_cart_content"></div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
-                    </div>    
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="card m-b-30">
-                                <div class="card-header">                                
-                                    <div class="row align-items-center">
-                                        <div class="col-9">
-                                            <h5 class="card-title mb-0"><lang class="lang_paymentmode">Payment Modes </lang></h5>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="card-body p-0">
-                                    <div id="apex-circle-chart"></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-md-8">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="card m-b-30">
-                                        <div class="card-body">                                
-                                            <h5 class="card-title mt-0 font-16"><lang class="lang_sale_total">Total Sales </lang></h5>
-                                            <div class="row align-items-center mb-2">
-                                                <div class="col-12">
-                                                    <h4><span class="sign display-currency"></span>&nbsp;<span id="dashboard_sales_amount" class="mb-0">&mdash;</span></h4>
-                                                </div>
-                                            </div>
-                                            <div id="apex-line-chart-sales-parent">
-                                                <div id="apex-line-chart-sales"></div>
-                                            </div>
-                                        </div>
-                                    </div>            
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="card m-b-30">
-                                        <div class="card-body">                                
-                                            <h5 class="card-title mt-0 font-16"><lang class="lang_purchase">Total Purchases</lang></h5>
-                                            <div class="row align-items-center mb-2">
-                                                <div class="col-12">
-                                                    <h4><span class="sign display-currency"></span>&nbsp;<span id="dashboard_purchase_amount" class="mb-0">&mdash;</span></h4>
-                                                </div>
-                                            </div>
-                                            <div id="apex-line-chart-purchase-parent">
-                                                <div id="apex-line-chart-purchase"></div>
-                                            </div>
-                                        </div>
-                                    </div>            
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="card m-b-30">
-                                        <div class="card-body">                                
-                                            <h5 class="card-title mt-0 font-16"><lang class="lang_return">Return Sales</lang></h5>
-                                            <div class="row align-items-center mb-2">
-                                                <div class="col-12">
-                                                    <h4><span class="sign display-currency"></span>&nbsp;<span id="dashboard_return_amount" class="mb-0">&mdash;</span></h4>
-                                                </div>
-                                            </div>
-                                            <div id="apex-line-chart-return-parent">
-                                                <div id="apex-line-chart-return"></div>
-                                            </div>
-                                        </div>
-                                    </div>            
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="card m-b-30">
-                                        <div class="card-body">                                
-                                            <h5 class="card-title mt-0 font-16"><lang class="lang_purchase_return"> Purchases Return</lang></h5>
-                                            <div class="row align-items-center mb-2">
-                                                <div class="col-12">
-                                                    <h4><span class="sign display-currency"></span>&nbsp;<span id="dashboard_return_purchases_amount" class="mb-0">&mdash;</span></h4>
-                                                </div>
-                                            </div>
-                                            <div id="apex-line-chart-purchasereturn-parent">
-                                                <div id="apex-line-chart-purchasereturn"></div>
-                                            </div>
-                                        </div>
-                                    </div>            
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- ************************************ Top Performer ************************************ -->
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="card m-b-30 topPerformer">
-                                <div class="card-header">                                
-                                    <div class="row align-items-center">
-                                        <div class="col-9">
-                                            <h5 class="card-title mb-0"><lang class="lang_top">Top Performer</lang></h5>
-                                        </div>
-                                    </div>  
-                                </div>                            
-                                <div class="user-slider">
-                                    <div class="user-slider-item">
-                                        <div class="card-body text-center topPerform_footer">
-                                            <img src="static/images/default/user.svg" id="user-image" class="img-fluid rounded-circle text-center" style="width: 63px; margin: 0 auto;" alt="profile">
-                                            <!--<span class="action-icon badge badge-primary-inverse">JD</span>-->
-                                            <h5 id="top_performer_name">&mdash;</h5>
-                                            <p id="top_performer_email">&mdash;</p>
-                                            <p>
-                                                <span class="badge badge-danger-inverse" id="top_performer_designation">&mdash;</span>
-                                            </p>
-                                        </div>
-                                        <div class="card-footer text-center top_sales_tamil">
-                                            <div class="row footer_count">
-                                                <div class="col-6 border-right">
-                                                    <h4 id="top_performer_sales_count" class="top_saleCount badge badge-primary-inverse">&mdash;</h4>
-                                                    <p class="my-2 font_14 dash_sale_count"><lang class="lang_no_sale">No. of Sales</lang></p>
-                                                </div>
-                                                <div class="col-6">
-                                                    <h4 class="top_saleCount badge badge-primary-inverse"><span class="sign display-currency font-10"></span>&nbsp;<span id="top_performer_sales_amount" class="top_saleAmount">&mdash;</span></h4>
-                                                    <p class="my-2 font_14 dash_sale_count"><lang class="lang_amount_sale">Sales Amount</lang></p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>                            
-                            </div>      
-                        </div>
-                        <div class="col-md-8">
-                            <div class="card m-b-30">
-                                <div class="card-header">                                
-                                    <div class="row align-items-center">
-                                        <div class="col-9">
-                                            <h5 class="card-title mb-0"><lang class="lang_best_sale">Best Selling Products</lang></h5>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="card-body">
-                                    <div class="table-responsive">
-                                        <table id="tblBestSellingProducts" class="table table-borderless">
-                                            <thead class="BestSellingitem">
-                                                <tr>
-                                                    <th sytle="width: 5%">#</th>
-                                                    <th sytle="width: 65%"><lang class="lang_name_title">Name</lang></th>
-                                                    <th sytle="width: 10%"><lang class="lang_quantity_title">Qty</lang></th>
-                                                    <th sytle="width: 20%"><lang class="lang_amount_title">Amount</lang></th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <tr>
-                                                    <td colspan="4">
-                                                        <div class='text-center text-dark'>
-                                                            <div class="table_cart_content"></div>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>                                   
-                                </div>
-                            </div>
-                        </div>                       
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <div class="card m-b-30 recent_card" style="overflow: hidden;">
-                        <div class="card-header">                                
+                        <div class="card-header">
                             <div class="row align-items-center">
                                 <div class="col-9">
                                     <h5 class="card-title mb-0"><lang class="lang_pending_payment">Outstanding Customers</lang></h5>
@@ -287,56 +135,6 @@
                 </div>
             </div>
           </div>
-          <div class="col-md-12">
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="card m-b-30">
-                        <div class="card-header">                                
-                            <div class="row align-items-center">
-                                <div class="col-9">
-                                    <h5 class="card-title mb-0">
-                                        <lang class="lang_best_sale">Date Expired Stocks</lang>
-                                        <span class="text-black">*</span>
-                                        <span class="summary_toolsize" data-toggle="tooltip" data-placement="top" title="" data-original-title="Displaying items based on the selected filter in the dashboard.">
-                                            <i class="feather icon-help-circle"></i>
-                                        </span>
-                                    </h5>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table id="expired_stock_table" class="table table-borderless">
-                                    <thead class="Expireditem">
-                                        <tr>
-                                            <th sytle="width: 5%">#</th>
-                                            <th sytle="width: 65%"><lang class="lang_name_title">Name</lang></th>
-                                            <th sytle="width: 10%"><lang class="lang_quantity_title">Qty</lang></th>
-                                            <th sytle="width: 10%"><lang class="lang_expired_title">Expired Date</lang></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td colspan="4">
-                                                <div class='text-center text-dark'>
-                                                    <div class="table_cart_content"></div>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>                                   
-                        </div>
-                    </div>
-                </div>  
-            </div>
-         </div> 
-            <!-- The heavy 3D sales/purchase chart (amCharts) was removed: it is a
-                 large library and a memory hog on low-end phones. The trend now
-                 rides in the lighter widgets above. -->
         </div>
     </div>
 </div>
-
-
-
