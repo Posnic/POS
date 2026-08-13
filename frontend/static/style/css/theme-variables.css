@@ -2704,6 +2704,62 @@
    ============================================ */
 
 /* Blue Light Theme */
+/* Eye Comfort - warm, low-blue "paper" light theme for all-day use. Colours are
+   set as variables (like every theme) AND with explicit overrides so it applies
+   whether or not a given element reads the variable. */
+[data-theme="comfort"] {
+    --theme-primary-color: #4F7A69;
+    --theme-primary-hover: #40655A;
+    --theme-body-bg: #F3ECDB;
+    --theme-card-bg: #FBF6EA;
+    --theme-sidebar-bg: #EAE1CE;
+    --theme-topbar-bg: #FBF6EA;
+    --theme-text-primary: #3A352B;
+    --theme-text-secondary: #5B5545;
+    --theme-border-color: #E2D7BF;
+    --theme-menu-bg: #EAE1CE;
+    --theme-menu-text: #4A4433;
+    --theme-menu-active-bg: #4F7A69;
+    --theme-menu-active-text: #ffffff;
+}
+/* Warm surfaces instead of white */
+[data-theme="comfort"] body,
+[data-theme="comfort"] .page_loader,
+[data-theme="comfort"] .contentbar,
+[data-theme="comfort"] .breadcrumbbar { background-color: #F3ECDB !important; }
+[data-theme="comfort"] .card,
+[data-theme="comfort"] .topbar,
+[data-theme="comfort"] .navbar,
+[data-theme="comfort"] .modal-content { background-color: #FBF6EA !important; }
+/* Light warm sidebar with dark text - no harsh dark block */
+[data-theme="comfort"] .vertical-menu,
+[data-theme="comfort"] .leftbar,
+[data-theme="comfort"] .vertical-menu-detail { background-color: #EAE1CE !important; }
+[data-theme="comfort"] .vertical-menu li a,
+[data-theme="comfort"] .metismenu li a { color: #4A4433 !important; }
+[data-theme="comfort"] .vertical-menu li a:hover,
+[data-theme="comfort"] .vertical-menu li.mm-active > a { color: #4F7A69 !important; }
+/* Warm, softened text - not pure black */
+[data-theme="comfort"] body,
+[data-theme="comfort"] p,
+[data-theme="comfort"] td,
+[data-theme="comfort"] label,
+[data-theme="comfort"] .table { color: #4B463C; }
+[data-theme="comfort"] h1, [data-theme="comfort"] h2, [data-theme="comfort"] h3,
+[data-theme="comfort"] h4, [data-theme="comfort"] h5, [data-theme="comfort"] h6 { color: #3A352B; }
+/* Sage-teal accent - the restful hue */
+[data-theme="comfort"] .btn-primary { background-color: #4F7A69 !important; border-color: #4F7A69 !important; color: #fff !important; }
+[data-theme="comfort"] .btn-primary:hover { background-color: #40655A !important; border-color: #40655A !important; }
+[data-theme="comfort"] .btn-primary-rgba { background-color: rgba(79, 122, 105, 0.12) !important; color: #40655A !important; }
+[data-theme="comfort"] a { color: #4F7A69; }
+[data-theme="comfort"] .title_h2,
+[data-theme="comfort"] .menu-title,
+[data-theme="comfort"] .text-primary { color: #4F7A69 !important; }
+[data-theme="comfort"] input[type=checkbox]:checked:after,
+[data-theme="comfort"] .checkbox input[type=checkbox]:checked:after,
+[data-theme="comfort"] .custom-radio .custom-control-input:checked~.custom-control-label::before,
+[data-theme="comfort"] .custom-control-input:checked~.custom-control-label::before { background-color: #4F7A69 !important; border-color: #4F7A69 !important; }
+
 [data-theme="blue"] {
     --theme-primary-color: #2196F3;
     --theme-primary-hover: #1976D2;
