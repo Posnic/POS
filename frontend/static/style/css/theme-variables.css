@@ -2836,6 +2836,18 @@
 [data-theme="comfort"] .topbar-toggle-hamburger,
 [data-theme="comfort"] .menu-hamburger,
 [data-theme="comfort"] .navbar-toggle { background-color: transparent !important; }
+[data-theme="comfort"] .menu-hamburger:hover,
+[data-theme="comfort"] .topbar-toggle-hamburger:hover { background-color: transparent !important; }
+/* The datatable refresh overlay (.loadingSpinner) is a near-white panel painted
+   over the table - warm it so the table no longer flashes white on refresh. */
+[data-theme="comfort"] .loadingSpinner { background-color: #F3ECDB !important; }
+/* +Add button (btn-rounded): sage on hover, not the default blue. */
+[data-theme="comfort"] .btn-rounded:hover,
+[data-theme="comfort"] .add_dropdown .btn:hover { background-color: #4F7A69 !important; border-color: #4F7A69 !important; color: #fff !important; }
+/* Warm table rows/cells so checkbox and data columns are not white. */
+[data-theme="comfort"] .table td,
+[data-theme="comfort"] .table tbody tr,
+[data-theme="comfort"] table.dataTable tbody tr { background-color: #FBF6EA !important; }
 
 [data-theme="blue"] {
     --theme-primary-color: #2196F3;
