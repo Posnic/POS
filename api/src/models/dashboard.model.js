@@ -667,6 +667,98 @@ class DashboardModel extends BaseModel {
     }
   }
 
+  /*
+   * A light low-stock glance for the dashboard: how many items are at or below
+   * a threshold, and the few lowest. The full, branch-threshold-aware list
+   * lives on its own page; this is just the number a shop should see at a
+   * glance without another round trip.
+   */
+  async getLowStockSummary(data) {
+    try {
+      const items = await this.getCollection('items');
+      const threshold =
+        Number(data && data.low_stock_threshold) > 0 ? Number(data.low_stock_threshold) : 10;
+      const match = this.getContextMatch({
+        available_quantity: { $lte: threshold },
+        item_status: { $ne: 'instant' },
+      });
+      const [count, list] = await Promise.all([
+        items.countDocuments(match),
+        items
+          .find(match, { projection: { name: 1, available_quantity: 1, unit: 1 } })
+          .sort({ available_quantity: 1 })
+          .limit(5)
+          .toArray(),
+      ]);
+      return {
+        count,
+        items: list.map((i) => ({ name: i.name, qty: i.available_quantity, unit: i.unit || '' })),
+      };
+    } catch (error) {
+      console.error('Error in getLowStockSummary:', error);
+      return { count: 0, items: [] };
+    }
+  }
+
+  /*
+   * One call for the whole dashboard.
+   *
+   * The dashboard is every user's first screen, so it used to fire eight
+   * separate requests the instant it opened - a real cost on a phone. This runs
+   * the same work in parallel on the server and returns it in a single, small
+   * payload: the period's sales trend and count, the payment mix, top items,
+   * and a low-stock glance. Money-health (profit, and the rupee amounts behind
+   * the payment mix) is included ONLY when the caller is allowed it - the
+   * controller decides via canSeeFinancials and passes it in here.
+   */
+  async getOverviewModel(data, options = {}) {
+    const financials = !!(options && options.financials);
+    const [totalsR, paymentR, topR, lowStock, profitR] = await Promise.all([
+      this.getDashboardTotalAmountsModel(data),
+      this.getDashboardPaymentModeDataModel(data),
+      this.getDashboardBestSellingProductsModel(data),
+      this.getLowStockSummary(data),
+      financials ? this.getProfitSummaryModel(data) : Promise.resolve(null),
+    ]);
+
+    const totals = (totalsR && totalsR.data) || {};
+    const payment = (paymentR && paymentR.data) || {};
+    const top = (topR && topR.data && topR.data.best_selling_products) || [];
+    const list = totals.list_data || {};
+    const totalData = totals.total_data || {};
+    const round = (v) => Math.round((Number(v) || 0) * 100) / 100;
+
+    // Payment mix: percentages for everyone; rupee amounts only for financials.
+    const paymentMix = (payment.pay_mode_series || []).map((mode, i) => {
+      const row = { mode, pct: round((payment.percentage_series || [])[i] || 0) };
+      if (financials) {
+        row.amount = round(((payment.paymode_data || [])[i] || {}).amount || 0);
+      }
+      return row;
+    });
+
+    const salesAmounts = (list.sales_y_axis || []).map((v) => round(v));
+
+    return {
+      status: true,
+      data: {
+        filter: (data && data.filter) || 'month',
+        financials,
+        totals: {
+          sales_days: list.sales_x_axis || [],
+          sales_amounts: salesAmounts,
+          sales_count: totalData.Total_Sales_Amount || 0,
+          sales_amount: round(salesAmounts.reduce((a, b) => a + b, 0)),
+        },
+        paymentMix,
+        topItems: top,
+        lowStock,
+        profit: financials ? (profitR && profitR.data) || null : null,
+      },
+      message: 'overview',
+    };
+  }
+
   /**
    * Get expired products for dashboard
    * Mirrors PHP getDashboardExpiredProductsModel()
