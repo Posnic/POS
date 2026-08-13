@@ -8837,7 +8837,7 @@ class SalesRepository {
     void prefixLength;
     void salesCollection;
     const n = await this.nextSalesNumberForBranch(branchId, BaseModel.license);
-    return prefix + String(n).padStart(6, '0');
+    return this.buildSalesId(prefix, n);
   }
 
   /*
@@ -8880,6 +8880,9 @@ class SalesRepository {
       }
     }
 
+    // The bill-number uniqueness backstop, ensured alongside the counter.
+    await this._ensureSalesIdIndex(db);
+
     const existing = await counters.findOne(key);
     if (!existing) {
       const seed = await this.maxIssuedSalesNumber(branchIdRaw, licenseRaw);
@@ -8900,6 +8903,118 @@ class SalesRepository {
       throw new Error('could not allocate a sales number for this branch');
     }
     return doc.seq;
+  }
+
+  /*
+   * A short, stable code unique to THIS till.
+   *
+   * The per-branch counter is atomic but LOCAL to each till and never synced,
+   * so two tills in one branch each count their own sequence and hand out the
+   * same numbers - the cause of duplicate bill numbers across devices. A local
+   * counter cannot fix that on its own: independent offline tills cannot agree
+   * on "the next number" without colliding. So each till stamps its own code
+   * into every bill number, and no two tills ever share a numbering space.
+   *
+   * Generated once and kept in device_meta - a collection that, like counters,
+   * does NOT ride the sync wire - so it survives restarts and never travels to
+   * another till. Cached on the class after first read. Four base-36 chars is
+   * ~1.68M codes; with 35 tills the chance any two share one is ~0.04%, and the
+   * unique index below turns even that into a caught retry, never a silent dup.
+   */
+  async deviceTag() {
+    if (this.constructor._deviceTag) return this.constructor._deviceTag;
+    try {
+      const db = await BaseModel.getDb();
+      const meta = db.collection('device_meta');
+      let doc = await meta.findOne({ _id: 'device_tag' });
+      if (!doc || !doc.tag) {
+        const bytes = crypto.randomBytes(6);
+        let n = 0;
+        for (const b of bytes) n = n * 256 + b; // < 2^48, exact in a double
+        const tag = n.toString(36).toUpperCase().slice(-4).padStart(4, '0');
+        // Set-if-absent so two first-sales racing on a fresh till settle on one.
+        await meta
+          .updateOne(
+            { _id: 'device_tag' },
+            { $setOnInsert: { _id: 'device_tag', tag, createdAt: new Date() } },
+            { upsert: true }
+          )
+          .catch(() => {});
+        doc = await meta.findOne({ _id: 'device_tag' });
+      }
+      this.constructor._deviceTag = (doc && doc.tag) || '';
+    } catch (e) {
+      // No tag rather than a failed sale. An untagged number is the old
+      // behaviour, no worse than before; the next sale tries again.
+      this.constructor._deviceTag = '';
+    }
+    return this.constructor._deviceTag;
+  }
+
+  /*
+   * Build a full bill number: prefix, this till's code, then the running
+   * number. Single source of the format, so the normal sale path and the
+   * kiosk/QR path can never drift apart. Falls back to the old untagged form
+   * only if a till code could not be read, which must never fail a sale.
+   */
+  async buildSalesId(prefix, n) {
+    const num = String(n).padStart(6, '0');
+    const tag = await this.deviceTag();
+    return tag ? `${prefix}-${tag}-${num}` : `${prefix}${num}`;
+  }
+
+  /*
+   * The hard backstop: no two sales in a licence may share a bill number, ever.
+   * The till code above makes a collision astronomically unlikely; this makes a
+   * silent duplicate impossible - a stray collision fails loud and is retried
+   * for the next number instead of quietly becoming a second SID000005.
+   *
+   * Best-effort and lazy, like the counter index: on a shop that still carries
+   * legacy duplicates the build throws and the flag stays unset, so it simply
+   * builds later, once those are cleaned. Partial on a string bill number so
+   * documents without one are ignored.
+   */
+  async _ensureSalesIdIndex(db) {
+    if (this.constructor._salesIdIndexEnsured) return;
+    try {
+      await db.collection('sales').createIndex(
+        { license: 1, sales_id: 1 },
+        {
+          unique: true,
+          partialFilterExpression: { sales_id: { $type: 'string' } },
+          name: 'unique_sales_id_per_license',
+        }
+      );
+      this.constructor._salesIdIndexEnsured = true;
+    } catch (e) {
+      /* legacy duplicates still present - try again on a later sale */
+    }
+  }
+
+  isDuplicateSalesIdError(err) {
+    if (!err || (err.code !== 11000 && err.code !== 11001)) return false;
+    const where = `${err.message || ''} ${JSON.stringify(err.keyPattern || err.keyValue || {})}`;
+    return /sales_id/i.test(where);
+  }
+
+  /*
+   * Create a sale, and if the bill number lost a one-in-a-million race, take
+   * the next number and try again rather than fail the sale. `nextId` returns a
+   * freshly allocated bill number. Only a bill-number clash is retried; every
+   * other error is thrown straight through, unchanged.
+   */
+  async createSaleUnique(data, nextId, { attempts = 6 } = {}) {
+    for (let i = 0; ; i++) {
+      try {
+        return await this.create(data);
+      } catch (err) {
+        if (i >= attempts - 1 || !this.isDuplicateSalesIdError(err)) throw err;
+        const sid = await nextId();
+        data.sales_id = sid;
+        data.invoice_number = sid;
+        data.sale_no = sid;
+      }
+    }
   }
 
   /*

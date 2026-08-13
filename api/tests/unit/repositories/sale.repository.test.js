@@ -167,6 +167,14 @@ describe('SalesRepository', () => {
       }
     });
 
+    // A fixed per-till code ("DEV1") so bill-number tests are deterministic,
+    // and clear the cached tag / one-time index flags between tests.
+    salesRepository.constructor._deviceTag = undefined;
+    salesRepository.constructor._salesIdIndexEnsured = false;
+    salesRepository.constructor._countersIndexEnsured = false;
+    if (!collections.device_meta) collections.device_meta = mkCol();
+    collections.device_meta.findOne.mockResolvedValue({ _id: 'device_tag', tag: 'DEV1' });
+
     // Reset Mongoose model mocks
     MockSaleModel.find.mockReturnValue(createQueryMock([]));
     MockSaleModel.findOne.mockReturnValue(createQueryMock(null));
@@ -399,7 +407,7 @@ describe('SalesRepository', () => {
       collections.sales.find.mockReturnValue({ toArray: jest.fn().mockResolvedValue([]) });
       collections.counters.findOneAndUpdate.mockResolvedValue({ seq: 1 });
       const r = await salesRepository.generateSalesIdForBranch(FAKE_BRANCH);
-      expect(r).toBe('SID000001');
+      expect(r).toBe('SID-DEV1-000001');
     });
     test('seeds from the highest issued number, not the last inserted sale', async () => {
       // The merge case that produced real duplicates: an older-numbered sale
@@ -422,7 +430,7 @@ describe('SalesRepository', () => {
         { $setOnInsert: { seq: 42 } },
         { upsert: true }
       );
-      expect(r).toBe('SID000043');
+      expect(r).toBe('SID-DEV1-000043');
     });
     test('uses custom prefix', async () => {
       if (!collections.branches) collections.branches = mkCol();
@@ -431,7 +439,7 @@ describe('SalesRepository', () => {
       collections.counters.findOne.mockResolvedValue({ seq: 7 });
       collections.counters.findOneAndUpdate.mockResolvedValue({ seq: 8 });
       const r = await salesRepository.generateSalesIdForBranch(FAKE_BRANCH);
-      expect(r).toBe('SAL000008');
+      expect(r).toBe('SAL-DEV1-000008');
     });
     test('two simultaneous callers get distinct numbers', async () => {
       if (!collections.branches) collections.branches = mkCol();
@@ -445,7 +453,81 @@ describe('SalesRepository', () => {
         salesRepository.generateSalesIdForBranch(FAKE_BRANCH),
         salesRepository.generateSalesIdForBranch(FAKE_BRANCH),
       ]);
-      expect([a, b].sort()).toEqual(['SID000005', 'SID000006']);
+      expect([a, b].sort()).toEqual(['SID-DEV1-000005', 'SID-DEV1-000006']);
+    });
+  });
+
+  describe('bill-number uniqueness (per-till tagging)', () => {
+    test('buildSalesId puts the till code between the prefix and the number', async () => {
+      const id = await salesRepository.buildSalesId('SID', 45);
+      expect(id).toBe('SID-DEV1-000045');
+    });
+
+    test('two tills with different codes never collide on the same number', async () => {
+      salesRepository.constructor._deviceTag = 'AAAA';
+      const a = await salesRepository.buildSalesId('SID', 5);
+      salesRepository.constructor._deviceTag = 'BBBB';
+      const b = await salesRepository.buildSalesId('SID', 5);
+      expect(a).toBe('SID-AAAA-000005');
+      expect(b).toBe('SID-BBBB-000005');
+      expect(a).not.toBe(b);
+    });
+
+    test('buildSalesId falls back to the untagged form when no code is available', async () => {
+      jest.spyOn(salesRepository, 'deviceTag').mockResolvedValue('');
+      const id = await salesRepository.buildSalesId('SID', 7);
+      expect(id).toBe('SID000007');
+    });
+
+    test('deviceTag generates and stores a code once, then caches it', async () => {
+      salesRepository.constructor._deviceTag = undefined;
+      collections.device_meta.findOne
+        .mockResolvedValueOnce(null) // none stored yet
+        .mockResolvedValueOnce({ _id: 'device_tag', tag: 'Z9Q2' }); // after upsert
+      const t1 = await salesRepository.deviceTag();
+      expect(t1).toBe('Z9Q2');
+      expect(collections.device_meta.updateOne).toHaveBeenCalled();
+
+      collections.device_meta.findOne.mockClear();
+      const t2 = await salesRepository.deviceTag(); // served from cache
+      expect(t2).toBe('Z9Q2');
+      expect(collections.device_meta.findOne).not.toHaveBeenCalled();
+    });
+
+    test('isDuplicateSalesIdError matches only a sales_id duplicate key', () => {
+      expect(
+        salesRepository.isDuplicateSalesIdError({ code: 11000, message: 'E11000 dup: sales_id_1' })
+      ).toBe(true);
+      expect(
+        salesRepository.isDuplicateSalesIdError({ code: 11000, keyPattern: { sales_id: 1 } })
+      ).toBe(true);
+      expect(
+        salesRepository.isDuplicateSalesIdError({
+          code: 11000,
+          message: 'dup: billing_transaction_id_1',
+        })
+      ).toBe(false);
+      expect(salesRepository.isDuplicateSalesIdError({ code: 121 })).toBe(false);
+      expect(salesRepository.isDuplicateSalesIdError(null)).toBe(false);
+    });
+
+    test('createSaleUnique retries with the next number on a clash, then succeeds', async () => {
+      const dup = new Error('E11000 dup: sales_id_1');
+      dup.code = 11000;
+      const spy = jest.spyOn(salesRepository, 'create');
+      spy.mockRejectedValueOnce(dup).mockResolvedValueOnce({ _id: 'ok' });
+      const nextId = jest.fn().mockResolvedValue('SID-DEV1-000006');
+      const data = { sales_id: 'SID-DEV1-000005' };
+
+      const r = await salesRepository.createSaleUnique(data, nextId);
+      expect(r._id).toBe('ok');
+      expect(nextId).toHaveBeenCalledTimes(1);
+      expect(data.sales_id).toBe('SID-DEV1-000006'); // number was bumped for the retry
+    });
+
+    test('createSaleUnique rethrows a non-duplicate error unchanged', async () => {
+      jest.spyOn(salesRepository, 'create').mockRejectedValue(new Error('disk full'));
+      await expect(salesRepository.createSaleUnique({}, jest.fn())).rejects.toThrow('disk full');
     });
   });
 
