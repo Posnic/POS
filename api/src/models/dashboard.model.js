@@ -774,6 +774,43 @@ class DashboardModel extends BaseModel {
 
     const salesAmounts = (list.sales_y_axis || []).map((v) => round(v));
 
+    /*
+     * The six headline totals a manager flicks between periods to read: sales,
+     * purchases, expenses, tax collected, cash and UPI taken. Financial layer
+     * only - a salesperson never sees the shop's money totals. Purchases and
+     * expenses are reused from the profit summary already computed above; tax is
+     * summed here; cash and UPI are split out of the payment mix by mode name.
+     */
+    let kpis = null;
+    if (financials) {
+      const profit = (profitR && profitR.data) || {};
+      const from = new Date(BaseModel.startingDate(data.starting_date, this.timeZone) || 0);
+      const to = new Date(BaseModel.endingDate(data.ending_date, this.timeZone) || Date.now());
+      const salesMatch = this.getContextMatch({
+        date: { $gte: from, $lte: to },
+        sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] },
+      });
+      const tax = await this.sumCollectionField('sales', salesMatch, 'tax_amount');
+      let cash = 0;
+      let upi = 0;
+      // Mode names live in pay_mode_series, amounts in paymode_data, aligned by
+      // index - the same pairing the payment mix above uses.
+      (payment.pay_mode_series || []).forEach((mode, i) => {
+        const m = String(mode || '').toLowerCase();
+        const amt = Number(((payment.paymode_data || [])[i] || {}).amount) || 0;
+        if (/cash/.test(m)) cash += amt;
+        else if (/upi|gpay|phonepe|paytm/.test(m)) upi += amt;
+      });
+      kpis = {
+        total_sales: round(salesAmounts.reduce((a, b) => a + b, 0)),
+        total_purchase: round(profit.purchases || 0),
+        total_expenses: round(profit.expenses || 0),
+        total_tax: round(tax),
+        total_cash: round(cash),
+        total_upi: round(upi),
+      };
+    }
+
     return {
       status: true,
       data: {
@@ -785,6 +822,7 @@ class DashboardModel extends BaseModel {
           sales_count: totalData.Total_Sales_Amount || 0,
           sales_amount: round(salesAmounts.reduce((a, b) => a + b, 0)),
         },
+        kpis,
         paymentMix,
         topItems: top,
         lowStock,

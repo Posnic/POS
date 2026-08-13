@@ -838,9 +838,12 @@ describe('DashboardModel — getOverviewModel()', () => {
       data: { best_selling_products: [{ item_name: 'X' }] },
     });
     jest.spyOn(dm, 'getLowStockSummary').mockResolvedValue({ count: 3, items: [] });
-    jest
-      .spyOn(dm, 'getProfitSummaryModel')
-      .mockResolvedValue({ status: true, data: { net_profit: 250 } });
+    jest.spyOn(dm, 'getProfitSummaryModel').mockResolvedValue({
+      status: true,
+      data: { net_profit: 250, purchases: 400, expenses: 150 },
+    });
+    // The only real sumCollectionField call left is the KPI tax total.
+    jest.spyOn(dm, 'sumCollectionField').mockResolvedValue(50);
 
     const r = await dm.getOverviewModel(range, { financials: true });
     expect(r.status).toBe(true);
@@ -849,7 +852,17 @@ describe('DashboardModel — getOverviewModel()', () => {
     expect(r.data.paymentMix[0]).toEqual({ mode: 'Cash', pct: 70, amount: 700 });
     expect(r.data.topItems).toHaveLength(1);
     expect(r.data.lowStock.count).toBe(3);
-    expect(r.data.profit).toEqual({ net_profit: 250 });
+    expect(r.data.profit).toEqual({ net_profit: 250, purchases: 400, expenses: 150 });
+    // The six KPI tiles: sales/purchase/expenses reused, tax summed, cash/UPI
+    // split from the payment mix (Card counts as neither cash nor UPI).
+    expect(r.data.kpis).toMatchObject({
+      total_sales: 300,
+      total_purchase: 400,
+      total_expenses: 150,
+      total_tax: 50,
+      total_cash: 700,
+      total_upi: 0,
+    });
   });
 
   test('hides profit and rupee amounts from a non-financial user, and never runs the profit query', async () => {
@@ -871,6 +884,7 @@ describe('DashboardModel — getOverviewModel()', () => {
 
     const r = await dm.getOverviewModel(range, { financials: false });
     expect(r.data.profit).toBeNull();
+    expect(r.data.kpis).toBeNull(); // no money totals for a non-financial user
     expect(r.data.paymentMix[0].pct).toBe(100);
     expect(r.data.paymentMix[0].amount).toBeUndefined();
     expect(profitSpy).not.toHaveBeenCalled();
