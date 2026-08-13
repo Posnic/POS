@@ -936,6 +936,10 @@ PosnicPro.dashboard = {
      * the cost recorded on each sale, so the margin is real, not estimated.
      */
     getProfitSummary: function (filter) {
+        // The card is removed by ACL for users without financial access; if it
+        // is not on the page there is nothing to fill, and no reason to ask the
+        // server for figures they are not allowed to see.
+        if (!$('#profit_net').length) { return; }
         var params = { url: 'dashboard/getProfitSummary', data: { filter: filter } };
         PosnicPro.get(params, function (response) {
             if (response.type !== 'success') { return; }

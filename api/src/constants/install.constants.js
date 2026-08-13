@@ -116,7 +116,7 @@ const FIELD_LIMITS = {
 
 // Access permissions structure
 const DEFAULT_ACCESS = {
-  dashboard: { read: true },
+  dashboard: { read: true, financials: true },
   sales: { read: true, write: true, delete: true },
   receiving: { read: true, write: true, delete: true },
   customer: { read: true, write: true, delete: true },

@@ -1137,8 +1137,18 @@ PosnicPro = {
     ACLApply: function (element) {
         var access = $(element).data('access');
         var module = $(element).data('module');
-        if (!access.match(/(read|write|delete|super)/)) {
+        if (!access.match(/(read|write|delete|super|financials)/)) {
             return;
+        }
+
+        // The money-health layer (profit, cost, margin, expenses, cash, dues).
+        // The owner always sees it - which grandfathers shops from before the
+        // flag existed; anyone else needs it granted. Mirrors the server gate.
+        if (access.indexOf('financials') !== -1) {
+            var usertype = PosnicPro.local.get('usertype');
+            var okFin = usertype === 'admin' || usertype === 'super_admin' ||
+                PosnicPro.checkAccess(module, 'financials');
+            access = okFin ? access.replace('financials', 'true') : access.replace('financials', 'false');
         }
 
         if (access.indexOf('read') !== -1) {

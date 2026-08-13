@@ -111,6 +111,19 @@ class DashboardController extends BaseController {
     return model;
   }
 
+  /*
+   * Whether this user may see money-health figures - profit, cost, margin,
+   * expenses, cash, dues. The owner always may (role 'admin'), which also
+   * grandfathers shops that upgraded before the flag existed; a manager or
+   * anyone else needs it granted explicitly. The gate for every financial
+   * dashboard endpoint runs through here.
+   */
+  canSeeFinancials(user) {
+    if (!user) return false;
+    const isOwner = user.role === 'admin' || user.usertype === 'admin';
+    return isOwner || user.access?.dashboard?.financials === true;
+  }
+
   /**
    * Get dashboard welcome message and quotes
    * @param {Object} req - Express request object
@@ -429,6 +442,19 @@ class DashboardController extends BaseController {
         return res
           .status(401)
           .json({ type: 'error', message: 'Authentication required', data: null });
+      }
+
+      // Financial visibility is the real boundary, enforced here so a
+      // salesperson cannot reach profit, cost or margin even by calling this
+      // directly. The owner (role 'admin') always qualifies - which also
+      // grandfathers shops upgraded before the flag existed; everyone else
+      // needs it granted explicitly via access.dashboard.financials.
+      if (!this.canSeeFinancials(req.user)) {
+        return res.status(403).json({
+          type: 'error',
+          message: 'You do not have access to financial figures',
+          data: null,
+        });
       }
 
       await this.ensureContext(req);

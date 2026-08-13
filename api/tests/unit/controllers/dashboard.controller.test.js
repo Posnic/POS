@@ -20,6 +20,7 @@ jest.mock('../../../src/models/dashboard.model', () =>
     getDashboardTopPerformersModel: jest.fn(),
     getDashboardTotalAmountsModel: jest.fn(),
     getDashboardSalesPurchaseModel: jest.fn(),
+    getProfitSummaryModel: jest.fn(),
     getDashboardBestSellingProductsModel: jest.fn(),
     getDashboardExpiredProducts: jest.fn(),
     branchId: null,
@@ -127,6 +128,7 @@ beforeEach(() => {
     getDashboardTopPerformersModel: jest.fn(),
     getDashboardTotalAmountsModel: jest.fn(),
     getDashboardSalesPurchaseModel: jest.fn(),
+    getProfitSummaryModel: jest.fn(),
     getDashboardBestSellingProductsModel: jest.fn(),
     getDashboardExpiredProducts: jest.fn(),
     branchId: null,
@@ -1151,5 +1153,58 @@ describe('getDatesBasedOnFilter', () => {
       const { start_date, end_date } = getRange(filter);
       expect(start_date.getTime()).toBeLessThanOrEqual(end_date.getTime());
     });
+  });
+});
+
+// ─── getProfitSummary — financial ACL gate ──────────────────────────────────
+describe('getProfitSummary — financial ACL gate', () => {
+  beforeEach(() => {
+    mdl.getProfitSummaryModel.mockResolvedValue({
+      status: true,
+      data: { net_profit: 250 },
+      message: 'ok',
+    });
+  });
+
+  test('owner (usertype admin) gets the profit summary', async () => {
+    const res = mockRes();
+    await controller.getProfitSummary(mockReq({ query: { filter: 'month' } }), res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(mdl.getProfitSummaryModel).toHaveBeenCalled();
+  });
+
+  test('a salesperson without the flag is refused (403) and the model is never called', async () => {
+    const staff = {
+      _id: VALID_ID,
+      usertype: 'staff',
+      role: 'staff',
+      license: VALID_ID,
+      settings: {},
+      access: {},
+    };
+    const res = mockRes();
+    await controller.getProfitSummary(mockReq({ user: staff }), res);
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(mdl.getProfitSummaryModel).not.toHaveBeenCalled();
+  });
+
+  test('a manager granted access.dashboard.financials gets it', async () => {
+    const manager = {
+      _id: VALID_ID,
+      usertype: 'staff',
+      role: 'staff',
+      license: VALID_ID,
+      settings: {},
+      access: { dashboard: { financials: true } },
+    };
+    const res = mockRes();
+    await controller.getProfitSummary(mockReq({ user: manager }), res);
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  test('unauthenticated request is 401', async () => {
+    const res = mockRes();
+    await controller.getProfitSummary(mockReq({ user: null }), res);
+    expect(res.status).toHaveBeenCalledWith(401);
   });
 });
