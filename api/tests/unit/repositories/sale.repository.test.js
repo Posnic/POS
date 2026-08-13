@@ -170,6 +170,8 @@ describe('SalesRepository', () => {
     // A fixed per-till code ("DEV1") so bill-number tests are deterministic,
     // and clear the cached tag / one-time index flags between tests.
     salesRepository.constructor._deviceTag = undefined;
+    salesRepository.constructor._deviceCode = undefined;
+    salesRepository.constructor._branchCodes = undefined;
     salesRepository.constructor._salesIdIndexEnsured = false;
     salesRepository.constructor._countersIndexEnsured = false;
     if (!collections.device_meta) collections.device_meta = mkCol();
@@ -528,6 +530,55 @@ describe('SalesRepository', () => {
     test('createSaleUnique rethrows a non-duplicate error unchanged', async () => {
       jest.spyOn(salesRepository, 'create').mockRejectedValue(new Error('disk full'));
       await expect(salesRepository.createSaleUnique({}, jest.fn())).rejects.toThrow('disk full');
+    });
+  });
+
+  describe('readable document numbers (SB1D1)', () => {
+    test('deviceCode reads the gateway-assigned code from device_meta, caching a real one', async () => {
+      collections.device_meta.findOne.mockResolvedValue({ _id: 'device_code', code: 'D3' });
+      expect(await salesRepository.deviceCode()).toBe('D3');
+    });
+
+    test('deviceCode is empty (not cached) until a code has been assigned', async () => {
+      collections.device_meta.findOne.mockResolvedValue(null);
+      expect(await salesRepository.deviceCode()).toBe('');
+      // A later assignment is then picked up without a restart.
+      collections.device_meta.findOne.mockResolvedValue({ code: 'D5' });
+      expect(await salesRepository.deviceCode()).toBe('D5');
+    });
+
+    test('branchCode ranks branches by creation order, oldest = B1', async () => {
+      if (!collections.branches) collections.branches = mkCol();
+      collections.branches.find.mockReturnValue({
+        toArray: jest.fn().mockResolvedValue([
+          { _id: 'young', created_date: '2026-05-01' },
+          { _id: 'old', created_date: '2025-01-01' },
+          { _id: 'mid', created_date: '2025-09-01' },
+        ]),
+      });
+      expect(await salesRepository.branchCode('old')).toBe('B1');
+      expect(await salesRepository.branchCode('mid')).toBe('B2');
+      expect(await salesRepository.branchCode('young')).toBe('B3');
+    });
+
+    test('buildDocNumber uses the readable scheme when branch and device codes exist', async () => {
+      jest.spyOn(salesRepository, 'branchCode').mockResolvedValue('B1');
+      jest.spyOn(salesRepository, 'deviceCode').mockResolvedValue('D2');
+      expect(await salesRepository.buildDocNumber('S', 'anyBranch', 45)).toBe('SB1D2-000045');
+      // A return carries the R- prefix on top of the S/P base.
+      expect(await salesRepository.buildDocNumber('S', 'anyBranch', 12, { isReturn: true })).toBe(
+        'R-SB1D2-000012'
+      );
+      // Purchases use P.
+      expect(await salesRepository.buildDocNumber('P', 'anyBranch', 8)).toBe('PB1D2-000008');
+    });
+
+    test('buildDocNumber falls back to the till-tagged number when a code is missing', async () => {
+      jest.spyOn(salesRepository, 'branchCode').mockResolvedValue('B1');
+      jest.spyOn(salesRepository, 'deviceCode').mockResolvedValue(''); // no device code yet
+      expect(
+        await salesRepository.buildDocNumber('S', 'anyBranch', 45, { fallbackPrefix: 'SID' })
+      ).toBe('SID-DEV1-000045');
     });
   });
 
