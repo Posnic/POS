@@ -29,6 +29,18 @@
                 </div>
             </div>
 
+            <!-- Greeting first: a warm line every user sees. The wish is worked
+                 out on the client from the time of day - no extra request. -->
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="card bg-primary-rgba m-b-30">
+                        <div class="card-body">
+                            <h5 class="text-primary mb-0" id="dashboard_greeting">Welcome</h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- The six numbers a manager reads, for the chosen period. Financial
                  layer: a salesperson never sees the shop's money totals. -->
             <div class="row" data-module="dashboard" data-access="financials">
@@ -128,6 +140,7 @@
                         <div class="card-body recentBody">
                             <div class="ecom-notification-box">
                                 <ul class="list-unstyled" id="lstRecentActivities">
+                                    <li class="text-muted" style="padding:12px 4px;">No customer owes money right now.</li>
                                 </ul>
                             </div>
                         </div>
