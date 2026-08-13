@@ -997,6 +997,17 @@ PosnicPro.dashboard = {
         $('#dashboard_greeting').text(wish + (name ? ', ' + name : ''));
     },
 
+    // Keep the dashboard on one screen. When nobody owes money the Customer Dues
+    // card is sized to match Best Sellers beside it (instead of standing tall and
+    // empty and forcing a page scroll); when there are real dues, it grows to fit.
+    syncDuesHeight: function () {
+        var dues = $('#lstRecentActivities').closest('.card');
+        var best = $('#tblBestSellingProducts').closest('.card');
+        if (!dues.length || !best.length) { return; }
+        var hasData = $('#lstRecentActivities > li').not('.text-muted').length > 0;
+        dues.css('height', hasData ? 'auto' : best.outerHeight() + 'px');
+    },
+
     KPI_IDS: '#kpi_sales,#kpi_purchase,#kpi_expenses,#kpi_tax,#kpi_upi,#kpi_cash',
 
     loadOverview: function (filter) {
@@ -1027,6 +1038,8 @@ PosnicPro.dashboard = {
 
             PosnicPro.dashboard.renderBestSellers(d.topItems || []);
             PosnicPro.dashboard.renderProfit(d.profit, filter);
+            // Let the layout settle, then match the empty dues card to Best Sellers.
+            setTimeout(function () { PosnicPro.dashboard.syncDuesHeight(); }, 60);
         }, function () {
             $(PosnicPro.dashboard.KPI_IDS).html('&mdash;');
         });
@@ -1186,6 +1199,9 @@ $('#view_customersearch').click(function () {
 $('#dashboard_page').click(function () {
     let objDay = document.getElementById('btnDashboardCountDay');
     PosnicPro.dashboard.activeInActiveFilterButtons('day', objDay);
+});
+$(window).on('resize', function () {
+    if (PosnicPro.dashboard && PosnicPro.dashboard.syncDuesHeight) PosnicPro.dashboard.syncDuesHeight();
 });
 /* -- Sweet Alert - Warning -- */
 $("#logout").on("click", function () {
