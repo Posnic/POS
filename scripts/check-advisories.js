@@ -65,6 +65,21 @@ const ACCEPTED = {
        js-yaml 5 rather than us carrying this indefinitely. Re-check then. */
     expires: '2026-11-01',
   },
+  'GHSA-jmr9-qjv8-65gv': {
+    package: 'extract-zip',
+    via: '@puppeteer/browsers',
+    reason:
+      'Symlink path traversal while extracting a crafted zip. extract-zip is ' +
+      'reached only through whatsapp-web.js -> puppeteer -> @puppeteer/browsers, ' +
+      'which uses it to unpack the Chromium build puppeteer downloads from ' +
+      "Google's servers over HTTPS. The archive is never attacker-supplied: to " +
+      "trigger the traversal you must control that download - Google's CDN and " +
+      'the TLS to it - at which point a symlink in a zip is not the exposure. ' +
+      'The offered fix is a major bump of whatsapp-web.js, a breaking change to ' +
+      'WhatsApp receipts, to close a path that needs a zip we only ever fetch ' +
+      'from Google.',
+    expires: '2027-02-01',
+  },
 };
 
 const workspaces = [
