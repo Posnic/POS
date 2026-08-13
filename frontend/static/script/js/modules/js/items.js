@@ -2035,22 +2035,70 @@ PosnicPro.itemdetails = {
         var item_id = currentHash.split('/')[1];
         if (!item_id) { return false; }
 
-        // A field's label now comes from the server (row.label); this only
-        // covers older price-only rows written before that field existed.
+        var loader = $('.loader-item-pricehistory');
+        $('#item_pricehistory_body').empty();
+        $('#item_history_filter_row').hide();
+        $("<div class='loadingSpinner'></div>").appendTo(loader);
+
+        PosnicPro.get({ url: 'items/priceHistory/' + item_id, data: '' }, function (response) {
+            loader.find('.loadingSpinner:first').remove();
+            var rows = (response && response.data) ? response.data : [];
+            PosnicPro.itemdetails._historyRows = rows;
+            if (!rows.length) {
+                $('#item_pricehistory_wrap').hide();
+                $('#item_history_filter_row').hide();
+                $('#item_pricehistory_empty').show();
+                return;
+            }
+            $('#item_pricehistory_empty').hide();
+            $('#item_pricehistory_wrap').show();
+            $('#item_history_filter').val('all');
+            $('#item_history_filter_row').show();
+            PosnicPro.itemdetails.renderHistory();
+        }, function (xhr) {
+            loader.find('.loadingSpinner:first').remove();
+            $('#item_pricehistory_wrap').hide();
+            $('#item_history_filter_row').hide();
+            $('#item_pricehistory_empty').show();
+        });
+        return false;
+    },
+
+    /*
+     * Draw the stored history through the current filter.
+     *
+     * The rows are already loaded, so filtering by "Price changes", "Name",
+     * "Category", "Tax" or "SKU / Barcode" is instant - no round trip. A field
+     * is matched by its stored `field`/`value_type`, so this keeps working as
+     * new tracked fields are added server-side.
+     */
+    renderHistory: function () {
+        var rows = PosnicPro.itemdetails._historyRows || [];
+        var filter = $('#item_history_filter').val() || 'all';
+        var match = function (r) {
+            var type = r.value_type || 'money';
+            var f = r.field || '';
+            switch (filter) {
+                case 'price': return type === 'money' || type === 'percent';
+                case 'name': return f === 'name';
+                case 'category': return f === 'category_name';
+                case 'tax': return f === 'tax' || f === 'tax_name';
+                case 'sku': return f === 'itemid' || f === 'barcode_id';
+                default: return true;
+            }
+        };
+
         var legacyLabel = {
             selling_price: 'Selling price',
             mrp_price: 'MRP price',
             company_price: 'Company price'
         };
         var currency = PosnicPro.local.get('currencySign') || '';
-        // Values can be item names or categories a person typed, so anything
-        // shown as text is escaped before it reaches the DOM.
         var esc = function (v) {
             return String(v === undefined || v === null ? '' : v)
                 .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;');
         };
-        // Render one value the way its type wants to be read.
         var show = function (v, type) {
             if (type === 'money') return currency + '&nbsp;' + (Number(v) || 0).toFixed(2);
             if (type === 'percent') return (Number(v) || 0) + '%';
@@ -2058,59 +2106,45 @@ PosnicPro.itemdetails = {
             return t === '' ? '<span class="text-muted">-</span>' : t;
         };
 
-        var loader = $('.loader-item-pricehistory');
-        $('#item_pricehistory_body').empty();
-        $("<div class='loadingSpinner'></div>").appendTo(loader);
+        var html = '';
+        var shown = 0;
+        for (var i = 0; i < rows.length; i++) {
+            var r = rows[i];
+            if (!match(r)) continue;
+            shown += 1;
+            var type = r.value_type || 'money';
+            var label = r.label || legacyLabel[r.field] || r.field || '';
 
-        PosnicPro.get({ url: 'items/priceHistory/' + item_id, data: '' }, function (response) {
-            loader.find('.loadingSpinner:first').remove();
-            var rows = (response && response.data) ? response.data : [];
-            if (!rows.length) {
-                $('#item_pricehistory_wrap').hide();
-                $('#item_pricehistory_empty').show();
-                return;
+            // The up/down arrow only means something for a number. A name going
+            // from "Pen" to "Pencil" gets a neutral dash instead.
+            var change = '<span class="text-muted">-</span>';
+            if (type === 'money' || type === 'percent') {
+                var oldN = Number(r.old_value) || 0;
+                var newN = Number(r.new_value) || 0;
+                change = (newN >= oldN)
+                    ? '<span class="text-success"><i class="feather icon-arrow-up"></i> ' + (newN - oldN).toFixed(2) + '</span>'
+                    : '<span class="text-danger"><i class="feather icon-arrow-down"></i> ' + (oldN - newN).toFixed(2) + '</span>';
             }
-            $('#item_pricehistory_empty').hide();
-            $('#item_pricehistory_wrap').show();
 
-            var html = '';
-            for (var i = 0; i < rows.length; i++) {
-                var r = rows[i];
-                var type = r.value_type || 'money';
-                var label = r.label || legacyLabel[r.field] || r.field || '';
-
-                // The up/down arrow only means something for a number. A name
-                // going from "Pen" to "Pencil" gets a neutral dash instead.
-                var change = '<span class="text-muted">-</span>';
-                if (type === 'money' || type === 'percent') {
-                    var oldN = Number(r.old_value) || 0;
-                    var newN = Number(r.new_value) || 0;
-                    change = (newN >= oldN)
-                        ? '<span class="text-success"><i class="feather icon-arrow-up"></i> ' + (newN - oldN).toFixed(2) + '</span>'
-                        : '<span class="text-danger"><i class="feather icon-arrow-down"></i> ' + (oldN - newN).toFixed(2) + '</span>';
-                }
-
-                var rawDate = r.date || r.created_date || r.updated_date;
-                var when = rawDate ? PosnicPro.convertDate(rawDate) : '';
-                var source = esc(r.process || 'Edit');
-                var by = esc(r.changed_by || '');
-                html += '<tr>'
-                    + '<td>' + when + '</td>'
-                    + '<td>' + esc(label) + '</td>'
-                    + '<td class="text-right">' + show(r.old_value, type) + '</td>'
-                    + '<td class="text-right f-w-6">' + show(r.new_value, type) + '</td>'
-                    + '<td class="text-center">' + change + '</td>'
-                    + '<td><span class="badge badge-info-inverse">' + source + '</span></td>'
-                    + '<td>' + by + '</td>'
-                    + '</tr>';
-            }
-            $('#item_pricehistory_body').html(html);
-        }, function (xhr) {
-            loader.find('.loadingSpinner:first').remove();
-            $('#item_pricehistory_wrap').hide();
-            $('#item_pricehistory_empty').show();
-        });
-        return false;
+            var rawDate = r.date || r.created_date || r.updated_date;
+            var when = rawDate ? PosnicPro.convertDate(rawDate) : '';
+            var source = esc(r.process || 'Edit');
+            var by = esc(r.changed_by || '');
+            html += '<tr>'
+                + '<td>' + when + '</td>'
+                + '<td>' + esc(label) + '</td>'
+                + '<td class="text-right">' + show(r.old_value, type) + '</td>'
+                + '<td class="text-right f-w-6">' + show(r.new_value, type) + '</td>'
+                + '<td class="text-center">' + change + '</td>'
+                + '<td><span class="badge badge-info-inverse">' + source + '</span></td>'
+                + '<td>' + by + '</td>'
+                + '</tr>';
+        }
+        if (!shown) {
+            html = '<tr><td colspan="7" class="text-center text-muted" style="padding:20px;">No changes of this kind.</td></tr>';
+        }
+        $('#item_pricehistory_body').html(html);
+        $('#item_history_filter_count').text(shown + ' of ' + rows.length);
     },
 
     itemdetailsreportexport: function (index) {
