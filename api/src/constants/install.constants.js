@@ -15,7 +15,7 @@ const DEFAULTS = {
   CURRENCY_TEXT: 'India Rupee / INR or ₹',
   CURRENCY_TYPE: '₹',
   TIME_ZONE: 'Asia/Kolkata',
-  SALES_PREFIX: 'SID',
+  SALES_PREFIX: 'S',
   RECEIVING_PREFIX: 'RID',
   PRINT_TYPE: 'standard',
   PRINTING_SIZE: 'receipt_medium',

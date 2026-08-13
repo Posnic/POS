@@ -8830,8 +8830,11 @@ class SalesRepository {
       _id: branchId,
       ...(BaseModel.license ? { license: BaseModel.license } : {}),
     });
-    const prefix =
-      (branchDoc?.sales_prefix || branchDoc?.salesPrefix || 'SID').toString().trim() || 'SID';
+    // The prefix comes from the branch config. An empty prefix is honoured - a
+    // shop may want plain numbers - so only a branch that never set the field
+    // falls back to the default 'S'.
+    const prefixRaw = branchDoc?.sales_prefix ?? branchDoc?.salesPrefix;
+    const prefix = prefixRaw != null ? prefixRaw.toString().trim() : 'S';
     const prefixLength = prefix.length;
 
     void prefixLength;
@@ -8960,7 +8963,11 @@ class SalesRepository {
   async buildSalesId(prefix, n) {
     const num = String(n).padStart(6, '0');
     const tag = await this.deviceTag();
-    return tag ? `${prefix}-${tag}-${num}` : `${prefix}${num}`;
+    const p = (prefix || '').toString().trim();
+    // An empty prefix yields just the tag+number (or a bare number) - no leading
+    // dash - so a shop that clears its prefix still gets clean bill numbers.
+    if (tag) return p ? `${p}-${tag}-${num}` : `${tag}-${num}`;
+    return `${p}${num}`;
   }
 
   /*
@@ -9033,7 +9040,7 @@ class SalesRepository {
    * collision-free - so the visible format changes exactly once, cleanly, and
    * a sale never waits on the gateway.
    */
-  async buildDocNumber(typeLetter, branchId, n, { isReturn = false, fallbackPrefix = 'SID' } = {}) {
+  async buildDocNumber(typeLetter, branchId, n, { isReturn = false, fallbackPrefix = 'S' } = {}) {
     const num = String(n).padStart(6, '0');
     const [branchCode, deviceCode] = await Promise.all([
       this.branchCode(branchId),

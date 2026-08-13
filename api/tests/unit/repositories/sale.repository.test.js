@@ -409,7 +409,7 @@ describe('SalesRepository', () => {
       collections.sales.find.mockReturnValue({ toArray: jest.fn().mockResolvedValue([]) });
       collections.counters.findOneAndUpdate.mockResolvedValue({ seq: 1 });
       const r = await salesRepository.generateSalesIdForBranch(FAKE_BRANCH);
-      expect(r).toBe('SID-DEV1-000001');
+      expect(r).toBe('S-DEV1-000001');
     });
     test('seeds from the highest issued number, not the last inserted sale', async () => {
       // The merge case that produced real duplicates: an older-numbered sale
@@ -432,7 +432,7 @@ describe('SalesRepository', () => {
         { $setOnInsert: { seq: 42 } },
         { upsert: true }
       );
-      expect(r).toBe('SID-DEV1-000043');
+      expect(r).toBe('S-DEV1-000043');
     });
     test('uses custom prefix', async () => {
       if (!collections.branches) collections.branches = mkCol();
@@ -455,14 +455,14 @@ describe('SalesRepository', () => {
         salesRepository.generateSalesIdForBranch(FAKE_BRANCH),
         salesRepository.generateSalesIdForBranch(FAKE_BRANCH),
       ]);
-      expect([a, b].sort()).toEqual(['SID-DEV1-000005', 'SID-DEV1-000006']);
+      expect([a, b].sort()).toEqual(['S-DEV1-000005', 'S-DEV1-000006']);
     });
   });
 
   describe('bill-number uniqueness (per-till tagging)', () => {
     test('buildSalesId puts the till code between the prefix and the number', async () => {
       const id = await salesRepository.buildSalesId('SID', 45);
-      expect(id).toBe('SID-DEV1-000045');
+      expect(id).toBe('S-DEV1-000045');
     });
 
     test('two tills with different codes never collide on the same number', async () => {
@@ -518,13 +518,13 @@ describe('SalesRepository', () => {
       dup.code = 11000;
       const spy = jest.spyOn(salesRepository, 'create');
       spy.mockRejectedValueOnce(dup).mockResolvedValueOnce({ _id: 'ok' });
-      const nextId = jest.fn().mockResolvedValue('SID-DEV1-000006');
-      const data = { sales_id: 'SID-DEV1-000005' };
+      const nextId = jest.fn().mockResolvedValue('S-DEV1-000006');
+      const data = { sales_id: 'S-DEV1-000005' };
 
       const r = await salesRepository.createSaleUnique(data, nextId);
       expect(r._id).toBe('ok');
       expect(nextId).toHaveBeenCalledTimes(1);
-      expect(data.sales_id).toBe('SID-DEV1-000006'); // number was bumped for the retry
+      expect(data.sales_id).toBe('S-DEV1-000006'); // number was bumped for the retry
     });
 
     test('createSaleUnique rethrows a non-duplicate error unchanged', async () => {
@@ -578,7 +578,7 @@ describe('SalesRepository', () => {
       jest.spyOn(salesRepository, 'deviceCode').mockResolvedValue(''); // no device code yet
       expect(
         await salesRepository.buildDocNumber('S', 'anyBranch', 45, { fallbackPrefix: 'SID' })
-      ).toBe('SID-DEV1-000045');
+      ).toBe('S-DEV1-000045');
     });
   });
 

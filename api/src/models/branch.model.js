@@ -120,7 +120,7 @@ const branchSchema = new Schema(
     discount: { type: String },
     discount_amount: { type: Number },
     discount_percentage: { type: Number },
-    sales_prefix: { type: String, default: 'SID' },
+    sales_prefix: { type: String, default: 'S' },
     receiving_prefix: { type: String, default: 'RID' },
 
     smstype: { type: String },
@@ -838,7 +838,7 @@ class BranchModel {
         smstype: 'way2sms',
         discount_amount: 0,
         discount_percentage: 0.0,
-        sales_prefix: 'SID',
+        sales_prefix: 'S',
         receiving_prefix: 'RID',
         auto_sms: false, // Default to false or from session settings
         sales_sms: false,

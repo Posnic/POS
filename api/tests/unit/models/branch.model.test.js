@@ -297,8 +297,8 @@ describe('Branch schema — default values', () => {
     expect(sp('whatsapp_device_id').defaultValue).toBe('');
   });
 
-  test('sales_prefix defaults to SID', () => {
-    expect(sp('sales_prefix').defaultValue).toBe('SID');
+  test('sales_prefix defaults to S', () => {
+    expect(sp('sales_prefix').defaultValue).toBe('S');
   });
 
   test('receiving_prefix defaults to RID', () => {
