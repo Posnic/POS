@@ -969,6 +969,101 @@ PosnicPro.dashboard = {
         }, function () { });
     },
 
+    // Currency comes from the shop's own setting, never a hard-coded symbol -
+    // an INR shop must never see a dollar sign, least of all if the API fails.
+    money: function (v) {
+        var cur = PosnicPro.local.get('currencySign') || '';
+        return cur + ' ' + (Number(v) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    },
+
+    /*
+     * The whole dashboard, from one request.
+     *
+     * Every user lands here first, so it now makes a single call and renders
+     * from that - no eight-request burst, no heavy chart libraries. It shows a
+     * quiet loading state first and never leaves a stale or invented number on
+     * screen: if the call fails, the figures fall back to a dash, not a made-up
+     * amount in the wrong currency.
+     */
+    loadOverview: function (filter) {
+        $('#dashboard_sales_count').text('…');
+        $('#dashboard_sales_amount').html('…');
+
+        PosnicPro.get({ url: 'dashboard/getOverview', data: { filter: filter } }, function (response) {
+            if (response.type !== 'success' || !response.data) {
+                $('#dashboard_sales_count,#dashboard_sales_amount').html('&mdash;');
+                return;
+            }
+            var d = response.data;
+            var t = d.totals || {};
+            $('#dashboard_sales_count').text(t.sales_count || 0);
+            $('#dashboard_sales_amount').html(PosnicPro.dashboard.money(t.sales_amount));
+
+            PosnicPro.dashboard.renderBestSellers(d.topItems || []);
+            PosnicPro.dashboard.renderPaymentMix(d.paymentMix || [], !!d.financials);
+            PosnicPro.dashboard.renderProfit(d.profit, filter);
+        }, function () {
+            $('#dashboard_sales_count,#dashboard_sales_amount').html('&mdash;');
+        });
+    },
+
+    renderBestSellers: function (items) {
+        var esc = function (v) { return $('<div>').text(v == null ? '' : v).html(); };
+        var tbody = $('#tblBestSellingProducts tbody');
+        if (!tbody.length) { return; }
+        if (!items.length) {
+            tbody.html('<tr><td colspan="4" class="text-center text-muted" style="padding:16px;">No sales in this period</td></tr>');
+            return;
+        }
+        var html = '';
+        for (var i = 0; i < items.length; i++) {
+            var it = items[i];
+            html += '<tr><td>' + (i + 1) + '</td><td>' + esc(it.item_name) + '</td><td>' + (it.total_qty || 0) + '</td><td>' + PosnicPro.dashboard.money(it.total_amount) + '</td></tr>';
+        }
+        tbody.html(html);
+    },
+
+    // Light HTML bars instead of a chart library - the same information, none of
+    // the megabytes. Rupee amounts only for a user allowed the financial layer.
+    renderPaymentMix: function (mix, financials) {
+        var box = $('#apex-circle-chart');
+        if (!box.length) { return; }
+        if (!mix.length) {
+            box.html('<div class="text-center text-muted" style="padding:24px 8px;">No payments in this period</div>');
+            return;
+        }
+        var esc = function (v) { return $('<div>').text(v == null ? '' : v).html(); };
+        var colors = ['#506fe4', '#43d187', '#f7bb4d', '#96a3b6', '#FF4560', '#775DD0'];
+        var html = '<div style="padding:10px 12px;">';
+        for (var i = 0; i < mix.length; i++) {
+            var m = mix[i];
+            var pct = Number(m.pct) || 0;
+            var right = financials && m.amount != null ? PosnicPro.dashboard.money(m.amount) : pct + '%';
+            html += '<div style="margin-bottom:10px;">' +
+                '<div style="display:flex; justify-content:space-between; font-size:13px;"><span>' + esc(m.mode) + '</span><span class="f-w-6">' + right + '</span></div>' +
+                '<div style="height:6px; background:#eef0f3; border-radius:4px; overflow:hidden; margin-top:3px;"><div style="height:6px; width:' + pct + '%; background:' + colors[i % colors.length] + ';"></div></div>' +
+                '</div>';
+        }
+        html += '</div>';
+        box.html(html);
+    },
+
+    renderProfit: function (profit, filter) {
+        if (!$('#profit_net').length) { return; } // hidden for non-financial users
+        if (!profit) { return; }
+        var money = PosnicPro.dashboard.money;
+        $('#profit_revenue').html(money(profit.revenue));
+        $('#profit_cogs').html(money(profit.cogs));
+        $('#profit_gross').html(money(profit.gross_profit));
+        $('#profit_expenses').html(money(profit.expenses));
+        var net = Number(profit.net_profit) || 0;
+        $('#profit_net').html(money(net)).removeClass('text-success text-danger').addClass(net >= 0 ? 'text-success' : 'text-danger');
+        $('#profit_margin').text((Number(profit.margin_percent) || 0) + '% margin');
+        $('#profit_period_label').text('(' + (filter || 'month') + ')');
+        $('#profit_sales_count').text((profit.sales_count || 0) + ' sale' + (profit.sales_count === 1 ? '' : 's'));
+        $('#profit_cashflow_note').text(' Stock bought this ' + (filter || 'period') + ': ' + money(profit.purchases) + '. Cash in minus out: ' + money(profit.cash_flow) + '.');
+    },
+
     activeInActiveFilterButtons: function (filter, obj) {
         var arrBtns = ['btnDashboardCountYear', 'btnDashboardCountMonth', 'btnDashboardCountWeek', 'btnDashboardCountDay'];
 
@@ -977,15 +1072,8 @@ PosnicPro.dashboard = {
             $("#" + arrBtns[i]).removeClass("active");
         }
         $("#" + obj.id).addClass("active");
-        //Call All other corresponding Functions
-        PosnicPro.dashboard.getProfitSummary(filter);
-        PosnicPro.dashboard.getDashboardSalesPaymentModeData(filter);
-        PosnicPro.dashboard.getDashboardTotalAmounts(filter);
-        PosnicPro.dashboard.getDashboardSalesPurchase(filter);
-        PosnicPro.dashboard.getDashboardTopPerformers(filter);
-        PosnicPro.dashboard.getDashboardBestSellingProducts(filter);
-        PosnicPro.dashboard.getDashboardExpiredProducts(filter);
-        PosnicPro.dashboard.getDashboardPendingActivities(filter);
+        // One request for the whole dashboard - see loadOverview.
+        PosnicPro.dashboard.loadOverview(filter);
     },
     outstandingCustomerViewAllClick: function () {
         $("#outstandingCustomersModal").modal('hide');
