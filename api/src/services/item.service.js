@@ -1231,6 +1231,14 @@ class ItemService {
     return this.repository.bulkUpdatePrices(params, context);
   }
 
+  async bulkSetMargin(params = {}, context = {}) {
+    return this.repository.bulkSetMargin(params, context);
+  }
+
+  async previewSetMargin(params = {}, context = {}) {
+    return this.repository.previewSetMargin(params, context);
+  }
+
   async previewBulkUpdatePrices(params = {}, context = {}) {
     return this.repository.previewBulkUpdatePrices(params, context);
   }

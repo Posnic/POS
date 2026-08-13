@@ -78,6 +78,8 @@ router.post('/exportItems', bindController(itemsController.exportItems));
 // Raise/lower prices across many items at once; and a per-item price history.
 router.post('/bulkUpdatePrices', bindController(itemsController.bulkUpdatePrices));
 router.post('/bulkPricePreview', bindController(itemsController.bulkPricePreview));
+router.post('/bulkSetMargin', bindController(itemsController.bulkSetMargin));
+router.post('/marginPreview', bindController(itemsController.marginPreview));
 router.get('/priceHistory/:id', bindController(itemsController.getPriceHistory));
 router.get('/bulkPriceHistory', bindController(itemsController.getBulkPriceUpdates));
 

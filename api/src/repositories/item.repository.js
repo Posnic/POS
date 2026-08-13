@@ -569,6 +569,192 @@ class ItemRepository extends BaseModel {
     };
   }
 
+  /*
+   * Set the selling price from a target margin in one move - the "40% margin"
+   * button. For each item the new selling price is worked out FROM its cost
+   * (company price), not nudged from an unknown base:
+   *   margin mode  selling = cost / (1 - margin/100)   (margin is % OF selling)
+   *   markup mode  selling = cost * (1 + margin/100)   (margin is % ON cost)
+   * An item with no cost is left alone - there is nothing to base a margin on.
+   */
+  _marginCompute(mode, marginPct) {
+    const m = Number(marginPct);
+    return (cost) => {
+      const c = Number(cost) || 0;
+      if (c <= 0) return null; // no cost -> no basis for a margin
+      const val = mode === 'markup' ? c * (1 + m / 100) : c / (1 - m / 100);
+      return Math.round(val * 100) / 100;
+    };
+  }
+
+  _validMargin(marginPct, mode) {
+    const m = Number(marginPct);
+    if (!Number.isFinite(m) || m < 0) return 'Enter a valid margin percentage';
+    if (mode === 'margin' && m >= 100) return 'A margin of 100% or more is not possible';
+    return null;
+  }
+
+  // Dry-run a margin change: what it would do, how many have no cost to base it
+  // on, and how many would price above MRP - all without writing.
+  async previewSetMargin({ scope, categoryId, margin, mode = 'margin' } = {}, context = {}) {
+    const err = this._validMargin(margin, mode);
+    if (err) return { status: false, message: err };
+    const built = this._bulkPriceFilter({ scope, categoryId }, context);
+    if (built.error) return { status: false, message: built.error };
+    const collection = await this.getCollection(this.collectionName);
+    const items = await collection
+      .find(built.filter, {
+        projection: { name: 1, mrp_price: 1, company_price: 1, selling_price: 1 },
+      })
+      .toArray();
+    const compute = this._marginCompute(mode, margin);
+    let willChange = 0;
+    let noCost = 0;
+    const exceedsMrp = [];
+    for (const it of items) {
+      const newV = compute(it.company_price);
+      if (newV == null) {
+        noCost += 1;
+        continue;
+      }
+      if (newV === (Number(it.selling_price) || 0)) continue;
+      willChange += 1;
+      const v = this._priceRuleViolation(it, 'selling_price', newV);
+      if (v && v.rule === 'exceeds_mrp') {
+        exceedsMrp.push({ name: it.name || '', selling: newV, limit: v.limit });
+      }
+    }
+    return {
+      status: true,
+      data: {
+        total: items.length,
+        willChange,
+        noCost,
+        exceedsMrpCount: exceedsMrp.length,
+        exceedsMrp: exceedsMrp.slice(0, 50),
+      },
+      message: 'preview',
+    };
+  }
+
+  // Apply a target margin across all items or one category. Same guards, history
+  // logging and batch-audit record as a bulk +/-, so a margin run is auditable
+  // exactly like a hand edit.
+  async bulkSetMargin(
+    { scope, categoryId, margin, mode = 'margin', skipViolations } = {},
+    context = {}
+  ) {
+    const err = this._validMargin(margin, mode);
+    if (err) return { status: false, message: err };
+    const built = this._bulkPriceFilter({ scope, categoryId }, context);
+    if (built.error) return { status: false, message: built.error };
+    const collection = await this.getCollection(this.collectionName);
+    const items = await collection
+      .find(built.filter, {
+        projection: { name: 1, branch_id: 1, mrp_price: 1, company_price: 1, selling_price: 1 },
+      })
+      .toArray();
+    if (!items.length)
+      return {
+        status: true,
+        data: { updated: 0, total: 0, skipped: 0 },
+        message: 'No items matched',
+      };
+
+    const now = new Date();
+    const db = await BaseModel.getDb();
+    const batchId = new ObjectId();
+    const compute = this._marginCompute(mode, margin);
+    const fieldMeta = TRACKED_FIELDS.find((f) => f.field === 'selling_price') || {
+      label: 'Selling price',
+      type: 'money',
+    };
+    const priceRows = [];
+    let updated = 0;
+    let skipped = 0;
+    let noCost = 0;
+    for (const it of items) {
+      const oldV = Number(it.selling_price) || 0;
+      const newV = compute(it.company_price);
+      if (newV == null) {
+        noCost += 1;
+        continue;
+      }
+      if (newV === oldV) continue;
+      if (skipViolations && this._priceRuleViolation(it, 'selling_price', newV)) {
+        skipped += 1;
+        continue;
+      }
+      await collection.updateOne(
+        { _id: it._id },
+        {
+          $set: {
+            selling_price: newV,
+            updated_date: now,
+            updated_by: context.userName || '',
+            updated_by_id: context.userId || null,
+          },
+        }
+      );
+      updated += 1;
+      priceRows.push({
+        item_id: it._id,
+        item_name: it.name || '',
+        branch_id: it.branch_id || null,
+        field: 'selling_price',
+        label: fieldMeta.label,
+        value_type: fieldMeta.type,
+        old_value: oldV,
+        new_value: newV,
+        process: 'Bulk',
+        batch_id: batchId,
+        changed_by: context.userName || '',
+        changed_by_id: context.userId || null,
+        date: now,
+        created_date: now,
+        updated_date: now,
+        license: BaseModel.license || null,
+      });
+    }
+    if (priceRows.length) {
+      await db
+        .collection('price_history')
+        .insertMany(priceRows)
+        .catch(() => {});
+    }
+    if (updated > 0) {
+      await db
+        .collection('bulk_price_updates')
+        .insertOne({
+          _id: batchId,
+          field: 'selling_price',
+          label: fieldMeta.label,
+          scope: scope === 'category' ? 'category' : 'all',
+          category_id: scope === 'category' ? this.toObjectId(categoryId) : null,
+          op: mode === 'markup' ? 'markup' : 'margin',
+          direction: 'margin',
+          value: Number(margin) || 0,
+          items_changed: updated,
+          items_matched: items.length,
+          items_skipped: skipped,
+          changed_by: context.userName || '',
+          changed_by_id: context.userId || null,
+          date: now,
+          created_date: now,
+          license: BaseModel.license || null,
+        })
+        .catch(() => {});
+    }
+    return {
+      status: true,
+      data: { updated, total: items.length, skipped, noCost, batch_id: batchId },
+      message:
+        `Set ${mode === 'markup' ? 'markup' : 'margin'} ${margin}% on ${updated} of ${items.length} item(s)` +
+        (skipped ? `, skipped ${skipped} that would exceed MRP` : '') +
+        (noCost ? `, ${noCost} have no cost price` : ''),
+    };
+  }
+
   async upsertItem(data, id = '', context = {}) {
     try {
       const collection = await this.getCollection(this.collectionName);
