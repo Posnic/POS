@@ -140,6 +140,9 @@ class StockLogsRepository extends BaseModel {
         item_quantity: logData.item_quantity,
         process: logData.process,
         reference: logData.reference,
+        // Optional free-text reason (e.g. from a bulk stock update). Empty for
+        // the many callers that do not set one, so the field is always present.
+        note: logData.note || '',
         date: logDate,
         created_date: logDate,
         updated_date: logDate,

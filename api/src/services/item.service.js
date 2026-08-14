@@ -1247,6 +1247,18 @@ class ItemService {
     return this.repository.getBulkPriceUpdates(opts);
   }
 
+  async bulkUpdateStock(params = {}, context = {}) {
+    return this.repository.bulkUpdateStock(params, context);
+  }
+
+  async previewBulkUpdateStock(params = {}, context = {}) {
+    return this.repository.previewBulkUpdateStock(params, context);
+  }
+
+  async getBulkStockUpdates(opts = {}) {
+    return this.repository.getBulkStockUpdates(opts);
+  }
+
   async getPriceHistory(itemId, opts = {}) {
     return this.repository.getPriceHistory(itemId, opts);
   }

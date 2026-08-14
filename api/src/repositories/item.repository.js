@@ -569,6 +569,214 @@ class ItemRepository extends BaseModel {
     };
   }
 
+  /** Recent bulk stock runs, newest first, paginated - the audit list of who
+   *  added or removed stock, when, and on how many items. Mirrors
+   *  getBulkPriceUpdates but reads the bulk_stock_updates collection. */
+  async getBulkStockUpdates({ limit = 20, skip = 0 } = {}) {
+    try {
+      const db = await BaseModel.getDb();
+      const filter = {};
+      if (BaseModel.license) filter.license = BaseModel.license;
+      const col = db.collection('bulk_stock_updates');
+      const lim = Math.min(100, Math.max(1, Number(limit) || 20));
+      const sk = Math.max(0, Number(skip) || 0);
+      const [rows, total] = await Promise.all([
+        col.find(filter).sort({ date: -1 }).skip(sk).limit(lim).toArray(),
+        col.countDocuments(filter),
+      ]);
+      return { status: true, data: rows, total };
+    } catch (error) {
+      return { status: false, data: [], total: 0, message: error.message };
+    }
+  }
+
+  // Validate + normalise a bulk-stock request. Stock has a single field
+  // (available_quantity), so unlike price there is nothing to choose. Returns
+  // { error } or { amount, sign, compute }. Stock is clamped at zero and rounded
+  // to two decimals - weight-priced items can carry fractional quantity.
+  _bulkStockParams({ op, value, direction }) {
+    const amount = Number(value);
+    if (!Number.isFinite(amount) || amount < 0) return { error: 'Enter a valid quantity' };
+    if (op !== 'percent' && op !== 'amount') return { error: 'Choose percent or amount' };
+    const sign = direction === 'decrease' ? -1 : 1;
+    const compute = (oldV) => {
+      const delta = op === 'percent' ? (oldV * amount) / 100 : amount;
+      return Math.max(0, Math.round((oldV + sign * delta) * 100) / 100);
+    };
+    return { amount, sign, compute };
+  }
+
+  /*
+   * Dry-run a bulk stock change: compute what it would do WITHOUT writing, and
+   * report how many items would change, with a small sample. The "check" step
+   * so the shop sees the effect before committing.
+   */
+  async previewBulkUpdateStock({ scope, categoryId, op, value, direction } = {}, context = {}) {
+    const parts = this._bulkStockParams({ op, value, direction });
+    if (parts.error) return { status: false, message: parts.error };
+    const built = this._bulkPriceFilter({ scope, categoryId }, context);
+    if (built.error) return { status: false, message: built.error };
+
+    const collection = await this.getCollection(this.collectionName);
+    const items = await collection
+      .find(built.filter, {
+        projection: { name: 1, available_quantity: 1 },
+      })
+      .toArray();
+
+    let willChange = 0;
+    const sample = [];
+    for (const it of items) {
+      const oldV = Number(it.available_quantity) || 0;
+      const newV = parts.compute(oldV);
+      if (newV === oldV) continue;
+      willChange += 1;
+      if (sample.length < 100)
+        sample.push({ name: it.name || '', old_value: oldV, new_value: newV });
+    }
+
+    return {
+      status: true,
+      data: { total: items.length, willChange, sample },
+      message: 'Preview ready',
+    };
+  }
+
+  /*
+   * Add to or remove from available stock across many items at once - all items,
+   * or one category - by a flat quantity or a percentage. Every item that
+   * actually changes AND is inventory-tracked is written to stocklogs with
+   * process 'Bulk Stock', so the movement is auditable exactly like a single
+   * hand edit. Stock is clamped at zero.
+   */
+  async bulkUpdateStock({ scope, categoryId, op, value, direction, note } = {}, context = {}) {
+    const parts = this._bulkStockParams({ op, value, direction });
+    if (parts.error) return { status: false, message: parts.error };
+    const built = this._bulkPriceFilter({ scope, categoryId }, context);
+    if (built.error) return { status: false, message: built.error };
+    // A free-text reason the shopkeeper can attach to the run ("new delivery",
+    // "stock take correction"), carried onto every stock-log row and the batch
+    // record so later readers see why the numbers moved. Capped so it cannot
+    // bloat the audit.
+    const cleanNote = String(note || '').trim().slice(0, 500);
+
+    const collection = await this.getCollection(this.collectionName);
+    const items = await collection
+      .find(built.filter, {
+        projection: {
+          available_quantity: 1,
+          name: 1,
+          branch_id: 1,
+          barcode_id: 1,
+          track_inventory: 1,
+        },
+      })
+      .toArray();
+    if (!items.length)
+      return {
+        status: true,
+        data: { updated: 0, total: 0, skipped: 0 },
+        message: 'No items matched',
+      };
+
+    const now = new Date();
+    const db = await BaseModel.getDb();
+    // One id for the whole run: stamped on the batch record so the run reads as
+    // a single event.
+    const batchId = new ObjectId();
+
+    // Stock logs record real opening/closing balances unless the branch turned
+    // that off (then they read 'N/A'); the log row itself is still written.
+    const branchObjectId = context.branchId ? this.toObjectId(context.branchId) : null;
+    let stockLogStatus = true;
+    if (branchObjectId) {
+      const branchesCollection = await this.getCollection('branches');
+      const branchDoc = await branchesCollection.findOne({ _id: branchObjectId });
+      stockLogStatus = branchDoc?.stock_management_log !== false;
+    }
+    const stockLogsRepository = new StockLogsRepository();
+
+    let updated = 0;
+    for (const it of items) {
+      const oldV = Number(it.available_quantity) || 0;
+      const newV = parts.compute(oldV);
+      if (newV === oldV) continue;
+      await collection.updateOne(
+        { _id: it._id },
+        {
+          $set: {
+            available_quantity: newV,
+            updated_date: now,
+            updated_by: context.userName || '',
+            updated_by_id: context.userId || null,
+          },
+        }
+      );
+      updated += 1;
+
+      // Audit each changed, inventory-tracked item to stocklogs, exactly as the
+      // single-edit path does. Same count convention: old - new, negated when
+      // stock went up.
+      if (it.track_inventory === true) {
+        const diff = oldV - newV;
+        const count = diff < 0 ? String(Math.abs(diff)) : '-' + String(diff);
+        await stockLogsRepository
+          .createStockLog({
+            stocklog: stockLogStatus,
+            branch_id: branchObjectId || it.branch_id || null,
+            view_item_id: it._id,
+            item_barcode_id: it.barcode_id,
+            item_name: it.name,
+            item_quantity: String(newV),
+            process: 'Bulk Stock',
+            reference: it.barcode_id,
+            note: cleanNote,
+            date: now,
+            action: 'Add',
+            opening_balance: String(oldV),
+            closing_balance: String(newV),
+            count: count,
+            changed_by_userid: context.userId,
+            changed_by: context.userName,
+          })
+          .catch(() => {});
+      }
+    }
+
+    // Batch-level audit: one row per bulk run, so "who added how much stock to
+    // how many items, when" reads as a single event. Only when something changed.
+    if (updated > 0) {
+      await db
+        .collection('bulk_stock_updates')
+        .insertOne({
+          _id: batchId,
+          field: 'available_quantity',
+          label: 'Stock',
+          scope: scope === 'category' ? 'category' : 'all',
+          category_id: scope === 'category' ? this.toObjectId(categoryId) : null,
+          op, // 'percent' | 'amount'
+          direction, // 'increase' | 'decrease'
+          value: Number(value) || 0,
+          note: cleanNote,
+          items_changed: updated,
+          items_matched: items.length,
+          items_skipped: 0,
+          changed_by: context.userName || '',
+          changed_by_id: context.userId || null,
+          date: now,
+          created_date: now,
+          license: BaseModel.license || null,
+        })
+        .catch(() => {});
+    }
+
+    return {
+      status: true,
+      data: { updated, total: items.length, skipped: 0, batch_id: batchId },
+      message: `Updated stock for ${updated} of ${items.length} item(s)`,
+    };
+  }
+
   /*
    * Set the selling price from a target margin in one move - the "40% margin"
    * button. For each item the new selling price is worked out FROM its cost

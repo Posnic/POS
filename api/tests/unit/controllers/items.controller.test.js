@@ -58,6 +58,9 @@ jest.mock('../../../src/services/item.service', () =>
     itemReportTable: jest.fn(),
     bulkUpdatePrices: jest.fn(),
     previewBulkUpdatePrices: jest.fn(),
+    bulkUpdateStock: jest.fn(),
+    previewBulkUpdateStock: jest.fn(),
+    getBulkStockUpdates: jest.fn(),
     getPriceHistory: jest.fn(),
   }))
 );
@@ -1804,6 +1807,75 @@ describe('bulkPricePreview', () => {
     const res = mockRes();
     await ctrl.bulkPricePreview(req, res);
     expect(svc.previewBulkUpdatePrices).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(401);
+  });
+});
+
+// =============================================================================
+// bulkUpdateStock
+// =============================================================================
+
+describe('bulkUpdateStock', () => {
+  const body = { scope: 'all', op: 'amount', value: 5, direction: 'increase', note: 'new delivery' };
+
+  test('returns 200 and forwards params, incl. the note, to the service', async () => {
+    svc.bulkUpdateStock.mockResolvedValue({
+      status: true,
+      data: { updated: 3, total: 5, skipped: 0 },
+      message: 'ok',
+    });
+    const req = mockReq({ body, user: adminUser() });
+    const res = mockRes();
+    await ctrl.bulkUpdateStock(req, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    const [params] = svc.bulkUpdateStock.mock.calls[0];
+    expect(params.op).toBe('amount');
+    expect(params.note).toBe('new delivery');
+  });
+
+  test('returns 401 when access.item.write is explicitly false', async () => {
+    const req = mockReq({ body, user: adminUser({ access: { item: { write: false } } }) });
+    const res = mockRes();
+    await ctrl.bulkUpdateStock(req, res);
+    expect(svc.bulkUpdateStock).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(401);
+  });
+
+  test('returns 400 when the service rejects the request', async () => {
+    svc.bulkUpdateStock.mockResolvedValue({ status: false, message: 'Enter a valid quantity' });
+    const req = mockReq({ body: { value: -1 }, user: adminUser() });
+    const res = mockRes();
+    await ctrl.bulkUpdateStock(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+});
+
+// =============================================================================
+// bulkStockPreview
+// =============================================================================
+
+describe('bulkStockPreview', () => {
+  test('returns 200 with the change count', async () => {
+    svc.previewBulkUpdateStock.mockResolvedValue({
+      status: true,
+      data: { total: 5, willChange: 3, sample: [] },
+      message: 'Preview ready',
+    });
+    const req = mockReq({
+      body: { scope: 'all', op: 'amount', value: 5, direction: 'increase' },
+      user: adminUser(),
+    });
+    const res = mockRes();
+    await ctrl.bulkStockPreview(req, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json.mock.calls[0][0].data.willChange).toBe(3);
+  });
+
+  test('returns 401 when access.item.read is explicitly false', async () => {
+    const req = mockReq({ body: {}, user: adminUser({ access: { item: { read: false } } }) });
+    const res = mockRes();
+    await ctrl.bulkStockPreview(req, res);
+    expect(svc.previewBulkUpdateStock).not.toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(401);
   });
 });
