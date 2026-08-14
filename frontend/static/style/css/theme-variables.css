@@ -2036,7 +2036,7 @@ body {
     --theme-table-row-hover: #f2f2f4;
     --theme-menu-bg: #f5f5f7;
     --theme-menu-text: #1d1d1f;
-    --theme-menu-active-bg: #007aff;
+    --theme-menu-active-bg: #0064cc;
     --theme-menu-active-text: #ffffff;
     --theme-btn-primary-bg: #007aff;
     --theme-btn-primary-text: #ffffff;
@@ -2231,7 +2231,7 @@ body {
 }
 [data-theme="macos"] .vertical-menu > li:hover > a { background-color: rgba(0,0,0,0.05) !important; color: #1d1d1f !important; }
 [data-theme="macos"] .vertical-menu > li > a.active,
-[data-theme="macos"] .vertical-menu > li.active > a { background-color: #007aff !important; color: #ffffff !important; }
+[data-theme="macos"] .vertical-menu > li.active > a { background-color: #0064cc !important; color: #ffffff !important; }
 [data-theme="macos"] .vertical-menu > li > a.active img,
 [data-theme="macos"] .vertical-menu > li.active > a img { filter: brightness(0) invert(1) !important; }
 /* Soft, deep-shadowed rounded popovers + a hairline topbar. */

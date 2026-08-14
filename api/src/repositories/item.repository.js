@@ -658,7 +658,9 @@ class ItemRepository extends BaseModel {
     // "stock take correction"), carried onto every stock-log row and the batch
     // record so later readers see why the numbers moved. Capped so it cannot
     // bloat the audit.
-    const cleanNote = String(note || '').trim().slice(0, 500);
+    const cleanNote = String(note || '')
+      .trim()
+      .slice(0, 500);
 
     const collection = await this.getCollection(this.collectionName);
     const items = await collection

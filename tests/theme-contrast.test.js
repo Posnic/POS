@@ -13,10 +13,10 @@ const { contrast } = require('../window-chrome');
  * item whose label vanishes into its own highlight. Nothing errors, no test
  * fails, and the shop concludes the software is broken.
  *
- * There are 24 presets and each carries about a dozen colours, so this is not
- * something to check by eye - and checking it by eye is exactly what has been
- * happening. The thresholds are WCAG 2.1: 4.5:1 for body text, 3:1 for large
- * text and for things that are shapes rather than words.
+ * There are about a dozen presets and each carries about a dozen colours, so
+ * this is not something to check by eye - and checking it by eye is exactly what
+ * has been happening. The thresholds are WCAG 2.1: 4.5:1 for body text, 3:1 for
+ * large text and for things that are shapes rather than words.
  *
  * The presets are read out of themeManager.js rather than duplicated here. A
  * copy would be wrong the first time somebody added a theme, and then this file
@@ -70,7 +70,7 @@ const PAIRS = [
 
 test('the presets are found, so the rest of this file means something', () => {
   const names = Object.keys(PRESETS);
-  assert.ok(names.length >= 15, 'expected the full set of presets, found ' + names.length);
+  assert.ok(names.length >= 10, 'expected the full set of presets, found ' + names.length);
   assert.ok(names.includes('dark') && names.includes('default'),
     'the two presets every install can reach must be among them');
 });

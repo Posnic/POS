@@ -121,7 +121,7 @@ describe('users.constants', () => {
       USER_NOT_FOUND: 'User not found',
       INVALID_CREDENTIALS: 'Incorrect username or password',
       NO_BRANCHES: 'No branch is assigned to this user',
-      INVALID_BRANCH: "No valid branch is assigned. Please contact your administrator.",
+      INVALID_BRANCH: 'No valid branch is assigned. Please contact your administrator.',
       UNAUTHORIZED: 'Unauthorized',
       VALIDATION_ERROR: 'Validation Error',
       INVALID_BRANCH_ID: 'Invalid branch ID',
