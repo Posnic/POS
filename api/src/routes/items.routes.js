@@ -83,6 +83,11 @@ router.post('/marginPreview', bindController(itemsController.marginPreview));
 router.get('/priceHistory/:id', bindController(itemsController.getPriceHistory));
 router.get('/bulkPriceHistory', bindController(itemsController.getBulkPriceUpdates));
 
+// Add/remove stock across many items at once, with a note, audited to stocklogs.
+router.post('/bulkUpdateStock', bindController(itemsController.bulkUpdateStock));
+router.post('/bulkStockPreview', bindController(itemsController.bulkStockPreview));
+router.get('/bulkStockHistory', bindController(itemsController.getBulkStockUpdates));
+
 // PHP: categoryItemsReportTable() - Category report
 router.get('/categoryItemsReportTable', bindController(itemsController.categoryItemsReportTable));
 

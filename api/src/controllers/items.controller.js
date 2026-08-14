@@ -1362,6 +1362,73 @@ class ItemsController extends BaseController {
   }
 
   /**
+   * Add to or remove from stock across many items or a category at once. Every
+   * changed, inventory-tracked item is written to the stock log with the note
+   * the shopkeeper attached, so the movement is auditable.
+   */
+  async bulkUpdateStock(req, res) {
+    try {
+      if (req.user?.access?.item?.write === false) {
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+      }
+      await this.ensureContext(req);
+      const ctx = req.itemContext || {};
+      const { scope, category_id, op, value, direction, note } = req.body || {};
+      const result = await this.service.bulkUpdateStock(
+        { scope, categoryId: category_id, op, value, direction, note },
+        { branchId: ctx.branchId, userName: ctx.loggedUserName, userId: ctx.loggedUserId }
+      );
+      if (result && result.status) return this.success(res, result.data, result.message);
+      return this.error(res, result?.message || 'Bulk stock update failed', 400);
+    } catch (error) {
+      console.error('Error in bulkUpdateStock:', error);
+      return this.error(res, error.message, 500);
+    }
+  }
+
+  /** Dry-run a bulk stock change: how many items it would change. */
+  async bulkStockPreview(req, res) {
+    try {
+      if (req.user?.access?.item?.read === false) {
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+      }
+      await this.ensureContext(req);
+      const ctx = req.itemContext || {};
+      const { scope, category_id, op, value, direction } = req.body || {};
+      const result = await this.service.previewBulkUpdateStock(
+        { scope, categoryId: category_id, op, value, direction },
+        { branchId: ctx.branchId }
+      );
+      if (result && result.status) return this.success(res, result.data, result.message);
+      return this.error(res, result?.message || 'Could not check stock', 400);
+    } catch (error) {
+      console.error('Error in bulkStockPreview:', error);
+      return this.error(res, error.message, 500);
+    }
+  }
+
+  async getBulkStockUpdates(req, res) {
+    try {
+      if (req.user?.access?.item?.read === false) {
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+      }
+      await this.ensureContext(req);
+      const result = await this.service.getBulkStockUpdates({
+        limit: req.query.limit,
+        skip: req.query.skip,
+      });
+      return this.success(
+        res,
+        { runs: result.data || [], total: result.total || 0 },
+        'Bulk stock history'
+      );
+    } catch (error) {
+      console.error('Error in getBulkStockUpdates:', error);
+      return this.error(res, error.message, 500);
+    }
+  }
+
+  /**
    * PHP: itemsImport() - Bulk import items from CSV/Excel
    * Frontend posts to `items/itemsImport` with body { result: [...] }.
    */

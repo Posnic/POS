@@ -1073,6 +1073,123 @@ describe('ItemRepository', () => {
     });
   });
 
+  describe('bulkUpdateStock', () => {
+    const ctx = { branchId: FAKE_BRANCH, userName: 'admin', userId: 'u1' };
+    const withDb = (batchInsert) => {
+      BaseModel.getDb = jest.fn().mockResolvedValue({
+        collection: (name) => ({
+          insertMany: () => Promise.resolve({}),
+          insertOne:
+            name === 'bulk_stock_updates' && batchInsert ? batchInsert : () => Promise.resolve({}),
+        }),
+      });
+    };
+
+    test('rejects a negative quantity or a bad operation', async () => {
+      expect((await repo.bulkUpdateStock({ op: 'amount', value: -1 })).status).toBe(false);
+      expect((await repo.bulkUpdateStock({ op: 'bad', value: 5 })).status).toBe(false);
+    });
+
+    test('adds stock by a flat quantity, only where it actually changes', async () => {
+      withDb();
+      col.find.mockReturnValue(
+        mkChain([
+          { _id: FAKE_ID, name: 'A', available_quantity: 10, track_inventory: true },
+          { _id: 'z', name: 'B', available_quantity: 7, track_inventory: false },
+        ])
+      );
+      const r = await repo.bulkUpdateStock(
+        { scope: 'all', op: 'amount', value: 5, direction: 'increase' },
+        ctx
+      );
+      expect(r.status).toBe(true);
+      expect(r.data.total).toBe(2);
+      expect(r.data.updated).toBe(2); // A 10->15, B 7->12
+      expect(col.updateOne).toHaveBeenCalledTimes(2);
+      expect(col.updateOne.mock.calls[0][1].$set.available_quantity).toBe(15);
+    });
+
+    test('a decrease never takes stock below zero', async () => {
+      withDb();
+      col.find.mockReturnValue(
+        mkChain([{ _id: FAKE_ID, name: 'A', available_quantity: 3, track_inventory: true }])
+      );
+      await repo.bulkUpdateStock(
+        { scope: 'all', op: 'amount', value: 20, direction: 'decrease' },
+        ctx
+      );
+      expect(col.updateOne.mock.calls[0][1].$set.available_quantity).toBe(0);
+    });
+
+    test('writes a batch audit record carrying the note, and returns its id', async () => {
+      const batchInsert = jest.fn().mockResolvedValue({});
+      withDb(batchInsert);
+      col.find.mockReturnValue(
+        mkChain([{ _id: FAKE_ID, name: 'A', available_quantity: 10, track_inventory: true }])
+      );
+      const r = await repo.bulkUpdateStock(
+        { scope: 'all', op: 'amount', value: 5, direction: 'increase', note: 'new delivery' },
+        ctx
+      );
+      expect(r.data.updated).toBe(1);
+      expect(r.data.batch_id).toBeDefined();
+      expect(batchInsert).toHaveBeenCalledTimes(1);
+      const rec = batchInsert.mock.calls[0][0];
+      expect(rec.items_changed).toBe(1);
+      expect(rec.direction).toBe('increase');
+      expect(rec.changed_by).toBe('admin');
+      expect(rec.note).toBe('new delivery');
+    });
+
+    test('writes no batch record when nothing actually changes', async () => {
+      const batchInsert = jest.fn().mockResolvedValue({});
+      withDb(batchInsert);
+      col.find.mockReturnValue(
+        mkChain([{ _id: 'z', name: 'Z', available_quantity: 0, track_inventory: true }])
+      );
+      const r = await repo.bulkUpdateStock(
+        { scope: 'all', op: 'amount', value: 0, direction: 'increase' },
+        ctx
+      );
+      expect(r.data.updated).toBe(0);
+      expect(batchInsert).not.toHaveBeenCalled();
+    });
+
+    test('previewBulkUpdateStock counts how many would change without writing', async () => {
+      col.find.mockReturnValue(
+        mkChain([
+          { _id: '1', name: 'A', available_quantity: 10 },
+          { _id: '2', name: 'B', available_quantity: 4 },
+        ])
+      );
+      const r = await repo.previewBulkUpdateStock(
+        { scope: 'all', op: 'amount', value: 5, direction: 'increase' },
+        ctx
+      );
+      expect(r.status).toBe(true);
+      expect(r.data.total).toBe(2);
+      expect(r.data.willChange).toBe(2);
+      expect(col.updateOne).not.toHaveBeenCalled();
+    });
+
+    test('getBulkStockUpdates lists runs newest first with a total', async () => {
+      const runs = [{ _id: 'b1', items_changed: 3, note: 'delivery' }];
+      const chain = {
+        find: () => chain,
+        sort: () => chain,
+        skip: () => chain,
+        limit: () => chain,
+        toArray: () => Promise.resolve(runs),
+        countDocuments: () => Promise.resolve(4),
+      };
+      BaseModel.getDb = jest.fn().mockResolvedValue({ collection: () => chain });
+      const r = await repo.getBulkStockUpdates({ limit: 20, skip: 0 });
+      expect(r.status).toBe(true);
+      expect(r.data).toEqual(runs);
+      expect(r.total).toBe(4);
+    });
+  });
+
   describe('bulkSetMargin', () => {
     const ctx = { branchId: FAKE_BRANCH, userName: 'admin', userId: 'u1' };
     const withDb = () => {

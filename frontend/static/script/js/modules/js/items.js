@@ -1015,6 +1015,114 @@ PosnicPro.items = {
         });
         return false;
     },
+
+    // ---- Bulk stock update: add/remove stock across items or a category, with
+    // a note carried into the stock log. Mirrors bulk price; no MRP/cost rules. ----
+    openBulkStock: function () {
+        $('input[name="bulk_stock_scope"][value="all"]').prop('checked', true);
+        $('.bulk-stock-category-row').hide();
+        $('#bulk_stock_direction').val('increase');
+        $('#bulk_stock_op').val('amount');
+        $('.bulk-stock-unit').text('Qty');
+        $('#bulk_stock_value').val('');
+        $('#bulk_stock_note').val('');
+        $('#bulk_stock_check_result').hide().empty();
+        $('#bulk_stock_submit').prop('disabled', false);
+        PosnicPro.items.loadBulkStockCategories();
+        $('#bulk_stock_modal').modal('show');
+    },
+
+    readBulkStockForm: function () {
+        var scope = $('input[name="bulk_stock_scope"]:checked').val();
+        var value = $('#bulk_stock_value').val();
+        if (value === '' || isNaN(value) || Number(value) < 0) {
+            PosnicPro.alert('warning', 'Enter a valid quantity.');
+            return null;
+        }
+        var category_id = (scope === 'category') ? $('#bulk_stock_category').val() : null;
+        if (scope === 'category' && !category_id) {
+            PosnicPro.alert('warning', 'Choose a category.');
+            return null;
+        }
+        return {
+            scope: scope,
+            category_id: category_id,
+            op: $('#bulk_stock_op').val(),
+            value: value,
+            direction: $('#bulk_stock_direction').val(),
+            note: $('#bulk_stock_note').val()
+        };
+    },
+
+    checkBulkStock: function () {
+        var form = PosnicPro.items.readBulkStockForm();
+        if (!form) return false;
+        var box = $('#bulk_stock_check_result');
+        box.html('<span class="dim">Checking...</span>').show();
+        PosnicPro.post({ url: 'items/bulkStockPreview', data: JSON.stringify(form) }, function (response) {
+            if (response.type !== 'success') {
+                box.hide();
+                PosnicPro.alert(response.type, response.message);
+                return;
+            }
+            var d = response.data || {};
+            var esc = function (v) { return $('<div>').text(v == null ? '' : v).html(); };
+            var sample = (d.sample || []).slice(0, 5).map(function (r) {
+                return '<li>' + esc(r.name) + ': ' + esc(r.old_value) + ' &rarr; <b>' + esc(r.new_value) + '</b></li>';
+            }).join('');
+            var more = (d.willChange > 5) ? '<li class="dim">and ' + (d.willChange - 5) + ' more</li>' : '';
+            var head = '<b>' + (d.willChange || 0) + '</b> of ' + (d.total || 0) + ' item(s) would change.';
+            var body = sample ? '<ul style="margin:4px 0 0; padding-left:18px;">' + sample + more + '</ul>' : '';
+            box.attr('class', 'alert alert-info')
+                .css({ 'font-size': '12.5px', 'padding': '8px 12px' })
+                .html(head + body).show();
+        }, function () {
+            box.hide();
+        });
+        return false;
+    },
+
+    toggleBulkStockCategory: function () {
+        var scope = $('input[name="bulk_stock_scope"]:checked').val();
+        (scope === 'category') ? $('.bulk-stock-category-row').show() : $('.bulk-stock-category-row').hide();
+    },
+
+    bulkStockOpChanged: function () {
+        var op = $('#bulk_stock_op').val();
+        $('.bulk-stock-unit').text(op === 'percent' ? '%' : 'Qty');
+    },
+
+    loadBulkStockCategories: function () {
+        var sel = $('#bulk_stock_category');
+        var params = { url: 'categories/getCategoryAjaxList', data: 'query=' };
+        PosnicPro.get(params, function (response) {
+            sel.empty();
+            $.map(response.suggestions || [], function (dataItem) {
+                sel.append('<option value="' + dataItem.id + '">' + dataItem.name + '</option>');
+            });
+            sel.select2({ placeholder: 'Choose a category', dropdownParent: $('#bulk_stock_modal') });
+        });
+    },
+
+    submitBulkStock: function () {
+        var form = PosnicPro.items.readBulkStockForm();
+        if (!form) return false;
+        $('#bulk_stock_submit').prop('disabled', true);
+        var params = { url: 'items/bulkUpdateStock', data: JSON.stringify(form) };
+        PosnicPro.post(params, function (response) {
+            $('#bulk_stock_submit').prop('disabled', false);
+            if (response.type === 'success') {
+                $('#bulk_stock_modal').modal('hide');
+                PosnicPro.alert('success', response.message);
+                PosnicPro.items.itemsTable();
+            } else {
+                PosnicPro.alert(response.type, response.message);
+            }
+        }, function () {
+            $('#bulk_stock_submit').prop('disabled', false);
+        });
+        return false;
+    },
     itemImageFormSubmit: function () {
 
         if ($('#item_value_check').val('') !== '' && $('#items_name').val() !== '') {

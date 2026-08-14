@@ -99,6 +99,11 @@
                                                 </a>
                                             </li>
                                             <li class="list-inline-item email_320">
+                                                <a data-module="item" data-access="write" href="#/items" id="items_bulkstockbtn" class="sale_color" onClick="PosnicPro.items.openBulkStock(); return false;" data-toggle="tooltip" title="Bulk stock update">
+                                                    <i class="feather icon-layers font-20"></i>
+                                                </a>
+                                            </li>
+                                            <li class="list-inline-item email_320">
                                                 <a data-module="item" data-access="delete" href="#/items" id="items_deletebtn" class="sale_color" onclick="PosnicPro.items.deleteSelectedItems();" data-toggle="tooltip" title="Delete">
                                                     <i class="feather icon-trash font-20"></i>
                                                 </a>
@@ -608,3 +613,91 @@
     </div>
 </div>
 <!-- end Bulk price update -->
+
+<!-- Bulk stock update -->
+<div class="modal fade close_on_esc" id="bulk_stock_modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="feather icon-layers mr-2"></i>Bulk stock update</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form onsubmit="return PosnicPro.items.submitBulkStock();">
+                <div class="modal-body">
+                    <p class="text-muted" style="font-size:13px; margin-bottom:14px;">
+                        Add to or remove from stock for many items at once. Every change to a stock-tracked item is kept in its stock log, along with your note.
+                    </p>
+
+                    <div class="form-group">
+                        <label class="f-w-6">Which items</label>
+                        <div>
+                            <label class="mr-4" style="font-weight:normal;">
+                                <input type="radio" name="bulk_stock_scope" value="all" checked onclick="PosnicPro.items.toggleBulkStockCategory();"> All items
+                            </label>
+                            <label style="font-weight:normal;">
+                                <input type="radio" name="bulk_stock_scope" value="category" onclick="PosnicPro.items.toggleBulkStockCategory();"> One category
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group bulk-stock-category-row" style="display:none;">
+                        <label class="f-w-6">Category</label>
+                        <select class="form-control" id="bulk_stock_category" style="width:100%;"></select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="f-w-6">Change by</label>
+                        <div class="row">
+                            <div class="col-4">
+                                <select class="form-control" id="bulk_stock_direction">
+                                    <option value="increase" selected>Add</option>
+                                    <option value="decrease">Remove</option>
+                                </select>
+                            </div>
+                            <div class="col-4">
+                                <select class="form-control" id="bulk_stock_op" onchange="PosnicPro.items.bulkStockOpChanged();">
+                                    <option value="amount" selected>by quantity</option>
+                                    <option value="percent">by %</option>
+                                </select>
+                            </div>
+                            <div class="col-4">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text bulk-stock-unit">Qty</span>
+                                    </div>
+                                    <input type="number" min="0" step="0.01" class="form-control" id="bulk_stock_value" placeholder="0" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="f-w-6">Note / reason <span class="text-muted" style="font-weight:normal;">(optional)</span></label>
+                        <textarea class="form-control" id="bulk_stock_note" rows="2" maxlength="500" placeholder="e.g. New delivery from supplier, invoice #1234 - shown in the stock history"></textarea>
+                    </div>
+
+                    <!-- Filled by "Check" - how many items would change before it is applied. -->
+                    <div id="bulk_stock_check_result" style="display:none; margin-bottom:10px;"></div>
+
+                    <div class="alert alert-warning" style="font-size:12px; padding:8px 12px; margin-bottom:0;">
+                        This changes every matching item and is not undone in one click. Stock never drops below zero.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-danger" data-dismiss="modal">
+                        <i class="feather icon-x-circle mr-2"></i>Cancel
+                    </button>
+                    <button type="button" id="bulk_stock_check" class="btn btn-outline-secondary" onclick="PosnicPro.items.checkBulkStock();">
+                        <i class="feather icon-search mr-2"></i>Check
+                    </button>
+                    <button type="submit" id="bulk_stock_submit" class="btn btn-outline-primary">
+                        <i class="feather icon-check-circle mr-2"></i>Update stock
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- end Bulk stock update -->
