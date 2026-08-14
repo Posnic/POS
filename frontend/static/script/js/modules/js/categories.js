@@ -613,8 +613,8 @@ PosnicPro.categorydetails = {
                         $('.category_details_totalreturn').html(totalreturn);
                     }
 
-                    $('.category_details_saletotalvalue').html(saleTotalValue);
-                    $('.category_details_returntotalvalue').html(returnTotalValue);
+                    $('.category_details_saletotalvalue').html(Number(saleTotalValue).toFixed(2));
+                    $('.category_details_returntotalvalue').html(Number(returnTotalValue).toFixed(2));
 
                 } else {
                     var categorysalesreport = [];
