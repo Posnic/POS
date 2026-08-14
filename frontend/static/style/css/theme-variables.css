@@ -230,6 +230,27 @@
      color: var(--theme-text-primary);
  }
 
+ /* --- Input-group corners: keep the field and its trailing button meeting
+    cleanly, so no rounded-corner "bulge" shows at the join (New Purchase /
+    New Sale search boxes). Higher specificity than the base radius; no !important. */
+ .chat-search .input-group input[type="search"],
+ .input-group > .form-control:not(:last-child) {
+     border-top-right-radius: 0;
+     border-bottom-right-radius: 0;
+ }
+ .chat-search .input-group-append > .btn,
+ .input-group > .input-group-append > .btn {
+     border-top-left-radius: 0;
+     border-bottom-left-radius: 0;
+ }
+
+ /* --- Details > Activities: the stacked stat cards (Total Sales, Items Sold,
+    Returns) used a 30px gap that read as too airy. Tighten it, scoped to the
+    activity portlet so global .m-b-30 spacing is untouched (no !important). */
+ .slider-portlet-vh .card.m-b-30 {
+     margin-bottom: 14px;
+ }
+
  [data-theme] select,
  [data-theme] .custom-select,
  [data-theme] select.form-control,
