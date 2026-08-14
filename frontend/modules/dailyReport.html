@@ -7,7 +7,7 @@
             <!--  filter-->
             <div class="row align-items-center row_filter hide-sale-filter">
                 <div class="col-lg-2 col-xl-2">
-                    <h4 class="page-title break_title">Quick Sales Reports</h4>
+                    <h4 class="page-title break_title">Day-End Summary</h4>
                 </div>
                 <div class="col-md-9 col-lg-9 show-button-action"></div>
                 <div class="col-lg-2 col-xl-2 hide-button-action tb_filter" style="display:none;">
@@ -129,27 +129,18 @@
 
 
                                                     <div id="export_daily_report">
+                                                        <!-- From and To on one line, right-aligned, with a modest top
+                                                             gap (was m-t-50 on two stacked tables) so the report fits
+                                                             without scrolling. Span ids are kept for the JS that fills them. -->
                                                         <table
-                                                            class="col-12 table table-borderless table-bordered-padding m-t-50"
+                                                            class="col-12 table table-borderless table-bordered-padding m-t-15"
                                                             id="daily_report_date_details">
-                                                            <tbody class="pull-right">
+                                                            <tbody>
                                                                 <tr>
-                                                                    <th><span class="f-w-3 font-21">From :
-                                                                            &nbsp;&nbsp;</span><span
-                                                                            class="f-w-3 font-21"
-                                                                            id="daily_report_fromdate"></span></th>
-                                                                </tr>
-                                                            </tbody>
-                                                        </table>
-                                                        <table
-                                                            class="col-12 table table-borderless table-bordered-padding m-t-10"
-                                                            id="daily_report_todate_details">
-                                                            <tbody class="pull-right">
-                                                                <tr>
-                                                                    <th><span class="f-w-3 font-21">To :
-                                                                            &nbsp;&nbsp;</span><span
-                                                                            class="f-w-3 font-21"
-                                                                            id="daily_report_todate"></span></th>
+                                                                    <th class="text-right f-w-3 font-18">
+                                                                        <span>From :&nbsp;</span><span id="daily_report_fromdate"></span>
+                                                                        <span>&nbsp;&nbsp;&nbsp;&nbsp;To :&nbsp;</span><span id="daily_report_todate"></span>
+                                                                    </th>
                                                                 </tr>
                                                             </tbody>
                                                         </table>
@@ -158,8 +149,7 @@
                                                             id="daily_report_branch_details">
                                                             <tbody>
                                                                 <tr>
-                                                                    <th id="" class="f-w-7 font-30 text-left">Quick Sale
-                                                                        Report</th>
+                                                                    <th id="" class="f-w-7 font-30 text-left">Day-End Summary</th>
                                                                 </tr>
                                                                 <tr>
                                                                     <th></th>

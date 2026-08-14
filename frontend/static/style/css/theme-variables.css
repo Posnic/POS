@@ -261,6 +261,25 @@
      line-height: 1;
  }
 
+ /* --- Customer search product cards: the thumbnail was img-fluid with no
+    height cap, so a tall product image filled the whole card. Keep it a
+    consistent, contained thumbnail in the grid; clicking it still opens the
+    full image in the popup. */
+ .product-bar .product-head {
+     height: 170px;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     overflow: hidden;
+ }
+ .product-bar .product-head img,
+ .product-bar .product-head .img-fluid {
+     max-height: 170px;
+     max-width: 100%;
+     width: auto;
+     object-fit: contain;
+ }
+
  [data-theme] select,
  [data-theme] .custom-select,
  [data-theme] select.form-control,

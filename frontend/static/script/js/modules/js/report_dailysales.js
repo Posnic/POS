@@ -694,7 +694,7 @@ PosnicPro.quickreport = {
         var img = canvas.toDataURL('image/png');
         var w = window.open('', '_blank');
         if (!w) { PosnicPro.alert('warning', 'Allow pop-ups so the report can print.'); return; }
-        w.document.write('<html><head><title>Quick Sale Report</title>'
+        w.document.write('<html><head><title>Day-End Summary</title>'
           + '<style>@page{margin:12mm;}body{margin:0;}img{width:100%;display:block;}</style></head>'
           + '<body><img src="' + img + '" onload="setTimeout(function(){window.focus();window.print();},60);"></body></html>');
         w.document.close();
