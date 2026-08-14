@@ -330,10 +330,10 @@ describe('InstallModel — installInsertDocument() success flow', () => {
     expect(customerDoc.name).toBe('Walk-in Customer');
   });
 
-  test('inserts default supplier named "Anonymous"', async () => {
+  test('inserts default supplier named "General Supplier"', async () => {
     await im.installInsertDocument(validData());
     const [supplierDoc] = cols.suppliers.insertOne.mock.calls[0];
-    expect(supplierDoc.name).toBe('Anonymous');
+    expect(supplierDoc.name).toBe('General Supplier');
   });
 
   test('inserts default unit named "Quantity" with value "qty"', async () => {
@@ -445,7 +445,7 @@ describe('InstallModel — insertDemoData()', () => {
     now: new Date(),
     userBranch: [],
     supplierId: newId(),
-    supplierName: 'Anonymous',
+    supplierName: 'General Supplier',
     taxId: newId(),
     taxData: { name: 'GST', rate: 18 },
     unitId: newId(),
@@ -499,7 +499,7 @@ describe('InstallModel — insertDefaultCategoryAndItem()', () => {
     now: new Date(),
     userBranch: [],
     supplierId: newId(),
-    supplierName: 'Anonymous',
+    supplierName: 'General Supplier',
     taxId: null,
     taxData: null,
     unitId: newId(),
