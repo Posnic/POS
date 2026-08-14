@@ -2,7 +2,12 @@
     "documents": [
         {
             "categories": [
-                {            
+                {
+                    "name": "General",
+                    "description": "General items that do not belong to a specific category. A sensible default so a new shop can start adding stock right away.",
+                    "image": ""
+                },
+                {
                     "name": "Beauty stores",
                     "description": "A beauty store, beauty supply store or cosmetics store is a specialty retail business that sells cosmetics, hair-care products and/or beauty tools.",
                     "image": "https://prod-upload-pro.s3.ap-south-1.amazonaws.com/2024-05-30-07-52-00-posnic_category-665830203975e5.48756347.jpg"
