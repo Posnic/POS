@@ -72,7 +72,10 @@ PosnicPro.stocklogs = {
                             '</div>' +
                             '<div data-toolbar="user-options" class="btn btn-round btn-primary-rgba round-pad" id="onclick-toolbar_' + i + '"><i class="feather icon-more-vertical-"></i></div>';
 
-                    var trow = '<tr><td data-module="item" data-access="write"><input type="checkbox" class="stocklogs-row-id" id="' + row._id + '" name="id[]" value="' + row._id + '" onclick="PosnicPro.checkboxSelectOne(this,\'stocklogs\');"></td> <td scope="row">' + row_no + '</td> <td width="30%">' + row.item_name + '</td><td>' + updateDate + '</td> <td class="text-center"><span class="' + process_class + '">' + row.process + '</span></td><td class="text-center">' + row.changed_by + '</td><td class="text-right"><span>' + row.opening_balance + '</span></td><td class="text-right">' + row.count + '</td><td class="text-right"><span>' + row.closing_balance + '</span></td> ' +
+                    // Escape the free-text note before it goes into the row (it
+                    // is user-entered, unlike the fixed process labels).
+                    var noteEsc = row.note ? $('<div>').text(row.note).html() : '';
+                    var trow = '<tr><td data-module="item" data-access="write"><input type="checkbox" class="stocklogs-row-id" id="' + row._id + '" name="id[]" value="' + row._id + '" onclick="PosnicPro.checkboxSelectOne(this,\'stocklogs\');"></td> <td scope="row">' + row_no + '</td> <td width="30%">' + row.item_name + '</td><td>' + updateDate + '</td> <td class="text-center"><span class="' + process_class + '">' + row.process + '</span>' + (noteEsc ? '<div class="text-muted" style="font-size:11px;margin-top:3px;white-space:normal;word-break:break-word;">' + noteEsc + '</div>' : '') + '</td><td class="text-center">' + row.changed_by + '</td><td class="text-right"><span>' + row.opening_balance + '</span></td><td class="text-right">' + row.count + '</td><td class="text-right"><span>' + row.closing_balance + '</span></td> ' +
                             '<td class="text-center"> <span>' + action + ' </span>' +
                             ' </td></tr>';
                     $('#view_stocklogs').children('tbody').append(trow);
