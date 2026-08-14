@@ -2919,8 +2919,11 @@ html:not([data-theme]) .infobar-settings-sidebar-head {
 }
 .close,
 .modal-header .close,
-[data-dismiss="modal"] { padding: 4px 9px !important; }
-.infobar-settings-close {
+[data-dismiss="modal"]:not(.btn) { padding: 4px 9px !important; }
+/* The bare panel X (NOT a styled .btn Close button) becomes a centered,
+   min-sized box so its hover background is a clean square that never clips the
+   icon. Styled .btn close buttons keep their own button hover. */
+.infobar-settings-close:not(.btn) {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -2930,8 +2933,8 @@ html:not([data-theme]) .infobar-settings-sidebar-head {
     flex: 0 0 auto;
 }
 .close:hover,
-.infobar-settings-close:hover,
-[data-dismiss="modal"]:hover,
+.infobar-settings-close:not(.btn):hover,
+[data-dismiss="modal"]:not(.btn):hover,
 .modal-header .close:hover { background-color: rgba(120, 120, 120, 0.22) !important; }
 
 /* Row alignment (the real fix): data cells (.table td) were vertical-align:

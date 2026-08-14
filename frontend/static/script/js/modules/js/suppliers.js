@@ -594,8 +594,8 @@ PosnicPro.supplierdetails = {
                     }
                     $('.supplier_details_totalpurchase').html(purchaseTotalQty);
                     $('.supplier_details_totalreturn').html(returnTotalQty);
-                    $('.supplier_details_purchasetotalvalue').html(purchaseTotalValue);
-                    $('.supplier_details_returntotalvalue').html(returnTotalValue);
+                    $('.supplier_details_purchasetotalvalue').html(Number(purchaseTotalValue).toFixed(2));
+                    $('.supplier_details_returntotalvalue').html(Number(returnTotalValue).toFixed(2));
                 } else {
                     var supplierreceivingreport = [];
                     data = response.data.table.data.list;
