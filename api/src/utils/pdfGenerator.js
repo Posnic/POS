@@ -708,12 +708,12 @@ function generateReceivingPDF(options) {
 
   // Header Layout matching design
 
-  // Add watermark text. Use the white-label brand name; an unbranded install
-  // resolves to '' and addWatermark() then draws nothing, so a shop's purchase
-  // invoice is never stamped with our company name.
+  // Add watermark text. A white-label reseller gets their own brand name; every
+  // other install shows the short mark "Posnic" (never the full "Posnic
+  // Innovations Pvt ltd" company name).
   const watermarkFontName = hasDejavu ? 'DejaVuSansCondensed' : 'Helvetica';
   const watermarkText =
-    config.watermarkText || require('../helpers/brand').brandName();
+    config.watermarkText || require('../helpers/brand').brandName() || 'Posnic';
   addWatermark(doc, watermarkText, {
     fontName: watermarkFontName,
     fontSize: hasDejavu ? 52 : 50,

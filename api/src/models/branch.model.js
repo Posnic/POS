@@ -995,6 +995,24 @@ class BranchModel {
       const supplierResult = await supplierCollection.insertOne(defaultSupplierData);
       const supplierId = supplierResult.insertedId;
 
+      // 5b. Create a default "General" customer category, so the customer form
+      // has a ready group to pick and a new shop is not forced to create one
+      // before it can save its first customer.
+      const customerCategoryCollection = db.collection('customer_category');
+      await customerCategoryCollection.insertOne({
+        branch_id: branchId,
+        branch_name: data.name?.trim(),
+        name: 'General',
+        description: 'Default customer group.',
+        license: user.license,
+        created_by: user.username,
+        created_by_id: user._id,
+        updated_by: user.username,
+        updated_by_id: user._id,
+        created_date: mongoDate,
+        updated_date: mongoDate,
+      });
+
       // 6. Setup Taxes
       let sortname = '';
       let defaultTaxId = null;

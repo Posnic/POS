@@ -370,6 +370,23 @@ class InstallModel extends BaseModel {
         license: licenseId,
       });
 
+      // Create a default "General" customer category so the customer form has a
+      // ready group and a new shop need not create one before its first save.
+      const customerCategoryCollection = await this.getCollection('customer_category');
+      await customerCategoryCollection.insertOne({
+        branch_id: branchId,
+        branch_name: data.register_companyname.trim(),
+        name: 'General',
+        description: 'Default customer group.',
+        created_date: now,
+        updated_date: now,
+        created_by: data.register_username,
+        created_by_id: userId,
+        updated_by: data.register_username,
+        updated_by_id: userId,
+        license: licenseId,
+      });
+
       // Update branch with default values
       await branchCollection.updateOne(
         { _id: branchId, license: licenseId },
