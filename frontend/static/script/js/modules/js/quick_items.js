@@ -45,9 +45,14 @@
             // The full form ships this checked, so an item added quickly counts
             // stock the same way as one added the long way.
             inventory: f.inventory !== false,
-            sales_channel: false,
+            // Sellable in New Sale by default (the full form ships this checked
+            // too) - without it, bulk/quick items are hidden from every sale view.
+            sales_channel: true,
             ecommerce: false,
-            negative_stock: false,
+            // Allow selling even when stock is 0 (industry-standard flexible
+            // default). Stock is still tracked; the shopkeeper can restrict an
+            // item later by unchecking "allow negative stock" on it.
+            negative_stock: true,
             item_weight_machine_based: false,
             description: ''
         };
