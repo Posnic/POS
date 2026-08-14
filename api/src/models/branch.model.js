@@ -970,7 +970,7 @@ class BranchModel {
       const defaultSupplierData = {
         branch_id: branchId,
         branch_name: data.name?.trim(),
-        name: 'Anonymous',
+        name: 'General Supplier',
         // supplier.model.js enforces a unique index on email; a shared blank
         // string collides on every branch after the first, so give each
         // default supplier a placeholder that's unique per branch.

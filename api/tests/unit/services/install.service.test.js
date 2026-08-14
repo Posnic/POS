@@ -171,7 +171,7 @@ function makeParams(overrides = {}) {
     now: new Date('2026-01-01T00:00:00.000Z'),
     userBranch: [{ branch_id: BRANCH_ID, branch_name: 'Demo Company', branch_image: 'store.png' }],
     supplierId: SUPPLIER_ID,
-    supplierName: 'Anonymous',
+    supplierName: 'General Supplier',
     taxId: null,
     taxData: null,
     unitId: UNIT_ID,

@@ -2855,17 +2855,34 @@ html:not([data-theme]) .infobar-settings-sidebar-head {
 /* Close buttons (modal X + item-detail panel X): soft rounded hover
    background so closing feels responsive. Minimal - only padding + background,
    nothing that changes the button's own size/display (that broke the icon). */
-.modal-header .close,
-.modal .close,
-.infobar-settings-close {
-    transition: background-color .15s ease;
-    border-radius: 8px;
+/* Close buttons across EVERY popup - Bootstrap's generic .close, any
+   [data-dismiss] button, and the item/customer panel X. Soft rounded hover
+   background so closing feels responsive, on all themes. Padding gives the
+   background an area; the panel X gets a min-sized centered box (never clipped). */
+.close,
+.infobar-settings-close,
+[data-dismiss="modal"],
+.modal-header .close {
+    transition: background-color .15s ease !important;
+    border-radius: 8px !important;
     cursor: pointer;
 }
-.infobar-settings-close { padding: 5px; }
-.modal-header .close:hover,
-.modal .close:hover,
-.infobar-settings-close:hover { background-color: rgba(120, 120, 120, 0.2); }
+.close,
+.modal-header .close,
+[data-dismiss="modal"] { padding: 4px 9px !important; }
+.infobar-settings-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    min-height: 34px;
+    padding: 5px !important;
+    flex: 0 0 auto;
+}
+.close:hover,
+.infobar-settings-close:hover,
+[data-dismiss="modal"]:hover,
+.modal-header .close:hover { background-color: rgba(120, 120, 120, 0.22) !important; }
 
 /* Row alignment (the real fix): data cells (.table td) were vertical-align:
    middle but the header cells holding the checkbox and # were left at :top, so
