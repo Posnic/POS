@@ -251,6 +251,16 @@
      margin-bottom: 14px;
  }
 
+ /* --- New Purchase qty +/- buttons: the feather icon sat a couple of pixels
+    low inside the button. Flex-center it so the +/- lines up with the centered
+    quantity value (a real fix, not a magic-number nudge). */
+ .input-group .receive_qty_check {
+     display: inline-flex;
+     align-items: center;
+     justify-content: center;
+     line-height: 1;
+ }
+
  [data-theme] select,
  [data-theme] .custom-select,
  [data-theme] select.form-control,
