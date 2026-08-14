@@ -1801,7 +1801,10 @@ class ItemRepository extends BaseModel {
           { 'branch_access.branch_id': branchObjectId },
           { item_status: { $ne: 'instant' } },
           stockCondition,
-          { sales_channel: true },
+          // sales_channel filter removed: it was implemented as a misused
+          // boolean, not the intended multi-channel (POS/kiosk/e-commerce)
+          // selector, so it silently hid items from New Sale. To be
+          // reintroduced as a proper channel model later.
           ...(licenseObjectId ? [{ license: licenseObjectId }] : []),
         ].filter(Boolean),
       };
@@ -2551,7 +2554,7 @@ class ItemRepository extends BaseModel {
         {
           $or: [{ available_quantity: { $gt: 0 } }, { negative_stock: true }],
         },
-        { sales_channel: true },
+        // sales_channel filter removed for New Sale (see getOnlineItemsAjaxList).
         { category_id: categoryObjectId },
       ];
 
