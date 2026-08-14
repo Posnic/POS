@@ -90,7 +90,7 @@ PosnicPro.expenses = {
                             '<a data-module = "expense" data-access = "delete" href="#/expenses/' + row._id + '/delete" data-id="expenses/' + row._id + '/delete" data-toggle="tooltip" title="Delete Expense" class="point-cursor mobile_tooltip"><i class="feather icon-trash"></i></a>' +
                             '</div>' +
                             '<div data-toolbar="user-options" class="btn btn-round btn-primary-rgba round-pad" id="onclick-toolbar_' + i + '"><i class="feather icon-more-vertical-"></i></div>';
-                    var trow = '<tr class="pipeline"><th><input type="checkbox" class="expenses-row-id" id="' + row._id + '" name="id[]" value="' + row._id + '" onclick="PosnicPro.checkboxSelectOne(this,\'expenses\');"></th> <th scope="row">' + row_no + '</th><td class="text-right">' + currency + '&nbsp;<span class="number">' + row.amount + '</span></td><td>' + row.type + '</td><td>' + row.category + '</td><td>' + row.approvedby + '</td><td>' + (row.description || '') + '</td>' +
+                    var trow = '<tr class="pipeline"><th><input type="checkbox" class="expenses-row-id" id="' + row._id + '" name="id[]" value="' + row._id + '" onclick="PosnicPro.checkboxSelectOne(this,\'expenses\');"></th> <th scope="row">' + row_no + '</th><td class="text-right">' + currency + '&nbsp;<span class="number">' + row.amount + '</span></td><td>' + (row.type === 'credit' ? 'Money In' : row.type === 'debit' ? 'Money Out' : (row.type || '')) + '</td><td>' + row.category + '</td><td>' + row.approvedby + '</td><td>' + (row.description || '') + '</td>' +
                             '<td class="text-center"><span>' + action + '</span></td>' +
                             '</tr>';
                     $('#view_expenses').children('tbody').append(trow);
@@ -220,6 +220,10 @@ PosnicPro.expenses = {
         var updateDate = PosnicPro.convertDate(data.date);
         $('#expenses_view_date').html(updateDate);
         $('#expenses_view_amount').number(data.amount, 2);
+        // Show the money direction in shopkeeper terms, not raw credit/debit.
+        $('#expenses_view_type').html(
+            data.type === 'credit' ? 'Money In' : data.type === 'debit' ? 'Money Out' : (data.type || '')
+        );
         var updateCreateDate = PosnicPro.convertDate(data.created_date);
         $('#expenses_view_created_date').html(updateCreateDate);
         var updateUpdateDate = PosnicPro.convertDate(data.updated_date);
