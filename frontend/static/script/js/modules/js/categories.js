@@ -488,8 +488,8 @@ PosnicPro.categories = {
                     maxlength: "Category name should not be more than 250 characters"
                 },
                 description: {
-                    minlength: "Category Discription must be at least 3 Characters",
-                    maxlength: "Discription is too Long !"
+                    minlength: "Category description must be at least 3 characters",
+                    maxlength: "Description is too long."
                 },
                 discount_amount: {
                     minlength: "Discount amount must be at least 1 digit",

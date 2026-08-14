@@ -56,7 +56,7 @@ PosnicPro.whatsapp = {
                 // Start polling for QR code
                 this.startQRPolling();
                 
-                PosnicPro.alert('success', 'Initializing WhatsApp connection...');
+                PosnicPro.alert('success', 'Connecting to WhatsApp...');
             } else {
                 $('#whatsapp_connect_btn').prop('disabled', false).html('<i class="feather icon-link"></i> Connect WhatsApp');
                 PosnicPro.alert('error', response.message || 'Failed to initialize connection');
@@ -247,7 +247,7 @@ PosnicPro.whatsapp = {
         
         this.updateStatusBadge('connected', true);
         
-        PosnicPro.alert('success', 'WhatsApp connected successfully!');
+        PosnicPro.alert('success', 'WhatsApp connected');
     },
 
     /**
@@ -275,7 +275,7 @@ PosnicPro.whatsapp = {
         PosnicPro.post(params, (response) => {
             if (response.type === 'success') {
                 this.resetUI();
-                PosnicPro.alert('success', 'WhatsApp disconnected successfully');
+                PosnicPro.alert('success', 'WhatsApp disconnected');
             } else {
                 $('#whatsapp_disconnect_btn').prop('disabled', false).html('<i class="feather icon-log-out"></i> Disconnect');
                 PosnicPro.alert('error', response.message || 'Failed to disconnect');
@@ -500,7 +500,7 @@ PosnicPro.whatsapp = {
             checkbox.prop('disabled', false);
             
             if (response.type === 'success') {
-                PosnicPro.alert('success', 'WhatsApp receipt setting saved successfully!');
+                PosnicPro.alert('success', 'WhatsApp receipt setting saved');
             } else {
                 // Revert checkbox state if save failed
                 checkbox.prop('checked', !isEnabled);
@@ -751,7 +751,7 @@ PosnicPro.whatsapp = {
         const templateType = $('#template_type').val();
 
         if (!name || !message) {
-            PosnicPro.alert('error', 'Template name and message are required');
+            PosnicPro.alert('error', 'Enter a template name and message.');
             return;
         }
 
@@ -769,7 +769,7 @@ PosnicPro.whatsapp = {
         PosnicPro.post(params, (response) => {
             if (response.type === 'success') {
                 $('#whatsappTemplateModal').modal('hide');
-                PosnicPro.alert('success', 'Template saved successfully');
+                PosnicPro.alert('success', 'Template saved');
                 this.loadTemplates(); // Reload templates
             } else {
                 PosnicPro.alert('error', response.message);
@@ -850,7 +850,7 @@ PosnicPro.whatsapp = {
         const templateType = $('#template_type').val();
 
         if (!name || !message) {
-            PosnicPro.alert('error', 'Template name and message are required');
+            PosnicPro.alert('error', 'Enter a template name and message.');
             return;
         }
 
@@ -867,7 +867,7 @@ PosnicPro.whatsapp = {
         PosnicPro.post(params, (response) => {
             if (response.type === 'success') {
                 $('#whatsappTemplateModal').modal('hide');
-                PosnicPro.alert('success', 'Template updated successfully');
+                PosnicPro.alert('success', 'Template updated');
                 this.loadTemplates(); // Reload templates
             } else {
                 PosnicPro.alert('error', response.message);
@@ -954,7 +954,7 @@ PosnicPro.whatsapp = {
 
         PosnicPro.post(params, (response) => {
             if (response.type === 'success') {
-                PosnicPro.alert('success', 'Template deleted successfully');
+                PosnicPro.alert('success', 'Template deleted');
                 this.loadTemplates(); // Reload templates
             } else {
                 PosnicPro.alert('error', response.message);
@@ -1028,7 +1028,7 @@ PosnicPro.whatsapp = {
             $('#whatsapp_test_send_btn').prop('disabled', false).html('<i class="feather icon-send mr-2"></i> Send Test Message');
             
             if (response.type === 'success') {
-                PosnicPro.alert('success', 'Test message sent successfully!');
+                PosnicPro.alert('success', 'Test message sent');
                 this.clearTestForm();
             } else {
                 PosnicPro.alert('error', response.message);

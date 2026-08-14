@@ -993,7 +993,8 @@ PosnicPro.dashboard = {
     greeting: function () {
         var h = new Date().getHours();
         var wish = h < 12 ? 'Good Morning' : h < 17 ? 'Good Afternoon' : h < 21 ? 'Good Evening' : 'Good Night';
-        var name = ($('.branch-name').first().text() || '').trim();
+        // Greet the logged-in USER by first name, not the shop/branch name.
+        var name = (PosnicPro.local.get('userfirstname') || PosnicPro.local.get('username') || '').trim();
         $('#dashboard_greeting').text(wish + (name ? ', ' + name : ''));
     },
 
@@ -1200,8 +1201,14 @@ $('#dashboard_page').click(function () {
     let objDay = document.getElementById('btnDashboardCountDay');
     PosnicPro.dashboard.activeInActiveFilterButtons('day', objDay);
 });
+var _duesResizeTimer;
 $(window).on('resize', function () {
-    if (PosnicPro.dashboard && PosnicPro.dashboard.syncDuesHeight) PosnicPro.dashboard.syncDuesHeight();
+    // Debounced: run once after resize settles, not on every frame - reading
+    // outerHeight() mid-drag forced a full reflow and made resizing janky.
+    clearTimeout(_duesResizeTimer);
+    _duesResizeTimer = setTimeout(function () {
+        if (PosnicPro.dashboard && PosnicPro.dashboard.syncDuesHeight) PosnicPro.dashboard.syncDuesHeight();
+    }, 150);
 });
 /* -- Sweet Alert - Warning -- */
 $("#logout").on("click", function () {

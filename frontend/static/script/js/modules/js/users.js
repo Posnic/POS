@@ -566,11 +566,11 @@ PosnicPro.users = {
                 });
             } else {
                 $('#email').focus();
-                PosnicPro.alert('error', 'Please enter valid email address');
+                PosnicPro.alert('error', 'Enter a valid email address.');
             }
         } else {
             $('#email').focus();
-            PosnicPro.alert('error', 'Please enter required field');
+            PosnicPro.alert('error', 'Fill in the required fields.');
         }
     },
 
@@ -1218,11 +1218,11 @@ PosnicPro.users = {
                     }
                 });
             } else {
-                PosnicPro.alert('error', 'Password mismatch!!.');
+                PosnicPro.alert('error', 'Passwords do not match.');
                 $('#update_new_password').focus();
             }
         } else {
-            PosnicPro.alert('error', 'Please fill the required fields');
+            PosnicPro.alert('error', 'Fill in the required fields.');
         }
     },
     /*Change user account password*/

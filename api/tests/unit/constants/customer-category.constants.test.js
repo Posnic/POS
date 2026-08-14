@@ -54,14 +54,14 @@ describe('customer-category.constants', () => {
     });
 
     expect(SUCCESS_MESSAGES).toMatchObject({
-      CATEGORY_CREATED: 'Customer category created successfully',
-      CATEGORY_UPDATED: 'Customer category updated successfully',
-      CATEGORY_DELETED: 'Customer category deleted successfully',
-      CATEGORIES_DELETED: 'Customer categories deleted successfully',
-      CATEGORIES_RETRIEVED: 'Customer categories retrieved successfully',
-      CATEGORY_RETRIEVED: 'Customer category retrieved successfully',
-      CATEGORIES_IMPORTED: 'Customer categories imported successfully',
-      CATEGORIES_EXPORTED: 'Customer categories exported successfully',
+      CATEGORY_CREATED: 'Customer category created',
+      CATEGORY_UPDATED: 'Customer category updated',
+      CATEGORY_DELETED: 'Customer category deleted',
+      CATEGORIES_DELETED: 'Customer categories deleted',
+      CATEGORIES_RETRIEVED: 'Customer categories retrieved',
+      CATEGORY_RETRIEVED: 'Customer category retrieved',
+      CATEGORIES_IMPORTED: 'Customer categories imported',
+      CATEGORIES_EXPORTED: 'Customer categories exported',
     });
 
     expect(FIELD_LIMITS).toEqual({

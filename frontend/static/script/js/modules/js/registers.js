@@ -628,7 +628,7 @@ PosnicPro.registers = {
             $('#cash_button_note').val('');
         });
         if (outAmount > parseInt($('#expected_cash_amount').html())) {
-            PosnicPro.alert('error', 'Cash till does not have sufficient funds');
+            PosnicPro.alert('error', 'The cash till does not have enough funds.');
             return false;
         } else {
             var inOutAmountType = {
@@ -1219,7 +1219,7 @@ $('#confirm_delete_cashinout').off('click').on('click', function() {
     console.log('Delete Cash In/Out - Index:', index, 'Type:', type, 'Register ID (_id):', register_id, 'From reg_upd_id:', $('#reg_upd_id').val());
     
     if (!register_id || register_id === 'undefined' || register_id === '') {
-        PosnicPro.alert('error', 'Register ID not found. Please reload the page.');
+        PosnicPro.alert('error', 'Register not found. Please reload the page.');
         $('#delete_cashinout_modal').modal('hide');
         return;
     }

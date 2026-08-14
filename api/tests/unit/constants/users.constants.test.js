@@ -120,8 +120,8 @@ describe('users.constants', () => {
       AUTH_REQUIRED: 'Authentication required',
       USER_NOT_FOUND: 'User not found',
       INVALID_CREDENTIALS: 'Incorrect username or password',
-      NO_BRANCHES: 'User Have not Any Branch',
-      INVALID_BRANCH: "User don't have valid branch. Please contact Administrator",
+      NO_BRANCHES: 'No branch is assigned to this user',
+      INVALID_BRANCH: "No valid branch is assigned. Please contact your administrator.",
       UNAUTHORIZED: 'Unauthorized',
       VALIDATION_ERROR: 'Validation Error',
       INVALID_BRANCH_ID: 'Invalid branch ID',
@@ -136,17 +136,17 @@ describe('users.constants', () => {
     });
 
     expect(SUCCESS_MESSAGES).toMatchObject({
-      LOGIN_SUCCESS: 'Successfully login',
-      LOGOUT_SUCCESS: 'User logout successfully',
-      BRANCH_CHANGED: 'branch changed successfully',
-      BRANCH_SET: 'branch choose successfully',
-      PROFILE_UPDATED: 'User details update successfully',
-      PASSWORD_UPDATED: 'Password updated successfully',
-      USER_CREATED: 'User created successfully',
-      USER_UPDATED: 'User updated successfully',
-      USER_DELETED: 'User deleted successfully',
+      LOGIN_SUCCESS: 'Signed in',
+      LOGOUT_SUCCESS: 'Signed out',
+      BRANCH_CHANGED: 'Branch changed',
+      BRANCH_SET: 'Branch set',
+      PROFILE_UPDATED: 'Profile updated',
+      PASSWORD_UPDATED: 'Password updated',
+      USER_CREATED: 'User created',
+      USER_UPDATED: 'User updated',
+      USER_DELETED: 'User deleted',
       VALID_ADMIN: 'Valid Admin',
-      DATA_LOADED: 'successfully loaded',
+      DATA_LOADED: 'Loaded',
     });
   });
 });

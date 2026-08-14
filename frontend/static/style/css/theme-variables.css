@@ -1,8 +1,29 @@
 /* Theme Variables CSS - Dynamic theming support */
+
+/* Self-hosted DM Sans (variable font) - served same-origin from /static/fonts
+   so browser privacy/ad-block extensions and CDN blockers can NEVER stop the
+   font from loading (which is why earlier font changes looked unchanged). */
+@font-face {
+    font-family: 'DM Sans';
+    font-style: normal;
+    font-weight: 400 700;
+    font-display: swap;
+    src: url(/static/fonts/dmsans/dmsans-1.woff2) format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+    font-family: 'DM Sans';
+    font-style: normal;
+    font-weight: 400 700;
+    font-display: swap;
+    src: url(/static/fonts/dmsans/dmsans-0.woff2) format('woff2');
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
 :root {
     /* Primary Colors */
     --theme-primary-color: #506fe4;
-    --theme-primary-hover: #4560c9;
+    --theme-primary-hover: #3f5cd6;
     
     /* Background Colors */
     --theme-body-bg: #f2f3f7;
@@ -10,24 +31,29 @@
     --theme-sidebar-bg: #ffffff;
     --theme-topbar-bg: #ffffff;
     
-    /* Text Colors */
-    --theme-text-primary: #000000;
-    --theme-text-secondary: #333333;
-    --theme-text-muted: #4d4d4d;
+    /* Text Colors - dark navy instead of pure black: high legibility without
+       the halation/harshness of #000 over a long shift. Muted passes WCAG AA. */
+    --theme-text-primary: #16203a;
+    --theme-text-secondary: #3a4459;
+    --theme-text-muted: #5b6577;
      
-    /* Font Settings */
-    --theme-font-family: 'Mukta Vaani', sans-serif;
+    /* Font Settings
+       Native system-font stack: Segoe UI on Windows, SF on macOS, Roboto on
+       Android/Linux. Zero network load (works offline in Electron), crisp on
+       every OS, and the feel is native + professional. 'Mukta Vaani' is kept
+       as a late fallback. Body weight 400 for legibility (300 strains). */
+    --theme-font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
     --theme-font-size-base: 16px;
     --theme-font-size-small: calc(var(--theme-font-size-base) - 2px);
     --theme-font-size-large: calc(var(--theme-font-size-base) + 2px);
-    --theme-font-weight: 300;
+    --theme-font-weight: 400;
     
-    /* Border Colors */
-    --theme-border-color: #e6e6e6;
-    
-    /* Table Colors */
-    --theme-table-header-bg: #f5f6fa;
-    --theme-table-row-hover: #f8f9fa;
+    /* Border Colors - cool grey that harmonises with the indigo brand */
+    --theme-border-color: #e5e8ef;
+
+    /* Table Colors - header a hair cooler; row hover carries a faint brand tint */
+    --theme-table-header-bg: #f6f7fb;
+    --theme-table-row-hover: #eef2fd;
     
     /* Menu Colors */
     --theme-menu-bg: #ffffff;
@@ -39,11 +65,12 @@
     --theme-btn-primary-bg: var(--theme-primary-color);
     --theme-btn-primary-text: #ffffff;
     
-    /* Alert/Status Colors */
-    --theme-success-color: #39da8a;
-    --theme-warning-color: #fdac41;
-    --theme-danger-color: #ff5b5c;
-    --theme-info-color: #00cfdd;
+    /* Alert/Status Colors - calmer, accessible tones (the old neon green/red
+       read as "loud" over a long shift); harmonised with the indigo primary. */
+    --theme-success-color: #16b364;
+    --theme-warning-color: #f79009;
+    --theme-danger-color: #f04438;
+    --theme-info-color: #2e90fa;
 }
 
  html,
@@ -53,6 +80,11 @@
      font-family: var(--theme-font-family);
      font-size: var(--theme-font-size-base);
      font-weight: var(--theme-font-weight);
+     /* Crisper glyph edges on retina / macOS. (Dropped text-rendering:
+        optimizeLegibility - it forces expensive text shaping on every reflow,
+        which added to the resize/scroll jank on dense pages.) */
+     -webkit-font-smoothing: antialiased;
+     -moz-osx-font-smoothing: grayscale;
  }
 
  a {
@@ -756,8 +788,8 @@
 [data-theme] .btn-payment-mode,
 [data-theme] .chat-list,
 [data-theme] .chat-list .chat-search input[type=search] { background-color: var(--theme-card-bg, #fff) !important; color: var(--theme-text-primary, #212529) !important; }
-[data-theme] .btn-payment-mode.active,
-[data-theme] .btn-payment-mode.open_status_active { background-color: var(--theme-primary-color, #506fe4) !important; border-color: var(--theme-primary-color, #506fe4) !important; color: #fff !important; }
+[data-theme] .btn-payment-mode.active { background-color: var(--theme-primary-color, #506fe4) !important; border-color: var(--theme-primary-color, #506fe4) !important; color: var(--theme-btn-primary-text, #ffffff) !important; }
+[data-theme] .btn-payment-mode.active * { color: var(--theme-btn-primary-text, #ffffff) !important; }
 [data-theme] .file-upload .file-select { background: var(--theme-card-bg, #fff) !important; }
 [data-theme] .file-upload .file-select .file-select-button { background: var(--theme-table-header-bg, #dce4ec) !important; color: var(--theme-text-primary, #333) !important; }
 
@@ -1144,8 +1176,7 @@ table.dataTable thead th,
 
 /* Payment-mode toggle buttons: white -> warm; selected -> sage. */
 [data-theme="comfort"] .btn-payment-mode { background-color: #FBF6EA !important; border-color: #C0B393 !important; color: #3A352B !important; }
-[data-theme="comfort"] .btn-payment-mode.active,
-[data-theme="comfort"] .btn-payment-mode.open_status_active { background-color: #4F7A69 !important; border-color: #4F7A69 !important; color: #fff !important; }
+[data-theme="comfort"] .btn-payment-mode.active { background-color: #4F7A69 !important; border-color: #4F7A69 !important; color: #fff !important; }
 
 /* Chat-list panel (notifications/search) was white. */
 [data-theme="comfort"] .chat-list,
@@ -1294,11 +1325,11 @@ body {
 
 /* Vertical Menu Icon */
 .vertical-menu-icon {
-    background-color: var(--theme-primary-color) !important;
+    background-color: var(--theme-primary-color, #506fe4) !important;
 }
 
 .vertical-menu-icon i {
-    color: var(--theme-menu-active-text) !important;
+    color: var(--theme-menu-active-text, #ffffff) !important;
 }
 
 /* Topbar and Infobar */
@@ -2371,6 +2402,29 @@ body {
 [data-theme="softdark"] .modal-content, [data-theme="warmnight"] .modal-content { background-color: var(--theme-card-bg) !important; }
 [data-theme="terminal"] .modal-body, [data-theme="dosblue"] .modal-body,
 [data-theme="softdark"] .modal-body, [data-theme="warmnight"] .modal-body { color: var(--theme-text-primary) !important; }
+
+/* Sidebar bottom illustration sat too close to the last menu item - nudge down. */
+.dashboard_img_menu { margin-top: 20px !important; }
+
+/* Clean Light: grey + dim the empty-state illustrations (New Sale, New Purchase)
+   so the colourful piggy doesn't clash with the minimal grey theme. */
+[data-theme="cleanlight"] .sales-cart-image,
+[data-theme="cleanlight"] .receiving-image-wrapper,
+[data-theme="cleanlight"] .receiving-image-wrapper img { filter: grayscale(1) !important; opacity: 0.28 !important; }
+
+/* Toggle switches / custom checkbox + radio: checked colour was hardcoded blue -
+   theme it for every theme. */
+[data-theme] .custom-control-input:checked ~ .custom-control-label::before { background-color: var(--theme-primary-color, #506fe4) !important; border-color: var(--theme-primary-color, #506fe4) !important; }
+/* Empty-state datatable illustration (nodata.svg, in every *_norecord block) +
+   the New Purchase cart image: dim on dark themes, grey+dim on Clean Light -
+   matching the sale-cart image, so the artwork suits the theme. */
+[data-theme="terminal"] [class*="_norecord"] img, [data-theme="dosblue"] [class*="_norecord"] img,
+[data-theme="softdark"] [class*="_norecord"] img, [data-theme="warmnight"] [class*="_norecord"] img,
+[data-theme="dark"] [class*="_norecord"] img,
+[data-theme="terminal"] .receiving-image-wrapper, [data-theme="dosblue"] .receiving-image-wrapper,
+[data-theme="softdark"] .receiving-image-wrapper, [data-theme="warmnight"] .receiving-image-wrapper,
+[data-theme="dark"] .receiving-image-wrapper { opacity: 0.3 !important; }
+[data-theme="cleanlight"] [class*="_norecord"] img { filter: grayscale(1) !important; opacity: 0.4 !important; }
 /* Clean Light: subtle light-grey top-bar icon hover (not a solid dark chip), dark
    icon on hover (not the blue tint). */
 [data-theme="cleanlight"] .topbar .infobar .infobar-icon:hover,
@@ -2414,3 +2468,465 @@ body {
 [data-theme="warmnight"] .toolbar-primary .tool-item:hover, [data-theme="warmnight"] .toolbar-primary .tool-item.selected { background: var(--theme-primary-color) !important; }
 [data-theme="softdark"] .toolbar-primary.tool-top .arrow,
 [data-theme="warmnight"] .toolbar-primary.tool-top .arrow { border-top-color: var(--theme-menu-active-bg) !important; }
+
+/* =====================================================================
+   Flash / toast notifications  —  modern, theme-aware redesign
+   ---------------------------------------------------------------------
+   The jQuery Toast plugin ships fixed solid-colour boxes (dark green /
+   red / brown / teal) that look the same on every theme. This replaces
+   them with a clean card that adopts the ACTIVE theme's surface plus a
+   semantic accent bar (green success / red error / amber warning /
+   blue info). Light themes -> light card + dark text; dark themes ->
+   dark card + light text; default theme -> white card. The accent is
+   pulled from each theme's own success/danger/warning/info colour so it
+   harmonises, with universal fallbacks so it stays meaningful.
+   ===================================================================== */
+.jq-toast-wrap { width: 340px; }
+.jq-toast-single {
+    position: relative;
+    background: var(--theme-card-bg, #ffffff) !important;
+    color: var(--theme-text-primary, #2c3e50) !important;
+    border: 1px solid var(--theme-border-color, #e6e9ef) !important;
+    border-left: 4px solid var(--toast-accent, #6b7280) !important;
+    border-radius: 10px !important;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.16) !important;
+    padding: 14px 34px 14px 56px !important;
+    margin: 0 0 10px !important;
+    font-size: 13px !important;
+    line-height: 1.45 !important;
+}
+.jq-toast-single h2 {
+    color: var(--theme-text-primary, #2c3e50) !important;
+    font-size: 14px;
+    font-weight: 700;
+    margin: 0 0 3px;
+    text-transform: capitalize;
+}
+.jq-toast-single a {
+    color: var(--toast-accent, #6b7280) !important;
+    border-bottom-color: var(--toast-accent, #6b7280) !important;
+}
+.close-jq-toast-single {
+    top: 9px;
+    right: 11px;
+    font-size: 16px;
+    color: var(--theme-text-muted, #9aa0ac) !important;
+    opacity: .7;
+}
+.close-jq-toast-single:hover { opacity: 1; }
+.jq-toast-loader {
+    height: 3px;
+    top: 0;
+    border-radius: 10px 10px 0 0;
+    background: var(--toast-accent, #6b7280) !important;
+}
+/* Replace the plugin's left PNG icon with a themed circular badge + glyph */
+.jq-has-icon { background-image: none !important; }
+.jq-toast-single.jq-has-icon::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--toast-accent, #6b7280);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    font-family: Arial, sans-serif;
+    line-height: 1;
+}
+.jq-icon-success::before { content: '\2713' !important; }  /* check */
+.jq-icon-error::before   { content: '\2715' !important; }  /* cross */
+.jq-icon-warning::before { content: '!'     !important; }
+.jq-icon-info::before    { content: 'i'     !important; }
+/* Semantic accent per type, sourced from the active theme (fallbacks universal) */
+.jq-icon-success { --toast-accent: var(--theme-success-color, #2e7d32); }
+.jq-icon-error   { --toast-accent: var(--theme-danger-color,  #d64545); }
+.jq-icon-warning { --toast-accent: var(--theme-warning-color, #d98a00); }
+.jq-icon-info    { --toast-accent: var(--theme-info-color,    #2b7fbf); }
+
+/* =====================================================================
+   File-upload "Browse" buttons were hardcoded blue on every theme except
+   VS Code (dark). Theme them everywhere: the bootstrap custom-file Browse
+   chip (::after, used on the Purchase page) and the Neon uploader's Browse
+   link (used on the New Item page). Default theme keeps the original blue.
+   ===================================================================== */
+[data-theme] .custom-file-label::after {
+    background-color: var(--theme-primary-color, #506fe4) !important;
+    color: var(--theme-btn-primary-text, #fff) !important;
+}
+[data-theme] .Neon-input-choose-btn.blue {
+    background-color: var(--theme-primary-color, #506fe4) !important;
+    border-color: var(--theme-primary-color, #506fe4) !important;
+    color: var(--theme-btn-primary-text, #fff) !important;
+}
+
+/* =====================================================================
+   DEFAULT THEME SAFETY NET
+   The global rules above read --theme-* variables. On the Default theme
+   (no data-theme attribute) those come from the :root block. If any of
+   them is ever missing or clobbered at runtime, these literal rules keep
+   the core chrome rendering exactly as Default intends - most importantly
+   the blue icon rail with its white SVG icons, which otherwise disappear.
+   ===================================================================== */
+html:not([data-theme]) .vertical-menu-icon { background-color: #506fe4 !important; }
+html:not([data-theme]) .vertical-menu-icon .nav-pills .nav-link img { filter: none !important; opacity: 1 !important; }
+html:not([data-theme]) .leftbar,
+html:not([data-theme]) .vertical-menu,
+html:not([data-theme]) .metismenu { background-color: #ffffff !important; }
+html:not([data-theme]) body { background-color: #f2f3f7 !important; color: #3a4459 !important; }
+
+/* Default theme: SOLID surfaces. The item "view" slide-over (and some popups)
+   had NO explicit background on Default, so the page behind bled through and
+   mixed. Paint every panel / popup / card surface white - the completeness the
+   named themes (Eye Comfort etc.) already have. */
+html:not([data-theme]) .infobar-settings-sidebar,
+html:not([data-theme]) #infobar-settings-sidebar-item-details,
+html:not([data-theme]) #infobar-settings-sidebar-item,
+html:not([data-theme]) #infobar-settings-sidebar-instance,
+html:not([data-theme]) .infobar-settings-sidebar-body,
+html:not([data-theme]) .modal-content,
+html:not([data-theme]) .dropdown-menu,
+html:not([data-theme]) .card,
+html:not([data-theme]) .card-body {
+    background-color: #ffffff !important;
+}
+
+/* Default theme: crisp inputs - a clear border so fields read as distinct
+   surfaces, and an obvious focus ring on the active field (the purchase-page
+   inputs previously looked flat / unhighlighted). */
+html:not([data-theme]) .form-control,
+html:not([data-theme]) .custom-select,
+html:not([data-theme]) .input-group-text {
+    border: 1px solid #e6e9ef !important;
+    background-color: #ffffff !important;
+}
+html:not([data-theme]) .form-control:focus,
+html:not([data-theme]) .custom-select:focus {
+    border-color: #506fe4 !important;
+    box-shadow: 0 0 0 3px rgba(80, 111, 228, 0.12) !important;
+    background-color: #ffffff !important;
+}
+
+/* Default second (detail) menu - mirror Eye Comfort's feel: a light tint on
+   hover, and a darker highlight + bold on the active item. */
+html:not([data-theme]) .vertical-menu > li:hover > a {
+    color: #3f5cd6 !important;
+    background-color: rgba(80, 111, 228, 0.07) !important;
+    border-radius: 8px !important;
+}
+html:not([data-theme]) .vertical-menu > li.active > a,
+html:not([data-theme]) .vertical-menu > li > a.active {
+    color: #2f47b8 !important;
+    background-color: rgba(80, 111, 228, 0.15) !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+}
+
+/* =====================================================================
+   MOTION LAYER  —  subtle, professional micro-interactions
+   ---------------------------------------------------------------------
+   Small, fast, GPU-friendly transitions so hovering, clicking, opening a
+   popup, or moving between tabs feels smooth rather than abrupt. Kept
+   understated (150-250ms, gentle easing) - professional, not flashy.
+   The whole layer is gated behind prefers-reduced-motion so it fully
+   disables for users/OS settings that ask for reduced motion.
+   ===================================================================== */
+@media (prefers-reduced-motion: no-preference) {
+    /* Lean motion: a light colour transition on interactive CONTROLS only.
+       The previous version transitioned transform/opacity on a broad set
+       (a, .badge, table rows, images...) which created compositing layers and
+       made every scroll/resize repaint expensive - the cause of the jank. */
+    .btn,
+    .nav-link,
+    .dropdown-item,
+    .shop_buttons .btn,
+    .infobar-icon a,
+    .vertical-menu > li > a,
+    .nav-tabs .nav-link,
+    .theme-preset-card,
+    .theme-color-box {
+        transition: background-color .15s ease, color .15s ease, border-color .15s ease;
+    }
+    .btn { transition: background-color .15s ease, color .15s ease, border-color .15s ease, box-shadow .15s ease; }
+    .btn:active { transform: translateY(1px); }
+
+    /* Open animations only - these run once, never during scroll. */
+    .modal.fade .modal-dialog {
+        transition: transform .22s cubic-bezier(.2, .8, .2, 1) !important;
+        transform: translateY(-8px) scale(.99);
+    }
+    .modal.show .modal-dialog { transform: none; }
+    /* Fade only - NO transform. Bootstrap/Popper position dropdowns with their
+       own transform, so animating transform here made the menu appear in the
+       wrong corner and snap into place. Opacity is safe. */
+    .dropdown-menu.show { animation: posnicDropIn .14s ease; }
+    @keyframes posnicDropIn {
+        from { opacity: 0; }
+        to   { opacity: 1; }
+    }
+}
+
+/* =====================================================================
+   PROFESSIONAL POLISH  —  soft elevation + cleaner separation
+   ---------------------------------------------------------------------
+   Cards previously sat flat on the grey body with only a hairline border,
+   so nothing distinguished a surface from its background. A subtle, even
+   shadow + slightly larger radius gives cards real depth (the premium
+   SaaS look) without feeling heavy when cards nest. A hairline divider
+   under the topbar separates the chrome from the content. Applies to
+   every theme; dark themes get a deeper shadow so it still reads.
+   ===================================================================== */
+.card {
+    /* Borderless, like Eye Comfort: surfaces separate by TONE (white card on
+       the grey body) + a soft shadow, not a hard "boxy" border line. */
+    border: 0 !important;
+    border-radius: 12px !important;
+    box-shadow: 0 1px 3px rgba(16, 24, 40, 0.05), 0 1px 2px rgba(16, 24, 40, 0.04) !important;
+}
+/* Round the inner surfaces to match the card, so a card's white body/header/
+   footer never shows square corners inside the rounded box. This gives every
+   dashboard box (and the datatable "Showing 1 to N" footer) consistent curves
+   at all four corners - no overflow clipping, so pop-outs still work. */
+.card > .card-header:first-child { border-top-left-radius: 12px !important; border-top-right-radius: 12px !important; }
+.card > .card-body:first-child   { border-top-left-radius: 12px !important; border-top-right-radius: 12px !important; }
+.card > .card-body:last-child    { border-bottom-left-radius: 12px !important; border-bottom-right-radius: 12px !important; }
+.card > .card-footer:last-child  { border-bottom-left-radius: 12px !important; border-bottom-right-radius: 12px !important; }
+.card-header {
+    border-top-left-radius: 12px !important;
+    border-top-right-radius: 12px !important;
+    background-clip: padding-box;
+}
+.topbar {
+    border-bottom: 1px solid var(--theme-border-color, #e9ecef) !important;
+    box-shadow: 0 1px 3px rgba(16, 24, 40, 0.04) !important;
+}
+/* Default: keep the topbar crisply white so it separates from the grey body */
+html:not([data-theme]) .topbar,
+html:not([data-theme]) .topbar .infobar { background-color: #ffffff !important; }
+
+/* Active period buttons (Today / This Week ...): clear on-brand highlight */
+.shop_buttons .btn.active,
+.shop_buttons .btn-light.active {
+    background-color: var(--theme-primary-color, #506fe4) !important;
+    border-color: var(--theme-primary-color, #506fe4) !important;
+    color: #ffffff !important;
+    box-shadow: 0 1px 3px rgba(80, 111, 228, 0.35) !important;
+}
+
+/* Second (detail) vertical menu: unmistakable active item (no left bar, per preference) */
+.vertical-menu > li.active > a,
+.vertical-menu > li > a.active {
+    color: var(--theme-primary-color, #506fe4) !important;
+    background-color: rgba(80, 111, 228, 0.10) !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+}
+
+/* Dark themes: a light shadow is invisible, so deepen it a touch */
+[data-theme="dark"] .card,
+[data-theme="softdark"] .card,
+[data-theme="warmnight"] .card,
+[data-theme="terminal"] .card,
+[data-theme="dosblue"] .card {
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.28) !important;
+}
+
+/* Perf: the leftbar/rightbar shipped with 'transition: all', which animated
+   their HEIGHT on every window resize - the menu appeared to render slowly
+   top-to-bottom while dragging. Restrict to the toggle-collapse properties
+   only (never height). Loaded last, so this wins over the source rules. */
+.leftbar { transition: width .3s ease, left .3s ease, transform .3s ease !important; }
+.rightbar { transition: margin-left .3s ease !important; }
+
+/* Keep second-menu items on one line so the "open in new window" icons on
+   Customer Display / Catalog Display never wrap to the next row. */
+.vertical-menu > li > a { white-space: nowrap; }
+
+/* Empty-state illustrations (nodata.svg, wallet.svg under /general/) shipped as
+   plain <img> - not inside a _norecord block - so the blue artwork stayed blue
+   on every theme. Target them by src and neutralise to greyscale so they blend
+   with any theme; dark themes brighten + dim so the grey reads on a dark panel. */
+[data-theme] img[src*="/general/"] { filter: grayscale(1) !important; }
+[data-theme="dark"] img[src*="/general/"],
+[data-theme="softdark"] img[src*="/general/"],
+[data-theme="warmnight"] img[src*="/general/"],
+[data-theme="terminal"] img[src*="/general/"],
+[data-theme="dosblue"] img[src*="/general/"] { filter: grayscale(1) brightness(1.5) opacity(0.5) !important; }
+
+/* Default popups/panels: soften the hard divider lines (modal header/footer,
+   card header, item-view panel head) so they match the borderless surface
+   look instead of reading as harsh "boxy" lines. */
+html:not([data-theme]) .modal-header,
+html:not([data-theme]) .modal-footer,
+html:not([data-theme]) .card-header,
+html:not([data-theme]) .card-footer,
+html:not([data-theme]) .infobar-settings-sidebar-head {
+    border-color: #eef1f5 !important;
+}
+
+/* =====================================================================
+   GitHub theme (Primer light) - the look & feel of github.com:
+   white canvas + #f6f8fa insets, #d0d7de bordered boxes with 6px corners,
+   GitHub-blue (#0969da) links/accents, GREEN (#1f883d) primary buttons,
+   and GitHub's native system-font stack (Segoe UI on Windows).
+   ===================================================================== */
+[data-theme="github"] {
+    --theme-primary-color: #0969da;
+    --theme-primary-hover: #0860ca;
+    --theme-body-bg: #f6f8fa;
+    --theme-card-bg: #ffffff;
+    --theme-sidebar-bg: #ffffff;
+    --theme-topbar-bg: #ffffff;
+    --theme-text-primary: #1f2328;
+    --theme-text-secondary: #424a53;
+    --theme-text-muted: #656d76;
+    --theme-border-color: #d0d7de;
+    --theme-table-header-bg: #f6f8fa;
+    --theme-table-row-hover: #f6f8fa;
+    --theme-menu-bg: #ffffff;
+    --theme-menu-text: #1f2328;
+    --theme-menu-active-bg: #0969da;
+    --theme-menu-active-text: #ffffff;
+    --theme-btn-primary-bg: #1f883d;
+    --theme-btn-primary-text: #ffffff;
+    --theme-success-color: #1a7f37;
+    --theme-warning-color: #9a6700;
+    --theme-danger-color: #cf222e;
+    --theme-info-color: #0969da;
+    /* Keep the self-hosted DM Sans (works offline) as the default font. */
+    --theme-font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+}
+/* GitHub uses bordered boxes (1px #d0d7de), small 6px radius, no shadow. */
+[data-theme="github"] .card {
+    border: 1px solid #d0d7de !important;
+    border-radius: 6px !important;
+    box-shadow: none !important;
+}
+[data-theme="github"] .card > .card-header:first-child,
+[data-theme="github"] .card > .card-body:first-child { border-top-left-radius: 6px !important; border-top-right-radius: 6px !important; }
+[data-theme="github"] .card > .card-body:last-child,
+[data-theme="github"] .card > .card-footer:last-child { border-bottom-left-radius: 6px !important; border-bottom-right-radius: 6px !important; }
+/* Primary action buttons are GREEN on GitHub; links/accents stay blue. */
+[data-theme="github"] .btn-primary,
+[data-theme="github"] thead.btn-primary { background-color: #1f883d !important; border-color: rgba(27, 31, 36, 0.15) !important; color: #ffffff !important; }
+[data-theme="github"] .btn-primary:hover { background-color: #1a7f37 !important; }
+/* Default (GitHub) keeps the classic blue icon rail, per preference. */
+[data-theme="github"] .vertical-menu-icon { background-color: #506fe4 !important; }
+/* Active icon: a soft white overlay reads better than the old dark overlay
+   (which looked like a "dark blue" blob) on the blue rail. */
+[data-theme="github"] .vertical-menu-icon .nav-pills .nav-link.active { background-color: rgba(255, 255, 255, 0.20) !important; }
+
+/* Active theme in the picker menu: soft highlight + a check mark on the right. */
+#dropdown-theme .theme-item.theme-active {
+    background-color: rgba(80, 111, 228, 0.10);
+    border-radius: 6px;
+    font-weight: 600;
+}
+#dropdown-theme .theme-item.theme-active::after {
+    content: '\2713';
+    margin-left: auto;
+    padding-left: 8px;
+    color: var(--theme-primary-color, #506fe4);
+    font-weight: 700;
+}
+
+/* Smooth tab switches - a gentle opacity fade instead of an instant flash.
+   Opacity ONLY (no transform), so it can never shift the position of anything
+   inside the pane. Retriggers every time a pane gains .active/.tab-pane-active. */
+@media (prefers-reduced-motion: no-preference) {
+    .tab-pane.active,
+    .tab-pane-active { animation: posnicTabFade .22s ease; }
+    @keyframes posnicTabFade { from { opacity: 0; } to { opacity: 1; } }
+
+    /* Slide-over (item detail) panel: snappier, nicely-eased open (was a slow
+       0.5s linear width tween) + a fading dark backdrop. Kept width-based so it
+       can't add a horizontal scrollbar. */
+    .infobar-settings-sidebar { transition: width .28s cubic-bezier(.2, .8, .2, 1) !important; }
+    .infobar-settings-sidebar-overlay { transition: background-color .28s ease; }
+}
+
+/* Close buttons (modal X + item-detail panel X): soft rounded hover
+   background so closing feels responsive. Minimal - only padding + background,
+   nothing that changes the button's own size/display (that broke the icon). */
+.modal-header .close,
+.modal .close,
+.infobar-settings-close {
+    transition: background-color .15s ease;
+    border-radius: 8px;
+    cursor: pointer;
+}
+.infobar-settings-close { padding: 5px; }
+.modal-header .close:hover,
+.modal .close:hover,
+.infobar-settings-close:hover { background-color: rgba(120, 120, 120, 0.2); }
+
+/* Row alignment (the real fix): data cells (.table td) were vertical-align:
+   middle but the header cells holding the checkbox and # were left at :top, so
+   they sat higher than the row text. Align EVERY table cell to middle so the
+   whole row - checkbox, number, name, values - lines up cleanly. */
+.table th,
+.table td,
+table.dataTable th,
+table.dataTable td { vertical-align: middle !important; }
+
+/* List name cells open the item detail view on click - give them a subtle
+   dotted underline as a "clickable / expandable" affordance instead of a
+   strong bold link, and drop the italic so they read calmer. */
+.table_model_item {
+    font-style: normal;
+    text-decoration: underline dotted;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+    cursor: pointer;
+}
+.table_model_item:hover { text-decoration-style: solid; }
+
+/* A .card-body that is ALSO a Bootstrap .row carries -15px side margins that
+   overflow the card and hide its left/right border - very visible now that the
+   GitHub default has bordered cards (the "first box, left/right corners
+   missing" report). Keep the row body inside the card. */
+.card-body.row { margin-left: 0; margin-right: 0; }
+
+/* Default theme loading overlay: themed pages already swap the white GIF for
+   a CSS spinner on a themed surface; Default (no data-theme) was missed, so it
+   still flashed the near-white loading.gif. Give it the same treatment. */
+html:not([data-theme]) .loadingSpinner {
+    background-image: none !important;
+    background-color: var(--theme-body-bg, #f2f3f7) !important;
+    opacity: 0.92 !important;
+}
+html:not([data-theme]) .loadingSpinner::after {
+    content: '';
+    position: absolute;
+    top: 42%;
+    left: 50%;
+    width: 42px;
+    height: 42px;
+    margin: -21px 0 0 -21px;
+    border: 4px solid var(--theme-border-color, #e0e0e0);
+    border-top-color: var(--theme-primary-color, #506fe4);
+    border-radius: 50%;
+    animation: ps-comfort-spin 0.8s linear infinite;
+}
+
+/* =====================================================================
+   PER-THEME TYPOGRAPHY  —  research-backed personalities
+   Inter is the base (:root). These give a few themes a face fit for their
+   purpose. Every stack falls back to the native system font (Segoe UI on
+   Windows) when the web font is unavailable - e.g. the offline desktop build.
+     - Lexend on Eye Comfort  : engineered to reduce reading fatigue.
+     - Source Sans on Coffee / Warm Night : warmer, more human.
+     - IBM Plex Sans on VS Code : technical, engineered feel.
+   macOS keeps the Apple system stack; Terminal / Turbo C keep monospace.
+   ===================================================================== */
+[data-theme="comfort"]   { --theme-font-family: 'Lexend', 'Inter', -apple-system, 'Segoe UI', Roboto, sans-serif; }
+[data-theme="brown"]     { --theme-font-family: 'Source Sans 3', 'Source Sans Pro', -apple-system, 'Segoe UI', Roboto, sans-serif; }
+[data-theme="warmnight"] { --theme-font-family: 'Source Sans 3', 'Source Sans Pro', -apple-system, 'Segoe UI', Roboto, sans-serif; }
+[data-theme="dark"]      { --theme-font-family: 'IBM Plex Sans', -apple-system, 'Segoe UI', Roboto, sans-serif; }

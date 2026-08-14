@@ -569,7 +569,7 @@ PosnicPro.receivings = {
                 var ItemQty = available_quantity;
                 PosnicPro.receivings.receivingTextboxQtyChange(ItemQty, id);
                 PosnicPro.receivings.addReceivingTableRowCalc();
-                PosnicPro.alert('error', 'Items Not Available In The Stock!!.');
+                PosnicPro.alert('error', 'Some items are out of stock.');
                 return false;
             }
         }
@@ -771,7 +771,7 @@ PosnicPro.receivings = {
                 $('#items_company_price').val('0');
                 $('#items_mrp_price').val('0');
                 $('#items_selling_price').val('0');
-                PosnicPro.alert('info', 'This product quantity already available. So this product added as new one . Please fill Price details !!.', '10000');
+                PosnicPro.alert('info', 'This item is already in stock and was added as a new line. Enter its price details.', '10000');
                 hasher.changed.active = false; //disable changed signal
                 hasher.replaceHash('receivings/items/new');
                 hasher.changed.active = true; //enable changed signal
@@ -874,10 +874,10 @@ PosnicPro.receivings = {
         if ($('#receiving_print tbody tr').find(':nth-child(8)').text() === '' || supplier_name === '') {
             if (supplier_name === '') {
                 $("#receiving_add_supplier_name").focus();
-                PosnicPro.alert('error', 'Please Enter A Supplier Name !!.');
+                PosnicPro.alert('error', 'Enter a supplier name.');
                 return false;
             }
-            PosnicPro.alert('warning', 'You must select a ITEM!!.');
+            PosnicPro.alert('warning', 'Add at least one item.');
             $('#receiving_add_item_name').focus();
             return false;
         } else {
@@ -1090,10 +1090,10 @@ PosnicPro.receivings = {
         if ($('#receiving_print tbody tr').find(':nth-child(8)').text() === '' || supplier_name === '') {
             if (supplier_name === '') {
                 $("#receiving_add_supplier_name").focus();
-                PosnicPro.alert('error', 'Please Enter A Supplier Name !!.');
+                PosnicPro.alert('error', 'Enter a supplier name.');
                 return false;
             }
-            PosnicPro.alert('warning', 'You must select a ITEM!!.');
+            PosnicPro.alert('warning', 'Add at least one item.');
             $('#receiving_add_item_name').focus();
             return false;
         } else {
@@ -1254,7 +1254,7 @@ PosnicPro.receivings = {
         $('#receiviing_img_hide').show();
         (PosnicPro.local.get('default_supplier_enable_disable') === 'false') ? $('#receiving_add_supplier_id,#receiving_add_supplier_name,#receiving_add_supplier_address,#receiving_add_supplier_phone,#receiving_add_supplier_email,#receiving_add_supplier_state,#receiving_add_supplier_gst_type,#receiving_add_supplier_gst_number').val('') : PosnicPro.defaultSupplierSet();
         PosnicPro.receiving_lineitems = [];
-        PosnicPro.alert('success', 'Receiving cancelled!!.');
+        PosnicPro.alert('success', 'Receiving cancelled.');
         $('#reset_modal').modal('hide');
     },
     receivingImageFormSubmit: function () {
@@ -1489,7 +1489,7 @@ $('#receiving_add_item_name').on('click keydown.autocomplete keyup.autocomplete'
     var name = $('#receiving_add_supplier_name').val();
     if (name === '') {
         $('#receiving_add_supplier_name').focus();
-        PosnicPro.alert('error', 'Please enter a supplier name !!.');
+        PosnicPro.alert('error', 'Enter a supplier name.');
         return false;
     }
     $(this).autocomplete({

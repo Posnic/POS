@@ -739,8 +739,10 @@ PosnicPro.customerdetails = {
                     }
                     $('.customer_details_totalsale').html(salesTotalQty);
                     $('.customer_details_totalreturn').html(returnTotalQty);
-                    $('.customer_details_saletotalvalue').html(saleTotalValue);
-                    $('.customer_details_returntotalvalue').html(returnTotalValue);
+                    // Money totals - round to 2 decimals so floating-point sums
+                    // like 1306.8600000000001 never reach the screen.
+                    $('.customer_details_saletotalvalue').html(Number(saleTotalValue).toFixed(2));
+                    $('.customer_details_returntotalvalue').html(Number(returnTotalValue).toFixed(2));
 
                 } else {
                     var customersalesreport = [];
@@ -1012,7 +1014,7 @@ PosnicPro.closesalesdetails = {
                     let trow = '<li class="media">' +
                             '<div class="media-body">' +
                             '<h5><span>' + row_no + ')&nbsp;&nbsp;</span>' + row.sales_id + '<span class="badge badge-success ml-3 number">' + currency + ' ' + row.payment_pending.toFixed(2) + '</span> ' + checkboxvalue + ' </h5>' +
-                            '<p class="timing ml-3 font-10">Partialy Paid :' + currency + ' ' + row.partial_balance.toFixed(2) + '</p>' +
+                            '<p class="timing ml-3 font-10">Partially Paid :' + currency + ' ' + row.partial_balance.toFixed(2) + '</p>' +
                             '<span class="timing ml-3">' + row.date + '</span>' +
                             '</div>' +
                             '</li>';
@@ -1041,7 +1043,7 @@ PosnicPro.closesalesdetails = {
         });
         if (PosnicPro.closesalesdetails.fixedwalletbalance < checkedWalletBalance) {
             $(element).prop("checked", false);
-            PosnicPro.alert('warning', 'Insufficient wallet amount. ');
+            PosnicPro.alert('warning', 'Not enough wallet balance.');
             var removeRmIndex = PosnicPro.closesalesdetails.partialy_checkbox.map(function (item) {
                 return item.id === $(element).val() ? $(element).val() : '';
             }).indexOf($(element).val());
@@ -1055,7 +1057,7 @@ PosnicPro.closesalesdetails = {
     paymentClose: function () {
 
         if (PosnicPro.closesalesdetails.partialy_checkbox.length === 0) {
-            PosnicPro.alert('error', 'Please choose sales');
+            PosnicPro.alert('error', 'Select a sale.');
             return false;
         }
         let customer_id = currentHash.split('/');

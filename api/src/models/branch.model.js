@@ -927,7 +927,7 @@ class BranchModel {
       const defaultCustomerData = {
         branch_id: branchId,
         branch_name: data.name?.trim(),
-        name: 'Walk-In-Customer',
+        name: 'Walk-in Customer',
         date: mongoDate,
         phone: '',
         /*

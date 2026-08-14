@@ -307,7 +307,7 @@ PosnicPro.settings = {
                 }
             });
         } else {
-            PosnicPro.alert('success', 'Image update successfully');
+            PosnicPro.alert('success', 'Image updated');
         }
         return false;
     },
@@ -1228,9 +1228,9 @@ if ($wrapper.length) {
             loader.find(".loadingSpinner").remove();
 
             if (response.type === 'success') {
-                PosnicPro.alert('success', response.message || 'Settings saved successfully');
+                PosnicPro.alert('success', response.message || 'Settings saved');
             } else {
-                PosnicPro.alert('error', response.message || 'Failed to save settings');
+                PosnicPro.alert('error', response.message || 'Could not save settings. Please try again.');
             }
         }, function (xhr) {
             loader.find(".loadingSpinner").remove();
@@ -1239,7 +1239,7 @@ if ($wrapper.length) {
                 const response = JSON.parse(xhr.responseText);
                 PosnicPro.alert(response.type || 'error', response.message || 'Unexpected server error');
             } catch (e) {
-                PosnicPro.alert('error', 'Unexpected error occurred');
+                PosnicPro.alert('error', 'Something went wrong. Please try again.');
             }
         });
 
@@ -1274,9 +1274,9 @@ if ($wrapper.length) {
             loader.find(".loadingSpinner").remove();
 
             if (response.type === 'success') {
-                PosnicPro.alert('success', response.message || 'Settings saved successfully');
+                PosnicPro.alert('success', response.message || 'Settings saved');
             } else {
-                PosnicPro.alert('error', response.message || 'Failed to save settings');
+                PosnicPro.alert('error', response.message || 'Could not save settings. Please try again.');
             }
         }, function (xhr) {
             loader.find(".loadingSpinner").remove();
@@ -1285,7 +1285,7 @@ if ($wrapper.length) {
                 const response = JSON.parse(xhr.responseText);
                 PosnicPro.alert(response.type || 'error', response.message || 'Unexpected server error');
             } catch (e) {
-                PosnicPro.alert('error', 'Unexpected error occurred');
+                PosnicPro.alert('error', 'Something went wrong. Please try again.');
             }
         });
     },
@@ -1531,7 +1531,7 @@ if ($wrapper.length) {
             $('#restoreModal').modal('show');
             $('.restoreCountValue').html(restore.length);
         } else {
-            PosnicPro.alert('warning', 'Please selected atleast one row!!.');
+            PosnicPro.alert('warning', 'Select at least one row.');
         }
     },
     setRestoreAccess: function () {
@@ -1622,7 +1622,7 @@ if ($wrapper.length) {
                             register_status: 'open'
                         });
                         
-                        PosnicPro.alert('success', 'Successfully Changed Branch - Continuing with open register: ' + registerResponse.data.open_register.register_name);
+                        PosnicPro.alert('success', 'Branch changed - Continuing with open register: ' + registerResponse.data.open_register.register_name);
                     } else {
                         // No open register - clear register data
                         PosnicPro.local.set('userRegisterStatus', 'Closed');
@@ -1633,7 +1633,7 @@ if ($wrapper.length) {
                         
                         db.currentregister.put({id: '1', register_id: '', register_name: '', register_status: 'close'});
                         
-                        PosnicPro.alert('success', 'Successfully Changed Branch - Please select a register before creating sales');
+                        PosnicPro.alert('success', 'Branch changed - Please select a register before creating sales');
                     }
                 });
                 
@@ -1644,7 +1644,7 @@ if ($wrapper.length) {
                 $("#v-pills-dashboard-tab").addClass('active');
                 $("#v-pills-dashboard-tab").addClass('active show');
                 hasher.setHash('branches');
-                PosnicPro.alert('success', 'Successfully Changed Branch');
+                PosnicPro.alert('success', 'Branch changed');
             }
             return false;
         }, function (xhr) {
@@ -4225,7 +4225,7 @@ $("#payment_gateway").on('change', function (event) {
     if ($('#payment_gateway').is(":checked")) {
         if ($('#site_key').val() === '' || $('#secret_key').val() === '') {
             $('#payment_gateway').prop("checked", false).attr('unchecked', 'unchecked');
-            PosnicPro.alert('warning', 'Please fill out this field for all empty fields');
+            PosnicPro.alert('warning', 'Fill in all required fields.');
         }
     }
 });

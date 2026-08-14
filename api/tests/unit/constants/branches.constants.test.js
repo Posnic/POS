@@ -68,16 +68,16 @@ describe('branches.constants', () => {
     });
 
     expect(SUCCESS_MESSAGES).toMatchObject({
-      CREATED: 'Branch created successfully',
-      UPDATED: 'Branch updated successfully',
-      DELETED: 'Branch deleted successfully',
-      RETRIEVED: 'Branch retrieved successfully',
-      LIST_RETRIEVED: 'Branch list retrieved successfully',
-      EXPORTED: 'Branches exported successfully',
-      STATUS_TOGGLED: 'Branch status updated successfully',
-      PAYMENT_GATEWAY_RESET: 'Payment gateway settings reset successfully',
-      PHONEPE_GATEWAY_RESET: 'PhonePe payment gateway settings reset successfully',
-      EMAIL_SETTINGS_RESET: 'Email settings reset successfully',
+      CREATED: 'Branch created',
+      UPDATED: 'Branch updated',
+      DELETED: 'Branch deleted',
+      RETRIEVED: 'Branch retrieved',
+      LIST_RETRIEVED: 'Branch list retrieved',
+      EXPORTED: 'Branches exported',
+      STATUS_TOGGLED: 'Branch status updated',
+      PAYMENT_GATEWAY_RESET: 'Payment gateway settings reset',
+      PHONEPE_GATEWAY_RESET: 'PhonePe payment gateway settings reset',
+      EMAIL_SETTINGS_RESET: 'Email settings reset',
     });
 
     expect(VALIDATION).toEqual({

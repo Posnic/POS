@@ -263,7 +263,7 @@ PosnicPro.quickreport = {
           groupedPayments[key].amount += amt;
         }
 
-        // Extra Discount - show detailed breakdown by type (calculate before tender)
+        // Additional Discount - show detailed breakdown by type (calculate before tender)
         let extraDiscountData = response.data && response.data.extra_discount ? response.data.extra_discount : {};
         let total_sale_extra_discount = safeNum(extraDiscountData.total_sale_extra_discount) || 0;
         let extraDiscountByType = extraDiscountData.by_type || [];
@@ -364,7 +364,7 @@ PosnicPro.quickreport = {
                 } else if (discountType === 'amount' || discountType === 'price') {
                   typeLabel = 'Amount Discount';
                 } else {
-                  typeLabel = 'Extra Discount';
+                  typeLabel = 'Additional Discount';
                 }
                 
                 let rowHTML = '<tr>' +
@@ -813,15 +813,23 @@ PosnicPro.quickreport = {
   dailyReportPdf: function () {
     var report = PosnicPro.quickreport.lastReport;
     if (!report) { PosnicPro.alert('warning', 'Run the report first, then download it.'); return false; }
-    if (!window.jspdf) { PosnicPro.alert('error', 'PDF tools not loaded - refresh and retry.'); return false; }
+    // The bundled jsPDF exposes its constructor differently across builds:
+    // window.jspdf.jsPDF (2.x UMD returning {jsPDF}), window.jsPDF (1.x global),
+    // or window.jspdf itself when the UMD returns the constructor directly (our
+    // bundle) - the last case made "window.jspdf.jsPDF" undefined and threw
+    // "jsPDF is not a constructor". Resolve it robustly.
+    var jsPDFCtor = (window.jspdf && typeof window.jspdf.jsPDF === 'function') ? window.jspdf.jsPDF
+                  : (typeof window.jsPDF === 'function') ? window.jsPDF
+                  : (typeof window.jspdf === 'function') ? window.jspdf
+                  : null;
+    if (!jsPDFCtor) { PosnicPro.alert('error', 'PDF tools not loaded - refresh and retry.'); return false; }
     PosnicPro.quickreport._captureReport(function (canvas) {
-      var jsPDF = window.jspdf.jsPDF;
       var imgData = canvas.toDataURL('image/png');
       var pageW = 210, pageH = 297, margin = 8;         // A4 portrait, mm
       var contentW = pageW - margin * 2;
       var imgH = (canvas.height * contentW) / canvas.width;
       var pageContentH = pageH - margin * 2;
-      var pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+      var pdf = new jsPDFCtor({ unit: 'mm', format: 'a4', orientation: 'portrait' });
       var position = margin;
       var heightLeft = imgH;
       pdf.addImage(imgData, 'PNG', margin, position, contentW, imgH, undefined, 'FAST');

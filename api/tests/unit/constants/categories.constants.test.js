@@ -62,18 +62,18 @@ describe('categories.constants', () => {
       DELETE_FAILED: 'Failed to delete category',
       UPDATE_FAILED: 'Failed to update category',
       CREATE_FAILED: 'Failed to create category',
-      CANNOT_DELETE_WITH_ITEMS: 'Cannot delete category with associated items',
+      CANNOT_DELETE_WITH_ITEMS: 'You cannot delete a category that still has items',
     });
 
     expect(SUCCESS_MESSAGES).toMatchObject({
-      CATEGORY_CREATED: 'Category created successfully',
-      CATEGORY_UPDATED: 'Category updated successfully',
-      CATEGORY_DELETED: 'Category deleted successfully',
-      CATEGORIES_DELETED: 'Categories deleted successfully',
-      CATEGORIES_RETRIEVED: 'Categories retrieved successfully',
-      CATEGORY_RETRIEVED: 'Category retrieved successfully',
-      CATEGORIES_IMPORTED: 'Categories imported successfully',
-      CATEGORIES_EXPORTED: 'Categories exported successfully',
+      CATEGORY_CREATED: 'Category created',
+      CATEGORY_UPDATED: 'Category updated',
+      CATEGORY_DELETED: 'Category deleted',
+      CATEGORIES_DELETED: 'Categories deleted',
+      CATEGORIES_RETRIEVED: 'Categories retrieved',
+      CATEGORY_RETRIEVED: 'Category retrieved',
+      CATEGORIES_IMPORTED: 'Categories imported',
+      CATEGORIES_EXPORTED: 'Categories exported',
     });
 
     expect(FIELD_LIMITS).toEqual({

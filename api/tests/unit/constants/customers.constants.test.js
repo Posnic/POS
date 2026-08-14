@@ -92,7 +92,7 @@ describe('customers.constants', () => {
       INVALID_GST_NUMBER: 'Invalid GST number',
       VALIDATION_ERROR: 'Validation Error',
       BRANCH_REQUIRED: 'Branch ID is required',
-      INSUFFICIENT_POINTS: 'Insufficient loyalty points',
+      INSUFFICIENT_POINTS: 'Not enough loyalty points',
       INVALID_POINTS: 'Points must be greater than 0',
       DELETE_FAILED: 'Failed to delete customer',
       UPDATE_FAILED: 'Failed to update customer',
@@ -101,17 +101,17 @@ describe('customers.constants', () => {
     });
 
     expect(SUCCESS_MESSAGES).toMatchObject({
-      CUSTOMER_CREATED: 'Customer added successfully',
-      CUSTOMER_UPDATED: 'Customer updated successfully',
-      CUSTOMER_DELETED: 'Customer deleted successfully',
-      CUSTOMERS_DELETED: 'Customers deleted successfully',
-      CUSTOMERS_RETRIEVED: 'Customers retrieved successfully',
-      CUSTOMER_RETRIEVED: 'Customer retrieved successfully',
-      POINTS_ADDED: 'Loyalty points added successfully',
-      POINTS_REDEEMED: 'Loyalty points redeemed successfully',
-      PREFERENCES_UPDATED: 'Customer preferences updated successfully',
-      CUSTOMERS_IMPORTED: 'Customers imported successfully',
-      CUSTOMERS_EXPORTED: 'Customers exported successfully',
+      CUSTOMER_CREATED: 'Customer added',
+      CUSTOMER_UPDATED: 'Customer updated',
+      CUSTOMER_DELETED: 'Customer deleted',
+      CUSTOMERS_DELETED: 'Customers deleted',
+      CUSTOMERS_RETRIEVED: 'Customers retrieved',
+      CUSTOMER_RETRIEVED: 'Customer retrieved',
+      POINTS_ADDED: 'Loyalty points added',
+      POINTS_REDEEMED: 'Loyalty points redeemed',
+      PREFERENCES_UPDATED: 'Customer preferences updated',
+      CUSTOMERS_IMPORTED: 'Customers imported',
+      CUSTOMERS_EXPORTED: 'Customers exported',
     });
 
     expect(FIELD_LIMITS).toEqual({

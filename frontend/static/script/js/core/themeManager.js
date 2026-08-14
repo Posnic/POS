@@ -22,7 +22,7 @@ PosnicPro.themeManager = {
     },
 
     defaults: {
-        preset: 'default',
+        preset: 'github',
         primaryColor: '#4e6ddf',
         bodyBg: '#f2f3f7',
         cardBg: '#ffffff',
@@ -158,6 +158,21 @@ PosnicPro.themeManager = {
             menuActiveBg: '#007aff',
             menuActiveText: '#ffffff'
         },
+        github: {
+            name: 'GitHub',
+            type: 'light',
+            primaryColor: '#0969da',
+            bodyBg: '#f6f8fa',
+            cardBg: '#ffffff',
+            sidebarBg: '#ffffff',
+            topbarBg: '#ffffff',
+            textPrimary: '#1f2328',
+            textSecondary: '#424a53',
+            menuBg: '#ffffff',
+            menuText: '#1f2328',
+            menuActiveBg: '#0969da',
+            menuActiveText: '#ffffff'
+        },
         cleanlight: {
             name: 'Clean Light',
             type: 'light',
@@ -218,6 +233,21 @@ PosnicPro.themeManager = {
         }
 
         this.initStorageSync();
+        // Highlight the currently-applied theme whenever the picker opens.
+        if (window.jQuery) {
+            window.jQuery(document).on('shown.bs.dropdown', '#dropdown-theme', function () { self.markActiveThemeItem(); });
+        }
+    },
+
+    markActiveThemeItem: function() {
+        try {
+            var active = document.documentElement.getAttribute('data-theme') || 'github';
+            var items = document.querySelectorAll('#dropdown-theme .theme-item');
+            for (var i = 0; i < items.length; i++) {
+                if (items[i].getAttribute('data-preset') === active) items[i].classList.add('theme-active');
+                else items[i].classList.remove('theme-active');
+            }
+        } catch (e) {}
     },
 
     initStorageSync: function() {
@@ -512,13 +542,10 @@ PosnicPro.themeManager = {
         var state = this.normalizeThemeState(settings);
 
         if (state.preset && state.preset !== 'custom' && this.presets[state.preset]) {
-            if (state.preset === 'default') {
-                root.removeAttribute('data-theme');
-                document.body.removeAttribute('data-theme');
-            } else {
-                root.setAttribute('data-theme', state.preset);
-                document.body.setAttribute('data-theme', state.preset);
-            }
+            // "Default" is now the GitHub theme (old blue rail).
+            var applied = (state.preset === 'default') ? 'github' : state.preset;
+            root.setAttribute('data-theme', applied);
+            document.body.setAttribute('data-theme', applied);
             this.clearInlineThemeVariables();
             this.applyOverrides(state.overrides);
             this.syncWindowChrome(state);

@@ -324,10 +324,10 @@ describe('InstallModel — installInsertDocument() success flow', () => {
     expect(branchDoc.stock_management).toBe(true);
   });
 
-  test('inserts default customer named "Walk-In-Customer"', async () => {
+  test('inserts default customer named "Walk-in Customer"', async () => {
     await im.installInsertDocument(validData());
     const [customerDoc] = cols.customers.insertOne.mock.calls[0];
-    expect(customerDoc.name).toBe('Walk-In-Customer');
+    expect(customerDoc.name).toBe('Walk-in Customer');
   });
 
   test('inserts default supplier named "Anonymous"', async () => {

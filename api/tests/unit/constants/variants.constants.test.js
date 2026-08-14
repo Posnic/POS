@@ -38,16 +38,16 @@ describe('variants.constants', () => {
 
   test('exports message catalogs', () => {
     expect(SUCCESS_MESSAGES).toMatchObject({
-      VARIANT_RETRIEVED: 'Variant retrieved successfully',
-      VARIANTS_RETRIEVED: 'Variants retrieved successfully',
-      VARIANT_CREATED: 'variant added successfully',
-      VARIANT_UPDATED: 'variant updated successfully',
-      VARIANT_DELETED: 'Variant deleted successfully',
-      VARIANTS_DELETED: 'variant deleted successfully',
-      VARIANTS_EXPORTED: 'Variants Exported Successfully',
-      VARIANT_DETAILS_RETRIEVED: 'Variant details retrieved successfully',
-      SEARCH_RESULTS_RETRIEVED: 'Search results retrieved successfully',
-      VARIANT_STATS_RETRIEVED: 'Variant statistics retrieved successfully',
+      VARIANT_RETRIEVED: 'Variant retrieved',
+      VARIANTS_RETRIEVED: 'Variants retrieved',
+      VARIANT_CREATED: 'variant added',
+      VARIANT_UPDATED: 'variant updated',
+      VARIANT_DELETED: 'Variant deleted',
+      VARIANTS_DELETED: 'variant deleted',
+      VARIANTS_EXPORTED: 'Variants Exported',
+      VARIANT_DETAILS_RETRIEVED: 'Variant details retrieved',
+      SEARCH_RESULTS_RETRIEVED: 'Search results retrieved',
+      VARIANT_STATS_RETRIEVED: 'Variant statistics retrieved',
     });
 
     expect(ERROR_MESSAGES).toMatchObject({
@@ -56,7 +56,7 @@ describe('variants.constants', () => {
       VARIANT_ID_NOT_FOUND: 'Variant Id Not Found',
       VARIANT_NAME_REQUIRED: 'Variant name is required',
       VARIANT_VALUE_REQUIRED: 'At least one variant value is required',
-      VARIANT_EXISTS: 'This variant details already exist in our system',
+      VARIANT_EXISTS: 'This variant already exists',
       VARIANT_RETRIEVE_FAILED: 'Failed to retrieve variants. Please try again later.',
       VARIANT_LOAD_FAILED: 'Unable to load variant. Please try again later.',
       VARIANT_DETAILS_LOAD_FAILED: 'Unable to load variant details. Please try again later.',

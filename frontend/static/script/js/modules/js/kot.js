@@ -776,7 +776,7 @@ PosnicPro.kot = {
             
             // Check if this is the last item
             if (rowCount <= 1) {
-                PosnicPro.alert('error', 'Cannot remove last item. At least 1 product must remain in the order.');
+                PosnicPro.alert('error', 'You cannot remove the last item. An order needs at least one product.');
                 return;
             }
             
@@ -1233,14 +1233,14 @@ PosnicPro.kot = {
                 if (typeof PosnicPro.kot.refreshTables === 'function') {
                     PosnicPro.kot.refreshTables();
                 }
-                PosnicPro.alert('success', 'Item added successfully');
+                PosnicPro.alert('success', 'Item added');
             } else {
                 PosnicPro.alert(res.type, res.message);
             }
         }, function(xhr) {
             spinner.remove();
             var err = JSON.parse(xhr.responseText || '{}');
-            PosnicPro.alert('error', err.message || 'Failed to add item');
+            PosnicPro.alert('error', err.message || 'Could not add the item. Please try again.');
         });
     },
 
@@ -1339,14 +1339,14 @@ PosnicPro.kot = {
                     if (typeof PosnicPro.kot.refreshTables === 'function') {
                         PosnicPro.kot.refreshTables();
                     }
-                    PosnicPro.alert('success', 'Quantities updated successfully');
+                    PosnicPro.alert('success', 'Quantities updated');
                 } else {
                     PosnicPro.alert(res.type, res.message);
                 }
             }, function(xhr) {
                 spinner.remove();
                 var err = JSON.parse(xhr.responseText || '{}');
-                PosnicPro.alert('error', err.message || 'Failed to update quantities');
+                PosnicPro.alert('error', err.message || 'Could not update quantities. Please try again.');
             });
         }, function(xhr) {
             spinner.remove();
@@ -1357,13 +1357,13 @@ PosnicPro.kot = {
     addCustomTableKOT: function () {
         var customTableNumber = $('#custom_table_number_input').val().trim();
         if (!customTableNumber) {
-            PosnicPro.alert('error', 'Please enter a table or room number');
+            PosnicPro.alert('error', 'Enter a table or room number.');
             return;
         }
 
         // Prevent using TA as it's reserved for takeaway
         if (customTableNumber.toUpperCase() === 'TA') {
-            PosnicPro.alert('error', 'TA is reserved for Takeaway orders. Please use a different table number.');
+            PosnicPro.alert('error', 'TA is reserved for takeaway orders. Use a different table number.');
             return;
         }
 
@@ -2120,7 +2120,7 @@ PosnicPro.kot = {
 
         // JS-based validation so we don't show native browser tooltip
         if (!saleId || isNaN(discountValue) || description === '') {
-            PosnicPro.alert('error', 'Please fill all required fields');
+            PosnicPro.alert('error', 'Fill in all required fields.');
             return;
         }
 
@@ -2418,7 +2418,7 @@ PosnicPro.kot = {
             
             // Check if this is the last item
             if (rowCount <= 1) {
-                PosnicPro.alert('error', 'Cannot remove last item. At least 1 product must remain in the order.');
+                PosnicPro.alert('error', 'You cannot remove the last item. An order needs at least one product.');
                 return;
             }
             
@@ -2498,7 +2498,7 @@ PosnicPro.kot = {
                 PosnicPro.get('sales/cancel/' + saleId, function (res) {
                     spinner.remove();
                     if (res.type === 'success') {
-                        PosnicPro.alert('success', 'Order cancelled as all items were removed');
+                        PosnicPro.alert('success', 'Order cancelled - all items were removed.');
                         if (PosnicPro.kot.currentTableNumber) {
                              // Refresh tables and clear details panel
                              PosnicPro.kot.refreshTables();
@@ -2856,7 +2856,7 @@ PosnicPro.kot = {
         PosnicPro.put(params, function (res) {
             spinner.remove();
             if (res.type === 'success') {
-                PosnicPro.alert('success', 'Item added successfully');
+                PosnicPro.alert('success', 'Item added');
                 
                 // Hide add modal
                 $('#kot_add_item_modal').modal('hide');

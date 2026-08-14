@@ -320,7 +320,7 @@ class InstallModel extends BaseModel {
       const customerInsertResult = await customerCollection.insertOne({
         branch_id: branchId,
         branch_name: data.register_companyname.trim(),
-        name: 'Walk-In-Customer',
+        name: 'Walk-in Customer',
         email: '',
         phone: '',
         address: '',

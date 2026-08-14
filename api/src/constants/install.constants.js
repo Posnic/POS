@@ -78,11 +78,11 @@ const ERROR_MESSAGES = {
 
 // Success messages
 const SUCCESS_MESSAGES = {
-  ACCOUNT_CREATED: 'Account created successfully',
-  CLEANUP_SUCCESS: 'Successfully deleted records across all collections',
-  INSTALLATION_COMPLETE: 'Installation completed successfully',
-  DEMO_DATA_LOADED: 'Demo data loaded successfully',
-  DEFAULT_DATA_LOADED: 'Default data loaded successfully',
+  ACCOUNT_CREATED: 'Account created',
+  CLEANUP_SUCCESS: 'Deleted records across all collections',
+  INSTALLATION_COMPLETE: 'Installation completed',
+  DEMO_DATA_LOADED: 'Demo data loaded',
+  DEFAULT_DATA_LOADED: 'Default data loaded',
 };
 
 // HTTP Status codes
