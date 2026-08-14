@@ -47,9 +47,37 @@ function brandName() {
   return name;
 }
 
+/**
+ * Absolute path to the white-label brand logo, or null when unbranded.
+ *
+ * Reads the same file-based descriptor as brandName() (POSNIC_BRAND_DIR), so a
+ * receipt's footer logo and the name printed beside it always come from one
+ * source and cannot disagree. Returns null for an unbranded install and for the
+ * Mongo-stored brand (whose logo is raw bytes, not a path) - letting the caller
+ * fall back to its own default image. Never throws: branding must not be the
+ * reason a till fails to print.
+ *
+ * @returns {string|null} path to brand-logo.png, or null
+ */
+function brandLogoPath() {
+  try {
+    const dir = process.env.POSNIC_BRAND_DIR;
+    if (!dir) return null;
+    const meta = path.join(dir, 'brand.json');
+    if (fs.existsSync(meta)) {
+      const brand = JSON.parse(fs.readFileSync(meta, 'utf8'));
+      if (brand && brand.enabled === false) return null;
+    }
+    const logo = path.join(dir, 'brand-logo.png');
+    return fs.existsSync(logo) ? logo : null;
+  } catch (e) {
+    return null;
+  }
+}
+
 /** Drops the cache so a freshly synced brand applies without a restart. */
 function invalidate() {
   cache = { at: 0, name: null };
 }
 
-module.exports = { brandName, invalidate };
+module.exports = { brandName, brandLogoPath, invalidate };
