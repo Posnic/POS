@@ -374,6 +374,9 @@
         $("#return_view_hide,#check_button,#return_button,#button_return").css("display", "none");
         PosnicPro.sales.recentMenu.recentSalesTabDetails();
         PosnicPro.sales.showSalesHoldPage(id);
+        // After retrieving a parked sale, jump to the Items tab - the cashier's
+        // next step is almost always to add more items, not stay on Recent Sales.
+        $('#home-tab-justified').trigger('click');
         $("#time-format").attr('readOnly', 'true');
         $("#paymentreturnhistory").hide();
         var loader = $(".loader-sales-balance");
@@ -523,7 +526,7 @@
                     var return_icon = '<a data-module="sales" data-access="write" href="#/sales/' + row._id + '/return" data-id="sales/' + row._id + '/return" id="return_sales_' + row._id + '" data-toggle="tooltip" title="Sales Return" class="point-cursor mobile_tooltip"><i class="feather icon-corner-up-left"></i></a>';
                     var view_icon = '<a data-module="sales" data-access="read" href="#/sales/' + row._id + '" data-id="sales/' + row._id + '" data-toggle="tooltip" title="View" class="point-cursor mobile_tooltip"><i class="feather icon-eye"></i></a>';
                     var edit_icon = '<a data-module="sales" data-access="write" href="#/sales/' + row._id + '/edit" data-id="sales/' + row._id + '/edit" id="edit_sales_' + row._id + '" data-toggle="tooltip" title="Edit" class="point-cursor mobile_tooltip"><i class="feather icon-edit"></i></a>';
-                    var hold_icon = '<a data-module="sales" data-access="write" href="#/sales/' + row._id + '/hold" data-id="sales/' + row._id + '/hold" data-toggle="tooltip" title="Unhold" class="point-cursor mobile_tooltip"><i class="feather icon-pause-circle"></i></a>';
+                    var hold_icon = '<a data-module="sales" data-access="write" href="#/sales/' + row._id + '/hold" data-id="sales/' + row._id + '/hold" data-toggle="tooltip" title="Retrieve parked sale" class="point-cursor mobile_tooltip"><i class="feather icon-play-circle"></i></a>';
 
                     var paymentStatusText = (typeof (row.payment_status) === 'undefined' || row.payment_status === null) ? 'Paid' : row.payment_status;
                     var showUnpaidPayment = (paymentStatusText === 'Unpaid') && (row.sale_process === 'Add' || row.sale_process === 'Edit');
@@ -558,7 +561,9 @@
                         processHtml = '<span class="badge badge-danger-inverse">Cancel</span>';
                         hold_icon = '<span id="show_hold_icon" style="display:none;"></span>';
                     } else {
-                        processHtml = '<span class="' + process_class + '">' + row.sale_process + '</span>';
+                        // Show "Parked" for held sales (keep the stored value 'Hold').
+                        var processLabel = (row.sale_process === 'Hold') ? 'Parked' : row.sale_process;
+                        processHtml = '<span class="' + process_class + '">' + processLabel + '</span>';
                     }
 
                     // Hide Edit (but not Return) for KOT orders that have been
@@ -763,7 +768,7 @@
             var placedQty = $('#touchsale_item_qty' + id).val();
             if (params.available_quantity <= placedQty) {
                 $('#touchsale_item_qty' + id).val(params.available_quantity);
-                PosnicPro.alert('error', 'Items Not Available In The Stock!!.');
+                PosnicPro.alert('error', 'Some items are out of stock.');
                 return false;
             }
         }
@@ -1251,18 +1256,18 @@
             if (customer_name === '') {
                 $('.toggle-customer-user').css({ display: 'block' });
                 $("#sales_new_customer_name").focus();
-                PosnicPro.alert('error', 'Please Enter a Customer Name !!.');
+                PosnicPro.alert('error', 'Enter a customer name.');
                 return false;
             }
             $('#collapseOne').removeClass("show");
             $('#collapseTwo').addClass("show");
-            PosnicPro.alert('warning', 'You must select a ITEM !!.');
+            PosnicPro.alert('warning', 'Add at least one item.');
             $('#sales_new_item_name').focus();
             return false;
         }
 
         if (!PosnicPro.sales.paymentOnlyMode && saleNewTot < 0) {
-            PosnicPro.alert('error', 'Pay Total cannot be zero or less than zero.');
+            PosnicPro.alert('error', 'Enter a payment amount greater than zero.');
             return false;
         }
 
@@ -3181,7 +3186,7 @@ PosnicPro.kotorder = {
         }
 
         if (dineType === 'Dine-in' && (!tableNumber || tableNumber === '')) {
-            PosnicPro.alert('warning', 'Please select a table.');
+            PosnicPro.alert('warning', 'Select a table.');
             return;
         }
 
@@ -3231,7 +3236,7 @@ PosnicPro.sales.addSale = {
         if (!PosnicPro.sales.paymentOnlyMode && PosnicPro.sales.SaleAction !== 'return' && $('#Partial_amount').val() === '') {
             if ($('#Partial_amount').val() === '') {
                 $("#Partial_amount").focus();
-                PosnicPro.alert('error', 'Please Enter a Partial Amount');
+                PosnicPro.alert('error', 'Enter a partial amount.');
                 return false;
             }
         }
@@ -3274,7 +3279,7 @@ PosnicPro.sales.addSale = {
                 (PosnicPro.kotorder && PosnicPro.kotorder.kotTableNumber && PosnicPro.kotorder.kotTableNumber.toString().trim() !== '');
 
             if (!hasTable) {
-                PosnicPro.alert('warning', 'Please select a table.');
+                PosnicPro.alert('warning', 'Select a table.');
                 return false;
             }
 
@@ -3307,12 +3312,12 @@ PosnicPro.sales.addSale = {
             if (customer_name === '') {
                 $('.toggle-customer-user').css({ display: 'block' });
                 $("#sales_new_customer_name").focus();
-                PosnicPro.alert('error', 'Please Enter a Customer Name !!.');
+                PosnicPro.alert('error', 'Enter a customer name.');
                 return false;
             }
             $('#collapseOne').removeClass("show");
             $('#collapseTwo').addClass("show");
-            PosnicPro.alert('warning', 'You must select a ITEM !!.');
+            PosnicPro.alert('warning', 'Add at least one item.');
             $('#sales_new_item_name').focus();
             return false;
         } else {
@@ -3705,7 +3710,7 @@ PosnicPro.sales.editSale = {
         if (!PosnicPro.sales.paymentOnlyMode && ($('#sales_new_items_table tbody tr').find(':nth-child(8)').text() === '' || customer_name === '')) {
             if (customer_name === '') {
                 $("#sales_new_customer_name").focus();
-                PosnicPro.alert('error', 'Please Enter a Customer Name !!.');
+                PosnicPro.alert('error', 'Enter a customer name.');
                 return false;
             }
         }
@@ -4222,10 +4227,10 @@ PosnicPro.sales.holdSale = {
             if (customer_name === '') {
                 $('.toggle-customer-user').css({ display: 'block' });
                 $("#sales_new_customer_name").focus();
-                PosnicPro.alert('error', 'Please Enter a Customer Name !!.');
+                PosnicPro.alert('error', 'Enter a customer name.');
                 return false;
             }
-            PosnicPro.alert('warning', 'You must select a ITEM !!.');
+            PosnicPro.alert('warning', 'Add at least one item.');
             $('#sales_new_item_name').focus();
             return false;
         } else {
@@ -4446,7 +4451,7 @@ PosnicPro.sales.quantity = {
                     });
                 } else {
                     if (available_quantity < value) {
-                        PosnicPro.alert('error', 'Items Not Available In The Stock!!.');
+                        PosnicPro.alert('error', 'Some items are out of stock.');
                         $('#touchsale_item_qty' + id).val(PosnicPro.sales.SaleTableLineItems[id].available_quantity);
                         return false;
                     }
@@ -4606,7 +4611,7 @@ PosnicPro.sales.quantity = {
                     itemRecord.push({ name: $('#addSalesLineItemName_' + id).text(), qty: available_quantity, price: $('#addSalesLineItemPrice_' + id).text(), discount: $('#addSalesLineItemDiscount_' + id).text(), tax: $('#addSalesLineItemTax_' + id).text(), total: salesLineTotal });
                     db.customerDisplay.put({ id: id, 'clear': 'yes', 'get': 'yes', items: itemRecord });
                     PosnicPro.sales.calculation.salesTableRowCart();
-                    PosnicPro.alert('error', 'Items Not Available In The Stock!!.');
+                    PosnicPro.alert('error', 'Some items are out of stock.');
                     return false;
                 }
             }
@@ -5328,7 +5333,7 @@ PosnicPro.sales.quantity = {
                 $('#touchsale_item_return_qty' + id).val(qtyupdate);
                 PosnicPro.sales.quantity.retrunlineItemCalculation(id, qtyupdate);
                 $('#touch_row_return_' + id).remove();
-                PosnicPro.alert('error', 'Items Not Available In The Stock!!.');
+                PosnicPro.alert('error', 'Some items are out of stock.');
                 return false;
             } else {
                 var total_qty = available_quantity - ItemQty;
@@ -5593,7 +5598,7 @@ PosnicPro.sales.quantity = {
             var total_qty = return_mode - value;
             total_qty = (Number.isInteger(total_qty) === false) ? total_qty.toFixed(2) : total_qty;
             if (parseFloat(return_mode) < parseFloat(value)) {
-                PosnicPro.alert('error', 'No Items Available In The Stock!!.');
+                PosnicPro.alert('error', 'No items are in stock.');
                 $('#touchsale_item_qty' + id).val(return_mode);
                 return false;
             }
@@ -5798,7 +5803,7 @@ PosnicPro.sales.setSaleDefaults = function () {
                     $('.choose_register_model').html(registerOption);
                     $('#salesRegisterModal').modal('show');
                     
-                    PosnicPro.alert('warning', 'Please select a register before creating sales');
+                    PosnicPro.alert('warning', 'Select a register before creating a sale.');
                 } else {
                     // No registers for this branch
                     PosnicPro.local.set('branch_has_no_registers', 'true');
@@ -5955,7 +5960,7 @@ PosnicPro.sales.clear.cartItems = function (isFalse) {
     $('#sales_new_item_name').focus();
     $('#reset_modal').modal('hide');
     if (isFalse !== false) {
-        PosnicPro.alert('success', 'Sales cancelled!!');
+        PosnicPro.alert('success', 'Sale cancelled.');
     }
 };
 /**** END CLEAR SALES FUNCTION ****/
@@ -6315,12 +6320,23 @@ PosnicPro.sales.recentMenu = {
                             ? ''
                             : '<i><a data-module = "sales" data-access = "delete" href="#/sales/' + id + '/delete" class="btn-sm btn-danger-rgba" data-toggle="tooltip" title="Delete"><i class="feather icon-trash"></a></i>';
 
+                        // Parked (held) sale: mark it and offer a one-click Retrieve
+                        // that loads it back into the cart. Hide Edit/Return - a
+                        // parked sale is a draft, not a completed transaction.
+                        var isParked = (String(params.sale_process) === 'Hold');
+                        var parkedBadge = isParked ? ' <span class="badge badge-warning-inverse" style="font-size:9px;padding:2px 5px;">Parked</span>' : '';
+                        var retrieveIcon = isParked
+                            ? '<i><a data-module="sales" data-access="write" href="#/sales/' + id + '/hold" class="btn-sm btn-success-rgba" data-toggle="tooltip" title="Retrieve parked sale"><i class="feather icon-play-circle"></i></a></i>'
+                            : '';
+                        if (isParked) { editIcon = ''; returnIcon = ''; }
+
                         var recentSalerowHTMLLine = '<tr id="recent_sales_table_row_' + id + '" class="highlight-select touch-sales-hover-effect"> ' +
-                            '    <td id="recentSalesId_' + id + '" data-toggle="tooltip" title="' + params.sales_id + '" class="suggestion-name-wrap">' + params.sales_id + '</td>' +
+                            '    <td id="recentSalesId_' + id + '" data-toggle="tooltip" title="' + params.sales_id + '" class="suggestion-name-wrap">' + params.sales_id + parkedBadge + '</td>' +
                             '    <td class="suggestion-name-wrap text-center" data-toggle="tooltip" title="' + params.customer_name + '">' + params.customer_name + '</td>' +
                             '    <td class="text-right">' + currency + '&nbsp;<span class="number">' + params.total_amount.toFixed(2) + '</span></td>' +
                             '    <td id="recentSalesEditItem_' + id + '">' +
                             '    <i><a data-module = "sales"  data-access = "read" href="#/sales/' + id + '" class="btn-sm btn-primary-rgba" data-toggle="tooltip" title="View"><i class="feather icon-eye"></a></i>' +
+                            retrieveIcon +
                             editIcon +
                             returnIcon +
                             deleteIcon +
@@ -6868,7 +6884,7 @@ $('#sales_new_item_name').scannerDetection({
                 if (mustCheckStock && !isNegativeStock) {
                     var availableQty = parseFloat(itemData.available_quantity) || 0;
                     if (availableQty <= 0) {
-                        PosnicPro.alert('error', 'Please check your product quantity');
+                        PosnicPro.alert('error', 'Check the product quantity.');
                         return;
                     }
                 }
@@ -7619,7 +7635,7 @@ PosnicPro.sales.readWeightFromMachine = async function () {
     const settings = settingsStr ? JSON.parse(settingsStr) : null;
 
     if (!settings || !settings.hardware_weight_machine_enable) {
-        PosnicPro.alert('warning', 'Weight machine is not enabled in settings');
+        PosnicPro.alert('warning', 'Weight machine is not enabled in settings.');
         return;
     }
 
@@ -7882,7 +7898,7 @@ PosnicPro.sales.openRegisterFromSales = function () {
     let registerId = $('#sales_choose_register_model option:selected').val();
     
     if (!registerId) {
-        PosnicPro.alert('warning', 'Please select a register');
+        PosnicPro.alert('warning', 'Select a register.');
         return false;
     }
     
@@ -7907,7 +7923,7 @@ PosnicPro.sales.openRegisterFromSales = function () {
             PosnicPro.local.set('userRegisterStatus', 'Open');
             
             $('#salesRegisterModal').modal('hide');
-            PosnicPro.alert('success', 'Register opened successfully: ' + registerName);
+            PosnicPro.alert('success', 'Register opened: ' + registerName);
         } else {
             PosnicPro.alert(response.type, response.message);
         }

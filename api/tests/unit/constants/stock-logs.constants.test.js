@@ -46,12 +46,12 @@ describe('stock-logs.constants', () => {
     });
 
     expect(SUCCESS_MESSAGES).toMatchObject({
-      STOCK_LOGS_RETRIEVED: 'Stock logs retrieved successfully',
-      STOCK_LOG_RETRIEVED: 'Stock log retrieved successfully',
-      STOCK_LOG_CREATED: 'Stock log created successfully',
-      STOCK_LOGS_DELETED: 'Stock logs deleted successfully',
-      STOCK_LOGS_EXPORTED: 'Stock logs exported successfully',
-      STOCK_EXPORTED: 'Stock exported successfully',
+      STOCK_LOGS_RETRIEVED: 'Stock logs retrieved',
+      STOCK_LOG_RETRIEVED: 'Stock log retrieved',
+      STOCK_LOG_CREATED: 'Stock log created',
+      STOCK_LOGS_DELETED: 'Stock logs deleted',
+      STOCK_LOGS_EXPORTED: 'Stock logs exported',
+      STOCK_EXPORTED: 'Stock exported',
     });
   });
 });

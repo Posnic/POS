@@ -318,7 +318,7 @@ describe('UsersService (singleton)', () => {
       bcrypt.compare.mockResolvedValueOnce(true);
       const r = await service.authenticateUser('testuser', 'pass');
       expect(r.status).toBe('none');
-      expect(r.message).toBe('User Have not Any Branch');
+      expect(r.message).toBe('No branch is assigned to this user');
     });
 
     test('the password hash does not come back with the user', async () => {
@@ -783,7 +783,7 @@ describe('UsersService (singleton)', () => {
       bcrypt.compare.mockResolvedValue(true);
       const r = await service.mobileLogin('testuser', 'correct');
       expect(r.status).toBe(true);
-      expect(r.message).toBe('Successfully login');
+      expect(r.message).toBe('Signed in');
     });
 
     test('returns empty array when branch_access is undefined', async () => {

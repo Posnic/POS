@@ -225,7 +225,7 @@
 }
 .title_h2{
     font-weight: 700;
-    color: #506fe4;
+    color: var(--theme-primary-color, #506fe4);
 }
 .border-header{
     border-bottom:1px solid #ccc !important;
@@ -296,7 +296,7 @@
     font-size:13px !important;
 }
 .text_dark_cl{
-    color:#506fe4 !important;
+    color:var(--theme-primary-color, #506fe4) !important;
     font-size: 21px !important;
 }
 /*dropdown action*/
@@ -323,7 +323,7 @@
     color: var(--theme-text-primary) !important;
 }
 .table_model_item{
-    color: #506FE4 !important;
+    color: var(--theme-primary-color, #506fe4) !important;
     font-weight: 900;
     font-style: normal !important;
 }
@@ -341,7 +341,7 @@
     box-shadow: none !important;
     background-color: rgba(80,111,228,0.1) !important;
     border: none !important;
-    color: #506FE4 !important;
+    color: var(--theme-primary-color, #506fe4) !important;
 }
 /*filter close*/
 .field-value-remove{
@@ -653,7 +653,7 @@
 }
 
 .autocomplete-selected {
-    background-color: #506FE4;
+    background-color: var(--theme-primary-color, #506fe4);
     color: #fff;
     cursor: pointer
 }
@@ -870,8 +870,8 @@ input[type="checkbox"]:checked:before, .checkbox input[type="checkbox"]:checked:
 }
 
 input[type="checkbox"]:checked:after, .checkbox input[type="checkbox"]:checked:after, .checkbox-inline input[type="checkbox"]:checked:after {
-    background-color: #506fe4;
-    border-color: #506fe4;
+    background-color: var(--theme-primary-color, #506fe4);
+    border-color: var(--theme-primary-color, #506fe4);
 }
 
 .address-text-wrap {
@@ -1308,7 +1308,7 @@ input[type="checkbox"]:checked:after, .checkbox input[type="checkbox"]:checked:a
 .fontt_style{
     font-weight:600;
     font-size: 14px;
-    color: #506fe4;
+    color: var(--theme-primary-color, #506fe4);
     text-align: center;
 }
 .pad_progress{
@@ -1541,7 +1541,7 @@ input[type="checkbox"]:checked:after, .checkbox input[type="checkbox"]:checked:a
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 .header_blue {
-    background: #506fe4 !important;
+    background: var(--theme-primary-color, #506fe4) !important;
     font-weight: 900 !important;
     color: #ffffff !important;
 }
@@ -1649,7 +1649,7 @@ input[type="checkbox"]:checked:after, .checkbox input[type="checkbox"]:checked:a
     cursor:pointer;
 }
 .irs-bar{
-    background: #506fe4;
+    background: var(--theme-primary-color, #506fe4);
 }
 .loadingSpinner {
     top: 0 !important;;
@@ -1761,11 +1761,11 @@ main {
     margin: auto;
 }
 .bg-green-background {
-    background: #506fe4 !important;
+    background: var(--theme-primary-color, #506fe4) !important;
 }
 .select_Button_col{
     background: white !important;
-    color: #506fe4 !important;
+    color: var(--theme-primary-color, #506fe4) !important;
     border: none !important;
 }
 
@@ -1782,7 +1782,7 @@ main {
 .select_Button_col:hover{
     color: #fff !important;
     border: 2px solid #fff !important;
-    background: #506fe4 !important;
+    background: var(--theme-primary-color, #506fe4) !important;
 }
 .text_white{
     color:#fff !important;
@@ -1986,7 +1986,7 @@ main {
     padding-left: 0px;
 }
 #item_view_image img:hover{
-    border: 2px solid #506fe4 !important;
+    border: 2px solid var(--theme-primary-color, #506fe4) !important;
 }
 
 #dropdownMenuButton{
@@ -1995,7 +1995,7 @@ main {
     color: #96a3b6;
 }
 #dropdownMenuButton:hover{
-    background-color: #506fe4 !important;
+    background-color: var(--theme-primary-color, #506fe4) !important;
     color : #fff;
 
 }
@@ -2007,7 +2007,7 @@ main {
 }
 .font-dark{
     font-weight: 700;
-    color:#506fe4;
+    color:var(--theme-primary-color, #506fe4);
 }
 .font-black{
     font-weight: 700;
@@ -2021,7 +2021,7 @@ main {
     word-break: break-all;
 }
 .dark_bgr{
-    background-color: #506fe4 !important;
+    background-color: var(--theme-primary-color, #506fe4) !important;
 }
 .amount_text{
     color: #fff;
@@ -2131,7 +2131,7 @@ main {
     padding-left: 30px;
 }
 .summary_font_blue{
-    color: #506fe4;
+    color: var(--theme-primary-color, #506fe4);
 }
 .summary_mb-10{
     margin-left: -10px;
@@ -2249,7 +2249,7 @@ main {
 }
 
 input:checked + .slider {
-    background-color: #506fe4;
+    background-color: var(--theme-primary-color, #506fe4);
 }
 
 input:checked + .slider:before {

@@ -16,7 +16,7 @@ const HTTP_STATUS = {
 const ERROR_MESSAGES = {
   // General
   NOT_FOUND: 'Setting not found',
-  INVALID_DATA: 'Data Not Valid',
+  INVALID_DATA: 'The data provided is not valid',
   UNAUTHORIZED: 'Unauthorized',
   UPDATE_FAILED: 'Failed to update setting',
   DELETE_FAILED: 'Failed to delete setting',
@@ -60,7 +60,7 @@ const ERROR_MESSAGES = {
 
   // Password
   PASSWORD_CHANGE_FAILED: 'Failed to change password',
-  OLD_PASSWORD_INCORRECT: 'Old password is incorrect',
+  OLD_PASSWORD_INCORRECT: 'Your current password is incorrect',
 
   // Collection
   COLLECTION_DELETE_FAILED: 'Failed to delete collection',
@@ -89,76 +89,76 @@ const ERROR_MESSAGES = {
 // Success Messages
 const SUCCESS_MESSAGES = {
   // General
-  UPDATED: 'Setting updated successfully',
-  DELETED: 'Setting deleted successfully',
-  RETRIEVED: 'Setting retrieved successfully',
+  UPDATED: 'Setting updated',
+  DELETED: 'Setting deleted',
+  RETRIEVED: 'Setting retrieved',
 
   // Tax
-  TAX_ADDED: 'Tax added successfully',
-  TAX_UPDATED: 'Tax updated successfully',
-  TAX_DELETED: 'Tax deleted successfully',
-  TAX_RETRIEVED: 'Tax retrieved successfully',
-  TAX_GROUP_ADDED: 'Tax group added successfully',
-  TAX_GROUP_UPDATED: 'Tax group updated successfully',
-  TAX_GROUP_DELETED: 'Tax group deleted successfully',
+  TAX_ADDED: 'Tax added',
+  TAX_UPDATED: 'Tax updated',
+  TAX_DELETED: 'Tax deleted',
+  TAX_RETRIEVED: 'Tax retrieved',
+  TAX_GROUP_ADDED: 'Tax group added',
+  TAX_GROUP_UPDATED: 'Tax group updated',
+  TAX_GROUP_DELETED: 'Tax group deleted',
 
   // Unit
-  UNIT_ADDED: 'Unit added successfully',
-  UNIT_UPDATED: 'Unit updated successfully',
-  UNIT_DELETED: 'Unit deleted successfully',
-  UNIT_RETRIEVED: 'Unit retrieved successfully',
+  UNIT_ADDED: 'Unit added',
+  UNIT_UPDATED: 'Unit updated',
+  UNIT_DELETED: 'Unit deleted',
+  UNIT_RETRIEVED: 'Unit retrieved',
 
   // Denomination
-  DENOM_ADDED: 'Denomination added successfully',
-  DENOM_UPDATED: 'Denomination updated successfully',
-  DENOM_DELETED: 'Denomination deleted successfully',
-  DENOM_RETRIEVED: 'Denomination retrieved successfully',
+  DENOM_ADDED: 'Denomination added',
+  DENOM_UPDATED: 'Denomination updated',
+  DENOM_DELETED: 'Denomination deleted',
+  DENOM_RETRIEVED: 'Denomination retrieved',
 
   // Payment
-  PAYMENT_ADDED: 'Payment method added successfully',
-  PAYMENT_UPDATED: 'Payment method updated successfully',
-  PAYMENT_DELETED: 'Payment method deleted successfully',
-  PAYMENT_RETRIEVED: 'Payment methods retrieved successfully',
+  PAYMENT_ADDED: 'Payment method added',
+  PAYMENT_UPDATED: 'Payment method updated',
+  PAYMENT_DELETED: 'Payment method deleted',
+  PAYMENT_RETRIEVED: 'Payment methods retrieved',
 
   // Table Order
-  TABLE_ORDER_ADDED: 'Table order added successfully',
-  TABLE_ORDER_UPDATED: 'Table order updated successfully',
-  TABLE_ORDER_DELETED: 'Table order deleted successfully',
-  TABLE_ORDER_RETRIEVED: 'Table orders retrieved successfully',
+  TABLE_ORDER_ADDED: 'Table order added',
+  TABLE_ORDER_UPDATED: 'Table order updated',
+  TABLE_ORDER_DELETED: 'Table order deleted',
+  TABLE_ORDER_RETRIEVED: 'Table orders retrieved',
 
   // Settings Updates
   GENERAL_SETTING_UPDATED: 'General Setting updated',
-  COMMON_SETTINGS_UPDATED: 'Common settings updated successfully',
-  OFFLINE_SETTING_UPDATED: 'Offline setting updated successfully',
-  SMS_SETTING_UPDATED: 'SMS setting updated successfully',
-  LOGO_UPDATED: 'Branch logo updated successfully',
-  KIOSK_IMAGES_UPDATED: 'Kiosk images updated successfully',
-  IMAGE_STORED: 'Image data stored successfully',
-  IMAGE_DELETED: 'Image deleted successfully',
+  COMMON_SETTINGS_UPDATED: 'Common settings updated',
+  OFFLINE_SETTING_UPDATED: 'Offline setting updated',
+  SMS_SETTING_UPDATED: 'SMS setting updated',
+  LOGO_UPDATED: 'Branch logo updated',
+  KIOSK_IMAGES_UPDATED: 'Kiosk images updated',
+  IMAGE_STORED: 'Image data stored',
+  IMAGE_DELETED: 'Image deleted',
 
   // Password
-  PASSWORD_CHANGED: 'Password changed successfully',
+  PASSWORD_CHANGED: 'Password changed',
 
   // Customer/Supplier
-  CUSTOMER_SETTINGS_UPDATED: 'Customer settings updated successfully',
-  SUPPLIER_SETTINGS_UPDATED: 'Supplier settings updated successfully',
+  CUSTOMER_SETTINGS_UPDATED: 'Customer settings updated',
+  SUPPLIER_SETTINGS_UPDATED: 'Supplier settings updated',
 
   // Theme
   THEME_SETTINGS_UPDATED: 'Theme settings updated',
-  THEME_SETTINGS_RETRIEVED: 'Theme settings retrieved successfully',
+  THEME_SETTINGS_RETRIEVED: 'Theme settings retrieved',
 
   // Collection
-  COLLECTION_DELETED: 'Collection deleted successfully',
+  COLLECTION_DELETED: 'Collection deleted',
 
   // Payment Keys
-  PAYMENT_KEY_UPDATED: 'Payment key updated successfully',
+  PAYMENT_KEY_UPDATED: 'Payment key updated',
 
   // SMS Receipt
-  SMS_RECEIPT_SENT: 'SMS receipt sent successfully',
+  SMS_RECEIPT_SENT: 'SMS receipt sent',
 
   // Backup
-  BACKUP_CREATED: 'Backup created successfully',
-  RESTORE_COMPLETED: 'Restore completed successfully',
+  BACKUP_CREATED: 'Backup created',
+  RESTORE_COMPLETED: 'Restore completed',
 };
 
 // Validation Constraints

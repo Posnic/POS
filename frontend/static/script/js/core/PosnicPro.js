@@ -2040,7 +2040,7 @@ PosnicPro = {
             'paymentreceivingreport': '<tr><th>#</th><th>Id</th><th>Date</th><th>Supplier</th><th>Payment Mode</th><th>Payment Note</th><th class="text-right">Price</th></tr>',
             'taxsalesreport': '<tr><th>#</th><th>Tax Name</th><th class="text-right">Amount</th></tr>',
             'registerreport': '<tr><th>#</th><th>Name</th><th>Time opened</th><th>Time closed</th><th class="text-right">Float Amount</th><th class="text-right">Register amount</th></tr>',
-            'pendingreport': '<tr><th>#</th><th>Id</th><th>Date</th><th class="text-center">No. of product</th><th class="text-right">Total</th><th class="text-right">Partialy</th><th class="text-right">Due</th></tr>',
+            'pendingreport': '<tr><th>#</th><th>Id</th><th>Date</th><th class="text-center">No. of product</th><th class="text-right">Total</th><th class="text-right">Partial</th><th class="text-right">Due</th></tr>',
             'returnreport': '<tr><th>#</th><th>Sales Id</th><th>Date</th><th>Customer name</th><th>Payment Method</th><th>No. of Item </th><th class="text-right">Return Amount</th></tr>',
             'returnreceivingreport': '<tr><th>#</th><th>Receiving Id</th><th>Date</th><th>Supplier name</th><th>Payment Method</th><th>No. of Item </th><th class="text-right">Return Amount</th></tr>',
             'customerdetails': '<tr><th>#</th><th> Sale </th><th>Date</th><th class="text-center">Process</th><th class="text-center">No. of item return</th><th class="text-right">Return total</th><th class="text-center">No. of item sold</th><th class="text-right">Sale total</th></tr>',

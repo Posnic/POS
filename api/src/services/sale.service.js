@@ -1867,7 +1867,9 @@ const getLatestSales = async ({ branchId, licenseId }, { SaleModel } = {}) => {
   }
 
   const baseFilter = {
-    sale_process: { $in: ['Add', 'Edit'] },
+    // Include 'Hold' so parked sales surface in the New Sale "Recent Sales" tab
+    // for one-click retrieval, without leaving the billing screen.
+    sale_process: { $in: ['Add', 'Edit', 'Hold'] },
   };
 
   if (branchMatch.length) {

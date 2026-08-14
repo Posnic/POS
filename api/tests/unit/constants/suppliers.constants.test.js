@@ -89,19 +89,19 @@ describe('suppliers.constants', () => {
       DELETE_FAILED: 'Failed to delete supplier',
       UPDATE_FAILED: 'Failed to update supplier',
       CREATE_FAILED: 'Failed to create supplier',
-      CREDIT_LIMIT_EXCEEDED: 'Credit limit exceeded for this supplier',
+      CREDIT_LIMIT_EXCEEDED: 'The credit limit for this supplier has been exceeded',
     });
 
     expect(SUCCESS_MESSAGES).toMatchObject({
-      SUPPLIER_CREATED: 'Supplier added successfully',
-      SUPPLIER_UPDATED: 'Supplier updated successfully',
-      SUPPLIER_DELETED: 'Supplier deleted successfully',
-      SUPPLIERS_DELETED: 'Suppliers deleted successfully',
-      SUPPLIERS_RETRIEVED: 'Suppliers retrieved successfully',
-      SUPPLIER_RETRIEVED: 'Supplier retrieved successfully',
-      PREFERENCES_UPDATED: 'Supplier preferences updated successfully',
-      SUPPLIERS_IMPORTED: 'Suppliers imported successfully',
-      SUPPLIERS_EXPORTED: 'Suppliers exported successfully',
+      SUPPLIER_CREATED: 'Supplier added',
+      SUPPLIER_UPDATED: 'Supplier updated',
+      SUPPLIER_DELETED: 'Supplier deleted',
+      SUPPLIERS_DELETED: 'Suppliers deleted',
+      SUPPLIERS_RETRIEVED: 'Suppliers retrieved',
+      SUPPLIER_RETRIEVED: 'Supplier retrieved',
+      PREFERENCES_UPDATED: 'Supplier preferences updated',
+      SUPPLIERS_IMPORTED: 'Suppliers imported',
+      SUPPLIERS_EXPORTED: 'Suppliers exported',
     });
 
     expect(FIELD_LIMITS).toEqual({

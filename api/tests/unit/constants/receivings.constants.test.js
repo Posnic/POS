@@ -105,21 +105,21 @@ describe('receivings.constants', () => {
       DELETE_FAILED: 'Failed to delete receiving',
       UPDATE_FAILED: 'Failed to update receiving',
       CREATE_FAILED: 'Failed to create receiving',
-      ALREADY_RECEIVED: 'Receiving already marked as received',
+      ALREADY_RECEIVED: 'This receiving is already marked as received',
       CANNOT_MODIFY_RECEIVED: 'Cannot modify received receiving',
     });
 
     expect(SUCCESS_MESSAGES).toMatchObject({
-      RECEIVING_CREATED: 'Receiving created successfully',
-      RECEIVING_UPDATED: 'Receiving updated successfully',
-      RECEIVING_DELETED: 'Receiving deleted successfully',
-      RECEIVINGS_DELETED: 'Receivings deleted successfully',
-      RECEIVINGS_RETRIEVED: 'Receivings retrieved successfully',
-      RECEIVING_RETRIEVED: 'Receiving retrieved successfully',
-      RECEIVING_RECEIVED: 'Receiving marked as received successfully',
-      RETURN_PROCESSED: 'Return processed successfully',
-      IMAGE_UPLOADED: 'Image uploaded successfully',
-      RECEIVINGS_EXPORTED: 'Receivings exported successfully',
+      RECEIVING_CREATED: 'Receiving created',
+      RECEIVING_UPDATED: 'Receiving updated',
+      RECEIVING_DELETED: 'Receiving deleted',
+      RECEIVINGS_DELETED: 'Receivings deleted',
+      RECEIVINGS_RETRIEVED: 'Receivings retrieved',
+      RECEIVING_RETRIEVED: 'Receiving retrieved',
+      RECEIVING_RECEIVED: 'Receiving marked as received',
+      RETURN_PROCESSED: 'Return processed',
+      IMAGE_UPLOADED: 'Image uploaded',
+      RECEIVINGS_EXPORTED: 'Receivings exported',
     });
   });
 });

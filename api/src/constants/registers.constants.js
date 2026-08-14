@@ -20,22 +20,22 @@ const ERROR_MESSAGES = {
   NOT_VALID_INPUT: 'Not valid Input',
   UNAUTHORIZED: 'Unauthorized',
   SALES_DETAILS_NOT_FOUND: 'Sales Details Not Found',
-  REGISTER_SESSION_LOCKED: 'This register is already open on another user or device',
+  REGISTER_SESSION_LOCKED: 'This register is already open on another device or by another user',
 };
 
 // Success messages
 const SUCCESS_MESSAGES = {
-  REGISTER_OPENED: 'Register Opened successfully',
-  REGISTER_CLOSED: 'Register Closed successfully',
-  REGISTER_FETCHED: 'Register get successfully',
-  REGISTER_CASHDETAIL_UPDATED: 'Register Cashdetail update successfully',
-  REGISTER_CASH_ENTRY_DELETED: 'Cash In/Out entry deleted successfully',
-  PAYMENT_NOTE_UPDATED: 'Payment note updated successfully',
-  AMOUNT_UPDATED: 'Amount Updated successfully',
-  CASH_ADDED: 'Cash added successfully',
+  REGISTER_OPENED: 'Register opened',
+  REGISTER_CLOSED: 'Register closed',
+  REGISTER_FETCHED: 'Register retrieved',
+  REGISTER_CASHDETAIL_UPDATED: 'Cash details updated',
+  REGISTER_CASH_ENTRY_DELETED: 'Cash In/Out entry deleted',
+  PAYMENT_NOTE_UPDATED: 'Payment note updated',
+  AMOUNT_UPDATED: 'Amount updated',
+  CASH_ADDED: 'Cash added',
   CHANGES_RETRIEVED: 'Changes Retrieved',
-  REGISTER_REPORT_DETAILS_RETRIEVED: 'Register report details retrieved successfully',
-  DELETE_SUCCESS: 'Delete Successfully',
+  REGISTER_REPORT_DETAILS_RETRIEVED: 'Register report details retrieved',
+  DELETE_SUCCESS: 'Deleted',
 };
 
 // HTTP Status codes

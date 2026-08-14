@@ -474,7 +474,7 @@ describe('VariantsService (singleton)', () => {
       const r = await service.createVariant(validData, FAKE_BRANCH_ID);
       expect(r.status).toBe('exist');
       expect(r.type).toBe('error');
-      expect(r.message).toBe('This variant details already exist in our system');
+      expect(r.message).toBe('This variant already exists');
     });
 
     test('calls existsByName with trimmed name, null excludeId, and branch_id', async () => {

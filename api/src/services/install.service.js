@@ -529,7 +529,7 @@ class InstallService {
     const customerData = {
       branch_id: branchId,
       branch_name: data.register_companyname.trim(),
-      name: 'Walk-In-Customer',
+      name: 'Walk-in Customer',
       email: '',
       phone: '',
       address: '',

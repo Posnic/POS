@@ -523,8 +523,8 @@ PosnicPro.items = {
         $("#infobar-settings-sidebar-item-details").addClass("sidebarview");
         $("#item-detail-tab").addClass("active");
         $("#item_detail").addClass("active show");
-        $("#item-sale-tab,#item-image-tab,#item-description-tab").removeClass("active");
-        $("#item_sale,#item_image,#description_detail").removeClass("active show");
+        $("#item-sale-tab,#item-image-tab,#item-description-tab,#item-pricehistory-tab").removeClass("active");
+        $("#item_sale,#item_image,#description_detail,#item_price_history").removeClass("active show");
         $('#show_product_image,#item-image-tab,#item-description-tab').hide();
         var data = response.data;
 
@@ -1051,7 +1051,7 @@ PosnicPro.items = {
             });
 
         } else {
-            PosnicPro.alert('error', 'Please fill required fields');
+            PosnicPro.alert('error', 'Fill in the required fields.');
         }
         return false;
     },
@@ -1365,11 +1365,11 @@ PosnicPro.items = {
         var html = "";
         var item_name = $("#items_name").val();
         if (item_name === '' || item_name.length <= 2) {
-            PosnicPro.alert('error', 'Please fill required fields');
+            PosnicPro.alert('error', 'Fill in the required fields.');
             $("#items_name").focus();
             return false;
         } else if (variant_value.length === 0) {
-            PosnicPro.alert('error', 'Please fill required fields');
+            PosnicPro.alert('error', 'Fill in the required fields.');
             $("#item_variant_list").focus();
             return false;
         } else {
@@ -1540,11 +1540,11 @@ PosnicPro.items = {
                 }
                 if (imageToBig) {
                     //give an alert that at least one image is to big
-                    PosnicPro.alert('error', fileNameArray + "Size should be less than 5MB !");
+                    PosnicPro.alert('error', fileNameArray + "Each file must be under 5 MB.");
                     return false;
                 }
                 if ($('#item-display-preview').find('div').length > 11) {
-                    PosnicPro.alert('error', "Maximum 12 files are allowed");
+                    PosnicPro.alert('error', "You can upload up to 12 files.");
                     return false;
                 }
 
@@ -1985,8 +1985,9 @@ PosnicPro.itemdetails = {
                         $('.item_details_totalreturn').html(totalreturn);
                     }
 
-                    $('.item_details_saletotalvalue').html(saleTotalValue);
-                    $('.item_details_returntotalvalue').html(returnTotalValue);
+                    // Money totals - round to 2 decimals (no raw 1306.8600000000001).
+                    $('.item_details_saletotalvalue').html(Number(saleTotalValue).toFixed(2));
+                    $('.item_details_returntotalvalue').html(Number(returnTotalValue).toFixed(2));
                 } else {
                     var itemsalesreport = [];
                     data = response.data.table.data.list;
