@@ -354,7 +354,8 @@ class CategoryRepository extends BaseModel {
                 'branch_access.branch_id': branchObjectId,
                 ...(licenseObjectId ? { license: licenseObjectId } : {}),
                 item_status: { $ne: 'instant' },
-                sales_channel: true,
+                // sales_channel filter removed for New Sale (misused boolean,
+                // not the intended multi-channel selector).
                 is_deleted: { $ne: true },
                 $or: [
                   // Case 1: Inventory not tracked — always allowed
