@@ -1816,7 +1816,13 @@ describe('bulkPricePreview', () => {
 // =============================================================================
 
 describe('bulkUpdateStock', () => {
-  const body = { scope: 'all', op: 'amount', value: 5, direction: 'increase', note: 'new delivery' };
+  const body = {
+    scope: 'all',
+    op: 'amount',
+    value: 5,
+    direction: 'increase',
+    note: 'new delivery',
+  };
 
   test('returns 200 and forwards params, incl. the note, to the service', async () => {
     svc.bulkUpdateStock.mockResolvedValue({

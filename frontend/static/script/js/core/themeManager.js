@@ -155,7 +155,7 @@ PosnicPro.themeManager = {
             textSecondary: '#3a3a3c',
             menuBg: '#f5f5f7',
             menuText: '#1d1d1f',
-            menuActiveBg: '#007aff',
+            menuActiveBg: '#0064cc',
             menuActiveText: '#ffffff'
         },
         github: {

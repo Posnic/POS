@@ -1381,8 +1381,7 @@ class SalesController extends BaseController {
       // Footer branding: the white-label brand logo when this install has one,
       // so a shop's daily report never carries our mark; posnic only as a last
       // resort for an unbranded install.
-      const footerBrandLogo =
-        require('../helpers/brand').brandLogoPath() || defaultPosnicLogo;
+      const footerBrandLogo = require('../helpers/brand').brandLogoPath() || defaultPosnicLogo;
 
       // Match the logo resolution behaviour used by the shared
       // pdfGenerator utilities so branch logos load reliably for

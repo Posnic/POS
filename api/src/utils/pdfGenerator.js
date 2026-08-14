@@ -712,8 +712,7 @@ function generateReceivingPDF(options) {
   // other install shows the short mark "Posnic" (never the full "Posnic
   // Innovations Pvt ltd" company name).
   const watermarkFontName = hasDejavu ? 'DejaVuSansCondensed' : 'Helvetica';
-  const watermarkText =
-    config.watermarkText || require('../helpers/brand').brandName() || 'Posnic';
+  const watermarkText = config.watermarkText || require('../helpers/brand').brandName() || 'Posnic';
   addWatermark(doc, watermarkText, {
     fontName: watermarkFontName,
     fontSize: hasDejavu ? 52 : 50,
