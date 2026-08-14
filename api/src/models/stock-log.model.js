@@ -17,6 +17,7 @@ class StockLogModel extends BaseModel {
     item_quantity: { type: 'String', select: true },
     process: { type: 'String', select: true },
     reference: { type: 'String', select: true },
+    note: { type: 'String', select: true },
     date: { type: 'Date', select: true },
     created_date: { type: 'Date', select: true },
     updated_date: { type: 'Date', select: true },

@@ -200,8 +200,8 @@ describe('StockLogModel — fields schema definition', () => {
     expect(model.fields).not.toBeNull();
   });
 
-  test('fields has exactly 19 entries', () => {
-    expect(Object.keys(model.fields)).toHaveLength(19);
+  test('fields has exactly 20 entries', () => {
+    expect(Object.keys(model.fields)).toHaveLength(20);
   });
 
   test('all expected field names are present', () => {
@@ -214,6 +214,7 @@ describe('StockLogModel — fields schema definition', () => {
       'item_quantity',
       'process',
       'reference',
+      'note',
       'date',
       'created_date',
       'updated_date',
@@ -383,9 +384,9 @@ describe('StockLogModel — fields select:true', () => {
     'changed_by',
   ];
 
-  test('exactly 18 fields have select:true', () => {
+  test('exactly 19 fields have select:true', () => {
     const count = Object.values(fields).filter((f) => f.select === true).length;
-    expect(count).toBe(18);
+    expect(count).toBe(19);
   });
 
   selectTrueFields.forEach((fieldName) => {
@@ -426,8 +427,8 @@ describe('StockLogModel — static fields', () => {
     expect(m.fields).toBe(StockLogModel.fields);
   });
 
-  test('static fields has all 19 field entries', () => {
-    expect(Object.keys(StockLogModel.fields)).toHaveLength(19);
+  test('static fields has all 20 field entries', () => {
+    expect(Object.keys(StockLogModel.fields)).toHaveLength(20);
   });
 });
 
@@ -440,9 +441,9 @@ describe('StockLogModel — getSelectFields integration', () => {
     model = new StockLogModel();
   });
 
-  test('static getSelectFields returns 18-field projection when showAll=false', () => {
+  test('static getSelectFields returns 19-field projection when showAll=false', () => {
     const result = BaseModel.getSelectFields(model.fields, false);
-    expect(Object.keys(result)).toHaveLength(18);
+    expect(Object.keys(result)).toHaveLength(19);
   });
 
   test('all returned projection values are 1 (MongoDB projection format)', () => {
