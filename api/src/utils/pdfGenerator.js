@@ -156,14 +156,36 @@ function generateInvoicePDF(options) {
 
   // Header Layout matching design
 
-  // Store logo on top right corner
+  // Store logo on top right corner. Resolve the stored branch.logo the same way
+  // the receiving invoice does: a value like '/uploads/x.png' is relative to the
+  // api src dir, so pass it as an absolute path (or a URL) rather than handing
+  // doc.image() a bare relative string it cannot find - which silently dropped
+  // tenant logos from sales invoices.
   const defaultStoreLogo = path.join(__dirname, '../img/store.png');
-  const branchImage = branch?.logo && branch.logo !== 'store.png' ? branch.logo : defaultStoreLogo;
+  let branchImage = defaultStoreLogo;
+  if (branch && typeof branch.logo === 'string' && branch.logo.trim() !== '') {
+    const rawLogo = branch.logo.trim();
+    if (rawLogo !== 'store.png') {
+      if (
+        rawLogo.startsWith('http://') ||
+        rawLogo.startsWith('https://') ||
+        path.isAbsolute(rawLogo)
+      ) {
+        branchImage = rawLogo;
+      } else {
+        branchImage = path.join(__dirname, '..', rawLogo);
+      }
+    }
+  }
 
   try {
     doc.image(branchImage, 520, 40, { width: 40, height: 40 });
   } catch (err) {
-    console.log('Branch logo failed to load:', err.message);
+    try {
+      doc.image(defaultStoreLogo, 520, 40, { width: 40, height: 40 });
+    } catch (fallbackErr) {
+      console.log('Branch logo failed to load:', err.message);
+    }
   }
 
   // Store info on left side
@@ -553,10 +575,15 @@ function generateInvoicePDF(options) {
   // Horizontal line above footer
   doc.moveTo(50, footerY).lineTo(545, footerY).stroke();
 
-  // Posnic branding with logo (left side)
-  // Construct logo path similar to PHP: dirname(__FILE__) . '/../img/posnicicon.png'
+  // Footer branding logo (left side). Prefer the white-label brand logo so a
+  // shop trading under its own brand never hands its customer a bill stamped
+  // with ours; fall back to the posnic mark only when nothing is configured.
   const defaultLogoPath = path.join(__dirname, '../img/posnicicon.png');
-  const posnicLogoPath = config.posnicLogo || branch?.posnic_logo || defaultLogoPath;
+  const posnicLogoPath =
+    config.posnicLogo ||
+    branch?.posnic_logo ||
+    require('../helpers/brand').brandLogoPath() ||
+    defaultLogoPath;
 
   // Logo on left and page number on right - same line
   const footerTextY = footerY + 10;
@@ -681,9 +708,12 @@ function generateReceivingPDF(options) {
 
   // Header Layout matching design
 
-  // Add watermark text
+  // Add watermark text. Use the white-label brand name; an unbranded install
+  // resolves to '' and addWatermark() then draws nothing, so a shop's purchase
+  // invoice is never stamped with our company name.
   const watermarkFontName = hasDejavu ? 'DejaVuSansCondensed' : 'Helvetica';
-  const watermarkText = config.watermarkText || 'Posnic Innovations Pvt ltd';
+  const watermarkText =
+    config.watermarkText || require('../helpers/brand').brandName();
   addWatermark(doc, watermarkText, {
     fontName: watermarkFontName,
     fontSize: hasDejavu ? 52 : 50,
@@ -1005,9 +1035,14 @@ function generateReceivingPDF(options) {
   // Horizontal line above footer
   doc.moveTo(50, footerY).lineTo(545, footerY).stroke();
 
-  // Posnic branding with logo (left side)
+  // Footer branding logo (left side). White-label brand logo first, posnic mark
+  // only as a last resort - see generateInvoicePDF footer for the rationale.
   const defaultLogoPath = path.join(__dirname, '../img/posnicicon.png');
-  const posnicLogoPath = config.posnicLogo || branch?.posnic_logo || defaultLogoPath;
+  const posnicLogoPath =
+    config.posnicLogo ||
+    branch?.posnic_logo ||
+    require('../helpers/brand').brandLogoPath() ||
+    defaultLogoPath;
 
   // Logo on left and page number on right - same line
   const footerTextY = footerY + 10;

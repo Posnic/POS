@@ -1378,6 +1378,11 @@ class SalesController extends BaseController {
       // Pre-resolve logo paths used in header/footer
       const defaultStoreLogo = path.join(__dirname, '../img/store.png');
       const defaultPosnicLogo = path.join(__dirname, '../img/posnicicon.png');
+      // Footer branding: the white-label brand logo when this install has one,
+      // so a shop's daily report never carries our mark; posnic only as a last
+      // resort for an unbranded install.
+      const footerBrandLogo =
+        require('../helpers/brand').brandLogoPath() || defaultPosnicLogo;
 
       // Match the logo resolution behaviour used by the shared
       // pdfGenerator utilities so branch logos load reliably for
@@ -1544,7 +1549,7 @@ class SalesController extends BaseController {
           .stroke();
 
         try {
-          doc.image(defaultPosnicLogo, margins.left, footerContentY, {
+          doc.image(footerBrandLogo, margins.left, footerContentY, {
             width: 35,
             height: 15,
           });
