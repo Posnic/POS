@@ -391,7 +391,12 @@ PosnicPro.suppliers = {
                 options += '<option value="' + dataItem + '">' + dataItem + ' </option>';
                 stateSelect.append(options).trigger('change');
             });
-            if (PosnicPro.local.get('edit_supplier_state') !== '' && action === 'edit') {
+            // Pre-select the stored state for every action, not just edit: the
+            // add/clear paths store the shop's own state (state_setting), so a
+            // new supplier now defaults to the shop's state instead of whatever
+            // sorts first in the list. Falls back to the first option only when
+            // no state is stored.
+            if (PosnicPro.local.get('edit_supplier_state') !== '') {
                  stateSelect.val(PosnicPro.local.get('edit_supplier_state')).trigger('change.select2');
             } else {
                 $('#supplier_state option:eq(0)').prop('selected', true);
