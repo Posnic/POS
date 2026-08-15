@@ -70,9 +70,24 @@ PosnicPro.messaging = {
     $('#messaging_sms_provider').val(s.sms_provider || '');
     $('#messaging_sms_template').val(s.sms_template || '');
     $('#messaging_wa_enabled').prop('checked', !!s.whatsapp_enabled);
+    $('#messaging_wa_mode').val(s.whatsapp_mode || 'web');
     $('#messaging_wa_device').val(s.whatsapp_device_id || '');
     $('#messaging_wa_host').val(s.whatsapp_host || '');
+    var cloud = s.whatsapp_cloud || {};
+    var waSet = s.whatsapp_secrets_set || {};
+    $('#messaging_wa_token').val('').attr('placeholder', waSet.access_token ? '•••••• saved — leave blank to keep' : '');
+    $('#messaging_wa_phoneid').val(cloud.phone_number_id || '');
+    $('#messaging_wa_apiver').val(cloud.api_version || '');
+    $('#messaging_wa_tplname').val(cloud.template_name || '');
+    $('#messaging_wa_tpllang').val(cloud.template_lang || '');
+    PosnicPro.messaging.toggleWaMode();
     PosnicPro.messaging.renderFields(s.sms_provider || '', s.sms_config || {}, s.sms_secrets_set || {});
+  },
+
+  toggleWaMode: function () {
+    var cloud = $('#messaging_wa_mode').val() === 'cloud';
+    $('#messaging_wa_cloud').toggle(cloud);
+    $('#messaging_wa_web').toggle(!cloud);
   },
 
   // Draw the credential inputs for the chosen provider. Secret fields that are
@@ -124,8 +139,16 @@ PosnicPro.messaging = {
       sms_config: config,
       sms_template: $('#messaging_sms_template').val() || '',
       whatsapp_enabled: $('#messaging_wa_enabled').is(':checked'),
+      whatsapp_mode: $('#messaging_wa_mode').val() || 'web',
       whatsapp_device_id: $('#messaging_wa_device').val() || '',
       whatsapp_host: $('#messaging_wa_host').val() || '',
+      whatsapp_cloud: {
+        access_token: $('#messaging_wa_token').val() || '',
+        phone_number_id: $('#messaging_wa_phoneid').val() || '',
+        api_version: $('#messaging_wa_apiver').val() || '',
+        template_name: $('#messaging_wa_tplname').val() || '',
+        template_lang: $('#messaging_wa_tpllang').val() || '',
+      },
     };
   },
 
@@ -136,17 +159,20 @@ PosnicPro.messaging = {
     });
   },
 
-  test: function () {
-    var phone = $('#messaging_test_phone').val();
+  // Save first so the test uses the latest credentials, then send on `channel`.
+  test: function (channel, phoneSel) {
+    var phone = $(phoneSel).val();
     if (!phone) {
       PosnicPro.alert('error', 'Enter a phone number (with country code) to send a test.');
       return;
     }
-    // Save first so the test uses the latest credentials.
     PosnicPro.put({ url: 'messaging/settings', data: JSON.stringify(PosnicPro.messaging.collect()) }, function () {
-      PosnicPro.post({ url: 'messaging/test', data: JSON.stringify({ phone: phone }) }, function (res) {
-        PosnicPro.alert((res && res.type) || 'error', (res && res.message) || 'Test failed');
-      });
+      PosnicPro.post(
+        { url: 'messaging/test', data: JSON.stringify({ phone: phone, channel: channel || 'sms' }) },
+        function (res) {
+          PosnicPro.alert((res && res.type) || 'error', (res && res.message) || 'Test failed');
+        }
+      );
     });
   },
 };
@@ -155,9 +181,15 @@ $(document).on('change', '#messaging_sms_provider', function () {
   // On provider change, redraw fields fresh (no carried-over secrets).
   PosnicPro.messaging.renderFields($(this).val(), {}, {});
 });
-$(document).on('click', '#messaging_save', function () {
+$(document).on('click', '#messaging_save, #messaging_wa_save', function () {
   PosnicPro.messaging.save();
 });
 $(document).on('click', '#messaging_test_btn', function () {
-  PosnicPro.messaging.test();
+  PosnicPro.messaging.test('sms', '#messaging_test_phone');
+});
+$(document).on('click', '#messaging_wa_test_btn', function () {
+  PosnicPro.messaging.test('whatsapp', '#messaging_wa_test_phone');
+});
+$(document).on('change', '#messaging_wa_mode', function () {
+  PosnicPro.messaging.toggleWaMode();
 });

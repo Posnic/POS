@@ -10,6 +10,8 @@ const LoyaltyService = require('../services/loyalty.service');
 const loyaltyService = new LoyaltyService();
 const CouponService = require('../services/coupon.service');
 const couponService = new CouponService();
+const CreditService = require('../services/credit.service');
+const creditService = new CreditService();
 const { createActivityLog } = require('../utils/activityLogger');
 const sessionFilterUtil = require('../utils/session-filter.util');
 const { SALE_STATUS } = require('../constants');
@@ -409,6 +411,41 @@ class SalesController extends BaseController {
   }
 
   /*
+   * Enforce the customer's credit limit before an on-credit sale is priced. Only
+   * an explicit credit sale (partial, or the unpaid toggle) counts; a normal paid
+   * sale is never touched. Returns { blocked, error } - blocked only when a limit
+   * is actually configured and this sale would break it. Fail-open: any error in
+   * the check lets the sale through rather than blocking a shop over a glitch.
+   */
+  async checkCustomerCreditLimit(req, payload) {
+    try {
+      const customerId = payload.customer_id;
+      if (!customerId) return { blocked: false };
+      const total = Number(payload.sales_total) || 0;
+      let creditAmount = 0;
+      if (String(payload.partial_check) === 'true') {
+        creditAmount = total - (Number(payload.partial_balance) || 0);
+      } else if (String(payload.unpaid) === 'true') {
+        creditAmount = total;
+      }
+      if (creditAmount <= 0) return { blocked: false };
+      const ctx = this.buildLoyaltyCtx(req);
+      const r = await creditService.checkCreditLimit(customerId, creditAmount, ctx.branchId);
+      if (r && !r.allowed) {
+        return {
+          blocked: true,
+          error: `Credit limit exceeded — limit ${r.limit}, already outstanding ${r.outstanding}, this sale would make it ${r.wouldBe}.`,
+          data: r,
+        };
+      }
+      return { blocked: false };
+    } catch (e) {
+      console.error('[credit] limit check skipped:', e && e.message);
+      return { blocked: false };
+    }
+  }
+
+  /*
    * Loyalty is a side effect of a completed sale, not part of saving one. It
    * runs after the sale is safely committed and is wrapped so that a loyalty
    * failure can never fail a sale. Walk-in sales (no customer) do nothing. Both
@@ -560,6 +597,10 @@ class SalesController extends BaseController {
       if (processValue !== 'Hold') {
         await this.prepareLoyaltyRedemption(req, payload);
         await this.prepareCouponRedemption(req, payload);
+        const creditCheck = await this.checkCustomerCreditLimit(req, payload);
+        if (creditCheck.blocked) {
+          return this.error(res, creditCheck.error, 400, creditCheck.data);
+        }
       }
 
       const result = await salesService.processSale(payload, '', processValue, context);

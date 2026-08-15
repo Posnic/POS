@@ -178,3 +178,88 @@ describe('MessagingService.sendSms', () => {
     expect(r.ok).toBe(false);
   });
 });
+
+describe('MessagingService WhatsApp (mode + cloud)', () => {
+  let svc;
+  beforeEach(() => {
+    svc = new MessagingService();
+    BaseModel.license = 'lic-test';
+    axios.mockReset();
+  });
+  afterEach(() => {
+    BaseModel.getDb = undefined;
+  });
+
+  test('getSettings blanks the cloud access token but reports it set', async () => {
+    const settings = makeCollection([
+      {
+        license: 'lic-test',
+        branch_id: new ObjectId(BRANCH),
+        whatsapp_enabled: true,
+        whatsapp_mode: 'cloud',
+        whatsapp_cloud: { access_token: 'secret-tok', phone_number_id: 'PID1' },
+      },
+    ]);
+    BaseModel.getDb = jest.fn().mockResolvedValue(makeDb({ messaging_settings: settings }));
+    const out = await svc.getSettings(BRANCH);
+    expect(out.whatsapp_mode).toBe('cloud');
+    expect(out.whatsapp_cloud.phone_number_id).toBe('PID1');
+    expect(out.whatsapp_cloud.access_token).toBeUndefined();
+    expect(out.whatsapp_secrets_set.access_token).toBe(true);
+  });
+
+  test('cloud mode posts to the Meta Graph API with a bearer token', async () => {
+    const settings = makeCollection([
+      {
+        license: 'lic-test',
+        branch_id: new ObjectId(BRANCH),
+        whatsapp_enabled: true,
+        whatsapp_mode: 'cloud',
+        whatsapp_cloud: { access_token: 'TOK', phone_number_id: 'PID1', api_version: 'v20.0' },
+      },
+    ]);
+    BaseModel.getDb = jest.fn().mockResolvedValue(makeDb({ messaging_settings: settings }));
+    axios.mockResolvedValue({ status: 200, data: { messages: [{ id: 'wamid.1' }] } });
+
+    const r = await svc.sendWhatsapp(BRANCH, '+15551234567', 'hello');
+    expect(r.ok).toBe(true);
+    const req = axios.mock.calls[0][0];
+    expect(req.url).toContain('graph.facebook.com/v20.0/PID1/messages');
+    expect(req.headers.Authorization).toBe('Bearer TOK');
+    expect(req.data.text.body).toBe('hello');
+  });
+
+  test('cloud mode refuses when not configured', async () => {
+    const settings = makeCollection([
+      {
+        license: 'lic-test',
+        branch_id: new ObjectId(BRANCH),
+        whatsapp_enabled: true,
+        whatsapp_mode: 'cloud',
+        whatsapp_cloud: {},
+      },
+    ]);
+    BaseModel.getDb = jest.fn().mockResolvedValue(makeDb({ messaging_settings: settings }));
+    const r = await svc.sendWhatsapp(BRANCH, '+15551234567', 'hi');
+    expect(r.ok).toBe(false);
+  });
+
+  test('saveSettings keeps a blank cloud token but updates the phone id', async () => {
+    const settings = makeCollection([
+      {
+        license: 'lic-test',
+        branch_id: new ObjectId(BRANCH),
+        whatsapp_mode: 'cloud',
+        whatsapp_cloud: { access_token: 'stored', phone_number_id: 'OLD' },
+      },
+    ]);
+    BaseModel.getDb = jest.fn().mockResolvedValue(makeDb({ messaging_settings: settings }));
+    await svc.saveSettings(BRANCH, {
+      whatsapp_enabled: true,
+      whatsapp_mode: 'cloud',
+      whatsapp_cloud: { access_token: '', phone_number_id: 'NEW' },
+    });
+    expect(settings._docs[0].whatsapp_cloud.access_token).toBe('stored');
+    expect(settings._docs[0].whatsapp_cloud.phone_number_id).toBe('NEW');
+  });
+});

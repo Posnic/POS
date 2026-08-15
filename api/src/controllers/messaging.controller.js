@@ -68,12 +68,13 @@ class MessagingController extends BaseController {
     }
   }
 
-  /** POST /messaging/test - send one real test SMS to confirm the credentials. */
+  /** POST /messaging/test - send one real test message (sms|whatsapp) to confirm. */
   async test(req, res) {
     try {
       if (!this._isSuperAdmin(req)) return this._denied(res);
       const ctx = this._ctx(req);
-      const r = await this.service.testSms(ctx.branchId, (req.body || {}).phone, ctx);
+      const body = req.body || {};
+      const r = await this.service.test(ctx.branchId, body.phone, body.channel || 'sms', ctx);
       if (!r.status) return this.error(res, r.message, 400, r.data);
       return this.success(res, r.data, r.message);
     } catch (e) {

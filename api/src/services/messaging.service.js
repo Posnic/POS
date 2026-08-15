@@ -6,6 +6,7 @@ const BaseModel = require('../models/base.model');
 const providers = require('./sms-providers');
 
 const oid = (v) => (v && ObjectId.isValid(String(v)) ? new ObjectId(String(v)) : v);
+const digits = (p) => String(p || '').replace(/[^\d]/g, '');
 
 /*
  * Messaging settings + the SMS sender.
@@ -38,8 +39,10 @@ class MessagingService {
         sms_config: {},
         sms_template: '',
         whatsapp_enabled: false,
+        whatsapp_mode: 'web',
         whatsapp_device_id: '',
         whatsapp_host: '',
+        whatsapp_cloud: {},
       }
     );
   }
@@ -54,6 +57,11 @@ class MessagingService {
       secretsSet[k] = !!config[k];
       delete config[k]; // never leave the shop over the wire
     }
+    // WhatsApp Cloud API access token is a secret too - blank it on read.
+    const cloud = { ...(raw.whatsapp_cloud || {}) };
+    const waSecretsSet = { access_token: !!cloud.access_token };
+    delete cloud.access_token;
+
     return {
       branch_id: raw.branch_id || (branchId ? oid(branchId) : null),
       sms_enabled: !!raw.sms_enabled,
@@ -62,8 +70,11 @@ class MessagingService {
       sms_secrets_set: secretsSet,
       sms_template: raw.sms_template || '',
       whatsapp_enabled: !!raw.whatsapp_enabled,
+      whatsapp_mode: raw.whatsapp_mode === 'cloud' ? 'cloud' : 'web',
       whatsapp_device_id: raw.whatsapp_device_id || '',
       whatsapp_host: raw.whatsapp_host || '',
+      whatsapp_cloud: cloud,
+      whatsapp_secrets_set: waSecretsSet,
     };
   }
 
@@ -105,6 +116,7 @@ class MessagingService {
       sms_template:
         data.sms_template !== undefined ? String(data.sms_template) : existing.sms_template || '',
       whatsapp_enabled: data.whatsapp_enabled === true || data.whatsapp_enabled === 'true',
+      whatsapp_mode: data.whatsapp_mode === 'cloud' ? 'cloud' : 'web',
       whatsapp_device_id:
         data.whatsapp_device_id !== undefined
           ? String(data.whatsapp_device_id)
@@ -113,6 +125,7 @@ class MessagingService {
         data.whatsapp_host !== undefined
           ? String(data.whatsapp_host)
           : existing.whatsapp_host || '',
+      whatsapp_cloud: this._mergeCloud(data.whatsapp_cloud || {}, existing.whatsapp_cloud || {}),
       branch_id: oid(branchId),
       branch_name: ctx.branchName || existing.branch_name || '',
       updated_date: now,
@@ -127,6 +140,99 @@ class MessagingService {
         { upsert: true }
       );
     return this.getSettings(branchId);
+  }
+
+  // Merge WhatsApp Cloud creds, keeping the stored access token when the client
+  // sends it blank (same rule as the SMS secrets).
+  _mergeCloud(incoming, prev) {
+    const keep = (k) =>
+      incoming[k] !== undefined && incoming[k] !== null ? String(incoming[k]) : prev[k] || '';
+    return {
+      access_token: incoming.access_token ? String(incoming.access_token) : prev.access_token || '',
+      phone_number_id: keep('phone_number_id'),
+      api_version: keep('api_version'),
+      template_name: keep('template_name'),
+      template_lang: keep('template_lang'),
+    };
+  }
+
+  /**
+   * Send one WhatsApp message the way the shop chose:
+   *  - 'web'   : the QR-linked device running on the shop's own machine;
+   *  - 'cloud' : Meta's WhatsApp Cloud API (their registered app + access token).
+   * A template name (cloud) sends an approved template with the text as its first
+   * body variable; otherwise a plain text message (valid inside the 24h window).
+   */
+  async sendWhatsapp(branchId, phone, message) {
+    const raw = await this._raw(branchId);
+    if (!raw.whatsapp_enabled)
+      return { ok: false, error: 'WhatsApp is not enabled for this branch' };
+    if (!phone) return { ok: false, error: 'No phone number' };
+
+    if (raw.whatsapp_mode === 'cloud') {
+      const c = raw.whatsapp_cloud || {};
+      if (!c.access_token || !c.phone_number_id) {
+        return { ok: false, error: 'WhatsApp Cloud API is not configured' };
+      }
+      const ver = c.api_version || 'v20.0';
+      const body = c.template_name
+        ? {
+            messaging_product: 'whatsapp',
+            to: digits(phone),
+            type: 'template',
+            template: {
+              name: c.template_name,
+              language: { code: c.template_lang || 'en_US' },
+              components: [{ type: 'body', parameters: [{ type: 'text', text: message }] }],
+            },
+          }
+        : {
+            messaging_product: 'whatsapp',
+            to: digits(phone),
+            type: 'text',
+            text: { body: message, preview_url: false },
+          };
+      try {
+        const resp = await axios({
+          method: 'POST',
+          url: `https://graph.facebook.com/${ver}/${encodeURIComponent(c.phone_number_id)}/messages`,
+          headers: {
+            Authorization: `Bearer ${c.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          data: body,
+          timeout: 30000,
+          validateStatus: () => true,
+        });
+        const ok =
+          resp.status >= 200 &&
+          resp.status < 300 &&
+          !!(resp.data && resp.data.messages && resp.data.messages[0]);
+        return {
+          ok,
+          error: ok
+            ? null
+            : (resp.data && resp.data.error && resp.data.error.message) || `HTTP ${resp.status}`,
+        };
+      } catch (e) {
+        return { ok: false, error: e.message };
+      }
+    }
+
+    // web / local device
+    const whatsappService = require('./whatsapp.service');
+    const db = await BaseModel.getDb();
+    const branch = branchId
+      ? await db.collection('branches').findOne({ _id: oid(branchId) })
+      : null;
+    const deviceId = raw.whatsapp_device_id || (branch && branch.whatsapp_device_id);
+    if (!deviceId) return { ok: false, error: 'No WhatsApp device linked for this branch' };
+    try {
+      const r = await whatsappService.sendMessage(deviceId, branchId, phone, message);
+      return { ok: r && r.status === true, error: r && r.message };
+    } catch (e) {
+      return { ok: false, error: e.message };
+    }
   }
 
   /**
@@ -178,14 +284,17 @@ class MessagingService {
     }
   }
 
-  /** Super-admin action: fire one real test message to check the credentials. */
-  async testSms(branchId, phone, ctx = {}) {
+  /**
+   * Super-admin action: fire one real test message to check the credentials, on
+   * whichever channel was asked for (defaults to SMS).
+   */
+  async test(branchId, phone, channel = 'sms', ctx = {}) {
     if (!phone) return { status: false, message: 'Enter a phone number to test' };
-    const r = await this.sendSms(
-      branchId,
-      phone,
-      'Test message from your POS — SMS is configured correctly.'
-    );
+    const text = 'Test message from your POS — messaging is configured correctly.';
+    const r =
+      channel === 'whatsapp'
+        ? await this.sendWhatsapp(branchId, phone, text)
+        : await this.sendSms(branchId, phone, text);
     return {
       status: r.ok,
       data: { ok: r.ok, error: r.error || null },

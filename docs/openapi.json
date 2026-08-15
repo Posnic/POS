@@ -58,6 +58,10 @@
       "description": "Mounted at /coupons"
     },
     {
+      "name": "Credit",
+      "description": "Mounted at /credit"
+    },
+    {
       "name": "Crons",
       "description": "Mounted at /crons"
     },
@@ -2318,6 +2322,177 @@
             "description": "Server error"
           }
         }
+      }
+    },
+    "/credit/settings": {
+      "get": {
+        "summary": "getSettings",
+        "operationId": "get_credit_settings",
+        "tags": [
+          "Credit"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      },
+      "put": {
+        "summary": "saveSettings",
+        "operationId": "put_credit_settings",
+        "tags": [
+          "Credit"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      },
+      "post": {
+        "summary": "saveSettings",
+        "operationId": "post_credit_settings",
+        "tags": [
+          "Credit"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/credit/outstanding": {
+      "get": {
+        "summary": "outstanding",
+        "operationId": "get_credit_outstanding",
+        "tags": [
+          "Credit"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/credit/check-limit": {
+      "get": {
+        "summary": "checkLimit",
+        "operationId": "get_credit_check_limit",
+        "tags": [
+          "Credit"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/credit/run-reminders": {
+      "post": {
+        "summary": "runReminders",
+        "operationId": "post_credit_run_reminders",
+        "tags": [
+          "Credit"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/credit/reminder/{customerId}": {
+      "post": {
+        "summary": "sendReminder",
+        "operationId": "post_credit_reminder_customerId",
+        "tags": [
+          "Credit"
+        ],
+        "parameters": [
+          {
+            "name": "customerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
     "/crons/cronCreateFile": {
