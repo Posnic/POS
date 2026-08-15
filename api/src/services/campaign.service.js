@@ -206,21 +206,12 @@ class CampaignService {
   // SMS goes through the shop's own configured provider (messaging settings);
   // WhatsApp runs on the shop's linked local device.
   async _defaultAdapters(branchId) {
-    const whatsappService = require('./whatsapp.service');
     const MessagingService = require('./messaging.service');
     const messagingService = new MessagingService();
-    const db = await BaseModel.getDb();
-    const branch = branchId
-      ? await db.collection('branches').findOne({ _id: oid(branchId) })
-      : null;
-    const settings = await messagingService._raw(branchId);
-    const deviceId = settings.whatsapp_device_id || (branch && branch.whatsapp_device_id);
     return {
       [CHANNEL.WHATSAPP]: async (phone, message) => {
-        if (!deviceId) return { ok: false, error: 'No WhatsApp device linked for this branch' };
         try {
-          const r = await whatsappService.sendMessage(deviceId, branchId, phone, message);
-          return { ok: r && r.status === true, error: r && r.message };
+          return await messagingService.sendWhatsapp(branchId, phone, message);
         } catch (e) {
           return { ok: false, error: e.message };
         }

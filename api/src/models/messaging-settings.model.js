@@ -26,8 +26,14 @@ class MessagingSettingsModel extends BaseModel {
     sms_template: { type: 'String', select: true }, // optional default / DLT text
 
     whatsapp_enabled: { type: 'Boolean', select: true },
-    whatsapp_device_id: { type: 'String', select: true }, // local linked device
-    whatsapp_host: { type: 'String', select: true }, // informational: machine/IP
+    // 'web' = a QR-linked device on the shop's own machine (whatsapp-web);
+    // 'cloud' = Meta's WhatsApp Cloud API (registered Meta app + access token).
+    whatsapp_mode: { type: 'String', select: true },
+    whatsapp_device_id: { type: 'String', select: true }, // web mode: local linked device
+    whatsapp_host: { type: 'String', select: true }, // web mode: machine/IP (informational)
+    // cloud mode: { access_token (secret), phone_number_id, api_version,
+    // template_name, template_lang }
+    whatsapp_cloud: { type: 'Object', select: true },
 
     created_date: { type: 'Date', select: true },
     updated_date: { type: 'Date', select: true },

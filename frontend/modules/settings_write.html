@@ -151,6 +151,12 @@
                                     onclick="PosnicPro.messaging.load();"><i class="feather icon-cpu mr-2"></i>
                                     <lang class="lang_messaging_settings">SMS &amp; WhatsApp Providers</lang>
                                 </a>
+                                <a class="nav-link mb-2" data-module="branch" data-access="write"
+                                    id="v-pills-credit-tab" data-toggle="pill" href="#v-pills-credit" role="tab"
+                                    aria-controls="v-pills-credit" aria-selected="false"
+                                    onclick="PosnicPro.credit.load();"><i class="feather icon-book mr-2"></i>
+                                    <lang class="lang_credit_settings">Credit &amp; Reminders</lang>
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -1493,7 +1499,7 @@
 
                                 <div class="card m-b-30">
                                     <div class="card-header d-flex align-items-center justify-content-between">
-                                        <h5 class="card-title mb-0">WhatsApp (runs on this shop's machine)</h5>
+                                        <h5 class="card-title mb-0">WhatsApp</h5>
                                         <div class="custom-control custom-switch">
                                             <input type="checkbox" class="custom-control-input" id="messaging_wa_enabled">
                                             <label class="custom-control-label" for="messaging_wa_enabled">Enable
@@ -1501,21 +1507,175 @@
                                         </div>
                                     </div>
                                     <div class="card-body">
-                                        <p class="text-muted mb-3">WhatsApp runs locally as a linked device on your own
-                                            computer — connect it under <strong>Settings → WhatsApp Connection</strong>.
-                                            No cloud credentials are stored.</p>
                                         <div class="form-row">
-                                            <div class="col-md-6 mb-2">
-                                                <label>Linked device id</label>
-                                                <input type="text" class="form-control" id="messaging_wa_device"
-                                                    placeholder="from WhatsApp Connection">
-                                            </div>
-                                            <div class="col-md-6 mb-2">
-                                                <label>Machine host / IP (optional)</label>
-                                                <input type="text" class="form-control" id="messaging_wa_host"
-                                                    placeholder="e.g. 192.168.1.20">
+                                            <div class="col-md-6 mb-3">
+                                                <label>How do you connect WhatsApp?</label>
+                                                <select class="form-control" id="messaging_wa_mode">
+                                                    <option value="web">Scan on this machine (local device)</option>
+                                                    <option value="cloud">Meta WhatsApp Cloud API</option>
+                                                </select>
                                             </div>
                                         </div>
+
+                                        <div id="messaging_wa_web">
+                                            <p class="text-muted small mb-2">Runs locally as a linked device — scan the QR
+                                                under <strong>Settings → WhatsApp Connection</strong>. No cloud credentials
+                                                are stored.</p>
+                                            <div class="form-row">
+                                                <div class="col-md-6 mb-2">
+                                                    <label>Linked device id</label>
+                                                    <input type="text" class="form-control" id="messaging_wa_device"
+                                                        placeholder="from WhatsApp Connection">
+                                                </div>
+                                                <div class="col-md-6 mb-2">
+                                                    <label>Machine host / IP (optional)</label>
+                                                    <input type="text" class="form-control" id="messaging_wa_host"
+                                                        placeholder="e.g. 192.168.1.20">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div id="messaging_wa_cloud" style="display:none;">
+                                            <p class="text-muted small mb-2">Register a Meta app, add a WhatsApp phone
+                                                number, and paste its credentials. Marketing messages need an approved
+                                                Meta template — set its name below.</p>
+                                            <div class="form-row">
+                                                <div class="col-md-6 mb-2">
+                                                    <label>Access token <span class="text-danger">*</span></label>
+                                                    <input type="password" class="form-control" id="messaging_wa_token"
+                                                        autocomplete="new-password" placeholder="">
+                                                </div>
+                                                <div class="col-md-6 mb-2">
+                                                    <label>Phone number id <span class="text-danger">*</span></label>
+                                                    <input type="text" class="form-control" id="messaging_wa_phoneid">
+                                                </div>
+                                                <div class="col-md-4 mb-2">
+                                                    <label>API version</label>
+                                                    <input type="text" class="form-control" id="messaging_wa_apiver"
+                                                        placeholder="v20.0">
+                                                </div>
+                                                <div class="col-md-4 mb-2">
+                                                    <label>Template name (marketing)</label>
+                                                    <input type="text" class="form-control" id="messaging_wa_tplname">
+                                                </div>
+                                                <div class="col-md-4 mb-2">
+                                                    <label>Template language</label>
+                                                    <input type="text" class="form-control" id="messaging_wa_tpllang"
+                                                        placeholder="en_US">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="d-flex flex-wrap align-items-center mt-2">
+                                            <button type="button" class="btn btn-outline-primary mr-3 mb-1"
+                                                id="messaging_wa_save"><i class="feather icon-save mr-1"></i>
+                                                Save</button>
+                                            <div class="input-group input-group-sm mb-1" style="max-width: 320px;">
+                                                <input type="text" class="form-control" id="messaging_wa_test_phone"
+                                                    placeholder="Test number, with country code">
+                                                <div class="input-group-append">
+                                                    <button type="button" class="btn btn-outline-secondary"
+                                                        id="messaging_wa_test_btn">Send WhatsApp test</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Credit & Reminders Start -->
+                        <div class="tab-pane fade" id="v-pills-credit" role="tabpanel"
+                            aria-labelledby="v-pills-credit-tab">
+                            <div class="card m-b-30">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">Credit rules</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p class="text-muted mb-3">Let customers buy on credit (khata) and collect later. A
+                                        credit limit caps how much a customer can owe; leave it 0 for no limit.</p>
+                                    <div class="form-row">
+                                        <div class="col-md-4 mb-2">
+                                            <label>Default credit limit
+                                                (<span class="credit-currency-label">currency</span>, 0 = none)</label>
+                                            <input type="number" min="0" step="0.01" class="form-control"
+                                                id="credit_default_limit" value="0">
+                                        </div>
+                                        <div class="col-md-4 mb-2">
+                                            <label>Credit terms (days, 0 = none)</label>
+                                            <input type="number" min="0" step="1" class="form-control"
+                                                id="credit_terms_days" value="0">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card m-b-30">
+                                <div class="card-header d-flex align-items-center justify-content-between">
+                                    <h5 class="card-title mb-0">Payment reminders</h5>
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input"
+                                            id="credit_reminder_enabled">
+                                        <label class="custom-control-label" for="credit_reminder_enabled">Enable
+                                            reminders</label>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <p class="text-muted mb-3">Remind customers who owe money, over SMS or WhatsApp (your
+                                        configured providers). A customer is never reminded twice in one day.</p>
+                                    <div class="form-row">
+                                        <div class="col-md-3 mb-2">
+                                            <label>Channel</label>
+                                            <select class="form-control" id="credit_reminder_channel">
+                                                <option value="sms">SMS</option>
+                                                <option value="whatsapp">WhatsApp</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3 mb-2">
+                                            <label>Only remind dues over
+                                                (<span class="credit-currency-label">currency</span>)</label>
+                                            <input type="number" min="0" step="0.01" class="form-control"
+                                                id="credit_reminder_min_due" value="0">
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="col-md-12 mb-2">
+                                            <label>Message — use {name} {due} {currency} {shop}</label>
+                                            <textarea class="form-control" id="credit_reminder_template" rows="2"
+                                                placeholder="Hi {name}, you have {currency}{due} due at {shop}. Please pay soon."></textarea>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-outline-primary mt-2" id="credit_save">
+                                        <i class="feather icon-save mr-2"></i> Save credit settings
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="card m-b-30">
+                                <div class="card-header d-flex align-items-center justify-content-between">
+                                    <h5 class="card-title mb-0">Outstanding customers —
+                                        <span id="credit_outstanding_total">0</span></h5>
+                                    <div>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm mr-1"
+                                            id="credit_remind_test">Test (dry run)</button>
+                                        <button type="button" class="btn btn-primary-rgba btn-sm"
+                                            id="credit_remind_all"><i class="feather icon-send mr-1"></i> Remind
+                                            all</button>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-borderless">
+                                            <thead>
+                                                <tr>
+                                                    <td class="font-weight-normal">Customer</td>
+                                                    <td class="font-weight-normal">Phone</td>
+                                                    <td class="font-weight-normal text-right">Due</td>
+                                                    <td class="font-weight-normal text-center">Action</td>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="credit_outstanding_body"></tbody>
+                                        </table>
                                     </div>
                                 </div>
                             </div>

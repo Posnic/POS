@@ -15,6 +15,7 @@ const categoriesRoutes = require('./categories.routes');
 const customerCategoryRoutes = require('./customer-categories.routes');
 const commonPdfRoutes = require('./common-pdf.routes');
 const couponRoutes = require('./coupon.routes');
+const creditRoutes = require('./credit.routes');
 const customersRoutes = require('./customers.routes');
 const dashboardRoutes = require('./dashboard.routes');
 const easyTableRoutes = require('./easy-tables.routes');
@@ -65,6 +66,7 @@ router.use('/branches', branchesRoutes);
 router.use('/categories', categoriesRoutes);
 router.use('/campaigns', campaignRoutes);
 router.use('/coupons', couponRoutes);
+router.use('/credit', creditRoutes);
 router.use('/customer-category', customerCategoryRoutes);
 router.use('/customercategory', customerCategoryRoutes); // Legacy PHP path support
 router.use('/common-pdf', commonPdfRoutes);
