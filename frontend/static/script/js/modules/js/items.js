@@ -2094,9 +2094,21 @@ PosnicPro.itemdetails = {
                         $('.item_details_totalreturn').html(totalreturn);
                     }
 
-                    // Money totals - round to 2 decimals (no raw 1306.8600000000001).
-                    $('.item_details_saletotalvalue').html(Number(saleTotalValue).toFixed(2));
-                    $('.item_details_returntotalvalue').html(Number(returnTotalValue).toFixed(2));
+                    // Prefer the server's item-revenue total (the sum of THIS
+                    // item's line totals across all its sales). The old fallback
+                    // summed each sale's whole-bill total over just the loaded
+                    // page, so it counted other items in the bill and changed as
+                    // you paged. Round to 2 decimals (no raw 1306.8600000000001).
+                    var itemSaleValue =
+                        response.data.sale_amount !== undefined && response.data.sale_amount !== null
+                            ? Number(response.data.sale_amount)
+                            : saleTotalValue;
+                    var itemReturnValue =
+                        response.data.return_amount !== undefined && response.data.return_amount !== null
+                            ? Number(response.data.return_amount)
+                            : returnTotalValue;
+                    $('.item_details_saletotalvalue').html(itemSaleValue.toFixed(2));
+                    $('.item_details_returntotalvalue').html(itemReturnValue.toFixed(2));
                 } else {
                     var itemsalesreport = [];
                     data = response.data.table.data.list;

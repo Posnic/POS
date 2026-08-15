@@ -613,8 +613,20 @@ PosnicPro.categorydetails = {
                         $('.category_details_totalreturn').html(totalreturn);
                     }
 
-                    $('.category_details_saletotalvalue').html(Number(saleTotalValue).toFixed(2));
-                    $('.category_details_returntotalvalue').html(Number(returnTotalValue).toFixed(2));
+                    // Prefer the server's category-revenue total (sum of this
+                    // category's item line totals). The old fallback summed each
+                    // sale's whole-bill total over the loaded page, counting
+                    // items from other categories and changing as you paged.
+                    var catSaleValue =
+                        response.data.sale_amount !== undefined && response.data.sale_amount !== null
+                            ? Number(response.data.sale_amount)
+                            : saleTotalValue;
+                    var catReturnValue =
+                        response.data.return_amount !== undefined && response.data.return_amount !== null
+                            ? Number(response.data.return_amount)
+                            : returnTotalValue;
+                    $('.category_details_saletotalvalue').html(catSaleValue.toFixed(2));
+                    $('.category_details_returntotalvalue').html(catReturnValue.toFixed(2));
 
                 } else {
                     var categorysalesreport = [];
