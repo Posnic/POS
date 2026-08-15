@@ -469,8 +469,16 @@ PosnicPro.customercategorydetails = {
 
                     // Show summary values with clean rounding so we avoid
                     // long floating point tails like 1499.3600000000001
-                    var saleTotalDisplay = Number(saleTotalValue.toFixed(2));
-                    var returnTotalDisplay = Number(returnTotalValue.toFixed(2));
+                    // Prefer the server's COMPLETE totals for this customer
+                    // category, not a sum over just the loaded page.
+                    var saleTotalDisplay =
+                        response.data.total && response.data.total.length
+                            ? Number(Number(response.data.total[0]).toFixed(2))
+                            : Number(saleTotalValue.toFixed(2));
+                    var returnTotalDisplay =
+                        response.data.return_total && response.data.return_total.length
+                            ? Number(Number(response.data.return_total[0]).toFixed(2))
+                            : Number(returnTotalValue.toFixed(2));
 
                     $('.customercategory_details_totalsale').html(salesTotalQty);
                     $('.customercategory_details_totalreturn').html(returnTotalQty);

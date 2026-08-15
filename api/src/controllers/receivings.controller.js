@@ -1079,6 +1079,28 @@ class ReceivingsController extends BaseController {
       // Get total count
       const total = await receivingsCollection.countDocuments(filter);
 
+      // This supplier's COMPLETE purchase value across all matching receivings,
+      // so the detail page shows the true total rather than a client-side sum
+      // over just the loaded page (which under-counted once there was >1 page).
+      const totalsAgg = await receivingsCollection
+        .aggregate([
+          { $match: filter },
+          {
+            $group: {
+              _id: null,
+              purchase_amount: { $sum: { $ifNull: ['$items_total', 0] } },
+              return_amount: { $sum: { $ifNull: ['$items_return_total', 0] } },
+            },
+          },
+        ])
+        .toArray();
+      const purchaseAmount = totalsAgg.length
+        ? Math.round((totalsAgg[0].purchase_amount || 0) * 100) / 100
+        : 0;
+      const returnAmount = totalsAgg.length
+        ? Math.round((totalsAgg[0].return_amount || 0) * 100) / 100
+        : 0;
+
       // Get paginated receivings
       const receivings = await receivingsCollection
         .find(filter)
@@ -1119,6 +1141,8 @@ class ReceivingsController extends BaseController {
               list: this.mongoIDFilter(formattedList),
             },
           },
+          purchase_amount: purchaseAmount,
+          return_amount: returnAmount,
         },
         'Get Successfully'
       );

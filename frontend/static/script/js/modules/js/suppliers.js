@@ -594,8 +594,18 @@ PosnicPro.supplierdetails = {
                     }
                     $('.supplier_details_totalpurchase').html(purchaseTotalQty);
                     $('.supplier_details_totalreturn').html(returnTotalQty);
-                    $('.supplier_details_purchasetotalvalue').html(Number(purchaseTotalValue).toFixed(2));
-                    $('.supplier_details_returntotalvalue').html(Number(returnTotalValue).toFixed(2));
+                    // Prefer the server's COMPLETE purchase/return totals for
+                    // this supplier, not a sum over just the loaded page.
+                    var supPurchaseTotal =
+                        response.data.purchase_amount !== undefined && response.data.purchase_amount !== null
+                            ? Number(response.data.purchase_amount)
+                            : purchaseTotalValue;
+                    var supReturnTotal =
+                        response.data.return_amount !== undefined && response.data.return_amount !== null
+                            ? Number(response.data.return_amount)
+                            : returnTotalValue;
+                    $('.supplier_details_purchasetotalvalue').html(supPurchaseTotal.toFixed(2));
+                    $('.supplier_details_returntotalvalue').html(supReturnTotal.toFixed(2));
                 } else {
                     var supplierreceivingreport = [];
                     data = response.data.table.data.list;
