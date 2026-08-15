@@ -6,6 +6,10 @@ const BaseModel = require('../models/base.model');
 const mongoose = require('mongoose');
 const salesService = require('../services/sale.service');
 const ItemService = require('../services/item.service');
+const LoyaltyService = require('../services/loyalty.service');
+const loyaltyService = new LoyaltyService();
+const CouponService = require('../services/coupon.service');
+const couponService = new CouponService();
 const { createActivityLog } = require('../utils/activityLogger');
 const sessionFilterUtil = require('../utils/session-filter.util');
 const { SALE_STATUS } = require('../constants');
@@ -304,6 +308,187 @@ class SalesController extends BaseController {
     };
   }
 
+  // Per-request context the loyalty engine needs: which branch, who, and the
+  // branch's currency (display-only - the maths is a pure ratio and never looks
+  // at the currency). license is already on BaseModel via the tenant middleware.
+  buildLoyaltyCtx(req) {
+    const u = req.user || {};
+    const { branch_id, branch_name } = this.resolveBranchContext(req);
+    return {
+      branchId: branch_id,
+      branchName: branch_name,
+      userName: u.username || u.name || u.email || 'System',
+      userId: u._id || u.id || null,
+      currency: (req.tenantContext && req.tenantContext.currency) || u.currency_type || '',
+    };
+  }
+
+  /*
+   * Turn a redemption request into a validated discount before the sale is
+   * priced. The client only says how many points the customer wants to spend;
+   * the server decides what that is worth, against this branch's loyalty rules
+   * and the customer's real balance, and caps it at the configured share of the
+   * bill. An invalid or stale request is dropped (the sale proceeds at full
+   * price) rather than allowed to fail the sale.
+   */
+  async prepareLoyaltyRedemption(req, payload) {
+    try {
+      const requested = Math.max(
+        0,
+        parseInt(
+          payload.redeem_points != null ? payload.redeem_points : payload.loyalty_redeem_points,
+          10
+        ) || 0
+      );
+      // The server owns these fields; never trust a client-sent value.
+      payload.loyalty_redeem_points = 0;
+      delete payload.loyalty_redeem_value;
+      if (!requested || !payload.customer_id) return;
+      if (!mongoose.Types.ObjectId.isValid(String(payload.customer_id))) return;
+
+      const ctx = this.buildLoyaltyCtx(req);
+      const cfg = await loyaltyService.getConfig(ctx.branchId);
+      if (!cfg || !cfg.enabled) return;
+
+      const db = await BaseModel.getDb();
+      const cust = await db.collection('customers').findOne({
+        _id: new mongoose.Types.ObjectId(String(payload.customer_id)),
+        license: BaseModel.license,
+      });
+      const available = cust && cust.loyalty ? Number(cust.loyalty.points) || 0 : 0;
+      const billBasis = Number(payload.loyalty_bill_total || payload.sales_total || 0);
+      const r = LoyaltyService.computeRedeem(requested, billBasis, available, cfg);
+      if (!r.valid) {
+        console.error('[loyalty] redemption ignored:', r.error);
+        return;
+      }
+      payload.loyalty_redeem_points = r.points;
+      payload.loyalty_redeem_value = r.value;
+    } catch (e) {
+      console.error('[loyalty] prepare redemption skipped:', e && e.message);
+      payload.loyalty_redeem_points = 0;
+      delete payload.loyalty_redeem_value;
+    }
+  }
+
+  /*
+   * Turn a coupon code into a validated discount before the sale is priced. The
+   * client sends a code; the server decides what it is worth against this
+   * branch's coupons and the customer, and caps it. The validated code and its
+   * value ride into processSale as a fixed discount; an invalid or stale code is
+   * dropped (the sale proceeds at full price) rather than allowed to fail it.
+   */
+  async prepareCouponRedemption(req, payload) {
+    try {
+      const code = String(payload.coupon_code || '').trim();
+      // The server owns the applied value; never trust a client-sent amount.
+      payload.coupon_discount_value = 0;
+      if (!code) {
+        payload.coupon_code = '';
+        return;
+      }
+      const ctx = this.buildLoyaltyCtx(req);
+      const billBasis = Number(payload.loyalty_bill_total || payload.sales_total || 0);
+      const r = await couponService.validate(code, {
+        billTotal: billBasis,
+        customerId: payload.customer_id || null,
+        branchId: ctx.branchId,
+      });
+      if (!r.valid || !r.data) {
+        console.error('[coupon] code ignored:', r.message);
+        payload.coupon_code = '';
+        return;
+      }
+      payload.coupon_code = r.data.code;
+      payload.coupon_discount_value = r.data.discount;
+    } catch (e) {
+      console.error('[coupon] prepare redemption skipped:', e && e.message);
+      payload.coupon_code = '';
+      payload.coupon_discount_value = 0;
+    }
+  }
+
+  /*
+   * Loyalty is a side effect of a completed sale, not part of saving one. It
+   * runs after the sale is safely committed and is wrapped so that a loyalty
+   * failure can never fail a sale. Walk-in sales (no customer) do nothing. Both
+   * the spend and the earn are idempotent per sale, so a retry or an Edit will
+   * not double-spend points or double-credit them.
+   */
+  async applyLoyaltyEarn(req, saleData) {
+    try {
+      const saleId = saleData && (saleData._id || saleData.sales_id);
+      if (!saleId) return;
+      const SaleModel = this.model || Sale;
+      const sale = await salesService.getSaleById(saleId, { SaleModel });
+      if (!sale || !sale.customer_id) return; // walk-in => no loyalty
+      if (sale.status === SALE_STATUS.CANCELLED) return;
+      const ctx = this.buildLoyaltyCtx(req);
+
+      // Spend first: the points the customer chose to redeem on this bill.
+      const redeemPts = Math.max(0, parseInt(sale.loyalty_redeem_points, 10) || 0);
+      if (redeemPts > 0) {
+        await loyaltyService.applyRedeemPoints(sale.customer_id, {
+          points: redeemPts,
+          value: Number(sale.loyalty_redeem_value) || 0,
+          saleId: sale._id || saleId,
+          reference: sale.sales_id || '',
+          ctx,
+        });
+      }
+
+      // Then earn on what they actually paid (already net of the redemption).
+      const amount = Number(sale.sales_total || sale.total || 0);
+      if (amount > 0) {
+        await loyaltyService.earn(sale.customer_id, {
+          amount,
+          saleId: sale._id || saleId,
+          reference: sale.sales_id || '',
+          ctx,
+        });
+        // If this is the referred customer's first qualifying purchase, reward
+        // both them and whoever referred them.
+        await loyaltyService.grantReferralIfEligible(sale.customer_id, {
+          amount,
+          saleId: sale._id || saleId,
+          ctx,
+        });
+      }
+    } catch (e) {
+      console.error('[loyalty] sale hook skipped:', e && e.message);
+    }
+  }
+
+  /*
+   * Record a coupon redemption once the sale is committed - separate from
+   * loyalty because a coupon needs no customer (walk-in sales can use one). The
+   * discount was already applied to the bill in processSale; this just books the
+   * usage. Idempotent per sale and wrapped so it can never fail a sale.
+   */
+  async applyCoupon(req, saleData) {
+    try {
+      const saleId = saleData && (saleData._id || saleData.sales_id);
+      if (!saleId) return;
+      const SaleModel = this.model || Sale;
+      const sale = await salesService.getSaleById(saleId, { SaleModel });
+      if (!sale || sale.status === SALE_STATUS.CANCELLED) return;
+      const code = (sale.coupon_code || '').toString().trim();
+      const discount = Number(sale.coupon_discount_value) || 0;
+      if (!code || !(discount > 0)) return;
+      await couponService.apply(code, {
+        saleId: sale._id || saleId,
+        customerId: sale.customer_id || null,
+        customerName: sale.customer_name || '',
+        billTotal: Number(sale.sales_total || sale.total || 0),
+        discount,
+        reference: sale.sales_id || '',
+        ctx: this.buildLoyaltyCtx(req),
+      });
+    } catch (e) {
+      console.error('[coupon] apply skipped:', e && e.message);
+    }
+  }
+
   // Shared internal implementation for creating or holding a sale (PHP salesInsertUpdate parity)
   async createOrHoldInternal(
     req,
@@ -368,6 +553,15 @@ class SalesController extends BaseController {
           ? { priceChanges: [], discounts: [] }
           : await collectSaleAuditChanges(payload);
 
+      // Validate any loyalty redemption and coupon BEFORE the sale is priced, so
+      // the discounts that reach processSale are ones the branch's rules, the
+      // customer's balance and the coupon's limits actually allow. A held bill
+      // earns and spends nothing.
+      if (processValue !== 'Hold') {
+        await this.prepareLoyaltyRedemption(req, payload);
+        await this.prepareCouponRedemption(req, payload);
+      }
+
       const result = await salesService.processSale(payload, '', processValue, context);
 
       if (!result || typeof result !== 'object') {
@@ -423,6 +617,12 @@ class SalesController extends BaseController {
           'Discount applied during sale',
           auditChanges.discounts
         );
+      }
+
+      // A held bill is not a completed sale, so it earns/redeems nothing yet.
+      if (processValue !== 'Hold') {
+        await this.applyLoyaltyEarn(req, result.data);
+        await this.applyCoupon(req, result.data);
       }
 
       return this.success(res, result.data, message, 200);
@@ -7225,6 +7425,18 @@ class SalesController extends BaseController {
           total: sale.sales_total || sale.total || 0,
           sale_process: sale.sale_process || '',
         });
+        // Undo any loyalty this sale earned or redeemed, and free any coupon it
+        // used, back up (neither ever blocks the cancel).
+        try {
+          await loyaltyService.reverse(sale._id || saleId, this.buildLoyaltyCtx(req));
+        } catch (e) {
+          console.error('[loyalty] reverse skipped:', e && e.message);
+        }
+        try {
+          await couponService.reverse(sale._id || saleId);
+        } catch (e) {
+          console.error('[coupon] reverse skipped:', e && e.message);
+        }
         return this.success(res, result.data, 'Sale cancelled successfully');
       } else {
         return this.error(res, result?.message || 'Failed to cancel sale', 500);

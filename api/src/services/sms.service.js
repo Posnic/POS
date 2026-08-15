@@ -20,6 +20,59 @@ class SmsService {
   }
 
   /**
+   * Send a free-form SMS - used by marketing campaigns, not transactional
+   * receipts. Brevo transactional SMS accepts arbitrary content, so campaigns
+   * go out cleanly through it. MSG91 here is template-only (DLT-approved
+   * templates), so free-form campaign SMS through MSG91 is not supported and is
+   * reported as such rather than silently dropped or faked.
+   *
+   * @param {string} phone - recipient, with country code
+   * @param {string} message - the fully-rendered message text
+   * @returns {Promise<{ ok: boolean, error?: string }>}
+   */
+  async sendText(phone, message) {
+    if (!phone) return { ok: false, error: 'No phone number' };
+    if (this.provider !== 'brevo') {
+      return {
+        ok: false,
+        error:
+          this.provider === 'msg91'
+            ? 'MSG91 needs an approved template for campaign SMS'
+            : 'No SMS provider configured for campaigns',
+      };
+    }
+    try {
+      const response = await axios.post(
+        'https://api.brevo.com/v3/transactionalSMS/sms',
+        {
+          sender: config.sms.brevo.sender,
+          recipient: String(phone),
+          content: String(message || ''),
+          type: 'marketing',
+        },
+        {
+          headers: {
+            accept: 'application/json',
+            'api-key': config.sms.brevo.apiKey,
+            'content-type': 'application/json',
+          },
+          timeout: 30000,
+        }
+      );
+      const status = response.data && response.data.status;
+      return status === 'delivered' || status === 'sent' || status === 'accepted'
+        ? { ok: true }
+        : { ok: false, error: 'Provider returned ' + (status || 'no status') };
+    } catch (error) {
+      return {
+        ok: false,
+        error:
+          (error.response && error.response.data && error.response.data.message) || error.message,
+      };
+    }
+  }
+
+  /**
    * Send sales SMS receipt to customer
    * Matches PHP: salesSmsReceiptModel() in setting_model.php:2644-2672
    *
