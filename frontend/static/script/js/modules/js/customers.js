@@ -739,10 +739,19 @@ PosnicPro.customerdetails = {
                     }
                     $('.customer_details_totalsale').html(salesTotalQty);
                     $('.customer_details_totalreturn').html(returnTotalQty);
-                    // Money totals - round to 2 decimals so floating-point sums
-                    // like 1306.8600000000001 never reach the screen.
-                    $('.customer_details_saletotalvalue').html(Number(saleTotalValue).toFixed(2));
-                    $('.customer_details_returntotalvalue').html(Number(returnTotalValue).toFixed(2));
+                    // Prefer the server's COMPLETE totals for this customer (over
+                    // all their sales), not a sum of just the loaded page which
+                    // under-counts once there is more than one page. Round to 2dp.
+                    var custSaleTotal =
+                        response.data.total && response.data.total.length
+                            ? Number(response.data.total[0])
+                            : saleTotalValue;
+                    var custReturnTotal =
+                        response.data.return_total && response.data.return_total.length
+                            ? Number(response.data.return_total[0])
+                            : returnTotalValue;
+                    $('.customer_details_saletotalvalue').html(custSaleTotal.toFixed(2));
+                    $('.customer_details_returntotalvalue').html(custReturnTotal.toFixed(2));
 
                 } else {
                     var customersalesreport = [];
