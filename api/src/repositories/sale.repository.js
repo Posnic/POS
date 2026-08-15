@@ -3068,9 +3068,19 @@ class SalesRepository {
         typeof doc.total_qty === 'number' ? doc.total_qty : 0
       );
 
+      // The item/category's OWN revenue - the sum of its line totals across the
+      // matching sales (and returns) - shown as "Total Sales". Already aggregated
+      // above; it just was not returned, so the client fell back to summing each
+      // sale's whole-bill total over the loaded page, which counted every other
+      // item in those bills and changed as you paged. Rounded to 2dp.
+      const saleAmount = salesList.length ? Number(salesList[0].total_amount) || 0 : 0;
+      const returnAmount = returnList.length ? Number(returnList[0].total_amount) || 0 : 0;
+
       const arrTableData = {
         sale: salesValues,
         return: returnValues,
+        sale_amount: Math.round(saleAmount * 100) / 100,
+        return_amount: Math.round(returnAmount * 100) / 100,
         table: tableData,
       };
 
@@ -3211,9 +3221,19 @@ class SalesRepository {
         typeof doc.total_qty === 'number' ? doc.total_qty : 0
       );
 
+      // The item/category's OWN revenue - the sum of its line totals across the
+      // matching sales (and returns) - shown as "Total Sales". Already aggregated
+      // above; it just was not returned, so the client fell back to summing each
+      // sale's whole-bill total over the loaded page, which counted every other
+      // item in those bills and changed as you paged. Rounded to 2dp.
+      const saleAmount = salesList.length ? Number(salesList[0].total_amount) || 0 : 0;
+      const returnAmount = returnList.length ? Number(returnList[0].total_amount) || 0 : 0;
+
       const arrTableData = {
         sale: salesValues,
         return: returnValues,
+        sale_amount: Math.round(saleAmount * 100) / 100,
+        return_amount: Math.round(returnAmount * 100) / 100,
         table: tableData,
       };
 
