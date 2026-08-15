@@ -4262,6 +4262,7 @@ class SalesRepository {
                 $ifNull: ['$items_total', { $ifNull: ['$sales_total', '$total'] }],
               },
             },
+            return_amount: { $sum: { $ifNull: ['$items_return_total', 0] } },
           },
         },
       ]);
@@ -4269,10 +4270,16 @@ class SalesRepository {
       const totals = saleList.map((doc) =>
         typeof doc.total_amount === 'number' ? round(doc.total_amount, 2) : 0
       );
+      // Complete return total too, so the client shows the real figure rather
+      // than a sum over just the loaded page.
+      const returnTotals = saleList.map((doc) =>
+        typeof doc.return_amount === 'number' ? round(doc.return_amount, 2) : 0
+      );
 
       const arrTableData = {
         table: tableData,
         total: totals,
+        return_total: returnTotals,
       };
 
       return {
@@ -4354,6 +4361,7 @@ class SalesRepository {
                 $ifNull: ['$items_total', { $ifNull: ['$sales_total', '$total'] }],
               },
             },
+            return_amount: { $sum: { $ifNull: ['$items_return_total', 0] } },
           },
         },
       ]);
@@ -4361,9 +4369,13 @@ class SalesRepository {
       const totals = saleList.map((doc) =>
         typeof doc.total_amount === 'number' ? round(doc.total_amount, 2) : 0
       );
+      const returnTotals = saleList.map((doc) =>
+        typeof doc.return_amount === 'number' ? round(doc.return_amount, 2) : 0
+      );
 
       const arrTableData = {
         table: tableData,
+        return_total: returnTotals,
         total: totals,
       };
 
