@@ -1,4 +1,5 @@
 const baseService = require('../services/base.service');
+const { resolveAccess } = require('../utils/access-resolver');
 
 /**
  * Base controller class that provides common controller functionality
@@ -34,7 +35,8 @@ class BaseController {
       return true;
     }
 
-    const access = user.access || (user._doc && user._doc.access);
+    // Effective access is resolved in one place (the seam for Phase 1 roles).
+    const access = resolveAccess(user);
     const normalizedResource = String(resource || '').toLowerCase();
     const normalizedAction = String(action || 'read').toLowerCase();
 
