@@ -576,6 +576,8 @@ PosnicPro.settings = {
                 $('#textlocal_api').val(data.textlocal_api);
                 $('#sales_prefix').val(data.sales_prefix || 'S');
                 $('#receiving_prefix').val(data.receiving_prefix || 'P');
+                $('#allow_sale_date_edit').prop('checked', data.allow_sale_date_edit !== 'false' && data.allow_sale_date_edit !== false);
+                PosnicPro.local.set('allow_sale_date_edit', (data.allow_sale_date_edit === 'false' || data.allow_sale_date_edit === false) ? 'false' : 'true');
                 const dbValue = data.sms_auto_send_time; // Replace with your actual database value
                 let [time, period] = dbValue.split(' '); // Split into time and AM/PM
                 let [hour, minute] = time.split(':'); // Split into hour and minute
@@ -1360,6 +1362,7 @@ if ($wrapper.length) {
                 discount_amount: $('#discount_amount').val(),
                 sales_prefix: $('#sales_prefix').val(),
                 receiving_prefix: $('#receiving_prefix').val(),
+                allow_sale_date_edit: ($('#allow_sale_date_edit').is(":checked")) ? 'true' : 'false',
                 indian_gst: $('#indian_gst').val(),
                 branch_gstin_number: $('#branch_gstin_number').val(),
                 print_type: $('#print_type').val(),

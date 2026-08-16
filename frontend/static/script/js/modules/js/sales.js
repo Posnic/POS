@@ -129,6 +129,7 @@
         $('#time-format').addClass('commonDate');
         $('#time-format').removeClass('commonEditDate');
         PosnicPro.commonDate();
+        if (PosnicPro.sales.applySaleDateLock) { PosnicPro.sales.applySaleDateLock(); }
         $('#v-pills-dashboard-tab,.sales_new_shortcut').addClass('active');
         $('#v-pills-dashboard').addClass('show active');
         $('.vertical-menu li a#view_touchsales_page').addClass('active');
@@ -7262,6 +7263,23 @@ PosnicPro.sales.updateCustomerChip = function () {
         var t = 'Walk-in customer — click to choose or add';
         $btn.attr('data-original-title', t).attr('title', t);
     }
+};
+// Super-admin "lock sale date": when the setting is off, the New Sale date is
+// pinned to the current date/time and the picker is disabled, so cashiers can't
+// backdate a sale. The value is set explicitly so it is never blank on submit;
+// this fails open (stays editable) on any error or if the setting is unset.
+PosnicPro.sales.applySaleDateLock = function () {
+    if (PosnicPro.local.get('allow_sale_date_edit') !== 'false') { return; }
+    try {
+        var tz = PosnicPro.local.get('timezone');
+        var now = moment(new Date()).tz(tz).format('YYYY/MM/DD hh:mm A');
+        var $d = $('#time-format');
+        if ($d.data('datepicker') && typeof $d.data('datepicker').destroy === 'function') {
+            $d.data('datepicker').destroy();
+        }
+        $d.removeClass('commonDate').off('click').val(now)
+            .attr('readonly', true).css({ 'pointer-events': 'none' });
+    } catch (e) { /* fail open: leave the date editable */ }
 };
 $('.toggle-user-input').click(function () {
     var $pop = $('.toggle-customer-user');
