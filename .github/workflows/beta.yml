@@ -55,7 +55,7 @@ jobs:
       version: ${{ steps.v.outputs.version }}
       tag: ${{ steps.v.outputs.tag }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - id: v
         run: |
           set -euo pipefail
@@ -81,11 +81,11 @@ jobs:
           - { os: ubuntu-latest,  name: Linux,   flag: '--linux --x64' }
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           submodules: recursive
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v7
         with: { node-version: 22 }
 
       # The installs come before the version is stamped. `npm ci` refuses to
@@ -185,7 +185,7 @@ jobs:
           ls -1 dist/*.yml || echo "  NONE - the update path cannot work"
 
       - name: Upload installers
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.name }}
           path: |
@@ -206,8 +206,8 @@ jobs:
     needs: [version, build]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/download-artifact@v6
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
         with: { path: artifacts }
 
       - name: Collect and checksum
@@ -220,7 +220,7 @@ jobs:
           sha256sum $(ls | grep -vE 'latest.*\.yml$|\.blockmap$') > SHA256SUMS.txt
           echo "Publishing:"; ls -lh
 
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ needs.version.outputs.tag }}
           name: ${{ needs.version.outputs.tag }} (test build)
