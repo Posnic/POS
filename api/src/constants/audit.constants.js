@@ -17,6 +17,7 @@ const AUDIT_EVENTS = {
   CLOCK_OUT: 'clock_out',
   BREAK_START: 'break_start',
   BREAK_END: 'break_end',
+  SHIFT_EDIT: 'shift_edit',
   // Sale-sensitive actions
   SALE_VOID: 'sale_void',
   SALE_REFUND: 'sale_refund',

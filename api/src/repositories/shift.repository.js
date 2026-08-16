@@ -200,6 +200,60 @@ class ShiftRepository {
     }
   }
 
+  // Manager correction of a shift (timecard): adjust clock_in / clock_out /
+  // break_minutes / note and recompute worked_minutes. License-scoped. A closed
+  // shift stays closed; worked_minutes is recomputed only when both ends exist.
+  async editShift(shiftId, patch = {}) {
+    try {
+      const collection = await this.model.getCollection('shifts');
+      const id = toId(shiftId);
+      if (!id) return { status: false, statusCode: 400, message: 'A valid shift id is required' };
+      const filter = { _id: id, license: this._license() };
+      const shift = await collection.findOne(filter);
+      if (!shift) return { status: false, statusCode: 404, message: 'Shift not found' };
+
+      const set = { updated_date: new Date() };
+      const parseDate = (v) => {
+        if (v === undefined) return undefined;
+        if (v === null || v === '') return null;
+        const d = v instanceof Date ? v : new Date(v);
+        return Number.isNaN(d.getTime()) ? undefined : d;
+      };
+
+      const newIn = parseDate(patch.clock_in);
+      if (newIn !== undefined) set.clock_in = newIn;
+      const newOut = parseDate(patch.clock_out);
+      if (newOut !== undefined) set.clock_out = newOut;
+      if (patch.break_minutes !== undefined) {
+        const b = Number(patch.break_minutes);
+        if (!Number.isFinite(b) || b < 0) {
+          return { status: false, statusCode: 400, message: 'break_minutes must be a non-negative number' };
+        }
+        set.break_minutes = b;
+      }
+      if (patch.note !== undefined) set.note = patch.note === null ? null : String(patch.note).trim();
+
+      // Recompute worked_minutes from the effective in/out/break.
+      const effIn = set.clock_in !== undefined ? set.clock_in : shift.clock_in;
+      const effOut = set.clock_out !== undefined ? set.clock_out : shift.clock_out;
+      const effBreak = set.break_minutes !== undefined ? set.break_minutes : (Number(shift.break_minutes) || 0);
+      if (effIn && effOut) {
+        const inMs = (effIn instanceof Date ? effIn : new Date(effIn)).getTime();
+        const outMs = (effOut instanceof Date ? effOut : new Date(effOut)).getTime();
+        if (outMs < inMs) {
+          return { status: false, statusCode: 400, message: 'clock_out cannot be before clock_in' };
+        }
+        const grossMin = Math.max(0, Math.round((outMs - inMs) / 60000));
+        set.worked_minutes = Math.max(0, grossMin - effBreak);
+      }
+
+      await collection.updateOne(filter, { $set: set });
+      return { status: true, data: { ...shift, ...set }, message: 'Shift updated' };
+    } catch (error) {
+      return { status: false, data: null, message: error.message };
+    }
+  }
+
   // Group shifts by user over a date range (by clock_in) for the labour report.
   // Returns per-user rows (shift count, worked minutes, span, still-open count)
   // and a grand total. Payout (x wage) is layered on in the service.
