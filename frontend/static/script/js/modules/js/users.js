@@ -1462,20 +1462,16 @@ PosnicPro.users = {
                 },
                 name: {
                     required: true,
-                    minlength: 6,
                     maxlength: 30,
                     username: true
 
                 },
                 password: {
                     required: true,
-                    minlength: 5,
-                    strong_password: true,
                     maxlength: 20
                 },
                 retype_password: {
                     required: true,
-                    minlength: 5,
                     maxlength: 20,
                     equalTo: "#users_password"
                 },
