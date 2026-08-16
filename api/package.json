@@ -102,5 +102,10 @@
   "bugs": {
     "url": "https://github.com/Posnic/POS/issues"
   },
-  "homepage": "https://github.com/Posnic/POS#readme"
+  "homepage": "https://github.com/Posnic/POS#readme",
+  "overrides": {
+    "exceljs": {
+      "uuid": "^11.1.1"
+    }
+  }
 }
