@@ -2921,6 +2921,22 @@ html:not([data-theme]) .card-body {
     color: #8a94a6;
 }
 
+/* New Purchase form: Supplier / Date / Payment sat far apart (each field in its
+   own full-width row with default form-group + label margins and roomy card
+   padding), forcing a scroll on an otherwise short form. Tighten the vertical
+   rhythm so it fits without scrolling. Horizontal layout is untouched. */
+#receiving_add .card-body {
+    padding-top: 14px !important;
+    padding-bottom: 14px !important;
+}
+#receiving_add .form-group {
+    margin-bottom: 0.5rem !important;
+}
+#receiving_add .form-group > label,
+#receiving_add label.form-control-placeholder {
+    margin-bottom: 0.2rem !important;
+}
+
 /* Default theme: crisp inputs - a clear border so fields read as distinct
    surfaces, and an obvious focus ring on the active field (the purchase-page
    inputs previously looked flat / unhighlighted). */
