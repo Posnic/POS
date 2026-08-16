@@ -1232,8 +1232,8 @@ $("#logout").on("click", function () {
         title: title,
         text: text,
         showCancelButton: true,
-        confirmButtonClass: 'btn btn-outline-primary',
-        cancelButtonClass: 'btn btn-outline-danger m-l-10',
+        confirmButtonClass: 'btn btn-primary',
+        cancelButtonClass: 'btn btn-danger m-l-10',
         confirmButtonText: 'Yes',
         cancelButtonText: 'No'
     }).then(function () {

@@ -1133,7 +1133,10 @@ class UsersController extends BaseController {
         return this.error(res, 'Invalid User ID format', 400);
       }
 
-      if (!this.checkPermission('user', 'read', req.user)) {
+      // A user may always fetch their OWN record (My Profile) even without the
+      // user-management read permission; otherwise it needs user.read.
+      const isSelf = String(req.user && req.user._id) === String(userId);
+      if (!isSelf && !this.checkPermission('user', 'read', req.user)) {
         return this.error(res, 'Unauthorized', 401);
       }
 

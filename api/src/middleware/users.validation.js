@@ -21,8 +21,8 @@ const validateUser = [
     .trim()
     .notEmpty()
     .withMessage('The Name field is required')
-    .isLength({ min: 6, max: 30 })
-    .withMessage('The Name field needs to be between 6 and 30 characters in length')
+    .isLength({ max: 30 })
+    .withMessage('The Name field can be no longer than 30 characters in length')
     .matches(/^[a-zA-Z0-9_-]+$/)
     .withMessage(
       'The Name field can only contain alpha-numeric characters, dashes, and underscores'
@@ -41,8 +41,8 @@ const validateUser = [
   body('password')
     .if(body('usertype').not().equals('api'))
     .optional({ checkFalsy: true })
-    .isLength({ min: 5, max: 20 })
-    .withMessage('The Password field needs to be between 5 and 20 characters in length'),
+    .isLength({ max: 20 })
+    .withMessage('The Password field can be no longer than 20 characters in length'),
 
   body('usertype')
     .if(body('usertype').not().equals('api'))
@@ -113,8 +113,8 @@ const validateUserVerify = [
   query('password')
     .notEmpty()
     .withMessage('The Password field is required')
-    .isLength({ min: 5, max: 20 })
-    .withMessage('The Password field needs to be between 5 and 20 characters in length'),
+    .isLength({ max: 20 })
+    .withMessage('The Password field can be no longer than 20 characters in length'),
 ];
 
 const validateChangeBranch = [
