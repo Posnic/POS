@@ -2826,6 +2826,21 @@ html:not([data-theme]) .card-body {
     font-weight: 500;
 }
 
+/* Add-customer form: the phone field uses intl-tel-input, whose wrapper is
+   display:inline-block by default - that made the "Phone" label sit beside the
+   field while every other field stacks label-over-field. Force the wrapper (and
+   the inner input) to a full-width block so Phone matches the rest. */
+#customer_add_form .intl-tel-input,
+#customer_add_form .iti {
+    display: block !important;
+    width: 100% !important;
+}
+#customer_add_form .intl-tel-input .form-control,
+#customer_add_form .intl-tel-input input[type="tel"],
+#customer_add_form .iti input[type="tel"] {
+    width: 100% !important;
+}
+
 /* Default theme: crisp inputs - a clear border so fields read as distinct
    surfaces, and an obvious focus ring on the active field (the purchase-page
    inputs previously looked flat / unhighlighted). */
