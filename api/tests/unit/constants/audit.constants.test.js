@@ -14,6 +14,7 @@ describe('AUDIT_EVENTS', () => {
     expect(AUDIT_EVENTS.REGISTER_OPEN).toBe('register_open');
     expect(AUDIT_EVENTS.REGISTER_CLOSE).toBe('register_close');
     expect(AUDIT_EVENTS.MANAGER_APPROVAL).toBe('manager_approval');
+    expect(AUDIT_EVENTS.SHIFT_EDIT).toBe('shift_edit');
   });
 
   test('all values are unique, non-empty, snake_case strings', () => {

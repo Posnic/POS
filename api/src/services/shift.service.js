@@ -123,6 +123,25 @@ class ShiftService {
     return result;
   }
 
+  // Manager correction of a shift's times/breaks (timecard). Records a SHIFT_EDIT
+  // audit event with what changed, so corrections are accountable.
+  async editShift(shiftId, patch = {}) {
+    const result = await this.repository.editShift(shiftId, patch);
+    if (result.status) {
+      await new AuditService().record(AUDIT_EVENTS.SHIFT_EDIT, {
+        entity: 'shift',
+        entity_id: shiftId,
+        details: {
+          clock_in: patch.clock_in,
+          clock_out: patch.clock_out,
+          break_minutes: patch.break_minutes,
+          worked_minutes: result.data && result.data.worked_minutes,
+        },
+      });
+    }
+    return result;
+  }
+
   // Set a user's hourly wage (used by the payout report).
   async setRate({ userId, hourlyRate, license }) {
     if (!userId || !mongoose.Types.ObjectId.isValid(String(userId))) {

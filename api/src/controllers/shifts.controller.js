@@ -125,6 +125,26 @@ class ShiftsController extends BaseController {
     }
   }
 
+  // Manager correction of a shift's times/breaks (timecard).
+  async editShift(req, res) {
+    try {
+      this.setRequestContext(req);
+      if (!this.checkPermission('user', 'write', req.user)) {
+        return this.error(res, 'You do not have permission to edit shifts', 403);
+      }
+      const result = await this.service.editShift(req.params.id, {
+        clock_in: req.body.clock_in,
+        clock_out: req.body.clock_out,
+        break_minutes: req.body.break_minutes,
+        note: req.body.note,
+      });
+      if (result.status) return this.success(res, result.data, result.message);
+      return this.error(res, result.message, result.statusCode || 400);
+    } catch (error) {
+      return this.error(res, error.message, 500);
+    }
+  }
+
   // Set a user's hourly wage (managing wages ~ managing staff).
   async setRate(req, res) {
     try {

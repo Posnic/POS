@@ -21,6 +21,7 @@ const mockGetCurrent = jest.fn();
 const mockList = jest.fn();
 const mockToggle = jest.fn();
 const mockGetShiftReport = jest.fn();
+const mockEditShift = jest.fn();
 jest.mock('../../../src/repositories/shift.repository', () =>
   jest.fn().mockImplementation(() => ({
     clockIn: mockClockIn,
@@ -29,6 +30,7 @@ jest.mock('../../../src/repositories/shift.repository', () =>
     listShifts: mockList,
     toggleForUser: mockToggle,
     getShiftReport: mockGetShiftReport,
+    editShift: mockEditShift,
   }))
 );
 
@@ -53,7 +55,7 @@ jest.mock('../../../src/services/audit.service', () => ({
       return mockRecord(...a);
     }
   },
-  AUDIT_EVENTS: { CLOCK_IN: 'clock_in', CLOCK_OUT: 'clock_out' },
+  AUDIT_EVENTS: { CLOCK_IN: 'clock_in', CLOCK_OUT: 'clock_out', SHIFT_EDIT: 'shift_edit' },
 }));
 
 const ShiftService = require('../../../src/services/shift.service');
@@ -162,6 +164,24 @@ describe('getReport (payout)', () => {
     const r = await new ShiftService().getReport({});
     expect(r.data.rows[0].payout).toBe(0);
     expect(r.data.totals.payout).toBe(0);
+  });
+});
+
+describe('editShift', () => {
+  test('records a SHIFT_EDIT audit on success', async () => {
+    mockEditShift.mockResolvedValue({ status: true, data: { _id: 's1', worked_minutes: 450 } });
+    const r = await new ShiftService().editShift('s1', { break_minutes: 30 });
+    expect(r.status).toBe(true);
+    const [event, ctx] = mockRecord.mock.calls[0];
+    expect(event).toBe('shift_edit');
+    expect(ctx.entity).toBe('shift');
+    expect(ctx.entity_id).toBe('s1');
+  });
+
+  test('does not audit on failure', async () => {
+    mockEditShift.mockResolvedValue({ status: false, statusCode: 404 });
+    await new ShiftService().editShift('s1', {});
+    expect(mockRecord).not.toHaveBeenCalled();
   });
 });
 

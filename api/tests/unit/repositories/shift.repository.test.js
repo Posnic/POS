@@ -136,6 +136,39 @@ describe('toggleForUser (clock-by-card)', () => {
   });
 });
 
+describe('editShift (timecard correction)', () => {
+  test('recomputes worked_minutes from corrected times minus break', async () => {
+    const col = makeCollection();
+    col.findOne.mockResolvedValue({
+      _id: 's1', clock_in: new Date('2026-01-01T09:00:00Z'), clock_out: new Date('2026-01-01T17:00:00Z'), break_minutes: 0, status: 'closed',
+    });
+    const repo = makeRepo(col);
+    const r = await repo.editShift('SHIFT0000001', {
+      clock_in: '2026-01-01T09:00:00Z', clock_out: '2026-01-01T17:00:00Z', break_minutes: 30,
+    });
+    expect(r.status).toBe(true);
+    const set = col.updateOne.mock.calls[0][1].$set;
+    expect(set.worked_minutes).toBe(450); // 8h (480) - 30 break
+    expect(set.break_minutes).toBe(30);
+  });
+
+  test('rejects clock_out before clock_in', async () => {
+    const col = makeCollection();
+    col.findOne.mockResolvedValue({ _id: 's1', clock_in: new Date('2026-01-01T09:00:00Z'), clock_out: null, break_minutes: 0 });
+    const repo = makeRepo(col);
+    const r = await repo.editShift('SHIFT0000001', { clock_out: '2026-01-01T08:00:00Z' });
+    expect(r.statusCode).toBe(400);
+    expect(col.updateOne).not.toHaveBeenCalled();
+  });
+
+  test('404 when the shift is not found, 400 on a bad id', async () => {
+    const col = makeCollection();
+    col.findOne.mockResolvedValue(null);
+    expect((await makeRepo(col).editShift('SHIFT0000001', {})).statusCode).toBe(404);
+    expect((await makeRepo(col).editShift(null, {})).statusCode).toBe(400);
+  });
+});
+
 describe('getShiftReport', () => {
   test('groups shifts by user with summed minutes/hours + grand totals', async () => {
     const col = makeCollection();
