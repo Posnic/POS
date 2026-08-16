@@ -20,7 +20,16 @@
                                id="customer_name" minlength="3" maxlength="250" placeholder="Enter the name" required>
                         <input type="hidden" name="id" id="customer_id" class="customer-trigger">
                     </div>
-                </div>                
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-12">
+                        <label for="customer_phone">
+                            <lang class="lang_phone_title"> Phone </lang>
+                        </label>
+                        <input type="tel" class="form-control border-control customer-trigger allow_phone_validate"
+                               name="phone" id="customer_phone" minlength="3" maxlength="20" placeholder="Enter the phone">
+                    </div>
+                </div>
                 <div class="form-row">
                     <div class="form-group col-md-12">
                         <label for="customer_category">
@@ -40,14 +49,7 @@
                     </div>
                 </div>
                 <div class="form-row">
-                    <div class="form-group col-md-6">
-                        <label for="customer_phone">
-                            <lang class="lang_phone_title"> Phone </lang>
-                        </label>
-                        <input type="tel" class="form-control border-control customer-trigger allow_phone_validate"
-                               name="phone" id="customer_phone" minlength="3" maxlength="20" placeholder="Enter the phone">
-                    </div>
-                    <div class="form-group col-md-6">
+                    <div class="form-group col-md-12">
                         <label for="customer_email">
                             <lang class="lang_email_title"> Email </lang>
                         </label>
@@ -94,8 +96,9 @@
                     <div class="form-group col-md-12">
                         <input type="checkbox" class="custom-control-input" id="partial_balance" name="partial_balance">
                         <label class="custom-control-label" for="partial_balance">
-                            Partially paid 
+                            Allow credit (pay later)
                         </label>
+                        <small class="form-text text-muted">Let this customer buy on credit and settle the balance later.</small>
                     </div>
                 </div>
 
