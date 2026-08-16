@@ -5631,6 +5631,23 @@ PosnicPro.sales.calculation = {
     /*
      * ADD SALES LINE ITEMS TABLE ROW CALCULATION
      */
+    /*
+     * Bill-level discounts the cashier applied at the till - a coupon and/or
+     * loyalty points spent. They come straight off the payable total, exactly
+     * as the server subtracts them at save, so the Pay Total the shop shows is
+     * the one the customer pays and the Discount line reflects them live.
+     */
+    billLevelDiscount: function () {
+        var couponDisc =
+            (window.PosnicPro && PosnicPro.coupons && PosnicPro.coupons.tillState &&
+                Number(PosnicPro.coupons.tillState.discount)) || 0;
+        var redeem =
+            window.PosnicPro && PosnicPro.loyalty && PosnicPro.loyalty.tillState &&
+            PosnicPro.loyalty.tillState.redeem;
+        var loyaltyDisc = (redeem && Number(redeem.value)) || 0;
+        var d = (couponDisc > 0 ? couponDisc : 0) + (loyaltyDisc > 0 ? loyaltyDisc : 0);
+        return isFinite(d) ? d : 0;
+    },
     salesTableRowCart: function () {
         $('#RoundOff').html('');
         PosnicPro.sales.addLineTable = $('#sales_new_items_table tbody tr').map(function () {
@@ -5666,7 +5683,9 @@ PosnicPro.sales.calculation = {
         $('#sales_new_subtotal').number(addSalesLineSubTotal, 2);
         $("#sales_total_company_price").val(addSalesLineSubTotal);
         $("#tax").number(addSalesLineGstTaxTotal, 2);
-        $("#discount_sale_amount").number(addReceivingLineDiscountTotal, 2);
+        // Show line-item discounts plus any coupon/loyalty applied to the bill.
+        var billDiscForShow = PosnicPro.sales.calculation.billLevelDiscount();
+        $("#discount_sale_amount").number(addReceivingLineDiscountTotal + billDiscForShow, 2);
         $('#sales_new_total_amount').val(addSalesSubTotal);
         $('#grand_total').val(addSalesSubTotal);
         var extraDiscInput = parseFloat($('#extraDisc').text()) || 0;
@@ -5699,6 +5718,14 @@ PosnicPro.sales.calculation = {
         if (!$('#percentIcon').hasClass('d-none')) {
             let discAmt = grand_total * (inputValue / 100);
             outputVal = grand_total - discAmt;
+        }
+        // A coupon and/or redeemed loyalty points come off the payable total too
+        // (after the extra discount, before round-off) - the same order the server
+        // uses at save, so what the customer sees is what they pay.
+        var billDisc = PosnicPro.sales.calculation.billLevelDiscount();
+        if (billDisc > 0) {
+            outputVal = outputVal - billDisc;
+            if (outputVal < 0) outputVal = 0;
         }
         let roundOffValue = (PosnicPro.roundoff === true) ? Math.round(outputVal) - outputVal : 0.00;
         let sign = roundOffValue >= 0 ? '+' : '-';

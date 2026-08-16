@@ -296,6 +296,14 @@ PosnicPro.loyalty.redeemPointsForPayload = function () {
   return r && r.points > 0 ? r.points : 0;
 };
 
+// Refresh the till totals so spent points show in Pay Total / Discount.
+PosnicPro.loyalty.recalc = function () {
+  if (window.PosnicPro && PosnicPro.sales && PosnicPro.sales.calculation &&
+      PosnicPro.sales.calculation.salesTableRowCart) {
+    PosnicPro.sales.calculation.salesTableRowCart();
+  }
+};
+
 $(document).on('click', '#sales_loyalty_redeem_apply', function () {
   var st = PosnicPro.loyalty.tillState;
   if (!st || !st.customerId || !st.summary) return;
@@ -303,6 +311,7 @@ $(document).on('click', '#sales_loyalty_redeem_apply', function () {
   if (pts <= 0) {
     PosnicPro.loyalty.tillState.redeem = null;
     $('#sales_loyalty_redeem_status').empty();
+    PosnicPro.loyalty.recalc();
     return;
   }
   var bill = PosnicPro.loyalty.currentBill();
@@ -322,6 +331,7 @@ $(document).on('click', '#sales_loyalty_redeem_apply', function () {
         $('#sales_loyalty_redeem_status').html(
           '<span class="text-danger">' + PosnicPro.loyalty.esc(rd.error || 'Cannot redeem these points') + '</span>'
         );
+        PosnicPro.loyalty.recalc();
         return;
       }
       PosnicPro.loyalty.tillState.redeem = { points: rd.points, value: rd.value };
@@ -331,6 +341,7 @@ $(document).on('click', '#sales_loyalty_redeem_apply', function () {
         '<span class="text-success">&minus;' + sign + PosnicPro.loyalty.fmt(rd.value) +
           ' will apply (' + rd.points + ' pts)' + (rd.capped ? ' &middot; capped to the bill limit' : '') + '</span>'
       );
+      PosnicPro.loyalty.recalc();
     }
   );
 });
@@ -339,4 +350,5 @@ $(document).on('click', '#sales_loyalty_redeem_clear', function () {
   if (PosnicPro.loyalty.tillState) PosnicPro.loyalty.tillState.redeem = null;
   $('#sales_loyalty_redeem_points').val('');
   $('#sales_loyalty_redeem_status').empty();
+  PosnicPro.loyalty.recalc();
 });

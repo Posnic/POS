@@ -178,10 +178,19 @@ PosnicPro.coupons = {
       : '';
   },
 
+  // Refresh the till totals so the coupon discount shows in Pay Total / Discount.
+  recalc: function () {
+    if (window.PosnicPro && PosnicPro.sales && PosnicPro.sales.calculation &&
+        PosnicPro.sales.calculation.salesTableRowCart) {
+      PosnicPro.sales.calculation.salesTableRowCart();
+    }
+  },
+
   tillClear: function () {
     PosnicPro.coupons.tillState = { code: null, discount: 0 };
     $('#sales_coupon_code').val('');
     $('#sales_coupon_status').empty();
+    PosnicPro.coupons.recalc();
   },
 
   tillApply: function () {
@@ -189,6 +198,7 @@ PosnicPro.coupons = {
     if (!code) {
       PosnicPro.coupons.tillState = { code: null, discount: 0 };
       $('#sales_coupon_status').empty();
+      PosnicPro.coupons.recalc();
       return;
     }
     var bill = PosnicPro.coupons.currentBill();
@@ -202,6 +212,7 @@ PosnicPro.coupons = {
           $('#sales_coupon_status').html(
             '<span class="text-danger">' + PosnicPro.coupons.esc((res && res.message) || 'Coupon not accepted') + '</span>'
           );
+          PosnicPro.coupons.recalc();
           return;
         }
         PosnicPro.coupons.tillState = { code: d.code, discount: d.discount };
@@ -211,6 +222,7 @@ PosnicPro.coupons = {
           '<span class="text-success">&minus;' + sign + PosnicPro.coupons.fmtMoney(d.discount) +
             ' with ' + PosnicPro.coupons.esc(d.code) + (d.capped ? ' &middot; capped' : '') + '</span>'
         );
+        PosnicPro.coupons.recalc();
       }
     );
   },
