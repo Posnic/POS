@@ -346,6 +346,14 @@ const userSchema = new mongoose.Schema(
       type: Object,
       default: {},
     },
+    // Manager approval PIN (bcrypt hash) used to authorise a cashier's
+    // restricted till action on the spot. Never selected by default; set only
+    // by an authorised (super-admin) user via the manager-PIN endpoint.
+    manager_pin: {
+      type: String,
+      select: false,
+      default: null,
+    },
     address: {
       street: String,
       city: String,
@@ -1079,6 +1087,13 @@ userSchema.statics.userInsertUpdate = async function (data, id, context) {
         if (roleDoc && roleDoc.access) {
           access = mergeAccess(roleDoc.access, data.access_overrides || {});
           access.plan = { read: context.user.access?.plan?.read || false };
+          // Carry the role's granular POS permissions + manager-approval list
+          // onto the user so the till can gate void / refund / discount etc.
+          // without another lookup. These sit alongside the CRUD matrix.
+          access.pos = roleDoc.pos && typeof roleDoc.pos === 'object' ? roleDoc.pos : {};
+          access.pos_manager_approval = Array.isArray(roleDoc.requires_manager_approval)
+            ? roleDoc.requires_manager_approval
+            : [];
           if (userType === id) {
             ['branch', 'report', 'user'].forEach((m) => {
               access[m] = { ...(access[m] || {}), write: true, delete: true };
