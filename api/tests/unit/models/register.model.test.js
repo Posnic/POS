@@ -188,8 +188,8 @@ describe('RegisterModel — fields schema definition', () => {
     expect(model.fields).not.toBeNull();
   });
 
-  test('fields has exactly 18 entries', () => {
-    expect(Object.keys(model.fields)).toHaveLength(18);
+  test('fields has exactly 20 entries', () => {
+    expect(Object.keys(model.fields)).toHaveLength(20);
   });
 
   test('all expected field names are present', () => {
@@ -207,6 +207,8 @@ describe('RegisterModel — fields schema definition', () => {
       'register_closedate',
       'current_user',
       'current_user_id',
+      'lock_device_id',
+      'lock_acquired_at',
       'license',
       'register_sales',
       'cashInOutDetail',
@@ -380,11 +382,11 @@ describe('RegisterModel — fields select:false (excluded from default projectio
     fields = new RegisterModel().fields;
   });
 
-  const selectFalseFields = ['branch_id', 'date', 'current_user_id', 'license'];
+  const selectFalseFields = ['branch_id', 'date', 'current_user_id', 'lock_device_id', 'lock_acquired_at', 'license'];
 
-  test('exactly 4 fields have select:false', () => {
+  test('exactly 6 fields have select:false', () => {
     const count = Object.values(fields).filter((f) => f.select === false).length;
-    expect(count).toBe(4);
+    expect(count).toBe(6);
   });
 
   selectFalseFields.forEach((fieldName) => {
