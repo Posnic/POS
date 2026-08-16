@@ -157,6 +157,12 @@
                                     onclick="PosnicPro.credit.load();"><i class="feather icon-book mr-2"></i>
                                     <lang class="lang_credit_settings">Credit &amp; Reminders</lang>
                                 </a>
+                                <a class="nav-link mb-2" data-module="branch" data-access="write"
+                                    id="v-pills-cashback-tab" data-toggle="pill" href="#v-pills-cashback" role="tab"
+                                    aria-controls="v-pills-cashback" aria-selected="false"
+                                    onclick="PosnicPro.cashback.load();"><i class="feather icon-gift mr-2"></i>
+                                    <lang class="lang_cashback_settings">Cashback</lang>
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -1675,6 +1681,106 @@
                                                 </tr>
                                             </thead>
                                             <tbody id="credit_outstanding_body"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cashback Start -->
+                        <div class="tab-pane fade" id="v-pills-cashback" role="tabpanel"
+                            aria-labelledby="v-pills-cashback-tab">
+                            <div class="card m-b-30">
+                                <div class="card-header d-flex align-items-center justify-content-between">
+                                    <h5 class="card-title mb-0">Cashback</h5>
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="cashback_enabled">
+                                        <label class="custom-control-label" for="cashback_enabled">Enable cashback</label>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <p class="text-muted mb-3">A qualifying sale gives the customer a single-use voucher
+                                        worth a percentage of the bill, to spend on their next visit before it expires.
+                                        They can redeem it at the till (type the code, or scan the printed barcode), and
+                                        it can be sent by SMS/WhatsApp.</p>
+                                    <div class="form-row">
+                                        <div class="col-md-3 mb-2">
+                                            <label>Cashback %</label>
+                                            <input type="number" min="0" max="100" step="0.1" class="form-control"
+                                                id="cashback_percent" value="0">
+                                        </div>
+                                        <div class="col-md-3 mb-2">
+                                            <label>Min bill to earn
+                                                (<span class="cashback-currency-label">currency</span>)</label>
+                                            <input type="number" min="0" step="0.01" class="form-control"
+                                                id="cashback_min_spend" value="0">
+                                        </div>
+                                        <div class="col-md-3 mb-2">
+                                            <label>Max cashback
+                                                (<span class="cashback-currency-label">currency</span>, 0=none)</label>
+                                            <input type="number" min="0" step="0.01" class="form-control"
+                                                id="cashback_max" value="0">
+                                        </div>
+                                        <div class="col-md-3 mb-2">
+                                            <label>Valid for (days)</label>
+                                            <input type="number" min="1" step="1" class="form-control"
+                                                id="cashback_validity" value="30">
+                                        </div>
+                                    </div>
+                                    <div class="form-row align-items-end">
+                                        <div class="col-md-3 mb-2">
+                                            <label>Min bill to redeem
+                                                (<span class="cashback-currency-label">currency</span>)</label>
+                                            <input type="number" min="0" step="0.01" class="form-control"
+                                                id="cashback_min_redeem" value="0">
+                                        </div>
+                                        <div class="col-md-3 mb-2">
+                                            <div class="custom-control custom-switch mt-4">
+                                                <input type="checkbox" class="custom-control-input" id="cashback_bind">
+                                                <label class="custom-control-label" for="cashback_bind">Bind to the
+                                                    customer</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3 mb-2">
+                                            <label>Send via</label>
+                                            <select class="form-control" id="cashback_channel">
+                                                <option value="none">Don't send (print only)</option>
+                                                <option value="sms">SMS</option>
+                                                <option value="whatsapp">WhatsApp</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="col-md-12 mb-2">
+                                            <label>Message — {name} {amount} {code} {currency} {shop} {expiry}</label>
+                                            <textarea class="form-control" id="cashback_template" rows="2"
+                                                placeholder="Thank you {name}! You earned {currency}{amount} cashback (code {code}). Use it before {expiry}."></textarea>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-outline-primary mt-2" id="cashback_save">
+                                        <i class="feather icon-save mr-2"></i> Save cashback settings
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="card m-b-30">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">Recently issued</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-borderless">
+                                            <thead>
+                                                <tr>
+                                                    <td class="font-weight-normal">Code</td>
+                                                    <td class="font-weight-normal text-right">Amount</td>
+                                                    <td class="font-weight-normal">Customer</td>
+                                                    <td class="font-weight-normal">Expires</td>
+                                                    <td class="font-weight-normal">Status</td>
+                                                    <td class="font-weight-normal text-center">Print</td>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="cashback_recent_body"></tbody>
                                         </table>
                                     </div>
                                 </div>

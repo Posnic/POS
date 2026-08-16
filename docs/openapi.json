@@ -46,6 +46,10 @@
       "description": "Mounted at /campaigns"
     },
     {
+      "name": "Cashback",
+      "description": "Mounted at /cashback"
+    },
+    {
       "name": "Categories",
       "description": "Mounted at /categories"
     },
@@ -1588,6 +1592,96 @@
           }
         },
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/cashback/settings": {
+      "get": {
+        "summary": "getSettings",
+        "operationId": "get_cashback_settings",
+        "tags": [
+          "Cashback"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      },
+      "put": {
+        "summary": "saveSettings",
+        "operationId": "put_cashback_settings",
+        "tags": [
+          "Cashback"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      },
+      "post": {
+        "summary": "saveSettings",
+        "operationId": "post_cashback_settings",
+        "tags": [
+          "Cashback"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/cashback/recent": {
+      "get": {
+        "summary": "recent",
+        "operationId": "get_cashback_recent",
+        "tags": [
+          "Cashback"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
       }
     },
     "/categories": {

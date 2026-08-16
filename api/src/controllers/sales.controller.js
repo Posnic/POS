@@ -12,6 +12,8 @@ const CouponService = require('../services/coupon.service');
 const couponService = new CouponService();
 const CreditService = require('../services/credit.service');
 const creditService = new CreditService();
+const CashbackService = require('../services/cashback.service');
+const cashbackService = new CashbackService();
 const { createActivityLog } = require('../utils/activityLogger');
 const sessionFilterUtil = require('../utils/session-filter.util');
 const { SALE_STATUS } = require('../constants');
@@ -526,6 +528,24 @@ class SalesController extends BaseController {
     }
   }
 
+  /*
+   * Mint a cashback coupon for a completed sale - a discount the customer can
+   * spend on their next visit. Idempotent per sale, and wrapped so it can never
+   * fail a sale. Works for walk-in sales too; delivery just needs a phone.
+   */
+  async applyCashback(req, saleData) {
+    try {
+      const saleId = saleData && (saleData._id || saleData.sales_id);
+      if (!saleId) return;
+      const SaleModel = this.model || Sale;
+      const sale = await salesService.getSaleById(saleId, { SaleModel });
+      if (!sale || sale.status === SALE_STATUS.CANCELLED) return;
+      await cashbackService.issueForSale(sale, { ctx: this.buildLoyaltyCtx(req) });
+    } catch (e) {
+      console.error('[cashback] issue skipped:', e && e.message);
+    }
+  }
+
   // Shared internal implementation for creating or holding a sale (PHP salesInsertUpdate parity)
   async createOrHoldInternal(
     req,
@@ -664,6 +684,7 @@ class SalesController extends BaseController {
       if (processValue !== 'Hold') {
         await this.applyLoyaltyEarn(req, result.data);
         await this.applyCoupon(req, result.data);
+        await this.applyCashback(req, result.data);
       }
 
       return this.success(res, result.data, message, 200);
@@ -7477,6 +7498,11 @@ class SalesController extends BaseController {
           await couponService.reverse(sale._id || saleId);
         } catch (e) {
           console.error('[coupon] reverse skipped:', e && e.message);
+        }
+        try {
+          await cashbackService.reverseForSale(sale._id || saleId);
+        } catch (e) {
+          console.error('[cashback] reverse skipped:', e && e.message);
         }
         return this.success(res, result.data, 'Sale cancelled successfully');
       } else {
