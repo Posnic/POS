@@ -1158,6 +1158,11 @@ PosnicPro = {
         openWidget: function () {
             PosnicPro.shiftWidget.refresh();
             $('#shift_card_input').val('');
+            // Only staff who can read users (managers) see the report entry point.
+            var ut = PosnicPro.local.get('usertype');
+            var canReport = ut === 'super_admin' || ut === 'admin' || ut === 'manager'
+                || PosnicPro.checkAccess('user', 'read');
+            $('#labour_report_link_wrap').toggle(!!canReport);
             $('#shift_modal').modal('show');
             setTimeout(function () { $('#shift_card_input').trigger('focus'); }, 400);
         },
@@ -1207,6 +1212,69 @@ PosnicPro = {
             }, function () {
                 $('#shift_card_input').val('').trigger('focus');
             });
+        },
+        // Labour / payout report ------------------------------------------------
+        _fmtDate: function (d) {
+            var m = ('0' + (d.getMonth() + 1)).slice(-2);
+            var day = ('0' + d.getDate()).slice(-2);
+            return d.getFullYear() + '-' + m + '-' + day;
+        },
+        openReport: function () {
+            var to = new Date();
+            var from = new Date(to.getTime() - 30 * 24 * 60 * 60 * 1000);
+            $('#labour_report_from').val(PosnicPro.shiftWidget._fmtDate(from));
+            $('#labour_report_to').val(PosnicPro.shiftWidget._fmtDate(to));
+            $('#labour_report_body').html('<tr><td colspan="5" class="text-center text-muted">Pick a range and Run.</td></tr>');
+            $('#labour_report_foot').html('');
+            $('#shift_modal').modal('hide');
+            $('#labour_report_modal').modal('show');
+        },
+        runReport: function () {
+            var from = $('#labour_report_from').val();
+            var to = $('#labour_report_to').val();
+            $('#labour_report_body').html('<tr><td colspan="5" class="text-center text-muted">Loading…</td></tr>');
+            $('#labour_report_foot').html('');
+            var url = 'shifts/report?from=' + encodeURIComponent(from) + '&to=' + encodeURIComponent(to);
+            PosnicPro.get(url, function (response) {
+                PosnicPro.shiftWidget._renderReport(response && response.data);
+            }, function () {
+                $('#labour_report_body').html('<tr><td colspan="5" class="text-center text-danger">Could not load the report.</td></tr>');
+            });
+        },
+        _renderReport: function (data) {
+            var rows = (data && data.rows) || [];
+            var cur = PosnicPro.local.get('currencySign') || '';
+            var esc = function (s) {
+                return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+                    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+                });
+            };
+            var num = function (n) { return (Number(n) || 0).toFixed(2); };
+            if (!rows.length) {
+                $('#labour_report_body').html('<tr><td colspan="5" class="text-center text-muted">No shifts in this range.</td></tr>');
+                $('#labour_report_foot').html('');
+                return;
+            }
+            var html = '';
+            rows.forEach(function (r) {
+                html += '<tr>'
+                    + '<td>' + esc(r.user_name || '—')
+                    + (r.open_shifts ? ' <span class="badge badge-success">on shift</span>' : '') + '</td>'
+                    + '<td class="text-right">' + (r.shifts || 0) + '</td>'
+                    + '<td class="text-right">' + num(r.worked_hours) + '</td>'
+                    + '<td class="text-right">' + (r.hourly_rate ? cur + num(r.hourly_rate) : '—') + '</td>'
+                    + '<td class="text-right">' + (r.payout ? cur + num(r.payout) : '—') + '</td>'
+                    + '</tr>';
+            });
+            $('#labour_report_body').html(html);
+            var t = (data && data.totals) || {};
+            $('#labour_report_foot').html('<tr class="font-weight-bold">'
+                + '<td>Total (' + (t.users || 0) + ' staff)</td>'
+                + '<td class="text-right">' + (t.shifts || 0) + '</td>'
+                + '<td class="text-right">' + num(t.worked_hours) + '</td>'
+                + '<td></td>'
+                + '<td class="text-right">' + (t.payout ? cur + num(t.payout) : '—') + '</td>'
+                + '</tr>');
         },
     },
     getAllSelectedCollections: function () {
