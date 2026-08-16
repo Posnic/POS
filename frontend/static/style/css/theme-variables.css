@@ -2936,6 +2936,11 @@ html:not([data-theme]) .card-body {
 #receiving_add label.form-control-placeholder {
     margin-bottom: 0.2rem !important;
 }
+/* New Purchase Open/Received: cleaner rounded segmented toggle. */
+.receiving-status-toggle .btn {
+    border-radius: 8px !important;
+    font-weight: 600;
+}
 
 /* Tender/payment modal: the close × sat in a position:fixed head at the top-
    LEFT, directly under the left vertical menu - so the sidebar swallowed its
