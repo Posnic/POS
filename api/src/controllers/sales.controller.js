@@ -15,6 +15,7 @@ const creditService = new CreditService();
 const CashbackService = require('../services/cashback.service');
 const cashbackService = new CashbackService();
 const { createActivityLog } = require('../utils/activityLogger');
+const { AuditService, AUDIT_EVENTS } = require('../services/audit.service');
 const sessionFilterUtil = require('../utils/session-filter.util');
 const { SALE_STATUS } = require('../constants');
 const {
@@ -141,6 +142,17 @@ const collectSaleAuditChanges = async (payload, existingSale = null) => {
   return { priceChanges, discounts };
 };
 
+// Sensitive sale actions also belong in the canonical accountability trail
+// (audit_log) that the shift / payout reports read - separate from the activity
+// feed written by createActivityLog. Map the activity action -> AUDIT_EVENTS.
+const SALE_AUDIT_EVENT = {
+  delete: AUDIT_EVENTS.SALE_VOID,
+  cancel: AUDIT_EVENTS.SALE_VOID,
+  refund: AUDIT_EVENTS.SALE_REFUND,
+  discount: AUDIT_EVENTS.DISCOUNT_APPLIED,
+  price_change: AUDIT_EVENTS.PRICE_OVERRIDE,
+};
+
 const writeSaleAudit = async (req, action, entityId, description, changes) => {
   const user = req.user || {};
   await createActivityLog({
@@ -156,6 +168,25 @@ const writeSaleAudit = async (req, action, entityId, description, changes) => {
     ipAddress: req.ip,
     userAgent: typeof req.get === 'function' ? req.get('user-agent') : req.headers?.['user-agent'],
   });
+
+  // Mirror sensitive actions into the append-only accountability trail. Actor +
+  // tenant are passed explicitly (same source as the activity log) so this does
+  // not depend on the per-request context being set. Fail-safe: record() never
+  // throws, so an audit failure can never break the sale operation.
+  const event = SALE_AUDIT_EVENT[action];
+  if (event) {
+    await new AuditService().record(event, {
+      entity: 'sale',
+      entity_id: entityId,
+      actor_user_id: user._id,
+      actor_name: user.username || user.name || user.email || null,
+      license: user.license || user.licenseId || BaseModel.license,
+      branch_id: resolveBranchId(user, req.session) || BaseModel.currentBranch,
+      amount: changes && typeof changes.total === 'number' ? changes.total : undefined,
+      reason: description,
+      details: changes && typeof changes === 'object' ? changes : undefined,
+    });
+  }
 };
 
 const duplicateSaleData = (sale) => ({
