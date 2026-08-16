@@ -310,6 +310,13 @@ class RegistersController extends BaseController {
       const result = await this.service.registeraddInsert(req.body);
 
       if (result.status === true) {
+        // Append-only accountability trail (fail-safe; see registerClose).
+        // result.data is the new register id.
+        await new AuditService(this.registerModel).record(AUDIT_EVENTS.REGISTER_OPEN, {
+          entity: 'cashregister',
+          entity_id: result.data,
+          device_id: req.body.lock_device_id,
+        });
         return this.success(res, result.data, result.message);
       } else {
         return this.error(res, result.message, result.statusCode || 404, result.data);
