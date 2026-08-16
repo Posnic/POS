@@ -574,8 +574,8 @@ PosnicPro.settings = {
                 $('#way2sms_password').val(data.way2sms_password);
                 $('#textlocal_sender').val(data.textlocal_sender);
                 $('#textlocal_api').val(data.textlocal_api);
-                $('#sales_prefix').val(data.sales_prefix);
-                $('#receiving_prefix').val(data.receiving_prefix);
+                $('#sales_prefix').val(data.sales_prefix || 'S');
+                $('#receiving_prefix').val(data.receiving_prefix || 'P');
                 const dbValue = data.sms_auto_send_time; // Replace with your actual database value
                 let [time, period] = dbValue.split(' '); // Split into time and AM/PM
                 let [hour, minute] = time.split(':'); // Split into hour and minute
@@ -3995,16 +3995,10 @@ $("#tax_discount_add").validate({
             maxlength: 100
         },
         sales_prefix: {
-            required: true,
-            lettersonly: true,
-            minlength: 3,
-            maxlength: 3
+            maxlength: 6
         },
         receiving_prefix: {
-            required: true,
-            lettersonly: true,
-            minlength: 3,
-            maxlength: 3
+            maxlength: 6
         },
         notification_value: {
             required: true
