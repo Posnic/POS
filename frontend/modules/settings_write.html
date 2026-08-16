@@ -24,6 +24,7 @@
                         <div class="card-body">
                             <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist"
                                 aria-orientation="vertical">
+                                <div class="settings-nav-group">Store</div>
                                 <a data-module="branch" data-access="write"
                                     class="nav-link mb-2 show-superadmin-tab active" id="v-pills-store-tab"
                                     data-toggle="pill" href="#v-pills-store" role="tab" aria-controls="v-pills-store"
@@ -36,18 +37,8 @@
                                         class="feather icon-settings mr-2"></i>
                                     <lang class="lang_generalset">General Settings</lang>
                                 </a>
-                                <a class="nav-link mb-2 " id="v-pills-offline-tab" data-toggle="pill"
-                                    href="#v-pills-offline" role="tab" aria-controls="v-pills-offline"
-                                    aria-selected="true" style="display:none;"><i
-                                        class="feather icon-wifi-off mr-2"></i>
-                                    <lang class="lang_offline">Offline</lang>
-                                </a>
-                                <a class="nav-link mb-2" data-module="plan" data-access="read" id="v-pills-sms-tab"
-                                    data-toggle="pill" href="#v-pills-sms" role="tab" aria-controls="v-pills-sms"
-                                    aria-selected="false" style="display:none;"><i
-                                        class="feather icon-message-circle mr-2"></i>
-                                    <lang class="lang_sms_set">Sms Settings</lang>
-                                </a>
+
+                                <div class="settings-nav-group">Sales &amp; Billing</div>
                                 <a class="nav-link mb-2" data-module="branch" data-access="write" id="v-pills-tax-tab"
                                     data-toggle="pill" href="#v-pills-tax" role="tab" aria-controls="v-pills-tax"
                                     aria-selected="false" onclick="PosnicPro.tax.taxTable();"><i
@@ -65,15 +56,21 @@
                                     data-toggle="pill" href="#v-pills-item-unit" role="tab" aria-controls="v-pills-tax"
                                     aria-selected="false" onclick="PosnicPro.unit.unitTable();"><i
                                         class="feather icon-type mr-2"></i>
-                                    <lang class="lang_taxrate_title">Types of Units</lang>
+                                    <lang class="lang_taxrate_title">Units</lang>
                                 </a>
-
+                                <a class="nav-link mb-2" data-module="branch" data-access="write"
+                                    id="v-pills-payment-tab" data-toggle="pill" href="#v-pills-payment" role="tab"
+                                    aria-controls="v-pills-payment" aria-selected="false"
+                                    onclick="PosnicPro.payment.paymentTable();"> <i
+                                        class="feather icon-dollar-sign mr-2"></i>
+                                    <lang class="lang_payment_fields">Payment Modes</lang>
+                                </a>
                                 <a class="nav-link mb-2" data-module="branch" data-access="write"
                                     id="v-pills-cashdenom-tab" data-toggle="pill" href="#v-pills-cashdenom" role="tab"
                                     aria-controls="v-pills-cashdenom" aria-selected="false"
                                     onclick="PosnicPro.denom.denomTable();"><i
                                         class="feather icon-trending-up mr-2"></i>
-                                    <lang class="lang_denomination_fields">Denomination Fields</lang>
+                                    <lang class="lang_denomination_fields">Cash Denominations</lang>
                                 </a>
                                 <a class="nav-link mb-2" data-module="branch" data-access="write"
                                     id="v-pills-tableorder-tab" data-toggle="pill" href="#v-pills-tableorder" role="tab"
@@ -82,51 +79,8 @@
                                         class="feather icon-grid mr-2"></i>
                                     Tables List
                                 </a>
-                                <a class="nav-link mb-2" data-module="branch" data-access="write"
-                                    id="v-pills-payment-tab" data-toggle="pill" href="#v-pills-payment" role="tab"
-                                    aria-controls="v-pills-payment" aria-selected="false"
-                                    onclick="PosnicPro.payment.paymentTable();"> <i
-                                        class="feather icon-dollar-sign mr-2"></i>
-                                    <lang class="lang_payment_fields">Payment Fields</lang>
-                                </a>
 
-                                <a class="nav-link mb-2" data-module="plan" data-access="read"
-                                    id="v-pills-recyclebin-tab" data-toggle="pill" href="#v-pills-recyclebin" role="tab"
-                                    aria-controls="v-pills-recyclebin" aria-selected="false"
-                                    onclick="PosnicPro.settings.settingsTable();"><i
-                                        class="feather icon-trash-2 mr-2"></i>
-                                    <lang class="lang_recycle">Recycle Bin</lang>
-                                </a>
-                                <a class="nav-link mb-2" data-module="plan" data-access="read" id="v-pills-erase-tab"
-                                    data-toggle="pill" href="#v-pills-erase" role="tab" aria-controls="v-pills-erase"
-                                    aria-selected="false" style="display:none;"><i class="feather icon-trash mr-2"></i>
-                                    <lang class="lang_eraseall">Erase All</lang>
-                                </a>
-                                <a class="nav-link mb-2" data-module="plan" data-access="read" id="v-pills-email-tab"
-                                    data-toggle="pill" href="#v-pills-email" role="tab" aria-controls="v-pills-email"
-                                    aria-selected="false"><i class="feather icon-mail mr-2"></i>
-                                    <lang class="lang_mail">Report Email Settings</lang>
-                                </a>
-                                <a class="nav-link mb-2" data-module="plan" data-access="read" id="v-pills-qr-tab"
-                                    data-toggle="pill" href="#v-pills-qr" role="tab" aria-controls="v-pills-qr"
-                                    aria-selected="false"><i class="feather icon-credit-card mr-2"></i>
-                                    <lang class="lang_mail">Payment Gateway</lang>
-                                </a>
-                                <a class="nav-link mb-2" data-module="plan" data-access="read" id="v-pills-whatsapp-tab"
-                                    data-toggle="pill" href="#v-pills-whatsapp" role="tab" aria-controls="v-pills-whatsapp"
-                                    aria-selected="false"><i class="feather icon-message-square mr-2"></i>
-                                    WhatsApp Settings
-                                </a>
-                                <a class="nav-link mb-2" data-module="plan" data-access="read" id="v-pills-kiosk-tab"
-                                    data-toggle="pill" href="#v-pills-kiosk" role="tab" aria-controls="v-pills-kiosk"
-                                    aria-selected="false"><i class="feather icon-monitor mr-2"></i>
-                                    <lang class="lang_mail">Kiosk settings</lang>
-                                </a>
-                                <a class="nav-link mb-2" data-module="branch" data-access="write" id="v-pills-theme-tab"
-                                    data-toggle="pill" href="#v-pills-theme" role="tab" aria-controls="v-pills-theme"
-                                    aria-selected="false" onclick="PosnicPro.themeManager.loadThemeSettingsUI();"><i class="feather icon-droplet mr-2"></i>
-                                    <lang class="lang_theme_settings">Theme & Appearance</lang>
-                                </a>
+                                <div class="settings-nav-group">Marketing</div>
                                 <a class="nav-link mb-2" data-module="branch" data-access="write"
                                     id="v-pills-loyalty-tab" data-toggle="pill" href="#v-pills-loyalty" role="tab"
                                     aria-controls="v-pills-loyalty" aria-selected="false"
@@ -140,28 +94,87 @@
                                     <lang class="lang_coupons_settings">Coupons</lang>
                                 </a>
                                 <a class="nav-link mb-2" data-module="branch" data-access="write"
+                                    id="v-pills-cashback-tab" data-toggle="pill" href="#v-pills-cashback" role="tab"
+                                    aria-controls="v-pills-cashback" aria-selected="false"
+                                    onclick="PosnicPro.cashback.load();"><i class="feather icon-gift mr-2"></i>
+                                    <lang class="lang_cashback_settings">Cashback</lang>
+                                </a>
+                                <a class="nav-link mb-2" data-module="branch" data-access="write"
                                     id="v-pills-campaigns-tab" data-toggle="pill" href="#v-pills-campaigns" role="tab"
                                     aria-controls="v-pills-campaigns" aria-selected="false"
                                     onclick="PosnicPro.campaigns.load();"><i class="feather icon-send mr-2"></i>
                                     <lang class="lang_campaigns_settings">Campaigns</lang>
                                 </a>
-                                <a class="nav-link mb-2 show-superadmin-tab" data-module="branch" data-access="write"
-                                    id="v-pills-messaging-tab" data-toggle="pill" href="#v-pills-messaging" role="tab"
-                                    aria-controls="v-pills-messaging" aria-selected="false"
-                                    onclick="PosnicPro.messaging.load();"><i class="feather icon-cpu mr-2"></i>
-                                    <lang class="lang_messaging_settings">SMS &amp; WhatsApp Providers</lang>
-                                </a>
+
+                                <div class="settings-nav-group">Customers</div>
                                 <a class="nav-link mb-2" data-module="branch" data-access="write"
                                     id="v-pills-credit-tab" data-toggle="pill" href="#v-pills-credit" role="tab"
                                     aria-controls="v-pills-credit" aria-selected="false"
                                     onclick="PosnicPro.credit.load();"><i class="feather icon-book mr-2"></i>
                                     <lang class="lang_credit_settings">Credit &amp; Reminders</lang>
                                 </a>
-                                <a class="nav-link mb-2" data-module="branch" data-access="write"
-                                    id="v-pills-cashback-tab" data-toggle="pill" href="#v-pills-cashback" role="tab"
-                                    aria-controls="v-pills-cashback" aria-selected="false"
-                                    onclick="PosnicPro.cashback.load();"><i class="feather icon-gift mr-2"></i>
-                                    <lang class="lang_cashback_settings">Cashback</lang>
+
+                                <div class="settings-nav-group">Messaging</div>
+                                <a class="nav-link mb-2 show-superadmin-tab" data-module="branch" data-access="write"
+                                    id="v-pills-messaging-tab" data-toggle="pill" href="#v-pills-messaging" role="tab"
+                                    aria-controls="v-pills-messaging" aria-selected="false"
+                                    onclick="PosnicPro.messaging.load();"><i class="feather icon-cpu mr-2"></i>
+                                    <lang class="lang_messaging_settings">SMS &amp; WhatsApp Providers</lang>
+                                </a>
+                                <a class="nav-link mb-2" data-module="plan" data-access="read" id="v-pills-whatsapp-tab"
+                                    data-toggle="pill" href="#v-pills-whatsapp" role="tab" aria-controls="v-pills-whatsapp"
+                                    aria-selected="false"><i class="feather icon-message-square mr-2"></i>
+                                    WhatsApp Connection
+                                </a>
+                                <a class="nav-link mb-2" data-module="plan" data-access="read" id="v-pills-email-tab"
+                                    data-toggle="pill" href="#v-pills-email" role="tab" aria-controls="v-pills-email"
+                                    aria-selected="false"><i class="feather icon-mail mr-2"></i>
+                                    <lang class="lang_mail">Report Email Settings</lang>
+                                </a>
+                                <a class="nav-link mb-2" data-module="plan" data-access="read" id="v-pills-qr-tab"
+                                    data-toggle="pill" href="#v-pills-qr" role="tab" aria-controls="v-pills-qr"
+                                    aria-selected="false"><i class="feather icon-credit-card mr-2"></i>
+                                    <lang class="lang_mail">Payment Gateway</lang>
+                                </a>
+                                <a class="nav-link mb-2" data-module="plan" data-access="read" id="v-pills-sms-tab"
+                                    data-toggle="pill" href="#v-pills-sms" role="tab" aria-controls="v-pills-sms"
+                                    aria-selected="false" style="display:none;"><i
+                                        class="feather icon-message-circle mr-2"></i>
+                                    <lang class="lang_sms_set">SMS Settings</lang>
+                                </a>
+
+                                <div class="settings-nav-group">Devices</div>
+                                <a class="nav-link mb-2" data-module="plan" data-access="read" id="v-pills-kiosk-tab"
+                                    data-toggle="pill" href="#v-pills-kiosk" role="tab" aria-controls="v-pills-kiosk"
+                                    aria-selected="false"><i class="feather icon-monitor mr-2"></i>
+                                    <lang class="lang_mail">Kiosk settings</lang>
+                                </a>
+                                <a class="nav-link mb-2 " id="v-pills-offline-tab" data-toggle="pill"
+                                    href="#v-pills-offline" role="tab" aria-controls="v-pills-offline"
+                                    aria-selected="true" style="display:none;"><i
+                                        class="feather icon-wifi-off mr-2"></i>
+                                    <lang class="lang_offline">Offline</lang>
+                                </a>
+
+                                <div class="settings-nav-group">Appearance</div>
+                                <a class="nav-link mb-2" data-module="branch" data-access="write" id="v-pills-theme-tab"
+                                    data-toggle="pill" href="#v-pills-theme" role="tab" aria-controls="v-pills-theme"
+                                    aria-selected="false" onclick="PosnicPro.themeManager.loadThemeSettingsUI();"><i class="feather icon-droplet mr-2"></i>
+                                    <lang class="lang_theme_settings">Theme & Appearance</lang>
+                                </a>
+
+                                <div class="settings-nav-group">System</div>
+                                <a class="nav-link mb-2" data-module="plan" data-access="read"
+                                    id="v-pills-recyclebin-tab" data-toggle="pill" href="#v-pills-recyclebin" role="tab"
+                                    aria-controls="v-pills-recyclebin" aria-selected="false"
+                                    onclick="PosnicPro.settings.settingsTable();"><i
+                                        class="feather icon-trash-2 mr-2"></i>
+                                    <lang class="lang_recycle">Recycle Bin</lang>
+                                </a>
+                                <a class="nav-link mb-2" data-module="plan" data-access="read" id="v-pills-erase-tab"
+                                    data-toggle="pill" href="#v-pills-erase" role="tab" aria-controls="v-pills-erase"
+                                    aria-selected="false" style="display:none;"><i class="feather icon-trash mr-2"></i>
+                                    <lang class="lang_eraseall">Erase All</lang>
                                 </a>
                             </div>
                         </div>

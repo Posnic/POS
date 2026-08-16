@@ -5947,7 +5947,11 @@ PosnicPro.sales.setDefaults = function () {
     $('#sales_new_radio_discountamount,#sales_new_radio_discountpercent').text('').val('');
     $('#sales_new_radio_discountamount').editable('setValue', '0');
     $('#sales_new_radio_discountpercent').editable('setValue', '0');
-    $('#click_payment_description,#click_sales_description,#click_discount_description').css({ color: '#506fe4' });
+    $('#click_discount_description').css({ color: '#506fe4' });
+    if (PosnicPro.updateSaleNoteFlag) {
+        PosnicPro.updateSaleNoteFlag('click_payment_description', 'feather icon-edit-1', '');
+        PosnicPro.updateSaleNoteFlag('click_sales_description', 'feather icon-edit-1', '');
+    }
     if (PosnicPro.sales.defaultCustomer === true) {
         (PosnicPro.local.get('default_customer_enable_disable') === 'false') ? $('#sales_new_customer_id,#sales_new_customer_name,#sales_new_customer_address,#sales_new_customer_phone,#sales_new_customer_email,#sales_new_customer_state,#sales_new_customer_gst_type,#sales_new_customer_gst_number').val('') : PosnicPro.defaultcustomerSet();
     }
@@ -6613,20 +6617,20 @@ PosnicPro.sales.recentMenu = {
     setEditSalesDetails: function () {
         if (PosnicPro.sales.EditRecentSaleParams.payment_description === '') {
             $('#payment_description').text('').val('').hide();
-            $('#click_payment_description').css({ color: '#506fe4' });
+            PosnicPro.updateSaleNoteFlag('click_payment_description', 'feather icon-edit-1', '');
         } else {
             $('#payment_description').val(PosnicPro.sales.EditRecentSaleParams.payment_description).hide();
             $('#payment_description').editable('setValue', PosnicPro.sales.EditRecentSaleParams.payment_description);
-            $('#click_payment_description').css({ color: '#5fd799' });
+            PosnicPro.updateSaleNoteFlag('click_payment_description', 'feather icon-edit-1', PosnicPro.sales.EditRecentSaleParams.payment_description);
         }
 
         if (PosnicPro.sales.EditRecentSaleParams.sales_description === '') {
             $('#sales_description').text('').val('').hide();
-            $('#click_sales_description').css({ color: '#506fe4' });
+            PosnicPro.updateSaleNoteFlag('click_sales_description', 'feather icon-edit-1', '');
         } else {
             $('#sales_description').val(PosnicPro.sales.EditRecentSaleParams.sales_description).hide();
             $('#sales_description').editable('setValue', PosnicPro.sales.EditRecentSaleParams.sales_description);
-            $('#click_sales_description').css({ color: '#5fd799' });
+            PosnicPro.updateSaleNoteFlag('click_sales_description', 'feather icon-edit-1', PosnicPro.sales.EditRecentSaleParams.sales_description);
         }
 
         if (PosnicPro.sales.EditRecentSaleParams.discount_description === '') {
