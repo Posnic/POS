@@ -3414,6 +3414,8 @@ PosnicPro.sales.addSale = {
                     sales_total: $("#grand_total").val(),
                     sales_sub_total: $('#sales_new_subtotal').text(),
                     customer_id: $('#sales_new_customer_id').val(),
+                    redeem_points: (PosnicPro.loyalty ? PosnicPro.loyalty.redeemPointsForPayload() : 0),
+                    coupon_code: (PosnicPro.coupons ? PosnicPro.coupons.codeForPayload() : ''),
                     customer_name: $('#sales_new_customer_name').val(),
                     customer_address: $('#sales_new_customer_address').val(),
                     customer_phone: $('#sales_new_customer_phone').val(),
@@ -5843,6 +5845,8 @@ PosnicPro.sales.setSaleDefaults = function () {
     (PosnicPro.local.get('default_customer_enable_disable') === 'false')
         ? $('#sales_new_customer_id,#sales_new_customer_name,#sales_new_customer_address,#sales_new_customer_phone,#sales_new_customer_email,#sales_new_customer_state,#sales_new_customer_gst_type,#sales_new_customer_gst_number,#sales_new_customer_partial_balance').val('')
         : PosnicPro.defaultcustomerSet();
+    if (PosnicPro.loyalty) PosnicPro.loyalty.tillClear();
+    if (PosnicPro.coupons) PosnicPro.coupons.tillClear();
 
     PosnicPro.sales.sale_offlineadditems = [];
     PosnicPro.sales.editSaleAction = false;
@@ -7140,6 +7144,7 @@ $('#sales_new_customer_name').on('keydown.autocomplete', function () {
                 customerRecord.push({ name: suggestion.data.name, phone: suggestion.data.phone, email: suggestion.data.email, address: suggestion.data.address });
                 db.customerDisplay.put({ id: '1', clear: 'no', 'get': 'no', customer: customerRecord });
                 PosnicPro.sales.calculation.salesTableRowCart();
+                if (PosnicPro.loyalty) PosnicPro.loyalty.tillShow(suggestion.data.id);
             } else {
                 hasher.setHash('sales/customers/new');
             }

@@ -127,6 +127,42 @@
                                     aria-selected="false" onclick="PosnicPro.themeManager.loadThemeSettingsUI();"><i class="feather icon-droplet mr-2"></i>
                                     <lang class="lang_theme_settings">Theme & Appearance</lang>
                                 </a>
+                                <a class="nav-link mb-2" data-module="branch" data-access="write"
+                                    id="v-pills-loyalty-tab" data-toggle="pill" href="#v-pills-loyalty" role="tab"
+                                    aria-controls="v-pills-loyalty" aria-selected="false"
+                                    onclick="PosnicPro.loyalty.load();"><i class="feather icon-award mr-2"></i>
+                                    <lang class="lang_loyalty_settings">Loyalty &amp; Rewards</lang>
+                                </a>
+                                <a class="nav-link mb-2" data-module="branch" data-access="write"
+                                    id="v-pills-coupons-tab" data-toggle="pill" href="#v-pills-coupons" role="tab"
+                                    aria-controls="v-pills-coupons" aria-selected="false"
+                                    onclick="PosnicPro.coupons.load();"><i class="feather icon-tag mr-2"></i>
+                                    <lang class="lang_coupons_settings">Coupons</lang>
+                                </a>
+                                <a class="nav-link mb-2" data-module="branch" data-access="write"
+                                    id="v-pills-campaigns-tab" data-toggle="pill" href="#v-pills-campaigns" role="tab"
+                                    aria-controls="v-pills-campaigns" aria-selected="false"
+                                    onclick="PosnicPro.campaigns.load();"><i class="feather icon-send mr-2"></i>
+                                    <lang class="lang_campaigns_settings">Campaigns</lang>
+                                </a>
+                                <a class="nav-link mb-2 show-superadmin-tab" data-module="branch" data-access="write"
+                                    id="v-pills-messaging-tab" data-toggle="pill" href="#v-pills-messaging" role="tab"
+                                    aria-controls="v-pills-messaging" aria-selected="false"
+                                    onclick="PosnicPro.messaging.load();"><i class="feather icon-cpu mr-2"></i>
+                                    <lang class="lang_messaging_settings">SMS &amp; WhatsApp Providers</lang>
+                                </a>
+                                <a class="nav-link mb-2" data-module="branch" data-access="write"
+                                    id="v-pills-credit-tab" data-toggle="pill" href="#v-pills-credit" role="tab"
+                                    aria-controls="v-pills-credit" aria-selected="false"
+                                    onclick="PosnicPro.credit.load();"><i class="feather icon-book mr-2"></i>
+                                    <lang class="lang_credit_settings">Credit &amp; Reminders</lang>
+                                </a>
+                                <a class="nav-link mb-2" data-module="branch" data-access="write"
+                                    id="v-pills-cashback-tab" data-toggle="pill" href="#v-pills-cashback" role="tab"
+                                    aria-controls="v-pills-cashback" aria-selected="false"
+                                    onclick="PosnicPro.cashback.load();"><i class="feather icon-gift mr-2"></i>
+                                    <lang class="lang_cashback_settings">Cashback</lang>
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -975,6 +1011,777 @@
                                                 </div>
                                             </div>
                                         </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Loyalty & Rewards Start -->
+                        <div class="tab-pane fade" id="v-pills-loyalty" role="tabpanel"
+                            aria-labelledby="v-pills-loyalty-tab">
+                            <div class="card m-b-30">
+                                <div class="card-header d-flex align-items-center justify-content-between">
+                                    <h5 class="card-title mb-0">
+                                        <lang class="lang_loyalty_title">Loyalty &amp; Rewards</lang>
+                                    </h5>
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="loyalty_enabled">
+                                        <label class="custom-control-label" for="loyalty_enabled">Enable loyalty</label>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <p class="text-muted mb-4">
+                                        Rewards work in points, so the same rules fit any currency or country. Every rate below
+                                        is a ratio against this branch's own currency
+                                        (<strong class="loyalty-currency-label">currency</strong>).
+                                    </p>
+
+                                    <div id="loyalty_liability" class="mb-4" style="display:none;">
+                                        <div class="row">
+                                            <div class="col-md-4 mb-2">
+                                                <div class="card border bg-secondary-rgba m-b-0">
+                                                    <div class="card-body py-3">
+                                                        <div class="text-muted small">Members with points</div>
+                                                        <h4 class="mb-0" id="loyalty_liab_members">0</h4>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4 mb-2">
+                                                <div class="card border bg-secondary-rgba m-b-0">
+                                                    <div class="card-body py-3">
+                                                        <div class="text-muted small">Points outstanding</div>
+                                                        <h4 class="mb-0" id="loyalty_liab_points">0</h4>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4 mb-2">
+                                                <div class="card border bg-secondary-rgba m-b-0">
+                                                    <div class="card-body py-3">
+                                                        <div class="text-muted small">Liability
+                                                            (<span class="loyalty-currency-label">currency</span>)</div>
+                                                        <h4 class="mb-0" id="loyalty_liab_value">0</h4>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="table-responsive" id="loyalty_liab_tier_wrap" style="display:none;">
+                                            <table class="table table-sm table-borderless mb-0">
+                                                <thead>
+                                                    <tr>
+                                                        <td class="font-weight-normal">Tier</td>
+                                                        <td class="font-weight-normal text-right">Members</td>
+                                                        <td class="font-weight-normal text-right">Points</td>
+                                                        <td class="font-weight-normal text-right">Value</td>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="loyalty_liab_tier_body"></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <div id="loyalty_rules_fieldset">
+                                        <h6 class="text-uppercase text-muted mb-3">Earning</h6>
+                                        <div class="form-row align-items-end mb-3">
+                                            <div class="col-md-3 mb-2">
+                                                <label>Points earned</label>
+                                                <input type="number" min="0" step="1" class="form-control"
+                                                    id="loyalty_earn_points" value="1">
+                                            </div>
+                                            <div class="col-md-1 text-center mb-2 pb-2">per</div>
+                                            <div class="col-md-4 mb-2">
+                                                <label>Amount spent (<span class="loyalty-currency-label">currency</span>)</label>
+                                                <input type="number" min="0" step="0.01" class="form-control"
+                                                    id="loyalty_earn_amount" value="100">
+                                            </div>
+                                            <div class="col-md-4 mb-2">
+                                                <label>Rounding</label>
+                                                <select class="form-control" id="loyalty_earn_rounding">
+                                                    <option value="floor">Round down (never over-credit)</option>
+                                                    <option value="round">Nearest</option>
+                                                    <option value="ceil">Round up</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="form-row mb-4">
+                                            <div class="col-md-4 mb-2">
+                                                <label>Minimum spend to earn (<span class="loyalty-currency-label">currency</span>)</label>
+                                                <input type="number" min="0" step="0.01" class="form-control"
+                                                    id="loyalty_min_spend" value="0">
+                                            </div>
+                                        </div>
+
+                                        <h6 class="text-uppercase text-muted mb-3">Redeeming</h6>
+                                        <div class="form-row align-items-end mb-3">
+                                            <div class="col-md-3 mb-2">
+                                                <label>Points</label>
+                                                <input type="number" min="1" step="1" class="form-control"
+                                                    id="loyalty_redeem_points" value="1">
+                                            </div>
+                                            <div class="col-md-1 text-center mb-2 pb-2">=</div>
+                                            <div class="col-md-4 mb-2">
+                                                <label>Value (<span class="loyalty-currency-label">currency</span>)</label>
+                                                <input type="number" min="0" step="0.01" class="form-control"
+                                                    id="loyalty_redeem_value" value="1">
+                                            </div>
+                                        </div>
+                                        <div class="form-row mb-4">
+                                            <div class="col-md-4 mb-2">
+                                                <label>Minimum points to redeem</label>
+                                                <input type="number" min="0" step="1" class="form-control"
+                                                    id="loyalty_min_redeem" value="0">
+                                            </div>
+                                            <div class="col-md-4 mb-2">
+                                                <label>Max discount (% of bill)</label>
+                                                <input type="number" min="0" max="100" step="1" class="form-control"
+                                                    id="loyalty_max_redeem_percent" value="100">
+                                            </div>
+                                            <div class="col-md-4 mb-2">
+                                                <label>Points expire after (months, 0 = never)</label>
+                                                <input type="number" min="0" step="1" class="form-control"
+                                                    id="loyalty_expiry_months" value="0">
+                                            </div>
+                                        </div>
+
+                                        <h6 class="text-uppercase text-muted mb-3 d-flex align-items-center justify-content-between">
+                                            <span>Tiers</span>
+                                            <a href="javascript:void(0)" class="btn btn-primary-rgba btn-sm" id="loyalty_add_tier">
+                                                <i class="feather icon-plus mr-1"></i> Add tier
+                                            </a>
+                                        </h6>
+                                        <p class="text-muted small mb-2">A tier's multiplier boosts earning once a customer's
+                                            lifetime points reach its threshold. The lowest threshold is the starting tier.</p>
+                                        <div class="table-responsive mb-4">
+                                            <table class="table table-borderless">
+                                                <thead>
+                                                    <tr>
+                                                        <td class="font-weight-normal">Name</td>
+                                                        <td class="font-weight-normal">From (lifetime points)</td>
+                                                        <td class="font-weight-normal">Earn multiplier</td>
+                                                        <td class="font-weight-normal text-center">Action</td>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="loyalty_tiers_body"></tbody>
+                                            </table>
+                                        </div>
+
+                                        <h6 class="text-uppercase text-muted mb-3 mt-2 d-flex align-items-center justify-content-between">
+                                            <span>Referrals</span>
+                                            <div class="custom-control custom-switch">
+                                                <input type="checkbox" class="custom-control-input"
+                                                    id="loyalty_referral_enabled">
+                                                <label class="custom-control-label"
+                                                    for="loyalty_referral_enabled">Enable referrals</label>
+                                            </div>
+                                        </h6>
+                                        <p class="text-muted small mb-2">When a customer referred by another makes their
+                                            first purchase over the minimum, both sides get points.</p>
+                                        <div class="form-row mb-4">
+                                            <div class="col-md-4 mb-2">
+                                                <label>Points to the referrer</label>
+                                                <input type="number" min="0" step="1" class="form-control"
+                                                    id="loyalty_referral_referrer_points" value="0">
+                                            </div>
+                                            <div class="col-md-4 mb-2">
+                                                <label>Points to the new customer</label>
+                                                <input type="number" min="0" step="1" class="form-control"
+                                                    id="loyalty_referral_referee_points" value="0">
+                                            </div>
+                                            <div class="col-md-4 mb-2">
+                                                <label>Min first-purchase spend
+                                                    (<span class="loyalty-currency-label">currency</span>)</label>
+                                                <input type="number" min="0" step="0.01" class="form-control"
+                                                    id="loyalty_referral_min_spend" value="0">
+                                            </div>
+                                        </div>
+
+                                        <div class="alert alert-info" role="alert">
+                                            <div id="loyalty_preview_earn">A sale earns points based on the rate above.</div>
+                                            <div id="loyalty_preview_redeem" class="mt-1"></div>
+                                        </div>
+                                    </div>
+
+                                    <button type="button" class="btn btn-outline-primary btn-lg btn-block mt-3"
+                                        id="loyalty_save">
+                                        <i class="feather icon-save mr-2"></i> Save loyalty settings
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Coupons Start -->
+                        <div class="tab-pane fade" id="v-pills-coupons" role="tabpanel"
+                            aria-labelledby="v-pills-coupons-tab">
+                            <div class="card m-b-30">
+                                <div class="card-header d-flex align-items-center justify-content-between">
+                                    <h5 class="card-title mb-0">
+                                        <lang class="lang_coupons_title">Coupons</lang>
+                                    </h5>
+                                    <a href="javascript:void(0)" class="btn btn-primary-rgba" id="coupons_new">
+                                        <i class="feather icon-plus mr-2"></i> New coupon
+                                    </a>
+                                </div>
+                                <div class="card-body">
+                                    <p class="text-muted mb-3">Discount codes for the till. A code is a percentage or a
+                                        fixed amount off (in this branch's currency), with optional validity dates and
+                                        usage limits. Use a total limit of 1 for a one-time code.</p>
+
+                                    <div id="coupons_form_wrap" class="card border m-b-30" style="display:none;">
+                                        <div class="card-header">
+                                            <h6 class="mb-0" id="coupon_form_title">New coupon</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <input type="hidden" id="coupon_form_id">
+                                            <div class="form-row">
+                                                <div class="col-md-4 mb-2">
+                                                    <label>Code</label>
+                                                    <input type="text" class="form-control text-uppercase"
+                                                        id="coupon_code" placeholder="DIWALI10">
+                                                </div>
+                                                <div class="col-md-8 mb-2">
+                                                    <label>Description</label>
+                                                    <input type="text" class="form-control" id="coupon_description"
+                                                        placeholder="Diwali festival offer">
+                                                </div>
+                                            </div>
+                                            <div class="form-row">
+                                                <div class="col-md-3 mb-2">
+                                                    <label>Type</label>
+                                                    <select class="form-control" id="coupon_type">
+                                                        <option value="percent">Percentage off</option>
+                                                        <option value="fixed">Fixed amount off</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-3 mb-2">
+                                                    <label>Value</label>
+                                                    <input type="number" min="0" step="0.01" class="form-control"
+                                                        id="coupon_value" value="0">
+                                                </div>
+                                                <div class="col-md-3 mb-2">
+                                                    <label>Min spend
+                                                        (<span class="coupon-currency-label">currency</span>)</label>
+                                                    <input type="number" min="0" step="0.01" class="form-control"
+                                                        id="coupon_min_spend" value="0">
+                                                </div>
+                                                <div class="col-md-3 mb-2" id="coupon_max_discount_wrap">
+                                                    <label>Max discount
+                                                        (<span class="coupon-currency-label">currency</span>, 0=none)</label>
+                                                    <input type="number" min="0" step="0.01" class="form-control"
+                                                        id="coupon_max_discount" value="0">
+                                                </div>
+                                            </div>
+                                            <div class="form-row">
+                                                <div class="col-md-3 mb-2">
+                                                    <label>Valid from</label>
+                                                    <input type="date" class="form-control" id="coupon_start_date">
+                                                </div>
+                                                <div class="col-md-3 mb-2">
+                                                    <label>Valid until</label>
+                                                    <input type="date" class="form-control" id="coupon_end_date">
+                                                </div>
+                                                <div class="col-md-3 mb-2">
+                                                    <label>Total uses (0=∞)</label>
+                                                    <input type="number" min="0" step="1" class="form-control"
+                                                        id="coupon_usage_limit" value="0">
+                                                </div>
+                                                <div class="col-md-3 mb-2">
+                                                    <label>Per customer (0=∞)</label>
+                                                    <input type="number" min="0" step="1" class="form-control"
+                                                        id="coupon_per_customer_limit" value="0">
+                                                </div>
+                                            </div>
+                                            <div class="custom-control custom-switch mb-3">
+                                                <input type="checkbox" class="custom-control-input" id="coupon_active"
+                                                    checked>
+                                                <label class="custom-control-label" for="coupon_active">Active</label>
+                                            </div>
+                                            <button type="button" class="btn btn-primary" id="coupon_form_save">
+                                                <i class="feather icon-save mr-2"></i> Save
+                                            </button>
+                                            <button type="button" class="btn btn-outline-secondary"
+                                                id="coupon_form_cancel">Cancel</button>
+                                        </div>
+                                    </div>
+
+                                    <div class="table-responsive">
+                                        <table class="table table-borderless">
+                                            <thead>
+                                                <tr>
+                                                    <td class="font-weight-normal">Code</td>
+                                                    <td class="font-weight-normal">Value</td>
+                                                    <td class="font-weight-normal">Valid</td>
+                                                    <td class="font-weight-normal">Used</td>
+                                                    <td class="font-weight-normal">Status</td>
+                                                    <td class="font-weight-normal text-center">Action</td>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="coupons_table_body"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Campaigns Start -->
+                        <div class="tab-pane fade" id="v-pills-campaigns" role="tabpanel"
+                            aria-labelledby="v-pills-campaigns-tab">
+                            <div class="card m-b-30">
+                                <div class="card-header d-flex align-items-center justify-content-between">
+                                    <h5 class="card-title mb-0">
+                                        <lang class="lang_campaigns_title">Campaigns</lang>
+                                    </h5>
+                                    <a href="javascript:void(0)" class="btn btn-primary-rgba" id="campaigns_new">
+                                        <i class="feather icon-plus mr-2"></i> New campaign
+                                    </a>
+                                </div>
+                                <div class="card-body">
+                                    <p class="text-muted mb-3">Reach a group of customers by SMS or WhatsApp. Preview the
+                                        reach, send a test dry-run first, then send or schedule. Customers who opted out
+                                        of that channel, or who have no phone number, are skipped automatically.</p>
+
+                                    <div id="campaigns_form_wrap" class="card border m-b-30" style="display:none;">
+                                        <div class="card-header">
+                                            <h6 class="mb-0" id="campaign_form_title">New campaign</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <input type="hidden" id="campaign_form_id">
+                                            <div class="form-row">
+                                                <div class="col-md-6 mb-2">
+                                                    <label>Name</label>
+                                                    <input type="text" class="form-control" id="campaign_name"
+                                                        placeholder="Diwali offer">
+                                                </div>
+                                                <div class="col-md-3 mb-2">
+                                                    <label>Channel</label>
+                                                    <select class="form-control" id="campaign_channel">
+                                                        <option value="whatsapp">WhatsApp</option>
+                                                        <option value="sms">SMS</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            <div class="form-row align-items-end">
+                                                <div class="col-md-3 mb-2">
+                                                    <label>Audience</label>
+                                                    <select class="form-control" id="campaign_seg_type">
+                                                        <option value="all">All customers</option>
+                                                        <option value="tier">Loyalty tier</option>
+                                                        <option value="min_points">Minimum points</option>
+                                                        <option value="lapsed">Lapsed (no purchase)</option>
+                                                        <option value="category">Customer category</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-3 mb-2 campaign-seg-field" id="campaign_seg_tier_wrap"
+                                                    style="display:none;">
+                                                    <label>Tier</label>
+                                                    <select class="form-control" id="campaign_seg_tier"></select>
+                                                </div>
+                                                <div class="col-md-3 mb-2 campaign-seg-field"
+                                                    id="campaign_seg_min_points_wrap" style="display:none;">
+                                                    <label>Minimum points</label>
+                                                    <input type="number" min="0" step="1" class="form-control"
+                                                        id="campaign_seg_min_points" value="0">
+                                                </div>
+                                                <div class="col-md-3 mb-2 campaign-seg-field"
+                                                    id="campaign_seg_lapsed_wrap" style="display:none;">
+                                                    <label>No purchase in (days)</label>
+                                                    <input type="number" min="0" step="1" class="form-control"
+                                                        id="campaign_seg_lapsed_days" value="30">
+                                                </div>
+                                                <div class="col-md-4 mb-2 campaign-seg-field"
+                                                    id="campaign_seg_category_wrap" style="display:none;">
+                                                    <label>Category id</label>
+                                                    <input type="text" class="form-control" id="campaign_seg_category"
+                                                        placeholder="customer category id">
+                                                </div>
+                                            </div>
+
+                                            <div class="mb-2">
+                                                <label>Message</label>
+                                                <div class="mb-1">
+                                                    <span class="text-muted small mr-1">Insert:</span>
+                                                    <a href="javascript:void(0)" class="badge badge-primary-inverse campaign-merge" data-field="name">{name}</a>
+                                                    <a href="javascript:void(0)" class="badge badge-primary-inverse campaign-merge" data-field="points">{points}</a>
+                                                    <a href="javascript:void(0)" class="badge badge-primary-inverse campaign-merge" data-field="tier">{tier}</a>
+                                                </div>
+                                                <textarea class="form-control" id="campaign_message" rows="3"
+                                                    placeholder="Hi {name}, you have {points} points waiting. Visit us this week!"></textarea>
+                                            </div>
+
+                                            <div id="campaign_preview_out" class="mb-2"></div>
+
+                                            <div class="d-flex flex-wrap align-items-center">
+                                                <button type="button" class="btn btn-outline-secondary mr-2 mb-1"
+                                                    id="campaign_preview_btn">Preview reach</button>
+                                                <button type="button" class="btn btn-outline-secondary mr-2 mb-1"
+                                                    id="campaign_test_btn">Test (dry run)</button>
+                                                <button type="button" class="btn btn-primary mr-2 mb-1"
+                                                    id="campaign_save_draft">Save draft</button>
+                                                <button type="button" class="btn btn-success mr-3 mb-1"
+                                                    id="campaign_send_btn"><i class="feather icon-send mr-1"></i> Send
+                                                    now</button>
+                                                <div class="input-group input-group-sm mb-1" style="max-width: 300px;">
+                                                    <input type="datetime-local" class="form-control"
+                                                        id="campaign_schedule_at">
+                                                    <div class="input-group-append">
+                                                        <button type="button" class="btn btn-outline-primary"
+                                                            id="campaign_schedule_btn">Schedule</button>
+                                                    </div>
+                                                </div>
+                                                <button type="button" class="btn btn-link text-muted mb-1"
+                                                    id="campaign_form_cancel">Close</button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="table-responsive">
+                                        <table class="table table-borderless">
+                                            <thead>
+                                                <tr>
+                                                    <td class="font-weight-normal">Campaign</td>
+                                                    <td class="font-weight-normal">Channel</td>
+                                                    <td class="font-weight-normal">Audience</td>
+                                                    <td class="font-weight-normal">Status</td>
+                                                    <td class="font-weight-normal">Result</td>
+                                                    <td class="font-weight-normal text-center">Action</td>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="campaigns_table_body"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SMS & WhatsApp Providers Start (super admin only) -->
+                        <div class="tab-pane fade" id="v-pills-messaging" role="tabpanel"
+                            aria-labelledby="v-pills-messaging-tab">
+                            <div id="messaging_not_allowed" class="alert alert-warning" style="display:none;">
+                                Only a super admin can configure messaging providers.
+                            </div>
+                            <div id="messaging_body">
+                                <div class="card m-b-30">
+                                    <div class="card-header d-flex align-items-center justify-content-between">
+                                        <h5 class="card-title mb-0">SMS provider</h5>
+                                        <div class="custom-control custom-switch">
+                                            <input type="checkbox" class="custom-control-input" id="messaging_sms_enabled">
+                                            <label class="custom-control-label" for="messaging_sms_enabled">Enable
+                                                SMS</label>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted mb-3">SMS is sent through <strong>your own provider
+                                                account</strong> — pick your provider and enter your credentials. Your
+                                            keys are stored securely on the server and are never shown again after
+                                            saving.</p>
+                                        <div class="form-row">
+                                            <div class="col-md-6 mb-3">
+                                                <label>Provider</label>
+                                                <select class="form-control" id="messaging_sms_provider"></select>
+                                            </div>
+                                        </div>
+                                        <div id="messaging_provider_note"></div>
+                                        <div class="form-row" id="messaging_sms_fields"></div>
+                                        <div class="form-row">
+                                            <div class="col-md-12 mb-2">
+                                                <label>Default template / notes (optional)</label>
+                                                <textarea class="form-control" id="messaging_sms_template" rows="2"
+                                                    placeholder="For template-based providers, your DLT-approved template text."></textarea>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex flex-wrap align-items-center mt-2">
+                                            <button type="button" class="btn btn-outline-primary mr-3 mb-1"
+                                                id="messaging_save"><i class="feather icon-save mr-1"></i> Save</button>
+                                            <div class="input-group input-group-sm mb-1" style="max-width: 320px;">
+                                                <input type="text" class="form-control" id="messaging_test_phone"
+                                                    placeholder="Test number, with country code">
+                                                <div class="input-group-append">
+                                                    <button type="button" class="btn btn-outline-secondary"
+                                                        id="messaging_test_btn">Send test</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="card m-b-30">
+                                    <div class="card-header d-flex align-items-center justify-content-between">
+                                        <h5 class="card-title mb-0">WhatsApp</h5>
+                                        <div class="custom-control custom-switch">
+                                            <input type="checkbox" class="custom-control-input" id="messaging_wa_enabled">
+                                            <label class="custom-control-label" for="messaging_wa_enabled">Enable
+                                                WhatsApp</label>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-row">
+                                            <div class="col-md-6 mb-3">
+                                                <label>How do you connect WhatsApp?</label>
+                                                <select class="form-control" id="messaging_wa_mode">
+                                                    <option value="web">Scan on this machine (local device)</option>
+                                                    <option value="cloud">Meta WhatsApp Cloud API</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div id="messaging_wa_web">
+                                            <p class="text-muted small mb-2">Runs locally as a linked device — scan the QR
+                                                under <strong>Settings → WhatsApp Connection</strong>. No cloud credentials
+                                                are stored.</p>
+                                            <div class="form-row">
+                                                <div class="col-md-6 mb-2">
+                                                    <label>Linked device id</label>
+                                                    <input type="text" class="form-control" id="messaging_wa_device"
+                                                        placeholder="from WhatsApp Connection">
+                                                </div>
+                                                <div class="col-md-6 mb-2">
+                                                    <label>Machine host / IP (optional)</label>
+                                                    <input type="text" class="form-control" id="messaging_wa_host"
+                                                        placeholder="e.g. 192.168.1.20">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div id="messaging_wa_cloud" style="display:none;">
+                                            <p class="text-muted small mb-2">Register a Meta app, add a WhatsApp phone
+                                                number, and paste its credentials. Marketing messages need an approved
+                                                Meta template — set its name below.</p>
+                                            <div class="form-row">
+                                                <div class="col-md-6 mb-2">
+                                                    <label>Access token <span class="text-danger">*</span></label>
+                                                    <input type="password" class="form-control" id="messaging_wa_token"
+                                                        autocomplete="new-password" placeholder="">
+                                                </div>
+                                                <div class="col-md-6 mb-2">
+                                                    <label>Phone number id <span class="text-danger">*</span></label>
+                                                    <input type="text" class="form-control" id="messaging_wa_phoneid">
+                                                </div>
+                                                <div class="col-md-4 mb-2">
+                                                    <label>API version</label>
+                                                    <input type="text" class="form-control" id="messaging_wa_apiver"
+                                                        placeholder="v20.0">
+                                                </div>
+                                                <div class="col-md-4 mb-2">
+                                                    <label>Template name (marketing)</label>
+                                                    <input type="text" class="form-control" id="messaging_wa_tplname">
+                                                </div>
+                                                <div class="col-md-4 mb-2">
+                                                    <label>Template language</label>
+                                                    <input type="text" class="form-control" id="messaging_wa_tpllang"
+                                                        placeholder="en_US">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="d-flex flex-wrap align-items-center mt-2">
+                                            <button type="button" class="btn btn-outline-primary mr-3 mb-1"
+                                                id="messaging_wa_save"><i class="feather icon-save mr-1"></i>
+                                                Save</button>
+                                            <div class="input-group input-group-sm mb-1" style="max-width: 320px;">
+                                                <input type="text" class="form-control" id="messaging_wa_test_phone"
+                                                    placeholder="Test number, with country code">
+                                                <div class="input-group-append">
+                                                    <button type="button" class="btn btn-outline-secondary"
+                                                        id="messaging_wa_test_btn">Send WhatsApp test</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Credit & Reminders Start -->
+                        <div class="tab-pane fade" id="v-pills-credit" role="tabpanel"
+                            aria-labelledby="v-pills-credit-tab">
+                            <div class="card m-b-30">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">Credit rules</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p class="text-muted mb-3">Let customers buy on credit (khata) and collect later. A
+                                        credit limit caps how much a customer can owe; leave it 0 for no limit.</p>
+                                    <div class="form-row">
+                                        <div class="col-md-4 mb-2">
+                                            <label>Default credit limit
+                                                (<span class="credit-currency-label">currency</span>, 0 = none)</label>
+                                            <input type="number" min="0" step="0.01" class="form-control"
+                                                id="credit_default_limit" value="0">
+                                        </div>
+                                        <div class="col-md-4 mb-2">
+                                            <label>Credit terms (days, 0 = none)</label>
+                                            <input type="number" min="0" step="1" class="form-control"
+                                                id="credit_terms_days" value="0">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card m-b-30">
+                                <div class="card-header d-flex align-items-center justify-content-between">
+                                    <h5 class="card-title mb-0">Payment reminders</h5>
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input"
+                                            id="credit_reminder_enabled">
+                                        <label class="custom-control-label" for="credit_reminder_enabled">Enable
+                                            reminders</label>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <p class="text-muted mb-3">Remind customers who owe money, over SMS or WhatsApp (your
+                                        configured providers). A customer is never reminded twice in one day.</p>
+                                    <div class="form-row">
+                                        <div class="col-md-3 mb-2">
+                                            <label>Channel</label>
+                                            <select class="form-control" id="credit_reminder_channel">
+                                                <option value="sms">SMS</option>
+                                                <option value="whatsapp">WhatsApp</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3 mb-2">
+                                            <label>Only remind dues over
+                                                (<span class="credit-currency-label">currency</span>)</label>
+                                            <input type="number" min="0" step="0.01" class="form-control"
+                                                id="credit_reminder_min_due" value="0">
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="col-md-12 mb-2">
+                                            <label>Message — use {name} {due} {currency} {shop}</label>
+                                            <textarea class="form-control" id="credit_reminder_template" rows="2"
+                                                placeholder="Hi {name}, you have {currency}{due} due at {shop}. Please pay soon."></textarea>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-outline-primary mt-2" id="credit_save">
+                                        <i class="feather icon-save mr-2"></i> Save credit settings
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="card m-b-30">
+                                <div class="card-header d-flex align-items-center justify-content-between">
+                                    <h5 class="card-title mb-0">Outstanding customers —
+                                        <span id="credit_outstanding_total">0</span></h5>
+                                    <div>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm mr-1"
+                                            id="credit_remind_test">Test (dry run)</button>
+                                        <button type="button" class="btn btn-primary-rgba btn-sm"
+                                            id="credit_remind_all"><i class="feather icon-send mr-1"></i> Remind
+                                            all</button>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-borderless">
+                                            <thead>
+                                                <tr>
+                                                    <td class="font-weight-normal">Customer</td>
+                                                    <td class="font-weight-normal">Phone</td>
+                                                    <td class="font-weight-normal text-right">Due</td>
+                                                    <td class="font-weight-normal text-center">Action</td>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="credit_outstanding_body"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cashback Start -->
+                        <div class="tab-pane fade" id="v-pills-cashback" role="tabpanel"
+                            aria-labelledby="v-pills-cashback-tab">
+                            <div class="card m-b-30">
+                                <div class="card-header d-flex align-items-center justify-content-between">
+                                    <h5 class="card-title mb-0">Cashback</h5>
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="cashback_enabled">
+                                        <label class="custom-control-label" for="cashback_enabled">Enable cashback</label>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <p class="text-muted mb-3">A qualifying sale gives the customer a single-use voucher
+                                        worth a percentage of the bill, to spend on their next visit before it expires.
+                                        They can redeem it at the till (type the code, or scan the printed barcode), and
+                                        it can be sent by SMS/WhatsApp.</p>
+                                    <div class="form-row">
+                                        <div class="col-md-3 mb-2">
+                                            <label>Cashback %</label>
+                                            <input type="number" min="0" max="100" step="0.1" class="form-control"
+                                                id="cashback_percent" value="0">
+                                        </div>
+                                        <div class="col-md-3 mb-2">
+                                            <label>Min bill to earn
+                                                (<span class="cashback-currency-label">currency</span>)</label>
+                                            <input type="number" min="0" step="0.01" class="form-control"
+                                                id="cashback_min_spend" value="0">
+                                        </div>
+                                        <div class="col-md-3 mb-2">
+                                            <label>Max cashback
+                                                (<span class="cashback-currency-label">currency</span>, 0=none)</label>
+                                            <input type="number" min="0" step="0.01" class="form-control"
+                                                id="cashback_max" value="0">
+                                        </div>
+                                        <div class="col-md-3 mb-2">
+                                            <label>Valid for (days)</label>
+                                            <input type="number" min="1" step="1" class="form-control"
+                                                id="cashback_validity" value="30">
+                                        </div>
+                                    </div>
+                                    <div class="form-row align-items-end">
+                                        <div class="col-md-3 mb-2">
+                                            <label>Min bill to redeem
+                                                (<span class="cashback-currency-label">currency</span>)</label>
+                                            <input type="number" min="0" step="0.01" class="form-control"
+                                                id="cashback_min_redeem" value="0">
+                                        </div>
+                                        <div class="col-md-3 mb-2">
+                                            <div class="custom-control custom-switch mt-4">
+                                                <input type="checkbox" class="custom-control-input" id="cashback_bind">
+                                                <label class="custom-control-label" for="cashback_bind">Bind to the
+                                                    customer</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3 mb-2">
+                                            <label>Send via</label>
+                                            <select class="form-control" id="cashback_channel">
+                                                <option value="none">Don't send (print only)</option>
+                                                <option value="sms">SMS</option>
+                                                <option value="whatsapp">WhatsApp</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="col-md-12 mb-2">
+                                            <label>Message — {name} {amount} {code} {currency} {shop} {expiry}</label>
+                                            <textarea class="form-control" id="cashback_template" rows="2"
+                                                placeholder="Thank you {name}! You earned {currency}{amount} cashback (code {code}). Use it before {expiry}."></textarea>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-outline-primary mt-2" id="cashback_save">
+                                        <i class="feather icon-save mr-2"></i> Save cashback settings
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="card m-b-30">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">Recently issued</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-borderless">
+                                            <thead>
+                                                <tr>
+                                                    <td class="font-weight-normal">Code</td>
+                                                    <td class="font-weight-normal text-right">Amount</td>
+                                                    <td class="font-weight-normal">Customer</td>
+                                                    <td class="font-weight-normal">Expires</td>
+                                                    <td class="font-weight-normal">Status</td>
+                                                    <td class="font-weight-normal text-center">Print</td>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="cashback_recent_body"></tbody>
+                                        </table>
                                     </div>
                                 </div>
                             </div>

@@ -830,6 +830,42 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
       salesExtraDiscount = discAmt;
     }
 
+    /*
+     * Coupon discount - a code the cashier applied. Validated in the controller
+     * against this branch's coupons (active, in date, within its usage limits,
+     * over its minimum spend), so here it is simply a fixed amount that reduces
+     * the payable total. A coupon and a loyalty redemption may both apply to one
+     * bill; each is clamped so the running total can never go below zero.
+     */
+    const couponCode = (data.coupon_code || '').toString().trim().toUpperCase();
+    const couponDiscountValue = round2(
+      Math.min(Math.abs(parseFloat(data.coupon_discount_value) || 0), itemsTotAmount),
+      2
+    );
+    if (couponDiscountValue > 0) {
+      itemsTotAmount = itemsTotAmount - couponDiscountValue;
+    }
+
+    /*
+     * Loyalty redemption - a discount the cashier chose to spend points on.
+     *
+     * The points and the currency value were already validated in the
+     * controller against this branch's loyalty rules and the customer's
+     * balance, so here it is simply a fixed amount that reduces the payable
+     * total, exactly like the extra discount above, and then rides the same
+     * round-off and payment logic below. It is a plain number in the branch's
+     * own currency, so it carries no assumption about symbol or country. Clamped
+     * so a redemption can never push a bill below zero.
+     */
+    const loyaltyRedeemValue = round2(
+      Math.min(Math.abs(parseFloat(data.loyalty_redeem_value) || 0), itemsTotAmount),
+      2
+    );
+    const loyaltyRedeemPoints = Math.max(0, parseInt(data.loyalty_redeem_points, 10) || 0);
+    if (loyaltyRedeemValue > 0) {
+      itemsTotAmount = itemsTotAmount - loyaltyRedeemValue;
+    }
+
     // Fetch Branch Settings for Round Off
     const roundOffSetting = context.roundOff === true;
 
@@ -1062,6 +1098,10 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
       sale_extra_discount: round2(salesExtraDiscount, 2),
       extra_discount_type: data.extra_discount_type,
       extra_discount: round2(extraDiscount, 2),
+      loyalty_redeem_points: loyaltyRedeemPoints,
+      loyalty_redeem_value: loyaltyRedeemValue,
+      coupon_code: couponCode,
+      coupon_discount_value: couponDiscountValue,
 
       // ...
       sale_method: saleMethod,
