@@ -1522,6 +1522,13 @@ $('#receiving_add_item_name').on('click keydown.autocomplete keyup.autocomplete'
                 $('#receiving_add_item_unit').val(suggestion.data.item_unit);
                 $('#receiving_add_line_total').val(suggestion.data.company_price);
                 PosnicPro.receivings.addReceivingLineItems(suggestion.data);
+                // Clear the search and refocus so the next item can be typed
+                // straight away (rapid entry). Previously the picked item name
+                // stayed stuck in the box with no easy way to clear it.
+                var $box = $('#receiving_add_item_name');
+                $box.val('');
+                if ($box.data('autocomplete')) { $box.autocomplete('clear'); }
+                setTimeout(function () { $box.focus(); }, 0);
             } else {
                 hasher.setHash('items/new/addnewitem');
             }
