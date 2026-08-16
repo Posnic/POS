@@ -81,31 +81,20 @@ class UpdateService {
       console.log('[UpdateService] Update check failed:', firstLine);
     });
     
-    // Native taskbar progress while the update downloads
-    autoUpdater.addListener('download-progress', (progress) => {
-      try {
-        const { BrowserWindow } = require('electron');
-        const win = BrowserWindow.getAllWindows()[0];
-        if (win) win.setProgressBar((progress.percent || 0) / 100);
-      } catch (e) { /* non-fatal */ }
-    });
-
-    // NSIS installer silent mode configuration
-    autoUpdater.addListener('update-downloaded', () => {
-      console.log('[UpdateService] Update downloaded, ready for silent install');
-      try {
-        const { BrowserWindow } = require('electron');
-        const win = BrowserWindow.getAllWindows()[0];
-        if (win) win.setProgressBar(-1);
-      } catch (e) { /* non-fatal */ }
-      try {
-        const { Notification } = require('electron');
-        new Notification({
-          title: 'Posnic update ready',
-          body: 'It will install the next time you close Posnic, or install now via Software Update.'
-        }).show();
-      } catch (e) { /* notifications unavailable - non-fatal */ }
-    });
+    /*
+     * Slack-style silent updates.
+     *
+     * We deliberately do NOT show a taskbar progress bar or an "update ready"
+     * popup. An app (patch/minor) update - which is where our features ship -
+     * downloads quietly in the background (see update-available below) and is
+     * applied on the next close by the quit handler, which backs the shop up
+     * first. So the till just opens on the new version next launch: the shop
+     * never sees a download bar or a prompt, exactly like Slack.
+     *
+     * The Updates screen still shows live progress for anyone who opens it (that
+     * broadcast is a separate listener below), and core (Electron/Node) updates
+     * still wait for a deliberate click because their restart is longer.
+     */
 
     if (!app.isPackaged) {
       autoUpdater.forceDevUpdateConfig = true;
