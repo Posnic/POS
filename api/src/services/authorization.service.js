@@ -16,6 +16,7 @@ const mongoose = require('mongoose');
 const User = require('../models/user.model');
 const BaseModel = require('../models/base.model');
 const { AuditService, AUDIT_EVENTS } = require('./audit.service');
+const { signApproval } = require('../utils/approval-token.util');
 
 const PIN_RE = /^\d{4,8}$/;
 // Legacy account types that may authorise regardless of a resolved pos matrix.
@@ -88,10 +89,20 @@ class AuthorizationService {
         reason: `Approved ${action}`,
         details: { action },
       });
+      const cashierId = (actor && actor.id) || BaseModel.loggedUser || null;
       return {
         status: true,
         message: 'Approved',
-        data: { approved_by_user_id: String(m._id), approved_by_name: approverName, action },
+        data: {
+          approved_by_user_id: String(m._id),
+          approved_by_name: approverName,
+          action,
+          approval_token: signApproval({
+            action,
+            approved_by_user_id: String(m._id),
+            cashier_user_id: cashierId ? String(cashierId) : null,
+          }),
+        },
       };
     }
     return {
@@ -164,10 +175,21 @@ class AuthorizationService {
       reason: `Approved ${action} (card)`,
       details: { action, method: 'rfid' },
     });
+    const cashierId = (actor && actor.id) || BaseModel.loggedUser || null;
     return {
       status: true,
       message: 'Approved',
-      data: { approved_by_user_id: String(m._id), approved_by_name: approverName, action, method: 'rfid' },
+      data: {
+        approved_by_user_id: String(m._id),
+        approved_by_name: approverName,
+        action,
+        method: 'rfid',
+        approval_token: signApproval({
+          action,
+          approved_by_user_id: String(m._id),
+          cashier_user_id: cashierId ? String(cashierId) : null,
+        }),
+      },
     };
   }
 

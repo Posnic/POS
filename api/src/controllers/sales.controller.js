@@ -16,6 +16,8 @@ const CashbackService = require('../services/cashback.service');
 const cashbackService = new CashbackService();
 const { createActivityLog } = require('../utils/activityLogger');
 const { AuditService, AUDIT_EVENTS } = require('../services/audit.service');
+const { canPos } = require('../utils/pos-permission.util');
+const { isApprovedFor } = require('../utils/approval-token.util');
 const sessionFilterUtil = require('../utils/session-filter.util');
 const { SALE_STATUS } = require('../constants');
 const {
@@ -993,6 +995,20 @@ class SalesController extends BaseController {
     try {
       if (!this.checkPermission('sales', 'delete', req.user)) {
         return this.error(res, ERROR_MESSAGES.UNAUTHORIZED_DELETE_SALES, 403);
+      }
+
+      // A sale delete is a void. If this user can't void on their own, require a
+      // valid manager-approval token (minted by /authorizations/verify-pin|card).
+      // Fails open for unconfigured users so existing tills are never blocked.
+      if (!canPos(req.user, 'void_sale')) {
+        const approved = isApprovedFor(
+          req.body && req.body.approval_token,
+          'void_sale',
+          req.user && req.user._id
+        );
+        if (!approved) {
+          return this.error(res, 'Voiding a sale needs manager approval', 403);
+        }
       }
 
       // Ensure BaseModel branch / license / user context is set for
@@ -5652,6 +5668,20 @@ class SalesController extends BaseController {
       const userAccess = req.user?.access?.sales?.write;
       if (userAccess !== true) {
         return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+      }
+
+      // Refund enforcement (mirrors the void gate). Require a valid manager
+      // approval token when this user can't refund on their own; fails open for
+      // unconfigured users so existing tills keep working.
+      if (!canPos(req.user, 'refund')) {
+        const approved = isApprovedFor(
+          req.body && req.body.approval_token,
+          'refund',
+          req.user && req.user._id
+        );
+        if (!approved) {
+          return this.error(res, 'A refund needs manager approval', 403);
+        }
       }
 
       await this.ensureContext(req);

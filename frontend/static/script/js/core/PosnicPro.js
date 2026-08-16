@@ -933,8 +933,9 @@ PosnicPro = {
             arr.push(obj);
             var params = {
                 url: '' + PosnicPro.record_url + '/delete',
-                data: JSON.stringify({ data: arr })
+                data: JSON.stringify({ data: arr, approval_token: PosnicPro._approvalToken || undefined })
             };
+            PosnicPro._approvalToken = null; // single-use
             PosnicPro.delete(params, function (response) {
                 if (response.type === 'success') {
                     let actionUrl = (PosnicPro.record_url === 'customerCategory') ? PosnicPro.record_url.toLowerCase() : PosnicPro.record_url;
@@ -987,8 +988,9 @@ PosnicPro = {
             });
             var params = {
                 url: '' + PosnicPro.record_url + '/delete',
-                data: JSON.stringify({ data: arr })
+                data: JSON.stringify({ data: arr, approval_token: PosnicPro._approvalToken || undefined })
             };
+            PosnicPro._approvalToken = null; // single-use
             //$(e).each(function (key, id) {
             PosnicPro.delete(params, function (response) {
                 if (response.type === 'success') {
@@ -1042,7 +1044,13 @@ PosnicPro = {
         if (PosnicPro.record_url === 'sales' && !PosnicPro.posCan('void_sale')) {
             var sid = (typeof cb.arguments === 'string') ? cb.arguments : null;
             PosnicPro.requireManagerApproval('void_sale',
-                { saleId: sid, prompt: "Voiding a sale needs a manager's approval." }, proceed);
+                { saleId: sid, prompt: "Voiding a sale needs a manager's approval." },
+                function (approval) {
+                    // Stash the token so the delete request can prove the approval
+                    // to the server (it is single-use: cleared once sent).
+                    PosnicPro._approvalToken = approval && approval.approval_token;
+                    proceed();
+                });
             return;
         }
         proceed();
