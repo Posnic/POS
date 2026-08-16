@@ -621,6 +621,7 @@ class SettingModel extends BaseModel {
         hardware_weight_machine_enable: hardware_weight_machine_enable,
         till_lock_enable: till_lock_enable,
         till_lock_idle_minutes: till_lock_idle_minutes,
+        allow_sale_date_edit: data.allow_sale_date_edit === 'false' ? 'false' : 'true',
       };
 
       // Normalize IDs to ObjectId for database query (matching PHP line 52)

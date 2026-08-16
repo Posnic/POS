@@ -1914,6 +1914,19 @@
                         <!-- table orders Start -->
                         <div class="tab-pane fade" id="v-pills-tableorder" role="tabpanel"
                             aria-labelledby="v-pills-tableorder-tab">
+                            <div class="card m-b-30" data-module="plan" data-access="read">
+                                <div class="card-body">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="table_options"
+                                            name="table_options" />
+                                        <label class="custom-control-label" for="table_options">
+                                            Enable Restaurant / KOT mode (table orders)
+                                        </label>
+                                    </div>
+                                    <small class="form-text text-muted">Turn this on to take dine-in orders by table and
+                                        send KOTs to the kitchen. Manage your tables below.</small>
+                                </div>
+                            </div>
                             <div class="card m-b-30">
                                 <div class="card-header">
                                     <h5 class="card-title">
@@ -2995,6 +3008,23 @@
                                                             placeholder="Ex :- S (or leave blank)">
                                                     </div>
                                                 </div>
+                                                <div class="row">
+                                                    <div class="form-group col-md-6">
+                                                        <label for="allow_sale_date_edit" data-toggle="tooltip"
+                                                            title="When off, the New Sale date is locked to the current date/time and cashiers cannot backdate a sale.">
+                                                            Allow changing sale date
+                                                        </label>
+                                                        <div class="custom-control custom-switch mt-2">
+                                                            <input type="checkbox" class="custom-control-input"
+                                                                id="allow_sale_date_edit" name="allow_sale_date_edit"
+                                                                checked />
+                                                            <label class="custom-control-label"
+                                                                for="allow_sale_date_edit"></label>
+                                                        </div>
+                                                        <small class="form-text text-muted">Off = date fixed to now on
+                                                            New Sale (no backdating).</small>
+                                                    </div>
+                                                </div>
 
                                                 <div class="row" data-module="plan" data-access="read">
                                                     <div class="form-group col-md-6">
@@ -3059,19 +3089,6 @@
                                                     </div>
                                                 </div>
 
-                                                <div class="row" data-module="plan" data-access="read">
-                                                    <div class="form-group col-md-6">
-                                                        <label for="table_options" data-toggle="tooltip"
-                                                            title="Enable(or)Disable table order">
-                                                            KOT Order </label>
-                                                        <div class="custom-control custom-switch mt-2">
-                                                            <input type="checkbox" class="custom-control-input"
-                                                                id="table_options" name="table_options" />
-                                                            <label class="custom-control-label"
-                                                                for="table_options"></label>
-                                                        </div>
-                                                    </div>
-                                                </div>
 
                                             </fieldset>
                                         </div>
