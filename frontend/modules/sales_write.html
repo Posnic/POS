@@ -42,7 +42,7 @@
                                  text sized to hold the full "YYYY/MM/DD hh:mm AM" without wrapping. -->
                             <input type="text" id="time-format" name="date"
                                 class="form-control-plaintext commonDate text-right text-muted" readonly
-                                style="padding:0; height:auto; border:0; background:transparent; white-space:nowrap; font-size:13px;" />
+                                style="padding:0; height:38px; line-height:38px; border:0; background:transparent; white-space:nowrap; font-size:13px;" />
                         </div>
                     </div>
                     <div class="row">
@@ -142,13 +142,14 @@
                                         </span>
                                     </a>
                                     <span class="input-group-btn" id="employee_box">
-                                        <span data-toggle="tooltip" data-placement="top"
-                                            data-original-title="Open customer">
-                                            <span
-                                                style="height:38px;border: transparent;border-radius: 0px;font-size: 18px;"
-                                                class="btn btn-primary-rgba toggle-user-input open_register_disabled">
-                                                <i class="feather icon-more-vertical"> </i>
-                                            </span>
+                                        <span id="sales_customer_btn"
+                                            class="btn btn-primary-rgba toggle-user-input open_register_disabled sales-customer-btn"
+                                            data-toggle="tooltip" data-placement="top"
+                                            title="Walk-in customer — click to choose or add"
+                                            data-original-title="Walk-in customer — click to choose or add">
+                                            <i class="feather icon-user"></i>
+                                            <span id="sales_customer_btn_label"
+                                                class="sales-customer-label">Walk-in</span>
                                         </span>
                                     </span>
                                 </div>
