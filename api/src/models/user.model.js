@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const { defineModel, getModel } = require('../db/model-registry');
 const { currentConnection } = require('../db/tenant-context');
+const { mergeAccess } = require('../utils/access-resolver');
 const bcrypt = require('bcryptjs');
 const { toJSON, paginate } = require('./plugins');
 
@@ -332,6 +333,18 @@ const userSchema = new mongoose.Schema(
     access: {
       type: Object,
       default: createDefaultAccess,
+    },
+    // Phase 1 roles: the assigned role + any per-user overrides. The RESOLVED
+    // matrix is stored on `access` (above) at write time via mergeAccess, so all
+    // enforcement keeps reading `access` with no per-request role lookup.
+    role_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Role',
+      default: null,
+    },
+    access_overrides: {
+      type: Object,
+      default: {},
     },
     address: {
       street: String,
@@ -1014,7 +1027,7 @@ userSchema.statics.userInsertUpdate = async function (data, id, context) {
       delete: deleteKey in data && data[deleteKey] ? true : false,
     });
 
-    const access = {
+    let access = {
       dashboard: {
         read: 'dashboard_read' in data && data.dashboard_read ? true : false,
         // The money-health layer - profit, cost, margin, expenses, cash, dues.
@@ -1048,6 +1061,34 @@ userSchema.statics.userInsertUpdate = async function (data, id, context) {
         read: context.user.access?.plan?.read || false,
       },
     };
+
+    // Phase 1 (roles): if a role is chosen, the user's effective access = the
+    // role's access merged with any per-user overrides. Users created without a
+    // role_id keep the flat-form matrix above (fully backward-compatible).
+    // plan.read stays an entitlement (from the creating user); editing your own
+    // record still keeps self-management. Fails open to the flat-form matrix.
+    if (data.role_id) {
+      try {
+        const roleDb = currentConnection(mongoose.connection).db;
+        const roleDoc = roleDb
+          ? await roleDb.collection('roles').findOne({
+            _id: new ObjectId(data.role_id),
+            license: context.license,
+          })
+          : null;
+        if (roleDoc && roleDoc.access) {
+          access = mergeAccess(roleDoc.access, data.access_overrides || {});
+          access.plan = { read: context.user.access?.plan?.read || false };
+          if (userType === id) {
+            ['branch', 'report', 'user'].forEach((m) => {
+              access[m] = { ...(access[m] || {}), write: true, delete: true };
+            });
+          }
+        }
+      } catch (roleErr) {
+        console.error('[userInsertUpdate] role resolve failed:', roleErr && roleErr.message);
+      }
+    }
 
     // PHP lines 238-266: Get branch printing design details
     // PHP lines 239-242: Convert branch_id strings to ObjectID for query
@@ -1127,6 +1168,9 @@ userSchema.statics.userInsertUpdate = async function (data, id, context) {
       branch_access: branch_data,
       printing_design: branchesValue,
       access: access,
+      role_id: data.role_id ? new ObjectId(data.role_id) : null,
+      access_overrides:
+        data.access_overrides && typeof data.access_overrides === 'object' ? data.access_overrides : {},
       plan: {
         name: context.user.plan?.name || 'premium',
         max_sales: context.user.plan?.max_sales || 'unlimited',
