@@ -42,7 +42,7 @@
                                  text sized to hold the full "YYYY/MM/DD hh:mm AM" without wrapping. -->
                             <input type="text" id="time-format" name="date"
                                 class="form-control-plaintext commonDate text-right text-muted" readonly
-                                style="padding:0; height:38px; line-height:38px; border:0; background:transparent; white-space:nowrap; font-size:13px; display:inline-block; width:165px; max-width:100%; float:right;" />
+                                style="padding:0; height:38px; line-height:38px; border:0; background:transparent; white-space:nowrap; font-size:13px; display:inline-block; width:165px; max-width:100%;" />
                         </div>
                     </div>
                     <div class="row">
@@ -155,24 +155,30 @@
                                 </div>
                             </div>
 
-                            <div class="row toggle-customer-user" style="display:none;">
-                                <div class="col-12 input-group bootstrap-touchspin" style="padding-right: 18px;">
-                                    <input type="text" id="sales_new_customer_name" placeholder="Enter Customer Name"
-                                        class="form-control border-control osk-trigger clear-sale-text" required>
-                                    <a data-module="customer" data-access="write" href="#/sales/customers/new"
-                                        class="btn btn-payment-mode active"
-                                        style="height:38px;border: transparent;border-radius: 0px;">
-                                        <i class="feather icon-plus" data-toggle="tooltip"
-                                            title="Add new customer easily"></i>
-                                    </a>
+                            <div class="toggle-customer-user sales-customer-pop" style="display:none;">
+                                <div class="sales-customer-pop-head">
+                                    <span class="sales-customer-pop-title"><i
+                                            class="feather icon-users mr-1"></i>Choose customer</span>
+                                    <a href="javascript:void(0)" class="sales-customer-pop-x"
+                                        id="sales_customer_pop_close" title="Close">&times;</a>
                                 </div>
-                                <!--                                <div class="col-6 input-group bootstrap-touchspin" style="padding-left: 0px; max-width: 100%;display:none;">
-                                
-                                                                    <input type="text" placeholder="Find User" name="search_user_name" id="search_user_name" class="form-control user-name" readonly>
-                                                                    <button type="button" class="btn btn-payment-mode active" style="height:38px;border: transparent;border-radius: 0px; cursor: context-menu;">
-                                                                        User
-                                                                    </button>
-                                                                </div>-->
+                                <div class="input-group bootstrap-touchspin sales-customer-search-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text sales-customer-search-ic"><i
+                                                class="feather icon-search"></i></span>
+                                    </div>
+                                    <input type="text" id="sales_new_customer_name" placeholder="Search name or phone…"
+                                        class="form-control border-control osk-trigger clear-sale-text" required
+                                        autocomplete="off">
+                                </div>
+                                <a data-module="customer" data-access="write" href="#/sales/customers/new"
+                                    class="sales-customer-pop-action" id="sales_customer_add_new">
+                                    <i class="feather icon-user-plus mr-2"></i>Add new customer
+                                </a>
+                                <a href="javascript:void(0)" class="sales-customer-pop-action sales-customer-walkin"
+                                    id="sales_customer_walkin">
+                                    <i class="feather icon-user mr-2"></i>Walk-in · no customer
+                                </a>
                             </div>
                             <div>
 

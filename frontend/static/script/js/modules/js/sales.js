@@ -7179,6 +7179,7 @@ $('#sales_new_customer_name').on('keydown.autocomplete', function () {
                 PosnicPro.sales.calculation.salesTableRowCart();
                 if (PosnicPro.loyalty) PosnicPro.loyalty.tillShow(suggestion.data.id);
                 if (PosnicPro.sales.updateCustomerChip) PosnicPro.sales.updateCustomerChip();
+                $('.toggle-customer-user').hide();
             } else {
                 hasher.setHash('sales/customers/new');
             }
@@ -7263,7 +7264,35 @@ PosnicPro.sales.updateCustomerChip = function () {
     }
 };
 $('.toggle-user-input').click(function () {
-    $('.toggle-customer-user').toggle();
+    var $pop = $('.toggle-customer-user');
+    $pop.toggle();
+    if ($pop.is(':visible')) {
+        setTimeout(function () { $('#sales_new_customer_name').trigger('focus'); }, 0);
+    }
+});
+// Customer popover: close on the × or an outside click; "Walk-in" clears the
+// customer back to none. Selecting a search result (autocomplete onSelect) also
+// closes it. The popover reuses #sales_new_customer_name so search/submit are
+// unchanged - only the presentation moved into a floating card.
+$(document).on('click', '#sales_customer_pop_close', function () {
+    $('.toggle-customer-user').hide();
+});
+$(document).on('click', '#sales_customer_walkin', function (e) {
+    e.preventDefault();
+    $('#sales_new_customer_id,#sales_new_customer_name,#sales_new_customer_address,#sales_new_customer_phone,#sales_new_customer_email,#sales_new_customer_state,#sales_new_customer_gst_type,#sales_new_customer_gst_number,#sales_new_customer_partial_balance').val('');
+    if (PosnicPro.sales.updateCustomerChip) { PosnicPro.sales.updateCustomerChip(); }
+    if (PosnicPro.loyalty && PosnicPro.loyalty.tillClear) { PosnicPro.loyalty.tillClear(); }
+    if (PosnicPro.sales.calculation && PosnicPro.sales.calculation.salesTableRowCart) {
+        PosnicPro.sales.calculation.salesTableRowCart();
+    }
+    $('.toggle-customer-user').hide();
+});
+$(document).on('mousedown', function (e) {
+    var $pop = $('.toggle-customer-user');
+    if (!$pop.length || !$pop.is(':visible')) { return; }
+    if ($(e.target).closest('.toggle-customer-user, #sales_customer_btn, .autocomplete-suggestions').length === 0) {
+        $pop.hide();
+    }
 });
 $(document).ready(function () {
     if (PosnicPro.sales.updateCustomerChip) { PosnicPro.sales.updateCustomerChip(); }

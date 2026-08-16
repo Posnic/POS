@@ -2852,6 +2852,75 @@ html:not([data-theme]) .card-body {
     width: 100% !important;
 }
 
+/* Customer popover: opens under the customer button as a floating card - search
+   by name/phone (live results), add a new customer, or drop to walk-in. Replaces
+   the old full-width toggle row that pushed the whole page down. Theme-aware. */
+#items_view_hide {
+    position: relative;
+}
+.toggle-customer-user.sales-customer-pop {
+    position: absolute;
+    top: 52px;
+    right: 18px;
+    width: 300px;
+    max-width: calc(100% - 24px);
+    z-index: 1050;
+    padding: 10px;
+    background: var(--theme-body-bg, #ffffff);
+    border: 1px solid rgba(128, 128, 128, 0.22);
+    border-radius: 10px;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.16);
+}
+.sales-customer-pop-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+.sales-customer-pop-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #8a94a6;
+}
+.sales-customer-pop-x {
+    font-size: 18px;
+    line-height: 1;
+    color: #8a94a6;
+    text-decoration: none;
+}
+.sales-customer-pop-x:hover {
+    color: #f9616d;
+    text-decoration: none;
+}
+.sales-customer-search-group {
+    margin-bottom: 8px;
+}
+.sales-customer-search-ic {
+    background: transparent;
+    border-right: 0;
+}
+.sales-customer-pop-action {
+    display: flex;
+    align-items: center;
+    padding: 9px 10px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--theme-text-primary, #16203a);
+    text-decoration: none;
+    cursor: pointer;
+}
+.sales-customer-pop-action:hover {
+    background: rgba(128, 128, 128, 0.10);
+    color: var(--theme-text-primary, #16203a);
+    text-decoration: none;
+}
+.sales-customer-walkin {
+    color: #8a94a6;
+}
+
 /* Default theme: crisp inputs - a clear border so fields read as distinct
    surfaces, and an obvious focus ring on the active field (the purchase-page
    inputs previously looked flat / unhighlighted). */
