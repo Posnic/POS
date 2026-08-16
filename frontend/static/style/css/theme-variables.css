@@ -1410,7 +1410,7 @@ body {
 /* Clock-in/out infobar icon (inline SVG). It inherits the primary-blue colour
    above, which disappears on the blue hover background - so set it explicitly:
    theme text colour at rest, white on hover. */
-#shift_clock_btn .shift-clock-ico { color: var(--theme-text-primary, #495057) !important; vertical-align: middle; }
+#shift_clock_btn .shift-clock-ico { width: 20px !important; height: 20px !important; margin: auto; display: block; color: var(--theme-text-primary, #495057) !important; }
 #shift_clock_btn:hover .shift-clock-ico { color: #fff !important; }
 
 /* Sweet-alert confirm button label stays readable on its coloured background
