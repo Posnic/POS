@@ -8,6 +8,7 @@ const branchesService = require('../services/branch.service');
 const { mongoRegisterDateFilter } = require('../helpers/registers.helper');
 const sessionFilterUtil = require('../utils/session-filter.util');
 const { getRequestDeviceId } = require('../utils/device-id.util');
+const { AuditService, AUDIT_EVENTS } = require('../services/audit.service');
 
 class RegistersController extends BaseController {
   constructor() {
@@ -382,6 +383,14 @@ class RegistersController extends BaseController {
       const result = await this.service.registercloseUpdate(req.body);
 
       if (result.status === true) {
+        // Append-only accountability trail. Fail-safe: never throws, so a
+        // failed audit write can't break the close (actor/tenant come from the
+        // per-request context set by setRequestContext above).
+        await new AuditService(this.registerModel).record(AUDIT_EVENTS.REGISTER_CLOSE, {
+          entity: 'cashregister',
+          entity_id: req.body.cash_register_id,
+          device_id: req.body.lock_device_id,
+        });
         return this.success(res, result.data, result.message);
       } else {
         return this.error(res, result.message, result.statusCode || 404, result.data);

@@ -874,6 +874,10 @@ class RegisterRepository {
       let currentUserId = this.model.user?._id || BaseModel.loggedUser || null;
       if (typeof currentUserId === 'string' && ObjectId.isValid(currentUserId))
         currentUserId = new ObjectId(currentUserId);
+      // Record who actually performed the close. This can differ from
+      // current_user_id (the session owner) when a manager closes another
+      // cashier's till, and it feeds the shift / payout reports.
+      registerCollectionData.register_closed_by = currentUserId;
       const role = String(
         data.request_user_role || this.model.user?.usertype || this.model.user?.role || ''
       ).toLowerCase();
