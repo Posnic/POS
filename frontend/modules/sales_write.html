@@ -22,7 +22,7 @@
                 <form class="touchsales_page" id="touchsales_page">
                     <!-- start -->
                     <div class="row" style="margin-top: -35px;">
-                        <div class="col-xs-2 col-md-6 col-lg-6 col-xl-6">
+                        <div class="col-xs-2 col-md-5 col-lg-5 col-xl-5">
                         </div>
                         <div class="col-xs-5 col-md-3 col-lg-3 col-xl-3 pull-right" style="padding-right: 5px; display: none;" id="weight_machine_container">
                             <div style="display: flex; align-items: center; gap: 10px;">
@@ -37,12 +37,12 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-xs-5 col-md-3 col-lg-3 col-xl-3 pull-right">
-                            <!-- Plain date field. The input-group/bootstrap-touchspin classes and
-                                 data-bts-* attributes here were leftovers copied from a quantity
-                                 spinner and rendered a stray spinner "box" around the date. -->
+                        <div class="col-xs-5 col-md-4 col-lg-4 col-xl-4 pull-right">
+                            <!-- Plain date/time readout - no field box, just right-aligned muted
+                                 text sized to hold the full "YYYY/MM/DD hh:mm AM" without wrapping. -->
                             <input type="text" id="time-format" name="date"
-                                class="form-control commonDate text-right text-muted" readonly />
+                                class="form-control-plaintext commonDate text-right text-muted" readonly
+                                style="padding:0; height:auto; border:0; background:transparent; white-space:nowrap; font-size:13px;" />
                         </div>
                     </div>
                     <div class="row">
@@ -188,9 +188,9 @@
                                         <input type="number" min="0" step="1" id="sales_loyalty_redeem_points"
                                             class="form-control" placeholder="0">
                                         <div class="input-group-append">
-                                            <button type="button" class="btn btn-outline-primary"
+                                            <button type="button" class="btn btn-success-rgba"
                                                 id="sales_loyalty_redeem_apply">Apply</button>
-                                            <button type="button" class="btn btn-outline-secondary"
+                                            <button type="button" class="btn btn-secondary-rgba"
                                                 id="sales_loyalty_redeem_clear" title="Clear redemption">&times;</button>
                                         </div>
                                     </div>
@@ -303,21 +303,21 @@
 
                             <div class="row kot-hide" id="sales_coupon_row">
                                 <div class="col-12 mb-2">
-                                    <div id="sales_coupon_panel">
-                                        <div class="input-group input-group-sm" style="max-width: 360px;">
+                                    <div id="sales_coupon_panel" class="d-flex flex-column align-items-end">
+                                        <div class="input-group input-group-sm" style="max-width: 320px;">
                                             <div class="input-group-prepend">
                                                 <span class="input-group-text"><i class="feather icon-tag"></i></span>
                                             </div>
                                             <input type="text" id="sales_coupon_code"
                                                 class="form-control text-uppercase" placeholder="Coupon code">
                                             <div class="input-group-append">
-                                                <button type="button" class="btn btn-outline-primary"
+                                                <button type="button" class="btn btn-success-rgba"
                                                     id="sales_coupon_apply">Apply</button>
-                                                <button type="button" class="btn btn-outline-secondary"
+                                                <button type="button" class="btn btn-secondary-rgba"
                                                     id="sales_coupon_clear" title="Remove coupon">&times;</button>
                                             </div>
                                         </div>
-                                        <div id="sales_coupon_status" class="small mt-1"></div>
+                                        <div id="sales_coupon_status" class="small mt-1 text-right"></div>
                                     </div>
                                 </div>
                             </div>

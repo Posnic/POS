@@ -9,6 +9,27 @@ $(document).ready(function () {
     $.fn.editable.defaults.mode = 'popup';
     $.fn.editableform.buttons = '<button type="submit" class="btn btn-success editable-submit btn-sm"><i class="feather icon-check"></i></button><button type="button" class="btn btn-danger editable-cancel btn-sm"><i class="feather icon-x"></i></button>';
 
+    // Glanceable flag on a note's edit link. Once text is set the pencil turns
+    // green and a check + short preview appears next to it (full text on hover);
+    // empty resets to the plain blue pencil. The old behaviour only tinted the
+    // tiny pencil, which was too subtle to notice that a note had been saved.
+    window.PosnicPro = window.PosnicPro || {};
+    PosnicPro.updateSaleNoteFlag = function (clickId, iconClass, text) {
+        var $a = $('#' + clickId);
+        if (!$a.length) { return; }
+        var t = (text == null) ? '' : String(text).trim();
+        if (t.length > 0) {
+            var preview = t.length > 24 ? t.slice(0, 24) + '…' : t;
+            $a.attr('title', t).css({ color: '#2ca77b' }).html(
+                '[<i class="' + iconClass + '"></i>] ' +
+                '<span class="note-set-flag" style="color:#2ca77b;font-weight:600;white-space:nowrap;">' +
+                '<i class="feather icon-check"></i> ' + $('<div>').text(preview).html() + '</span>'
+            );
+        } else {
+            $a.removeAttr('title').css({ color: '#506fe4' }).html('[<i class="' + iconClass + '"></i>]');
+        }
+    };
+
     $('#extraDisc').editable({
         mode: 'inline',
         type: 'number', // Input type
@@ -62,12 +83,7 @@ $(document).ready(function () {
             $('#payment_description').val(val);
             $('#payment_description').text('');
             $('#payment_description').hide();
-            if (val.length > 0) {
-                $('#click_payment_description').css({ color: '#5fd799' });
-            } else {
-                $('#click_payment_description').css({ color: '#506fe4' });
-            }
-
+            PosnicPro.updateSaleNoteFlag('click_payment_description', 'feather icon-edit-1', val);
         }
     });
     $('#click_payment_description').click(function (e) {
@@ -95,11 +111,7 @@ $(document).ready(function () {
             $('#sales_description').val(val);
             $('#sales_description').text('');
             $('#sales_description').hide();
-            if (val.length > 0) {
-                $('#click_sales_description').css({ color: '#5fd799' });
-            } else {
-                $('#click_sales_description').css({ color: '#506fe4' });
-            }
+            PosnicPro.updateSaleNoteFlag('click_sales_description', 'feather icon-edit-1', val);
         }
     });
     $('#click_sales_description').click(function (e) {
