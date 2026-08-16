@@ -2943,6 +2943,10 @@ html:not([data-theme]) .card-body {
    top-RIGHT corner (clear of the sidebar), lift it above the modal body, and
    make it a real circular button with a clear hover state. */
 #infobar-settings-sidebar-tender-details .infobar-settings-sidebar-head {
+    display: none !important;
+}
+#infobar-settings-sidebar-tender-details.sidebarview .infobar-settings-sidebar-head {
+    display: block !important;
     position: fixed !important;
     top: 12px !important;
     right: 18px !important;
@@ -2951,7 +2955,10 @@ html:not([data-theme]) .card-body {
     padding: 0 !important;
     z-index: 1060 !important;
 }
-#infobar-settings-sidebar-tender-details .infobar-tender-close {
+/* Scope the circular styling to ONLY the × inside the head. The
+   .infobar-tender-close class is ALSO on the Cancel / New sale / Tender buttons
+   in the body - styling all of them as 40px circles collapsed those buttons. */
+#infobar-settings-sidebar-tender-details .infobar-settings-sidebar-head .infobar-tender-close {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -2963,14 +2970,14 @@ html:not([data-theme]) .card-body {
     cursor: pointer;
     transition: background 0.15s ease;
 }
-#infobar-settings-sidebar-tender-details .infobar-tender-close:hover {
+#infobar-settings-sidebar-tender-details .infobar-settings-sidebar-head .infobar-tender-close:hover {
     background: #f9616d;
 }
-#infobar-settings-sidebar-tender-details .infobar-tender-close img {
+#infobar-settings-sidebar-tender-details .infobar-settings-sidebar-head .infobar-tender-close img {
     width: 18px;
     transition: filter 0.15s ease;
 }
-#infobar-settings-sidebar-tender-details .infobar-tender-close:hover img {
+#infobar-settings-sidebar-tender-details .infobar-settings-sidebar-head .infobar-tender-close:hover img {
     filter: brightness(0) invert(1);
 }
 
