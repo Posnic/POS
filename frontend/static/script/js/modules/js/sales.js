@@ -5874,6 +5874,7 @@ PosnicPro.sales.setSaleDefaults = function () {
         : PosnicPro.defaultcustomerSet();
     if (PosnicPro.loyalty) PosnicPro.loyalty.tillClear();
     if (PosnicPro.coupons) PosnicPro.coupons.tillClear();
+    if (PosnicPro.sales.updateCustomerChip) PosnicPro.sales.updateCustomerChip();
 
     PosnicPro.sales.sale_offlineadditems = [];
     PosnicPro.sales.editSaleAction = false;
@@ -6478,6 +6479,7 @@ PosnicPro.sales.recentMenu = {
         $('#sales_new_customer_phone').val(result.customer_phone || '');
         $('#sales_new_customer_email').val(result.customer_email || '');
         $('#sales_new_customer_state').val(result.customer_state || '');
+        if (PosnicPro.sales.updateCustomerChip) PosnicPro.sales.updateCustomerChip();
         $('#sales_new_customer_country').val(result.customer_country || '');
         $('#sales_new_customer_gst_type').val(result.customer_gst_type || '');
         $('#sales_new_customer_gst_number').val(result.customer_gst_number || '');
@@ -7176,6 +7178,7 @@ $('#sales_new_customer_name').on('keydown.autocomplete', function () {
                 db.customerDisplay.put({ id: '1', clear: 'no', 'get': 'no', customer: customerRecord });
                 PosnicPro.sales.calculation.salesTableRowCart();
                 if (PosnicPro.loyalty) PosnicPro.loyalty.tillShow(suggestion.data.id);
+                if (PosnicPro.sales.updateCustomerChip) PosnicPro.sales.updateCustomerChip();
             } else {
                 hasher.setHash('sales/customers/new');
             }
@@ -7234,8 +7237,36 @@ var $table = $('.tableFixHead').find('thead th')
 $('.tableFixHead').on('scroll', function () {
     $table.css('transform', 'translateY(' + this.scrollTop + 'px)');
 });
+// Customer chip on the sales screen: reflect who the sale is for. "Walk-in"
+// (muted user icon) when no customer is set; the customer's name (accent,
+// checked icon, name + phone on hover) once one is chosen. Kept in sync from
+// the autocomplete select, the new-sale reset and the edit-sale load.
+PosnicPro.sales.updateCustomerChip = function () {
+    var $btn = $('#sales_customer_btn');
+    if (!$btn.length) { return; }
+    var id = ($('#sales_new_customer_id').val() || '').trim();
+    var name = ($('#sales_new_customer_name').val() || '').trim();
+    var phone = ($('#sales_new_customer_phone').val() || '').trim();
+    var $icon = $btn.children('i.feather');
+    if (id) {
+        $('#sales_customer_btn_label').text(name || 'Customer');
+        $btn.addClass('has-customer');
+        $icon.removeClass('icon-user').addClass('icon-user-check');
+        var tip = (name || 'Customer') + (phone ? ' · ' + phone : '');
+        $btn.attr('data-original-title', tip).attr('title', tip);
+    } else {
+        $('#sales_customer_btn_label').text('Walk-in');
+        $btn.removeClass('has-customer');
+        $icon.removeClass('icon-user-check').addClass('icon-user');
+        var t = 'Walk-in customer — click to choose or add';
+        $btn.attr('data-original-title', t).attr('title', t);
+    }
+};
 $('.toggle-user-input').click(function () {
     $('.toggle-customer-user').toggle();
+});
+$(document).ready(function () {
+    if (PosnicPro.sales.updateCustomerChip) { PosnicPro.sales.updateCustomerChip(); }
 });
 $(document).ready(function () {
     $(document).click(function (e) {

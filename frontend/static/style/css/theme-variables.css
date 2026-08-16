@@ -2669,23 +2669,34 @@ html:not([data-theme]) .card-body {
     margin-top: 0;
 }
 
-/* --- Item detail drawer polish (applies in every theme) ---------------------
-   1) The tab bodies (Details / Activities / History) carried a fat 30px pad
-      that left a lot of empty gap around the content - tighten it.
-   2) The bottom "Close" was a stark full-width white slab pinned to the panel
-      foot, so it read as a separate bar rather than part of the panel. Blend it
-      in, align it with the content, and give the button a soft rounded pill. */
-#infobar-settings-sidebar-item-details .infobar-settings-sidebar-body .custom-mode-setting {
-    padding: 10px 14px !important;
+/* --- Detail drawer polish (item / category / customer / supplier / branch,
+   applies in every theme) ---------------------------------------------------
+   1) Big vertical gap between the tabs and the content (tab wrapper padded 30px
+      on top, modal body another 20px). Pull the content UP by trimming only the
+      VERTICAL padding + the tab row's bottom margin - horizontal inset is left
+      exactly as-is so nothing shifts left.
+   2) The bottom "Close" was a stark full-width white slab pinned to the foot,
+      reading as a separate bar. Blend it in, align it, soften the button.
+   Scoped to .infobar-settings-sidebar so it covers ALL the detail drawers. */
+.infobar-settings-sidebar .infobar-settings-sidebar-body .nav-tabs.mb-3 {
+    margin-bottom: 8px !important;
 }
-#infobar-settings-sidebar-item-details .infobar-settings-sidebar-foot {
+.infobar-settings-sidebar .infobar-settings-sidebar-body .custom-mode-setting,
+.infobar-settings-sidebar .infobar-settings-sidebar-body .custom-layout-setting {
+    padding-top: 6px !important;
+    padding-bottom: 12px !important;
+}
+.infobar-settings-sidebar .slider-modal-body {
+    padding-top: 4px !important;
+}
+.infobar-settings-sidebar .infobar-settings-sidebar-foot {
     padding: 12px 18px !important;
     background: transparent !important;
     border-top: 1px solid rgba(0, 0, 0, 0.06) !important;
     box-shadow: none !important;
     text-align: right !important;
 }
-#infobar-settings-sidebar-item-details .infobar-settings-sidebar-foot .btn {
+.infobar-settings-sidebar .infobar-settings-sidebar-foot .btn {
     padding: 7px 22px !important;
     border-radius: 8px !important;
     font-weight: 500 !important;
@@ -2782,6 +2793,37 @@ html:not([data-theme]) .card-body {
 #sales_coupon_panel .sales-coupon-applied .feather {
     font-size: 13px;
     vertical-align: middle;
+}
+
+/* Sales customer button: shows who the sale is for. Neutral/muted "Walk-in"
+   when none is set; accent when a customer is attached. Name ellipsises, full
+   name + phone shows on hover (tooltip). Replaces the old ⋮ toggle. */
+.sales-customer-btn {
+    height: 38px;
+    border: 0;
+    border-radius: 0;
+    display: inline-flex !important;
+    align-items: center;
+    gap: 6px;
+    max-width: 200px;
+    background: rgba(128, 128, 128, 0.12) !important;
+    color: #6c757d !important;
+}
+.sales-customer-btn.has-customer {
+    background: rgba(80, 111, 228, 0.12) !important;
+    color: #506fe4 !important;
+}
+.sales-customer-btn .feather {
+    font-size: 16px;
+    flex: 0 0 auto;
+}
+.sales-customer-btn .sales-customer-label {
+    max-width: 130px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+    font-weight: 500;
 }
 
 /* Default theme: crisp inputs - a clear border so fields read as distinct
