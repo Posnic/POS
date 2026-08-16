@@ -1,0 +1,71 @@
+'use strict';
+
+const { ROLE_KEYS, DEFAULT_ROLES } = require('../../../src/constants/roles.constants');
+
+const byKey = (k) => DEFAULT_ROLES.find((r) => r.key === k);
+const MODULES = [
+  'dashboard', 'sales', 'receiving', 'customer', 'supplier', 'category',
+  'item', 'expense', 'branch', 'report', 'user', 'plan',
+];
+
+describe('DEFAULT_ROLES', () => {
+  test('ships the 8 standard system roles in order', () => {
+    expect(DEFAULT_ROLES).toHaveLength(8);
+    expect(DEFAULT_ROLES.map((r) => r.key)).toEqual([
+      'owner', 'admin', 'store_manager', 'shift_supervisor',
+      'cashier', 'inventory_clerk', 'accountant', 'api',
+    ]);
+  });
+
+  test('every role is a system role with a name, description and full access matrix', () => {
+    DEFAULT_ROLES.forEach((r) => {
+      expect(r.is_system).toBe(true);
+      expect(typeof r.name).toBe('string');
+      expect(r.description.length).toBeGreaterThan(0);
+      MODULES.forEach((m) => expect(r.access[m]).toBeDefined());
+    });
+  });
+
+  test('Owner and Admin have full access + financials', () => {
+    [byKey('owner'), byKey('admin')].forEach((r) => {
+      expect(r.access.dashboard.financials).toBe(true);
+      expect(r.access.sales).toEqual({ read: true, write: true, delete: true });
+      expect(r.access.user).toEqual({ read: true, write: true, delete: true });
+      expect(r.access.plan.read).toBe(true);
+    });
+  });
+
+  test('Cashier can ring sales + add customers, but NOT delete, see reports/financials, or manage users', () => {
+    const c = byKey('cashier');
+    expect(c.access.sales).toEqual({ read: true, write: true, delete: false });
+    expect(c.access.customer).toEqual({ read: true, write: true, delete: false });
+    expect(c.access.dashboard.financials).toBe(false);
+    expect(c.access.report).toEqual({ read: false, write: false, delete: false });
+    expect(c.access.user).toEqual({ read: false, write: false, delete: false });
+    expect(c.access.expense).toEqual({ read: false, write: false, delete: false });
+    expect(c.access.plan.read).toBe(false);
+  });
+
+  test('Accountant is read-only with financials (no writes anywhere)', () => {
+    const a = byKey('accountant');
+    expect(a.access.dashboard.financials).toBe(true);
+    expect(a.access.report.read).toBe(true);
+    ['sales', 'item', 'expense', 'customer'].forEach((m) => {
+      expect(a.access[m].write).toBe(false);
+      expect(a.access[m].delete).toBe(false);
+    });
+  });
+
+  test('Inventory Clerk manages items but has no POS (sales) access', () => {
+    const k = byKey('inventory_clerk');
+    expect(k.access.item).toEqual({ read: true, write: true, delete: true });
+    expect(k.access.sales).toEqual({ read: false, write: false, delete: false });
+  });
+
+  test('ROLE_KEYS values are unique snake_case strings and cover all defaults', () => {
+    const vals = Object.values(ROLE_KEYS);
+    vals.forEach((v) => expect(v).toMatch(/^[a-z_]+$/));
+    expect(new Set(vals).size).toBe(vals.length);
+    expect(vals.sort()).toEqual(DEFAULT_ROLES.map((r) => r.key).sort());
+  });
+});
