@@ -55,6 +55,54 @@ const access = ({
   plan: { read: plan },
 });
 
+// POS-granular permissions (Phase 2). Layered on top of the CRUD access matrix,
+// these gate the sensitive till actions. Numeric caps: 0 = no cap (unlimited)
+// when the matching boolean is true. `requires_manager_approval` (per role) lists
+// actions a role cannot self-perform but a manager may authorise on the spot.
+const POS_PERMISSIONS = {
+  DISCOUNT_APPLY: 'discount_apply',
+  PRICE_OVERRIDE: 'price_override',
+  VOID_LINE: 'void_line',
+  VOID_SALE: 'void_sale',
+  REFUND: 'refund',
+  REPRINT_RECEIPT: 'reprint_receipt',
+  NO_SALE_OPEN_DRAWER: 'no_sale_open_drawer',
+  REGISTER_OPEN: 'register_open',
+  REGISTER_CLOSE: 'register_close',
+  CASH_IN_OUT: 'cash_in_out',
+  CASH_DROP: 'cash_drop',
+};
+
+const pos = (o = {}) => ({
+  discount_apply: !!o.discount_apply,
+  discount_max_percent: o.discount_max_percent != null ? o.discount_max_percent : 0,
+  price_override: !!o.price_override,
+  void_line: !!o.void_line,
+  void_sale: !!o.void_sale,
+  refund: !!o.refund,
+  refund_max_amount: o.refund_max_amount != null ? o.refund_max_amount : 0,
+  reprint_receipt: !!o.reprint_receipt,
+  no_sale_open_drawer: !!o.no_sale_open_drawer,
+  register_open: !!o.register_open,
+  register_close: !!o.register_close,
+  cash_in_out: !!o.cash_in_out,
+  cash_drop: !!o.cash_drop,
+});
+const POS_FULL = {
+  discount_apply: true,
+  discount_max_percent: 100,
+  price_override: true,
+  void_line: true,
+  void_sale: true,
+  refund: true,
+  reprint_receipt: true,
+  no_sale_open_drawer: true,
+  register_open: true,
+  register_close: true,
+  cash_in_out: true,
+  cash_drop: true,
+};
+
 const ROLE_KEYS = {
   OWNER: 'owner',
   ADMIN: 'admin',
@@ -125,4 +173,51 @@ const DEFAULT_ROLES = [
   },
 ];
 
-module.exports = { ROLE_KEYS, DEFAULT_ROLES };
+// Attach the POS-granular permission set + manager-approval list per role.
+// Cashier can only reprint; voids/refunds/discounts/no-sale/register-close need
+// a manager. Supervisor can do most within limits (a full void needs a manager).
+const ROLE_POS = {
+  owner: pos(POS_FULL),
+  admin: pos(POS_FULL),
+  store_manager: pos(POS_FULL),
+  shift_supervisor: pos({
+    discount_apply: true,
+    discount_max_percent: 20,
+    void_line: true,
+    refund: true,
+    reprint_receipt: true,
+    no_sale_open_drawer: true,
+    register_open: true,
+    register_close: true,
+    cash_in_out: true,
+    cash_drop: true,
+  }),
+  cashier: pos({ reprint_receipt: true }),
+  inventory_clerk: pos({}),
+  accountant: pos({}),
+  api: pos({ reprint_receipt: true }),
+};
+const ROLE_MGR_APPROVAL = {
+  owner: [],
+  admin: [],
+  store_manager: [],
+  shift_supervisor: ['void_sale'],
+  cashier: [
+    'void_line',
+    'void_sale',
+    'refund',
+    'discount_apply',
+    'price_override',
+    'no_sale_open_drawer',
+    'register_close',
+  ],
+  inventory_clerk: [],
+  accountant: [],
+  api: [],
+};
+DEFAULT_ROLES.forEach((r) => {
+  r.pos = ROLE_POS[r.key] || pos({});
+  r.requires_manager_approval = ROLE_MGR_APPROVAL[r.key] || [];
+});
+
+module.exports = { ROLE_KEYS, DEFAULT_ROLES, POS_PERMISSIONS };

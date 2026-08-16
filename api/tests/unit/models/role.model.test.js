@@ -40,14 +40,14 @@ describe('RoleModel', () => {
     expect(new RoleModel().collectionName).toBe('roles');
   });
 
-  test('declares all expected fields (11)', () => {
+  test('declares all expected fields (12)', () => {
     const f = new RoleModel().fields;
     const expected = [
       '_id', 'license', 'name', 'key', 'is_system', 'description',
-      'branch_scope', 'access', 'pos', 'created_date', 'updated_date',
+      'branch_scope', 'access', 'pos', 'requires_manager_approval', 'created_date', 'updated_date',
     ];
     expected.forEach((n) => expect(f[n]).toBeDefined());
-    expect(Object.keys(f)).toHaveLength(11);
+    expect(Object.keys(f)).toHaveLength(12);
   });
 
   test('license is select:false; name/key/access are select:true', () => {

@@ -69,6 +69,9 @@ class RoleRepository {
         branch_scope: data.branch_scope || 'all',
         access: data.access && typeof data.access === 'object' ? data.access : {},
         pos: data.pos && typeof data.pos === 'object' ? data.pos : {},
+        requires_manager_approval: Array.isArray(data.requires_manager_approval)
+          ? data.requires_manager_approval
+          : [],
         created_date: now,
         updated_date: now,
       };
@@ -88,6 +91,9 @@ class RoleRepository {
       if (data.branch_scope !== undefined) set.branch_scope = data.branch_scope;
       if (data.access !== undefined) set.access = data.access;
       if (data.pos !== undefined) set.pos = data.pos;
+      if (data.requires_manager_approval !== undefined) {
+        set.requires_manager_approval = data.requires_manager_approval;
+      }
       // Note: key + is_system are intentionally never updatable here.
       const result = await collection.updateOne(
         { _id: this.model.toObjectId(id), license: this._license() },
@@ -140,7 +146,8 @@ class RoleRepository {
         description: d.description,
         branch_scope: 'all',
         access: d.access,
-        pos: {},
+        pos: d.pos || {},
+        requires_manager_approval: d.requires_manager_approval || [],
         created_date: now,
         updated_date: now,
       }));
