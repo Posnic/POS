@@ -102,6 +102,47 @@ class ShiftsController extends BaseController {
       return this.error(res, error.message, 500);
     }
   }
+
+  // Labour / payout report over a date range (defaults to the last 30 days).
+  async report(req, res) {
+    try {
+      this.setRequestContext(req);
+      if (!this.checkPermission('user', 'read', req.user)) {
+        return this.error(res, 'You do not have permission to view the labour report', 403);
+      }
+      const parseDate = (v) => {
+        if (!v) return null;
+        const d = new Date(v);
+        return Number.isNaN(d.getTime()) ? null : d;
+      };
+      const to = parseDate(req.query.to) || new Date();
+      const from = parseDate(req.query.from) || new Date(to.getTime() - 30 * 24 * 60 * 60 * 1000);
+      const result = await this.service.getReport({ from, to, user_id: req.query.user_id });
+      if (result.status) return this.success(res, result.data, 'success');
+      return this.error(res, result.message, 400);
+    } catch (error) {
+      return this.error(res, error.message, 500);
+    }
+  }
+
+  // Set a user's hourly wage (managing wages ~ managing staff).
+  async setRate(req, res) {
+    try {
+      this.setRequestContext(req);
+      if (!this.checkPermission('user', 'write', req.user)) {
+        return this.error(res, 'You do not have permission to set a wage', 403);
+      }
+      const result = await this.service.setRate({
+        userId: req.body.user_id || req.body.userId,
+        hourlyRate: req.body.hourly_rate,
+        license: req.user && req.user.license,
+      });
+      if (result.status) return this.success(res, null, result.message);
+      return this.error(res, result.message, result.statusCode || 400);
+    } catch (error) {
+      return this.error(res, error.message, 500);
+    }
+  }
 }
 
 module.exports = new ShiftsController();

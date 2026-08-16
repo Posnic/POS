@@ -3,8 +3,10 @@
 // Thin service over ShiftRepository that also records CLOCK_IN / CLOCK_OUT to the
 // append-only audit trail (fail-safe: an audit failure never breaks the clock op).
 
+const mongoose = require('mongoose');
 const ShiftRepository = require('../repositories/shift.repository');
 const BaseModel = require('../models/base.model');
+const User = require('../models/user.model');
 const authorizationService = require('./authorization.service');
 const { AuditService, AUDIT_EVENTS } = require('./audit.service');
 
@@ -84,6 +86,57 @@ class ShiftService {
 
   listShifts(opts = {}) {
     return this.repository.listShifts(opts);
+  }
+
+  // Labour / payout report: per-user worked hours over a range, times each
+  // person's hourly wage (0 if unset => hours only). Wages are joined here so
+  // the repository stays about shift data.
+  async getReport({ from, to, user_id } = {}) {
+    const result = await this.repository.getShiftReport({ from, to, user_id });
+    if (!result.status || !result.data) return result;
+
+    const rows = result.data.rows || [];
+    const ids = rows.map((r) => r.user_id).filter(Boolean);
+    let userById = {};
+    if (ids.length) {
+      try {
+        const users = await User.find({ _id: { $in: ids } })
+          .select('hourly_rate firstname lastname username')
+          .lean();
+        users.forEach((u) => { userById[String(u._id)] = u; });
+      } catch (e) {
+        userById = {};
+      }
+    }
+
+    let totalPayout = 0;
+    result.data.rows = rows.map((r) => {
+      const u = userById[String(r.user_id)] || {};
+      const rate = Number(u.hourly_rate) || 0;
+      const payout = Math.round(r.worked_hours * rate * 100) / 100;
+      totalPayout += payout;
+      const name =
+        r.user_name || [u.firstname, u.lastname].filter(Boolean).join(' ') || u.username || null;
+      return { ...r, user_name: name, hourly_rate: rate, payout };
+    });
+    result.data.totals.payout = Math.round(totalPayout * 100) / 100;
+    return result;
+  }
+
+  // Set a user's hourly wage (used by the payout report).
+  async setRate({ userId, hourlyRate, license }) {
+    if (!userId || !mongoose.Types.ObjectId.isValid(String(userId))) {
+      return { status: false, statusCode: 400, message: 'A valid user_id is required' };
+    }
+    const rate = Number(hourlyRate);
+    if (!Number.isFinite(rate) || rate < 0) {
+      return { status: false, statusCode: 400, message: 'Hourly rate must be a non-negative number' };
+    }
+    const filter = { _id: new mongoose.Types.ObjectId(String(userId)) };
+    if (license) filter.license = license;
+    const result = await User.updateOne(filter, { $set: { hourly_rate: rate } });
+    if (!result.matchedCount) return { status: false, statusCode: 404, message: 'User not found' };
+    return { status: true, message: 'Hourly rate saved' };
   }
 }
 

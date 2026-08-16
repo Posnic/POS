@@ -362,6 +362,12 @@ const userSchema = new mongoose.Schema(
       select: false,
       default: null,
     },
+    // Optional hourly wage used by the labour / payout report (Phase 5) to turn
+    // worked hours into a payout figure. 0 (or unset) => hours only, no payout.
+    hourly_rate: {
+      type: Number,
+      default: 0,
+    },
     address: {
       street: String,
       city: String,

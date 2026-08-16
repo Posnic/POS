@@ -136,6 +136,32 @@ describe('toggleForUser (clock-by-card)', () => {
   });
 });
 
+describe('getShiftReport', () => {
+  test('groups shifts by user with summed minutes/hours + grand totals', async () => {
+    const col = makeCollection();
+    col.find.mockReturnValue({
+      sort: jest.fn().mockReturnThis(),
+      toArray: jest.fn().mockResolvedValue([
+        { user_id: 'u1', user_name: 'A', status: 'closed', worked_minutes: 120, clock_in: new Date('2026-01-01T09:00:00Z'), clock_out: new Date('2026-01-01T11:00:00Z') },
+        { user_id: 'u1', user_name: 'A', status: 'closed', worked_minutes: 60, clock_in: new Date('2026-01-02T09:00:00Z'), clock_out: new Date('2026-01-02T10:00:00Z') },
+        { user_id: 'u2', user_name: 'B', status: 'open', worked_minutes: 0, clock_in: new Date('2026-01-02T09:00:00Z'), clock_out: null },
+      ]),
+    });
+    const repo = makeRepo(col);
+    const r = await repo.getShiftReport({});
+    expect(r.status).toBe(true);
+    const rowA = r.data.rows.find((x) => x.user_id === 'u1');
+    expect(rowA.shifts).toBe(2);
+    expect(rowA.worked_minutes).toBe(180);
+    expect(rowA.worked_hours).toBe(3);
+    const rowB = r.data.rows.find((x) => x.user_id === 'u2');
+    expect(rowB.open_shifts).toBe(1);
+    expect(r.data.totals.shifts).toBe(3);
+    expect(r.data.totals.users).toBe(2);
+    expect(r.data.totals.worked_hours).toBe(3);
+  });
+});
+
 describe('getCurrentShift / listShifts', () => {
   test('getCurrentShift returns the open shift', async () => {
     const col = makeCollection();
