@@ -66,6 +66,25 @@ class ShiftsController extends BaseController {
     }
   }
 
+  // Swipe-to-clock at a shared terminal: the card identifies the person, and
+  // their shift toggles (in <-> out). The terminal must be authenticated, but
+  // the action applies to the cardholder.
+  async clockByCard(req, res) {
+    try {
+      this.setRequestContext(req);
+      const result = await this.service.clockByCard({
+        card_uid: req.body.card_uid || req.body.rfid_uid,
+        register_id: req.body.register_id,
+        device_id: getRequestDeviceId(req),
+        license: (req.user && req.user.license) || undefined,
+      });
+      if (result.status) return this.success(res, result.data, result.message);
+      return this.error(res, result.message, result.statusCode || 400);
+    } catch (error) {
+      return this.error(res, error.message, 500);
+    }
+  }
+
   async list(req, res) {
     try {
       this.setRequestContext(req);

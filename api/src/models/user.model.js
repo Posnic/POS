@@ -354,6 +354,14 @@ const userSchema = new mongoose.Schema(
       select: false,
       default: null,
     },
+    // RFID / swipe card. Stored as a SHA-256 hash of the normalised card UID -
+    // an IDENTIFIER we look up (clock-by-card, swipe-to-approve), not a secret
+    // we verify, so a fast indexed lookup is the right tool (unlike manager_pin).
+    rfid_hash: {
+      type: String,
+      select: false,
+      default: null,
+    },
     address: {
       street: String,
       city: String,

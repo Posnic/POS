@@ -11,6 +11,7 @@
 // tenant-isolation pattern the rest of the users controller uses).
 
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const mongoose = require('mongoose');
 const User = require('../models/user.model');
 const BaseModel = require('../models/base.model');
@@ -19,6 +20,14 @@ const { AuditService, AUDIT_EVENTS } = require('./audit.service');
 const PIN_RE = /^\d{4,8}$/;
 // Legacy account types that may authorise regardless of a resolved pos matrix.
 const MANAGER_TYPES = ['owner', 'admin', 'super_admin', 'manager', 'store_manager'];
+
+// HID keyboard-emulation readers type the UID with assorted separators/case, so
+// normalise to bare uppercase alphanumerics before hashing/looking up.
+const normalizeCard = (uid) => String(uid || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+const hashCard = (uid) => {
+  const norm = normalizeCard(uid);
+  return norm ? crypto.createHash('sha256').update(norm).digest('hex') : null;
+};
 
 class AuthorizationService {
   /**
@@ -89,6 +98,76 @@ class AuthorizationService {
       status: false,
       statusCode: 403,
       message: 'Invalid PIN or not authorised for this action',
+    };
+  }
+
+  /**
+   * Assign (or clear) a user's RFID/swipe card. Stores a SHA-256 hash of the
+   * normalised UID; a card can belong to only one user per tenant.
+   */
+  async setRfid({ userId, cardUid, license }) {
+    if (!userId || !mongoose.Types.ObjectId.isValid(String(userId))) {
+      return { status: false, statusCode: 400, message: 'A valid user_id is required' };
+    }
+    let hash = null;
+    const raw = cardUid === null || cardUid === undefined ? '' : String(cardUid).trim();
+    if (raw.length > 0) {
+      hash = hashCard(raw);
+      if (!hash) return { status: false, statusCode: 400, message: 'Invalid card' };
+      // One card, one person: reject if another user already holds it.
+      const clashFilter = { rfid_hash: hash, _id: { $ne: new mongoose.Types.ObjectId(String(userId)) } };
+      if (license) clashFilter.license = license;
+      const clash = await User.findOne(clashFilter).select('_id').lean();
+      if (clash) {
+        return { status: false, statusCode: 409, message: 'That card is already assigned to another user' };
+      }
+    }
+    const filter = { _id: new mongoose.Types.ObjectId(String(userId)) };
+    if (license) filter.license = license;
+    const result = await User.updateOne(filter, { $set: { rfid_hash: hash } });
+    if (!result.matchedCount) return { status: false, statusCode: 404, message: 'User not found' };
+    return { status: true, message: hash ? 'RFID card assigned' : 'RFID card cleared' };
+  }
+
+  // Look up the (lean) user who holds a card, or null. Selects the fields the
+  // callers need (access/usertype/name).
+  async findUserByCard(cardUid, license) {
+    const hash = hashCard(cardUid);
+    if (!hash) return null;
+    const filter = { rfid_hash: hash };
+    if (license) filter.license = license;
+    return User.findOne(filter)
+      .select('+rfid_hash +access +usertype +firstname +lastname +username +email')
+      .lean();
+  }
+
+  /**
+   * Verify a swiped card belongs to a manager allowed to perform `action`; on
+   * success record a MANAGER_APPROVAL audit event. Fails closed (403).
+   */
+  async verifyManagerCard({ card_uid, action, license, actor, entityId }) {
+    if (!card_uid) return { status: false, statusCode: 400, message: 'Card is required' };
+    if (!action) return { status: false, statusCode: 400, message: 'action is required' };
+    const m = await this.findUserByCard(card_uid, license);
+    if (!m || !this._canAuthorise(m, action)) {
+      return { status: false, statusCode: 403, message: 'Card not recognised or not authorised for this action' };
+    }
+    const approverName =
+      [m.firstname, m.lastname].filter(Boolean).join(' ') || m.username || m.email || 'Manager';
+    await new AuditService().record(AUDIT_EVENTS.MANAGER_APPROVAL, {
+      actor_user_id: (actor && actor.id) || BaseModel.loggedUser,
+      actor_name: (actor && actor.name) || BaseModel.loggedUserName,
+      approved_by_user_id: m._id,
+      approved_by_name: approverName,
+      entity: 'sale',
+      entity_id: entityId || null,
+      reason: `Approved ${action} (card)`,
+      details: { action, method: 'rfid' },
+    });
+    return {
+      status: true,
+      message: 'Approved',
+      data: { approved_by_user_id: String(m._id), approved_by_name: approverName, action, method: 'rfid' },
     };
   }
 

@@ -11,6 +11,7 @@ router.use(protect);
 router.get('/current', bind(shiftsController.current));
 router.post('/clock-in', bind(shiftsController.clockIn));
 router.post('/clock-out', bind(shiftsController.clockOut));
+router.post('/clock-by-card', bind(shiftsController.clockByCard));
 router.get('/', bind(shiftsController.list));
 
 module.exports = router;

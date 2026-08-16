@@ -100,6 +100,42 @@ describe('clockOut', () => {
   });
 });
 
+describe('toggleForUser (clock-by-card)', () => {
+  test('clocks OUT when the user has an open shift', async () => {
+    const col = makeCollection();
+    col.findOne.mockResolvedValue({
+      _id: 'open1', status: SHIFT_STATUS.OPEN, clock_in: new Date(Date.now() - 30 * 60 * 1000), break_minutes: 0,
+    });
+    const repo = makeRepo(col);
+    const r = await repo.toggleForUser({ userId: 'CARDUSER0001', userName: 'Meera' });
+    expect(r.status).toBe(true);
+    expect(r.data.action).toBe('clock_out');
+    expect(col.updateOne).toHaveBeenCalled();
+    expect(col.insertOne).not.toHaveBeenCalled();
+  });
+
+  test('clocks IN when the user has no open shift', async () => {
+    const col = makeCollection();
+    col.findOne.mockResolvedValue(null);
+    const repo = makeRepo(col);
+    const r = await repo.toggleForUser({ userId: 'CARDUSER0001', userName: 'Meera' });
+    expect(r.status).toBe(true);
+    expect(r.data.action).toBe('clock_in');
+    expect(col.insertOne).toHaveBeenCalled();
+    const doc = col.insertOne.mock.calls[0][0];
+    expect(doc.user_name).toBe('Meera');
+    expect(doc.status).toBe(SHIFT_STATUS.OPEN);
+  });
+
+  test('rejects when no user is supplied', async () => {
+    const col = makeCollection();
+    const repo = makeRepo(col);
+    const r = await repo.toggleForUser({ userId: null });
+    expect(r.status).toBe(false);
+    expect(r.statusCode).toBe(400);
+  });
+});
+
 describe('getCurrentShift / listShifts', () => {
   test('getCurrentShift returns the open shift', async () => {
     const col = makeCollection();

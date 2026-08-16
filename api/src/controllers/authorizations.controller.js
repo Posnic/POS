@@ -47,6 +47,42 @@ class AuthorizationsController extends BaseController {
       return this.error(res, error.message, 500);
     }
   }
+
+  // Assign/clear a user's RFID swipe card (managing cards ~ managing staff).
+  async setRfid(req, res) {
+    try {
+      if (!this.checkPermission('user', 'write', req.user)) {
+        return this.error(res, 'You do not have permission to assign an RFID card', 403);
+      }
+      const result = await authorizationService.setRfid({
+        userId: req.body.user_id || req.body.userId,
+        cardUid: req.body.card_uid !== undefined ? req.body.card_uid : req.body.rfid_uid,
+        license: req.user && req.user.license,
+      });
+      if (result.status) return this.success(res, null, result.message);
+      return this.error(res, result.message, result.statusCode || 400);
+    } catch (error) {
+      return this.error(res, error.message, 500);
+    }
+  }
+
+  // Verify a swiped manager card authorises a restricted action.
+  async verifyCard(req, res) {
+    try {
+      const user = req.user || {};
+      const result = await authorizationService.verifyManagerCard({
+        card_uid: req.body.card_uid || req.body.rfid_uid,
+        action: req.body.action,
+        license: user.license,
+        actor: { id: user._id, name: user.username || user.name || user.email },
+        entityId: req.body.sale_id || req.body.entity_id || null,
+      });
+      if (result.status) return this.success(res, result.data, result.message);
+      return this.error(res, result.message, result.statusCode || 403);
+    } catch (error) {
+      return this.error(res, error.message, 500);
+    }
+  }
 }
 
 module.exports = new AuthorizationsController();
