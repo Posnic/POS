@@ -1133,6 +1133,17 @@
 table.dataTable thead th,
 .dataTables_scrollHead th { font-size: 1em !important; font-weight: 600 !important; }
 
+/* Sales & return cart headers (Items / Qty / Unit / Price / Disc / Tax / Total
+   / Action) carry .btn-primary, which forces white text - but the header cells
+   render on a LIGHT themed background, so the labels were white-on-light and
+   invisible (worst in the default theme). Force the header text to the theme's
+   own readable text colour in EVERY theme, leaving the background untouched. */
+.table thead.btn-primary,
+.table thead.btn-primary th,
+.table thead.btn-primary th * {
+    color: var(--theme-text-primary, #16203a) !important;
+}
+
 /* .table th { background: var(--theme-table-header-bg) } - comfort never set that
    var, so ALL <th> (header row AND the body checkbox/# columns, which are <th>)
    fell back to white. Set the var warm for the header row, and make body-row <th>
