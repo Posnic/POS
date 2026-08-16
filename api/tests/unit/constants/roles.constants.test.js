@@ -1,6 +1,6 @@
 'use strict';
 
-const { ROLE_KEYS, DEFAULT_ROLES } = require('../../../src/constants/roles.constants');
+const { ROLE_KEYS, DEFAULT_ROLES, POS_PERMISSIONS } = require('../../../src/constants/roles.constants');
 
 const byKey = (k) => DEFAULT_ROLES.find((r) => r.key === k);
 const MODULES = [
@@ -67,5 +67,48 @@ describe('DEFAULT_ROLES', () => {
     vals.forEach((v) => expect(v).toMatch(/^[a-z_]+$/));
     expect(new Set(vals).size).toBe(vals.length);
     expect(vals.sort()).toEqual(DEFAULT_ROLES.map((r) => r.key).sort());
+  });
+});
+
+describe('POS-granular permissions (Phase 2)', () => {
+  test('every role has a full pos object with all POS_PERMISSIONS keys + an approval list', () => {
+    const keys = Object.values(POS_PERMISSIONS);
+    DEFAULT_ROLES.forEach((r) => {
+      keys.forEach((k) => expect(r.pos[k]).toBeDefined());
+      expect(Array.isArray(r.requires_manager_approval)).toBe(true);
+    });
+  });
+
+  test('Owner / Admin / Store Manager have full POS rights and need no approvals', () => {
+    ['owner', 'admin', 'store_manager'].forEach((k) => {
+      const r = byKey(k);
+      expect(r.pos.void_sale).toBe(true);
+      expect(r.pos.refund).toBe(true);
+      expect(r.pos.discount_apply).toBe(true);
+      expect(r.pos.register_close).toBe(true);
+      expect(r.requires_manager_approval).toEqual([]);
+    });
+  });
+
+  test('Cashier can only reprint; sensitive actions all require a manager', () => {
+    const c = byKey('cashier');
+    expect(c.pos.reprint_receipt).toBe(true);
+    expect(c.pos.void_sale).toBe(false);
+    expect(c.pos.refund).toBe(false);
+    expect(c.pos.discount_apply).toBe(false);
+    expect(c.pos.no_sale_open_drawer).toBe(false);
+    expect(c.pos.register_close).toBe(false);
+    expect(c.requires_manager_approval).toEqual(
+      expect.arrayContaining(['void_sale', 'refund', 'discount_apply', 'register_close'])
+    );
+  });
+
+  test('Shift Supervisor: void a line + refund + register close, but a full void needs a manager', () => {
+    const s = byKey('shift_supervisor');
+    expect(s.pos.void_line).toBe(true);
+    expect(s.pos.refund).toBe(true);
+    expect(s.pos.register_close).toBe(true);
+    expect(s.pos.discount_max_percent).toBe(20);
+    expect(s.requires_manager_approval).toContain('void_sale');
   });
 });

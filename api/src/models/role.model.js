@@ -21,7 +21,8 @@ class RoleModel extends BaseModel {
       description: { type: 'String', select: true },
       branch_scope: { type: 'Object', select: true }, // 'all' | [branch_id, ...]
       access: { type: 'Object', select: true },
-      pos: { type: 'Object', select: true }, // reserved for Phase 2 (void/refund/…)
+      pos: { type: 'Object', select: true }, // Phase 2 granular POS actions
+      requires_manager_approval: { type: 'Array', select: true }, // actions needing manager PIN
       created_date: { type: 'Date', select: true },
       updated_date: { type: 'Date', select: true },
     };
