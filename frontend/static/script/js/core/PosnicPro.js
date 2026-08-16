@@ -1592,10 +1592,25 @@ PosnicPro = {
             if (!printerName) {
                 throw new Error('No printer found. Choose one in Hardware Manager, Receipt Printer.');
             }
-            return window.electronAPI.printer.printReceipt(sale, {
-                printerName: printerName,
-                paperWidth: width,
-                docName: 'Receipt ' + (sale.billNo || '')
+            // Auto-open the cash drawer on a sale if the shop enabled it in
+            // Hardware Manager ("Auto-open on every sale"). The main process
+            // already emits the ESC/POS drawer pulse when openDrawer is passed
+            // (escpos-receipt). Fail-safe: any error reading the drawer config
+            // simply prints without opening, so a sale never fails on this.
+            var drawerCfg = (window.electronAPI.cashDrawer && window.electronAPI.cashDrawer.loadConfig)
+                ? Promise.resolve(window.electronAPI.cashDrawer.loadConfig()).catch(function () { return null; })
+                : Promise.resolve(null);
+            return drawerCfg.then(function (cfg) {
+                var opts = {
+                    printerName: printerName,
+                    paperWidth: width,
+                    docName: 'Receipt ' + (sale.billNo || '')
+                };
+                if (cfg && cfg.autoOpenOnSale) {
+                    opts.openDrawer = true;
+                    opts.drawerPin = (cfg.pin != null) ? cfg.pin : 0;
+                }
+                return window.electronAPI.printer.printReceipt(sale, opts);
             });
         })
         .then(function (result) {
