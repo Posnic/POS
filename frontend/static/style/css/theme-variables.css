@@ -2937,6 +2937,43 @@ html:not([data-theme]) .card-body {
     margin-bottom: 0.2rem !important;
 }
 
+/* Tender/payment modal: the close × sat in a position:fixed head at the top-
+   LEFT, directly under the left vertical menu - so the sidebar swallowed its
+   clicks and hover (it never closed and never highlighted). Move it to the
+   top-RIGHT corner (clear of the sidebar), lift it above the modal body, and
+   make it a real circular button with a clear hover state. */
+#infobar-settings-sidebar-tender-details .infobar-settings-sidebar-head {
+    position: fixed !important;
+    top: 12px !important;
+    right: 18px !important;
+    left: auto !important;
+    width: auto !important;
+    padding: 0 !important;
+    z-index: 1060 !important;
+}
+#infobar-settings-sidebar-tender-details .infobar-tender-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+#infobar-settings-sidebar-tender-details .infobar-tender-close:hover {
+    background: #f9616d;
+}
+#infobar-settings-sidebar-tender-details .infobar-tender-close img {
+    width: 18px;
+    transition: filter 0.15s ease;
+}
+#infobar-settings-sidebar-tender-details .infobar-tender-close:hover img {
+    filter: brightness(0) invert(1);
+}
+
 /* Default theme: crisp inputs - a clear border so fields read as distinct
    surfaces, and an obvious focus ring on the active field (the purchase-page
    inputs previously looked flat / unhighlighted). */
