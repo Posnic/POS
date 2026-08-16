@@ -2767,6 +2767,22 @@ html:not([data-theme]) .card-body {
 #sales_coupon_panel .sales-coupon-clear:hover {
     color: #f9616d;
 }
+/* Applied state: the input + Apply collapse into this inline green summary
+   chip ("check −₹10 with DOIT"); it grows to fill and ellipsises if long. */
+#sales_coupon_panel .sales-coupon-applied {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #2ca77b;
+    font-size: 13px;
+    font-weight: 600;
+}
+#sales_coupon_panel .sales-coupon-applied .feather {
+    font-size: 13px;
+    vertical-align: middle;
+}
 
 /* Default theme: crisp inputs - a clear border so fields read as distinct
    surfaces, and an obvious focus ring on the active field (the purchase-page

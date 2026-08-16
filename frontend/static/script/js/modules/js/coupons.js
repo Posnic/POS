@@ -186,10 +186,27 @@ PosnicPro.coupons = {
     }
   },
 
+  // Toggle the till coupon control between its entry state (icon + input +
+  // Apply) and its applied state (icon + green summary chip + remove ×), all on
+  // one line. The × only exists once a coupon is on; removing it returns to the
+  // entry state. Errors keep the entry state and show below in red.
+  setApplied: function (applied, html) {
+    if (applied) {
+      $('#sales_coupon_applied').html(html || '').show();
+      $('#sales_coupon_clear').show();
+      $('#sales_coupon_code, #sales_coupon_apply').hide();
+    } else {
+      $('#sales_coupon_applied').empty().hide();
+      $('#sales_coupon_clear').hide();
+      $('#sales_coupon_code, #sales_coupon_apply').show();
+    }
+  },
+
   tillClear: function () {
     PosnicPro.coupons.tillState = { code: null, discount: 0 };
     $('#sales_coupon_code').val('');
     $('#sales_coupon_status').empty();
+    PosnicPro.coupons.setApplied(false);
     PosnicPro.coupons.recalc();
   },
 
@@ -198,6 +215,7 @@ PosnicPro.coupons = {
     if (!code) {
       PosnicPro.coupons.tillState = { code: null, discount: 0 };
       $('#sales_coupon_status').empty();
+      PosnicPro.coupons.setApplied(false);
       PosnicPro.coupons.recalc();
       return;
     }
@@ -209,6 +227,7 @@ PosnicPro.coupons = {
         var d = res && res.data;
         if (!res || res.type !== 'success' || !d) {
           PosnicPro.coupons.tillState = { code: null, discount: 0 };
+          PosnicPro.coupons.setApplied(false);
           $('#sales_coupon_status').html(
             '<span class="text-danger">' + PosnicPro.coupons.esc((res && res.message) || 'Coupon not accepted') + '</span>'
           );
@@ -218,10 +237,10 @@ PosnicPro.coupons = {
         PosnicPro.coupons.tillState = { code: d.code, discount: d.discount };
         var sign = d.currency || PosnicPro.coupons.currencySign() || '';
         $('#sales_coupon_code').val(d.code);
-        $('#sales_coupon_status').html(
-          '<span class="text-success">&minus;' + sign + PosnicPro.coupons.fmtMoney(d.discount) +
-            ' with ' + PosnicPro.coupons.esc(d.code) + (d.capped ? ' &middot; capped' : '') + '</span>'
-        );
+        PosnicPro.coupons.setApplied(true,
+          '<i class="feather icon-check"></i> &minus;' + sign + PosnicPro.coupons.fmtMoney(d.discount) +
+            ' with ' + PosnicPro.coupons.esc(d.code) + (d.capped ? ' &middot; capped' : ''));
+        $('#sales_coupon_status').empty();
         PosnicPro.coupons.recalc();
       }
     );
