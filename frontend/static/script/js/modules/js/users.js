@@ -339,6 +339,9 @@ PosnicPro.users = {
     editUser: function (id) {
         /*Condition To refresh checkbox*/
         $('#user_value_check').val('');
+        // The manager-PIN control applies to an existing user (edit mode).
+        $('#manager_pin_row').show();
+        $('#user_manager_pin').val('');
         var loader = $(".loader-user");
         $("<div class='loadingSpinner'></div>").appendTo(loader);
         $('.onoffswitch-checkbox').removeAttr('checked');
@@ -541,9 +544,36 @@ PosnicPro.users = {
         $boxes.prop('disabled', true).css({ 'pointer-events': 'none', opacity: 0.7 });
         $('.userAccessLabel').hide();
     },
+    // Set (or replace) this user's manager-approval PIN. Only meaningful once the
+    // user exists (edit mode), so the row is hidden when adding a new user.
+    setManagerPin: function () {
+        var userId = $('#users_id').val();
+        if (!userId) {
+            PosnicPro.alert('warning', 'Save the user first, then set a PIN.');
+            return;
+        }
+        var pin = $('#user_manager_pin').val();
+        if (!pin || !/^\d{4,8}$/.test(pin)) {
+            PosnicPro.alert('warning', 'Enter a 4 to 8 digit PIN.');
+            return;
+        }
+        $('#user_manager_pin_btn').prop('disabled', true);
+        var done = function () { $('#user_manager_pin_btn').prop('disabled', false); };
+        PosnicPro.post({
+            url: 'authorizations/set-manager-pin',
+            data: JSON.stringify({ user_id: userId, pin: pin }),
+        }, function (response) {
+            done();
+            PosnicPro.alert(response.type, response.message);
+            if (response.type === 'success') { $('#user_manager_pin').val(''); }
+        }, function () { done(); });
+    },
     addUserButton: function () {
         var loader = $(".loader-user");
         loader.find(".loadingSpinner:first").remove();
+        // A new user has no id yet, so the manager-PIN control can't apply.
+        $('#manager_pin_row').hide();
+        $('#user_manager_pin').val('');
         (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('#user_title').text('புதிய') : $('#user_title').text('Add');
         $('.user-image-label-title').html('<i class="feather icon-plus-circle mr-2"></i>Add Image');
         $('#user_button_title,#submit_user_img').text('Save');
