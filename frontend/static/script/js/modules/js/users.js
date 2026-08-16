@@ -339,8 +339,8 @@ PosnicPro.users = {
     editUser: function (id) {
         /*Condition To refresh checkbox*/
         $('#user_value_check').val('');
-        // The manager-PIN + RFID controls apply to an existing user (edit mode).
-        $('#manager_pin_row, #rfid_row').show();
+        // The manager-PIN + RFID + wage controls apply to an existing user (edit mode).
+        $('#manager_pin_row, #rfid_row, #wage_row').show();
         $('#user_manager_pin, #user_rfid_uid').val('');
         var loader = $(".loader-user");
         $("<div class='loadingSpinner'></div>").appendTo(loader);
@@ -373,6 +373,7 @@ PosnicPro.users = {
                 $('#users_firstname').val(data.firstname);
                 $('#users_lastname').val(data.lastname);
                 $('#users_email').val(data.email);
+                $('#user_hourly_rate').val(data.hourly_rate || '');
                 $("#users_password,#users_retype_password").css({cursor: "not-allowed"}).attr('disabled', 'disabled');
                 $("#users_password,#users_retype_password").val('Demo@000');
                 $('#usertype').val(data.usertype);
@@ -597,12 +598,34 @@ PosnicPro.users = {
     clearRfid: function () {
         PosnicPro.users._postRfid('');
     },
+    // Save this user's hourly wage for the payout report (edit mode only).
+    setRate: function () {
+        var userId = $('#users_id').val();
+        if (!userId) {
+            PosnicPro.alert('warning', 'Save the user first, then set a wage.');
+            return;
+        }
+        var rate = $('#user_hourly_rate').val();
+        if (rate === '' || isNaN(rate) || Number(rate) < 0) {
+            PosnicPro.alert('warning', 'Enter a valid wage (0 or more).');
+            return;
+        }
+        $('#user_wage_btn').prop('disabled', true);
+        var done = function () { $('#user_wage_btn').prop('disabled', false); };
+        PosnicPro.post({
+            url: 'shifts/set-rate',
+            data: JSON.stringify({ user_id: userId, hourly_rate: Number(rate) }),
+        }, function (response) {
+            done();
+            PosnicPro.alert(response.type, response.message);
+        }, function () { done(); });
+    },
     addUserButton: function () {
         var loader = $(".loader-user");
         loader.find(".loadingSpinner:first").remove();
-        // A new user has no id yet, so the manager-PIN + RFID controls can't apply.
-        $('#manager_pin_row, #rfid_row').hide();
-        $('#user_manager_pin, #user_rfid_uid').val('');
+        // A new user has no id yet, so the manager-PIN + RFID + wage controls can't apply.
+        $('#manager_pin_row, #rfid_row, #wage_row').hide();
+        $('#user_manager_pin, #user_rfid_uid, #user_hourly_rate').val('');
         (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('#user_title').text('புதிய') : $('#user_title').text('Add');
         $('.user-image-label-title').html('<i class="feather icon-plus-circle mr-2"></i>Add Image');
         $('#user_button_title,#submit_user_img').text('Save');
