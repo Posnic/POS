@@ -182,6 +182,19 @@
                         </div>
                         <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordionExample" style="">
                             <div class="card-body">
+                                <div class="row" id="user_role_row" style="margin-bottom:14px;">
+                                    <div class="col-md-12">
+                                        <label for="user_role_id" style="font-weight:600;">Role
+                                            <span class="text-muted" style="font-weight:400;">(permission group)</span></label>
+                                        <select id="user_role_id" name="role_id"
+                                            class="form-control border-control"
+                                            onchange="PosnicPro.users.applyRoleToForm(this.value);">
+                                            <option value="">Custom — set permissions manually</option>
+                                        </select>
+                                        <small class="form-text text-muted">Pick a role to apply its preset
+                                            permissions, or choose "Custom" to set them by hand below.</small>
+                                    </div>
+                                </div>
                                 <div class="panel-body">
                                     <div class="row">
                                         <div class="col-md-4 userAccessLabel adminAccessLabel">

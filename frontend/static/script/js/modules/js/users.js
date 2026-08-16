@@ -440,6 +440,10 @@ PosnicPro.users = {
                     });
                 });
                 
+                // Reflect the user's assigned role (if any) in the dropdown +
+                // matrix; "Custom" (no role) leaves the boxes editable as before.
+                PosnicPro.users.renderRoleOptions(data.role_id || '');
+
                 // Update select-all checkboxes based on individual checkboxes
                 var allReadChecked = $('.read-selectall:not(.read-selectall-only)').length === $('.read-selectall:not(.read-selectall-only):checked').length;
                 var allWriteChecked = $('.write-selectall:not(.write-selectall_only)').length === $('.write-selectall:not(.write-selectall_only):checked').length;
@@ -489,6 +493,54 @@ PosnicPro.users = {
     resetEditButton: function (id) {
         PosnicPro.users.editUser(id);
     },
+    rolesCache: [],
+    _escRole: function (s) {
+        return String(s == null ? '' : s).replace(/[&<>"]/g, function (m) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m];
+        });
+    },
+    // Load the tenant's roles into #user_role_id (GET /roles auto-seeds the
+    // defaults), preselect one, and reflect it on the ACL matrix.
+    renderRoleOptions: function (preselectId) {
+        if (!$('#user_role_id').length) { return; }
+        PosnicPro.get('roles', function (res) {
+            var roles = (res && res.data) || [];
+            if (!Array.isArray(roles)) { roles = []; }
+            PosnicPro.users.rolesCache = roles;
+            var $sel = $('#user_role_id');
+            $sel.find('option').not('[value=""]').remove();
+            roles.forEach(function (r) {
+                $sel.append('<option value="' + (r._id || r.id) + '">' +
+                    PosnicPro.users._escRole(r.name) + '</option>');
+            });
+            $sel.val(preselectId || '');
+            PosnicPro.users.applyRoleToForm($sel.val());
+        });
+    },
+    // A chosen role fills the ACL matrix (read-only) and replaces the
+    // Admin/Normal/Api choice; "Custom" unlocks the matrix for manual editing.
+    applyRoleToForm: function (roleId) {
+        var $boxes = $('.onoffswitch-checkbox');
+        if (!roleId) {
+            $boxes.prop('disabled', false).css({ 'pointer-events': 'auto', opacity: 1 });
+            $('.userAccessLabel').show();
+            return;
+        }
+        var role = (PosnicPro.users.rolesCache || []).filter(function (r) {
+            return String(r._id || r.id) === String(roleId);
+        })[0];
+        if (!role || !role.access) { return; }
+        $boxes.prop('checked', false);
+        $.each(role.access, function (mod, val) {
+            if (val && typeof val === 'object') {
+                $.each(val, function (action, on) {
+                    $('#' + mod + '_' + action).prop('checked', !!on);
+                });
+            }
+        });
+        $boxes.prop('disabled', true).css({ 'pointer-events': 'none', opacity: 0.7 });
+        $('.userAccessLabel').hide();
+    },
     addUserButton: function () {
         var loader = $(".loader-user");
         loader.find(".loadingSpinner:first").remove();
@@ -502,6 +554,7 @@ PosnicPro.users = {
         $('#show_last_created_user').hide();
         $('#users_id').val('');
         $('#logo_user').val('user.svg');
+        PosnicPro.users.renderRoleOptions('');
         if (document.getElementById('apiMethod').checked) {
             $('#apiMethod').prop('checked', true);
             $('.adminAccessLabel').hide();
