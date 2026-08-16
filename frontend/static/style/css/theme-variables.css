@@ -2941,6 +2941,13 @@ html:not([data-theme]) .card-body {
     border-radius: 8px !important;
     font-weight: 600;
 }
+/* Sales item card: subtle stock count under the price (tracked items only). */
+.wsk-cp-stock {
+    font-size: 11px;
+    color: #9aa4b2;
+    margin-top: 2px;
+    line-height: 1.2;
+}
 
 /* Tender/payment modal: the close × sat in a position:fixed head at the top-
    LEFT, directly under the left vertical menu - so the sidebar swallowed its
