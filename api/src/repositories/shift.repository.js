@@ -200,6 +200,72 @@ class ShiftRepository {
     }
   }
 
+  // Group shifts by user over a date range (by clock_in) for the labour report.
+  // Returns per-user rows (shift count, worked minutes, span, still-open count)
+  // and a grand total. Payout (x wage) is layered on in the service.
+  async getShiftReport({ from, to, user_id } = {}) {
+    try {
+      const collection = await this.model.getCollection('shifts');
+      const query = { license: this._license() };
+      const branch = this._branch();
+      if (branch) query.branch_id = branch;
+      if (user_id) query.user_id = toId(user_id);
+      const range = {};
+      if (from instanceof Date) range.$gte = from;
+      if (to instanceof Date) range.$lte = to;
+      if (range.$gte || range.$lte) query.clock_in = range;
+
+      const shifts = await collection.find(query).sort({ clock_in: 1 }).toArray();
+
+      const byUser = new Map();
+      let totalMinutes = 0;
+      let totalShifts = 0;
+      for (const s of shifts) {
+        const key = String(s.user_id);
+        if (!byUser.has(key)) {
+          byUser.set(key, {
+            user_id: s.user_id,
+            user_name: s.user_name || null,
+            shifts: 0,
+            open_shifts: 0,
+            worked_minutes: 0,
+            first_in: s.clock_in || null,
+            last_out: s.clock_out || null,
+          });
+        }
+        const row = byUser.get(key);
+        row.shifts += 1;
+        row.worked_minutes += Number(s.worked_minutes) || 0;
+        if (s.status === SHIFT_STATUS.OPEN) row.open_shifts += 1;
+        if (s.clock_in && (!row.first_in || s.clock_in < row.first_in)) row.first_in = s.clock_in;
+        if (s.clock_out && (!row.last_out || s.clock_out > row.last_out)) row.last_out = s.clock_out;
+        totalMinutes += Number(s.worked_minutes) || 0;
+        totalShifts += 1;
+      }
+
+      const rows = Array.from(byUser.values()).map((r) => ({
+        ...r,
+        worked_hours: Math.round((r.worked_minutes / 60) * 100) / 100,
+      }));
+
+      return {
+        status: true,
+        data: {
+          rows,
+          totals: {
+            users: rows.length,
+            shifts: totalShifts,
+            worked_minutes: totalMinutes,
+            worked_hours: Math.round((totalMinutes / 60) * 100) / 100,
+          },
+        },
+        message: 'success',
+      };
+    } catch (error) {
+      return { status: false, data: null, message: error.message };
+    }
+  }
+
   // List shifts for the current branch (most recent first). Optional filters:
   // user_id, status, limit.
   async listShifts(opts = {}) {
