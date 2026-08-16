@@ -1066,7 +1066,7 @@ class RegisterRepository {
 
   async registerCountedAmount(data) {
     try {
-      const collection = await this.model.getCollection('registers');
+      const collection = await this.model.getCollection('cashregister');
       const registerRowId = new ObjectId(data.register_row_Id);
 
       // Check if payment type already exists in countedAmount array
@@ -1116,7 +1116,7 @@ class RegisterRepository {
 
   async registerPaymentNoteModel(data) {
     try {
-      const collection = await this.model.getCollection('registers');
+      const collection = await this.model.getCollection('cashregister');
 
       await collection.updateOne(
         { _id: new ObjectId(data.id) },
@@ -1505,6 +1505,11 @@ class RegisterRepository {
       const commonList = await collection
         .aggregate([
           { $match: filters },
+          // Counted cash lives in the countedAmount[] array ({paymenttype, value}),
+          // not a top-level `counted_amount` field. Total it per register first
+          // (the old `$sum: '$counted_amount'` always resolved to 0), then sum
+          // across the matched registers.
+          { $addFields: { _counted_total: { $sum: '$countedAmount.value' } } },
           {
             $group: {
               _id: {
@@ -1513,7 +1518,7 @@ class RegisterRepository {
                 branch_name: '$branch_name',
                 current_user: '$current_user',
               },
-              counted_amount: { $sum: '$counted_amount' },
+              counted_amount: { $sum: '$_counted_total' },
               opening_float: { $sum: '$opening_float' },
               mindate: { $first: '$register_opendate' },
               maxdate: { $last: '$register_closedate' },
