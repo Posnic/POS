@@ -27,6 +27,7 @@ const loyaltyRoutes = require('./loyalty.routes');
 const messagingRoutes = require('./messaging.routes');
 const receivingsRoutes = require('./receivings.routes');
 const registersRoutes = require('./registers.routes');
+const rolesRoutes = require('./roles.routes');
 const salesRoutes = require('./sales.routes');
 const settingsRoutes = require('./settings.routes'); // Note: File not renamed, but route will be /settings
 const stockLogsRoutes = require('./stock-logs.routes');
@@ -82,6 +83,7 @@ router.use('/loyalty', loyaltyRoutes);
 router.use('/messaging', messagingRoutes);
 router.use('/receivings', receivingsRoutes);
 router.use('/registers', registersRoutes);
+router.use('/roles', rolesRoutes);
 router.use('/sales', salesRoutes);
 router.use('/settings', settingsRoutes); // Primary path
 router.use('/setting', settingsRoutes); // Legacy PHP path support
