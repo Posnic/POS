@@ -25,6 +25,7 @@ jest.mock('bcryptjs', () => ({
 jest.mock('../../../src/models/user.model', () => ({
   updateOne: jest.fn(),
   find: jest.fn(),
+  findOne: jest.fn(),
 }));
 
 const mockRecord = jest.fn().mockResolvedValue({ status: true });
@@ -48,6 +49,11 @@ const VALID_ID = '507f1f77bcf86cd799439011';
 // Helper: make User.find(...).select(...).lean() resolve to `candidates`.
 const mockCandidates = (candidates) => {
   User.find.mockReturnValue({ select: () => ({ lean: () => Promise.resolve(candidates) }) });
+};
+
+// Helper: make User.findOne(...).select(...).lean() resolve to `doc`.
+const mockFindOne = (doc) => {
+  User.findOne.mockReturnValue({ select: () => ({ lean: () => Promise.resolve(doc) }) });
 };
 
 beforeEach(() => {
@@ -151,5 +157,71 @@ describe('verifyManagerPin', () => {
     const r = await service.verifyManagerPin({ pin: '0000', action: 'void_sale' });
     expect(r.status).toBe(false);
     expect(r.statusCode).toBe(403);
+  });
+});
+
+describe('setRfid', () => {
+  test('rejects an invalid user id', async () => {
+    const r = await service.setRfid({ userId: 'bad', cardUid: '0417AABB' });
+    expect(r.statusCode).toBe(400);
+  });
+
+  test('assigns a card when no other user holds it', async () => {
+    mockFindOne(null); // no clash
+    User.updateOne.mockResolvedValue({ matchedCount: 1 });
+    const r = await service.setRfid({ userId: VALID_ID, cardUid: '0417 AA:BB', license: 'L1' });
+    expect(r.status).toBe(true);
+    // stored value is a 64-char sha256 hex, not the raw UID
+    const set = User.updateOne.mock.calls[0][1].$set;
+    expect(set.rfid_hash).toMatch(/^[a-f0-9]{64}$/);
+    expect(r.message).toMatch(/assigned/i);
+  });
+
+  test('rejects a card already held by another user (409)', async () => {
+    mockFindOne({ _id: 'other' });
+    const r = await service.setRfid({ userId: VALID_ID, cardUid: '0417AABB' });
+    expect(r.statusCode).toBe(409);
+    expect(User.updateOne).not.toHaveBeenCalled();
+  });
+
+  test('an empty card clears the hash', async () => {
+    User.updateOne.mockResolvedValue({ matchedCount: 1 });
+    const r = await service.setRfid({ userId: VALID_ID, cardUid: '' });
+    const set = User.updateOne.mock.calls[0][1].$set;
+    expect(set.rfid_hash).toBeNull();
+    expect(r.message).toMatch(/cleared/i);
+  });
+});
+
+describe('verifyManagerCard', () => {
+  test('approves an allowed manager card and records the approval', async () => {
+    mockFindOne({ _id: 'm9', usertype: 'store_manager', username: 'sup' });
+    const r = await service.verifyManagerCard({
+      card_uid: '0417AABB', action: 'void_sale', license: 'L1',
+      actor: { id: 'c1', name: 'Cashier' }, entityId: 'S1',
+    });
+    expect(r.status).toBe(true);
+    expect(r.data.method).toBe('rfid');
+    expect(r.data.approved_by_user_id).toBe('m9');
+    expect(mockRecord).toHaveBeenCalledTimes(1);
+    expect(mockRecord.mock.calls[0][0]).toBe('manager_approval');
+  });
+
+  test('an unknown card -> 403 and no approval', async () => {
+    mockFindOne(null);
+    const r = await service.verifyManagerCard({ card_uid: 'DEADBEEF', action: 'void_sale' });
+    expect(r.statusCode).toBe(403);
+    expect(mockRecord).not.toHaveBeenCalled();
+  });
+
+  test('a card held by a non-authorised user -> 403', async () => {
+    mockFindOne({ _id: 'x', usertype: 'cashier', access: { pos: { void_sale: false } } });
+    const r = await service.verifyManagerCard({ card_uid: '0417AABB', action: 'void_sale' });
+    expect(r.statusCode).toBe(403);
+  });
+
+  test('missing card or action -> 400', async () => {
+    expect((await service.verifyManagerCard({ card_uid: '', action: 'void_sale' })).statusCode).toBe(400);
+    expect((await service.verifyManagerCard({ card_uid: 'X', action: '' })).statusCode).toBe(400);
   });
 });

@@ -10,5 +10,7 @@ router.use(protect);
 
 router.post('/set-manager-pin', bind(authorizationsController.setManagerPin));
 router.post('/verify-pin', bind(authorizationsController.verifyPin));
+router.post('/set-rfid', bind(authorizationsController.setRfid));
+router.post('/verify-card', bind(authorizationsController.verifyCard));
 
 module.exports = router;

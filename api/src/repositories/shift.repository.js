@@ -138,6 +138,68 @@ class ShiftRepository {
     }
   }
 
+  // Toggle a SPECIFIC user's shift (used by clock-by-card, where the cardholder
+  // is not the logged-in terminal operator): open shift -> clock out, else clock
+  // in. Branch/license come from the terminal's context.
+  async toggleForUser({ userId, userName, register_id, device_id, note } = {}) {
+    try {
+      const collection = await this.model.getCollection('shifts');
+      const uid = toId(userId);
+      if (!uid) return { status: false, statusCode: 400, message: 'No user for card' };
+
+      const open = await collection.findOne({
+        license: this._license(),
+        user_id: uid,
+        status: SHIFT_STATUS.OPEN,
+      });
+
+      const now = new Date();
+      if (open) {
+        const clockIn = open.clock_in instanceof Date ? open.clock_in : new Date(open.clock_in);
+        const breakMin = Number(open.break_minutes) || 0;
+        const grossMin = Math.max(0, Math.round((now.getTime() - clockIn.getTime()) / 60000));
+        const workedMin = Math.max(0, grossMin - breakMin);
+        const set = {
+          status: SHIFT_STATUS.CLOSED,
+          clock_out: now,
+          worked_minutes: workedMin,
+          updated_date: now,
+        };
+        await collection.updateOne({ _id: open._id }, { $set: set });
+        return {
+          status: true,
+          data: { action: 'clock_out', shift: { ...open, ...set } },
+          message: 'Clocked out',
+        };
+      }
+
+      const doc = {
+        license: this._license(),
+        branch_id: this._branch(),
+        user_id: uid,
+        user_name: userName || null,
+        status: SHIFT_STATUS.OPEN,
+        clock_in: now,
+        clock_out: null,
+        break_minutes: 0,
+        worked_minutes: 0,
+        register_id: register_id ? toId(register_id) : null,
+        device_id: device_id ? String(device_id) : null,
+        note: note ? String(note).trim() : null,
+        created_date: now,
+        updated_date: now,
+      };
+      const result = await collection.insertOne(doc);
+      return {
+        status: true,
+        data: { action: 'clock_in', shift: { ...doc, _id: result.insertedId } },
+        message: 'Clocked in',
+      };
+    } catch (error) {
+      return { status: false, data: null, message: error.message };
+    }
+  }
+
   // List shifts for the current branch (most recent first). Optional filters:
   // user_id, status, limit.
   async listShifts(opts = {}) {
