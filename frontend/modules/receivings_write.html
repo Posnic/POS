@@ -206,32 +206,41 @@
 
                         <div class="row receving-return-hide">
                             <div class="col-12">
-                                <div class="btn-group-toggle d-flex" data-toggle="buttons">
-                                    <div class="btn btn-payment-mode open_status_active active flex-fill mr-2">   
+                                <label class="d-block text-muted mb-1"
+                                    style="font-size:12px;font-weight:600;">Order status</label>
+                                <div class="btn-group-toggle d-flex receiving-status-toggle" data-toggle="buttons">
+                                    <div class="btn btn-payment-mode open_status_active active flex-fill mr-2">
                                         <label>
-                                            <input type="radio" class="receiving-status" name="receiving_status" id="Open" value="Open" checked/><lang class="lang_open">Open</lang></label> 
+                                            <input type="radio" class="receiving-status" name="receiving_status" id="Open" value="Open" checked/><lang class="lang_open">Open</lang></label>
                                     </div>
                                     <div class="btn btn-payment-mode flex-fill">
                                         <label>
                                             <input type="radio" class="receiving-status" name="receiving_status" id="Received" value="Received"><lang class="lang_receive">Received</lang></label>
                                     </div>
                                 </div>
+                                <small class="form-text text-muted mt-1">Open = ordered, awaiting delivery.
+                                    Received = goods received into stock.</small>
                             </div>
                         </div>
 
                         <!-- Start col -->
                         <div class="card doctor-box m-b-10 receving-return-hide">
-                            <div class="card-footer">  
+                            <div class="card-footer">
+                                <label class="d-block text-muted mb-1" style="font-size:12px;font-weight:600;">
+                                    Attachment <span class="font-weight-normal">(optional, for your records)</span>
+                                </label>
                                 <input type="hidden" id="item_upload_receiving_status" value="no">
-                                <div class="row">                                    
-                                    <div class="input-group mb-3">
+                                <div class="row">
+                                    <div class="input-group mb-1">
                                         <div class="custom-file">
                                             <input type="file" name="ImageReceiving[]" class="custom-file-input" id="receiving_upload_image" onchange="PosnicPro.receivings.receiving_image_preview(this)" accept=".gif, .jpg, .png, .jpeg, .bmp, .pdf" multiple>
                                             <label class="custom-file-label btn-primary-rgba" for="receiving_upload_image"><lang class="lang_file">Choose file</lang></label>
                                             <input type="hidden" name="receiving_logo" id="receiving_logo">
                                         </div>
-                                    </div>                                   
-                                </div>                                
+                                    </div>
+                                </div>
+                                <small class="form-text text-muted">Attach the supplier invoice or payment proof
+                                    (image or PDF) to keep with this purchase for reference.</small>
                             </div>
                             <div class="col-lg-12 col-xl-12">
                                 <div id="display-preview"></div>
