@@ -175,6 +175,45 @@
                             </div>
                             <div>
 
+                                <div id="sales_loyalty_panel" class="mb-3" style="display:none;">
+                                    <div class="d-flex align-items-center flex-wrap">
+                                        <span id="sales_loyalty_badge" class="mr-2"></span>
+                                        <span id="sales_loyalty_hint" class="text-muted small"></span>
+                                    </div>
+                                    <div id="sales_loyalty_redeem_wrap" class="input-group input-group-sm mt-2"
+                                        style="display:none; max-width: 340px;">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">Redeem points</span>
+                                        </div>
+                                        <input type="number" min="0" step="1" id="sales_loyalty_redeem_points"
+                                            class="form-control" placeholder="0">
+                                        <div class="input-group-append">
+                                            <button type="button" class="btn btn-outline-primary"
+                                                id="sales_loyalty_redeem_apply">Apply</button>
+                                            <button type="button" class="btn btn-outline-secondary"
+                                                id="sales_loyalty_redeem_clear" title="Clear redemption">&times;</button>
+                                        </div>
+                                    </div>
+                                    <div id="sales_loyalty_redeem_status" class="small mt-1"></div>
+                                </div>
+
+                                <div id="sales_coupon_panel" class="mb-3">
+                                    <div class="input-group input-group-sm" style="max-width: 340px;">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="feather icon-tag"></i></span>
+                                        </div>
+                                        <input type="text" id="sales_coupon_code"
+                                            class="form-control text-uppercase" placeholder="Coupon code">
+                                        <div class="input-group-append">
+                                            <button type="button" class="btn btn-outline-primary"
+                                                id="sales_coupon_apply">Apply</button>
+                                            <button type="button" class="btn btn-outline-secondary"
+                                                id="sales_coupon_clear" title="Remove coupon">&times;</button>
+                                        </div>
+                                    </div>
+                                    <div id="sales_coupon_status" class="small mt-1"></div>
+                                </div>
+
                                 <ul class="nav nav-tabs nav-justified mb-3" id="defaultTabJustified" role="tablist"
                                     style="background: #f9fbfc;">
                                     <li class="nav-item">

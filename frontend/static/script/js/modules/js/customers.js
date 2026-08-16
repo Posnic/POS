@@ -314,6 +314,25 @@ PosnicPro.customers = {
         if (PosnicPro.local.get('gst_action') === 'enable' && data.gst === 'enable') {
             $('.indian-gstr').show();
         }
+        PosnicPro.customers.renderLoyalty(data._id || PosnicPro.record_id);
+    },
+    /* Show the customer's points balance and tier, if loyalty is on for the branch. */
+    renderLoyalty: function (customerId) {
+        var row = $('#customer_view_loyalty_row');
+        row.hide();
+        $('#loyalty_customer_badge').empty();
+        $('#loyalty_customer_next').empty();
+        if (!customerId || !PosnicPro.loyalty) return;
+        PosnicPro.loyalty.summary(customerId, function (s) {
+            if (!s || !s.enabled) return; // loyalty off => leave the row hidden
+            $('#loyalty_customer_badge').html(PosnicPro.loyalty.badgeHtml(s));
+            if (s.nextTier && s.nextTier.needs > 0) {
+                $('#loyalty_customer_next').text(s.nextTier.needs + ' points to ' + s.nextTier.name);
+            } else {
+                $('#loyalty_customer_next').text('Lifetime points: ' + (s.lifetime || 0));
+            }
+            row.show();
+        });
     },
     /*Edit added customer in view customer page*/
     editCustomer: function (id) {
