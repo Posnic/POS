@@ -78,11 +78,23 @@
             </div>
             <div class="modal-body">
                 <p class="mb-2" id="manager_pin_prompt">This action needs a manager's approval.</p>
-                <input type="password" inputmode="numeric" autocomplete="off" maxlength="8"
-                       class="form-control text-center" id="manager_pin_input"
-                       placeholder="Manager PIN" style="letter-spacing:.4em;font-size:1.2rem;"
-                       onkeydown="if(event.key==='Enter'){event.preventDefault();PosnicPro.submitManagerApproval();}">
+                <div id="manager_pin_pane">
+                    <input type="password" inputmode="numeric" autocomplete="off" maxlength="8"
+                           class="form-control text-center" id="manager_pin_input"
+                           placeholder="Manager PIN" style="letter-spacing:.4em;font-size:1.2rem;"
+                           onkeydown="if(event.key==='Enter'){event.preventDefault();PosnicPro.submitManagerApproval();}">
+                </div>
+                <div id="manager_card_pane" class="d-none">
+                    <input type="text" autocomplete="off" class="form-control text-center"
+                           id="manager_card_input" placeholder="Swipe manager card…"
+                           onkeydown="if(event.key==='Enter'){event.preventDefault();PosnicPro.submitManagerApproval();}">
+                    <small class="form-text text-muted">Swipe the manager's card on the reader.</small>
+                </div>
                 <small class="text-danger d-none" id="manager_pin_error"></small>
+                <div class="mt-2">
+                    <a href="javascript:void(0);" id="manager_approval_toggle"
+                       onclick="PosnicPro.toggleApprovalMode();" style="font-size:.85rem;">Swipe card instead</a>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-danger" data-dismiss="modal">
@@ -95,6 +107,36 @@
     </div>
 </div>
 <!-- end Manager approval PIN modal -->
+
+<!-- start Shift / attendance modal -->
+<div class="modal fade close_on_esc" id="shift_modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="feather icon-clock mr-2"></i>Shift / Attendance</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="shift_status" class="mb-3 text-center">Loading&hellip;</div>
+                <div class="d-flex" style="gap:8px;">
+                    <button type="button" id="shift_clock_in_btn" class="btn btn-outline-success btn-block"
+                            onclick="PosnicPro.shiftWidget.clockIn();"><i class="feather icon-log-in mr-1"></i>Clock In</button>
+                    <button type="button" id="shift_clock_out_btn" class="btn btn-outline-danger btn-block"
+                            onclick="PosnicPro.shiftWidget.clockOut();"><i class="feather icon-log-out mr-1"></i>Clock Out</button>
+                </div>
+                <hr>
+                <label class="mb-1" style="font-weight:600; font-size:.85rem;">Swipe card (shared terminal)</label>
+                <input type="text" autocomplete="off" class="form-control" id="shift_card_input"
+                       placeholder="Swipe a staff card&hellip;"
+                       onkeydown="if(event.key==='Enter'){event.preventDefault();PosnicPro.shiftWidget.swipe();}">
+                <small class="form-text text-muted">Any staff member can swipe to clock in / out.</small>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- end Shift / attendance modal -->
 
 <!-- start remove line item modal -->
 <div class="modal fade" id="delete_transaction_modal" tabindex="-1" role="dialog" aria-hidden="true">

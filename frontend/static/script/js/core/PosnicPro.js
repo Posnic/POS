@@ -1076,6 +1076,7 @@ PosnicPro = {
         if (!pos || typeof pos !== 'object') return true;
         return pos[action] === true;
     },
+    _approvalMode: 'pin', // 'pin' | 'card'
     requireManagerApproval: function (action, opts, onApproved, onDenied) {
         opts = opts || {};
         if (PosnicPro.posCan(action)) {
@@ -1085,33 +1086,52 @@ PosnicPro = {
         PosnicPro._pendingApproval = {
             action: action, opts: opts, onApproved: onApproved, onDenied: onDenied,
         };
-        $('#manager_pin_input').val('');
+        PosnicPro._setApprovalMode('pin'); // always open on the PIN pane
+        $('#manager_pin_input, #manager_card_input').val('');
         $('#manager_pin_error').addClass('d-none').text('');
         $('#manager_pin_prompt').text(opts.prompt || "This action needs a manager's approval.");
         $('#manager_pin_submit').prop('disabled', false);
         $('#manager_pin_modal').modal('show');
         setTimeout(function () { $('#manager_pin_input').trigger('focus'); }, 400);
     },
+    _setApprovalMode: function (mode) {
+        PosnicPro._approvalMode = mode;
+        if (mode === 'card') {
+            $('#manager_pin_pane').addClass('d-none');
+            $('#manager_card_pane').removeClass('d-none');
+            $('#manager_approval_toggle').text('Enter PIN instead');
+        } else {
+            $('#manager_card_pane').addClass('d-none');
+            $('#manager_pin_pane').removeClass('d-none');
+            $('#manager_approval_toggle').text('Swipe card instead');
+        }
+    },
+    toggleApprovalMode: function () {
+        PosnicPro._setApprovalMode(PosnicPro._approvalMode === 'card' ? 'pin' : 'card');
+        $('#manager_pin_error').addClass('d-none').text('');
+        var sel = PosnicPro._approvalMode === 'card' ? '#manager_card_input' : '#manager_pin_input';
+        $(sel).val('').trigger('focus');
+    },
     submitManagerApproval: function () {
         var pending = PosnicPro._pendingApproval;
         if (!pending) { $('#manager_pin_modal').modal('hide'); return; }
-        var pin = $('#manager_pin_input').val();
-        if (!pin) {
-            $('#manager_pin_error').text('Enter a PIN').removeClass('d-none');
+        var byCard = PosnicPro._approvalMode === 'card';
+        var value = byCard ? $('#manager_card_input').val() : $('#manager_pin_input').val();
+        if (!value || !value.trim()) {
+            $('#manager_pin_error').text(byCard ? 'Swipe a card' : 'Enter a PIN').removeClass('d-none');
             return;
         }
         $('#manager_pin_submit').prop('disabled', true);
         var reEnable = function () {
             $('#manager_pin_submit').prop('disabled', false);
-            $('#manager_pin_input').val('').trigger('focus');
+            $(byCard ? '#manager_card_input' : '#manager_pin_input').val('').trigger('focus');
         };
+        var payload = byCard
+            ? { card_uid: value.trim(), action: pending.action, sale_id: pending.opts.saleId || pending.opts.entityId || null }
+            : { pin: value, action: pending.action, sale_id: pending.opts.saleId || pending.opts.entityId || null };
         PosnicPro.post({
-            url: 'authorizations/verify-pin',
-            data: JSON.stringify({
-                pin: pin,
-                action: pending.action,
-                sale_id: pending.opts.saleId || pending.opts.entityId || null,
-            }),
+            url: byCard ? 'authorizations/verify-card' : 'authorizations/verify-pin',
+            data: JSON.stringify(payload),
         }, function (response) {
             if (response && response.type === 'success') {
                 $('#manager_pin_modal').modal('hide');
@@ -1121,11 +1141,73 @@ PosnicPro = {
                 reEnable();
             }
         }, function () {
-            // Failure (e.g. 403 wrong PIN). Passing this callback also prevents
-            // the global handler from redirecting to login on a 403; the error
-            // toast it shows is enough. Keep the modal open for a retry.
+            // Failure (e.g. 403 wrong PIN/card). Passing this callback also
+            // prevents the global handler from redirecting to login on a 403;
+            // the error toast it shows is enough. Keep the modal open to retry.
             reEnable();
         });
+    },
+
+    /* ----- Shift / attendance widget (Phase 4) ------------------------------
+     * A header button opens a small modal: the logged-in user clocks themselves
+     * in/out, and a shared terminal can let any staff member SWIPE their card to
+     * clock in/out (POST /shifts/clock-by-card). Failure callbacks are passed so
+     * a 409 (e.g. "already clocked in") never bounces the user to login.
+     */
+    shiftWidget: {
+        openWidget: function () {
+            PosnicPro.shiftWidget.refresh();
+            $('#shift_card_input').val('');
+            $('#shift_modal').modal('show');
+            setTimeout(function () { $('#shift_card_input').trigger('focus'); }, 400);
+        },
+        refresh: function () {
+            $('#shift_status').text('Loading…');
+            PosnicPro.get('shifts/current', function (response) {
+                var s = response && response.data;
+                if (s && s.clock_in) {
+                    var since = new Date(s.clock_in);
+                    $('#shift_status').html('<span class="badge badge-success">On shift</span><br>'
+                        + '<small class="text-muted">since ' + since.toLocaleString() + '</small>');
+                    $('#shift_clock_in_btn').prop('disabled', true);
+                    $('#shift_clock_out_btn').prop('disabled', false);
+                } else {
+                    $('#shift_status').html('<span class="badge badge-secondary">Not clocked in</span>');
+                    $('#shift_clock_in_btn').prop('disabled', false);
+                    $('#shift_clock_out_btn').prop('disabled', true);
+                }
+            }, function () { $('#shift_status').text('—'); });
+        },
+        clockIn: function () {
+            PosnicPro.post({ url: 'shifts/clock-in', data: JSON.stringify({}) },
+                function (r) { PosnicPro.alert(r.type, r.message); PosnicPro.shiftWidget.refresh(); },
+                function () { PosnicPro.shiftWidget.refresh(); });
+        },
+        clockOut: function () {
+            PosnicPro.post({ url: 'shifts/clock-out', data: JSON.stringify({}) },
+                function (r) { PosnicPro.alert(r.type, r.message); PosnicPro.shiftWidget.refresh(); },
+                function () { PosnicPro.shiftWidget.refresh(); });
+        },
+        swipe: function () {
+            var card = $('#shift_card_input').val();
+            if (!card || !card.trim()) return;
+            PosnicPro.post({
+                url: 'shifts/clock-by-card',
+                data: JSON.stringify({ card_uid: card.trim() }),
+            }, function (r) {
+                if (r && r.type === 'success') {
+                    var who = (r.data && r.data.shift && r.data.shift.user_name) || 'Staff';
+                    var act = (r.data && r.data.action === 'clock_out') ? 'clocked out' : 'clocked in';
+                    PosnicPro.alert('success', who + ' ' + act);
+                } else if (r && r.message) {
+                    PosnicPro.alert(r.type || 'error', r.message);
+                }
+                $('#shift_card_input').val('').trigger('focus');
+                PosnicPro.shiftWidget.refresh();
+            }, function () {
+                $('#shift_card_input').val('').trigger('focus');
+            });
+        },
     },
     getAllSelectedCollections: function () {
         if (PosnicPro.local.get('usertype') === 'super_admin' || PosnicPro.local.get('usertype') === 'admin') {

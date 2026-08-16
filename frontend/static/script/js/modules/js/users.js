@@ -339,9 +339,9 @@ PosnicPro.users = {
     editUser: function (id) {
         /*Condition To refresh checkbox*/
         $('#user_value_check').val('');
-        // The manager-PIN control applies to an existing user (edit mode).
-        $('#manager_pin_row').show();
-        $('#user_manager_pin').val('');
+        // The manager-PIN + RFID controls apply to an existing user (edit mode).
+        $('#manager_pin_row, #rfid_row').show();
+        $('#user_manager_pin, #user_rfid_uid').val('');
         var loader = $(".loader-user");
         $("<div class='loadingSpinner'></div>").appendTo(loader);
         $('.onoffswitch-checkbox').removeAttr('checked');
@@ -568,12 +568,41 @@ PosnicPro.users = {
             if (response.type === 'success') { $('#user_manager_pin').val(''); }
         }, function () { done(); });
     },
+    // Assign / clear this user's RFID swipe card (edit mode only).
+    _postRfid: function (cardUid) {
+        var userId = $('#users_id').val();
+        if (!userId) {
+            PosnicPro.alert('warning', 'Save the user first, then assign a card.');
+            return;
+        }
+        $('#user_rfid_btn,#user_rfid_clear_btn').prop('disabled', true);
+        var done = function () { $('#user_rfid_btn,#user_rfid_clear_btn').prop('disabled', false); };
+        PosnicPro.post({
+            url: 'authorizations/set-rfid',
+            data: JSON.stringify({ user_id: userId, card_uid: cardUid }),
+        }, function (response) {
+            done();
+            PosnicPro.alert(response.type, response.message);
+            if (response.type === 'success') { $('#user_rfid_uid').val(''); }
+        }, function () { done(); });
+    },
+    setRfid: function () {
+        var card = $('#user_rfid_uid').val();
+        if (!card || !card.trim()) {
+            PosnicPro.alert('warning', 'Swipe or type a card, then Assign.');
+            return;
+        }
+        PosnicPro.users._postRfid(card.trim());
+    },
+    clearRfid: function () {
+        PosnicPro.users._postRfid('');
+    },
     addUserButton: function () {
         var loader = $(".loader-user");
         loader.find(".loadingSpinner:first").remove();
-        // A new user has no id yet, so the manager-PIN control can't apply.
-        $('#manager_pin_row').hide();
-        $('#user_manager_pin').val('');
+        // A new user has no id yet, so the manager-PIN + RFID controls can't apply.
+        $('#manager_pin_row, #rfid_row').hide();
+        $('#user_manager_pin, #user_rfid_uid').val('');
         (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('#user_title').text('புதிய') : $('#user_title').text('Add');
         $('.user-image-label-title').html('<i class="feather icon-plus-circle mr-2"></i>Add Image');
         $('#user_button_title,#submit_user_img').text('Save');

@@ -212,6 +212,25 @@
                                             manager types this at the till to approve a cashier's restricted action.</small>
                                     </div>
                                 </div>
+                                <div class="row" id="rfid_row" style="margin-bottom:14px; display:none;">
+                                    <div class="col-md-12">
+                                        <label style="font-weight:600;">RFID / Swipe Card
+                                            <span class="text-muted" style="font-weight:400;">(optional — swipe to clock in / approve)</span></label>
+                                        <div class="input-group">
+                                            <input type="text" autocomplete="off" class="form-control border-control"
+                                                   id="user_rfid_uid" placeholder="Click here, then swipe the card"
+                                                   onkeydown="if(event.key==='Enter'){event.preventDefault();PosnicPro.users.setRfid();}">
+                                            <div class="input-group-append">
+                                                <button type="button" class="btn btn-outline-primary" id="user_rfid_btn"
+                                                        onclick="PosnicPro.users.setRfid();">Assign</button>
+                                                <button type="button" class="btn btn-outline-danger" id="user_rfid_clear_btn"
+                                                        onclick="PosnicPro.users.clearRfid();">Clear</button>
+                                            </div>
+                                        </div>
+                                        <small class="form-text text-muted">Focus the field and swipe the card on a USB
+                                            reader (it types the code), or type it, then Assign. One card per person.</small>
+                                    </div>
+                                </div>
                                 <div class="panel-body">
                                     <div class="row">
                                         <div class="col-md-4 userAccessLabel adminAccessLabel">
