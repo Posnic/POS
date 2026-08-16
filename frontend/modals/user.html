@@ -231,6 +231,22 @@
                                             reader (it types the code), or type it, then Assign. One card per person.</small>
                                     </div>
                                 </div>
+                                <div class="row" id="wage_row" style="margin-bottom:14px; display:none;">
+                                    <div class="col-md-12">
+                                        <label style="font-weight:600;">Hourly Wage
+                                            <span class="text-muted" style="font-weight:400;">(optional — for the payout report)</span></label>
+                                        <div class="input-group">
+                                            <input type="number" min="0" step="0.01" class="form-control border-control"
+                                                   id="user_hourly_rate" placeholder="0.00">
+                                            <div class="input-group-append">
+                                                <button type="button" class="btn btn-outline-primary" id="user_wage_btn"
+                                                        onclick="PosnicPro.users.setRate();">Save Wage</button>
+                                            </div>
+                                        </div>
+                                        <small class="form-text text-muted">Turns worked hours into a payout figure in the
+                                            labour report.</small>
+                                    </div>
+                                </div>
                                 <div class="panel-body">
                                     <div class="row">
                                         <div class="col-md-4 userAccessLabel adminAccessLabel">
