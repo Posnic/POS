@@ -353,6 +353,29 @@ class RegistersController extends BaseController {
       const result = await this.service.registerInOutDetail(req.body);
 
       if (result.status === true) {
+        // Record the cash movement(s) to the append-only audit_log (fail-safe).
+        // One request may carry a pay-in and/or a pay-out; log whichever ran.
+        const inAmt = parseFloat(req.body.in_amount) || 0;
+        const outAmt = parseFloat(req.body.out_amount) || 0;
+        const audit = new AuditService(this.registerModel);
+        if (inAmt > 0) {
+          await audit.record(AUDIT_EVENTS.CASH_IN, {
+            entity: 'cashregister',
+            entity_id: req.body.cash_register_id,
+            amount: inAmt,
+            reason: (req.body.in_description || '').trim() || null,
+            device_id: req.body.lock_device_id,
+          });
+        }
+        if (outAmt > 0) {
+          await audit.record(AUDIT_EVENTS.CASH_OUT, {
+            entity: 'cashregister',
+            entity_id: req.body.cash_register_id,
+            amount: outAmt,
+            reason: (req.body.out_description || '').trim() || null,
+            device_id: req.body.lock_device_id,
+          });
+        }
         return this.success(res, result.data, result.message);
       } else {
         return this.error(res, result.message, result.statusCode || 400, result.data);
