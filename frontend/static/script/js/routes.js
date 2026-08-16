@@ -6,6 +6,14 @@ $(document).ready(function () {
         PosnicPro[module].showAdd()
     });
     crossroads.addRoute('{module}/{id}/return', function (module, id) {
+        // A sales refund is a restricted action - a cashier who can't refund on
+        // their own needs a manager to approve it before the return screen opens.
+        if (module === 'sales' && PosnicPro.posCan && !PosnicPro.posCan('refund')) {
+            PosnicPro.requireManagerApproval('refund',
+                { saleId: id, prompt: "A refund needs a manager's approval." },
+                function () { PosnicPro[module].view.returnPage(module, id); });
+            return;
+        }
         PosnicPro[module].view.returnPage(module, id)
     });
     crossroads.addRoute('{module}/{id}/edit', function (module, id) {
