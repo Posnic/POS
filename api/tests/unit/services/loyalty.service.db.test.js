@@ -52,7 +52,7 @@ function makeCollection(seed = [], aggregateResult = null) {
       return { insertedId: doc._id || new ObjectId() };
     },
     async updateOne(query, update) {
-      let doc = docs.find((d) => matches(d, query));
+      const doc = docs.find((d) => matches(d, query));
       if (!doc) return { matchedCount: 0, modifiedCount: 0 };
       if (update.$set) Object.keys(update.$set).forEach((p) => setDotted(doc, p, update.$set[p]));
       if (update.$inc)
@@ -62,7 +62,7 @@ function makeCollection(seed = [], aggregateResult = null) {
       return { matchedCount: 1, modifiedCount: 1 };
     },
     find(query) {
-      let result = docs.filter((d) => matches(d, query));
+      const result = docs.filter((d) => matches(d, query));
       return {
         sort() {
           return this;
