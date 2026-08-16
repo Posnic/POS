@@ -1,0 +1,163 @@
+// src/repositories/shift.repository.js
+//
+// Data layer for staff shifts (Phase 4). All queries are tenant-scoped by
+// license; the actor comes from the per-request BaseModel context. A user may
+// have at most one OPEN shift at a time (enforced in clockIn).
+
+const ShiftModel = require('../models/shift.model');
+const BaseModel = require('../models/base.model');
+const { ObjectId } = require('mongodb');
+const { SHIFT_STATUS } = require('../constants/shift.constants');
+
+const toId = (v) => {
+  if (v === null || v === undefined) return null;
+  if (v instanceof ObjectId) return v;
+  return ObjectId.isValid(v) ? new ObjectId(v) : v;
+};
+
+class ShiftRepository {
+  constructor(model) {
+    this.model = model || new ShiftModel();
+  }
+
+  _license() {
+    return toId(this.model.licenseId || BaseModel.license);
+  }
+
+  _branch() {
+    return toId(this.model.branchId || BaseModel.currentBranch);
+  }
+
+  _userId() {
+    return toId((this.model.user && this.model.user._id) || BaseModel.loggedUser);
+  }
+
+  _userName() {
+    const u = this.model.user;
+    return (
+      (u && (u.username || u.name || u.email)) ||
+      BaseModel.loggedUserName ||
+      null
+    );
+  }
+
+  // The current user's open shift, or null.
+  async getCurrentShift() {
+    try {
+      const collection = await this.model.getCollection('shifts');
+      const shift = await collection.findOne({
+        license: this._license(),
+        user_id: this._userId(),
+        status: SHIFT_STATUS.OPEN,
+      });
+      return { status: true, data: shift || null, message: shift ? 'success' : 'No open shift' };
+    } catch (error) {
+      return { status: false, data: null, message: error.message };
+    }
+  }
+
+  // Start a shift. Fails (409) if the user already has one open.
+  async clockIn(data = {}) {
+    try {
+      const collection = await this.model.getCollection('shifts');
+      const userId = this._userId();
+      if (!userId) return { status: false, statusCode: 400, message: 'No user in context' };
+
+      const existing = await collection.findOne({
+        license: this._license(),
+        user_id: userId,
+        status: SHIFT_STATUS.OPEN,
+      });
+      if (existing) {
+        return {
+          status: false,
+          statusCode: 409,
+          data: existing,
+          message: 'You already have an open shift',
+        };
+      }
+
+      const now = new Date();
+      const doc = {
+        license: this._license(),
+        branch_id: this._branch(),
+        user_id: userId,
+        user_name: this._userName(),
+        status: SHIFT_STATUS.OPEN,
+        clock_in: now,
+        clock_out: null,
+        break_minutes: 0,
+        worked_minutes: 0,
+        register_id: data.register_id ? toId(data.register_id) : null,
+        device_id: data.device_id ? String(data.device_id) : null,
+        note: data.note ? String(data.note).trim() : null,
+        created_date: now,
+        updated_date: now,
+      };
+      const result = await collection.insertOne(doc);
+      return { status: true, data: { ...doc, _id: result.insertedId }, message: 'Clocked in' };
+    } catch (error) {
+      return { status: false, data: null, message: error.message };
+    }
+  }
+
+  // End the current user's open shift, computing worked minutes (gross minus any
+  // accumulated break time). Fails (409) if there is nothing open.
+  async clockOut(data = {}) {
+    try {
+      const collection = await this.model.getCollection('shifts');
+      const userId = this._userId();
+      if (!userId) return { status: false, statusCode: 400, message: 'No user in context' };
+
+      const shift = await collection.findOne({
+        license: this._license(),
+        user_id: userId,
+        status: SHIFT_STATUS.OPEN,
+      });
+      if (!shift) {
+        return { status: false, statusCode: 409, message: 'No open shift to clock out' };
+      }
+
+      const now = new Date();
+      const clockIn = shift.clock_in instanceof Date ? shift.clock_in : new Date(shift.clock_in);
+      const breakMin = Number(shift.break_minutes) || 0;
+      const grossMin = Math.max(0, Math.round((now.getTime() - clockIn.getTime()) / 60000));
+      const workedMin = Math.max(0, grossMin - breakMin);
+
+      const set = {
+        status: SHIFT_STATUS.CLOSED,
+        clock_out: now,
+        worked_minutes: workedMin,
+        note: data.note !== undefined ? String(data.note).trim() : shift.note,
+        updated_date: now,
+      };
+      await collection.updateOne({ _id: shift._id }, { $set: set });
+      return { status: true, data: { ...shift, ...set }, message: 'Clocked out' };
+    } catch (error) {
+      return { status: false, data: null, message: error.message };
+    }
+  }
+
+  // List shifts for the current branch (most recent first). Optional filters:
+  // user_id, status, limit.
+  async listShifts(opts = {}) {
+    try {
+      const collection = await this.model.getCollection('shifts');
+      const query = { license: this._license() };
+      const branch = this._branch();
+      if (branch) query.branch_id = branch;
+      if (opts.user_id) query.user_id = toId(opts.user_id);
+      if (opts.status) query.status = opts.status;
+      const shifts = await collection
+        .find(query)
+        .sort({ clock_in: -1 })
+        .limit(Number(opts.limit) || 200)
+        .toArray();
+      return { status: true, data: shifts, message: 'success' };
+    } catch (error) {
+      return { status: false, data: [], message: error.message };
+    }
+  }
+}
+
+module.exports = ShiftRepository;
