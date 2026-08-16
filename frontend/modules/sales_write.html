@@ -7,11 +7,16 @@
     </div>
     <div class="contentbar">
         <div class="breadcrumbbar" style="margin-left: -0px;margin-top: -20px !important;">
-            <div class="row text-left">
-                <div class="col-md-8 col-lg-8">
+            <div class="row text-left align-items-center">
+                <div class="col-7 col-md-8 col-lg-8">
                     <h4 class="page-title break_title"><span id="sales-text-change">New</span>
                         <lang class="lang_printsale">&nbsp;Sale</lang>
                     </h4>
+                </div>
+                <div class="col-5 col-md-4 col-lg-4 text-right">
+                    <input type="text" id="time-format" name="date"
+                        class="form-control-plaintext commonDate text-right text-muted" readonly
+                        style="padding:0; border:0; background:transparent; white-space:nowrap; font-size:13px; display:inline-block; width:165px; max-width:100%;" />
                 </div>
             </div>
         </div>
@@ -21,8 +26,8 @@
                 <!-- Start Touch Sale Form -->
                 <form class="touchsales_page" id="touchsales_page">
                     <!-- start -->
-                    <div class="row" style="margin-top: -35px;">
-                        <div class="col-xs-2 col-md-5 col-lg-5 col-xl-5">
+                    <div class="row" style="margin-top: -10px;">
+                        <div class="col-xs-2 col-md-8 col-lg-8 col-xl-8">
                         </div>
                         <div class="col-xs-5 col-md-3 col-lg-3 col-xl-3 pull-right" style="padding-right: 5px; display: none;" id="weight_machine_container">
                             <div style="display: flex; align-items: center; gap: 10px;">
@@ -36,13 +41,6 @@
                                     <span id="live_weight_value">--</span> <small style="margin-left: 4px;">kg</small>
                                 </div>
                             </div>
-                        </div>
-                        <div class="col-xs-5 col-md-4 col-lg-4 col-xl-4 pull-right">
-                            <!-- Plain date/time readout - no field box, just right-aligned muted
-                                 text sized to hold the full "YYYY/MM/DD hh:mm AM" without wrapping. -->
-                            <input type="text" id="time-format" name="date"
-                                class="form-control-plaintext commonDate text-right text-muted" readonly
-                                style="padding:0; height:38px; line-height:38px; border:0; background:transparent; white-space:nowrap; font-size:13px; display:inline-block; width:165px; max-width:100%;" />
                         </div>
                     </div>
                     <div class="row">
