@@ -3827,6 +3827,10 @@ PosnicPro.sales.editSale = {
                 dine_type: dineType
             };
             $('#return_amount_check').modal('hide');
+            // Carry the manager-approval token (if a refund needed one) so the
+            // server can verify it. Single-use: cleared once sent.
+            data.approval_token = PosnicPro._refundApprovalToken || undefined;
+            PosnicPro._refundApprovalToken = null;
             var paramsReturn = {
                 method: 'POST',
                 url: 'sales/returnSales',

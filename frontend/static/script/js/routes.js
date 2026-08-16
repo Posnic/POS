@@ -11,7 +11,12 @@ $(document).ready(function () {
         if (module === 'sales' && PosnicPro.posCan && !PosnicPro.posCan('refund')) {
             PosnicPro.requireManagerApproval('refund',
                 { saleId: id, prompt: "A refund needs a manager's approval." },
-                function () { PosnicPro[module].view.returnPage(module, id); });
+                function (approval) {
+                    // Stash the token so the return submission can prove approval
+                    // to the server (valid ~5 min, i.e. long enough to finish).
+                    PosnicPro._refundApprovalToken = approval && approval.approval_token;
+                    PosnicPro[module].view.returnPage(module, id);
+                });
             return;
         }
         PosnicPro[module].view.returnPage(module, id)
