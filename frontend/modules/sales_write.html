@@ -302,20 +302,16 @@
                             </div>
 
                             <div class="row kot-hide" id="sales_coupon_row">
-                                <div class="col-12 mb-2">
-                                    <div id="sales_coupon_panel" class="d-flex flex-column align-items-end">
-                                        <div class="input-group input-group-sm" style="max-width: 320px;">
-                                            <div class="input-group-prepend">
-                                                <span class="input-group-text"><i class="feather icon-tag"></i></span>
-                                            </div>
+                                <div class="col-12 mb-2 d-flex flex-column align-items-end">
+                                    <div id="sales_coupon_panel">
+                                        <div class="sales-coupon-box">
+                                            <i class="feather icon-tag sales-coupon-icon"></i>
                                             <input type="text" id="sales_coupon_code"
-                                                class="form-control text-uppercase" placeholder="Coupon code">
-                                            <div class="input-group-append">
-                                                <button type="button" class="btn btn-success-rgba"
-                                                    id="sales_coupon_apply">Apply</button>
-                                                <button type="button" class="btn btn-secondary-rgba"
-                                                    id="sales_coupon_clear" title="Remove coupon">&times;</button>
-                                            </div>
+                                                class="text-uppercase sales-coupon-input" placeholder="Coupon code">
+                                            <button type="button" class="sales-coupon-apply"
+                                                id="sales_coupon_apply">Apply</button>
+                                            <button type="button" class="sales-coupon-clear"
+                                                id="sales_coupon_clear" title="Remove coupon">&times;</button>
                                         </div>
                                         <div id="sales_coupon_status" class="small mt-1 text-right"></div>
                                     </div>
