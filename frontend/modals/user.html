@@ -195,6 +195,23 @@
                                             permissions, or choose "Custom" to set them by hand below.</small>
                                     </div>
                                 </div>
+                                <div class="row" id="manager_pin_row" style="margin-bottom:14px; display:none;">
+                                    <div class="col-md-12">
+                                        <label style="font-weight:600;">Manager Approval PIN
+                                            <span class="text-muted" style="font-weight:400;">(authorises a cashier's voids / refunds at the till)</span></label>
+                                        <div class="input-group">
+                                            <input type="password" inputmode="numeric" autocomplete="new-password" maxlength="8"
+                                                   class="form-control border-control" id="user_manager_pin"
+                                                   placeholder="4-8 digit PIN">
+                                            <div class="input-group-append">
+                                                <button type="button" class="btn btn-outline-primary" id="user_manager_pin_btn"
+                                                        onclick="PosnicPro.users.setManagerPin();">Set PIN</button>
+                                            </div>
+                                        </div>
+                                        <small class="form-text text-muted">Enter a 4-8 digit PIN and click Set PIN. A
+                                            manager types this at the till to approve a cashier's restricted action.</small>
+                                    </div>
+                                </div>
                                 <div class="panel-body">
                                     <div class="row">
                                         <div class="col-md-4 userAccessLabel adminAccessLabel">

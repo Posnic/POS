@@ -1030,8 +1030,22 @@ PosnicPro = {
     /*delete confirmation*/
     deleteConfirmed: function () {
         $('#delete_modal').modal('hide');
-        PosnicPro.deleteConfirmation = true;
-        window['PosnicPro']['' + PosnicPro.callbackRegistry.name](PosnicPro.callbackRegistry.arguments);
+        // Capture the pending callback now so the async approval path below is
+        // not affected by any later change to callbackRegistry.
+        var cb = PosnicPro.callbackRegistry;
+        var proceed = function () {
+            PosnicPro.deleteConfirmation = true;
+            window['PosnicPro']['' + cb.name](cb.arguments);
+        };
+        // Deleting a sale is a void. When this user can't void on their own a
+        // manager must approve it on the spot before we proceed.
+        if (PosnicPro.record_url === 'sales' && !PosnicPro.posCan('void_sale')) {
+            var sid = (typeof cb.arguments === 'string') ? cb.arguments : null;
+            PosnicPro.requireManagerApproval('void_sale',
+                { saleId: sid, prompt: "Voiding a sale needs a manager's approval." }, proceed);
+            return;
+        }
+        proceed();
     },
     /*delete confirmation for delete all collection from the admin settings*/
     collectionDeleteConfirmed: function () {
@@ -1040,6 +1054,78 @@ PosnicPro = {
         $('.user_verify').hide();
         PosnicPro.deleteConfirmation = true;
         window['PosnicPro']['' + PosnicPro.callbackRegistry.name](PosnicPro.callbackRegistry.arguments);
+    },
+
+    /* ----- Manager-approval elevation (Phase 2) -----------------------------
+     * A cashier's restricted POS action (void / refund / over-limit discount)
+     * can be authorised on the spot by a manager entering their PIN. posCan()
+     * answers whether the CURRENT user may do the action without a manager;
+     * requireManagerApproval() runs onApproved immediately if so, otherwise
+     * pops the PIN modal and only proceeds once the server approves the PIN.
+     */
+    _pendingApproval: null,
+    posCan: function (action) {
+        var usertype = PosnicPro.local.get('usertype');
+        // Owner-class accounts always pass (also grandfathers pre-roles shops).
+        if (usertype === 'super_admin' || usertype === 'admin' || usertype === 'manager') {
+            return true;
+        }
+        var pos = PosnicPro.userACL && PosnicPro.userACL.pos;
+        // Fail open when the POS matrix isn't present (a session from before this
+        // shipped) so the till is never unexpectedly blocked.
+        if (!pos || typeof pos !== 'object') return true;
+        return pos[action] === true;
+    },
+    requireManagerApproval: function (action, opts, onApproved, onDenied) {
+        opts = opts || {};
+        if (PosnicPro.posCan(action)) {
+            if (typeof onApproved === 'function') onApproved(null);
+            return;
+        }
+        PosnicPro._pendingApproval = {
+            action: action, opts: opts, onApproved: onApproved, onDenied: onDenied,
+        };
+        $('#manager_pin_input').val('');
+        $('#manager_pin_error').addClass('d-none').text('');
+        $('#manager_pin_prompt').text(opts.prompt || "This action needs a manager's approval.");
+        $('#manager_pin_submit').prop('disabled', false);
+        $('#manager_pin_modal').modal('show');
+        setTimeout(function () { $('#manager_pin_input').trigger('focus'); }, 400);
+    },
+    submitManagerApproval: function () {
+        var pending = PosnicPro._pendingApproval;
+        if (!pending) { $('#manager_pin_modal').modal('hide'); return; }
+        var pin = $('#manager_pin_input').val();
+        if (!pin) {
+            $('#manager_pin_error').text('Enter a PIN').removeClass('d-none');
+            return;
+        }
+        $('#manager_pin_submit').prop('disabled', true);
+        var reEnable = function () {
+            $('#manager_pin_submit').prop('disabled', false);
+            $('#manager_pin_input').val('').trigger('focus');
+        };
+        PosnicPro.post({
+            url: 'authorizations/verify-pin',
+            data: JSON.stringify({
+                pin: pin,
+                action: pending.action,
+                sale_id: pending.opts.saleId || pending.opts.entityId || null,
+            }),
+        }, function (response) {
+            if (response && response.type === 'success') {
+                $('#manager_pin_modal').modal('hide');
+                PosnicPro._pendingApproval = null;
+                if (typeof pending.onApproved === 'function') pending.onApproved(response.data);
+            } else {
+                reEnable();
+            }
+        }, function () {
+            // Failure (e.g. 403 wrong PIN). Passing this callback also prevents
+            // the global handler from redirecting to login on a 403; the error
+            // toast it shows is enough. Keep the modal open for a retry.
+            reEnable();
+        });
     },
     getAllSelectedCollections: function () {
         if (PosnicPro.local.get('usertype') === 'super_admin' || PosnicPro.local.get('usertype') === 'admin') {

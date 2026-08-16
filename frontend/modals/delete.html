@@ -62,9 +62,39 @@
                 </button>
             </div>
         </div>
-    </div>       
+    </div>
 </div>
 <!-- end Delete modal -->
+
+<!-- start Manager approval PIN modal -->
+<div class="modal fade close_on_esc" id="manager_pin_modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="feather icon-lock mr-2"></i>Manager approval</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-2" id="manager_pin_prompt">This action needs a manager's approval.</p>
+                <input type="password" inputmode="numeric" autocomplete="off" maxlength="8"
+                       class="form-control text-center" id="manager_pin_input"
+                       placeholder="Manager PIN" style="letter-spacing:.4em;font-size:1.2rem;"
+                       onkeydown="if(event.key==='Enter'){event.preventDefault();PosnicPro.submitManagerApproval();}">
+                <small class="text-danger d-none" id="manager_pin_error"></small>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-danger" data-dismiss="modal">
+                    <i class="feather icon-x-circle mr-2"></i>Cancel
+                </button>
+                <button type="button" id="manager_pin_submit" onclick="PosnicPro.submitManagerApproval();"
+                        class="btn btn-outline-primary"><i class="feather icon-check mr-2"></i>Approve</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- end Manager approval PIN modal -->
 
 <!-- start remove line item modal -->
 <div class="modal fade" id="delete_transaction_modal" tabindex="-1" role="dialog" aria-hidden="true">
