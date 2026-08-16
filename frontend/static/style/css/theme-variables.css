@@ -807,7 +807,11 @@
 /* Accent: #506fe4 -> theme primary */
 [data-theme] .btn-primary,
 [data-theme] .bg-primary,
-[data-theme] .toolbar-primary .tool-item { background-color: var(--theme-primary-color, #506fe4) !important; border-color: var(--theme-primary-color, #506fe4) !important; }
+[data-theme] .toolbar-primary .tool-item { background-color: var(--theme-primary-color, #506fe4) !important; border-color: var(--theme-primary-color, #506fe4) !important; color: var(--theme-btn-primary-text, #fff) !important; }
+/* The default (non-hover) state was missing a text colour, so in themes without
+   their own .btn-primary override (e.g. VS Code) the label inherited the primary
+   colour and vanished into the identical background. Force a contrasting label. */
+[data-theme] .btn-primary, [data-theme] .btn-primary * { color: var(--theme-btn-primary-text, #fff) !important; }
 [data-theme] .btn-primary:hover,
 [data-theme] .btn-primary:focus,
 [data-theme] .toolbar-primary .tool-item:hover,
