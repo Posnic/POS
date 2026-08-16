@@ -6074,6 +6074,15 @@ PosnicPro.sales.itemsMenu = {
                         let currentDate = new Date().getTime(currentDateTimeCentralTimeZone);
                         let items_expiry_date = getItemdata[i]['items_expiry_date'];
                         if (items_expiry_date >= currentDate || items_expiry_date === null || items_expiry_date === '') {
+                            // Subtle, light-grey stock count on the card - only when the item
+                            // tracks inventory. Fails safe (shows nothing) if the field is absent.
+                            var _trackInv = getItemdata[i]['track_inventory'];
+                            var _stockHtml = '';
+                            if (_trackInv === true || _trackInv === 'true') {
+                                var _aq = getItemdata[i]['available_quantity'];
+                                _aq = (_aq === undefined || _aq === null || _aq === '') ? 0 : _aq;
+                                _stockHtml = '<div class="text-center wsk-cp-stock">' + _aq + ' in stock</div>';
+                            }
                             var product = '<div class="wsk-cp cbutton--effect-novak" id="' + getItemdata[i]['id'] + '" onclick="PosnicPro.sales.itemsMenu.addToLineItemsList(this.id)">' +
                                 '<div class="wsk-cp-product">' +
                                 '<div class="description-prod">' +
@@ -6083,7 +6092,7 @@ PosnicPro.sales.itemsMenu = {
                                 '<div class="wsk-cp-text mt-3">' +
                                 '<div class="price-text-color">' +
                                 '<div class="text-center"><span class="price">' + currency + '&nbsp;' + price.toFixed(2) + '</span></div>' +
-                                '</div>' +
+                                '</div>' + _stockHtml +
                                 '</div>' +
                                 '</div>' +
                                 '</div>';
