@@ -483,6 +483,41 @@ describe('SalesController', () => {
       expect(res.status).toHaveBeenCalledWith(200);
     });
 
+    test('403 when an allowed discount exceeds the role cap', async () => {
+      // 20 off a 100 subtotal = 20%, over the 10% cap.
+      const res = mockRes();
+      await ctrl.create(
+        mockReq({
+          user: cashier({ discount_apply: true, discount_max_percent: 10 }),
+          body: {
+            items: [{ item_id: VALID_ID, item_quantity: 1, item_discount: 20 }],
+            sales_sub_total: 100,
+            sales_total: 80,
+          },
+        }),
+        res,
+        mockNext()
+      );
+      expect(res.status).toHaveBeenCalledWith(403);
+    });
+
+    test('within the role cap passes without approval', async () => {
+      const res = mockRes();
+      await ctrl.create(
+        mockReq({
+          user: cashier({ discount_apply: true, discount_max_percent: 10 }),
+          body: {
+            items: [{ item_id: VALID_ID, item_quantity: 1, item_discount: 5 }],
+            sales_sub_total: 100,
+            sales_total: 95,
+          },
+        }),
+        res,
+        mockNext()
+      );
+      expect(res.status).toHaveBeenCalledWith(200);
+    });
+
     test('no gate on an undiscounted sale', async () => {
       const res = mockRes();
       await ctrl.create(
