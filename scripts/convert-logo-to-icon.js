@@ -1,5 +1,8 @@
 const sharp = require('sharp');
-const toIco = require('to-ico');
+/* png-to-ico, not to-ico: same job, but to-ico dragged in jimp 0.2 and the
+   long-dead `request`, which between them were four of Dependabot's critical
+   findings - for a script that runs when somebody redesigns the logo. */
+const pngToIco = require('png-to-ico');
 const fs = require('fs');
 const path = require('path');
 
@@ -26,9 +29,9 @@ async function convertSvgToIcons() {
       console.log(`✅ PNG created: ${pngPath}`);
     }
 
-    // Convert PNGs to ICO
+    // Convert PNGs to ICO (png-to-ico accepts an array of PNG buffers too)
     console.log('📦 Converting PNGs to ICO...');
-    const icoBuffer = await toIco(pngBuffers);
+    const icoBuffer = await pngToIco(pngBuffers);
     const icoPath = path.join(buildsDir, 'icon.ico');
     fs.writeFileSync(icoPath, icoBuffer);
     console.log(`✅ ICO created: ${icoPath}`);

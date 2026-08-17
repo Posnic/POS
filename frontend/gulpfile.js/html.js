@@ -1,6 +1,8 @@
 var fs = require('fs');
 var path = require('path')
-var minify = require('html-minifier').minify;
+/* html-minifier was required here for YEARS while its one call sat commented
+   out below - meanwhile it was the frontend's only unfixable high-severity
+   audit finding. The pages ship readable on purpose; the dependency is gone. */
 const { publicDir, languages, langDir, s, isDir} = require('./config');
 const dir = process.cwd();
 const langContent = [];
@@ -113,15 +115,6 @@ function buildAllHtml(cb, skip) {
     readPagesAndHtmls();
     loadAllHtml(); // Loading All Html's into Memory and language replace
     setInterval(function () {
-        // Disabled HTML minification for human readable output
-        let minifyOptions = {
-            minifyCSS: false,
-            minifyJS: false,
-            collapseWhitespace: false,
-            removeComments: false,
-            removeAttributeQuotes: false,
-            removeTagWhitespace: false
-        };
         if (taskCount === 0) {
             for (let lang of languages) {
                 if (skipLang && lang !=='en') {
@@ -130,8 +123,6 @@ function buildAllHtml(cb, skip) {
                 for (let item in html[lang]) {
                     if (html[lang].hasOwnProperty(item) && typeof html[lang][item] === 'string') {
                         let content = getLinkContent(html[lang][item], lang);
-                        // Keep HTML human readable - skip minification
-                        // content = minify(content, minifyOptions);
                         if (!fs.existsSync(publicDir)) {
                             fs.mkdirSync(publicDir, {recursive: true});
                         }

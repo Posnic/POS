@@ -449,8 +449,7 @@
     "jquery": "^3.7.1",
     "jsdom": "^30.0.1",
     "png-to-ico": "^3.0.2",
-    "sharp": "^0.35.3",
-    "to-ico": "^1.1.5"
+    "sharp": "^0.35.3"
   },
   "dependencies": {
     "@serialport/parser-readline": "^13.0.0",
