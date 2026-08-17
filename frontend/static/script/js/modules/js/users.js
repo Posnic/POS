@@ -935,36 +935,48 @@ PosnicPro.users = {
         return false;
     },
     registerMenuDetails: function () {
+        // A browser that has never opened a register here simply has no
+        // currentregister record - which is exactly the case for admins, who
+        // skip register selection at login. That used to fall through to a
+        // catch that REMOVED the whole Cash Register menu: the people who
+        // administer the tills were the ones the menu vanished for, until
+        // the next full reload. No record is the 'closed' state, not an error.
+        var renderClosed = function () {
+            $('.register_details_data').hide();
+            $('#close_register_card').show();
+            $(".register_details_visibledata").css('visibility', 'hidden');
+
+            // Load registers for the current branch immediately
+            let id = PosnicPro.local.get("branch_id_set");
+            var params = {
+                url: 'branches/userRegisterBranchSelect',
+                data: {id: id}
+            };
+            PosnicPro.get(params, function (response) {
+                if (response.type === 'success' && response.data.register_data.length > 0) {
+                    var registerOption = '';
+                    for (var i = 0; i < response.data.register_data.length; i++) {
+                        var row = response.data.register_data[i];
+                        registerOption += '<option id="' + row.register_id + '" value="' + row.register_id + '">' + row.register_name + '</option>';
+                    }
+                    $('#choose_register_model').html(registerOption);
+                }
+            });
+        };
         db.currentregister.get('1').then(function (data) {
-            if (data.register_status === 'open') {
+            if (data && data.register_status === 'open') {
                 $('.register_details_data').show();
                 $('#close_register_card').hide();
                 $(".register_details_visibledata").css('visibility', 'visible');
                 PosnicPro.registers.cashReportRegister(data.register_id);
             } else {
-                $('.register_details_data').hide();
-                $('#close_register_card').show();
-                $(".register_details_visibledata").css('visibility', 'hidden');
-                
-                // Load registers for the current branch immediately
-                let id = PosnicPro.local.get("branch_id_set");
-                var params = {
-                    url: 'branches/userRegisterBranchSelect',
-                    data: {id: id}
-                };
-                PosnicPro.get(params, function (response) {
-                    if (response.type === 'success' && response.data.register_data.length > 0) {
-                        var registerOption = '';
-                        for (var i = 0; i < response.data.register_data.length; i++) {
-                            var row = response.data.register_data[i];
-                            registerOption += '<option id="' + row.register_id + '" value="' + row.register_id + '">' + row.register_name + '</option>';
-                        }
-                        $('#choose_register_model').html(registerOption);
-                    }
-                });
+                renderClosed();
             }
-        }).catch(function () {
-            $('.cashRegisterModule').remove();
+        }).catch(function (err) {
+            // A storage hiccup must degrade to the closed view, never take
+            // the menu away.
+            console.error('currentregister lookup failed:', err);
+            renderClosed();
         });
     },
 
