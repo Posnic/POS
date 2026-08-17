@@ -475,6 +475,45 @@ describe('RegisterRepository', () => {
       expect(r.message).toBe(SUCCESS_MESSAGES.REGISTER_CLOSED);
       expect(r.data.register_status).toBe(REGISTER_STATUS.CLOSED);
     });
+
+    test('persists expected/counted/over_short from the session at close', async () => {
+      col.findOne.mockResolvedValue({
+        _id: FAKE_ID,
+        register_status: REGISTER_STATUS.OPENED,
+        opening_float: '100',
+        register_sales: [
+          { register_paymentmode: 'Cash', register_amount: '250' },
+          { register_paymentmode: 'Card', register_amount: '400' },
+          { multi_payment: { cash: 50, card: 30 } },
+        ],
+        cashInOutDetail: [{ cashin_amount: '20' }, { cashout_amount: '70' }],
+        countedAmount: [{ paymenttype: 'Cash', value: '340' }],
+      });
+      modelMock.getCollection = jest.fn().mockResolvedValue(col);
+      const r = await repo.registercloseUpdate({ cash_register_id: FAKE_ID });
+      expect(r.status).toBe(true);
+      // 100 float + 250 cash + 50 multi-cash + 20 in - 70 out = 350 expected
+      expect(r.data.closing_expected).toBe(350);
+      expect(r.data.closing_counted).toBe(340);
+      expect(r.data.over_short).toBe(-10);
+    });
+
+    test('a blind close (nothing counted) stores expected with null counted', async () => {
+      col.findOne.mockResolvedValue({
+        _id: FAKE_ID,
+        register_status: REGISTER_STATUS.OPENED,
+        opening_float: 100,
+        register_sales: [],
+        cashInOutDetail: [],
+        countedAmount: [],
+      });
+      modelMock.getCollection = jest.fn().mockResolvedValue(col);
+      const r = await repo.registercloseUpdate({ cash_register_id: FAKE_ID });
+      expect(r.status).toBe(true);
+      expect(r.data.closing_expected).toBe(100);
+      expect(r.data.closing_counted).toBeNull();
+      expect(r.data.over_short).toBeNull();
+    });
     test('returns error on exception', async () => {
       modelMock.getCollection = jest.fn().mockRejectedValue(new Error('fail'));
       const r = await repo.registercloseUpdate({ cash_register_id: FAKE_ID });

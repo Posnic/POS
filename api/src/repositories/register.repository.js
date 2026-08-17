@@ -848,6 +848,45 @@ class RegisterRepository {
     }
   }
 
+  /*
+   * Expected CASH in the drawer for a session document, by the one agreed
+   * formula: opening float + cash takings (single-mode cash sales and the
+   * cash slice of multi-payments) + Σ cash-in − Σ cash-out. Mirrors the tally
+   * cashRegisterOpenManualModel shows live.
+   */
+  _expectedCashAtClose(document) {
+    let cashSales = 0;
+    for (const regSale of document.register_sales || []) {
+      let multiPayment = regSale.multi_payment;
+      if (typeof multiPayment === 'string') {
+        try {
+          multiPayment = JSON.parse(multiPayment);
+        } catch (e) {
+          multiPayment = {};
+        }
+      }
+      if (
+        multiPayment &&
+        typeof multiPayment === 'object' &&
+        Object.keys(multiPayment).length > 0
+      ) {
+        for (const [method, amount] of Object.entries(multiPayment)) {
+          if (String(method).toLowerCase() === 'cash') cashSales += parseFloat(amount) || 0;
+        }
+      } else if (String(regSale.register_paymentmode || '').toLowerCase() === 'cash') {
+        cashSales += parseFloat(regSale.register_amount) || 0;
+      }
+    }
+    let cashIn = 0;
+    let cashOut = 0;
+    for (const entry of document.cashInOutDetail || []) {
+      cashIn += parseFloat(entry.cashin_amount) || 0;
+      cashOut += parseFloat(entry.cashout_amount) || 0;
+    }
+    const openingFloat = parseFloat(document.opening_float) || 0;
+    return Math.round((openingFloat + cashSales + cashIn - cashOut) * 100) / 100;
+  }
+
   async registercloseUpdate(data) {
     try {
       const collection = await this.model.getCollection('cashregister');
@@ -870,6 +909,33 @@ class RegisterRepository {
         register_status: REGISTER_STATUS.CLOSED,
         register_closedate: mongoDate,
       };
+
+      // Persist the close numbers so they are immutable: expected cash by the
+      // agreed formula, the counted Cash amount (entered on the register
+      // screen before closing), and the over/short. A blind close (nothing
+      // counted) stores the expectation with counted/over_short null. The
+      // close itself must never fail over this computation.
+      try {
+        const session = await collection.findOne({
+          _id: cashRegisterRowId,
+          branch_id: branchIdToMatch,
+          license: licenseToMatch,
+          register_status: REGISTER_STATUS.OPENED,
+        });
+        if (session) {
+          const expected = this._expectedCashAtClose(session);
+          const countedEntry = (session.countedAmount || []).find(
+            (c) => String(c.paymenttype || '').toLowerCase() === 'cash'
+          );
+          const counted = countedEntry ? parseFloat(countedEntry.value) || 0 : null;
+          registerCollectionData.closing_expected = expected;
+          registerCollectionData.closing_counted = counted;
+          registerCollectionData.over_short =
+            counted === null ? null : Math.round((counted - expected) * 100) / 100;
+        }
+      } catch (varianceErr) {
+        console.error('close variance not persisted:', varianceErr.message);
+      }
 
       let currentUserId = this.model.user?._id || BaseModel.loggedUser || null;
       if (typeof currentUserId === 'string' && ObjectId.isValid(currentUserId))
