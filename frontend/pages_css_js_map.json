@@ -112,6 +112,7 @@
             "static/script/js/modules/js/customers.js",
             "static/script/js/plugins/toolbar/jquery.toolbar.js",
             "static/script/js/modules/js/dashboard.js",
+            "static/script/js/modules/js/roles.js",
             "static/script/js/modules/js/registers.js",
             "static/script/js/modules/js/expenses.js",
             "static/script/js/modules/js/items.js",
