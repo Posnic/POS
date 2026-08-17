@@ -972,6 +972,45 @@ if (process.env.NODE_ENV !== 'production') {
    for", which is what makes serving more than one shop from a process safe. */
 app.use(attachDb);
 
+/*
+ * Realtime (S2): every successful write publishes a coarse change signal to
+ * the shop's other tills, and /events is the SSE stream they hold open.
+ * Sits right after attachDb so the tenant key exists, and before the
+ * routers so no write seam can be missed. The stream carries invalidation
+ * signals only - never data - so it cannot leak what a till could not have
+ * fetched itself; see src/realtime/ for both halves.
+ */
+const { changeEvents } = require('./src/realtime/change-events');
+const { subscribe: sseSubscribe } = require('./src/realtime/event-bus');
+const { protect: sseProtect } = require('./src/middleware/auth');
+app.use(changeEvents);
+
+const sseEvents = (req, res) => {
+  if (!req.db) return res.status(503).json({ type: 'error', message: 'No shop in context' });
+  /* text/event-stream is not a compressible type, so the compression
+     middleware passes it through unbuffered; no-transform tells any proxy
+     the same. X-Accel-Buffering switches off nginx response buffering,
+     without which events would arrive in batches whenever a buffer filled. */
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache, no-transform');
+  res.setHeader('X-Accel-Buffering', 'no');
+  res.flushHeaders();
+
+  const sub = sseSubscribe(req.db.databaseName, res);
+  if (!sub.ok) {
+    /* Over the per-shop cap: tell the browser to retry much later rather
+       than hammering; the poll fallbacks keep the till usable meanwhile. */
+    res.write('retry: 60000\n\n');
+    res.end();
+    return;
+  }
+  res.write('retry: 3000\n\n');
+  res.write(`data: ${JSON.stringify({ type: 'hello' })}\n\n`);
+  req.on('close', () => sub.unsubscribe());
+};
+app.get('/api/events', sseProtect, sseEvents);
+app.get('/events', sseProtect, sseEvents);
+
 // Mount API routes under /api
 app.use('/api', apiRouter);
 
