@@ -473,6 +473,27 @@
                                             </div>
                                         </div>
 
+                                        <!--
+                                            Shop-wide: staff clock in/out, the labour /
+                                            payout report and payroll exports all hang off
+                                            this. Off hides the header clock button.
+                                        -->
+                                        <div class="form-row">
+                                            <div class="form-group col-md-6">
+                                                <label for="staff_shifts_enable">
+                                                    <lang class="lang_staffshifts_title">Staff clock-in / attendance</lang>
+                                                </label>
+                                                <select name="staff_shifts_enable" id="staff_shifts_enable"
+                                                    class="form-control border-control">
+                                                    <option value="false">Disable</option>
+                                                    <option value="true" selected>Enable</option>
+                                                </select>
+                                                <small class="text-muted">Staff clock in and out from the
+                                                    clock button in the header; managers get the labour /
+                                                    payout report and payroll exports there too.</small>
+                                            </div>
+                                        </div>
+
                                     </div>
                                     <div class="card-footer text-right">
                                         <button type="button"

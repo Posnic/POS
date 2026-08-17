@@ -587,6 +587,16 @@ class SettingModel extends BaseModel {
       }
       till_lock_idle_minutes = Math.min(till_lock_idle_minutes, 120);
 
+      /*
+       * Staff clock-in / attendance. On unless the shop turns it off - the
+       * shift system shipped live, so an update (or an old client that does
+       * not send the field) must not take the clock button away from shops
+       * already using it. Only an explicit 'false' disables it.
+       */
+      const staff_shifts_enable = !(
+        data.staff_shifts_enable === 'false' || data.staff_shifts_enable === false
+      );
+
       // Strip GMT offset from timezone (e.g., "Pacific/Niue (GMT-11:00)" -> "Pacific/Niue")
       let cleanTimezone = data.time_zone?.trim() || 'Asia/Kolkata';
       const gmtOffsetMatch = cleanTimezone.match(/^([^(]+)\s*\(GMT[^)]+\)$/);
@@ -621,6 +631,7 @@ class SettingModel extends BaseModel {
         hardware_weight_machine_enable: hardware_weight_machine_enable,
         till_lock_enable: till_lock_enable,
         till_lock_idle_minutes: till_lock_idle_minutes,
+        staff_shifts_enable: staff_shifts_enable,
         allow_sale_date_edit: data.allow_sale_date_edit === 'false' ? 'false' : 'true',
       };
 
@@ -672,6 +683,7 @@ class SettingModel extends BaseModel {
         hardware_weight_machine_enable: hardware_weight_machine_enable,
         till_lock_enable: till_lock_enable,
         till_lock_idle_minutes: till_lock_idle_minutes,
+        staff_shifts_enable: staff_shifts_enable,
       };
 
       // PHP lines 109-121: Update branch_name across all collections

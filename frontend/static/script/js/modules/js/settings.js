@@ -378,9 +378,11 @@ PosnicPro.settings = {
                     var generalSettings = {
                         hardware_weight_machine_enable: response.data['hardware_weight_machine_enable'] || false,
                         till_lock_enable: response.data['till_lock_enable'] || false,
-                        till_lock_idle_minutes: response.data['till_lock_idle_minutes'] || 0
+                        till_lock_idle_minutes: response.data['till_lock_idle_minutes'] || 0,
+                        staff_shifts_enable: response.data['staff_shifts_enable'] !== false
                     };
                     PosnicPro.local.set('general_settings', JSON.stringify(generalSettings));
+                    PosnicPro.shiftWidget.applyEnabled();
                     
                     let branchRecord = [];
                     branchRecord.push({ name: response.data['branch_name'], phone: response.data['store_telephone'], email: response.data['store_email'], address: response.data['store_address'], image: response.data['branch_image'] });
@@ -612,14 +614,19 @@ PosnicPro.settings = {
                 // per-machine one.
                 $('#till_lock_enable').val(data.till_lock_enable === true ? 'true' : 'false');
                 $('#till_lock_idle_minutes').val(String(data.till_lock_idle_minutes || 0));
-                
+
+                // Staff clock-in: on unless the shop explicitly disabled it.
+                $('#staff_shifts_enable').val(data.staff_shifts_enable === false ? 'false' : 'true');
+
                 // Store general settings including hardware_weight_machine_enable
                 var generalSettings = {
                     hardware_weight_machine_enable: data.hardware_weight_machine_enable || false,
                     till_lock_enable: data.till_lock_enable || false,
-                    till_lock_idle_minutes: data.till_lock_idle_minutes || 0
+                    till_lock_idle_minutes: data.till_lock_idle_minutes || 0,
+                    staff_shifts_enable: data.staff_shifts_enable !== false
                 };
                 PosnicPro.local.set('general_settings', JSON.stringify(generalSettings));
+                PosnicPro.shiftWidget.applyEnabled();
                 
                 $('.display-branch-name').html(data.branch_name);
                 $('.display-tax-value').html(data.tax_percentage);
@@ -1399,10 +1406,9 @@ if ($wrapper.length) {
                 sms_retry_period: $('#sms_retry_period').val(),
                 sms_max_retries: $('#sms_max_retries').val(),
                 hardware_weight_machine_enable: ($('#hardware_weight_machine_enable').val() === 'true'),
-                    till_lock_enable: ($('#till_lock_enable').val() === 'true'),
-                    till_lock_idle_minutes: parseInt($('#till_lock_idle_minutes').val(), 10) || 0 ? 'true' : 'false',
                 till_lock_enable: ($('#till_lock_enable').val() === 'true') ? 'true' : 'false',
                 till_lock_idle_minutes: $('#till_lock_idle_minutes').val() || '0',
+                staff_shifts_enable: ($('#staff_shifts_enable').val() === 'false') ? 'false' : 'true',
             })
         };
         PosnicPro.put(params, function (response) {
@@ -1494,9 +1500,12 @@ if ($wrapper.length) {
                 var generalSettings = {
                     hardware_weight_machine_enable: ($('#hardware_weight_machine_enable').val() === 'true'),
                     till_lock_enable: ($('#till_lock_enable').val() === 'true'),
-                    till_lock_idle_minutes: parseInt($('#till_lock_idle_minutes').val(), 10) || 0
+                    till_lock_idle_minutes: parseInt($('#till_lock_idle_minutes').val(), 10) || 0,
+                    staff_shifts_enable: ($('#staff_shifts_enable').val() !== 'false')
                 };
                 PosnicPro.local.set('general_settings', JSON.stringify(generalSettings));
+                // Show or hide the header clock button to match, right away.
+                PosnicPro.shiftWidget.applyEnabled();
             }
             PosnicPro.alert(response.type, response.message);
             loader.find(".loadingSpinner:first").remove();

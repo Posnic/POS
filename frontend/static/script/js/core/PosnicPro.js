@@ -1163,7 +1163,20 @@ PosnicPro = {
      * a 409 (e.g. "already clocked in") never bounces the user to login.
      */
     shiftWidget: {
+        // Settings can switch the whole clock-in system off (staff_shifts_enable,
+        // shop-wide). On unless explicitly disabled, so a shop that never visits
+        // Settings keeps the clock button it already uses.
+        enabled: function () {
+            try {
+                var raw = PosnicPro.local.get('general_settings');
+                return !raw || JSON.parse(raw).staff_shifts_enable !== false;
+            } catch (e) { return true; }
+        },
+        applyEnabled: function () {
+            $('#shift_clock_li').toggle(PosnicPro.shiftWidget.enabled());
+        },
         openWidget: function () {
+            if (!PosnicPro.shiftWidget.enabled()) { return; }
             PosnicPro.shiftWidget.refresh();
             $('#shift_card_input').val('');
             // Only staff who can read users (managers) see the report entry point.

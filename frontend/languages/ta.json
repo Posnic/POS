@@ -656,5 +656,8 @@
     "lang_expenses_reporttile": "செலவுகள்",
     "lang_quicksale_title": "விரைவான விற்பனை",
     "lang_mail": "மின்னஞ்சல் அமைப்புகளைப் புகாரளிக்கவும்",
-    "lang_kiosktitle": "கியோஸ்க்"
+    "lang_kiosktitle": "கியோஸ்க்",
+    "lang_tilllock_title": "PIN மூலம் கல்லாவைப் பூட்டு",
+    "lang_tilllockidle_title": "செயலற்ற போது பூட்டு",
+    "lang_staffshifts_title": "பணியாளர் வருகைப் பதிவு"
 }
