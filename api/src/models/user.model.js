@@ -979,8 +979,8 @@ userSchema.statics.backfillPosAccess = async function (userDoc) {
       pos = null;
     }
   }
+  const type = String(userDoc.usertype || '').toLowerCase();
   if (!pos) {
-    const type = String(userDoc.usertype || '').toLowerCase();
     const keyByType = {
       super_admin: 'owner',
       owner: 'owner',
@@ -996,11 +996,35 @@ userSchema.statics.backfillPosAccess = async function (userDoc) {
       : [];
   }
 
-  await this.updateOne(
-    { _id: userDoc._id },
-    { $set: { 'access.pos': pos, 'access.pos_manager_approval': mgr } }
-  );
-  return { ...access, pos, pos_manager_approval: mgr };
+  const set = { 'access.pos': pos, 'access.pos_manager_approval': mgr };
+  let matrix = access;
+
+  /*
+   * Stamping access.pos is also the moment a manager loses the blanket
+   * checkPermission bypass (see base.controller) - so their module matrix must
+   * be complete when that happens. Union it with the Store Manager preset:
+   * anything they could already do stays, anything a store manager should be
+   * able to do is added. Role-holding managers already resolved a full matrix.
+   */
+  if (!userDoc.role_id && (type === 'manager' || type === 'store_manager')) {
+    const preset = (roleByKey('store_manager') || {}).access || {};
+    matrix = { ...access };
+    Object.keys(preset).forEach((m) => {
+      const pm = preset[m] && typeof preset[m] === 'object' ? preset[m] : {};
+      const em = access[m] && typeof access[m] === 'object' ? access[m] : {};
+      const merged = { ...pm, ...em };
+      Object.keys(pm).forEach((a) => {
+        if (pm[a] === true) merged[a] = true;
+      });
+      matrix[m] = merged;
+    });
+    Object.keys(matrix).forEach((m) => {
+      if (!['pos', 'pos_manager_approval'].includes(m)) set[`access.${m}`] = matrix[m];
+    });
+  }
+
+  await this.updateOne({ _id: userDoc._id }, { $set: set });
+  return { ...matrix, pos, pos_manager_approval: mgr };
 };
 
 userSchema.statics.userInsertUpdate = async function (data, id, context) {
@@ -1099,6 +1123,15 @@ userSchema.statics.userInsertUpdate = async function (data, id, context) {
 
     // PHP lines 186-236: Construct access matrix
     const userType = context.user._id.toString();
+
+    // Editing your own record must not grant you anything. Historically a
+    // self-edit forced usertype to super_admin and self-managed the
+    // branch/report/user rights - a privilege escalation for anyone below the
+    // owner. Only the tenant's own top account keeps elevated self-rights.
+    const selfEdit = userType === id;
+    const selfElevate =
+      selfEdit &&
+      ['super_admin', 'owner'].includes(String(context.user.usertype || '').toLowerCase());
     // PHP uses isset() which checks if key exists AND is not null
     // JavaScript equivalent: check if property exists and is truthy
     const constructAccess = (readKey, writeKey, deleteKey) => ({
@@ -1124,18 +1157,18 @@ userSchema.statics.userInsertUpdate = async function (data, id, context) {
       expense: constructAccess('expense_read', 'expense_write', 'expense_delete'),
       branch: {
         read: 'branch_read' in data && data.branch_read ? true : false,
-        write: userType === id ? true : false,
-        delete: userType === id ? true : false,
+        write: selfElevate,
+        delete: selfElevate,
       },
       report: {
         read: 'report_read' in data && data.report_read ? true : false,
-        write: userType === id ? true : false,
-        delete: userType === id ? true : false,
+        write: selfElevate,
+        delete: selfElevate,
       },
       user: {
         read: 'user_read' in data && data.user_read ? true : false,
-        write: userType === id ? true : false,
-        delete: userType === id ? true : false,
+        write: selfElevate,
+        delete: selfElevate,
       },
       plan: {
         read: context.user.access?.plan?.read || false,
@@ -1166,7 +1199,7 @@ userSchema.statics.userInsertUpdate = async function (data, id, context) {
           access.pos_manager_approval = Array.isArray(roleDoc.requires_manager_approval)
             ? roleDoc.requires_manager_approval
             : [];
-          if (userType === id) {
+          if (selfElevate) {
             ['branch', 'report', 'user'].forEach((m) => {
               access[m] = { ...(access[m] || {}), write: true, delete: true };
             });
@@ -1283,7 +1316,9 @@ userSchema.statics.userInsertUpdate = async function (data, id, context) {
         name: context.user.plan?.name || 'premium',
         max_sales: context.user.plan?.max_sales || 'unlimited',
       },
-      usertype: userType === id ? 'super_admin' : data.usertype,
+      // Self-edit preserves the editor's real type - it must never mint a
+      // super_admin out of whoever edits their own record.
+      usertype: selfEdit ? context.user.usertype || data.usertype : data.usertype,
       activate: data.user_status === 'active' ? true : false,
       image: (data.image || '').trim(),
       register_status: 'Closed',
