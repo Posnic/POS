@@ -3418,6 +3418,35 @@ db.version(2).stores({
 });
 
 /*
+ * Customer display sync (S4 v2): pushed, not polled.
+ *
+ * The sales page talks to the customer-facing window through the
+ * customerDisplay Dexie store - fifteen write sites across five files. The
+ * display used to discover those writes by re-reading the store every
+ * 500ms, forever. Wrapping the store's write methods once here means every
+ * writer broadcasts without knowing it, and the display re-renders the
+ * moment something changed instead of on a timer. BroadcastChannel reaches
+ * every window of the origin - including a second Electron BrowserWindow.
+ */
+(function () {
+    if (typeof BroadcastChannel === 'undefined' || !db.customerDisplay) return;
+    var channel;
+    try { channel = new BroadcastChannel('posnic-customer-display'); } catch (e) { return; }
+    ['put', 'add', 'update'].forEach(function (op) {
+        var original = db.customerDisplay[op].bind(db.customerDisplay);
+        db.customerDisplay[op] = function () {
+            var result = original.apply(null, arguments);
+            if (result && result.then) {
+                result.then(function () {
+                    try { channel.postMessage('changed'); } catch (e) { /* display falls back to its safety poll */ }
+                }).catch(function () { /* the caller owns the failure */ });
+            }
+            return result;
+        };
+    });
+})();
+
+/*
  * amCharts loads lazily, and no report file knows it.
  *
  * Every chart in the product enters through am4core.ready(cb) - the library's

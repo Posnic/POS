@@ -207,24 +207,38 @@ $(document).ready(function () {
     }
     qrCodeUpdate();
     PosnicPro.customerview.customer_display_update();
-    // Debounce mechanism to prevent rapid updates
-    var updateTimeout = null;
-    var lastUpdateTime = 0;
-    
+
+    // The clock is the only thing that needs a timer.
     setInterval(function () {
         var timeZone = PosnicPro.local.get('timezone');
-        var dateTime = new Date();
-        var currentDateTimeCentralTimeZone = moment(dateTime).tz(timeZone).format('YYYY/MM/DD hh:mm:ss A');
+        var currentDateTimeCentralTimeZone = moment(new Date()).tz(timeZone).format('YYYY/MM/DD hh:mm:ss A');
         $('.custom_view_date').html(currentDateTimeCentralTimeZone);
-        
-        // Debounce updates - only update every 500ms minimum
-        var now = Date.now();
-        if (now - lastUpdateTime >= 500) {
-            lastUpdateTime = now;
+    }, 1000);
+
+    /*
+     * Pushed, not polled (S4 v2). The till's writes to the customerDisplay
+     * store broadcast on this channel (see the wrapper in PosnicPro.js), so
+     * the display re-renders when something changed instead of re-reading
+     * IndexedDB every 500ms forever. The debounce coalesces a burst of cart
+     * writes into one paint; the slow interval is a safety net for a missed
+     * message - or the whole mechanism, on a browser without the channel.
+     */
+    var renderQueued = null;
+    function renderSoon() {
+        clearTimeout(renderQueued);
+        renderQueued = setTimeout(function () {
             PosnicPro.customerview.customer_display_update();
             qrCodeUpdate();
-        }
-    }, 500);
+        }, 120);
+    }
+    var hasChannel = false;
+    if (typeof BroadcastChannel !== 'undefined') {
+        try {
+            new BroadcastChannel('posnic-customer-display').onmessage = renderSoon;
+            hasChannel = true;
+        } catch (e) { /* poll fallback below */ }
+    }
+    setInterval(renderSoon, hasChannel ? 10000 : 2000);
 });
 $(window).resize(function () {
     var height = $(window).height() - 130;

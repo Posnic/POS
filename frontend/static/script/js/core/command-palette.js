@@ -100,7 +100,65 @@
             .map(function (x) { return x.c; });
     }
 
-    var state = { open: false, results: [], index: 0 };
+    /*
+     * Entity search (S3 v2): the same suggestion endpoint the list pages'
+     * autocomplete uses, asked for items and customers the query matches.
+     * Picking one opens the list ALREADY filtered: the filter is written
+     * into the table's data() before navigating, and the page's own load
+     * reads it - one fetch, no race with an unfiltered load.
+     */
+    var ENTITY_SOURCES = [
+        { module: 'items', label: 'Item', acl: ['item', 'read'] },
+        { module: 'customers', label: 'Customer', acl: ['customer', 'read'] },
+    ];
+
+    function searchEntities(query, done) {
+        var pending = 0;
+        var found = [];
+        ENTITY_SOURCES.forEach(function (src) {
+            if (!aclCan(src.acl[0], src.acl[1])) return;
+            pending++;
+            PosnicPro.get({
+                url: 'base/autoSuggestionTableField',
+                data: 'query=' + encodeURIComponent(query) + '&field=name&module=' + src.module,
+            }, function (response) {
+                var list = (response && response.data && response.data.suggestions) || [];
+                for (var i = 0; i < Math.min(list.length, 4); i++) {
+                    var value = list[i] && (list[i].value || list[i]);
+                    if (typeof value === 'string' && value) {
+                        found.push({ name: value, kind: src.label, module: src.module, value: value });
+                    }
+                }
+                if (--pending === 0) done(found);
+            }, function () {
+                if (--pending === 0) done(found);
+            });
+        });
+        if (pending === 0) done(found);
+    }
+
+    function openEntity(cmd) {
+        var module = cmd.module;
+        var escaped = cmd.value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        var filter = {};
+        filter.name = { $regex: '(?=.*' + escaped + ')', $options: 'i' };
+        $('#view_' + module + '_fields').val('name');
+        $('#view_' + module + '_input').val(cmd.value);
+        var table = $('#view_' + module);
+        table.data('current_page', 1);
+        table.data('filters', JSON.stringify(filter));
+        if (window.location.hash.slice(1) === '/' + module) {
+            var fn = PosnicPro[module] && PosnicPro[module][module + 'Table'];
+            if (fn) fn.call(PosnicPro[module]);
+        } else {
+            $('[id^="v-pills-"][id$="-tab"]').removeClass('active');
+            $('[id^="v-pills-"]').not('[id$="-tab"]').removeClass('show active');
+            $('.tool-container').hide();
+            hasher.setHash(module);
+        }
+    }
+
+    var state = { open: false, results: [], index: 0, seq: 0 };
 
     function ensureDom() {
         if (document.getElementById('cmdk-overlay')) return;
@@ -128,10 +186,27 @@
         });
     }
 
+    var entityTimer = null;
     function render(query) {
         state.results = matches(query);
         state.index = 0;
         paint();
+
+        /* Entities arrive a beat later, appended below the commands; a stale
+           response for an earlier keystroke is ignored. */
+        clearTimeout(entityTimer);
+        var q = $.trim(query);
+        if (q.length < 2) return;
+        var seq = ++state.seq;
+        entityTimer = setTimeout(function () {
+            searchEntities(q, function (found) {
+                if (seq !== state.seq || !state.open) return;
+                if (found.length) {
+                    state.results = state.results.concat(found);
+                    paint();
+                }
+            });
+        }, 250);
     }
 
     function paint() {
@@ -140,9 +215,10 @@
         var html = '';
         for (var i = 0; i < state.results.length; i++) {
             var cmd = state.results[i];
+            var kind = cmd.kind ? cmd.kind : (cmd.hash ? '' : 'action');
             html += '<div class="cmdk-item' + (i === state.index ? ' cmdk-active' : '') + '" data-i="' + i + '" role="option">' +
                 $('<span>').text(cmd.name).html() +
-                (cmd.hash ? '' : '<span class="cmdk-kind">action</span>') +
+                (kind ? '<span class="cmdk-kind">' + kind + '</span>' : '') +
                 '</div>';
         }
         if (!state.results.length) html = '<div class="cmdk-empty">Nothing matches</div>';
@@ -156,7 +232,9 @@
         var cmd = state.results[i];
         if (!cmd) return;
         close();
-        if (cmd.hash) {
+        if (cmd.module && cmd.value) {
+            openEntity(cmd);
+        } else if (cmd.hash) {
             /* Same cleanup the keyboard shortcuts do: drop every sidebar pill
                highlight so the destination's own show function starts clean. */
             $('[id^="v-pills-"][id$="-tab"]').removeClass('active');
