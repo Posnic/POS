@@ -151,7 +151,7 @@
                             </a>
                         </div>
                     </li>
-                    <li class="list-inline-item mobile-hide" data-toggle="tooltip" title="Clock In / Out">
+                    <li class="list-inline-item mobile-hide" id="shift_clock_li" data-toggle="tooltip" title="Clock In / Out">
                         <div class="clockbar">
                             <a href="javascript:void(0);" id="shift_clock_btn" class="infobar-icon"
                                 onclick="PosnicPro.shiftWidget.openWidget();">
@@ -161,6 +161,21 @@
                             </a>
                         </div>
                     </li>
+                    <script>
+                        /* Staff clock-in can be switched off shop-wide in Settings
+                           (staff_shifts_enable). The header is inlined into every
+                           page at build time, so this runs wherever the button
+                           exists. On unless the shop said off; any error leaves
+                           the button visible. */
+                        (function () {
+                            try {
+                                var s = JSON.parse(localStorage.getItem('general_settings') || '{}');
+                                if (s.staff_shifts_enable === false) {
+                                    document.getElementById('shift_clock_li').style.display = 'none';
+                                }
+                            } catch (e) { /* fail open */ }
+                        })();
+                    </script>
                     <!--                    <li class="list-inline-item" data-toggle="tooltip" title="Network Status">
                                             <div class="offlinebar">
                                                 <a href="#" id="network" class="infobar-icon offline-mode"

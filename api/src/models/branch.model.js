@@ -567,6 +567,12 @@ class BranchModel {
        */
       withDefaults.till_lock_enable = withDefaults.till_lock_enable ?? false;
       withDefaults.till_lock_idle_minutes = withDefaults.till_lock_idle_minutes ?? 0;
+      /*
+       * Staff clock-in shipped live (no dark launch), so the default is ON:
+       * a shop that never visited Settings keeps the clock button it already
+       * uses. Only an explicit false hides it.
+       */
+      withDefaults.staff_shifts_enable = withDefaults.staff_shifts_enable ?? true;
 
       // Ensure time_zone has a default value if not present (matches PHP BaseModel line 49)
       if (!withDefaults.time_zone) {
@@ -905,6 +911,7 @@ class BranchModel {
          */
         till_lock_enable: false,
         till_lock_idle_minutes: 0,
+        staff_shifts_enable: true,
 
         created_by_id: user._id,
         created_by: user.username,

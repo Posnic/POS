@@ -691,6 +691,22 @@ describe('editGeneralSetting', () => {
     expect(upd.$set.hardware_weight_machine_enable).toBe(true);
   });
 
+  test('staff_shifts_enable stays on unless explicitly disabled', async () => {
+    // Shipped live: an old client that does not send the field must not
+    // switch the clock-in system off.
+    col.updateOne.mockResolvedValue({ matchedCount: 1 });
+    await m.editGeneralSetting({ store_name: 'S' });
+    expect(col.updateOne.mock.calls[0][1].$set.staff_shifts_enable).toBe(true);
+
+    col.updateOne.mockClear();
+    await m.editGeneralSetting({ store_name: 'S', staff_shifts_enable: 'false' });
+    expect(col.updateOne.mock.calls[0][1].$set.staff_shifts_enable).toBe(false);
+
+    col.updateOne.mockClear();
+    await m.editGeneralSetting({ store_name: 'S', staff_shifts_enable: 'true' });
+    expect(col.updateOne.mock.calls[0][1].$set.staff_shifts_enable).toBe(true);
+  });
+
   test('returns status:false on DB error', async () => {
     jest.spyOn(m, 'getCollection').mockRejectedValue(new Error('crash'));
     const r = await m.editGeneralSetting({ store_name: 'S' });
