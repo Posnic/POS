@@ -5296,6 +5296,18 @@ class SalesRepository {
 
       await releaseReturnLock();
 
+      /* A return changed the sale record (and possibly minted a return doc):
+         both must reach the cloud on the critical lane, not the 15s scan.
+         Fire-safe; no-op in the cloud. */
+      try {
+        const { enqueue, REASONS } = require('../sync/outbox');
+        enqueue({ collection: 'sales', documentId: saleObjectId, reason: REASONS.RETURN });
+        if (returnObjId && String(returnObjId) !== String(saleObjectId)) {
+          enqueue({ collection: 'sales', documentId: returnObjId, reason: REASONS.RETURN });
+        }
+        require('../sync/nudge').nudgeSyncAgent();
+      } catch (e) { /* accelerator only */ }
+
       return {
         status: true,
         data: {
