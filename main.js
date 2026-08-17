@@ -4417,6 +4417,11 @@ function startServer() {
    * the installer and this changes nothing.
    */
   try {
+    // A fresh installer's baseline must never be shadowed by assets staged
+    // from an older release (asset-channel.js explains the ordering).
+    const { reconcileWithInstaller } = require('./asset-channel');
+    reconcileWithInstaller(assetUpdater, app.getVersion(), console.log);
+
     const boot = assetUpdater.beginBoot();
     if (boot.reverted) {
       console.warn(`[assets] ${boot.from} would not start - reverted to `
@@ -4505,6 +4510,40 @@ function startServer() {
        * enough to actually be a till.
        */
       try { assetUpdater.markHealthy(); } catch (e) { /* not fatal */ }
+
+      /*
+       * Silent asset updates between installer releases (asset-channel.js):
+       * checked shortly after a healthy boot and daily after that, staged in
+       * the background, live on the next launch. Packaged builds only - dev
+       * trees serve their own working copy.
+       */
+      if (app.isPackaged) {
+        const runAssetCheck = () => {
+          try {
+            const { checkAndApply } = require('./asset-channel');
+            checkAndApply({
+              assetUpdater,
+              appVersion: app.getVersion(),
+              sevenZipPath: path.join(
+                process.resourcesPath,
+                'tools',
+                process.platform === 'win32' ? '7za.exe' : '7za',
+              ),
+              log: console.log,
+            }).then((r) => {
+              if (r.applied) {
+                BrowserWindow.getAllWindows().forEach((w) => {
+                  if (!w.isDestroyed()) w.webContents.send('update:assets-ready', { version: r.version });
+                });
+              }
+            }).catch((e) => console.warn('[assets] check failed:', e.message));
+          } catch (e) {
+            console.warn('[assets] check could not start:', e.message);
+          }
+        };
+        setTimeout(runAssetCheck, 2 * 60 * 1000);
+        setInterval(runAssetCheck, 24 * 60 * 60 * 1000);
+      }
 
       // Start optional cloud sync agent (no-op unless installed + activated)
       try {
