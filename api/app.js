@@ -655,7 +655,16 @@ app.use(
 // public/static, so point at that.
 const BUILT_STATIC = path.join(__dirname, '..', 'frontend', 'public', 'static');
 
-app.use('/static', express.static(BUILT_STATIC, { fallthrough: true }));
+/*
+ * App art (fonts, icons, images, reference JSON files) changes rarely and
+ * only with releases: a week of HTTP cache (SW roadmap W2). The service
+ * worker already shields repeat visits; this covers SW-less contexts. Art
+ * that must change immediately should change NAME - same discipline as the
+ * bundles, documented in SERVICE_WORKER_CACHING_STRATEGY.md.
+ */
+const STATIC_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
+
+app.use('/static', express.static(BUILT_STATIC, { fallthrough: true, maxAge: STATIC_MAX_AGE }));
 
 /*
  * Print documents, served from this origin so they need no exception.
@@ -694,7 +703,7 @@ app.get('/print/:token', (req, res) => {
 });
 
 // The compiled stylesheets reference ../fonts, which resolves to /fonts.
-app.use('/fonts', express.static(path.join(BUILT_STATIC, 'fonts'), { fallthrough: true }));
+app.use('/fonts', express.static(path.join(BUILT_STATIC, 'fonts'), { fallthrough: true, maxAge: STATIC_MAX_AGE }));
 
 // Serving backend-specific static files (exports, uploads, etc.)
 app.use(express.static(path.join(__dirname, 'public')));
@@ -1031,9 +1040,9 @@ app.use('/suppliers', suppliersRoutes);
 
 // Serve frontend static files
 const frontendPath = path.join(__dirname, '..', 'frontend');
-app.use('/static', express.static(path.join(frontendPath, 'static')));
-app.use('/images', express.static(path.join(frontendPath, 'static', 'images')));
-app.use('/fonts', express.static(path.join(frontendPath, 'static', 'fonts')));
+app.use('/static', express.static(path.join(frontendPath, 'static'), { maxAge: STATIC_MAX_AGE }));
+app.use('/images', express.static(path.join(frontendPath, 'static', 'images'), { maxAge: STATIC_MAX_AGE }));
+app.use('/fonts', express.static(path.join(frontendPath, 'static', 'fonts'), { maxAge: STATIC_MAX_AGE }));
 app.use('/style', express.static(path.join(frontendPath, 'public', 'style'), { setHeaders: assetCacheHeaders }));
 app.use('/script', express.static(path.join(frontendPath, 'public', 'script'), { setHeaders: assetCacheHeaders }));
 // Serve static files from /public/static for pages loaded from /public/
