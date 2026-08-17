@@ -1,11 +1,40 @@
 var fs = require('fs');
 var path = require('path')
-// Removed UglifyJS for human readable output
+const { minify } = require('terser');
 const { publicDir, languages, s, isDir, env} = require('./config');
 
 const dir = process.cwd();
 const js = [];
 var taskCount = 0;
+
+/*
+ * Minification (S1 feel-fast). "Removed UglifyJS for human readable output"
+ * lived here for years while every till parsed a 6.8MB dashboard bundle on
+ * every boot. Terser (uglify cannot parse the ES6 in the modules) minifies
+ * each source file once per build - memoized, since core files appear in
+ * every page's bundle - with top-level names untouched (the concatenated
+ * bundle is one shared scope; only function-local names are mangled, so
+ * window-attached objects and the inline onclick="PosnicPro..." handlers in
+ * the HTML keep working). A file terser cannot parse ships unminified with a
+ * warning: a slightly larger bundle beats a broken build.
+ *
+ * POSNIC_MINIFY=0 turns it off for debugging a production build locally.
+ */
+const MINIFY = process.env.POSNIC_MINIFY !== '0' && env !== 'dev';
+const minified = new Map(); // url -> Promise<string>
+const unminifiable = [];
+function minifyFile(url, data) {
+    if (!MINIFY) return Promise.resolve(data);
+    if (minified.has(url)) return minified.get(url);
+    const p = minify(data, { compress: true, mangle: true })
+        .then((out) => (out && out.code ? out.code : data))
+        .catch((err) => {
+            unminifiable.push(`${url}: ${err.message}`);
+            return data;
+        });
+    minified.set(url, p);
+    return p;
+}
 function loadJsToMemory() {
     let file = `pages_css_js_map.json`;
     let obj = JSON.parse(fs.readFileSync(file, 'utf8'));
@@ -46,11 +75,13 @@ function mergeNonMinJsFile(index, page, url) {
     fs.readFile(url, "utf8", function read(err, data) {
         if (err) {
             console.log('ERROR reading', url, err);
-        } else {
-            // Keep original JS content without minification
-            js[page][index] = data;
+            taskCount--;
+            return;
         }
-        taskCount--;
+        minifyFile(url, data).then(function (code) {
+            js[page][index] = code;
+            taskCount--;
+        });
     })
 }
 
@@ -101,6 +132,12 @@ function buildAllJs(cb) {
                         }
                         fs.writeFileSync(`${directory}${s}${page}.js`,content,{encoding:'utf8'})
                 }
+            }
+            if (unminifiable.length) {
+                console.warn(
+                    `[minify] ${unminifiable.length} file(s) shipped unminified:\n  ` +
+                    unminifiable.join('\n  ')
+                );
             }
             cb();
             clearInterval(this);

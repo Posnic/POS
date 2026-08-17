@@ -55,6 +55,34 @@ function copyVendorScripts() {
         .pipe(dest(`${publicDir}/script/vendor`));
 }
 
+/*
+ * Libraries that load on first use instead of riding every page bundle
+ * (S1 feel-fast; PosnicPro.lazy owns the client half). Copied under STABLE
+ * names on purpose: they are versioned by the service worker's build-hash
+ * cache, not by filename, and the desktop asset channel ships them like any
+ * other public file. fingerprint.js does not descend into lazy/, so these
+ * names never change between deploys.
+ */
+function copyLazyScripts(cb) {
+    const fsx = require('fs');
+    const pathx = require('path');
+    const LAZY = [
+        ['static/script/js/plugins/amcharts/core.js', 'amcharts-core.js'],
+        ['static/script/js/plugins/amcharts/charts.js', 'amcharts-charts.js'],
+        ['static/script/js/plugins/amcharts/theme/animated.js', 'amcharts-animated.js'],
+        ['static/script/js/plugins/apexcharts/apexcharts.min.js', 'apexcharts.js'],
+        ['static/script/js/jspdf.debug.js', 'jspdf.js'],
+        ['static/script/js/html2canvas.min.js', 'html2canvas.js'],
+    ];
+    const outDir = pathx.join(process.cwd(), publicDir, 'script', 'lazy');
+    fsx.mkdirSync(outDir, { recursive: true });
+    for (const [from, to] of LAZY) {
+        if (!fsx.existsSync(from)) { cb(new Error(`lazy lib missing: ${from}`)); return; }
+        fsx.copyFileSync(from, pathx.join(outDir, to));
+    }
+    cb();
+}
+
 exports.default = function() {
     exports.build();
     // Every watcher that rewrites a bundle or a page must re-fingerprint:
@@ -83,4 +111,4 @@ function fingerprintAssets(cb) {
     fingerprint.fingerprintAssets(cb);
 }
 exports.fingerprint = fingerprintAssets;
-exports.build = series(parallel(copyStatic, copyVendorScripts, buildCss, buildJs, buildHtml), fingerprintAssets, buildServiceWorker);
+exports.build = series(parallel(copyStatic, copyVendorScripts, copyLazyScripts, buildCss, buildJs, buildHtml), fingerprintAssets, buildServiceWorker);

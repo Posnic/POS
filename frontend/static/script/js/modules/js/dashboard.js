@@ -453,8 +453,14 @@ PosnicPro.dashboard = {
                 };
                 
                 loader.find(".loadingSpinner:first").remove();
-                var chart = new ApexCharts(chartContainer, options);
-                chart.render();
+                PosnicPro.lazy.load('apexcharts').then(function () {
+                    // The operator may have left the dashboard while the
+                    // library was fetched; rendering into a detached node
+                    // throws on offsetWidth.
+                    if (!chartContainer.isConnected) return;
+                    var chart = new ApexCharts(chartContainer, options);
+                    chart.render();
+                });
             } else {
                 PosnicPro.alert(response.type, response.message);
             }
@@ -895,8 +901,11 @@ PosnicPro.dashboard = {
         if (!salesChartEl) {
             return;
         }
-        var sales_chart = new ApexCharts(salesChartEl, options);
-        sales_chart.render();
+        PosnicPro.lazy.load('apexcharts').then(function () {
+            if (!salesChartEl.isConnected) return;
+            var sales_chart = new ApexCharts(salesChartEl, options);
+            sales_chart.render();
+        });
     },
 
     getDashboardCurrentWish: function () {

@@ -793,26 +793,37 @@ PosnicPro.quickreport = {
   _captureReport: function (onCanvas) {
     var el = document.getElementById('export_daily_report');
     if (!el) { PosnicPro.alert('warning', 'Run the report first, then try again.'); return; }
-    if (!window.html2canvas) { PosnicPro.alert('error', 'Report tools not loaded - refresh and retry.'); return; }
-    var scale = Math.min(3, Math.max(2, (window.devicePixelRatio || 1) * 1.5));
-    window.html2canvas(el, {
-      scale: scale,
-      useCORS: true,
-      backgroundColor: '#ffffff',
-      width: el.scrollWidth,
-      height: el.scrollHeight,
-      windowWidth: el.scrollWidth,
-      logging: false
-    }).then(function (canvas) {
-      onCanvas(canvas);
-    }).catch(function (err) {
-      PosnicPro.alert('error', 'Could not render the report: ' + (err && err.message ? err.message : err));
+    /* html2canvas loads on first use. This also FIXES the dashboard: the
+       library was only ever bundled into the mail-print page, so this check
+       used to fail on every till with "Report tools not loaded". */
+    PosnicPro.lazy.load('html2canvas').then(function () {
+      var scale = Math.min(3, Math.max(2, (window.devicePixelRatio || 1) * 1.5));
+      window.html2canvas(el, {
+        scale: scale,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        width: el.scrollWidth,
+        height: el.scrollHeight,
+        windowWidth: el.scrollWidth,
+        logging: false
+      }).then(function (canvas) {
+        onCanvas(canvas);
+      }).catch(function (err) {
+        PosnicPro.alert('error', 'Could not render the report: ' + (err && err.message ? err.message : err));
+      });
     });
   },
 
   dailyReportPdf: function () {
     var report = PosnicPro.quickreport.lastReport;
     if (!report) { PosnicPro.alert('warning', 'Run the report first, then download it.'); return false; }
+    PosnicPro.lazy.load('jspdf').then(function () {
+      PosnicPro.quickreport._buildPdf();
+    });
+    return false;
+  },
+
+  _buildPdf: function () {
     // The bundled jsPDF exposes its constructor differently across builds:
     // window.jspdf.jsPDF (2.x UMD returning {jsPDF}), window.jsPDF (1.x global),
     // or window.jspdf itself when the UMD returns the constructor directly (our
