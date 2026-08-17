@@ -230,6 +230,10 @@
         "to": "api/node_modules.zip.id"
       },
       {
+        "from": "asset-signing-key.pub",
+        "to": "asset-signing-key.pub"
+      },
+      {
         "from": "api-runtime.js",
         "to": "api-runtime.js"
       },

@@ -221,12 +221,30 @@ jobs:
     name: Publish release
     needs: build
     runs-on: ubuntu-latest
+    env:
+      ASSET_SIGNING_KEY: ${{ secrets.POSNIC_ASSET_SIGNING_KEY }}
     steps:
       - uses: actions/checkout@v7
         with: { ref: '${{ inputs.tag || github.ref }}' }
 
       - uses: actions/download-artifact@v8
         with: { path: artifacts }
+
+      # The silent asset-update channel (asset-updater.js on the till):
+      # rebuild the frontend deterministically from this tag, sign the
+      # manifest with the fleet key, and ship manifest + bundle under stable
+      # names so /releases/latest/download/ URLs never change. Skipped
+      # gracefully while the signing secret is not configured - installers
+      # ship regardless, and tills simply keep updating by installer only.
+      - name: Build and sign the asset bundle
+        if: env.ASSET_SIGNING_KEY != ''
+        run: |
+          (cd frontend && npm ci --no-audit --no-fund && npx gulp build)
+          mkdir -p release
+          POSNIC_ASSET_SIGNING_KEY="$ASSET_SIGNING_KEY" \
+            node scripts/build-asset-bundle.js release/asset-manifest.json
+          (cd frontend/public && zip -qr ../../release/posnic-assets.zip . -x all.zip)
+          ls -lh release/
 
       # Anyone downloading a point-of-sale binary should be able to check it
       # arrived intact. One file, one line per installer.
@@ -247,7 +265,7 @@ jobs:
           # own hashes for the updater, and a blockmap or the release manifest is an
           # implementation detail, so listing them would only add noise to the thing
           # the release notes tell people to check.
-          sha256sum $(ls | grep -vE 'latest.*\.yml$|\.blockmap$|release-manifest\.json$') > SHA256SUMS.txt
+          sha256sum $(ls | grep -vE 'latest.*\.yml$|\.blockmap$|release-manifest\.json$|asset-manifest\.json$') > SHA256SUMS.txt
           echo "Publishing:"; ls -lh
 
       - uses: softprops/action-gh-release@v3
