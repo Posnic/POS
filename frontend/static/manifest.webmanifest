@@ -1,0 +1,19 @@
+{
+  "name": "Posnic POS",
+  "short_name": "Posnic",
+  "description": "Point of sale, inventory and billing",
+  "start_url": "../dashboard.html",
+  "scope": "../",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f2f3f7",
+  "theme_color": "#506fe4",
+  "icons": [
+    {
+      "src": "images/logo/posnic-logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
