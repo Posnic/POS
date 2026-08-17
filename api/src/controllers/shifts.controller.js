@@ -10,6 +10,18 @@ const BaseModel = require('../models/base.model');
 const ShiftService = require('../services/shift.service');
 const { getRequestDeviceId } = require('../utils/device-id.util');
 
+// Parse a query date. A date-only "to" value (YYYY-MM-DD) is made inclusive of
+// that whole day, so a report/export "to today" includes today's shifts.
+const parseDate = (v, { endOfDay = false } = {}) => {
+  if (!v) return null;
+  const d = new Date(v);
+  if (Number.isNaN(d.getTime())) return null;
+  if (endOfDay && /^\d{4}-\d{2}-\d{2}$/.test(String(v).trim())) {
+    d.setHours(23, 59, 59, 999);
+  }
+  return d;
+};
+
 class ShiftsController extends BaseController {
   constructor() {
     super();
@@ -95,6 +107,8 @@ class ShiftsController extends BaseController {
         user_id: req.query.user_id,
         status: req.query.status,
         limit: req.query.limit,
+        from: parseDate(req.query.from),
+        to: parseDate(req.query.to, { endOfDay: true }),
       });
       if (result.status) return this.success(res, result.data, 'success');
       return this.error(res, result.message, 400);
@@ -110,12 +124,7 @@ class ShiftsController extends BaseController {
       if (!this.checkPermission('user', 'read', req.user)) {
         return this.error(res, 'You do not have permission to view the labour report', 403);
       }
-      const parseDate = (v) => {
-        if (!v) return null;
-        const d = new Date(v);
-        return Number.isNaN(d.getTime()) ? null : d;
-      };
-      const to = parseDate(req.query.to) || new Date();
+      const to = parseDate(req.query.to, { endOfDay: true }) || new Date();
       const from = parseDate(req.query.from) || new Date(to.getTime() - 30 * 24 * 60 * 60 * 1000);
       const result = await this.service.getReport({ from, to, user_id: req.query.user_id });
       if (result.status) return this.success(res, result.data, 'success');

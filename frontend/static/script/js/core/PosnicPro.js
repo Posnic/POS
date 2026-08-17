@@ -1240,6 +1240,8 @@ PosnicPro = {
         runReport: function () {
             var from = $('#labour_report_from').val();
             var to = $('#labour_report_to').val();
+            PosnicPro.shiftWidget._lastRange = { from: from, to: to };
+            PosnicPro.shiftWidget._lastReport = null;
             $('#labour_report_body').html('<tr><td colspan="5" class="text-center text-muted">Loading…</td></tr>');
             $('#labour_report_foot').html('');
             var url = 'shifts/report?from=' + encodeURIComponent(from) + '&to=' + encodeURIComponent(to);
@@ -1250,6 +1252,7 @@ PosnicPro = {
             });
         },
         _renderReport: function (data) {
+            PosnicPro.shiftWidget._lastReport = data || null;
             var rows = (data && data.rows) || [];
             var cur = PosnicPro.local.get('currencySign') || '';
             var esc = function (s) {
@@ -1283,6 +1286,66 @@ PosnicPro = {
                 + '<td></td>'
                 + '<td class="text-right">' + (t.payout ? cur + num(t.payout) : '—') + '</td>'
                 + '</tr>');
+        },
+        // Payroll / timecard export (Phase 7) --------------------------------
+        // Payroll CSV: one row per employee for the pay period (hours x wage),
+        // exactly the rows the report shows. Timecards CSV: one row per shift,
+        // for audit or import into an external payroll provider. Both go
+        // through the existing JSONToCSVConvertor download path.
+        exportPayroll: function () {
+            var data = PosnicPro.shiftWidget._lastReport;
+            var rows = (data && data.rows) || [];
+            if (!rows.length) {
+                PosnicPro.alert('warning', 'Run the report first — there is nothing to export.');
+                return;
+            }
+            var range = PosnicPro.shiftWidget._lastRange || {};
+            var out = rows.map(function (r) {
+                return {
+                    staff: r.user_name || '',
+                    shifts: r.shifts || 0,
+                    hours: Number(r.worked_hours) || 0,
+                    hourly_rate: Number(r.hourly_rate) || 0,
+                    pay: Number(r.payout) || 0,
+                    period_from: range.from || '',
+                    period_to: range.to || '',
+                };
+            });
+            PosnicPro.JSONToCSVConvertor(out, 'payroll_' + (range.from || 'all') + '_' + (range.to || 'all'), true);
+        },
+        exportTimecards: function () {
+            var from = $('#labour_report_from').val();
+            var to = $('#labour_report_to').val();
+            var url = 'shifts/?from=' + encodeURIComponent(from) + '&to=' + encodeURIComponent(to) + '&limit=5000';
+            PosnicPro.get(url, function (response) {
+                var shifts = (response && response.data) || [];
+                if (!shifts.length) {
+                    PosnicPro.alert('warning', 'No shifts in this range.');
+                    return;
+                }
+                var fmt = PosnicPro.shiftWidget._fmtDateTime;
+                var out = shifts.map(function (s) {
+                    return {
+                        staff: s.user_name || '',
+                        clock_in: fmt(s.clock_in),
+                        clock_out: fmt(s.clock_out),
+                        break_minutes: Number(s.break_minutes) || 0,
+                        hours: Math.round(((Number(s.worked_minutes) || 0) / 60) * 100) / 100,
+                        status: s.status || '',
+                    };
+                });
+                PosnicPro.JSONToCSVConvertor(out, 'timecards_' + (from || 'all') + '_' + (to || 'all'), true);
+            }, function () {
+                PosnicPro.alert('error', 'Could not load shifts for the export.');
+            });
+        },
+        _fmtDateTime: function (v) {
+            if (!v) return '';
+            var d = new Date(v);
+            if (isNaN(d.getTime())) return '';
+            var p = function (n) { return ('0' + n).slice(-2); };
+            return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate())
+                + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
         },
     },
     getAllSelectedCollections: function () {

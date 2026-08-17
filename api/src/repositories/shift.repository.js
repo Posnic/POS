@@ -321,7 +321,7 @@ class ShiftRepository {
   }
 
   // List shifts for the current branch (most recent first). Optional filters:
-  // user_id, status, limit.
+  // user_id, status, from/to (Date range on clock_in), limit.
   async listShifts(opts = {}) {
     try {
       const collection = await this.model.getCollection('shifts');
@@ -330,6 +330,10 @@ class ShiftRepository {
       if (branch) query.branch_id = branch;
       if (opts.user_id) query.user_id = toId(opts.user_id);
       if (opts.status) query.status = opts.status;
+      const range = {};
+      if (opts.from instanceof Date) range.$gte = opts.from;
+      if (opts.to instanceof Date) range.$lte = opts.to;
+      if (range.$gte || range.$lte) query.clock_in = range;
       const shifts = await collection
         .find(query)
         .sort({ clock_in: -1 })
