@@ -287,9 +287,13 @@ PosnicPro.branches = {
                 $('#branch_view_' + key).text(val);
             }
         });
+        // Registers may be stored as {register_id, register_name} (current),
+        // {id, name} (older) or plain name strings (legacy PHP) - show all.
         var register = [];
-        $.each(data.register, function (index, value) {
-            register.push(value.register_name);
+        $.each(data.register || [], function (index, value) {
+            var name = (value && (value.register_name || value.name))
+                || (typeof value === 'string' ? value : '');
+            if (name) { register.push(name); }
         });
         $('#branch_view_website_value').text(data.website);
         $('#branch_view_city_value').text(data.city);
@@ -304,7 +308,7 @@ PosnicPro.branches = {
         $('#branch_view_indian_gst_value').text(data.indian_gst);
         $('#branch_view_theme_value').text(data.theme);
         $('#branch_view_notification_range_value').text(data.notification_range);
-        $('#branch_view_register_value').text(register);
+        $('#branch_view_register_value').text(register.length ? register.join(', ') : 'None');
         var updateCreateDate = PosnicPro.convertDate(data.created_date);
         $('#branch_view_created_date').text(updateCreateDate);
         var updateUpdateDate = PosnicPro.convertDate(data.updated_date);
