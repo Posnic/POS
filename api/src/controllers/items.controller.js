@@ -1032,13 +1032,6 @@ class ItemsController extends BaseController {
    */
   async itemStockReportTable(req, res) {
     try {
-      console.log('🔍 Item Stock Report Table - METHOD CALLED!');
-      console.log('🔍 Item Stock Report Table - Full Query Params:', req.query);
-      console.log('🔍 Item Stock Report Table - User Info:', {
-        _id: req.user?._id,
-        usertype: req.user?.usertype,
-        access: req.user?.access,
-      });
 
       await this.ensureContext(req);
 
@@ -1054,14 +1047,9 @@ class ItemsController extends BaseController {
         ending_date: req.query.ending_date,
       };
 
-      console.log('🔍 Item Stock Report Table - Initial Data:', data);
 
       // Apply session filtering if user has permission and dates are provided
       if (data.starting_date || data.ending_date) {
-        console.log('🔍 Item Stock Report Table - Before filter:', {
-          starting_date: data.starting_date,
-          ending_date: data.ending_date,
-        });
 
         const startDate = data.starting_date ? new Date(data.starting_date) : null;
         const endDate = data.ending_date ? new Date(data.ending_date) : null;
@@ -1071,25 +1059,17 @@ class ItemsController extends BaseController {
           end_date: endDate || new Date(),
         };
 
-        console.log('🔍 Item Stock Report Table - About to apply session filter...');
         const filteredDateRange = await sessionFilterUtil.applySessionFilter(
           req,
           originalDateRange
         );
 
-        console.log('🔍 Item Stock Report Table - Date range:', {
-          original: originalDateRange,
-          filtered: filteredDateRange,
-          session_applied: filteredDateRange?.session_applied || false,
-        });
 
         // Update data with filtered dates
         data.starting_date = filteredDateRange.start_date;
         data.ending_date = filteredDateRange.end_date;
 
-        console.log('🔍 Item Stock Report Table - Final Data After Filter:', data);
       } else {
-        console.log('🔍 Item Stock Report Table - No dates provided, skipping session filter');
       }
 
       const response = await this.service.itemStockReportTable(data, {
@@ -1624,23 +1604,14 @@ class ItemsController extends BaseController {
    */
   async categoryItemsReportTable(req, res) {
     try {
-      console.log('🔍 Category Items Report Table - METHOD CALLED!');
-      console.log('🔍 Category Items Report Table - Full Query Params:', req.query);
-      console.log('🔍 Category Items Report Table - User Info:', {
-        _id: req.user?._id,
-        usertype: req.user?.usertype,
-        access: req.user?.access,
-      });
 
       await this.ensureContext(req);
 
       const userAccess = req.user?.access?.report?.read;
       if (userAccess !== true) {
-        console.log('❌ Category Items Report Table - Permission Denied');
         return this.error(res, 'Unauthorized', 403);
       }
 
-      console.log('✅ Category Items Report Table - Permission Granted');
 
       const limit =
         req.query.limit && parseInt(req.query.limit) > 0 ? parseInt(req.query.limit) : 5;
@@ -1649,23 +1620,12 @@ class ItemsController extends BaseController {
       let starting_date = req.query.starting_date;
       let ending_date = req.query.ending_date;
 
-      console.log('🔍 Category Items Report Table - Initial Data:', {
-        rawBranches: req.query.branch || req.query['branch[]'] || [],
-        starting_date,
-        ending_date,
-        category_id: req.query.field_input || '',
-      });
 
       // Apply session filtering if user has permission and dates are provided
       if (
         (starting_date && starting_date.trim() !== '') ||
         (ending_date && ending_date.trim() !== '')
       ) {
-        console.log('🔍 Category Items Report Table - Session filter condition MET!');
-        console.log('🔍 Category Items Report Table - Before filter:', {
-          starting_date,
-          ending_date,
-        });
 
         const startDate = starting_date ? new Date(starting_date) : null;
         const endDate = ending_date ? new Date(ending_date) : null;
@@ -1675,28 +1635,17 @@ class ItemsController extends BaseController {
           end_date: endDate || new Date(),
         };
 
-        console.log('🔍 Category Items Report Table - About to apply session filter...');
         const filteredDateRange = await sessionFilterUtil.applySessionFilter(
           req,
           originalDateRange
         );
 
-        console.log('🔍 Category Items Report Table - Date range:', {
-          original: originalDateRange,
-          filtered: filteredDateRange,
-          session_applied: filteredDateRange?.session_applied || false,
-        });
 
         // Update dates with filtered values
         starting_date = filteredDateRange.start_date;
         ending_date = filteredDateRange.end_date;
 
-        console.log('🔍 Category Items Report Table - Final Data After Filter:', {
-          starting_date,
-          ending_date,
-        });
       } else {
-        console.log('🔍 Category Items Report Table - No dates provided, skipping session filter');
       }
 
       const params = {
@@ -1708,10 +1657,6 @@ class ItemsController extends BaseController {
         page,
       };
 
-      console.log(
-        '🔍 Category Items Report Table - About to call service with filtered params:',
-        params
-      );
 
       const result = await this.service.categoryItemsReportTable(params);
 
@@ -1740,23 +1685,14 @@ class ItemsController extends BaseController {
    */
   async supplierItemsReportTable(req, res) {
     try {
-      console.log('🔍 Supplier Items Report Table (v2) - METHOD CALLED!');
-      console.log('🔍 Supplier Items Report Table (v2) - Full Query Params:', req.query);
-      console.log('🔍 Supplier Items Report Table (v2) - User Info:', {
-        _id: req.user?._id,
-        usertype: req.user?.usertype,
-        access: req.user?.access,
-      });
 
       await this.ensureContext(req);
 
       const userAccess = req.user?.access?.report?.read;
       if (userAccess !== true) {
-        console.log('❌ Supplier Items Report Table (v2) - Permission Denied');
         return this.error(res, 'Unauthorized', 403);
       }
 
-      console.log('✅ Supplier Items Report Table (v2) - Permission Granted');
 
       const limit =
         req.query.limit && parseInt(req.query.limit) > 0 ? parseInt(req.query.limit) : 5;
@@ -1765,23 +1701,12 @@ class ItemsController extends BaseController {
       let starting_date = req.query.starting_date;
       let ending_date = req.query.ending_date;
 
-      console.log('🔍 Supplier Items Report Table (v2) - Initial Data:', {
-        rawBranches: req.query.branch || req.query['branch[]'] || [],
-        starting_date,
-        ending_date,
-        supplier_id: req.query.field_input || '',
-      });
 
       // Apply session filtering if user has permission and dates are provided
       if (
         (starting_date && starting_date.trim() !== '') ||
         (ending_date && ending_date.trim() !== '')
       ) {
-        console.log('🔍 Supplier Items Report Table (v2) - Session filter condition MET!');
-        console.log('🔍 Supplier Items Report Table (v2) - Before filter:', {
-          starting_date,
-          ending_date,
-        });
 
         const startDate = starting_date ? new Date(starting_date) : null;
         const endDate = ending_date ? new Date(ending_date) : null;
@@ -1791,30 +1716,17 @@ class ItemsController extends BaseController {
           end_date: endDate || new Date(),
         };
 
-        console.log('🔍 Supplier Items Report Table (v2) - About to apply session filter...');
         const filteredDateRange = await sessionFilterUtil.applySessionFilter(
           req,
           originalDateRange
         );
 
-        console.log('🔍 Supplier Items Report Table (v2) - Date range:', {
-          original: originalDateRange,
-          filtered: filteredDateRange,
-          session_applied: filteredDateRange?.session_applied || false,
-        });
 
         // Update dates with filtered values
         starting_date = filteredDateRange.start_date;
         ending_date = filteredDateRange.end_date;
 
-        console.log('🔍 Supplier Items Report Table (v2) - Final Data After Filter:', {
-          starting_date,
-          ending_date,
-        });
       } else {
-        console.log(
-          '🔍 Supplier Items Report Table (v2) - No dates provided, skipping session filter'
-        );
       }
 
       const params = {
@@ -1826,10 +1738,6 @@ class ItemsController extends BaseController {
         page,
       };
 
-      console.log(
-        '🔍 Supplier Items Report Table (v2) - About to call service with filtered params:',
-        params
-      );
 
       const result = await this.service.supplierItemsReportTable(params);
 

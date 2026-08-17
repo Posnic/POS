@@ -1278,11 +1278,6 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
 
     if (id === '') {
       // ADD
-      console.log('[SALES DEBUG] Stock log context:', {
-        stockManagement: context.stockManagement,
-        stockLogStatus: stockLogStatus,
-        itemCount: items.length,
-      });
 
       for (const item of items) {
         const doc = await itemRepository.findItemById(item.item_id);
@@ -1295,12 +1290,6 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
         const count = `-${qty}`;
         const isTracked = doc.track_inventory === true || doc.track_inventory === 'true';
 
-        console.log('[SALES DEBUG] Item check:', {
-          item_id: item.item_id,
-          track_inventory: doc.track_inventory,
-          track_inventory_type: typeof doc.track_inventory,
-          stockManagement: context.stockManagement,
-        });
 
         // Always update item stock for tracked items, even if branch
         // stock_management is disabled. The branch setting only controls

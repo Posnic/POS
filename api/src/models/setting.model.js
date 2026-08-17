@@ -469,18 +469,6 @@ class SettingModel extends BaseModel {
       // Debug: Check what users backups exist in recycle_bin
       if (params.table === 'users') {
         const testDocs = await collection.find({ document_name: 'users' }).limit(3).toArray();
-        console.log(
-          '🔍 Test: All users backups in recycle_bin (first 3):',
-          testDocs.map((doc) => ({
-            _id: doc._id.toString(),
-            branch_id: doc.branch_id?.toString(),
-            branch_id_type: doc.branch_id?.constructor?.name,
-            license: doc.license?.toString(),
-            license_type: doc.license?.constructor?.name,
-            email: doc.email,
-            backup_date: doc.document_backup_date,
-          }))
-        );
       }
 
       const cursor = await collection.find(filter, {
@@ -3158,7 +3146,6 @@ class SettingModel extends BaseModel {
           if (existingDoc) {
             // Document exists, replace it
             await targetCollection.replaceOne({ _id: backupData._id }, backupData);
-            console.log(`✅ Replaced document ${backupData._id} in ${collectionName}`);
           } else {
             // Document doesn't exist, insert it
             // Remove _id to let MongoDB generate a new one to avoid conflicts
@@ -3166,7 +3153,6 @@ class SettingModel extends BaseModel {
             delete insertData._id;
 
             const result = await targetCollection.insertOne(insertData);
-            console.log(`✅ Inserted document ${result.insertedId} in ${collectionName}`);
           }
           restoredCount++;
         } catch (docError) {

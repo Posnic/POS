@@ -15,9 +15,6 @@ class SessionFilterUtil {
    * Get database connection
    */
   getDatabase(req) {
-    console.log('🔍 DEBUG: Checking database connection...');
-    console.log('🔍 DEBUG: req.app.locals:', req.app?.locals);
-    console.log('🔍 DEBUG: mongoClient available:', !!req.app?.locals?.mongoClient);
 
     if (!req.app?.locals?.mongoClient) {
       console.error('❌ No MongoDB client available in app.locals');
@@ -25,7 +22,6 @@ class SessionFilterUtil {
     }
 
     const dbName = process.env.MONGODB_URI?.split('/')?.pop()?.split('?')[0] || 'PosnicPro';
-    console.log('🔍 DEBUG: Using database:', dbName);
 
     return req.app.locals.mongoClient.db(dbName);
   }
@@ -34,13 +30,6 @@ class SessionFilterUtil {
    * Check if user has session filter permission
    */
   hasSessionFilterPermission(user) {
-    console.log('🔍 DEBUG: Checking session filter permission:', {
-      hasUser: !!user,
-      hasAccess: !!user?.access,
-      hasSales: !!user?.access?.sales,
-      sessionFilterValue: user?.access?.sales?.session_filter,
-      isTrue: user?.access?.sales?.session_filter === true,
-    });
     return user?.access?.sales?.session_filter === true;
   }
 
@@ -49,7 +38,6 @@ class SessionFilterUtil {
    */
   async getUserSessionData(req) {
     if (!req.user?._id) {
-      console.log('❌ No user ID available for session lookup');
       return null;
     }
 
@@ -61,9 +49,6 @@ class SessionFilterUtil {
     const dbName = process.env.MONGODB_URI?.split('/')?.pop()?.split('?')[0] || 'PosnicPro';
 
     try {
-      console.log('🔍 Looking for session in database:', dbName);
-      console.log('🔍 Collection name:', this.collectionName);
-      console.log('🔍 User ID for session lookup:', req.user._id);
 
       const userSessionsCollection = db.collection(this.collectionName);
 
@@ -74,11 +59,8 @@ class SessionFilterUtil {
         is_active: true,
       });
 
-      console.log('🔍 Session query result:', sessionData);
 
       if (sessionData) {
-        console.log('✅ Found active session for user:', req.user._id);
-        console.log('🔍 Session login time:', sessionData.login_time);
         return sessionData;
       } else {
         console.log('⚠️ No active session found for user:', req.user._id);
@@ -96,27 +78,17 @@ class SessionFilterUtil {
   async applySessionFilter(req, originalDateRange = null) {
     const user = req.user;
 
-    console.log('🔍 SESSION FILTER START:', {
-      userId: user?._id,
-      username: user?.username,
-      hasUser: !!user,
-      originalDateRange: originalDateRange,
-    });
 
     // Check if user has session filter permission
     const hasPermission = this.hasSessionFilterPermission(user);
-    console.log('🔍 Permission check result:', hasPermission);
 
     if (!hasPermission) {
-      console.log('🔍 User does not have session filter permission - using original date range');
       return originalDateRange;
     }
 
-    console.log('🔍 User has session filter permission - applying session filter');
 
     // Get user's session data
     const sessionData = await this.getUserSessionData(req);
-    console.log('🔍 Session data result:', sessionData);
 
     if (!sessionData || !sessionData.login_time) {
       console.log('⚠️ No session data available - using original date range');
@@ -125,7 +97,6 @@ class SessionFilterUtil {
 
     // Apply session-based filtering
     const sessionLoginTime = new Date(sessionData.login_time);
-    console.log('🔍 Session login time:', sessionLoginTime);
 
     // If original date range is provided, use the later of session login or original start
     let filteredDateRange;
@@ -141,7 +112,6 @@ class SessionFilterUtil {
         session_login_time: sessionLoginTime,
       };
 
-      console.log('🔍 Applied session filter - effective start date:', effectiveStart);
     } else {
       // No original date range, use session login time as start
       const now = new Date();
@@ -152,15 +122,8 @@ class SessionFilterUtil {
         session_login_time: sessionLoginTime,
       };
 
-      console.log('🔍 Using session time as date range - start:', sessionLoginTime, 'end:', now);
     }
 
-    console.log('🔍 SESSION FILTER FINAL RESULT:', {
-      session_applied: filteredDateRange.session_applied,
-      original_start: originalDateRange?.start_date,
-      filtered_start: filteredDateRange.start_date,
-      session_login_time: filteredDateRange.session_login_time,
-    });
 
     return filteredDateRange;
   }
@@ -173,7 +136,6 @@ class SessionFilterUtil {
 
     // Check if user has session filter permission
     if (!this.hasSessionFilterPermission(user)) {
-      console.log('🔍 User does not have session filter permission - pipeline unchanged');
       return pipeline;
     }
 
@@ -187,7 +149,6 @@ class SessionFilterUtil {
 
     // Add session filter to pipeline
     const sessionLoginTime = new Date(sessionData.login_time);
-    console.log('🔍 Adding session filter to pipeline - from:', sessionLoginTime);
 
     // Find the $match stage and add session filter
     const matchStageIndex = pipeline.findIndex((stage) => stage.$match);
@@ -213,7 +174,6 @@ class SessionFilterUtil {
         existingMatch[dateField] = { $gte: sessionLoginTime };
       }
 
-      console.log('🔍 Updated existing $match stage with session filter');
     } else {
       // Add new $match stage with session filter
       pipeline.unshift({
@@ -222,7 +182,6 @@ class SessionFilterUtil {
         },
       });
 
-      console.log('🔍 Added new $match stage with session filter');
     }
 
     return pipeline;
@@ -236,7 +195,6 @@ class SessionFilterUtil {
 
     // Check if user has session filter permission
     if (!this.hasSessionFilterPermission(user)) {
-      console.log('🔍 User does not have session filter permission - sales filters unchanged');
       return filters;
     }
 
@@ -250,7 +208,6 @@ class SessionFilterUtil {
 
     // Apply session filter to date range in sales filters
     const sessionLoginTime = new Date(sessionData.login_time);
-    console.log('🔍 Applying session filter to sales filters - from:', sessionLoginTime);
 
     // Handle different date field structures in sales filters
     if (filters.date) {
@@ -262,7 +219,6 @@ class SessionFilterUtil {
         // Add session filter as start date
         filters.date.$gte = sessionLoginTime;
       }
-      console.log('🔍 Updated sales filters.date with session filter');
     } else if (filters.created_date) {
       // Alternative date field
       if (filters.created_date.$gte) {
@@ -273,11 +229,9 @@ class SessionFilterUtil {
       } else {
         filters.created_date = { $gte: sessionLoginTime };
       }
-      console.log('🔍 Updated sales filters.created_date with session filter');
     } else {
       // Add date filter if none exists
       filters.date = { $gte: sessionLoginTime };
-      console.log('🔍 Added new date filter to sales filters');
     }
 
     return filters;

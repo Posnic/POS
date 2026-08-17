@@ -8274,12 +8274,6 @@ class SalesRepository {
 
       const filters = { $and: andConditions };
 
-      console.log(
-        '🔍 pendingCustomerCategoryReportPage filters:',
-        JSON.stringify(filters, null, 2)
-      );
-      console.log('🔍 Date range:', { fromDate, toDate });
-      console.log('🔍 Branch IDs:', branchObjectIds);
 
       const limit = parseInt(options.limit, 10) > 0 ? parseInt(options.limit, 10) : BaseModel.limit;
       const page = parseInt(options.page, 10) > 0 ? parseInt(options.page, 10) : 1;
@@ -8309,8 +8303,6 @@ class SalesRepository {
 
       const aggResults = await salesCollection.aggregate(pipeline).toArray();
 
-      console.log('🔍 Aggregation results count:', aggResults.length);
-      console.log('🔍 First result:', aggResults[0]);
 
       const list = (aggResults || []).map((doc) => {
         const id = doc._id || {};
@@ -8340,8 +8332,6 @@ class SalesRepository {
       const countDocs = await salesCollection.aggregate(countPipeline).toArray();
       const total = (countDocs[0] && countDocs[0].total) || 0;
 
-      console.log('🔍 Total count:', total);
-      console.log('🔍 List length:', list.length);
 
       return {
         status: true,

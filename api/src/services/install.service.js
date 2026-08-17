@@ -43,7 +43,6 @@ class InstallService {
       if (data.db_username && data.db_password) {
         console.log('🔐 Setting up MongoDB authentication first...');
         await this._setupMongoDBAuth(data.db_username, data.db_password);
-        console.log('✅ MongoDB authentication configured, proceeding with installation');
       }
 
       const licenseId = new ObjectId(data.register_license);
@@ -59,7 +58,6 @@ class InstallService {
         // For fresh installation, cleanup existing data with same license
         console.log('🧹 Found existing data, cleaning up before fresh installation...');
         await this.repository.cleanupByLicense(licenseId);
-        console.log('✅ Cleanup complete, proceeding with fresh installation');
       }
 
       // Generate user secret key
@@ -142,14 +140,8 @@ class InstallService {
         },
       ];
 
-      console.log('🔍 Checking demo data condition:', {
-        register_demo: data.register_demo,
-        businessType: data.businessType,
-        willLoadDemo: data.register_demo === true || data.register_demo === 'on',
-      });
 
       if (data.register_demo === true || data.register_demo === 'on') {
-        console.log('✅ Loading business-type specific demo data...');
         // Load business-type specific demo data
         await this._insertBusinessTypeDemoData({
           branchId,
@@ -655,7 +647,6 @@ class InstallService {
         return await this._insertDefaultCategoryAndItem(params);
       }
 
-      console.log(`✅ Loading ${businessType} demo data with ${demoData.products.length} products`);
       console.log(
         `📂 Categories to insert:`,
         demoData.categories.map((c) => c.name)
@@ -756,9 +747,6 @@ class InstallService {
 
       console.log(`🔄 Attempting to insert ${itemMultiData.length} products...`);
       await this.repository.insertItems(itemMultiData);
-      console.log(
-        `✅ Successfully inserted ${itemMultiData.length} demo products for ${businessType} business`
-      );
     } catch (error) {
       console.error('Error in _insertBusinessTypeDemoData:', error);
       // Don't throw error, just log it - installation can continue without demo data
@@ -1016,7 +1004,6 @@ class InstallService {
         client = new MongoClient(authUri, { serverSelectionTimeoutMS: 5000 });
         await client.connect();
         adminDb = client.db('admin');
-        console.log('✅ Connected with provided credentials');
         connected = true;
       } catch (authError) {
         console.log('⚠️ Strategy 1 failed:', authError.message);
@@ -1032,7 +1019,6 @@ class InstallService {
           adminDb = client.db('admin');
           // Verify by listing collections (auth check)
           await adminDb.listCollections().toArray();
-          console.log('✅ Connected without authentication');
           connected = true;
         } catch (unauthError) {
           console.log('⚠️ Strategy 2 failed:', unauthError.message);
@@ -1077,7 +1063,6 @@ class InstallService {
             await client.connect();
             adminDb = client.db('admin');
             await adminDb.listCollections().toArray();
-            console.log('✅ Connected with existing credentials');
             connected = true;
             break;
           } catch (e) {
@@ -1107,7 +1092,6 @@ class InstallService {
             { role: 'dbOwner', db: dbName },
           ],
         });
-        console.log(`✅ Created MongoDB admin user: ${dbUsername}`);
       } catch (userError) {
         if (userError.message.includes('already exists') || userError.code === 51003) {
           // Update existing user password
@@ -1146,7 +1130,6 @@ class InstallService {
           socketTimeoutMS: 30000,
           connectTimeoutMS: 10000,
         });
-        console.log('✅ Mongoose reconnected with authentication');
       }
 
       // Also update BaseModel connection (native MongoDB driver)
@@ -1157,10 +1140,8 @@ class InstallService {
         const { MongoClient } = require('mongodb');
         BaseModel.mongoClient = await MongoClient.connect(newUri);
         BaseModel.database = BaseModel.mongoClient.db('PosnicPro');
-        console.log('✅ BaseModel reconnected with authentication');
       }
 
-      console.log('✅ MongoDB authentication setup complete');
       return true;
     } catch (error) {
       console.error('❌ Error setting up MongoDB authentication:', error.message);
@@ -1264,7 +1245,6 @@ class InstallService {
       envContent += `MONGODB_USER=${dbUsername}\n`;
 
       fs.writeFileSync(envPath, envContent.trim());
-      console.log('✅ Database connection saved to .env (without the password)');
 
       // Also save to a credentials file for the Electron app to read
       // In packaged Electron app, save to userData folder (writable)
@@ -1327,7 +1307,6 @@ class InstallService {
               fs.mkdirSync(credDir, { recursive: true });
             }
             fs.writeFileSync(credPath, JSON.stringify(credentials, null, 2));
-            console.log('✅ Credentials saved to:', credPath);
           } catch (writeErr) {
             console.warn('⚠️ Could not write to:', credPath, writeErr.message);
           }
@@ -1382,7 +1361,6 @@ class InstallService {
 
       // Check if authorization is already enabled
       if (config.includes('authorization: enabled')) {
-        console.log('✅ MongoDB authentication already enabled in config');
         return true;
       }
 
@@ -1398,7 +1376,6 @@ class InstallService {
       }
 
       fs.writeFileSync(configPath, config);
-      console.log('✅ MongoDB authentication enabled in config file');
 
       return true;
     } catch (error) {

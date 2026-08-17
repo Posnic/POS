@@ -929,11 +929,6 @@ class SalesController extends BaseController {
         parsedFilters
       );
 
-      console.log('🔍 Sales List - Session filter applied:', {
-        original_filters: parsedFilters,
-        filtered_filters: filteredSalesFilters,
-        session_applied: JSON.stringify(filteredSalesFilters) !== JSON.stringify(parsedFilters),
-      });
 
       // Apply branch scoping similar to PHP behaviour
       const { validBranchIds } = parseBranchIdsFromRequest(req);
@@ -1261,11 +1256,6 @@ class SalesController extends BaseController {
       const originalDateRange = { start_date: start, end_date: end };
       const filteredDateRange = await sessionFilterUtil.applySessionFilter(req, originalDateRange);
 
-      console.log('🔍 Daily Sales Reports - Date range:', {
-        original: originalDateRange,
-        filtered: filteredDateRange,
-        session_applied: filteredDateRange?.session_applied || false,
-      });
 
       // Use filtered dates
       const filteredStart = filteredDateRange.start_date;
@@ -1628,11 +1618,6 @@ class SalesController extends BaseController {
       const originalDateRange = { start_date: start, end_date: end };
       const filteredDateRange = await sessionFilterUtil.applySessionFilter(req, originalDateRange);
 
-      console.log('🔍 Daily Report PDF - Date range:', {
-        original: originalDateRange,
-        filtered: filteredDateRange,
-        session_applied: filteredDateRange?.session_applied || false,
-      });
 
       // Use filtered dates
       const filteredStart = filteredDateRange.start_date;
@@ -2521,24 +2506,17 @@ class SalesController extends BaseController {
 
       // Apply session filtering if user has permission (same as salesSummaryReports)
       if (startDate || endDate) {
-        console.log('🔍 Sales Graphical Reports - Before filter:', { startDate, endDate });
 
         const originalDateRange = {
           start_date: startDate || new Date(0),
           end_date: endDate || new Date(),
         };
 
-        console.log('🔍 Sales Graphical Reports - About to apply session filter...');
         const filteredDateRange = await sessionFilterUtil.applySessionFilter(
           req,
           originalDateRange
         );
 
-        console.log('🔍 Sales Graphical Reports - Date range:', {
-          original: originalDateRange,
-          filtered: filteredDateRange,
-          session_applied: filteredDateRange?.session_applied || false,
-        });
 
         // Use filtered dates
         const filteredStartDate = filteredDateRange.start_date;
@@ -2639,11 +2617,6 @@ class SalesController extends BaseController {
           originalDateRange
         );
 
-        console.log('🔍 Sales Summary Reports - Date range:', {
-          original: originalDateRange,
-          filtered: filteredDateRange,
-          session_applied: filteredDateRange?.session_applied || false,
-        });
 
         match.date = {};
 
@@ -2676,23 +2649,16 @@ class SalesController extends BaseController {
 
   async salesReports(req, res) {
     try {
-      console.log('🔍 Sales Reports - METHOD CALLED!');
-      console.log('🔍 Sales Reports - Query params:', req.query);
 
       // Permission check matching PHP controller line 445
-      console.log('🔍 Sales Reports - About to check permission...');
       const role = (req.user?.usertype || req.user?.role || '').toLowerCase();
-      console.log('🔍 Sales Reports - User role:', role);
-      console.log('🔍 Sales Reports - User access:', req.user?.access);
 
       const hasPermission =
         req.user?.access?.report?.read === true ||
         ['super_admin', 'admin', 'manager', 'api'].includes(role);
 
-      console.log('🔍 Sales Reports - Permission check:', { role, hasPermission });
 
       if (!hasPermission) {
-        console.log('🔍 Sales Reports - No permission - returning 403');
         return res.status(403).json({
           type: 'error',
           message: ERROR_MESSAGES.UNAUTHORIZED,
@@ -2700,82 +2666,49 @@ class SalesController extends BaseController {
         });
       }
 
-      console.log('🔍 Sales Reports - Permission granted - continuing...');
       const { ObjectId } = require('mongodb');
 
       // Parse query params matching PHP controller lines 439-444
       const limit = parseInt(req.query.limit, 10) > 0 ? parseInt(req.query.limit, 10) : 5;
       const page = parseInt(req.query.page, 10) > 0 ? parseInt(req.query.page, 10) : 1;
 
-      console.log('🔍 Sales Reports - Parsed params:', { limit, page });
 
       let branchObjectIds;
       let startDate;
       let endDate;
 
-      console.log('🔍 Sales Reports - Checking filters:', {
-        hasSalesReportsFilters: !!req.salesReportsFilters,
-        branchObjectIds: req.salesReportsFilters?.branchObjectIds,
-      });
 
-      console.log('🔍 Sales Reports - Pre-parsed filters content:', req.salesReportsFilters);
 
       if (req.salesReportsFilters && Array.isArray(req.salesReportsFilters.branchObjectIds)) {
-        console.log('🔍 Sales Reports - Using pre-parsed filters');
-        console.log('🔍 Sales Reports - Pre-parsed dates:', {
-          startDate: req.salesReportsFilters.startDate,
-          endDate: req.salesReportsFilters.endDate,
-        });
         branchObjectIds = req.salesReportsFilters.branchObjectIds;
         startDate = req.salesReportsFilters.startDate;
         endDate = req.salesReportsFilters.endDate;
 
-        console.log('🔍 Sales Reports - After pre-parsed filters:', { startDate, endDate });
 
         // Apply session filtering if user has permission (same as salesSummaryReports)
         if (startDate || endDate) {
-          console.log('🔍 Sales Reports - Before filter (pre-parsed):', { startDate, endDate });
 
           const originalDateRange = {
             start_date: startDate,
             end_date: endDate,
           };
 
-          console.log('🔍 Sales Reports - About to apply session filter (pre-parsed)...');
           const filteredDateRange = await sessionFilterUtil.applySessionFilter(
             req,
             originalDateRange
           );
 
-          console.log('🔍 Sales Reports - Date range (pre-parsed):', {
-            original: originalDateRange,
-            filtered: filteredDateRange,
-            session_applied: filteredDateRange?.session_applied || false,
-          });
 
           // Use filtered dates
           startDate = filteredDateRange.start_date;
           endDate = filteredDateRange.end_date;
 
-          console.log('🔍 Sales Reports - Date comparison (pre-parsed):', {
-            before: {
-              start: req.salesReportsFilters.startDate,
-              end: req.salesReportsFilters.endDate,
-            },
-            after: { start: startDate, end: endDate },
-            changed:
-              req.salesReportsFilters.startDate !== startDate ||
-              req.salesReportsFilters.endDate !== endDate,
-          });
         }
       } else {
-        console.log('🔍 Sales Reports - Parsing branch IDs from query');
         // Parse branch IDs (can be single string or array)
         let branchIds = req.query.branch || req.query.branchid;
-        console.log('🔍 Sales Reports - Branch IDs from query:', branchIds);
 
         if (!branchIds) {
-          console.log('🔍 Sales Reports - No branch IDs found - returning 400');
           return res.status(400).json({
             type: 'error',
             message: 'Branch ID is required',
@@ -2821,24 +2754,17 @@ class SalesController extends BaseController {
         endDate.setHours(23, 59, 59, 999);
 
         // Apply session filtering if user has permission (same as salesSummaryReports)
-        console.log('🔍 Sales Reports - Before filter:', { startDate, endDate });
 
         const originalDateRange = {
           start_date: startDate,
           end_date: endDate,
         };
 
-        console.log('🔍 Sales Reports - About to apply session filter...');
         const filteredDateRange = await sessionFilterUtil.applySessionFilter(
           req,
           originalDateRange
         );
 
-        console.log('🔍 Sales Reports - Date range:', {
-          original: originalDateRange,
-          filtered: filteredDateRange,
-          session_applied: filteredDateRange?.session_applied || false,
-        });
 
         // Use filtered dates
         const oldStartDate = startDate;
@@ -2846,11 +2772,6 @@ class SalesController extends BaseController {
         startDate = filteredDateRange.start_date;
         endDate = filteredDateRange.end_date;
 
-        console.log('🔍 Sales Reports - Date comparison:', {
-          before: { start: oldStartDate, end: oldEndDate },
-          after: { start: startDate, end: endDate },
-          changed: oldStartDate !== startDate || oldEndDate !== endDate,
-        });
       }
 
       // Build filter matching PHP model lines 1062-1068
@@ -2940,27 +2861,17 @@ class SalesController extends BaseController {
       if (req.reportParams && (req.reportParams.startDate || req.reportParams.endDate)) {
         // Apply session filtering if user has permission and dates are provided
         if (req.reportParams.startDate || req.reportParams.endDate) {
-          console.log('🔍 Instant Sales Reports - Before filter (reportParams):', {
-            startDate: req.reportParams.startDate,
-            endDate: req.reportParams.endDate,
-          });
 
           const originalDateRange = {
             start_date: req.reportParams.startDate || new Date(0),
             end_date: req.reportParams.endDate || new Date(),
           };
 
-          console.log('🔍 Instant Sales Reports - About to apply session filter (reportParams)...');
           const filteredDateRange = await sessionFilterUtil.applySessionFilter(
             req,
             originalDateRange
           );
 
-          console.log('🔍 Instant Sales Reports - Date range (reportParams):', {
-            original: originalDateRange,
-            filtered: filteredDateRange,
-            session_applied: filteredDateRange?.session_applied || false,
-          });
 
           // Use filtered dates
           if (filteredDateRange.start_date) {
@@ -2983,27 +2894,17 @@ class SalesController extends BaseController {
 
         // Apply session filtering if user has permission and dates are provided
         if (startDate || endDate) {
-          console.log('🔍 Instant Sales Reports - Before filter (query):', {
-            starting_date: req.query.starting_date,
-            ending_date: req.query.ending_date,
-          });
 
           const originalDateRange = {
             start_date: startDate || new Date(0),
             end_date: endDate || new Date(),
           };
 
-          console.log('🔍 Instant Sales Reports - About to apply session filter (query)...');
           const filteredDateRange = await sessionFilterUtil.applySessionFilter(
             req,
             originalDateRange
           );
 
-          console.log('🔍 Instant Sales Reports - Date range (query):', {
-            original: originalDateRange,
-            filtered: filteredDateRange,
-            session_applied: filteredDateRange?.session_applied || false,
-          });
 
           // Use filtered dates
           if (filteredDateRange.start_date) {
@@ -3236,29 +3137,17 @@ class SalesController extends BaseController {
 
         // Apply session filtering if user has permission and dates are provided
         if (startDate || endDate) {
-          console.log('🔍 Item Sales Report Table - Before filter (reportParams):', {
-            startDate,
-            endDate,
-          });
 
           const originalDateRange = {
             start_date: startDate || new Date(0),
             end_date: endDate || new Date(),
           };
 
-          console.log(
-            '🔍 Item Sales Report Table - About to apply session filter (reportParams)...'
-          );
           const filteredDateRange = await sessionFilterUtil.applySessionFilter(
             req,
             originalDateRange
           );
 
-          console.log('🔍 Item Sales Report Table - Date range (reportParams):', {
-            original: originalDateRange,
-            filtered: filteredDateRange,
-            session_applied: filteredDateRange?.session_applied || false,
-          });
 
           // Use filtered dates
           const filteredStartDate = filteredDateRange.start_date;
@@ -3292,27 +3181,17 @@ class SalesController extends BaseController {
 
         // Apply session filtering if user has permission and dates are provided
         if (startDate || endDate) {
-          console.log('🔍 Item Sales Report Table - Before filter (query):', {
-            startDate,
-            endDate,
-          });
 
           const originalDateRange = {
             start_date: startDate || new Date(0),
             end_date: endDate || new Date(),
           };
 
-          console.log('🔍 Item Sales Report Table - About to apply session filter (query)...');
           const filteredDateRange = await sessionFilterUtil.applySessionFilter(
             req,
             originalDateRange
           );
 
-          console.log('🔍 Item Sales Report Table - Date range (query):', {
-            original: originalDateRange,
-            filtered: filteredDateRange,
-            session_applied: filteredDateRange?.session_applied || false,
-          });
 
           // Use filtered dates
           const filteredStartDate = filteredDateRange.start_date;
@@ -3418,29 +3297,17 @@ class SalesController extends BaseController {
 
         // Apply session filtering if user has permission and dates are provided
         if (startDate || endDate) {
-          console.log('🔍 Category Sales Report Table - Before filter (reportParams):', {
-            startDate,
-            endDate,
-          });
 
           const originalDateRange = {
             start_date: startDate || new Date(0),
             end_date: endDate || new Date(),
           };
 
-          console.log(
-            '🔍 Category Sales Report Table - About to apply session filter (reportParams)...'
-          );
           const filteredDateRange = await sessionFilterUtil.applySessionFilter(
             req,
             originalDateRange
           );
 
-          console.log('🔍 Category Sales Report Table - Date range (reportParams):', {
-            original: originalDateRange,
-            filtered: filteredDateRange,
-            session_applied: filteredDateRange?.session_applied || false,
-          });
 
           // Use filtered dates
           const filteredStartDate = filteredDateRange.start_date;
@@ -3474,27 +3341,17 @@ class SalesController extends BaseController {
 
         // Apply session filtering if user has permission and dates are provided
         if (startDate || endDate) {
-          console.log('🔍 Category Sales Report Table - Before filter (query):', {
-            startDate,
-            endDate,
-          });
 
           const originalDateRange = {
             start_date: startDate || new Date(0),
             end_date: endDate || new Date(),
           };
 
-          console.log('🔍 Category Sales Report Table - About to apply session filter (query)...');
           const filteredDateRange = await sessionFilterUtil.applySessionFilter(
             req,
             originalDateRange
           );
 
-          console.log('🔍 Category Sales Report Table - Date range (query):', {
-            original: originalDateRange,
-            filtered: filteredDateRange,
-            session_applied: filteredDateRange?.session_applied || false,
-          });
 
           // Use filtered dates
           const filteredStartDate = filteredDateRange.start_date;
@@ -3608,29 +3465,17 @@ class SalesController extends BaseController {
 
         // Apply session filtering if user has permission and dates are provided
         if (startDate || endDate) {
-          console.log('🔍 Supplier Sales Report Table - Before filter (reportParams):', {
-            startDate,
-            endDate,
-          });
 
           const originalDateRange = {
             start_date: startDate || new Date(0),
             end_date: endDate || new Date(),
           };
 
-          console.log(
-            '🔍 Supplier Sales Report Table - About to apply session filter (reportParams)...'
-          );
           const filteredDateRange = await sessionFilterUtil.applySessionFilter(
             req,
             originalDateRange
           );
 
-          console.log('🔍 Supplier Sales Report Table - Date range (reportParams):', {
-            original: originalDateRange,
-            filtered: filteredDateRange,
-            session_applied: filteredDateRange?.session_applied || false,
-          });
 
           // Use filtered dates
           const filteredStartDate = filteredDateRange.start_date;
@@ -3676,27 +3521,17 @@ class SalesController extends BaseController {
 
         // Apply session filtering if user has permission and dates are provided
         if (startDate || endDate) {
-          console.log('🔍 Supplier Sales Report Table - Before filter (query):', {
-            startDate,
-            endDate,
-          });
 
           const originalDateRange = {
             start_date: startDate || new Date(0),
             end_date: endDate || new Date(),
           };
 
-          console.log('🔍 Supplier Sales Report Table - About to apply session filter (query)...');
           const filteredDateRange = await sessionFilterUtil.applySessionFilter(
             req,
             originalDateRange
           );
 
-          console.log('🔍 Supplier Sales Report Table - Date range (query):', {
-            original: originalDateRange,
-            filtered: filteredDateRange,
-            session_applied: filteredDateRange?.session_applied || false,
-          });
 
           // Use filtered dates
           const filteredStartDate = filteredDateRange.start_date;
@@ -3804,29 +3639,17 @@ class SalesController extends BaseController {
 
         // Apply session filtering if user has permission and dates are provided
         if (startDate || endDate) {
-          console.log('🔍 Customer Sales Report Table - Before filter (reportParams):', {
-            startDate,
-            endDate,
-          });
 
           const originalDateRange = {
             start_date: startDate || new Date(0),
             end_date: endDate || new Date(),
           };
 
-          console.log(
-            '🔍 Customer Sales Report Table - About to apply session filter (reportParams)...'
-          );
           const filteredDateRange = await sessionFilterUtil.applySessionFilter(
             req,
             originalDateRange
           );
 
-          console.log('🔍 Customer Sales Report Table - Date range (reportParams):', {
-            original: originalDateRange,
-            filtered: filteredDateRange,
-            session_applied: filteredDateRange?.session_applied || false,
-          });
 
           // Use filtered dates
           const filteredStartDate = filteredDateRange.start_date;
@@ -3872,27 +3695,17 @@ class SalesController extends BaseController {
 
         // Apply session filtering if user has permission and dates are provided
         if (startDate || endDate) {
-          console.log('🔍 Customer Sales Report Table - Before filter (query):', {
-            startDate,
-            endDate,
-          });
 
           const originalDateRange = {
             start_date: startDate || new Date(0),
             end_date: endDate || new Date(),
           };
 
-          console.log('🔍 Customer Sales Report Table - About to apply session filter (query)...');
           const filteredDateRange = await sessionFilterUtil.applySessionFilter(
             req,
             originalDateRange
           );
 
-          console.log('🔍 Customer Sales Report Table - Date range (query):', {
-            original: originalDateRange,
-            filtered: filteredDateRange,
-            session_applied: filteredDateRange?.session_applied || false,
-          });
 
           // Use filtered dates
           const filteredStartDate = filteredDateRange.start_date;
@@ -4040,24 +3853,17 @@ class SalesController extends BaseController {
 
       // Apply session filtering if user has permission and dates are provided
       if (startDate || endDate) {
-        console.log('🔍 Item Graphical Reports - Before filter:', { startDate, endDate });
 
         const originalDateRange = {
           start_date: startDate || new Date(0),
           end_date: endDate || new Date(),
         };
 
-        console.log('🔍 Item Graphical Reports - About to apply session filter...');
         const filteredDateRange = await sessionFilterUtil.applySessionFilter(
           req,
           originalDateRange
         );
 
-        console.log('🔍 Item Graphical Reports - Date range:', {
-          original: originalDateRange,
-          filtered: filteredDateRange,
-          session_applied: filteredDateRange?.session_applied || false,
-        });
 
         // Use filtered dates
         startDate = filteredDateRange.start_date;
@@ -4233,35 +4039,21 @@ class SalesController extends BaseController {
    */
   async userReportTable(req, res) {
     try {
-      console.log('🔍 User Report Table - METHOD CALLED!');
-      console.log('🔍 User Report Table - Full Query Params:', req.query);
-      console.log('🔍 User Report Table - User Info:', {
-        _id: req.user?._id,
-        usertype: req.user?.usertype,
-        access: req.user?.access,
-      });
 
       if (!this.checkPermission('report', 'read', req.user)) {
-        console.log('❌ User Report Table - Permission Denied');
         return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
 
-      console.log('✅ User Report Table - Permission Granted');
 
       let options;
       let data;
 
       if (req.userReportParams && req.userReportParams.options && req.userReportParams.data) {
-        console.log('🔍 User Report Table - Using pre-parsed params');
         options = req.userReportParams.options;
         data = req.userReportParams.data;
 
         // Apply session filtering if user has permission and dates are provided
         if (data.starting_date || data.ending_date) {
-          console.log('🔍 User Report Table - Before filter (pre-parsed):', {
-            starting_date: data.starting_date,
-            ending_date: data.ending_date,
-          });
 
           const startDate = data.starting_date ? new Date(data.starting_date) : null;
           const endDate = data.ending_date ? new Date(data.ending_date) : null;
@@ -4271,30 +4063,19 @@ class SalesController extends BaseController {
             end_date: endDate || new Date(),
           };
 
-          console.log('🔍 User Report Table - About to apply session filter (pre-parsed)...');
           const filteredDateRange = await sessionFilterUtil.applySessionFilter(
             req,
             originalDateRange
           );
 
-          console.log('🔍 User Report Table - Date range (pre-parsed):', {
-            original: originalDateRange,
-            filtered: filteredDateRange,
-            session_applied: filteredDateRange?.session_applied || false,
-          });
 
           // Update data with filtered dates
           data.starting_date = filteredDateRange.start_date;
           data.ending_date = filteredDateRange.end_date;
 
-          console.log('🔍 User Report Table - Final Data After Filter (pre-parsed):', data);
         } else {
-          console.log(
-            '🔍 User Report Table - No dates provided in pre-parsed params, skipping session filter'
-          );
         }
       } else {
-        console.log('🔍 User Report Table - Building data from query params');
         const limit = parseInt(req.query.limit, 10) > 0 ? parseInt(req.query.limit, 10) : 5;
         const page = parseInt(req.query.page, 10) > 0 ? parseInt(req.query.page, 10) : 1;
         options = { limit, page };
@@ -4309,10 +4090,6 @@ class SalesController extends BaseController {
 
         // Apply session filtering if user has permission and dates are provided
         if (data.starting_date || data.ending_date) {
-          console.log('🔍 User Report Table - Before filter (query):', {
-            starting_date: data.starting_date,
-            ending_date: data.ending_date,
-          });
 
           const startDate = data.starting_date ? new Date(data.starting_date) : null;
           const endDate = data.ending_date ? new Date(data.ending_date) : null;
@@ -4322,25 +4099,17 @@ class SalesController extends BaseController {
             end_date: endDate || new Date(),
           };
 
-          console.log('🔍 User Report Table - About to apply session filter (query)...');
           const filteredDateRange = await sessionFilterUtil.applySessionFilter(
             req,
             originalDateRange
           );
 
-          console.log('🔍 User Report Table - Date range (query):', {
-            original: originalDateRange,
-            filtered: filteredDateRange,
-            session_applied: filteredDateRange?.session_applied || false,
-          });
 
           // Update data with filtered dates
           data.starting_date = filteredDateRange.start_date;
           data.ending_date = filteredDateRange.end_date;
 
-          console.log('🔍 User Report Table - Final Data After Filter (query):', data);
         } else {
-          console.log('🔍 User Report Table - No dates provided, skipping session filter');
         }
       }
 
@@ -4423,10 +4192,6 @@ class SalesController extends BaseController {
 
       // Apply session filtering if user has permission and dates are provided
       if (data.starting_date || data.ending_date) {
-        console.log('🔍 User Graphical Reports - Before filter:', {
-          starting_date: data.starting_date,
-          ending_date: data.ending_date,
-        });
 
         const startDate = data.starting_date ? new Date(data.starting_date) : null;
         const endDate = data.ending_date ? new Date(data.ending_date) : null;
@@ -4436,17 +4201,11 @@ class SalesController extends BaseController {
           end_date: endDate || new Date(),
         };
 
-        console.log('🔍 User Graphical Reports - About to apply session filter...');
         const filteredDateRange = await sessionFilterUtil.applySessionFilter(
           req,
           originalDateRange
         );
 
-        console.log('🔍 User Graphical Reports - Date range:', {
-          original: originalDateRange,
-          filtered: filteredDateRange,
-          session_applied: filteredDateRange?.session_applied || false,
-        });
 
         // Update data with filtered dates
         data.starting_date = filteredDateRange.start_date;
@@ -4508,10 +4267,6 @@ class SalesController extends BaseController {
 
         // Apply session filtering if user has permission and dates are provided
         if (data.starting_date || data.ending_date) {
-          console.log('🔍 Return Sales Report Table - Before filter:', {
-            starting_date: data.starting_date,
-            ending_date: data.ending_date,
-          });
 
           const startDate = data.starting_date ? new Date(data.starting_date) : null;
           const endDate = data.ending_date ? new Date(data.ending_date) : null;
@@ -4521,17 +4276,11 @@ class SalesController extends BaseController {
             end_date: endDate || new Date(),
           };
 
-          console.log('🔍 Return Sales Report Table - About to apply session filter...');
           const filteredDateRange = await sessionFilterUtil.applySessionFilter(
             req,
             originalDateRange
           );
 
-          console.log('🔍 Return Sales Report Table - Date range:', {
-            original: originalDateRange,
-            filtered: filteredDateRange,
-            session_applied: filteredDateRange?.session_applied || false,
-          });
 
           // Update data with filtered dates
           data.starting_date = filteredDateRange.start_date;
@@ -4703,10 +4452,6 @@ class SalesController extends BaseController {
 
         // Apply session filtering if user has permission and dates are provided
         if (data.starting_date || data.ending_date) {
-          console.log('🔍 Pending Sales Report Table - Before filter:', {
-            starting_date: data.starting_date,
-            ending_date: data.ending_date,
-          });
 
           const startDate = data.starting_date ? new Date(data.starting_date) : null;
           const endDate = data.ending_date ? new Date(data.ending_date) : null;
@@ -4716,17 +4461,11 @@ class SalesController extends BaseController {
             end_date: endDate || new Date(),
           };
 
-          console.log('🔍 Pending Sales Report Table - About to apply session filter...');
           const filteredDateRange = await sessionFilterUtil.applySessionFilter(
             req,
             originalDateRange
           );
 
-          console.log('🔍 Pending Sales Report Table - Date range:', {
-            original: originalDateRange,
-            filtered: filteredDateRange,
-            session_applied: filteredDateRange?.session_applied || false,
-          });
 
           // Update data with filtered dates
           data.starting_date = filteredDateRange.start_date;
@@ -4784,10 +4523,6 @@ class SalesController extends BaseController {
 
         // Apply session filtering if user has permission and dates are provided
         if (data.starting_date || data.ending_date) {
-          console.log('🔍 Pending Customer Report Table - Before filter:', {
-            starting_date: data.starting_date,
-            ending_date: data.ending_date,
-          });
 
           const startDate = data.starting_date ? new Date(data.starting_date) : null;
           const endDate = data.ending_date ? new Date(data.ending_date) : null;
@@ -4797,17 +4532,11 @@ class SalesController extends BaseController {
             end_date: endDate || new Date(),
           };
 
-          console.log('🔍 Pending Customer Report Table - About to apply session filter...');
           const filteredDateRange = await sessionFilterUtil.applySessionFilter(
             req,
             originalDateRange
           );
 
-          console.log('🔍 Pending Customer Report Table - Date range:', {
-            original: originalDateRange,
-            filtered: filteredDateRange,
-            session_applied: filteredDateRange?.session_applied || false,
-          });
 
           // Update data with filtered dates
           data.starting_date = filteredDateRange.start_date;
@@ -4855,10 +4584,6 @@ class SalesController extends BaseController {
 
         // Apply session filtering if user has permission and dates are provided
         if (data.starting_date || data.ending_date) {
-          console.log('🔍 Tax Sales Reports - Before filter:', {
-            starting_date: data.starting_date,
-            ending_date: data.ending_date,
-          });
 
           const startDate = data.starting_date ? new Date(data.starting_date) : null;
           const endDate = data.ending_date ? new Date(data.ending_date) : null;
@@ -4868,17 +4593,11 @@ class SalesController extends BaseController {
             end_date: endDate || new Date(),
           };
 
-          console.log('🔍 Tax Sales Reports - About to apply session filter...');
           const filteredDateRange = await sessionFilterUtil.applySessionFilter(
             req,
             originalDateRange
           );
 
-          console.log('🔍 Tax Sales Reports - Date range:', {
-            original: originalDateRange,
-            filtered: filteredDateRange,
-            session_applied: filteredDateRange?.session_applied || false,
-          });
 
           // Update data with filtered dates
           data.starting_date = filteredDateRange.start_date;
@@ -4912,20 +4631,11 @@ class SalesController extends BaseController {
    */
   async paymentSalesTranscationReportTable(req, res) {
     try {
-      console.log('🔍 Payment Sales Transaction Report Table - METHOD CALLED!');
-      console.log('🔍 Payment Sales Transaction Report Table - Full Query Params:', req.query);
-      console.log('🔍 Payment Sales Transaction Report Table - User Info:', {
-        _id: req.user?._id,
-        usertype: req.user?.usertype,
-        access: req.user?.access,
-      });
 
       if (!this.checkPermission('report', 'read', req.user)) {
-        console.log('❌ Payment Sales Transaction Report Table - Permission Denied');
         return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
 
-      console.log('✅ Payment Sales Transaction Report Table - Permission Granted');
 
       let options;
       let data;
@@ -4935,15 +4645,10 @@ class SalesController extends BaseController {
         req.paymentReportParams.options &&
         req.paymentReportParams.data
       ) {
-        console.log('🔍 Payment Sales Transaction Report Table - Using pre-parsed params');
         ({ options, data } = req.paymentReportParams);
 
         // Apply session filtering if user has permission and dates are provided
         if (data.starting_date || data.ending_date) {
-          console.log('🔍 Payment Sales Transaction Report Table - Before filter (pre-parsed):', {
-            starting_date: data.starting_date,
-            ending_date: data.ending_date,
-          });
 
           const startDate = data.starting_date ? new Date(data.starting_date) : null;
           const endDate = data.ending_date ? new Date(data.ending_date) : null;
@@ -4953,35 +4658,19 @@ class SalesController extends BaseController {
             end_date: endDate || new Date(),
           };
 
-          console.log(
-            '🔍 Payment Sales Transaction Report Table - About to apply session filter (pre-parsed)...'
-          );
           const filteredDateRange = await sessionFilterUtil.applySessionFilter(
             req,
             originalDateRange
           );
 
-          console.log('🔍 Payment Sales Transaction Report Table - Date range (pre-parsed):', {
-            original: originalDateRange,
-            filtered: filteredDateRange,
-            session_applied: filteredDateRange?.session_applied || false,
-          });
 
           // Update data with filtered dates
           data.starting_date = filteredDateRange.start_date;
           data.ending_date = filteredDateRange.end_date;
 
-          console.log(
-            '🔍 Payment Sales Transaction Report Table - Final Data After Filter (pre-parsed):',
-            data
-          );
         } else {
-          console.log(
-            '🔍 Payment Sales Transaction Report Table - No dates provided in pre-parsed params, skipping session filter'
-          );
         }
       } else {
-        console.log('🔍 Payment Sales Transaction Report Table - Building data from query params');
         const limit = parseInt(req.query.limit, 10) > 0 ? parseInt(req.query.limit, 10) : 5;
         const page = parseInt(req.query.page, 10) > 0 ? parseInt(req.query.page, 10) : 1;
         options = { limit, page };
@@ -4997,10 +4686,6 @@ class SalesController extends BaseController {
 
         // Apply session filtering if user has permission and dates are provided
         if (data.starting_date || data.ending_date) {
-          console.log('🔍 Payment Sales Transaction Report Table - Before filter (query):', {
-            starting_date: data.starting_date,
-            ending_date: data.ending_date,
-          });
 
           const startDate = data.starting_date ? new Date(data.starting_date) : null;
           const endDate = data.ending_date ? new Date(data.ending_date) : null;
@@ -5010,32 +4695,17 @@ class SalesController extends BaseController {
             end_date: endDate || new Date(),
           };
 
-          console.log(
-            '🔍 Payment Sales Transaction Report Table - About to apply session filter (query)...'
-          );
           const filteredDateRange = await sessionFilterUtil.applySessionFilter(
             req,
             originalDateRange
           );
 
-          console.log('🔍 Payment Sales Transaction Report Table - Date range (query):', {
-            original: originalDateRange,
-            filtered: filteredDateRange,
-            session_applied: filteredDateRange?.session_applied || false,
-          });
 
           // Update data with filtered dates
           data.starting_date = filteredDateRange.start_date;
           data.ending_date = filteredDateRange.end_date;
 
-          console.log(
-            '🔍 Payment Sales Transaction Report Table - Final Data After Filter (query):',
-            data
-          );
         } else {
-          console.log(
-            '🔍 Payment Sales Transaction Report Table - No dates provided, skipping session filter'
-          );
         }
       }
 
@@ -5062,33 +4732,19 @@ class SalesController extends BaseController {
    */
   async paymentSaleTypeReport(req, res) {
     try {
-      console.log('🔍 Payment Sale Type Report - METHOD CALLED!');
-      console.log('🔍 Payment Sale Type Report - Full Query Params:', req.query);
-      console.log('🔍 Payment Sale Type Report - User Info:', {
-        _id: req.user?._id,
-        usertype: req.user?.usertype,
-        access: req.user?.access,
-      });
 
       if (!this.checkPermission('report', 'read', req.user)) {
-        console.log('❌ Payment Sale Type Report - Permission Denied');
         return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
 
-      console.log('✅ Payment Sale Type Report - Permission Granted');
 
       let data;
 
       if (req.branchReportParams && req.branchReportParams.data) {
-        console.log('🔍 Payment Sale Type Report - Using pre-parsed params');
         ({ data } = req.branchReportParams);
 
         // Apply session filtering if user has permission and dates are provided
         if (data.starting_date || data.ending_date) {
-          console.log('🔍 Payment Sale Type Report - Before filter (pre-parsed):', {
-            starting_date: data.starting_date,
-            ending_date: data.ending_date,
-          });
 
           const startDate = data.starting_date ? new Date(data.starting_date) : null;
           const endDate = data.ending_date ? new Date(data.ending_date) : null;
@@ -5098,32 +4754,19 @@ class SalesController extends BaseController {
             end_date: endDate || new Date(),
           };
 
-          console.log(
-            '🔍 Payment Sale Type Report - About to apply session filter (pre-parsed)...'
-          );
           const filteredDateRange = await sessionFilterUtil.applySessionFilter(
             req,
             originalDateRange
           );
 
-          console.log('🔍 Payment Sale Type Report - Date range (pre-parsed):', {
-            original: originalDateRange,
-            filtered: filteredDateRange,
-            session_applied: filteredDateRange?.session_applied || false,
-          });
 
           // Update data with filtered dates
           data.starting_date = filteredDateRange.start_date;
           data.ending_date = filteredDateRange.end_date;
 
-          console.log('🔍 Payment Sale Type Report - Final Data After Filter (pre-parsed):', data);
         } else {
-          console.log(
-            '🔍 Payment Sale Type Report - No dates provided in pre-parsed params, skipping session filter'
-          );
         }
       } else {
-        console.log('🔍 Payment Sale Type Report - Building data from query params');
         // Handle both 'branch' and 'branch[]' query params
         const branches = req.query['branch[]'] || req.query.branch || [];
         data = {
@@ -5132,14 +4775,9 @@ class SalesController extends BaseController {
           ending_date: req.query.ending_date || '',
         };
 
-        console.log('🔍 Payment Sale Type Report - Initial Data:', data);
 
         // Apply session filtering if user has permission and dates are provided
         if (data.starting_date || data.ending_date) {
-          console.log('🔍 Payment Sale Type Report - Before filter:', {
-            starting_date: data.starting_date,
-            ending_date: data.ending_date,
-          });
 
           const startDate = data.starting_date ? new Date(data.starting_date) : null;
           const endDate = data.ending_date ? new Date(data.ending_date) : null;
@@ -5149,25 +4787,17 @@ class SalesController extends BaseController {
             end_date: endDate || new Date(),
           };
 
-          console.log('🔍 Payment Sale Type Report - About to apply session filter...');
           const filteredDateRange = await sessionFilterUtil.applySessionFilter(
             req,
             originalDateRange
           );
 
-          console.log('🔍 Payment Sale Type Report - Date range:', {
-            original: originalDateRange,
-            filtered: filteredDateRange,
-            session_applied: filteredDateRange?.session_applied || false,
-          });
 
           // Update data with filtered dates
           data.starting_date = filteredDateRange.start_date;
           data.ending_date = filteredDateRange.end_date;
 
-          console.log('🔍 Payment Sale Type Report - Final Data After Filter:', data);
         } else {
-          console.log('🔍 Payment Sale Type Report - No dates provided, skipping session filter');
         }
       }
 
@@ -5228,10 +4858,6 @@ class SalesController extends BaseController {
 
         // Apply session filtering if user has permission and dates are provided
         if (data.starting_date || data.ending_date) {
-          console.log('🔍 Payment Return Sales Transaction Report Table - Before filter:', {
-            starting_date: data.starting_date,
-            ending_date: data.ending_date,
-          });
 
           const startDate = data.starting_date ? new Date(data.starting_date) : null;
           const endDate = data.ending_date ? new Date(data.ending_date) : null;
@@ -5241,19 +4867,11 @@ class SalesController extends BaseController {
             end_date: endDate || new Date(),
           };
 
-          console.log(
-            '🔍 Payment Return Sales Transaction Report Table - About to apply session filter...'
-          );
           const filteredDateRange = await sessionFilterUtil.applySessionFilter(
             req,
             originalDateRange
           );
 
-          console.log('🔍 Payment Return Sales Transaction Report Table - Date range:', {
-            original: originalDateRange,
-            filtered: filteredDateRange,
-            session_applied: filteredDateRange?.session_applied || false,
-          });
 
           // Update data with filtered dates
           data.starting_date = filteredDateRange.start_date;
@@ -5298,10 +4916,6 @@ class SalesController extends BaseController {
 
       // Apply session filtering if user has permission and dates are provided
       if (data.starting_date || data.ending_date) {
-        console.log('🔍 Payment Graphical Reports - Before filter:', {
-          starting_date: data.starting_date,
-          ending_date: data.ending_date,
-        });
 
         const startDate = data.starting_date ? new Date(data.starting_date) : null;
         const endDate = data.ending_date ? new Date(data.ending_date) : null;
@@ -5311,17 +4925,11 @@ class SalesController extends BaseController {
           end_date: endDate || new Date(),
         };
 
-        console.log('🔍 Payment Graphical Reports - About to apply session filter...');
         const filteredDateRange = await sessionFilterUtil.applySessionFilter(
           req,
           originalDateRange
         );
 
-        console.log('🔍 Payment Graphical Reports - Date range:', {
-          original: originalDateRange,
-          filtered: filteredDateRange,
-          session_applied: filteredDateRange?.session_applied || false,
-        });
 
         // Update data with filtered dates
         data.starting_date = filteredDateRange.start_date;
@@ -7477,30 +7085,18 @@ class SalesController extends BaseController {
 
       // Apply session filtering if user has permission and dates are provided
       if (data.starting_date || data.ending_date) {
-        console.log('🔍 Item Expiry Report Table - Before filter:', {
-          starting_date: data.starting_date,
-          ending_date: data.ending_date,
-        });
 
         // Debug user permissions
-        console.log('🔍 DEBUG - User session filter permission:', {
-          user_id: req.user?._id,
-          session_filter_permission: req.user?.access?.sales?.session_filter,
-          user_access: req.user?.access,
-        });
 
         const startDate = data.starting_date ? new Date(data.starting_date) : null;
         const endDate = data.ending_date ? new Date(data.ending_date) : null;
 
-        console.log('🔍 DEBUG - Parsed dates:', { startDate, endDate });
 
         const originalDateRange = {
           start_date: startDate || new Date(0),
           end_date: endDate || new Date(),
         };
 
-        console.log('🔍 DEBUG - Original date range:', originalDateRange);
-        console.log('🔍 Item Expiry Report Table - About to apply session filter...');
 
         try {
           const filteredDateRange = await sessionFilterUtil.applySessionFilter(
@@ -7508,37 +7104,17 @@ class SalesController extends BaseController {
             originalDateRange
           );
 
-          console.log('🔍 DEBUG - Filtered date range result:', filteredDateRange);
-          console.log('🔍 Item Expiry Report Table - Date range:', {
-            original: originalDateRange,
-            filtered: filteredDateRange,
-            session_applied: filteredDateRange?.session_applied || false,
-          });
 
           // Debug date comparison
-          console.log('🔍 DEBUG - Date comparison:', {
-            original_start: originalDateRange.start_date,
-            original_end: originalDateRange.end_date,
-            filtered_start: filteredDateRange.start_date,
-            filtered_end: filteredDateRange.end_date,
-            start_changed: originalDateRange.start_date !== filteredDateRange.start_date,
-            end_changed: originalDateRange.end_date !== filteredDateRange.end_date,
-          });
 
           // Update data with filtered dates
           data.starting_date = filteredDateRange.start_date;
           data.ending_date = filteredDateRange.end_date;
 
-          console.log('🔍 DEBUG - Final data dates:', {
-            starting_date: data.starting_date,
-            ending_date: data.ending_date,
-          });
         } catch (error) {
-          console.log('🔍 DEBUG - Session filter error:', error);
           throw error;
         }
       } else {
-        console.log('🔍 DEBUG - No dates provided, skipping session filter');
       }
 
       const userAccess = req.user?.access?.report?.read;

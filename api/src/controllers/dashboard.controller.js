@@ -228,11 +228,6 @@ class DashboardController extends BaseController {
       // Apply session filtering if user has permission
       const filteredDateRange = await sessionFilterUtil.applySessionFilter(req, originalDateRange);
 
-      console.log('🔍 Dashboard Payment Mode Data - Date range:', {
-        original: originalDateRange,
-        filtered: filteredDateRange,
-        session_applied: filteredDateRange?.session_applied || false,
-      });
 
       const model = req.dashboardModel;
       const result = await model.getDashboardPaymentModeDataModel({
@@ -277,23 +272,10 @@ class DashboardController extends BaseController {
       await this.ensureContext(req);
 
       // DEBUG: Log user data before session filter
-      console.log('🔍 DEBUG: User data before session filter:', {
-        userId: req.user?._id,
-        username: req.user?.username,
-        access: req.user?.access,
-        salesAccess: req.user?.access?.sales,
-        sessionFilter: req.user?.access?.sales?.session_filter,
-        originalDateRange: originalDateRange,
-      });
 
       // Apply session filtering if user has permission
       const filteredDateRange = await sessionFilterUtil.applySessionFilter(req, originalDateRange);
 
-      console.log('🔍 Dashboard Pending Activities - Date range:', {
-        original: originalDateRange,
-        filtered: filteredDateRange,
-        session_applied: filteredDateRange?.session_applied || false,
-      });
 
       const model = req.dashboardModel;
       const result = await model.getPendingActivitiesModel({
@@ -331,27 +313,17 @@ class DashboardController extends BaseController {
    */
   async debugSessionFilter(req, res) {
     try {
-      console.log('🔍 DEBUG SESSION FILTER - Starting...');
 
       // Test basic user data
-      console.log('🔍 User data:', {
-        userId: req.user?._id,
-        username: req.user?.username,
-        access: req.user?.access,
-        salesAccess: req.user?.access?.sales,
-        sessionFilter: req.user?.access?.sales?.session_filter,
-      });
 
       // Test session filter utility
       const sessionFilterUtil = require('../utils/session-filter.util');
 
       // Test permission check
       const hasPermission = sessionFilterUtil.hasSessionFilterPermission(req.user);
-      console.log('🔍 Permission check result:', hasPermission);
 
       // Test session data retrieval
       const sessionData = await sessionFilterUtil.getUserSessionData(req);
-      console.log('🔍 Session data result:', sessionData);
 
       // Test session filter application
       const testDateRange = {
@@ -360,7 +332,6 @@ class DashboardController extends BaseController {
       };
 
       const filteredDateRange = await sessionFilterUtil.applySessionFilter(req, testDateRange);
-      console.log('🔍 Filter result:', filteredDateRange);
 
       return res.status(200).json({
         type: 'success',
@@ -404,11 +375,6 @@ class DashboardController extends BaseController {
       // Apply session filtering if user has permission
       const filteredDateRange = await sessionFilterUtil.applySessionFilter(req, originalDateRange);
 
-      console.log('🔍 Dashboard Top Performers - Date range:', {
-        original: originalDateRange,
-        filtered: filteredDateRange,
-        session_applied: filteredDateRange?.session_applied || false,
-      });
 
       const model = req.dashboardModel;
       const result = await model.getDashboardTopPerformersModel({
@@ -458,11 +424,6 @@ class DashboardController extends BaseController {
       // Apply session filtering if user has permission
       const filteredDateRange = await sessionFilterUtil.applySessionFilter(req, originalDateRange);
 
-      console.log('🔍 Dashboard Total Amounts - Date range:', {
-        original: originalDateRange,
-        filtered: filteredDateRange,
-        session_applied: filteredDateRange?.session_applied || false,
-      });
 
       const model = req.dashboardModel;
       const result = await model.getDashboardTotalAmountsModel({
@@ -573,11 +534,6 @@ class DashboardController extends BaseController {
       // Apply session filtering if user has permission
       const filteredDateRange = await sessionFilterUtil.applySessionFilter(req, originalDateRange);
 
-      console.log('🔍 Dashboard Sales/Purchase - Date range:', {
-        original: originalDateRange,
-        filtered: filteredDateRange,
-        session_applied: filteredDateRange?.session_applied || false,
-      });
 
       const model = req.dashboardModel;
       const result = await model.getDashboardSalesPurchaseModel({
@@ -628,11 +584,6 @@ class DashboardController extends BaseController {
       // Apply session filtering if user has permission
       const filteredDateRange = await sessionFilterUtil.applySessionFilter(req, originalDateRange);
 
-      console.log('🔍 Dashboard Best Selling Products - Date range:', {
-        original: originalDateRange,
-        filtered: filteredDateRange,
-        session_applied: filteredDateRange?.session_applied || false,
-      });
 
       const model = req.dashboardModel;
       const result = await model.getDashboardBestSellingProductsModel({
@@ -748,11 +699,6 @@ class DashboardController extends BaseController {
       // Apply session filtering if user has permission
       const filteredDateRange = await sessionFilterUtil.applySessionFilter(req, originalDateRange);
 
-      console.log('🔍 Dashboard Expired Products - Date range:', {
-        original: originalDateRange,
-        filtered: filteredDateRange,
-        session_applied: filteredDateRange?.session_applied || false,
-      });
 
       const result = await model.getDashboardExpiredProducts(filteredDateRange);
 

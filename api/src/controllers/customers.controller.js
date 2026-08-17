@@ -940,10 +940,6 @@ class CustomerController extends BaseController {
         ];
       }
 
-      console.log('🔍 TransactionDetails - Filters:', JSON.stringify(filters, null, 2));
-      console.log('🔍 TransactionDetails - Customer ID:', data.customer_id);
-      console.log('🔍 TransactionDetails - Branch IDs:', data.branchid);
-      console.log('🔍 TransactionDetails - License:', BaseModel.license);
 
       // Get transaction collection
       const transactionCollection = await BaseModel.prototype.getCollection.call(
@@ -961,19 +957,13 @@ class CustomerController extends BaseController {
         .limit(limit)
         .toArray();
 
-      console.log('🔍 TransactionDetails - Found transactions:', transactions.length);
 
       // Check if there are any transactions without license filter
       const totalWithoutLicense = await transactionCollection.countDocuments(filters);
-      console.log('🔍 TransactionDetails - Total without license filter:', totalWithoutLicense);
 
       // Get a sample transaction to see its structure
       if (totalWithoutLicense > 0) {
         const sampleTxn = await transactionCollection.findOne(filters);
-        console.log(
-          '🔍 TransactionDetails - Sample transaction:',
-          JSON.stringify(sampleTxn, null, 2)
-        );
       }
 
       // Format transactions with string_date for frontend
@@ -1297,13 +1287,6 @@ class CustomerController extends BaseController {
    */
   async customerGraphicalReports(req, res) {
     try {
-      console.log('🔍 Customer Graphical Reports - METHOD CALLED!');
-      console.log('🔍 Customer Graphical Reports - Full Query Params:', req.query);
-      console.log('🔍 Customer Graphical Reports - User Info:', {
-        _id: req.user?._id,
-        usertype: req.user?.usertype,
-        access: req.user?.access,
-      });
 
       this.setRequestContext(req);
 
@@ -1312,19 +1295,9 @@ class CustomerController extends BaseController {
       const branchIds = req.query.branch || req.query['branch[]'] || [];
       const customerId = req.query.field_input || '';
 
-      console.log('🔍 Customer Graphical Reports - Initial Data:', {
-        branchIds,
-        startingDate,
-        endingDate,
-        customerId,
-      });
 
       // Apply session filtering if user has permission and dates are provided
       if (startingDate || endingDate) {
-        console.log('🔍 Customer Graphical Reports - Before filter:', {
-          startingDate,
-          endingDate,
-        });
 
         const startDate = startingDate ? new Date(startingDate) : null;
         const endDate = endingDate ? new Date(endingDate) : null;
@@ -1334,36 +1307,22 @@ class CustomerController extends BaseController {
           end_date: endDate || new Date(),
         };
 
-        console.log('🔍 Customer Graphical Reports - About to apply session filter...');
         const filteredDateRange = await sessionFilterUtil.applySessionFilter(
           req,
           originalDateRange
         );
 
-        console.log('🔍 Customer Graphical Reports - Date range:', {
-          original: originalDateRange,
-          filtered: filteredDateRange,
-          session_applied: filteredDateRange?.session_applied || false,
-        });
 
         // Update dates with filtered values
         startingDate = filteredDateRange.start_date;
         endingDate = filteredDateRange.end_date;
 
-        console.log('🔍 Customer Graphical Reports - Final Data After Filter:', {
-          branchIds,
-          startingDate,
-          endingDate,
-          customerId,
-        });
       } else {
-        console.log('🔍 Customer Graphical Reports - No dates provided, skipping session filter');
       }
 
       // Check user access
       const userAccess = this.user?.access?.report?.read ?? false;
       if (!userAccess) {
-        console.log('❌ Customer Graphical Reports - Permission Denied');
         return res.status(403).json({
           type: 'error',
           message: 'Unauthorized',
@@ -1371,7 +1330,6 @@ class CustomerController extends BaseController {
         });
       }
 
-      console.log('✅ Customer Graphical Reports - Permission Granted');
 
       const result = await this.service.getCustomerGraphicalReports({
         branchIds: Array.isArray(branchIds) ? branchIds : [branchIds],

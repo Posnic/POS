@@ -144,21 +144,12 @@ class RegistersController extends BaseController {
   // PHP: registerReportTable()
   async registerReportTable(req, res) {
     try {
-      console.log('🔍 Register Report Table - METHOD CALLED!');
-      console.log('🔍 Register Report Table - Full Query Params:', req.query);
-      console.log('🔍 Register Report Table - User Info:', {
-        _id: req.user?._id,
-        usertype: req.user?.usertype,
-        access: req.user?.access,
-      });
 
       await this.setRequestContext(req);
       if (!this.checkPermission('report', 'read', req.user)) {
-        console.log('❌ Register Report Table - Permission Denied');
         return this.error(res, 'Unauthorized', 403);
       }
 
-      console.log('✅ Register Report Table - Permission Granted');
 
       const limit = parseInt(req.query.limit) > 0 ? parseInt(req.query.limit) : 5;
       const page = parseInt(req.query.page) > 0 ? parseInt(req.query.page) : 1;
@@ -167,22 +158,12 @@ class RegistersController extends BaseController {
       let starting_date = req.query.starting_date;
       let ending_date = req.query.ending_date;
 
-      console.log('🔍 Register Report Table - Initial Data:', {
-        register_id: req.query.register || [],
-        starting_date,
-        ending_date,
-      });
 
       // Apply session filtering if user has permission and dates are provided
       if (
         (starting_date && starting_date.trim() !== '') ||
         (ending_date && ending_date.trim() !== '')
       ) {
-        console.log('🔍 Register Report Table - Session filter condition MET!');
-        console.log('🔍 Register Report Table - Before filter:', {
-          starting_date,
-          ending_date,
-        });
 
         const startDate = starting_date ? new Date(starting_date) : null;
         const endDate = ending_date ? new Date(ending_date) : null;
@@ -192,29 +173,17 @@ class RegistersController extends BaseController {
           end_date: endDate || new Date(),
         };
 
-        console.log('🔍 Register Report Table - About to apply session filter...');
         const filteredDateRange = await sessionFilterUtil.applySessionFilter(
           req,
           originalDateRange
         );
 
-        console.log('🔍 Register Report Table - Date range:', {
-          original: originalDateRange,
-          filtered: filteredDateRange,
-          session_applied: filteredDateRange?.session_applied || false,
-        });
 
         // Update dates with filtered values
         starting_date = filteredDateRange.start_date;
         ending_date = filteredDateRange.end_date;
 
-        console.log('🔍 Register Report Table - Final Data After Filter:', {
-          register_id: req.query.register || [],
-          starting_date,
-          ending_date,
-        });
       } else {
-        console.log('🔍 Register Report Table - No dates provided, skipping session filter');
       }
 
       const data = {
@@ -223,7 +192,6 @@ class RegistersController extends BaseController {
         ending_date,
       };
 
-      console.log('🔍 Register Report Table - About to call service with filtered data:', data);
 
       const result = await this.service.registerReportPage(data, options);
 
