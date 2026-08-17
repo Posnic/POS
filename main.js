@@ -4545,10 +4545,14 @@ function startServer() {
         setInterval(runAssetCheck, 24 * 60 * 60 * 1000);
       }
 
-      // Start optional cloud sync agent (no-op unless installed + activated)
+      // Start optional cloud sync agent (no-op unless installed + activated).
+      // start() is async since the self-update apply step (U3.5); a rejection
+      // must not become an unhandled one.
       try {
         syncAgentManager = new SyncAgentManager({ app });
-        syncAgentManager.start();
+        Promise.resolve(syncAgentManager.start()).catch((e) =>
+          console.warn('[SyncAgent] failed to start:', e.message)
+        );
       } catch (syncErr) {
         console.warn('[SyncAgent] failed to start:', syncErr.message);
       }

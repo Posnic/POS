@@ -142,4 +142,12 @@ async function checkAndApply({ assetUpdater, appVersion, sevenZipPath, log = () 
   }
 }
 
-module.exports = { checkAndApply, reconcileWithInstaller, compareVersions, FEED_BASE };
+module.exports = {
+  checkAndApply,
+  reconcileWithInstaller,
+  compareVersions,
+  FEED_BASE,
+  // shared with the agent self-update apply path (agent-update-apply.js)
+  extractZip,
+  loadTree,
+};
