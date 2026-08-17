@@ -61,12 +61,33 @@ describe('clockIn', () => {
 
   test('refuses a second open shift (409)', async () => {
     const col = makeCollection();
-    col.findOne.mockResolvedValue({ _id: 'open1', status: SHIFT_STATUS.OPEN });
+    col.findOne.mockResolvedValue({
+      _id: 'open1', status: SHIFT_STATUS.OPEN, clock_in: new Date(Date.now() - 60 * 60 * 1000),
+    });
     const repo = makeRepo(col);
     const r = await repo.clockIn({});
     expect(r.status).toBe(false);
     expect(r.statusCode).toBe(409);
     expect(col.insertOne).not.toHaveBeenCalled();
+  });
+
+  test('a stale forgotten shift is auto-closed (capped) and clock-in proceeds', async () => {
+    const col = makeCollection();
+    const clockIn = new Date(Date.now() - 20 * 60 * 60 * 1000); // 20h ago
+    col.findOne.mockResolvedValue({
+      _id: 'stale1', status: SHIFT_STATUS.OPEN, clock_in: clockIn, break_minutes: 30, note: null,
+    });
+    const repo = makeRepo(col);
+    const r = await repo.clockIn({});
+    expect(r.status).toBe(true);
+    expect(r.auto_closed).toBeTruthy();
+    // Gross capped at 12h; minus the 30min break.
+    expect(r.auto_closed.worked_minutes).toBe(12 * 60 - 30);
+    expect(r.auto_closed.note).toBe('[auto clock-out]');
+    const closeSet = col.updateOne.mock.calls[0][1].$set;
+    expect(closeSet.status).toBe(SHIFT_STATUS.CLOSED);
+    expect(closeSet.clock_out.getTime()).toBe(clockIn.getTime() + 12 * 60 * 60000);
+    expect(col.insertOne).toHaveBeenCalled(); // the fresh shift opened
   });
 });
 

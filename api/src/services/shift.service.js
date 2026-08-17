@@ -22,6 +22,16 @@ class ShiftService {
   async clockIn(data = {}) {
     const result = await this.repository.clockIn(data);
     if (result.status) {
+      // A forgotten shift closed on the way in is audited as its own event, so
+      // the trail shows both the auto-close and the fresh clock-in.
+      if (result.auto_closed) {
+        await new AuditService().record(AUDIT_EVENTS.CLOCK_OUT, {
+          entity: 'shift',
+          entity_id: result.auto_closed._id,
+          device_id: data.device_id,
+          details: { auto: true, worked_minutes: result.auto_closed.worked_minutes },
+        });
+      }
       await new AuditService().record(AUDIT_EVENTS.CLOCK_IN, {
         entity: 'shift',
         entity_id: result.data && result.data._id,
@@ -73,6 +83,16 @@ class ShiftService {
     if (result.status && result.data) {
       const clockedOut = result.data.action === 'clock_out';
       const shift = result.data.shift;
+      if (result.data.auto_closed) {
+        await new AuditService().record(AUDIT_EVENTS.CLOCK_OUT, {
+          actor_user_id: user._id,
+          actor_name: userName,
+          entity: 'shift',
+          entity_id: result.data.auto_closed._id,
+          device_id,
+          details: { auto: true, worked_minutes: result.data.auto_closed.worked_minutes, method: 'rfid' },
+        });
+      }
       await new AuditService().record(
         clockedOut ? AUDIT_EVENTS.CLOCK_OUT : AUDIT_EVENTS.CLOCK_IN,
         {

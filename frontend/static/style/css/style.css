@@ -27865,6 +27865,15 @@ mark {
 #infobar-settings-sidebar-table-selection {
   width: 97%;
 }
+
+/* Detail sliders bring their own inner padding (.slider-modal-body), so the
+   generic 30px body padding and its rules doubled the frame around them. */
+.infobar-settings-sidebar[id$="-details"] .infobar-settings-sidebar-body .custom-mode-setting,
+#infobar-settings-sidebar-table-selection .infobar-settings-sidebar-body .custom-mode-setting {
+  padding: 0;
+  border-top: 0;
+  border-bottom: 0;
+}
 #infobar-settings-sidebar-users {
   width: clamp(600px, 55vw, 840px);
 }
