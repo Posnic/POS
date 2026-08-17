@@ -1968,28 +1968,6 @@ describe('updateTextLocalSmsSetting', () => {
   });
 });
 
-describe('updateOfflineSetting', () => {
-  test('200 on success', async () => {
-    mockModel.updateOfflineSettingModel.mockResolvedValue(ok({}, 'Updated'));
-    const res = mockRes();
-    await ctrl.updateOfflineSetting(mockReq({ body: { offline_mode: true } }), res);
-    expect(res.status).toHaveBeenCalledWith(200);
-  });
-
-  test('404 when model returns status:false', async () => {
-    mockModel.updateOfflineSettingModel.mockResolvedValue(err());
-    const res = mockRes();
-    await ctrl.updateOfflineSetting(mockReq(), res);
-    expect(res.status).toHaveBeenCalledWith(404);
-  });
-
-  test('500 when model throws', async () => {
-    mockModel.updateOfflineSettingModel.mockRejectedValue(new Error('crash'));
-    const res = mockRes();
-    await ctrl.updateOfflineSetting(mockReq(), res);
-    expect(res.status).toHaveBeenCalledWith(500);
-  });
-});
 
 // =============================================================================
 // File upload — updateBranchLogo / updateKioskImages

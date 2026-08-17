@@ -1048,48 +1048,6 @@ describe('phonepePaymentKeyModel', () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 24. updateOfflineSetting
-// ─────────────────────────────────────────────────────────────────────────────
-describe('updateOfflineSetting', () => {
-  let m, col;
-  beforeEach(() => {
-    m = makeModel();
-    col = makeMockCollection();
-    jest.spyOn(m, 'getCollection').mockResolvedValue(col);
-  });
-
-  test('sets offline_mode=true for string "true"', async () => {
-    await m.updateOfflineSetting({ offline_mode: 'true' });
-    const [, upd] = col.updateOne.mock.calls[0];
-    expect(upd.$set.offline_mode).toBe(true);
-  });
-
-  test('sets offline_mode=false for string "false"', async () => {
-    await m.updateOfflineSetting({ offline_mode: 'false' });
-    const [, upd] = col.updateOne.mock.calls[0];
-    expect(upd.$set.offline_mode).toBe(false);
-  });
-
-  test('sets offline_mode=true for boolean true', async () => {
-    await m.updateOfflineSetting({ offline_mode: true });
-    const [, upd] = col.updateOne.mock.calls[0];
-    expect(upd.$set.offline_mode).toBe(true);
-  });
-
-  test('returns status:true on success', async () => {
-    const r = await m.updateOfflineSetting({ offline_mode: true });
-    expect(r.status).toBe(true);
-    expect(r.message).toBe('Offline setting updated successfully');
-  });
-
-  test('returns status:false on error', async () => {
-    jest.spyOn(m, 'getCollection').mockRejectedValue(new Error('fail'));
-    const r = await m.updateOfflineSetting({ offline_mode: true });
-    expect(r.status).toBe(false);
-  });
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
 // 25. updateSmsSetting
 // ─────────────────────────────────────────────────────────────────────────────
 describe('updateSmsSetting', () => {

@@ -441,20 +441,6 @@ PosnicPro.settings = {
             return false;
         }
     },
-    /* update offline settings */
-    offlineStoreSettings: function (data) {
-        var params = {
-            url: 'setting/updateOfflineSetting',
-            data: JSON.stringify(data)
-        };
-        PosnicPro.put(params, function (response) {
-            PosnicPro.alert(response.type, response.message);
-        }, function (xhr) {
-            var response = jQuery.parseJSON(xhr.responseText);
-            PosnicPro.alert(response.type, response.message);
-        });
-        return false;
-    },
     way2smsSettings: function () {
         var loader = $(".loader-view-sms");
         $("<div class='loadingSpinner'></div>").appendTo(loader);
@@ -1047,28 +1033,6 @@ if ($wrapper.length) {
 
                 //var countryDetail = $('#setting_country').select2("data");
                 //PosnicPro.settings.loadSelectSettingState(countryDetail[0].element.attributes['data-setting-id'].value);
-                // updating offline settings
-                //                if (data.settings.offline)
-                //                    $.each(data.settings.offline, function (key, value) {
-                //                        var text = key.split('_');
-                //                        var module = text[0];
-                //                        var type = text[1];
-                //                        if (type === 'action') {
-                //                            var element = $('#offline_' + module + '_support');
-                //                            if (value) {
-                //                                element.prop('checked', false).trigger("click");
-                //                            } else {
-                //                                element.prop('checked', true).trigger("click");
-                //                            }
-                //                        } else {
-                //                            var element = $('#offline_data_' + module);
-                //                            if (value) {
-                //                                element.prop('checked', false).trigger("click");
-                //                            } else {
-                //                                element.prop('checked', true).trigger("click");
-                //                            }
-                //                        }
-                //                    });
             } else {
                 $('#setting_status').val("No");
             }
@@ -3158,29 +3122,6 @@ $(function () {
     if ($backupSelect.length) {
         PosnicPro.settings.changeInputFieldsValueBackupTable($backupSelect[0]);
     }
-    $('.offline_checkbox').on('change', function () {
-        if ($(this).data('offmodule') === 'sales' && $(this).data('type') === 'action' && $(this).is(':checked')) {
-            $('#offline_data_customers').prop('checked', false).trigger("click");
-            $('#offline_data_items').prop('checked', false).trigger("click");
-        }
-        if ($(this).data('offmodule') === 'customers' && !$(this).is(':checked') && $(this).data('type') === 'cache') {
-            $('#offline_sales_support').prop('checked', true).trigger("click");
-        }
-
-        if ($(this).data('offmodule') === 'items' && !$(this).is(':checked') && $(this).data('type') === 'cache') {
-            $('#offline_sales_support').prop('checked', true).trigger("click");
-            $('#offline_receivings_support').prop('checked', true).trigger("click");
-        }
-
-        if ($(this).data('offmodule') === 'receivings' && $(this).data('type') === 'action' && $(this).is(':checked')) {
-            $('#offline_data_suppliers').prop('checked', false).trigger("click");
-            $('#offline_data_items').prop('checked', false).trigger("click");
-        }
-
-        if (($(this).data('offmodule') === 'suppliers' || $(this).data('offmodule') === 'items') && !$(this).is(':checked') && $(this).data('type') === 'cache') {
-            $('#offline_receivings_support').prop('checked', true).trigger("click");
-        }
-    });
     /*
      * Test print, using whatever is selected right now.
      *
@@ -3203,13 +3144,6 @@ $(function () {
         }
     });
 
-    $('#saveOfflineSettings').on('click', function () {
-        var data = {};
-        $(".offline_checkbox").each(function () {
-            data[$(this).data('offmodule') + '_' + $(this).data('type')] = $(this).is(':checked');
-        });
-        PosnicPro.settings.offlineStoreSettings(data);
-    });
     $('.custom_default_value_search').on('keydown.autocomplete', function () {
         var module = $(this).data('id');
         $(this).autocomplete({

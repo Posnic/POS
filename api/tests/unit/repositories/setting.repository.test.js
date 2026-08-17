@@ -48,8 +48,7 @@ describe('SettingsRepository', () => {
       'deleteTableOrderFiledModel',
       'editGeneralSetting',
       'updateCommonSettings',
-      'updateOfflineSetting',
-      'updateWay2SmsSetting',
+            'updateWay2SmsSetting',
       'updateTextLocalSmsSetting',
       'updateBranchLogoModel',
       'updateKioskImagesModel',
@@ -287,11 +286,6 @@ describe('SettingsRepository', () => {
       expect(mockModel.updateCommonSettings).toHaveBeenCalledWith(data);
     });
 
-    test('updateOfflineSetting delegates to model.updateOfflineSetting', async () => {
-      const data = { enabled: true };
-      await settingsRepository.updateOfflineSetting(data);
-      expect(mockModel.updateOfflineSetting).toHaveBeenCalledWith(data);
-    });
 
     test('updateWay2SmsSetting delegates to model.updateWay2SmsSetting', async () => {
       const data = { api_key: 'key' };
@@ -556,8 +550,7 @@ describe('SettingsRepository', () => {
       'deleteTableOrder',
       'updateGeneralSetting',
       'updateCommonSettings',
-      'updateOfflineSetting',
-      'updateWay2SmsSetting',
+            'updateWay2SmsSetting',
       'updateTextLocalSmsSetting',
       'updateBranchLogo',
       'updateKioskImages',

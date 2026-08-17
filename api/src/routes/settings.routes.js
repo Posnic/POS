@@ -216,7 +216,6 @@ router.post(
   handleValidationErrors,
   bindController(settingController.updateTextLocalSmsSetting)
 );
-router.post('/updateOfflineSetting', bindController(settingController.updateOfflineSetting));
 
 // PHP: Image routes
 router.post(

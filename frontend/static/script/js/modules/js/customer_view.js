@@ -206,7 +206,6 @@ $(document).ready(function () {
         });
     }
     qrCodeUpdate();
-    PosnicPro.local.set('html', '');
     PosnicPro.customerview.customer_display_update();
     // Debounce mechanism to prevent rapid updates
     var updateTimeout = null;

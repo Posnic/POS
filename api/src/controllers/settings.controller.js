@@ -1481,23 +1481,6 @@ class SettingController extends BaseController {
     }
   }
 
-  async updateOfflineSetting(req, res) {
-    try {
-      const settingModel = this.createModelWithContext(req);
-      const result = await settingModel.updateOfflineSettingModel(req.body);
-      if (result.status) {
-        return res
-          .status(200)
-          .json({ type: 'success', message: result.message, data: result.data });
-      } else {
-        return res.status(404).json({ type: 'error', message: result.message, data: result.data });
-      }
-    } catch (error) {
-      console.error('Error in updateOfflineSetting:', error);
-      return res.status(500).json({ type: 'error', message: error.message });
-    }
-  }
-
   async updateBranchLogo(req, res) {
     try {
       const settingModel = this.createModelWithContext(req);

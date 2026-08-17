@@ -180,15 +180,11 @@ $(document).ready(function () {
     if (!hasher.getHash()) {
         hasher.setHash(DEFAULT_HASH)
     }
-    $('.page_url').click(function () {
-        var hash = window.location.hash.slice(1);
-        var newAddItemName = $('#items_name').val();
-        if (hash === '/items/new/addnewitem' || "'#/items/new/" + newAddItemName + "'" || '/branches/new/addbranch') {
-            $('.change_branch').removeClass('show');
-            history.back()
-        } else {
-            var page = $(this).data('page');
-            hasher.setHash(page)
-        }
-    })
+    /*
+     * A '.page_url' click handler used to live here. It was dead twice over:
+     * it bound non-delegated at ready to elements only created later (so it
+     * attached to nothing), and its condition contained a non-empty string
+     * literal as an || operand, making the else branch unreachable anyway.
+     * The .page_url elements are plain hash links; the router handles them.
+     */
 })
