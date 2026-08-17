@@ -1171,7 +1171,6 @@
             PosnicPro.sales.customerViewDisplay();
             var lineItemLength = PosnicPro.sales.addLineTable.length;
             if (lineItemLength === 0) {
-                PosnicPro.local.set('html', '');
                 $("#save_submit,#check_button").attr("disabled", true);
                 PosnicPro.sales.setDefaults();
             }
@@ -2157,58 +2156,6 @@
         setTimeout(function() {
             PosnicPro.sales.initPaymentValidation();
         }, 100);
-    },
-
-    searchItemFromOfffline: function () {
-        var items = jQuery.parseJSON(PosnicPro.local.get('localitemname'));
-        $('#sales_new_item_name').typeahead({
-            highlight: true,
-            minLength: 1,
-            hint: false
-        }, {
-            name: 'items',
-            display: function (item) {
-                return item[1];
-            },
-            source: substringMatcher(items),
-            templates: {
-                suggestion: function (data) {
-                    if (data[3] > 0) {
-                        var currency = PosnicPro.local.get('currencySign');
-                        var image_path = (data[0] !== "item.svg") ? data[0] : 'static/images/default/' + data[0];
-                        return '<div class="tt-suggestion tt-selectable"><img src="' + image_path + '" height="40" width="40" style="border-radius: 25%;" /> ' +
-                            '<div class="suggestion-name">' + data[1] +
-                            '</div><span class="suggestion-price pull-right">' + currency + '&nbsp;' + data[2] + '</span></div>';
-                    }
-                },
-                footer: [
-                    '<div class="tt-suggestion tt-selectable"><a class="dropdownview suggestion-name" href="#/items/new/addnewitem">Add Item</a><div>'
-                ],
-                notFound: function () {
-                    var newAddItemName = $('#sales_new_item_name').val();
-                    return "<div class=tt-suggestion tt-selectable>"
-                        + " <a href='#/items/new/" + newAddItemName + "'><p> " + newAddItemName + " ( + Add New )</a></p>"
-                        + "</div>";
-                }
-            }
-        }).on('keypress', function (e) {
-            if (e.which === 13) {
-                $(".tt-suggestion:first-child").trigger('click');
-            }
-        }).on('typeahead:selected', function (obj, selected, datum) {
-            var getItems = PosnicPro.local.get('localitem');
-            var getItemdata = jQuery.parseJSON(getItems);
-            $.each(getItemdata, function (key, val) {
-                var param = JSON.stringify(val);
-                var params = jQuery.parseJSON(param);
-                var item_name = params.item_name;
-                if (datum === item_name) {
-                    (PosnicPro.sales.SaleAction === 'return') ? PosnicPro.sales.salesExchange = true : PosnicPro.sales.salesExchange = false;
-                    PosnicPro.sales.addSalesLineItems(params);
-                    $('#sales_new_item_name').typeahead('val', '');
-                }
-            });
-        });
     },
 
     instanceClearForm: function () {
@@ -3514,8 +3461,7 @@ PosnicPro.sales.addSale = {
                     $('#Partial_amount').val('');
                     loader.find(".loadingSpinner:first").remove();
 
-                    PosnicPro.local.set('html', '');
-                    PosnicPro.sales.setDefaults();
+                        PosnicPro.sales.setDefaults();
                     PosnicPro.sales.customerViewDisplay();
                     PosnicPro.stocklogs.viewLowStockDashboard();
                     PosnicPro.sales.recentMenu.recentSalesTabDetails();
@@ -4142,8 +4088,7 @@ PosnicPro.sales.editSale = {
                     PosnicPro.sales.salesId = '';
                     (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('.changeSalesBtnText').text('புதுப்பி') : $('.changeSalesBtnText').text('Update');
 
-                    PosnicPro.local.set('html', '');
-
+    
                     // Cache proceeded KOT sale ids locally so Sales History can
                     // always hide Edit for those finalized KOT orders, even if
                     // the backend does not yet return was_kot_proceeded.
@@ -7194,11 +7139,7 @@ $('#sales_new_item_name').on('keydown.autocomplete keyup.autocomplete', function
         }
     });
 });
-$("#customerdisplay").click(function () {
-    var html = $("#viewtest").html();
-    $("body#mainBodycustom").html(html);
-    PosnicPro.local.set('html', html);
-});
+
 $(document).ready(function () {
     $('#sales_new_item_name').focus();
     $('#sales_new_balance_amount').addClass('bg-white');

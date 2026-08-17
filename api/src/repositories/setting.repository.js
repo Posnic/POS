@@ -223,13 +223,6 @@ class SettingsRepository {
   /**
    * Update offline setting
    */
-  async updateOfflineSetting(data) {
-    return await this.settingModel.updateOfflineSetting(data);
-  }
-
-  /**
-   * Update Way2SMS setting
-   */
   async updateWay2SmsSetting(data) {
     return await this.settingModel.updateWay2SmsSetting(data);
   }

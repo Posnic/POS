@@ -1526,34 +1526,6 @@ class SettingModel extends BaseModel {
   }
 
   // General Settings Updates
-  async updateOfflineSetting(data) {
-    try {
-      const collection = await this.getCollection();
-      const updateData = {
-        offline_mode: data.offline_mode === 'true' || data.offline_mode === true,
-        updated_at: new Date(),
-      };
-
-      const result = await collection.updateOne(
-        { _id: this.branchId, license: this.licenseId },
-        { $set: updateData }
-      );
-
-      return {
-        status: true,
-        data: result.modifiedCount,
-        message: 'Offline setting updated successfully',
-      };
-    } catch (error) {
-      console.error('Error in updateOfflineSetting:', error);
-      return {
-        status: false,
-        data: null,
-        message: error.message,
-      };
-    }
-  }
-
   async updateTextLocalSmsSetting(data) {
     return this.updateSmsSetting('textlocal', data);
   }

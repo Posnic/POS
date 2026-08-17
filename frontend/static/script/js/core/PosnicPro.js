@@ -1,9 +1,6 @@
 PosnicPro = {
     config: [],
     modules: ['customers', 'suppliers', 'categories', 'items', 'users', 'branches', 'expenses', 'receivings', 'sales', 'registers'],
-    offlineRequest: 0, // used to protect too many call at same time
-    isOffline: false, // decides application should work in online or offline
-    offlineModules: ['customers', 'suppliers', 'categories', 'items', 'users', 'branches', 'expenses', 'receivings', 'sales'],
     record_url: null,
     record_id: null,
     action: 'add', // can be add or edit
@@ -214,42 +211,6 @@ PosnicPro = {
         $('#view_' + module + '_input').prop('placeholder', 'Enter ' + field_name);
     },
     /* Common request for all outgoing server calls */
-    updateLocal: function (module, localHash, serverHash) {
-        if (localHash === '') {
-            PosnicPro.get('' + module + '/getAll', function (response) {
-                db[module].clear();
-                for (var i = 0; i < response.data.length; i++) {
-                    var row = response.data[i];
-                    row.jsDate = PosnicPro.mongoIdToDate(row.id);
-                    db[module].add(row);
-                }
-                db.offline_hash.put({ module: module, hash: serverHash });
-            }, false, -1);
-        } else {
-            PosnicPro.get({ url: '' + module + '/getDataChanges', data: { from: localHash } }, function (response) {
-                if (response.type === 'error') {
-                    db.offline_hash.put({ module: module, hash: '' });
-                } else {
-                    if (response.data.changed.length > 0) {
-                        for (var i = 0; i < response.data.changed.length; i++) {
-                            var row = response.data.changed[i];
-                            row.jsDate = PosnicPro.mongoIdToDate(row.id);
-                            db[module].put(row);
-                        }
-                        db.offline_hash.put({ module: module, hash: serverHash });
-                    }
-                    if (response.data.deleted.length > 0) {
-                        db[module].bulkDelete(response.data.deleted).then(function (lastKey) {
-                            db.offline_hash.put({ module: module, hash: serverHash });
-                        }).catch(Dexie.BulkError, function (e) {
-                        });
-                    }
-                }
-
-            }, false, -1);
-        }
-
-    },
     requestImage: function (method, params, data, type, callback) {
         let url = API_URL + params;
         // JWT Token support for Electron cross-origin requests
@@ -3000,19 +2961,6 @@ $(document).ready(function () {
     }
 
     PosnicPro.applyKotVisibility(kotEnabled);
-
-    $("#network").click(function () {
-        var children = $(this).find('i');
-        if (children.hasClass('mdi-wifi')) {
-            children.removeClass("mdi-wifi").addClass("mdi-wifi-off");
-            PosnicPro.isOffline = true;
-            PosnicPro.alert('Alert', 'Application changed to offline mode', 3000, 'bottom-right');
-        } else {
-            children.removeClass("mdi-wifi-off").addClass("mdi-wifi");
-            PosnicPro.isOffline = false;
-            PosnicPro.alert('Alert', 'Application changed to online mode', 3000, 'bottom-right');
-        }
-    });
 });
 
 /*Import Csv File Into Table By Type of Table Request*/
@@ -3313,6 +3261,26 @@ db.version(1).stores({
     recevingAutoFocus: "id, clear, get, branch_id, addReceiving, editReceiving",
     customerPlan: "id, read",
     printLableValues: "++id, id, printLabel"
+});
+/*
+ * v2 deletes the abandoned offline layer's stores: the nine collection mirrors
+ * (never populated - the downloader was dead code), the change-hash table, and
+ * the write-only queue that silently swallowed offline sales. Version 1 above
+ * must stay as-is so existing installs upgrade cleanly (Dexie needs the old
+ * schema to diff against); a null store means "delete this table and its data".
+ */
+db.version(2).stores({
+    customers: null,
+    items: null,
+    suppliers: null,
+    categories: null,
+    users: null,
+    branches: null,
+    expenses: null,
+    receivings: null,
+    sales: null,
+    offline_hash: null,
+    queue: null
 });
 
 $('.custom_search_input').on('keypress keydown.autocomplete', function () {
