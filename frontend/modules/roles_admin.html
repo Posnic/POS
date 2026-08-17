@@ -1,0 +1,129 @@
+<div class="vertical-layout page_loader" id="roles_admin_detail" style="display: none">
+    <!-- Start Containerbar -->
+    <div id="containerbar">
+        <div class="breadcrumbbar crumbbar_padding">
+            <div class="row align-items-center row_filter">
+                <div class="col-lg-6 col-xl-6">
+                    <h4 class="page-title break_title"><lang class="lang_roles_title">Roles</lang></h4>
+                </div>
+                <div class="col-lg-6 col-xl-6 text-right">
+                    <button type="button" class="btn btn-primary-rgba" onclick="PosnicPro.roles.openEditor('');">
+                        <i class="feather icon-plus mr-1"></i><lang class="lang_newrole_title">New Role</lang>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="contentbar">
+            <div class="card m-b-30">
+                <div class="card-body">
+                    <p class="text-muted" style="font-size:.85rem;">
+                        A role is a reusable permission set: the module access matrix plus the
+                        till actions its holders may do without a manager. Assign roles on the
+                        user form. Editing a role updates every user holding it immediately.
+                    </p>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Role</th>
+                                    <th>Type</th>
+                                    <th>Description</th>
+                                    <th>Till authority</th>
+                                    <th class="text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="roles_admin_body">
+                                <tr><td colspan="5" class="text-center text-muted">Loading&hellip;</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Role editor modal -->
+<div class="modal fade close_on_esc" id="role_editor_modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="role_editor_title">Role</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="role_editor_id">
+                <div class="form-row">
+                    <div class="form-group col-md-5">
+                        <label for="role_editor_name" style="font-weight:600;">Name</label>
+                        <input type="text" class="form-control border-control" id="role_editor_name"
+                               maxlength="60" placeholder="e.g. Weekend Supervisor">
+                    </div>
+                    <div class="form-group col-md-7">
+                        <label for="role_editor_description" style="font-weight:600;">Description</label>
+                        <input type="text" class="form-control border-control" id="role_editor_description"
+                               maxlength="200" placeholder="What this role is for">
+                    </div>
+                </div>
+
+                <label style="font-weight:600;">Module access</label>
+                <div class="table-responsive" style="border:1px solid #eae8e8; border-radius:4px; margin-bottom:14px;">
+                    <table class="table table-sm" style="margin-bottom:0;">
+                        <thead>
+                            <tr>
+                                <th>Module</th>
+                                <th class="text-center">Read</th>
+                                <th class="text-center">Write</th>
+                                <th class="text-center">Delete</th>
+                            </tr>
+                        </thead>
+                        <tbody id="role_editor_acl_body"></tbody>
+                    </table>
+                </div>
+                <div class="form-group">
+                    <label style="font-weight:400;">
+                        <input type="checkbox" id="role_acl_dashboard_financials">
+                        Dashboard financials <span class="text-muted">(profit, margins, expenses)</span>
+                    </label>
+                </div>
+
+                <label style="font-weight:600;">Till / POS actions</label>
+                <div class="table-responsive" style="border:1px solid #eae8e8; border-radius:4px; margin-bottom:14px;">
+                    <table class="table table-sm" style="margin-bottom:0;">
+                        <thead>
+                            <tr>
+                                <th>Action</th>
+                                <th class="text-center">Allowed</th>
+                                <th class="text-center">Needs manager approval</th>
+                            </tr>
+                        </thead>
+                        <tbody id="role_editor_pos_body"></tbody>
+                    </table>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label style="font-weight:400; font-size:.85rem;">Max discount %</label>
+                        <input type="number" min="0" max="100" step="1" class="form-control border-control"
+                               id="role_editor_discount_cap" value="0">
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label style="font-weight:400; font-size:.85rem;">Max refund amount <span class="text-muted">(0 = no limit)</span></label>
+                        <input type="number" min="0" step="0.01" class="form-control border-control"
+                               id="role_editor_refund_cap" value="0">
+                    </div>
+                </div>
+                <small class="text-muted" id="role_editor_system_note" style="display:none;">
+                    This is a built-in role: its permissions can be tuned, but it cannot be renamed
+                    in a way that changes what it is, and it cannot be deleted.
+                </small>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-outline-primary" id="role_editor_save"
+                        onclick="PosnicPro.roles.save();">Save Role</button>
+            </div>
+        </div>
+    </div>
+</div>

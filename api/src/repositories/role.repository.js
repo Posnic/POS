@@ -6,6 +6,7 @@
 
 const BaseModel = require('../models/base.model');
 const { DEFAULT_ROLES } = require('../constants/roles.constants');
+const { mergeAccess } = require('../utils/access-resolver');
 
 class RoleRepository {
   constructor(model) {
@@ -99,6 +100,9 @@ class RoleRepository {
         { _id: this.model.toObjectId(id), license: this._license() },
         { $set: set }
       );
+      if (result.matchedCount > 0) {
+        await this.recomputeUsersForRole(id);
+      }
       return {
         status: result.matchedCount > 0,
         data: null,
@@ -106,6 +110,43 @@ class RoleRepository {
       };
     } catch (error) {
       return { status: false, data: null, message: error.message };
+    }
+  }
+
+  /**
+   * Re-resolve the stored access of every user assigned to this role, so a role
+   * edit takes effect immediately - not only the next time each user is saved.
+   * The role-derived parts are recomputed (module matrix merged with the user's
+   * own overrides, POS matrix, manager-approval list); the user's `plan` access
+   * is preserved as-is, since it is an entitlement, not a role grant. Failures
+   * are reported but never fail the role update itself.
+   */
+  async recomputeUsersForRole(roleId) {
+    try {
+      const collection = await this.model.getCollection('roles');
+      const role = await collection.findOne({
+        _id: this.model.toObjectId(roleId),
+        license: this._license(),
+      });
+      if (!role) return;
+      const users = await this.model.getCollection('users');
+      const assigned = await users
+        .find(
+          { role_id: this.model.toObjectId(roleId), license: this._license() },
+          { projection: { access: 1, access_overrides: 1 } }
+        )
+        .toArray();
+      for (const u of assigned) {
+        const access = mergeAccess(role.access || {}, u.access_overrides || {});
+        access.plan = (u.access && u.access.plan) || { read: false };
+        access.pos = role.pos && typeof role.pos === 'object' ? role.pos : {};
+        access.pos_manager_approval = Array.isArray(role.requires_manager_approval)
+          ? role.requires_manager_approval
+          : [];
+        await users.updateOne({ _id: u._id }, { $set: { access, updated_date: new Date() } });
+      }
+    } catch (error) {
+      console.error('recomputeUsersForRole failed:', error.message);
     }
   }
 
@@ -117,6 +158,20 @@ class RoleRepository {
       if (!role) return { status: false, data: null, message: 'Role not found' };
       if (role.is_system) {
         return { status: false, data: null, message: 'System roles cannot be deleted' };
+      }
+      // A role still assigned to users cannot be deleted - the users' resolved
+      // access would keep working but their role would silently dangle.
+      const users = await this.model.getCollection('users');
+      const assignedCount = await users.countDocuments({
+        role_id: this.model.toObjectId(id),
+        license: this._license(),
+      });
+      if (assignedCount > 0) {
+        return {
+          status: false,
+          data: { assigned: assignedCount },
+          message: `Role is assigned to ${assignedCount} user(s). Reassign them first.`,
+        };
       }
       await collection.deleteOne(filter);
       return { status: true, data: null, message: 'Role deleted' };

@@ -20,6 +20,7 @@ function makeCollection(overrides = {}) {
     insertMany: jest.fn().mockResolvedValue({ insertedCount: 0 }),
     updateOne: jest.fn().mockResolvedValue({ matchedCount: 1 }),
     deleteOne: jest.fn().mockResolvedValue({ deletedCount: 1 }),
+    countDocuments: jest.fn().mockResolvedValue(0),
     ...overrides,
   };
 }
@@ -78,6 +79,56 @@ describe('RoleRepository', () => {
     const rc = await cust.deleteRole('id1');
     expect(rc.status).toBe(true);
     expect(custCol.deleteOne).toHaveBeenCalled();
+  });
+
+  test('deleteRole refuses a custom role still assigned to users', async () => {
+    const col = makeCollection({
+      findOne: jest.fn().mockResolvedValue({ is_system: false }),
+      countDocuments: jest.fn().mockResolvedValue(3),
+    });
+    const repo = new RoleRepository(makeModel(col));
+    const r = await repo.deleteRole('id1');
+    expect(r.status).toBe(false);
+    expect(r.message).toMatch(/assigned to 3 user/);
+    expect(col.deleteOne).not.toHaveBeenCalled();
+  });
+
+  test('updateRole recomputes the access of every assigned user', async () => {
+    const rolesCol = makeCollection({
+      findOne: jest.fn().mockResolvedValue({
+        access: { sales: { read: true, write: true } },
+        pos: { void_sale: true, refund: false },
+        requires_manager_approval: ['refund'],
+      }),
+    });
+    const usersCol = makeCollection({
+      find: jest.fn().mockReturnValue({
+        toArray: jest.fn().mockResolvedValue([
+          {
+            _id: 'u1',
+            access: { plan: { read: true } },
+            access_overrides: { report: { read: true } },
+          },
+        ]),
+      }),
+    });
+    const model = {
+      getCollection: jest.fn((name) =>
+        Promise.resolve(name === 'users' ? usersCol : rolesCol)
+      ),
+      toObjectId: jest.fn((v) => (v === null || v === undefined ? null : { oid: v })),
+      licenseId: 'lic1',
+    };
+    const repo = new RoleRepository(model);
+    const r = await repo.updateRole('id1', { name: 'Tighter Supervisor' });
+    expect(r.status).toBe(true);
+    expect(usersCol.updateOne).toHaveBeenCalledTimes(1);
+    const [, upd] = usersCol.updateOne.mock.calls[0];
+    expect(upd.$set.access.sales).toEqual({ read: true, write: true });
+    expect(upd.$set.access.report).toEqual({ read: true }); // user's own override kept
+    expect(upd.$set.access.plan).toEqual({ read: true }); // entitlement preserved
+    expect(upd.$set.access.pos).toEqual({ void_sale: true, refund: false });
+    expect(upd.$set.access.pos_manager_approval).toEqual(['refund']);
   });
 
   test('updateRole never changes key or is_system', async () => {

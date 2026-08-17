@@ -38,6 +38,7 @@
         "modules/receivingsReport.html",
         "modules/receivings_write.html",
         "modules/registerReport.html",
+        "modules/roles_admin.html",
         "modules/registers.html",
         "modules/register_write.html",
         "modules/report_gstrnine.html",
