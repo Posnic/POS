@@ -528,6 +528,9 @@ PosnicPro.users = {
     loadRegisterOptions: function (preselect) {
         var $sel = $('#choose_register');
         if (!$sel.length) { return; }
+        if (!$sel.data('select2')) {
+            $sel.select2({ placeholder: 'Select Register', width: '100%' });
+        }
         var branches = $('#branchtype').select2('data') || [];
         var ids = $.map(branches, function (b) { return b.id; });
         $sel.empty();
@@ -2113,20 +2116,11 @@ $(document).ready(function () {
         }
     });
 });
-$('#users_new').on('shown.bs.modal', function () {
-    $('#collapseOne').collapse('show');
-    $(this).find('#users_name').focus();
-    // The Choose Register multi-select tracks the selected branches: picking or
-    // removing a branch reloads its register options (keeping current picks).
-    if ($('#choose_register').length && !$('#choose_register').data('select2')) {
-        $('#choose_register').select2({ placeholder: 'Select Register' });
-    }
-    if (!PosnicPro.users._registerBranchBound) {
-        PosnicPro.users._registerBranchBound = true;
-        $('#branchtype').on('change', function () {
-            PosnicPro.users.loadRegisterOptions($('#choose_register').val() || []);
-        });
-    }
+// The user editor is a drawer, not a modal, so its controls are wired
+// directly: the Choose Register options track the selected branches -
+// picking or removing a branch reloads them (keeping current picks).
+$(document).on('change', '#branchtype', function () {
+    PosnicPro.users.loadRegisterOptions($('#choose_register').val() || []);
 });
 $('#panel-collapse').find('.panel-default:has(".in")').addClass('panel-primary');
 $('#panel-collapse').on('show.bs.collapse', function (e) {
