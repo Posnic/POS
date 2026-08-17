@@ -665,5 +665,11 @@
     "lang_stafftips_title": "டிப்ஸ் பதிவு",
     "lang_staffroster_title": "பணி அட்டவணை",
     "lang_tip_title": "டிப்",
-    "lang_labourreport_title": "ஊதியம் / வருகை"
+    "lang_labourreport_title": "ஊதியம் / வருகை",
+    "lang_modules": "தொகுதிகள்",
+    "lang_modules_workforce": "பணியாளர் — வருகை, ஷிப்ட் மற்றும் கல்லா",
+    "lang_modules_restaurant": "உணவகம் — மேசைகள் மற்றும் சமையலறை (KOT)",
+    "lang_modules_hardware": "வன்பொருள் — எடை இயந்திரம்",
+    "lang_modules_kot_hint": "உணவகம் / KOT முறை அமைப்புகள் > தொகுதிகள் பக்கத்தில் இயக்கப்படுகிறது. இந்தப் பக்கம் அதன் மேசைகளை நிர்வகிக்கிறது.",
+    "lang_modules_managetables": "மேசைகளை நிர்வகிக்கவும்"
 }
