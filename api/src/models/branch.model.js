@@ -495,11 +495,42 @@ class BranchModel {
           }))
         : [];
 
+      // A user with linked registers (user form -> Choose Register) is offered
+      // only those; an empty link list means no restriction. Admin-type
+      // accounts are never restricted, and any lookup problem - or links that
+      // match nothing (e.g. stale ids) - falls back to the full list rather
+      // than presenting a till with no registers at all.
+      let offered = registerData;
+      if (user && user._id) {
+        try {
+          const type = String(user.usertype || '').toLowerCase();
+          const unrestricted = ['owner', 'admin', 'super_admin', 'manager', 'store_manager'];
+          if (!unrestricted.includes(type)) {
+            const userDoc = await this.model.db
+              .collection('users')
+              .findOne(
+                { _id: new Types.ObjectId(user._id) },
+                { projection: { registers: 1 } }
+              );
+            const links = Array.isArray(userDoc?.registers) ? userDoc.registers : [];
+            if (links.length) {
+              const allowed = new Set(
+                links.map((r) => String(r.register_id?.$oid || r.register_id || r.id || r))
+              );
+              const filtered = registerData.filter((r) => allowed.has(String(r.register_id)));
+              if (filtered.length) offered = filtered;
+            }
+          }
+        } catch (filterErr) {
+          console.error('register link filter skipped:', filterErr.message);
+        }
+      }
+
       // PHP lines 915-933: Return data with open_register
       return {
         status: true,
         data: {
-          register_data: registerData,
+          register_data: offered,
           open_register: openRegister,
         },
         message: 'register report successfully',
@@ -1191,14 +1222,32 @@ class BranchModel {
         return { status: false, message: 'Branch id is required' };
       }
 
-      // Process registers
+      // Process registers. A register that already exists on the branch KEEPS
+      // its register_id (matched by name) - regenerating ids on every edit
+      // would orphan user links and historical cashregister sessions that
+      // reference them. Only genuinely new names get a new id. If the current
+      // registers can't be read, fall back to minting ids (legacy behaviour)
+      // rather than failing the update.
+      let currentRegisters = [];
+      try {
+        const existing = await this.model.findById(id).select('register').lean();
+        currentRegisters = (existing && existing.register) || [];
+      } catch (lookupErr) {
+        currentRegisters = [];
+      }
+      const existingByName = new Map(
+        currentRegisters
+          .filter((r) => r && r.register_name)
+          .map((r) => [String(r.register_name).trim(), r.register_id])
+      );
       const registers = [];
       if (Array.isArray(data.register)) {
         data.register.forEach((regName) => {
           if (regName) {
+            const name = String(regName).trim();
             registers.push({
-              register_id: new Types.ObjectId(),
-              register_name: regName,
+              register_id: existingByName.get(name) || new Types.ObjectId(),
+              register_name: name,
             });
           }
         });

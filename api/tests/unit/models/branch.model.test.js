@@ -1020,6 +1020,32 @@ describe('BranchModel.updateBranch', () => {
     expect(spy).toHaveBeenCalledTimes(1);
   });
 
+  test('an existing register keeps its register_id across edits; new names get new ids', async () => {
+    const id = validObjId();
+    const keptId = validObjId();
+    mockModel.findById = jest.fn().mockReturnValue({
+      select: jest.fn().mockReturnValue({
+        lean: jest.fn().mockResolvedValue({
+          register: [{ register_id: keptId, register_name: 'Counter 1' }],
+        }),
+      }),
+    });
+    mockModel.findByIdAndUpdate.mockReturnValue({
+      lean: jest.fn().mockResolvedValue({ _id: id, branch_name: 'Updated' }),
+    });
+    mockUserUpdateMany.mockResolvedValue({});
+    jest.spyOn(bm, 'updateBranchNameInCollections').mockResolvedValue();
+
+    await bm.updateBranch(id.toString(), { ...data, register: ['Counter 1', 'Counter 2'] }, user);
+
+    const saved = mockModel.findByIdAndUpdate.mock.calls[0][1].$set.register;
+    expect(saved).toHaveLength(2);
+    expect(String(saved[0].register_id)).toBe(String(keptId)); // preserved
+    expect(saved[0].register_name).toBe('Counter 1');
+    expect(String(saved[1].register_id)).not.toBe(String(keptId)); // minted fresh
+    expect(saved[1].register_name).toBe('Counter 2');
+  });
+
   test('returns status:false when an exception is thrown', async () => {
     mockModel.findByIdAndUpdate.mockImplementation(() => {
       throw new Error('fail');

@@ -205,19 +205,15 @@ PosnicPro.users = {
         var branchType = {
             branch_data: branchData
         };
-//        var selectRegister = $("#choose_register").select2("data");
-//        var registerData = [];
-//        $(selectRegister).each(function (index) {
-//            var register_id = selectRegister[index].element.attributes['data-register-id'].value;
-//            var register_name = selectRegister[index].element.attributes['data-register-name'].value;
-//            var branch_id = selectRegister[index].element.attributes['data-branch-id'].value;
-//            var branch_name = selectRegister[index].element.attributes['data-branch-name'].value;
-//            registerData.push({register_id: register_id, register_name: register_name, branch_id: branch_id, branch_name: branch_name});
-//        });
-//
-//        var registerType = {
-//            register_data: registerData
-//        };
+        // Registers this user may operate (empty = all of the branch's
+        // registers). Sent as explicit {register_id, register_name} pairs.
+        var registerData = [];
+        if ($('#choose_register').length) {
+            $($("#choose_register").select2('data') || []).each(function (index, r) {
+                registerData.push({ register_id: r.id, register_name: r.text });
+            });
+        }
+        var registerType = { registers: registerData };
         var formData = PosnicPro.getFormData($('.user_add'));
         // The Till/POS actions matrix travels as an explicit object. With a role
         // selected the server resolves pos from the role and ignores this; for
@@ -227,7 +223,7 @@ PosnicPro.users = {
         var params = {
             method: method,
             url: url,
-            data: JSON.stringify(Object.assign(formData, branchType, key, posType))
+            data: JSON.stringify(Object.assign(formData, branchType, key, registerType, posType))
         };
         PosnicPro.request(params, function (response) {
             if (response.type === 'success') {
@@ -291,6 +287,11 @@ PosnicPro.users = {
             branchAccess.push(data.branch_access[i].branch_name);
         }
         var branchAccessText = (branchAccess.length === 0) ? 'No Branch Found' : branchAccess;
+        // Linked registers (empty = all of the branch's registers).
+        var regNames = $.map(data.registers || [], function (r) {
+            return (r && r.register_name) || null;
+        }).join(', ');
+        $('#user_view_register_name').text(regNames || 'All registers');
         $.each(data, function (key, val) {
             if (val === '') {
                 $('#user_view_' + key).text('');
@@ -419,9 +420,13 @@ PosnicPro.users = {
 
                 var registerOption = [];
                 $.each(data.registers, function (key, val) {
-                    registerOption.push(val.register_id.$oid);
+                    var rid = val && val.register_id;
+                    registerOption.push((rid && rid.$oid) || rid);
                 });
                 PosnicPro.local.set("register_ids", [registerOption]);
+                // Fill the Choose Register options from the user's branches and
+                // preselect their linked registers.
+                PosnicPro.users.loadRegisterOptions(registerOption);
                 if (data.activate === true) {
                     $('#ActiveMethod').prop('checked', true);
                     $('#InActiveMethod').prop('checked', false);
@@ -515,6 +520,39 @@ PosnicPro.users = {
     _escRole: function (s) {
         return String(s == null ? '' : s).replace(/[&<>"]/g, function (m) {
             return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m];
+        });
+    },
+    // Load the register options for the currently selected branches into
+    // #choose_register (union across branches, deduped), preselecting the
+    // user's linked registers. Empty selection = no restriction (all).
+    loadRegisterOptions: function (preselect) {
+        var $sel = $('#choose_register');
+        if (!$sel.length) { return; }
+        var branches = $('#branchtype').select2('data') || [];
+        var ids = $.map(branches, function (b) { return b.id; });
+        $sel.empty();
+        if (!ids.length) { $sel.trigger('change'); return; }
+        var pending = ids.length;
+        var seen = {};
+        var finish = function () {
+            if (--pending === 0) {
+                $sel.val(preselect && preselect.length ? preselect : null).trigger('change');
+            }
+        };
+        ids.forEach(function (branchId) {
+            PosnicPro.get({
+                url: 'branches/userRegisterBranchSelect',
+                data: { id: branchId }
+            }, function (res) {
+                var rows = (res && res.data && res.data.register_data) || [];
+                rows.forEach(function (r) {
+                    if (!r.register_id || seen[r.register_id]) { return; }
+                    seen[r.register_id] = true;
+                    $sel.append('<option value="' + r.register_id + '">'
+                        + PosnicPro.users._escRole(r.register_name || '') + '</option>');
+                });
+                finish();
+            }, finish);
         });
     },
     // Load the tenant's roles into #user_role_id (GET /roles auto-seeds the
@@ -706,6 +744,7 @@ PosnicPro.users = {
         // New user: start the till permissions from nothing - what you tick is
         // exactly what they get (a picked role overrides this).
         PosnicPro.users.fillPosForm({}, false);
+        $('#choose_register').empty().trigger('change');
         PosnicPro.users.renderRoleOptions('');
         if (document.getElementById('apiMethod').checked) {
             $('#apiMethod').prop('checked', true);
@@ -2077,6 +2116,17 @@ $(document).ready(function () {
 $('#users_new').on('shown.bs.modal', function () {
     $('#collapseOne').collapse('show');
     $(this).find('#users_name').focus();
+    // The Choose Register multi-select tracks the selected branches: picking or
+    // removing a branch reloads its register options (keeping current picks).
+    if ($('#choose_register').length && !$('#choose_register').data('select2')) {
+        $('#choose_register').select2({ placeholder: 'Select Register' });
+    }
+    if (!PosnicPro.users._registerBranchBound) {
+        PosnicPro.users._registerBranchBound = true;
+        $('#branchtype').on('change', function () {
+            PosnicPro.users.loadRegisterOptions($('#choose_register').val() || []);
+        });
+    }
 });
 $('#panel-collapse').find('.panel-default:has(".in")').addClass('panel-primary');
 $('#panel-collapse').on('show.bs.collapse', function (e) {
