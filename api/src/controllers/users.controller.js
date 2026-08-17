@@ -229,7 +229,7 @@ class UsersController extends BaseController {
           $or: [{ email: loginId }, { username: loginId }],
         })
         .select(
-          '+password +license +branch_access +printing_design +access +plan +plan_access +activate +firstname +lastname +username +email +image +register_status +usertype'
+          '+password +license +branch_access +printing_design +access +plan +plan_access +activate +firstname +lastname +username +email +image +register_status +usertype +role_id'
         )
         .lean();
 
@@ -275,6 +275,17 @@ class UsersController extends BaseController {
           message: 'Your account is inactive. Please contact administrator.',
           data: 'inactive',
         });
+      }
+
+      // Users saved before the explicit POS matrix shipped have no access.pos
+      // (fail-open at the till). Stamp it once here from their role/usertype so
+      // till gating is explicit for everyone. Never blocks a login.
+      if (user.access && !user.access.pos) {
+        try {
+          user.access = await this.userModel.backfillPosAccess(user);
+        } catch (backfillErr) {
+          console.error('POS backfill skipped at login:', backfillErr.message);
+        }
       }
 
       const branchAccess = Array.isArray(user.branch_access) ? user.branch_access : [];
