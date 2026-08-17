@@ -100,3 +100,34 @@ test('the updater still refuses pre-releases', () => {
       'no longer stops it being pushed to shops',
   );
 });
+
+test('every release ships the machine-readable release manifest', () => {
+  /* release-manifest.json (SEAMLESS_UPDATE_ROADMAP U1): version, channel,
+     schema + sync-protocol, oldest supported client - generated, not typed. */
+  const collect = RELEASE.slice(RELEASE.indexOf('Collect and checksum'));
+  const body = collect.slice(0, collect.indexOf('Publishing:'));
+  assert.match(
+    body,
+    /release-manifest\.js release\/release-manifest\.json/,
+    'the collect step does not generate release-manifest.json, so releases ' +
+      'carry no machine-readable statement of what they are',
+  );
+});
+
+test('the release manifest carries the update-contract fields', () => {
+  const os = require('os');
+  const { execFileSync } = require('child_process');
+  const out = path.join(os.tmpdir(), `posnic-release-manifest-${process.pid}.json`);
+  execFileSync(
+    process.execPath,
+    [path.join(ROOT, 'scripts', 'release-manifest.js'), out],
+    { env: { ...process.env, POSNIC_PRERELEASE: 'no' } },
+  );
+  const manifest = JSON.parse(fs.readFileSync(out, 'utf8'));
+  fs.unlinkSync(out);
+  assert.match(manifest.version, /^\d+\.\d+\.\d+$/, 'version must be the plain root semver');
+  assert.strictEqual(manifest.channel, 'stable', 'POSNIC_PRERELEASE=no must mean the stable channel');
+  assert.strictEqual(typeof manifest.apiSchema, 'number');
+  assert.strictEqual(typeof manifest.syncProtocol, 'number');
+  assert.match(manifest.minClientVersion, /^\d+\.\d+\.\d+$/);
+});

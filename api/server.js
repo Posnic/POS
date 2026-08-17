@@ -65,6 +65,18 @@ const startServer = async () => {
     const { migrateOptionalEmailIndexes } = require("./src/database/migrations/optional-email-indexes");
     await migrateOptionalEmailIndexes(mongoose.connection.db);
 
+    // Versioned, ledgered schema migrations (SEAMLESS_UPDATE_ROADMAP U1.3):
+    // every not-yet-applied entry in src/db/migrations/index.js runs before
+    // the server accepts traffic, recorded per database in schema_migrations.
+    // In cloud multi-tenant serving, the deploy pipeline runs these per tenant
+    // database instead of at boot.
+    const { runMigrations } = require('./src/db/migrations');
+    const migrationRegistry = require('./src/db/migrations/index');
+    const { applied } = await runMigrations(mongoose.connection.db, migrationRegistry);
+    if (applied.length) {
+      console.log(`✅ Schema migrations applied: ${applied.join(', ')}`);
+    }
+
     // Add MongoDB client to app.locals for session management
     const { MongoClient } = require('mongodb');
     /* Sessions only. A second pool of 100 alongside mongoose's own was most of

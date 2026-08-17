@@ -231,17 +231,23 @@ jobs:
       # Anyone downloading a point-of-sale binary should be able to check it
       # arrived intact. One file, one line per installer.
       - name: Collect and checksum
+        env:
+          POSNIC_PRERELEASE: ${{ vars.POSNIC_PRERELEASE }}
         run: |
           mkdir -p release
           find artifacts -type f \( -name '*.exe' -o -name '*.dmg' -o -name '*.zip' \
             -o -name '*.AppImage' -o -name '*.deb' -o -name 'latest*.yml' \
             -o -name '*.blockmap' \) -exec mv {} release/ \;
+          # The machine-readable statement of what this release IS (version,
+          # channel, schema + sync-protocol, oldest supported client). Fleet
+          # tooling and the gateway read this instead of parsing file names.
+          node scripts/release-manifest.js release/release-manifest.json
           cd release
           # The checksum file lists what a person downloads. latest.yml carries its
-          # own hashes for the updater and a blockmap is an implementation detail, so
-          # listing them would only add noise to the thing the release notes tell
-          # people to check.
-          sha256sum $(ls | grep -vE 'latest.*\.yml$|\.blockmap$') > SHA256SUMS.txt
+          # own hashes for the updater, and a blockmap or the release manifest is an
+          # implementation detail, so listing them would only add noise to the thing
+          # the release notes tell people to check.
+          sha256sum $(ls | grep -vE 'latest.*\.yml$|\.blockmap$|release-manifest\.json$') > SHA256SUMS.txt
           echo "Publishing:"; ls -lh
 
       - uses: softprops/action-gh-release@v3
