@@ -71,135 +71,27 @@ jobs:
           } | ssh -i ~/.ssh/deploy.pem "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
             'umask 077; cat > ~/apps/tenants/app/api/.env && echo "storage env written ($(grep -c = ~/apps/tenants/app/api/.env) keys)"'
 
-      - name: Install deps and reload tenants
+      # Ring-ordered reload with a smoke gate between rings (U3.2).
+      #
+      # The orchestration lives in api/scripts/ring-reload.sh, which the rsync
+      # above just delivered - the script and the code it deploys travel
+      # together, so a fix to the deploy procedure rides the same commit as
+      # the code that needs it. It carries this workflow's hard-won rules
+      # (no --update-env, one pm2 reload per call, online processes only,
+      # shard health check, sign-in smoke for every shop, quiet because this
+      # log is public) - see the script for the full history of each.
+      #
+      # Ring order comes from ~/apps/admin/provisioning/rings.json ON THE
+      # SERVER (operator-owned, not in this repo). Between rings the full
+      # sign-in smoke runs; a red ring HALTS the deploy while every later
+      # ring keeps serving the previous build. No rings file = one ring =
+      # the single-pass deploy this replaces.
+      #
+      # A red deploy is recoverable; a green one that broke sign-in is
+      # discovered by a customer.
+      - name: Reload ring by ring, smoke-gated
         run: |
-          # No --update-env: pm2 would overwrite each tenant's cached env with
-          # this SSH session's environment, which has none of the per-tenant
-          # PORT or MONGODB_URI values. That has taken tenants down before.
-          # A code-only deploy does not need it.
-          #
-          # Reloaded one at a time, in a loop. `pm2 reload a b c` acts on the
-          # first name only and exits 0, so this step passed every deploy while
-          # reloading one shop of twenty: the code was rsynced and then never
-          # loaded, and the shops went on running whatever they had started
-          # with - in one case for five days. A deploy that reports success
-          # having applied nothing is worse than one that fails.
-          #
-          # The count is printed and compared, so a partial reload is visible
-          # rather than silent.
-          #
-          # ONLY processes that are currently online.
-          #
-          # `pm2 reload` on a stopped process STARTS it. Shops now serve from
-          # the shard and their own processes are stopped deliberately - they
-          # are the rollback - so every deploy resurrected all twenty-one of
-          # them. Three deploys in one day each silently undid the
-          # consolidation, and 2.6GB went back to processes serving nobody. The
-          # only symptom was memory; every check in this workflow passed.
-          #
-          # It is the same mistake the watchdog made and had fixed hours
-          # earlier: something helpfully restarting processes that were stopped
-          # on purpose. A stopped process needs no code loaded into it - it
-          # reads whatever is on disk when it is next started.
-          #
-          # posnic-shard-* is matched as well as posnic-tenant-*, and that is
-          # not a tidy-up. Shops are being moved onto a shared process, and
-          # nginx sends their traffic there; a deploy that reloaded only the
-          # per-shop processes would rsync the new code and reload the very
-          # processes no longer serving anyone, while every live request went
-          # on being answered by the shard running the old build. It would
-          # report success having changed nothing a customer can see - the same
-          # failure as the `pm2 reload a b c` bug above, arriving by a different
-          # route, and just as invisible.
           ssh -i ~/.ssh/deploy.pem "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
             'set -e
              cd ~/apps/tenants/app/api && npm ci --omit=dev --silent
-             names=$(pm2 jlist | node -e "let d=\"\";process.stdin.on(\"data\",c=>d+=c).on(\"end\",()=>console.log(JSON.parse(d).filter(p=>/^posnic-(tenant|shard)-/.test(p.name)&&p.pm2_env.status===\"online\").map(p=>p.name).join(\"\\n\")))")
-             total=0; ok=0
-             for n in $names; do
-               total=$((total+1))
-               if pm2 reload "$n" --silent >/dev/null 2>&1; then ok=$((ok+1)); else echo "::warning::reload failed for $n"; fi
-             done
-             echo "reloaded $ok of $total processes"
-             pm2 save
-             test "$ok" -eq "$total"
-             # A shard reloaded but not answering is a whole machine down, so
-             # it is checked here rather than discovered by a shopkeeper.
-             for n in $names; do
-               case "$n" in posnic-shard-*)
-                 sleep 2
-                 p=$(pm2 jlist | node -e "let d=\"\";process.stdin.on(\"data\",c=>d+=c).on(\"end\",()=>{const x=JSON.parse(d).find(y=>y.name===process.argv[1]);console.log(x?x.pm2_env.status:\"missing\")})" "$n")
-                 test "$p" = "online" || { echo "::error::$n is $p after reload"; exit 1; }
-                 echo "$n online"
-               ;; esac
-             done'
-
-      # Does the product actually work, for every shop, after this deploy.
-      #
-      # This step exists because a deploy once passed every check above -
-      # rsync fine, reload fine, shard online, 7,865 unit tests green - while
-      # nobody could sign in to any shop. The session store had lost
-      # createSession(), which express-session only calls when a request
-      # arrives carrying a cookie for a session that already exists. A fresh
-      # curl worked; a real person did not.
-      #
-      # So this signs in for real, comes back with the cookie, and reads the
-      # data, against the running server, for every shop. It is the only step
-      # here that would have caught it.
-      #
-      # Fails the deploy. A red deploy is recoverable; a green one that broke
-      # sign-in is discovered by a customer.
-      - name: Smoke test every shop
-        run: |
-          ssh -i ~/.ssh/deploy.pem "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
-            'set -a; . ~/apps/admin/.env; set +a
-             cd ~/apps/admin
-             if [ ! -f provisioning/smoke.js ]; then
-               echo "::warning::smoke.js not present - deploy the console to enable this gate"
-               exit 0
-             fi
-
-             # Wait for a shop to answer before testing shops.
-             #
-             # The step above proves pm2 says "online". That is not the same as
-             # "listening": pm2 reports online the moment it has started the
-             # process, while node is still building routes and connecting to
-             # MongoDB. The first run of this gate failed every check with 502
-             # against a deploy that was completely fine.
-             #
-             # Polled, not slept, because how long a reload takes depends on the
-             # machine and a fixed pause is either too short or wasted. Tested
-             # for success rather than for failure - `curl || echo 000` prints
-             # 000 from -w AND 000 from the fallback, and "000000" is not equal
-             # to "000", so a check written that way reads a dead port as alive.
-             host=$(grep -oP "^[a-z0-9-]+\.posnic\.io" /etc/nginx/tenants.map | head -1)
-             ready=""
-             for i in $(seq 1 60); do
-               code=$(curl -s -o /dev/null -m 5 -w "%{http_code}" -H "Host: $host" http://127.0.0.1/ 2>/dev/null)
-               if [ "$code" = "200" ]; then ready=yes; break; fi
-               sleep 2
-             done
-             if [ -z "$ready" ]; then
-               echo "::error::no shop answered within 120s of the reload"
-               exit 1
-             fi
-             echo "shops answering after ${i} attempt(s); running smoke test"
-
-             # --quiet, because THIS LOG IS PUBLIC.
-             #
-             # POS is an open-source repository, so every workflow run here is
-             # readable by anyone on the internet. The full smoke output prints
-             # one line per shop with the shop name beside its inventory and
-             # branch counts - which is named customer business data on a
-             # public page, published by us, without them being asked.
-             #
-             # (No apostrophes in these comments: the whole block is one
-             # single-quoted ssh argument, and an apostrophe ends it early -
-             # the gate then silently tests nothing and fails at EOF.)
-             #
-             # Quiet mode reports the same verdict and the same failing checks
-             # with no customer named. Anyone who needs to know WHICH shop runs
-             # it from the console, where the answer belongs and where the
-             # people entitled to it already are.
-             SMOKE_QUIET=true SMOKE_WRITE_TENANT="${SMOKE_WRITE_TENANT:-tech}" \
-               node provisioning/smoke.js --quiet'
+             bash scripts/ring-reload.sh'
