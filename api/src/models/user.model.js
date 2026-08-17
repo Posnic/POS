@@ -945,6 +945,64 @@ userSchema.statics.getDataChanges = async function (module, from) {
  * @param {Object} context - Context object with user, license, etc.
  * @returns {Object} Response object with status, data, and message
  */
+/*
+ * Lazy backfill (Phase 2): a user saved before the explicit POS matrix shipped
+ * has no access.pos, which the till treats as fail-open - so a legacy cashier
+ * could void without approval. Called once at login: derive the matrix from
+ * their role when they have one, else from their usertype (admin types get
+ * full authority, everyone else the cashier preset), persist it, and return
+ * the patched access. Any error leaves access untouched - login never breaks
+ * over a backfill.
+ */
+userSchema.statics.backfillPosAccess = async function (userDoc) {
+  const access = (userDoc && userDoc.access) || {};
+  if (access.pos && typeof access.pos === 'object') return access;
+
+  const { DEFAULT_ROLES } = require('../constants/roles.constants');
+  const roleByKey = (key) => DEFAULT_ROLES.find((r) => r.key === key);
+
+  let pos = null;
+  let mgr = [];
+  if (userDoc.role_id) {
+    try {
+      const db = currentConnection(mongoose.connection).db;
+      const roleDoc = db
+        ? await db.collection('roles').findOne({ _id: userDoc.role_id })
+        : null;
+      if (roleDoc && roleDoc.pos && typeof roleDoc.pos === 'object') {
+        pos = roleDoc.pos;
+        mgr = Array.isArray(roleDoc.requires_manager_approval)
+          ? roleDoc.requires_manager_approval
+          : [];
+      }
+    } catch (e) {
+      pos = null;
+    }
+  }
+  if (!pos) {
+    const type = String(userDoc.usertype || '').toLowerCase();
+    const keyByType = {
+      super_admin: 'owner',
+      owner: 'owner',
+      admin: 'admin',
+      manager: 'store_manager',
+      store_manager: 'store_manager',
+      api: 'api',
+    };
+    const fallback = roleByKey(keyByType[type] || 'cashier') || {};
+    pos = fallback.pos || {};
+    mgr = Array.isArray(fallback.requires_manager_approval)
+      ? fallback.requires_manager_approval
+      : [];
+  }
+
+  await this.updateOne(
+    { _id: userDoc._id },
+    { $set: { 'access.pos': pos, 'access.pos_manager_approval': mgr } }
+  );
+  return { ...access, pos, pos_manager_approval: mgr };
+};
+
 userSchema.statics.userInsertUpdate = async function (data, id, context) {
   try {
     const bcrypt = require('bcryptjs');
@@ -1196,6 +1254,17 @@ userSchema.statics.userInsertUpdate = async function (data, id, context) {
       license: context.license,
     };
 
+    // Registers this user may operate (empty = no restriction, all of the
+    // branch's registers). Sanitized to {register_id, register_name} pairs.
+    const registers = Array.isArray(data.registers)
+      ? data.registers
+          .filter((r) => r && (r.register_id || r.id))
+          .map((r) => ({
+            register_id: new ObjectId(String(r.register_id || r.id)),
+            register_name: String(r.register_name || r.name || '').trim(),
+          }))
+      : null;
+
     // PHP lines 289-310: updateData
     const updateData = {
       firstname: (data.firstname || '').trim(),
@@ -1207,6 +1276,7 @@ userSchema.statics.userInsertUpdate = async function (data, id, context) {
       printing_design: branchesValue,
       access: access,
       role_id: data.role_id ? new ObjectId(data.role_id) : null,
+      ...(registers !== null ? { registers } : {}),
       access_overrides:
         data.access_overrides && typeof data.access_overrides === 'object' ? data.access_overrides : {},
       plan: {
