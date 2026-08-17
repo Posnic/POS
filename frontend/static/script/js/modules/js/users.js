@@ -926,6 +926,16 @@ PosnicPro.users = {
         PosnicPro.request(params, function (response) {
             if (response.type === 'success') {
                 db.currentregister.put({id: '1', register_id: registerId, register_name: registerName, register_status: 'open'});
+                // The sale payload sends cash_register_id, and the server only
+                // accepts the session THIS open created (session locking). The
+                // login-path open sets these; this path forgot to, so sales
+                // went out with a stale session id and were refused with
+                // "register is already open on another device".
+                PosnicPro.local.set('cash_register_id', response.data);
+                PosnicPro.local.set('register_id', registerId);
+                PosnicPro.local.set('register_name', registerName);
+                PosnicPro.local.set('userRegisterStatus', 'Open');
+                PosnicPro.local.set('hourAlertregister', 'false');
                 PosnicPro.users.registerMenuDetails();
                 PosnicPro.alert(response.type, response.message);
             } else {
