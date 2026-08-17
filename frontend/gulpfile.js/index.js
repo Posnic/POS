@@ -5,6 +5,7 @@ var css = require('./css');
 var js = require('./js');
 var html = require('./html');
 var sw = require('./sw');
+var fingerprint = require('./fingerprint');
 
 function buildCss(cb) {
     css.buildAllCss(cb);
@@ -56,13 +57,15 @@ function copyVendorScripts() {
 
 exports.default = function() {
     exports.build();
-    // You can use a single task
-    watch(['**/*.html', '!static/**', '!public/**'], buildHtml);
-    watch('static/style/**/*.css', buildCss);
-    watch('static/style/**/*.scss', buildCss);
-    watch('static/script/**/*.js', buildJs);
+    // Every watcher that rewrites a bundle or a page must re-fingerprint:
+    // a fresh dashboard.js under its canonical name is invisible to pages
+    // that reference the hashed one, and the dev would be running stale code.
+    watch(['**/*.html', '!static/**', '!public/**'], series(buildHtml, fingerprintAssets, buildServiceWorker));
+    watch('static/style/**/*.css', series(buildCss, fingerprintAssets, buildServiceWorker));
+    watch('static/style/**/*.scss', series(buildCss, fingerprintAssets, buildServiceWorker));
+    watch('static/script/**/*.js', series(buildJs, fingerprintAssets, buildServiceWorker));
     watch('static/script/vendor/**/*', copyVendorScripts);
-    watch('pages_css_js_map.json', parallel(buildCss, buildJs));
+    watch('pages_css_js_map.json', series(parallel(buildCss, buildJs), fingerprintAssets, buildServiceWorker));
 };
 exports.js = buildJs
 exports.css = buildCss
@@ -74,4 +77,10 @@ function buildServiceWorker(cb) {
     sw.buildServiceWorker(cb);
 }
 exports.sw = buildServiceWorker;
-exports.build = series(parallel(copyStatic, copyVendorScripts, buildCss, buildJs, buildHtml), buildServiceWorker);
+/* Bundle names carry a content hash (immutable caching) and the service
+   worker precaches those names, so both must follow the builds, in order. */
+function fingerprintAssets(cb) {
+    fingerprint.fingerprintAssets(cb);
+}
+exports.fingerprint = fingerprintAssets;
+exports.build = series(parallel(copyStatic, copyVendorScripts, buildCss, buildJs, buildHtml), fingerprintAssets, buildServiceWorker);
