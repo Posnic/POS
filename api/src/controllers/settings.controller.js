@@ -730,7 +730,7 @@ class SettingController extends BaseController {
       //   - If `plan.read` is explicitly false -> deny
       const planAccess = req.user?.access?.plan;
       if (planAccess && planAccess.read === false) {
-        return res.status(401).json({ type: 'error', message: 'Unauthorized' });
+        return res.status(403).json({ type: 'error', message: 'Unauthorized' });
       }
 
       const settingModel = this.createModelWithContext(req);
@@ -793,7 +793,7 @@ class SettingController extends BaseController {
     try {
       const planAccess = req.user?.access?.plan;
       if (planAccess && planAccess.read === false) {
-        return res.status(401).json({ type: 'error', message: 'Unauthorized' });
+        return res.status(403).json({ type: 'error', message: 'Unauthorized' });
       }
 
       const id = req.query.id;
@@ -928,7 +928,7 @@ class SettingController extends BaseController {
     try {
       const userAccess = req.user?.access?.plan?.read;
       if (userAccess !== true) {
-        return res.status(401).json({ type: 'error', message: 'Unauthorized' });
+        return res.status(403).json({ type: 'error', message: 'Unauthorized' });
       }
       const settingModel = this.createModelWithContext(req);
       const result = await settingModel.getAllCollectionTotal();
@@ -989,7 +989,7 @@ class SettingController extends BaseController {
     try {
       const planAccess = req.user?.access?.plan;
       if (planAccess && planAccess.read === false) {
-        return res.status(401).json({ type: 'error', message: 'Unauthorized' });
+        return res.status(403).json({ type: 'error', message: 'Unauthorized' });
       }
       const settingModel = this.createModelWithContext(req);
       const result = await settingModel.emailSettingModel(req.body);
@@ -1012,7 +1012,7 @@ class SettingController extends BaseController {
       const planAccess = req.user?.access?.plan;
       // Mirror permissive ACL behaviour: only block when plan.read is explicitly false.
       if (planAccess && planAccess.read === false) {
-        return res.status(401).json({ type: 'error', message: 'Unauthorized' });
+        return res.status(403).json({ type: 'error', message: 'Unauthorized' });
       }
       const settingModel = this.createModelWithContext(req);
       const result = await settingModel.kioskAccountSettingsModel(req.body);
@@ -1033,7 +1033,7 @@ class SettingController extends BaseController {
     try {
       const planAccess = req.user?.access?.plan;
       if (planAccess && planAccess.read === false) {
-        return res.status(401).json({ type: 'error', message: 'Unauthorized' });
+        return res.status(403).json({ type: 'error', message: 'Unauthorized' });
       }
       const settingModel = this.createModelWithContext(req);
       const result = await settingModel.kioskPrinterSettingsModel(req.body);
@@ -1054,7 +1054,7 @@ class SettingController extends BaseController {
     try {
       const planAccess = req.user?.access?.plan;
       if (planAccess && planAccess.read === false) {
-        return res.status(401).json({ type: 'error', message: 'Unauthorized' });
+        return res.status(403).json({ type: 'error', message: 'Unauthorized' });
       }
       const settingModel = this.createModelWithContext(req);
       const result = await settingModel.kioskPaymentModel(req.body);
@@ -1075,7 +1075,7 @@ class SettingController extends BaseController {
     try {
       const planAccess = req.user?.access?.plan;
       if (planAccess && planAccess.read === false) {
-        return res.status(401).json({ type: 'error', message: 'Unauthorized' });
+        return res.status(403).json({ type: 'error', message: 'Unauthorized' });
       }
       const settingModel = this.createModelWithContext(req);
       const result = await settingModel.phonepePaymentKeyModel(req.body);
@@ -1676,7 +1676,7 @@ class SettingController extends BaseController {
     try {
       const userAccess = req.user?.access?.plan?.read;
       if (userAccess !== true) {
-        return res.status(401).json({ type: 'error', message: 'Unauthorized', data: null });
+        return res.status(403).json({ type: 'error', message: 'Unauthorized', data: null });
       }
 
       const settingModel = this.createModelWithContext(req);

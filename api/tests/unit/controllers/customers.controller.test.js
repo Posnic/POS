@@ -1210,14 +1210,14 @@ describe('CustomerController — delete (alias for bulkDelete)', () => {
 // ─── customerGraphicalReports ────────────────────────────────────────────────
 
 describe('CustomerController — customerGraphicalReports', () => {
-  it('returns 401 when user lacks report read permission', async () => {
+  it('returns 403 when user lacks report read permission', async () => {
     const req = mockRequest({
       query: {},
       user: { ...adminUser, access: { report: { read: false } } },
     });
     const res = mockResponse();
     await ctrl.customerGraphicalReports(req, res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'error', message: 'Unauthorized' })
     );
@@ -1281,14 +1281,14 @@ describe('CustomerController — customerGraphicalReports', () => {
 // ─── customerOutstandingReportTable ───────────────────────────────────────────
 
 describe('CustomerController — customerOutstandingReportTable', () => {
-  it('returns 401 when user lacks report read permission', async () => {
+  it('returns 403 when user lacks report read permission', async () => {
     const req = mockRequest({
       query: {},
       user: { ...adminUser, access: { report: { read: false } } },
     });
     const res = mockResponse();
     await ctrl.customerOutstandingReportTable(req, res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'error', message: 'Unauthorized' })
     );

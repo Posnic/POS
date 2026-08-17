@@ -251,12 +251,12 @@ describe('getAll', () => {
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ type: 'success' }));
   });
 
-  test('returns 401 when access.item.read is explicitly false', async () => {
+  test('returns 403 when access.item.read is explicitly false', async () => {
     const req = mockReq({ query: {}, user: adminUser({ access: { item: { read: false } } }) });
     const res = mockRes();
     await ctrl.getAll(req, res);
     expect(svc.getAllItems).not.toHaveBeenCalled();
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('returns 404 when service status is false', async () => {
@@ -421,7 +421,7 @@ describe('delete', () => {
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
-  test('returns 401 when access.item.delete is not explicitly true', async () => {
+  test('returns 403 when access.item.delete is not explicitly true', async () => {
     svc.deleteItems.mockResolvedValue({ status: true, data: 1 });
     const req = mockReq({
       body: { data: [VALID_ID] },
@@ -430,7 +430,7 @@ describe('delete', () => {
     const res = mockRes();
     await ctrl.delete(req, res);
     expect(svc.deleteItems).not.toHaveBeenCalled();
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('returns 404 when service returns status false', async () => {
@@ -719,12 +719,12 @@ describe('itemLowStockTable', () => {
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
-  test('returns 401 when access.item.read is explicitly false', async () => {
+  test('returns 403 when access.item.read is explicitly false', async () => {
     const req = mockReq({ query: {}, user: adminUser({ access: { item: { read: false } } }) });
     const res = mockRes();
     await ctrl.itemLowStockTable(req, res);
     expect(svc.getLowStockItems).not.toHaveBeenCalled();
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('returns 500 when service returns status false', async () => {
@@ -772,6 +772,7 @@ describe('accesskiosk', () => {
     const req = mockReq({ headers: { kioskkey: KIOSK_KEY }, body: { branch: VALID_BRANCH } });
     const res = mockRes();
     await ctrl.accesskiosk(req, res);
+    // 401, not 403: a kiosk key is device AUTHENTICATION, not a permission.
     expect(res.status).toHaveBeenCalledWith(401);
   });
 
@@ -788,6 +789,7 @@ describe('accesskiosk', () => {
     const res = mockRes();
     await ctrl.accesskiosk(req, res);
     expect(svc.accessKiosk).not.toHaveBeenCalled();
+    // 401, not 403: a kiosk key is device AUTHENTICATION, not a permission.
     expect(res.status).toHaveBeenCalledWith(401);
   });
 
@@ -1000,7 +1002,7 @@ describe('exportItems', () => {
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
-  test('returns 401 when access.item.read is explicitly false', async () => {
+  test('returns 403 when access.item.read is explicitly false', async () => {
     const req = mockReq({
       body: [VALID_ID],
       user: adminUser({ access: { item: { read: false } } }),
@@ -1008,7 +1010,7 @@ describe('exportItems', () => {
     const res = mockRes();
     await ctrl.exportItems(req, res);
     expect(svc.exportItems).not.toHaveBeenCalled();
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('returns 400 when no ids provided', async () => {
@@ -1056,7 +1058,7 @@ describe('itemsImport', () => {
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
-  test('returns 401 when access.item.write is explicitly false', async () => {
+  test('returns 403 when access.item.write is explicitly false', async () => {
     const req = mockReq({
       body: { result: [{ name: 'X' }] },
       user: adminUser({ access: { item: { write: false } } }),
@@ -1064,7 +1066,7 @@ describe('itemsImport', () => {
     const res = mockRes();
     await ctrl.itemsImport(req, res);
     expect(svc.importItems).not.toHaveBeenCalled();
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('returns 400 when result array is empty', async () => {
@@ -1382,12 +1384,12 @@ describe('categoryItemsReportTable', () => {
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ type: 'success' }));
   });
 
-  test('returns 401 when access.report.read is not true', async () => {
+  test('returns 403 when access.report.read is not true', async () => {
     const req = mockReq({ query: {}, user: restrictedUser() });
     const res = mockRes();
     await ctrl.categoryItemsReportTable(req, res);
     expect(svc.categoryItemsReportTable).not.toHaveBeenCalled();
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('returns 404 when service returns status false', async () => {
@@ -1435,12 +1437,12 @@ describe('supplierItemsReportTable', () => {
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ type: 'success' }));
   });
 
-  test('returns 401 when access.report.read is not true', async () => {
+  test('returns 403 when access.report.read is not true', async () => {
     const req = mockReq({ query: {}, user: restrictedUser() });
     const res = mockRes();
     await ctrl.supplierItemsReportTable(req, res);
     expect(svc.supplierItemsReportTable).not.toHaveBeenCalled();
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('applies session filter when dates provided', async () => {
@@ -1751,12 +1753,12 @@ describe('bulkUpdatePrices', () => {
     expect(params.skipViolations).toBe(true);
   });
 
-  test('returns 401 when access.item.write is explicitly false', async () => {
+  test('returns 403 when access.item.write is explicitly false', async () => {
     const req = mockReq({ body, user: adminUser({ access: { item: { write: false } } }) });
     const res = mockRes();
     await ctrl.bulkUpdatePrices(req, res);
     expect(svc.bulkUpdatePrices).not.toHaveBeenCalled();
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('returns 400 when the service rejects the request', async () => {
@@ -1802,12 +1804,12 @@ describe('bulkPricePreview', () => {
     expect(res.json.mock.calls[0][0].data.exceedsMrpCount).toBe(2);
   });
 
-  test('returns 401 when access.item.read is explicitly false', async () => {
+  test('returns 403 when access.item.read is explicitly false', async () => {
     const req = mockReq({ body: {}, user: adminUser({ access: { item: { read: false } } }) });
     const res = mockRes();
     await ctrl.bulkPricePreview(req, res);
     expect(svc.previewBulkUpdatePrices).not.toHaveBeenCalled();
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 });
 
@@ -1839,12 +1841,12 @@ describe('bulkUpdateStock', () => {
     expect(params.note).toBe('new delivery');
   });
 
-  test('returns 401 when access.item.write is explicitly false', async () => {
+  test('returns 403 when access.item.write is explicitly false', async () => {
     const req = mockReq({ body, user: adminUser({ access: { item: { write: false } } }) });
     const res = mockRes();
     await ctrl.bulkUpdateStock(req, res);
     expect(svc.bulkUpdateStock).not.toHaveBeenCalled();
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('returns 400 when the service rejects the request', async () => {
@@ -1877,11 +1879,11 @@ describe('bulkStockPreview', () => {
     expect(res.json.mock.calls[0][0].data.willChange).toBe(3);
   });
 
-  test('returns 401 when access.item.read is explicitly false', async () => {
+  test('returns 403 when access.item.read is explicitly false', async () => {
     const req = mockReq({ body: {}, user: adminUser({ access: { item: { read: false } } }) });
     const res = mockRes();
     await ctrl.bulkStockPreview(req, res);
     expect(svc.previewBulkUpdateStock).not.toHaveBeenCalled();
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 });

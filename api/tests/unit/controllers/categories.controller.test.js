@@ -200,12 +200,12 @@ describe('getAll', () => {
     );
   });
 
-  test('returns 401 when user lacks read permission', async () => {
+  test('returns 403 when user lacks read permission', async () => {
     controller.checkPermission = jest.fn().mockReturnValue(false);
     const res = mockRes();
     await controller.getAll(mockReq(), res, jest.fn());
 
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'error', message: 'Unauthorized' })
     );
@@ -957,12 +957,12 @@ describe('categoriesImport', () => {
     );
   });
 
-  test('returns 401 when user lacks write permission', async () => {
+  test('returns 403 when user lacks write permission', async () => {
     controller.checkPermission = jest.fn().mockReturnValue(false);
     const res = mockRes();
     await controller.categoriesImport(mockReq({ body: { result: validRows } }), res, jest.fn());
 
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(svc.bulkImport).not.toHaveBeenCalled();
   });
 
@@ -1055,12 +1055,12 @@ describe('exportCategories', () => {
     );
   });
 
-  test('returns 401 when user lacks read permission', async () => {
+  test('returns 403 when user lacks read permission', async () => {
     controller.checkPermission = jest.fn().mockReturnValue(false);
     const res = mockRes();
     await controller.exportCategories(mockReq({ body: { data: [VALID_ID] } }), res, jest.fn());
 
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(svc.getCategoryById).not.toHaveBeenCalled();
   });
 
@@ -1130,12 +1130,12 @@ describe('deleteCategory', () => {
     );
   });
 
-  test('returns 401 when user lacks delete permission', async () => {
+  test('returns 403 when user lacks delete permission', async () => {
     controller.checkPermission = jest.fn().mockReturnValue(false);
     const res = mockRes();
     await controller.deleteCategory(mockReq({ params: { id: VALID_ID } }), res, jest.fn());
 
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(svc.deleteCategory).not.toHaveBeenCalled();
   });
 
@@ -1181,12 +1181,12 @@ describe('bulkDelete', () => {
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ type: 'success', data: 3 }));
   });
 
-  test('returns 401 when user lacks delete permission', async () => {
+  test('returns 403 when user lacks delete permission', async () => {
     controller.checkPermission = jest.fn().mockReturnValue(false);
     const res = mockRes();
     await controller.bulkDelete(mockReq({ body: { data: [VALID_ID] } }), res, jest.fn());
 
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(svc.bulkDeleteCategories).not.toHaveBeenCalled();
   });
 
@@ -1239,12 +1239,12 @@ describe('delete (legacy alias)', () => {
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
-  test('returns 401 when permission denied (inherited from bulkDelete)', async () => {
+  test('returns 403 when permission denied (inherited from bulkDelete)', async () => {
     controller.checkPermission = jest.fn().mockReturnValue(false);
     const res = mockRes();
     await controller.delete(mockReq({ body: { data: [VALID_ID] } }), res, jest.fn());
 
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 });
 
@@ -1281,12 +1281,12 @@ describe('categoryImageDelete', () => {
     );
   });
 
-  test('returns 401 when user lacks write permission', async () => {
+  test('returns 403 when user lacks write permission', async () => {
     controller.checkPermission = jest.fn().mockReturnValue(false);
     const res = mockRes();
     await controller.categoryImageDelete(mockReq({ body: { id: VALID_ID } }), res, jest.fn());
 
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(svc.getCategoryById).not.toHaveBeenCalled();
   });
 

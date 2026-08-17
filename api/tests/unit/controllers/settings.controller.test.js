@@ -894,10 +894,10 @@ describe('restoreBackup', () => {
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
-  test('401 when user plan.read is explicitly false', async () => {
+  test('403 when user plan.read is explicitly false', async () => {
     const res = mockRes();
     await ctrl.restoreBackup(mockReq({ user: planBlockedUser }), res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(res.json.mock.calls[0][0].message).toBe('Unauthorized');
     expect(mockModel.restoreBackup).not.toHaveBeenCalled();
   });
@@ -1011,10 +1011,10 @@ describe('getRecycleBin', () => {
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
-  test('401 when user plan.read is explicitly false', async () => {
+  test('403 when user plan.read is explicitly false', async () => {
     const res = mockRes();
     await ctrl.getRecycleBin(mockReq({ user: planBlockedUser, query: { id: 'rb1' } }), res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(mockModel.getSettingTableRow).not.toHaveBeenCalled();
   });
 
@@ -1216,17 +1216,17 @@ describe('getAllCollectionTotal', () => {
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
-  test('401 when plan.read is false', async () => {
+  test('403 when plan.read is false', async () => {
     const res = mockRes();
     await ctrl.getAllCollectionTotal(mockReq({ user: planBlockedUser }), res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(mockModel.getAllCollectionTotal).not.toHaveBeenCalled();
   });
 
-  test('401 when user has no plan ACL at all', async () => {
+  test('403 when user has no plan ACL at all', async () => {
     const res = mockRes();
     await ctrl.getAllCollectionTotal(mockReq({ user: { ...adminUser, access: {} } }), res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('404 when model returns status:false', async () => {
@@ -1315,10 +1315,10 @@ describe('emailSetting', () => {
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
-  test('401 when plan.read is false', async () => {
+  test('403 when plan.read is false', async () => {
     const res = mockRes();
     await ctrl.emailSetting(mockReq({ user: planBlockedUser, body: emailBody }), res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(mockModel.emailSettingModel).not.toHaveBeenCalled();
   });
 
@@ -1356,10 +1356,10 @@ describe('kioskAccountSettings', () => {
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
-  test('401 when plan.read is false', async () => {
+  test('403 when plan.read is false', async () => {
     const res = mockRes();
     await ctrl.kioskAccountSettings(mockReq({ user: planBlockedUser }), res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('404 when model returns status:false', async () => {
@@ -1385,10 +1385,10 @@ describe('kioskPrinterSettings', () => {
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
-  test('401 when plan.read is false', async () => {
+  test('403 when plan.read is false', async () => {
     const res = mockRes();
     await ctrl.kioskPrinterSettings(mockReq({ user: planBlockedUser }), res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('500 when model throws', async () => {
@@ -1407,10 +1407,10 @@ describe('kioskPayment', () => {
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
-  test('401 when plan.read is false', async () => {
+  test('403 when plan.read is false', async () => {
     const res = mockRes();
     await ctrl.kioskPayment(mockReq({ user: planBlockedUser }), res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('500 when model throws', async () => {
@@ -1429,10 +1429,10 @@ describe('phonepepaymentsKey', () => {
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
-  test('401 when plan.read is false', async () => {
+  test('403 when plan.read is false', async () => {
     const res = mockRes();
     await ctrl.phonepepaymentsKey(mockReq({ user: planBlockedUser }), res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('500 when model throws', async () => {
@@ -2269,17 +2269,17 @@ describe('paymentsKey', () => {
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
-  test('401 when plan.read is not true', async () => {
+  test('403 when plan.read is not true', async () => {
     const res = mockRes();
     await ctrl.paymentsKey(mockReq({ user: planBlockedUser }), res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(mockModel.paymentKeyModel).not.toHaveBeenCalled();
   });
 
-  test('401 when user has no plan ACL', async () => {
+  test('403 when user has no plan ACL', async () => {
     const res = mockRes();
     await ctrl.paymentsKey(mockReq({ user: { ...adminUser, access: {} } }), res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('payment key not echoed in response', async () => {

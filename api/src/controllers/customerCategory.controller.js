@@ -15,7 +15,7 @@ class CustomerCategoryController extends BaseController {
   async getAll(req, res) {
     try {
       if (!this.checkPermission('category', 'read', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const limit = parseInt(req.query.limit) || 5;
@@ -58,7 +58,7 @@ class CustomerCategoryController extends BaseController {
       }
 
       if (!this.checkPermission('category', 'write', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const { name, description } = req.body;
@@ -92,7 +92,7 @@ class CustomerCategoryController extends BaseController {
       }
 
       if (!this.checkPermission('category', 'write', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const id = req.params.id;
@@ -133,7 +133,7 @@ class CustomerCategoryController extends BaseController {
       const applyAccessControl = req.query.access !== 'no';
 
       if (applyAccessControl && !this.checkPermission('category', 'read', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const model = new CustomerCategoryModel();
@@ -162,7 +162,7 @@ class CustomerCategoryController extends BaseController {
       }
 
       if (!this.checkPermission('category', 'delete', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const model = new CustomerCategoryModel();
@@ -208,7 +208,7 @@ class CustomerCategoryController extends BaseController {
   async importCustomerCategory(req, res) {
     try {
       if (!this.checkPermission('category', 'write', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const result = req.body.result;
@@ -237,7 +237,7 @@ class CustomerCategoryController extends BaseController {
   async exportCustomerCategory(req, res) {
     try {
       if (!this.checkPermission('category', 'read', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const ids = req.body;

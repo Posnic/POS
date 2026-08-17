@@ -181,10 +181,10 @@ describe('CronsController — cronCreateFile', () => {
 // =============================================================================
 
 describe('CronsController — getAllCronJobs', () => {
-  test('returns 401 when user lacks setting read permission', async () => {
+  test('returns 403 when user lacks setting read permission', async () => {
     const res = mockRes();
     await ctrl.getAllCronJobs(mockReq({ user: noReadUser }), res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(res.json.mock.calls[0][0].type).toBe('error');
   });
 
@@ -246,10 +246,10 @@ describe('CronsController — getAllCronJobs', () => {
 // =============================================================================
 
 describe('CronsController — createCronJob', () => {
-  test('returns 401 when user lacks write permission', async () => {
+  test('returns 403 when user lacks write permission', async () => {
     const res = mockRes();
     await ctrl.createCronJob(mockReq({ user: lowUser }), res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('returns 400 when name is missing', async () => {
@@ -371,10 +371,10 @@ describe('CronsController — createCronJob', () => {
 // =============================================================================
 
 describe('CronsController — updateCronJob', () => {
-  test('returns 401 when user lacks write permission', async () => {
+  test('returns 403 when user lacks write permission', async () => {
     const res = mockRes();
     await ctrl.updateCronJob(mockReq({ user: lowUser, params: { name: 'job1' } }), res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('returns 404 when job not found', async () => {
@@ -516,10 +516,10 @@ describe('CronsController — updateCronJob', () => {
 // =============================================================================
 
 describe('CronsController — deleteCronJob', () => {
-  test('returns 401 when user lacks delete permission', async () => {
+  test('returns 403 when user lacks delete permission', async () => {
     const res = mockRes();
     await ctrl.deleteCronJob(mockReq({ user: lowUser, params: { name: 'job1' } }), res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('returns 404 when job not found', async () => {
@@ -572,10 +572,10 @@ describe('CronsController — deleteCronJob', () => {
 // =============================================================================
 
 describe('CronsController — startCronJob', () => {
-  test('returns 401 when user lacks write permission', async () => {
+  test('returns 403 when user lacks write permission', async () => {
     const res = mockRes();
     await ctrl.startCronJob(mockReq({ user: lowUser, params: { name: 'job1' } }), res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('returns 404 when job not found', async () => {
@@ -624,10 +624,10 @@ describe('CronsController — startCronJob', () => {
 // =============================================================================
 
 describe('CronsController — stopCronJob', () => {
-  test('returns 401 when user lacks write permission', async () => {
+  test('returns 403 when user lacks write permission', async () => {
     const res = mockRes();
     await ctrl.stopCronJob(mockReq({ user: lowUser, params: { name: 'job1' } }), res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('returns 404 when job not found', async () => {
@@ -683,10 +683,10 @@ describe('CronsController — stopCronJob', () => {
 // =============================================================================
 
 describe('CronsController — executeCronJob', () => {
-  test('returns 401 when user lacks write permission', async () => {
+  test('returns 403 when user lacks write permission', async () => {
     const res = mockRes();
     await ctrl.executeCronJob(mockReq({ user: lowUser, params: { name: 'job1' } }), res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('returns 404 when job not found', async () => {
@@ -742,10 +742,10 @@ describe('CronsController — executeCronJob', () => {
 // =============================================================================
 
 describe('CronsController — getCronLogs', () => {
-  test('returns 401 when user lacks setting read permission', async () => {
+  test('returns 403 when user lacks setting read permission', async () => {
     const res = mockRes();
     await ctrl.getCronLogs(mockReq({ user: noReadUser, params: { name: 'job1' } }), res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('reads correct log file for given job name', async () => {

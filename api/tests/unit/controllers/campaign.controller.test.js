@@ -198,11 +198,11 @@ describe('create', () => {
     );
   });
 
-  test('returns 401 when the user lacks write access', async () => {
+  test('returns 403 when the user lacks write access', async () => {
     const res = mockRes();
     await controller.create(mockReq({ user: noWriteUser(), body: { name: 'New' } }), res);
 
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'error', message: 'Unauthorized' })
     );
@@ -252,14 +252,14 @@ describe('update', () => {
     );
   });
 
-  test('returns 401 when the user lacks write access', async () => {
+  test('returns 403 when the user lacks write access', async () => {
     const res = mockRes();
     await controller.update(
       mockReq({ user: noWriteUser(), params: { id: VALID_ID }, body: { name: 'Edited' } }),
       res
     );
 
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(svc.save).not.toHaveBeenCalled();
   });
 
@@ -305,11 +305,11 @@ describe('remove', () => {
     );
   });
 
-  test('returns 401 when the user lacks write access', async () => {
+  test('returns 403 when the user lacks write access', async () => {
     const res = mockRes();
     await controller.remove(mockReq({ user: noWriteUser(), params: { id: VALID_ID } }), res);
 
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(svc.remove).not.toHaveBeenCalled();
   });
 
@@ -395,14 +395,14 @@ describe('send', () => {
     );
   });
 
-  test('real send is rejected with 401 when the user lacks write access', async () => {
+  test('real send is rejected with 403 when the user lacks write access', async () => {
     const res = mockRes();
     await controller.send(
       mockReq({ user: noWriteUser(), params: { id: VALID_ID }, body: { dryRun: false } }),
       res
     );
 
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'error', message: 'Unauthorized' })
     );
@@ -468,14 +468,14 @@ describe('schedule', () => {
     );
   });
 
-  test('returns 401 when the user lacks write access', async () => {
+  test('returns 403 when the user lacks write access', async () => {
     const res = mockRes();
     await controller.schedule(
       mockReq({ user: noWriteUser(), params: { id: VALID_ID }, body: { schedule_at: 'x' } }),
       res
     );
 
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(svc.schedule).not.toHaveBeenCalled();
   });
 
@@ -521,11 +521,11 @@ describe('runDue', () => {
     );
   });
 
-  test('returns 401 when the user lacks write access', async () => {
+  test('returns 403 when the user lacks write access', async () => {
     const res = mockRes();
     await controller.runDue(mockReq({ user: noWriteUser() }), res);
 
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(svc.runDue).not.toHaveBeenCalled();
   });
 

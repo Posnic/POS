@@ -175,11 +175,11 @@ describe('create', () => {
     );
   });
 
-  test('returns 401 when the branch has no write access', async () => {
+  test('returns 403 when the branch has no write access', async () => {
     const res = mockRes();
     await controller.create(noWriteReq({ body: { code: 'DIWALI10' } }), res);
 
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'error', message: 'Unauthorized' })
     );
@@ -245,11 +245,11 @@ describe('update', () => {
     );
   });
 
-  test('returns 401 when the branch has no write access', async () => {
+  test('returns 403 when the branch has no write access', async () => {
     const res = mockRes();
     await controller.update(noWriteReq({ params: { id: VALID_ID }, body: {} }), res);
 
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'error', message: 'Unauthorized' })
     );
@@ -304,11 +304,11 @@ describe('remove', () => {
     );
   });
 
-  test('returns 401 when the branch has no write access', async () => {
+  test('returns 403 when the branch has no write access', async () => {
     const res = mockRes();
     await controller.remove(noWriteReq({ params: { id: VALID_ID } }), res);
 
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'error', message: 'Unauthorized' })
     );

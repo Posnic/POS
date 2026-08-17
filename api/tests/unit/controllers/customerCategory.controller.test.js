@@ -132,10 +132,10 @@ const withValidationErrors = (errors = [{ path: 'name', msg: 'Required' }]) => {
 // =============================================================================
 
 describe('CustomerCategoryController (legacy) — getAll', () => {
-  test('returns 401 when user lacks category read permission', async () => {
+  test('returns 403 when user lacks category read permission', async () => {
     const res = mockRes();
     await ctrl.getAll(mockReq({ user: noReadUser }), res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(res.json.mock.calls[0][0]).toMatchObject({ type: 'error', message: 'Unauthorized' });
   });
 
@@ -259,10 +259,10 @@ describe('CustomerCategoryController (legacy) — create', () => {
     expect(mockModelMethods.categoryInsertUpdate).not.toHaveBeenCalled();
   });
 
-  test('returns 401 when user lacks write permission', async () => {
+  test('returns 403 when user lacks write permission', async () => {
     const res = mockRes();
     await ctrl.create(mockReq({ user: lowUser }), res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(res.json.mock.calls[0][0]).toMatchObject({ type: 'error', message: 'Unauthorized' });
   });
 
@@ -335,10 +335,10 @@ describe('CustomerCategoryController (legacy) — update', () => {
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
-  test('returns 401 when user lacks write permission', async () => {
+  test('returns 403 when user lacks write permission', async () => {
     const res = mockRes();
     await ctrl.update(mockReq({ user: lowUser, params: { id: VALID_ID } }), res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('returns 400 when id is missing from params', async () => {
@@ -418,10 +418,10 @@ describe('CustomerCategoryController (legacy) — getOne', () => {
     expect(res.json.mock.calls[0][0].message).toBe('Category Id is mandatory');
   });
 
-  test('returns 401 when user lacks read permission (access control applied by default)', async () => {
+  test('returns 403 when user lacks read permission (access control applied by default)', async () => {
     const res = mockRes();
     await ctrl.getOne(mockReq({ user: noReadUser, params: { id: VALID_ID } }), res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('skips access control when req.query.access === "no"', async () => {
@@ -508,10 +508,10 @@ describe('CustomerCategoryController (legacy) — delete', () => {
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
-  test('returns 401 when user lacks delete permission', async () => {
+  test('returns 403 when user lacks delete permission', async () => {
     const res = mockRes();
     await ctrl.delete(mockReq({ user: lowUser, body: { data: [VALID_ID] } }), res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('calls deleteCustomerCategoryCollectionData with provided ids', async () => {
@@ -610,10 +610,10 @@ describe('CustomerCategoryController (legacy) — getDataChanges', () => {
 // =============================================================================
 
 describe('CustomerCategoryController (legacy) — importCustomerCategory', () => {
-  test('returns 401 when user lacks write permission', async () => {
+  test('returns 403 when user lacks write permission', async () => {
     const res = mockRes();
     await ctrl.importCustomerCategory(mockReq({ user: lowUser }), res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('returns 400 when body.result is missing', async () => {
@@ -678,10 +678,10 @@ describe('CustomerCategoryController (legacy) — importCustomerCategory', () =>
 // =============================================================================
 
 describe('CustomerCategoryController (legacy) — exportCustomerCategory', () => {
-  test('returns 401 when user lacks read permission', async () => {
+  test('returns 403 when user lacks read permission', async () => {
     const res = mockRes();
     await ctrl.exportCustomerCategory(mockReq({ user: noReadUser }), res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('returns 400 when body is not an array (object body)', async () => {

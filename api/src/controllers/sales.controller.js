@@ -1187,7 +1187,7 @@ class SalesController extends BaseController {
       // or
       //   response('error', 'Recent Sales Not Retrived ', $data, 404).
       if (!this.checkPermission('sales', 'write', req.user)) {
-        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
 
       // Ensure BaseModel context (license, branch) is initialised
@@ -1230,7 +1230,7 @@ class SalesController extends BaseController {
       const hasReportAccess = this.checkPermission('report', 'read', req.user);
 
       if (!hasReportAccess) {
-        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
 
       // ---- Read & sanitize inputs ----
@@ -1541,7 +1541,7 @@ class SalesController extends BaseController {
 
       const userAccess = req.user?.access?.report?.read;
       if (userAccess !== true) {
-        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
 
       const SaleModel = this.model || Sale;
@@ -1570,7 +1570,7 @@ class SalesController extends BaseController {
       // Permissions: same as other report endpoints
       const hasReportAccess = this.checkPermission('report', 'read', req.user);
       if (!hasReportAccess) {
-        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
 
       await this.ensureContext(req);
@@ -1610,7 +1610,7 @@ class SalesController extends BaseController {
       const hasReportAccess = this.checkPermission('report', 'read', req.user);
 
       if (!hasReportAccess) {
-        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
 
       // ---- Read & sanitize inputs ----
@@ -2692,8 +2692,8 @@ class SalesController extends BaseController {
       console.log('🔍 Sales Reports - Permission check:', { role, hasPermission });
 
       if (!hasPermission) {
-        console.log('🔍 Sales Reports - No permission - returning 401');
-        return res.status(401).json({
+        console.log('🔍 Sales Reports - No permission - returning 403');
+        return res.status(403).json({
           type: 'error',
           message: ERROR_MESSAGES.UNAUTHORIZED,
           data: null,
@@ -5523,7 +5523,7 @@ class SalesController extends BaseController {
   async salesPdf(req, res) {
     try {
       if (!this.checkPermission('sales', 'read', req.user)) {
-        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
 
       const id = req.query?.id;
@@ -5725,7 +5725,7 @@ class SalesController extends BaseController {
     try {
       const userAccess = req.user?.access?.sales?.write;
       if (userAccess !== true) {
-        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
 
       // Refund enforcement (mirrors the void gate). Require a valid manager
@@ -5798,7 +5798,7 @@ class SalesController extends BaseController {
     try {
       const userAccess = req.user?.access?.sales?.read;
       if (userAccess !== true) {
-        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
 
       await this.ensureContext(req);
@@ -5901,7 +5901,7 @@ class SalesController extends BaseController {
     try {
       const userAccess = req.user?.access?.sales?.read;
       if (userAccess !== true) {
-        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
 
       await this.ensureContext(req);
@@ -5983,7 +5983,7 @@ class SalesController extends BaseController {
 
       const userAccess = req.user?.access?.sales?.read;
       if (userAccess !== true) {
-        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
 
       const SaleModel = this.model || Sale;
@@ -6039,7 +6039,7 @@ class SalesController extends BaseController {
 
       const userAccess = req.user?.access?.report?.read;
       if (userAccess !== true) {
-        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
 
       const SaleModel = this.model || Sale;
@@ -6081,7 +6081,7 @@ class SalesController extends BaseController {
 
       const userAccess = req.user?.access?.report?.read;
       if (userAccess !== true) {
-        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
 
       const SaleModel = this.model || Sale;
@@ -6119,7 +6119,7 @@ class SalesController extends BaseController {
 
       const userAccess = req.user?.access?.report?.read;
       if (userAccess !== true) {
-        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
 
       const SaleModel = this.model || Sale;
@@ -6179,7 +6179,7 @@ class SalesController extends BaseController {
 
       const userAccess = req.user?.access?.report?.read;
       if (userAccess !== true) {
-        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
 
       const SaleModel = this.model || Sale;
@@ -6255,7 +6255,7 @@ class SalesController extends BaseController {
       // PHP line 2844-2845: Check permission
       const userAccess = req.user?.access?.report?.read;
       if (userAccess !== true) {
-        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
 
       // PHP line 2846: Call model method
@@ -6300,7 +6300,7 @@ class SalesController extends BaseController {
 
       const userAccess = req.user?.access?.report?.read;
       if (userAccess !== true) {
-        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
 
       const SaleModel = this.model || Sale;
@@ -6321,7 +6321,7 @@ class SalesController extends BaseController {
     try {
       const userAccess = req.user?.access?.report?.read;
       if (userAccess !== true) {
-        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
 
       // Prefer context prepared by middleware; fall back to legacy inline logic
@@ -6374,7 +6374,7 @@ class SalesController extends BaseController {
     try {
       const userAccess = req.user?.access?.report?.read;
       if (userAccess !== true) {
-        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
 
       // Prefer context prepared by middleware; fall back to session-based logic
@@ -6414,7 +6414,7 @@ class SalesController extends BaseController {
     try {
       const userAccess = req.user?.access?.report?.read;
       if (userAccess !== true) {
-        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
 
       // Prefer context prepared by middleware; fall back to legacy inline logic
@@ -6466,7 +6466,7 @@ class SalesController extends BaseController {
 
       const userAccess = req.user?.access?.report?.read;
       if (userAccess !== true) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       if (!input.data || typeof input.data !== 'object') {
@@ -6497,7 +6497,7 @@ class SalesController extends BaseController {
     try {
       const userAccess = req.user?.access?.customer?.write;
       if (userAccess !== true) {
-        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
 
       // Add context to request body
@@ -6532,7 +6532,7 @@ class SalesController extends BaseController {
       const id = req.query.id;
       const userAccess = req.user?.access?.sales?.write;
       if (userAccess !== true) {
-        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
 
       // Set BaseModel context for branch and license
@@ -6576,7 +6576,7 @@ class SalesController extends BaseController {
       const saleid = req.query.salesid;
       const userAccess = req.user?.access?.sales?.write;
       if (userAccess !== true) {
-        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
 
       const SaleModel = this.model || Sale;
@@ -6602,7 +6602,7 @@ class SalesController extends BaseController {
       const amount = req.query.amount;
       const userAccess = req.user?.access?.sales?.write;
       if (userAccess !== true) {
-        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
 
       // Set BaseModel context for branch and license
@@ -6653,7 +6653,7 @@ class SalesController extends BaseController {
       const id = req.query.id;
       const userAccess = req.user?.access?.sales?.write;
       if (userAccess !== true) {
-        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
 
       const SaleModel = this.model || Sale;
@@ -6969,7 +6969,7 @@ class SalesController extends BaseController {
     try {
       const userAccess = req.user?.access?.sales?.write;
       if (userAccess !== true) {
-        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
 
       const SaleModel = this.model || Sale;
@@ -7155,7 +7155,7 @@ class SalesController extends BaseController {
 
       const userAccess = req.user?.access?.report?.read;
       if (userAccess !== true) {
-        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
 
       const SaleModel = this.model || Sale;
@@ -7193,7 +7193,7 @@ class SalesController extends BaseController {
 
       const userAccess = req.user?.access?.report?.read;
       if (userAccess !== true) {
-        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
 
       const SaleModel = this.model || Sale;
@@ -7274,7 +7274,7 @@ class SalesController extends BaseController {
 
       const userAccess = req.user?.access?.report?.read;
       if (userAccess !== true) {
-        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
 
       const SaleModel = this.model || Sale;
@@ -7334,7 +7334,7 @@ class SalesController extends BaseController {
 
       const userAccess = req.user?.access?.report?.read;
       if (userAccess !== true) {
-        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
 
       const SaleModel = this.model || Sale;
@@ -7383,7 +7383,7 @@ class SalesController extends BaseController {
 
       const userAccess = req.user?.access?.report?.read;
       if (userAccess !== true) {
-        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
 
       const SaleModel = this.model || Sale;
@@ -7425,7 +7425,7 @@ class SalesController extends BaseController {
 
       const userAccess = req.user?.access?.report?.read;
       if (userAccess !== true) {
-        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
 
       const SaleModel = this.model || Sale;
@@ -7543,7 +7543,7 @@ class SalesController extends BaseController {
 
       const userAccess = req.user?.access?.report?.read;
       if (userAccess !== true) {
-        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
 
       const SaleModel = this.model || Sale;

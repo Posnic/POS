@@ -212,7 +212,7 @@ class ItemsController extends BaseController {
       // Check user access
       const userAccess = req.user?.access?.item?.read;
       if (userAccess === false) {
-        return this.sendError(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+        return this.sendError(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
 
       const limitParam = parseInt(req.query.limit, 10);
@@ -280,7 +280,7 @@ class ItemsController extends BaseController {
 
       const userAccess = req.user?.access?.item?.read;
       if (userAccess === false) {
-        return this.sendError(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+        return this.sendError(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
 
       const limitParam = parseInt(req.query.limit, 10);
@@ -463,6 +463,9 @@ class ItemsController extends BaseController {
       const kioskKey = req.headers['kioskkey'];
       const expected = currentSecret('KIOSK_API_KEY', process.env.KIOSK_API_KEY) || null;
       if (!expected || kioskKey !== expected) {
+        // 401, not 403: a wrong or missing kiosk key is failed AUTHENTICATION
+        // of the kiosk device. 403 is reserved for a signed-in user who lacks
+        // a permission (the browser client signs out on 401 by design).
         return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
       }
 
@@ -1121,7 +1124,7 @@ class ItemsController extends BaseController {
     try {
       const userAccess = req.user?.access?.item?.read;
       if (userAccess === false) {
-        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
 
       await this.ensureContext(req);
@@ -1227,7 +1230,7 @@ class ItemsController extends BaseController {
   async bulkUpdatePrices(req, res) {
     try {
       if (req.user?.access?.item?.write === false) {
-        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
       await this.ensureContext(req);
       const ctx = req.itemContext || {};
@@ -1259,7 +1262,7 @@ class ItemsController extends BaseController {
   async bulkPricePreview(req, res) {
     try {
       if (req.user?.access?.item?.read === false) {
-        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
       await this.ensureContext(req);
       const ctx = req.itemContext || {};
@@ -1280,7 +1283,7 @@ class ItemsController extends BaseController {
   async bulkSetMargin(req, res) {
     try {
       if (req.user?.access?.item?.write === false) {
-        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
       await this.ensureContext(req);
       const ctx = req.itemContext || {};
@@ -1307,7 +1310,7 @@ class ItemsController extends BaseController {
   async marginPreview(req, res) {
     try {
       if (req.user?.access?.item?.read === false) {
-        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
       await this.ensureContext(req);
       const ctx = req.itemContext || {};
@@ -1328,7 +1331,7 @@ class ItemsController extends BaseController {
   async getPriceHistory(req, res) {
     try {
       if (req.user?.access?.item?.read === false) {
-        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
       await this.ensureContext(req);
       const itemId = req.params.id || req.params.itemId;
@@ -1343,7 +1346,7 @@ class ItemsController extends BaseController {
   async getBulkPriceUpdates(req, res) {
     try {
       if (req.user?.access?.item?.read === false) {
-        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
       await this.ensureContext(req);
       const result = await this.service.getBulkPriceUpdates({
@@ -1369,7 +1372,7 @@ class ItemsController extends BaseController {
   async bulkUpdateStock(req, res) {
     try {
       if (req.user?.access?.item?.write === false) {
-        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
       await this.ensureContext(req);
       const ctx = req.itemContext || {};
@@ -1390,7 +1393,7 @@ class ItemsController extends BaseController {
   async bulkStockPreview(req, res) {
     try {
       if (req.user?.access?.item?.read === false) {
-        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
       await this.ensureContext(req);
       const ctx = req.itemContext || {};
@@ -1410,7 +1413,7 @@ class ItemsController extends BaseController {
   async getBulkStockUpdates(req, res) {
     try {
       if (req.user?.access?.item?.read === false) {
-        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
       await this.ensureContext(req);
       const result = await this.service.getBulkStockUpdates({
@@ -1436,7 +1439,7 @@ class ItemsController extends BaseController {
     try {
       const userAccess = req.user?.access?.item?.write;
       if (userAccess === false) {
-        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
 
       const rows = req.body?.result || req.body?.items || [];
@@ -1524,7 +1527,7 @@ class ItemsController extends BaseController {
       // Check user access for item.delete
       const userAccess = req.user?.access?.item?.delete;
       if (userAccess !== true) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const licenseId = this.model?.licenseId || req.user?.license || req.user?.license_id || null;
@@ -1634,7 +1637,7 @@ class ItemsController extends BaseController {
       const userAccess = req.user?.access?.report?.read;
       if (userAccess !== true) {
         console.log('❌ Category Items Report Table - Permission Denied');
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       console.log('✅ Category Items Report Table - Permission Granted');
@@ -1750,7 +1753,7 @@ class ItemsController extends BaseController {
       const userAccess = req.user?.access?.report?.read;
       if (userAccess !== true) {
         console.log('❌ Supplier Items Report Table (v2) - Permission Denied');
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       console.log('✅ Supplier Items Report Table (v2) - Permission Granted');
@@ -1911,7 +1914,7 @@ class ItemsController extends BaseController {
       await this.ensureContext(req);
 
       if (req.user?.access?.item?.read === false) {
-        return this.sendError(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
+        return this.sendError(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
 
       const term = String(req.query.q ?? req.query.search ?? req.query.term ?? '').trim();

@@ -466,7 +466,7 @@ class ExpensesController extends BaseController {
   async expensesImport(req, res) {
     try {
       if (!this.checkPermission('expense', 'write', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const result = req.body.result || req.body.expenses || [];
@@ -506,7 +506,7 @@ class ExpensesController extends BaseController {
       await this.ensureContext(req);
 
       if (!this.checkPermission('expense', 'read', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       // Normalize legacy export payload formats (array, wrapped, or encoded)
@@ -581,7 +581,7 @@ class ExpensesController extends BaseController {
   async getSummary(req, res) {
     try {
       if (!this.checkPermission('expense', 'read', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const { startDate, endDate } = req.query;
@@ -637,7 +637,7 @@ class ExpensesController extends BaseController {
   async getByCategory(req, res) {
     try {
       if (!this.checkPermission('expense', 'read', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const { category } = req.params;
@@ -668,7 +668,7 @@ class ExpensesController extends BaseController {
   async getByType(req, res) {
     try {
       if (!this.checkPermission('expense', 'read', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const { type } = req.params;

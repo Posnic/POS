@@ -2,7 +2,7 @@
  * Unit (REST-layer) tests for CreditController.
  *
  * Methods covered: getSettings, saveSettings, outstanding, checkLimit,
- * sendReminder, runReminders — success paths plus the _canWrite 401 guards and
+ * sendReminder, runReminders — success paths plus the _canWrite 403 guards and
  * the sendReminder {status:false} -> 400 path.
  *
  * Mocked: CreditService, base.model.
@@ -86,7 +86,7 @@ describe('CreditController', () => {
       mockReq({ user: { access: { branch: { write: false } } } }),
       res
     );
-    expect(res.statusCode).toBe(401);
+    expect(res.statusCode).toBe(403);
     expect(mockService.saveSettings).not.toHaveBeenCalled();
   });
 
@@ -139,7 +139,7 @@ describe('CreditController', () => {
       mockReq({ user: { access: { branch: { write: false } } }, params: { customerId: 'c1' } }),
       res
     );
-    expect(res.statusCode).toBe(401);
+    expect(res.statusCode).toBe(403);
     expect(mockService.sendReminder).not.toHaveBeenCalled();
   });
 
@@ -157,6 +157,6 @@ describe('CreditController', () => {
       mockReq({ user: { access: { branch: { write: false } } } }),
       res
     );
-    expect(res.statusCode).toBe(401);
+    expect(res.statusCode).toBe(403);
   });
 });

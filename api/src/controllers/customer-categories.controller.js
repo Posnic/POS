@@ -172,7 +172,7 @@ class CustomerCategoryController extends BaseController {
     // Check user access
     const userAccess = req.user?.access?.category?.read;
     if (userAccess !== true) {
-      return res.status(401).json({
+      return res.status(403).json({
         type: 'error',
         message: 'Unauthorized',
         data: null,
@@ -236,7 +236,7 @@ class CustomerCategoryController extends BaseController {
     // Check user access
     const userAccess = req.user?.access?.category?.write;
     if (userAccess !== true) {
-      return res.status(401).json({
+      return res.status(403).json({
         type: 'error',
         message: 'Unauthorized',
         data: null,
@@ -325,7 +325,7 @@ class CustomerCategoryController extends BaseController {
     // Check user access - skip if access is 'no'
     const userAccess = access === 'yes' ? req.user?.access?.category?.read : true;
     if (userAccess !== true) {
-      return res.status(401).json({
+      return res.status(403).json({
         type: 'error',
         message: 'Unauthorized',
         data: null,
@@ -389,7 +389,7 @@ class CustomerCategoryController extends BaseController {
     // Check user access
     const userAccess = req.user?.access?.category?.delete;
     if (userAccess !== true) {
-      return res.status(401).json({
+      return res.status(403).json({
         type: 'error',
         message: 'Unauthorized',
         data: null,
@@ -455,7 +455,7 @@ class CustomerCategoryController extends BaseController {
     // Check user access
     const userAccess = req.user?.access?.category?.write;
     if (userAccess !== true) {
-      return res.status(401).json({
+      return res.status(403).json({
         type: 'error',
         message: 'Unauthorized',
         data: null,
@@ -509,7 +509,7 @@ class CustomerCategoryController extends BaseController {
     // Check user access
     const userAccess = req.user?.access?.category?.read;
     if (userAccess !== true) {
-      return res.status(401).json({
+      return res.status(403).json({
         type: 'error',
         message: 'Unauthorized',
         data: null,

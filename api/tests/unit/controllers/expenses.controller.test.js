@@ -718,7 +718,7 @@ describe('expensesImport', () => {
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
-  test('returns 401 when user lacks write permission', async () => {
+  test('returns 403 when user lacks write permission', async () => {
     const req = mockReq({
       body: { result: validImport },
       user: restrictedUser({ expense: { write: false } }),
@@ -727,7 +727,7 @@ describe('expensesImport', () => {
 
     await controller.expensesImport(req, res);
 
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(mdl.importExpensesModel).not.toHaveBeenCalled();
   });
 
@@ -782,13 +782,13 @@ describe('exportExpenses', () => {
     );
   });
 
-  test('returns 401 when user lacks read permission', async () => {
+  test('returns 403 when user lacks read permission', async () => {
     const req = mockReq({ body: [VALID_ID], user: restrictedUser() });
     const res = mockRes();
 
     await controller.exportExpenses(req, res);
 
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(mdl.exportExpensesOrder).not.toHaveBeenCalled();
   });
 
@@ -888,13 +888,13 @@ describe('getByType', () => {
     );
   });
 
-  test('returns 401 when user lacks read permission', async () => {
+  test('returns 403 when user lacks read permission', async () => {
     const req = mockReq({ params: { type: 'credit' }, user: restrictedUser() });
     const res = mockRes();
 
     await controller.getByType(req, res);
 
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   /**
@@ -1215,11 +1215,11 @@ describe('exportExpenses � normalizeExportIds edge cases', () => {
 // -----------------------------------------------------------------------------
 
 describe('getSummary', () => {
-  test('returns 401 when user lacks read permission', async () => {
+  test('returns 403 when user lacks read permission', async () => {
     const req = mockReq({ user: restrictedUser() });
     const res = mockRes();
     await controller.getSummary(req, res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('returns 500 due to Expense being undefined (production bug � no import)', async () => {
@@ -1243,11 +1243,11 @@ describe('getSummary', () => {
 // -----------------------------------------------------------------------------
 
 describe('getByCategory', () => {
-  test('returns 401 when user lacks read permission', async () => {
+  test('returns 403 when user lacks read permission', async () => {
     const req = mockReq({ params: { category: 'food' }, user: restrictedUser() });
     const res = mockRes();
     await controller.getByCategory(req, res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('returns 500 due to Expense being undefined (production bug)', async () => {
