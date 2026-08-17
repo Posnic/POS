@@ -707,6 +707,24 @@ describe('editGeneralSetting', () => {
     expect(col.updateOne.mock.calls[0][1].$set.staff_shifts_enable).toBe(true);
   });
 
+  test('tips default off (opt-in) and roster defaults on (opt-out)', async () => {
+    col.updateOne.mockResolvedValue({ matchedCount: 1 });
+    await m.editGeneralSetting({ store_name: 'S' });
+    let set = col.updateOne.mock.calls[0][1].$set;
+    expect(set.staff_tips_enable).toBe(false);
+    expect(set.staff_roster_enable).toBe(true);
+
+    col.updateOne.mockClear();
+    await m.editGeneralSetting({
+      store_name: 'S',
+      staff_tips_enable: 'true',
+      staff_roster_enable: 'false',
+    });
+    set = col.updateOne.mock.calls[0][1].$set;
+    expect(set.staff_tips_enable).toBe(true);
+    expect(set.staff_roster_enable).toBe(false);
+  });
+
   test('returns status:false on DB error', async () => {
     jest.spyOn(m, 'getCollection').mockRejectedValue(new Error('crash'));
     const r = await m.editGeneralSetting({ store_name: 'S' });

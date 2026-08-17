@@ -597,6 +597,15 @@ class SettingModel extends BaseModel {
         data.staff_shifts_enable === 'false' || data.staff_shifts_enable === false
       );
 
+      // Tips at clock-out: hospitality-only, so OFF unless the shop turns it
+      // on. The roster is generally useful, so it follows the shifts pattern:
+      // on unless explicitly disabled.
+      const staff_tips_enable =
+        data.staff_tips_enable === 'true' || data.staff_tips_enable === true;
+      const staff_roster_enable = !(
+        data.staff_roster_enable === 'false' || data.staff_roster_enable === false
+      );
+
       // Strip GMT offset from timezone (e.g., "Pacific/Niue (GMT-11:00)" -> "Pacific/Niue")
       let cleanTimezone = data.time_zone?.trim() || 'Asia/Kolkata';
       const gmtOffsetMatch = cleanTimezone.match(/^([^(]+)\s*\(GMT[^)]+\)$/);
@@ -632,6 +641,8 @@ class SettingModel extends BaseModel {
         till_lock_enable: till_lock_enable,
         till_lock_idle_minutes: till_lock_idle_minutes,
         staff_shifts_enable: staff_shifts_enable,
+        staff_tips_enable: staff_tips_enable,
+        staff_roster_enable: staff_roster_enable,
         allow_sale_date_edit: data.allow_sale_date_edit === 'false' ? 'false' : 'true',
       };
 
@@ -684,6 +695,8 @@ class SettingModel extends BaseModel {
         till_lock_enable: till_lock_enable,
         till_lock_idle_minutes: till_lock_idle_minutes,
         staff_shifts_enable: staff_shifts_enable,
+        staff_tips_enable: staff_tips_enable,
+        staff_roster_enable: staff_roster_enable,
       };
 
       // PHP lines 109-121: Update branch_name across all collections

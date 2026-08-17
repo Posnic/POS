@@ -604,6 +604,10 @@ class BranchModel {
        * uses. Only an explicit false hides it.
        */
       withDefaults.staff_shifts_enable = withDefaults.staff_shifts_enable ?? true;
+      // Tips are hospitality-only: off until a shop asks. The roster follows
+      // the shifts pattern: on unless the shop turned it off.
+      withDefaults.staff_tips_enable = withDefaults.staff_tips_enable ?? false;
+      withDefaults.staff_roster_enable = withDefaults.staff_roster_enable ?? true;
 
       // Ensure time_zone has a default value if not present (matches PHP BaseModel line 49)
       if (!withDefaults.time_zone) {
@@ -943,6 +947,8 @@ class BranchModel {
         till_lock_enable: false,
         till_lock_idle_minutes: 0,
         staff_shifts_enable: true,
+        staff_tips_enable: false,
+        staff_roster_enable: true,
 
         created_by_id: user._id,
         created_by: user.username,
