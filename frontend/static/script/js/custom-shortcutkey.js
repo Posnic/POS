@@ -1,6 +1,18 @@
 $(document).ready(function () {
+    /*
+     * ACL, read safely. Every binding used to reach straight into
+     * PosnicPro['userACL'].module.perm - which THROWS when a shortcut is
+     * pressed in the seconds before the ACL blob loads, killing the handler
+     * for the rest of the session. Absent ACL now simply means "not allowed
+     * yet", the same answer the sidebar gives while it waits.
+     */
+    function aclCan(module, perm) {
+        var u = PosnicPro.userACL;
+        return !!(u && u[module] && u[module][perm] === true);
+    }
+
     Mousetrap.bind(['s', 'ctrl+1'], function (e) {
-        if (PosnicPro['userACL'].sales.write === !0) {
+        if (aclCan('sales', 'write')) {
             $('#v-pills-manage-tab,#v-pills-report-tab,#v-pills-purchase-tab,#v-pills-customer-tab,#v-pills-inventory-tab').removeClass('active');
             $('#v-pills-manage,#v-pills-report,#v-pills-purchase,#v-pills-customer,#v-pills-inventory').removeClass('show active');
             $('.tool-container').hide();
@@ -11,7 +23,7 @@ $(document).ready(function () {
     });
 
     Mousetrap.bind(['ctrl+2', 'a'], function (e) {
-        if (PosnicPro['userACL'].sales.read === !0) {
+        if (aclCan('sales', 'read')) {
             $('#v-pills-manage-tab,#v-pills-report-tab,#v-pills-purchase-tab,#v-pills-customer-tab,#v-pills-inventory-tab').removeClass('active');
             $('#v-pills-manage,#v-pills-report,#v-pills-purchase,#v-pills-customer,#v-pills-inventory').removeClass('show active');
             $('.tool-container').hide();
@@ -22,7 +34,7 @@ $(document).ready(function () {
     });
 
     Mousetrap.bind(['ctrl+3', 'f'], function (e) {
-        if (PosnicPro['userACL'].report.read === !0) {
+        if (aclCan('report', 'read')) {
             $('#v-pills-manage-tab,#v-pills-sales-tab,#v-pills-dashboard-tab,#v-pills-purchase-tab,#v-pills-customer-tab,#v-pills-inventory-tab').removeClass('active');
             $('#v-pills-manage,#v-pills-sales,#v-pills-dashboard,#v-pills-purchase,#v-pills-customer,#v-pills-inventory').removeClass('show active');
             $('.tool-container').hide();
@@ -32,7 +44,7 @@ $(document).ready(function () {
         }
     });
     Mousetrap.bind(['ctrl+4', 'p'], function (e) {
-        if (PosnicPro['userACL'].receiving.write === !0) {
+        if (aclCan('receiving', 'write')) {
             $('#v-pills-manage-tab,#v-pills-report-tab,#v-pills-dashboard-tab,#v-pills-sales-tab,#v-pills-customer-tab,#v-pills-inventory-tab').removeClass('active');
             $('#v-pills-manage,#v-pills-report,#v-pills-dashboard,#v-pills-sales,#v-pills-customer,#v-pills-inventory').removeClass('show active');
             $('.tool-container').hide();
@@ -42,7 +54,7 @@ $(document).ready(function () {
         }
     });
     Mousetrap.bind(['ctrl+5', 'z'], function (e) {
-        if (PosnicPro['userACL'].receiving.read === !0) {
+        if (aclCan('receiving', 'read')) {
             $('#v-pills-manage-tab,#v-pills-report-tab,#v-pills-dashboard-tab,#v-pills-sales-tab,#v-pills-customer-tab,#v-pills-inventory-tab').removeClass('active');
             $('#v-pills-manage,#v-pills-report,#v-pills-dashboard,#v-pills-sales,#v-pills-customer,#v-pills-inventory').removeClass('show active');
             $('.tool-container').hide();
@@ -52,7 +64,7 @@ $(document).ready(function () {
         }
     });
     Mousetrap.bind(['ctrl+6', 'h'], function (e) {
-        if (PosnicPro['userACL'].report.read === !0) {
+        if (aclCan('report', 'read')) {
             $('#v-pills-manage-tab,#v-pills-sales-tab,#v-pills-dashboard-tab,#v-pills-purchase-tab,#v-pills-customer-tab,#v-pills-inventory-tab').removeClass('active');
             $('#v-pills-manage,#v-pills-sales,#v-pills-dashboard,#v-pills-purchase,#v-pills-customer,#v-pills-inventory').removeClass('show active');
             $('.tool-container').hide();
@@ -62,7 +74,7 @@ $(document).ready(function () {
         }
     });
     Mousetrap.bind(['ctrl+7', 'c'], function (e) {
-        if (PosnicPro['userACL'].customer.write === !0) {
+        if (aclCan('customer', 'write')) {
             $('#v-pills-manage-tab,#v-pills-report-tab,#v-pills-dashboard-tab,#v-pills-sales-tab,#v-pills-purchase-tab,#v-pills-inventory-tab').removeClass('active');
             $('#v-pills-manage,#v-pills-report,#v-pills-dashboard,#v-pills-sales,#v-pills-purchase,#v-pills-inventory').removeClass('show active');
             $('.tool-container').hide();
@@ -72,7 +84,7 @@ $(document).ready(function () {
         }
     });
     Mousetrap.bind(['ctrl+8', 'j'], function (e) {
-        if (PosnicPro['userACL'].customer.read === !0) {
+        if (aclCan('customer', 'read')) {
             $('#v-pills-manage-tab,#v-pills-report-tab,#v-pills-dashboard-tab,#v-pills-sales-tab,#v-pills-purchase-tab,#v-pills-inventory-tab').removeClass('active');
             $('#v-pills-manage,#v-pills-report,#v-pills-dashboard,#v-pills-sales,#v-pills-purchase,#v-pills-inventory').removeClass('show active');
             $('.tool-container').hide();
@@ -82,7 +94,7 @@ $(document).ready(function () {
         }
     });
     Mousetrap.bind(['ctrl+9', 'v'], function (e) {
-        if (PosnicPro['userACL'].customer.read === !0) {
+        if (aclCan('customer', 'read')) {
             $('#v-pills-manage-tab,#v-pills-sales-tab,#v-pills-dashboard-tab,#v-pills-purchase-tab,#v-pills-customer-tab,#v-pills-inventory-tab').removeClass('active');
             $('#v-pills-manage,#v-pills-sales,#v-pills-dashboard,#v-pills-purchase,#v-pills-customer,#v-pills-inventory').removeClass('show active');
             $('.tool-container').hide();
@@ -93,7 +105,7 @@ $(document).ready(function () {
     });
     Mousetrap.bind(['ctrl+shift+1', 'i'], function (e) {
 
-        if (PosnicPro['userACL'].item.write === !0) {
+        if (aclCan('item', 'write')) {
             $('#v-pills-manage-tab,#v-pills-sales-tab,#v-pills-dashboard-tab,#v-pills-purchase-tab,#v-pills-customer-tab,#v-pills-report-tab').removeClass('active');
             $('#v-pills-manage,#v-pills-sales,#v-pills-dashboard,#v-pills-purchase,#v-pills-customer,#v-pills-report').removeClass('show active');
             $('.tool-container').hide();
@@ -103,7 +115,7 @@ $(document).ready(function () {
         }
     });
     Mousetrap.bind(['ctrl+shift+2', 'm'], function (e) {
-        if (PosnicPro['userACL'].item.read === !0) {
+        if (aclCan('item', 'read')) {
             $('#v-pills-manage-tab,#v-pills-sales-tab,#v-pills-dashboard-tab,#v-pills-purchase-tab,#v-pills-customer-tab,#v-pills-report-tab').removeClass('active');
             $('#v-pills-manage,#v-pills-sales,#v-pills-dashboard,#v-pills-purchase,#v-pills-customer,#v-pills-report').removeClass('show active');
             $('.tool-container').hide();
@@ -113,7 +125,7 @@ $(document).ready(function () {
         }
     });
     Mousetrap.bind(['ctrl+shift+3', 'n'], function (e) {
-        if (PosnicPro['userACL'].report.read === !0) {
+        if (aclCan('report', 'read')) {
             $('#v-pills-manage-tab,#v-pills-sales-tab,#v-pills-dashboard-tab,#v-pills-purchase-tab,#v-pills-customer-tab,#v-pills-inventory-tab').removeClass('active');
             $('#v-pills-manage,#v-pills-sales,#v-pills-dashboard,#v-pills-purchase,#v-pills-customer,#v-pills-inventory').removeClass('show active');
             $('.tool-container').hide();
@@ -123,7 +135,7 @@ $(document).ready(function () {
         }
     });
     Mousetrap.bind(['ctrl+shift+4', 'y'], function (e) {
-        if (PosnicPro['userACL'].supplier.write === !0) {
+        if (aclCan('supplier', 'write')) {
             $('#v-pills-manage-tab,#v-pills-report-tab,#v-pills-dashboard-tab,#v-pills-sales-tab,#v-pills-purchase-tab,#v-pills-customer-tab').removeClass('active');
             $('#v-pills-manage,#v-pills-report,#v-pills-dashboard,#v-pills-sales,#v-pills-purchase,#v-pills-customer').removeClass('show active');
             $('.tool-container').hide();
@@ -133,7 +145,7 @@ $(document).ready(function () {
         }
     });
     Mousetrap.bind(['ctrl+shift+5', 'o'], function (e) {
-        if (PosnicPro['userACL'].supplier.read === !0) {
+        if (aclCan('supplier', 'read')) {
             $('#v-pills-manage-tab,#v-pills-report-tab,#v-pills-dashboard-tab,#v-pills-sales-tab,#v-pills-customer-tab').removeClass('active');
             $('#v-pills-manage,#v-pills-report,#v-pills-dashboard,#v-pills-sales,#v-pills-customer').removeClass('show active');
             $('.tool-container').hide();
@@ -143,7 +155,7 @@ $(document).ready(function () {
         }
     });
     Mousetrap.bind(['ctrl+shift+6', 'q'], function (e) {
-        if (PosnicPro['userACL'].report.read === !0) {
+        if (aclCan('report', 'read')) {
             $('#v-pills-manage-tab,#v-pills-sales-tab,#v-pills-dashboard-tab,#v-pills-purchase-tab,#v-pills-customer-tab,#v-pills-inventory-tab').removeClass('active');
             $('#v-pills-manage,#v-pills-sales,#v-pills-dashboard,#v-pills-purchase,#v-pills-customer,#v-pills-inventory').removeClass('show active');
             $('.tool-container').hide();
@@ -153,7 +165,7 @@ $(document).ready(function () {
         }
     });
     Mousetrap.bind(['ctrl+shift+7', 'u'], function (e) {
-        if (PosnicPro['userACL'].user.write === !0) {
+        if (aclCan('user', 'write')) {
             $('#v-pills-inventory-tab,#v-pills-report-tab,#v-pills-dashboard-tab,#v-pills-sales-tab,#v-pills-purchase-tab,#v-pills-customer-tab').removeClass('active');
             $('#v-pills-inventory,#v-pills-report,#v-pills-dashboard,#v-pills-sales,#v-pills-purchase,#v-pills-customer').removeClass('show active');
             $('.tool-container').hide();
@@ -163,7 +175,7 @@ $(document).ready(function () {
         }
     });
     Mousetrap.bind(['ctrl+shift+8', 'w'], function (e) {
-        if (PosnicPro['userACL'].user.read === !0) {
+        if (aclCan('user', 'read')) {
             $('#v-pills-inventory-tab,#v-pills-report-tab,#v-pills-dashboard-tab,#v-pills-sales-tab,#v-pills-purchase-tab,#v-pills-customer-tab').removeClass('active');
             $('#v-pills-inventory,#v-pills-report,#v-pills-dashboard,#v-pills-sales,#v-pills-purchase,#v-pills-customer').removeClass('show active');
             $('.tool-container').hide();
@@ -173,7 +185,7 @@ $(document).ready(function () {
         }
     });
     Mousetrap.bind(['ctrl+shift+9', 't'], function (e) {
-        if (PosnicPro['userACL'].report.read === !0) {
+        if (aclCan('report', 'read')) {
             $('#v-pills-manage-tab,#v-pills-sales-tab,#v-pills-dashboard-tab,#v-pills-purchase-tab,#v-pills-customer-tab,#v-pills-inventory-tab').removeClass('active');
             $('#v-pills-manage,#v-pills-sales,#v-pills-dashboard,#v-pills-purchase,#v-pills-customer,#v-pills-inventory').removeClass('show active');
             $('.tool-container').hide();
@@ -183,7 +195,7 @@ $(document).ready(function () {
         }
     });
     Mousetrap.bind(['ctrl+d', 'e'], function (e) {
-        if (PosnicPro['userACL'].expense.write === !0) {
+        if (aclCan('expense', 'write')) {
             $('#v-pills-inventory-tab,#v-pills-report-tab,#v-pills-dashboard-tab,#v-pills-sales-tab,#v-pills-purchase-tab,#v-pills-customer-tab').removeClass('active');
             $('#v-pills-inventory,#v-pills-report,#v-pills-dashboard,#v-pills-sales,#v-pills-purchase,#v-pills-customer').removeClass('show active');
             $('.tool-container').hide();
@@ -202,7 +214,7 @@ $(document).ready(function () {
      * happens, not one of two.
      */
     Mousetrap.bind(['l'], function (e) {
-        if (PosnicPro['userACL'].expense.read === !0) {
+        if (aclCan('expense', 'read')) {
             $('#v-pills-inventory-tab,#v-pills-report-tab,#v-pills-dashboard-tab,#v-pills-sales-tab,#v-pills-purchase-tab,#v-pills-customer-tab').removeClass('active');
             $('#v-pills-inventory,#v-pills-report,#v-pills-dashboard,#v-pills-sales,#v-pills-purchase,#v-pills-customer').removeClass('show active');
             $('.tool-container').hide();
@@ -218,7 +230,7 @@ $(document).ready(function () {
      * which is how a shortcut gets reported as working on one machine only.
      */
     Mousetrap.bind(['b'], function (e) {
-        if (PosnicPro['userACL'].branch.read === !0) {
+        if (aclCan('branch', 'read')) {
             $('#v-pills-dashboard-tab,#v-pills-sales-tab,#v-pills-inventory-tab,#v-pills-purchase-tab,#v-pills-customer-tab,#v-pills-report-tab').removeClass('active');
             $('#v-pills-dashboard,#v-pills-sales,#v-pills-inventory,#v-pills-purchase,#v-pills-customer,#v-pills-report').removeClass('show active');
             $('.tool-container').hide();
@@ -230,7 +242,7 @@ $(document).ready(function () {
     // Categories is "r" alone. Ctrl+R is Reload, in the menu here and in
     // every browser everywhere; taking it would be surprising even if it worked.
     Mousetrap.bind(['r'], function (e) {
-        if (PosnicPro['userACL'].category.read === !0) {
+        if (aclCan('category', 'read')) {
             $('#v-pills-dashboard-tab,#v-pills-sales-tab,#v-pills-manage-tab,#v-pills-purchase-tab,#v-pills-customer-tab,#v-pills-report-tab').removeClass('active');
             $('#v-pills-dashboard,#v-pills-sales,#v-pills-manage,#v-pills-purchase,#v-pills-customer,#v-pills-report').removeClass('show active');
             $('.tool-container').hide();
@@ -240,8 +252,10 @@ $(document).ready(function () {
         }
     });
 
-    Mousetrap.bind(['ctrl+k', 'k'], function (e) {
-        if (PosnicPro['userACL'].branch.write === !0) {
+    // ctrl+k now opens the command palette (command-palette.js); the bare
+    // letter keeps taking long-time users to stock logs.
+    Mousetrap.bind(['k'], function (e) {
+        if (aclCan('branch', 'write')) {
             $('#v-pills-dashboard-tab,#v-pills-sales-tab,#v-pills-manage-tab,#v-pills-purchase-tab,#v-pills-customer-tab,#v-pills-report-tab').removeClass('active');
             $('#v-pills-dashboard,#v-pills-sales,#v-pills-manage,#v-pills-purchase,#v-pills-customer,#v-pills-report').removeClass('show active');
             $('.tool-container').hide();
@@ -251,7 +265,7 @@ $(document).ready(function () {
         }
     });
     Mousetrap.bind(['ctrl+g', 'g'], function (e) {
-        if (PosnicPro['userACL'].branch.write === !0) {
+        if (aclCan('branch', 'write')) {
             $('#v-pills-dashboard-tab,#v-pills-sales-tab,#v-pills-inventory-tab,#v-pills-purchase-tab,#v-pills-customer-tab,#v-pills-report-tab').removeClass('active');
             $('#v-pills-dashboard,#v-pills-sales,#v-pills-inventory,#v-pills-purchase,#v-pills-customer,#v-pills-report').removeClass('show active');
             $('.tool-container').hide();
@@ -261,7 +275,7 @@ $(document).ready(function () {
         }
     });
     Mousetrap.bind(['home', 'd'], function (e) {
-        if (PosnicPro['userACL'].dashboard.read === !0) {
+        if (aclCan('dashboard', 'read')) {
             $('#v-pills-manage-tab,#v-pills-sales-tab,#v-pills-inventory-tab,#v-pills-purchase-tab,#v-pills-customer-tab,#v-pills-report-tab').removeClass('active');
             $('#v-pills-manage,#v-pills-sales,#v-pills-inventory,#v-pills-purchase,#v-pills-customer,#v-pills-report').removeClass('show active');
             $('.tool-container').hide();
@@ -361,7 +375,7 @@ $(document).ready(function () {
 
     $(document).bind("keydown", function (e) {
         var hash = window.location.hash.slice(1);
-        if (PosnicPro['userACL'].sales.write === !0 && hash === "/sales/new") {
+        if (aclCan('sales', 'write') && hash === "/sales/new") {
             if (e.ctrlKey && e.keyCode === 13) {
                 // Call the New Sale submit handler directly to avoid triggering
                 // multiple hidden/duplicate .save_return_submit buttons, which
