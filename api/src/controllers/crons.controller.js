@@ -51,7 +51,7 @@ class CronsController extends BaseController {
   async getAllCronJobs(req, res) {
     try {
       if (!this.checkPermission('setting', 'read', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const jobs = Array.from(this.cronJobs.entries()).map(([name, job]) => ({
@@ -74,7 +74,7 @@ class CronsController extends BaseController {
   async createCronJob(req, res) {
     try {
       if (!this.checkPermission('setting', 'write', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const { name, schedule, action, enabled = true } = req.body;
@@ -125,7 +125,7 @@ class CronsController extends BaseController {
   async updateCronJob(req, res) {
     try {
       if (!this.checkPermission('setting', 'write', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const { name } = req.params;
@@ -172,7 +172,7 @@ class CronsController extends BaseController {
   async deleteCronJob(req, res) {
     try {
       if (!this.checkPermission('setting', 'delete', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const { name } = req.params;
@@ -203,7 +203,7 @@ class CronsController extends BaseController {
   async startCronJob(req, res) {
     try {
       if (!this.checkPermission('setting', 'write', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const { name } = req.params;
@@ -231,7 +231,7 @@ class CronsController extends BaseController {
   async stopCronJob(req, res) {
     try {
       if (!this.checkPermission('setting', 'write', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const { name } = req.params;
@@ -263,7 +263,7 @@ class CronsController extends BaseController {
   async executeCronJob(req, res) {
     try {
       if (!this.checkPermission('setting', 'write', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const { name } = req.params;
@@ -294,7 +294,7 @@ class CronsController extends BaseController {
   async getCronLogs(req, res) {
     try {
       if (!this.checkPermission('setting', 'read', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const { name } = req.params;

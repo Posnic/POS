@@ -164,10 +164,10 @@ describe('BranchesController — getAll', () => {
     expect(bm.branchPage).not.toHaveBeenCalled();
   });
 
-  test('returns 401 when user lacks read permission', async () => {
+  test('returns 403 when user lacks read permission', async () => {
     const res = mockRes();
     await ctrl.getAll(mockReq({ user: noReadUser }), res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(bm.branchPage).not.toHaveBeenCalled();
   });
 
@@ -236,10 +236,10 @@ describe('BranchesController — getOne', () => {
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
-  test('returns 401 when user lacks read permission', async () => {
+  test('returns 403 when user lacks read permission', async () => {
     const res = mockRes();
     await ctrl.getOne(mockReq({ user: noReadUser, params: { id: 'b1' } }), res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(bm.getBranchById).not.toHaveBeenCalled();
   });
 
@@ -284,10 +284,10 @@ describe('BranchesController — add', () => {
     expect(res.json.mock.calls[0][0].type).toBe('success');
   });
 
-  test('returns 401 when user lacks write permission', async () => {
+  test('returns 403 when user lacks write permission', async () => {
     const res = mockRes();
     await ctrl.add(mockReq({ user: lowUser }), res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(bm.createBranch).not.toHaveBeenCalled();
   });
 
@@ -336,10 +336,10 @@ describe('BranchesController — edit', () => {
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
-  test('returns 401 when user lacks write permission', async () => {
+  test('returns 403 when user lacks write permission', async () => {
     const res = mockRes();
     await ctrl.edit(mockReq({ user: lowUser, params: { id: 'b1' } }), res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(bm.updateBranch).not.toHaveBeenCalled();
   });
 
@@ -398,10 +398,10 @@ describe('BranchesController — delete', () => {
     expect(bm.deleteBranchCollectionData).not.toHaveBeenCalled();
   });
 
-  test('returns 401 when user lacks delete permission', async () => {
+  test('returns 403 when user lacks delete permission', async () => {
     const res = mockRes();
     await ctrl.delete(mockReq({ user: lowUser, params: { id: 'b1' } }), res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(bm.deleteBranchCollectionData).not.toHaveBeenCalled();
   });
 
@@ -601,6 +601,8 @@ describe('BranchesController — getBranchList', () => {
   test('returns 401 when req.user._id is absent', async () => {
     const res = mockRes();
     await ctrl.getBranchList(mockReq({ user: {} }), res);
+    // 401, not 403: no user id on the request is missing AUTHENTICATION,
+    // not a missing permission.
     expect(res.status).toHaveBeenCalledWith(401);
     expect(User.findById).not.toHaveBeenCalled();
   });
@@ -865,10 +867,10 @@ describe('BranchesController — exportBranches', () => {
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
-  test('returns 401 when user lacks read permission', async () => {
+  test('returns 403 when user lacks read permission', async () => {
     const res = mockRes();
     await ctrl.exportBranches(mockReq({ user: noReadUser }), res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(bm.exportBranchOrder).not.toHaveBeenCalled();
   });
 
@@ -945,10 +947,10 @@ describe('BranchesController — getStats', () => {
     expect(res.json.mock.calls[0][0].type).toBe('success');
   });
 
-  test('returns 401 when user lacks read permission', async () => {
+  test('returns 403 when user lacks read permission', async () => {
     const res = mockRes();
     await ctrl.getStats(mockReq({ user: noReadUser }), res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(branchesService.getBranchStatistics).not.toHaveBeenCalled();
   });
 
@@ -985,10 +987,10 @@ describe('BranchesController — search', () => {
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
-  test('returns 401 when user lacks read permission', async () => {
+  test('returns 403 when user lacks read permission', async () => {
     const res = mockRes();
     await ctrl.search(mockReq({ user: noReadUser }), res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(branchesService.searchBranches).not.toHaveBeenCalled();
   });
 
@@ -1035,10 +1037,10 @@ describe('BranchesController — toggleStatus', () => {
     expect(res.json.mock.calls[0][0].type).toBe('success');
   });
 
-  test('returns 401 when user lacks write permission', async () => {
+  test('returns 403 when user lacks write permission', async () => {
     const res = mockRes();
     await ctrl.toggleStatus(mockReq({ user: lowUser, params: { id: 'b1' } }), res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(branchesService.toggleBranchStatus).not.toHaveBeenCalled();
   });
 

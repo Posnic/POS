@@ -794,10 +794,10 @@ describe('SalesController', () => {
       expect(res.json.mock.calls[0][0].data).toBe(0);
     });
 
-    test('401 no write permission', async () => {
+    test('403 no write permission', async () => {
       const res = mockRes();
       await ctrl.getLatestSales(mockReq({ user: restrictedUser() }), res);
-      expect(res.status).toHaveBeenCalledWith(401);
+      expect(res.status).toHaveBeenCalledWith(403);
     });
 
     test('500 on exception', async () => {
@@ -825,10 +825,10 @@ describe('SalesController', () => {
       expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ type: 'success' }));
     });
 
-    test('401 no report permission', async () => {
+    test('403 no report permission', async () => {
       const res = mockRes();
       await ctrl.dailySalesReports(mockReq({ query: q, user: restrictedUser() }), res);
-      expect(res.status).toHaveBeenCalledWith(401);
+      expect(res.status).toHaveBeenCalledWith(403);
     });
 
     test('404 branch not found', async () => {
@@ -859,10 +859,10 @@ describe('SalesController', () => {
   describe('dailyReportPdf', () => {
     const q = { branch: VALID_BRANCH, starting_date: '2025-01-01', ending_date: '2025-12-31' };
 
-    test('401 no report permission', async () => {
+    test('403 no report permission', async () => {
       const res = mockRes();
       await ctrl.dailyReportPdf(mockReq({ query: q, user: restrictedUser() }), res);
-      expect(res.status).toHaveBeenCalledWith(401);
+      expect(res.status).toHaveBeenCalledWith(403);
     });
 
     test('400 invalid dates', async () => {
@@ -894,10 +894,10 @@ describe('SalesController', () => {
       expect(res.status).toHaveBeenCalledWith(200);
     });
 
-    test('401 no report.read permission', async () => {
+    test('403 no report.read permission', async () => {
       const res = mockRes();
       await ctrl.returnProductDetails(mockReq({ query: {}, user: restrictedUser() }), res);
-      expect(res.status).toHaveBeenCalledWith(401);
+      expect(res.status).toHaveBeenCalledWith(403);
     });
 
     test('404 when service status false', async () => {
@@ -916,13 +916,13 @@ describe('SalesController', () => {
       expect(res.status).toHaveBeenCalledWith(200);
     });
 
-    test('401 no permission', async () => {
+    test('403 no permission', async () => {
       const res = mockRes();
       await ctrl.returnProductView(
         mockReq({ query: { id: VALID_ID }, user: restrictedUser() }),
         res
       );
-      expect(res.status).toHaveBeenCalledWith(401);
+      expect(res.status).toHaveBeenCalledWith(403);
     });
 
     test('400 missing id', async () => {
@@ -1023,10 +1023,10 @@ describe('SalesController', () => {
       expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ type: 'success' }));
     });
 
-    test('401 no permission', async () => {
+    test('403 no permission', async () => {
       const res = mockRes();
       await ctrl.salesReports(mockReq({ query: {}, user: restrictedUser() }), res);
-      expect(res.status).toHaveBeenCalledWith(401);
+      expect(res.status).toHaveBeenCalledWith(403);
     });
 
     test('400 no branch in query', async () => {
@@ -1388,10 +1388,10 @@ describe('SalesController', () => {
       );
     });
 
-    test('401 no sales.write access', async () => {
+    test('403 no sales.write access', async () => {
       const res = mockRes();
       await ctrl.returnSales(mockReq({ body: {}, user: restrictedUser() }), res);
-      expect(res.status).toHaveBeenCalledWith(401);
+      expect(res.status).toHaveBeenCalledWith(403);
     });
 
     test('404 when service status false', async () => {
@@ -1417,13 +1417,13 @@ describe('SalesController', () => {
       expect(res.status).toHaveBeenCalledWith(200);
     });
 
-    test('401 no sales.read access', async () => {
+    test('403 no sales.read access', async () => {
       const res = mockRes();
       await ctrl.exportSales(
         mockReq({ method: 'POST', body: [VALID_ID], user: restrictedUser() }),
         res
       );
-      expect(res.status).toHaveBeenCalledWith(401);
+      expect(res.status).toHaveBeenCalledWith(403);
     });
 
     test('400 no IDs provided', async () => {
@@ -1475,13 +1475,13 @@ describe('SalesController', () => {
       expect(res.status).toHaveBeenCalledWith(200);
     });
 
-    test('401 no sales.read access', async () => {
+    test('403 no sales.read access', async () => {
       const res = mockRes();
       await ctrl.getReturnSalesDetails(
         mockReq({ query: { id: VALID_ID }, user: restrictedUser() }),
         res
       );
-      expect(res.status).toHaveBeenCalledWith(401);
+      expect(res.status).toHaveBeenCalledWith(403);
     });
 
     test('404 when service status false', async () => {
@@ -1560,10 +1560,10 @@ describe('SalesController', () => {
 
   // ── salesPdf ──────────────────────────────────────────────────────────────────
   describe('salesPdf', () => {
-    test('401 no sales.read permission', async () => {
+    test('403 no sales.read permission', async () => {
       const res = mockRes();
       await ctrl.salesPdf(mockReq({ query: { id: VALID_ID }, user: restrictedUser() }), res);
-      expect(res.status).toHaveBeenCalledWith(401);
+      expect(res.status).toHaveBeenCalledWith(403);
     });
 
     test('400 missing id', async () => {

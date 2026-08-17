@@ -27,11 +27,15 @@ class RegisterRepository {
 
     const ownerId = document.current_user_id ? String(document.current_user_id) : '';
     const requesterId = userId ? String(userId) : '';
+    // Name the holder: "locked" without saying by whom is a dead end, and a
+    // manager CAN resolve it (close from the Cash Register page - the close
+    // path allows manager/admin/super_admin to close anyone's session).
+    const holder = document.current_user ? ` (opened by ${document.current_user})` : '';
     if (ownerId && ownerId !== requesterId) {
-      return { status: false, message: ERROR_MESSAGES.REGISTER_SESSION_LOCKED };
+      return { status: false, message: ERROR_MESSAGES.REGISTER_SESSION_LOCKED + holder };
     }
     if (document.lock_device_id && document.lock_device_id !== String(deviceId || 'unknown')) {
-      return { status: false, message: ERROR_MESSAGES.REGISTER_SESSION_LOCKED };
+      return { status: false, message: ERROR_MESSAGES.REGISTER_SESSION_LOCKED + holder };
     }
 
     if (!document.lock_device_id) {

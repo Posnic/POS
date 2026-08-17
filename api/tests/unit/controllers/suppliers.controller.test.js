@@ -325,11 +325,11 @@ describe('getAll', () => {
     expect(body.data.total_pages).toBe(1);
   });
 
-  test('401 when user has no read access', async () => {
+  test('403 when user has no read access', async () => {
     const req = mockReq({ user: { ...adminUser, access: { supplier: { read: false } } } });
     const res = mockRes();
     await ctrl.getAll(req, res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(mockSvc.getAllSuppliers).not.toHaveBeenCalled();
   });
 
@@ -450,14 +450,14 @@ describe('add', () => {
     expect(res.json.mock.calls[0][0].type).toBe('success');
   });
 
-  test('401 when user has no write access', async () => {
+  test('403 when user has no write access', async () => {
     const req = mockReq({
       body: validBody,
       user: { ...adminUser, access: { supplier: { write: false } } },
     });
     const res = mockRes();
     await ctrl.add(req, res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(mockSvc.createSupplier).not.toHaveBeenCalled();
   });
 
@@ -590,7 +590,7 @@ describe('edit', () => {
     expect(mockSvc.updateSupplier).toHaveBeenCalledWith('q_sup', expect.any(Object));
   });
 
-  test('401 when user has no write access', async () => {
+  test('403 when user has no write access', async () => {
     const req = mockReq({
       params: { id: 'sup001' },
       body: updateBody,
@@ -598,7 +598,7 @@ describe('edit', () => {
     });
     const res = mockRes();
     await ctrl.edit(req, res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(mockSvc.updateSupplier).not.toHaveBeenCalled();
   });
 
@@ -687,14 +687,14 @@ describe('getOne', () => {
     expect(mockSvc.getSupplierById).toHaveBeenCalledWith('q_sup');
   });
 
-  test('401 when user has no read access', async () => {
+  test('403 when user has no read access', async () => {
     const req = mockReq({
       params: { id: 'sup001' },
       user: { ...adminUser, access: { supplier: { read: false } } },
     });
     const res = mockRes();
     await ctrl.getOne(req, res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(mockSvc.getSupplierById).not.toHaveBeenCalled();
   });
 
@@ -790,14 +790,14 @@ describe('delete', () => {
     expect(mockSvc.bulkDeleteSuppliers).not.toHaveBeenCalled();
   });
 
-  test('401 when user has no delete access', async () => {
+  test('403 when user has no delete access', async () => {
     const req = mockReq({
       body: { ids: ['sup001'] },
       user: { ...adminUser, access: { supplier: { delete: false } } },
     });
     const res = mockRes();
     await ctrl.delete(req, res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(mockSvc.bulkDeleteSuppliers).not.toHaveBeenCalled();
   });
 
@@ -929,11 +929,11 @@ describe('supplierGraphicalReports', () => {
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
-  test('401 when user has no report read access', async () => {
+  test('403 when user has no report read access', async () => {
     const req = mockReq({ user: { ...adminUser, access: { report: { read: false } } } });
     const res = mockRes();
     await ctrl.supplierGraphicalReports(req, res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(mockLegacyInstance.getSupplierGraphicalReports).not.toHaveBeenCalled();
   });
 
@@ -1033,14 +1033,14 @@ describe('suppliersImport', () => {
     expect(mockSvc.bulkImport).toHaveBeenCalled();
   });
 
-  test('401 when user has no write access', async () => {
+  test('403 when user has no write access', async () => {
     const req = mockReq({
       body: { result: sampleImport },
       user: { ...adminUser, access: { supplier: { write: false } } },
     });
     const res = mockRes();
     await ctrl.suppliersImport(req, res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(mockSvc.bulkImport).not.toHaveBeenCalled();
   });
 
@@ -1178,14 +1178,14 @@ describe('exportSuppliers', () => {
     expect(res.json.mock.calls[0][0].message).toBe(SUCCESS_MESSAGES.SUPPLIERS_EXPORTED);
   });
 
-  test('401 when user has no read access', async () => {
+  test('403 when user has no read access', async () => {
     const req = mockReq({
       body: ['sup001'],
       user: { ...adminUser, access: { supplier: { read: false } } },
     });
     const res = mockRes();
     await ctrl.exportSuppliers(req, res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(mockSvc.exportSuppliers).not.toHaveBeenCalled();
   });
 

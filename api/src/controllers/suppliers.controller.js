@@ -95,7 +95,7 @@ class SuppliersController extends BaseController {
     // Check user access
     const userAccess = req.user?.access?.supplier?.read;
     if (userAccess === false) {
-      return this.sendError(res, 'Unauthorized', 401);
+      return this.sendError(res, 'Unauthorized', 403);
     }
 
     // Validate request
@@ -167,7 +167,7 @@ class SuppliersController extends BaseController {
     // Check user access
     const userAccess = req.user?.access?.supplier?.write;
     if (userAccess === false) {
-      return this.sendError(res, 'Unauthorized', 401);
+      return this.sendError(res, 'Unauthorized', 403);
     }
 
     // Validate request
@@ -304,7 +304,7 @@ class SuppliersController extends BaseController {
     // Check user access
     const userAccess = req.user?.access?.supplier?.write;
     if (userAccess === false) {
-      return this.sendError(res, 'Unauthorized', 401);
+      return this.sendError(res, 'Unauthorized', 403);
     }
 
     // Validate request
@@ -360,7 +360,7 @@ class SuppliersController extends BaseController {
     // Check user access
     const userAccess = req.user?.access?.supplier?.read;
     if (userAccess === false) {
-      return this.sendError(res, 'Unauthorized', 401);
+      return this.sendError(res, 'Unauthorized', 403);
     }
 
     // Call service
@@ -410,7 +410,7 @@ class SuppliersController extends BaseController {
     // Check user access
     const userAccess = req.user?.access?.supplier?.delete;
     if (userAccess === false) {
-      return this.sendError(res, 'Unauthorized', 401);
+      return this.sendError(res, 'Unauthorized', 403);
     }
 
     const idsArray = Array.isArray(ids) ? ids : [ids];
@@ -478,7 +478,7 @@ class SuppliersController extends BaseController {
     // Check user access for reports
     const userAccess = req.user?.access?.report?.read;
     if (userAccess === false) {
-      return this.sendError(res, 'Unauthorized', 401);
+      return this.sendError(res, 'Unauthorized', 403);
     }
 
     // Handle both 'branch' and 'branch[]' query params
@@ -543,7 +543,7 @@ class SuppliersController extends BaseController {
     // Check user access
     const userAccess = req.user?.access?.supplier?.write;
     if (userAccess === false) {
-      return this.sendError(res, 'Unauthorized', 401);
+      return this.sendError(res, 'Unauthorized', 403);
     }
 
     const suppliers = req.body.result || req.body.suppliers || [];
@@ -677,7 +677,7 @@ class SuppliersController extends BaseController {
     // Check user access
     const userAccess = req.user?.access?.supplier?.read;
     if (userAccess === false) {
-      return this.sendError(res, 'Unauthorized', 401);
+      return this.sendError(res, 'Unauthorized', 403);
     }
 
     // Normalize various legacy payload formats into a clean ID array

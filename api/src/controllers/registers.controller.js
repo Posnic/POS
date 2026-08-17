@@ -155,7 +155,7 @@ class RegistersController extends BaseController {
       await this.setRequestContext(req);
       if (!this.checkPermission('report', 'read', req.user)) {
         console.log('❌ Register Report Table - Permission Denied');
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       console.log('✅ Register Report Table - Permission Granted');
@@ -264,7 +264,7 @@ class RegistersController extends BaseController {
 
       const registerCount = req.user?.register?.length || 0;
       if (registerCount <= 0) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const result = await this.service.registeropendateFilterPage(data);

@@ -33,7 +33,7 @@ class BranchesController extends BaseController {
       }
 
       if (!this.checkPermission('branch', 'read', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const options = {
@@ -91,7 +91,7 @@ class BranchesController extends BaseController {
       const { id } = req.params;
 
       if (!this.checkPermission('branch', 'read', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const result = await this.branchModel.getBranchById(id);
@@ -115,7 +115,7 @@ class BranchesController extends BaseController {
   async add(req, res) {
     try {
       if (!this.checkPermission('branch', 'write', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const data = req.body;
@@ -146,7 +146,7 @@ class BranchesController extends BaseController {
   async edit(req, res) {
     try {
       if (!this.checkPermission('branch', 'write', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const { id } = req.params;
@@ -191,7 +191,7 @@ class BranchesController extends BaseController {
       // PHP line 280: $user_access = $_SESSION['PosnicPro']['user']['access']['branch']['delete'];
       // PHP line 281: if ($user_access === true)
       if (!this.checkPermission('branch', 'delete', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       // Set BaseModel context for backup
@@ -570,7 +570,7 @@ class BranchesController extends BaseController {
     try {
       // PHP line 306: Check permission
       if (!this.checkPermission('branch', 'read', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       // PHP line 308: Get IDs from request body ($GLOBALS['input']['json'])
@@ -619,7 +619,7 @@ class BranchesController extends BaseController {
   async getStats(req, res) {
     try {
       if (!this.checkPermission('branch', 'read', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const result = await this.branchesService.getBranchStatistics();
@@ -641,7 +641,7 @@ class BranchesController extends BaseController {
   async search(req, res) {
     try {
       if (!this.checkPermission('branch', 'read', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const q = req.query.q || '';
@@ -664,7 +664,7 @@ class BranchesController extends BaseController {
   async toggleStatus(req, res) {
     try {
       if (!this.checkPermission('branch', 'write', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const { id } = req.params;

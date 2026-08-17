@@ -280,19 +280,19 @@ describe('create', () => {
     expect(Receiving.receivingInsertUpdate).toHaveBeenCalledWith(validBody, null);
   });
 
-  test('returns 401 when checkPermission denies write access', async () => {
+  test('returns 403 when checkPermission denies write access', async () => {
     const req = mockReq({ body: validBody, user: restrictedUser() });
     const res = mockRes();
     await ctrl.create(req, res);
     expect(Receiving.receivingInsertUpdate).not.toHaveBeenCalled();
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
-  test('returns 401 when user is undefined', async () => {
+  test('returns 403 when user is undefined', async () => {
     const req = mockReq({ body: validBody, user: undefined });
     const res = mockRes();
     await ctrl.create(req, res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('returns 400 when supplier_name is missing', async () => {
@@ -357,12 +357,12 @@ describe('update', () => {
     expect(Receiving.receivingInsertUpdate).toHaveBeenCalledWith(validBody, VALID_ID);
   });
 
-  test('returns 401 when user lacks write access', async () => {
+  test('returns 403 when user lacks write access', async () => {
     const req = mockReq({ params: { id: VALID_ID }, body: validBody, user: restrictedUser() });
     const res = mockRes();
     await ctrl.update(req, res);
     expect(Receiving.receivingInsertUpdate).not.toHaveBeenCalled();
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('returns 400 when id param is missing', async () => {
@@ -428,11 +428,11 @@ describe('receivedReceiving', () => {
     );
   });
 
-  test('returns 401 when user lacks write access', async () => {
+  test('returns 403 when user lacks write access', async () => {
     const req = mockReq({ body: { id: VALID_ID }, user: restrictedUser() });
     const res = mockRes();
     await ctrl.receivedReceiving(req, res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('returns 400 when id is missing from body', async () => {
@@ -492,12 +492,12 @@ describe('returnReceiving', () => {
     expect(Receiving.returnReceivingOrder).toHaveBeenCalledWith(returnBody);
   });
 
-  test('returns 401 when user lacks write access', async () => {
+  test('returns 403 when user lacks write access', async () => {
     const req = mockReq({ body: returnBody, user: restrictedUser() });
     const res = mockRes();
     await ctrl.returnReceiving(req, res);
     expect(Receiving.returnReceivingOrder).not.toHaveBeenCalled();
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('returns 400 when model returns status false', async () => {
@@ -543,12 +543,12 @@ describe('delete', () => {
     expect(Receiving.deleteReceivingCollectionData).toHaveBeenCalledWith([VALID_ID]);
   });
 
-  test('returns 401 when user lacks delete access', async () => {
+  test('returns 403 when user lacks delete access', async () => {
     const req = mockReq({ body: { data: [VALID_ID] }, user: restrictedUser() });
     const res = mockRes();
     await ctrl.delete(req, res);
     expect(Receiving.deleteReceivingCollectionData).not.toHaveBeenCalled();
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('returns 400 when data array is empty', async () => {
@@ -623,11 +623,11 @@ describe('exportReceivings', () => {
     expect(Receiving.exportReceivingsOrder).toHaveBeenCalledWith([VALID_ID]);
   });
 
-  test('returns 401 when user lacks read access (no user)', async () => {
+  test('returns 403 when user lacks read access (no user)', async () => {
     const req = mockReq({ body: { data: [VALID_ID] }, user: undefined });
     const res = mockRes();
     await ctrl.exportReceivings(req, res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('returns 400 when body is a number (invalid format)', async () => {
@@ -713,12 +713,12 @@ describe('getAll', () => {
     expect(Array.isArray(payload.data.list)).toBe(true);
   });
 
-  test('returns 401 when user is null (checkPermission returns false for null user)', async () => {
+  test('returns 403 when user is null (checkPermission returns false for null user)', async () => {
     const req = mockReq({ query: {}, user: null });
     const res = mockRes();
     await ctrl.getAll(req, res);
     expect(Receiving.find).not.toHaveBeenCalled();
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('defaults page=1 and limit=10 for invalid query params', async () => {
@@ -841,11 +841,11 @@ describe('getOne', () => {
     expect(payload.data.exclusive_tax).toBe('off');
   });
 
-  test('returns 401 when user is null', async () => {
+  test('returns 403 when user is null', async () => {
     const req = mockReq({ params: { id: VALID_ID }, user: null });
     const res = mockRes();
     await ctrl.getOne(req, res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('returns 400 when neither params.id nor query.id provided', async () => {
@@ -915,11 +915,11 @@ describe('receivingReportTable', () => {
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
-  test('returns 401 when user is null', async () => {
+  test('returns 403 when user is null', async () => {
     const req = mockReq({ query: {}, user: null });
     const res = mockRes();
     await ctrl.receivingReportTable(req, res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('returns "No records found" message when list is empty', async () => {
@@ -984,11 +984,11 @@ describe('receivingsGraphicalReports', () => {
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
-  test('returns 401 when user is null', async () => {
+  test('returns 403 when user is null', async () => {
     const req = mockReq({ query: {}, user: null });
     const res = mockRes();
     await ctrl.receivingsGraphicalReports(req, res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('returns 404 when model returns status false', async () => {
@@ -1030,11 +1030,11 @@ describe('returnReceivingReportTable', () => {
     expect(payload.data.total).toBe(1);
   });
 
-  test('returns 401 when user is null', async () => {
+  test('returns 403 when user is null', async () => {
     const req = mockReq({ query: {}, user: null });
     const res = mockRes();
     await ctrl.returnReceivingReportTable(req, res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('returns 404 when model returns status false', async () => {
@@ -1071,11 +1071,11 @@ describe('pendingReceivingReportTable', () => {
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
-  test('returns 401 when user is null', async () => {
+  test('returns 403 when user is null', async () => {
     const req = mockReq({ query: {}, user: null });
     const res = mockRes();
     await ctrl.pendingReceivingReportTable(req, res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('returns 200 with empty list when model returns status false (formatReportResponse always succeeds)', async () => {
@@ -1115,11 +1115,11 @@ describe('pendingSupplierReportTable', () => {
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
-  test('returns 401 when user is null', async () => {
+  test('returns 403 when user is null', async () => {
     const req = mockReq({ query: {}, user: null });
     const res = mockRes();
     await ctrl.pendingSupplierReportTable(req, res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('returns 500 when model throws', async () => {
@@ -1151,11 +1151,11 @@ describe('productBasedReceivingReturnDetails', () => {
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
-  test('returns 401 when user is null', async () => {
+  test('returns 403 when user is null', async () => {
     const req = mockReq({ query: {}, user: null });
     const res = mockRes();
     await ctrl.productBasedReceivingReturnDetails(req, res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('returns 404 when model returns status false', async () => {
@@ -1195,11 +1195,11 @@ describe('returnReceivingProductDetails', () => {
     expect(payload.data.total).toBe(1);
   });
 
-  test('returns 401 when user is null', async () => {
+  test('returns 403 when user is null', async () => {
     const req = mockReq({ query: {}, user: null });
     const res = mockRes();
     await ctrl.returnReceivingProductDetails(req, res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('returns 404 when model returns status false', async () => {
@@ -1235,11 +1235,11 @@ describe('returnReceivingProductView', () => {
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
-  test('returns 401 when user is null', async () => {
+  test('returns 403 when user is null', async () => {
     const req = mockReq({ query: {}, user: null });
     const res = mockRes();
     await ctrl.returnReceivingProductView(req, res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('returns 404 when model returns status false', async () => {
@@ -1321,11 +1321,11 @@ describe('supplierReceivingDetails', () => {
     expect(payload.data.table.data.total).toBe(2);
   });
 
-  test('returns 401 when user is null', async () => {
+  test('returns 403 when user is null', async () => {
     const req = mockReq({ query: { supplier_id: VALID_SUPPLIER }, user: null });
     const res = mockRes();
     await ctrl.supplierReceivingDetails(req, res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('returns 400 when supplier_id is missing', async () => {
@@ -1483,11 +1483,11 @@ describe('gstTwoReportTable', () => {
     expect(payload.data.product_data).toHaveLength(1);
   });
 
-  test('returns 401 when user is null', async () => {
+  test('returns 403 when user is null', async () => {
     const req = mockReq({ query: {}, user: null });
     const res = mockRes();
     await ctrl.gstTwoReportTable(req, res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('returns 400 when starting_date is missing', async () => {
@@ -1547,27 +1547,27 @@ describe('gstNineReportTable', () => {
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
-  test('returns 401 when access.report.read is not true (restrictedUser)', async () => {
+  test('returns 403 when access.report.read is not true (restrictedUser)', async () => {
     const req = mockReq({ query: {}, session: {}, user: restrictedUser() });
     const res = mockRes();
     await ctrl.gstNineReportTable(req, res);
     expect(Receiving.gstNineReportPage).not.toHaveBeenCalled();
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
-  test('returns 401 when user is undefined', async () => {
+  test('returns 403 when user is undefined', async () => {
     const req = mockReq({ query: {}, session: {}, user: undefined });
     const res = mockRes();
     await ctrl.gstNineReportTable(req, res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
-  test('returns 401 when super_admin lacks explicit access.report.read flag', async () => {
+  test('returns 403 when super_admin lacks explicit access.report.read flag', async () => {
     const userWithoutFlag = { ...adminUser(), access: { report: { read: false } } };
     const req = mockReq({ query: {}, session: {}, user: userWithoutFlag });
     const res = mockRes();
     await ctrl.gstNineReportTable(req, res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('returns 404 when model returns status false', async () => {
@@ -1614,21 +1614,21 @@ describe('companyPriceUpdate', () => {
     );
   });
 
-  test('returns 401 when access.receiving.write is not true', async () => {
+  test('returns 403 when access.receiving.write is not true', async () => {
     const req = mockReq({
       body: { item_id: VALID_ITEM_ID, item_price: 100 },
       user: restrictedUser(),
     });
     const res = mockRes();
     await ctrl.companyPriceUpdate(req, res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
-  test('returns 401 when user is undefined', async () => {
+  test('returns 403 when user is undefined', async () => {
     const req = mockReq({ body: { item_id: VALID_ITEM_ID, item_price: 100 }, user: undefined });
     const res = mockRes();
     await ctrl.companyPriceUpdate(req, res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('returns 400 when item_id is missing', async () => {

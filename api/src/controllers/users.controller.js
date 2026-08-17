@@ -132,7 +132,7 @@ class UsersController extends BaseController {
   async add(req, res, edit = false, id = '') {
     try {
       if (!this.checkPermission('user', 'write', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const data = req.body;
@@ -1074,7 +1074,7 @@ class UsersController extends BaseController {
       }
 
       if (!this.checkPermission('user', 'read', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const options = {
@@ -1148,7 +1148,7 @@ class UsersController extends BaseController {
       // user-management read permission; otherwise it needs user.read.
       const isSelf = String(req.user && req.user._id) === String(userId);
       if (!isSelf && !this.checkPermission('user', 'read', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const user = await this.userModel.findById(userId).lean();
@@ -1215,7 +1215,7 @@ class UsersController extends BaseController {
       const user = await this.userModel.findById(req.user._id).select('+password');
 
       if (!user || !(await bcrypt.compare(currentPassword, user.password))) {
-        return this.error(res, 'Your current password is incorrect', 401);
+        return this.error(res, 'Your current password is incorrect', 403);
       }
 
       // 2) Check if new passwords match
@@ -1258,7 +1258,7 @@ class UsersController extends BaseController {
       }
 
       if (!this.checkPermission('user', 'delete', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const userType = req.user._id.toString();
@@ -1607,7 +1607,7 @@ class UsersController extends BaseController {
     try {
       // PHP line 500: Check permission
       if (!this.checkPermission('user', 'read', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       // PHP line 502: Get IDs from request body ($GLOBALS['input']['json'])
@@ -1989,7 +1989,7 @@ class UsersController extends BaseController {
 
       const planAccess = user.access?.plan?.read || false;
       if (!planAccess) {
-        return res.status(401).json({
+        return res.status(403).json({
           type: 'error',
           message: 'Unauthorized',
           data: null,

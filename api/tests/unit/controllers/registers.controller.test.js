@@ -361,11 +361,11 @@ describe('registerReportTable', () => {
     expect(list[0]).toHaveProperty('string_date');
   });
 
-  test('returns 401 when user is null (checkPermission returns false)', async () => {
+  test('returns 403 when user is null (checkPermission returns false)', async () => {
     const req = mockReq({ user: null, query: {} });
     const res = mockRes();
     await ctrl.registerReportTable(req, res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ message: 'Unauthorized' }));
   });
 
@@ -455,26 +455,26 @@ describe('registeropendateFilter', () => {
     });
   });
 
-  test('returns 401 when user.register is an empty array', async () => {
+  test('returns 403 when user.register is an empty array', async () => {
     const req = mockReq({ user: adminUser({ register: [] }), query: {} });
     const res = mockRes();
     await ctrl.registeropendateFilter(req, res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ message: 'Unauthorized' }));
   });
 
-  test('returns 401 when user.register is undefined', async () => {
+  test('returns 403 when user.register is undefined', async () => {
     const req = mockReq({ user: adminUser({ register: undefined }), query: {} });
     const res = mockRes();
     await ctrl.registeropendateFilter(req, res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
-  test('returns 401 when user.register is null', async () => {
+  test('returns 403 when user.register is null', async () => {
     const req = mockReq({ user: adminUser({ register: null }), query: {} });
     const res = mockRes();
     await ctrl.registeropendateFilter(req, res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('returns 404 when service returns status false', async () => {

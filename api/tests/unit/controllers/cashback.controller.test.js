@@ -1,6 +1,6 @@
 /**
  * Unit (REST-layer) tests for CashbackController.
- * Covers getSettings, saveSettings (+ 401 guard), recent. Mocks CashbackService.
+ * Covers getSettings, saveSettings (+ 403 guard), recent. Mocks CashbackService.
  */
 
 const mockService = {
@@ -75,7 +75,7 @@ describe('CashbackController', () => {
       mockReq({ user: { access: { branch: { write: false } } } }),
       res
     );
-    expect(res.statusCode).toBe(401);
+    expect(res.statusCode).toBe(403);
     expect(mockService.saveSettings).not.toHaveBeenCalled();
   });
 

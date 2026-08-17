@@ -40,7 +40,7 @@ class CreditController extends BaseController {
   /** PUT /credit/settings - save the credit + reminder rules. */
   async saveSettings(req, res) {
     try {
-      if (!this._canWrite(req)) return this.error(res, 'Unauthorized', 401);
+      if (!this._canWrite(req)) return this.error(res, 'Unauthorized', 403);
       const ctx = this._ctx(req);
       const data = await this.service.saveSettings(ctx.branchId, req.body || {}, ctx);
       return this.success(res, data, 'Credit settings saved');
@@ -79,7 +79,7 @@ class CreditController extends BaseController {
   /** POST /credit/reminder/:customerId - send one customer their reminder now. */
   async sendReminder(req, res) {
     try {
-      if (!this._canWrite(req)) return this.error(res, 'Unauthorized', 401);
+      if (!this._canWrite(req)) return this.error(res, 'Unauthorized', 403);
       const ctx = this._ctx(req);
       const dryRun = (req.body || {}).dryRun === true || (req.body || {}).dryRun === 'true';
       const r = await this.service.sendReminder(req.params.customerId, {
@@ -98,7 +98,7 @@ class CreditController extends BaseController {
   /** POST /credit/run-reminders - remind every outstanding customer (cron/manual). */
   async runReminders(req, res) {
     try {
-      if (!this._canWrite(req)) return this.error(res, 'Unauthorized', 401);
+      if (!this._canWrite(req)) return this.error(res, 'Unauthorized', 403);
       const ctx = this._ctx(req);
       const dryRun = (req.body || {}).dryRun === true || (req.body || {}).dryRun === 'true';
       const r = await this.service.runReminders(ctx.branchId, { ctx, dryRun });

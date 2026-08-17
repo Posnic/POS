@@ -40,7 +40,7 @@ class CashbackController extends BaseController {
   /** PUT /cashback/settings - save the cashback rule. */
   async saveSettings(req, res) {
     try {
-      if (!this._canWrite(req)) return this.error(res, 'Unauthorized', 401);
+      if (!this._canWrite(req)) return this.error(res, 'Unauthorized', 403);
       const ctx = this._ctx(req);
       const data = await this.service.saveSettings(ctx.branchId, req.body || {}, ctx);
       return this.success(res, data, 'Cashback settings saved');

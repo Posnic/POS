@@ -243,7 +243,7 @@ class CategoriesController extends BaseController {
    */
   getAll = asyncHandler(async (req, res) => {
     if (!this.checkPermission('category', 'read', req.user)) {
-      return this.error(res, 'Unauthorized', 401);
+      return this.error(res, 'Unauthorized', 403);
     }
 
     const pageParam = parseInt(req.query.page);
@@ -682,7 +682,7 @@ class CategoriesController extends BaseController {
    */
   categoriesImport = asyncHandler(async (req, res) => {
     if (!this.checkPermission('category', 'write', req.user)) {
-      return this.error(res, 'Unauthorized', 401);
+      return this.error(res, 'Unauthorized', 403);
     }
 
     const rows = req.body.result || req.body.categories || [];
@@ -764,7 +764,7 @@ class CategoriesController extends BaseController {
    */
   exportCategories = asyncHandler(async (req, res) => {
     if (!this.checkPermission('category', 'read', req.user)) {
-      return this.error(res, 'Unauthorized', 401);
+      return this.error(res, 'Unauthorized', 403);
     }
 
     const rawBody = req.body;
@@ -850,7 +850,7 @@ class CategoriesController extends BaseController {
    */
   deleteCategory = asyncHandler(async (req, res) => {
     if (!this.checkPermission('category', 'delete', req.user)) {
-      return this.error(res, 'Unauthorized', 401);
+      return this.error(res, 'Unauthorized', 403);
     }
 
     const id = req.params.id;
@@ -876,7 +876,7 @@ class CategoriesController extends BaseController {
    */
   bulkDelete = asyncHandler(async (req, res) => {
     if (!this.checkPermission('category', 'delete', req.user)) {
-      return this.error(res, 'Unauthorized', 401);
+      return this.error(res, 'Unauthorized', 403);
     }
 
     const ids = req.body.data || req.body.ids || req.body;
@@ -914,7 +914,7 @@ class CategoriesController extends BaseController {
   categoryImageDelete = asyncHandler(async (req, res) => {
     try {
       if (!this.checkPermission('category', 'write', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const body = req.body || {};

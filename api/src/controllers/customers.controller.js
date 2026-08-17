@@ -1364,7 +1364,7 @@ class CustomerController extends BaseController {
       const userAccess = this.user?.access?.report?.read ?? false;
       if (!userAccess) {
         console.log('❌ Customer Graphical Reports - Permission Denied');
-        return res.status(401).json({
+        return res.status(403).json({
           type: 'error',
           message: 'Unauthorized',
           data: null,
@@ -1422,7 +1422,7 @@ class CustomerController extends BaseController {
       // Check user access
       const userAccess = this.user?.access?.report?.read ?? false;
       if (!userAccess) {
-        return res.status(401).json({
+        return res.status(403).json({
           type: 'error',
           message: 'Unauthorized',
           data: null,

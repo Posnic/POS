@@ -53,7 +53,7 @@ class CampaignController extends BaseController {
   /** POST /campaigns - create. */
   async create(req, res) {
     try {
-      if (!this._canWrite(req)) return this.error(res, 'Unauthorized', 401);
+      if (!this._canWrite(req)) return this.error(res, 'Unauthorized', 403);
       const r = await this.service.save('', req.body || {}, this._ctx(req));
       if (!r.status) return this.error(res, r.message, 400);
       return this.success(res, r.data, r.message);
@@ -66,7 +66,7 @@ class CampaignController extends BaseController {
   /** PUT /campaigns/:id - update. */
   async update(req, res) {
     try {
-      if (!this._canWrite(req)) return this.error(res, 'Unauthorized', 401);
+      if (!this._canWrite(req)) return this.error(res, 'Unauthorized', 403);
       const r = await this.service.save(req.params.id, req.body || {}, this._ctx(req));
       if (!r.status) return this.error(res, r.message, 400);
       return this.success(res, r.data, r.message);
@@ -79,7 +79,7 @@ class CampaignController extends BaseController {
   /** DELETE /campaigns/:id */
   async remove(req, res) {
     try {
-      if (!this._canWrite(req)) return this.error(res, 'Unauthorized', 401);
+      if (!this._canWrite(req)) return this.error(res, 'Unauthorized', 403);
       const r = await this.service.remove(req.params.id);
       if (!r.status) return this.error(res, r.message, 404);
       return this.success(res, r.data, r.message);
@@ -109,7 +109,7 @@ class CampaignController extends BaseController {
   async send(req, res) {
     try {
       const dryRun = (req.body || {}).dryRun === true || (req.body || {}).dryRun === 'true';
-      if (!dryRun && !this._canWrite(req)) return this.error(res, 'Unauthorized', 401);
+      if (!dryRun && !this._canWrite(req)) return this.error(res, 'Unauthorized', 403);
       const r = await this.service.send(req.params.id, { dryRun, ctx: this._ctx(req) });
       if (!r.status) return this.error(res, r.message, 400);
       return this.success(res, r.data, r.message);
@@ -122,7 +122,7 @@ class CampaignController extends BaseController {
   /** POST /campaigns/:id/schedule - set a future send time. */
   async schedule(req, res) {
     try {
-      if (!this._canWrite(req)) return this.error(res, 'Unauthorized', 401);
+      if (!this._canWrite(req)) return this.error(res, 'Unauthorized', 403);
       const r = await this.service.schedule(
         req.params.id,
         (req.body || {}).schedule_at,
@@ -139,7 +139,7 @@ class CampaignController extends BaseController {
   /** POST /campaigns/run-due - send any scheduled campaigns now due (cron tick). */
   async runDue(req, res) {
     try {
-      if (!this._canWrite(req)) return this.error(res, 'Unauthorized', 401);
+      if (!this._canWrite(req)) return this.error(res, 'Unauthorized', 403);
       const r = await this.service.runDue({ ctx: this._ctx(req) });
       return this.success(res, r.data, r.message);
     } catch (e) {

@@ -44,7 +44,7 @@ class CouponController extends BaseController {
   /** POST /coupons - create a coupon. */
   async create(req, res) {
     try {
-      if (!this._canWrite(req)) return this.error(res, 'Unauthorized', 401);
+      if (!this._canWrite(req)) return this.error(res, 'Unauthorized', 403);
       const ctx = this._ctx(req);
       const r = await this.service.save('', req.body || {}, ctx);
       if (!r.status) return this.error(res, r.message, 400);
@@ -58,7 +58,7 @@ class CouponController extends BaseController {
   /** PUT /coupons/:id - update a coupon. */
   async update(req, res) {
     try {
-      if (!this._canWrite(req)) return this.error(res, 'Unauthorized', 401);
+      if (!this._canWrite(req)) return this.error(res, 'Unauthorized', 403);
       const ctx = this._ctx(req);
       const r = await this.service.save(req.params.id, req.body || {}, ctx);
       if (!r.status) return this.error(res, r.message, 400);
@@ -72,7 +72,7 @@ class CouponController extends BaseController {
   /** DELETE /coupons/:id - remove a coupon. */
   async remove(req, res) {
     try {
-      if (!this._canWrite(req)) return this.error(res, 'Unauthorized', 401);
+      if (!this._canWrite(req)) return this.error(res, 'Unauthorized', 403);
       const r = await this.service.remove(req.params.id);
       if (!r.status) return this.error(res, r.message, 404);
       return this.success(res, r.data, r.message);

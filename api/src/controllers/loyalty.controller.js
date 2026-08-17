@@ -41,7 +41,7 @@ class LoyaltyController extends BaseController {
   async saveConfig(req, res) {
     try {
       if (req.user?.access?.customer?.write === false) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
       const ctx = this._ctx(req);
       const cfg = await this.service.saveConfig(ctx.branchId, req.body || {}, ctx);
@@ -69,7 +69,7 @@ class LoyaltyController extends BaseController {
   async liability(req, res) {
     try {
       if (req.user?.access?.customer?.read === false) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
       const ctx = this._ctx(req);
       const r = await this.service.liability(ctx.branchId);
@@ -88,7 +88,7 @@ class LoyaltyController extends BaseController {
   async preview(req, res) {
     try {
       if (req.user?.access?.customer?.read === false) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
       const ctx = this._ctx(req);
       const cfg = await this.service.getConfig(ctx.branchId);

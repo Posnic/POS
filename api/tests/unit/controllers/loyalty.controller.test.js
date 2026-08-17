@@ -137,14 +137,14 @@ describe('saveConfig', () => {
     );
   });
 
-  test('returns 401 when user lacks customer write access', async () => {
+  test('returns 403 when user lacks customer write access', async () => {
     const res = mockRes();
     await controller.saveConfig(
       mockReq({ user: { access: { customer: { write: false } } }, body: { enabled: true } }),
       res
     );
 
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'error', message: 'Unauthorized' })
     );
@@ -210,11 +210,11 @@ describe('liability', () => {
     );
   });
 
-  test('returns 401 when user lacks customer read access', async () => {
+  test('returns 403 when user lacks customer read access', async () => {
     const res = mockRes();
     await controller.liability(mockReq({ user: { access: { customer: { read: false } } } }), res);
 
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'error', message: 'Unauthorized' })
     );
@@ -266,14 +266,14 @@ describe('preview', () => {
     expect(payload.data.earn).toEqual({ points: 3, tier: 'Bronze' });
   });
 
-  test('returns 401 when user lacks customer read access', async () => {
+  test('returns 403 when user lacks customer read access', async () => {
     const res = mockRes();
     await controller.preview(
       mockReq({ user: { access: { customer: { read: false } } }, body: { amount: 100 } }),
       res
     );
 
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'error', message: 'Unauthorized' })
     );

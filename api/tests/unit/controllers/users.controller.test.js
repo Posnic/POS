@@ -296,13 +296,13 @@ describe('add', () => {
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ type: 'error' }));
   });
 
-  test('401 when user lacks write permission', async () => {
+  test('403 when user lacks write permission', async () => {
     const req = mockReq({
       user: { usertype: 'user', access: { user: { read: true, write: false } } },
     });
     const res = mockRes();
     await ctrl.add(req, res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('500 on service exception', async () => {
@@ -750,11 +750,11 @@ describe('getAll', () => {
     expect(res.status).toHaveBeenCalledWith(404);
   });
 
-  test('401 when user lacks read permission', async () => {
+  test('403 when user lacks read permission', async () => {
     const req = mockReq({ user: { usertype: 'user', access: { user: { read: false } } } });
     const res = mockRes();
     await ctrl.getAll(req, res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('404 on invalid filter JSON', async () => {
@@ -826,14 +826,14 @@ describe('getOne', () => {
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
-  test('401 when no read permission', async () => {
+  test('403 when no read permission', async () => {
     const req = mockReq({
       params: { id: 'aabbccddeeff001122334455' },
       user: { usertype: 'user', access: { user: { read: false } } },
     });
     const res = mockRes();
     await ctrl.getOne(req, res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('404 when user not found', async () => {
@@ -903,7 +903,7 @@ describe('updatePassword', () => {
     return c;
   };
 
-  test('401 when current password is incorrect', async () => {
+  test('403 when current password is incorrect', async () => {
     mockUserModel.findById.mockReturnValue(buildFindByIdChain(fakeUser));
     mockBcrypt.compare.mockResolvedValue(false);
     const req = mockReq({
@@ -911,7 +911,9 @@ describe('updatePassword', () => {
     });
     const res = mockRes();
     await ctrl.updatePassword(req, res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    // 403, not 401: the session itself is valid - a mistyped current password
+    // must not sign the user out (the client signs out on any 401).
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('400 when new passwords do not match', async () => {
@@ -963,14 +965,14 @@ describe('delete', () => {
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
-  test('401 when user lacks delete permission', async () => {
+  test('403 when user lacks delete permission', async () => {
     const req = mockReq({
       params: { id: 'uid1' },
       user: { _id: 'admin', usertype: 'user', license: 'l1', access: { user: { delete: false } } },
     });
     const res = mockRes();
     await ctrl.delete(req, res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('400 when trying to delete own account', async () => {
@@ -1143,11 +1145,11 @@ describe('getUserDetails', () => {
 // exportUsers
 // ═══════════════════════════════════════════════════════════════════════════════
 describe('exportUsers', () => {
-  test('401 when no read permission', async () => {
+  test('403 when no read permission', async () => {
     const req = mockReq({ user: { usertype: 'user', access: { user: { read: false } } } });
     const res = mockRes();
     await ctrl.exportUsers(req, res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('200 on success', async () => {
@@ -1450,7 +1452,7 @@ describe('userVerify', () => {
     expect(res.status).toHaveBeenCalledWith(404);
   });
 
-  test('401 when user has no plan read access', async () => {
+  test('403 when user has no plan read access', async () => {
     const user = {
       _id: 'u1',
       password: 'hashed',
@@ -1460,7 +1462,7 @@ describe('userVerify', () => {
     mockUserModel.findById.mockReturnValue(buildSelectLean(user));
     const res = mockRes();
     await ctrl.userVerify(mockReq({ query: { password: 'valid123' } }), res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('200 when super_admin with valid password', async () => {

@@ -237,17 +237,17 @@ describe('CustomerCategoryController — resolveIdCandidate', () => {
 // =============================================================================
 
 describe('CustomerCategoryController — getAll', () => {
-  test('returns 401 when user lacks category read access', async () => {
+  test('returns 403 when user lacks category read access', async () => {
     const res = mockRes();
     await ctrl.getAll(mockReq({ user: noReadUser }), res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(res.json.mock.calls[0][0]).toMatchObject({ type: 'error', message: 'Unauthorized' });
   });
 
-  test('returns 401 when user has no access object', async () => {
+  test('returns 403 when user has no access object', async () => {
     const res = mockRes();
     await ctrl.getAll(mockReq({ user: { _id: VALID_ID } }), res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('returns 400 when filters JSON string is invalid', async () => {
@@ -355,10 +355,10 @@ describe('CustomerCategoryController — getAll', () => {
 // =============================================================================
 
 describe('CustomerCategoryController — add (create mode, no id)', () => {
-  test('returns 401 when user lacks write access', async () => {
+  test('returns 403 when user lacks write access', async () => {
     const res = mockRes();
     await ctrl.add(mockReq({ user: noWriteUser }), res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(res.json.mock.calls[0][0]).toMatchObject({ type: 'error', message: 'Unauthorized' });
   });
 
@@ -514,7 +514,7 @@ describe('CustomerCategoryController — edit', () => {
   test('respects write permission check (via add delegate)', async () => {
     const res = mockRes();
     await ctrl.edit(mockReq({ params: { id: VALID_ID }, user: noWriteUser }), res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 });
 
@@ -536,10 +536,10 @@ describe('CustomerCategoryController — getOne', () => {
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
-  test('returns 401 when user lacks read access (access="yes" default)', async () => {
+  test('returns 403 when user lacks read access (access="yes" default)', async () => {
     const res = mockRes();
     await ctrl.getOne(mockReq({ params: { id: VALID_ID }, user: noReadUser }), res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('returns 200 with category data on success', async () => {
@@ -648,10 +648,10 @@ describe('CustomerCategoryController — delete', () => {
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
-  test('returns 401 when user lacks delete access', async () => {
+  test('returns 403 when user lacks delete access', async () => {
     const res = mockRes();
     await ctrl.delete(mockReq({ user: noDeleteUser, body: { data: [VALID_ID] } }), res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('calls deleteCustomerCategories with provided ids', async () => {
@@ -744,10 +744,10 @@ describe('CustomerCategoryController — getDataChanges', () => {
 // =============================================================================
 
 describe('CustomerCategoryController — customercategoryImport', () => {
-  test('returns 401 when user lacks write access', async () => {
+  test('returns 403 when user lacks write access', async () => {
     const res = mockRes();
     await ctrl.customercategoryImport(mockReq({ user: noWriteUser }), res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('returns 400 when no data is provided', async () => {
@@ -826,10 +826,10 @@ describe('CustomerCategoryController — customercategoryImport', () => {
 // =============================================================================
 
 describe('CustomerCategoryController — exportCustomerCategory', () => {
-  test('returns 401 when user lacks read access', async () => {
+  test('returns 403 when user lacks read access', async () => {
     const res = mockRes();
     await ctrl.exportCustomerCategory(mockReq({ user: noReadUser }), res);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
   test('returns 400 when body is empty object (no ids)', async () => {

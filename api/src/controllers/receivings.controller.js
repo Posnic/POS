@@ -134,7 +134,7 @@ class ReceivingsController extends BaseController {
   async create(req, res) {
     try {
       if (!this.checkPermission('receiving', 'write', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       // Ensure BaseModel context (branch, license, user) is set so that
@@ -171,7 +171,7 @@ class ReceivingsController extends BaseController {
   async update(req, res) {
     try {
       if (!this.checkPermission('receiving', 'write', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       // Ensure BaseModel context (branch, license, user) is set before
@@ -220,7 +220,7 @@ class ReceivingsController extends BaseController {
   async receivedReceiving(req, res) {
     try {
       if (!this.checkPermission('receiving', 'write', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const { id } = req.body;
@@ -286,7 +286,7 @@ class ReceivingsController extends BaseController {
   async returnReceiving(req, res) {
     try {
       if (!this.checkPermission('receiving', 'write', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const data = req.body;
@@ -419,7 +419,7 @@ class ReceivingsController extends BaseController {
   async delete(req, res) {
     try {
       if (!this.checkPermission('receiving', 'delete', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       // Set BaseModel context for the delete operation
@@ -509,7 +509,7 @@ class ReceivingsController extends BaseController {
   async exportReceivings(req, res) {
     try {
       if (!this.checkPermission('receiving', 'read', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       // Set BaseModel context
@@ -562,7 +562,7 @@ class ReceivingsController extends BaseController {
   async getAll(req, res) {
     try {
       if (!this.checkPermission('receiving', 'read', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const page = Math.max(1, parseInt(req.query.page) || 1);
@@ -671,7 +671,7 @@ class ReceivingsController extends BaseController {
   async getOne(req, res) {
     try {
       if (!this.checkPermission('receiving', 'read', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const id = req.params.id || req.query.id;
@@ -717,7 +717,7 @@ class ReceivingsController extends BaseController {
   async productBasedReceivingReturnDetails(req, res) {
     try {
       if (!this.checkPermission('report', 'read', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const BaseModel = require('../models/base.model');
@@ -766,7 +766,7 @@ class ReceivingsController extends BaseController {
   async receivingReportTable(req, res) {
     try {
       if (!this.checkPermission('report', 'read', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const BaseModel = require('../models/base.model');
@@ -817,7 +817,7 @@ class ReceivingsController extends BaseController {
   async receivingsGraphicalReports(req, res) {
     try {
       if (!this.checkPermission('report', 'read', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const BaseModel = require('../models/base.model');
@@ -856,7 +856,7 @@ class ReceivingsController extends BaseController {
   async returnReceivingReportTable(req, res) {
     try {
       if (!this.checkPermission('report', 'read', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const BaseModel = require('../models/base.model');
@@ -907,7 +907,7 @@ class ReceivingsController extends BaseController {
   async pendingReceivingReportTable(req, res) {
     try {
       if (!this.checkPermission('report', 'read', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const limit = parseInt(req.query.limit, 10) > 0 ? parseInt(req.query.limit, 10) : 5;
@@ -936,7 +936,7 @@ class ReceivingsController extends BaseController {
   async pendingSupplierReportTable(req, res) {
     try {
       if (!this.checkPermission('report', 'read', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const limit = parseInt(req.query.limit, 10) > 0 ? parseInt(req.query.limit, 10) : 5;
@@ -967,7 +967,7 @@ class ReceivingsController extends BaseController {
   async returnReceivingProductDetails(req, res) {
     try {
       if (!this.checkPermission('report', 'read', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const limit = parseInt(req.query.limit) > 0 ? parseInt(req.query.limit) : 5;
@@ -1014,7 +1014,7 @@ class ReceivingsController extends BaseController {
   async returnReceivingProductView(req, res) {
     try {
       if (!this.checkPermission('report', 'read', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const limit = parseInt(req.query.limit) > 0 ? parseInt(req.query.limit) : 5;
@@ -1051,7 +1051,7 @@ class ReceivingsController extends BaseController {
       await this.ensureContext(req);
 
       if (!this.checkPermission('report', 'read', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const limit = parseInt(req.query.limit) > 0 ? parseInt(req.query.limit) : 5;
@@ -1257,7 +1257,7 @@ class ReceivingsController extends BaseController {
   async supplierReceivingReportTable(req, res) {
     try {
       if (!this.checkPermission('report', 'read', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const limit = parseInt(req.query.limit) || 5;
@@ -1387,7 +1387,7 @@ class ReceivingsController extends BaseController {
   async gstTwoReportTable(req, res) {
     try {
       if (!this.checkPermission('report', 'read', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       // Get branch_id from session (selectedBranchId or branch_id)
@@ -1621,7 +1621,7 @@ class ReceivingsController extends BaseController {
     try {
       const userAccess = req.user?.access?.report?.read;
       if (userAccess !== true) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const data = {
@@ -1652,7 +1652,7 @@ class ReceivingsController extends BaseController {
     try {
       const userAccess = req.user?.access?.receiving?.write;
       if (userAccess !== true) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const { item_id, item_price } = req.body;
@@ -1711,7 +1711,7 @@ class ReceivingsController extends BaseController {
   async getSummary(req, res) {
     try {
       if (!this.checkPermission('receiving', 'read', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const collection = currentConnection(mongoose.connection).db.collection('receivings');
@@ -1760,7 +1760,7 @@ class ReceivingsController extends BaseController {
   async updateStatus(req, res) {
     try {
       if (!this.checkPermission('receiving', 'edit', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const id = String(req.params.id || '').trim();
@@ -1839,7 +1839,7 @@ class ReceivingsController extends BaseController {
   async pendingReceivingProductDetails(req, res) {
     try {
       if (!this.checkPermission('receiving', 'read', req.user)) {
-        return this.error(res, 'Unauthorized', 401);
+        return this.error(res, 'Unauthorized', 403);
       }
 
       const receivingId = String(req.query.receiving_id || '').trim();
