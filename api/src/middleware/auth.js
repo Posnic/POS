@@ -398,41 +398,31 @@ const optionalProtect = async (req, res, next) => {
   }
 };
 
-// Restrict to certain roles
+// The account's type may live on `usertype` (canonical) or the legacy `role`
+// field depending on how the account was made - every role check reads both.
+const effectiveType = (user) => String(user?.usertype || user?.role || '').toLowerCase();
+
+// Restrict to certain roles. super_admin always satisfies an 'admin'
+// requirement - it is the higher rank of the same owner.
 const restrictTo = (...roles) => {
   return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
+    const type = effectiveType(req.user);
+    const allowed = roles.includes(type) || (type === 'super_admin' && roles.includes('admin'));
+    if (!allowed) {
       return next(new AppError('You do not have permission to perform this action', 403));
     }
     next();
   };
 };
 
-// Check if user has permission
-const checkPermission = (resource, action) => {
-  return (req, res, next) => {
-    const { role, permissions } = req.user;
-
-    // Admin has all permissions
-    if (role === 'admin') return next();
-
-    // Check if user has the required permission
-    const hasPermission = permissions.some(
-      (permission) => permission.resource === resource && permission[action] === true
-    );
-
-    if (!hasPermission) {
-      return next(new AppError('You do not have permission to perform this action', 403));
-    }
-
-    next();
-  };
-};
+// The vestigial permissions-array checkPermission middleware was retired (P2):
+// no route used it - enforcement runs through base.controller.checkPermission,
+// which reads the resolved access matrix.
 
 // Prevent unauthorized access to user data
 const restrictToUser = (req, res, next) => {
-  // Allow admin to access any user's data
-  if (req.user.role === 'admin') return next();
+  // Allow the tenant's top accounts to access any user's data
+  if (['admin', 'super_admin'].includes(effectiveType(req.user))) return next();
 
   // User can only access their own data
   if (req.params.id !== req.user.id) {
@@ -462,7 +452,6 @@ module.exports = {
   optionalProtect,
   isLoggedIn,
   restrictTo,
-  checkPermission,
   restrictToUser,
   createPasswordResetToken,
   findUserByApiKey,

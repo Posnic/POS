@@ -38,7 +38,7 @@
  *   - Virtuals: fullName, initials
  *   - Pre-save hooks: password hashing (skip if already bcrypt), passwordChangedAt, updatedAt
  *   - Pre-find hook: auto-filters isActive:{ $ne: false } unless includeInactive:true
- *   - Instance methods: correctPassword, changedPasswordAfter, hasPermission, hasAnyRole,
+ *   - Instance methods: correctPassword, changedPasswordAfter,
  *                       lockAccount, unlockAccount
  *   - Static methods: findByCredentials, findByEmail, isEmailTaken, getUsersByRole,
  *                     userPage, userstatusReportPage, getDataChanges, userInsertUpdate
@@ -80,16 +80,6 @@ const STATUS_ENUM = ['active', 'inactive', 'suspended', 'pending'];
 const GENDER_ENUM = ['male', 'female', 'other', 'prefer-not-to-say'];
 const LANG_ENUM = ['en', 'es', 'fr', 'de', 'hi', 'ta', 'te', 'kn', 'ml'];
 const THEME_ENUM = ['light', 'dark', 'system'];
-const PERMISSION_ENUM = [
-  'inventory:read',
-  'inventory:write',
-  'sales:read',
-  'sales:write',
-  'customers:read',
-  'customers:write',
-  'reports:view',
-  'settings:manage',
-];
 const ACL_MODULES = [
   'dashboard',
   'sales',
@@ -402,28 +392,6 @@ describe('User — branch_access field', () => {
   });
 });
 
-// ══════════════════════════════════════════════════════════════════════════════
-// 11. permissions array
-// ══════════════════════════════════════════════════════════════════════════════
-describe('User — permissions field', () => {
-  test('permissions is an Array path', () => {
-    expect(p('permissions').instance).toBe('Array');
-  });
-
-  test('permissions array items enum matches all 8 permission strings', () => {
-    const itemPath = p('permissions.$');
-    expect(itemPath.enumValues).toEqual(PERMISSION_ENUM);
-  });
-
-  test('document instance stores valid permissions correctly', () => {
-    const doc = new User(validData({ permissions: ['sales:read', 'reports:view'] }));
-    expect(doc.permissions).toEqual(['sales:read', 'reports:view']);
-  });
-
-  test('document defaults to empty permissions array', () => {
-    expect(new User(validData()).permissions).toEqual([]);
-  });
-});
 
 // ══════════════════════════════════════════════════════════════════════════════
 // 12. access field (ACL matrix)
@@ -815,51 +783,7 @@ describe('User — instance changedPasswordAfter', () => {
   });
 });
 
-// ══════════════════════════════════════════════════════════════════════════════
-// 24. Instance method — hasPermission
-// ══════════════════════════════════════════════════════════════════════════════
-describe('User — instance hasPermission', () => {
-  test('admin has all permissions without checking the permissions array', () => {
-    const admin = new User(validData({ role: 'admin' }));
-    expect(admin.hasPermission('sales:read')).toBe(true);
-    expect(admin.hasPermission('nonexistent:perm')).toBe(true);
-  });
 
-  test('non-admin returns true when permission is in permissions array', () => {
-    const user = new User(validData({ role: 'staff', permissions: ['sales:read'] }));
-    expect(user.hasPermission('sales:read')).toBe(true);
-  });
-
-  test('non-admin returns false when permission is NOT in array', () => {
-    const user = new User(validData({ role: 'staff', permissions: ['sales:read'] }));
-    expect(user.hasPermission('reports:view')).toBe(false);
-  });
-
-  test('non-admin with empty permissions returns false', () => {
-    const user = new User(validData({ role: 'cashier', permissions: [] }));
-    expect(user.hasPermission('inventory:write')).toBe(false);
-  });
-});
-
-// ══════════════════════════════════════════════════════════════════════════════
-// 25. Instance method — hasAnyRole
-// ══════════════════════════════════════════════════════════════════════════════
-describe('User — instance hasAnyRole', () => {
-  test('returns true when user role is in the provided roles array', () => {
-    const user = new User(validData({ role: 'manager' }));
-    expect(user.hasAnyRole(['admin', 'manager'])).toBe(true);
-  });
-
-  test('returns false when user role is NOT in the provided roles array', () => {
-    const user = new User(validData({ role: 'cashier' }));
-    expect(user.hasAnyRole(['admin', 'manager'])).toBe(false);
-  });
-
-  test('returns false for empty roles array', () => {
-    const user = new User(validData({ role: 'admin' }));
-    expect(user.hasAnyRole([])).toBe(false);
-  });
-});
 
 // ══════════════════════════════════════════════════════════════════════════════
 // 26. Instance methods — lockAccount / unlockAccount

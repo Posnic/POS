@@ -118,8 +118,11 @@ exports.protect = async (req, res, next) => {
 
 exports.restrictTo = (...roles) => {
   return (req, res, next) => {
-    // roles ['admin', 'lead-guide']. role='user'
-    if (!roles.includes(req.user.role)) {
+    // The type may live on usertype (canonical) or the legacy role field;
+    // super_admin always satisfies an 'admin' requirement.
+    const type = String(req.user?.usertype || req.user?.role || '').toLowerCase();
+    const allowed = roles.includes(type) || (type === 'super_admin' && roles.includes('admin'));
+    if (!allowed) {
       return next(new AppError('You do not have permission to perform this action', 403));
     }
     next();
