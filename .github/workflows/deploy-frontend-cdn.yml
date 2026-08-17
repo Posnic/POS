@@ -63,17 +63,18 @@ jobs:
           aws-secret-access-key: ${{ secrets.CDN_AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-south-1
 
-      # Two passes with different cache lives. Bundle names carry a content
-      # hash, so those bytes can never change under their URL: a year,
-      # immutable. The second pass deliberately has no --delete - HTML already
-      # in a browser still references the previous hashes, so old bundles must
-      # outlive the deploy that replaced them.
+      # Passes by cache life. Bundle names carry a content hash, so those
+      # bytes can never change under their URL: a year, immutable - and that
+      # pass deliberately has no --delete, because HTML already in a browser
+      # still references the previous hashes. Static art gets a week (SW
+      # roadmap W2): it changes only with releases, and art that must change
+      # immediately changes NAME.
       - name: Sync to S3
         run: |
           aws s3 sync builds/cdn-frontend/ s3://posnic-frontend \
             --delete \
             --exclude 'style/*' --exclude 'script/*' \
-            --cache-control 'public, max-age=86400'
+            --cache-control 'public, max-age=604800'
           aws s3 sync builds/cdn-frontend/ s3://posnic-frontend \
             --exclude '*' --include 'style/*' --include 'script/*' \
             --cache-control 'public, max-age=31536000, immutable'

@@ -62,6 +62,31 @@
             visible: function () { return aclCan('user', 'read') && !!(PosnicPro.shiftWidget && PosnicPro.shiftWidget.openReport); },
             run: function () { PosnicPro.shiftWidget.openReport(); },
         },
+        {
+            /* The cache doctor (SW roadmap W3): one click instead of the
+               "clear site data" support walk-through. Unregisters the
+               worker, empties every cache, reloads - the page comes back on
+               plain network and re-registers a fresh worker. */
+            name: 'Refresh App Cache', keywords: 'clear cache stale doctor reload service worker fix',
+            visible: function () { return true; },
+            run: function () {
+                var done = function () { window.location.reload(); };
+                try {
+                    var work = [];
+                    if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+                        work.push(navigator.serviceWorker.getRegistrations().then(function (regs) {
+                            return Promise.all(regs.map(function (r) { return r.unregister(); }));
+                        }));
+                    }
+                    if (window.caches && caches.keys) {
+                        work.push(caches.keys().then(function (keys) {
+                            return Promise.all(keys.map(function (k) { return caches.delete(k); }));
+                        }));
+                    }
+                    Promise.all(work).then(done, done);
+                } catch (e) { done(); }
+            },
+        },
     ];
 
     function commands() {
