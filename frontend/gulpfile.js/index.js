@@ -1,9 +1,10 @@
-const { parallel, src, dest, pipe, gulp, watch } = require('gulp');
+const { parallel, series, src, dest, pipe, gulp, watch } = require('gulp');
 var argv = require('yargs').argv;
 const { publicDir, languages, s } = require('./config');
 var css = require('./css');
 var js = require('./js');
 var html = require('./html');
+var sw = require('./sw');
 
 function buildCss(cb) {
     css.buildAllCss(cb);
@@ -68,4 +69,9 @@ exports.css = buildCss
 exports.html = buildHtml
 exports.static = copyStatic
 exports.vendorScripts = copyVendorScripts
-exports.build = parallel(copyStatic, copyVendorScripts, buildCss, buildJs, buildHtml);
+/* The service worker hashes the built bundles, so it must run after them. */
+function buildServiceWorker(cb) {
+    sw.buildServiceWorker(cb);
+}
+exports.sw = buildServiceWorker;
+exports.build = series(parallel(copyStatic, copyVendorScripts, buildCss, buildJs, buildHtml), buildServiceWorker);

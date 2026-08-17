@@ -421,5 +421,17 @@
                 }
             })();
         </script>
+        <script>
+        /* Static-asset service worker (web / LAN counters only). The desktop
+           shell is skipped: its assets are local files owned by the installer
+           and asset-updater. Cache invalidation is the worker's own contract -
+           its cache name carries the build hash, so a server deploy replaces
+           every cached bundle on the next navigation. */
+        if ('serviceWorker' in navigator && navigator.userAgent.indexOf('Electron') === -1) {
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.register('sw.js').catch(function () { /* optional */ });
+            });
+        }
+    </script>
     </body>       
 </html>
