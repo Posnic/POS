@@ -34,6 +34,10 @@
       "description": "Mounted at /auth"
     },
     {
+      "name": "Authorizations",
+      "description": "Mounted at /authorizations"
+    },
+    {
       "name": "Base",
       "description": "Mounted at /base"
     },
@@ -114,12 +118,20 @@
       "description": "Mounted at /registers"
     },
     {
+      "name": "Roles",
+      "description": "Mounted at /roles"
+    },
+    {
       "name": "Sales",
       "description": "Mounted at /sales"
     },
     {
       "name": "Settings",
       "description": "Mounted at /settings"
+    },
+    {
+      "name": "Shifts",
+      "description": "Mounted at /shifts"
     },
     {
       "name": "Stock logs",
@@ -638,6 +650,102 @@
             "description": "Server error"
           }
         }
+      }
+    },
+    "/authorizations/set-manager-pin": {
+      "post": {
+        "summary": "setManagerPin",
+        "operationId": "post_authorizations_set_manager_pin",
+        "tags": [
+          "Authorizations"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/authorizations/verify-pin": {
+      "post": {
+        "summary": "verifyPin",
+        "operationId": "post_authorizations_verify_pin",
+        "tags": [
+          "Authorizations"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/authorizations/set-rfid": {
+      "post": {
+        "summary": "setRfid",
+        "operationId": "post_authorizations_set_rfid",
+        "tags": [
+          "Authorizations"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/authorizations/verify-card": {
+      "post": {
+        "summary": "verifyCard",
+        "operationId": "post_authorizations_verify_card",
+        "tags": [
+          "Authorizations"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
     "/base": {
@@ -8412,6 +8520,203 @@
         }
       }
     },
+    "/roles": {
+      "get": {
+        "summary": "list",
+        "operationId": "get_roles",
+        "tags": [
+          "Roles"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      },
+      "post": {
+        "summary": "create",
+        "operationId": "post_roles",
+        "tags": [
+          "Roles"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/roles/seed": {
+      "post": {
+        "summary": "seed",
+        "operationId": "post_roles_seed",
+        "tags": [
+          "Roles"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/roles/{id}": {
+      "get": {
+        "summary": "getById",
+        "operationId": "get_roles_id",
+        "tags": [
+          "Roles"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      },
+      "put": {
+        "summary": "update",
+        "operationId": "put_roles_id",
+        "tags": [
+          "Roles"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      },
+      "patch": {
+        "summary": "update",
+        "operationId": "patch_roles_id",
+        "tags": [
+          "Roles"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      },
+      "delete": {
+        "summary": "remove",
+        "operationId": "delete_roles_id",
+        "tags": [
+          "Roles"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
     "/sales/getTablesWithActiveOrders": {
       "get": {
         "summary": "getTablesWithActiveOrders",
@@ -13154,6 +13459,283 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
+    "/shifts/current": {
+      "get": {
+        "summary": "current",
+        "operationId": "get_shifts_current",
+        "tags": [
+          "Shifts"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/shifts/clock-in": {
+      "post": {
+        "summary": "clockIn",
+        "operationId": "post_shifts_clock_in",
+        "tags": [
+          "Shifts"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/shifts/clock-out": {
+      "post": {
+        "summary": "clockOut",
+        "operationId": "post_shifts_clock_out",
+        "tags": [
+          "Shifts"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/shifts/clock-by-card": {
+      "post": {
+        "summary": "clockByCard",
+        "operationId": "post_shifts_clock_by_card",
+        "tags": [
+          "Shifts"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/shifts/report": {
+      "get": {
+        "summary": "report",
+        "operationId": "get_shifts_report",
+        "tags": [
+          "Shifts"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/shifts/set-rate": {
+      "post": {
+        "summary": "setRate",
+        "operationId": "post_shifts_set_rate",
+        "tags": [
+          "Shifts"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/shifts/schedule": {
+      "get": {
+        "summary": "listSchedule",
+        "operationId": "get_shifts_schedule",
+        "tags": [
+          "Shifts"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      },
+      "post": {
+        "summary": "addSchedule",
+        "operationId": "post_shifts_schedule",
+        "tags": [
+          "Shifts"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/shifts/schedule/{id}": {
+      "delete": {
+        "summary": "deleteSchedule",
+        "operationId": "delete_shifts_schedule_id",
+        "tags": [
+          "Shifts"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/shifts/{id}": {
+      "put": {
+        "summary": "editShift",
+        "operationId": "put_shifts_id",
+        "tags": [
+          "Shifts"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/shifts": {
+      "get": {
+        "summary": "list",
+        "operationId": "get_shifts",
+        "tags": [
+          "Shifts"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
     "/stock-logs": {
       "get": {
         "summary": "getAll",
@@ -14017,7 +14599,6 @@
                   },
                   "name": {
                     "type": "string",
-                    "minLength": 6,
                     "maxLength": 30,
                     "description": "The Name field is required"
                   },
@@ -14029,9 +14610,8 @@
                   },
                   "password": {
                     "type": "string",
-                    "minLength": 5,
                     "maxLength": 20,
-                    "description": "The Password field needs to be between 5 and 20 characters in length"
+                    "description": "The Password field can be no longer than 20 characters in length"
                   },
                   "usertype": {
                     "type": "string",
@@ -15020,7 +15600,6 @@
             "required": true,
             "schema": {
               "type": "string",
-              "minLength": 5,
               "maxLength": 20
             },
             "description": "The Password field is required"
