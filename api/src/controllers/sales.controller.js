@@ -85,6 +85,34 @@ const auditItemDiscount = (item) => ({
   ),
 });
 
+// Best-effort percent estimate of a sale's manual discount, for the role's
+// discount_max_percent cap: the larger of (total discount amount / subtotal)
+// and any raw percent entered on a line or the extra discount. Mirrors the
+// till's estimate (sales.js _manualDiscountPct).
+const estimateManualDiscountPct = (payload) => {
+  const subtotal = auditFirstNumber(payload?.sales_sub_total, payload?.sales_total);
+  let amount = 0;
+  let maxPct = 0;
+  auditItems(payload).forEach((item) => {
+    const d = auditItemDiscount(item);
+    amount += d.amount;
+    if (d.percentage > maxPct) maxPct = d.percentage;
+  });
+  const extra = auditNumber(payload?.extra_discount);
+  if (extra > 0) {
+    if ((payload?.extra_discount_type || 'price') === 'percent') {
+      if (extra > maxPct) maxPct = extra;
+    } else {
+      amount += extra;
+    }
+  }
+  if (subtotal > 0) {
+    const pctOfBill = (amount / subtotal) * 100;
+    if (pctOfBill > maxPct) maxPct = pctOfBill;
+  }
+  return maxPct;
+};
+
 const collectSaleAuditChanges = async (payload, existingSale = null) => {
   const incoming = auditItems(payload);
   const oldItems = auditItems(existingSale);
@@ -591,7 +619,12 @@ class SalesController extends BaseController {
     if (!auditChanges || !Array.isArray(auditChanges.discounts) || !auditChanges.discounts.length) {
       return false;
     }
-    if (canPos(req.user, 'discount_apply')) return false;
+    if (canPos(req.user, 'discount_apply')) {
+      // Allowed to discount - but the role may cap how deep (0 = no cap).
+      const pos = (req.user && req.user.access && req.user.access.pos) || {};
+      const cap = Number(pos.discount_max_percent) || 0;
+      if (cap <= 0 || estimateManualDiscountPct(payload) <= cap) return false;
+    }
     const token =
       (payload && payload.approval_token) || (req.body && req.body.approval_token) || null;
     return !isApprovedFor(token, 'discount_apply', req.user && req.user._id);

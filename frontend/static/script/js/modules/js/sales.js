@@ -4116,6 +4116,8 @@ PosnicPro.sales.editSale = {
                 data: JSON.stringify(dataEdit)
             };
 
+            PosnicPro.sales._editDiscountRetried = false;
+            var submitEditSale = function () {
             PosnicPro.request(paramsEdit, function (response) {
                 if (response.type === 'success') {
                     // Normalise sale id for both legacy (string) and new (object) responses
@@ -4273,6 +4275,26 @@ PosnicPro.sales.editSale = {
                 }
             }, function (xhr) {
                 var response = jQuery.parseJSON(xhr.responseText);
+
+                // A discount added while editing needs a manager: prompt for the
+                // PIN/card, attach the token, and resubmit once.
+                if (xhr.status === 403 && response
+                        && /discount needs manager approval/i.test(response.message || '')
+                        && !PosnicPro.sales._editDiscountRetried) {
+                    PosnicPro.sales._editDiscountRetried = true;
+                    loader.find(".loadingSpinner:first").remove();
+                    PosnicPro.requireManagerApproval('discount_apply',
+                        { prompt: "This discount needs a manager's approval." },
+                        function (approval) {
+                            try {
+                                var d = JSON.parse(paramsEdit.data);
+                                d.approval_token = approval && approval.approval_token;
+                                paramsEdit.data = JSON.stringify(d);
+                            } catch (e) { /* resubmit unchanged; server decides */ }
+                            submitEditSale();
+                        });
+                    return;
+                }
                 PosnicPro.alert(response.type, response.message);
 
                 // Reset payment-only flags and close tender appropriately on error
@@ -4287,6 +4309,8 @@ PosnicPro.sales.editSale = {
                 }
                 loader.find(".loadingSpinner:first").remove();
             });
+            };
+            submitEditSale();
             return false;
         }
     }
