@@ -622,6 +622,58 @@ PosnicPro = {
     },
 
     /*
+     * Lazy libraries (S1 feel-fast).
+     *
+     * amCharts (1.1MB), ApexCharts (425KB), jsPDF (619KB) and html2canvas
+     * (194KB) used to be parsed by every till on every boot, to draw charts
+     * and exports most sessions never open. They now load on first use: the
+     * build copies them to script/lazy/ under stable names, the service
+     * worker caches them after the first click, and a deploy invalidates
+     * that cache like any other static file.
+     *
+     * load() resolves after every file in the set has EXECUTED, in order -
+     * amcharts' charts.js needs core.js first, so order is the contract.
+     */
+    lazy: {
+        _sets: {
+            amcharts: [
+                'script/lazy/amcharts-core.js',
+                'script/lazy/amcharts-charts.js',
+                'script/lazy/amcharts-animated.js',
+            ],
+            apexcharts: ['script/lazy/apexcharts.js'],
+            jspdf: ['script/lazy/jspdf.js'],
+            html2canvas: ['script/lazy/html2canvas.js'],
+        },
+        _loads: {},
+        _script: function (url) {
+            return new Promise(function (resolve, reject) {
+                var el = document.createElement('script');
+                el.src = url;
+                el.onload = resolve;
+                el.onerror = function () { reject(new Error('failed to load ' + url)); };
+                document.head.appendChild(el);
+            });
+        },
+        load: function (name) {
+            if (PosnicPro.lazy._loads[name]) return PosnicPro.lazy._loads[name];
+            var files = PosnicPro.lazy._sets[name] || [];
+            var p = files.reduce(function (prev, url) {
+                return prev.then(function () { return PosnicPro.lazy._script(url); });
+            }, Promise.resolve());
+            p = p.catch(function (err) {
+                /* A failed load must be retryable on the next click, never
+                   cached as forever-broken. */
+                delete PosnicPro.lazy._loads[name];
+                PosnicPro.alert('error', 'Could not load the chart / report tools - check the connection and try again.');
+                throw err;
+            });
+            PosnicPro.lazy._loads[name] = p;
+            return p;
+        },
+    },
+
+    /*
      * Charts.
      *
      * Every report used to call am4core.create() straight onto its div, and no
@@ -3282,6 +3334,28 @@ db.version(2).stores({
     offline_hash: null,
     queue: null
 });
+
+/*
+ * amCharts loads lazily, and no report file knows it.
+ *
+ * Every chart in the product enters through am4core.ready(cb) - the library's
+ * own idiom. This stub queues that callback, loads the real library (whose
+ * UMD assigns window.am4core wholesale, replacing the stub), then hands the
+ * callback to the real ready(). Eight report modules stay byte-identical
+ * while 1.1MB leaves the boot path.
+ */
+(function () {
+    function stubReady(cb) {
+        PosnicPro.lazy.load('amcharts').then(function () {
+            if (window.am4core && window.am4core.ready !== stubReady) {
+                window.am4core.ready(cb);
+            } else {
+                console.error('[lazy] amcharts loaded but did not replace the stub');
+            }
+        }).catch(function () { /* already surfaced by lazy.load */ });
+    }
+    if (!window.am4core) window.am4core = { ready: stubReady };
+})();
 
 $('.custom_search_input').on('keypress keydown.autocomplete', function () {
     var module = $(this).data('id');

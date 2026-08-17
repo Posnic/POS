@@ -347,8 +347,12 @@ PosnicPro.kioskgraphicalreport = {
         $("#kiosks-report-apex-line-chart").html('');
         $("#kiosks-report-apex-range-slider").html('');
 
-        new ApexCharts(document.querySelector("#kiosks-report-apex-line-chart"), mainChartOptions).render();
-        new ApexCharts(document.querySelector("#kiosks-report-apex-range-slider"), rangeSliderOptions).render();
+        PosnicPro.lazy.load('apexcharts').then(function () {
+            var line = document.querySelector("#kiosks-report-apex-line-chart");
+            var slider = document.querySelector("#kiosks-report-apex-range-slider");
+            if (line) new ApexCharts(line, mainChartOptions).render();
+            if (slider) new ApexCharts(slider, rangeSliderOptions).render();
+        });
 
     },
     kioskGraphTabClick: function () {
