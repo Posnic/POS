@@ -27832,20 +27832,72 @@ mark {
   margin-top: 3px;
 }
 
+/*
+ * Right-side drawers (create/edit forms and detail sliders).
+ *
+ * Width is constant per drawer; open/close is a GPU transform slide, never a
+ * width animation (which reflows every frame and clips the form while it
+ * opens). The page underneath settles back slightly while a drawer is open -
+ * depth without disorientation - and every motion here respects
+ * prefers-reduced-motion.
+ */
 .infobar-settings-sidebar {
   height: 100%;
-  width: 0;
+  width: min(420px, 100vw);
   position: fixed;
   z-index: 1001;
   top: 0;
   right: 0;
   background-color: #ffffff;
   overflow-x: hidden;
-  transition: 0.5s;
+  overflow-y: auto;
+  box-shadow: -12px 0 32px rgba(16, 24, 40, 0.12);
+  transform: translateX(110%);
+  visibility: hidden;
+  transition: transform 280ms cubic-bezier(0.4, 0, 0.2, 1),
+    visibility 0s linear 280ms;
 }
 
-.infobar-settings-sidebar.sidebarshow {
-  width: 420px;
+/* Detail / slider panels stay near-fullscreen; the user editor is wide enough
+   for the permission matrices. Width lives on the element (not the state
+   class) so the closing slide keeps its size. */
+.infobar-settings-sidebar[id$="-details"],
+#infobar-settings-sidebar-table-selection {
+  width: 97%;
+}
+#infobar-settings-sidebar-users {
+  width: clamp(600px, 55vw, 840px);
+}
+
+.infobar-settings-sidebar.sidebarshow,
+.infobar-settings-sidebar.sidebarview {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform 280ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* The page settles back a touch while a drawer is open: anchored on the left
+   so content eases away from the panel. Skipped for users who prefer
+   reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  #containerbar {
+    transition: transform 280ms cubic-bezier(0.4, 0, 0.2, 1),
+      filter 280ms cubic-bezier(0.4, 0, 0.2, 1);
+    transform-origin: left center;
+  }
+  body:has(.infobar-settings-sidebar.sidebarshow) #containerbar,
+  body:has(.infobar-settings-sidebar.sidebarview) #containerbar {
+    transform: scale(0.988);
+    filter: brightness(0.96);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .infobar-settings-sidebar,
+  .infobar-settings-sidebar.sidebarshow,
+  .infobar-settings-sidebar.sidebarview,
+  .infobar-settings-sidebar-overlay {
+    transition: none;
+  }
 }
 
 .infobar-settings-sidebar .infobar-settings-sidebar-head {
@@ -27896,6 +27948,9 @@ mark {
   right: 0;
   overflow: hidden;
   z-index: 1000;
+  /* The scrim's color is set inline by the openers; fading it here keeps
+     every call-site untouched. */
+  transition: background-color 280ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .languagebar .dropdown-menu {
@@ -36770,9 +36825,12 @@ table.focus-on tfoot tr.focused td {
   }
 }
 
-@media (max-width: 420px) {
-  .infobar-settings-sidebar.sidebarshow {
-    width: 100%;
+@media (max-width: 767px) {
+  .infobar-settings-sidebar,
+  .infobar-settings-sidebar[id$="-details"],
+  #infobar-settings-sidebar-users,
+  #infobar-settings-sidebar-table-selection {
+    width: 100vw;
   }
 }
 /*# sourceMappingURL=style.css.map */
