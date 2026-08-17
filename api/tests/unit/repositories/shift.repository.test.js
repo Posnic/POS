@@ -214,5 +214,25 @@ describe('getCurrentShift / listShifts', () => {
     expect(query.status).toBe(SHIFT_STATUS.CLOSED);
     expect('license' in query).toBe(true);
     expect('branch_id' in query).toBe(true);
+    expect('clock_in' in query).toBe(false);
+  });
+
+  test('listShifts filters clock_in by from/to when given Dates (timecard export)', async () => {
+    const col = makeCollection();
+    const repo = makeRepo(col);
+    const from = new Date('2026-08-01T00:00:00Z');
+    const to = new Date('2026-08-17T23:59:59Z');
+    const r = await repo.listShifts({ from, to });
+    expect(r.status).toBe(true);
+    const query = col.find.mock.calls[0][0];
+    expect(query.clock_in).toEqual({ $gte: from, $lte: to });
+  });
+
+  test('listShifts ignores non-Date from/to values', async () => {
+    const col = makeCollection();
+    const repo = makeRepo(col);
+    await repo.listShifts({ from: '2026-08-01', to: 'not a date' });
+    const query = col.find.mock.calls[0][0];
+    expect('clock_in' in query).toBe(false);
   });
 });
