@@ -927,6 +927,7 @@ class LegacySaleModel {
     wallet_amount: { type: 'Number', select: true },
     sale_extra_discount: { type: 'Number', select: true },
     extra_discount: { type: 'Number', select: true },
+    tip_amount: { type: 'Number', select: true },
     discount_description: { type: 'String', select: true },
     return_extra_discount: { type: 'Number', select: true },
     extra_discount_type: { type: 'String', select: true },

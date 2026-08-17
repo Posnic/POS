@@ -1302,7 +1302,7 @@ PosnicPro = {
                     + '<td class="text-right">' + (r.shifts || 0) + '</td>'
                     + '<td class="text-right">' + (r.scheduled_hours ? num(r.scheduled_hours) : '—') + '</td>'
                     + '<td class="text-right">' + num(r.worked_hours) + '</td>'
-                    + '<td class="text-right">' + (r.tips ? cur + num(r.tips) : '—') + '</td>'
+                    + '<td class="text-right">' + (r.tips_total ? cur + num(r.tips_total) : '—') + '</td>'
                     + '<td class="text-right">' + (r.hourly_rate ? cur + num(r.hourly_rate) : '—') + '</td>'
                     + '<td class="text-right">' + (r.payout ? cur + num(r.payout) : '—') + '</td>'
                     + '</tr>';
@@ -1314,7 +1314,7 @@ PosnicPro = {
                 + '<td class="text-right">' + (t.shifts || 0) + '</td>'
                 + '<td class="text-right">' + (t.scheduled_hours ? num(t.scheduled_hours) : '—') + '</td>'
                 + '<td class="text-right">' + num(t.worked_hours) + '</td>'
-                + '<td class="text-right">' + (t.tips ? cur + num(t.tips) : '—') + '</td>'
+                + '<td class="text-right">' + (t.tips_total ? cur + num(t.tips_total) : '—') + '</td>'
                 + '<td></td>'
                 + '<td class="text-right">' + (t.payout ? cur + num(t.payout) : '—') + '</td>'
                 + '</tr>');
@@ -1340,7 +1340,9 @@ PosnicPro = {
                     hours: Number(r.worked_hours) || 0,
                     hourly_rate: Number(r.hourly_rate) || 0,
                     pay: Number(r.payout) || 0,
-                    tips: Number(r.tips) || 0,
+                    cash_tips_declared: Number(r.tips) || 0,
+                    sale_tips: Number(r.sale_tips) || 0,
+                    tips_total: Number(r.tips_total) || 0,
                     period_from: range.from || '',
                     period_to: range.to || '',
                 };
