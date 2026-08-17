@@ -1102,6 +1102,14 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
       loyalty_redeem_value: loyaltyRedeemValue,
       coupon_code: couponCode,
       coupon_discount_value: couponDiscountValue,
+      // Tip captured at tender (standard POS tip line). Metadata beside the
+      // bill: never part of sales_total, tax or drawer expectations (tip-jar
+      // model); reported per employee via the labour report. An Edit that does
+      // not send the field preserves the recorded tip.
+      tip_amount:
+        data.tip_amount !== undefined && data.tip_amount !== null
+          ? Math.max(0, round2(parseFloat(data.tip_amount) || 0, 2))
+          : existingSale?.tip_amount || 0,
 
       // ...
       sale_method: saleMethod,

@@ -346,13 +346,46 @@ class ShiftRepository {
         // The roster is an overlay - a failure there never sinks the report.
       }
 
+      // Tips captured on sales at tender (the standard tip line), summed per
+      // seller for the same range. Kept separate from declared cash tips so
+      // payroll can show both. An overlay: a failure never sinks the report.
+      const saleTipsByUser = new Map();
+      let totalSaleTips = 0;
+      try {
+        const salesCol = await this.model.getCollection('sales');
+        const saleQuery = { license: this._license(), tip_amount: { $gt: 0 } };
+        const saleBranch = this._branch();
+        if (saleBranch) saleQuery.branch_id = saleBranch;
+        if (user_id) saleQuery.user_id = String(user_id);
+        const dateRange = {};
+        if (from instanceof Date) dateRange.$gte = from;
+        if (to instanceof Date) dateRange.$lte = to;
+        if (dateRange.$gte || dateRange.$lte) saleQuery.created_date = dateRange;
+        const tipped = await salesCol
+          .find(saleQuery, { projection: { user_id: 1, tip_amount: 1 } })
+          .toArray();
+        for (const sale of tipped) {
+          const key = String(sale.user_id);
+          const amt = Number(sale.tip_amount) || 0;
+          saleTipsByUser.set(key, (saleTipsByUser.get(key) || 0) + amt);
+          totalSaleTips += amt;
+        }
+      } catch (tipErr) {
+        // sale-tips overlay skipped
+      }
+
       const round2 = (n) => Math.round(n * 100) / 100;
-      const rows = Array.from(byUser.values()).map((r) => ({
-        ...r,
-        worked_hours: round2(r.worked_minutes / 60),
-        scheduled_hours: round2(r.scheduled_minutes / 60),
-        tips: round2(r.tips),
-      }));
+      const rows = Array.from(byUser.values()).map((r) => {
+        const saleTips = saleTipsByUser.get(String(r.user_id)) || 0;
+        return {
+          ...r,
+          worked_hours: round2(r.worked_minutes / 60),
+          scheduled_hours: round2(r.scheduled_minutes / 60),
+          tips: round2(r.tips),
+          sale_tips: round2(saleTips),
+          tips_total: round2(r.tips + saleTips),
+        };
+      });
 
       return {
         status: true,
@@ -365,6 +398,8 @@ class ShiftRepository {
             worked_hours: round2(totalMinutes / 60),
             scheduled_hours: round2(totalScheduled / 60),
             tips: round2(totalTips),
+            sale_tips: round2(totalSaleTips),
+            tips_total: round2(totalTips + totalSaleTips),
           },
         },
         message: 'success',

@@ -315,7 +315,7 @@ describe('roster / schedules', () => {
     expect(r.statusCode).toBe(404);
   });
 
-  test('getShiftReport sums tips and overlays scheduled minutes', async () => {
+  test('getShiftReport sums declared + sale tips and overlays scheduled minutes', async () => {
     const col = makeCollection();
     col.find = jest.fn((query) => ({
       sort: jest.fn().mockReturnThis(),
@@ -323,11 +323,13 @@ describe('roster / schedules', () => {
       toArray: jest.fn().mockResolvedValue(
         'date' in query
           ? [{ user_id: 'USER00000001', user_name: 'Joe', minutes: 480 }]
-          : [{
-              user_id: 'USER00000001', user_name: 'Joe', status: SHIFT_STATUS.CLOSED,
-              clock_in: new Date('2026-08-17T09:00:00Z'), clock_out: new Date('2026-08-17T17:00:00Z'),
-              worked_minutes: 450, tips_declared: 25,
-            }]
+          : 'tip_amount' in query
+            ? [{ user_id: 'USER00000001', tip_amount: 15 }, { user_id: 'USER00000001', tip_amount: 5 }]
+            : [{
+                user_id: 'USER00000001', user_name: 'Joe', status: SHIFT_STATUS.CLOSED,
+                clock_in: new Date('2026-08-17T09:00:00Z'), clock_out: new Date('2026-08-17T17:00:00Z'),
+                worked_minutes: 450, tips_declared: 25,
+              }]
       ),
     }));
     const repo = makeRepo(col);
@@ -337,10 +339,12 @@ describe('roster / schedules', () => {
     });
     expect(r.status).toBe(true);
     const row = r.data.rows[0];
-    expect(row.tips).toBe(25);
+    expect(row.tips).toBe(25); // declared cash tips
+    expect(row.sale_tips).toBe(20); // captured at tender
+    expect(row.tips_total).toBe(45);
     expect(row.scheduled_minutes).toBe(480);
     expect(row.scheduled_hours).toBe(8);
-    expect(r.data.totals.tips).toBe(25);
+    expect(r.data.totals.tips_total).toBe(45);
     expect(r.data.totals.scheduled_hours).toBe(8);
   });
 });

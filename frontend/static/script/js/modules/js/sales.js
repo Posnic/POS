@@ -3442,6 +3442,7 @@ PosnicPro.sales.addSale = {
                     wallet_check: ($('#wallet_balance').is(":checked")) ? 'true' : 'false',
                     extra_discount: parseFloat($('#extraDisc').text()),
                     extra_discount_type: !$('#percentIcon').hasClass('d-none') ? "percent" : "price",
+                    tip_amount: parseFloat($('#sale_tip_input').val()) || 0,
                     multi_payment: payments,
                     enable_multi_payment: PosnicPro.local.get('enable_multi_payment'),
                     table_number: newSaleTableNumber,
@@ -3459,6 +3460,7 @@ PosnicPro.sales.addSale = {
                     window.intlTelInputGlobals.getInstance(document.querySelector("#customer_sms_phone")).setCountry(response.data.country_sort);
                     $('#extraDisc').text(0);
                     $('#extraDisc').editable('setValue', 0);
+                    $('#sale_tip_input').val('');
                     $("#save_submit").addClass("disabled");
                     $('.smsSalesReceipt').hide();
                     if (response.data.sms === true) {
@@ -5890,6 +5892,11 @@ PosnicPro.sales.calculation = {
 
 // Initialize fields for a brand new sale (/sales/new)
 PosnicPro.sales.setSaleDefaults = function () {
+
+    // Tip line at tender: only for shops that switched tips on in Settings.
+    $('.sale-tip-row').toggle(
+        !!(PosnicPro.shiftWidget && PosnicPro.shiftWidget._setting('staff_tips_enable', false))
+    );
 
     // Check if register is required and open before allowing sales
     var branchHasNoRegisters = PosnicPro.local.get('branch_has_no_registers');
