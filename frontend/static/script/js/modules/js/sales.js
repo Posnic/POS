@@ -3477,6 +3477,8 @@ PosnicPro.sales.addSale = {
                 // ✅ Clear submission flag
     PosnicPro.sales.submissionInProgress = false;
                 if (response.type === 'success') {
+                    // Stock just changed on the server; cached items are stale.
+                    PosnicPro.sales.itemCache.clear();
                     window.intlTelInputGlobals.getInstance(document.querySelector("#customer_sms_phone")).setCountry(response.data.country_sort);
                     $('#extraDisc').text(0);
                     $('#extraDisc').editable('setValue', 0);
@@ -3861,6 +3863,8 @@ PosnicPro.sales.editSale = {
             };
             PosnicPro.request(paramsReturn, function (response) {
                 if (response.type === 'success') {
+                    // A return puts stock back; cached items are stale.
+                    PosnicPro.sales.itemCache.clear();
                     PosnicPro.alert(response.type, response.message);
                     history.back();
                 } else {
@@ -4073,6 +4077,8 @@ PosnicPro.sales.editSale = {
             var submitEditSale = function () {
             PosnicPro.request(paramsEdit, function (response) {
                 if (response.type === 'success') {
+                    // An edit moves stock; cached items are stale.
+                    PosnicPro.sales.itemCache.clear();
                     // Normalise sale id for both legacy (string) and new (object) responses
                     var saleId = null;
                     if (response && typeof response.data !== 'undefined' && response.data !== null) {
@@ -6060,6 +6066,49 @@ PosnicPro.sales.clear.cartItems = function (isFalse) {
 /******** START ~ ADD SALES PAGE MENU ********/
 /**** START SALES PRODUCT MENU *****/
 
+/*
+ * Item cache for the billing hot path (S1 feel-fast).
+ *
+ * Every tap on a product tile did a full GET items/:id before the line
+ * appeared in the cart - the slowest moment of the fastest-repeated action
+ * in the product. A rush hour is the same few items tapped over and over,
+ * so a short cache turns everything after the first tap instant.
+ *
+ * 60 seconds, then re-fetched; cleared outright when a sale is saved,
+ * edited or returned, because those change stock. Staleness within the
+ * window is no worse than what already existed: stock moves between
+ * add-to-cart and save regardless, and the server enforces stock at save.
+ *
+ * Serves a deep copy - addSalesLineItems and friends mutate what they are
+ * given, and a second tap must not inherit the first tap's mutations.
+ * Edit-mode stock checks deliberately bypass this and stay live.
+ */
+PosnicPro.sales.itemCache = {
+    TTL_MS: 60 * 1000,
+    _map: {},
+    get: function (id, onData) {
+        var hit = PosnicPro.sales.itemCache._map[id];
+        if (hit && (Date.now() - hit.at) < PosnicPro.sales.itemCache.TTL_MS) {
+            onData(JSON.parse(hit.json));
+            return;
+        }
+        PosnicPro.get('items/' + id, function (response) {
+            if (response.type === 'success') {
+                PosnicPro.sales.itemCache._map[id] = { at: Date.now(), json: JSON.stringify(response.data) };
+                onData(JSON.parse(JSON.stringify(response.data)));
+            } else {
+                PosnicPro.alert(response.type, response.message);
+            }
+        }, function (xhr) {
+            var response = jQuery.parseJSON(xhr.responseText);
+            PosnicPro.alert(response.type, response.message);
+        });
+    },
+    clear: function () {
+        PosnicPro.sales.itemCache._map = {};
+    },
+};
+
 PosnicPro.sales.itemsMenu = {
     /*sales Product Display*/
     onlineProductList: function () {
@@ -6172,27 +6221,20 @@ PosnicPro.sales.itemsMenu = {
         });
     },
     addToLineItemsList: function (item_id) {
-        PosnicPro.get('items/' + item_id, function (response) {
-            if (response.type === 'success') {
-                $("#save_submit").removeClass("disabled");
-                let hash = window.location.hash.slice(1);
-                if (hash === '/sales/new') {
-                    db.saleAutoFocus.get('1').then(function (data) {
-                        if (data.addSale === true) {
-                            $('#sales_new_item_name').focus();
-                        } else {
-                            $('#sales_new_item_name').blur();
-                        }
-                    });
-                }
-                PosnicPro.sales.itemsMenu.clickEffect();
-                PosnicPro.sales.addSalesLineItems(response.data);
-            } else {
-                PosnicPro.alert(response.type, response.message);
+        PosnicPro.sales.itemCache.get(item_id, function (item) {
+            $("#save_submit").removeClass("disabled");
+            let hash = window.location.hash.slice(1);
+            if (hash === '/sales/new') {
+                db.saleAutoFocus.get('1').then(function (data) {
+                    if (data.addSale === true) {
+                        $('#sales_new_item_name').focus();
+                    } else {
+                        $('#sales_new_item_name').blur();
+                    }
+                });
             }
-        }, function (xhr) {
-            var response = jQuery.parseJSON(xhr.responseText);
-            PosnicPro.alert(response.type, response.message);
+            PosnicPro.sales.itemsMenu.clickEffect();
+            PosnicPro.sales.addSalesLineItems(item);
         });
     },
     clickEffect: function () {
