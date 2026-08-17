@@ -3614,6 +3614,15 @@ db.version(2).stores({
 $(function () {
     if (!/dashboard\.html$/i.test(window.location.pathname)) return;
     PosnicPro.realtime.start();
+    /* Ask the browser not to evict this origin's caches under storage
+       pressure - a LAN counter that loses them re-downloads megabytes
+       mid-shift. Silent grant for installed/engaged origins; a refusal
+       just means today's behaviour. */
+    try {
+        if (navigator.storage && navigator.storage.persist) {
+            navigator.storage.persist().catch(function () {});
+        }
+    } catch (e) { /* optional everywhere */ }
     ['items', 'customers', 'suppliers', 'receivings', 'expenses', 'categories']
         .forEach(function (entity) {
             PosnicPro.realtime.on(entity, function () {

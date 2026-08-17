@@ -43,15 +43,70 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys()
       .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+      /* Pages are network-only, so every navigation used to wait for this
+         worker to boot before the request even left. Preload starts the
+         fetch in parallel with SW startup - pure latency, no semantics. */
+      .then(() => (self.registration.navigationPreload
+        ? self.registration.navigationPreload.enable()
+        : undefined))
       .then(() => self.clients.claim())
   );
 });
+
+/*
+ * Reference data: country / state / currency / timezone lists. Anonymous by
+ * design, byte-identical for every user, changed only by a release - so they
+ * are served STALE-WHILE-REVALIDATE from the versioned cache: the picker gets
+ * an instant answer, the network refreshes it in the background, and a deploy
+ * invalidates the lot through the cache-name turnover like everything else.
+ * This is the ONLY API surface the worker touches; business data never
+ * enters a cache the server does not control.
+ */
+const REFERENCE = /^\/(api\/)?setting\/getJSON(Country|State|Currency|TimeZone|GstState)/;
 
 self.addEventListener('fetch', (event) => {
   const request = event.request;
   if (request.method !== 'GET') return;
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
+
+  /* Navigations: network (preloaded when available); when the network is
+     gone entirely, an honest offline page instead of the browser error. */
+  if (request.mode === 'navigate') {
+    event.respondWith((async () => {
+      try {
+        const preloaded = await event.preloadResponse;
+        if (preloaded) return preloaded;
+        return await fetch(request);
+      } catch (e) {
+        const fallback = await caches.match('static/offline.html');
+        return fallback || Response.error();
+      }
+    })());
+    return;
+  }
+
+  if (REFERENCE.test(url.pathname)) {
+    event.respondWith(
+      caches.open(CACHE).then((cache) =>
+        cache.match(request).then((hit) => {
+          const refresh = fetch(request).then((response) => {
+            if (response.ok && response.type === 'basic') {
+              cache.put(request, response.clone());
+            }
+            return response;
+          });
+          if (hit) {
+            refresh.catch(() => { /* stale answer already served */ });
+            return hit;
+          }
+          return refresh;
+        })
+      )
+    );
+    return;
+  }
+
   /* Static assets only — never pages, never /api. */
   if (!/^\/(static|style|script|fonts|images)\//.test(url.pathname)) return;
 

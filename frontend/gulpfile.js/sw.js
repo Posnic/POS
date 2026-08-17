@@ -35,11 +35,13 @@ function buildServiceWorker(cb) {
     }
     const buildHash = hash.digest('hex').slice(0, 16);
 
-    /* Warm the heavy pages' bundles, by their fingerprinted names. */
+    /* Warm the heavy pages' bundles by their fingerprinted names, and the
+       offline fallback - which must be cached BEFORE the network dies. */
     const renames = fingerprint.lastRenames || new Map();
     const precache = [];
     for (const canonical of ['script/dashboard.js', 'style/dashboard.css',
-                             'script/login.js', 'style/login.css']) {
+                             'script/login.js', 'style/login.css',
+                             'static/offline.html']) {
       precache.push(renames.get(canonical) || canonical);
     }
 
