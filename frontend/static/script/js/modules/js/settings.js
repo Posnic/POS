@@ -381,7 +381,8 @@ PosnicPro.settings = {
                         till_lock_idle_minutes: response.data['till_lock_idle_minutes'] || 0,
                         staff_shifts_enable: response.data['staff_shifts_enable'] !== false,
                         staff_tips_enable: response.data['staff_tips_enable'] === true,
-                        staff_roster_enable: response.data['staff_roster_enable'] !== false
+                        staff_roster_enable: response.data['staff_roster_enable'] !== false,
+                        cash_register_enable: response.data['cash_register_enable'] !== false
                     };
                     PosnicPro.local.set('general_settings', JSON.stringify(generalSettings));
                     PosnicPro.shiftWidget.applyEnabled();
@@ -532,7 +533,10 @@ PosnicPro.settings = {
                 PosnicPro.settings.loadSelectSettingState(country_id);
                 PosnicPro.record_id = id;
                 PosnicPro.roundoff = data.roundOff;
-                (data.register.length === 0) ? $('.cashRegisterModule').css('display', 'none') : $('.cashRegisterModule').css('display', 'block');
+                // Hidden when the module is off OR nothing is configured.
+                (data.cash_register_enable === false || data.register.length === 0)
+                    ? $('.cashRegisterModule').css('display', 'none')
+                    : $('.cashRegisterModule').css('display', 'block');
                 $('#id').val(PosnicPro.record_id);
                 $('#razor_key').text(data.razorKey);
                 $('#razor_url').text(data.razorUrl);
@@ -608,6 +612,7 @@ PosnicPro.settings = {
                 $('#staff_shifts_enable').val(data.staff_shifts_enable === false ? 'false' : 'true');
                 $('#staff_tips_enable').val(data.staff_tips_enable === true ? 'true' : 'false');
                 $('#staff_roster_enable').val(data.staff_roster_enable === false ? 'false' : 'true');
+                $('#cash_register_enable').val(data.cash_register_enable === false ? 'false' : 'true');
 
                 // Store general settings including hardware_weight_machine_enable
                 var generalSettings = {
@@ -616,7 +621,8 @@ PosnicPro.settings = {
                     till_lock_idle_minutes: data.till_lock_idle_minutes || 0,
                     staff_shifts_enable: data.staff_shifts_enable !== false,
                     staff_tips_enable: data.staff_tips_enable === true,
-                    staff_roster_enable: data.staff_roster_enable !== false
+                    staff_roster_enable: data.staff_roster_enable !== false,
+                    cash_register_enable: data.cash_register_enable !== false
                 };
                 PosnicPro.local.set('general_settings', JSON.stringify(generalSettings));
                 PosnicPro.shiftWidget.applyEnabled();
@@ -1382,6 +1388,7 @@ if ($wrapper.length) {
                 staff_shifts_enable: ($('#staff_shifts_enable').val() === 'false') ? 'false' : 'true',
                 staff_tips_enable: ($('#staff_tips_enable').val() === 'true') ? 'true' : 'false',
                 staff_roster_enable: ($('#staff_roster_enable').val() === 'false') ? 'false' : 'true',
+                cash_register_enable: ($('#cash_register_enable').val() === 'false') ? 'false' : 'true',
             })
         };
         PosnicPro.put(params, function (response) {
@@ -1476,11 +1483,22 @@ if ($wrapper.length) {
                     till_lock_idle_minutes: parseInt($('#till_lock_idle_minutes').val(), 10) || 0,
                     staff_shifts_enable: ($('#staff_shifts_enable').val() !== 'false'),
                     staff_tips_enable: ($('#staff_tips_enable').val() === 'true'),
-                    staff_roster_enable: ($('#staff_roster_enable').val() !== 'false')
+                    staff_roster_enable: ($('#staff_roster_enable').val() !== 'false'),
+                    cash_register_enable: ($('#cash_register_enable').val() !== 'false')
                 };
                 PosnicPro.local.set('general_settings', JSON.stringify(generalSettings));
                 // Show or hide the header clock button to match, right away.
                 PosnicPro.shiftWidget.applyEnabled();
+                // Register menu follows the module toggle the same way.
+                if ($('#cash_register_enable').val() === 'false') {
+                    $('.cashRegisterModule').css('display', 'none');
+                } else {
+                    $('.cashRegisterModule').css('display', 'block');
+                    // Re-enabling must also re-arm the sale-screen gate: the
+                    // disable path parks branch_has_no_registers='true' to
+                    // stand the gate down, so clear it here.
+                    PosnicPro.local.set('branch_has_no_registers', '');
+                }
             }
             PosnicPro.alert(response.type, response.message);
             loader.find(".loadingSpinner:first").remove();

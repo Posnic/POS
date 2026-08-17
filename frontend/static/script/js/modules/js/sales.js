@@ -5854,13 +5854,17 @@ PosnicPro.sales.setSaleDefaults = function () {
         !!(PosnicPro.shiftWidget && PosnicPro.shiftWidget._setting('staff_tips_enable', false))
     );
 
-    // Check if register is required and open before allowing sales
+    // Check if register is required and open before allowing sales.
+    // ONLY when the module is on: a shop that disabled cash registers in
+    // Settings > Modules sells the plain way, and nothing here may block it.
+    var registerModuleOn = !!(PosnicPro.shiftWidget
+        && PosnicPro.shiftWidget._setting('cash_register_enable', true));
     var branchHasNoRegisters = PosnicPro.local.get('branch_has_no_registers');
     var registerStatus = PosnicPro.local.get('userRegisterStatus');
     var registerId = PosnicPro.local.get('register_id');
-    
+
     // If branch has registers but no register is open, check database and show modal if needed
-    if (branchHasNoRegisters !== 'true' && (registerStatus !== 'Open' || !registerId)) {
+    if (registerModuleOn && branchHasNoRegisters !== 'true' && (registerStatus !== 'Open' || !registerId)) {
         var branchId = PosnicPro.local.get('branch_id_set');
         var params = {
             url: 'branches/userRegisterBranchSelect',

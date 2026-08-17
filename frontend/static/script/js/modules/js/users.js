@@ -883,7 +883,24 @@ PosnicPro.users = {
                 $('#containerbar_sso').show();
                 $('#login_form').hide();
                 $('#Branch_selection_form').hide();
-                
+
+                /*
+                 * The cash-register module is optional (Settings > Modules).
+                 * Off = no register ceremony at login: straight to selling.
+                 * The flag rides the server response because localStorage is
+                 * not populated yet on a fresh browser at this point.
+                 */
+                if (data.cash_register_enable === false) {
+                    PosnicPro.local.set('userRegisterStatus', 'Closed');
+                    PosnicPro.local.set('cash_register_id', '');
+                    PosnicPro.local.set('register_id', '');
+                    PosnicPro.local.set('branch_has_no_registers', 'true');
+                    $('.loginform_card').hide();
+                    PosnicPro.users.createCookie('loginuser', 'yes', 1);
+                    window.location = 'dashboard.html#/dashboard';
+                    return;
+                }
+
                 // Check if there's an open register in database
                 if (data.open_register && data.open_register.register_status === 'Opened') {
                     // Load existing open register to local storage and IndexedDB
