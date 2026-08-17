@@ -495,6 +495,49 @@ class BranchModel {
           }))
         : [];
 
+      /*
+       * Who is on each register RIGHT NOW.
+       *
+       * The session lock refuses a register someone else holds - but the till
+       * only learned that by trying. Annotating the list up front lets the
+       * selection screen say "in use by Priya" beside the name and lets the
+       * register page show a live overview, instead of a dead end at submit.
+       * Best-effort: a lookup failure serves the plain list, never no list.
+       */
+      if (user && user.license) {
+        try {
+          const openSessions = await this.model.db
+            .collection('cashregister')
+            .find(
+              {
+                branch_id: new Types.ObjectId(branchId),
+                register_status: 'Opened',
+                license: new Types.ObjectId(user.license),
+              },
+              { projection: { register_id: 1, current_user: 1, current_user_id: 1, register_opendate: 1 } }
+            )
+            .toArray();
+          const byRegister = new Map(
+            openSessions.map((s) => [String(s.register_id || ''), s])
+          );
+          for (const row of registerData) {
+            const open = byRegister.get(String(row.register_id));
+            if (open) {
+              row.in_use = true;
+              row.in_use_by = open.current_user || '';
+              row.in_use_by_me = user._id
+                ? String(open.current_user_id || '') === String(user._id)
+                : false;
+              row.open_since = open.register_opendate || null;
+            } else {
+              row.in_use = false;
+            }
+          }
+        } catch (annotateErr) {
+          console.error('register open-state annotation skipped:', annotateErr.message);
+        }
+      }
+
       // A user with linked registers (user form -> Choose Register) is offered
       // only those; an empty link list means no restriction. Admin-type
       // accounts are never restricted, and any lookup problem - or links that

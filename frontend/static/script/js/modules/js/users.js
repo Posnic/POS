@@ -821,6 +821,57 @@ PosnicPro.users = {
         }
     },
 
+    /*
+     * One way to fill a register dropdown, everywhere one exists.
+     *
+     * The server annotates each register with who holds it right now
+     * (in_use / in_use_by / in_use_by_me), so the screen can say "in use by
+     * Priya" BESIDE THE NAME instead of letting the cashier pick it, type a
+     * float, press Open and only then meet the session lock. Selecting an
+     * in-use register shows a note under the select; opening your OWN open
+     * register is fine (the server resumes the session) and says so.
+     */
+    fillRegisterSelect: function ($selects, list) {
+        var html = '';
+        for (var i = 0; i < list.length; i++) {
+            var row = list[i];
+            var name = row.register_name;
+            var suffix = '';
+            if (row.in_use && row.in_use_by_me) suffix = ' — your open session';
+            else if (row.in_use) suffix = ' — in use' + (row.in_use_by ? ' by ' + row.in_use_by : '');
+            html += '<option id="' + row.register_id + '" value="' + row.register_id + '"' +
+                ' data-inuse="' + (row.in_use ? '1' : '') + '"' +
+                ' data-inuseby="' + $('<span>').text(row.in_use_by || '').html() + '"' +
+                ' data-mine="' + (row.in_use_by_me ? '1' : '') + '">' +
+                $('<span>').text(name + suffix).html() +
+                '</option>';
+        }
+        $selects.each(function () {
+            var $sel = $(this);
+            $sel.html(html);
+            var $note = $sel.parent().find('.register-inuse-note');
+            if (!$note.length) {
+                $note = $('<div class="register-inuse-note" style="display:none;"></div>');
+                $sel.after($note);
+            }
+            var update = function () {
+                var $opt = $sel.find(':selected');
+                if ($opt.data('inuse') && !$opt.data('mine')) {
+                    var who = $opt.data('inuseby');
+                    $note.text('Already open' + (who ? ' by ' + who : ' on another till') +
+                        '. Choose another register, or ask them to close it first.')
+                        .show();
+                } else if ($opt.data('mine')) {
+                    $note.text('This is your open session - opening will resume it.').show();
+                } else {
+                    $note.hide();
+                }
+            };
+            $sel.off('change.inuse').on('change.inuse', update);
+            update();
+        });
+    },
+
     selectedRegisterActiveBranchUser: function (id) {
         var params = {
             url: 'branches/userRegisterBranchSelect',
@@ -857,12 +908,7 @@ PosnicPro.users = {
                     let loader = $(".loader-login");
                     loader.find(".loadingSpinner:first").remove();
                     $('#registerselect_form').show();
-                    var registerOption = [];
-                    for (var i = 0; i < data.register_data.length; i++) {
-                        var row = data.register_data[i];
-                        registerOption += '<option id="' + row.register_id + '" value="' + row.register_id + '">' + row.register_name + '</option>';
-                    }
-                    $('.choose_register_model').html(registerOption);
+                    PosnicPro.users.fillRegisterSelect($('.choose_register_model'), data.register_data);
                 } else {
                     // No registers for this branch
                     $('.cashRegisterModule').remove();
@@ -964,12 +1010,11 @@ PosnicPro.users = {
             };
             PosnicPro.get(params, function (response) {
                 if (response.type === 'success' && response.data.register_data.length > 0) {
-                    var registerOption = '';
-                    for (var i = 0; i < response.data.register_data.length; i++) {
-                        var row = response.data.register_data[i];
-                        registerOption += '<option id="' + row.register_id + '" value="' + row.register_id + '">' + row.register_name + '</option>';
-                    }
-                    $('#choose_register_model').html(registerOption);
+                    PosnicPro.users.fillRegisterSelect(
+                        $('#choose_register_model'), response.data.register_data);
+                }
+                if (PosnicPro.registers && PosnicPro.registers.renderOverview) {
+                    PosnicPro.registers.renderOverview(response && response.data);
                 }
             });
         };

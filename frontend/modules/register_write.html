@@ -32,7 +32,37 @@
                         </div>
                     </div>
                 </div>
-                <div class="row" id="close_register_card" style="display:none;">            
+                <!-- Every register of the branch, and who is on it right now.
+                     This card is ALWAYS visible on the page: before it existed
+                     there was nowhere to simply SEE the branch's registers. -->
+                <div class="row" id="register_overview_row">
+                    <div class="col-12">
+                        <div class="card m-b-30">
+                            <div class="card-header d-flex align-items-center justify-content-between">
+                                <h5 class="card-title mb-0">
+                                    <lang class="lang_register_overview">Registers</lang>
+                                    <span class="text-muted" id="register_overview_branch"></span>
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-borderless mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th><lang class="lang_registername_title">Register name</lang></th>
+                                                <th><lang class="lang_status_title">Status</lang></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="register_overview_body"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row" id="close_register_card" style="display:none;">
                     <div class="col-lg-4 col-xl-4">
                     </div>
                     <div class="col-lg-4 col-xl-4" id="close_model_register">
@@ -52,7 +82,10 @@
                                         <label for="choose_register_model" class="text_white" style="font-weight: 500; margin-bottom: 0.5rem;">
                                             <i class="feather icon-monitor"></i> <lang class="lang_choose_register">Choose Register</lang>
                                         </label>
-                                        <select id="choose_register_model" class="custom-select border-control choose_register_model" data-placedataholder="Select Register" style="width: 100%; border: 1px solid #eae8e8; padding: 0.75rem; font-size: 1rem;">
+                                        <!-- height:auto, because .custom-select has a FIXED height and the
+                                             0.75rem padding pushed the text half out of it - register names
+                                             rendered clipped to their top half. -->
+                                        <select id="choose_register_model" class="custom-select border-control choose_register_model" data-placedataholder="Select Register" style="width: 100%; height: auto; border: 1px solid #eae8e8; padding: 0.75rem; font-size: 1rem;">
                                         </select>
                                     </div>
                                 </div>
@@ -65,7 +98,9 @@
                                     <input type="hidden" class="select-register-status" id="closeregister_status" name="register_select_status">
                                 </div>
                                 <div class="card-footer text-center" style="background-color: transparent; border-top: none; padding-top: 1rem;">
-                                    <button type="button" class="btn btn-light btn-lg" id="close_register_action" onclick="PosnicPro.users.cashregisterOpenForm();" style="padding: 0.75rem 2rem; font-weight: 600; border-radius: 5px; width: 100%;">
+                                    <!-- btn-primary, not btn-light: the grey read as DISABLED, on the
+                                         one button this card exists for. -->
+                                    <button type="button" class="btn btn-primary btn-lg" id="close_register_action" onclick="PosnicPro.users.cashregisterOpenForm();" style="padding: 0.75rem 2rem; font-weight: 600; border-radius: 5px; width: 100%;">
                                         <i class="feather icon-unlock"></i> <lang class="lang_registeredopen"> Open Register</lang>
                                     </button>
                                 </div>
