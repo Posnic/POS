@@ -704,6 +704,7 @@ PosnicPro = {
                     try { event = JSON.parse(msg.data); } catch (e) { return; }
                     if (!event || event.type !== 'change' || !event.entity) return;
                     var entity = event.entity;
+                    try { PosnicPro.bellFeed.record(entity); } catch (e) { /* feed is a bonus */ }
                     clearTimeout(PosnicPro.realtime._timers[entity]);
                     PosnicPro.realtime._timers[entity] = setTimeout(function () {
                         var fns = PosnicPro.realtime._handlers[entity] || [];
@@ -717,6 +718,123 @@ PosnicPro = {
         on: function (entity, fn) {
             (PosnicPro.realtime._handlers[entity] =
                 PosnicPro.realtime._handlers[entity] || []).push(fn);
+        },
+    },
+
+    /*
+     * The bell (S2): what the shop's other tills just did, in one glance.
+     *
+     * Fed by the realtime change signals, which carry an entity name and
+     * nothing else - so the feed is honest about what it knows: "Sales
+     * activity, 2 min ago, ×3", never invented detail. Entries are gated by
+     * the same ACL as the page they open, coalesced per entity within a
+     * minute so a rush reads as one line, and kept in memory only - the
+     * lists themselves are the record; this is just the tap on the shoulder.
+     */
+    bellFeed: {
+        MAX: 20,
+        _items: [],       // newest first: {entity, label, hash, count, at}
+        _unseen: 0,
+        _open: false,
+        _KINDS: {
+            sales: { label: 'Sales activity', hash: 'sales', acl: ['sales', 'read'] },
+            items: { label: 'Inventory updated', hash: 'items', acl: ['item', 'read'] },
+            receivings: { label: 'Receiving activity', hash: 'receivings', acl: ['receiving', 'read'] },
+            customers: { label: 'Customer records changed', hash: 'customers', acl: ['customer', 'read'] },
+            suppliers: { label: 'Supplier records changed', hash: 'suppliers', acl: ['supplier', 'read'] },
+            categories: { label: 'Categories changed', hash: 'categories', acl: ['category', 'read'] },
+            expenses: { label: 'Expense recorded', hash: 'expenses', acl: ['expense', 'read'] },
+            registers: { label: 'Register activity', hash: 'registers', acl: ['sales', 'read'] },
+            shifts: { label: 'Staff clock activity', hash: 'users', acl: ['user', 'read'] },
+            easytables: { label: 'Table / KOT activity', hash: 'kothistory', acl: ['sales', 'read'] },
+        },
+        _can: function (acl) {
+            var u = PosnicPro.userACL;
+            return !!(u && u[acl[0]] && u[acl[0]][acl[1]] === true);
+        },
+        record: function (entity) {
+            var kind = PosnicPro.bellFeed._KINDS[entity];
+            if (!kind || !PosnicPro.bellFeed._can(kind.acl)) return;
+            var items = PosnicPro.bellFeed._items;
+            var now = Date.now();
+            if (items.length && items[0].entity === entity && now - items[0].at < 60000) {
+                items[0].count++;
+                items[0].at = now;
+            } else {
+                items.unshift({ entity: entity, label: kind.label, hash: kind.hash, count: 1, at: now });
+                if (items.length > PosnicPro.bellFeed.MAX) items.pop();
+                PosnicPro.bellFeed._unseen++;
+            }
+            PosnicPro.bellFeed._badge();
+            if (PosnicPro.bellFeed._open) PosnicPro.bellFeed._paint();
+        },
+        _badge: function () {
+            var el = document.getElementById('bell_feed_badge');
+            if (!el) return;
+            var n = PosnicPro.bellFeed._unseen;
+            el.style.display = n > 0 ? 'inline-block' : 'none';
+            el.textContent = n > 99 ? '99+' : String(n);
+        },
+        _ago: function (at) {
+            var s = Math.max(0, Math.round((Date.now() - at) / 1000));
+            if (s < 60) return 'just now';
+            var m = Math.round(s / 60);
+            if (m < 60) return m + ' min ago';
+            return Math.round(m / 60) + ' h ago';
+        },
+        _paint: function () {
+            var list = document.getElementById('bell_feed_list');
+            if (!list) return;
+            var items = PosnicPro.bellFeed._items;
+            if (!items.length) {
+                list.innerHTML = '<div class="bellfeed-empty">Nothing yet - activity from other tills lands here.</div>';
+                return;
+            }
+            var html = '';
+            for (var i = 0; i < items.length; i++) {
+                var it = items[i];
+                html += '<div class="bellfeed-item" data-i="' + i + '">' +
+                    '<span>' + it.label + (it.count > 1 ? ' <span class="bellfeed-count">×' + it.count + '</span>' : '') + '</span>' +
+                    '<span class="bellfeed-time">' + PosnicPro.bellFeed._ago(it.at) + '</span>' +
+                    '</div>';
+            }
+            list.innerHTML = html;
+            $(list).children('.bellfeed-item').off('click').on('click', function () {
+                var it = PosnicPro.bellFeed._items[Number($(this).data('i'))];
+                PosnicPro.bellFeed.close();
+                if (it) hasher.setHash(it.hash);
+            });
+        },
+        _ensureDom: function () {
+            if (document.getElementById('bell_feed_panel')) return;
+            var panel = document.createElement('div');
+            panel.id = 'bell_feed_panel';
+            panel.innerHTML = '<div id="bell_feed_head">Shop activity</div><div id="bell_feed_list"></div>';
+            document.body.appendChild(panel);
+            document.addEventListener('mousedown', function (ev) {
+                if (!PosnicPro.bellFeed._open) return;
+                var p = document.getElementById('bell_feed_panel');
+                var b = document.getElementById('bell_feed_btn');
+                if (p && !p.contains(ev.target) && b && !b.contains(ev.target)) {
+                    PosnicPro.bellFeed.close();
+                }
+            });
+        },
+        toggle: function () {
+            PosnicPro.bellFeed._open ? PosnicPro.bellFeed.close() : PosnicPro.bellFeed.openPanel();
+        },
+        openPanel: function () {
+            PosnicPro.bellFeed._ensureDom();
+            PosnicPro.bellFeed._open = true;
+            PosnicPro.bellFeed._unseen = 0;
+            PosnicPro.bellFeed._badge();
+            document.getElementById('bell_feed_panel').style.display = 'block';
+            PosnicPro.bellFeed._paint();
+        },
+        close: function () {
+            PosnicPro.bellFeed._open = false;
+            var p = document.getElementById('bell_feed_panel');
+            if (p) p.style.display = 'none';
         },
     },
 

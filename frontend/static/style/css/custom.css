@@ -2445,3 +2445,54 @@ input:checked + .slider:before {
     color: var(--theme-text-muted, #5b6577);
     border-top: 1px solid rgba(127, 127, 127, 0.18);
 }
+
+/*
+ * Shop-activity bell (S2; fed by the realtime channel, PosnicPro.bellFeed).
+ */
+#bell_feed_btn { position: relative; }
+#bell_feed_badge {
+    position: absolute;
+    top: -4px;
+    right: -6px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 8px;
+    background: #e5484d;
+    color: #fff;
+    font-size: 10px;
+    line-height: 16px;
+    text-align: center;
+    font-weight: 600;
+}
+#bell_feed_panel {
+    display: none;
+    position: fixed;
+    top: 64px;
+    right: 16px;
+    width: min(340px, 92vw);
+    max-height: 60vh;
+    overflow-y: auto;
+    z-index: 19000;
+    background: var(--theme-card-bg, #fff);
+    color: var(--theme-text-primary, #16203a);
+    border-radius: 10px;
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.28);
+}
+#bell_feed_head {
+    padding: 12px 16px;
+    font-weight: 600;
+    border-bottom: 1px solid rgba(127, 127, 127, 0.18);
+}
+.bellfeed-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 16px;
+    cursor: pointer;
+    font-size: 13.5px;
+}
+.bellfeed-item:hover { background: rgba(127, 127, 127, 0.10); }
+.bellfeed-count { opacity: 0.7; font-size: 12px; }
+.bellfeed-time { color: var(--theme-text-muted, #5b6577); font-size: 12px; white-space: nowrap; }
+.bellfeed-empty { padding: 16px; color: var(--theme-text-muted, #5b6577); font-size: 13px; }
