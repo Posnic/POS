@@ -20,6 +20,7 @@ const ERROR_MESSAGES = {
   SALES_NOT_UPDATED: 'Sales not updated',
   UNAUTHORIZED_VIEW_SALES: 'You do not have permission to view sales',
   UNAUTHORIZED_DELETE_SALES: 'You do not have permission to delete sales',
+  DISCOUNT_NEEDS_APPROVAL: 'Applying a discount needs manager approval',
   NO_VALID_SALE_IDS_FOR_DELETE: 'No valid sale ids supplied for delete',
   SALES_NOT_DELETED: 'Sales Not deleted',
   FAILED_TO_SAVE_SALE_UNEXPECTED: 'Failed to save sale (unexpected service response)',
