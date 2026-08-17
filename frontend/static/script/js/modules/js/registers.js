@@ -10,6 +10,7 @@ PosnicPro.registers = {
         $('#hide_show_cashbutton').hide();
         $('#cash_button_amount').hide();
         PosnicPro.users.registerMenuDetails();
+        PosnicPro.registers.renderOverview();
         $('#user_name').html(PosnicPro.local.get('username'));
         $('#cash_outbutton_amount').hide();
         $('#cashregisters_detail').show();
@@ -22,6 +23,45 @@ PosnicPro.registers = {
             $("#delete").removeAttr('disabled', false).css({"cursor": 'pointer', "color": '#f9616d', "border-color": '#f9616d'});
         }
     },
+    /*
+     * The branch's registers and who holds each, at a glance - the page used
+     * to show NOTHING unless you were mid-open or mid-close. Reuses the
+     * annotated register list; pass data when a caller already fetched it.
+     */
+    renderOverview: function (data) {
+        var paint = function (d) {
+            var rows = (d && d.register_data) || [];
+            $('#register_overview_branch').text(
+                PosnicPro.local.get('branchname') ? ' — ' + PosnicPro.local.get('branchname') : '');
+            var html = '';
+            for (var i = 0; i < rows.length; i++) {
+                var r = rows[i];
+                var status;
+                if (r.in_use && r.in_use_by_me) {
+                    status = '<span class="badge badge-success">Open — your session</span>';
+                } else if (r.in_use) {
+                    status = '<span class="badge badge-warning">Open — ' +
+                        $('<span>').text(r.in_use_by || 'another till').html() + '</span>';
+                } else {
+                    status = '<span class="badge badge-light">Closed</span>';
+                }
+                html += '<tr><td>' + (i + 1) + '</td><td>' +
+                    $('<span>').text(r.register_name).html() + '</td><td>' + status + '</td></tr>';
+            }
+            if (!html) {
+                html = '<tr><td colspan="3" class="text-muted">No registers configured for this branch - add them in Settings &gt; Branch.</td></tr>';
+            }
+            $('#register_overview_body').html(html);
+        };
+        if (data && data.register_data) { paint(data); return; }
+        PosnicPro.get({
+            url: 'branches/userRegisterBranchSelect',
+            data: { id: PosnicPro.local.get('branch_id_set') }
+        }, function (response) {
+            if (response.type === 'success') paint(response.data);
+        }, function () { /* the page's other cards still render */ });
+    },
+
     showDelete: function (id) {
         PosnicPro.deleteTableRowData(id, 'registers');
     },
