@@ -32,6 +32,19 @@ function extractArchive(sevenZipPath, archivePath, destination, onPercent) {
 }
 
 function getArchiveId(archivePath) {
+  /*
+   * Prefer the build fingerprint shipped beside the archive
+   * (node_modules.zip.id, written by scripts/prepare-api-runtime.js): it only
+   * changes when the dependencies or build settings genuinely change. Hashing
+   * the archive bytes - the fallback for older installs that shipped without
+   * the id - changes on every CI build (fresh file mtimes inside the zip), so
+   * it forced the slow full re-extraction on every update even when nothing
+   * in the runtime had changed.
+   */
+  try {
+    const shipped = fs.readFileSync(`${archivePath}.id`, 'utf8').trim();
+    if (/^[0-9a-f]{16,}$/i.test(shipped)) return shipped;
+  } catch (e) { /* no id file: fall back to hashing the bytes */ }
   const hash = crypto.createHash('sha256');
   hash.update(fs.readFileSync(archivePath));
   return hash.digest('hex');

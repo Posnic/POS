@@ -560,10 +560,17 @@ const startupPerformance = {
   interfaceVisibleMs: null,
   summaryWritten: false
 };
-const STARTUP_READY_FILE = path.join(
-  app.getPath('userData'),
-  `.startup-ready-${app.getVersion()}`
-);
+/*
+ * Warm-boot marker. Deliberately NOT keyed on the app version any more: it
+ * used to be `.startup-ready-<version>`, which forced the cold-boot experience
+ * (visible loading window, slowest path) on the first launch after EVERY
+ * update - the opposite of a seamless update. What actually makes a post-
+ * update boot slow is the api-runtime re-extraction, and that is now keyed on
+ * its own shipped fingerprint (api-runtime.js), so an update that does not
+ * change the runtime boots warm. If extraction is needed after all, the
+ * loading screen still appears via the reveal fallback with honest progress.
+ */
+const STARTUP_READY_FILE = path.join(app.getPath('userData'), '.startup-ready');
 
 function focusPrimaryWindow() {
   if (!mainWindow || mainWindow.isDestroyed()) {
@@ -653,7 +660,14 @@ function isWarmStartup() {
 
 function rememberSuccessfulStartup() {
   try {
-    fs.writeFileSync(STARTUP_READY_FILE, new Date().toISOString());
+    fs.writeFileSync(STARTUP_READY_FILE, `${app.getVersion()} ${new Date().toISOString()}`);
+    // Sweep the old per-version markers this file replaces, so userData does
+    // not accumulate one stale .startup-ready-1.2.3 per release forever.
+    for (const name of fs.readdirSync(app.getPath('userData'))) {
+      if (name.startsWith('.startup-ready-')) {
+        try { fs.unlinkSync(path.join(app.getPath('userData'), name)); } catch (e) { /* best effort */ }
+      }
+    }
   } catch (error) {
     console.warn('[Main] Could not save startup state:', error.message);
   }
@@ -4382,6 +4396,14 @@ function startServer() {
    * scan still finds every change, which is exactly how every till works today.
    */
   process.env.SYNC_OUTBOX_ENABLED = process.env.SYNC_OUTBOX_ENABLED || 'true';
+
+  /*
+   * Runtime identity for the in-process API (GET /api/runtime-info): this
+   * process IS the desktop shell, and the version users and the updater see is
+   * the root app version - the api's own package version is meaningless here.
+   */
+  process.env.POSNIC_DESKTOP = '1';
+  process.env.POSNIC_APP_VERSION = app.getVersion();
 
   /*
    * Decide which frontend to serve, before the API starts serving it.

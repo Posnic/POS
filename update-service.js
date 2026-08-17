@@ -7,7 +7,9 @@
  * Key behaviours:
  *  - Production only  (app.isPackaged guard — dev mode is silently skipped)
  *  - autoDownload = false  (user controls when to download)
- *  - autoInstallOnAppQuit = true  (installs on next close if downloaded)
+ *  - autoInstallOnAppQuit stays OFF: install-on-close is sequenced by
+ *    main.js's before-quit handler (backup first, then quitAndInstall),
+ *    honouring the shop's installOnQuit setting
  *  - Supports both automatic (startup + periodic) and manual checks
  *  - Broadcasts status / progress events to all open BrowserWindows
  */
@@ -171,8 +173,13 @@ class UpdateService {
        * shop starts it, because the restart is longer and they should pick
        * when.
        */
-      if (this._updateInfo.kind === 'app' && this._autoUpdater) {
-        this._autoUpdater.autoInstallOnAppQuit = true;
+      /* Note: electron-updater's own autoInstallOnAppQuit stays OFF (set once
+         in init). The install-on-close behaviour is sequenced by main.js's
+         before-quit handler instead - prepareQuitInstall (backup, while the
+         database is still up) then finishQuitInstall - and it also honours the
+         shop's installOnQuit setting. Turning the built-in flag on here would
+         bypass both. */
+      if (this._updateInfo.kind === 'app') {
         console.log(`[UpdateService] ${info.version} downloaded; it will be applied when the app is next closed`);
       }
     });
