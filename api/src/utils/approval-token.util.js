@@ -9,15 +9,17 @@
 // expires quickly, so it can't be reused for a different action/person or later.
 
 const crypto = require('crypto');
+const { currentSecret } = require('../db/tenant-context');
 
-// Signing key. Production sets JWT_SECRET (the app's auth already requires it, so
-// it is present and identical across the dual-process deployment). The random
-// fallback is only reached in single-process dev/test where no env secret is
-// set - never a hard-coded secret, and unforgeable.
-const SECRET =
-  process.env.JWT_SECRET ||
-  process.env.ENCRYPTION_KEY ||
-  crypto.randomBytes(32).toString('hex');
+// Signing key, resolved per call so a process serving several shops signs each
+// shop's approvals with that shop's own JWT_SECRET - a token minted in one shop
+// must never verify in another. Standalone falls back to the environment (the
+// app's auth already requires JWT_SECRET, so it is present and identical across
+// the dual-process deployment). The random fallback is only reached in
+// single-process dev/test where no env secret is set - never a hard-coded
+// secret, and unforgeable.
+const DEV_FALLBACK = crypto.randomBytes(32).toString('hex');
+const secret = () => currentSecret('JWT_SECRET', process.env.JWT_SECRET || process.env.ENCRYPTION_KEY || DEV_FALLBACK);
 // 5 minutes: long enough that a refund approved when the return screen opens is
 // still valid when the cashier finishes and submits, short enough to limit reuse.
 const DEFAULT_TTL_MS = 5 * 60 * 1000;
@@ -32,7 +34,7 @@ function signApproval(payload = {}, ttlMs = DEFAULT_TTL_MS) {
   const body = { ...payload };
   if (!body.exp) body.exp = Date.now() + ttlMs;
   const bodyStr = b64(JSON.stringify(body));
-  const sig = crypto.createHmac('sha256', SECRET).update(bodyStr).digest('base64url');
+  const sig = crypto.createHmac('sha256', secret()).update(bodyStr).digest('base64url');
   return `${bodyStr}.${sig}`;
 }
 
@@ -44,7 +46,7 @@ function verifyApproval(token) {
   if (!token || typeof token !== 'string' || token.indexOf('.') === -1) return null;
   const [bodyStr, sig] = token.split('.');
   if (!bodyStr || !sig) return null;
-  const expected = crypto.createHmac('sha256', SECRET).update(bodyStr).digest('base64url');
+  const expected = crypto.createHmac('sha256', secret()).update(bodyStr).digest('base64url');
   const sigBuf = Buffer.from(sig);
   const expBuf = Buffer.from(expected);
   if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) return null;
