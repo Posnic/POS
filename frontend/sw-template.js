@@ -54,6 +54,34 @@ self.addEventListener('activate', (event) => {
 });
 
 /*
+ * Web Push (roadmap W4): render what the server sent, focus the app on tap.
+ * The payload is built server-side only; this handler invents nothing.
+ */
+self.addEventListener('push', (event) => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; } catch (e) { /* show the default */ }
+  event.waitUntil(self.registration.showNotification(data.title || 'Posnic', {
+    body: data.body || '',
+    tag: data.tag || 'posnic',
+    icon: 'static/images/logo/posnic-logo.svg',
+    data: { url: data.url || '/dashboard.html' },
+  }));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = (event.notification.data && event.notification.data.url) || '/dashboard.html';
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((wins) => {
+      for (const win of wins) {
+        if ('focus' in win) return win.focus();
+      }
+      return self.clients.openWindow(url);
+    })
+  );
+});
+
+/*
  * Reference data: country / state / currency / timezone lists. Anonymous by
  * design, byte-identical for every user, changed only by a release - so they
  * are served STALE-WHILE-REVALIDATE from the versioned cache: the picker gets

@@ -805,12 +805,78 @@ PosnicPro = {
                 if (it) hasher.setHash(it.hash);
             });
         },
+        /*
+         * Push opt-in (roadmap W4). The pipe exists server-side; this is the
+         * per-device door: ask permission, subscribe with the shop's VAPID
+         * key, register with the server, then offer a test send so the
+         * person SEES it work. Hidden wherever push cannot work (Electron
+         * never registers the worker; unsupported browsers).
+         */
+        _pushSetup: function () {
+            var $btn = $('#bell_feed_push');
+            if (!$btn.length) return;
+            if (!('Notification' in window) || !navigator.serviceWorker || !('PushManager' in window)) {
+                $btn.hide();
+                return;
+            }
+            navigator.serviceWorker.getRegistration().then(function (reg) {
+                if (!reg) { $btn.hide(); return; }
+                reg.pushManager.getSubscription().then(function (sub) {
+                    $btn.text(sub ? 'Send test notification' : 'Enable notifications on this device')
+                        .data('subscribed', !!sub).show();
+                });
+            }).catch(function () { $btn.hide(); });
+        },
+        _pushClick: function () {
+            var $btn = $('#bell_feed_push');
+            if ($btn.data('subscribed')) {
+                PosnicPro.post({ url: 'push/test', data: JSON.stringify({}) }, function (response) {
+                    PosnicPro.alert(response.type, response.message);
+                }, function () { PosnicPro.alert('error', 'Could not send the test.'); });
+                return;
+            }
+            Notification.requestPermission().then(function (perm) {
+                if (perm !== 'granted') return;
+                return navigator.serviceWorker.getRegistration().then(function (reg) {
+                    if (!reg) return;
+                    return new Promise(function (resolve) {
+                        PosnicPro.get({ url: 'push/key', data: {} }, function (r) {
+                            resolve(r && r.data && r.data.key);
+                        }, function () { resolve(null); });
+                    }).then(function (key) {
+                        if (!key) return;
+                        var raw = atob(key.replace(/-/g, '+').replace(/_/g, '/')
+                            + '='.repeat((4 - key.length % 4) % 4));
+                        var bytes = new Uint8Array(raw.length);
+                        for (var i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+                        return reg.pushManager.subscribe({
+                            userVisibleOnly: true,
+                            applicationServerKey: bytes,
+                        }).then(function (sub) {
+                            return new Promise(function (resolve) {
+                                PosnicPro.post({
+                                    url: 'push/subscribe',
+                                    data: JSON.stringify({ subscription: sub.toJSON() }),
+                                }, function () {
+                                    PosnicPro.alert('success', 'Notifications enabled on this device.');
+                                    PosnicPro.bellFeed._pushSetup();
+                                    resolve();
+                                }, function () { resolve(); });
+                            });
+                        });
+                    });
+                });
+            }).catch(function () { /* declined or unsupported - the bell still works */ });
+        },
         _ensureDom: function () {
             if (document.getElementById('bell_feed_panel')) return;
             var panel = document.createElement('div');
             panel.id = 'bell_feed_panel';
-            panel.innerHTML = '<div id="bell_feed_head">Shop activity</div><div id="bell_feed_list"></div>';
+            panel.innerHTML = '<div id="bell_feed_head">Shop activity</div><div id="bell_feed_list"></div>'
+                + '<div id="bell_feed_foot"><button type="button" id="bell_feed_push" style="display:none;"'
+                + ' onclick="PosnicPro.bellFeed._pushClick();"></button></div>';
             document.body.appendChild(panel);
+            PosnicPro.bellFeed._pushSetup();
             document.addEventListener('mousedown', function (ev) {
                 if (!PosnicPro.bellFeed._open) return;
                 var p = document.getElementById('bell_feed_panel');

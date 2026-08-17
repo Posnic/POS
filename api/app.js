@@ -1020,6 +1020,48 @@ const sseEvents = (req, res) => {
 app.get('/api/events', sseProtect, sseEvents);
 app.get('/events', sseProtect, sseEvents);
 
+/*
+ * Web Push (SW roadmap W4) - the pipe only; what may notify is a gated
+ * product decision, so the sole sender is the caller-addressed test.
+ * Mounted here beside /events for the same reason it is: infra endpoints
+ * live with their middleware, out of the generated API docs.
+ */
+const pushInfra = require('./src/realtime/push');
+app.get('/push/key', sseProtect, async (req, res) => {
+  try {
+    const key = req.db ? await pushInfra.getPublicKey(req.db) : null;
+    if (!key) return res.status(503).json({ type: 'error', message: 'Push unavailable' });
+    res.json({ type: 'success', data: { key } });
+  } catch (e) {
+    res.status(500).json({ type: 'error', message: 'Push unavailable' });
+  }
+});
+app.post('/push/subscribe', sseProtect, async (req, res) => {
+  try {
+    const result = req.db && req.user
+      ? await pushInfra.subscribe(req.db, req.user._id, req.body && req.body.subscription)
+      : { ok: false };
+    if (!result.ok) return res.status(400).json({ type: 'error', message: 'Invalid subscription' });
+    res.json({ type: 'success', data: null, message: 'Subscribed' });
+  } catch (e) {
+    res.status(500).json({ type: 'error', message: 'Subscription failed' });
+  }
+});
+app.post('/push/test', sseProtect, async (req, res) => {
+  try {
+    const result = req.db && req.user
+      ? await pushInfra.sendToUser(req.db, req.user._id, {
+          title: 'Posnic',
+          body: 'Notifications are working on this device.',
+          url: '/dashboard.html#/dashboard',
+        })
+      : { sent: 0 };
+    res.json({ type: 'success', data: result, message: result.sent ? 'Sent' : 'No subscriptions on this device yet' });
+  } catch (e) {
+    res.status(500).json({ type: 'error', message: 'Send failed' });
+  }
+});
+
 // Mount API routes under /api
 app.use('/api', apiRouter);
 
