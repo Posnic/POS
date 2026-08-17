@@ -2685,23 +2685,9 @@ class ItemRepository extends BaseModel {
     // Helper: find branch by kiosk.store_id first, then fallback to _id
     const findBranch = async () => {
       const branchCollection = await this.getCollection('branches');
-      console.log(
-        '[accessQr] branch param received:',
-        branch,
-        '| ObjectId.isValid:',
-        ObjectId.isValid(branch)
-      );
       let doc = await branchCollection.findOne({ 'kiosk.store_id': branch });
-      console.log(
-        '[accessQr] kiosk.store_id lookup result:',
-        doc ? `Found: ${doc._id}` : 'Not found'
-      );
       if (!doc && ObjectId.isValid(branch)) {
         doc = await branchCollection.findOne({ _id: new ObjectId(branch) });
-        console.log(
-          '[accessQr] _id fallback lookup result:',
-          doc ? `Found: ${doc._id} name: ${doc.branch_name}` : 'Not found'
-        );
       }
       if (!doc) {
         const total = await branchCollection.countDocuments({});
@@ -2709,12 +2695,6 @@ class ItemRepository extends BaseModel {
           .find({}, { projection: { _id: 1, branch_name: 1, 'kiosk.store_id': 1 } })
           .limit(5)
           .toArray();
-        console.log(
-          '[accessQr] BRANCH NOT FOUND. Total branches in DB:',
-          total,
-          '| Sample:',
-          JSON.stringify(sample)
-        );
       }
       return { branchCollection, doc };
     };
@@ -3284,23 +3264,15 @@ class ItemRepository extends BaseModel {
 
       // Apply session filtering if dates are provided
       if (data.starting_date || data.ending_date) {
-        console.log('🔍 Item Stock Report Repository - Applying session filter to dates');
 
         // Note: This is a stock report showing current inventory,
         // but applying session filter as requested
         const startDate = data.starting_date ? new Date(data.starting_date) : null;
         const endDate = data.ending_date ? new Date(data.ending_date) : null;
 
-        console.log('🔍 Item Stock Report Repository - Date filter applied:', {
-          starting_date: startDate,
-          ending_date: endDate,
-        });
 
         // For stock reports, we could filter by items that were last updated/modified within the date range
         // but stock reports typically show current inventory regardless of date
-        console.log(
-          '🔍 Item Stock Report Repository - Note: Session filter applied but stock reports show current inventory'
-        );
       }
 
       const collection = await this.getCollection(this.collectionName);
@@ -3332,14 +3304,9 @@ class ItemRepository extends BaseModel {
 
       // Apply session filter dates to the query
       if (data.starting_date || data.ending_date) {
-        console.log('🔍 Item Stock Report Repository - Adding date filter to MongoDB query');
 
         if (data.starting_date) {
           filter.createdAt = { $gte: new Date(data.starting_date) };
-          console.log(
-            '🔍 Item Stock Report Repository - Added createdAt filter:',
-            filter.createdAt
-          );
         }
 
         if (data.ending_date) {
@@ -3348,10 +3315,6 @@ class ItemRepository extends BaseModel {
           } else {
             filter.createdAt = { $lte: new Date(data.ending_date) };
           }
-          console.log(
-            '🔍 Item Stock Report Repository - Added createdAt end filter:',
-            filter.createdAt
-          );
         }
       }
 
@@ -3461,8 +3424,6 @@ class ItemRepository extends BaseModel {
   }
 
   async categoryItemsReportTable({ countPipeline = [], paginatedPipeline = [] } = {}) {
-    console.log('🔍 Category Items Report Repository - METHOD CALLED!');
-    console.log('🔍 Category Items Report Repository - Pipeline stages:', paginatedPipeline.length);
 
     // Check if pipeline contains date filtering (session filter applied)
     const hasDateFilter = paginatedPipeline.some(
@@ -3472,18 +3433,10 @@ class ItemRepository extends BaseModel {
         (stage.$match.updated_date.$gte || stage.$match.updated_date.$lte)
     );
 
-    console.log(
-      '🔍 Category Items Report Repository - Session filter applied in pipeline:',
-      hasDateFilter
-    );
 
     if (hasDateFilter) {
       const dateMatchStage = paginatedPipeline.find(
         (stage) => stage.$match && stage.$match.updated_date
-      );
-      console.log(
-        '🔍 Category Items Report Repository - Date filter stage:',
-        dateMatchStage.$match.updated_date
       );
     }
 
@@ -3494,15 +3447,11 @@ class ItemRepository extends BaseModel {
 
     const results = await collection.aggregate(paginatedPipeline).toArray();
 
-    console.log('🔍 Category Items Report Repository - Results count:', results.length);
-    console.log('🔍 Category Items Report Repository - Total count:', total);
 
     return { total, results };
   }
 
   async supplierItemsReportTable({ pipeline = [], countPipeline = [] } = {}) {
-    console.log('🔍 Supplier Items Report Repository - METHOD CALLED!');
-    console.log('🔍 Supplier Items Report Repository - Pipeline stages:', pipeline.length);
 
     // Check if pipeline contains date filtering (session filter applied)
     const hasDateFilter = pipeline.some(
@@ -3512,17 +3461,9 @@ class ItemRepository extends BaseModel {
         (stage.$match.updated_date.$gte || stage.$match.updated_date.$lte)
     );
 
-    console.log(
-      '🔍 Supplier Items Report Repository - Session filter applied in pipeline:',
-      hasDateFilter
-    );
 
     if (hasDateFilter) {
       const dateMatchStage = pipeline.find((stage) => stage.$match && stage.$match.updated_date);
-      console.log(
-        '🔍 Supplier Items Report Repository - Date filter stage:',
-        dateMatchStage.$match.updated_date
-      );
     }
 
     const collection = await this.getCollection(this.collectionName);
@@ -3531,8 +3472,6 @@ class ItemRepository extends BaseModel {
     const countResults = await collection.aggregate(countPipeline).toArray();
     const total = countResults.length;
 
-    console.log('🔍 Supplier Items Report Repository - Results count:', results.length);
-    console.log('🔍 Supplier Items Report Repository - Total count:', total);
 
     return { total, results };
   }

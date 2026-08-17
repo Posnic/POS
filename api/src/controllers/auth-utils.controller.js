@@ -53,7 +53,6 @@ const createAndSendToken = async (user, statusCode, res, req) => {
   const token = signToken(user._id);
 
   // 🔍 SESSION CREATION DEBUG - ADD THIS
-  console.log('\n🔍 LOGIN SESSION DEBUG');
   console.log('=======================');
 
   // 1. Check user authentication
@@ -65,7 +64,6 @@ const createAndSendToken = async (user, statusCode, res, req) => {
     console.log('User ID:', user._id);
     console.log('User access:', JSON.stringify(user.access, null, 2));
   } else {
-    console.log('❌ NO USER FOUND - Authentication failed');
   }
 
   // 2. Check permission
@@ -79,7 +77,6 @@ const createAndSendToken = async (user, statusCode, res, req) => {
   console.log('Has session filter permission:', hasPermission);
 
   if (!hasPermission) {
-    console.log('❌ NO PERMISSION - User does not have access.sales.session_filter: true');
     console.log(
       '💡 Fix with: db.users.updateOne({email:"' +
         (user?.email || 'user@example.com') +
@@ -97,11 +94,9 @@ const createAndSendToken = async (user, statusCode, res, req) => {
     const mongoClient = req.app.locals.mongoClient;
     const dbName = process.env.MONGODB_URI?.split('/')?.pop()?.split('?')[0] || 'posnicpro';
     db = mongoClient.db(dbName);
-    console.log('✅ Using mongoClient from app.locals');
   }
 
   if (!db) {
-    console.log('❌ NO DATABASE CONNECTION');
     console.log('💡 Fix: Add to app.js -> app.locals.mongoClient = mongoClient;');
   }
 
@@ -162,7 +157,6 @@ const createAndSendToken = async (user, statusCode, res, req) => {
         );
 
         sessionRecordId = existingSession._id;
-        console.log('✅ Existing session reactivated:', existingSession._id);
 
         // Set session data
         if (req.session) {
@@ -176,7 +170,6 @@ const createAndSendToken = async (user, statusCode, res, req) => {
         // Create new
         const result = await userSessionsCollection.insertOne(sessionData);
         sessionRecordId = result.insertedId;
-        console.log('✅ New session created:', result.insertedId);
 
         // Set session data
         if (req.session) {
@@ -194,24 +187,19 @@ const createAndSendToken = async (user, statusCode, res, req) => {
       });
 
       if (createdRecord) {
-        console.log('✅ DATABASE RECORD VERIFIED:');
         console.log(JSON.stringify(createdRecord, null, 2));
       } else {
-        console.log('❌ RECORD NOT FOUND IN DATABASE');
       }
 
       console.log('\n🎉 SESSION CREATION SUCCESS!');
     } catch (error) {
-      console.log('❌ SESSION CREATION ERROR:', error.message);
       console.log('Stack:', error.stack);
     }
   } else {
     console.log('\n📋 4. No Session Creation:');
     if (!hasPermission) {
-      console.log('❌ No permission');
     }
     if (!db) {
-      console.log('❌ No database connection');
     }
   }
 

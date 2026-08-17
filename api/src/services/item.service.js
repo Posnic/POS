@@ -1010,14 +1010,6 @@ class ItemService {
       const effectiveEndingDate = ending_date || endingDate;
       const effectiveSupplierId = supplier_id || supplierId;
 
-      console.log('🔍 Supplier Items Report Service - Dates received:', {
-        starting_date,
-        startingDate,
-        ending_date,
-        endingDate,
-        effectiveStartingDate,
-        effectiveEndingDate,
-      });
 
       const effectiveLimit = parseInt(limit, 10) > 0 ? parseInt(limit, 10) : 5;
       const effectivePage = parseInt(page, 10) > 0 ? parseInt(page, 10) : 1;

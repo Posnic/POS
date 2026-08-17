@@ -543,8 +543,6 @@ class UsersController extends BaseController {
 
           // Check if user has sales.session_filter permission (PHP logic)
           const hasSessionFilterPermission = user.access?.sales?.session_filter === true;
-          console.log('🔍 Session filter permission check:', hasSessionFilterPermission);
-          console.log('🔍 User access.sales.session_filter:', user.access?.sales?.session_filter);
 
           if (!hasSessionFilterPermission) {
             console.log(
@@ -552,7 +550,6 @@ class UsersController extends BaseController {
             );
             // Skip session record creation for users without permission
           } else {
-            console.log('✅ User has session filter permission - managing session record...');
 
             // Check if user already has an active session (logout_time: null, is_active: true)
             const existingSession = await userSessionsCollection.findOne({
@@ -583,11 +580,7 @@ class UsersController extends BaseController {
               );
 
               if (updateResult.modifiedCount > 0) {
-                console.log('✅ Existing session updated successfully!');
-                console.log('🔍 Session ID:', existingSession._id);
-                console.log('🔍 Login time preserved:', existingSession.login_time);
               } else {
-                console.log('❌ Failed to update existing session');
               }
             } else {
               // No existing session - create new one
@@ -611,16 +604,11 @@ class UsersController extends BaseController {
               const insertResult = await userSessionsCollection.insertOne(sessionRecord);
 
               if (insertResult.insertedId) {
-                console.log('✅ New session record created successfully!');
-                console.log('🔍 Session ID:', insertResult.insertedId);
-                console.log('🔍 Login time:', currentTime);
               } else {
-                console.log('❌ Failed to create session record');
               }
             }
           } // Close the else block for session filter permission
         } else {
-          console.log('❌ No database connection available for session management');
         }
       } catch (sessionError) {
         console.error('❌ Error managing session record:', sessionError.message);
@@ -662,7 +650,6 @@ class UsersController extends BaseController {
           const db = mongoClient.db(dbName);
           const userSessionsCollection = db.collection('user_sessions');
 
-          console.log('🔍 Updating session record in database...');
 
           // Find and update active session for this user
           const logoutTime = new Date();
@@ -686,7 +673,6 @@ class UsersController extends BaseController {
             );
 
             sessionUpdated = updateResult.modifiedCount > 0;
-            console.log('🔍 Session update result (user_id):', updateResult.modifiedCount);
           }
 
           // If not found by user_id, try by session ID
@@ -707,7 +693,6 @@ class UsersController extends BaseController {
             );
 
             sessionUpdated = updateResult.modifiedCount > 0;
-            console.log('🔍 Session update result (session_id):', updateResult.modifiedCount);
           }
 
           // If still not found, try any active session
@@ -727,16 +712,13 @@ class UsersController extends BaseController {
             );
 
             sessionUpdated = updateResult.modifiedCount > 0;
-            console.log('🔍 Session update result (any active):', updateResult.modifiedCount);
           }
 
           if (sessionUpdated) {
-            console.log('✅ Session record updated successfully!');
           } else {
             console.log('⚠️ No active session found to update');
           }
         } else {
-          console.log('❌ No database connection available');
         }
       } catch (dbError) {
         console.error('❌ Error updating session record:', dbError.message);
@@ -748,7 +730,6 @@ class UsersController extends BaseController {
           if (err) {
             console.error('❌ Error destroying Express session:', err);
           } else {
-            console.log('✅ Express session destroyed');
           }
         });
       }
@@ -1335,20 +1316,11 @@ class UsersController extends BaseController {
    */
   async userstatusReportTable(req, res) {
     try {
-      console.log('🔍 User Status Report Table - METHOD CALLED!');
-      console.log('🔍 User Status Report Table - Full Query Params:', req.query);
-      console.log('🔍 User Status Report Table - User Info:', {
-        _id: req.user?._id,
-        usertype: req.user?.usertype,
-        access: req.user?.access,
-      });
 
       if (!this.checkPermission('report', 'read', req.user)) {
-        console.log('❌ User Status Report Table - Permission Denied');
         return this.error(res, 'Unauthorized', 403);
       }
 
-      console.log('✅ User Status Report Table - Permission Granted');
 
       const limit = parseInt(req.query.limit) > 0 ? parseInt(req.query.limit) : 5;
       const page = parseInt(req.query.page) > 0 ? parseInt(req.query.page) : 1;
@@ -1368,14 +1340,9 @@ class UsersController extends BaseController {
         license: req.user?.license || '',
       };
 
-      console.log('🔍 User Status Report Table - Initial Data:', data);
 
       // Apply session filtering if user has permission and dates are provided
       if (data.starting_date || data.ending_date) {
-        console.log('🔍 User Status Report Table - Before filter:', {
-          starting_date: data.starting_date,
-          ending_date: data.ending_date,
-        });
 
         const startDate = data.starting_date ? new Date(data.starting_date) : null;
         const endDate = data.ending_date ? new Date(data.ending_date) : null;
@@ -1385,25 +1352,17 @@ class UsersController extends BaseController {
           end_date: endDate || new Date(),
         };
 
-        console.log('🔍 User Status Report Table - About to apply session filter...');
         const filteredDateRange = await sessionFilterUtil.applySessionFilter(
           req,
           originalDateRange
         );
 
-        console.log('🔍 User Status Report Table - Date range:', {
-          original: originalDateRange,
-          filtered: filteredDateRange,
-          session_applied: filteredDateRange?.session_applied || false,
-        });
 
         // Update data with filtered dates
         data.starting_date = filteredDateRange.start_date;
         data.ending_date = filteredDateRange.end_date;
 
-        console.log('🔍 User Status Report Table - Final Data After Filter:', data);
       } else {
-        console.log('🔍 User Status Report Table - No dates provided, skipping session filter');
       }
 
       // Call the model method to get report data

@@ -140,7 +140,6 @@ class InstallRepository extends BaseModel {
     console.log(`🗄️ Repository: Inserting ${categoriesData.length} categories into DB...`);
     const result = await categoryCollection.insertMany(categoriesData);
     const ids = Object.values(result.insertedIds);
-    console.log(`✅ Repository: Inserted ${ids.length} categories, IDs:`, ids);
     return ids;
   }
 
@@ -181,9 +180,6 @@ class InstallRepository extends BaseModel {
     const itemCollection = await this.getCollection('items');
     console.log(`🗄️ Repository: Inserting ${itemsData.length} items into DB...`);
     const result = await itemCollection.insertMany(itemsData);
-    console.log(
-      `✅ Repository: Inserted ${Object.keys(result.insertedIds).length} items successfully`
-    );
   }
 
   /**

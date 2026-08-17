@@ -205,22 +205,6 @@ class SuppliersController extends BaseController {
     };
 
     // Add branch information with ObjectId conversion
-    console.log(
-      '🔍 Supplier Create - req.user:',
-      JSON.stringify({
-        branch_id: req.user?.branch_id,
-        branch_name: req.user?.branch_name,
-        branch: req.user?.branch,
-        branch_access: req.user?.branch_access,
-      })
-    );
-    console.log(
-      '🔍 Supplier Create - req.session:',
-      JSON.stringify({
-        selectedBranchId: req.session?.selectedBranchId,
-        branch_id: req.session?.branch_id,
-      })
-    );
 
     const branchId =
       req.body.branch_id ||
@@ -238,8 +222,6 @@ class SuppliersController extends BaseController {
       (req.user?.branch_access && req.user.branch_access[0]?.branch_name) ||
       '';
 
-    console.log('🔍 Supplier Create - Resolved branchId:', branchId);
-    console.log('🔍 Supplier Create - Resolved branchName:', branchName);
 
     // If branch_name is empty but we have branch_id, fetch from branches collection
     if (branchId && !branchName) {
@@ -254,7 +236,6 @@ class SuppliersController extends BaseController {
         });
         if (branchDoc) {
           branchName = branchDoc.name || branchDoc.branch_name || '';
-          console.log('🔍 Supplier Create - Fetched branchName from DB:', branchName);
         }
       } catch (error) {
         console.error('Error fetching branch name:', error);
@@ -264,8 +245,6 @@ class SuppliersController extends BaseController {
     if (branchId) {
       supplierData.branch_id = new ObjectId(branchId);
       supplierData.branch_name = branchName;
-      console.log('🔍 Supplier Create - Final branch_id:', supplierData.branch_id);
-      console.log('🔍 Supplier Create - Final branch_name:', supplierData.branch_name);
     } else {
       console.warn('⚠️ Supplier Create - No branch_id found!');
     }

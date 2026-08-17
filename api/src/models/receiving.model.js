@@ -1124,28 +1124,14 @@ receivingSchema.statics.supplierReceivingReportPage = async function (value, opt
     const collection = await baseModel.getCollection('receivings');
 
     // DEBUG: Log filters and check collection
-    console.log('🔍 DEBUG - Filters:', JSON.stringify(filters, null, 2));
-    console.log('🔍 DEBUG - Branch IDs:', branchIds);
-    console.log('🔍 DEBUG - License:', licenseId);
-    console.log('🔍 DEBUG - Date Range:', fromDate, 'to', toDate);
 
     const totalInCollection = await collection.countDocuments({});
-    console.log('🔍 DEBUG - Total docs in receivings collection:', totalInCollection);
 
     const matchingDocs = await collection.countDocuments(filters);
-    console.log('🔍 DEBUG - Docs matching filters:', matchingDocs);
 
     // Get sample doc to check structure
     const sampleDoc = await collection.findOne({});
     if (sampleDoc) {
-      console.log('🔍 DEBUG - Sample doc structure:', {
-        _id: sampleDoc._id,
-        branch_id: sampleDoc.branch_id,
-        license: sampleDoc.license,
-        receiving_status: sampleDoc.receiving_status,
-        updated_date: sampleDoc.updated_date,
-        supplier_name: sampleDoc.supplier_name,
-      });
     }
 
     // Aggregation pipeline
@@ -1171,7 +1157,6 @@ receivingSchema.statics.supplierReceivingReportPage = async function (value, opt
     const countResult = await collection.aggregate(countPipeline).toArray();
     const total = countResult.length;
 
-    console.log('🔍 DEBUG - Aggregation result count:', total);
 
     // Get paginated results
     const paginatedPipeline = [...pipeline, { $skip: skip }, { $limit: limit }];

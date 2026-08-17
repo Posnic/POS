@@ -639,9 +639,6 @@ class CategoriesController extends BaseController {
   getCategoriesWithValidItems = asyncHandler(async (req, res) => {
     const { branch_id } = await this.resolveBranchContext(req);
 
-    console.log('🔍 getCategoriesWithValidItems - branch_id:', branch_id);
-    console.log('🔍 Session:', req.session?.branch_id, req.session?.selectedBranchId);
-    console.log('🔍 User branch_access:', req.user?.branch_access);
 
     const license =
       req.user?.license?.toString?.() ||
@@ -655,7 +652,6 @@ class CategoriesController extends BaseController {
       license
     );
 
-    console.log('🔍 Categories result:', { status: result.status, count: result.data?.length });
 
     if (result.status) {
       // Format for legacy compatibility
@@ -667,11 +663,9 @@ class CategoriesController extends BaseController {
         description: cat.description || '',
       }));
 
-      console.log('✅ Returning', formatted.length, 'categories (with items only)');
 
       return this.success(res, formatted, 'Categories with valid items retrieved successfully');
     } else {
-      console.log('❌ Error:', result.message);
       return this.error(res, result.message, 400);
     }
   });

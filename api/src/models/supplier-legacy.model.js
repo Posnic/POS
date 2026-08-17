@@ -676,9 +676,6 @@ class SupplierModel extends BaseModel {
         }
       }
 
-      console.log('🔍 supplierGraphicalReports - Branch IDs:', value.branchid);
-      console.log('🔍 supplierGraphicalReports - Branch ObjectIds:', branchObjectIds);
-      console.log('🔍 supplierGraphicalReports - Date range:', fromDate, 'to', toDate);
 
       // Convert timestamps to Date objects
       const startDateObj = new Date(fromDate);
@@ -697,7 +694,6 @@ class SupplierModel extends BaseModel {
         ],
       };
 
-      console.log('🔍 supplierGraphicalReports - Condition:', JSON.stringify(condition, null, 2));
 
       const pipeline = [
         { $match: condition },
@@ -715,7 +711,6 @@ class SupplierModel extends BaseModel {
 
       const supplierList = await receivingsCollection.aggregate(pipeline).toArray();
 
-      console.log('🔍 supplierGraphicalReports - Results count:', supplierList.length);
 
       const graphicalData = {};
       for (const data of supplierList) {
