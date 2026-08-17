@@ -53,4 +53,28 @@ function mergeAccess(base, overrides) {
   return out;
 }
 
-module.exports = { resolveAccess, mergeAccess };
+/**
+ * Sanitize a POS-actions object posted from the user form into a safe
+ * `access.pos` matrix: only whitelisted action keys, booleans coerced
+ * strictly (true/'true' only), and the two numeric caps clamped to
+ * non-negative numbers. Used for "Custom" users saved without a role, so
+ * till gating never rests on an absent (fail-open) pos object.
+ *
+ * @param {Object} input  the untrusted `pos` object from the form
+ * @returns {Object} a complete pos matrix (every action key present)
+ */
+function sanitizePosInput(input) {
+  // Late require to avoid a hard cycle if constants ever import this util.
+  const { POS_PERMISSIONS } = require('../constants/roles.constants');
+  const src = input && typeof input === 'object' ? input : {};
+  const out = {};
+  Object.values(POS_PERMISSIONS).forEach((k) => {
+    out[k] = src[k] === true || src[k] === 'true';
+  });
+  const cap = (v) => (Number.isFinite(Number(v)) && Number(v) >= 0 ? Number(v) : 0);
+  out.discount_max_percent = cap(src.discount_max_percent);
+  out.refund_max_amount = cap(src.refund_max_amount);
+  return out;
+}
+
+module.exports = { resolveAccess, mergeAccess, sanitizePosInput };
