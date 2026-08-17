@@ -158,6 +158,21 @@ app.use(
  * API will not bring it back, and a restart loop makes the outage worse. That
  * is what readyz is for.
  */
+/*
+ * Runtime identity: which edition, mode and version this process is
+ * (PRODUCT_ARCHITECTURE §1; SEAMLESS_UPDATE_ROADMAP U1). Public and
+ * tenant-free by design - the login page and the update machinery read it
+ * before any authentication exists.
+ */
+app.get('/api/runtime-info', (req, res) => {
+  const { buildRuntimeInfo } = require('./src/utils/runtime-info');
+  return res.status(200).json(buildRuntimeInfo());
+});
+app.get('/runtime-info', (req, res) => {
+  const { buildRuntimeInfo } = require('./src/utils/runtime-info');
+  return res.status(200).json(buildRuntimeInfo());
+});
+
 app.get('/api/healthz', (req, res) => {
   const lag = require('./src/utils/event-loop-lag');
 
