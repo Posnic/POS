@@ -126,7 +126,7 @@
                     <button type="button" id="shift_clock_out_btn" class="btn btn-outline-danger"
                             style="flex:1 1 0;" onclick="PosnicPro.shiftWidget.clockOut();"><i class="feather icon-log-out mr-1"></i>Clock Out</button>
                 </div>
-                <div class="mt-2">
+                <div class="mt-2" id="shift_tips_wrap" style="display:none;">
                     <input type="number" min="0" step="0.01" class="form-control form-control-sm"
                            id="shift_tips_input" placeholder="Cash tips to declare (optional)">
                     <small class="form-text text-muted">Declared with your clock-out; shows on the labour report.</small>
@@ -141,10 +141,10 @@
                     <a href="javascript:void(0);" onclick="PosnicPro.shiftWidget.openReport();" style="font-size:.85rem;">
                         <i class="feather icon-bar-chart-2 mr-1"></i>Labour / payout report
                     </a>
-                    <span class="text-muted mx-1">&middot;</span>
+                    <span id="roster_link_wrap"><span class="text-muted mx-1">&middot;</span>
                     <a href="javascript:void(0);" onclick="PosnicPro.shiftWidget.openRoster();" style="font-size:.85rem;">
                         <i class="feather icon-calendar mr-1"></i>Roster
-                    </a>
+                    </a></span>
                 </div>
             </div>
         </div>

@@ -1163,14 +1163,20 @@ PosnicPro = {
      * a 409 (e.g. "already clocked in") never bounces the user to login.
      */
     shiftWidget: {
-        // Settings can switch the whole clock-in system off (staff_shifts_enable,
-        // shop-wide). On unless explicitly disabled, so a shop that never visits
-        // Settings keeps the clock button it already uses.
-        enabled: function () {
+        // Shop-wide staff toggles from General Settings, read from the cached
+        // general_settings blob. Each key falls back to its shipping default
+        // when the blob (or the key) is absent: clock-in on, tips off
+        // (hospitality-only), roster on.
+        _setting: function (key, dflt) {
             try {
                 var raw = PosnicPro.local.get('general_settings');
-                return !raw || JSON.parse(raw).staff_shifts_enable !== false;
-            } catch (e) { return true; }
+                if (!raw) return dflt;
+                var v = JSON.parse(raw)[key];
+                return typeof v === 'boolean' ? v : dflt;
+            } catch (e) { return dflt; }
+        },
+        enabled: function () {
+            return PosnicPro.shiftWidget._setting('staff_shifts_enable', true);
         },
         applyEnabled: function () {
             $('#shift_clock_li').toggle(PosnicPro.shiftWidget.enabled());
@@ -1184,6 +1190,8 @@ PosnicPro = {
             var canReport = ut === 'super_admin' || ut === 'admin' || ut === 'manager'
                 || PosnicPro.checkAccess('user', 'read');
             $('#labour_report_link_wrap').toggle(!!canReport);
+            $('#shift_tips_wrap').toggle(PosnicPro.shiftWidget._setting('staff_tips_enable', false));
+            $('#roster_link_wrap').toggle(PosnicPro.shiftWidget._setting('staff_roster_enable', true));
             $('#shift_modal').modal('show');
             setTimeout(function () { $('#shift_card_input').trigger('focus'); }, 400);
         },
@@ -1376,6 +1384,7 @@ PosnicPro = {
         },
         // Roster / scheduling (Phase 7) ------------------------------------
         openRoster: function () {
+            if (!PosnicPro.shiftWidget._setting('staff_roster_enable', true)) { return; }
             var now = new Date();
             var monday = new Date(now.getTime() - ((now.getDay() + 6) % 7) * 86400000);
             var sunday = new Date(monday.getTime() + 6 * 86400000);
