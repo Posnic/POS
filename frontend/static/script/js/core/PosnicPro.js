@@ -2575,7 +2575,26 @@ PosnicPro = {
         } else {
             formatData = "ddd DD MMMM YY";
         }
-        return (PosnicPro.local.get('timeformat') === 'enable') ? moment(date).format(formatData + " " + "LT") : moment(date).format(formatData);
+        /*
+         * Parse with the shapes we actually receive, not moment's guesser.
+         * A bare moment(string) on a non-ISO value logs the RFC2822
+         * deprecation warning - once per rendered date, thousands per
+         * session on the lists. Known formats first; anything else goes
+         * through Date, which is exactly where moment's fallback ended up
+         * anyway, minus the console noise.
+         */
+        var m = (date instanceof Date || typeof date === 'number')
+            ? moment(date)
+            : moment(date, [
+                moment.ISO_8601,
+                'YYYY/MM/DD hh:mm A',
+                'YYYY/MM/DD',
+                'YYYY-MM-DD HH:mm:ss',
+                'DD/MM/YYYY',
+                'MM/DD/YYYY',
+            ], false);
+        if (!m.isValid()) m = moment(new Date(date));
+        return (PosnicPro.local.get('timeformat') === 'enable') ? m.format(formatData + " " + "LT") : m.format(formatData);
     },
     convertFormatDateTime: function () {
         var dateformatsets = PosnicPro.local.get("dateformatset");
