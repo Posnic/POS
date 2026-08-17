@@ -540,6 +540,12 @@ class RegistersController extends BaseController {
         ending_date: req.query.ending_date,
         register_id: req.query.register,
       };
+      // Server-decided visibility (P0 rule): managers see every session on the
+      // register, a cashier only their own. Never taken from the client.
+      const requesterType = String(req.user?.usertype || req.user?.role || '').toLowerCase();
+      data.see_all =
+        ['super_admin', 'owner', 'admin', 'manager', 'store_manager'].includes(requesterType) ||
+        this.checkPermission('user', 'read', req.user);
 
       const result = await this.service.getRegisterReportDetailsPage(data);
 
@@ -563,6 +569,12 @@ class RegistersController extends BaseController {
         ending_date: req.query.ending_date,
         register_id: req.query.register,
       };
+      // Server-decided visibility (P0 rule): managers see every session on the
+      // register, a cashier only their own. Never taken from the client.
+      const requesterType = String(req.user?.usertype || req.user?.role || '').toLowerCase();
+      data.see_all =
+        ['super_admin', 'owner', 'admin', 'manager', 'store_manager'].includes(requesterType) ||
+        this.checkPermission('user', 'read', req.user);
 
       const result = await this.service.getRegisterReportPdfDetails(data);
 

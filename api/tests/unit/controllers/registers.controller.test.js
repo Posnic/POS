@@ -1032,6 +1032,7 @@ describe('getRegisterReportDetails', () => {
       starting_date: '2025-01-01',
       ending_date: '2025-12-31',
       register_id: VALID_REG_ID,
+      see_all: true, // admin requester: managers see every session
     });
   });
 
@@ -1089,6 +1090,7 @@ describe('getRegisterReportPdfDetails', () => {
       starting_date: '2025-01-01',
       ending_date: '2025-12-31',
       register_id: VALID_REG_ID,
+      see_all: true, // admin requester: managers see every session
     });
     const payload = res.json.mock.calls[0][0];
     expect(payload.data.calculated).toBeDefined();

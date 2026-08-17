@@ -1508,12 +1508,17 @@ class RegisterRepository {
           { register_opendate: { $gte: new Date(fromDate) } },
           { register_closedate: { $lte: new Date(toDate) } },
           { register_id: new ObjectId(data.register_id) },
-          {
-            current_user_id: this.model.loggedUserId || BaseModel.loggedUser,
-          },
           { license: this.model.licenseId || BaseModel.license },
         ],
       };
+      // Visibility is a role decision made by the controller (see_all is set
+      // server-side, never from the client): managers see every session on
+      // this register, a cashier only their own.
+      if (!data.see_all) {
+        filters.$and.push({
+          current_user_id: this.model.loggedUserId || BaseModel.loggedUser,
+        });
+      }
 
       // Sales aggregation
       const salesList = await collection
