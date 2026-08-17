@@ -76,6 +76,7 @@ function branchExpectations() {
     { field: 'staff_shifts_enable', severity: 'cosmetic', why: 'defaults to true on read' },
     { field: 'staff_tips_enable', severity: 'cosmetic', why: 'defaults to false on read' },
     { field: 'staff_roster_enable', severity: 'cosmetic', why: 'defaults to true on read' },
+    { field: 'cash_register_enable', severity: 'cosmetic', why: 'defaults to true on read' },
     { field: 'enable_notification_reminders', severity: 'cosmetic', why: 'defaults to false on read' },
     { field: 'sms_auto_send_time', severity: 'cosmetic', why: 'defaults to 10:00 am on read' },
   ];

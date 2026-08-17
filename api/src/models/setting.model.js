@@ -594,6 +594,17 @@ class SettingModel extends BaseModel {
         data.staff_roster_enable === 'false' || data.staff_roster_enable === false
       );
 
+      /*
+       * Cash register sessions. On unless the shop turns it off - registers
+       * shipped live, so shops using them must feel nothing. Off means the
+       * whole register apparatus steps aside: no selection at login, no gate
+       * before a sale, no register menu. Selling must never be blocked by a
+       * module the shop does not use.
+       */
+      const cash_register_enable = !(
+        data.cash_register_enable === 'false' || data.cash_register_enable === false
+      );
+
       // Strip GMT offset from timezone (e.g., "Pacific/Niue (GMT-11:00)" -> "Pacific/Niue")
       let cleanTimezone = data.time_zone?.trim() || 'Asia/Kolkata';
       const gmtOffsetMatch = cleanTimezone.match(/^([^(]+)\s*\(GMT[^)]+\)$/);
@@ -631,6 +642,7 @@ class SettingModel extends BaseModel {
         staff_shifts_enable: staff_shifts_enable,
         staff_tips_enable: staff_tips_enable,
         staff_roster_enable: staff_roster_enable,
+        cash_register_enable: cash_register_enable,
         allow_sale_date_edit: data.allow_sale_date_edit === 'false' ? 'false' : 'true',
       };
 
@@ -685,6 +697,7 @@ class SettingModel extends BaseModel {
         staff_shifts_enable: staff_shifts_enable,
         staff_tips_enable: staff_tips_enable,
         staff_roster_enable: staff_roster_enable,
+        cash_register_enable: cash_register_enable,
       };
 
       // PHP lines 109-121: Update branch_name across all collections

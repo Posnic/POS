@@ -501,6 +501,29 @@
                                         </div>
                                     </div>
                                     <!--
+                                        Cash register sessions are OPTIONAL. A grocery
+                                        counter that just sells must never be blocked by
+                                        register ceremony it does not use: off means no
+                                        selection at login, no gate before a sale, no
+                                        register menu. On is the default - shops already
+                                        using registers feel nothing.
+                                    -->
+                                    <div class="form-row">
+                                        <div class="form-group col-md-6">
+                                            <label for="cash_register_enable">
+                                                <lang class="lang_cashregister_enable">Cash register (till sessions)</lang>
+                                            </label>
+                                            <select name="cash_register_enable" id="cash_register_enable"
+                                                class="form-control border-control">
+                                                <option value="false">Disable</option>
+                                                <option value="true" selected>Enable</option>
+                                            </select>
+                                            <small class="text-muted">Off: sales work without opening a
+                                                register - no selection at login, no gate on the sale
+                                                screen. On: sessions, floats and the register reports.</small>
+                                        </div>
+                                    </div>
+                                    <!--
                                         Shop-wide on purpose: a shop that wants
                                         its tills locked wants all of them
                                         locked, and the one that opted out

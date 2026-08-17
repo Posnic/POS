@@ -570,8 +570,12 @@ class BranchModel {
       }
 
       // PHP lines 915-933: Return data with open_register
+      // cash_register_enable rides along so the LOGIN flow can honour the
+      // module toggle server-authoritatively - localStorage caches are not
+      // populated yet on a fresh browser at that point.
       return {
         status: true,
+        cash_register_enable: branch.cash_register_enable !== false,
         data: {
           register_data: offered,
           open_register: openRegister,
@@ -647,6 +651,7 @@ class BranchModel {
        * uses. Only an explicit false hides it.
        */
       withDefaults.staff_shifts_enable = withDefaults.staff_shifts_enable ?? true;
+      withDefaults.cash_register_enable = withDefaults.cash_register_enable ?? true;
       // Tips are hospitality-only: off until a shop asks. The roster follows
       // the shifts pattern: on unless the shop turned it off.
       withDefaults.staff_tips_enable = withDefaults.staff_tips_enable ?? false;
@@ -992,6 +997,7 @@ class BranchModel {
         staff_shifts_enable: true,
         staff_tips_enable: false,
         staff_roster_enable: true,
+        cash_register_enable: true,
 
         created_by_id: user._id,
         created_by: user.username,
