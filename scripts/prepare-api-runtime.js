@@ -140,6 +140,18 @@ function writeFingerprint(fingerprint) {
   const temporaryPath = `${fingerprintPath}.tmp`;
   fs.writeFileSync(temporaryPath, JSON.stringify({ fingerprint }, null, 2));
   fs.renameSync(temporaryPath, fingerprintPath);
+
+  /*
+   * The fingerprint also ships NEXT TO the archive (as node_modules.zip.id in
+   * extraResources) so the installed app can tell whether an update actually
+   * changed the runtime. The archive's raw bytes differ on every CI build
+   * (7-Zip captures fresh npm-ci mtimes), so hashing the bytes - what
+   * api-runtime.js falls back to - made every update look like a runtime
+   * change and forced the slow re-extraction on each one. The fingerprint is
+   * derived from the dependency manifests + build settings, so it only
+   * changes when the runtime genuinely does.
+   */
+  fs.writeFileSync(`${archivePath}.id`, fingerprint, 'utf8');
 }
 
 if (!fs.existsSync(sourceDir)) {

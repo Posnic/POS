@@ -38,15 +38,6 @@ const KNOWN_DEAD = new Map([
     "requires winston, never installed; the API logs through console",
   ],
   [
-    "scripts/build-update.js",
-    "requires archiver, never installed; nothing runs this script - it is not " +
-      "in package.json scripts or any workflow",
-  ],
-  [
-    "scripts/build-frontend-update.js",
-    "same as build-update.js: requires archiver, and nothing runs it",
-  ],
-  [
     "api/src/middleware/security.js",
     "requires express-mongo-sanitize and xss-clean; never mounted, and app.js " +
       "already sanitises with its own middleware and the xss package",

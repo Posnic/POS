@@ -226,6 +226,10 @@
         "to": "api/node_modules.zip"
       },
       {
+        "from": "builds/api-runtime/node_modules.zip.id",
+        "to": "api/node_modules.zip.id"
+      },
+      {
         "from": "api-runtime.js",
         "to": "api-runtime.js"
       },

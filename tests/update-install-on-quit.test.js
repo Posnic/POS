@@ -43,6 +43,17 @@ test("electron-updater's own quit installer stays off", () => {
     'autoInstallOnAppQuit must stay false - its quit handler bypasses ' +
       'quitAndInstall() and the backup that runs inside it',
   );
+  /* The first version of this test only checked that the false assignment
+     existed - and a later change set the flag to true elsewhere at runtime
+     (on update-downloaded), which this grep happily missed while the backup
+     guarantee was silently gone. Assert the absence of ANY true assignment. */
+  assert.doesNotMatch(
+    SERVICE,
+    /autoInstallOnAppQuit\s*=\s*true/,
+    'something sets autoInstallOnAppQuit = true at runtime - that re-enables ' +
+      "electron-updater's own quit handler, bypassing the pre-update backup " +
+      'and the installOnQuit setting',
+  );
 });
 
 test('the backup runs before the shutdown that stops the database', () => {
