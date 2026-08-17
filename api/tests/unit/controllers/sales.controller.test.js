@@ -422,6 +422,94 @@ describe('SalesController', () => {
     });
   });
 
+  // ── discount manager-approval gate ──────────────────────────────────────────
+  describe('create — manual-discount approval gate', () => {
+    const { signApproval } = require('../../../src/utils/approval-token.util');
+    const cashier = (posOverrides = {}) =>
+      adminUser({
+        usertype: 'user',
+        role: 'user',
+        access: {
+          sales: { read: true, write: true, delete: true },
+          pos: { discount_apply: false, void_sale: false, refund: false, ...posOverrides },
+        },
+      });
+    const discountedBody = (extra = {}) => ({
+      items: [{ item_id: VALID_ID, item_quantity: 1, item_discount: 5 }],
+      sales_total: 95,
+      ...extra,
+    });
+
+    test('403 when a restricted cashier applies a discount with no token', async () => {
+      const res = mockRes();
+      await ctrl.create(mockReq({ user: cashier(), body: discountedBody() }), res, mockNext());
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({ message: ERROR_MESSAGES.DISCOUNT_NEEDS_APPROVAL })
+      );
+      expect(salesService.processSale).not.toHaveBeenCalled();
+    });
+
+    test('passes with a valid manager-approval token bound to this cashier', async () => {
+      const token = signApproval({ action: 'discount_apply', cashier_user_id: VALID_ID });
+      const res = mockRes();
+      await ctrl.create(
+        mockReq({ user: cashier(), body: discountedBody({ approval_token: token }) }),
+        res,
+        mockNext()
+      );
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(salesService.processSale).toHaveBeenCalled();
+    });
+
+    test('rejects a token minted for a different action', async () => {
+      const token = signApproval({ action: 'void_sale', cashier_user_id: VALID_ID });
+      const res = mockRes();
+      await ctrl.create(
+        mockReq({ user: cashier(), body: discountedBody({ approval_token: token }) }),
+        res,
+        mockNext()
+      );
+      expect(res.status).toHaveBeenCalledWith(403);
+    });
+
+    test('no gate when the cashier may apply discounts', async () => {
+      const res = mockRes();
+      await ctrl.create(
+        mockReq({ user: cashier({ discount_apply: true }), body: discountedBody() }),
+        res,
+        mockNext()
+      );
+      expect(res.status).toHaveBeenCalledWith(200);
+    });
+
+    test('no gate on an undiscounted sale', async () => {
+      const res = mockRes();
+      await ctrl.create(
+        mockReq({
+          user: cashier(),
+          body: { items: [{ item_id: VALID_ID, item_quantity: 1 }], sales_total: 100 },
+        }),
+        res,
+        mockNext()
+      );
+      expect(res.status).toHaveBeenCalledWith(200);
+    });
+
+    test('fails open for a user with no pos matrix (legacy session)', async () => {
+      const res = mockRes();
+      await ctrl.create(
+        mockReq({
+          user: adminUser({ usertype: 'user', role: 'user', access: { sales: { write: true } } }),
+          body: discountedBody(),
+        }),
+        res,
+        mockNext()
+      );
+      expect(res.status).toHaveBeenCalledWith(200);
+    });
+  });
+
   // ── update ──────────────────────────────────────────────────────────────────
   describe('update', () => {
     const body = { items: [{ item_id: VALID_ID, item_quantity: 2 }], sales_total: 100 };

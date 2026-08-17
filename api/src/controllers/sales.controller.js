@@ -580,6 +580,23 @@ class SalesController extends BaseController {
   }
 
   // Shared internal implementation for creating or holding a sale (PHP salesInsertUpdate parity)
+  // A manual discount (line or extra) detected on this sale is a restricted
+  // till action. If this user can't apply discounts on their own, a valid
+  // manager-approval token is required - the same server-side gate as
+  // void/refund. Coupon and loyalty discounts are validated by their own rules
+  // (prepareCouponRedemption / prepareLoyaltyRedemption) and are never counted
+  // by collectSaleAuditChanges, so they never trip this. Fails open for
+  // unconfigured users so existing tills are never blocked.
+  discountNeedsApproval(req, payload, auditChanges) {
+    if (!auditChanges || !Array.isArray(auditChanges.discounts) || !auditChanges.discounts.length) {
+      return false;
+    }
+    if (canPos(req.user, 'discount_apply')) return false;
+    const token =
+      (payload && payload.approval_token) || (req.body && req.body.approval_token) || null;
+    return !isApprovedFor(token, 'discount_apply', req.user && req.user._id);
+  }
+
   async createOrHoldInternal(
     req,
     res,
@@ -642,6 +659,10 @@ class SalesController extends BaseController {
         processValue === 'Hold'
           ? { priceChanges: [], discounts: [] }
           : await collectSaleAuditChanges(payload);
+
+      if (processValue !== 'Hold' && this.discountNeedsApproval(req, payload, auditChanges)) {
+        return this.error(res, ERROR_MESSAGES.DISCOUNT_NEEDS_APPROVAL, 403);
+      }
 
       // Validate any loyalty redemption and coupon BEFORE the sale is priced, so
       // the discounts that reach processSale are ones the branch's rules, the
@@ -799,6 +820,10 @@ class SalesController extends BaseController {
       }
 
       const auditChanges = await collectSaleAuditChanges(payload, existingSale);
+
+      if (this.discountNeedsApproval(req, payload, auditChanges)) {
+        return this.error(res, ERROR_MESSAGES.DISCOUNT_NEEDS_APPROVAL, 403);
+      }
 
       // Delegate Edit business logic to salesService.processSale (PHP
       // salesInsertUpdate parity for $process = 'Edit').
