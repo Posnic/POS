@@ -3159,6 +3159,79 @@ PosnicPro.kotorder = {
     }
 };
 
+// Manual-discount approval gate (Phase 2). Line discounts and the extra
+// discount are restricted till actions; coupon / loyalty discounts are
+// validated server-side by their own rules and never counted here. The
+// detection mirrors the server's collectSaleAuditChanges, which backs this
+// gate with a 403 unless a manager-approval token rides on the payload.
+//
+// On PosnicPro.sales itself, NOT inside addSale: cartOrderSubmit and every
+// helper call resolve these as PosnicPro.sales.* - defined anywhere else,
+// the Tender button dies with "guardDiscountApproval is not a function".
+PosnicPro.sales._num = function (v) { var n = parseFloat(v); return isFinite(n) ? n : 0; };
+PosnicPro.sales._manualDiscountOn = function (data) {
+    var num = PosnicPro.sales._num;
+    var items = data.items || [];
+    for (var i = 0; i < items.length; i++) {
+        var it = items[i] || {};
+        if (num(it.sale_inline_discount_value) > 0 || num(it.item_discount) > 0 ||
+            num(it.discount_amount) > 0 || num(it.sale_inline_discount_pervalue) > 0 ||
+            num(it.item_discount_percentage) > 0 || num(it.discount_percentage) > 0) {
+            return true;
+        }
+    }
+    return num(data.extra_discount) > 0;
+};
+// Best-effort percent estimate for the role's discount cap: the larger of
+// (total discount amount / subtotal) and any raw percent entered.
+PosnicPro.sales._manualDiscountPct = function (data) {
+    var num = PosnicPro.sales._num;
+    var subtotal = num(data.sales_sub_total) || num(data.sales_total);
+    var amount = 0, maxPct = 0;
+    (data.items || []).forEach(function (raw) {
+        var it = raw || {};
+        amount += num(it.sale_inline_discount_value) || num(it.item_discount) || num(it.discount_amount);
+        var p = num(it.sale_inline_discount_pervalue) || num(it.item_discount_percentage) || num(it.discount_percentage);
+        if (p > maxPct) maxPct = p;
+    });
+    var extra = num(data.extra_discount);
+    if (extra > 0) {
+        if (data.extra_discount_type === 'percent') { if (extra > maxPct) maxPct = extra; }
+        else { amount += extra; }
+    }
+    if (subtotal > 0) {
+        var pctOfBill = (amount / subtotal) * 100;
+        if (pctOfBill > maxPct) maxPct = pctOfBill;
+    }
+    return maxPct;
+};
+// Wraps a sale submit. proceed() runs immediately when there is no manual
+// discount, or this user may apply it within their cap; otherwise the
+// manager PIN/card modal runs first and the token is attached to the
+// payload for the server-side check.
+PosnicPro.sales.guardDiscountApproval = function (params, proceed) {
+    var data;
+    try { data = JSON.parse(params.data); } catch (e) { proceed(); return; }
+    if (!data || !PosnicPro.sales._manualDiscountOn(data)) { proceed(); return; }
+    if (PosnicPro.posCan('discount_apply')) {
+        var pos = PosnicPro.userACL && PosnicPro.userACL.pos;
+        var cap = pos ? PosnicPro.sales._num(pos.discount_max_percent) : 0;
+        if (cap <= 0 || PosnicPro.sales._manualDiscountPct(data) <= cap) {
+            proceed();
+            return;
+        }
+    }
+    PosnicPro.requireManagerApproval('discount_apply',
+        { prompt: "This discount needs a manager's approval." },
+        function (approval) {
+            if (approval && approval.approval_token) {
+                data.approval_token = approval.approval_token;
+                params.data = JSON.stringify(data);
+            }
+            proceed();
+        });
+};
+
 /*********** START - ADD NEW SALES ***********/
 /***********  THIS FUNCTION HANDLE THE ADD NEW SALES ORDER ***********/
 PosnicPro.sales.addSale = {
@@ -3501,74 +3574,6 @@ PosnicPro.sales.addSale = {
             });
             });
         }
-    },
-    // Manual-discount approval gate (Phase 2). Line discounts and the extra
-    // discount are restricted till actions; coupon / loyalty discounts are
-    // validated server-side by their own rules and never counted here. The
-    // detection mirrors the server's collectSaleAuditChanges, which backs this
-    // gate with a 403 unless a manager-approval token rides on the payload.
-    _num: function (v) { var n = parseFloat(v); return isFinite(n) ? n : 0; },
-    _manualDiscountOn: function (data) {
-        var num = PosnicPro.sales._num;
-        var items = data.items || [];
-        for (var i = 0; i < items.length; i++) {
-            var it = items[i] || {};
-            if (num(it.sale_inline_discount_value) > 0 || num(it.item_discount) > 0 ||
-                num(it.discount_amount) > 0 || num(it.sale_inline_discount_pervalue) > 0 ||
-                num(it.item_discount_percentage) > 0 || num(it.discount_percentage) > 0) {
-                return true;
-            }
-        }
-        return num(data.extra_discount) > 0;
-    },
-    // Best-effort percent estimate for the role's discount cap: the larger of
-    // (total discount amount / subtotal) and any raw percent entered.
-    _manualDiscountPct: function (data) {
-        var num = PosnicPro.sales._num;
-        var subtotal = num(data.sales_sub_total) || num(data.sales_total);
-        var amount = 0, maxPct = 0;
-        (data.items || []).forEach(function (raw) {
-            var it = raw || {};
-            amount += num(it.sale_inline_discount_value) || num(it.item_discount) || num(it.discount_amount);
-            var p = num(it.sale_inline_discount_pervalue) || num(it.item_discount_percentage) || num(it.discount_percentage);
-            if (p > maxPct) maxPct = p;
-        });
-        var extra = num(data.extra_discount);
-        if (extra > 0) {
-            if (data.extra_discount_type === 'percent') { if (extra > maxPct) maxPct = extra; }
-            else { amount += extra; }
-        }
-        if (subtotal > 0) {
-            var pctOfBill = (amount / subtotal) * 100;
-            if (pctOfBill > maxPct) maxPct = pctOfBill;
-        }
-        return maxPct;
-    },
-    // Wraps a sale submit. proceed() runs immediately when there is no manual
-    // discount, or this user may apply it within their cap; otherwise the
-    // manager PIN/card modal runs first and the token is attached to the
-    // payload for the server-side check.
-    guardDiscountApproval: function (params, proceed) {
-        var data;
-        try { data = JSON.parse(params.data); } catch (e) { proceed(); return; }
-        if (!data || !PosnicPro.sales._manualDiscountOn(data)) { proceed(); return; }
-        if (PosnicPro.posCan('discount_apply')) {
-            var pos = PosnicPro.userACL && PosnicPro.userACL.pos;
-            var cap = pos ? PosnicPro.sales._num(pos.discount_max_percent) : 0;
-            if (cap <= 0 || PosnicPro.sales._manualDiscountPct(data) <= cap) {
-                proceed();
-                return;
-            }
-        }
-        PosnicPro.requireManagerApproval('discount_apply',
-            { prompt: "This discount needs a manager's approval." },
-            function (approval) {
-                if (approval && approval.approval_token) {
-                    data.approval_token = approval.approval_token;
-                    params.data = JSON.stringify(data);
-                }
-                proceed();
-            });
     },
     sendSms: function () {
 
