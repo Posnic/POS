@@ -1258,6 +1258,20 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
     const salePrefixedId =
       id === '' ? prefixId : existingSale && existingSale.sales_id ? existingSale.sales_id : '';
 
+    /*
+     * The sale is committed - tell the sync agent NOW, not on the 15s scan.
+     * The marker is an event row (never deduplicated) and the agent's
+     * critical lane pushes sales before the stock they changed, so the shop's
+     * record that money was taken reaches the cloud in ~2s. Fire-safe both
+     * halves: the sale is done whatever happens here, and in the cloud both
+     * are no-ops (see sync/outbox.js isEnabled).
+     */
+    try {
+      const { enqueue, REASONS } = require('../sync/outbox');
+      enqueue({ collection: 'sales', documentId: saleId, reason: REASONS.SALE });
+      require('../sync/nudge').nudgeSyncAgent();
+    } catch (e) { /* accelerator only - the periodic scan still delivers */ }
+
     // Update Stock & Logs (PHP lines 696-710 for Add, 753-778 for Edit)
     const stockLogsRepository = new StockLogsRepository();
     const stockLogStatus = context.stockLogStatus || true; // Default true
