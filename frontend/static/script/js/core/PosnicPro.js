@@ -2565,6 +2565,41 @@ PosnicPro = {
         $(TableBody).each(function (key, val) {
             $(".datatable-thead-tbody").empty().html(val[table]);
         });
+
+        /*
+         * Skeleton rows while the list loads (S1 feel-fast).
+         *
+         * Every list used to clear to a blank white table with a corner
+         * spinner; the page looked broken for however long the fetch took.
+         * Ghost rows shaped like the data communicate "loading" without a
+         * layout jump - the fetch's success handler replaces the tbody, so
+         * they can never outlive the data. Column count comes from the
+         * thead markup above, so the two cannot drift.
+         */
+        var head = TableBody[table];
+        if (head) {
+            PosnicPro.skeleton.fill(table, (head.match(/<th/g) || []).length);
+        }
+    },
+
+    /* Ghost rows for a table that is fetching. The shimmer runs a bounded
+       number of times so a failed fetch degrades to a calm grey ghost, not
+       an infinite pulse beside an error toast. */
+    skeleton: {
+        ROWS: 8,
+        fill: function (module, columns) {
+            var tbody = $('#view_' + module).children('tbody');
+            if (!tbody.length || !columns) return;
+            var cells = '';
+            for (var c = 0; c < columns; c++) {
+                cells += '<td><span class="skeleton-cell"></span></td>';
+            }
+            var rows = '';
+            for (var r = 0; r < PosnicPro.skeleton.ROWS; r++) {
+                rows += '<tr class="skeleton-row">' + cells + '</tr>';
+            }
+            tbody.html(rows);
+        },
     },
 
     appendRecyclebinDataTableBody: function (table) {

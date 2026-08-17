@@ -206,8 +206,6 @@
             "static/style/plugins/datepicker/i18n/datepicker.en.js",
             "static/script/js/jquery.number.min.js",
             "static/script/js/jquery.toast.min.js",
-            "static/script/js/plugins/d3/d3.min.js",
-            "static/script/js/plugins/c3/c3.min.js",
             "static/script/js/dexie.min.js",
             "static/script/js/core/PosnicPro.js",
             "static/script/js/core/lock-screen.js",

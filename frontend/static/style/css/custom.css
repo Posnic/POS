@@ -2341,3 +2341,38 @@ input:checked + .slider:before {
     border-radius: 15px;
     border: 1px solid #2196f3;
 }
+/*
+ * Skeleton loading rows (S1 feel-fast; filled by PosnicPro.skeleton).
+ *
+ * Grey-with-alpha on purpose: it reads correctly on every one of the 11
+ * themes, light or dark, without touching the token system. The shimmer
+ * iterates a bounded number of times so a failed fetch leaves a calm grey
+ * ghost next to its error toast instead of pulsing forever.
+ */
+.skeleton-cell {
+    display: inline-block;
+    width: 100%;
+    height: 14px;
+    border-radius: 4px;
+    background: linear-gradient(90deg,
+        rgba(127, 127, 127, 0.10) 25%,
+        rgba(127, 127, 127, 0.22) 50%,
+        rgba(127, 127, 127, 0.10) 75%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.2s linear 12;
+}
+.skeleton-row td {
+    padding-top: 14px;
+    padding-bottom: 14px;
+}
+/* Varied widths so the ghost reads as data, not as stripes. */
+.skeleton-row td:nth-child(3n) .skeleton-cell { width: 62%; }
+.skeleton-row td:nth-child(4n + 1) .skeleton-cell { width: 78%; }
+.skeleton-row td:first-child .skeleton-cell { width: 16px; }
+@keyframes skeleton-shimmer {
+    from { background-position: 200% 0; }
+    to { background-position: -200% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .skeleton-cell { animation: none; }
+}
