@@ -44,6 +44,16 @@ if (isProduction()) {
   app.set('trust proxy', 1);
 }
 
+/*
+ * Compress every compressible response. The dependency sat in package.json
+ * for months while the biggest payloads - a multi-megabyte dashboard bundle,
+ * EJSON lists, CSV exports - crossed the shop's wire uncompressed. First in
+ * the chain so everything downstream (static files included) benefits;
+ * clients that already hold a gzip (or that nginx re-handles) negotiate via
+ * Accept-Encoding as usual.
+ */
+app.use(require('compression')());
+
 // 1) GLOBAL MIDDLEWARES
 // Set security headers with CSP tuned for legacy frontend. We explicitly
 // allow data: frames so that purchase/sales image previews (which render
@@ -759,11 +769,21 @@ app.use(
      * secret is handled the same way a few lines up.
      */
     store: tenantAwareSessionStore(),
+    /*
+     * Sliding expiry, not a fixed one. Without rolling, the 24h below counts
+     * from SIGN-IN, so a cashier who opened the till in the morning was thrown
+     * out mid-sale exactly 24 hours later, however busy the counter - the
+     * session died at its busiest. Rolling resets the window on every request
+     * (connect-mongo's touch keeps the store's TTL in step), so an active till
+     * never expires and an abandoned browser still does, 24h after it was
+     * last used.
+     */
+    rolling: true,
     cookie: {
       secure: isProduction(),
       sameSite: isProduction() ? 'none' : 'lax',
       httpOnly: true,
-      maxAge: 24 * 60 * 60 * 1000, // 1 day
+      maxAge: 24 * 60 * 60 * 1000, // 1 day of INACTIVITY, not of shift
     },
   })
 );

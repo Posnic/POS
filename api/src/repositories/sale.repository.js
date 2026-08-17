@@ -6902,6 +6902,17 @@ class SalesRepository {
       if (!branchDoc) {
         return { status: false, message: 'Branch not found', data: null };
       }
+      /*
+       * QR ordering is opt-in. This endpoint is anonymous by design (a
+       * customer's phone has no credentials), so the ONLY thing standing
+       * between the internet and a shop's kitchen queue is this: a branch
+       * that never configured a QR identity must not accept orders addressed
+       * by its raw database id, which appears in every authenticated response
+       * and is no secret.
+       */
+      if (!branchDoc.kiosk || !branchDoc.kiosk.store_id) {
+        return { status: false, message: 'QR ordering is not enabled for this branch', data: null };
+      }
       const branchObjectId = branchDoc._id;
 
       // Generate token ID

@@ -2200,6 +2200,24 @@ setInterval(function () {
     }
 }, 30000); // 30 seconds
 
+/*
+ * Multi-till: a sale completed on another till appears on this one's sales
+ * list without anyone pressing refresh. checkNewSaleAndRefresh() above was
+ * written for exactly this and then never called from anywhere - the sales
+ * page just showed yesterday until someone navigated away and back.
+ *
+ * Only while the sales list is actually on screen in a visible tab, and only
+ * for users who can pass getNewSale's sales.write gate - anyone else would
+ * collect an Unauthorized toast every interval.
+ */
+setInterval(function () {
+    if (document.hidden) return;
+    if (window.location.hash.slice(1) !== '/sales') return;
+    var acl = PosnicPro.userACL;
+    if (!acl || !acl.sales || acl.sales.write !== true) return;
+    checkNewSaleAndRefresh();
+}, 30000);
+
 // Auto-refresh toggle init (KOT History)
 $(document).on('change', '#kot_auto_refresh_toggle', function () {
     const enabled = this.checked ? 'enable' : 'disable';

@@ -61,8 +61,11 @@ const ALLOWED_ANONYMOUS = {
     '/accesskiosk', '/accessQr', '/accessMobileApp',
   ],
   'sales.routes.js': [
-    // Both refuse an anonymous caller inside the handler: they read req.user and
-    // have nothing to return without it.
+    // getNewSale refuses an anonymous caller inside the handler (403 without
+    // sales.write). qrOrder is anonymous BY DESIGN - a customer's phone has no
+    // credentials - and is gated in the repository instead: only a branch with
+    // a configured QR identity (kiosk.store_id) accepts orders, so a shop that
+    // never enabled QR ordering exposes nothing.
     '/qrOrder', '/getNewSale',
   ],
   'base.routes.js': [
@@ -165,6 +168,28 @@ test('the routes that leaked are specifically closed', () => {
         `${route} is unguarded again - it exposes ${what}`);
     }
   }
+});
+
+test('anonymous qrOrder only serves branches that opted into QR', () => {
+  /*
+   * qrOrder is anonymous by design - a customer's phone has no credentials -
+   * so the gate lives in the repository: no configured QR identity
+   * (kiosk.store_id), no order. Without it, any branch's raw ObjectId (which
+   * appears in every authenticated response and is no secret) was enough for
+   * a stranger to put orders on its kitchen queue. Asserted here because the
+   * repository's own unit file sits in jest's CI ignore list.
+   */
+  const src = fs.readFileSync(
+    path.join(__dirname, '..', 'api', 'src', 'repositories', 'sale.repository.js'), 'utf8');
+  const start = src.indexOf('async qrOrderModel');
+  assert.ok(start >= 0, 'qrOrderModel has gone or been renamed');
+  const insertAt = src.indexOf('insertOne', start);
+  const beforeCreate = src.slice(start, insertAt > start ? insertAt : start + 4000);
+
+  assert.match(beforeCreate, /branchDoc\.kiosk\s*\|\|\s*!branchDoc\.kiosk\.store_id/,
+    'the QR opt-in gate is gone - any branch id would accept anonymous orders again');
+  assert.ok(beforeCreate.includes('QR ordering is not enabled for this branch'),
+    'the refusal message changed or moved after order creation');
 });
 
 test('the kiosk key is compared in constant time', () => {

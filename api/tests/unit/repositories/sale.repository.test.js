@@ -740,9 +740,28 @@ describe('SalesRepository', () => {
       expect(r.status).toBe(false);
       expect(r.message).toBe('Branch not found');
     });
-    test('creates QR order successfully', async () => {
+    test('a branch that never configured QR refuses anonymous orders', async () => {
+      // The endpoint is anonymous by design; the QR identity is the opt-in.
+      // Without this, any branch's raw ObjectId - no secret - was enough for
+      // a stranger to put orders on its kitchen queue.
       if (!collections.branches) collections.branches = mkCol();
       collections.branches.findOne.mockResolvedValue({ _id: FAKE_BRANCH, name: 'Main' });
+      const r = await salesRepository.qrOrderModel({
+        branch: FAKE_BRANCH,
+        items: [
+          { item_id: FAKE_ITEM, item_name: 'Test', item_quantity: 1, item_price: 10, gst: 1 },
+        ],
+      });
+      expect(r.status).toBe(false);
+      expect(r.message).toBe('QR ordering is not enabled for this branch');
+    });
+    test('creates QR order successfully', async () => {
+      if (!collections.branches) collections.branches = mkCol();
+      collections.branches.findOne.mockResolvedValue({
+        _id: FAKE_BRANCH,
+        name: 'Main',
+        kiosk: { store_id: 'QR-STORE-1' },
+      });
       if (!collections.sales) collections.sales = mkCol();
       collections.sales.insertOne.mockResolvedValue({ insertedId: FAKE_ID });
       const r = await salesRepository.qrOrderModel({

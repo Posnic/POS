@@ -9,6 +9,8 @@ let taskCount = 0;
 let skipLang = false;
 let pages = {};
 let htmls = [];
+/* Keys a language file lacks, collected across the build and reported once. */
+const missingKeys = new Set();
 
 function readLangJSON() {
     languages.forEach(lang => {
@@ -52,8 +54,17 @@ function langReplace(url, dir, file) {
             if (lang === 'en') {
                 data = data.replace(find, '$2');
             } else {
-                data = data.replace(find, (match, key) => {
-                    return langContent[lang][key];
+                data = data.replace(find, (match, key, english) => {
+                    const translated = langContent[lang][key];
+                    // A missing key used to interpolate as the literal string
+                    // "undefined" - shipped to customers, in the UI, for
+                    // months. The English the tag already carries is always a
+                    // better answer; the build lists what needs translating.
+                    if (translated === undefined) {
+                        missingKeys.add(`${lang}: ${key}`);
+                        return english;
+                    }
+                    return translated;
                 });
             }
             html[lang] = html[lang] ? html[lang] : [];
@@ -129,6 +140,12 @@ function buildAllHtml(cb, skip) {
                     }
                 }
 
+            }
+            if (missingKeys.size) {
+                console.warn(
+                    `[i18n] ${missingKeys.size} untranslated key(s) fell back to English:\n  ` +
+                    [...missingKeys].sort().join('\n  ')
+                );
             }
             cb();
             clearInterval(this);
