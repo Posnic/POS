@@ -1410,8 +1410,26 @@ body {
 /* Clock-in/out infobar icon (inline SVG). It inherits the primary-blue colour
    above, which disappears on the blue hover background - so set it explicitly:
    theme text colour at rest, white on hover. */
-#shift_clock_btn .shift-clock-ico { width: 20px !important; height: 20px !important; margin: auto; display: block; color: var(--theme-text-primary, #495057) !important; }
+#shift_clock_btn { justify-content: center; align-items: center; }
+#shift_clock_btn .shift-clock-ico { width: 20px !important; height: 20px !important; flex: 0 0 20px; margin: auto; display: block; color: var(--theme-text-primary, #495057) !important; }
 #shift_clock_btn:hover .shift-clock-ico { color: #fff !important; }
+
+/* On-shift indicator: a small green dot on the clock button while the user is
+   clocked in - identification without shouting. Set by shiftWidget (refresh +
+   page-load sync). */
+#shift_clock_btn.on-shift { position: relative; }
+#shift_clock_btn.on-shift::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  right: 14px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2ecc71;
+  box-shadow: 0 0 0 2px #f2f3f7;
+}
+#shift_clock_btn.on-shift:hover::after { box-shadow: 0 0 0 2px var(--theme-primary-color, #506fe4); }
 
 /* Sweet-alert confirm button label stays readable on its coloured background
    (e.g. the "Yes" on the logout prompt was blue text on a blue button). */

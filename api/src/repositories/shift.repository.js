@@ -7,7 +7,11 @@
 const ShiftModel = require('../models/shift.model');
 const BaseModel = require('../models/base.model');
 const { ObjectId } = require('mongodb');
-const { SHIFT_STATUS } = require('../constants/shift.constants');
+const {
+  SHIFT_STATUS,
+  STALE_SHIFT_AFTER_MINUTES,
+  AUTO_CLOCKOUT_CAP_MINUTES,
+} = require('../constants/shift.constants');
 
 const toId = (v) => {
   if (v === null || v === undefined) return null;
@@ -41,6 +45,30 @@ class ShiftRepository {
     );
   }
 
+  /*
+   * Forgot-to-clock-out safeguard: if this open shift is stale (older than
+   * STALE_SHIFT_AFTER_MINUTES), close it now - clock_out at the cap, worked
+   * minutes capped, note flagged - and return the closed doc so the caller can
+   * audit it. Returns null when the shift is fresh (caller keeps its normal
+   * behaviour, e.g. the 409 on double clock-in).
+   */
+  async _autoCloseIfStale(collection, shift, now) {
+    const clockIn = shift.clock_in instanceof Date ? shift.clock_in : new Date(shift.clock_in);
+    const ageMin = Math.round((now.getTime() - clockIn.getTime()) / 60000);
+    if (!(ageMin > STALE_SHIFT_AFTER_MINUTES)) return null;
+    const breakMin = Number(shift.break_minutes) || 0;
+    const cappedGross = Math.min(ageMin, AUTO_CLOCKOUT_CAP_MINUTES);
+    const set = {
+      status: SHIFT_STATUS.CLOSED,
+      clock_out: new Date(clockIn.getTime() + cappedGross * 60000),
+      worked_minutes: Math.max(0, cappedGross - breakMin),
+      note: [shift.note, '[auto clock-out]'].filter(Boolean).join(' '),
+      updated_date: now,
+    };
+    await collection.updateOne({ _id: shift._id }, { $set: set });
+    return { ...shift, ...set };
+  }
+
   // The current user's open shift, or null.
   async getCurrentShift() {
     try {
@@ -68,16 +96,20 @@ class ShiftRepository {
         user_id: userId,
         status: SHIFT_STATUS.OPEN,
       });
+      const now = new Date();
+      let autoClosed = null;
       if (existing) {
-        return {
-          status: false,
-          statusCode: 409,
-          data: existing,
-          message: 'You already have an open shift',
-        };
+        autoClosed = await this._autoCloseIfStale(collection, existing, now);
+        if (!autoClosed) {
+          return {
+            status: false,
+            statusCode: 409,
+            data: existing,
+            message: 'You already have an open shift',
+          };
+        }
       }
 
-      const now = new Date();
       const doc = {
         license: this._license(),
         branch_id: this._branch(),
@@ -95,7 +127,14 @@ class ShiftRepository {
         updated_date: now,
       };
       const result = await collection.insertOne(doc);
-      return { status: true, data: { ...doc, _id: result.insertedId }, message: 'Clocked in' };
+      return {
+        status: true,
+        data: { ...doc, _id: result.insertedId },
+        auto_closed: autoClosed,
+        message: autoClosed
+          ? 'Clocked in (your forgotten shift was closed automatically)'
+          : 'Clocked in',
+      };
     } catch (error) {
       return { status: false, data: null, message: error.message };
     }
@@ -160,23 +199,30 @@ class ShiftRepository {
       });
 
       const now = new Date();
+      let autoClosed = null;
       if (open) {
-        const clockIn = open.clock_in instanceof Date ? open.clock_in : new Date(open.clock_in);
-        const breakMin = Number(open.break_minutes) || 0;
-        const grossMin = Math.max(0, Math.round((now.getTime() - clockIn.getTime()) / 60000));
-        const workedMin = Math.max(0, grossMin - breakMin);
-        const set = {
-          status: SHIFT_STATUS.CLOSED,
-          clock_out: now,
-          worked_minutes: workedMin,
-          updated_date: now,
-        };
-        await collection.updateOne({ _id: open._id }, { $set: set });
-        return {
-          status: true,
-          data: { action: 'clock_out', shift: { ...open, ...set } },
-          message: 'Clocked out',
-        };
+        // A stale (forgotten) shift is auto-closed and the swipe counts as a
+        // fresh clock-IN - otherwise a forgotten tap yesterday would turn
+        // today's arrival into a 30-hour clock-out.
+        autoClosed = await this._autoCloseIfStale(collection, open, now);
+        if (!autoClosed) {
+          const clockIn = open.clock_in instanceof Date ? open.clock_in : new Date(open.clock_in);
+          const breakMin = Number(open.break_minutes) || 0;
+          const grossMin = Math.max(0, Math.round((now.getTime() - clockIn.getTime()) / 60000));
+          const workedMin = Math.max(0, grossMin - breakMin);
+          const set = {
+            status: SHIFT_STATUS.CLOSED,
+            clock_out: now,
+            worked_minutes: workedMin,
+            updated_date: now,
+          };
+          await collection.updateOne({ _id: open._id }, { $set: set });
+          return {
+            status: true,
+            data: { action: 'clock_out', shift: { ...open, ...set } },
+            message: 'Clocked out',
+          };
+        }
       }
 
       const doc = {
@@ -198,8 +244,14 @@ class ShiftRepository {
       const result = await collection.insertOne(doc);
       return {
         status: true,
-        data: { action: 'clock_in', shift: { ...doc, _id: result.insertedId } },
-        message: 'Clocked in',
+        data: {
+          action: 'clock_in',
+          shift: { ...doc, _id: result.insertedId },
+          auto_closed: autoClosed,
+        },
+        message: autoClosed
+          ? 'Clocked in (the forgotten shift was closed automatically)'
+          : 'Clocked in',
       };
     } catch (error) {
       return { status: false, data: null, message: error.message };

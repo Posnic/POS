@@ -1179,7 +1179,17 @@ PosnicPro = {
             return PosnicPro.shiftWidget._setting('staff_shifts_enable', true);
         },
         applyEnabled: function () {
-            $('#shift_clock_li').toggle(PosnicPro.shiftWidget.enabled());
+            var on = PosnicPro.shiftWidget.enabled();
+            $('#shift_clock_li').toggle(on);
+            $('#labour_report_menu').toggle(on);
+        },
+        // Page-load sync for the header's on-shift dot (the modal's refresh
+        // keeps it current afterwards). Silent: never disturbs the page.
+        syncHeader: function () {
+            if (!$('#shift_clock_btn').length || !PosnicPro.shiftWidget.enabled()) { return; }
+            PosnicPro.get('shifts/current', function (r) {
+                $('#shift_clock_btn').toggleClass('on-shift', !!(r && r.data && r.data.clock_in));
+            }, function () {});
         },
         openWidget: function () {
             if (!PosnicPro.shiftWidget.enabled()) { return; }
@@ -1199,7 +1209,9 @@ PosnicPro = {
             $('#shift_status').text('Loading…');
             PosnicPro.get('shifts/current', function (response) {
                 var s = response && response.data;
-                if (s && s.clock_in) {
+                var onShift = !!(s && s.clock_in);
+                $('#shift_clock_btn').toggleClass('on-shift', onShift);
+                if (onShift) {
                     var since = new Date(s.clock_in);
                     $('#shift_status').html('<span class="badge badge-success">On shift</span><br>'
                         + '<small class="text-muted">since ' + since.toLocaleString() + '</small>');
@@ -3669,3 +3681,13 @@ $('.custom_report_search_input').on('keyup', function (event) {
         setTimeout(paintLabel, 1500);
     });
 })();
+
+// Shift header state at page load: show/hide the clock button and roster menu
+// per the shop's settings, and light the on-shift dot if the user is clocked
+// in. The shift modal keeps both in sync afterwards.
+$(function () {
+    if (PosnicPro.shiftWidget) {
+        PosnicPro.shiftWidget.applyEnabled();
+        PosnicPro.shiftWidget.syncHeader();
+    }
+});
