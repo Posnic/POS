@@ -25,6 +25,13 @@ class RegisterModel extends BaseModel {
       cashInOutDetail: { type: 'Array', select: true },
       cashDenomDetail: { type: 'Array', select: true },
       countedAmount: { type: 'Array', select: true },
+      // Persisted close (immutable Z numbers), written once by
+      // registercloseUpdate: expected cash at the moment of close, what was
+      // counted, and the difference. Reports read these instead of recomputing,
+      // so later edits to sales or cash entries can't rewrite a closed till.
+      closing_expected: { type: 'Double', select: true },
+      closing_counted: { type: 'Double', select: true },
+      over_short: { type: 'Double', select: true },
     };
   }
 }

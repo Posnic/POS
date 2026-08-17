@@ -188,8 +188,8 @@ describe('RegisterModel — fields schema definition', () => {
     expect(model.fields).not.toBeNull();
   });
 
-  test('fields has exactly 20 entries', () => {
-    expect(Object.keys(model.fields)).toHaveLength(20);
+  test('fields has exactly 23 entries', () => {
+    expect(Object.keys(model.fields)).toHaveLength(23);
   });
 
   test('all expected field names are present', () => {
@@ -214,6 +214,9 @@ describe('RegisterModel — fields schema definition', () => {
       'cashInOutDetail',
       'cashDenomDetail',
       'countedAmount',
+      'closing_expected',
+      'closing_counted',
+      'over_short',
     ];
     const actualFields = Object.keys(model.fields);
     expectedFields.forEach((name) => {
@@ -362,11 +365,14 @@ describe('RegisterModel — fields select:true', () => {
     'cashInOutDetail',
     'cashDenomDetail',
     'countedAmount',
+    'closing_expected',
+    'closing_counted',
+    'over_short',
   ];
 
-  test('exactly 14 fields have select:true', () => {
+  test('exactly 17 fields have select:true', () => {
     const count = Object.values(fields).filter((f) => f.select === true).length;
-    expect(count).toBe(14);
+    expect(count).toBe(17);
   });
 
   selectTrueFields.forEach((fieldName) => {
@@ -405,9 +411,9 @@ describe('RegisterModel — getSelectFields integration', () => {
     model = new RegisterModel();
   });
 
-  test('static getSelectFields returns 14-field projection when showAll=false', () => {
+  test('static getSelectFields returns 17-field projection when showAll=false', () => {
     const result = BaseModel.getSelectFields(model.fields, false);
-    expect(Object.keys(result)).toHaveLength(14);
+    expect(Object.keys(result)).toHaveLength(17);
   });
 
   test('all returned projection values are 1 (MongoDB projection format)', () => {

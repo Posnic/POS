@@ -420,6 +420,11 @@ class RegistersController extends BaseController {
           entity: 'cashregister',
           entity_id: req.body.cash_register_id,
           device_id: req.body.lock_device_id,
+          details: {
+            closing_expected: result.data?.closing_expected,
+            closing_counted: result.data?.closing_counted,
+            over_short: result.data?.over_short,
+          },
         });
         return this.success(res, result.data, result.message);
       } else {
