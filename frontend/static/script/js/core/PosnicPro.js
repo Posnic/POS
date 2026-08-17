@@ -674,6 +674,53 @@ PosnicPro = {
     },
 
     /*
+     * Realtime (S2): the till listens instead of asking.
+     *
+     * One SSE connection per till. The server publishes a coarse
+     * {type:'change', entity} whenever any till in the shop writes that
+     * entity; interested screens register with on(entity, fn) and refresh
+     * through the endpoints they already use. Signals only, never data.
+     *
+     * EventSource reconnects by itself (server sets retry), so a deploy's
+     * process reload costs seconds of silence, not a broken page. Handlers
+     * are debounced per entity: a burst of writes becomes one refresh.
+     * Everything degrades to the existing polls when the stream is down.
+     */
+    realtime: {
+        _source: null,
+        _handlers: {},   // entity -> [fn]
+        _timers: {},     // entity -> debounce timer
+        DEBOUNCE_MS: 1500,
+        connected: false,
+        start: function () {
+            if (PosnicPro.realtime._source || typeof EventSource === 'undefined') return;
+            try {
+                var es = new EventSource('events');
+                PosnicPro.realtime._source = es;
+                es.onopen = function () { PosnicPro.realtime.connected = true; };
+                es.onerror = function () { PosnicPro.realtime.connected = false; };
+                es.onmessage = function (msg) {
+                    var event;
+                    try { event = JSON.parse(msg.data); } catch (e) { return; }
+                    if (!event || event.type !== 'change' || !event.entity) return;
+                    var entity = event.entity;
+                    clearTimeout(PosnicPro.realtime._timers[entity]);
+                    PosnicPro.realtime._timers[entity] = setTimeout(function () {
+                        var fns = PosnicPro.realtime._handlers[entity] || [];
+                        for (var i = 0; i < fns.length; i++) {
+                            try { fns[i](event); } catch (e) { /* one bad handler must not stop the rest */ }
+                        }
+                    }, PosnicPro.realtime.DEBOUNCE_MS);
+                };
+            } catch (e) { /* no stream: the polls carry on */ }
+        },
+        on: function (entity, fn) {
+            (PosnicPro.realtime._handlers[entity] =
+                PosnicPro.realtime._handlers[entity] || []).push(fn);
+        },
+    },
+
+    /*
      * Charts.
      *
      * Every report used to call am4core.create() straight onto its div, and no
@@ -3391,6 +3438,26 @@ db.version(2).stores({
     }
     if (!window.am4core) window.am4core = { ready: stubReady };
 })();
+
+/*
+ * Realtime wiring for the generic lists (S2). The dashboard is the only
+ * page with lists to keep fresh; login and friends never open the stream.
+ * The sales list has a smarter handler in sales_view.js - these are the
+ * screens where "someone changed it, re-ask" is the whole requirement.
+ */
+$(function () {
+    if (!/dashboard\.html$/i.test(window.location.pathname)) return;
+    PosnicPro.realtime.start();
+    ['items', 'customers', 'suppliers', 'receivings', 'expenses', 'categories']
+        .forEach(function (entity) {
+            PosnicPro.realtime.on(entity, function () {
+                if (document.hidden) return;
+                if (window.location.hash.slice(1) === '/' + entity) {
+                    PosnicPro.refreshDatatable(entity);
+                }
+            });
+        });
+});
 
 $('.custom_search_input').on('keypress keydown.autocomplete', function () {
     var module = $(this).data('id');

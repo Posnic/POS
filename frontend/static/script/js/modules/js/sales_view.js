@@ -2189,8 +2189,10 @@ function checkNewSaleAndRefresh() {
     });
 }
 
-// Auto-refresh for KOT History (30 seconds interval)
+// Auto-refresh for KOT History. Poll is the FALLBACK: when the realtime
+// stream is up, pushes drive the refresh and this interval stands down.
 setInterval(function () {
+    if (PosnicPro.realtime && PosnicPro.realtime.connected) return;
     let hash = window.location.hash.slice(1);
     let tableOpt = PosnicPro.local.get('table_options') === 'enable';
     let autoRefresh = localStorage.getItem('kot_auto_refresh') === 'enable';
@@ -2210,12 +2212,30 @@ setInterval(function () {
  * for users who can pass getNewSale's sales.write gate - anyone else would
  * collect an Unauthorized toast every interval.
  */
-setInterval(function () {
+function refreshSalesScreensIfWatching() {
     if (document.hidden) return;
+    var hash = window.location.hash.slice(1);
+    if (hash === '/sales') {
+        var acl = PosnicPro.userACL;
+        if (!acl || !acl.sales || acl.sales.write !== true) return;
+        checkNewSaleAndRefresh();
+    } else if (hash === '/kothistory'
+        && PosnicPro.local.get('table_options') === 'enable'
+        && localStorage.getItem('kot_auto_refresh') === 'enable') {
+        PosnicPro.refreshDatatable('kothistory');
+    }
+}
+
+// Push-driven (S2): another till wrote a sale - refresh within seconds.
+if (PosnicPro.realtime) {
+    PosnicPro.realtime.on('sales', refreshSalesScreensIfWatching);
+}
+
+// Poll fallback for when the stream is down.
+setInterval(function () {
+    if (PosnicPro.realtime && PosnicPro.realtime.connected) return;
     if (window.location.hash.slice(1) !== '/sales') return;
-    var acl = PosnicPro.userACL;
-    if (!acl || !acl.sales || acl.sales.write !== true) return;
-    checkNewSaleAndRefresh();
+    refreshSalesScreensIfWatching();
 }, 30000);
 
 // Auto-refresh toggle init (KOT History)
