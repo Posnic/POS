@@ -116,12 +116,46 @@ describe('BaseController — checkPermission', () => {
     expect(ctrl.checkPermission('item', 'write', { role: 'admin' })).toBe(true);
   });
 
-  test('returns true for manager role', () => {
+  test('an unmigrated manager (no access.pos yet) keeps the legacy bypass', () => {
     expect(ctrl.checkPermission('branch', 'delete', { role: 'manager' })).toBe(true);
   });
 
-  test('returns true for api role', () => {
+  test('a migrated manager is constrained by their matrix', () => {
+    const migrated = {
+      role: 'manager',
+      access: { branch: { read: true, delete: false }, pos: { void_sale: true } },
+    };
+    expect(ctrl.checkPermission('branch', 'delete', migrated)).toBe(false);
+    expect(ctrl.checkPermission('branch', 'read', migrated)).toBe(true);
+  });
+
+  test('a matrix-less api account keeps the legacy bypass', () => {
     expect(ctrl.checkPermission('users', 'write', { role: 'api' })).toBe(true);
+  });
+
+  test('an api account with a formed matrix is constrained by it', () => {
+    const apiUser = { role: 'api', access: { item: { read: true, write: false } } };
+    expect(ctrl.checkPermission('item', 'read', apiUser)).toBe(true);
+    expect(ctrl.checkPermission('item', 'write', apiUser)).toBe(false);
+    expect(ctrl.checkPermission('users', 'write', apiUser)).toBe(false);
+  });
+
+  test('a formed matrix denies reads of modules it does not mention', () => {
+    expect(
+      ctrl.checkPermission('report', 'read', {
+        role: 'cashier',
+        access: { sales: { read: true, write: true } },
+      })
+    ).toBe(false);
+  });
+
+  test('resources outside the matrix module set keep the fail-open read', () => {
+    expect(
+      ctrl.checkPermission('setting', 'read', {
+        role: 'cashier',
+        access: { sales: { read: true } },
+      })
+    ).toBe(true);
   });
 
   test('role matching is case-insensitive (ADMIN → admin)', () => {

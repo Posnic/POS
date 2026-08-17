@@ -29,14 +29,36 @@ class BaseController {
     if (!user) return false;
 
     const role = (user.usertype || user.role || '').toLowerCase();
-    const highPrivilegeRoles = ['super_admin', 'admin', 'manager', 'api'];
 
-    if (highPrivilegeRoles.includes(role)) {
+    // The tenant's own top accounts bypass the matrix.
+    if (['super_admin', 'owner', 'admin'].includes(role)) {
       return true;
     }
 
     // Effective access is resolved in one place (the seam for Phase 1 roles).
     const access = resolveAccess(user);
+
+    /*
+     * Phase 2 hardening: manager and api no longer bypass the matrix
+     * unconditionally.
+     *
+     * - A manager keeps the legacy bypass only until their account has been
+     *   migrated (the login backfill stamps access.pos and upgrades their
+     *   matrix to the Store Manager preset) - after that, the matrix is the
+     *   authority. This is the per-account "migrated" flag, so a deploy never
+     *   strands a manager mid-shift.
+     * - An api account is constrained as soon as it has a formed matrix - the
+     *   API form has always configured one explicitly, so the matrix is the
+     *   promise. A matrix-less legacy api account keeps the old behaviour.
+     */
+    if (role === 'manager' || role === 'store_manager') {
+      if (!access || !access.pos) return true;
+    } else if (role === 'api') {
+      const formed = Object.keys(access || {}).some(
+        (k) => !['pos', 'pos_manager_approval', 'plan'].includes(k)
+      );
+      if (!formed) return true;
+    }
     const normalizedResource = String(resource || '').toLowerCase();
     const normalizedAction = String(action || 'read').toLowerCase();
 
@@ -88,8 +110,24 @@ class BaseController {
       }
     }
 
+    /*
+     * Reads are deny-by-default once a user has a formed matrix: a known
+     * module missing from it is a module they were not given. Two carve-outs
+     * keep old behaviour where deny would be wrong: a legacy account with no
+     * matrix at all (an old session must never be bricked by a deploy), and a
+     * resource outside the matrix's module set (e.g. 'setting'), which has
+     * never been grantable and always read fail-open.
+     */
     if (actionKey === 'read') {
-      return true;
+      const MATRIX_MODULES = [
+        'dashboard', 'sales', 'receiving', 'customer', 'supplier',
+        'category', 'item', 'expense', 'branch', 'report', 'user',
+      ];
+      if (!MATRIX_MODULES.includes(moduleKey)) return true;
+      const formedModules = Object.keys(access || {}).filter(
+        (k) => !['pos', 'pos_manager_approval', 'plan'].includes(k)
+      );
+      if (formedModules.length === 0) return true;
     }
 
     return false;
