@@ -47,11 +47,13 @@ function changeEvents(req, res, next) {
       res.on('finish', () => {
         if (res.statusCode >= 200 && res.statusCode < 300 && req.db) {
           try {
-            publish(req.db.databaseName, {
-              type: 'change',
-              entity,
-              at: new Date().toISOString(),
-            });
+            const event = { type: 'change', entity, at: new Date().toISOString() };
+            publish(req.db.databaseName, event);
+            /* Same signal, outward: registered webhook endpoints hear what
+               the shop's own tills hear. Fire-and-forget both halves. */
+            const webhooks = require('./webhooks');
+            webhooks.publish(req.db, req.db.databaseName, event).catch(() => {});
+            webhooks.drainDue(req.db, req.db.databaseName).catch(() => {});
           } catch (e) { /* realtime is an optimisation, never a failure */ }
         }
       });

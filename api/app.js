@@ -1047,6 +1047,59 @@ app.post('/push/subscribe', sseProtect, async (req, res) => {
     res.status(500).json({ type: 'error', message: 'Subscription failed' });
   }
 });
+/*
+ * Webhook management (integration platform step 1). Branch-write holders
+ * only: registering an endpoint means every future change signal of the
+ * chosen entities leaves the building. The secret is returned exactly once,
+ * at creation.
+ */
+const webhookInfra = require('./src/realtime/webhooks');
+const requireBranchWrite = (req, res, next) => {
+  const u = req.user;
+  if (u && u.access && u.access.branch && u.access.branch.write === true) return next();
+  return res.status(403).json({ type: 'error', message: 'Unauthorized' });
+};
+app.get('/webhooks', sseProtect, requireBranchWrite, async (req, res) => {
+  try {
+    const rows = await webhookInfra.listSubscriptions(req.db);
+    res.json({
+      type: 'success',
+      data: rows.map((r) => ({
+        id: r._id, url: r.url, events: r.events,
+        description: r.description, active: r.active, createdAt: r.createdAt,
+      })),
+    });
+  } catch (e) {
+    res.status(500).json({ type: 'error', message: 'Could not list webhooks' });
+  }
+});
+app.post('/webhooks', sseProtect, requireBranchWrite, async (req, res) => {
+  try {
+    const result = await webhookInfra.addSubscription(req.db, req.body || {});
+    if (!result.ok) return res.status(400).json({ type: 'error', message: result.reason });
+    res.json({ type: 'success', data: { id: result.id, secret: result.secret },
+      message: 'Webhook registered. Store the secret now - it is not shown again.' });
+  } catch (e) {
+    res.status(500).json({ type: 'error', message: 'Could not register webhook' });
+  }
+});
+app.delete('/webhooks/:id', sseProtect, requireBranchWrite, async (req, res) => {
+  try {
+    const result = await webhookInfra.removeSubscription(req.db, req.params.id);
+    res.json({ type: result.ok ? 'success' : 'error', data: null,
+      message: result.ok ? 'Webhook removed' : 'Not found' });
+  } catch (e) {
+    res.status(500).json({ type: 'error', message: 'Could not remove webhook' });
+  }
+});
+app.get('/webhooks/deliveries', sseProtect, requireBranchWrite, async (req, res) => {
+  try {
+    res.json({ type: 'success', data: await webhookInfra.recentDeliveries(req.db) });
+  } catch (e) {
+    res.status(500).json({ type: 'error', message: 'Could not list deliveries' });
+  }
+});
+
 app.post('/push/test', sseProtect, async (req, res) => {
   try {
     const result = req.db && req.user
