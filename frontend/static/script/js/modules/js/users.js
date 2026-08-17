@@ -507,6 +507,10 @@ PosnicPro.users = {
     // defaults), preselect one, and reflect it on the ACL matrix.
     renderRoleOptions: function (preselectId) {
         if (!$('#user_role_id').length) { return; }
+        // getUserDetails returns ObjectIds in EJSON form ({$oid: '...'}); an
+        // object never matches an <option> value, which showed an assigned role
+        // as unset (and a save in that state would null the role out).
+        if (preselectId && preselectId.$oid) { preselectId = preselectId.$oid; }
         PosnicPro.get('roles', function (res) {
             var roles = (res && res.data) || [];
             if (!Array.isArray(roles)) { roles = []; }
