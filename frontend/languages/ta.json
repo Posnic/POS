@@ -671,5 +671,17 @@
     "lang_modules_restaurant": "உணவகம் — மேசைகள் மற்றும் சமையலறை (KOT)",
     "lang_modules_hardware": "வன்பொருள் — எடை இயந்திரம்",
     "lang_modules_kot_hint": "உணவகம் / KOT முறை அமைப்புகள் > தொகுதிகள் பக்கத்தில் இயக்கப்படுகிறது. இந்தப் பக்கம் அதன் மேசைகளை நிர்வகிக்கிறது.",
-    "lang_modules_managetables": "மேசைகளை நிர்வகிக்கவும்"
+    "lang_modules_managetables": "மேசைகளை நிர்வகிக்கவும்",
+    "lang_navgroup_store": "கடை",
+    "lang_navgroup_salesbilling": "விற்பனை & பில்லிங்",
+    "lang_navgroup_restaurant": "உணவகம்",
+    "lang_navgroup_customers_marketing": "வாடிக்கையாளர் & சந்தைப்படுத்தல்",
+    "lang_navgroup_messaging": "செய்தி அனுப்புதல்",
+    "lang_navgroup_device_appearance": "சாதனம் & தோற்றம்",
+    "lang_navgroup_system": "கணினி",
+    "lang_payment_gateway": "கட்டண நுழைவாயில்",
+    "lang_units_title": "அலகுகள்",
+    "lang_kiosk_settings": "கியோஸ்க் அமைப்புகள்",
+    "lang_tables_title": "மேசைகள்",
+    "lang_whatsapp_connection": "WhatsApp இணைப்பு"
 }
