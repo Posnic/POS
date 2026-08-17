@@ -37,6 +37,12 @@
                                         class="feather icon-settings mr-2"></i>
                                     <lang class="lang_generalset">General Settings</lang>
                                 </a>
+                                <a data-module="branch" data-access="write" class="nav-link mb-2"
+                                    id="v-pills-modules-tab" data-toggle="pill" href="#v-pills-modules" role="tab"
+                                    aria-controls="v-pills-modules" aria-selected="false"><i
+                                        class="feather icon-grid mr-2"></i>
+                                    <lang class="lang_modules">Modules</lang>
+                                </a>
 
                                 <div class="settings-nav-group">Sales &amp; Billing</div>
                                 <a class="nav-link mb-2" data-module="branch" data-access="write" id="v-pills-tax-tab"
@@ -414,104 +420,6 @@
                                                     maxlength="15" placeholder="Enter the GSTIN" autocomplete="off">
                                             </div>
                                         </div>
-                                        <div class="form-row">
-                                            <div class="form-group col-md-6">
-                                                <label for="hardware_weight_machine_enable">
-                                                    <lang class="lang_weightmachine_title">Enable Weight Machine</lang>
-                                                </label>
-                                                <select name="hardware_weight_machine_enable"
-                                                    id="hardware_weight_machine_enable"
-                                                    class="form-control border-control">
-                                                    <option value="false">Disable</option>
-                                                    <option value="true">Enable</option>
-                                                </select>
-                                                <small class="text-muted">Requires hardware manager
-                                                    configuration</small>
-                                            </div>
-                                        </div>
-
-                                        <!--
-                                            Shop-wide on purpose: a shop that wants
-                                            its tills locked wants all of them
-                                            locked, and the one that opted out
-                                            would be the one left open.
-                                        -->
-                                        <div class="form-row">
-                                            <div class="form-group col-md-6">
-                                                <label for="till_lock_enable">
-                                                    <lang class="lang_tilllock_title">Lock till with a PIN</lang>
-                                                </label>
-                                                <select name="till_lock_enable" id="till_lock_enable"
-                                                    class="form-control border-control">
-                                                    <option value="false">Disable</option>
-                                                    <option value="true">Enable</option>
-                                                </select>
-                                                <small class="text-muted">Staff unlock with a 4-digit PIN
-                                                    instead of typing their password. A deliberate logout
-                                                    still needs the password.</small>
-                                            </div>
-                                            <div class="form-group col-md-6">
-                                                <label for="till_lock_idle_minutes">
-                                                    <lang class="lang_tilllockidle_title">Lock when idle</lang>
-                                                </label>
-                                                <select name="till_lock_idle_minutes" id="till_lock_idle_minutes"
-                                                    class="form-control border-control">
-                                                    <option value="0">Only when asked</option>
-                                                    <option value="2">After 2 minutes</option>
-                                                    <option value="5">After 5 minutes</option>
-                                                    <option value="10">After 10 minutes</option>
-                                                    <option value="30">After 30 minutes</option>
-                                                </select>
-                                                <small class="text-muted">An unattended till is an open
-                                                    till. Ctrl+L locks it at any time.</small>
-                                            </div>
-                                        </div>
-
-                                        <!--
-                                            Shop-wide: staff clock in/out, the labour /
-                                            payout report and payroll exports all hang off
-                                            this. Off hides the header clock button.
-                                        -->
-                                        <div class="form-row">
-                                            <div class="form-group col-md-6">
-                                                <label for="staff_shifts_enable">
-                                                    <lang class="lang_staffshifts_title">Staff clock-in / attendance</lang>
-                                                </label>
-                                                <select name="staff_shifts_enable" id="staff_shifts_enable"
-                                                    class="form-control border-control">
-                                                    <option value="false">Disable</option>
-                                                    <option value="true" selected>Enable</option>
-                                                </select>
-                                                <small class="text-muted">Staff clock in and out from the
-                                                    clock button in the header; managers get the labour /
-                                                    payout report and payroll exports there too.</small>
-                                            </div>
-                                            <div class="form-group col-md-3">
-                                                <label for="staff_tips_enable">
-                                                    <lang class="lang_stafftips_title">Tips at clock-out</lang>
-                                                </label>
-                                                <select name="staff_tips_enable" id="staff_tips_enable"
-                                                    class="form-control border-control">
-                                                    <option value="false" selected>Disable</option>
-                                                    <option value="true">Enable</option>
-                                                </select>
-                                                <small class="text-muted">Staff declare cash tips when
-                                                    clocking out. For restaurants / cafés.</small>
-                                            </div>
-                                            <div class="form-group col-md-3">
-                                                <label for="staff_roster_enable">
-                                                    <lang class="lang_staffroster_title">Roster / scheduling</lang>
-                                                </label>
-                                                <select name="staff_roster_enable" id="staff_roster_enable"
-                                                    class="form-control border-control">
-                                                    <option value="false">Disable</option>
-                                                    <option value="true" selected>Enable</option>
-                                                </select>
-                                                <small class="text-muted">Managers plan staff days; the
-                                                    labour report shows scheduled vs worked.</small>
-                                            </div>
-                                        </div>
-
                                     </div>
                                     <div class="card-footer text-right">
                                         <button type="button"
@@ -531,6 +439,173 @@
                             <!--</form>-->
                         </div>
                         <!-- My Profile End -->
+
+                        <!-- Modules Start -->
+                        <!--
+                            Every optional module's master switch, in one place.
+                            The controls keep their historical ids: the loaders
+                            populate and updateCommonSetting saves them by id, so
+                            the same fields work here as they did scattered across
+                            Branch Info and Table Order. Deeper module settings
+                            stay on their own pages; this page only turns things on.
+                        -->
+                        <div class="tab-pane fade" id="v-pills-modules" role="tabpanel"
+                            aria-labelledby="v-pills-modules-tab">
+                            <div class="card m-b-30">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">
+                                        <lang class="lang_modules_workforce">Workforce &mdash; staff, shifts and till</lang>
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <!--
+                                        Shop-wide: staff clock in/out, the labour /
+                                        payout report and payroll exports all hang off
+                                        this. Off hides the header clock button.
+                                    -->
+                                    <div class="form-row">
+                                        <div class="form-group col-md-6">
+                                            <label for="staff_shifts_enable">
+                                                <lang class="lang_staffshifts_title">Staff clock-in / attendance</lang>
+                                            </label>
+                                            <select name="staff_shifts_enable" id="staff_shifts_enable"
+                                                class="form-control border-control">
+                                                <option value="false">Disable</option>
+                                                <option value="true" selected>Enable</option>
+                                            </select>
+                                            <small class="text-muted">Staff clock in and out from the
+                                                clock button in the header; managers get the labour /
+                                                payout report and payroll exports there too.</small>
+                                        </div>
+                                        <div class="form-group col-md-3">
+                                            <label for="staff_tips_enable">
+                                                <lang class="lang_stafftips_title">Tips at clock-out</lang>
+                                            </label>
+                                            <select name="staff_tips_enable" id="staff_tips_enable"
+                                                class="form-control border-control">
+                                                <option value="false" selected>Disable</option>
+                                                <option value="true">Enable</option>
+                                            </select>
+                                            <small class="text-muted">Staff declare cash tips when
+                                                clocking out; a Tip line appears at tender. For
+                                                restaurants / caf&eacute;s.</small>
+                                        </div>
+                                        <div class="form-group col-md-3">
+                                            <label for="staff_roster_enable">
+                                                <lang class="lang_staffroster_title">Roster / scheduling</lang>
+                                            </label>
+                                            <select name="staff_roster_enable" id="staff_roster_enable"
+                                                class="form-control border-control">
+                                                <option value="false">Disable</option>
+                                                <option value="true" selected>Enable</option>
+                                            </select>
+                                            <small class="text-muted">Managers plan staff days; the
+                                                labour report shows scheduled vs worked.</small>
+                                        </div>
+                                    </div>
+                                    <!--
+                                        Shop-wide on purpose: a shop that wants
+                                        its tills locked wants all of them
+                                        locked, and the one that opted out
+                                        would be the one left open.
+                                    -->
+                                    <div class="form-row">
+                                        <div class="form-group col-md-6">
+                                            <label for="till_lock_enable">
+                                                <lang class="lang_tilllock_title">Lock till with a PIN</lang>
+                                            </label>
+                                            <select name="till_lock_enable" id="till_lock_enable"
+                                                class="form-control border-control">
+                                                <option value="false">Disable</option>
+                                                <option value="true">Enable</option>
+                                            </select>
+                                            <small class="text-muted">Staff unlock with a 4-digit PIN
+                                                instead of typing their password. A deliberate logout
+                                                still needs the password.</small>
+                                        </div>
+                                        <div class="form-group col-md-6">
+                                            <label for="till_lock_idle_minutes">
+                                                <lang class="lang_tilllockidle_title">Lock when idle</lang>
+                                            </label>
+                                            <select name="till_lock_idle_minutes" id="till_lock_idle_minutes"
+                                                class="form-control border-control">
+                                                <option value="0">Only when asked</option>
+                                                <option value="2">After 2 minutes</option>
+                                                <option value="5">After 5 minutes</option>
+                                                <option value="10">After 10 minutes</option>
+                                                <option value="30">After 30 minutes</option>
+                                            </select>
+                                            <small class="text-muted">An unattended till is an open
+                                                till. Ctrl+L locks it at any time.</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card m-b-30" data-module="plan" data-access="read">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">
+                                        <lang class="lang_modules_restaurant">Restaurant &mdash; tables and kitchen (KOT)</lang>
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="table_options"
+                                            name="table_options" />
+                                        <label class="custom-control-label" for="table_options">
+                                            Enable Restaurant / KOT mode (table orders)
+                                        </label>
+                                    </div>
+                                    <small class="form-text text-muted">Turn this on to take dine-in orders by
+                                        table and send KOTs to the kitchen.
+                                        <a href="javascript:void(0)" onclick="$('#v-pills-tableorder-tab').click();">
+                                            <lang class="lang_modules_managetables">Manage tables</lang></a>
+                                    </small>
+                                </div>
+                            </div>
+
+                            <div class="card m-b-30">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">
+                                        <lang class="lang_modules_hardware">Hardware &mdash; weighing scale</lang>
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-row">
+                                        <div class="form-group col-md-6">
+                                            <label for="hardware_weight_machine_enable">
+                                                <lang class="lang_weightmachine_title">Enable Weight Machine</lang>
+                                            </label>
+                                            <select name="hardware_weight_machine_enable"
+                                                id="hardware_weight_machine_enable"
+                                                class="form-control border-control">
+                                                <option value="false">Disable</option>
+                                                <option value="true">Enable</option>
+                                            </select>
+                                            <small class="text-muted">Requires hardware manager
+                                                configuration</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card m-b-30">
+                                <div class="card-footer text-right">
+                                    <!--
+                                        Saves through the same updateCommonSetting the
+                                        General form uses - it collects every control
+                                        above by id and refreshes the cached settings
+                                        and menu visibility on success.
+                                    -->
+                                    <button type="button" class="btn btn-outline-primary"
+                                        onclick="PosnicPro.settings.updateCommonSetting();"><i
+                                            class="feather icon-save mr-2"></i>
+                                        <lang class="lang_save_title">Save</lang>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Modules End -->
 
                         <!-- Offline Tab Start -->
                         <!-- Offline Tab End -->
@@ -1577,15 +1652,10 @@
                             aria-labelledby="v-pills-tableorder-tab">
                             <div class="card m-b-30" data-module="plan" data-access="read">
                                 <div class="card-body">
-                                    <div class="custom-control custom-switch">
-                                        <input type="checkbox" class="custom-control-input" id="table_options"
-                                            name="table_options" />
-                                        <label class="custom-control-label" for="table_options">
-                                            Enable Restaurant / KOT mode (table orders)
-                                        </label>
-                                    </div>
-                                    <small class="form-text text-muted">Turn this on to take dine-in orders by table and
-                                        send KOTs to the kitchen. Manage your tables below.</small>
+                                    <small class="form-text text-muted">
+                                        <lang class="lang_modules_kot_hint">Restaurant / KOT mode is switched on
+                                        under Settings &gt; Modules. This page manages the tables it uses.</lang>
+                                    </small>
                                 </div>
                             </div>
                             <div class="card m-b-30">
