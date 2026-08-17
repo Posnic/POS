@@ -236,3 +236,111 @@ describe('getCurrentShift / listShifts', () => {
     expect('clock_in' in query).toBe(false);
   });
 });
+
+describe('tips declared at clock-out', () => {
+  test('clockOut stores a valid tips amount rounded to 2dp', async () => {
+    const col = makeCollection();
+    col.findOne.mockResolvedValue({
+      _id: 'open1', status: SHIFT_STATUS.OPEN,
+      clock_in: new Date(Date.now() - 60 * 60 * 1000), break_minutes: 0,
+    });
+    const repo = makeRepo(col);
+    const r = await repo.clockOut({ tips: '12.505' });
+    expect(r.status).toBe(true);
+    expect(col.updateOne.mock.calls[0][1].$set.tips_declared).toBe(12.51);
+  });
+
+  test('clockOut ignores an invalid or negative tips value', async () => {
+    const col = makeCollection();
+    col.findOne.mockResolvedValue({
+      _id: 'open1', status: SHIFT_STATUS.OPEN,
+      clock_in: new Date(Date.now() - 60 * 60 * 1000), break_minutes: 0,
+    });
+    const repo = makeRepo(col);
+    await repo.clockOut({ tips: -5 });
+    expect('tips_declared' in col.updateOne.mock.calls[0][1].$set).toBe(false);
+  });
+
+  test('editShift rejects a negative tips correction', async () => {
+    const col = makeCollection();
+    col.findOne.mockResolvedValue({ _id: 's1', clock_in: new Date(), break_minutes: 0 });
+    const repo = makeRepo(col);
+    const r = await repo.editShift('SHIFT0000001', { tips: -1 });
+    expect(r.status).toBe(false);
+    expect(r.statusCode).toBe(400);
+  });
+});
+
+describe('roster / schedules', () => {
+  test('addSchedule validates and stores a planned stretch with minutes', async () => {
+    const col = makeCollection();
+    const repo = makeRepo(col);
+    const r = await repo.addSchedule({
+      user_id: 'USER00000001', user_name: 'Joe',
+      date: '2026-08-20', start: '09:00', end: '17:30',
+    });
+    expect(r.status).toBe(true);
+    const doc = col.insertOne.mock.calls[0][0];
+    expect(doc.date).toBe('2026-08-20');
+    expect(doc.minutes).toBe(510);
+  });
+
+  test('addSchedule refuses end before start and bad formats', async () => {
+    const repo = makeRepo(makeCollection());
+    expect((await repo.addSchedule({
+      user_id: 'USER00000001', date: '2026-08-20', start: '17:00', end: '09:00',
+    })).statusCode).toBe(400);
+    expect((await repo.addSchedule({
+      user_id: 'USER00000001', date: '20-08-2026', start: '09:00', end: '17:00',
+    })).statusCode).toBe(400);
+    expect((await repo.addSchedule({
+      user_id: 'USER00000001', date: '2026-08-20', start: '9am', end: '17:00',
+    })).statusCode).toBe(400);
+  });
+
+  test('listSchedules filters by the date-string range', async () => {
+    const col = makeCollection();
+    const repo = makeRepo(col);
+    await repo.listSchedules({ from: '2026-08-01', to: '2026-08-31' });
+    const query = col.find.mock.calls[0][0];
+    expect(query.date).toEqual({ $gte: '2026-08-01', $lte: '2026-08-31' });
+  });
+
+  test('deleteSchedule 404s when nothing matches', async () => {
+    const col = makeCollection();
+    col.deleteOne = jest.fn().mockResolvedValue({ deletedCount: 0 });
+    const repo = makeRepo(col);
+    const r = await repo.deleteSchedule('SCHED0000001');
+    expect(r.status).toBe(false);
+    expect(r.statusCode).toBe(404);
+  });
+
+  test('getShiftReport sums tips and overlays scheduled minutes', async () => {
+    const col = makeCollection();
+    col.find = jest.fn((query) => ({
+      sort: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockReturnThis(),
+      toArray: jest.fn().mockResolvedValue(
+        'date' in query
+          ? [{ user_id: 'USER00000001', user_name: 'Joe', minutes: 480 }]
+          : [{
+              user_id: 'USER00000001', user_name: 'Joe', status: SHIFT_STATUS.CLOSED,
+              clock_in: new Date('2026-08-17T09:00:00Z'), clock_out: new Date('2026-08-17T17:00:00Z'),
+              worked_minutes: 450, tips_declared: 25,
+            }]
+      ),
+    }));
+    const repo = makeRepo(col);
+    const r = await repo.getShiftReport({
+      from: new Date('2026-08-01T00:00:00Z'),
+      to: new Date('2026-08-31T00:00:00Z'),
+    });
+    expect(r.status).toBe(true);
+    const row = r.data.rows[0];
+    expect(row.tips).toBe(25);
+    expect(row.scheduled_minutes).toBe(480);
+    expect(row.scheduled_hours).toBe(8);
+    expect(r.data.totals.tips).toBe(25);
+    expect(r.data.totals.scheduled_hours).toBe(8);
+  });
+});

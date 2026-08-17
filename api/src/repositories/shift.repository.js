@@ -131,6 +131,12 @@ class ShiftRepository {
         note: data.note !== undefined ? String(data.note).trim() : shift.note,
         updated_date: now,
       };
+      // Cash tips declared at clock-out (optional; hospitality). Stored on the
+      // shift so the labour report and payroll export carry them.
+      if (data.tips !== undefined && data.tips !== null && data.tips !== '') {
+        const tips = Number(data.tips);
+        if (Number.isFinite(tips) && tips >= 0) set.tips_declared = Math.round(tips * 100) / 100;
+      }
       await collection.updateOne({ _id: shift._id }, { $set: set });
       return { status: true, data: { ...shift, ...set }, message: 'Clocked out' };
     } catch (error) {
@@ -232,6 +238,13 @@ class ShiftRepository {
         set.break_minutes = b;
       }
       if (patch.note !== undefined) set.note = patch.note === null ? null : String(patch.note).trim();
+      if (patch.tips !== undefined) {
+        const tips = Number(patch.tips);
+        if (!Number.isFinite(tips) || tips < 0) {
+          return { status: false, statusCode: 400, message: 'tips must be a non-negative number' };
+        }
+        set.tips_declared = Math.round(tips * 100) / 100;
+      }
 
       // Recompute worked_minutes from the effective in/out/break.
       const effIn = set.clock_in !== undefined ? set.clock_in : shift.clock_in;
@@ -274,6 +287,7 @@ class ShiftRepository {
       const byUser = new Map();
       let totalMinutes = 0;
       let totalShifts = 0;
+      let totalTips = 0;
       for (const s of shifts) {
         const key = String(s.user_id);
         if (!byUser.has(key)) {
@@ -283,6 +297,8 @@ class ShiftRepository {
             shifts: 0,
             open_shifts: 0,
             worked_minutes: 0,
+            tips: 0,
+            scheduled_minutes: 0,
             first_in: s.clock_in || null,
             last_out: s.clock_out || null,
           });
@@ -290,16 +306,52 @@ class ShiftRepository {
         const row = byUser.get(key);
         row.shifts += 1;
         row.worked_minutes += Number(s.worked_minutes) || 0;
+        row.tips += Number(s.tips_declared) || 0;
         if (s.status === SHIFT_STATUS.OPEN) row.open_shifts += 1;
         if (s.clock_in && (!row.first_in || s.clock_in < row.first_in)) row.first_in = s.clock_in;
         if (s.clock_out && (!row.last_out || s.clock_out > row.last_out)) row.last_out = s.clock_out;
         totalMinutes += Number(s.worked_minutes) || 0;
+        totalTips += Number(s.tips_declared) || 0;
         totalShifts += 1;
       }
 
+      // Scheduled-vs-actual: overlay rostered minutes for the same range so the
+      // report can show both. A user with a roster but no shifts still appears.
+      let totalScheduled = 0;
+      try {
+        const schedules = await this.listSchedules({
+          from: from instanceof Date ? from.toISOString().slice(0, 10) : undefined,
+          to: to instanceof Date ? to.toISOString().slice(0, 10) : undefined,
+          user_id,
+        });
+        for (const sch of schedules.data || []) {
+          const key = String(sch.user_id);
+          if (!byUser.has(key)) {
+            byUser.set(key, {
+              user_id: sch.user_id,
+              user_name: sch.user_name || null,
+              shifts: 0,
+              open_shifts: 0,
+              worked_minutes: 0,
+              tips: 0,
+              scheduled_minutes: 0,
+              first_in: null,
+              last_out: null,
+            });
+          }
+          byUser.get(key).scheduled_minutes += Number(sch.minutes) || 0;
+          totalScheduled += Number(sch.minutes) || 0;
+        }
+      } catch (schErr) {
+        // The roster is an overlay - a failure there never sinks the report.
+      }
+
+      const round2 = (n) => Math.round(n * 100) / 100;
       const rows = Array.from(byUser.values()).map((r) => ({
         ...r,
-        worked_hours: Math.round((r.worked_minutes / 60) * 100) / 100,
+        worked_hours: round2(r.worked_minutes / 60),
+        scheduled_hours: round2(r.scheduled_minutes / 60),
+        tips: round2(r.tips),
       }));
 
       return {
@@ -310,11 +362,94 @@ class ShiftRepository {
             users: rows.length,
             shifts: totalShifts,
             worked_minutes: totalMinutes,
-            worked_hours: Math.round((totalMinutes / 60) * 100) / 100,
+            worked_hours: round2(totalMinutes / 60),
+            scheduled_hours: round2(totalScheduled / 60),
+            tips: round2(totalTips),
           },
         },
         message: 'success',
       };
+    } catch (error) {
+      return { status: false, data: null, message: error.message };
+    }
+  }
+
+  /* ----- Roster / scheduling (Phase 7) ------------------------------------
+   * A schedule entry is one planned stretch for one person on one day:
+   * { user_id, user_name, date 'YYYY-MM-DD', start 'HH:MM', end 'HH:MM',
+   *   minutes, note }. Split shifts are simply two entries on the same day.
+   * The labour report overlays these as scheduled-vs-actual.
+   */
+  async addSchedule({ user_id, user_name, date, start, end, note } = {}) {
+    try {
+      const uid = toId(user_id);
+      if (!uid) return { status: false, statusCode: 400, message: 'A valid user_id is required' };
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(String(date || ''))) {
+        return { status: false, statusCode: 400, message: 'date must be YYYY-MM-DD' };
+      }
+      const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
+      if (!TIME_RE.test(String(start || '')) || !TIME_RE.test(String(end || ''))) {
+        return { status: false, statusCode: 400, message: 'start and end must be HH:MM' };
+      }
+      const toMin = (t) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
+      const minutes = toMin(end) - toMin(start);
+      if (minutes <= 0) {
+        return { status: false, statusCode: 400, message: 'end must be after start' };
+      }
+      const collection = await this.model.getCollection('shift_schedules');
+      const now = new Date();
+      const doc = {
+        license: this._license(),
+        branch_id: this._branch(),
+        user_id: uid,
+        user_name: user_name ? String(user_name).trim() : null,
+        date: String(date),
+        start: String(start),
+        end: String(end),
+        minutes,
+        note: note ? String(note).trim() : null,
+        created_date: now,
+        updated_date: now,
+      };
+      const result = await collection.insertOne(doc);
+      return { status: true, data: { ...doc, _id: result.insertedId }, message: 'Scheduled' };
+    } catch (error) {
+      return { status: false, data: null, message: error.message };
+    }
+  }
+
+  async listSchedules({ from, to, user_id } = {}) {
+    try {
+      const collection = await this.model.getCollection('shift_schedules');
+      const query = { license: this._license() };
+      const branch = this._branch();
+      if (branch) query.branch_id = branch;
+      if (user_id) query.user_id = toId(user_id);
+      const range = {};
+      if (/^\d{4}-\d{2}-\d{2}$/.test(String(from || ''))) range.$gte = String(from);
+      if (/^\d{4}-\d{2}-\d{2}$/.test(String(to || ''))) range.$lte = String(to);
+      if (range.$gte || range.$lte) query.date = range;
+      const entries = await collection
+        .find(query)
+        .sort({ date: 1, start: 1 })
+        .limit(1000)
+        .toArray();
+      return { status: true, data: entries, message: 'success' };
+    } catch (error) {
+      return { status: false, data: [], message: error.message };
+    }
+  }
+
+  async deleteSchedule(id) {
+    try {
+      const sid = toId(id);
+      if (!sid) return { status: false, statusCode: 400, message: 'A valid id is required' };
+      const collection = await this.model.getCollection('shift_schedules');
+      const result = await collection.deleteOne({ _id: sid, license: this._license() });
+      if (!result.deletedCount) {
+        return { status: false, statusCode: 404, message: 'Schedule entry not found' };
+      }
+      return { status: true, message: 'Schedule entry removed' };
     } catch (error) {
       return { status: false, data: null, message: error.message };
     }

@@ -1210,8 +1210,15 @@ PosnicPro = {
                 function () { PosnicPro.shiftWidget.refresh(); });
         },
         clockOut: function () {
-            PosnicPro.post({ url: 'shifts/clock-out', data: JSON.stringify({}) },
-                function (r) { PosnicPro.alert(r.type, r.message); PosnicPro.shiftWidget.refresh(); },
+            var payload = {};
+            var tips = $('#shift_tips_input').val();
+            if (tips !== '' && !isNaN(tips) && Number(tips) >= 0) { payload.tips = Number(tips); }
+            PosnicPro.post({ url: 'shifts/clock-out', data: JSON.stringify(payload) },
+                function (r) {
+                    PosnicPro.alert(r.type, r.message);
+                    $('#shift_tips_input').val('');
+                    PosnicPro.shiftWidget.refresh();
+                },
                 function () { PosnicPro.shiftWidget.refresh(); });
         },
         swipe: function () {
@@ -1245,7 +1252,7 @@ PosnicPro = {
             var from = new Date(to.getTime() - 30 * 24 * 60 * 60 * 1000);
             $('#labour_report_from').val(PosnicPro.shiftWidget._fmtDate(from));
             $('#labour_report_to').val(PosnicPro.shiftWidget._fmtDate(to));
-            $('#labour_report_body').html('<tr><td colspan="5" class="text-center text-muted">Pick a range and Run.</td></tr>');
+            $('#labour_report_body').html('<tr><td colspan="7" class="text-center text-muted">Pick a range and Run.</td></tr>');
             $('#labour_report_foot').html('');
             $('#shift_modal').modal('hide');
             $('#labour_report_modal').modal('show');
@@ -1255,13 +1262,13 @@ PosnicPro = {
             var to = $('#labour_report_to').val();
             PosnicPro.shiftWidget._lastRange = { from: from, to: to };
             PosnicPro.shiftWidget._lastReport = null;
-            $('#labour_report_body').html('<tr><td colspan="5" class="text-center text-muted">Loading…</td></tr>');
+            $('#labour_report_body').html('<tr><td colspan="7" class="text-center text-muted">Loading…</td></tr>');
             $('#labour_report_foot').html('');
             var url = 'shifts/report?from=' + encodeURIComponent(from) + '&to=' + encodeURIComponent(to);
             PosnicPro.get(url, function (response) {
                 PosnicPro.shiftWidget._renderReport(response && response.data);
             }, function () {
-                $('#labour_report_body').html('<tr><td colspan="5" class="text-center text-danger">Could not load the report.</td></tr>');
+                $('#labour_report_body').html('<tr><td colspan="7" class="text-center text-danger">Could not load the report.</td></tr>');
             });
         },
         _renderReport: function (data) {
@@ -1275,7 +1282,7 @@ PosnicPro = {
             };
             var num = function (n) { return (Number(n) || 0).toFixed(2); };
             if (!rows.length) {
-                $('#labour_report_body').html('<tr><td colspan="5" class="text-center text-muted">No shifts in this range.</td></tr>');
+                $('#labour_report_body').html('<tr><td colspan="7" class="text-center text-muted">No shifts in this range.</td></tr>');
                 $('#labour_report_foot').html('');
                 return;
             }
@@ -1285,7 +1292,9 @@ PosnicPro = {
                     + '<td>' + esc(r.user_name || '—')
                     + (r.open_shifts ? ' <span class="badge badge-success">on shift</span>' : '') + '</td>'
                     + '<td class="text-right">' + (r.shifts || 0) + '</td>'
+                    + '<td class="text-right">' + (r.scheduled_hours ? num(r.scheduled_hours) : '—') + '</td>'
                     + '<td class="text-right">' + num(r.worked_hours) + '</td>'
+                    + '<td class="text-right">' + (r.tips ? cur + num(r.tips) : '—') + '</td>'
                     + '<td class="text-right">' + (r.hourly_rate ? cur + num(r.hourly_rate) : '—') + '</td>'
                     + '<td class="text-right">' + (r.payout ? cur + num(r.payout) : '—') + '</td>'
                     + '</tr>';
@@ -1295,7 +1304,9 @@ PosnicPro = {
             $('#labour_report_foot').html('<tr class="font-weight-bold">'
                 + '<td>Total (' + (t.users || 0) + ' staff)</td>'
                 + '<td class="text-right">' + (t.shifts || 0) + '</td>'
+                + '<td class="text-right">' + (t.scheduled_hours ? num(t.scheduled_hours) : '—') + '</td>'
                 + '<td class="text-right">' + num(t.worked_hours) + '</td>'
+                + '<td class="text-right">' + (t.tips ? cur + num(t.tips) : '—') + '</td>'
                 + '<td></td>'
                 + '<td class="text-right">' + (t.payout ? cur + num(t.payout) : '—') + '</td>'
                 + '</tr>');
@@ -1317,9 +1328,11 @@ PosnicPro = {
                 return {
                     staff: r.user_name || '',
                     shifts: r.shifts || 0,
+                    scheduled_hours: Number(r.scheduled_hours) || 0,
                     hours: Number(r.worked_hours) || 0,
                     hourly_rate: Number(r.hourly_rate) || 0,
                     pay: Number(r.payout) || 0,
+                    tips: Number(r.tips) || 0,
                     period_from: range.from || '',
                     period_to: range.to || '',
                 };
@@ -1344,6 +1357,7 @@ PosnicPro = {
                         clock_out: fmt(s.clock_out),
                         break_minutes: Number(s.break_minutes) || 0,
                         hours: Math.round(((Number(s.worked_minutes) || 0) / 60) * 100) / 100,
+                        tips: Number(s.tips_declared) || 0,
                         status: s.status || '',
                     };
                 });
@@ -1359,6 +1373,101 @@ PosnicPro = {
             var p = function (n) { return ('0' + n).slice(-2); };
             return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate())
                 + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+        },
+        // Roster / scheduling (Phase 7) ------------------------------------
+        openRoster: function () {
+            var now = new Date();
+            var monday = new Date(now.getTime() - ((now.getDay() + 6) % 7) * 86400000);
+            var sunday = new Date(monday.getTime() + 6 * 86400000);
+            $('#roster_from').val(PosnicPro.shiftWidget._fmtDate(monday));
+            $('#roster_to').val(PosnicPro.shiftWidget._fmtDate(sunday));
+            $('#roster_date').val(PosnicPro.shiftWidget._fmtDate(now));
+            PosnicPro.shiftWidget._loadRosterUsers();
+            $('#shift_modal').modal('hide');
+            $('#roster_modal').modal('show');
+            PosnicPro.shiftWidget.runRoster();
+        },
+        _loadRosterUsers: function () {
+            PosnicPro.get({ url: 'users', data: { page: 1, limit: 200, filters: '{}' } }, function (res) {
+                var list = (res && res.data && (res.data.list || res.data)) || [];
+                if (!Array.isArray(list)) { list = []; }
+                var esc = function (s) {
+                    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+                        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+                    });
+                };
+                var html = '<option value="">Select staff…</option>';
+                list.forEach(function (u) {
+                    var id = (u._id && u._id.$oid) || u._id;
+                    var name = [u.firstname, u.lastname].filter(Boolean).join(' ') || u.username || u.email || '';
+                    if (id && name) { html += '<option value="' + id + '">' + esc(name) + '</option>'; }
+                });
+                $('#roster_user').html(html);
+            }, function () { $('#roster_user').html('<option value="">Could not load staff</option>'); });
+        },
+        runRoster: function () {
+            var from = $('#roster_from').val();
+            var to = $('#roster_to').val();
+            $('#roster_body').html('<tr><td colspan="6" class="text-center text-muted">Loading…</td></tr>');
+            var url = 'shifts/schedule?from=' + encodeURIComponent(from) + '&to=' + encodeURIComponent(to);
+            PosnicPro.get(url, function (res) {
+                PosnicPro.shiftWidget._renderRoster((res && res.data) || []);
+            }, function () {
+                $('#roster_body').html('<tr><td colspan="6" class="text-center text-danger">Could not load the roster.</td></tr>');
+            });
+        },
+        _renderRoster: function (entries) {
+            var esc = function (s) {
+                return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+                    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+                });
+            };
+            if (!entries.length) {
+                $('#roster_body').html('<tr><td colspan="6" class="text-center text-muted">Nothing planned in this range.</td></tr>');
+                return;
+            }
+            var html = '';
+            entries.forEach(function (e) {
+                var id = (e._id && e._id.$oid) || e._id;
+                html += '<tr>'
+                    + '<td>' + esc(e.user_name || '—') + '</td>'
+                    + '<td>' + esc(e.date) + '</td>'
+                    + '<td>' + esc(e.start) + '</td>'
+                    + '<td>' + esc(e.end) + '</td>'
+                    + '<td class="text-right">' + (Math.round(((Number(e.minutes) || 0) / 60) * 100) / 100).toFixed(2) + '</td>'
+                    + '<td class="text-right"><a href="javascript:void(0);" class="text-danger" '
+                    + 'onclick="PosnicPro.shiftWidget.deleteRosterEntry(\'' + id + '\');">'
+                    + '<i class="feather icon-x"></i></a></td>'
+                    + '</tr>';
+            });
+            $('#roster_body').html(html);
+        },
+        addRosterEntry: function () {
+            var userId = $('#roster_user').val();
+            var userName = $('#roster_user option:selected').text();
+            if (!userId) { PosnicPro.alert('warning', 'Pick a staff member.'); return; }
+            $('#roster_add_btn').prop('disabled', true);
+            var done = function () { $('#roster_add_btn').prop('disabled', false); };
+            PosnicPro.post({
+                url: 'shifts/schedule',
+                data: JSON.stringify({
+                    user_id: userId,
+                    user_name: userName,
+                    date: $('#roster_date').val(),
+                    start: $('#roster_start').val(),
+                    end: $('#roster_end').val(),
+                }),
+            }, function (r) {
+                done();
+                PosnicPro.alert(r.type, r.message);
+                if (r.type === 'success') { PosnicPro.shiftWidget.runRoster(); }
+            }, function () { done(); });
+        },
+        deleteRosterEntry: function (id) {
+            PosnicPro.delete('shifts/schedule/' + id, function (r) {
+                PosnicPro.alert(r.type, r.message);
+                PosnicPro.shiftWidget.runRoster();
+            }, function () {});
         },
     },
     getAllSelectedCollections: function () {
