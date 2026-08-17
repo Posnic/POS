@@ -137,8 +137,13 @@ function buildAllHtml(cb, skip) {
 }
 
 function mergeDirectory(dir) {
+    // Key order here is fs.readFile completion order - a race that made every
+    // build byte-different (modules inlined in a different order each run).
+    // Sort so identical sources produce identical pages: the service worker's
+    // build hash and the asset channel both key off content, and a hash that
+    // moves when nothing changed forces cache flushes and phantom updates.
     let content = '';
-    for(let file in dir) {
+    for (const file of Object.keys(dir).sort()) {
         content += dir[file];
     }
     return content;

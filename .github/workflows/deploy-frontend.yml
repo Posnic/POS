@@ -62,12 +62,15 @@ jobs:
           set -e
           for f in \
             frontend/public/dashboard.html \
-            frontend/public/login.html \
-            frontend/public/style/dashboard.css \
-            frontend/public/script/dashboard.js
+            frontend/public/login.html
           do
             test -s "$f" || { echo "missing or empty after build: $f"; exit 1; }
           done
+          # Bundle names carry a content hash, so they are matched by pattern.
+          ls frontend/public/style/dashboard.*.css >/dev/null 2>&1 \
+            || { echo "missing hashed dashboard css"; exit 1; }
+          ls frontend/public/script/dashboard.*.js >/dev/null 2>&1 \
+            || { echo "missing hashed dashboard js"; exit 1; }
           echo "build looks complete: $(find frontend/public -type f | wc -l) files"
 
       - name: Set up SSH
@@ -112,10 +115,13 @@ jobs:
             cd ~/apps/tenants/app/frontend
             fail=0
 
-            # The pages themselves, by name: these do not move.
-            for f in public/dashboard.html public/style/dashboard.css public/script/dashboard.js; do
+            # The pages by name; the bundles by hashed pattern (the name
+            # carries a content hash and changes every deploy).
+            for f in public/dashboard.html public/login.html; do
               if [ -s "$f" ]; then echo "  ok       $f"; else echo "  MISSING  $f"; fail=1; fi
             done
+            ls public/style/dashboard.*.css >/dev/null 2>&1 && echo "  ok       hashed dashboard css" || { echo "  MISSING  hashed dashboard css"; fail=1; }
+            ls public/script/dashboard.*.js >/dev/null 2>&1 && echo "  ok       hashed dashboard js" || { echo "  MISSING  hashed dashboard js"; fail=1; }
 
             # Assets by category, not by filename. The first version of this
             # check named individual files under public/static/static, and when

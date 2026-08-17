@@ -24,12 +24,10 @@ const CACHE = 'posnic-static-__BUILD_HASH__';
 
 /* Warmed at install so the first navigation after an update is already fast;
    everything else under the static prefixes is cached on first use. */
-const PRECACHE = [
-  'script/dashboard.js',
-  'style/dashboard.css',
-  'script/login.js',
-  'style/login.css',
-];
+/* Injected by the build (gulpfile.js/sw.js) with the FINGERPRINTED names -
+   hashed filenames are the cache keys, so this list changes with every
+   deploy that changes a bundle. */
+const PRECACHE = __PRECACHE__;
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

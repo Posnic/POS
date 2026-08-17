@@ -1,14 +1,16 @@
 /*
  * Generate public/sw.js from sw-template.js, stamping the cache name with a
- * digest of the built bundles. Must run AFTER buildJs/buildCss/buildHtml
- * (index.js sequences it): the hash has to describe what actually shipped,
- * or a deploy could reuse the previous build's cache and serve stale code —
- * the exact failure this worker exists to prevent.
+ * digest of the built bundles and the precache list with the fingerprinted
+ * file names. Must run AFTER buildJs/buildCss/buildHtml AND fingerprintAssets
+ * (index.js sequences it): the hash has to describe what actually shipped and
+ * the precache has to name the hashed files, or a deploy could serve stale
+ * code — the exact failure this worker exists to prevent.
  */
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const { publicDir } = require('./config');
+const fingerprint = require('./fingerprint');
 
 function buildServiceWorker(cb) {
   try {
@@ -32,12 +34,23 @@ function buildServiceWorker(cb) {
       }
     }
     const buildHash = hash.digest('hex').slice(0, 16);
+
+    /* Warm the heavy pages' bundles, by their fingerprinted names. */
+    const renames = fingerprint.lastRenames || new Map();
+    const precache = [];
+    for (const canonical of ['script/dashboard.js', 'style/dashboard.css',
+                             'script/login.js', 'style/login.css']) {
+      precache.push(renames.get(canonical) || canonical);
+    }
+
     const template = fs.readFileSync(path.join(dir, 'sw-template.js'), 'utf8');
     fs.writeFileSync(
       path.join(dir, publicDir, 'sw.js'),
-      template.replace(/__BUILD_HASH__/g, buildHash)
+      template
+        .replace(/__BUILD_HASH__/g, buildHash)
+        .replace('__PRECACHE__', JSON.stringify(precache, null, 2))
     );
-    console.log(`service worker written (build ${buildHash})`);
+    console.log(`service worker written (build ${buildHash}, precache ${precache.length})`);
     cb();
   } catch (err) {
     cb(err);

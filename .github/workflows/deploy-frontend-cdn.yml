@@ -42,6 +42,17 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      # public/ is gulp output, not checked in - without this the /style and
+      # /script entries of the CDN plan copy nothing and the bundles never
+      # reach the CDN at all.
+      - name: Build the pages
+        working-directory: frontend
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build:assets
 
       - name: Assemble CDN asset tree
         run: node scripts/build-cdn-frontend.js
@@ -52,10 +63,20 @@ jobs:
           aws-secret-access-key: ${{ secrets.CDN_AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-south-1
 
+      # Two passes with different cache lives. Bundle names carry a content
+      # hash, so those bytes can never change under their URL: a year,
+      # immutable. The second pass deliberately has no --delete - HTML already
+      # in a browser still references the previous hashes, so old bundles must
+      # outlive the deploy that replaced them.
       - name: Sync to S3
         run: |
           aws s3 sync builds/cdn-frontend/ s3://posnic-frontend \
-            --delete --cache-control 'public, max-age=86400'
+            --delete \
+            --exclude 'style/*' --exclude 'script/*' \
+            --cache-control 'public, max-age=86400'
+          aws s3 sync builds/cdn-frontend/ s3://posnic-frontend \
+            --exclude '*' --include 'style/*' --include 'script/*' \
+            --cache-control 'public, max-age=31536000, immutable'
 
       - name: Invalidate CloudFront
         if: vars.CDN_DISTRIBUTION_ID != ''

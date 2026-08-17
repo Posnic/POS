@@ -603,9 +603,28 @@ app.use(async (req, res, next) => {
  * never taken an update.
  */
 const UPDATED_ASSETS = process.env.POSNIC_ASSET_DIR;
+
+/*
+ * Cache policy for the built frontend.
+ *
+ * Bundle filenames carry a content hash (script/dashboard.<hash8>.js), so the
+ * bytes behind such a URL can never change - a browser or CDN may keep them
+ * for a year and serve them without ever asking again. The HTML pages keep
+ * their plain names and must revalidate on every load: the page is what flips
+ * to the new hashed URLs, so it is the one thing that may never be stale.
+ */
+const HASHED_ASSET = /\.[0-9a-f]{8}\.(js|css)$/;
+function assetCacheHeaders(res, filePath) {
+  if (HASHED_ASSET.test(filePath)) {
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+  } else if (filePath.endsWith('.html')) {
+    res.setHeader('Cache-Control', 'no-cache');
+  }
+}
+
 if (UPDATED_ASSETS && fs.existsSync(UPDATED_ASSETS)) {
   console.log('[assets] serving updated assets from ' + UPDATED_ASSETS);
-  app.use('/', express.static(UPDATED_ASSETS, { fallthrough: true }));
+  app.use('/', express.static(UPDATED_ASSETS, { fallthrough: true, setHeaders: assetCacheHeaders }));
 }
 
 // Serve transformed frontend assets (used for login page, etc.)
@@ -613,6 +632,7 @@ app.use(
   '/',
   express.static(path.join(__dirname, '..', 'frontend', 'public'), {
     fallthrough: true,
+    setHeaders: assetCacheHeaders,
   })
 );
 
@@ -955,14 +975,14 @@ const frontendPath = path.join(__dirname, '..', 'frontend');
 app.use('/static', express.static(path.join(frontendPath, 'static')));
 app.use('/images', express.static(path.join(frontendPath, 'static', 'images')));
 app.use('/fonts', express.static(path.join(frontendPath, 'static', 'fonts')));
-app.use('/style', express.static(path.join(frontendPath, 'public', 'style')));
-app.use('/script', express.static(path.join(frontendPath, 'public', 'script')));
+app.use('/style', express.static(path.join(frontendPath, 'public', 'style'), { setHeaders: assetCacheHeaders }));
+app.use('/script', express.static(path.join(frontendPath, 'public', 'script'), { setHeaders: assetCacheHeaders }));
 // Serve static files from /public/static for pages loaded from /public/
 app.use('/public/static', express.static(path.join(frontendPath, 'static')));
 app.use('/public/images', express.static(path.join(frontendPath, 'static', 'images')));
 app.use('/public/fonts', express.static(path.join(frontendPath, 'static', 'fonts')));
-app.use('/public', express.static(path.join(frontendPath, 'public')));
-app.use(express.static(path.join(frontendPath, 'public')));
+app.use('/public', express.static(path.join(frontendPath, 'public'), { setHeaders: assetCacheHeaders }));
+app.use(express.static(path.join(frontendPath, 'public'), { setHeaders: assetCacheHeaders }));
 
 // Also mount API routes at root for backward compatibility
 app.use('/', apiRouter);
