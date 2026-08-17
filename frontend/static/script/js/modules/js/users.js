@@ -219,10 +219,15 @@ PosnicPro.users = {
 //            register_data: registerData
 //        };
         var formData = PosnicPro.getFormData($('.user_add'));
+        // The Till/POS actions matrix travels as an explicit object. With a role
+        // selected the server resolves pos from the role and ignores this; for
+        // "Custom" users it becomes their access.pos, so till gating never
+        // depends on an absent (fail-open) pos object.
+        var posType = $('#pos_actions_row').length ? { pos: PosnicPro.users.collectPosForm() } : {};
         var params = {
             method: method,
             url: url,
-            data: JSON.stringify(Object.assign(formData, branchType, key))
+            data: JSON.stringify(Object.assign(formData, branchType, key, posType))
         };
         PosnicPro.request(params, function (response) {
             if (response.type === 'success') {
@@ -339,8 +344,11 @@ PosnicPro.users = {
     editUser: function (id) {
         /*Condition To refresh checkbox*/
         $('#user_value_check').val('');
-        // The manager-PIN + RFID + wage controls apply to an existing user (edit mode).
-        $('#manager_pin_row, #rfid_row, #wage_row').show();
+        // The RFID + wage controls apply to an existing user (edit mode). The
+        // manager-PIN row shows only once we know the user can approve
+        // (updatePinRowVisibility, after details load).
+        $('#rfid_row, #wage_row').show();
+        $('#manager_pin_row').hide();
         $('#user_manager_pin, #user_rfid_uid').val('');
         var loader = $(".loader-user");
         $("<div class='loadingSpinner'></div>").appendTo(loader);
@@ -444,6 +452,12 @@ PosnicPro.users = {
                     });
                 });
                 
+                // Show the user's current till permissions; if a role is
+                // assigned, renderRoleOptions re-fills and locks them from the
+                // role in a moment.
+                PosnicPro.users.fillPosForm((data.access && data.access.pos) || {}, false);
+                PosnicPro.users.updatePinRowVisibility();
+
                 // Reflect the user's assigned role (if any) in the dropdown +
                 // matrix; "Custom" (no role) leaves the boxes editable as before.
                 PosnicPro.users.renderRoleOptions(data.role_id || '');
@@ -525,13 +539,56 @@ PosnicPro.users = {
             PosnicPro.users.applyRoleToForm($sel.val());
         });
     },
-    // A chosen role fills the ACL matrix (read-only) and replaces the
-    // Admin/Normal/Api choice; "Custom" unlocks the matrix for manual editing.
+    // The granular till permissions shown on the user form. Mirrors
+    // POS_PERMISSIONS in api/src/constants/roles.constants.js.
+    POS_ACTION_KEYS: ['discount_apply', 'price_override', 'void_line', 'void_sale', 'refund',
+        'reprint_receipt', 'no_sale_open_drawer', 'register_open', 'register_close',
+        'cash_in_out', 'cash_drop'],
+    // Fill the Till/POS Actions section from a pos object; locked = driven by a
+    // role (read-only), unlocked = Custom (editable).
+    fillPosForm: function (pos, locked) {
+        if (!$('#pos_actions_row').length) { return; }
+        pos = (pos && typeof pos === 'object') ? pos : {};
+        PosnicPro.users.POS_ACTION_KEYS.forEach(function (k) {
+            $('#pos_' + k).prop('checked', pos[k] === true);
+        });
+        $('#pos_discount_max_percent').val(pos.discount_max_percent != null ? pos.discount_max_percent : 0);
+        $('#pos_refund_max_amount').val(pos.refund_max_amount != null ? pos.refund_max_amount : 0);
+        $('.pos-action-box, #pos_discount_max_percent, #pos_refund_max_amount').prop('disabled', !!locked);
+    },
+    collectPosForm: function () {
+        var pos = {};
+        PosnicPro.users.POS_ACTION_KEYS.forEach(function (k) {
+            pos[k] = $('#pos_' + k).is(':checked');
+        });
+        pos.discount_max_percent = Number($('#pos_discount_max_percent').val()) || 0;
+        pos.refund_max_amount = Number($('#pos_refund_max_amount').val()) || 0;
+        return pos;
+    },
+    // The Manager Approval PIN only means something for a user who can approve
+    // (admin types, or a till permission that carries authority) - hide it
+    // otherwise so a cashier's form stops suggesting they need one. Edit mode
+    // only: a new user has no id to attach a PIN to yet.
+    updatePinRowVisibility: function () {
+        if (!$('#users_id').val()) { $('#manager_pin_row').hide(); return; }
+        var isAdmin = $('#adminUser').is(':checked') ||
+            ['super_admin', 'admin', 'owner', 'manager', 'store_manager']
+                .indexOf(String($('#usertype').val() || '').toLowerCase()) !== -1;
+        var canApprove = isAdmin ||
+            $('#pos_void_sale').is(':checked') || $('#pos_refund').is(':checked') ||
+            $('#pos_discount_apply').is(':checked');
+        $('#manager_pin_row').toggle(!!canApprove);
+    },
+    // A chosen role fills the ACL matrix + POS actions (read-only) and replaces
+    // the Admin/Normal/Api choice; "Custom" unlocks both for manual editing.
     applyRoleToForm: function (roleId) {
         var $boxes = $('.onoffswitch-checkbox');
         if (!roleId) {
             $boxes.prop('disabled', false).css({ 'pointer-events': 'auto', opacity: 1 });
             $('.userAccessLabel').show();
+            $('.pos-action-box, #pos_discount_max_percent, #pos_refund_max_amount').prop('disabled', false);
+            $('#pos_mgr_hint').text('Custom: tick exactly what this user may do without a manager.');
+            PosnicPro.users.updatePinRowVisibility();
             return;
         }
         var role = (PosnicPro.users.rolesCache || []).filter(function (r) {
@@ -548,6 +605,12 @@ PosnicPro.users = {
         });
         $boxes.prop('disabled', true).css({ 'pointer-events': 'none', opacity: 0.7 });
         $('.userAccessLabel').hide();
+        PosnicPro.users.fillPosForm(role.pos || {}, true);
+        var mgr = role.requires_manager_approval;
+        $('#pos_mgr_hint').text(Array.isArray(mgr) && mgr.length
+            ? 'This role needs a manager’s approval for: ' + mgr.join(', ').replace(/_/g, ' ') + '.'
+            : 'Set by the "' + (role.name || 'selected') + '" role.');
+        PosnicPro.users.updatePinRowVisibility();
     },
     // Set (or replace) this user's manager-approval PIN. Only meaningful once the
     // user exists (edit mode), so the row is hidden when adding a new user.
@@ -640,6 +703,9 @@ PosnicPro.users = {
         $('#show_last_created_user').hide();
         $('#users_id').val('');
         $('#logo_user').val('user.svg');
+        // New user: start the till permissions from nothing - what you tick is
+        // exactly what they get (a picked role overrides this).
+        PosnicPro.users.fillPosForm({}, false);
         PosnicPro.users.renderRoleOptions('');
         if (document.getElementById('apiMethod').checked) {
             $('#apiMethod').prop('checked', true);

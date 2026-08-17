@@ -247,6 +247,41 @@
                                             labour report.</small>
                                     </div>
                                 </div>
+                                <div class="row" id="pos_actions_row" style="margin-bottom:14px;">
+                                    <div class="col-md-12">
+                                        <label style="font-weight:600;">Till / POS Actions
+                                            <span class="text-muted" style="font-weight:400;">(what this user may do at the till without a manager)</span></label>
+                                        <div style="border:1px solid #eae8e8; border-radius:4px; padding:12px 14px;">
+                                            <div class="row" style="row-gap:6px;">
+                                                <div class="col-md-4"><label style="font-weight:400;"><input type="checkbox" class="pos-action-box" id="pos_discount_apply"> Apply discount</label></div>
+                                                <div class="col-md-4"><label style="font-weight:400;"><input type="checkbox" class="pos-action-box" id="pos_price_override"> Price override</label></div>
+                                                <div class="col-md-4"><label style="font-weight:400;"><input type="checkbox" class="pos-action-box" id="pos_void_line"> Void a line</label></div>
+                                                <div class="col-md-4"><label style="font-weight:400;"><input type="checkbox" class="pos-action-box" id="pos_void_sale"> Void a sale</label></div>
+                                                <div class="col-md-4"><label style="font-weight:400;"><input type="checkbox" class="pos-action-box" id="pos_refund"> Refund / return</label></div>
+                                                <div class="col-md-4"><label style="font-weight:400;"><input type="checkbox" class="pos-action-box" id="pos_reprint_receipt"> Reprint receipt</label></div>
+                                                <div class="col-md-4"><label style="font-weight:400;"><input type="checkbox" class="pos-action-box" id="pos_no_sale_open_drawer"> No-sale open drawer</label></div>
+                                                <div class="col-md-4"><label style="font-weight:400;"><input type="checkbox" class="pos-action-box" id="pos_register_open"> Open register</label></div>
+                                                <div class="col-md-4"><label style="font-weight:400;"><input type="checkbox" class="pos-action-box" id="pos_register_close"> Close register</label></div>
+                                                <div class="col-md-4"><label style="font-weight:400;"><input type="checkbox" class="pos-action-box" id="pos_cash_in_out"> Cash in / out</label></div>
+                                                <div class="col-md-4"><label style="font-weight:400;"><input type="checkbox" class="pos-action-box" id="pos_cash_drop"> Cash drop</label></div>
+                                            </div>
+                                            <div class="row" style="margin-top:8px;">
+                                                <div class="col-md-6">
+                                                    <label style="font-weight:400; font-size:.85rem;">Max discount %</label>
+                                                    <input type="number" min="0" max="100" step="1" class="form-control border-control" id="pos_discount_max_percent" value="0">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label style="font-weight:400; font-size:.85rem;">Max refund amount <span class="text-muted">(0 = no limit)</span></label>
+                                                    <input type="number" min="0" step="0.01" class="form-control border-control" id="pos_refund_max_amount" value="0">
+                                                </div>
+                                            </div>
+                                            <small class="form-text text-muted" id="pos_mgr_hint" style="margin-top:8px;"></small>
+                                            <small class="form-text text-muted">Unticked actions prompt for a manager's PIN or card at the
+                                                till. Void sale and refund are enforced server-side today; the other gates take effect
+                                                as they ship.</small>
+                                        </div>
+                                    </div>
+                                </div>
                                 <div class="panel-body">
                                     <div class="row">
                                         <div class="col-md-4 userAccessLabel adminAccessLabel">

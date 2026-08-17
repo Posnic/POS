@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const { defineModel, getModel } = require('../db/model-registry');
 const { currentConnection } = require('../db/tenant-context');
-const { mergeAccess } = require('../utils/access-resolver');
+const { mergeAccess, sanitizePosInput } = require('../utils/access-resolver');
 const bcrypt = require('bcryptjs');
 const { toJSON, paginate } = require('./plugins');
 
@@ -1117,6 +1117,15 @@ userSchema.statics.userInsertUpdate = async function (data, id, context) {
       } catch (roleErr) {
         console.error('[userInsertUpdate] role resolve failed:', roleErr && roleErr.message);
       }
+    }
+
+    // Phase 2 (till actions): a user saved without a role - or whose role could
+    // not be resolved - takes the form's explicit POS matrix, so till gating
+    // never rests on an absent `pos` object (absent fails open at the till for
+    // legacy sessions). Only whitelisted action keys are accepted.
+    if (!access.pos && data.pos && typeof data.pos === 'object') {
+      access.pos = sanitizePosInput(data.pos);
+      access.pos_manager_approval = [];
     }
 
     // PHP lines 238-266: Get branch printing design details
