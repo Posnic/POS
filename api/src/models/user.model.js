@@ -315,21 +315,6 @@ const userSchema = new mongoose.Schema(
       type: Date,
       select: false,
     },
-    permissions: [
-      {
-        type: String,
-        enum: [
-          'inventory:read',
-          'inventory:write',
-          'sales:read',
-          'sales:write',
-          'customers:read',
-          'customers:write',
-          'reports:view',
-          'settings:manage',
-        ],
-      },
-    ],
     access: {
       type: Object,
       default: createDefaultAccess,
@@ -555,19 +540,9 @@ userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
   return false;
 };
 
-// Instance method to check if user has a specific permission
-userSchema.methods.hasPermission = function (permission) {
-  // Admin has all permissions
-  if (this.role === 'admin') return true;
-
-  // Check if the user has the specific permission
-  return this.permissions && this.permissions.includes(permission);
-};
-
-// Instance method to check if user has any of the given roles
-userSchema.methods.hasAnyRole = function (roles) {
-  return roles.includes(this.role);
-};
+// The vestigial `permissions` enum + hasPermission/hasAnyRole helpers were
+// retired (P2): nothing enforced through them - the `access` matrix (resolved
+// from roles) is the single authority, read via base.controller.checkPermission.
 
 // Instance method to lock user account
 userSchema.methods.lockAccount = async function () {
