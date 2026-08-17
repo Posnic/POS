@@ -69,6 +69,7 @@ class ShiftsController extends BaseController {
       this.setRequestContext(req);
       const result = await this.service.clockOut({
         note: req.body.note,
+        tips: req.body.tips,
         device_id: getRequestDeviceId(req),
       });
       if (result.status) return this.success(res, result.data, result.message);
@@ -145,9 +146,67 @@ class ShiftsController extends BaseController {
         clock_in: req.body.clock_in,
         clock_out: req.body.clock_out,
         break_minutes: req.body.break_minutes,
+        tips: req.body.tips,
         note: req.body.note,
       });
       if (result.status) return this.success(res, result.data, result.message);
+      return this.error(res, result.message, result.statusCode || 400);
+    } catch (error) {
+      return this.error(res, error.message, 500);
+    }
+  }
+
+  // Roster: list the planned schedule over a date range (viewing other
+  // people's roster ~ viewing staff data).
+  async listSchedule(req, res) {
+    try {
+      this.setRequestContext(req);
+      if (!this.checkPermission('user', 'read', req.user)) {
+        return this.error(res, 'You do not have permission to view the roster', 403);
+      }
+      const result = await this.service.listSchedules({
+        from: req.query.from,
+        to: req.query.to,
+        user_id: req.query.user_id,
+      });
+      if (result.status) return this.success(res, result.data, 'success');
+      return this.error(res, result.message, 400);
+    } catch (error) {
+      return this.error(res, error.message, 500);
+    }
+  }
+
+  // Roster: plan a stretch for a person on a day (managing the roster ~
+  // managing staff).
+  async addSchedule(req, res) {
+    try {
+      this.setRequestContext(req);
+      if (!this.checkPermission('user', 'write', req.user)) {
+        return this.error(res, 'You do not have permission to manage the roster', 403);
+      }
+      const result = await this.service.addSchedule({
+        user_id: req.body.user_id,
+        user_name: req.body.user_name,
+        date: req.body.date,
+        start: req.body.start,
+        end: req.body.end,
+        note: req.body.note,
+      });
+      if (result.status) return this.success(res, result.data, result.message);
+      return this.error(res, result.message, result.statusCode || 400);
+    } catch (error) {
+      return this.error(res, error.message, 500);
+    }
+  }
+
+  async deleteSchedule(req, res) {
+    try {
+      this.setRequestContext(req);
+      if (!this.checkPermission('user', 'write', req.user)) {
+        return this.error(res, 'You do not have permission to manage the roster', 403);
+      }
+      const result = await this.service.deleteSchedule(req.params.id);
+      if (result.status) return this.success(res, null, result.message);
       return this.error(res, result.message, result.statusCode || 400);
     } catch (error) {
       return this.error(res, error.message, 500);

@@ -14,6 +14,9 @@ router.post('/clock-out', bind(shiftsController.clockOut));
 router.post('/clock-by-card', bind(shiftsController.clockByCard));
 router.get('/report', bind(shiftsController.report));
 router.post('/set-rate', bind(shiftsController.setRate));
+router.get('/schedule', bind(shiftsController.listSchedule));
+router.post('/schedule', bind(shiftsController.addSchedule));
+router.delete('/schedule/:id', bind(shiftsController.deleteSchedule));
 router.put('/:id', bind(shiftsController.editShift));
 router.get('/', bind(shiftsController.list));
 

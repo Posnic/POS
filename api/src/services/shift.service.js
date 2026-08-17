@@ -35,11 +35,15 @@ class ShiftService {
     const result = await this.repository.clockOut(data);
     if (result.status) {
       const worked = result.data && result.data.worked_minutes;
+      const tips = result.data && result.data.tips_declared;
       await new AuditService().record(AUDIT_EVENTS.CLOCK_OUT, {
         entity: 'shift',
         entity_id: result.data && result.data._id,
         device_id: data.device_id,
-        details: typeof worked === 'number' ? { worked_minutes: worked } : undefined,
+        details:
+          typeof worked === 'number'
+            ? { worked_minutes: worked, ...(typeof tips === 'number' ? { tips_declared: tips } : {}) }
+            : undefined,
       });
     }
     return result;
@@ -123,8 +127,8 @@ class ShiftService {
     return result;
   }
 
-  // Manager correction of a shift's times/breaks (timecard). Records a SHIFT_EDIT
-  // audit event with what changed, so corrections are accountable.
+  // Manager correction of a shift's times/breaks/tips (timecard). Records a
+  // SHIFT_EDIT audit event with what changed, so corrections are accountable.
   async editShift(shiftId, patch = {}) {
     const result = await this.repository.editShift(shiftId, patch);
     if (result.status) {
@@ -135,8 +139,46 @@ class ShiftService {
           clock_in: patch.clock_in,
           clock_out: patch.clock_out,
           break_minutes: patch.break_minutes,
+          tips: patch.tips,
           worked_minutes: result.data && result.data.worked_minutes,
         },
+      });
+    }
+    return result;
+  }
+
+  /* Roster / scheduling (Phase 7): planned stretches per person per day,
+   * overlaid on the labour report as scheduled-vs-actual. Add and remove are
+   * audited (SCHEDULE_EDIT) so roster changes are accountable too. */
+  async addSchedule(entry = {}) {
+    const result = await this.repository.addSchedule(entry);
+    if (result.status) {
+      await new AuditService().record(AUDIT_EVENTS.SCHEDULE_EDIT, {
+        entity: 'shift_schedule',
+        entity_id: result.data && result.data._id,
+        details: {
+          action: 'add',
+          user_id: entry.user_id,
+          date: entry.date,
+          start: entry.start,
+          end: entry.end,
+        },
+      });
+    }
+    return result;
+  }
+
+  listSchedules(opts = {}) {
+    return this.repository.listSchedules(opts);
+  }
+
+  async deleteSchedule(id) {
+    const result = await this.repository.deleteSchedule(id);
+    if (result.status) {
+      await new AuditService().record(AUDIT_EVENTS.SCHEDULE_EDIT, {
+        entity: 'shift_schedule',
+        entity_id: id,
+        details: { action: 'delete' },
       });
     }
     return result;
