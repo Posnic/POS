@@ -46,12 +46,16 @@ function copyStatic() {
     // on Linux. The same source tree produced two different layouts depending
     // on who ran the build, the app was wired for the Windows one, and CI has
     // been quietly shipping the other.
-    return src(['static/**/*', '!static/script/**', '!static/style/**'])
+    // encoding:false, because gulp 5 decodes streams as UTF-8 by default and
+    // silently corrupts every binary - fonts, icons, images all shipped
+    // mangled on the first gulp-5 build until the checksums caught it.
+    // Bytes in, bytes out is the only correct mode for a copy.
+    return src(['static/**/*', '!static/script/**', '!static/style/**'], { encoding: false })
         .pipe(dest(`${publicDir}/static`));
 }
 
 function copyVendorScripts() {
-    return src('static/script/vendor/**/*', { base: 'static/script/vendor' })
+    return src('static/script/vendor/**/*', { base: 'static/script/vendor', encoding: false })
         .pipe(dest(`${publicDir}/script/vendor`));
 }
 
