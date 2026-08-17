@@ -90,13 +90,10 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
         <link rel="shortcut icon" href="static/images/favicon/favicon.ico" type="image/x-icon">
         <link rel="icon" href="static/images/favicon/favicon.ico" type="image/x-icon">
-        <!-- Research-backed UI fonts: Inter (default), Lexend (Eye Comfort),
-             Source Sans 3 (Coffee/Warm Night), IBM Plex Sans (VS Code). Loaded
-             for the web app; the desktop build falls back to the native stack
-             (Segoe UI on Windows). display=swap = no blocking flash. -->
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500&display=swap">
+        <!-- UI fonts are self-hosted from /static/fonts (see theme-variables.css:
+             DM Sans + Lexend @font-face) - a till may be offline, and no shipped
+             page loads executable content from another host. Themes without a
+             vendored face fall back to the native stack (Segoe UI on Windows). -->
         <link crossorigin="anonymous" media="all" rel="stylesheet" type="text/css" href="style/dashboard.css" />
         <style>
             /* Consistent header height at every window size (maximized
