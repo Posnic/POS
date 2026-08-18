@@ -211,6 +211,12 @@ class SyncAgentManager {
       UPDATE_DIR: path.join(this.app.getPath('userData'), 'sync-agent-updates', 'incoming'),
       POSNIC_AGENT_VERSION:
         (engine && engine.activeVersion()) || this.app.getVersion(),
+      /*
+       * Connector bundles (I6) ride the agent's download rhythm: the agent
+       * holds the device token, so IT fetches; the connector runtime reads
+       * this directory at app start and does all the verifying.
+       */
+      CONNECTOR_UPDATE_DIR: path.join(this.app.getPath('userData'), 'connector-runtime', 'incoming'),
     };
 
     console.log('[SyncAgent] starting from', agentDir);

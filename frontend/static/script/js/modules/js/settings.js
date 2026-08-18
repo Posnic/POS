@@ -4692,6 +4692,83 @@ PosnicPro.integrations = {
     load: function () {
         PosnicPro.integrations.loadTokens();
         PosnicPro.integrations.loadHooks();
+        // Connectors are a TILL surface: the desktop supervises them, so the
+        // tab only exists where the desktop bridge does. The web dashboard
+        // manages tokens and webhooks; the till manages what runs beside it.
+        var hasBridge = !!(window.electronAPI && window.electronAPI.connectors);
+        $('#int_connectors_subtab').toggle(hasBridge);
+    },
+    // ---- connectors (I6 enable flow; desktop only) ----
+    loadConnectors: function () {
+        var api = window.electronAPI && window.electronAPI.connectors;
+        if (!api) { return; }
+        var esc = PosnicPro.integrations.esc;
+        api.status().then(function (r) {
+            var rows = (r && r.connectors) || [];
+            if (!rows.length) {
+                $('#int_connectors_body').html('<tr><td colspan="4" class="text-center text-muted">None installed yet - connectors arrive with the till&#39;s update checks once published.</td></tr>');
+                return;
+            }
+            var badge = function (c) {
+                if (!c.installed) return '<span class="badge badge-secondary">not installed</span>';
+                if (c.state === 'running') return '<span class="badge badge-success">running</span>';
+                if (c.state === 'crashloop') return '<span class="badge badge-danger">parked (kept failing)</span>';
+                if (!c.enabled) return '<span class="badge badge-light">off</span>';
+                return '<span class="badge badge-warning">' + esc(c.state) + '</span>';
+            };
+            var html = '';
+            rows.forEach(function (c) {
+                var action = c.enabled
+                    ? '<button type="button" class="btn btn-outline-danger btn-sm int-conn-disable" data-name="' + esc(c.name) + '">Turn off</button>'
+                    : '<button type="button" class="btn btn-outline-primary btn-sm int-conn-enable" data-name="' + esc(c.name) + '"' + (c.installed ? '' : ' disabled') + '>Turn on</button>';
+                html += '<tr><td>' + esc(c.name) + '</td>'
+                    + '<td>' + esc(c.version || '—') + '</td>'
+                    + '<td>' + badge(c) + '</td>'
+                    + '<td class="text-right">' + action + '</td></tr>';
+            });
+            $('#int_connectors_body').html(html);
+        }).catch(function () {
+            $('#int_connectors_body').html('<tr><td colspan="4" class="text-center text-danger">Could not reach the till&#39;s connector runtime.</td></tr>');
+        });
+    },
+    enableConnector: function (name) {
+        // The whole enable act: mint the connector its OWN scoped token
+        // (message-this-shop's-customers, nothing more), hand it to the
+        // desktop, start. The plaintext token goes straight into the till's
+        // config and is never shown - there is nothing for a person to store.
+        PosnicPro.post({
+            url: 'api-tokens',
+            data: JSON.stringify({
+                name: 'Connector: ' + name,
+                scopes: { customer: { read: true, write: true } },
+            })
+        }, function (r) {
+            if (!(r && r.type === 'success' && r.data && r.data.token)) {
+                PosnicPro.alert((r && r.type) || 'error', (r && r.message) || 'Could not mint the connector token.');
+                return;
+            }
+            window.electronAPI.connectors.enable(name, r.data.token, {}).then(function (res) {
+                if (res && res.ok) {
+                    PosnicPro.alert('success', name + ' turned on');
+                    PosnicPro.integrations.loadTokens();
+                    PosnicPro.integrations.loadConnectors();
+                } else {
+                    PosnicPro.alert('error', (res && res.error) || 'The till refused to start it.');
+                }
+            });
+        }, function () {
+            PosnicPro.alert('error', 'Could not mint the connector token.');
+        });
+    },
+    disableConnector: function (name) {
+        window.electronAPI.connectors.disable(name).then(function (res) {
+            if (res && res.ok) {
+                PosnicPro.alert('success', name + ' turned off');
+                PosnicPro.integrations.loadConnectors();
+            } else {
+                PosnicPro.alert('error', (res && res.error) || 'Could not stop it.');
+            }
+        });
     },
     esc: function (v) {
         return String(v == null ? '' : v).replace(/[&<>"]/g, function (c) {
@@ -4872,4 +4949,10 @@ $(document).on('click', '.int-revoke-btn', function () {
 });
 $(document).on('click', '.int-removehook-btn', function () {
     PosnicPro.integrations.removeHook($(this).data('id'));
+});
+$(document).on('click', '.int-conn-enable', function () {
+    PosnicPro.integrations.enableConnector($(this).data('name'));
+});
+$(document).on('click', '.int-conn-disable', function () {
+    PosnicPro.integrations.disableConnector($(this).data('name'));
 });
