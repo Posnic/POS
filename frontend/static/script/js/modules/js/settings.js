@@ -32,6 +32,26 @@ PosnicPro.settings = {
         if ($pill.length && $pill.css('display') !== 'none') { $pill[0].click(); }
         if (key === 'general') { PosnicPro.settings.restoreCoreTab(); }
     },
+    /*
+     * The branch's tax profile dresses the registration field (T2): every
+     * country has a registration identity - GSTIN, VAT No., TRN, ABN - so
+     * the field shows for everyone, labelled and shaped by the profile.
+     * India keeps exactly its current look; the gst_action machinery is
+     * untouched. Presentation only, and failure leaves things as they are.
+     */
+    applyTaxProfile: function () {
+        PosnicPro.get({ url: 'setting/taxProfile', data: {} }, function (r) {
+            var p = r && r.data;
+            if (!p || !p.registration) { return; }
+            PosnicPro.settings._taxProfile = p;
+            $('.branch-gstin-hide-show').show();
+            $('.branch-gstin-hide-show label lang').text(p.registration.label);
+            $('#branch_gstin_number').attr('placeholder', 'Enter the ' + p.registration.label);
+            if (!p.registration.regex) {
+                $('#branch_gstin_number').removeAttr('minlength').attr('maxlength', 30);
+            }
+        }, function () { /* presentation only - never disturb the page */ });
+    },
     restoreCoreTab: function () {
         var stored = PosnicPro.local.get('posnic_core_tab');
         if (stored && $('#core_settings_tabs a[href="' + stored + '"]').length) {
@@ -476,6 +496,7 @@ PosnicPro.settings = {
                         $('.indian-gstr').hide();
                         PosnicPro.local.set('gst_action', 'disable');
                     }
+                    PosnicPro.settings.applyTaxProfile();
                     loader.find(".loadingSpinner:first").remove();
                     // Saved from the Branch edit page: back to the list.
                     if (target) {
@@ -935,6 +956,7 @@ if ($wrapper.length) {
                     $('.hide_indian_gst').hide();
                     PosnicPro.local.set('gst_action', 'disable');
                 }
+                PosnicPro.settings.applyTaxProfile();
 
                 $('#setting_country,#customer_country,#supplier_country,#branch_country').val(data.country);
                 $('#client_dateformat').val(data.client_dateformat);

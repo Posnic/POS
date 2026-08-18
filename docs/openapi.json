@@ -11597,6 +11597,29 @@
         }
       }
     },
+    "/settings/taxProfile": {
+      "get": {
+        "summary": "getTaxProfile",
+        "operationId": "get_settings_taxProfile",
+        "tags": [
+          "Settings"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
     "/settings/priceLists": {
       "get": {
         "summary": "getPriceLists",

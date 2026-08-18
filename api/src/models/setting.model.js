@@ -3014,6 +3014,37 @@ class SettingModel extends BaseModel {
     }
   }
 
+  /*
+   * The session branch's resolved tax profile (T2): what the country's tax
+   * is CALLED, how its registration number is labelled and shaped, how it
+   * displays. Presentation only - rates and math never travel here.
+   */
+  async getTaxProfileModel() {
+    try {
+      const branchCollection = await this.getCollection();
+      const branch = await branchCollection.findOne({
+        _id: this.normalizeId(this.branchId),
+        license: this.normalizeId(this.licenseId),
+      });
+      const taxProfiles = require('../services/tax-profiles');
+      const { code, profile } = taxProfiles.profileForBranch(branch || {});
+      return {
+        status: true,
+        data: {
+          code,
+          label: profile.label,
+          registration: profile.registration,
+          components: { mode: profile.components.mode },
+          display: profile.display,
+        },
+        message: 'success',
+      };
+    } catch (error) {
+      console.error('Error in getTaxProfileModel:', error);
+      return { status: false, data: null, message: error.message };
+    }
+  }
+
   async getTableOrderAllModel() {
     try {
       const collection = await this.getCollection(this.tableOrderCollection);

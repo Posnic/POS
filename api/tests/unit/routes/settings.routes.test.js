@@ -19,6 +19,7 @@ jest.mock('../../../src/controllers/settings.controller', () => {
     addModifierGroup: make,
     editModifierGroup: make,
     deleteModifierGroup: make,
+    getTaxProfile: make,
     getPriceLists: make,
     savePriceList: make,
     deletePriceList: make,
