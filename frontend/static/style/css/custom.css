@@ -2570,11 +2570,21 @@ input:checked + .slider:before {
 .core-settings-tabs { flex-wrap: nowrap; overflow: hidden; }
 .core-settings-tabs .nav-link { white-space: nowrap; }
 
-/* Config's left menu sat ~40px too wide for its labels (user report):
-   cap the nav column on large screens and let the content take the rest. */
+/* Config's left menu: wide enough that the longest labels (Cash
+   Denominations, SMS & WhatsApp Providers) stay on ONE line, and no wider -
+   250px wrapped them, the original ~350px wasted 40px of air. */
 @media (min-width: 992px) {
-    .settings-nav-col { flex: 0 0 auto; width: 250px; max-width: 250px; }
+    .settings-nav-col { flex: 0 0 auto; width: 305px; max-width: 305px; }
     .settings-nav-col + div { flex: 1 1 0; max-width: none; }
+    .settings-nav-col .nav-link { white-space: nowrap; }
+}
+
+/* Fieldset legends inside Core Settings rendered at Bootstrap's default
+   1.5rem - a heading shouting over its own form. */
+.field-general-setting legend {
+    font-size: 14.5px;
+    font-weight: 600;
+    margin-bottom: 4px;
 }
 
 /* Register selection: who holds it, said before the Open click fails. */
