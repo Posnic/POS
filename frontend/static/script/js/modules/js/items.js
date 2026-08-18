@@ -26,6 +26,7 @@ PosnicPro.items = {
         $("#items_mfg_date").val('');
         $("#items_expiry_date").val('');
         $('#item_upload_image_status').val('no');
+        PosnicPro.items.applyHardwareGates();
         PosnicPro.items.addItemButton();
         $('#items_reset').show();
         $('.items_edit_reset').hide();
@@ -61,18 +62,30 @@ PosnicPro.items = {
         $('#item_variant_header').hide();
 
         PosnicPro.showEditModal('items');
+        PosnicPro.items.applyHardwareGates();
         PosnicPro.items.editItem(id);
         $('#item_discount').show();
         $('#v-pills-inventory-tab').addClass('active');
         $('#v-pills-inventory').addClass('show active');
         $('#items_reset').hide();
         $('.items_edit_reset').show();
-        $('.items_edit_reset').attr("id", id);
+        // The record id rides data-id; overwriting the DOM id broke every
+        // later #items_edit_reset selector.
+        $('.items_edit_reset').attr('data-id', id);
         $('.error_item').css('display', 'none');
         PosnicPro.items.itemAction = 'edit';
     },
     showDelete: function (id) {
         PosnicPro.deleteTableRowData(id, 'items');
+    },
+    /* The weight-scale flag only means anything when the weight-machine
+       hardware module is on - the sales side gates on the same setting. */
+    applyHardwareGates: function () {
+        var settings = null;
+        try { settings = JSON.parse(PosnicPro.local.get('general_settings') || 'null'); } catch (e) { /* defaults */ }
+        var weightOn = !!(settings && settings.hardware_weight_machine_enable);
+        $('#item_weight_flag_wrap').toggle(weightOn);
+        if (!weightOn) { $('#item_weight_machine_based').prop('checked', false); }
     },
     showDetails: function (id) {
         var loader = $(".loader-view-item");
@@ -518,10 +531,17 @@ PosnicPro.items = {
                     url: url,
                     data: JSON.stringify(Object.assign(formData, param_fields))
                 };
+                var typedSku = (formData.sku_id || '').trim();
                 PosnicPro.request(params, function (response) {
 
                     if (response.type === 'success') {
                         var data = response.data;
+                        // The server keeps a genuinely unique SKU and rewrites a
+                        // colliding one to the next free number - say so instead
+                        // of saving silently under a different SKU.
+                        if (typedSku && data.itemid && String(data.itemid) !== typedSku) {
+                            PosnicPro.alert('info', 'Saved with SKU ' + data.itemid + ' — ' + typedSku + ' was already taken');
+                        }
                         PosnicPro.items.addItemButton();
                         PosnicPro.items.loadSelectUnit();
                         $('#item_image_upload_form')[0].reset();
@@ -962,7 +982,6 @@ PosnicPro.items = {
                 $('#items_conversion_factor').val(data.conversion_factor || '');
                 $('#items_hsncode').val(data.hsncode);
                 $('#items_hsndescription').val(data.hsndescription);
-                $('#items_date').val(response.data.item_date);
                 $('#items_supplier').val(data.supplier_name);
                 $('#items_supplier_id').val(data.supplier_id);
                 $("#items_category").val(data.category_id).trigger("change");
@@ -973,7 +992,6 @@ PosnicPro.items = {
                 $('#items_selling_price').val(data.selling_price);
                 $('#items_available_quantity').val(data.available_quantity);
                 $("#items_unit option[value='" + data.unit + "']").prop("selected", true);
-                $('#item_image').val(data.image);
                 if (data.items_mfg_date) {
                     var mfgDate = new Date(data.items_mfg_date);
                     var formattedMfgDate = mfgDate.getFullYear() + '-' + ('0' + (mfgDate.getMonth() + 1)).slice(-2) + '-' + ('0' + mfgDate.getDate()).slice(-2);
@@ -995,7 +1013,6 @@ PosnicPro.items = {
                 } else {
                     $("#same_as_sku").prop("checked", false);
                 }
-                $('#itemImage').val(data.image);
                 $('#items_sort').val(data.sort_order);
                 if (data.description !== '') {
                     $('#items_description').append(data.description);
@@ -1413,7 +1430,7 @@ PosnicPro.items = {
     },
     itemImageFormSubmit: function () {
 
-        if ($('#item_value_check').val('') !== '' && $('#items_name').val() !== '') {
+        if ($('#items_name').val() !== '') {
             var loader = $(".loader-item");
             $("<div class='loadingSpinner'></div>").appendTo(loader);
             let uniqueImageParams = PosnicPro.items.imageParams.filter((c, index) => {
@@ -1486,7 +1503,6 @@ PosnicPro.items = {
                 $('#items_name').val(data.name + '_copy');
                 $('#items_itemid').val(data.itemid);
                 $('#items_barcodeid').val(data.barcode_id);
-                $('#items_date').val(response.data.item_date);
                 $('#items_supplier').val(data.supplier_name);
                 $('#items_supplier_id').val(data.supplier_id);
                 $("#items_category").val(data.category_id).trigger("change");
@@ -1554,7 +1570,6 @@ PosnicPro.items = {
                 (data.item_weight_machine_based === true) ? $('#item_weight_machine_based').prop('checked', true) : $('#item_weight_machine_based').prop("checked", false);
                 (data.tax_type === 'inclusive') ? $('#item_tax_inclusive').prop('checked', true) : $('#item_tax_exclusive').prop("checked", true);
                 $("#items_tax").val(data.tax_id).trigger("change");
-                $('#addItem').modal('show');
                 var radionbutton = $('#items_discount_amount').val();
                 if (radionbutton > 0) {
                     $("#item_radio_discount_amount").prop('checked', 'checked');
@@ -2905,6 +2920,14 @@ $(document).ready(function () {
                 dateISO: true,
                 greaterThanMfgDate: "#items_mfg_date",
                 expiryGreaterThanCurrentDate: true
+            },
+            // Validated only when HSN tax mode shows it (hidden fields are
+            // ignored) - it is the tax source in that mode, so it must be a
+            // real HSN: 4-8 digits.
+            items_hsncode: {
+                digits: true,
+                minlength: 4,
+                maxlength: 8
             }
 
         },
@@ -2912,7 +2935,7 @@ $(document).ready(function () {
             items_name: {
                 required: "Please Enter Item Name",
                 minlength: "Item Name must consist of at least 3 characters",
-                maxlength: "Item Name should not be more than 100 characters"
+                maxlength: "Item Name should not be more than 500 characters"
             },
             items_category: {
                 required: "Please Choose Category"
@@ -2967,6 +2990,11 @@ $(document).ready(function () {
             items_description: {
                 minlength: "This field must consist of at least 100 characters",
                 maxlength: "This field should not be more than 10000 characters"
+            },
+            items_hsncode: {
+                digits: "HSN code is digits only",
+                minlength: "HSN code is 4 to 8 digits",
+                maxlength: "HSN code is 4 to 8 digits"
             },
             items_mfg_date: {
                 dateISO: "Please enter a valid date in the format YYYY-MM-DD",

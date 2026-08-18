@@ -56,8 +56,6 @@
                                         name="items_name" placeholder="Enter Item Name" minlength="3" maxlength="500"
                                         autocomplete="off" required>
                                     <input type="hidden" name="id" id="itemid">
-
-                                    <input type='hidden' name='item_img' id='itemImage'>
                                 </div>
                             </div>
                         </div>
@@ -141,16 +139,18 @@
                                             placeholder="Scan From Bar Code Reader" autocomplete="off">
                                         <!-- V3: manufacturer / extra codes; scanning any of them finds this item. -->
                                         <input type="text" class="form-control clear_text_item mt-2" id="items_barcodes_alt"
-                                            maxlength="400" placeholder="Alternate barcodes (comma separated, optional)" autocomplete="off">
+                                            name="items_barcodes_alt" maxlength="400"
+                                            placeholder="Alternate barcodes (comma separated, optional)" autocomplete="off">
                                         <!-- V3: purchase-unit assist - "box of 24". Stock stays in base units. -->
                                         <div class="form-row mt-2">
                                             <div class="col-7">
                                                 <input type="text" class="form-control clear_text_item" id="items_purchase_unit"
-                                                    maxlength="30" placeholder="Purchase unit (e.g. box, optional)" autocomplete="off">
+                                                    name="items_purchase_unit" maxlength="30"
+                                                    placeholder="Purchase unit (e.g. box, optional)" autocomplete="off">
                                             </div>
                                             <div class="col-5">
                                                 <input type="number" min="0" step="any" class="form-control clear_text_item" id="items_conversion_factor"
-                                                    placeholder="Units per pack" autocomplete="off">
+                                                    name="items_conversion_factor" placeholder="Units per pack" autocomplete="off">
                                             </div>
                                         </div>
                                     </div>
@@ -227,96 +227,6 @@
                                             name="items_expiry_date" placeholder="Enter Expiry 2011-01-01"
                                             autocomplete="off">
                                     </div>
-
-                                    <!--                                    <div class="col-md-6">
-                                        <label class="form-control-placeholder" for="items_unit">
-                                            Item Units
-                                        </label>
-                                        <select class="form-control" id="items_unit" name="items_unit">                                            
-                                            <option value="pcs"><lang class="lang_unit_Pieces">Pieces - PCS</lang></option>
-                                            <option value="kgs"><lang class="lang_unit_Kilograms">Kilograms - KGS</lang></option>
-                                            <option value="bag"><lang class="lang_unit_Bags">Bags - BAG</lang></option> 
-                                            <option value="bal"><lang class="lang_unit_Bale">Bale - BAL</lang></option>
-                                            <option value="bou"><lang class="lang_unit_Billion">Billion of Units - BOU</lang></option>
-                                            <option value="btl"><lang class="lang_unit_Bottles">Bottles - BTL</lang></option>
-                                            <option value="box"><lang class="lang_unit_Box">Box - BOX</lang></option>
-                                            <option value="bkl"><lang class="lang_unit_Buckles">Buckles - BKL</lang></option>
-                                            <option value="bun"><lang class="lang_unit_Bunches">Bunches - BUN</lang></option>
-                                            <option value="bdl"><lang class="lang_unit_Bundles">Bundles - BDL</lang></option>
-                                            <option value="can"><lang class="lang_unit_Cans">Cans - CAN</lang></option>
-                                            <option value="ctn"><lang class="lang_unit_Cartons">Cartons - CTN</lang></option>
-                                            <option value="cms"><lang class="lang_unit_Centimeters">Centimeters - CMS</lang></option>
-                                            <option value="ccm"><lang class="lang_unit_Cubic_Centimeters">Cubic Centimeters - CCM</lang></option>
-                                            <option value="cbm"><lang class="lang_unit_Cubic_Meters">Cubic Meters - CBM</lang></option>
-                                            <option value="doz"><lang class="lang_unit_Dozens">Dozens - DOZ</lang></option>
-                                            <option value="drm"><lang class="lang_unit_Drums">Drums - DRM</lang></option>
-                                            <option value="gms"><lang class="lang_unit_Grams">Grams - GMS</lang></option>
-                                            <option value="ggk"><lang class="lang_unit_Grams">Great Gross - GGK</lang></option>
-                                            <option value="grs"><lang class="lang_unit_Great_Grams">Gross - GRS</lang></option>
-                                            <option value="gyd"><lang class="lang_unit_Gross_Yards">Gross Yards - GYD</lang></option>
-                                            <option value="klr"><lang class="lang_unit_Kilo_Litre">Kilolitre - KLR</lang></option>
-                                            <option value="kme"><lang class="lang_unit_Kilo_Metre">Kilometre - KME</lang></option>
-                                            <option value="ltr"><lang class="lang_unit_Litre">Litre - LTR</lang></option>
-                                            <option value="mtr"><lang class="lang_unit_Meter">Meters - MTR</lang></option>
-                                            <option value="mts"><lang class="lang_unit_Metric_Ton">Metric Ton - MTS</lang></option>
-                                            <option value="mlt"><lang class="lang_unit_Milli_Litre">Mililitre - MLT</lang></option>
-                                            <option value="pac"><lang class="lang_unit_Packs">Packs - PAC</lang></option>
-                                            <option value="prs"><lang class="lang_unit_Pairs">Pairs - PRS</lang></option>
-                                            <option value="qtl"><lang class="lang_unit_Quintal">Quintal - QTL</lang></option>
-                                            <option value="rol"><lang class="lang_unit_Rolls">Rolls - ROL</lang></option>
-                                            <option value="set"><lang class="lang_unit_Sets">Sets - SET</lang></option>
-                                            <option value="sqf"><lang class="lang_unit_Square_Feet">Square Feet - SQF</lang></option>
-                                            <option value="sqm"><lang class="lang_unit_Square_Yards">Square Yards - SQM</lang></option>
-                                            <option value="tbs"><lang class="lang_unit_Tablets">Tablets - TBS</lang></option>
-                                            <option value="tgm"><lang class="lang_unit_Ten_Gross">Ten Gross - TGM</lang></option>
-                                            <option value="thd"><lang class="lang_unit_Thousands">Thousands - THD</lang></option>
-                                            <option value="ton"><lang class="lang_unit_Tonnes">Tonnes - TON</lang></option>
-                                            <option value="tub"><lang class="lang_unit_Tubes">Tubes - TUB</lang></option>
-                                            <option value="unt"><lang class="lang_unit_Units">Units - UNT</lang></option>
-                                            <option value="ugs"><lang class="lang_unit_US_Gallons">US gallons - UGS</lang></option>
-                                            <option value="yds"><lang class="lang_unit_Yards">Yards - YDS</lang></option>
-                                            <option value="mins"><lang class="lang_unit_Minutes">Minutes - MINS</lang></option>
-                                            <option value="hrs"><lang class="lang_unit_Hours">Hours - HRS</lang></option>
-                                            <option value="day"><lang class="lang_unit_Days">Days - DAY</lang></option>
-                                            <option value="wks"><lang class="lang_unit_Weeks">Weeks - WKS</lang></option>
-                                            <option value="mon"><lang class="lang_unit_Months">Months - MON</lang></option>
-                                            <option value="yrs"><lang class="lang_unit_Years">Years - YRS</lang></option>
-                                            <option value="manday"><lang class="lang_unit_ManDays">Man Days - MAN-DAY</lang></option>
-                                            <option value="night"><lang class="lang_unit_Nights">Nights - NIGHT</lang></option>
-                                            <option value="pet"><lang class="lang_unit_Peti">Peti - PET</lang></option>
-                                            <option value="jar"><lang class="lang_unit_Jars">Jars - JAR</lang></option>
-                                            <option value="poch"><lang class="lang_unit_Pouch">Pouch - POCH</lang></option>
-                                            <option value="bor"><lang class="lang_unit_Bora">Bora - BOR</lang></option>
-                                            <option value="coil"><lang class="lang_unit_Coil">Coil - COIL</lang></option>
-                                            <option value="ft"><lang class="lang_unit_Feet">Feet - FT</lang></option>
-                                            <option value="in"><lang class="lang_unit_Inches">Inches - IN</lang></option>
-                                            <option value="prt"><lang class="lang_unit_Portion">Portion - PRT</lang></option> 
-                                            <option value="case"><lang class="lang_unit_CASE">CASE - CASE</lang></option>
-                                            <option value="cps"><lang class="lang_unit_Capsules">Capsules - CPS</lang></option>
-                                            <option value="sqmt"><lang class="lang_unit_SquareMeters">Square Meters - SQMT</lang></option>
-                                            <option value="mlg"><lang class="lang_unit_Milligram">Milligram - MLG</lang></option>
-                                            <option value="bck"><lang class="lang_unit_Buckets">Buckets - BCK</lang></option>
-                                            <option value="gls"><lang class="lang_unit_Glasses">Glasses - GLS</lang></option>
-                                            <option value="plt"><lang class="lang_unit_Plates">Plates - PLT</lang></option>
-                                            <option value="cts"><lang class="lang_unit_Carats">Carats - CTS</lang></option>
-                                            <option value="strp"><lang class="lang_unit_Strips">Strips - STRP</lang></option>
-                                            <option value="cuft"><lang class="lang_unit_CubicFeet">Cubic Feet - CUFT</lang></option>
-                                            <option value="rmt"><lang class="lang_unit_RunningMeter">Running Meter - RMT</lang></option>
-                                            <option value="try"><lang class="lang_unit_Trays">Trays - TRY</lang></option>
-                                            <option value="amp"><lang class="lang_unit_Ampoule">Ampoule - AMP</lang></option>
-                                            <option value="sqin"><lang class="lang_unit_Square">Square Inches - SQIN</lang></option>
-                                            <option value="sac"><lang class="lang_unit_Sachett">Sachet - SAC</lang></option>
-                                            <option value="tkt"><lang class="lang_unit_Ticket">Ticket - TKT</lang></option>                            
-                                            <option value="kw"><lang class="lang_unit_Kilowatt">Kilowatt - KW</lang></option>
-                                            <option value="w"><lang class="lang_unit_Watt">Watt - W</lang></option>
-                                            <option value="pkt"><lang class="lang_unit_Packets">Packets - PKT</lang></option>
-                                            <option value="mm"><lang class="lang_unit_Millimeter">Millimeter - MM</lang></option>
-                                            <option value="sqcm"><lang class="lang_unit_Square">Square Centimeters - SQCM</lang></option>
-                                            <option value="leng"><lang class="lang_unit_Length">Length - LENG</lang></option>
-                                            <option value="qty"><lang class="lang_unit_Quantity">Quantity - QTY</lang></option>
-                                            <option value="oth"><lang class="lang_unit_Others">Others - OTH</lang></option>
-                                        </select>
-                                    </div>-->
                                 </div>
                             </div>
                         </div>
@@ -376,11 +286,8 @@
 
                                 <div class="col-12">
                                     <div class="form-row">
-                                        <input type="hidden" name="items_multi_logo" id="items_multi_logo"
-                                            value="item.svg">
                                         <input type="hidden" name="item_logo" id="item_logo" value="item.svg">
                                         <div id="item-display-preview"></div>
-                                        <div id="item_image_count" style="display: none;">0</div>
                                     </div>
                                 </div>
 
@@ -423,7 +330,9 @@
                                     </label>
                                 </div>
 
-                                <div class="form-group col-md-3">
+                                <!-- Shown only when the weight-machine hardware module is on -
+                                     the sales side only honours the flag then (items.js gates it). -->
+                                <div class="form-group col-md-3" id="item_weight_flag_wrap" style="display:none;">
                                     <input type="checkbox" class="custom-control-input" id="item_weight_machine_based"
                                         name="item_weight_machine_based">
                                     <label class="custom-control-label" for="item_weight_machine_based">
@@ -515,7 +424,7 @@
                             </div>
                             <div class="">
                                 <input type="text" class="form-control border-control hsnCode" id="items_hsncode"
-                                    placeholder="Enter the HSN Code" autocomplete="off">
+                                    name="items_hsncode" maxlength="8" placeholder="Enter the HSN Code" autocomplete="off">
                                 <input type="hidden" id="items_hsndescription">
                             </div>
                         </div>
@@ -613,7 +522,8 @@
                             </button>
                             <button type="button"
                                 class="btn btn-outline-secondary infobar-settings-reset items_edit_reset"
-                                id="items_edit_reset" onclick="PosnicPro.items.resetEditButton(this.id);"><i
+                                id="items_edit_reset"
+                                onclick="PosnicPro.items.resetEditButton(this.getAttribute('data-id'));"><i
                                     class="feather icon-refresh-ccw mr-2"></i>
                                 <lang class="lang_reset_title"> Reset</lang>
                             </button>
