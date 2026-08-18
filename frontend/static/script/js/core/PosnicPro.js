@@ -2053,6 +2053,7 @@ PosnicPro = {
         { name: 'Money', items: [
             { hash: 'paymentreport', label: 'Payment', icon: 'dollar-sign' },
             { hash: 'taxreport', label: 'Tax', icon: 'percent', module: 'module_tax_enable' },
+            { hash: 'taxsummaryreport', label: 'Tax Summary', icon: 'layers', module: 'module_tax_enable' },
             { hash: 'expensesreport', label: 'Cash Book', icon: 'file-text', module: 'module_cashbook_enable' },
         ] },
     ],
@@ -4192,6 +4193,85 @@ PosnicPro.labourreport = {
         $('#labour_report_from').val(PosnicPro.shiftWidget._fmtDate(from));
         $('#labour_report_to').val(PosnicPro.shiftWidget._fmtDate(to));
         PosnicPro.shiftWidget.runReport();
+    }
+};
+
+/* Tax summary report (#/taxsummaryreport, T3) - totals per rate class over
+ * a period, straight off the generic endpoint. The route table dispatches
+ * {module} -> PosnicPro.taxsummaryreport. */
+PosnicPro.taxsummaryreport = {
+    _last: null,
+    showDataTablePage: function () {
+        PosnicPro.HideSideBarModal();
+        $(".vertical-layout").removeClass("toggle-menu");
+        $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
+        $(".vertical-menu li a").removeClass("active");
+        $('.page_loader,#osk-container').hide();
+        $('.page-title-box,#taxsummaryreport_new').show();
+        $('#v-pills-report-tab').addClass('active');
+        $('#v-pills-report').addClass('show active');
+        var to = new Date();
+        var from = new Date(to.getTime() - 30 * 24 * 60 * 60 * 1000);
+        var fmt = PosnicPro.shiftWidget._fmtDate;
+        $('#taxsummary_from').val(fmt(from));
+        $('#taxsummary_to').val(fmt(to));
+        PosnicPro.taxsummaryreport.run();
+    },
+    run: function () {
+        var from = $('#taxsummary_from').val();
+        var to = $('#taxsummary_to').val();
+        $('#taxsummary_body').html('<tr><td colspan="6" class="text-center text-muted">Loading&hellip;</td></tr>');
+        $('#taxsummary_foot').html('');
+        var url = 'sales/taxSummaryReportTable?starting_date=' + encodeURIComponent(from)
+            + '&ending_date=' + encodeURIComponent(to);
+        PosnicPro.get(url, function (response) {
+            var d = response && response.data;
+            PosnicPro.taxsummaryreport._last = d;
+            var rows = (d && d.list) || [];
+            var cur = PosnicPro.local.get('currencySign') || '';
+            if (!rows.length) {
+                $('#taxsummary_body').html('<tr><td colspan="6" class="text-center text-muted">No sales in this range.</td></tr>');
+                return;
+            }
+            var esc = function (s) {
+                return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+                    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+                });
+            };
+            var html = '';
+            rows.forEach(function (r) {
+                html += '<tr>'
+                    + '<td>' + (r.rate ? r.rate + '%' : '<span class="text-muted">0% / untaxed</span>') + '</td>'
+                    + '<td>' + (esc(r.tax_name) || '&mdash;') + '</td>'
+                    + '<td class="text-right">' + cur + '&nbsp;' + r.net.toFixed(2) + '</td>'
+                    + '<td class="text-right">' + cur + '&nbsp;' + r.tax.toFixed(2) + '</td>'
+                    + '<td class="text-right">' + cur + '&nbsp;' + r.gross.toFixed(2) + '</td>'
+                    + '<td class="text-right">' + r.lines + '</td>'
+                    + '</tr>';
+            });
+            $('#taxsummary_body').html(html);
+            var t = d.totals || {};
+            $('#taxsummary_foot').html('<tr class="font-weight-bold">'
+                + '<td colspan="2">Total</td>'
+                + '<td class="text-right">' + cur + '&nbsp;' + (t.net || 0).toFixed(2) + '</td>'
+                + '<td class="text-right">' + cur + '&nbsp;' + (t.tax || 0).toFixed(2) + '</td>'
+                + '<td class="text-right">' + cur + '&nbsp;' + (t.gross || 0).toFixed(2) + '</td>'
+                + '<td></td></tr>');
+        }, function () {
+            $('#taxsummary_body').html('<tr><td colspan="6" class="text-center text-danger">Could not load the summary.</td></tr>');
+        });
+    },
+    exportCsv: function () {
+        var d = PosnicPro.taxsummaryreport._last;
+        var rows = (d && d.list) || [];
+        if (!rows.length) {
+            PosnicPro.alert('warning', 'Run the report first - there is nothing to export.');
+            return;
+        }
+        var out = rows.map(function (r) {
+            return { rate: r.rate, tax_name: r.tax_name, net: r.net, tax: r.tax, gross: r.gross, lines: r.lines };
+        });
+        PosnicPro.JSONToCSVConvertor(out, 'tax-summary_' + $('#taxsummary_from').val() + '_' + $('#taxsummary_to').val(), true);
     }
 };
 
