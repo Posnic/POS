@@ -25,7 +25,11 @@ PosnicPro.settings = {
         // hash-sync round trip cannot loop.
         var $pill = $('#v-pills-' + key + '-tab');
         if (!$pill.length) { $pill = $('#v-pills-' + key); }
-        if ($pill.length && $pill.is(':visible')) { $pill[0].click(); }
+        // NOT :visible - the whole pills rail is display:none now (the
+        // Manage sidebar replaced it), which made every pill "invisible"
+        // and silently refused every section switch. Module gating sets
+        // INLINE display:none on individual pills; that is the real gate.
+        if ($pill.length && $pill.css('display') !== 'none') { $pill[0].click(); }
         if (key === 'general') { PosnicPro.settings.restoreCoreTab(); }
     },
     restoreCoreTab: function () {
