@@ -2598,11 +2598,19 @@ input:checked + .slider:before {
  */
 @media (prefers-reduced-motion: no-preference) {
     @keyframes posnic-page-in {
-        from { opacity: 0; transform: translateY(6px); }
+        from { opacity: 0; transform: translateY(8px); }
         to { opacity: 1; transform: none; }
     }
-    .vertical-layout.page_loader { animation: posnic-page-in .22s ease; }
-    .report-group-tabs { animation: posnic-page-in .18s ease; }
+    @keyframes posnic-tab-in {
+        from { opacity: 0; transform: translateY(4px); }
+        to { opacity: 1; transform: none; }
+    }
+    /* ease-out-expo: fast start, soft landing - the motion signature of
+       the switch, shared by pages, injected strips and every tab pane so
+       one gesture reads as one motion, not staged pops. */
+    .vertical-layout.page_loader { animation: posnic-page-in .26s cubic-bezier(0.16, 1, 0.3, 1); }
+    .report-group-tabs { animation: posnic-page-in .26s cubic-bezier(0.16, 1, 0.3, 1); }
+    .tab-content > .tab-pane.active { animation: posnic-tab-in .18s cubic-bezier(0.16, 1, 0.3, 1); }
     .vertical-menu-detail .tab-pane.fade { transition: opacity .16s linear; }
 }
 
