@@ -2562,6 +2562,15 @@ input:checked + .slider:before {
 .module-card.is-off { opacity: 0.62; }
 .module-card.is-off .module-ico { filter: grayscale(1); }
 .module-card.is-off .module-subs { pointer-events: none; opacity: 0.55; }
+/* Icon-font tiles (modules without a matching svg, e.g. Recycle Bin). */
+.module-ico i { font-size: 22px; color: var(--theme-primary-color, #506fe4); }
+
+/* Config's left menu sat ~40px too wide for its labels (user report):
+   cap the nav column on large screens and let the content take the rest. */
+@media (min-width: 992px) {
+    .settings-nav-col { flex: 0 0 auto; width: 250px; max-width: 250px; }
+    .settings-nav-col + div { flex: 1 1 0; max-width: none; }
+}
 
 /* Register selection: who holds it, said before the Open click fails. */
 .register-inuse-note {

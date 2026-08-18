@@ -838,6 +838,57 @@ class BaseModel {
         ...params,
       };
 
+      /*
+       * Sync ordering (delete propagation). Incremental scans checkpoint on
+       * updated_date - with the deleted doc's own (old) updated_date spread
+       * in above, a tombstone would sit behind every till's watermark and
+       * never be mentioned again. The deletion moment is the event time;
+       * the doc's last-edit time keeps its own field for the
+       * edit-after-delete-wins rule downstream.
+       */
+      backupTable.original_updated_date = backupTable.updated_date || null;
+      backupTable.updated_date = new Date();
+
+      /*
+       * Recycle Bin is a module (Module On/Off). OFF means deleted records
+       * are NOT retained - but the delete must still cross the wire, so a
+       * MINIMAL tombstone keeps: identity, collection and times, no
+       * document body. Restore is impossible then, which is the point.
+       * Any doubt (read error, no branch) keeps the full backup.
+       */
+      try {
+        if (BaseModel.currentBranch) {
+          const { Types } = require('mongoose');
+          const branchId = Types.ObjectId.isValid(String(BaseModel.currentBranch))
+            ? new Types.ObjectId(String(BaseModel.currentBranch))
+            : BaseModel.currentBranch;
+          const branchDoc = await currentDb(BaseModel.database)
+            .collection('branches')
+            .findOne({ _id: branchId }, { projection: { module_recyclebin_enable: 1 } });
+          if (branchDoc && branchDoc.module_recyclebin_enable === false) {
+            for (const key of Object.keys(backupTable)) {
+              if (
+                ![
+                  '_id',
+                  'document_name',
+                  'document_backup_date',
+                  'updated_date',
+                  'original_updated_date',
+                  'branch_id',
+                  'branch_name',
+                  'license',
+                ].includes(key)
+              ) {
+                delete backupTable[key];
+              }
+            }
+            backupTable.body_discarded = true;
+          }
+        }
+      } catch (e) {
+        /* fail open: keep the full backup */
+      }
+
       if (BaseModel.currentBranch) {
         backupTable.branch_id = BaseModel.currentBranch;
       }

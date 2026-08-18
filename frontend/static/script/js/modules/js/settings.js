@@ -405,7 +405,8 @@ PosnicPro.settings = {
                         module_marketing_enable: response.data['module_marketing_enable'] !== false,
                         module_messaging_enable: response.data['module_messaging_enable'] !== false,
                         module_channels_enable: response.data['module_channels_enable'] !== false,
-                        module_channels_kiosk_enable: response.data['module_channels_kiosk_enable'] !== false
+                        module_channels_kiosk_enable: response.data['module_channels_kiosk_enable'] !== false,
+                        module_recyclebin_enable: response.data['module_recyclebin_enable'] !== false
                     };
                     PosnicPro.local.set('general_settings', JSON.stringify(generalSettings));
                     PosnicPro.shiftWidget.applyEnabled();
@@ -639,6 +640,7 @@ PosnicPro.settings = {
                 $('#module_messaging_enable').prop('checked', data.module_messaging_enable !== false);
                 $('#module_channels_enable').prop('checked', data.module_channels_enable !== false);
                 $('#module_channels_kiosk_enable').prop('checked', data.module_channels_kiosk_enable !== false);
+                $('#module_recyclebin_enable').prop('checked', data.module_recyclebin_enable !== false);
 
                 // Store general settings including hardware_weight_machine_enable
                 var generalSettings = {
@@ -654,7 +656,8 @@ PosnicPro.settings = {
                     module_marketing_enable: data.module_marketing_enable !== false,
                     module_messaging_enable: data.module_messaging_enable !== false,
                     module_channels_enable: data.module_channels_enable !== false,
-                    module_channels_kiosk_enable: data.module_channels_kiosk_enable !== false
+                    module_channels_kiosk_enable: data.module_channels_kiosk_enable !== false,
+                    module_recyclebin_enable: data.module_recyclebin_enable !== false
                 };
                 PosnicPro.local.set('general_settings', JSON.stringify(generalSettings));
                 PosnicPro.shiftWidget.applyEnabled();
@@ -1428,6 +1431,7 @@ if ($wrapper.length) {
                 module_messaging_enable: $('#module_messaging_enable').is(':checked') ? 'true' : 'false',
                 module_channels_enable: $('#module_channels_enable').is(':checked') ? 'true' : 'false',
                 module_channels_kiosk_enable: $('#module_channels_kiosk_enable').is(':checked') ? 'true' : 'false',
+                module_recyclebin_enable: $('#module_recyclebin_enable').is(':checked') ? 'true' : 'false',
             })
         };
         PosnicPro.put(params, function (response) {
@@ -1530,7 +1534,8 @@ if ($wrapper.length) {
                     module_marketing_enable: $('#module_marketing_enable').is(':checked'),
                     module_messaging_enable: $('#module_messaging_enable').is(':checked'),
                     module_channels_enable: $('#module_channels_enable').is(':checked'),
-                    module_channels_kiosk_enable: $('#module_channels_kiosk_enable').is(':checked')
+                    module_channels_kiosk_enable: $('#module_channels_kiosk_enable').is(':checked'),
+                    module_recyclebin_enable: $('#module_recyclebin_enable').is(':checked')
                 };
                 PosnicPro.local.set('general_settings', JSON.stringify(generalSettings));
                 // Show or hide the header clock button to match, right away.
@@ -1585,6 +1590,7 @@ if ($wrapper.length) {
         // its own and must not be force-shown here.
         $('#v-pills-messaging-tab, #v-pills-whatsapp-tab, #v-pills-email-tab').toggle(on('module_messaging_enable'));
         $('#v-pills-kiosk-tab').toggle(on('module_channels_enable') && on('module_channels_kiosk_enable'));
+        $('#v-pills-recyclebin-tab').toggle(on('module_recyclebin_enable'));
         $('#v-pills-tableorder-tab').toggle(PosnicPro.local.get('table_options') === 'enable');
 
         $('#v-pills-tab .settings-nav-group').each(function () {
