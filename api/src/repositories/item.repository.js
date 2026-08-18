@@ -965,6 +965,32 @@ class ItemRepository extends BaseModel {
     };
   }
 
+  /*
+   * Rollback for a half-created variant family (V1): these rows were never
+   * visible to anyone, so this is a hard delete - no recycle_bin tombstone
+   * (a tombstone would SYNC the non-event fleet-wide) - and their freshly
+   * written 'Add Item' stock logs go with them.
+   */
+  async hardDeleteItems(ids, { licenseId } = {}) {
+    const objectIds = (ids || [])
+      .map((v) => (ObjectId.isValid(String(v)) ? new ObjectId(String(v)) : null))
+      .filter(Boolean);
+    if (!objectIds.length) return { deleted: 0 };
+    const filter = { _id: { $in: objectIds } };
+    if (licenseId && ObjectId.isValid(String(licenseId))) {
+      filter.license = new ObjectId(String(licenseId));
+    }
+    const collection = await this.getCollection(this.collectionName);
+    const r = await collection.deleteMany(filter);
+    try {
+      const logs = await this.getCollection('stocklogs');
+      await logs.deleteMany({ view_item_id: { $in: objectIds } });
+    } catch (e) {
+      /* debris, not data - never fail the rollback over it */
+    }
+    return { deleted: r.deletedCount || 0 };
+  }
+
   async upsertItem(data, id = '', context = {}) {
     try {
       const collection = await this.getCollection(this.collectionName);
@@ -1114,6 +1140,20 @@ class ItemRepository extends BaseModel {
         unit: data.unit || 'qty',
         unit_id: data.unit_id || '',
       };
+
+      /*
+       * Variant family link (VARIANT_SYSTEM_RESEARCH V1): four presence-
+       * gated fields that turn the "name generator" into a real family.
+       * Absent = plain item, and absent NEVER clears an existing link -
+       * every legacy edit path omits them, and an edit that silently
+       * orphaned an item from its family would be the old bug reborn.
+       */
+      if (data.variant_group_id && ObjectId.isValid(String(data.variant_group_id))) {
+        updateData.variant_group_id = new ObjectId(String(data.variant_group_id));
+        updateData.variant_axis = String(data.variant_axis || '').trim();
+        updateData.variant_value = String(data.variant_value || '').trim();
+        updateData.variant_parent_name = String(data.variant_parent_name || '').trim();
+      }
 
       if (!id) {
         // Insert new item

@@ -409,6 +409,107 @@ class ItemService {
   }
 
   /**
+   * Create a whole variant family in one call (VARIANT_SYSTEM_RESEARCH V1).
+   *
+   * The old flow fired one independent POST per variant value; a network
+   * blip mid-way left half a family behind, silently. This validates EVERY
+   * row before creating ANY, stamps the shared family link, creates
+   * sequentially through the same single-item path (stock logs, itemid
+   * uniquification and price history come along for free), and on a
+   * mid-way failure hard-deletes what it just created - these rows were
+   * never visible to anyone, so the recycle bin has no business seeing
+   * them. All-or-nothing as far as the shop can observe.
+   */
+  async createItemFamily({ data, branchId, licenseId, user } = {}) {
+    const rows = Array.isArray(data && data.items) ? data.items : [];
+    const axis = String((data && data.variant_axis) || '').trim();
+    const parentName = String((data && data.variant_parent_name) || '').trim();
+
+    // ---- validate everything before touching anything ----
+    if (rows.length < 2) {
+      return { status: false, data: null, message: 'A family needs at least two variants.' };
+    }
+    if (rows.length > 50) {
+      return { status: false, data: null, message: 'At most 50 variants per family.' };
+    }
+    if (!parentName) {
+      return { status: false, data: null, message: 'The family needs a product name.' };
+    }
+    const seenValues = new Set();
+    const seenBarcodes = new Set();
+    for (const [i, row] of rows.entries()) {
+      const label = 'Variant ' + (i + 1);
+      if (!row || !String(row.name || '').trim()) {
+        return { status: false, data: null, message: label + ' has no name.' };
+      }
+      const value = String(row.variant_value || '').trim();
+      if (!value) {
+        return { status: false, data: null, message: label + ' has no variant value.' };
+      }
+      if (seenValues.has(value.toLowerCase())) {
+        return {
+          status: false,
+          data: null,
+          message: 'Variant value "' + value + '" appears twice.',
+        };
+      }
+      seenValues.add(value.toLowerCase());
+      const barcode = String(row.barcode_id || '').trim();
+      if (barcode) {
+        if (seenBarcodes.has(barcode)) {
+          return {
+            status: false,
+            data: null,
+            message: 'Barcode "' + barcode + '" appears twice in the family.',
+          };
+        }
+        seenBarcodes.add(barcode);
+      }
+    }
+
+    // ---- create, with a compensating rollback ----
+    const groupId = new ObjectId();
+    const created = [];
+    for (const row of rows) {
+      const payload = {
+        ...row,
+        variant_group_id: groupId,
+        variant_axis: axis,
+        variant_value: String(row.variant_value || '').trim(),
+        variant_parent_name: parentName,
+      };
+      // eslint-disable-next-line no-await-in-loop
+      const result = await this.addItem({ data: payload, branchId, licenseId, user });
+      const newId =
+        result &&
+        result.status &&
+        result.data &&
+        (result.data._id || result.data.id || result.data);
+      if (!result || !result.status || !newId) {
+        // eslint-disable-next-line no-await-in-loop
+        await this.repository
+          .hardDeleteItems(created, { licenseId })
+          .catch((e) => console.error('Family rollback failed:', e.message));
+        return {
+          status: false,
+          data: { failed_variant: payload.variant_value, rolled_back: created.length },
+          message:
+            'Could not create "' +
+            payload.variant_value +
+            '" - nothing was kept. ' +
+            ((result && result.message) || ''),
+        };
+      }
+      created.push(newId);
+    }
+    return {
+      status: true,
+      data: { variant_group_id: String(groupId), created: created.map(String) },
+      message: 'Family created: ' + created.length + ' variants.',
+    };
+  }
+
+  /**
    * Update an existing item (delegates to legacy itemInsertUpdate via repository)
    */
   async updateItem({ id, data, branchId, licenseId, user } = {}) {
