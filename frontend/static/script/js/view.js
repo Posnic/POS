@@ -38,8 +38,8 @@ $(document).ready(function () {
     if (PosnicPro.local.get('usertype') !== 'super_admin') {
         $('#v-pills-store-tab').removeClass('active');
         $('#v-pills-store').removeClass('show active');
-        $('#v-pills-tax-tab').addClass('active');
-        $('#v-pills-tax').addClass('show active');
+        $('#v-pills-taxmodule-tab').addClass('active');
+        $('#v-pills-taxmodule').addClass('show active');
     }
 
     $("#default_customer").change("change", function () {

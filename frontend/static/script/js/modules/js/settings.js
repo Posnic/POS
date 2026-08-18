@@ -1662,11 +1662,8 @@ if ($wrapper.length) {
 
         $('#v-pills-taxmodule-tab').toggle(on('module_tax_enable'));
         $('#v-pills-credit-tab').toggle(on('module_credit_enable'));
-        $('#v-pills-loyalty-tab, #v-pills-coupons-tab, #v-pills-cashback-tab, #v-pills-campaigns-tab')
-            .toggle(on('module_marketing_enable'));
-        // #v-pills-sms-tab stays out of this list: it ships display:none on
-        // its own and must not be force-shown here.
-        $('#v-pills-messaging-tab, #v-pills-whatsapp-tab, #v-pills-email-tab').toggle(on('module_messaging_enable'));
+        $('#v-pills-marketingmodule-tab').toggle(on('module_marketing_enable'));
+        $('#v-pills-messagingmodule-tab').toggle(on('module_messaging_enable'));
         $('#v-pills-kiosk-tab').toggle(on('module_channels_enable') && on('module_channels_kiosk_enable'));
         $('#v-pills-recyclebin-tab').toggle(on('module_recyclebin_enable'));
         $('#v-pills-theme-tab').toggle(on('module_themes_enable'));

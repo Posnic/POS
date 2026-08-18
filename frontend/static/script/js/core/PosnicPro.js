@@ -1436,16 +1436,19 @@ PosnicPro = {
                 var s = response && response.data;
                 var onShift = !!(s && s.clock_in);
                 $('#shift_clock_btn').toggleClass('on-shift', onShift);
+                // ONE action at a time (user call): the state shows exactly
+                // the button that makes sense. Swipe stays for everyone -
+                // an RFID card decides in/out per person on the server.
+                $('#shift_clock_in_btn').toggle(!onShift);
+                $('#shift_clock_out_btn').toggle(onShift);
                 if (onShift) {
                     var since = new Date(s.clock_in);
                     $('#shift_status').html('<span class="badge badge-success">On shift</span><br>'
                         + '<small class="text-muted">since ' + since.toLocaleString() + '</small>');
-                    $('#shift_clock_in_btn').prop('disabled', true);
                     $('#shift_clock_out_btn').prop('disabled', false);
                 } else {
                     $('#shift_status').html('<span class="badge badge-secondary">Not clocked in</span>');
                     $('#shift_clock_in_btn').prop('disabled', false);
-                    $('#shift_clock_out_btn').prop('disabled', true);
                 }
             }, function () { $('#shift_status').text('—'); });
         },
