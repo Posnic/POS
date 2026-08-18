@@ -61,7 +61,11 @@ PosnicPro.itemreport = {
                 limit: per_page,
                 starting_date: fields[0],
                 ending_date: fields[1],
-                branch: $(".item_branch_value").val()
+                branch: $(".item_branch_value").val(),
+                // Family view is a table-only READING rollup; the export
+                // branch never sends it - exports stay per-item, always.
+                group_by_family: (type !== 'itemreportexport' && $('#itemreport_group_family').is(':checked'))
+                    ? 'true' : 'false'
             };
             var params = {
                 url: 'sales/itemSalesReportTable',
@@ -100,7 +104,9 @@ PosnicPro.itemreport = {
                         for (var i = 0; i < response.data.list.length; i++) {
                             var row = response.data.list[i];
                             var row_no = (table.data('current_page') - 1) * table.data('per_page') + i + 1;
-                            let trow = '<tr> <td scope="row">' + row_no + '</td> <td>' + row.name + '</td> <td class="text-center">' + row.item_quantity + '</td> <td class="text-center">' + row.sales_count + '</td> <td class="text-right">' + currency + '&nbsp;<span>' + row.sales_profit.toFixed(2) + '</span></td> <td class="text-right">' + currency + '&nbsp;<span class="number">' + row.sales_avg + '</span></td> <td class="text-right">' + currency + '&nbsp;<span class="number">' + row.total_amount + '</span></td></tr>';
+                            var familyNote = (row.family_members > 1)
+                                ? ' <small class="text-muted">(' + row.family_members + ' variants)</small>' : '';
+                            let trow = '<tr> <td scope="row">' + row_no + '</td> <td>' + row.name + familyNote + '</td> <td class="text-center">' + row.item_quantity + '</td> <td class="text-center">' + row.sales_count + '</td> <td class="text-right">' + currency + '&nbsp;<span>' + row.sales_profit.toFixed(2) + '</span></td> <td class="text-right">' + currency + '&nbsp;<span class="number">' + row.sales_avg + '</span></td> <td class="text-right">' + currency + '&nbsp;<span class="number">' + row.total_amount + '</span></td></tr>';
                             $('#view_itemreport').children('tbody').append(trow);
                         }
                         $('span.number').number(true, 2);

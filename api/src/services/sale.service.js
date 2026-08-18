@@ -2693,7 +2693,17 @@ module.exports = {
 
     return { itemsList, total };
   },
-  getItemSalesReportTableData: async ({ match, skip, limit }, { SaleModel } = {}) => {
+  /*
+   * groupByFamily (V1 tail): an optional READING view - the same per-line
+   * numbers, rolled up by variant_group_id where one exists. Per the
+   * reporting invariant, this changes no stored number and no default:
+   * off, every variant is its own row exactly as always; exports never
+   * pass the flag.
+   */
+  getItemSalesReportTableData: async (
+    { match, skip, limit, groupByFamily },
+    { SaleModel } = {}
+  ) => {
     const Model = getModel(SaleModel);
 
     const normalizedItemTotalExpr = toNumberExpression({
@@ -2821,17 +2831,42 @@ module.exports = {
         },
       },
       {
-        $group: {
-          _id: { $ifNull: ['$normalizedItemId', '$normalizedItemName'] },
-          name: { $first: '$normalizedItemName' },
-          total_amount: { $sum: '$normalizedItemTotal' },
-          item_quantity: { $sum: '$normalizedQuantity' },
-          total_company_price: { $sum: '$normalizedCompanyPrice' },
-          total_tax_amount: { $sum: '$tax_amount' },
-          sales_avg: { $avg: '$normalizedItemTotal' },
-          sales_count: { $sum: 1 },
-        },
+        $group: groupByFamily
+          ? {
+              // Family members share their group id as the key; everything
+              // else keys exactly as before. The summed inputs are the SAME
+              // per-line values the default view sums.
+              _id: {
+                $ifNull: [
+                  '$item_info.variant_group_id',
+                  { $ifNull: ['$normalizedItemId', '$normalizedItemName'] },
+                ],
+              },
+              name: {
+                $first: { $ifNull: ['$item_info.variant_parent_name', '$normalizedItemName'] },
+              },
+              family_members: {
+                $addToSet: { $ifNull: ['$normalizedItemId', '$normalizedItemName'] },
+              },
+              total_amount: { $sum: '$normalizedItemTotal' },
+              item_quantity: { $sum: '$normalizedQuantity' },
+              total_company_price: { $sum: '$normalizedCompanyPrice' },
+              total_tax_amount: { $sum: '$tax_amount' },
+              sales_avg: { $avg: '$normalizedItemTotal' },
+              sales_count: { $sum: 1 },
+            }
+          : {
+              _id: { $ifNull: ['$normalizedItemId', '$normalizedItemName'] },
+              name: { $first: '$normalizedItemName' },
+              total_amount: { $sum: '$normalizedItemTotal' },
+              item_quantity: { $sum: '$normalizedQuantity' },
+              total_company_price: { $sum: '$normalizedCompanyPrice' },
+              total_tax_amount: { $sum: '$tax_amount' },
+              sales_avg: { $avg: '$normalizedItemTotal' },
+              sales_count: { $sum: 1 },
+            },
       },
+      ...(groupByFamily ? [{ $set: { family_members: { $size: '$family_members' } } }] : []),
       {
         $set: {
           sales_profit: {

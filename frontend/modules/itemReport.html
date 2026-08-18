@@ -96,6 +96,15 @@
                                         <div class="email-rightbar">
                                             <div class="card-header header_icon">
                                                 <ul class="list-inline mb-0 pl-0 float-right">
+                                                    <!-- Family view (V1): a READING rollup, off by default; the
+                                                         table regroups, exports stay per-item always. -->
+                                                    <li class="list-inline-item email_320 mr-3">
+                                                        <div class="custom-control custom-switch d-inline-block" data-toggle="tooltip" title="One row per product family; each variant still counts separately everywhere else">
+                                                            <input type="checkbox" class="custom-control-input" id="itemreport_group_family"
+                                                                onchange="PosnicPro.itemreport.itemreportTable();">
+                                                            <label class="custom-control-label" for="itemreport_group_family" style="font-size:.8rem;"><lang class="lang_group_by_family">Group by family</lang></label>
+                                                        </div>
+                                                    </li>
                                                     <li class="list-inline-item email_320">
                                                         <a href="javascript:void(0);" data-module="report" data-access="read" data-id="itemreport" onclick="PosnicPro.refreshReportDatatable(this);" class="add_new_tooltip" data-toggle="tooltip" title="Refresh">
                                                             <i class="feather icon-refresh-cw font-20"></i>
