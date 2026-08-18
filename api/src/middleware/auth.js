@@ -237,6 +237,26 @@ const protect = async (req, res, next) => {
       return apiKeyAuth({ findUserByApiKey, continueWithTenant })(req, res, next);
     }
 
+    /*
+     * 0.5) A scoped integration token (integration platform step 2).
+     *
+     * Recognised by its prefix and FAIL-CLOSED: a caller who explicitly
+     * presented a posnic_ token gets a clean 401 on any mismatch rather
+     * than silently falling through to session auth - an integration must
+     * never half-authenticate as something else. A valid token joins at
+     * continueWithTenant like every other caller, carrying exactly the ACL
+     * matrix it was minted with.
+     */
+    const bearer = req.headers.authorization || '';
+    if (bearer.startsWith('Bearer posnic_')) {
+      const { resolveScopedToken } = require('../utils/api-tokens');
+      const principal = req.db ? await resolveScopedToken(req.db, bearer.slice(7)) : null;
+      if (!principal) {
+        return res.status(401).json({ status: 'error', message: 'Invalid or revoked API token' });
+      }
+      return continueWithTenant(req, res, next, principal);
+    }
+
     // 1) Try authenticating via existing express-session first (PHP-style primary auth)
     if (req.session && req.session.userId) {
       try {

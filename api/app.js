@@ -1092,6 +1092,53 @@ app.delete('/webhooks/:id', sseProtect, requireBranchWrite, async (req, res) => 
     res.status(500).json({ type: 'error', message: 'Could not remove webhook' });
   }
 });
+/*
+ * Scoped API tokens (integration platform step 2) - minted with an explicit
+ * ACL subset, hashed at rest, plaintext shown exactly once. Branch-write
+ * holders only: a token is a standing credential for the whole shop.
+ */
+const apiTokens = require('./src/utils/api-tokens');
+app.get('/api-tokens', sseProtect, requireBranchWrite, async (req, res) => {
+  try {
+    const rows = await apiTokens.listTokens(req.db);
+    res.json({
+      type: 'success',
+      data: rows.map((r) => ({
+        id: r._id, name: r.name, hint: r.token_hint, access: r.access,
+        active: r.active, createdAt: r.createdAt, last_used_at: r.last_used_at,
+      })),
+    });
+  } catch (e) {
+    res.status(500).json({ type: 'error', message: 'Could not list tokens' });
+  }
+});
+app.post('/api-tokens', sseProtect, requireBranchWrite, async (req, res) => {
+  try {
+    const result = await apiTokens.createToken(req.db, {
+      name: req.body && req.body.name,
+      scopes: req.body && req.body.scopes,
+      creator: req.user,
+    });
+    if (!result.ok) return res.status(400).json({ type: 'error', message: result.reason });
+    res.json({
+      type: 'success',
+      data: { id: result.id, token: result.token, hint: result.hint },
+      message: 'Token created. Store it now - it is not shown again.',
+    });
+  } catch (e) {
+    res.status(500).json({ type: 'error', message: 'Could not create token' });
+  }
+});
+app.delete('/api-tokens/:id', sseProtect, requireBranchWrite, async (req, res) => {
+  try {
+    const result = await apiTokens.revokeToken(req.db, req.params.id);
+    res.json({ type: result.ok ? 'success' : 'error', data: null,
+      message: result.ok ? 'Token revoked' : 'Not found' });
+  } catch (e) {
+    res.status(500).json({ type: 'error', message: 'Could not revoke token' });
+  }
+});
+
 app.get('/webhooks/deliveries', sseProtect, requireBranchWrite, async (req, res) => {
   try {
     res.json({ type: 'success', data: await webhookInfra.recentDeliveries(req.db) });
