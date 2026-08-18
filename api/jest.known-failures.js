@@ -12,7 +12,6 @@
  * To see where they stand:  npm run test:known-failures
  */
 module.exports = [
-  'tests/unit/config/config.test.js',
   'tests/unit/constants/install.constants.test.js',
   'tests/unit/controllers/common-pdf.controller.test.js',
   'tests/unit/middleware/install.validation.test.js',
