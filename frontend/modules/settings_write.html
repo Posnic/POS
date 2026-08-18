@@ -42,19 +42,13 @@
                                 <!-- Cursor Focus controls moved into Core Settings (Sale / Receivings tabs). -->
 
                                 <div class="settings-nav-group"><lang class="lang_navgroup_salesbilling">Sales &amp; Billing</lang></div>
-                                <a class="nav-link mb-2" data-module="branch" data-access="write" id="v-pills-tax-tab"
-                                    data-toggle="pill" href="#v-pills-tax" role="tab" aria-controls="v-pills-tax"
-                                    aria-selected="false" onclick="PosnicPro.tax.taxTable();"><i
+                                <a class="nav-link mb-2" data-module="branch" data-access="write" id="v-pills-taxmodule-tab"
+                                    data-toggle="pill" href="#v-pills-taxmodule" role="tab"
+                                    aria-controls="v-pills-taxmodule" aria-selected="false"><i
                                         class="feather icon-bar-chart-line- mr-2"></i>
-                                    <lang class="lang_taxrate_title">Tax Rates</lang>
+                                    <lang class="lang_module_tax">Tax</lang>
                                 </a>
-                                <a class="nav-link mb-2" data-module="branch" data-access="write"
-                                    id="v-pills-taxgroup-tab" data-toggle="pill" href="#v-pills-taxgroup" role="tab"
-                                    aria-controls="v-pills-taxgroup" aria-selected="false"
-                                    onclick="PosnicPro.taxgroup.taxgroupTable();"><i
-                                        class="feather icon-layers mr-2"></i>
-                                    <lang class="lang_taxgroup">Tax Groups</lang>
-                                </a>
+                                
                                 
                                 
                                 
@@ -489,12 +483,33 @@
                         <!-- Sms Tab End -->
 
                         <!-- Unit Tab Start -->
-                        <div class="tab-pane fade" id="v-pills-tax" role="tabpanel" aria-labelledby="v-pills-tax-tab">
+                        
 
-                            <!-- Tax defaults belong with tax, not in Core Settings
-                                 (user call). Same control ids - the Core save form
-                                 collects them wherever they live. -->
+                        <!-- Loyalty & Rewards Start -->
+                        <div class="tab-pane fade" id="v-pills-loyalty" role="tabpanel"
+                            aria-labelledby="v-pills-loyalty-tab">
                             <div class="card m-b-30">
+                                <div class="card-header d-flex align-items-center justify-content-between">
+                                    <h5 class="card-title mb-0">
+                                        <lang class="lang_loyalty_title">Loyalty &amp; Rewards</lang>
+                                    </h<div class="tab-pane fade" id="v-pills-taxmodule" role="tabpanel" aria-labelledby="v-pills-taxmodule-tab">
+                            <div class="card m-b-30">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0"><lang class="lang_module_tax">Tax</lang></h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-lg-3 core-subnav-col">
+                                            <div class="nav flex-column nav-pills" id="tax_subnav" role="tablist">
+                                                <a class="nav-link active" data-toggle="pill" href="#tax-sub-general" role="tab"><lang class="lang_common_settings">General</lang></a>
+                                                <a class="nav-link" data-toggle="pill" href="#tax-sub-rates" role="tab" onclick="PosnicPro.tax.taxTable();"><lang class="lang_taxrate_title">Tax Rates</lang></a>
+                                                <a class="nav-link" data-toggle="pill" href="#tax-sub-groups" role="tab" onclick="PosnicPro.taxgroup.taxgroupTable();"><lang class="lang_taxgroup">Tax Groups</lang></a>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-9">
+                                            <div class="tab-content">
+                                                <div class="tab-pane fade show active" id="tax-sub-general" role="tabpanel">
+<div class="card m-b-30">
                                 <div class="card-header">
                                     <h5 class="card-title mb-0"><lang class="lang_taxdefaults_title">Tax Defaults</lang></h5>
                                 </div>
@@ -535,6 +550,11 @@
                                     </div>
                                 </div>
                             </div>
+                                                </div>
+                                                <div class="tab-pane fade" id="tax-sub-rates" role="tabpanel">
+
+
+                            
 
                             <div class="card m-b-30">
                                 <div class="card-header">
@@ -585,16 +605,69 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        
+                                                </div>
+                                                <div class="tab-pane fade" id="tax-sub-groups" role="tabpanel">
 
-                        <!-- Loyalty & Rewards Start -->
-                        <div class="tab-pane fade" id="v-pills-loyalty" role="tabpanel"
-                            aria-labelledby="v-pills-loyalty-tab">
+
                             <div class="card m-b-30">
-                                <div class="card-header d-flex align-items-center justify-content-between">
-                                    <h5 class="card-title mb-0">
-                                        <lang class="lang_loyalty_title">Loyalty &amp; Rewards</lang>
+                                <div class="card-header">
+                                    <h5 class="card-title">
+                                        <lang class="lang_taxgroup">Tax Groups</lang>
                                     </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="order-box">
+                                        <div class="card border m-b-30">
+                                            <div class="card-header">
+                                                <div class="row align-items-center">
+                                                    <div class="col-sm-6"></div>
+                                                    <div class="col-sm-6">
+                                                        <h6 class="mb-0"><a data-module="branch" data-access="write"
+                                                                class="btn btn-primary-rgba"
+                                                                href="#/settings/taxgroup/new"><i
+                                                                    class="feather icon-plus mr-2"></i>
+                                                                <lang class="lang_addvariant_title">New</lang>
+                                                            </a></h6>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                            <div class="card-body loader-table-taxgroup">
+                                                <div class="table-responsive">
+                                                    <table id="view_taxgroup" class="table table-borderless">
+                                                        <thead>
+                                                            <tr>
+                                                                <td class="td_align font-weight-normal">#</td>
+                                                                <td class="text-left font-weight-normal">
+                                                                    <lang class="lang_name_title">Name </lang>
+                                                                </td>
+                                                                <td class="text-right font-weight-normal">
+                                                                    <lang class="lang_value_title">Value</lang>
+                                                                </td>
+                                                                <td class="text-center font-weight-normal">
+                                                                    <lang class="lang_action_title">Action</lang>
+                                                                </td>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        5>
                                     <div class="custom-control custom-switch">
                                         <input type="checkbox" class="custom-control-input" id="loyalty_enabled">
                                         <label class="custom-control-label" for="loyalty_enabled">Enable loyalty</label>
@@ -1460,59 +1533,7 @@
                         <!--Denom field end-->
 
                         <!-- Tax Tab Start -->
-                        <div class="tab-pane fade" id="v-pills-taxgroup" role="tabpanel"
-                            aria-labelledby="v-pills-taxgroup-tab">
-
-                            <div class="card m-b-30">
-                                <div class="card-header">
-                                    <h5 class="card-title">
-                                        <lang class="lang_taxgroup">Tax Groups</lang>
-                                    </h5>
-                                </div>
-                                <div class="card-body">
-                                    <div class="order-box">
-                                        <div class="card border m-b-30">
-                                            <div class="card-header">
-                                                <div class="row align-items-center">
-                                                    <div class="col-sm-6"></div>
-                                                    <div class="col-sm-6">
-                                                        <h6 class="mb-0"><a data-module="branch" data-access="write"
-                                                                class="btn btn-primary-rgba"
-                                                                href="#/settings/taxgroup/new"><i
-                                                                    class="feather icon-plus mr-2"></i>
-                                                                <lang class="lang_addvariant_title">New</lang>
-                                                            </a></h6>
-                                                    </div>
-                                                </div>
-
-                                            </div>
-                                            <div class="card-body loader-table-taxgroup">
-                                                <div class="table-responsive">
-                                                    <table id="view_taxgroup" class="table table-borderless">
-                                                        <thead>
-                                                            <tr>
-                                                                <td class="td_align font-weight-normal">#</td>
-                                                                <td class="text-left font-weight-normal">
-                                                                    <lang class="lang_name_title">Name </lang>
-                                                                </td>
-                                                                <td class="text-right font-weight-normal">
-                                                                    <lang class="lang_value_title">Value</lang>
-                                                                </td>
-                                                                <td class="text-center font-weight-normal">
-                                                                    <lang class="lang_action_title">Action</lang>
-                                                                </td>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        
 
                         <!-- Recycle Bin Tab Start -->
                         <div class="tab-pane fade" data-module="branch" data-access="write" id="v-pills-recyclebin"
