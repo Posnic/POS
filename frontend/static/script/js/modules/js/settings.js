@@ -5071,6 +5071,144 @@ PosnicPro.modifiers = {
 $(document).on('click', '.mod-edit-btn', function () { PosnicPro.modifiers.openEditor($(this).data('id')); });
 $(document).on('click', '.mod-del-btn', function () { PosnicPro.modifiers.remove($(this).data('id')); });
 
+/*
+ * Price lists (V4): customer-group pricing manager (Marketing > Customer
+ * Pricing). One list per category; the sale screen resolves it live.
+ */
+PosnicPro.pricelists = {
+    _esc: function (s) {
+        return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+        });
+    },
+    _cache: [],
+    load: function () {
+        var esc = PosnicPro.pricelists._esc;
+        PosnicPro.get({ url: 'setting/priceLists', data: {} }, function (r) {
+            var rows = (r && r.data) || [];
+            PosnicPro.pricelists._cache = rows;
+            if (!rows.length) {
+                $('#pricelists_body').html('<tr><td colspan="4" class="text-center text-muted">No price lists yet - wholesale pricing starts here.</td></tr>');
+                return;
+            }
+            var html = '';
+            rows.forEach(function (l) {
+                var rule = l.percent_off
+                    ? (l.percent_off > 0 ? l.percent_off + '% off' : Math.abs(l.percent_off) + '% markup')
+                    : '—';
+                html += '<tr><td>' + esc(l.customer_category_name || l.customer_category_id) + '</td>'
+                    + '<td>' + esc(rule) + '</td>'
+                    + '<td>' + (l.item_overrides || []).length + '</td>'
+                    + '<td class="text-right">'
+                    + '<button type="button" class="btn btn-outline-primary btn-sm pl-edit-btn" data-id="' + esc(l.id) + '">Edit</button> '
+                    + '<button type="button" class="btn btn-outline-danger btn-sm pl-del-btn" data-id="' + esc(l.id) + '">Delete</button>'
+                    + '</td></tr>';
+            });
+            $('#pricelists_body').html(html);
+        }, function () {
+            $('#pricelists_body').html('<tr><td colspan="4" class="text-center text-danger">Could not load price lists.</td></tr>');
+        });
+    },
+    openEditor: function (id) {
+        var esc = PosnicPro.pricelists._esc;
+        var l = id ? (PosnicPro.pricelists._cache.find(function (x) { return x.id === id; }) || {}) : {};
+        var overrideRow = function (o) {
+            o = o || { item_id: '', item_name: '', price: '' };
+            return '<div class="form-row mb-1 pl-ov-row">'
+                + '<div class="col-7"><input type="text" class="form-control form-control-sm pl-ov-name" placeholder="Type to search an item" value="' + esc(o.item_name) + '" data-itemid="' + esc(o.item_id) + '"></div>'
+                + '<div class="col-4"><input type="number" min="0" step="0.01" class="form-control form-control-sm pl-ov-price" placeholder="Price" value="' + (o.price === '' ? '' : (Number(o.price) || 0)) + '"></div>'
+                + '<div class="col-1"><a href="javascript:void(0);" class="text-danger pl-ov-remove"><i class="feather icon-x"></i></a></div>'
+                + '</div>';
+        };
+        $('#pricelist_editor_modal').remove();
+        $('body').append(
+            '<div class="modal fade close_on_esc" id="pricelist_editor_modal" tabindex="-1" role="dialog" aria-hidden="true">'
+            + '<div class="modal-dialog" role="document"><div class="modal-content">'
+            + '<div class="modal-header"><h5 class="modal-title">' + (id ? 'Edit' : 'New') + ' Price List</h5>'
+            + '<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>'
+            + '<div class="modal-body">'
+            + '<input type="hidden" id="pl_edit_id" value="' + esc(id || '') + '">'
+            + '<div class="form-group"><label style="font-weight:600; font-size:.85rem;">Customer category</label>'
+            + '<select class="form-control" id="pl_edit_category"><option value="">Loading&hellip;</option></select></div>'
+            + '<div class="form-group"><label style="font-weight:600; font-size:.85rem;">Percent off <small class="text-muted">(negative = markup; 0 = item prices only)</small></label>'
+            + '<input type="number" step="0.01" class="form-control" id="pl_edit_percent" value="' + (l.percent_off || 0) + '"></div>'
+            + '<label style="font-weight:600; font-size:.85rem;">Exact item prices <small class="text-muted">(win over the percentage)</small></label>'
+            + '<div id="pl_edit_overrides">' + ((l.item_overrides && l.item_overrides.length) ? l.item_overrides.map(overrideRow).join('') : '') + '</div>'
+            + '<button type="button" class="btn btn-outline-secondary btn-sm mt-1" id="pl_ov_add">+ Item price</button>'
+            + '</div>'
+            + '<div class="modal-footer">'
+            + '<button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>'
+            + '<button type="button" class="btn btn-outline-primary" onclick="PosnicPro.pricelists.save();">Save</button>'
+            + '</div></div></div></div>'
+        );
+        $('#pricelist_editor_modal').modal('show');
+        $('#pl_ov_add').on('click', function () { $('#pl_edit_overrides').append(overrideRow()); });
+        $('#pricelist_editor_modal').on('click', '.pl-ov-remove', function () { $(this).closest('.pl-ov-row').remove(); });
+        // Item search on override rows: first match by name wins on blur.
+        $('#pricelist_editor_modal').on('change', '.pl-ov-name', function () {
+            var $inp = $(this);
+            var q = ($inp.val() || '').trim();
+            if (!q) { $inp.data('itemid', ''); return; }
+            PosnicPro.get({ url: 'items/search', data: { q: q, limit: 1 } }, function (r) {
+                var hit = r && r.data && r.data.list && r.data.list[0];
+                if (hit) {
+                    $inp.val(hit.name).data('itemid', String(hit._id || hit.id || ''));
+                } else {
+                    $inp.data('itemid', '');
+                    PosnicPro.alert('warning', 'No item matches "' + q + '".');
+                }
+            }, function () { $inp.data('itemid', ''); });
+        });
+        // Categories dropdown from the same source the customer form uses.
+        PosnicPro.get({ url: 'customerCategory/getCustomerCategoryAjaxList', data: 'query=' }, function (response) {
+            var opts = '';
+            (response.suggestions || []).forEach(function (c) {
+                var sel = String(c.id) === String(l.customer_category_id) ? ' selected' : '';
+                opts += '<option value="' + esc(c.id) + '" data-name="' + esc(c.name) + '"' + sel + '>' + esc(c.name) + '</option>';
+            });
+            $('#pl_edit_category').html(opts || '<option value="">No customer categories yet</option>');
+        }, function () {
+            $('#pl_edit_category').html('<option value="">Could not load categories</option>');
+        });
+    },
+    save: function () {
+        var overrides = $('.pl-ov-row').map(function () {
+            return {
+                item_id: $(this).find('.pl-ov-name').data('itemid') || '',
+                item_name: $(this).find('.pl-ov-name').val(),
+                price: $(this).find('.pl-ov-price').val()
+            };
+        }).get().filter(function (o) { return o.item_id; });
+        var payload = {
+            customer_category_id: $('#pl_edit_category').val(),
+            customer_category_name: $('#pl_edit_category option:selected').data('name') || '',
+            percent_off: $('#pl_edit_percent').val(),
+            item_overrides: overrides
+        };
+        PosnicPro.post({ url: 'setting/priceLists', data: JSON.stringify(payload) }, function (r) {
+            if (r && r.type === 'success') {
+                $('#pricelist_editor_modal').modal('hide');
+                PosnicPro.alert('success', r.message);
+                PosnicPro.pricelists.load();
+            } else {
+                PosnicPro.alert((r && r.type) || 'error', (r && r.message) || 'Could not save the list.');
+            }
+        }, function (xhr) {
+            var resp = {};
+            try { resp = JSON.parse(xhr.responseText); } catch (e) { /* plain */ }
+            PosnicPro.alert('error', resp.message || 'Could not save the list.');
+        });
+    },
+    remove: function (id) {
+        PosnicPro.delete({ url: 'setting/priceLists/' + id, data: JSON.stringify({}) }, function (r) {
+            PosnicPro.alert((r && r.type) || 'error', (r && r.message) || '');
+            PosnicPro.pricelists.load();
+        }, function () { PosnicPro.alert('error', 'Could not delete the list.'); });
+    }
+};
+$(document).on('click', '.pl-edit-btn', function () { PosnicPro.pricelists.openEditor($(this).data('id')); });
+$(document).on('click', '.pl-del-btn', function () { PosnicPro.pricelists.remove($(this).data('id')); });
+
 // Delegated actions: rows repaint on every load.
 $(document).on('click', '.int-revoke-btn', function () {
     PosnicPro.integrations.revoke($(this).data('id'));
