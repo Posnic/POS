@@ -36,7 +36,7 @@ describe('findUserByIdentifier', () => {
 
     await expect(findUserByIdentifier('507f1f77bcf86cd799439011')).resolves.toEqual({ _id: 'u1' });
     expect(mockFindById).toHaveBeenCalledWith('507f1f77bcf86cd799439011');
-    expect(select).toHaveBeenCalledWith('+license');
+    expect(select).toHaveBeenCalledWith('+license +branch_access');
   });
 
   test('falls back to findOne search when id lookup misses', async () => {
