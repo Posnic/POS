@@ -151,21 +151,9 @@
                             </a>
                         </div>
                     </li>
-                    <li class="list-inline-item mobile-hide" id="bell_feed_li" data-toggle="tooltip" title="Shop activity">
-                        <div class="clockbar">
-                            <!-- Activity pulse, NOT a bell: the notification
-                                 bell (low stock) already exists to the right,
-                                 and two bells read as the same thing twice.
-                                 This one is the live shop-activity feed. -->
-                            <a href="javascript:void(0);" id="bell_feed_btn" class="infobar-icon"
-                                onclick="PosnicPro.bellFeed.toggle();">
-                                <svg class="shift-clock-ico" xmlns="http://www.w3.org/2000/svg" width="19" height="19"
-                                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                     stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-                                <span id="bell_feed_badge" style="display:none;"></span>
-                            </a>
-                        </div>
-                    </li>
+                    <!-- Shop activity lives inside the ONE notification bell
+                         (user: no need of two different stuff) - see the
+                         notifybar dropdown below. -->
                     <li class="list-inline-item mobile-hide" id="shift_clock_li" data-toggle="tooltip" title="Clock In / Out">
                         <div class="clockbar">
                             <a href="javascript:void(0);" id="shift_clock_btn" class="infobar-icon"
@@ -277,33 +265,48 @@
                         </div>
                     </li>
                     <li class="list-inline-item">
+                        <!-- ONE notification centre: live shop activity (fed by
+                             the realtime channel) + low stock, in one panel
+                             behind one bell. Device push opt-in lives here too. -->
                         <div class="notifybar">
                             <div class="dropdown" id="dropdown-notification">
                                 <a class="dropdown-toggle infobar-icon" href="javascript:void(0)" role="button"
                                     id="notoficationlink" data-toggle="dropdown" aria-haspopup="true"
                                     aria-expanded="false"><img src="static/images/svg-icon/notifications.svg"
                                         class="img-fluid" alt="notifications">
-                                    <span class="live-icon" id="low_item_stock_count"></span></a>
+                                    <span class="live-icon" id="low_item_stock_count"></span>
+                                    <span id="bell_feed_badge" style="display:none;"></span></a>
 
                                 <div class="dropdown-menu dropdown-menu-right low" aria-labelledby="notoficationlink">
 
                                     <div class="notification-dropdown-title">
                                         <h4>
-                                            <lang class="lang_lowstock_notify">Low Stock Notifications</lang>
+                                            <lang class="lang_notifications_title">Notifications</lang>
                                         </h4>
                                     </div>
-                                    <ul class="list-unstyled">
-                                        <li id="list_lowstock_name" class="list_unselect">
-                                        </li>
-                                        <li class="media dropdown-item" data-module="item"
-                                            data-access="read||write||delete">
-                                            <div class="media-body text-center">
-                                                <h5 class="action-title"><a href="#/lowstockitems">
-                                                        <lang class="lang_view_all">View All</lang>
-                                                    </a> </h5>
-                                            </div>
-                                        </li>
-                                    </ul>
+                                    <div id="bell_feed_list"></div>
+                                    <div class="lowstock-section">
+                                        <div class="notification-dropdown-title">
+                                            <h4>
+                                                <lang class="lang_lowstock_notify">Low Stock</lang>
+                                            </h4>
+                                        </div>
+                                        <ul class="list-unstyled">
+                                            <li id="list_lowstock_name" class="list_unselect">
+                                            </li>
+                                            <li class="media dropdown-item" data-module="item"
+                                                data-access="read||write||delete">
+                                                <div class="media-body text-center">
+                                                    <h5 class="action-title"><a href="#/lowstockitems">
+                                                            <lang class="lang_view_all">View All</lang>
+                                                        </a> </h5>
+                                                </div>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <div id="bell_feed_foot"><button type="button" id="bell_feed_push"
+                                            style="display:none;" onclick="PosnicPro.bellFeed._pushClick();"></button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
