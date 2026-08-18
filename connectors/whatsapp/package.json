@@ -1,0 +1,11 @@
+{
+  "name": "posnic-connector-whatsapp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Posnic WhatsApp connector - the signed sidecar that owns the QR-linked WhatsApp session so the API process never runs a browser. Spawned and supervised by the desktop's connector runtime (I5); speaks only to the local API with a scoped token.",
+  "main": "src/index.js",
+  "dependencies": {
+    "qrcode": "^1.5.4",
+    "whatsapp-web.js": "^1.34.7"
+  }
+}
