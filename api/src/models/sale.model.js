@@ -1,5 +1,6 @@
 // src/models/sale_model.js
 const mongoose = require('mongoose');
+const { computeLineTax } = require('../services/tax-engine');
 const { defineModel } = require('../db/model-registry');
 const { currentConnection } = require('../db/tenant-context');
 const { toJSON, paginate } = require('./plugins');
@@ -1816,134 +1817,31 @@ Sale.kioskOrderModel = async function (data) {
       const itemTax = parseFloat(doc.tax) || 0;
       let itemDiscountAmountTotalCalculation = 0;
 
-      if (discountAmount > 0 && itemTax > 0) {
-        itemDiscountAmountMultiple = discountAmount * itemQuantity;
-        const subTotal = itemAmount - itemDiscountAmountMultiple;
-        if (doc.tax_type === 'exclusive') {
-          itemSubTaxTotalCalculation = (subTotal / 100) * itemTax;
-          itemDiscountAmountTotalCalculation = subTotal + itemSubTaxTotalCalculation;
-          total_data.push({
-            totalsales_Amount: itemDiscountAmountTotalCalculation,
-          });
-          tax_data.push({ tax_amount: itemSubTaxTotalCalculation });
-          discount_data.push({ discount_amount: itemDiscountAmountMultiple });
-          subtotal_data.push({
-            subtotal_amount: subTotal + itemDiscountAmountMultiple,
-          });
-        } else {
-          const tax_price = (sellingPrice * itemTax) / (100 + itemTax);
-          const tax_itemprice = sellingPrice - tax_price;
-          const tax_discount_multiple = tax_itemprice * itemQuantity;
-          const tax_quantity_multiple = tax_discount_multiple - itemDiscountAmountMultiple;
-          itemDiscountAmountTotalCalculation =
-            tax_quantity_multiple + (tax_quantity_multiple / 100) * itemTax;
-          total_data.push({
-            totalsales_Amount: itemDiscountAmountTotalCalculation,
-          });
-          const incSubTotal = tax_quantity_multiple;
-          itemSubTaxTotalCalculation = (incSubTotal / 100) * itemTax;
-          tax_data.push({ tax_amount: itemSubTaxTotalCalculation });
-          discount_data.push({ discount_amount: itemDiscountAmountMultiple });
-          subtotal_data.push({
-            subtotal_amount: incSubTotal + itemDiscountAmountMultiple,
-          });
-        }
-        itemDiscountPercentageMultiple = 0.0;
-      } else if (discountPercentage > 0 && itemTax > 0) {
-        itemDiscountPercentageMultiple = discountPercentage;
-        const itemTaxTotalCalculation =
-          itemAmount - (itemAmount * itemDiscountPercentageMultiple) / 100;
-        if (doc.tax_type === 'exclusive') {
-          itemDiscountAmountTotalCalculation =
-            itemTaxTotalCalculation + (itemTaxTotalCalculation / 100) * itemTax;
-          total_data.push({
-            totalsales_Amount: itemDiscountAmountTotalCalculation,
-          });
-          itemSubTaxTotalCalculation = (itemTaxTotalCalculation / 100) * itemTax;
-          itemDiscountAmountMultiple = (itemAmount * itemDiscountPercentageMultiple) / 100;
-          tax_data.push({ tax_amount: itemSubTaxTotalCalculation });
-          discount_data.push({ discount_amount: itemDiscountAmountMultiple });
-          subtotal_data.push({
-            subtotal_amount: itemTaxTotalCalculation + itemDiscountAmountMultiple,
-          });
-        } else {
-          itemDiscountAmountTotalCalculation = itemTaxTotalCalculation;
-          total_data.push({
-            totalsales_Amount: itemDiscountAmountTotalCalculation,
-          });
-          const tax_price = (sellingPrice * itemTax) / (100 + itemTax);
-          const tax_itemprice = sellingPrice - tax_price;
-          const tax_discount_multiple = tax_itemprice * itemQuantity;
-          itemDiscountAmountMultiple =
-            (tax_discount_multiple * itemDiscountPercentageMultiple) / 100;
-          const tax_quantity_multiple = tax_discount_multiple - itemDiscountAmountMultiple;
-          itemSubTaxTotalCalculation = (tax_quantity_multiple / 100) * itemTax;
-          tax_data.push({ tax_amount: itemSubTaxTotalCalculation });
-          discount_data.push({ discount_amount: itemDiscountAmountMultiple });
-          subtotal_data.push({
-            subtotal_amount: tax_quantity_multiple + itemDiscountAmountMultiple,
-          });
-        }
-        itemDiscountAmountMultiple = 0;
-      } else if (itemTax > 0) {
-        if (doc.tax_type === 'exclusive') {
-          itemDiscountAmountTotalCalculation = itemAmount + (itemAmount / 100) * itemTax;
-          total_data.push({
-            totalsales_Amount: itemDiscountAmountTotalCalculation,
-          });
-          itemSubTaxTotalCalculation = (itemAmount / 100) * itemTax;
-          tax_data.push({ tax_amount: itemSubTaxTotalCalculation });
-          discount_data.push({ discount_amount: 0.0 });
-          subtotal_data.push({
-            subtotal_amount: itemAmount,
-          });
-        } else {
-          itemDiscountAmountTotalCalculation = itemAmount;
-          total_data.push({
-            totalsales_Amount: itemDiscountAmountTotalCalculation,
-          });
-          const tax_price = (sellingPrice * itemTax) / (100 + itemTax);
-          const tax_itemprice = sellingPrice - tax_price;
-          const tax_discount_multiple = tax_itemprice * itemQuantity;
-          const tax_quantity_multiple = tax_discount_multiple;
-          itemSubTaxTotalCalculation = (tax_quantity_multiple / 100) * itemTax;
-          tax_data.push({ tax_amount: itemSubTaxTotalCalculation });
-          discount_data.push({ discount_amount: 0.0 });
-          subtotal_data.push({ subtotal_amount: tax_quantity_multiple });
-        }
-      } else if (discountAmount > 0) {
-        itemDiscountAmountMultiple = discountAmount * itemQuantity;
-        const itemTaxTotalCalc = itemAmount - itemDiscountAmountMultiple;
-        itemDiscountAmountTotalCalculation = itemTaxTotalCalc;
-        total_data.push({
-          totalsales_Amount: itemDiscountAmountTotalCalculation,
-        });
-        itemDiscountPercentageMultiple = 0.0;
-        tax_data.push({ tax_amount: 0.0 });
-        discount_data.push({ discount_amount: itemDiscountAmountMultiple });
-        subtotal_data.push({ subtotal_amount: itemAmount });
-      } else if (discountPercentage > 0) {
-        itemDiscountPercentageMultiple = discountPercentage;
-        const itemTaxTotalCalc = itemAmount - (itemAmount * itemDiscountPercentageMultiple) / 100;
-        itemDiscountAmountTotalCalculation = itemTaxTotalCalc;
-        total_data.push({
-          totalsales_Amount: itemDiscountAmountTotalCalculation,
-        });
-        itemDiscountAmountMultiple = 0;
-        tax_data.push({ tax_amount: 0.0 });
-        discount_data.push({
-          discount_amount: (itemAmount * itemDiscountPercentageMultiple) / 100,
-        });
-        subtotal_data.push({ subtotal_amount: itemAmount });
-      } else {
-        itemDiscountAmountMultiple = 0;
-        itemDiscountPercentageMultiple = 0.0;
-        itemDiscountAmountTotalCalculation = itemAmount;
-        total_data.push({ totalsales_Amount: itemAmount });
-        tax_data.push({ tax_amount: 0.0 });
-        discount_data.push({ discount_amount: 0.0 });
-        subtotal_data.push({ subtotal_amount: itemAmount });
-      }
+      /*
+       * T1: the ONE tax engine (tax-engine.js) computes this line - the
+       * same six branches this block carried verbatim until the swap. The
+       * recalc path has no legacy GST fallback, so gstAmount stays 0, and
+       * the PHP-quirk locals the code below reads are reproduced exactly.
+       */
+      const engineLine = computeLineTax({
+        itemAmount,
+        sellingPrice,
+        itemQuantity,
+        itemTax,
+        taxType: doc.tax_type,
+        discountAmount,
+        discountPercentage,
+        gstAmount: 0,
+      });
+      itemDiscountAmountTotalCalculation = engineLine.total;
+      itemSubTaxTotalCalculation = engineLine.tax;
+      itemDiscountAmountMultiple = discountAmount > 0 ? discountAmount * itemQuantity : 0;
+      itemDiscountPercentageMultiple =
+        !(discountAmount > 0) && discountPercentage > 0 ? discountPercentage : 0;
+      total_data.push({ totalsales_Amount: engineLine.total });
+      tax_data.push({ tax_amount: engineLine.tax });
+      discount_data.push({ discount_amount: engineLine.discount });
+      subtotal_data.push({ subtotal_amount: engineLine.subtotal });
 
       // Running totals
       const sale_tot_amount = total_data.reduce((s, i) => s + i.totalsales_Amount, 0);
