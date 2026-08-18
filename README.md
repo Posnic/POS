@@ -13,7 +13,7 @@ Your data lives on your own computer. No internet required, ever.
 [![Release](https://github.com/Posnic/POS/actions/workflows/release.yml/badge.svg)](https://github.com/Posnic/POS/actions/workflows/release.yml)
 [![Downloads](https://img.shields.io/github/downloads/Posnic/POS/total?label=downloads&color=brightgreen)](https://github.com/Posnic/POS/releases)
 [![Latest release](https://img.shields.io/github/v/release/Posnic/POS?include_prereleases&label=latest&color=blue)](https://github.com/Posnic/POS/releases/latest)
-[![Tests](https://img.shields.io/badge/tests-8%2C000%2B%20passing-brightgreen)](docs/DEVELOPMENT.md#running-the-tests)
+[![Tests](https://img.shields.io/badge/tests-9%2C000%2B%20passing-brightgreen)](docs/DEVELOPMENT.md#running-the-tests)
 [![Coverage](https://img.shields.io/badge/coverage-66%25%20statements-yellow)](docs/DEVELOPMENT.md#running-the-tests)
 [![API](https://img.shields.io/badge/REST%20API-559%20endpoints-blue)](docs/API.md)
 [![Licence](https://img.shields.io/badge/licence-AGPL--3.0-blue)](LICENSE)
