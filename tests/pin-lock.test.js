@@ -45,7 +45,12 @@ test('the token is never on disk in the clear', () => {
 
   const raw = fs.readFileSync(file, 'utf8');
   assert.ok(!raw.includes('jwt-token-value'), 'the token is readable on disk');
-  assert.ok(!raw.includes('4829'), 'the PIN itself is on disk');
+  // Stored-in-the-clear means the PIN appears as a JSON VALUE. A bare
+  // substring check flaked here: the file is hex/base64 ciphertext and
+  // salts, and the digit run 4829 eventually showed up inside random
+  // encoded bytes (~1% of runs - it passed on the same commit's other run).
+  assert.ok(!raw.includes('"4829"'), 'the PIN itself is on disk as a string');
+  assert.ok(!/:\s*4829\s*[,}]/.test(raw), 'the PIN itself is on disk as a number');
 });
 
 test('five wrong tries wipe it, and the password becomes the only way in', () => {
