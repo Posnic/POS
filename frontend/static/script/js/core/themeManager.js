@@ -222,8 +222,19 @@ PosnicPro.themeManager = {
 
     isApplyingPreset: false,
 
+    /* The Themes MODULE gates all of this: off means the saved choice is
+       kept but never applied - the shop runs the default look until the
+       module comes back on. */
+    moduleEnabled: function() {
+        try {
+            var s = JSON.parse(localStorage.getItem('general_settings') || '{}');
+            return s.module_themes_enable !== false;
+        } catch (e) { return true; }
+    },
+
     init: function() {
         var self = this;
+        if (!this.moduleEnabled()) { return; }
         var savedTheme = this.getFromLocal();
         if (savedTheme) {
             this.applyTheme(savedTheme);

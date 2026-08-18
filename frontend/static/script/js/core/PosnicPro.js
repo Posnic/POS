@@ -2033,6 +2033,26 @@ PosnicPro = {
             .toggle(on('module_channels_enable') && on('module_channels_kiosk_enable'));
         $('#viewkotreport_page').closest('li')
             .toggle(PosnicPro.local.get('table_options') === 'enable');
+
+        /*
+         * Themes module, applied in REAL TIME: off hides the header theme
+         * button and the shop drops to the default look immediately. The
+         * saved choice is never wiped (applyTheme, not applyPreset), so
+         * switching back on restores it just as immediately.
+         */
+        var themesOn = on('module_themes_enable');
+        $('.themebar').closest('li').toggle(themesOn);
+        var tm = PosnicPro.themeManager;
+        if (tm && tm.applyTheme) {
+            if (!themesOn && !PosnicPro._themeSuppressed) {
+                PosnicPro._themeSuppressed = true;
+                tm.applyTheme({ preset: 'github', overrides: {} });
+            } else if (themesOn && PosnicPro._themeSuppressed) {
+                PosnicPro._themeSuppressed = false;
+                var saved = tm.getFromLocal && tm.getFromLocal();
+                if (saved) { tm.applyTheme(saved); }
+            }
+        }
     },
     applyKotVisibility: function (enabled) {
         $('#v-pills-tableorder-tab').toggle(!!enabled);
