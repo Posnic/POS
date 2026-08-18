@@ -1162,11 +1162,11 @@ class SettingController extends BaseController {
     }
   }
 
-  /* Price lists (V4) - customer-group pricing; one list per category. */
-  async getPriceLists(req, res) {
+  /* The session branch's tax profile (T2) - presentation only. */
+  async getTaxProfile(req, res) {
     try {
       const settingModel = this.createModelWithContext(req);
-      const result = await settingModel.getPriceListsModel();
+      const result = await settingModel.getTaxProfileModel();
       const code = result.status ? 200 : 400;
       return res
         .status(code)
@@ -1175,6 +1175,23 @@ class SettingController extends BaseController {
           message: result.message,
           data: result.data,
         });
+    } catch (error) {
+      console.error('Error in getTaxProfile:', error);
+      return res.status(500).json({ type: 'error', message: error.message });
+    }
+  }
+
+  /* Price lists (V4) - customer-group pricing; one list per category. */
+  async getPriceLists(req, res) {
+    try {
+      const settingModel = this.createModelWithContext(req);
+      const result = await settingModel.getPriceListsModel();
+      const code = result.status ? 200 : 400;
+      return res.status(code).json({
+        type: result.status ? 'success' : 'error',
+        message: result.message,
+        data: result.data,
+      });
     } catch (error) {
       console.error('Error in getPriceLists:', error);
       return res.status(500).json({ type: 'error', message: error.message });
@@ -1186,13 +1203,11 @@ class SettingController extends BaseController {
       const settingModel = this.createModelWithContext(req);
       const result = await settingModel.savePriceListModel(req.body || {});
       const code = result.status ? 200 : 400;
-      return res
-        .status(code)
-        .json({
-          type: result.status ? 'success' : 'error',
-          message: result.message,
-          data: result.data,
-        });
+      return res.status(code).json({
+        type: result.status ? 'success' : 'error',
+        message: result.message,
+        data: result.data,
+      });
     } catch (error) {
       console.error('Error in savePriceList:', error);
       return res.status(500).json({ type: 'error', message: error.message });
@@ -1204,13 +1219,11 @@ class SettingController extends BaseController {
       const settingModel = this.createModelWithContext(req);
       const result = await settingModel.deletePriceListModel(req.params.id || req.query.id);
       const code = result.status ? 200 : 400;
-      return res
-        .status(code)
-        .json({
-          type: result.status ? 'success' : 'error',
-          message: result.message,
-          data: result.data,
-        });
+      return res.status(code).json({
+        type: result.status ? 'success' : 'error',
+        message: result.message,
+        data: result.data,
+      });
     } catch (error) {
       console.error('Error in deletePriceList:', error);
       return res.status(500).json({ type: 'error', message: error.message });
