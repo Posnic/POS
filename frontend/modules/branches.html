@@ -4,13 +4,13 @@
         <div class="breadcrumbbar crumbbar_padding">
             <div class="row align-items-center row_filter">
                 <div class="col-lg-2 col-xl-2">
-                    <h4 class="page-title break_title"><lang class="lang_branchoutlet_title">Branch List</lang></h4>
-                </div> 
-                <div class="col-2 col-md-2 col-lg-2 col-md-3 hide-button-action text-dark text-right">
-               <lang class="lang_branchoutlet">Current Branch/Outlet</lang>                         
+                    <h4 class="page-title break_title"><lang class="lang_branchoutlet_title">Branches / Outlet</lang></h4>
                 </div>
-                <div class="col-md-2 col-lg-2 hide-button-action">
-                    <div class="single-dropdown">
+                <div class="col-2 col-md-2 col-lg-2 col-md-3 hide-button-action text-dark text-right">
+               <lang class="lang_branchoutlet">Current Branch/Outlet</lang>
+                </div>
+                <div class="col-md-3 col-lg-3 hide-button-action">
+                    <div class="single-dropdown d-inline-block align-middle">
                         <div class="dropdown">
                             <a class="btn btn-primary dropdown-toggle dropdown-cursor-pointer" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <span class="branch-name"></span>
@@ -20,6 +20,14 @@
                             </div>
                         </div>
                     </div>
+                    <!-- Straight into editing the branch you are ON - shown
+                         only to branch-write holders (ACL scan). -->
+                    <a href="javascript:void(0)" id="edit_current_branch_btn"
+                        data-module="branch" data-access="write"
+                        class="btn btn-primary-rgba ml-1 align-middle" data-toggle="tooltip" title="Edit current branch"
+                        onclick="hasher.setHash('branches/' + PosnicPro.local.get('branch_id_set') + '/edit');">
+                        <i class="feather icon-edit"></i>
+                    </a>
                 </div>
                 <div class="col-md-4 col-lg-4 show-button-action"></div>                  
                 <div class="col-lg-2 col-xl-2 hide-button-action tb_filter" style="display:none;">

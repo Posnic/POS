@@ -39,15 +39,7 @@
                                         class="feather icon-grid mr-2"></i>
                                     <lang class="lang_modules">Module On/Off</lang>
                                 </a>
-                                <!-- Cursor Focus is a Config TAB like every other config
-                                     page (user call) - never a jump to a different page. -->
-                                <a data-module="branch" data-access="read||write||delete" class="nav-link mb-2"
-                                    id="config_device_setup_link" data-toggle="pill" href="#v-pills-cursorfocus"
-                                    role="tab" aria-controls="v-pills-cursorfocus" aria-selected="false"
-                                    onclick="PosnicPro.device_setup.setToggleStatesFromIndexedDB();"><i
-                                        class="feather icon-mouse-pointer mr-2"></i>
-                                    <lang class="lang_device_title">Cursor Focus</lang>
-                                </a>
+                                <!-- Cursor Focus controls moved into Core Settings (Sale / Receivings tabs). -->
 
                                 <div class="settings-nav-group"><lang class="lang_navgroup_salesbilling">Sales &amp; Billing</lang></div>
                                 <a class="nav-link mb-2" data-module="branch" data-access="write" id="v-pills-tax-tab"
@@ -211,74 +203,6 @@
                         <!-- Cursor Focus: per-device auto-focus switches (IndexedDB,
                              not server settings) - moved here from the old
                              #/device_setup page so Config holds all configuration. -->
-                        <div class="tab-pane fade" id="v-pills-cursorfocus" role="tabpanel"
-                            aria-labelledby="config_device_setup_link">
-                            <div class="card m-b-30">
-                                <div class="card-header">
-                                    <h5 class="card-title mb-0"><lang class="lang_device_title">Cursor Focus</lang></h5>
-                                    <small class="text-muted">Which screens grab the cursor automatically, on this device.</small>
-                                </div>
-                                <div class="card-body loader-view-generalsetting">
-                                    <div class="form-row">
-                                        <fieldset class="col-12 form-group border p-3 field-general-setting">
-                                            <legend class="w-auto px-2">Sale</legend>
-                                            <div class="row">
-                                                <div class="form-group col-md-4">
-                                                    <label><lang class="lang_defaultcust_title">Add Sale</lang></label>
-                                                    <div class="custom-control custom-switch mt-2">
-                                                        <input type="checkbox" class="custom-control-input" id="toggleSwitchAddSale" checked>
-                                                        <label class="custom-control-label" for="toggleSwitchAddSale"></label>
-                                                    </div>
-                                                </div>
-                                                <div class="form-group col-md-4">
-                                                    <label class="label-text-color"><lang class="lang_saleprefix">Edit Sale</lang>
-                                                        <div class="custom-control custom-switch mt-2">
-                                                            <input type="checkbox" class="custom-control-input" id="toggleSwitchEditSale" checked>
-                                                            <label class="custom-control-label" for="toggleSwitchEditSale"></label>
-                                                        </div>
-                                                    </label>
-                                                </div>
-                                                <div class="form-group col-md-4">
-                                                    <label class="label-text-color"><lang class="lang_saleprefix">Hold Sale</lang>
-                                                        <div class="custom-control custom-switch mt-2">
-                                                            <input type="checkbox" class="custom-control-input" id="toggleSwitchHoldSale" checked>
-                                                            <label class="custom-control-label" for="toggleSwitchHoldSale"></label>
-                                                        </div>
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        </fieldset>
-                                    </div>
-                                    <div class="form-row">
-                                        <fieldset class="col-12 form-group border p-3 field-general-setting">
-                                            <legend class="w-auto px-2">Receiving</legend>
-                                            <div class="row">
-                                                <div class="form-group col-md-4">
-                                                    <label><lang class="lang_receiving_add_title">Add Receiving</lang></label>
-                                                    <div class="custom-control custom-switch mt-2">
-                                                        <input type="checkbox" class="custom-control-input" id="toggleSwitchReceivingAdd" checked>
-                                                        <label class="custom-control-label" for="toggleSwitchReceivingAdd"></label>
-                                                    </div>
-                                                </div>
-                                                <div class="form-group col-md-4">
-                                                    <label class="label-text-color"><lang class="lang_receiving_edit_title">Edit Receiving</lang>
-                                                        <div class="custom-control custom-switch mt-2">
-                                                            <input type="checkbox" class="custom-control-input" id="toggleSwitchReceivingEdit" checked>
-                                                            <label class="custom-control-label" for="toggleSwitchReceivingEdit"></label>
-                                                        </div>
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        </fieldset>
-                                    </div>
-                                </div>
-                                <div class="card-footer text-right">
-                                    <button type="button" class="btn btn-outline-secondary" id="device_edit_reset"><i class="feather icon-refresh-ccw mr-2"></i><lang class="lang_reset_title"> Reset</lang></button>
-                                    <button type="button" class="btn btn-outline-primary" id="saveButton"><i class="feather icon-save mr-2"></i><lang class="lang_save_title">Save</lang></button>
-                                </div>
-                            </div>
-                        </div>
-
                         <div class="tab-pane fade" id="v-pills-modules" role="tabpanel"
                             aria-labelledby="v-pills-modules-tab">
                             <div class="card m-b-30">
@@ -332,7 +256,22 @@
                                                     <label class="custom-control-label" for="till_lock_enable"></label>
                                                 </div>
                                             </div>
-                                            <p class="module-desc">Staff unlock with a 4-digit PIN. The idle timer lives in General Settings.</p>
+                                            <p class="module-desc">Staff unlock with a 4-digit PIN instead of a password.</p>
+                                            <div class="module-subs">
+                                                <div class="form-group mb-0" style="min-width:200px;">
+                                                    <label for="till_lock_idle_minutes" style="font-size:12.5px;" class="mb-1">
+                                                        <lang class="lang_tilllockidle_title">Lock when idle</lang>
+                                                    </label>
+                                                    <select name="till_lock_idle_minutes" id="till_lock_idle_minutes"
+                                                        class="form-control form-control-sm border-control">
+                                                        <option value="0">Only when asked</option>
+                                                        <option value="2">After 2 minutes</option>
+                                                        <option value="5">After 5 minutes</option>
+                                                        <option value="10">After 10 minutes</option>
+                                                        <option value="30">After 30 minutes</option>
+                                                    </select>
+                                                </div>
+                                            </div>
                                         </div>
 
                                         <div class="module-card" data-module="plan" data-access="read">
@@ -413,6 +352,18 @@
                                                     <label class="custom-control-label" for="module_channels_kiosk_enable"><lang class="lang_module_kiosk">Kiosk</lang></label>
                                                 </div>
                                             </div>
+                                        </div>
+
+                                        <div class="module-card">
+                                            <div class="module-card-head">
+                                                <span class="module-ico"><img src="static/images/svg-icon/theme.svg" alt="themes"></span>
+                                                <div class="module-title"><lang class="lang_module_themes">Themes</lang></div>
+                                                <div class="custom-control custom-switch module-switch">
+                                                    <input type="checkbox" class="custom-control-input" id="module_themes_enable" name="module_themes_enable">
+                                                    <label class="custom-control-label" for="module_themes_enable"></label>
+                                                </div>
+                                            </div>
+                                            <p class="module-desc">Theme &amp; Appearance - presets, custom colours and dark modes.</p>
                                         </div>
 
                                         <div class="module-card">
@@ -560,6 +511,51 @@
 
                         <!-- Unit Tab Start -->
                         <div class="tab-pane fade" id="v-pills-tax" role="tabpanel" aria-labelledby="v-pills-tax-tab">
+
+                            <!-- Tax defaults belong with tax, not in Core Settings
+                                 (user call). Same control ids - the Core save form
+                                 collects them wherever they live. -->
+                            <div class="card m-b-30">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0"><lang class="lang_taxdefaults_title">Tax Defaults</lang></h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-row">
+                                        <div class="form-group col-md-6">
+                                            <label for="tax_percentage" class="label-text-color">
+                                                <input type="checkbox" id="default_tax_enable_disable"
+                                                    name="default_tax_enable_disable"
+                                                    onclick="PosnicPro.settings.defaultTaxData(this.checked);" />
+                                                <lang class="lang_tax_title">Default Tax </lang><span
+                                                    class="text-danger">*</span>
+                                            </label>
+                                            <div class="input-group">
+                                                <select name="tax_percentage" id="tax_percentage"
+                                                    class="select2 form-control border-control items_tax">
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="hide_indian_gst form-group col-md-6">
+                                            <label for="indian_gst" data-toggle="tooltip" title="Indian gst"
+                                                class="label-text-color">
+                                                <lang class="lang_indiangst_title">Indian GST</lang>
+                                            </label>
+                                            <select name="indian_gst" class="form-control border-control"
+                                                id="indian_gst">
+                                                <option value="gst_off">Disable</option>
+                                                <option value="gst_on">Enable</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <button type="button" class="btn btn-outline-primary btn-sm"
+                                            onclick="PosnicPro.settings.updateCommonSetting();"><i
+                                                class="feather icon-save mr-1"></i>
+                                            <lang class="lang_save_title">Save</lang>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
 
                             <div class="card m-b-30">
                                 <div class="card-header">
@@ -1585,6 +1581,36 @@
                         <div class="tab-pane fade" id="v-pills-payment" role="tabpanel"
                             aria-labelledby="v-pills-payment-tab">
 
+                            <!-- Multi payment lives with the payment settings
+                                 (user call) - same control id, same save path. -->
+                            <div class="card m-b-30">
+                                <div class="card-body py-3">
+                                    <div class="form-row align-items-center mb-0">
+                                        <div class="form-group col-md-6 mb-0" data-module="plan" data-access="read">
+                                            <label for="enable_multi_payment" data-toggle="tooltip"
+                                                title="Enable(or)Disable multi payment" class="mb-0">
+                                                Multi Payment
+                                            </label>
+                                            <div class="custom-control custom-switch mt-1">
+                                                <input type="checkbox" class="custom-control-input"
+                                                    id="enable_multi_payment" name="enable_multi_payment" />
+                                                <label class="custom-control-label"
+                                                    for="enable_multi_payment"></label>
+                                            </div>
+                                            <small class="form-text text-muted">Split one sale across several
+                                                payment modes at tender.</small>
+                                        </div>
+                                        <div class="form-group col-md-6 mb-0 text-right">
+                                            <button type="button" class="btn btn-outline-primary btn-sm"
+                                                onclick="PosnicPro.settings.updateCommonSetting();"><i
+                                                    class="feather icon-save mr-1"></i>
+                                                <lang class="lang_save_title">Save</lang>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="card m-b-30">
                                 <div class="card-header">
                                     <h5 class="card-title">
@@ -2546,14 +2572,32 @@
                                 <div class="card m-b-30">
                                     <div class="card-header">
                                         <h5 class="card-title mb-0">
-                                            <lang class="lang_generalset">General Settings</lang>
+                                            <lang class="lang_generalset">Core Settings</lang>
                                         </h5>
                                     </div>
                                     <div class="card-body loader-view-generalsetting">
+                                        <!-- Core settings are grouped by the screen they shape.
+                                             Tabs that do not fit the width fold into the More
+                                             dropdown on the right (settings.js coreTabsOverflow). -->
+                                        <ul class="nav nav-tabs core-settings-tabs mb-3" id="core_settings_tabs" role="tablist">
+                                            <li class="nav-item"><a class="nav-link active" data-toggle="tab"
+                                                    href="#core-tab-sale" role="tab"><lang class="lang_coretab_sale">Sale</lang></a></li>
+                                            <li class="nav-item"><a class="nav-link" data-toggle="tab"
+                                                    href="#core-tab-receiving" role="tab"><lang class="lang_coretab_receiving">Receivings</lang></a></li>
+                                            <li class="nav-item"><a class="nav-link" data-toggle="tab"
+                                                    href="#core-tab-inventory" role="tab"><lang class="lang_coretab_inventory">Inventory</lang></a></li>
+                                            <li class="nav-item"><a class="nav-link" data-toggle="tab"
+                                                    href="#core-tab-print" role="tab"><lang class="lang_coretab_print">Receipt Print</lang></a></li>
+                                            <li class="nav-item dropdown core-tabs-more d-none">
+                                                <a class="nav-link dropdown-toggle" data-toggle="dropdown"
+                                                    href="javascript:void(0)" role="button">More</a>
+                                                <div class="dropdown-menu dropdown-menu-right core-tabs-more-menu"></div>
+                                            </li>
+                                        </ul>
+                                        <div class="tab-content">
 
-                                        <div class="form-row">
-                                            <fieldset class="col-12 form-group border p-3 field-general-setting">
-                                                <legend class="w-auto px-2">Sale</legend>
+                                            <!-- ============ SALE ============ -->
+                                            <div class="tab-pane fade show active" id="core-tab-sale" role="tabpanel">
                                                 <div class="row">
                                                     <div class="form-group col-md-6">
                                                         <input type="checkbox" id="default_customer_enable_disable"
@@ -2600,25 +2644,18 @@
                                                         <small class="form-text text-muted">Off = date fixed to now on
                                                             New Sale (no backdating).</small>
                                                     </div>
-                                                    <!-- Moved from the Modules tab: Module On/Off holds
-                                                         toggles only; this is till-lock CONFIGURATION. -->
-                                                    <div class="form-group col-md-6">
-                                                        <label for="till_lock_idle_minutes">
-                                                            <lang class="lang_tilllockidle_title">Lock when idle</lang>
-                                                        </label>
-                                                        <select name="till_lock_idle_minutes" id="till_lock_idle_minutes"
-                                                            class="form-control border-control">
-                                                            <option value="0">Only when asked</option>
-                                                            <option value="2">After 2 minutes</option>
-                                                            <option value="5">After 5 minutes</option>
-                                                            <option value="10">After 10 minutes</option>
-                                                            <option value="30">After 30 minutes</option>
-                                                        </select>
-                                                        <small class="form-text text-muted">Needs the Till PIN lock
-                                                            module on. Ctrl+L locks at any time.</small>
+                                                    <div class="form-group col-md-6" data-module="plan" data-access="read">
+                                                        <label for="sale_inline_editor" data-toggle="tooltip"
+                                                            title="Sales page inline ( price / discount / tax ) editor">
+                                                            Inline editor </label>
+                                                        <div class="custom-control custom-switch mt-2">
+                                                            <input type="checkbox" class="custom-control-input"
+                                                                id="sale_inline_editor" name="sale_inline_editor" />
+                                                            <label class="custom-control-label"
+                                                                for="sale_inline_editor"></label>
+                                                        </div>
                                                     </div>
                                                 </div>
-
                                                 <div class="row" data-module="plan" data-access="read">
                                                     <div class="form-group col-md-6">
                                                         <label for="sales_sms" data-toggle="tooltip"
@@ -2632,15 +2669,6 @@
                                                             <label class="custom-control-label" for="sales_sms"></label>
                                                         </div>
                                                     </div>
-
-                                                    <!--                                                    <div class="form-group col-md-3">
-                                                                                                            <label for="auto_sms" data-toggle="tooltip" title="Enable(or)Disable Auto sms receipt"><lang class="lang_autosmsaftersales_title"> Auto Sms Receipt</lang> </label>
-                                                                                                            <div class="custom-control custom-switch mt-2">
-                                                                                                                <input type="checkbox" class="custom-control-input" name="auto_sms" id="auto_sms"/> 
-                                                                                                                <label class="custom-control-label" for="auto_sms"></label>
-                                                                                                            </div>
-                                                                                                        </div>-->
-
                                                     <div class="form-group col-md-6">
                                                         <label for="whatsapp_receipt" data-toggle="tooltip"
                                                             title="Enable(or)Disable whatsapp receipt">
@@ -2655,40 +2683,209 @@
                                                         </div>
                                                     </div>
                                                 </div>
-
-                                                <div class="row" data-module="plan" data-access="read">
+                                                <div class="row">
                                                     <div class="form-group col-md-6">
-                                                        <label for="sale_inline_editor" data-toggle="tooltip"
-                                                            title="Sales page inline ( price / discount / tax ) editor">
-                                                            Inline editor </label>
-                                                        <div class="custom-control custom-switch mt-2">
-                                                            <input type="checkbox" class="custom-control-input"
-                                                                id="sale_inline_editor" name="sale_inline_editor" />
-                                                            <label class="custom-control-label"
-                                                                for="sale_inline_editor"></label>
+                                                        <div class="wallet-box" style="margin-top:0px;background: #fdfdfd;">
+                                                            <input type="checkbox" name="keyboard_view" id="keyboard_view" />
+                                                            <label for="keyboard_view" data-toggle="tooltip"
+                                                                title="Enable(or)Disable Virtual Keyboard">
+                                                                <span style="font-size:13px;">
+                                                                    <lang class="lang_displayscreen_title"> Virtual Keypad
+                                                                        Screen </lang>
+                                                                </span>
+                                                            </label>
                                                         </div>
                                                     </div>
                                                     <div class="form-group col-md-6">
-                                                        <label for="enable_multi_payment" data-toggle="tooltip"
-                                                            title="Enable(or)Disable multi payment">
-                                                            Multi Payment
-                                                        </label>
-                                                        <div class="custom-control custom-switch mt-2">
-                                                            <input type="checkbox" class="custom-control-input"
-                                                                id="enable_multi_payment" name="enable_multi_payment" />
-                                                            <label class="custom-control-label"
-                                                                for="enable_multi_payment"></label>
+                                                        <div class="wallet-box" style="margin-top:0px;background: #fdfdfd;">
+                                                            <input type="checkbox" name="decimal_Round" id="decimal_Round" />
+                                                            <label for="decimal_Round">
+                                                                <span style="font-size:13px;">
+                                                                    <lang class="lang_roundoftotal_title">Round-Off
+                                                                        Total&nbsp;1.00</lang>
+                                                                    <span data-toggle="tooltip" data-placement="top" title=""
+                                                                        data-original-title="for ex $1.56 with : 1.00 rounding = $2.00.print sale and purchase total round off">
+                                                                        <i class="feather icon-help-circle setfeather_font"></i>
+                                                                    </span>
+                                                                </span>
+                                                            </label>
                                                         </div>
                                                     </div>
                                                 </div>
+                                                <div class="row">
+                                                    <fieldset class="col-12 form-group border p-3 field-general-setting">
+                                                        <legend class="w-auto px-2"><lang class="lang_autofocus_sale">Auto focus on this device</lang></legend>
+                                                        <small class="form-text text-muted mb-2">Where the cursor lands
+                                                            automatically. Saved on this device only, immediately.</small>
+                                                        <div class="row">
+                                                            <div class="form-group col-md-4">
+                                                                <label>Add Sale</label>
+                                                                <div class="custom-control custom-switch mt-2">
+                                                                    <input type="checkbox" class="custom-control-input autofocus-switch" id="toggleSwitchAddSale" checked>
+                                                                    <label class="custom-control-label" for="toggleSwitchAddSale"></label>
+                                                                </div>
+                                                            </div>
+                                                            <div class="form-group col-md-4">
+                                                                <label>Edit Sale</label>
+                                                                <div class="custom-control custom-switch mt-2">
+                                                                    <input type="checkbox" class="custom-control-input autofocus-switch" id="toggleSwitchEditSale" checked>
+                                                                    <label class="custom-control-label" for="toggleSwitchEditSale"></label>
+                                                                </div>
+                                                            </div>
+                                                            <div class="form-group col-md-4">
+                                                                <label>Hold Sale</label>
+                                                                <div class="custom-control custom-switch mt-2">
+                                                                    <input type="checkbox" class="custom-control-input autofocus-switch" id="toggleSwitchHoldSale" checked>
+                                                                    <label class="custom-control-label" for="toggleSwitchHoldSale"></label>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </fieldset>
+                                                </div>
 
+                                                <!-- Legacy hidden blocks ride along unchanged: their ids are
+                                                     read by updateCommonSetting and old data still round-trips. -->
+                                                <div class="form-row" style="display: none;">
+                                                    <fieldset class="col-12 form-group border p-3 field-general-setting">
+                                                        <legend class="w-auto px-2">Outstanding Customer Payment Reminder
+                                                            (Notification/Email/SMS)</legend>
+                                                        <div class="row">
+                                                            <div class="form-group col-md-6">
+                                                                <div class="wallet-box"
+                                                                    style="margin-top:10px;background: #fdfdfd;">
+                                                                    <input type="checkbox" id="enable_notification_reminders"
+                                                                        name="enable_notification_reminders" />
+                                                                    <label for="enable_notification_reminders"
+                                                                        data-toggle="tooltip"
+                                                                        title="Enable(or)Disable Notification Reminders">
+                                                                        <span style="font-size:13px;"> Notification</span>
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+                                                            <div class="form-group col-md-3">
+                                                                <div class="wallet-box"
+                                                                    style="margin-top:10px;background: #fdfdfd;">
+                                                                    <input type="checkbox" id="enable_email_reminders"
+                                                                        name="enable_email_reminders" />
+                                                                    <label for="enable_email_reminders" data-toggle="tooltip"
+                                                                        title="Enable(or)Disable Email Reminders">
+                                                                        <span style="font-size:13px;"> Email</span>
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+                                                            <div class="form-group col-md-3">
+                                                                <div class="wallet-box"
+                                                                    style="margin-top:10px;background: #fdfdfd;">
+                                                                    <input type="checkbox" id="enable_sms_reminders"
+                                                                        name="enable_sms_reminders" />
+                                                                    <label for="enable_sms_reminders" data-toggle="tooltip"
+                                                                        title="Enable(or)Disable SMS Reminders">
+                                                                        <span style="font-size:13px;"> SMS</span>
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row">
+                                                            <div class="form-group col-md-6">
+                                                                <div class="wallet-box"
+                                                                    style="margin-top:10px;background: #fdfdfd;">
+                                                                    <input type="checkbox" id="enable_sms_auto_send"
+                                                                        name="enable_sms_auto_send" />
+                                                                    <label for="enable_sms_auto_send" data-toggle="tooltip"
+                                                                        title="Enable(or)Disable Auto Send">
+                                                                        <span style="font-size:13px;"> Auto-Send</span>
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+                                                            <div class="form-group col-md-6">
+                                                                <label for="sms_auto_send_time" class="form-label">Auto-Send
+                                                                    Time</label>
+                                                                <input type="time" class="form-control" id="sms_auto_send_time"
+                                                                    value="10:00">
+                                                                <input type="hidden" id="sms_auto_send_period"
+                                                                    name="sms_auto_send_period" value="10:00 am">
+                                                            </div>
+                                                            <div class="form-group col-md-6">
+                                                                <label for="sms_retry_period" class="form-label">Retry
+                                                                    Period</label>
+                                                                <select id="sms_retry_period" name="sms_retry_period"
+                                                                    class="form-control border-control">
+                                                                    <option value="1">1 Hour</option>
+                                                                    <option value="6">6 Hours</option>
+                                                                    <option value="12">12 Hours</option>
+                                                                    <option value="24" selected>1 Day</option>
+                                                                    <option value="48">2 Days</option>
+                                                                    <option value="72">3 Days</option>
+                                                                    <option value="96">4 Days</option>
+                                                                    <option value="120">5 Days</option>
+                                                                    <option value="168">1 Week</option>
+                                                                    <option value="336">2 Weeks</option>
+                                                                    <option value="720">1 Month</option>
+                                                                    <option value="1440">2 Months</option>
+                                                                    <option value="2160">3 Months</option>
+                                                                </select>
+                                                            </div>
+                                                            <div class="form-group col-md-6">
+                                                                <label for="sms_max_retries" class="form-label">Maximum Retry
+                                                                    Attempts</label>
+                                                                <select id="sms_max_retries" name="sms_max_retries"
+                                                                    class="form-control border-control">
+                                                                    <option value="1">1</option>
+                                                                    <option value="2" selected>2</option>
+                                                                    <option value="3">3</option>
+                                                                    <option value="4">4</option>
+                                                                    <option value="5">5</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </fieldset>
+                                                </div>
+                                                <div class="form-row">
+                                                    <div class="form-group col-md-6" style="display: none;">
+                                                        <label class="control-label" style="margin-bottom: 0px;">
+                                                            <label for="radio_discount_amount" class="control control--radio">
+                                                                <lang class="lang_discount_title">Global Discount &nbsp;&nbsp;
+                                                                </lang> <span class="display-currency"></span>
+                                                                <input type="radio" class="radio_discount" name="radio_discount"
+                                                                    id="radio_discount_amount" checked="checked">
+                                                                <div class="control__indicator"></div>
+                                                            </label>
+                                                        </label>&nbsp;&nbsp;
+                                                        <label class="control-label" style="margin-bottom: 0px;">
+                                                            <label for="radio_discount_percentage"
+                                                                class="control control--radio">%
+                                                                <input type="radio" class="radio_discount" name="radio_discount"
+                                                                    id="radio_discount_percentage">
+                                                                <div class="control__indicator"></div>
+                                                            </label>
+                                                        </label>
+                                                        <input name="discount_amount" id="discount_amount" type="text" min="0"
+                                                            minlength="1" maxlength="5"
+                                                            class="form-control border-control allow_decimal text-right display-discount-amount-value"
+                                                            required>
+                                                        <input name="discount_percentage" id="discount_percentage" type="number"
+                                                            class="form-control border-control text-right display-discount-percentage-value"
+                                                            min="0" max="100" onkeypress="return PosnicPro.isNumber(event)"
+                                                            onkeyup="this.value = PosnicPro.minmax(this.value, 0, 100)"
+                                                            style="display: none;" required>
+                                                    </div>
+                                                    <div class="form-group col-md-3" style="display:none;">
+                                                        <div class="wallet-box" style="margin-top:0px;background: #fdfdfd;">
+                                                            <input type="checkbox" name="sales_mail" id="sales_mail" />
+                                                            <label for="sales_mail" data-toggle="tooltip"
+                                                                title="Enable(or)Disable Sales Auto Mail">
+                                                                <span style="font-size:13px;">
+                                                                    <lang class="lang_automailaftersale_title"> Mail After Sales
+                                                                    </lang>
+                                                                </span>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
 
-                                            </fieldset>
-                                        </div>
-
-                                        <div class="form-row">
-                                            <fieldset class="col-12 form-group border p-3 field-general-setting">
-                                                <legend class="w-auto px-2">Receiving</legend>
+                                            <!-- ============ RECEIVINGS ============ -->
+                                            <div class="tab-pane fade" id="core-tab-receiving" role="tabpanel">
                                                 <div class="row">
                                                     <div class="form-group col-md-6">
                                                         <input type="checkbox" id="default_supplier_enable_disable"
@@ -2719,108 +2916,80 @@
                                                             placeholder="Ex :- P (or leave blank)">
                                                     </div>
                                                 </div>
-                                            </fieldset>
-                                        </div>
-                                        <div class="form-row" style="display: none;">
-                                            <fieldset class="col-12 form-group border p-3 field-general-setting">
-                                                <legend class="w-auto px-2">Outstanding Customer Payment Reminder
-                                                    (Notification/Email/SMS)</legend>
+                                                <div class="row">
+                                                    <fieldset class="col-12 form-group border p-3 field-general-setting">
+                                                        <legend class="w-auto px-2"><lang class="lang_autofocus_receiving">Auto focus on this device</lang></legend>
+                                                        <small class="form-text text-muted mb-2">Where the cursor lands
+                                                            automatically. Saved on this device only, immediately.</small>
+                                                        <div class="row">
+                                                            <div class="form-group col-md-4">
+                                                                <label>Add Receiving</label>
+                                                                <div class="custom-control custom-switch mt-2">
+                                                                    <input type="checkbox" class="custom-control-input autofocus-switch" id="toggleSwitchReceivingAdd" checked>
+                                                                    <label class="custom-control-label" for="toggleSwitchReceivingAdd"></label>
+                                                                </div>
+                                                            </div>
+                                                            <div class="form-group col-md-4">
+                                                                <label>Edit Receiving</label>
+                                                                <div class="custom-control custom-switch mt-2">
+                                                                    <input type="checkbox" class="custom-control-input autofocus-switch" id="toggleSwitchReceivingEdit" checked>
+                                                                    <label class="custom-control-label" for="toggleSwitchReceivingEdit"></label>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </fieldset>
+                                                </div>
+                                            </div>
+
+                                            <!-- ============ INVENTORY ============ -->
+                                            <div class="tab-pane fade" id="core-tab-inventory" role="tabpanel">
                                                 <div class="row">
                                                     <div class="form-group col-md-6">
-                                                        <div class="wallet-box"
-                                                            style="margin-top:10px;background: #fdfdfd;">
-                                                            <input type="checkbox" id="enable_notification_reminders"
-                                                                name="enable_notification_reminders" />
-                                                            <label for="enable_notification_reminders"
-                                                                data-toggle="tooltip"
-                                                                title="Enable(or)Disable Notification Reminders">
-                                                                <span style="font-size:13px;"> Notification</span>
-                                                            </label>
-                                                        </div>
-                                                    </div>
-                                                    <div class="form-group col-md-3">
-                                                        <div class="wallet-box"
-                                                            style="margin-top:10px;background: #fdfdfd;">
-                                                            <input type="checkbox" id="enable_email_reminders"
-                                                                name="enable_email_reminders" />
-                                                            <label for="enable_email_reminders" data-toggle="tooltip"
-                                                                title="Enable(or)Disable Email Reminders">
-                                                                <span style="font-size:13px;"> Email</span>
-                                                            </label>
-                                                        </div>
-                                                    </div>
-                                                    <div class="form-group col-md-3">
-                                                        <div class="wallet-box"
-                                                            style="margin-top:10px;background: #fdfdfd;">
-                                                            <input type="checkbox" id="enable_sms_reminders"
-                                                                name="enable_sms_reminders" />
-                                                            <label for="enable_sms_reminders" data-toggle="tooltip"
-                                                                title="Enable(or)Disable SMS Reminders">
-                                                                <span style="font-size:13px;"> SMS</span>
-                                                            </label>
-                                                        </div>
+                                                        <label for="notification_value" class="label-text-color">
+                                                            <lang class="lang_lowstocknotify_title">Low Stock Notification
+                                                                Range&nbsp;</lang>
+                                                            <span data-toggle="tooltip" data-placement="top" title=""
+                                                                data-original-title="Here,Set your notification range of lowstock.">
+                                                                <i class="feather icon-help-circle"></i>
+                                                            </span>
+                                                        </label>
+                                                        <input type="text" class="form-control border-control text-right"
+                                                            name="notification_value" id="notification_value" min="0" max="100"
+                                                            onkeyup="this.value = PosnicPro.minmax(this.value, 1, 100)"
+                                                            onkeypress="return PosnicPro.isNumber(event)" required>
                                                     </div>
                                                 </div>
                                                 <div class="row">
                                                     <div class="form-group col-md-6">
-                                                        <div class="wallet-box"
-                                                            style="margin-top:10px;background: #fdfdfd;">
-                                                            <input type="checkbox" id="enable_sms_auto_send"
-                                                                name="enable_sms_auto_send" />
-                                                            <label for="enable_sms_auto_send" data-toggle="tooltip"
-                                                                title="Enable(or)Disable Auto Send">
-                                                                <span style="font-size:13px;"> Auto-Send</span>
+                                                        <div class="wallet-box" style="margin-top:0px;background: #fdfdfd;">
+                                                            <input type="checkbox" id="stock_log_management"
+                                                                name="stock_log_management" />
+                                                            <label for="stock_log_management" data-toggle="tooltip"
+                                                                title="Enable/Disable Stock Log">
+                                                                <span style="font-size:13px;">
+                                                                    <lang class="lang_stocklog_title"> Stock Log </lang>
+                                                                </span>
                                                             </label>
                                                         </div>
                                                     </div>
-
                                                     <div class="form-group col-md-6">
-                                                        <label for="sms_auto_send_time" class="form-label">Auto-Send
-                                                            Time</label>
-                                                        <input type="time" class="form-control" id="sms_auto_send_time"
-                                                            value="10:00">
-                                                        <input type="hidden" id="sms_auto_send_period"
-                                                            name="sms_auto_send_period" value="10:00 am">
-                                                    </div>
-                                                    <div class="form-group col-md-6">
-                                                        <label for="sms_retry_period" class="form-label">Retry
-                                                            Period</label>
-                                                        <select id="sms_retry_period" name="sms_retry_period"
-                                                            class="form-control border-control">
-                                                            <option value="1">1 Hour</option>
-                                                            <option value="6">6 Hours</option>
-                                                            <option value="12">12 Hours</option>
-                                                            <option value="24" selected>1 Day</option>
-                                                            <option value="48">2 Days</option>
-                                                            <option value="72">3 Days</option>
-                                                            <option value="96">4 Days</option>
-                                                            <option value="120">5 Days</option>
-                                                            <option value="168">1 Week</option>
-                                                            <option value="336">2 Weeks</option>
-                                                            <option value="720">1 Month</option>
-                                                            <option value="1440">2 Months</option>
-                                                            <option value="2160">3 Months</option>
-                                                        </select>
-                                                    </div>
-                                                    <div class="form-group col-md-6">
-                                                        <label for="sms_max_retries" class="form-label">Maximum Retry
-                                                            Attempts</label>
-                                                        <select id="sms_max_retries" name="sms_max_retries"
-                                                            class="form-control border-control">
-                                                            <option value="1">1</option>
-                                                            <option value="2" selected>2</option>
-                                                            <option value="3">3</option>
-                                                            <option value="4">4</option>
-                                                            <option value="5">5</option>
-                                                        </select>
+                                                        <div class="wallet-box" style="margin-top:0px;background: #fdfdfd;">
+                                                            <input type="checkbox" id="stock_management"
+                                                                name="stock_management" />
+                                                            <label for="stock_management" data-toggle="tooltip"
+                                                                title="Items Quantity Maintenance">
+                                                                <span style="font-size:13px;">
+                                                                    <lang class="lang_trackinventory_title"> Track Inventory
+                                                                    </lang>
+                                                                </span>
+                                                            </label>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </fieldset>
-                                        </div>
+                                            </div>
 
-                                        <div class="form-row">
-                                            <fieldset class="col-12 form-group border p-3 field-general-setting">
-                                                <legend class="w-auto px-2">Print</legend>
+                                            <!-- ============ RECEIPT PRINT ============ -->
+                                            <div class="tab-pane fade" id="core-tab-print" role="tabpanel">
                                                 <div class="row">
                                                     <div class="form-group col-md-12">
                                                         <label for="print_type">
@@ -2832,12 +3001,6 @@
                                                             <option value="a4">Regular</option>
                                                         </select>
                                                     </div>
-                                                    <!-- Paper width, in the units rolls are sold in.
-                                                         Receipts were printed with @page size:auto, so
-                                                         the width came from whatever the Windows driver
-                                                         happened to say - a 58mm printer set to 80mm cut
-                                                         every line off on the right, with nothing in the
-                                                         app able to correct it. -->
                                                     <div class="form-group col-md-12">
                                                         <div class="alert alert-info mb-0" style="font-size:13.5px;">
                                                             <b>Printer and paper are set per till.</b>
@@ -2853,7 +3016,6 @@
                                                             </button>
                                                         </div>
                                                     </div>
-
                                                 </div>
                                                 <div class="form-row">
                                                     <div class="form-group col-md-6">
@@ -2901,7 +3063,6 @@
                                                     </div>
                                                 </div>
                                                 <div class="form-row">
-
                                                     <div class="form-group col-md-6">
                                                         <div class="wallet-box"
                                                             style="margin-top:0px;background: #fdfdfd;">
@@ -2916,7 +3077,6 @@
                                                             </label>
                                                         </div>
                                                     </div>
-
                                                     <div class="form-group col-md-6">
                                                         <div class="wallet-box"
                                                             style="margin-top:0px;background: #fdfdfd;">
@@ -2931,7 +3091,6 @@
                                                             </label>
                                                         </div>
                                                     </div>
-
                                                     <div class="form-group col-md-6">
                                                         <div class="wallet-box"
                                                             style="margin-top:0px;background: #fdfdfd;">
@@ -2965,9 +3124,7 @@
                                                             </label>
                                                         </div>
                                                     </div>
-
                                                 </div>
-
                                                 <div class="form-row print_url">
                                                     <div class="form-group col-md-6">
                                                         <div class="wallet-box"
@@ -2994,170 +3151,9 @@
                                                         </div>
                                                     </div>
                                                 </div>
-
-                                            </fieldset>
-                                        </div>         
-
-                                        <div class="form-row">
-                                            <div class="form-group col-md-6" style="display: none;">
-                                                <label class="control-label" style="margin-bottom: 0px;">
-                                                    <label for="radio_discount_amount" class="control control--radio">
-                                                        <lang class="lang_discount_title">Global Discount &nbsp;&nbsp;
-                                                        </lang> <span class="display-currency"></span>
-                                                        <input type="radio" class="radio_discount" name="radio_discount"
-                                                            id="radio_discount_amount" checked="checked">
-                                                        <div class="control__indicator"></div>
-                                                    </label>
-                                                </label>&nbsp;&nbsp;
-                                                <label class="control-label" style="margin-bottom: 0px;">
-                                                    <label for="radio_discount_percentage"
-                                                        class="control control--radio">%
-                                                        <input type="radio" class="radio_discount" name="radio_discount"
-                                                            id="radio_discount_percentage">
-                                                        <div class="control__indicator"></div>
-                                                    </label>
-                                                </label>
-                                                <input name="discount_amount" id="discount_amount" type="text" min="0"
-                                                    minlength="1" maxlength="5"
-                                                    class="form-control border-control allow_decimal text-right display-discount-amount-value"
-                                                    required>
-
-                                                <input name="discount_percentage" id="discount_percentage" type="number"
-                                                    class="form-control border-control text-right display-discount-percentage-value"
-                                                    min="0" max="100" onkeypress="return PosnicPro.isNumber(event)"
-                                                    onkeyup="this.value = PosnicPro.minmax(this.value, 0, 100)"
-                                                    style="display: none;" required>
                                             </div>
 
-                                            <div class="form-group col-md-6">
-                                                <label for="tax_percentage" class="label-text-color">
-                                                    <input type="checkbox" id="default_tax_enable_disable"
-                                                        name="default_tax_enable_disable"
-                                                        onclick="PosnicPro.settings.defaultTaxData(this.checked);" />
-                                                    <lang class="lang_tax_title">Default Tax </lang><span
-                                                        class="text-danger">*</span>
-                                                </label>
-                                                <div class="input-group">
-                                                    <select name="tax_percentage" id="tax_percentage"
-                                                        class="select2 form-control border-control items_tax">
-                                                    </select>
-                                                </div>
-                                            </div>
-
-                                            <div class="form-group col-md-6">
-                                                <label for="notification_value" class="label-text-color">
-                                                    <lang class="lang_lowstocknotify_title">Low Stock Notification
-                                                        Range&nbsp;</lang>
-                                                    <span data-toggle="tooltip" data-placement="top" title=""
-                                                        data-original-title="Here,Set your notification range of lowstock.">
-                                                        <i class="feather icon-help-circle"></i>
-                                                    </span>
-                                                </label>
-                                                <input type="text" class="form-control border-control text-right"
-                                                    name="notification_value" id="notification_value" min="0" max="100"
-                                                    onkeyup="this.value = PosnicPro.minmax(this.value, 1, 100)"
-                                                    onkeypress="return PosnicPro.isNumber(event)" required>
-                                            </div>
                                         </div>
-
-                                        <div class="form-row">
-                                            <div class="form-group col-md-3">
-                                                <div class="wallet-box" style="margin-top:0px;background: #fdfdfd;">
-                                                    <input type="checkbox" id="stock_log_management"
-                                                        name="stock_log_management" />
-                                                    <label for="stock_log_management" data-toggle="tooltip"
-                                                        title="Enable/Disable Stock Log">
-                                                        <span style="font-size:13px;">
-                                                            <lang class="lang_stocklog_title"> Stock Log </lang>
-                                                        </span>
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <div class="form-group col-md-3">
-                                                <div class="wallet-box" style="margin-top:0px;background: #fdfdfd;">
-                                                    <input type="checkbox" id="stock_management"
-                                                        name="stock_management" />
-                                                    <label for="stock_management" data-toggle="tooltip"
-                                                        title="Items Quantity Maintenance">
-                                                        <span style="font-size:13px;">
-                                                            <lang class="lang_trackinventory_title"> Track Inventory
-                                                            </lang>
-                                                        </span>
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <div class="form-group col-md-3">
-                                                <div class="wallet-box" style="margin-top:0px;background: #fdfdfd;">
-                                                    <input type="checkbox" name="keyboard_view" id="keyboard_view" />
-                                                    <label for="keyboard_view" data-toggle="tooltip"
-                                                        title="Enable(or)Disable Virtual Keyboard">
-                                                        <span style="font-size:13px;">
-                                                            <lang class="lang_displayscreen_title"> Virtual Keypad
-                                                                Screen </lang>
-                                                        </span>
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <div class="form-group col-md-3">
-                                                <div class="wallet-box" style="margin-top:0px;background: #fdfdfd;">
-                                                    <input type="checkbox" name="decimal_Round" id="decimal_Round" />
-                                                    <label for="decimal_Round">
-                                                        <span style="font-size:13px;">
-                                                            <lang class="lang_roundoftotal_title">Round-Off
-                                                                Total&nbsp;1.00</lang>
-                                                            <span data-toggle="tooltip" data-placement="top" title=""
-                                                                data-original-title="for ex $1.56 with : 1.00 rounding = $2.00.print sale and purchase total round off">
-                                                                <i class="feather icon-help-circle setfeather_font"></i>
-                                                            </span>
-                                                        </span>
-                                                    </label>
-
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="form-row">
-                                            <div class="form-group col-md-3" style="display:none;">
-                                                <div class="wallet-box" style="margin-top:0px;background: #fdfdfd;">
-                                                    <input type="checkbox" name="sales_sms" id="sales_sms" />
-                                                    <label for="sales_sms" data-toggle="tooltip"
-                                                        title="Enable(or)Disable Sales Auto SMS">
-                                                        <span style="font-size:13px;">
-                                                            <lang class="lang_autosmsaftersales_title"> SMS After Sales
-                                                            </lang>
-                                                        </span>
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="form-row">
-                                            <div class="form-group col-md-3" style="display: none;">
-                                                <div class="wallet-box" style="margin-top:0px;background: #fdfdfd;">
-                                                    <input type="checkbox" name="sales_mail" id="sales_mail" />
-                                                    <label for="sales_mail" data-toggle="tooltip"
-                                                        title="Enable(or)Disable Sales Auto Mail">
-                                                        <span style="font-size:13px;">
-                                                            <lang class="lang_automailaftersale_title"> Mail After Sales
-                                                            </lang>
-                                                        </span>
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="form-row">
-                                            <div class="hide_indian_gst form-group col-md-6">
-                                                <label for="indian_gst" data-toggle="tooltip" title="Indian gst"
-                                                    class="label-text-color">
-                                                    <lang class="lang_indiangst_title">Indian GST</lang>
-                                                </label>
-                                                <select name="indian_gst" class="form-control border-control"
-                                                    id="indian_gst">
-                                                    <option value="gst_off">Disable</option>
-                                                    <option value="gst_on">Enable</option>
-                                                </select>
-                                            </div>
-                                        </div>
-
                                     </div>
                                     <div class="card-footer text-right">
                                         <button type="button"
@@ -3174,7 +3170,6 @@
                                     </div>
                                 </div>
                             </form>
-                            <!--</form>-->
                         </div>
                         <!-- General Tab End -->
 

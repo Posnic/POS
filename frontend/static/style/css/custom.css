@@ -2565,6 +2565,11 @@ input:checked + .slider:before {
 /* Icon-font tiles (modules without a matching svg, e.g. Recycle Bin). */
 .module-ico i { font-size: 22px; color: var(--theme-primary-color, #506fe4); }
 
+/* Core Settings inner tabs: one row, never wrapping - what doesn't fit
+   folds into the More dropdown (settings.js coreTabsOverflow). */
+.core-settings-tabs { flex-wrap: nowrap; overflow: hidden; }
+.core-settings-tabs .nav-link { white-space: nowrap; }
+
 /* Config's left menu sat ~40px too wide for its labels (user report):
    cap the nav column on large screens and let the content take the rest. */
 @media (min-width: 992px) {
