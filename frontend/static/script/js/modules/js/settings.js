@@ -444,7 +444,8 @@ PosnicPro.settings = {
                         module_channels_enable: response.data['module_channels_enable'] !== false,
                         module_channels_kiosk_enable: response.data['module_channels_kiosk_enable'] !== false,
                         module_recyclebin_enable: response.data['module_recyclebin_enable'] !== false,
-                        module_themes_enable: response.data['module_themes_enable'] !== false
+                        module_themes_enable: response.data['module_themes_enable'] !== false,
+                        module_cashbook_enable: response.data['module_cashbook_enable'] !== false
                     };
                     PosnicPro.local.set('general_settings', JSON.stringify(generalSettings));
                     PosnicPro.shiftWidget.applyEnabled();
@@ -699,7 +700,8 @@ PosnicPro.settings = {
                     module_channels_enable: data.module_channels_enable !== false,
                     module_channels_kiosk_enable: data.module_channels_kiosk_enable !== false,
                     module_recyclebin_enable: data.module_recyclebin_enable !== false,
-                    module_themes_enable: data.module_themes_enable !== false
+                    module_themes_enable: data.module_themes_enable !== false,
+                    module_cashbook_enable: data.module_cashbook_enable !== false
                 };
                 PosnicPro.local.set('general_settings', JSON.stringify(generalSettings));
                 PosnicPro.shiftWidget.applyEnabled();
@@ -1585,7 +1587,8 @@ if ($wrapper.length) {
                     module_channels_enable: $('#module_channels_enable').is(':checked'),
                     module_channels_kiosk_enable: $('#module_channels_kiosk_enable').is(':checked'),
                     module_recyclebin_enable: $('#module_recyclebin_enable').is(':checked'),
-                    module_themes_enable: $('#module_themes_enable').is(':checked')
+                    module_themes_enable: $('#module_themes_enable').is(':checked'),
+                    module_cashbook_enable: $('#module_cashbook_enable').is(':checked')
                 };
                 PosnicPro.local.set('general_settings', JSON.stringify(generalSettings));
                 // Show or hide the header clock button to match, right away.
