@@ -402,15 +402,14 @@
                                     <lang class="lang_register_title">Register</lang>
                                 </a></li>
                             <li id="labour_report_menu"><a data-module="user" data-access="read"
-                                    href="javascript:void(0);" id="viewlabourreport_page"
-                                    onclick="PosnicPro.shiftWidget.openReport();"><img
+                                    href="#/labourreport" id="viewlabourreport_page"><img
                                         src="static/images/svg-icon/user.svg" class="img-fluid" alt="Labour">
                                     <lang class="lang_labourreport_title">Labour / Payout</lang>
                                 </a></li>
                             <li><a href="#/pendingreport" id="viewcuspendingreport_page"><img
                                         src="static/images/svg-icon/pendingreport.svg" class="img-fluid"
                                         alt="Pending Reports">
-                                    <lang class="lang_pending_title">Partially Paid</lang>
+                                    <lang class="lang_pending_title">Pending Payments</lang>
                                 </a></li>
                             <li><a href="#/returnreport" id="viewreturnsalereport_page"><img
                                         src="static/images/svg-icon/returnsale.svg" class="img-fluid"
@@ -455,17 +454,17 @@
                                     <lang class="lang_user_title">User List</lang>
                                 </a>
                             </li>
+                            <li id="rolesModule">
+                                <a data-module="user" data-access="write" href="#/roles" id="view_roles_page">
+                                    <img src="static/images/svg-icon/user.svg" class="img-fluid" alt="roles">
+                                    <lang class="lang_roles_title">User Roles</lang>
+                                </a>
+                            </li>
                             <li class="cashRegisterModule">
                                 <a href="#/registers" class="cashregisters" id="view_cashRegister_page">
                                     <img src="static/images/svg-icon/cash-register.svg" class="img-fluid"
                                         alt="cashregister details">
                                     <lang class="lang_cash_register">Cash Register</lang>
-                                </a>
-                            </li>
-                            <li id="rolesModule">
-                                <a data-module="user" data-access="write" href="#/roles" id="view_roles_page">
-                                    <img src="static/images/svg-icon/user.svg" class="img-fluid" alt="roles">
-                                    <lang class="lang_roles_title">Roles</lang>
                                 </a>
                             </li>
                             <li id="branchModule">

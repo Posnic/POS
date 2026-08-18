@@ -27940,12 +27940,6 @@ mark {
   padding: 30px;
 }
 
-.infobar-settings-sidebar .infobar-settings-sidebar-body .custom-mode-setting {
-  padding: 30px;
-  border-top: 1px solid rgba(0, 0, 0, 0.03);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.03);
-}
-
 .infobar-settings-sidebar .infobar-settings-sidebar-body .custom-layout-setting {
   padding: 30px;
 }

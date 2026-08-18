@@ -32,6 +32,7 @@
         "modules/quick_items.html",
         "modules/items_write.html",
         "modules/lowstock.html",
+        "modules/labourReport.html",
         "modules/paymentReport.html",
         "modules/pendingReport.html",
         "modules/receivings.html",

@@ -137,11 +137,11 @@
                        placeholder="Swipe a staff card&hellip;"
                        onkeydown="if(event.key==='Enter'){event.preventDefault();PosnicPro.shiftWidget.swipe();}">
                 <small class="form-text text-muted">Any staff member can swipe to clock in / out.</small>
-                <div class="mt-3 text-center" id="labour_report_link_wrap" style="display:none;">
-                    <a href="javascript:void(0);" onclick="PosnicPro.shiftWidget.openReport();" style="font-size:.85rem;">
-                        <i class="feather icon-bar-chart-2 mr-1"></i>Labour / payout report
-                    </a>
-                    <span id="roster_link_wrap"><span class="text-muted mx-1">&middot;</span>
+                <!-- Reports live under Reports > Labour / Payout, not here:
+                     the clock button is for clocking in and out. Roster is
+                     scheduling, not a report, so its link stays. -->
+                <div class="mt-3 text-center">
+                    <span id="roster_link_wrap">
                     <a href="javascript:void(0);" onclick="PosnicPro.shiftWidget.openRoster();" style="font-size:.85rem;">
                         <i class="feather icon-calendar mr-1"></i>Roster
                     </a></span>
@@ -152,63 +152,8 @@
 </div>
 <!-- end Shift / attendance modal -->
 
-<!-- start Labour / payout report modal -->
-<div class="modal fade" id="labour_report_modal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="feather icon-bar-chart-2 mr-2"></i>Labour / Payout Report</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="form-row align-items-end mb-3">
-                    <div class="col">
-                        <label style="font-size:.8rem; font-weight:600;">From</label>
-                        <input type="date" class="form-control" id="labour_report_from">
-                    </div>
-                    <div class="col">
-                        <label style="font-size:.8rem; font-weight:600;">To</label>
-                        <input type="date" class="form-control" id="labour_report_to">
-                    </div>
-                    <div class="col-auto">
-                        <button type="button" class="btn btn-primary" id="labour_report_run"
-                                onclick="PosnicPro.shiftWidget.runReport();">Run</button>
-                    </div>
-                </div>
-                <div class="table-responsive">
-                    <table class="table table-sm">
-                        <thead>
-                            <tr>
-                                <th>Staff</th>
-                                <th class="text-right">Shifts</th>
-                                <th class="text-right">Sched hrs</th>
-                                <th class="text-right">Hours</th>
-                                <th class="text-right">Tips</th>
-                                <th class="text-right">Wage</th>
-                                <th class="text-right">Payout</th>
-                            </tr>
-                        </thead>
-                        <tbody id="labour_report_body">
-                            <tr><td colspan="7" class="text-center text-muted">Pick a range and Run.</td></tr>
-                        </tbody>
-                        <tfoot id="labour_report_foot"></tfoot>
-                    </table>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" onclick="PosnicPro.shiftWidget.exportTimecards();">
-                    <i class="feather icon-download mr-1"></i>Timecards CSV
-                </button>
-                <button type="button" class="btn btn-outline-primary" onclick="PosnicPro.shiftWidget.exportPayroll();">
-                    <i class="feather icon-download mr-1"></i>Payroll CSV
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-<!-- end Labour / payout report modal -->
+<!-- The labour / payout report is a page now (modules/labourReport.html,
+     #/labourreport) - a report belongs in Reports, not in a popup. -->
 
 <!-- start Roster / scheduling modal -->
 <div class="modal fade" id="roster_modal" tabindex="-1" role="dialog" aria-hidden="true">
