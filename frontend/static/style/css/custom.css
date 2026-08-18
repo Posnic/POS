@@ -2579,6 +2579,14 @@ input:checked + .slider:before {
     .settings-nav-col .nav-link { white-space: nowrap; }
 }
 
+/* Core Settings vertical submenus (Inventory, Payments): two short words
+   do not need a quarter of the card - a compact rail, content takes the rest. */
+@media (min-width: 992px) {
+    .core-subnav-col { flex: 0 0 auto; width: 185px; max-width: 185px; }
+    .core-subnav-col + div { flex: 1 1 0; max-width: none; }
+}
+.core-subnav-col .nav-link { white-space: nowrap; }
+
 /* Fieldset legends inside Core Settings rendered at Bootstrap's default
    1.5rem - a heading shouting over its own form. */
 .field-general-setting legend {
