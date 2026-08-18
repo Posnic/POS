@@ -243,11 +243,18 @@ describe('SalesRepository', () => {
       const r = await salesRepository.getById(null);
       expect(r).toBeNull();
     });
-    test('delegates to Model.findById', async () => {
+    test('reads are TENANT-SCOPED: findOne carries license and branch, never a bare findById', async () => {
+      // The old contract was Model.findById(id); the repository now refuses
+      // to read across tenants - the stronger contract is the one to pin.
       const doc = { _id: FAKE_ID, total: 100 };
-      MockSaleModel.findById.mockReturnValue(createQueryMock(doc));
+      MockSaleModel.findOne.mockReturnValue(createQueryMock(doc));
       const r = await salesRepository.getById(FAKE_ID);
-      expect(MockSaleModel.findById).toHaveBeenCalledWith(FAKE_ID);
+      expect(MockSaleModel.findOne).toHaveBeenCalledWith({
+        _id: FAKE_ID,
+        license: FAKE_LICENSE,
+        branch_id: FAKE_BRANCH,
+      });
+      expect(MockSaleModel.findById).not.toHaveBeenCalled();
       expect(r).toEqual(doc);
     });
   });
@@ -257,21 +264,28 @@ describe('SalesRepository', () => {
       const r = await salesRepository.findById(null);
       expect(r).toBeNull();
     });
-    test('applies projection and populate', async () => {
+    test('applies projection and populate over the tenant-scoped read', async () => {
       const doc = { _id: FAKE_ID, total: 100 };
-      MockSaleModel.findById.mockReturnValue(createQueryMock(doc));
+      const q = createQueryMock(doc);
+      MockSaleModel.findOne.mockReturnValue(q);
       const r = await salesRepository.findById(FAKE_ID, {
         projection: 'total',
         populate: 'customer',
       });
-      expect(MockSaleModel.findById).toHaveBeenCalledWith(FAKE_ID);
+      expect(MockSaleModel.findOne).toHaveBeenCalledWith({
+        _id: FAKE_ID,
+        license: FAKE_LICENSE,
+        branch_id: FAKE_BRANCH,
+      });
+      expect(q.select).toHaveBeenCalledWith('total');
       expect(r).toEqual(doc);
     });
     test('supports array populate', async () => {
       const doc = { _id: FAKE_ID };
-      MockSaleModel.findById.mockReturnValue(createQueryMock(doc));
+      const q = createQueryMock(doc);
+      MockSaleModel.findOne.mockReturnValue(q);
       await salesRepository.findById(FAKE_ID, { populate: ['customer', 'branch'] });
-      expect(MockSaleModel.findById).toHaveBeenCalledWith(FAKE_ID);
+      expect(q.populate).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -462,7 +476,7 @@ describe('SalesRepository', () => {
   describe('bill-number uniqueness (per-till tagging)', () => {
     test('buildSalesId puts the till code between the prefix and the number', async () => {
       const id = await salesRepository.buildSalesId('SID', 45);
-      expect(id).toBe('S-DEV1-000045');
+      expect(id).toBe('SID-DEV1-000045');
     });
 
     test('two tills with different codes never collide on the same number', async () => {
@@ -578,7 +592,7 @@ describe('SalesRepository', () => {
       jest.spyOn(salesRepository, 'deviceCode').mockResolvedValue(''); // no device code yet
       expect(
         await salesRepository.buildDocNumber('S', 'anyBranch', 45, { fallbackPrefix: 'SID' })
-      ).toBe('S-DEV1-000045');
+      ).toBe('SID-DEV1-000045');
     });
   });
 
@@ -764,6 +778,16 @@ describe('SalesRepository', () => {
       });
       if (!collections.sales) collections.sales = mkCol();
       collections.sales.insertOne.mockResolvedValue({ insertedId: FAKE_ID });
+      // Prices come from the ITEM MASTER now, not the anonymous payload -
+      // the order refuses items it cannot verify, so the lookup must answer.
+      if (!collections.items) collections.items = mkCol();
+      collections.items.findOne.mockResolvedValue({
+        _id: FAKE_ITEM,
+        name: 'Test',
+        selling_price: 10,
+        tax: 0,
+        tax_type: 'exclusive',
+      });
       const r = await salesRepository.qrOrderModel({
         branch: FAKE_BRANCH,
         items: [
