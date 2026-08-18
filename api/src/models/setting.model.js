@@ -986,6 +986,7 @@ class SettingModel extends BaseModel {
         module_channels_kiosk_enable: offOnly,
         module_recyclebin_enable: offOnly,
         module_themes_enable: offOnly,
+        pl_include_cashbook: offOnly,
       };
       for (const [key, parse] of Object.entries(TOGGLES)) {
         if (data[key] !== undefined) {

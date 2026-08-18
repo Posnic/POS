@@ -1,21 +1,19 @@
 PosnicPro.registers = {
     addLineTable: [],
+    // Cash Register lives under Config > Modules now (user call): the old
+    // #/registers route lands on Config with the Cash Register pane active.
     showDataTablePage: function () {
-        PosnicPro.HideSideBarModal();
-        $(".vertical-layout").removeClass("toggle-menu");
-        $('.dropdown-item').removeClass('active');
-        $('.page_loader,#osk-container').hide();
-        $('#v-pills-manage-tab').addClass('active');
-        $('#v-pills-manage').addClass('show active');
+        PosnicPro.settings.showDataTablePage();
+        $('#v-pills-cashregister-tab').click();
+        PosnicPro.registers.paneInit();
+    },
+    paneInit: function () {
         $('#hide_show_cashbutton').hide();
         $('#cash_button_amount').hide();
         PosnicPro.users.registerMenuDetails();
         PosnicPro.registers.renderOverview();
         $('#user_name').html(PosnicPro.local.get('username'));
         $('#cash_outbutton_amount').hide();
-        $('#cashregisters_detail').show();
-        $('.dashboard_img_menu').hide();
-        $('#image_sidebar_cashregister').show();
         if ($("#denomTotal").is(":empty")) {
             $('#delete_denomination_modal').modal('hide');
             $("#delete").attr('disabled', true).css({"cursor": 'not-allowed', "color": '#d8d3d3', "border-color": '#d8d3d3'});

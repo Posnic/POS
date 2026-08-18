@@ -642,7 +642,27 @@ class DashboardModel extends BaseModel {
 
       const round = (v) => Math.round((Number(v) || 0) * 100) / 100;
       const grossProfit = revenue - cogs;
-      const netProfit = grossProfit - expenses;
+
+      /*
+       * Whether Cash Book expenses count against net profit is a shop
+       * choice (Core Settings > Sale; default ON = the historical
+       * behaviour). Off keeps the expenses figure visible but out of net
+       * profit and margin. cash_flow always includes them - money left
+       * either way.
+       */
+      let includeCashbook = true;
+      try {
+        const branchId = this.branchId || BaseModel.currentBranch;
+        if (branchId) {
+          const bCol = await this.getCollection('branches');
+          const q = ObjectId.isValid(String(branchId)) ? new ObjectId(String(branchId)) : branchId;
+          const bDoc = await bCol.findOne({ _id: q }, { projection: { pl_include_cashbook: 1 } });
+          if (bDoc && bDoc.pl_include_cashbook === false) includeCashbook = false;
+        }
+      } catch (e) {
+        /* default: include */
+      }
+      const netProfit = grossProfit - (includeCashbook ? expenses : 0);
 
       /*
        * How much of this rests on real cost data.
@@ -689,6 +709,7 @@ class DashboardModel extends BaseModel {
           cash_flow: round(revenue - purchases - expenses),
           margin_percent: revenue ? round((netProfit / revenue) * 100) : 0,
           sales_count: salesCount || 0,
+          pl_includes_cashbook: includeCashbook,
           // Trust signals for the client (see the block above).
           cost_missing_sales: missingCost,
           cost_coverage: costCoverage,
