@@ -282,6 +282,12 @@ PosnicPro.items = {
             wrap.show();
         }, function () { wrap.hide(); });
     },
+    /* Alternate barcodes (V3): the comma-separated field as a clean array. */
+    _altBarcodes: function () {
+        var raw = $('#items_barcodes_alt').val();
+        if (raw === undefined) { return undefined; }
+        return String(raw).split(',').map(function (v) { return v.trim(); }).filter(Boolean);
+    },
     /* Array when the section rendered (send the key: empty = clear all);
        undefined when it did not (omit the key: server leaves it alone). */
     _modifierGroupIds: function () {
@@ -333,7 +339,8 @@ PosnicPro.items = {
             tax_type: $('input[name="tax_radio_value"]:checked').val(),
             description: content.html(),
             image: PosnicPro.items.imageParams,
-            modifier_group_ids: PosnicPro.items._modifierGroupIds()
+            modifier_group_ids: PosnicPro.items._modifierGroupIds(),
+            barcodes: PosnicPro.items._altBarcodes()
         };
     },
     /*
@@ -499,7 +506,8 @@ PosnicPro.items = {
                     tax_type: $('input[name="tax_radio_value"]:checked').val(),
                     description: content.html(),
                     image: PosnicPro.items.imageParams,
-                    modifier_group_ids: PosnicPro.items._modifierGroupIds()
+                    modifier_group_ids: PosnicPro.items._modifierGroupIds(),
+                    barcodes: PosnicPro.items._altBarcodes()
                 };
                 var params = {
                     method: method,
@@ -945,6 +953,7 @@ PosnicPro.items = {
                 $('#items_name').val(data.name);
                 $('#items_itemid').val(data.itemid);
                 $('#items_barcodeid').val(data.barcode_id);
+                $('#items_barcodes_alt').val(Array.isArray(data.barcodes) ? data.barcodes.join(', ') : '');
                 $('#items_hsncode').val(data.hsncode);
                 $('#items_hsndescription').val(data.hsndescription);
                 $('#items_date').val(response.data.item_date);

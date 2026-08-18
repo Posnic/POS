@@ -139,6 +139,9 @@
                                         <input type="text" class="form-control clear_text_item" id="items_barcodeid"
                                             name="items_barcodeid" minlength="1" maxlength="100"
                                             placeholder="Scan From Bar Code Reader" autocomplete="off">
+                                        <!-- V3: manufacturer / extra codes; scanning any of them finds this item. -->
+                                        <input type="text" class="form-control clear_text_item mt-2" id="items_barcodes_alt"
+                                            maxlength="400" placeholder="Alternate barcodes (comma separated, optional)" autocomplete="off">
                                     </div>
                                 </div>
                                 <div class="row">
