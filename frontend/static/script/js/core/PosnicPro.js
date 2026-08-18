@@ -2058,7 +2058,7 @@ PosnicPro = {
         { name: 'Money', items: [
             { hash: 'paymentreport', label: 'Payment', icon: 'dollar-sign' },
             { hash: 'taxreport', label: 'Tax', icon: 'percent', module: 'module_tax_enable' },
-            { hash: 'expensesreport', label: 'Cash Book', icon: 'file-text' },
+            { hash: 'expensesreport', label: 'Cash Book', icon: 'file-text', module: 'module_cashbook_enable' },
         ] },
     ],
     injectReportGroupTabs: function () {

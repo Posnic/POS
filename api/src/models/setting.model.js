@@ -620,6 +620,7 @@ class SettingModel extends BaseModel {
       const module_channels_kiosk_enable = offOnly(data.module_channels_kiosk_enable);
       const module_recyclebin_enable = offOnly(data.module_recyclebin_enable);
       const module_themes_enable = offOnly(data.module_themes_enable);
+      const module_cashbook_enable = offOnly(data.module_cashbook_enable);
 
       /*
        * Two different forms save through here now: the Module On/Off tab
@@ -767,6 +768,7 @@ class SettingModel extends BaseModel {
         module_channels_kiosk_enable: module_channels_kiosk_enable,
         module_recyclebin_enable: module_recyclebin_enable,
         module_themes_enable: module_themes_enable,
+        module_cashbook_enable: module_cashbook_enable,
       };
 
       // Update branch_name across all collections - for the branch actually
@@ -986,6 +988,7 @@ class SettingModel extends BaseModel {
         module_channels_kiosk_enable: offOnly,
         module_recyclebin_enable: offOnly,
         module_themes_enable: offOnly,
+        module_cashbook_enable: offOnly,
         pl_include_cashbook: offOnly,
       };
       for (const [key, parse] of Object.entries(TOGGLES)) {
