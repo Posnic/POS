@@ -2598,10 +2598,17 @@ input:checked + .slider:before {
 /* Core Settings vertical submenus (Inventory, Payments): two short words
    do not need a quarter of the card - a compact rail, content takes the rest. */
 @media (min-width: 992px) {
-    .core-subnav-col { flex: 0 0 auto; width: 185px; max-width: 185px; }
-    .core-subnav-col + div { flex: 1 1 0; max-width: none; }
+    .core-subnav-col { flex: 0 0 auto; width: 205px; max-width: 205px; }
+    .core-subnav-col + div { flex: 1 1 0; max-width: none; padding-left: 20px; }
 }
-.core-subnav-col .nav-link { white-space: nowrap; }
+.core-subnav-col .nav-link { white-space: nowrap; margin-bottom: 4px; }
+/* A quiet seam between the rail and the content, and air on both sides
+   of it - rail and form sat shoulder to shoulder. */
+.core-subnav-col > .nav {
+    border-right: 1px solid rgba(127, 127, 127, 0.16);
+    padding-right: 14px;
+    min-height: 100%;
+}
 
 /* Fieldset legends inside Core Settings rendered at Bootstrap's default
    1.5rem - a heading shouting over its own form. */
