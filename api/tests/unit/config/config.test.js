@@ -30,7 +30,9 @@ describe('config modules', () => {
     const config = loadModule('../../../src/config/config');
 
     expect(config.server).toEqual({
-      port: '5000',
+      // The port is parsed to a NUMBER now - a string port broke
+      // listen() comparisons downstream.
+      port: 5000,
       env: 'development',
       host: '0.0.0.0',
     });
