@@ -406,7 +406,15 @@ PosnicPro.items = {
                 $('#item_image_upload_form')[0].reset();
                 PosnicPro.stocklogs.viewLowStockDashboard();
                 PosnicPro.sales.itemsMenu.onlineProductList();
-                hasher.setHash('items');
+                /* IC2: ONE after-save rule - every create stays on the form
+                   for the next entry (edit is what returns to the list).
+                   Variant mode resets to the plain-item state. */
+                $('#load_price_fields').html('').hide();
+                $('#show_variant_fields').hide();
+                $('#show_price_fields').show();
+                $('#product_without_variant').prop('checked', true);
+                PosnicPro.items.itemClearForm();
+                $('#items_name').focus();
             } else {
                 PosnicPro.alert(response.type || 'error', response.message || 'Could not create the family');
             }
@@ -549,8 +557,11 @@ PosnicPro.items = {
                         $('#item_image_upload_form')[0].reset();
                         PosnicPro.stocklogs.viewLowStockDashboard();
                         PosnicPro.sales.itemsMenu.onlineProductList();
-                        if (PosnicPro.action === 'add')
+                        if (PosnicPro.action === 'add') {
                             $('#show_last_created_item').show();
+                            // The rapid-entry loop: cursor back on the name.
+                            $('#items_name').focus();
+                        }
                         var path = '#/items/' + data.id;
                         $('#last_created_item').attr('href', path);
                         var itemDetails = {
@@ -3040,11 +3051,47 @@ $(document).ready(function () {
     $("#items_available_quantity,#items_sort").on('input', function () {
         $(this).valid();
     });
+    /* IC2: duplicate-name warning at entry, non-blocking. The server only
+       rejects when name AND barcode AND all three prices match, so this is
+       where a "did you mean the existing one?" moment actually happens. */
+    $('#items_name').on('blur', function () {
+        var typed = ($(this).val() || '').trim();
+        $('.item-dup-note').remove();
+        if ($('#itemid').val() !== '' || typed.length < 3) { return; }
+        PosnicPro.get({
+            url: 'base/autoSuggestionTableField',
+            data: 'query=' + encodeURIComponent(typed) + '&field=name&module=items'
+        }, function (response) {
+            var list = (response && response.data && response.data.suggestions) || [];
+            var clash = list.some(function (s) {
+                var value = (s && (s.value || s)) || '';
+                return typeof value === 'string' && value.trim().toLowerCase() === typed.toLowerCase();
+            });
+            // Re-check the field still shows what we looked up.
+            if (clash && ($('#items_name').val() || '').trim() === typed) {
+                $('#items_name').after(
+                    '<small class="item-dup-note text-warning d-block mt-1">An item named &quot;' +
+                    $('<span>').text(typed).html() + '&quot; already exists.</small>'
+                );
+            }
+        }, function () { /* advisory only - stay quiet on failure */ });
+    });
+
+    /* IC2: the per-variant price rows render the moment the values are
+       chosen - Save no longer has a silent first click that only rendered
+       rows. The submit-time render below stays as a fallback (with a voice)
+       for any path that reaches Save with the rows still missing. */
+    $('#item_variant_list').on('change', function () {
+        if ($('#product_with_variant').is(':checked') && ($(this).val() || []).length > 0) {
+            PosnicPro.items.loadVariant();
+        }
+    });
     $("#item_image_upload_form").submit(function (event) {
         event.preventDefault();
         if ($('#item_image_upload_form').valid()) {            // checks form for validity
             if ($("#product_with_variant").is(":checked") && $("#load_price_fields").html() === '') {
                 PosnicPro.items.loadVariant();
+                PosnicPro.alert('info', 'Review each variant\'s price below, then Save');
             } else {
                 if ($('#item_upload_image_status').val() === 'no') {
                     PosnicPro.items.item();
@@ -3585,6 +3632,21 @@ $(document).ready(function () {
             $('#items_selling_price').valid();
         }
     });
+    /* IC1: real pickers on the date fields - they were bare text inputs
+       validated as ISO dates, so MFG/expiry entry was guesswork. The
+       daterangepicker bundle already ships with the dashboard (reports).
+       autoUpdateInput stays off so an untouched field stays empty - both
+       dates are optional. */
+    if ($.fn.daterangepicker) {
+        $('#items_mfg_date, #items_expiry_date').daterangepicker({
+            singleDatePicker: true,
+            showDropdowns: true,
+            autoUpdateInput: false,
+            locale: { format: 'YYYY-MM-DD' }
+        }).on('apply.daterangepicker', function (ev, picker) {
+            $(this).val(picker.startDate.format('YYYY-MM-DD')).trigger('change');
+        });
+    }
     $("#items_variant").val(1).trigger('change.select2');
     $("#items_variant").select2({
         placeholder: "Choose a Variant"
