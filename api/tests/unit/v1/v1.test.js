@@ -88,6 +88,52 @@ describe('envelope', () => {
   });
 });
 
+describe('writes (I4.5) - deliberate, per entity', () => {
+  test('customers is the only writable entity in this cut', () => {
+    expect(Object.keys(v1.WRITABLE)).toEqual(['customers']);
+  });
+  test('the whitelist never carries money or referential state', () => {
+    for (const banned of [
+      'balance',
+      'loyalty',
+      'tags',
+      'category_id',
+      'referrer_id',
+      'license',
+      'branch_id',
+      '_id',
+    ]) {
+      expect(v1.WRITABLE.customers.fields).not.toContain(banned);
+    }
+  });
+  test('pickWritable keeps whitelisted fields only, coerced to strings', () => {
+    const out = v1.pickWritable('customers', {
+      name: 'Asha',
+      phone: 98400,
+      balance: 9999,
+      license: 'EVIL',
+      _id: 'x',
+      extra: 'no',
+    });
+    expect(out).toEqual({ name: 'Asha', phone: '98400' });
+  });
+  test('a customer needs a name or a phone', () => {
+    expect(v1.WRITABLE.customers.required({})).toBeTruthy();
+    expect(v1.WRITABLE.customers.required({ name: '  ' })).toBeTruthy();
+    expect(v1.WRITABLE.customers.required({ name: 'Asha' })).toBe(null);
+    expect(v1.WRITABLE.customers.required({ phone: '9' })).toBe(null);
+  });
+  test('write requires the write grant, not just read', () => {
+    expect(v1.canWrite({ access: { customer: { read: true } } }, 'customer')).toBe(false);
+    expect(v1.canWrite({ access: { customer: { write: true } } }, 'customer')).toBe(true);
+  });
+  test('writes land in the principal`s branch', () => {
+    expect(v1.writeBranchId({ branch_id: 'B1' })).toBe('B1');
+    expect(v1.writeBranchId({ branch_access: [{ branch_id: 'B2' }] })).toBe('B2');
+    expect(v1.writeBranchId({})).toBe(null);
+  });
+});
+
 describe('openapi spec', () => {
   test('documents exactly the entities the router serves', () => {
     const spec = v1.openapiSpec();
