@@ -1106,10 +1106,26 @@
                                                 <a class="nav-link" data-toggle="pill" href="#mkt-sub-coupons" role="tab" onclick="PosnicPro.coupons.load();"><i class="feather icon-tag mr-2"></i><lang class="lang_coupons_settings">Coupons</lang></a>
                                                 <a class="nav-link" data-toggle="pill" href="#mkt-sub-cashback" role="tab" onclick="PosnicPro.cashback.load();"><i class="feather icon-gift mr-2"></i><lang class="lang_cashback_settings">Cashback</lang></a>
                                                 <a class="nav-link" data-toggle="pill" href="#mkt-sub-campaigns" role="tab" onclick="PosnicPro.campaigns.load();"><i class="feather icon-send mr-2"></i><lang class="lang_campaigns_settings">Campaigns</lang></a>
+                                                <a class="nav-link" data-toggle="pill" href="#mkt-sub-pricing" role="tab" onclick="PosnicPro.pricelists.load();"><i class="feather icon-tag mr-2"></i><lang class="lang_pricelists">Customer Pricing</lang></a>
                                             </div>
                                         </div>
                                         <div class="col-lg-9">
                                             <div class="tab-content">
+                                                <!-- Price lists (V4): customer-group pricing. -->
+                                                <div class="tab-pane fade" id="mkt-sub-pricing" role="tabpanel">
+                                                    <div class="d-flex align-items-center justify-content-between mb-2">
+                                                        <small class="text-muted"><lang class="lang_pricelists_hint">A customer category can carry its own prices - a percentage off everything, exact prices per item, or both (exact wins). Applied automatically when a customer of that category is on the sale.</lang></small>
+                                                        <button type="button" class="btn btn-primary-rgba btn-sm" onclick="PosnicPro.pricelists.openEditor();">
+                                                            <i class="feather icon-plus mr-1"></i><lang class="lang_pricelists_new">New List</lang>
+                                                        </button>
+                                                    </div>
+                                                    <div class="table-responsive">
+                                                        <table class="table table-sm">
+                                                            <thead><tr><th>Category</th><th>Rule</th><th>Item prices</th><th class="text-right">Action</th></tr></thead>
+                                                            <tbody id="pricelists_body"><tr><td colspan="4" class="text-center text-muted">Loading&hellip;</td></tr></tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
                                                 <div class="tab-pane fade show active" id="mkt-sub-loyalty" role="tabpanel">
 
                             <div class="card m-b-30">
