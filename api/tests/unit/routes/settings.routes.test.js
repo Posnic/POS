@@ -14,6 +14,7 @@ jest.mock('../../../src/controllers/settings.controller', () => {
     backupTable: make,
     updateGeneralSetting: make,
     updateCommonSettings: make,
+    getBranchModules: make,
     getTaxAll: make,
     getTaxAjaxList: make,
     getTaxGroup: make,
