@@ -6144,11 +6144,32 @@ PosnicPro.sales.itemsMenu = {
                 $('#item-lists').remove();
                 $('#sales_new_productList').append(' <div class="col-md-12" id="item-lists">');
                 var currency = PosnicPro.local.get('currencySign');
+                /*
+                 * Variant families (V1): members of a family collapse into
+                 * ONE tile - "Shirt", not five unrelated "Shirt / ..."
+                 * tiles - and the tile opens a picker. Only groups with 2+
+                 * members present collapse; a lone member stands alone.
+                 */
+                var families = {};
+                (getItemdata || []).forEach(function (it) {
+                    var gid = it.variant_group_id;
+                    if (gid) { (families[gid] = families[gid] || []).push(it); }
+                });
+                PosnicPro.sales.itemsMenu._families = families;
+                var renderedGroups = {};
                 if (getItemdata && getItemdata.length > 0) {
                     var app = "<div>";
                     for (var i = 0; i < getItemdata.length; i++) {
                         if (i % getItemdata.length === 0) {
                             app = app + "</div><div class='row'>";
+                        }
+                        var familyGid = getItemdata[i]['variant_group_id'];
+                        var familyRows = familyGid && families[familyGid];
+                        if (familyRows && familyRows.length > 1) {
+                            if (renderedGroups[familyGid]) { continue; }
+                            renderedGroups[familyGid] = true;
+                            app = app + PosnicPro.sales.itemsMenu._familyTile(familyRows, currency);
+                            continue;
                         }
                         var list_item_name = getItemdata[i]['item_name'] ? getItemdata[i]['item_name'] : getItemdata[i]['name'];
                         var price = 0;
@@ -6240,6 +6261,88 @@ PosnicPro.sales.itemsMenu = {
             var response = jQuery.parseJSON(xhr.responseText);
             PosnicPro.alert(response.type, response.message);
         });
+    },
+    /* One tile for the whole family: parent name, "from" price when the
+       members differ, combined stock, a variant-count badge. */
+    _familyTile: function (rows, currency) {
+        var esc = function (s) {
+            return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+            });
+        };
+        var parent = rows[0]['variant_parent_name']
+            || String(rows[0]['name'] || '').split(' / ')[0];
+        var prices = rows.map(function (r) { return Number(r.selling_price) || 0; });
+        var minPrice = Math.min.apply(null, prices);
+        var differ = Math.max.apply(null, prices) !== minPrice;
+        var stock = 0;
+        var tracked = false;
+        rows.forEach(function (r) {
+            if (r.track_inventory === true || r.track_inventory === 'true') {
+                tracked = true;
+                stock += Number(r.available_quantity) || 0;
+            }
+        });
+        var image = (rows[0]['image'] !== 'item.svg')
+            ? rows[0]['image'] : 'static/images/default/' + rows[0]['image'];
+        var stockHtml = tracked
+            ? '<div class="text-center wsk-cp-stock">' + stock + ' in stock</div>' : '';
+        return '<div class="wsk-cp cbutton--effect-novak" ' +
+            'onclick="PosnicPro.sales.itemsMenu.openVariantPicker(\'' + esc(rows[0]['variant_group_id']) + '\')">' +
+            '<div class="wsk-cp-product">' +
+            '<div class="description-prod">' +
+            '<p data-searchval="' + esc(parent) + '" data-toggle="tooltip" title="' + esc(parent) + '">' +
+            PosnicPro.textOverflowEllipsis(parent, 30, true) +
+            ' <span class="badge badge-light">' + rows.length + '</span></p>' +
+            '</div>' +
+            '<div class="wsk-cp-img"><img src="' + esc(image) + '" alt="Product" class="img-responsive" /></div>' +
+            '<div class="wsk-cp-text mt-3">' +
+            '<div class="price-text-color">' +
+            '<div class="text-center"><span class="price">' + (differ ? 'from ' : '') +
+            currency + '&nbsp;' + minPrice.toFixed(2) + '</span></div>' +
+            '</div>' + stockHtml +
+            '</div>' +
+            '</div>' +
+            '</div>';
+    },
+    /* The picker: tap a variant, it lands on the sale like any tile tap. */
+    openVariantPicker: function (groupId) {
+        var rows = (PosnicPro.sales.itemsMenu._families || {})[groupId] || [];
+        if (!rows.length) { return; }
+        var esc = function (s) {
+            return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+            });
+        };
+        var currency = PosnicPro.local.get('currencySign');
+        var parent = rows[0]['variant_parent_name']
+            || String(rows[0]['name'] || '').split(' / ')[0];
+        var list = '';
+        rows.forEach(function (r) {
+            var label = r.variant_value || String(r.name || '').split(' / ').slice(1).join(' / ') || r.name;
+            var tracked = r.track_inventory === true || r.track_inventory === 'true';
+            var stock = tracked
+                ? '<small class="text-muted ml-2">' + (Number(r.available_quantity) || 0) + ' in stock</small>' : '';
+            list += '<a href="javascript:void(0);" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" ' +
+                'onclick="PosnicPro.sales.itemsMenu.pickVariant(\'' + esc(r.id) + '\');">' +
+                '<span>' + esc(label) + stock + '</span>' +
+                '<span class="price">' + currency + '&nbsp;' + (Number(r.selling_price) || 0).toFixed(2) + '</span>' +
+                '</a>';
+        });
+        $('#variant_picker_modal').remove();
+        $('body').append(
+            '<div class="modal fade close_on_esc" id="variant_picker_modal" tabindex="-1" role="dialog" aria-hidden="true">' +
+            '<div class="modal-dialog modal-sm" role="document"><div class="modal-content">' +
+            '<div class="modal-header"><h5 class="modal-title">' + esc(parent) + '</h5>' +
+            '<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>' +
+            '<div class="modal-body p-0"><div class="list-group list-group-flush">' + list + '</div></div>' +
+            '</div></div></div>'
+        );
+        $('#variant_picker_modal').modal('show');
+    },
+    pickVariant: function (item_id) {
+        $('#variant_picker_modal').modal('hide');
+        PosnicPro.sales.itemsMenu.addToLineItemsList(item_id);
     },
     addToLineItemsList: function (item_id) {
         PosnicPro.sales.itemCache.get(item_id, function (item) {
