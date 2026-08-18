@@ -1636,6 +1636,9 @@ if ($wrapper.length) {
         $('#v-pills-kiosk-tab').toggle(on('module_channels_enable') && on('module_channels_kiosk_enable'));
         $('#v-pills-recyclebin-tab').toggle(on('module_recyclebin_enable'));
         $('#v-pills-theme-tab').toggle(on('module_themes_enable'));
+        // The header and main sidebar follow the same truth at the same
+        // moment - every path that refreshes Config refreshes everywhere.
+        PosnicPro.applyModuleSidebar();
         PosnicPro.settings.coreTabsOverflow();
         $('#v-pills-tableorder-tab').toggle(PosnicPro.local.get('table_options') === 'enable');
 
