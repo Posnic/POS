@@ -1026,8 +1026,15 @@ app.get('/events', sseProtect, sseEvents);
  * Mounted here beside /events for the same reason it is: infra endpoints
  * live with their middleware, out of the generated API docs.
  */
+/*
+ * Every infra endpoint below is registered under BOTH the bare path and the
+ * /api-prefixed one, exactly like /events above: deployments differ in
+ * whether the proxy strips the /api prefix, and on the ones that keep it a
+ * bare-only registration is a live 404 (which is how webhooks, push and
+ * api-tokens shipped unreachable the first time).
+ */
 const pushInfra = require('./src/realtime/push');
-app.get('/push/key', sseProtect, async (req, res) => {
+app.get(['/push/key', '/api/push/key'], sseProtect, async (req, res) => {
   try {
     const key = req.db ? await pushInfra.getPublicKey(req.db) : null;
     if (!key) return res.status(503).json({ type: 'error', message: 'Push unavailable' });
@@ -1036,7 +1043,7 @@ app.get('/push/key', sseProtect, async (req, res) => {
     res.status(500).json({ type: 'error', message: 'Push unavailable' });
   }
 });
-app.post('/push/subscribe', sseProtect, async (req, res) => {
+app.post(['/push/subscribe', '/api/push/subscribe'], sseProtect, async (req, res) => {
   try {
     const result = req.db && req.user
       ? await pushInfra.subscribe(req.db, req.user._id, req.body && req.body.subscription)
@@ -1059,7 +1066,7 @@ const requireBranchWrite = (req, res, next) => {
   if (u && u.access && u.access.branch && u.access.branch.write === true) return next();
   return res.status(403).json({ type: 'error', message: 'Unauthorized' });
 };
-app.get('/webhooks', sseProtect, requireBranchWrite, async (req, res) => {
+app.get(['/webhooks', '/api/webhooks'], sseProtect, requireBranchWrite, async (req, res) => {
   try {
     const rows = await webhookInfra.listSubscriptions(req.db);
     res.json({
@@ -1073,7 +1080,7 @@ app.get('/webhooks', sseProtect, requireBranchWrite, async (req, res) => {
     res.status(500).json({ type: 'error', message: 'Could not list webhooks' });
   }
 });
-app.post('/webhooks', sseProtect, requireBranchWrite, async (req, res) => {
+app.post(['/webhooks', '/api/webhooks'], sseProtect, requireBranchWrite, async (req, res) => {
   try {
     const result = await webhookInfra.addSubscription(req.db, req.body || {});
     if (!result.ok) return res.status(400).json({ type: 'error', message: result.reason });
@@ -1083,7 +1090,7 @@ app.post('/webhooks', sseProtect, requireBranchWrite, async (req, res) => {
     res.status(500).json({ type: 'error', message: 'Could not register webhook' });
   }
 });
-app.delete('/webhooks/:id', sseProtect, requireBranchWrite, async (req, res) => {
+app.delete(['/webhooks/:id', '/api/webhooks/:id'], sseProtect, requireBranchWrite, async (req, res) => {
   try {
     const result = await webhookInfra.removeSubscription(req.db, req.params.id);
     res.json({ type: result.ok ? 'success' : 'error', data: null,
@@ -1098,7 +1105,7 @@ app.delete('/webhooks/:id', sseProtect, requireBranchWrite, async (req, res) => 
  * holders only: a token is a standing credential for the whole shop.
  */
 const apiTokens = require('./src/utils/api-tokens');
-app.get('/api-tokens', sseProtect, requireBranchWrite, async (req, res) => {
+app.get(['/api-tokens', '/api/api-tokens'], sseProtect, requireBranchWrite, async (req, res) => {
   try {
     const rows = await apiTokens.listTokens(req.db);
     res.json({
@@ -1112,7 +1119,7 @@ app.get('/api-tokens', sseProtect, requireBranchWrite, async (req, res) => {
     res.status(500).json({ type: 'error', message: 'Could not list tokens' });
   }
 });
-app.post('/api-tokens', sseProtect, requireBranchWrite, async (req, res) => {
+app.post(['/api-tokens', '/api/api-tokens'], sseProtect, requireBranchWrite, async (req, res) => {
   try {
     const result = await apiTokens.createToken(req.db, {
       name: req.body && req.body.name,
@@ -1129,7 +1136,7 @@ app.post('/api-tokens', sseProtect, requireBranchWrite, async (req, res) => {
     res.status(500).json({ type: 'error', message: 'Could not create token' });
   }
 });
-app.delete('/api-tokens/:id', sseProtect, requireBranchWrite, async (req, res) => {
+app.delete(['/api-tokens/:id', '/api/api-tokens/:id'], sseProtect, requireBranchWrite, async (req, res) => {
   try {
     const result = await apiTokens.revokeToken(req.db, req.params.id);
     res.json({ type: result.ok ? 'success' : 'error', data: null,
@@ -1139,7 +1146,7 @@ app.delete('/api-tokens/:id', sseProtect, requireBranchWrite, async (req, res) =
   }
 });
 
-app.get('/webhooks/deliveries', sseProtect, requireBranchWrite, async (req, res) => {
+app.get(['/webhooks/deliveries', '/api/webhooks/deliveries'], sseProtect, requireBranchWrite, async (req, res) => {
   try {
     res.json({ type: 'success', data: await webhookInfra.recentDeliveries(req.db) });
   } catch (e) {
@@ -1147,7 +1154,7 @@ app.get('/webhooks/deliveries', sseProtect, requireBranchWrite, async (req, res)
   }
 });
 
-app.post('/push/test', sseProtect, async (req, res) => {
+app.post(['/push/test', '/api/push/test'], sseProtect, async (req, res) => {
   try {
     const result = req.db && req.user
       ? await pushInfra.sendToUser(req.db, req.user._id, {
