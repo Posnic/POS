@@ -1427,12 +1427,14 @@ body {
     color: var(--theme-primary-color) !important;
 }
 
-/* Clock-in/out infobar icon (inline SVG). It inherits the primary-blue colour
-   above, which disappears on the blue hover background - so set it explicitly:
-   theme text colour at rest, white on hover. */
-#shift_clock_btn { justify-content: center; align-items: center; }
-#shift_clock_btn .shift-clock-ico { width: 20px !important; height: 20px !important; flex: 0 0 20px; margin: auto; display: block; color: var(--theme-text-primary, #495057) !important; }
-#shift_clock_btn:hover .shift-clock-ico { color: #fff !important; }
+/* Clock-in/out + shop-activity infobar icons (inline SVG). They inherit the
+   primary-blue colour above, which disappears on the blue hover background -
+   so set it explicitly: theme text colour at rest, white on hover. width:auto
+   like the theme icon, because the default .infobar-icon 60px pill read as a
+   different, wider control than its neighbours. */
+#shift_clock_btn, #bell_feed_btn { width: auto !important; min-width: 40px; justify-content: center; align-items: center; }
+#shift_clock_btn .shift-clock-ico, #bell_feed_btn .shift-clock-ico { width: 20px !important; height: 20px !important; flex: 0 0 20px; margin: auto; display: block; color: var(--theme-text-primary, #495057) !important; }
+#shift_clock_btn:hover .shift-clock-ico, #bell_feed_btn:hover .shift-clock-ico { color: #fff !important; }
 
 /* On-shift indicator: a small green dot on the clock button while the user is
    clocked in - identification without shouting. Set by shiftWidget (refresh +
@@ -1442,7 +1444,7 @@ body {
   content: '';
   position: absolute;
   top: 6px;
-  right: 14px;
+  right: 6px;
   width: 8px;
   height: 8px;
   border-radius: 50%;
@@ -2740,7 +2742,9 @@ html:not([data-theme]) .card-body {
 .infobar-settings-sidebar .infobar-settings-sidebar-body .nav-tabs.mb-3 {
     margin-bottom: 8px !important;
 }
-.infobar-settings-sidebar .infobar-settings-sidebar-body .custom-mode-setting,
+/* .custom-mode-setting deliberately carries NO padding rule anywhere - the
+   30px block padding (and the partial overrides patched on top of it) is
+   removed at the source in style.css and _custom-topbar.scss. Do not re-add. */
 .infobar-settings-sidebar .infobar-settings-sidebar-body .custom-layout-setting {
     padding-top: 6px !important;
     padding-bottom: 12px !important;
@@ -2999,9 +3003,11 @@ html:not([data-theme]) .card-body {
 
 /* Tender/payment modal: the close × sat in a position:fixed head at the top-
    LEFT, directly under the left vertical menu - so the sidebar swallowed its
-   clicks and hover (it never closed and never highlighted). Move it to the
-   top-RIGHT corner (clear of the sidebar), lift it above the modal body, and
-   make it a real circular button with a clear hover state. */
+   clicks and hover (it never closed and never highlighted). Keep it pinned
+   top-RIGHT but INSIDE the panel, and let it look like every other popup's
+   close (plain icon, no circle background - the white disc read as a foreign
+   control sitting over the panel edge). Appearance comes from the shared
+   .infobar-tender-close rule in custom.css. */
 #infobar-settings-sidebar-tender-details .infobar-settings-sidebar-head {
     display: none !important;
 }
@@ -3009,36 +3015,12 @@ html:not([data-theme]) .card-body {
     display: block !important;
     position: fixed !important;
     top: 12px !important;
-    right: 18px !important;
+    right: 8px !important;
     left: auto !important;
     width: auto !important;
     padding: 0 !important;
     z-index: 1060 !important;
-}
-/* Scope the circular styling to ONLY the × inside the head. The
-   .infobar-tender-close class is ALSO on the Cancel / New sale / Tender buttons
-   in the body - styling all of them as 40px circles collapsed those buttons. */
-#infobar-settings-sidebar-tender-details .infobar-settings-sidebar-head .infobar-tender-close {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: #ffffff;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
-    cursor: pointer;
-    transition: background 0.15s ease;
-}
-#infobar-settings-sidebar-tender-details .infobar-settings-sidebar-head .infobar-tender-close:hover {
-    background: #f9616d;
-}
-#infobar-settings-sidebar-tender-details .infobar-settings-sidebar-head .infobar-tender-close img {
-    width: 18px;
-    transition: filter 0.15s ease;
-}
-#infobar-settings-sidebar-tender-details .infobar-settings-sidebar-head .infobar-tender-close:hover img {
-    filter: brightness(0) invert(1);
+    background: transparent !important;
 }
 
 /* Default theme: crisp inputs - a clear border so fields read as distinct

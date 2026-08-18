@@ -52,6 +52,7 @@
                                                 <th>#</th>
                                                 <th><lang class="lang_registername_title">Register name</lang></th>
                                                 <th><lang class="lang_status_title">Status</lang></th>
+                                                <th class="text-right"><lang class="lang_action_title">Action</lang></th>
                                             </tr>
                                         </thead>
                                         <tbody id="register_overview_body"></tbody>
@@ -62,52 +63,31 @@
                     </div>
                 </div>
 
-                <div class="row" id="close_register_card" style="display:none;">
-                    <div class="col-lg-4 col-xl-4">
-                    </div>
-                    <div class="col-lg-4 col-xl-4" id="close_model_register">
-                        <div class="card text-white bg-dark m-b-30" style="border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
-                            <div class="card-header text-center" style="background-color: #1a1a2e; border-bottom: 2px solid #16213e;">
-                                <h4 class="mb-0" style="font-weight: 600;">
-                                    <i class="feather icon-box" style="font-size: 1.5rem; vertical-align: middle;"></i>
-                                    <lang class="lang_register_selection"> Register Selection</lang>
-                                </h4>
-                                <p class="mb-0 mt-2" style="font-size: 0.875rem; color: #b8b8b8;">
-                                    <lang class="lang_select_register_to_open">Select a register to open and start your session</lang>
-                                </p>
+                <!-- The open flow starts from a row's Open button in the table
+                     above; the only question a row cannot answer is the float. -->
+                <div class="modal fade" id="register_open_modal" tabindex="-1" role="dialog" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <lang class="lang_registeredopen">Open Register</lang>
+                                    &mdash; <span id="register_open_name"></span>
+                                </h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                             </div>
-                            <div class="card-body my-4">
-                                <div id="form_regsiter_selction">                                                                            
-                                    <div class="form-group col-md-12">
-                                        <label for="choose_register_model" class="text_white" style="font-weight: 500; margin-bottom: 0.5rem;">
-                                            <i class="feather icon-monitor"></i> <lang class="lang_choose_register">Choose Register</lang>
-                                        </label>
-                                        <!-- height:auto, because .custom-select has a FIXED height and the
-                                             0.75rem padding pushed the text half out of it - register names
-                                             rendered clipped to their top half. -->
-                                        <select id="choose_register_model" class="custom-select border-control choose_register_model" data-placedataholder="Select Register" style="width: 100%; height: auto; border: 1px solid #eae8e8; padding: 0.75rem; font-size: 1rem;">
-                                        </select>
-                                    </div>
+                            <div class="modal-body">
+                                <div class="form-group mb-0">
+                                    <label for="register_open_float"><lang class="lang_opening_float">Opening Float</lang></label>
+                                    <input type="text" class="form-control allow_decimal text-right" id="register_open_float" minlength="1" maxlength="10" value="0.00" placeholder="0.00">
                                 </div>
-
-                                <div class="form-group col-md-12">
-                                    <label for="closingopening_float" class="text_white" style="font-weight: 500; margin-bottom: 0.5rem;">
-                                        <i class="feather icon-dollar-sign"></i> <lang class="lang_opening_float">Opening Float</lang>
-                                    </label>
-                                    <input type="text" class="form-control allow_decimal text-right" id="closingopening_float" name="closingopening_float" minlength="1" maxlength="10" value="0.00" placeholder="0.00" style="padding: 0.75rem; font-size: 1rem;">
-                                    <input type="hidden" class="select-register-status" id="closeregister_status" name="register_select_status">
-                                </div>
-                                <div class="card-footer text-center" style="background-color: transparent; border-top: none; padding-top: 1rem;">
-                                    <!-- btn-primary, not btn-light: the grey read as DISABLED, on the
-                                         one button this card exists for. -->
-                                    <button type="button" class="btn btn-primary btn-lg" id="close_register_action" onclick="PosnicPro.users.cashregisterOpenForm();" style="padding: 0.75rem 2rem; font-weight: 600; border-radius: 5px; width: 100%;">
-                                        <i class="feather icon-unlock"></i> <lang class="lang_registeredopen"> Open Register</lang>
-                                    </button>
-                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal"><lang class="lang_cancel_title">Cancel</lang></button>
+                                <button type="button" class="btn btn-primary" onclick="PosnicPro.registers.confirmOpen();">
+                                    <i class="feather icon-unlock"></i> <lang class="lang_registeredopen">Open Register</lang>
+                                </button>
                             </div>
                         </div>
-                    </div>
-                    <div class="col-lg-4 col-xl-4">
                     </div>
                 </div>
 

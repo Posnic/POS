@@ -1,0 +1,67 @@
+<div class="vertical-layout page_loader" id="labourreport_new" style="display: none">
+    <!-- Start Containerbar -->
+    <div id="containerbar">
+        <!-- Start Breadcrumbbar -->
+        <div class="breadcrumbbar crumbbar_padding">
+            <div class="row align-items-center row_filter">
+                <div class="col-lg-4 col-xl-4">
+                    <h4 class="page-title break_title"><lang class="lang_labourreport_title">Labour / Payout</lang></h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Start Contentbar -->
+    <div class="contentbar">
+        <div class="row">
+            <div class="col-md-12 col-lg-12 col-xl-12 m-t-10">
+                <div class="card m-b-30">
+                    <div class="card-body">
+                        <div class="form-row align-items-end mb-3">
+                            <div class="form-group col-md-3 col-6 mb-2">
+                                <label for="labour_report_from" style="font-size:.8rem; font-weight:600;">From</label>
+                                <input type="date" class="form-control" id="labour_report_from">
+                            </div>
+                            <div class="form-group col-md-3 col-6 mb-2">
+                                <label for="labour_report_to" style="font-size:.8rem; font-weight:600;">To</label>
+                                <input type="date" class="form-control" id="labour_report_to">
+                            </div>
+                            <div class="form-group col-md-2 col-4 mb-2">
+                                <button type="button" class="btn btn-primary-rgba" id="labour_report_run"
+                                        onclick="PosnicPro.shiftWidget.runReport();">Run</button>
+                            </div>
+                            <div class="form-group col-md-4 col-8 mb-2 text-right">
+                                <button type="button" class="btn btn-outline-secondary" onclick="PosnicPro.shiftWidget.exportTimecards();">
+                                    <i class="feather icon-download mr-1"></i>Timecards CSV
+                                </button>
+                                <button type="button" class="btn btn-outline-primary" onclick="PosnicPro.shiftWidget.exportPayroll();">
+                                    <i class="feather icon-download mr-1"></i>Payroll CSV
+                                </button>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-borderless" cellspacing="0" width="100%">
+                                <thead>
+                                    <tr>
+                                        <th>Staff</th>
+                                        <th class="text-right">Shifts</th>
+                                        <th class="text-right">Sched hrs</th>
+                                        <th class="text-right">Hours</th>
+                                        <th class="text-right">Tips</th>
+                                        <th class="text-right">Wage</th>
+                                        <th class="text-right">Payout</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="labour_report_body">
+                                    <tr><td colspan="7" class="text-center text-muted">Pick a range and Run.</td></tr>
+                                </tbody>
+                                <tfoot id="labour_report_foot"></tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- End Contentbar -->
+</div>

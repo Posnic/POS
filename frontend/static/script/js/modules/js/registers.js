@@ -31,25 +31,34 @@ PosnicPro.registers = {
     renderOverview: function (data) {
         var paint = function (d) {
             var rows = (d && d.register_data) || [];
+            PosnicPro.registers._overviewRows = rows;
             $('#register_overview_branch').text(
                 PosnicPro.local.get('branchname') ? ' — ' + PosnicPro.local.get('branchname') : '');
             var html = '';
             for (var i = 0; i < rows.length; i++) {
                 var r = rows[i];
-                var status;
+                var status, action = '';
                 if (r.in_use && r.in_use_by_me) {
                     status = '<span class="badge badge-success">Open — your session</span>';
+                    // Resume covers the browser that lost its local session
+                    // record; when the session is already live here the
+                    // details below the table are the whole story.
+                    if (PosnicPro.local.get('userRegisterStatus') !== 'Open') {
+                        action = '<button type="button" class="btn btn-primary btn-sm register-open-btn" data-idx="' + i + '"><i class="feather icon-unlock"></i> Resume</button>';
+                    }
                 } else if (r.in_use) {
                     status = '<span class="badge badge-warning">Open — ' +
                         $('<span>').text(r.in_use_by || 'another till').html() + '</span>';
                 } else {
                     status = '<span class="badge badge-light">Closed</span>';
+                    action = '<button type="button" class="btn btn-primary btn-sm register-open-btn" data-idx="' + i + '"><i class="feather icon-unlock"></i> Open</button>';
                 }
                 html += '<tr><td>' + (i + 1) + '</td><td>' +
-                    $('<span>').text(r.register_name).html() + '</td><td>' + status + '</td></tr>';
+                    $('<span>').text(r.register_name).html() + '</td><td>' + status +
+                    '</td><td class="text-right">' + action + '</td></tr>';
             }
             if (!html) {
-                html = '<tr><td colspan="3" class="text-muted">No registers configured for this branch - add them in Settings &gt; Branch.</td></tr>';
+                html = '<tr><td colspan="4" class="text-muted">No registers configured for this branch - add them in Settings &gt; Branch.</td></tr>';
             }
             $('#register_overview_body').html(html);
         };
@@ -60,6 +69,53 @@ PosnicPro.registers = {
         }, function (response) {
             if (response.type === 'success') paint(response.data);
         }, function () { /* the page's other cards still render */ });
+    },
+
+    /* Row's Open/Resume button -> ask for the float -> open. */
+    promptOpen: function (idx) {
+        var r = (PosnicPro.registers._overviewRows || [])[idx];
+        if (!r) return;
+        PosnicPro.registers._openTarget = r;
+        $('#register_open_name').text(r.register_name);
+        $('#register_open_float').val('0.00');
+        $('#register_open_modal').modal('show');
+    },
+    confirmOpen: function () {
+        var r = PosnicPro.registers._openTarget;
+        if (!r) return false;
+        var params = {
+            method: 'POST',
+            url: 'registers/registerAdd',
+            data: JSON.stringify({
+                register_name: r.register_name,
+                register_Id: r.register_id,
+                opening_float: $('#register_open_float').val()
+            })
+        };
+        PosnicPro.request(params, function (response) {
+            if (response.type === 'success') {
+                $('#register_open_modal').modal('hide');
+                db.currentregister.put({id: '1', register_id: r.register_id,
+                    register_name: r.register_name, register_status: 'open'});
+                // Session locking: the server only accepts sales from the
+                // session THIS open created - set every local the sale
+                // payload reads, exactly like the login-path open does.
+                PosnicPro.local.set('cash_register_id', response.data);
+                PosnicPro.local.set('register_id', r.register_id);
+                PosnicPro.local.set('register_name', r.register_name);
+                PosnicPro.local.set('userRegisterStatus', 'Open');
+                PosnicPro.local.set('hourAlertregister', 'false');
+                PosnicPro.users.registerMenuDetails();
+                PosnicPro.registers.renderOverview();
+                PosnicPro.alert(response.type, response.message);
+            } else {
+                PosnicPro.alert(response.type, response.message);
+            }
+        }, function (xhr) {
+            var response = jQuery.parseJSON(xhr.responseText);
+            PosnicPro.alert(response.type, response.message);
+        });
+        return false;
     },
 
     showDelete: function (id) {
@@ -503,7 +559,7 @@ PosnicPro.registers = {
                     register_name: PosnicPro.local.get('register_name'), register_status: 'close'});
                 $(".cash_Intable").empty('');
                 $(".cash_Outtable").empty('');
-                $("#closingopening_float").val('0.00');
+                $("#register_open_float").val('0.00');
                 $("#register_add_payment_description").val('');
                 $("#denomination_table tbody tr").html('');
                 $("#denomTotal").html('');
@@ -513,7 +569,7 @@ PosnicPro.registers = {
                 PosnicPro.local.set('userRegisterStatus', 'Closed');
                 PosnicPro.registers.printRegisterscreen(PosnicPro.local.get('cash_register_id'));
                 $('.register_details_data').hide();
-                $('#close_register_card').show();
+                PosnicPro.registers.renderOverview();
                 $(".register_details_visibledata").css('visibility', 'hidden');
                 PosnicPro.commonDate();
                 PosnicPro.alert(response.type, response.message);
@@ -1229,6 +1285,11 @@ PosnicPro.registers.updateDenominationData = function() {
         }
     });
 };
+
+// Overview table row action -> open flow (delegated: rows repaint)
+$(document).on('click', '.register-open-btn', function () {
+    PosnicPro.registers.promptOpen(parseInt($(this).data('idx'), 10));
+});
 
 // Delete Cash In/Out functionality - API based
 $(document).on('click', '.delete-cashinout-btn', function() {

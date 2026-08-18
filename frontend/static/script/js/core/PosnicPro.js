@@ -1439,11 +1439,8 @@ PosnicPro = {
             if (!PosnicPro.shiftWidget.enabled()) { return; }
             PosnicPro.shiftWidget.refresh();
             $('#shift_card_input').val('');
-            // Only staff who can read users (managers) see the report entry point.
-            var ut = PosnicPro.local.get('usertype');
-            var canReport = ut === 'super_admin' || ut === 'admin' || ut === 'manager'
-                || PosnicPro.checkAccess('user', 'read');
-            $('#labour_report_link_wrap').toggle(!!canReport);
+            // No report entry points here - the header clock button is for
+            // clocking in and out; the report lives under Reports.
             $('#shift_tips_wrap').toggle(PosnicPro.shiftWidget._setting('staff_tips_enable', false));
             $('#roster_link_wrap').toggle(PosnicPro.shiftWidget._setting('staff_roster_enable', true));
             $('#shift_modal').modal('show');
@@ -1511,15 +1508,11 @@ PosnicPro = {
             var day = ('0' + d.getDate()).slice(-2);
             return d.getFullYear() + '-' + m + '-' + day;
         },
+        // The report is a page now (#/labourreport); kept as a redirect so
+        // any old caller still lands somewhere sensible.
         openReport: function () {
-            var to = new Date();
-            var from = new Date(to.getTime() - 30 * 24 * 60 * 60 * 1000);
-            $('#labour_report_from').val(PosnicPro.shiftWidget._fmtDate(from));
-            $('#labour_report_to').val(PosnicPro.shiftWidget._fmtDate(to));
-            $('#labour_report_body').html('<tr><td colspan="7" class="text-center text-muted">Pick a range and Run.</td></tr>');
-            $('#labour_report_foot').html('');
             $('#shift_modal').modal('hide');
-            $('#labour_report_modal').modal('show');
+            hasher.setHash('labourreport');
         },
         runReport: function () {
             var from = $('#labour_report_from').val();
@@ -4076,3 +4069,25 @@ $(function () {
         PosnicPro.shiftWidget.syncHeader();
     }
 });
+
+/* Labour / payout report page (#/labourreport) - a report page like the other
+ * reports, fed by the shiftWidget report/export functions it always used.
+ * The route table dispatches {module} -> PosnicPro.labourreport. */
+PosnicPro.labourreport = {
+    showDataTablePage: function () {
+        PosnicPro.HideSideBarModal();
+        $(".vertical-layout").removeClass("toggle-menu");
+        $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
+        $(".vertical-menu li a").removeClass("active");
+        $('.page_loader,#osk-container').hide();
+        $('.page-title-box,#labourreport_new').show();
+        $('#v-pills-report-tab,#viewlabourreport_page').addClass('active');
+        $('#v-pills-report').addClass('show active');
+        // Land with data: default to the last 30 days and run immediately.
+        var to = new Date();
+        var from = new Date(to.getTime() - 30 * 24 * 60 * 60 * 1000);
+        $('#labour_report_from').val(PosnicPro.shiftWidget._fmtDate(from));
+        $('#labour_report_to').val(PosnicPro.shiftWidget._fmtDate(to));
+        PosnicPro.shiftWidget.runReport();
+    }
+};

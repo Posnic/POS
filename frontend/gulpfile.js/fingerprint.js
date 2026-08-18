@@ -23,7 +23,10 @@ function hashDir(root, sub) {
   if (!fs.existsSync(dir)) return renames;
   for (const name of fs.readdirSync(dir)) {
     const full = path.join(dir, name);
-    if (!fs.statSync(full).isFile()) continue;
+    // The stale-sibling cleanup below deletes files that are still ahead of
+    // us in this (snapshotted) listing - statSync on one of those crashed the
+    // whole build the first time a changed bundle met its old hash on disk.
+    if (!fs.existsSync(full) || !fs.statSync(full).isFile()) continue;
     const ext = path.extname(name);
     if (!['.js', '.css'].includes(ext)) continue;
     // Already hashed (a rebuild over a dirty public/): strip the old hash so
