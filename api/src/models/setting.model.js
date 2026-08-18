@@ -619,6 +619,53 @@ class SettingModel extends BaseModel {
       const module_channels_enable = offOnly(data.module_channels_enable);
       const module_channels_kiosk_enable = offOnly(data.module_channels_kiosk_enable);
 
+      /*
+       * Two different forms save through here now: the Module On/Off tab
+       * (sends every toggle) and the merged Branch edit page (sends none of
+       * them). A toggle key ABSENT from the payload must be left untouched -
+       * writing its parse default instead silently reset Tips/PIN-lock every
+       * time the shop saved its address (a live bug the presence gate fixes).
+       */
+      const ifSent = (key, value) => (data[key] !== undefined ? { [key]: value } : {});
+
+      /*
+       * The branch being edited. The merged Branch edit page names a target
+       * (any branch of THIS license - the license filter stays in the query);
+       * absent, the session branch, exactly as before.
+       */
+      const { Types } = require('mongoose');
+      const targetBranchId =
+        data.target_branch_id && Types.ObjectId.isValid(String(data.target_branch_id))
+          ? data.target_branch_id
+          : this.branchId;
+
+      /* Registers, when the branch edit sends them. A register that already
+         exists KEEPS its register_id (matched by name) - regenerating ids
+         orphans user links and historical sessions. */
+      let registerUpdate = {};
+      if (Array.isArray(data.register)) {
+        const existingDoc = await collection.findOne(
+          { _id: this.normalizeId(targetBranchId), license: this.normalizeId(this.licenseId) },
+          { projection: { register: 1 } }
+        );
+        const existingByName = new Map(
+          ((existingDoc && existingDoc.register) || [])
+            .filter((r) => r && r.register_name)
+            .map((r) => [String(r.register_name).trim(), r.register_id])
+        );
+        const registers = [];
+        data.register.forEach((regName) => {
+          if (regName && String(regName).trim()) {
+            const name = String(regName).trim();
+            registers.push({
+              register_id: existingByName.get(name) || new Types.ObjectId(),
+              register_name: name,
+            });
+          }
+        });
+        registerUpdate = { register: registers };
+      }
+
       // Strip GMT offset from timezone (e.g., "Pacific/Niue (GMT-11:00)" -> "Pacific/Niue")
       let cleanTimezone = data.time_zone?.trim() || 'Asia/Kolkata';
       const gmtOffsetMatch = cleanTimezone.match(/^([^(]+)\s*\(GMT[^)]+\)$/);
@@ -650,40 +697,30 @@ class SettingModel extends BaseModel {
         time_zone: cleanTimezone,
         printing_address: data.printing_address?.trim() || '',
         branch_gstin_number: data.branch_gstin_number || '',
-        hardware_weight_machine_enable: hardware_weight_machine_enable,
-        till_lock_enable: till_lock_enable,
-        till_lock_idle_minutes: till_lock_idle_minutes,
-        staff_shifts_enable: staff_shifts_enable,
-        staff_tips_enable: staff_tips_enable,
-        staff_roster_enable: staff_roster_enable,
-        cash_register_enable: cash_register_enable,
-        module_tax_enable: module_tax_enable,
-        module_credit_enable: module_credit_enable,
-        module_marketing_enable: module_marketing_enable,
-        module_messaging_enable: module_messaging_enable,
-        module_channels_enable: module_channels_enable,
-        module_channels_kiosk_enable: module_channels_kiosk_enable,
-        allow_sale_date_edit: data.allow_sale_date_edit === 'false' ? 'false' : 'true',
+        ...ifSent('hardware_weight_machine_enable', hardware_weight_machine_enable),
+        ...ifSent('till_lock_enable', till_lock_enable),
+        ...ifSent('till_lock_idle_minutes', till_lock_idle_minutes),
+        ...ifSent('staff_shifts_enable', staff_shifts_enable),
+        ...ifSent('staff_tips_enable', staff_tips_enable),
+        ...ifSent('staff_roster_enable', staff_roster_enable),
+        ...ifSent('cash_register_enable', cash_register_enable),
+        ...ifSent('module_tax_enable', module_tax_enable),
+        ...ifSent('module_credit_enable', module_credit_enable),
+        ...ifSent('module_marketing_enable', module_marketing_enable),
+        ...ifSent('module_messaging_enable', module_messaging_enable),
+        ...ifSent('module_channels_enable', module_channels_enable),
+        ...ifSent('module_channels_kiosk_enable', module_channels_kiosk_enable),
+        ...ifSent('allow_sale_date_edit', data.allow_sale_date_edit === 'false' ? 'false' : 'true'),
+        ...registerUpdate,
       };
 
-      // Normalize IDs to ObjectId for database query (matching PHP line 52)
+      // License filter stays: a target outside this license matches nothing.
       const filter = {
-        _id: this.normalizeId(this.branchId),
+        _id: this.normalizeId(targetBranchId),
         license: this.normalizeId(this.licenseId),
       };
 
-      console.log('editGeneralSetting filter:', {
-        branchId: this.branchId,
-        licenseId: this.licenseId,
-        normalizedBranchId: filter._id,
-        normalizedLicenseId: filter.license,
-      });
-
       const updateResult = await collection.updateOne(filter, { $set: updateData });
-
-      console.log(
-        `General Setting Update - Branch ID: ${this.branchId}, Matched: ${updateResult.matchedCount}, Modified: ${updateResult.modifiedCount}, Value: ${data.hardware_weight_machine_enable !== undefined ? data.hardware_weight_machine_enable : 'not set'}`
-      );
 
       // Check if no document was matched
       if (updateResult.matchedCount === 0) {
@@ -726,9 +763,10 @@ class SettingModel extends BaseModel {
         module_channels_kiosk_enable: module_channels_kiosk_enable,
       };
 
-      // PHP lines 109-121: Update branch_name across all collections
+      // Update branch_name across all collections - for the branch actually
+      // edited, which is no longer always the session branch.
       const branchDetails = {
-        id: this.branchId.toString(),
+        id: String(targetBranchId),
         branch_name: data.store_name?.trim() || '',
       };
 
@@ -3525,10 +3563,17 @@ class SettingModel extends BaseModel {
       const usersCollection = await this.getCollection('users');
 
       const logoValue = data.setting_logo_value?.trim() || 'store.png';
+      // The merged Branch edit page names its target; absent, the session
+      // branch as before. License filter keeps it inside this shop.
+      const { Types } = require('mongoose');
+      const targetBranchId =
+        data.target_branch_id && Types.ObjectId.isValid(String(data.target_branch_id))
+          ? data.target_branch_id
+          : this.branchId;
 
       await collection.updateOne(
         {
-          _id: this.normalizeId(this.branchId),
+          _id: this.normalizeId(targetBranchId),
           license: this.normalizeId(this.licenseId),
         },
         { $set: { logo: logoValue } }
@@ -3536,7 +3581,7 @@ class SettingModel extends BaseModel {
 
       await usersCollection.updateMany(
         {
-          'branch_access.branch_id': this.normalizeId(this.branchId),
+          'branch_access.branch_id': this.normalizeId(targetBranchId),
           license: this.normalizeId(this.licenseId),
         },
         { $set: { 'branch_access.$.branch_image': logoValue } }

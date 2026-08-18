@@ -16,6 +16,7 @@
         "layouts/footer.html",
         "layouts/header.html",
         "layouts/sidebar.html",
+        "modules/branchEdit.html",
         "modules/branches.html",
         "modules/categories.html",
         "modules/categoryReport.html",
