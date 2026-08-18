@@ -1549,6 +1549,7 @@ if ($wrapper.length) {
                 // Config's own left menu follows the switches immediately -
                 // the feedback loop that teaches "this switch shapes my app".
                 PosnicPro.settings.applyModuleNav();
+                PosnicPro.applyModuleSidebar();
                 // Register menu follows the module toggle the same way.
                 if (!$('#cash_register_enable').is(':checked')) {
                     $('.cashRegisterModule').css('display', 'none');
