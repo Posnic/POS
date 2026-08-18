@@ -1608,6 +1608,10 @@ receivingSchema.statics.receivingInsertUpdate = async function (data, id) {
 
     // Get settings and user info
     let prefixValue = 'RID'; // Default prefix, should come from settings
+    /* The branch's real setting, not an assumption: this used to be
+       hardcoded 'gst_on', which gave every gst_off shop IGST/CGST splits
+       on its receivings. Default off - the split is the exception. */
+    let indianGstSetting = 'gst_off';
     const currentBranch = BaseModel.currentBranch;
     const currentBranchName = BaseModel.currentBranchName || '';
     const currentBranchState = BaseModel.currentBranchState || '';
@@ -1629,6 +1633,9 @@ receivingSchema.statics.receivingInsertUpdate = async function (data, id) {
           if (trimmed.length === 3) {
             prefixValue = trimmed;
           }
+        }
+        if (branchDoc && branchDoc.indian_gst === 'gst_on') {
+          indianGstSetting = 'gst_on';
         }
       } catch (e) {
         console.error('Error reading receiving_prefix from branch settings', e);
@@ -1788,9 +1795,7 @@ receivingSchema.statics.receivingInsertUpdate = async function (data, id) {
       let igstValue = 0.0;
       let csgstValue = 0.0;
 
-      // Assuming indian_gst setting - implement proper check if needed
-      const indianGst = 'gst_on'; // Should come from settings
-      if (indianGst === 'gst_on') {
+      if (indianGstSetting === 'gst_on') {
         if (data.supplier_state !== currentBranchState) {
           igstValue = parseFloat(item.gst || 0);
         } else {
