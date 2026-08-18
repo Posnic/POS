@@ -1161,6 +1161,51 @@ app.get(['/webhooks/deliveries', '/api/webhooks/deliveries'], sseProtect, requir
   }
 });
 
+/*
+ * WhatsApp connector lane (I6): the signed connector (I5) drains the
+ * outbox and mirrors its link state through these. The caller is a scoped
+ * token minted for the connector; customer:write is the scope that says
+ * "may message this shop's customers", and that is exactly what these do.
+ */
+const waOutbox = require('./src/services/whatsapp-outbox');
+const requireCustomerWrite = (req, res, next) => {
+  const a = req.user && req.user.access;
+  if (a && a.customer && a.customer.write === true) return next();
+  return res.status(403).json({ type: 'error', message: 'This token cannot message customers' });
+};
+
+app.post(['/connector/whatsapp/claim', '/api/connector/whatsapp/claim'], sseProtect, requireCustomerWrite, async (req, res) => {
+  try {
+    if (!req.db) return res.status(503).json({ type: 'error', message: 'No shop in context' });
+    const rows = await waOutbox.claim(req.db, req.user.license, { limit: (req.body || {}).limit });
+    res.json({ type: 'success', data: rows });
+  } catch (e) {
+    res.status(500).json({ type: 'error', message: 'Claim failed' });
+  }
+});
+
+app.post(['/connector/whatsapp/result', '/api/connector/whatsapp/result'], sseProtect, requireCustomerWrite, async (req, res) => {
+  try {
+    if (!req.db) return res.status(503).json({ type: 'error', message: 'No shop in context' });
+    const { id, ok, error } = req.body || {};
+    const r = await waOutbox.report(req.db, req.user.license, id, { ok: ok === true, error });
+    res.json({ type: 'success', data: r });
+  } catch (e) {
+    res.status(500).json({ type: 'error', message: 'Report failed' });
+  }
+});
+
+app.post(['/connector/whatsapp/state', '/api/connector/whatsapp/state'], sseProtect, requireCustomerWrite, async (req, res) => {
+  try {
+    if (!req.db) return res.status(503).json({ type: 'error', message: 'No shop in context' });
+    const { branch_id, device_id, status, qr } = req.body || {};
+    await waOutbox.recordState(req.db, req.user.license, { branch_id, device_id, status, qr });
+    res.json({ type: 'success' });
+  } catch (e) {
+    res.status(500).json({ type: 'error', message: 'State update failed' });
+  }
+});
+
 app.post(['/push/test', '/api/push/test'], sseProtect, async (req, res) => {
   try {
     const result = req.db && req.user

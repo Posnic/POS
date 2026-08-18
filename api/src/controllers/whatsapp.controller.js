@@ -36,6 +36,27 @@ class WhatsAppController extends BaseController {
     super();
   }
 
+  /*
+   * Whether this branch's QR-linked WhatsApp rides the signed connector
+   * (I5/I6) instead of the in-process client. When it does, the screen's
+   * init/QR/status calls are answered from the state the connector mirrors
+   * through /connector/whatsapp/state - same shapes, different engine.
+   */
+  async _connectorTransport(req, branchId) {
+    try {
+      const db = req.db;
+      if (!db || !branchId) return false;
+      const { ObjectId } = require('mongodb');
+      const q = ObjectId.isValid(String(branchId))
+        ? { branch_id: new ObjectId(String(branchId)) }
+        : { branch_id: branchId };
+      const row = await db.collection('messaging_settings').findOne(q);
+      return !!(row && row.whatsapp_transport === 'connector');
+    } catch (e) {
+      return false;
+    }
+  }
+
   /**
    * Initialize WhatsApp client and generate QR code
    */
@@ -55,6 +76,31 @@ class WhatsAppController extends BaseController {
         return res.json({
           type: 'error',
           message: 'Branch ID not found. Please ensure you are logged in.',
+        });
+      }
+
+      if (await this._connectorTransport(req, branchId)) {
+        // Ask the connector, not Chromium: record the request where the
+        // connector polls, and the QR arrives via its state mirror.
+        const outbox = require('../services/whatsapp-outbox');
+        await outbox.recordState(req.db, req.user && req.user.license, {
+          branch_id: branchId,
+          device_id,
+          status: 'init_requested',
+          qr: null,
+        });
+        try {
+          const Branch = require('../models/branch.model');
+          await Branch.updateOne(branchIdentity(req, branchId), {
+            $set: { whatsapp_device_id: device_id },
+          });
+        } catch (error) {
+          console.error('Error saving device_id:', error);
+        }
+        return res.json({
+          type: 'success',
+          message: 'Link requested - the connector will show a QR code shortly',
+          data: { connected: false, device_id, qr_code: null, qr_status: 'init_requested' },
         });
       }
 
@@ -105,6 +151,20 @@ class WhatsAppController extends BaseController {
         return res.json({
           type: 'error',
           message: 'Device ID and Branch ID are required',
+        });
+      }
+
+      if (await this._connectorTransport(req, branchId)) {
+        const outbox = require('../services/whatsapp-outbox');
+        const state = await outbox.getState(req.db, branchId);
+        const raw = state && state.qr;
+        return res.json({
+          type: 'success',
+          data: {
+            qr_code: raw ? (raw.startsWith('data:') ? raw : await qrcode.toDataURL(raw)) : null,
+            status: (state && state.status) || 'not_initialized',
+            device_id,
+          },
         });
       }
 
@@ -160,6 +220,16 @@ class WhatsAppController extends BaseController {
         return res.json({
           type: 'error',
           message: 'Device ID and Branch ID are required',
+        });
+      }
+
+      if (await this._connectorTransport(req, resolvedBranchId)) {
+        const outbox = require('../services/whatsapp-outbox');
+        const state = await outbox.getState(req.db, resolvedBranchId);
+        const s = (state && state.status) || 'not_initialized';
+        return res.json({
+          type: 'success',
+          data: { status: s, device_id, connected: s === 'connected' },
         });
       }
 
