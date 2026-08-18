@@ -292,6 +292,12 @@ PosnicPro.settings = {
             PosnicPro.settings.settingsTable();
         }
         PosnicPro.settings.coreTabsOverflow();
+        // Every Config open re-reads server truth. The controls used to be
+        // populated only at login (the DOM carried them between visits), so
+        // a change saved on another till showed stale here until re-login -
+        // and "does Module On/Off preserve the selections?" deserves a
+        // guaranteed yes, not a usually.
+        PosnicPro.settings.viewSettings(PosnicPro.local.get('branch_id_set'));
     },
     settingImageFormSubmit: function () {
         if ($('#setting_image_value').val() !== '') {
