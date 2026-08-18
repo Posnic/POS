@@ -962,6 +962,42 @@ class SettingModel extends BaseModel {
         updateFields.enable_email_reminders = enableEmailReminders;
       }
 
+      /*
+       * Workforce, till and Module On/Off switches. THIS function is what the
+       * Modules tab actually saves through - and it silently dropped every
+       * one of these keys, so "switch everything off, refresh, everything is
+       * back on" was exactly what happened: nothing was ever written, and the
+       * default-ON read filled the gaps. Presence-gated so callers that do
+       * not send a key can never reset it.
+       */
+      const offOnly = (v) => !(v === 'false' || v === false);
+      const onOnly = (v) => v === 'true' || v === true;
+      const TOGGLES = {
+        staff_shifts_enable: offOnly,
+        staff_tips_enable: onOnly,
+        staff_roster_enable: offOnly,
+        cash_register_enable: offOnly,
+        till_lock_enable: onOnly,
+        module_tax_enable: offOnly,
+        module_credit_enable: offOnly,
+        module_marketing_enable: offOnly,
+        module_messaging_enable: offOnly,
+        module_channels_enable: offOnly,
+        module_channels_kiosk_enable: offOnly,
+        module_recyclebin_enable: offOnly,
+        module_themes_enable: offOnly,
+      };
+      for (const [key, parse] of Object.entries(TOGGLES)) {
+        if (data[key] !== undefined) {
+          updateFields[key] = parse(data[key]);
+        }
+      }
+      if (data.till_lock_idle_minutes !== undefined) {
+        let idle = parseInt(data.till_lock_idle_minutes, 10);
+        if (isNaN(idle) || idle < 0) idle = 0;
+        updateFields.till_lock_idle_minutes = Math.min(idle, 120);
+      }
+
       // Update branch collection (matches PHP $set logic line 389-434)
       await branchCollection.updateOne(
         { _id: this.normalizeId(this.branchId), license: this.normalizeId(this.licenseId) },
