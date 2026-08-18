@@ -451,15 +451,11 @@
                                 <a data-module="user" data-access="read||write||delete" href="#/users" class="users"
                                     id="view_users_page">
                                     <img src="static/images/svg-icon/user.svg" class="img-fluid" alt="user">
-                                    <lang class="lang_user_title">User List</lang>
+                                    <lang class="lang_user_title">Users</lang>
                                 </a>
                             </li>
-                            <li id="rolesModule">
-                                <a data-module="user" data-access="write" href="#/roles" id="view_roles_page">
-                                    <img src="static/images/svg-icon/user.svg" class="img-fluid" alt="roles">
-                                    <lang class="lang_roles_title">User Roles</lang>
-                                </a>
-                            </li>
+                            <!-- Roles is a TAB inside Users now (user call) -
+                                 one place for people and what they may do. -->
                             <li class="cashRegisterModule">
                                 <a href="#/registers" class="cashregisters" id="view_cashRegister_page">
                                     <img src="static/images/svg-icon/cash-register.svg" class="img-fluid"
@@ -472,7 +468,7 @@
                                     class="branches" id="view_branches_page">
                                     <img src="static/images/svg-icon/agency.svg" class="img-fluid"
                                         alt="branches/outlet">
-                                    <lang class="lang_branchoutlet_title">Branch List</lang>
+                                    <lang class="lang_branchoutlet_title">Branches / Outlet</lang>
                                 </a>
                             </li>
                             <li id="expensesModule">

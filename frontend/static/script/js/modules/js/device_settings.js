@@ -1,11 +1,10 @@
 PosnicPro.device_setup = {
 
-    // Cursor Focus is a Config TAB now (#v-pills-cursorfocus); the old
-    // #/device_setup route lands on Config with that tab active.
+    // The auto-focus switches live inside Core Settings now (Sale and
+    // Receivings tabs); the old #/device_setup route lands on Config.
     showDataTablePage: function () {
         hasher.setHash('settings');
         setTimeout(function () {
-            $('#config_device_setup_link').click();
             PosnicPro.device_setup.setToggleStatesFromIndexedDB();
         }, 300);
     },
@@ -66,4 +65,11 @@ $('#device_edit_reset').click(function () {
 
 $(document).ready(function () {
    PosnicPro.device_setup.setToggleStatesFromIndexedDB();
+});
+
+// The switches sit inside Core Settings now and save IMMEDIATELY on change -
+// they are device-local (IndexedDB), so there is nothing to batch behind a
+// Save button.
+$(document).on('change', '.autofocus-switch', function () {
+    PosnicPro.device_setup.autoFocus();
 });

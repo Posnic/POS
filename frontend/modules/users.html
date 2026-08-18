@@ -3,9 +3,15 @@
     <div id="containerbar">
         <div class="breadcrumbbar crumbbar_padding">
             <div class="row align-items-center row_filter">
-                <div class="col-lg-2 col-xl-2">
-                    <h4 class="page-title"> <lang class="lang_user_title">User List </lang></h4>
-                </div>               
+                <div class="col-lg-4 col-xl-4 d-flex align-items-center">
+                    <h4 class="page-title mb-0 mr-3"> <lang class="lang_user_title">Users</lang></h4>
+                    <!-- Users and Roles are one place now: two tabs, one subject -
+                         the people and what they may do. -->
+                    <ul class="nav nav-pills users-roles-tabs">
+                        <li class="nav-item"><a class="nav-link active py-1 px-3" href="#/users"><lang class="lang_user_title">Users</lang></a></li>
+                        <li class="nav-item"><a class="nav-link py-1 px-3" data-module="user" data-access="write" href="#/roles"><lang class="lang_roles_title">Roles</lang></a></li>
+                    </ul>
+                </div>
                 <div class="col-md-8 col-lg-8 show-button-action"></div>                  
                 <div class="col-lg-3 col-xl-2 hide-button-action tb_filter" style="display:none;">
                     <div id="view_users_daterange" class="form-control pull-right daterange-timepicker-all daterange-style date-align">

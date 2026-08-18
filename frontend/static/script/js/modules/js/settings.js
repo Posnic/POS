@@ -291,6 +291,7 @@ PosnicPro.settings = {
         if ($('a#v-pills-recyclebin-tab').hasClass('active')) {
             PosnicPro.settings.settingsTable();
         }
+        PosnicPro.settings.coreTabsOverflow();
     },
     settingImageFormSubmit: function () {
         if ($('#setting_image_value').val() !== '') {
@@ -406,7 +407,8 @@ PosnicPro.settings = {
                         module_messaging_enable: response.data['module_messaging_enable'] !== false,
                         module_channels_enable: response.data['module_channels_enable'] !== false,
                         module_channels_kiosk_enable: response.data['module_channels_kiosk_enable'] !== false,
-                        module_recyclebin_enable: response.data['module_recyclebin_enable'] !== false
+                        module_recyclebin_enable: response.data['module_recyclebin_enable'] !== false,
+                        module_themes_enable: response.data['module_themes_enable'] !== false
                     };
                     PosnicPro.local.set('general_settings', JSON.stringify(generalSettings));
                     PosnicPro.shiftWidget.applyEnabled();
@@ -641,6 +643,7 @@ PosnicPro.settings = {
                 $('#module_channels_enable').prop('checked', data.module_channels_enable !== false);
                 $('#module_channels_kiosk_enable').prop('checked', data.module_channels_kiosk_enable !== false);
                 $('#module_recyclebin_enable').prop('checked', data.module_recyclebin_enable !== false);
+                $('#module_themes_enable').prop('checked', data.module_themes_enable !== false);
 
                 // Store general settings including hardware_weight_machine_enable
                 var generalSettings = {
@@ -657,7 +660,8 @@ PosnicPro.settings = {
                     module_messaging_enable: data.module_messaging_enable !== false,
                     module_channels_enable: data.module_channels_enable !== false,
                     module_channels_kiosk_enable: data.module_channels_kiosk_enable !== false,
-                    module_recyclebin_enable: data.module_recyclebin_enable !== false
+                    module_recyclebin_enable: data.module_recyclebin_enable !== false,
+                    module_themes_enable: data.module_themes_enable !== false
                 };
                 PosnicPro.local.set('general_settings', JSON.stringify(generalSettings));
                 PosnicPro.shiftWidget.applyEnabled();
@@ -1432,6 +1436,7 @@ if ($wrapper.length) {
                 module_channels_enable: $('#module_channels_enable').is(':checked') ? 'true' : 'false',
                 module_channels_kiosk_enable: $('#module_channels_kiosk_enable').is(':checked') ? 'true' : 'false',
                 module_recyclebin_enable: $('#module_recyclebin_enable').is(':checked') ? 'true' : 'false',
+                module_themes_enable: $('#module_themes_enable').is(':checked') ? 'true' : 'false',
             })
         };
         PosnicPro.put(params, function (response) {
@@ -1535,7 +1540,8 @@ if ($wrapper.length) {
                     module_messaging_enable: $('#module_messaging_enable').is(':checked'),
                     module_channels_enable: $('#module_channels_enable').is(':checked'),
                     module_channels_kiosk_enable: $('#module_channels_kiosk_enable').is(':checked'),
-                    module_recyclebin_enable: $('#module_recyclebin_enable').is(':checked')
+                    module_recyclebin_enable: $('#module_recyclebin_enable').is(':checked'),
+                    module_themes_enable: $('#module_themes_enable').is(':checked')
                 };
                 PosnicPro.local.set('general_settings', JSON.stringify(generalSettings));
                 // Show or hide the header clock button to match, right away.
@@ -1568,6 +1574,37 @@ if ($wrapper.length) {
      * nothing visible under it hides too (an empty RESTAURANT header was
      * exactly the clutter the module system exists to remove).
      */
+    /*
+     * Core Settings tabs: the ones that do not fit the card width fold into
+     * the More dropdown on the right. Re-run on show and resize; items are
+     * restored first so the measurement is honest.
+     */
+    coreTabsOverflow: function () {
+        var bar = $('#core_settings_tabs');
+        if (!bar.length || !bar.is(':visible')) { return; }
+        var more = bar.find('.core-tabs-more');
+        var menu = more.find('.core-tabs-more-menu').empty();
+        var items = bar.children('.nav-item').not(more);
+        items.removeClass('d-none');
+        more.addClass('d-none');
+        var avail = bar.width() - 90; // room for the More toggle
+        var used = 0;
+        var overflowed = [];
+        items.each(function () {
+            used += $(this).outerWidth(true);
+            if (used > avail) { overflowed.push(this); }
+        });
+        if (!overflowed.length) { return; }
+        more.removeClass('d-none');
+        $.each(overflowed, function (i, li) {
+            var $a = $(li).children('a');
+            $(li).addClass('d-none');
+            $('<a class="dropdown-item" href="javascript:void(0)"></a>')
+                .text($a.text().trim())
+                .on('click', function () { $a.tab('show'); })
+                .appendTo(menu);
+        });
+    },
     /* ON cards vivid, OFF cards greyed - the state must read before the
        labels do. Driven by each card's main switch. */
     refreshModuleCards: function () {
@@ -1591,6 +1628,8 @@ if ($wrapper.length) {
         $('#v-pills-messaging-tab, #v-pills-whatsapp-tab, #v-pills-email-tab').toggle(on('module_messaging_enable'));
         $('#v-pills-kiosk-tab').toggle(on('module_channels_enable') && on('module_channels_kiosk_enable'));
         $('#v-pills-recyclebin-tab').toggle(on('module_recyclebin_enable'));
+        $('#v-pills-theme-tab').toggle(on('module_themes_enable'));
+        PosnicPro.settings.coreTabsOverflow();
         $('#v-pills-tableorder-tab').toggle(PosnicPro.local.get('table_options') === 'enable');
 
         $('#v-pills-tab .settings-nav-group').each(function () {
@@ -4449,3 +4488,12 @@ $('#kiosk_payment_form').on('submit', function (e) {
 $(document).on('change', '#v-pills-modules .module-card-head input.custom-control-input', function () {
     PosnicPro.settings.refreshModuleCards();
 });
+
+// Core Settings tabs refold on resize (debounced - resize storms are real).
+(function () {
+    var t = null;
+    $(window).on('resize', function () {
+        clearTimeout(t);
+        t = setTimeout(function () { PosnicPro.settings.coreTabsOverflow(); }, 150);
+    });
+})();
