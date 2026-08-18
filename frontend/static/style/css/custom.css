@@ -2451,7 +2451,15 @@ input:checked + .slider:before {
  * Lives INSIDE the one notification bell's dropdown; the dot marks unseen
  * activity beside the numeric low-stock count.
  */
-#notoficationlink { position: relative; }
+/* The bell matches its neighbour icons (theme etc.): compact, never the wide
+   60px pill. The dropdown takes the old activity panel's width - Bootstrap's
+   default min-width wrapped every line of it. */
+#notoficationlink { position: relative; width: auto !important; min-width: 40px; justify-content: center; align-items: center; }
+#dropdown-notification .dropdown-menu {
+    width: min(340px, 92vw);
+    max-height: 70vh;
+    overflow-y: auto;
+}
 #bell_feed_badge {
     position: absolute;
     top: 2px;
