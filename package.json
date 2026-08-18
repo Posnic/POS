@@ -75,6 +75,7 @@
       "asset-updater.js",
       "asset-channel.js",
       "agent-update-apply.js",
+      "connector-runtime.js",
       "window-chrome.js",
       "window-theme.js",
       "window-theme.css",

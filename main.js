@@ -530,6 +530,7 @@ let hardwareWindow;
 let backupWindow;
 let mongoDBManager;
 let syncAgentManager = null;
+let connectorSupervisor = null;
 let pendingSecondInstanceFocus = false;
 let shutdownInProgress = false;
 /*
@@ -796,6 +797,12 @@ function shutdownSteps() {
       says:  'Stopping the sync agent...',
       ms:    SHUTDOWN_TIMEOUTS.backupScheduler,
       run:   () => { if (syncAgentManager) syncAgentManager.stop(); },
+    },
+    {
+      label: 'Connectors',
+      says:  'Stopping connectors...',
+      ms:    SHUTDOWN_TIMEOUTS.backupScheduler,
+      run:   () => { if (connectorSupervisor) connectorSupervisor.stopAll(); },
     },
     {
       label: 'API server',
@@ -4555,6 +4562,39 @@ function startServer() {
         );
       } catch (syncErr) {
         console.warn('[SyncAgent] failed to start:', syncErr.message);
+      }
+
+      /*
+       * Connector runtime (I5): signed sidecar integrations. Inert until a
+       * connector is installed AND the shop enabled it - which today is
+       * nobody; the runtime ships ahead of its first connector so the
+       * trust chain is proven before anything rides it.
+       */
+      try {
+        const { ConnectorSupervisor } = require('./connector-runtime');
+        const resourcesRoot = app.isPackaged ? process.resourcesPath : __dirname;
+        const connectorKeyFile = path.join(resourcesRoot, 'asset-signing-key.pub');
+        connectorSupervisor = new ConnectorSupervisor({
+          root: path.join(app.getPath('userData'), 'connector-runtime'),
+          publicKey: fs.existsSync(connectorKeyFile)
+            ? fs.readFileSync(connectorKeyFile, 'utf8')
+            : null,
+          apiPort: () => apiPort(),
+          appVersion: app.getVersion(),
+          log: (m) => console.log(m),
+        });
+        const sevenZip = path.join(
+          resourcesRoot, 'tools', process.platform === 'win32' ? '7za.exe' : '7za'
+        );
+        const { extractZip, loadTree } = require('./asset-channel');
+        const adopt = fs.existsSync(sevenZip)
+          ? { extract: (zip, dest) => extractZip(sevenZip, zip, dest), loadTree: (d) => loadTree(d, d) }
+          : {};
+        Promise.resolve(connectorSupervisor.startAll(adopt)).catch((e) =>
+          console.warn('[connectors] failed to start:', e.message)
+        );
+      } catch (connErr) {
+        console.warn('[connectors] runtime unavailable:', connErr.message);
       }
       // Pick up a changed logo or name without needing a reinstall. Hourly is
       // plenty: branding is not something a shop changes mid-shift.
