@@ -721,6 +721,56 @@
     _lineModifiers: {},
     _modifierDefs: null,
     _modifierDefsAt: 0,
+    /*
+     * Price lists (V4): the selected customer's category prices newly
+     * added lines - a per-item override wins, else the percentage rule,
+     * else the normal selling price. Applied ONCE per line at add time,
+     * before the modifier picker so deltas ride the list price. Changing
+     * the customer mid-sale does not reprice lines already on the sale
+     * (documented default - re-add the line to reprice it).
+     */
+    _customerCategoryId: '',
+    _priceLists: null,
+    _priceListsAt: 0,
+    _loadPriceLists: function () {
+        if (PosnicPro.sales._priceLists && (Date.now() - PosnicPro.sales._priceListsAt) < 60000) { return; }
+        PosnicPro.get({ url: 'setting/priceLists', data: {} }, function (r) {
+            PosnicPro.sales._priceLists = (r && r.data) || [];
+            PosnicPro.sales._priceListsAt = Date.now();
+        }, function () { PosnicPro.sales._priceLists = []; });
+    },
+    _applyPriceList: function (params) {
+        if (params._priceListApplied) { return params; }
+        params._priceListApplied = true;
+        var catId = PosnicPro.sales._customerCategoryId;
+        var lists = PosnicPro.sales._priceLists;
+        if (!catId || !lists || !lists.length) { return params; }
+        var list = null;
+        for (var i = 0; i < lists.length; i++) {
+            if (String(lists[i].customer_category_id) === String(catId)) { list = lists[i]; break; }
+        }
+        if (!list) { return params; }
+        var itemId = String(params.id ? params.id : params.item_id);
+        var override = null;
+        (list.item_overrides || []).forEach(function (o) {
+            if (String(o.item_id) === itemId) { override = o; }
+        });
+        var oldPrice = Number(params.selling_price) || 0;
+        var newPrice = oldPrice;
+        if (override) {
+            newPrice = Number(override.price);
+        } else if (list.percent_off) {
+            newPrice = oldPrice * (1 - Number(list.percent_off) / 100);
+            newPrice = Math.round(newPrice * 100) / 100;
+        }
+        if (Number.isFinite(newPrice) && newPrice >= 0 && newPrice !== oldPrice) {
+            // Both fields move together, same rule as modifiers: inclusive
+            // de-grossing and discount math downstream read either.
+            params.selling_price = newPrice;
+            params.mrp_price = newPrice;
+        }
+        return params;
+    },
     _loadModifierDefs: function (cb) {
         if (PosnicPro.sales._modifierDefs && (Date.now() - PosnicPro.sales._modifierDefsAt) < 60000) {
             cb(PosnicPro.sales._modifierDefs);
@@ -816,6 +866,11 @@
         });
     },
     addSalesLineItems: function (params) {
+        // Price list first, so modifier deltas ride the customer's price.
+        if (PosnicPro.sales.SaleAction !== 'return'
+            && PosnicPro.sales.searchItem(params.id ? params.id : params.item_id) === false) {
+            params = PosnicPro.sales._applyPriceList(params);
+        }
         if (!params._modifiersResolved
             && PosnicPro.local.get('table_options') === 'enable'
             && Array.isArray(params.modifier_group_ids) && params.modifier_group_ids.length
@@ -5982,8 +6037,10 @@ PosnicPro.sales.calculation = {
 // Initialize fields for a brand new sale (/sales/new)
 PosnicPro.sales.setSaleDefaults = function () {
 
-    // A fresh sale carries no picked modifiers.
+    // A fresh sale carries no picked modifiers and no customer pricing.
     PosnicPro.sales._lineModifiers = {};
+    PosnicPro.sales._customerCategoryId = '';
+    PosnicPro.sales._loadPriceLists();
 
     // Tip line at tender: only for shops that switched tips on in Settings.
     $('.sale-tip-row').toggle(
@@ -7520,6 +7577,17 @@ $('#sales_new_customer_name').on('keydown.autocomplete', function () {
                 $('#sales_new_customer_gst_number').val(suggestion.data.gst_number);
                 $('#sales_new_customer_partial_balance').val(suggestion.data.partial_balance);
                 $('#customer_current_balance').val(suggestion.data.balance);
+                // Price lists (V4): remember this customer's category so
+                // newly added lines price from their list. Falls back to a
+                // fetch when the suggestion payload lacks the category.
+                PosnicPro.sales._customerCategoryId = String(suggestion.data.category_id || '');
+                if (!PosnicPro.sales._customerCategoryId && suggestion.data.id) {
+                    PosnicPro.get('customers/' + suggestion.data.id, function (r) {
+                        if (r && r.data) {
+                            PosnicPro.sales._customerCategoryId = String(r.data.category_id || '');
+                        }
+                    }, function () { /* no category, no list */ });
+                }
                 customerRecord.push({ name: suggestion.data.name, phone: suggestion.data.phone, email: suggestion.data.email, address: suggestion.data.address });
                 db.customerDisplay.put({ id: '1', clear: 'no', 'get': 'no', customer: customerRecord });
                 PosnicPro.sales.calculation.salesTableRowCart();
