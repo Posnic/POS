@@ -457,173 +457,111 @@
                             aria-labelledby="v-pills-modules-tab">
                             <div class="card m-b-30">
                                 <div class="card-header">
-                                    <h5 class="card-title mb-0">
-                                        <lang class="lang_modules_workforce">Workforce &mdash; staff, shifts and till</lang>
-                                    </h5>
+                                    <h5 class="card-title mb-0"><lang class="lang_modules">Module On/Off</lang></h5>
+                                    <small class="text-muted"><lang class="lang_modules_hint">A module that is off disappears from the menus. Nothing is deleted - switch it back on and everything returns.</lang></small>
                                 </div>
-                                <div class="card-body">
-                                    <!--
-                                        Shop-wide: staff clock in/out, the labour /
-                                        payout report and payroll exports all hang off
-                                        this. Off hides the header clock button.
-                                    -->
-                                    <div class="form-row">
-                                        <div class="form-group col-md-6">
-                                            <label for="staff_shifts_enable">
-                                                <lang class="lang_staffshifts_title">Staff clock-in / attendance</lang>
-                                            </label>
-                                            <select name="staff_shifts_enable" id="staff_shifts_enable"
-                                                class="form-control border-control">
-                                                <option value="false">Disable</option>
-                                                <option value="true" selected>Enable</option>
-                                            </select>
-                                            <small class="text-muted">Staff clock in and out from the
-                                                clock button in the header; managers get the labour /
-                                                payout report and payroll exports there too.</small>
-                                        </div>
-                                        <div class="form-group col-md-3">
-                                            <label for="staff_tips_enable">
-                                                <lang class="lang_stafftips_title">Tips at clock-out</lang>
-                                            </label>
-                                            <select name="staff_tips_enable" id="staff_tips_enable"
-                                                class="form-control border-control">
-                                                <option value="false" selected>Disable</option>
-                                                <option value="true">Enable</option>
-                                            </select>
-                                            <small class="text-muted">Staff declare cash tips when
-                                                clocking out; a Tip line appears at tender. For
-                                                restaurants / caf&eacute;s.</small>
-                                        </div>
-                                        <div class="form-group col-md-3">
-                                            <label for="staff_roster_enable">
-                                                <lang class="lang_staffroster_title">Roster / scheduling</lang>
-                                            </label>
-                                            <select name="staff_roster_enable" id="staff_roster_enable"
-                                                class="form-control border-control">
-                                                <option value="false">Disable</option>
-                                                <option value="true" selected>Enable</option>
-                                            </select>
-                                            <small class="text-muted">Managers plan staff days; the
-                                                labour report shows scheduled vs worked.</small>
-                                        </div>
-                                    </div>
-                                    <!--
-                                        Cash register sessions are OPTIONAL. A grocery
-                                        counter that just sells must never be blocked by
-                                        register ceremony it does not use: off means no
-                                        selection at login, no gate before a sale, no
-                                        register menu. On is the default - shops already
-                                        using registers feel nothing.
-                                    -->
-                                    <div class="form-row">
-                                        <div class="form-group col-md-6">
-                                            <label for="cash_register_enable">
-                                                <lang class="lang_cashregister_enable">Cash register (till sessions)</lang>
-                                            </label>
-                                            <select name="cash_register_enable" id="cash_register_enable"
-                                                class="form-control border-control">
-                                                <option value="false">Disable</option>
-                                                <option value="true" selected>Enable</option>
-                                            </select>
-                                            <small class="text-muted">Off: sales work without opening a
-                                                register - no selection at login, no gate on the sale
-                                                screen. On: sessions, floats and the register reports.</small>
-                                        </div>
-                                    </div>
-                                    <!--
-                                        Shop-wide on purpose: a shop that wants
-                                        its tills locked wants all of them
-                                        locked, and the one that opted out
-                                        would be the one left open.
-                                    -->
-                                    <div class="form-row">
-                                        <div class="form-group col-md-6">
-                                            <label for="till_lock_enable">
-                                                <lang class="lang_tilllock_title">Lock till with a PIN</lang>
-                                            </label>
-                                            <select name="till_lock_enable" id="till_lock_enable"
-                                                class="form-control border-control">
-                                                <option value="false">Disable</option>
-                                                <option value="true">Enable</option>
-                                            </select>
-                                            <small class="text-muted">Staff unlock with a 4-digit PIN
-                                                instead of typing their password. A deliberate logout
-                                                still needs the password.</small>
-                                        </div>
-                                        <div class="form-group col-md-6">
-                                            <label for="till_lock_idle_minutes">
-                                                <lang class="lang_tilllockidle_title">Lock when idle</lang>
-                                            </label>
-                                            <select name="till_lock_idle_minutes" id="till_lock_idle_minutes"
-                                                class="form-control border-control">
-                                                <option value="0">Only when asked</option>
-                                                <option value="2">After 2 minutes</option>
-                                                <option value="5">After 5 minutes</option>
-                                                <option value="10">After 10 minutes</option>
-                                                <option value="30">After 30 minutes</option>
-                                            </select>
-                                            <small class="text-muted">An unattended till is an open
-                                                till. Ctrl+L locks it at any time.</small>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                                <div class="card-body module-onoff">
 
-                            <div class="card m-b-30" data-module="plan" data-access="read">
-                                <div class="card-header">
-                                    <h5 class="card-title mb-0">
-                                        <lang class="lang_modules_restaurant">Restaurant &mdash; tables and kitchen (KOT)</lang>
-                                    </h5>
-                                </div>
-                                <div class="card-body">
-                                    <div class="custom-control custom-switch">
-                                        <input type="checkbox" class="custom-control-input" id="table_options"
-                                            name="table_options" />
-                                        <label class="custom-control-label" for="table_options">
-                                            Enable Restaurant / KOT mode (table orders)
-                                        </label>
-                                    </div>
-                                    <small class="form-text text-muted">Turn this on to take dine-in orders by
-                                        table and send KOTs to the kitchen.
-                                        <a href="javascript:void(0)" onclick="$('#v-pills-tableorder-tab').click();">
-                                            <lang class="lang_modules_managetables">Manage tables</lang></a>
-                                    </small>
-                                </div>
-                            </div>
-
-                            <div class="card m-b-30">
-                                <div class="card-header">
-                                    <h5 class="card-title mb-0">
-                                        <lang class="lang_modules_hardware">Hardware &mdash; weighing scale</lang>
-                                    </h5>
-                                </div>
-                                <div class="card-body">
-                                    <div class="form-row">
-                                        <div class="form-group col-md-6">
-                                            <label for="hardware_weight_machine_enable">
-                                                <lang class="lang_weightmachine_title">Enable Weight Machine</lang>
-                                            </label>
-                                            <select name="hardware_weight_machine_enable"
-                                                id="hardware_weight_machine_enable"
-                                                class="form-control border-control">
-                                                <option value="false">Disable</option>
-                                                <option value="true">Enable</option>
-                                            </select>
-                                            <small class="text-muted">Requires hardware manager
-                                                configuration</small>
+                                    <div class="module-row">
+                                        <div class="custom-control custom-switch">
+                                            <input type="checkbox" class="custom-control-input" id="staff_shifts_enable" name="staff_shifts_enable">
+                                            <label class="custom-control-label" for="staff_shifts_enable"><lang class="lang_staffshifts_title">Workforce</lang></label>
+                                        </div>
+                                        <small class="form-text text-muted">Staff clock in/out from the header clock; labour report and payroll exports.</small>
+                                        <div class="module-subs">
+                                            <div class="custom-control custom-switch">
+                                                <input type="checkbox" class="custom-control-input" id="staff_tips_enable" name="staff_tips_enable">
+                                                <label class="custom-control-label" for="staff_tips_enable"><lang class="lang_stafftips_title">Tips at clock-out</lang></label>
+                                            </div>
+                                            <div class="custom-control custom-switch">
+                                                <input type="checkbox" class="custom-control-input" id="staff_roster_enable" name="staff_roster_enable">
+                                                <label class="custom-control-label" for="staff_roster_enable"><lang class="lang_staffroster_title">Roster / scheduling</lang></label>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
 
-                            <div class="card m-b-30">
+                                    <div class="module-row">
+                                        <div class="custom-control custom-switch">
+                                            <input type="checkbox" class="custom-control-input" id="cash_register_enable" name="cash_register_enable">
+                                            <label class="custom-control-label" for="cash_register_enable"><lang class="lang_cashregister_enable">Cash Register (till sessions)</lang></label>
+                                        </div>
+                                        <small class="form-text text-muted">Off: sales work without opening a register - no selection at login, no gate on the sale screen.</small>
+                                    </div>
+
+                                    <div class="module-row">
+                                        <div class="custom-control custom-switch">
+                                            <input type="checkbox" class="custom-control-input" id="till_lock_enable" name="till_lock_enable">
+                                            <label class="custom-control-label" for="till_lock_enable"><lang class="lang_tilllock_title">Till PIN lock</lang></label>
+                                        </div>
+                                        <small class="form-text text-muted">Staff unlock with a 4-digit PIN. The idle timer lives in General Settings.</small>
+                                    </div>
+
+                                    <div class="module-row" data-module="plan" data-access="read">
+                                        <div class="custom-control custom-switch">
+                                            <input type="checkbox" class="custom-control-input" id="table_options" name="table_options">
+                                            <label class="custom-control-label" for="table_options"><lang class="lang_modules_restaurant">Restaurant (tables &amp; kitchen)</lang></label>
+                                        </div>
+                                        <small class="form-text text-muted">Dine-in orders by table, KOTs to the kitchen. On shows the Restaurant section here in Config.
+                                            <a href="javascript:void(0)" onclick="$('#v-pills-tableorder-tab').click();"><lang class="lang_modules_managetables">Manage tables</lang></a>
+                                        </small>
+                                    </div>
+
+                                    <div class="module-row">
+                                        <div class="custom-control custom-switch">
+                                            <input type="checkbox" class="custom-control-input" id="module_tax_enable" name="module_tax_enable">
+                                            <label class="custom-control-label" for="module_tax_enable"><lang class="lang_module_tax">Tax</lang></label>
+                                        </div>
+                                        <small class="form-text text-muted">Tax Rates and Tax Groups. Off hides both sections; saved taxes keep.</small>
+                                    </div>
+
+                                    <div class="module-row">
+                                        <div class="custom-control custom-switch">
+                                            <input type="checkbox" class="custom-control-input" id="module_credit_enable" name="module_credit_enable">
+                                            <label class="custom-control-label" for="module_credit_enable"><lang class="lang_module_credit">Customer Credit</lang></label>
+                                        </div>
+                                        <small class="form-text text-muted">Credit limits and payment reminders.</small>
+                                    </div>
+
+                                    <div class="module-row">
+                                        <div class="custom-control custom-switch">
+                                            <input type="checkbox" class="custom-control-input" id="module_marketing_enable" name="module_marketing_enable">
+                                            <label class="custom-control-label" for="module_marketing_enable"><lang class="lang_module_marketing">Customer Marketing</lang></label>
+                                        </div>
+                                        <small class="form-text text-muted">Loyalty &amp; rewards, coupons, cashback and campaigns.</small>
+                                    </div>
+
+                                    <div class="module-row">
+                                        <div class="custom-control custom-switch">
+                                            <input type="checkbox" class="custom-control-input" id="module_messaging_enable" name="module_messaging_enable">
+                                            <label class="custom-control-label" for="module_messaging_enable"><lang class="lang_module_messaging">Messaging</lang></label>
+                                        </div>
+                                        <small class="form-text text-muted">SMS, WhatsApp and email providers and sends.</small>
+                                    </div>
+
+                                    <div class="module-row">
+                                        <div class="custom-control custom-switch">
+                                            <input type="checkbox" class="custom-control-input" id="module_channels_enable" name="module_channels_enable">
+                                            <label class="custom-control-label" for="module_channels_enable"><lang class="lang_module_channels">Sales Channels</lang></label>
+                                        </div>
+                                        <small class="form-text text-muted">Where the shop sells beyond the counter. Online sales, QR ordering and partner channels arrive here.</small>
+                                        <div class="module-subs">
+                                            <div class="custom-control custom-switch">
+                                                <input type="checkbox" class="custom-control-input" id="module_channels_kiosk_enable" name="module_channels_kiosk_enable">
+                                                <label class="custom-control-label" for="module_channels_kiosk_enable"><lang class="lang_module_kiosk">Kiosk</lang></label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="module-row">
+                                        <div class="custom-control custom-switch">
+                                            <input type="checkbox" class="custom-control-input" id="hardware_weight_machine_enable" name="hardware_weight_machine_enable">
+                                            <label class="custom-control-label" for="hardware_weight_machine_enable"><lang class="lang_weightmachine_title">Weighing scale</lang></label>
+                                        </div>
+                                        <small class="form-text text-muted">Requires hardware manager configuration on the till.</small>
+                                    </div>
+
+                                </div>
                                 <div class="card-footer text-right">
-                                    <!--
-                                        Saves through the same updateCommonSetting the
-                                        General form uses - it collects every control
-                                        above by id and refreshes the cached settings
-                                        and menu visibility on success.
-                                    -->
                                     <button type="button" class="btn btn-outline-primary"
                                         onclick="PosnicPro.settings.updateCommonSetting();"><i
                                             class="feather icon-save mr-2"></i>
@@ -2781,6 +2719,23 @@
                                                         </div>
                                                         <small class="form-text text-muted">Off = date fixed to now on
                                                             New Sale (no backdating).</small>
+                                                    </div>
+                                                    <!-- Moved from the Modules tab: Module On/Off holds
+                                                         toggles only; this is till-lock CONFIGURATION. -->
+                                                    <div class="form-group col-md-6">
+                                                        <label for="till_lock_idle_minutes">
+                                                            <lang class="lang_tilllockidle_title">Lock when idle</lang>
+                                                        </label>
+                                                        <select name="till_lock_idle_minutes" id="till_lock_idle_minutes"
+                                                            class="form-control border-control">
+                                                            <option value="0">Only when asked</option>
+                                                            <option value="2">After 2 minutes</option>
+                                                            <option value="5">After 5 minutes</option>
+                                                            <option value="10">After 10 minutes</option>
+                                                            <option value="30">After 30 minutes</option>
+                                                        </select>
+                                                        <small class="form-text text-muted">Needs the Till PIN lock
+                                                            module on. Ctrl+L locks at any time.</small>
                                                     </div>
                                                 </div>
 

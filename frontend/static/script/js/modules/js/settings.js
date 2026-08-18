@@ -382,7 +382,13 @@ PosnicPro.settings = {
                         staff_shifts_enable: response.data['staff_shifts_enable'] !== false,
                         staff_tips_enable: response.data['staff_tips_enable'] === true,
                         staff_roster_enable: response.data['staff_roster_enable'] !== false,
-                        cash_register_enable: response.data['cash_register_enable'] !== false
+                        cash_register_enable: response.data['cash_register_enable'] !== false,
+                        module_tax_enable: response.data['module_tax_enable'] !== false,
+                        module_credit_enable: response.data['module_credit_enable'] !== false,
+                        module_marketing_enable: response.data['module_marketing_enable'] !== false,
+                        module_messaging_enable: response.data['module_messaging_enable'] !== false,
+                        module_channels_enable: response.data['module_channels_enable'] !== false,
+                        module_channels_kiosk_enable: response.data['module_channels_kiosk_enable'] !== false
                     };
                     PosnicPro.local.set('general_settings', JSON.stringify(generalSettings));
                     PosnicPro.shiftWidget.applyEnabled();
@@ -595,24 +601,22 @@ PosnicPro.settings = {
                 $("#print_character option[value='" + print_character + "']").prop("selected", true);
                 PosnicPro.local.set('printing_max_char', print_character);
                 
-                // Set hardware weight machine enable dropdown
-                if (data.hardware_weight_machine_enable === true) {
-                    $('#hardware_weight_machine_enable').val('true');
-                } else {
-                    $('#hardware_weight_machine_enable').val('false');
-                }
-
-                // The PIN lock, which is a shop-wide choice rather than a
-                // per-machine one.
-                $('#till_lock_enable').val(data.till_lock_enable === true ? 'true' : 'false');
+                // Module On/Off switches (checkboxes since the toggles-only
+                // rebuild). ON unless explicitly false, except tips (opt-in)
+                // and the hardware/PIN switches which shipped off.
+                $('#hardware_weight_machine_enable').prop('checked', data.hardware_weight_machine_enable === true);
+                $('#till_lock_enable').prop('checked', data.till_lock_enable === true);
                 $('#till_lock_idle_minutes').val(String(data.till_lock_idle_minutes || 0));
-
-                // Staff clock-in: on unless the shop explicitly disabled it.
-                // Tips are opt-in (hospitality); roster is on unless disabled.
-                $('#staff_shifts_enable').val(data.staff_shifts_enable === false ? 'false' : 'true');
-                $('#staff_tips_enable').val(data.staff_tips_enable === true ? 'true' : 'false');
-                $('#staff_roster_enable').val(data.staff_roster_enable === false ? 'false' : 'true');
-                $('#cash_register_enable').val(data.cash_register_enable === false ? 'false' : 'true');
+                $('#staff_shifts_enable').prop('checked', data.staff_shifts_enable !== false);
+                $('#staff_tips_enable').prop('checked', data.staff_tips_enable === true);
+                $('#staff_roster_enable').prop('checked', data.staff_roster_enable !== false);
+                $('#cash_register_enable').prop('checked', data.cash_register_enable !== false);
+                $('#module_tax_enable').prop('checked', data.module_tax_enable !== false);
+                $('#module_credit_enable').prop('checked', data.module_credit_enable !== false);
+                $('#module_marketing_enable').prop('checked', data.module_marketing_enable !== false);
+                $('#module_messaging_enable').prop('checked', data.module_messaging_enable !== false);
+                $('#module_channels_enable').prop('checked', data.module_channels_enable !== false);
+                $('#module_channels_kiosk_enable').prop('checked', data.module_channels_kiosk_enable !== false);
 
                 // Store general settings including hardware_weight_machine_enable
                 var generalSettings = {
@@ -622,10 +626,17 @@ PosnicPro.settings = {
                     staff_shifts_enable: data.staff_shifts_enable !== false,
                     staff_tips_enable: data.staff_tips_enable === true,
                     staff_roster_enable: data.staff_roster_enable !== false,
-                    cash_register_enable: data.cash_register_enable !== false
+                    cash_register_enable: data.cash_register_enable !== false,
+                    module_tax_enable: data.module_tax_enable !== false,
+                    module_credit_enable: data.module_credit_enable !== false,
+                    module_marketing_enable: data.module_marketing_enable !== false,
+                    module_messaging_enable: data.module_messaging_enable !== false,
+                    module_channels_enable: data.module_channels_enable !== false,
+                    module_channels_kiosk_enable: data.module_channels_kiosk_enable !== false
                 };
                 PosnicPro.local.set('general_settings', JSON.stringify(generalSettings));
                 PosnicPro.shiftWidget.applyEnabled();
+                PosnicPro.settings.applyModuleNav();
                 
                 $('.display-branch-name').html(data.branch_name);
                 $('.display-tax-value').html(data.tax_percentage);
@@ -1382,13 +1393,19 @@ if ($wrapper.length) {
                 sms_auto_send_time: $('#sms_auto_send_period').val(),
                 sms_retry_period: $('#sms_retry_period').val(),
                 sms_max_retries: $('#sms_max_retries').val(),
-                hardware_weight_machine_enable: ($('#hardware_weight_machine_enable').val() === 'true'),
-                till_lock_enable: ($('#till_lock_enable').val() === 'true') ? 'true' : 'false',
+                hardware_weight_machine_enable: $('#hardware_weight_machine_enable').is(':checked'),
+                till_lock_enable: $('#till_lock_enable').is(':checked') ? 'true' : 'false',
                 till_lock_idle_minutes: $('#till_lock_idle_minutes').val() || '0',
-                staff_shifts_enable: ($('#staff_shifts_enable').val() === 'false') ? 'false' : 'true',
-                staff_tips_enable: ($('#staff_tips_enable').val() === 'true') ? 'true' : 'false',
-                staff_roster_enable: ($('#staff_roster_enable').val() === 'false') ? 'false' : 'true',
-                cash_register_enable: ($('#cash_register_enable').val() === 'false') ? 'false' : 'true',
+                staff_shifts_enable: $('#staff_shifts_enable').is(':checked') ? 'true' : 'false',
+                staff_tips_enable: $('#staff_tips_enable').is(':checked') ? 'true' : 'false',
+                staff_roster_enable: $('#staff_roster_enable').is(':checked') ? 'true' : 'false',
+                cash_register_enable: $('#cash_register_enable').is(':checked') ? 'true' : 'false',
+                module_tax_enable: $('#module_tax_enable').is(':checked') ? 'true' : 'false',
+                module_credit_enable: $('#module_credit_enable').is(':checked') ? 'true' : 'false',
+                module_marketing_enable: $('#module_marketing_enable').is(':checked') ? 'true' : 'false',
+                module_messaging_enable: $('#module_messaging_enable').is(':checked') ? 'true' : 'false',
+                module_channels_enable: $('#module_channels_enable').is(':checked') ? 'true' : 'false',
+                module_channels_kiosk_enable: $('#module_channels_kiosk_enable').is(':checked') ? 'true' : 'false',
             })
         };
         PosnicPro.put(params, function (response) {
@@ -1476,21 +1493,31 @@ if ($wrapper.length) {
                 $("#low_item_stock_count").text($('#notification_value').val());
                 PosnicPro.stocklogs.viewLowStockDashboard();
                 
-                // Save weight machine toggle to localStorage
+                // Save the Module On/Off state to localStorage (checkboxes
+                // since the toggles-only rebuild).
                 var generalSettings = {
-                    hardware_weight_machine_enable: ($('#hardware_weight_machine_enable').val() === 'true'),
-                    till_lock_enable: ($('#till_lock_enable').val() === 'true'),
+                    hardware_weight_machine_enable: $('#hardware_weight_machine_enable').is(':checked'),
+                    till_lock_enable: $('#till_lock_enable').is(':checked'),
                     till_lock_idle_minutes: parseInt($('#till_lock_idle_minutes').val(), 10) || 0,
-                    staff_shifts_enable: ($('#staff_shifts_enable').val() !== 'false'),
-                    staff_tips_enable: ($('#staff_tips_enable').val() === 'true'),
-                    staff_roster_enable: ($('#staff_roster_enable').val() !== 'false'),
-                    cash_register_enable: ($('#cash_register_enable').val() !== 'false')
+                    staff_shifts_enable: $('#staff_shifts_enable').is(':checked'),
+                    staff_tips_enable: $('#staff_tips_enable').is(':checked'),
+                    staff_roster_enable: $('#staff_roster_enable').is(':checked'),
+                    cash_register_enable: $('#cash_register_enable').is(':checked'),
+                    module_tax_enable: $('#module_tax_enable').is(':checked'),
+                    module_credit_enable: $('#module_credit_enable').is(':checked'),
+                    module_marketing_enable: $('#module_marketing_enable').is(':checked'),
+                    module_messaging_enable: $('#module_messaging_enable').is(':checked'),
+                    module_channels_enable: $('#module_channels_enable').is(':checked'),
+                    module_channels_kiosk_enable: $('#module_channels_kiosk_enable').is(':checked')
                 };
                 PosnicPro.local.set('general_settings', JSON.stringify(generalSettings));
                 // Show or hide the header clock button to match, right away.
                 PosnicPro.shiftWidget.applyEnabled();
+                // Config's own left menu follows the switches immediately -
+                // the feedback loop that teaches "this switch shapes my app".
+                PosnicPro.settings.applyModuleNav();
                 // Register menu follows the module toggle the same way.
-                if ($('#cash_register_enable').val() === 'false') {
+                if (!$('#cash_register_enable').is(':checked')) {
                     $('.cashRegisterModule').css('display', 'none');
                 } else {
                     $('.cashRegisterModule').css('display', 'block');
@@ -1505,6 +1532,35 @@ if ($wrapper.length) {
         }, function (xhr) {
             var response = jQuery.parseJSON(xhr.responseText);
             PosnicPro.alert(response.type, response.message);
+        });
+    },
+    /*
+     * Config's left menu shows only the modules the shop runs (Module
+     * On/Off). Reads the cached general_settings blob - both the load and
+     * save paths refresh the blob before calling this. A group header with
+     * nothing visible under it hides too (an empty RESTAURANT header was
+     * exactly the clutter the module system exists to remove).
+     */
+    applyModuleNav: function () {
+        var s = {};
+        try { s = JSON.parse(PosnicPro.local.get('general_settings') || '{}'); } catch (e) { /* defaults */ }
+        var on = function (k) { return s[k] !== false; };
+
+        $('#v-pills-tax-tab, #v-pills-taxgroup-tab').toggle(on('module_tax_enable'));
+        $('#v-pills-credit-tab').toggle(on('module_credit_enable'));
+        $('#v-pills-loyalty-tab, #v-pills-coupons-tab, #v-pills-cashback-tab, #v-pills-campaigns-tab')
+            .toggle(on('module_marketing_enable'));
+        // #v-pills-sms-tab stays out of this list: it ships display:none on
+        // its own and must not be force-shown here.
+        $('#v-pills-messaging-tab, #v-pills-whatsapp-tab, #v-pills-email-tab').toggle(on('module_messaging_enable'));
+        $('#v-pills-kiosk-tab').toggle(on('module_channels_enable') && on('module_channels_kiosk_enable'));
+        $('#v-pills-tableorder-tab').toggle(PosnicPro.local.get('table_options') === 'enable');
+
+        $('#v-pills-tab .settings-nav-group').each(function () {
+            var visible = $(this).nextUntil('.settings-nav-group').filter('a.nav-link').filter(function () {
+                return $(this).css('display') !== 'none';
+            }).length;
+            $(this).toggle(visible > 0);
         });
     },
     changeBranch: function (branch_no) {

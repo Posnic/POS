@@ -605,6 +605,20 @@ class SettingModel extends BaseModel {
         data.cash_register_enable === 'false' || data.cash_register_enable === false
       );
 
+      /*
+       * Module On/Off switches. All default ON (only an explicit 'false'
+       * disables) because every one of these surfaces shipped live and
+       * visible - an update must never hide a section a shop already uses.
+       * Off hides menus and sections; it never touches data.
+       */
+      const offOnly = (v) => !(v === 'false' || v === false);
+      const module_tax_enable = offOnly(data.module_tax_enable);
+      const module_credit_enable = offOnly(data.module_credit_enable);
+      const module_marketing_enable = offOnly(data.module_marketing_enable);
+      const module_messaging_enable = offOnly(data.module_messaging_enable);
+      const module_channels_enable = offOnly(data.module_channels_enable);
+      const module_channels_kiosk_enable = offOnly(data.module_channels_kiosk_enable);
+
       // Strip GMT offset from timezone (e.g., "Pacific/Niue (GMT-11:00)" -> "Pacific/Niue")
       let cleanTimezone = data.time_zone?.trim() || 'Asia/Kolkata';
       const gmtOffsetMatch = cleanTimezone.match(/^([^(]+)\s*\(GMT[^)]+\)$/);
@@ -643,6 +657,12 @@ class SettingModel extends BaseModel {
         staff_tips_enable: staff_tips_enable,
         staff_roster_enable: staff_roster_enable,
         cash_register_enable: cash_register_enable,
+        module_tax_enable: module_tax_enable,
+        module_credit_enable: module_credit_enable,
+        module_marketing_enable: module_marketing_enable,
+        module_messaging_enable: module_messaging_enable,
+        module_channels_enable: module_channels_enable,
+        module_channels_kiosk_enable: module_channels_kiosk_enable,
         allow_sale_date_edit: data.allow_sale_date_edit === 'false' ? 'false' : 'true',
       };
 
@@ -698,6 +718,12 @@ class SettingModel extends BaseModel {
         staff_tips_enable: staff_tips_enable,
         staff_roster_enable: staff_roster_enable,
         cash_register_enable: cash_register_enable,
+        module_tax_enable: module_tax_enable,
+        module_credit_enable: module_credit_enable,
+        module_marketing_enable: module_marketing_enable,
+        module_messaging_enable: module_messaging_enable,
+        module_channels_enable: module_channels_enable,
+        module_channels_kiosk_enable: module_channels_kiosk_enable,
       };
 
       // PHP lines 109-121: Update branch_name across all collections
