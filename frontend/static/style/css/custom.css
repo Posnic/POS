@@ -2590,6 +2590,14 @@ input:checked + .slider:before {
     padding: 18px;
 }
 
+/* Report menu groups: quiet uppercase labels, tighter than the Config
+   ones - a long list becomes five scannable clusters. */
+.vertical-menu .report-group {
+    padding: 10px 12px 2px;
+    font-size: 10.5px;
+    letter-spacing: .6px;
+}
+
 /* Users | Roles: the Core Settings tab look (underline, not pills),
    sitting beside the page title without drawing a full-width rule. */
 .users-roles-tabs { border-bottom: 0; }
