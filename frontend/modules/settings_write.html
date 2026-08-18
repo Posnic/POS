@@ -42,17 +42,19 @@
                                 <!-- Cursor Focus controls moved into Core Settings (Sale / Receivings tabs). -->
 
                                 <div class="settings-nav-group"><lang class="lang_navgroup_salesbilling">Sales &amp; Billing</lang></div>
+                                
+                                
+                                
+                                
+                                
+                                
+
                                 <a class="nav-link mb-2" data-module="branch" data-access="write" id="v-pills-taxmodule-tab"
                                     data-toggle="pill" href="#v-pills-taxmodule" role="tab"
                                     aria-controls="v-pills-taxmodule" aria-selected="false"><i
                                         class="feather icon-bar-chart-line- mr-2"></i>
                                     <lang class="lang_module_tax">Tax</lang>
                                 </a>
-                                
-                                
-                                
-                                
-                                
 
                                 <div class="settings-nav-group"><lang class="lang_navgroup_restaurant">Restaurant</lang></div>
                                 <a class="nav-link mb-2" data-module="branch" data-access="write"
@@ -73,6 +75,7 @@
                                 
                                 
                                 
+                                
 
                                 <a class="nav-link mb-2" data-module="branch" data-access="write"
                                     id="v-pills-credit-tab" data-toggle="pill" href="#v-pills-credit" role="tab"
@@ -88,6 +91,7 @@
                                     onclick="PosnicPro.messaging.load();"><i class="feather icon-cpu mr-2"></i>
                                     <lang class="lang_module_messaging">Messaging</lang>
                                 </a>
+                                
                                 
                                 
                                 
@@ -130,443 +134,7 @@
                 <!-- Start col -->
                 <div class="col-lg-7 col-xl-9">
                     <div class="tab-content loader-view-mystore" id="v-pills-tabContent">
-                        <!-- Branch / Outlet Info pane REMOVED - merged into
-                             Branch List > Edit (modules/branchEdit.html). -->
-                        <!-- Branch / Outlet Info: moved to modules/branchEdit.html -->
-
-                        <!-- Modules Start -->
-                        <!--
-                            Every optional module's master switch, in one place.
-                            The controls keep their historical ids: the loaders
-                            populate and updateCommonSetting saves them by id, so
-                            the same fields work here as they did scattered across
-                            Branch Info and Table Order. Deeper module settings
-                            stay on their own pages; this page only turns things on.
-                        -->
-                        <!-- General becomes the landing pane now that Branch /
-                             Outlet Info lives on the Branch edit page. -->
-                        <!-- Cursor Focus: per-device auto-focus switches (IndexedDB,
-                             not server settings) - moved here from the old
-                             #/device_setup page so Config holds all configuration. -->
-                        <div class="tab-pane fade" id="v-pills-modules" role="tabpanel"
-                            aria-labelledby="v-pills-modules-tab">
-                            <div class="card m-b-30">
-                                <div class="card-header">
-                                    <h5 class="card-title mb-0"><lang class="lang_modules">Module On/Off</lang></h5>
-                                    <small class="text-muted"><lang class="lang_modules_hint">A module that is off disappears from the menus. Nothing is deleted - switch it back on and everything returns.</lang></small>
-                                </div>
-                                <div class="card-body">
-                                    <div class="module-grid">
-
-                                        <div class="module-card">
-                                            <div class="module-card-head">
-                                                <span class="module-ico"><img src="static/images/svg-icon/user.svg" alt="workforce"></span>
-                                                <div class="module-title"><lang class="lang_staffshifts_title">Workforce</lang></div>
-                                                <div class="custom-control custom-switch module-switch">
-                                                    <input type="checkbox" class="custom-control-input" id="staff_shifts_enable" name="staff_shifts_enable">
-                                                    <label class="custom-control-label" for="staff_shifts_enable"></label>
-                                                </div>
-                                            </div>
-                                            <p class="module-desc">Staff clock in/out from the header clock; labour report and payroll exports.</p>
-                                            <div class="module-subs">
-                                                <div class="custom-control custom-switch">
-                                                    <input type="checkbox" class="custom-control-input" id="staff_tips_enable" name="staff_tips_enable">
-                                                    <label class="custom-control-label" for="staff_tips_enable"><lang class="lang_stafftips_title">Tips at clock-out</lang></label>
-                                                </div>
-                                                <div class="custom-control custom-switch">
-                                                    <input type="checkbox" class="custom-control-input" id="staff_roster_enable" name="staff_roster_enable">
-                                                    <label class="custom-control-label" for="staff_roster_enable"><lang class="lang_staffroster_title">Roster</lang></label>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="module-card">
-                                            <div class="module-card-head">
-                                                <span class="module-ico"><img src="static/images/svg-icon/cash-register.svg" alt="cash register"></span>
-                                                <div class="module-title"><lang class="lang_cashregister_enable">Cash Register</lang></div>
-                                                <div class="custom-control custom-switch module-switch">
-                                                    <input type="checkbox" class="custom-control-input" id="cash_register_enable" name="cash_register_enable">
-                                                    <label class="custom-control-label" for="cash_register_enable"></label>
-                                                </div>
-                                            </div>
-                                            <p class="module-desc">Till sessions, floats and register reports. Off: sales work without any register ceremony.</p>
-                                        </div>
-
-                                        <div class="module-card">
-                                            <div class="module-card-head">
-                                                <span class="module-ico"><img src="static/images/svg-icon/authentication.svg" alt="till lock"></span>
-                                                <div class="module-title"><lang class="lang_tilllock_title">Till PIN Lock</lang></div>
-                                                <div class="custom-control custom-switch module-switch">
-                                                    <input type="checkbox" class="custom-control-input" id="till_lock_enable" name="till_lock_enable">
-                                                    <label class="custom-control-label" for="till_lock_enable"></label>
-                                                </div>
-                                            </div>
-                                            <p class="module-desc">Staff unlock with a 4-digit PIN instead of a password.</p>
-                                            <div class="module-subs">
-                                                <div class="form-group mb-0" style="min-width:200px;">
-                                                    <label for="till_lock_idle_minutes" style="font-size:12.5px;" class="mb-1">
-                                                        <lang class="lang_tilllockidle_title">Lock when idle</lang>
-                                                    </label>
-                                                    <select name="till_lock_idle_minutes" id="till_lock_idle_minutes"
-                                                        class="form-control form-control-sm border-control">
-                                                        <option value="0">Only when asked</option>
-                                                        <option value="2">After 2 minutes</option>
-                                                        <option value="5">After 5 minutes</option>
-                                                        <option value="10">After 10 minutes</option>
-                                                        <option value="30">After 30 minutes</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="module-card" data-module="plan" data-access="read">
-                                            <div class="module-card-head">
-                                                <span class="module-ico"><img src="static/images/svg-icon/tables.svg" alt="restaurant"></span>
-                                                <div class="module-title"><lang class="lang_modules_restaurant">Restaurant</lang></div>
-                                                <div class="custom-control custom-switch module-switch">
-                                                    <input type="checkbox" class="custom-control-input" id="table_options" name="table_options">
-                                                    <label class="custom-control-label" for="table_options"></label>
-                                                </div>
-                                            </div>
-                                            <p class="module-desc">Dine-in orders by table, KOTs to the kitchen.
-                                                <a href="javascript:void(0)" onclick="$('#v-pills-tableorder-tab').click();"><lang class="lang_modules_managetables">Manage tables</lang></a>
-                                            </p>
-                                        </div>
-
-                                        <div class="module-card">
-                                            <div class="module-card-head">
-                                                <span class="module-ico"><img src="static/images/svg-icon/tax.svg" alt="tax"></span>
-                                                <div class="module-title"><lang class="lang_module_tax">Tax</lang></div>
-                                                <div class="custom-control custom-switch module-switch">
-                                                    <input type="checkbox" class="custom-control-input" id="module_tax_enable" name="module_tax_enable">
-                                                    <label class="custom-control-label" for="module_tax_enable"></label>
-                                                </div>
-                                            </div>
-                                            <p class="module-desc">Tax Rates and Tax Groups. Off hides both sections; saved taxes keep.</p>
-                                        </div>
-
-                                        <div class="module-card">
-                                            <div class="module-card-head">
-                                                <span class="module-ico"><img src="static/images/svg-icon/credit.svg" alt="credit"></span>
-                                                <div class="module-title"><lang class="lang_module_credit">Customer Credit</lang></div>
-                                                <div class="custom-control custom-switch module-switch">
-                                                    <input type="checkbox" class="custom-control-input" id="module_credit_enable" name="module_credit_enable">
-                                                    <label class="custom-control-label" for="module_credit_enable"></label>
-                                                </div>
-                                            </div>
-                                            <p class="module-desc">Credit limits and payment reminders.</p>
-                                        </div>
-
-                                        <div class="module-card">
-                                            <div class="module-card-head">
-                                                <span class="module-ico"><img src="static/images/svg-icon/crm.svg" alt="marketing"></span>
-                                                <div class="module-title"><lang class="lang_module_marketing">Customer Marketing</lang></div>
-                                                <div class="custom-control custom-switch module-switch">
-                                                    <input type="checkbox" class="custom-control-input" id="module_marketing_enable" name="module_marketing_enable">
-                                                    <label class="custom-control-label" for="module_marketing_enable"></label>
-                                                </div>
-                                            </div>
-                                            <p class="module-desc">Loyalty &amp; rewards, coupons, cashback and campaigns.</p>
-                                        </div>
-
-                                        <div class="module-card">
-                                            <div class="module-card-head">
-                                                <span class="module-ico"><img src="static/images/svg-icon/email.svg" alt="messaging"></span>
-                                                <div class="module-title"><lang class="lang_module_messaging">Messaging</lang></div>
-                                                <div class="custom-control custom-switch module-switch">
-                                                    <input type="checkbox" class="custom-control-input" id="module_messaging_enable" name="module_messaging_enable">
-                                                    <label class="custom-control-label" for="module_messaging_enable"></label>
-                                                </div>
-                                            </div>
-                                            <p class="module-desc">SMS, WhatsApp and email providers and sends.</p>
-                                        </div>
-
-                                        <div class="module-card">
-                                            <div class="module-card-head">
-                                                <span class="module-ico"><img src="static/images/svg-icon/shopping-online.svg" alt="sales channels"></span>
-                                                <div class="module-title"><lang class="lang_module_channels">Sales Channels</lang></div>
-                                                <div class="custom-control custom-switch module-switch">
-                                                    <input type="checkbox" class="custom-control-input" id="module_channels_enable" name="module_channels_enable">
-                                                    <label class="custom-control-label" for="module_channels_enable"></label>
-                                                </div>
-                                            </div>
-                                            <p class="module-desc">Selling beyond the counter - online, QR ordering and partner channels arrive here.</p>
-                                            <div class="module-subs">
-                                                <div class="custom-control custom-switch">
-                                                    <input type="checkbox" class="custom-control-input" id="module_channels_kiosk_enable" name="module_channels_kiosk_enable">
-                                                    <label class="custom-control-label" for="module_channels_kiosk_enable"><lang class="lang_module_kiosk">Kiosk</lang></label>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="module-card">
-                                            <div class="module-card-head">
-                                                <span class="module-ico"><img src="static/images/svg-icon/theme.svg" alt="themes"></span>
-                                                <div class="module-title"><lang class="lang_module_themes">Themes</lang></div>
-                                                <div class="custom-control custom-switch module-switch">
-                                                    <input type="checkbox" class="custom-control-input" id="module_themes_enable" name="module_themes_enable">
-                                                    <label class="custom-control-label" for="module_themes_enable"></label>
-                                                </div>
-                                            </div>
-                                            <p class="module-desc">Theme &amp; Appearance - presets, custom colours and dark modes.</p>
-                                        </div>
-
-                                        <div class="module-card">
-                                            <div class="module-card-head">
-                                                <span class="module-ico"><i class="feather icon-trash-2"></i></span>
-                                                <div class="module-title"><lang class="lang_module_recyclebin">Recycle Bin</lang></div>
-                                                <div class="custom-control custom-switch module-switch">
-                                                    <input type="checkbox" class="custom-control-input" id="module_recyclebin_enable" name="module_recyclebin_enable">
-                                                    <label class="custom-control-label" for="module_recyclebin_enable"></label>
-                                                </div>
-                                            </div>
-                                            <p class="module-desc">Keep deleted records for restore. Off: deleted records are NOT retained - deletes still sync, but cannot be undone.</p>
-                                        </div>
-
-                                        <div class="module-card">
-                                            <div class="module-card-head">
-                                                <span class="module-ico"><img src="static/images/svg-icon/supermarket.svg" alt="weighing scale"></span>
-                                                <div class="module-title"><lang class="lang_weightmachine_title">Weighing Scale</lang></div>
-                                                <div class="custom-control custom-switch module-switch">
-                                                    <input type="checkbox" class="custom-control-input" id="hardware_weight_machine_enable" name="hardware_weight_machine_enable">
-                                                    <label class="custom-control-label" for="hardware_weight_machine_enable"></label>
-                                                </div>
-                                            </div>
-                                            <p class="module-desc">Weight-embedded barcodes and scale reads. Needs the hardware manager on the till.</p>
-                                        </div>
-
-                                    </div>
-                                </div>
-                                <div class="card-footer text-right">
-                                    <button type="button" class="btn btn-outline-primary"
-                                        onclick="PosnicPro.settings.updateCommonSetting();"><i
-                                            class="feather icon-save mr-2"></i>
-                                        <lang class="lang_save_title">Save</lang>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Modules End -->
-
-                        <!-- Offline Tab Start -->
-                        <!-- Offline Tab End -->
-
-                        <!-- Sms Tab Start -->
-                        
-                        <!-- Sms Tab End -->
-
-                        <!-- Unit Tab Start -->
-                        
-
-                        <!-- Loyalty & Rewards Start -->
-                        
-
-                        <!-- Coupons Start -->
-                        
-
-                        <!-- Campaigns Start -->
-                        
-
-                        <!-- SMS & WhatsApp Providers Start (super admin only) -->
-                        
-
-                        <!-- Credit & Reminders Start -->
-                        <div class="tab-pane fade" id="v-pills-credit" role="tabpanel"
-                            aria-labelledby="v-pills-credit-tab">
-                            <div class="card m-b-30">
-                                <div class="card-header">
-                                    <h5 class="card-title mb-0">Credit rules</h5>
-                                </div>
-                                <div class="card-body">
-                                    <p class="text-muted mb-3">Let customers buy on credit (khata) and collect later. A
-                                        credit limit caps how much a customer can owe; leave it 0 for no limit.</p>
-                                    <div class="form-row">
-                                        <div class="col-md-4 mb-2">
-                                            <label>Default credit limit
-                                                (<span class="credit-currency-label">currency</span>, 0 = none)</label>
-                                            <input type="number" min="0" step="0.01" class="form-control"
-                                                id="credit_default_limit" value="0">
-                                        </div>
-                                        <div class="col-md-4 mb-2">
-                                            <label>Credit terms (days, 0 = none)</label>
-                                            <input type="number" min="0" step="1" class="form-control"
-                                                id="credit_terms_days" value="0">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="card m-b-30">
-                                <div class="card-header d-flex align-items-center justify-content-between">
-                                    <h5 class="card-title mb-0">Payment reminders</h5>
-                                    <div class="custom-control custom-switch">
-                                        <input type="checkbox" class="custom-control-input"
-                                            id="credit_reminder_enabled">
-                                        <label class="custom-control-label" for="credit_reminder_enabled">Enable
-                                            reminders</label>
-                                    </div>
-                                </div>
-                                <div class="card-body">
-                                    <p class="text-muted mb-3">Remind customers who owe money, over SMS or WhatsApp (your
-                                        configured providers). A customer is never reminded twice in one day.</p>
-                                    <div class="form-row">
-                                        <div class="col-md-3 mb-2">
-                                            <label>Channel</label>
-                                            <select class="form-control" id="credit_reminder_channel">
-                                                <option value="sms">SMS</option>
-                                                <option value="whatsapp">WhatsApp</option>
-                                            </select>
-                                        </div>
-                                        <div class="col-md-3 mb-2">
-                                            <label>Only remind dues over
-                                                (<span class="credit-currency-label">currency</span>)</label>
-                                            <input type="number" min="0" step="0.01" class="form-control"
-                                                id="credit_reminder_min_due" value="0">
-                                        </div>
-                                    </div>
-                                    <div class="form-row">
-                                        <div class="col-md-12 mb-2">
-                                            <label>Message — use {name} {due} {currency} {shop}</label>
-                                            <textarea class="form-control" id="credit_reminder_template" rows="2"
-                                                placeholder="Hi {name}, you have {currency}{due} due at {shop}. Please pay soon."></textarea>
-                                        </div>
-                                    </div>
-                                    <button type="button" class="btn btn-outline-primary mt-2" id="credit_save">
-                                        <i class="feather icon-save mr-2"></i> Save credit settings
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div class="card m-b-30">
-                                <div class="card-header d-flex align-items-center justify-content-between">
-                                    <h5 class="card-title mb-0">Outstanding customers —
-                                        <span id="credit_outstanding_total">0</span></h5>
-                                    <div>
-                                        <button type="button" class="btn btn-outline-secondary btn-sm mr-1"
-                                            id="credit_remind_test">Test (dry run)</button>
-                                        <button type="button" class="btn btn-primary-rgba btn-sm"
-                                            id="credit_remind_all"><i class="feather icon-send mr-1"></i> Remind
-                                            all</button>
-                                    </div>
-                                </div>
-                                <div class="card-body">
-                                    <div class="table-responsive">
-                                        <table class="table table-borderless">
-                                            <thead>
-                                                <tr>
-                                                    <td class="font-weight-normal">Customer</td>
-                                                    <td class="font-weight-normal">Phone</td>
-                                                    <td class="font-weight-normal text-right">Due</td>
-                                                    <td class="font-weight-normal text-center">Action</td>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="credit_outstanding_body"></tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Cashback Start -->
-                        
-
-                        <!-- Tax Tab Start -->
-                        
-
-
-                        <!-- cash denomination Start -->
-                        
-                        <!--Denom field end-->
-
-                        <!-- table orders Start -->
-                        <div class="tab-pane fade" id="v-pills-tableorder" role="tabpanel"
-                            aria-labelledby="v-pills-tableorder-tab">
-                            <div class="card m-b-30" data-module="plan" data-access="read">
-                                <div class="card-body">
-                                    <small class="form-text text-muted">
-                                        <lang class="lang_modules_kot_hint">Restaurant / KOT mode is switched on
-                                        under Settings &gt; Modules. This page manages the tables it uses.</lang>
-                                    </small>
-                                </div>
-                            </div>
-                            <div class="card m-b-30">
-                                <div class="card-header">
-                                    <h5 class="card-title">
-                                        Tables list
-                                    </h5>
-                                </div>
-                                <div class="card-body">
-                                    <div class="order-box">
-                                        <div class="card border m-b-30">
-                                            <div class="card-header">
-                                                <div class="row align-items-center">
-                                                    <div class="col-sm-2">
-                                                        <select class="form-control" id="view_tableorder_per_page" onchange="PosnicPro.tableOrders.changePerPage()">
-                                                            <option value="5">5</option>
-                                                            <option value="10" selected>10</option>
-                                                            <option value="25">25</option>
-                                                            <option value="50">50</option>
-                                                            <option value="100">100</option>
-                                                        </select>
-                                                    </div>
-                                                    <div class="col-sm-4"></div>
-                              <div class="tab-pane fade" id="v-pills-messagingmodule" role="tabpanel" aria-labelledby="v-pills-messagingmodule-tab">
-                            <div class="card m-b-30">
-                                <div class="card-header">
-                                    <h5 class="card-title mb-0"><lang class="lang_module_messaging">Messaging</lang></h5>
-                                </div>
-                                <div class="card-body">
-                                    <div class="row">
-                                        <div class="col-lg-3 core-subnav-col">
-                                            <div class="nav flex-column nav-pills" id="messaging_subnav" role="tablist">
-                                                <a class="nav-link active" data-toggle="pill" href="#msg-sub-providers" role="tab" onclick="PosnicPro.messaging.load();"><i class="feather icon-cpu mr-2"></i><lang class="lang_messaging_settings">SMS &amp; WhatsApp Providers</lang></a>
-                                                <a class="nav-link" data-toggle="pill" href="#msg-sub-whatsapp" role="tab" data-module="plan" data-access="read"><i class="feather icon-message-square mr-2"></i><lang class="lang_whatsapp_connection">WhatsApp Connection</lang></a>
-                                                <a class="nav-link" data-toggle="pill" href="#msg-sub-email" role="tab" data-module="plan" data-access="read"><i class="feather icon-mail mr-2"></i><lang class="lang_mail">Report Email Settings</lang></a>
-                                                <a class="nav-link" data-toggle="pill" href="#msg-sub-sms" role="tab" style="display:none;"><i class="feather icon-message-circle mr-2"></i><lang class="lang_sms_set">SMS Settings</lang></a>
-                                            </div>
-                                        </div>
-                                        <div class="col-lg-9">
-                                            <div class="tab-content">
-                                                <div class="tab-pane fade show active" id="msg-sub-providers" role="tabpanel">
-
-                            <div id="messaging_not_allowed" class="alert alert-warning" style="display:none;">
-                                Only a super admin can configure messaging providers.
-                            </div>
-                            <div id="messaging_body">
-                                <div class="card m-b-30">
-                                    <div class="card-header d-flex align-items-center justify-content-between">
-                                        <h5 class="card-title mb-0">SMS provider</h5>
-                                        <div class="custom-control custom-switch">
-                                            <input type="checkbox" class="custom-control-input" id="messaging_sms_enabled">
-                                            <label class="custom-control-label" for="messaging_sms_enabled">Enable
-                                                SMS</label>
-                                        </div>
-                                    </div>
-                                    <div class="card-body">
-                                        <p class="text<div class="tab-pane fade" id="v-pills-marketingmodule" role="tabpanel" aria-labelledby="v-pills-marketingmodule-tab">
-                            <div class="card m-b-30">
-                                <div class="card-header">
-                                    <h5 class="card-title mb-0"><lang class="lang_module_marketing">Marketing</lang></h5>
-                                </div>
-                                <div class="card-body">
-                                    <div class="row">
-                                        <div class="col-lg-3 core-subnav-col">
-                                            <div class="nav flex-column nav-pills" id="marketing_subnav" role="tablist">
-                                                <a class="nav-link active" data-toggle="pill" href="#mkt-sub-loyalty" role="tab" onclick="PosnicPro.loyalty.load();"><i class="feather icon-award mr-2"></i><lang class="lang_loyalty_settings">Loyalty &amp; Rewards</lang></a>
-                                                <a class="nav-link" data-toggle="pill" href="#mkt-sub-coupons" role="tab" onclick="PosnicPro.coupons.load();"><i class="feather icon-tag mr-2"></i><lang class="lang_coupons_settings">Coupons</lang></a>
-                                                <a class="nav-link" data-toggle="pill" href="#mkt-sub-cashback" role="tab" onclick="PosnicPro.cashback.load();"><i class="feather icon-gift mr-2"></i><lang class="lang_cashback_settings">Cashback</lang></a>
-                                                <a class="nav-link" data-toggle="pill" href="#mkt-sub-campaigns" role="tab" onclick="PosnicPro.campaigns.load();"><i class="feather icon-send mr-2"></i><lang class="lang_campaigns_settings">Campaigns</lang></a>
-                                            </div>
-                                        </div>
-                                        <div class="col-lg-9">
-                                            <div class="tab-content">
-                                                <div class="tab-pane fade show active" id="mkt-sub-loyalty" role="tabpanel">
-
-                            <div class="card m-b-30">
-                                <div class="card-header d-flex align-items-center justify-content-between">
-                                    <h5 class="card-title mb-0">
-                                        <lang class="lang_loyalty_title">Loyalty &amp; Rewards</lang>
-                                    </h<div class="tab-pane fade" id="v-pills-taxmodule" role="tabpanel" aria-labelledby="v-pills-taxmodule-tab">
+                        <div class="tab-pane fade" id="v-pills-taxmodule" role="tabpanel" aria-labelledby="v-pills-taxmodule-tab">
                             <div class="card m-b-30">
                                 <div class="card-header">
                                     <h5 class="card-title mb-0"><lang class="lang_module_tax">Tax</lang></h5>
@@ -574,7 +142,7 @@
                                 <div class="card-body">
                                     <div class="row">
                                         <div class="col-lg-3 core-subnav-col">
-                                            <div class="nav flex-column nav-pills" id="tax_subnav" role="tablist">
+                                            <div class="nav flex-column nav-pills" id="taxmodule_subnav" role="tablist">
                                                 <a class="nav-link active" data-toggle="pill" href="#tax-sub-general" role="tab"><i class="feather icon-sliders mr-2"></i><lang class="lang_common_settings">General</lang></a>
                                                 <a class="nav-link" data-toggle="pill" href="#tax-sub-rates" role="tab" onclick="PosnicPro.tax.taxTable();"><i class="feather icon-percent mr-2"></i><lang class="lang_taxrate_title">Tax Rates</lang></a>
                                                 <a class="nav-link" data-toggle="pill" href="#tax-sub-groups" role="tab" onclick="PosnicPro.taxgroup.taxgroupTable();"><i class="feather icon-layers mr-2"></i><lang class="lang_taxgroup">Tax Groups</lang></a>
@@ -741,7 +309,30 @@
                                 </div>
                             </div>
                         </div>
-                        5>
+                        <div class="tab-pane fade" id="v-pills-marketingmodule" role="tabpanel" aria-labelledby="v-pills-marketingmodule-tab">
+                            <div class="card m-b-30">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0"><lang class="lang_module_marketing">Marketing</lang></h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-lg-3 core-subnav-col">
+                                            <div class="nav flex-column nav-pills" id="marketingmodule_subnav" role="tablist">
+                                                <a class="nav-link active" data-toggle="pill" href="#mkt-sub-loyalty" role="tab" onclick="PosnicPro.loyalty.load();"><i class="feather icon-award mr-2"></i><lang class="lang_loyalty_settings">Loyalty &amp; Rewards</lang></a>
+                                                <a class="nav-link" data-toggle="pill" href="#mkt-sub-coupons" role="tab" onclick="PosnicPro.coupons.load();"><i class="feather icon-tag mr-2"></i><lang class="lang_coupons_settings">Coupons</lang></a>
+                                                <a class="nav-link" data-toggle="pill" href="#mkt-sub-cashback" role="tab" onclick="PosnicPro.cashback.load();"><i class="feather icon-gift mr-2"></i><lang class="lang_cashback_settings">Cashback</lang></a>
+                                                <a class="nav-link" data-toggle="pill" href="#mkt-sub-campaigns" role="tab" onclick="PosnicPro.campaigns.load();"><i class="feather icon-send mr-2"></i><lang class="lang_campaigns_settings">Campaigns</lang></a>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-9">
+                                            <div class="tab-content">
+                                                <div class="tab-pane fade show active" id="mkt-sub-loyalty" role="tabpanel">
+
+                            <div class="card m-b-30">
+                                <div class="card-header d-flex align-items-center justify-content-between">
+                                    <h5 class="card-title mb-0">
+                                        <lang class="lang_loyalty_title">Loyalty &amp; Rewards</lang>
+                                    </h5>
                                     <div class="custom-control custom-switch">
                                         <input type="checkbox" class="custom-control-input" id="loyalty_enabled">
                                         <label class="custom-control-label" for="loyalty_enabled">Enable loyalty</label>
@@ -1273,7 +864,40 @@
                                 </div>
                             </div>
                         </div>
-                        -muted mb-3">SMS is sent through <strong>your own provider
+                        <div class="tab-pane fade" id="v-pills-messagingmodule" role="tabpanel" aria-labelledby="v-pills-messagingmodule-tab">
+                            <div class="card m-b-30">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0"><lang class="lang_module_messaging">Messaging</lang></h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-lg-3 core-subnav-col">
+                                            <div class="nav flex-column nav-pills" id="messagingmodule_subnav" role="tablist">
+                                                <a class="nav-link active" data-toggle="pill" href="#msg-sub-providers" role="tab" onclick="PosnicPro.messaging.load();"><i class="feather icon-cpu mr-2"></i><lang class="lang_messaging_settings">SMS &amp; WhatsApp Providers</lang></a>
+                                                <a class="nav-link" data-toggle="pill" href="#msg-sub-whatsapp" role="tab" data-module="plan" data-access="read"><i class="feather icon-message-square mr-2"></i><lang class="lang_whatsapp_connection">WhatsApp Connection</lang></a>
+                                                <a class="nav-link" data-toggle="pill" href="#msg-sub-email" role="tab" data-module="plan" data-access="read"><i class="feather icon-mail mr-2"></i><lang class="lang_mail">Report Email Settings</lang></a>
+                                                <a class="nav-link" data-toggle="pill" href="#msg-sub-sms" role="tab" style="display:none;"><i class="feather icon-message-circle mr-2"></i><lang class="lang_sms_set">SMS Settings</lang></a>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-9">
+                                            <div class="tab-content">
+                                                <div class="tab-pane fade show active" id="msg-sub-providers" role="tabpanel">
+
+                            <div id="messaging_not_allowed" class="alert alert-warning" style="display:none;">
+                                Only a super admin can configure messaging providers.
+                            </div>
+                            <div id="messaging_body">
+                                <div class="card m-b-30">
+                                    <div class="card-header d-flex align-items-center justify-content-between">
+                                        <h5 class="card-title mb-0">SMS provider</h5>
+                                        <div class="custom-control custom-switch">
+                                            <input type="checkbox" class="custom-control-input" id="messaging_sms_enabled">
+                                            <label class="custom-control-label" for="messaging_sms_enabled">Enable
+                                                SMS</label>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted mb-3">SMS is sent through <strong>your own provider
                                                 account</strong> — pick your provider and enter your credentials. Your
                                             keys are stored securely on the server and are never shown again after
                                             saving.</p>
@@ -1768,7 +1392,388 @@
                                 </div>
                             </div>
                         </div>
-                                              <div class="col-sm-6">
+                        
+                        <!-- Branch / Outlet Info pane REMOVED - merged into
+                             Branch List > Edit (modules/branchEdit.html). -->
+                        <!-- Branch / Outlet Info: moved to modules/branchEdit.html -->
+
+                        <!-- Modules Start -->
+                        <!--
+                            Every optional module's master switch, in one place.
+                            The controls keep their historical ids: the loaders
+                            populate and updateCommonSetting saves them by id, so
+                            the same fields work here as they did scattered across
+                            Branch Info and Table Order. Deeper module settings
+                            stay on their own pages; this page only turns things on.
+                        -->
+                        <!-- General becomes the landing pane now that Branch /
+                             Outlet Info lives on the Branch edit page. -->
+                        <!-- Cursor Focus: per-device auto-focus switches (IndexedDB,
+                             not server settings) - moved here from the old
+                             #/device_setup page so Config holds all configuration. -->
+                        <div class="tab-pane fade" id="v-pills-modules" role="tabpanel"
+                            aria-labelledby="v-pills-modules-tab">
+                            <div class="card m-b-30">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0"><lang class="lang_modules">Module On/Off</lang></h5>
+                                    <small class="text-muted"><lang class="lang_modules_hint">A module that is off disappears from the menus. Nothing is deleted - switch it back on and everything returns.</lang></small>
+                                </div>
+                                <div class="card-body">
+                                    <div class="module-grid">
+
+                                        <div class="module-card">
+                                            <div class="module-card-head">
+                                                <span class="module-ico"><img src="static/images/svg-icon/user.svg" alt="workforce"></span>
+                                                <div class="module-title"><lang class="lang_staffshifts_title">Workforce</lang></div>
+                                                <div class="custom-control custom-switch module-switch">
+                                                    <input type="checkbox" class="custom-control-input" id="staff_shifts_enable" name="staff_shifts_enable">
+                                                    <label class="custom-control-label" for="staff_shifts_enable"></label>
+                                                </div>
+                                            </div>
+                                            <p class="module-desc">Staff clock in/out from the header clock; labour report and payroll exports.</p>
+                                            <div class="module-subs">
+                                                <div class="custom-control custom-switch">
+                                                    <input type="checkbox" class="custom-control-input" id="staff_tips_enable" name="staff_tips_enable">
+                                                    <label class="custom-control-label" for="staff_tips_enable"><lang class="lang_stafftips_title">Tips at clock-out</lang></label>
+                                                </div>
+                                                <div class="custom-control custom-switch">
+                                                    <input type="checkbox" class="custom-control-input" id="staff_roster_enable" name="staff_roster_enable">
+                                                    <label class="custom-control-label" for="staff_roster_enable"><lang class="lang_staffroster_title">Roster</lang></label>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="module-card">
+                                            <div class="module-card-head">
+                                                <span class="module-ico"><img src="static/images/svg-icon/cash-register.svg" alt="cash register"></span>
+                                                <div class="module-title"><lang class="lang_cashregister_enable">Cash Register</lang></div>
+                                                <div class="custom-control custom-switch module-switch">
+                                                    <input type="checkbox" class="custom-control-input" id="cash_register_enable" name="cash_register_enable">
+                                                    <label class="custom-control-label" for="cash_register_enable"></label>
+                                                </div>
+                                            </div>
+                                            <p class="module-desc">Till sessions, floats and register reports. Off: sales work without any register ceremony.</p>
+                                        </div>
+
+                                        <div class="module-card">
+                                            <div class="module-card-head">
+                                                <span class="module-ico"><img src="static/images/svg-icon/authentication.svg" alt="till lock"></span>
+                                                <div class="module-title"><lang class="lang_tilllock_title">Till PIN Lock</lang></div>
+                                                <div class="custom-control custom-switch module-switch">
+                                                    <input type="checkbox" class="custom-control-input" id="till_lock_enable" name="till_lock_enable">
+                                                    <label class="custom-control-label" for="till_lock_enable"></label>
+                                                </div>
+                                            </div>
+                                            <p class="module-desc">Staff unlock with a 4-digit PIN instead of a password.</p>
+                                            <div class="module-subs">
+                                                <div class="form-group mb-0" style="min-width:200px;">
+                                                    <label for="till_lock_idle_minutes" style="font-size:12.5px;" class="mb-1">
+                                                        <lang class="lang_tilllockidle_title">Lock when idle</lang>
+                                                    </label>
+                                                    <select name="till_lock_idle_minutes" id="till_lock_idle_minutes"
+                                                        class="form-control form-control-sm border-control">
+                                                        <option value="0">Only when asked</option>
+                                                        <option value="2">After 2 minutes</option>
+                                                        <option value="5">After 5 minutes</option>
+                                                        <option value="10">After 10 minutes</option>
+                                                        <option value="30">After 30 minutes</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="module-card" data-module="plan" data-access="read">
+                                            <div class="module-card-head">
+                                                <span class="module-ico"><img src="static/images/svg-icon/tables.svg" alt="restaurant"></span>
+                                                <div class="module-title"><lang class="lang_modules_restaurant">Restaurant</lang></div>
+                                                <div class="custom-control custom-switch module-switch">
+                                                    <input type="checkbox" class="custom-control-input" id="table_options" name="table_options">
+                                                    <label class="custom-control-label" for="table_options"></label>
+                                                </div>
+                                            </div>
+                                            <p class="module-desc">Dine-in orders by table, KOTs to the kitchen.
+                                                <a href="javascript:void(0)" onclick="$('#v-pills-tableorder-tab').click();"><lang class="lang_modules_managetables">Manage tables</lang></a>
+                                            </p>
+                                        </div>
+
+                                        <div class="module-card">
+                                            <div class="module-card-head">
+                                                <span class="module-ico"><img src="static/images/svg-icon/tax.svg" alt="tax"></span>
+                                                <div class="module-title"><lang class="lang_module_tax">Tax</lang></div>
+                                                <div class="custom-control custom-switch module-switch">
+                                                    <input type="checkbox" class="custom-control-input" id="module_tax_enable" name="module_tax_enable">
+                                                    <label class="custom-control-label" for="module_tax_enable"></label>
+                                                </div>
+                                            </div>
+                                            <p class="module-desc">Tax Rates and Tax Groups. Off hides both sections; saved taxes keep.</p>
+                                        </div>
+
+                                        <div class="module-card">
+                                            <div class="module-card-head">
+                                                <span class="module-ico"><img src="static/images/svg-icon/credit.svg" alt="credit"></span>
+                                                <div class="module-title"><lang class="lang_module_credit">Customer Credit</lang></div>
+                                                <div class="custom-control custom-switch module-switch">
+                                                    <input type="checkbox" class="custom-control-input" id="module_credit_enable" name="module_credit_enable">
+                                                    <label class="custom-control-label" for="module_credit_enable"></label>
+                                                </div>
+                                            </div>
+                                            <p class="module-desc">Credit limits and payment reminders.</p>
+                                        </div>
+
+                                        <div class="module-card">
+                                            <div class="module-card-head">
+                                                <span class="module-ico"><img src="static/images/svg-icon/crm.svg" alt="marketing"></span>
+                                                <div class="module-title"><lang class="lang_module_marketing">Customer Marketing</lang></div>
+                                                <div class="custom-control custom-switch module-switch">
+                                                    <input type="checkbox" class="custom-control-input" id="module_marketing_enable" name="module_marketing_enable">
+                                                    <label class="custom-control-label" for="module_marketing_enable"></label>
+                                                </div>
+                                            </div>
+                                            <p class="module-desc">Loyalty &amp; rewards, coupons, cashback and campaigns.</p>
+                                        </div>
+
+                                        <div class="module-card">
+                                            <div class="module-card-head">
+                                                <span class="module-ico"><img src="static/images/svg-icon/email.svg" alt="messaging"></span>
+                                                <div class="module-title"><lang class="lang_module_messaging">Messaging</lang></div>
+                                                <div class="custom-control custom-switch module-switch">
+                                                    <input type="checkbox" class="custom-control-input" id="module_messaging_enable" name="module_messaging_enable">
+                                                    <label class="custom-control-label" for="module_messaging_enable"></label>
+                                                </div>
+                                            </div>
+                                            <p class="module-desc">SMS, WhatsApp and email providers and sends.</p>
+                                        </div>
+
+                                        <div class="module-card">
+                                            <div class="module-card-head">
+                                                <span class="module-ico"><img src="static/images/svg-icon/shopping-online.svg" alt="sales channels"></span>
+                                                <div class="module-title"><lang class="lang_module_channels">Sales Channels</lang></div>
+                                                <div class="custom-control custom-switch module-switch">
+                                                    <input type="checkbox" class="custom-control-input" id="module_channels_enable" name="module_channels_enable">
+                                                    <label class="custom-control-label" for="module_channels_enable"></label>
+                                                </div>
+                                            </div>
+                                            <p class="module-desc">Selling beyond the counter - online, QR ordering and partner channels arrive here.</p>
+                                            <div class="module-subs">
+                                                <div class="custom-control custom-switch">
+                                                    <input type="checkbox" class="custom-control-input" id="module_channels_kiosk_enable" name="module_channels_kiosk_enable">
+                                                    <label class="custom-control-label" for="module_channels_kiosk_enable"><lang class="lang_module_kiosk">Kiosk</lang></label>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="module-card">
+                                            <div class="module-card-head">
+                                                <span class="module-ico"><img src="static/images/svg-icon/theme.svg" alt="themes"></span>
+                                                <div class="module-title"><lang class="lang_module_themes">Themes</lang></div>
+                                                <div class="custom-control custom-switch module-switch">
+                                                    <input type="checkbox" class="custom-control-input" id="module_themes_enable" name="module_themes_enable">
+                                                    <label class="custom-control-label" for="module_themes_enable"></label>
+                                                </div>
+                                            </div>
+                                            <p class="module-desc">Theme &amp; Appearance - presets, custom colours and dark modes.</p>
+                                        </div>
+
+                                        <div class="module-card">
+                                            <div class="module-card-head">
+                                                <span class="module-ico"><i class="feather icon-trash-2"></i></span>
+                                                <div class="module-title"><lang class="lang_module_recyclebin">Recycle Bin</lang></div>
+                                                <div class="custom-control custom-switch module-switch">
+                                                    <input type="checkbox" class="custom-control-input" id="module_recyclebin_enable" name="module_recyclebin_enable">
+                                                    <label class="custom-control-label" for="module_recyclebin_enable"></label>
+                                                </div>
+                                            </div>
+                                            <p class="module-desc">Keep deleted records for restore. Off: deleted records are NOT retained - deletes still sync, but cannot be undone.</p>
+                                        </div>
+
+                                        <div class="module-card">
+                                            <div class="module-card-head">
+                                                <span class="module-ico"><img src="static/images/svg-icon/supermarket.svg" alt="weighing scale"></span>
+                                                <div class="module-title"><lang class="lang_weightmachine_title">Weighing Scale</lang></div>
+                                                <div class="custom-control custom-switch module-switch">
+                                                    <input type="checkbox" class="custom-control-input" id="hardware_weight_machine_enable" name="hardware_weight_machine_enable">
+                                                    <label class="custom-control-label" for="hardware_weight_machine_enable"></label>
+                                                </div>
+                                            </div>
+                                            <p class="module-desc">Weight-embedded barcodes and scale reads. Needs the hardware manager on the till.</p>
+                                        </div>
+
+                                    </div>
+                                </div>
+                                <div class="card-footer text-right">
+                                    <button type="button" class="btn btn-outline-primary"
+                                        onclick="PosnicPro.settings.updateCommonSetting();"><i
+                                            class="feather icon-save mr-2"></i>
+                                        <lang class="lang_save_title">Save</lang>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Modules End -->
+
+                        <!-- Offline Tab Start -->
+                        <!-- Offline Tab End -->
+
+                        <!-- Sms Tab Start -->
+                        
+                        <!-- Sms Tab End -->
+
+                        <!-- Unit Tab Start -->
+                        
+
+                        <!-- Loyalty & Rewards Start -->
+                        
+
+                        <!-- Coupons Start -->
+                        
+
+                        <!-- Campaigns Start -->
+                        
+
+                        <!-- SMS & WhatsApp Providers Start (super admin only) -->
+                        
+
+                        <!-- Credit & Reminders Start -->
+                        <div class="tab-pane fade" id="v-pills-credit" role="tabpanel"
+                            aria-labelledby="v-pills-credit-tab">
+                            <div class="card m-b-30">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">Credit rules</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p class="text-muted mb-3">Let customers buy on credit (khata) and collect later. A
+                                        credit limit caps how much a customer can owe; leave it 0 for no limit.</p>
+                                    <div class="form-row">
+                                        <div class="col-md-4 mb-2">
+                                            <label>Default credit limit
+                                                (<span class="credit-currency-label">currency</span>, 0 = none)</label>
+                                            <input type="number" min="0" step="0.01" class="form-control"
+                                                id="credit_default_limit" value="0">
+                                        </div>
+                                        <div class="col-md-4 mb-2">
+                                            <label>Credit terms (days, 0 = none)</label>
+                                            <input type="number" min="0" step="1" class="form-control"
+                                                id="credit_terms_days" value="0">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card m-b-30">
+                                <div class="card-header d-flex align-items-center justify-content-between">
+                                    <h5 class="card-title mb-0">Payment reminders</h5>
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input"
+                                            id="credit_reminder_enabled">
+                                        <label class="custom-control-label" for="credit_reminder_enabled">Enable
+                                            reminders</label>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <p class="text-muted mb-3">Remind customers who owe money, over SMS or WhatsApp (your
+                                        configured providers). A customer is never reminded twice in one day.</p>
+                                    <div class="form-row">
+                                        <div class="col-md-3 mb-2">
+                                            <label>Channel</label>
+                                            <select class="form-control" id="credit_reminder_channel">
+                                                <option value="sms">SMS</option>
+                                                <option value="whatsapp">WhatsApp</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3 mb-2">
+                                            <label>Only remind dues over
+                                                (<span class="credit-currency-label">currency</span>)</label>
+                                            <input type="number" min="0" step="0.01" class="form-control"
+                                                id="credit_reminder_min_due" value="0">
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="col-md-12 mb-2">
+                                            <label>Message — use {name} {due} {currency} {shop}</label>
+                                            <textarea class="form-control" id="credit_reminder_template" rows="2"
+                                                placeholder="Hi {name}, you have {currency}{due} due at {shop}. Please pay soon."></textarea>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-outline-primary mt-2" id="credit_save">
+                                        <i class="feather icon-save mr-2"></i> Save credit settings
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="card m-b-30">
+                                <div class="card-header d-flex align-items-center justify-content-between">
+                                    <h5 class="card-title mb-0">Outstanding customers —
+                                        <span id="credit_outstanding_total">0</span></h5>
+                                    <div>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm mr-1"
+                                            id="credit_remind_test">Test (dry run)</button>
+                                        <button type="button" class="btn btn-primary-rgba btn-sm"
+                                            id="credit_remind_all"><i class="feather icon-send mr-1"></i> Remind
+                                            all</button>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-borderless">
+                                            <thead>
+                                                <tr>
+                                                    <td class="font-weight-normal">Customer</td>
+                                                    <td class="font-weight-normal">Phone</td>
+                                                    <td class="font-weight-normal text-right">Due</td>
+                                                    <td class="font-weight-normal text-center">Action</td>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="credit_outstanding_body"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cashback Start -->
+                        
+
+                        <!-- Tax Tab Start -->
+                        
+
+
+                        <!-- cash denomination Start -->
+                        
+                        <!--Denom field end-->
+
+                        <!-- table orders Start -->
+                        <div class="tab-pane fade" id="v-pills-tableorder" role="tabpanel"
+                            aria-labelledby="v-pills-tableorder-tab">
+                            <div class="card m-b-30" data-module="plan" data-access="read">
+                                <div class="card-body">
+                                    <small class="form-text text-muted">
+                                        <lang class="lang_modules_kot_hint">Restaurant / KOT mode is switched on
+                                        under Settings &gt; Modules. This page manages the tables it uses.</lang>
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="card m-b-30">
+                                <div class="card-header">
+                                    <h5 class="card-title">
+                                        Tables list
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="order-box">
+                                        <div class="card border m-b-30">
+                                            <div class="card-header">
+                                                <div class="row align-items-center">
+                                                    <div class="col-sm-2">
+                                                        <select class="form-control" id="view_tableorder_per_page" onchange="PosnicPro.tableOrders.changePerPage()">
+                                                            <option value="5">5</option>
+                                                            <option value="10" selected>10</option>
+                                                            <option value="25">25</option>
+                                                            <option value="50">50</option>
+                                                            <option value="100">100</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-sm-4"></div>
+                                                    <div class="col-sm-6">
                                                         <h6 class="mb-0 float-right"><a data-module="branch" data-access="write"
                                                                 class="btn btn-primary-rgba"
                                                                 href="#/settings/tableorder/new"><i
