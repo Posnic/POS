@@ -1162,6 +1162,82 @@ class SettingController extends BaseController {
     }
   }
 
+  /* Modifier groups (V2) - Restaurant option sets; CRUD mirrors tables. */
+  async getModifierGroups(req, res) {
+    try {
+      const settingModel = this.createModelWithContext(req);
+      const result = await settingModel.getModifierGroupsModel();
+      const code = result.status ? 200 : 400;
+      return res
+        .status(code)
+        .json({
+          type: result.status ? 'success' : 'error',
+          message: result.message,
+          data: result.data,
+        });
+    } catch (error) {
+      console.error('Error in getModifierGroups:', error);
+      return res.status(500).json({ type: 'error', message: error.message });
+    }
+  }
+
+  async addModifierGroup(req, res) {
+    try {
+      const settingModel = this.createModelWithContext(req);
+      const result = await settingModel.addModifierGroupModel(req.body || {});
+      const code = result.status ? 200 : 400;
+      return res
+        .status(code)
+        .json({
+          type: result.status ? 'success' : 'error',
+          message: result.message,
+          data: result.data,
+        });
+    } catch (error) {
+      console.error('Error in addModifierGroup:', error);
+      return res.status(500).json({ type: 'error', message: error.message });
+    }
+  }
+
+  async editModifierGroup(req, res) {
+    try {
+      const settingModel = this.createModelWithContext(req);
+      const result = await settingModel.editModifierGroupModel(
+        req.params.id || req.body.id,
+        req.body || {}
+      );
+      const code = result.status ? 200 : 400;
+      return res
+        .status(code)
+        .json({
+          type: result.status ? 'success' : 'error',
+          message: result.message,
+          data: result.data,
+        });
+    } catch (error) {
+      console.error('Error in editModifierGroup:', error);
+      return res.status(500).json({ type: 'error', message: error.message });
+    }
+  }
+
+  async deleteModifierGroup(req, res) {
+    try {
+      const settingModel = this.createModelWithContext(req);
+      const result = await settingModel.deleteModifierGroupModel(req.params.id || req.query.id);
+      const code = result.status ? 200 : 400;
+      return res
+        .status(code)
+        .json({
+          type: result.status ? 'success' : 'error',
+          message: result.message,
+          data: result.data,
+        });
+    } catch (error) {
+      console.error('Error in deleteModifierGroup:', error);
+      return res.status(500).json({ type: 'error', message: error.message });
+    }
+  }
+
   async getTableOrderAll(req, res) {
     try {
       const settingModel = this.createModelWithContext(req);

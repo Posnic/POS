@@ -1197,6 +1197,15 @@ class ItemRepository extends BaseModel {
         updateData.variant_parent_name = String(data.variant_parent_name || '').trim();
       }
 
+      /* Modifier groups (V2): which option sets this item offers at sale
+         time. Presence-gated like the variant link - a payload that sends
+         the key (even empty) sets it; one that omits it changes nothing. */
+      if (Array.isArray(data.modifier_group_ids)) {
+        updateData.modifier_group_ids = data.modifier_group_ids
+          .filter((v) => ObjectId.isValid(String(v)))
+          .map((v) => new ObjectId(String(v)));
+      }
+
       if (!id) {
         // Insert new item
         const insertData = {

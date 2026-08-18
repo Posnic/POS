@@ -2752,6 +2752,152 @@ class SettingModel extends BaseModel {
   }
 
   // Table Order Methods
+  /*
+   * Modifier groups (VARIANT roadmap V2): "Toppings", "Spice level" -
+   * named option sets with min/max selection rules and price deltas,
+   * referenced by items and picked at sale time. Restaurant-module
+   * surface; CRUD mirrors the table-order pattern beside it.
+   */
+  static normalizeModifierGroup(data = {}) {
+    const name = String(data.name || '').trim();
+    if (!name) return { error: 'The group needs a name.' };
+    if (name.length > 60) return { error: 'Group name is too long (60 max).' };
+    let min = parseInt(data.min, 10);
+    let max = parseInt(data.max, 10);
+    if (isNaN(min) || min < 0) min = 0;
+    if (isNaN(max) || max < 0) max = 0; // 0 = no upper limit
+    if (max !== 0 && max < min) return { error: 'Max picks cannot be below min picks.' };
+    const rawOptions = Array.isArray(data.options) ? data.options : [];
+    const options = [];
+    const seen = new Set();
+    for (const o of rawOptions) {
+      const oname = String((o && o.name) || '').trim();
+      if (!oname) continue;
+      if (seen.has(oname.toLowerCase())) {
+        return { error: 'Option "' + oname + '" appears twice.' };
+      }
+      seen.add(oname.toLowerCase());
+      const delta = Number(o.price_delta);
+      options.push({ name: oname, price_delta: Number.isFinite(delta) ? delta : 0 });
+    }
+    if (!options.length) return { error: 'The group needs at least one option.' };
+    if (min > options.length) return { error: 'Min picks exceeds the number of options.' };
+    return { value: { name, min, max, options } };
+  }
+
+  async getModifierGroupsModel() {
+    try {
+      const collection = await this.getCollection('modifier_groups');
+      const list = await collection.find(this.buildFilter()).sort({ name: 1 }).toArray();
+      return {
+        status: true,
+        data: list.map((doc) => ({
+          id: doc._id.toString(),
+          name: doc.name,
+          min: doc.min || 0,
+          max: doc.max || 0,
+          options: doc.options || [],
+        })),
+        message: 'success',
+      };
+    } catch (error) {
+      console.error('Error in getModifierGroupsModel:', error);
+      return { status: false, data: null, message: error.message };
+    }
+  }
+
+  async addModifierGroupModel(data) {
+    try {
+      const norm = SettingModel.normalizeModifierGroup(data);
+      if (norm.error) return { status: false, data: null, message: norm.error };
+      const collection = await this.getCollection('modifier_groups');
+      const dup = await collection.findOne({
+        ...this.buildFilter(),
+        name: {
+          $regex: new RegExp(
+            '^' + norm.value.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$',
+            'i'
+          ),
+        },
+      });
+      if (dup)
+        return { status: false, data: null, message: 'A group with this name already exists.' };
+      const now = new Date();
+      const r = await collection.insertOne({
+        ...norm.value,
+        branch_id: this.normalizeId(this.branchId),
+        branch_name: await this.getBranchName(),
+        license: this.normalizeId(this.licenseId),
+        created_date: now,
+        created_by: this.user?.username || 'system',
+        updated_date: now,
+        updated_by: this.user?.username || 'system',
+      });
+      return {
+        status: true,
+        data: { id: r.insertedId.toString() },
+        message: 'Modifier group created',
+      };
+    } catch (error) {
+      console.error('Error in addModifierGroupModel:', error);
+      return { status: false, data: null, message: error.message };
+    }
+  }
+
+  async editModifierGroupModel(id, data) {
+    try {
+      if (!id) return { status: false, data: null, message: 'Group id required' };
+      const norm = SettingModel.normalizeModifierGroup(data);
+      if (norm.error) return { status: false, data: null, message: norm.error };
+      const collection = await this.getCollection('modifier_groups');
+      const r = await collection.updateOne(
+        { _id: this.normalizeId(id), license: this.normalizeId(this.licenseId) },
+        {
+          $set: {
+            ...norm.value,
+            updated_date: new Date(),
+            updated_by: this.user?.username || 'system',
+          },
+        }
+      );
+      if (!r.matchedCount) return { status: false, data: null, message: 'No such modifier group' };
+      return { status: true, data: null, message: 'Modifier group updated' };
+    } catch (error) {
+      console.error('Error in editModifierGroupModel:', error);
+      return { status: false, data: null, message: error.message };
+    }
+  }
+
+  async deleteModifierGroupModel(id) {
+    try {
+      if (!id) return { status: false, data: null, message: 'Group id required' };
+      /* Same protection tax rates get: a group items still point at does
+         not silently vanish out from under their sale screens. */
+      const items = await this.getCollection('items');
+      const used = await items.countDocuments({
+        license: this.normalizeId(this.licenseId),
+        modifier_group_ids: this.normalizeId(id),
+      });
+      if (used > 0) {
+        return {
+          status: false,
+          data: null,
+          message: 'This group is used by ' + used + ' item(s). Remove it from them first.',
+        };
+      }
+      const collection = await this.getCollection('modifier_groups');
+      const r = await collection.deleteOne({
+        _id: this.normalizeId(id),
+        license: this.normalizeId(this.licenseId),
+      });
+      if (!r.deletedCount) return { status: false, data: null, message: 'No such modifier group' };
+      return { status: true, data: null, message: 'Modifier group deleted' };
+    } catch (error) {
+      console.error('Error in deleteModifierGroupModel:', error);
+      return { status: false, data: null, message: error.message };
+    }
+  }
+
   async getTableOrderAllModel() {
     try {
       const collection = await this.getCollection(this.tableOrderCollection);

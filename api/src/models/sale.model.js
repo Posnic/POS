@@ -196,6 +196,22 @@ const saleItemSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    /*
+     * Structured modifiers (V2): what the customer picked from the item's
+     * option sets, each with the price delta already inside the line price
+     * the client sent. Stored for the KOT, the receipt and honesty - the
+     * free-text item_description above stays for genuine comments.
+     */
+    modifiers: {
+      type: [
+        {
+          group: { type: String, trim: true },
+          name: { type: String, trim: true },
+          price_delta: { type: Number, default: 0 },
+        },
+      ],
+      default: undefined,
+    },
   },
   { _id: false, strict: false }
 );
@@ -791,6 +807,7 @@ saleSchema.pre('save', async function () {
         supplier_id: src.supplier_id != null ? src.supplier_id : undefined,
         supplier_name: src.supplier_name != null ? src.supplier_name : '',
         item_description: src.item_description != null ? src.item_description : '',
+        modifiers: Array.isArray(src.modifiers) && src.modifiers.length ? src.modifiers : undefined,
         tax: src.tax != null ? src.tax : 0,
         tax_type: src.tax_type != null ? src.tax_type : '',
         igst_tax: src.igst_tax != null ? src.igst_tax : 0,

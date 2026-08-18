@@ -99,6 +99,12 @@ router.put(
 // M4 branch selector: one branch's module switches, read before editing.
 router.get('/branchModules', bindController(settingController.getBranchModules));
 
+// Modifier groups (V2): Restaurant option sets with min/max + price deltas.
+router.get('/modifierGroups', bindController(settingController.getModifierGroups));
+router.post('/modifierGroups', bindController(settingController.addModifierGroup));
+router.put('/modifierGroups/:id', bindController(settingController.editModifierGroup));
+router.delete('/modifierGroups/:id', bindController(settingController.deleteModifierGroup));
+
 router.get('/getTaxAll', bindController(settingController.getTaxAll));
 router.get('/getTaxAjaxList', bindController(settingController.getTaxAjaxList));
 router.get('/getTaxGroup', bindController(settingController.getTaxGroup));
