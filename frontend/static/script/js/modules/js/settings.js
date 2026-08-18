@@ -4943,6 +4943,134 @@ PosnicPro.integrations = {
     }
 };
 
+/*
+ * Modifier groups (V2): the Restaurant pane's option-set manager. A group
+ * is a name, min/max pick rules and priced options; items reference the
+ * groups; the sale screen enforces the rules at pick time.
+ */
+PosnicPro.modifiers = {
+    _esc: function (s) {
+        return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+        });
+    },
+    _cache: [],
+    loadGroups: function () {
+        var esc = PosnicPro.modifiers._esc;
+        PosnicPro.get({ url: 'setting/modifierGroups', data: {} }, function (r) {
+            var rows = (r && r.data) || [];
+            PosnicPro.modifiers._cache = rows;
+            if (!rows.length) {
+                $('#modifier_groups_body').html('<tr><td colspan="4" class="text-center text-muted">No modifier groups yet - the kitchen menu starts here.</td></tr>');
+                return;
+            }
+            var html = '';
+            rows.forEach(function (g) {
+                var rules = (g.min > 0 ? 'pick at least ' + g.min : 'optional')
+                    + (g.max > 0 ? ', at most ' + g.max : '');
+                var opts = g.options.map(function (o) {
+                    var d = Number(o.price_delta) || 0;
+                    return esc(o.name) + (d ? ' (' + (d > 0 ? '+' : '') + d + ')' : '');
+                }).join(', ');
+                html += '<tr><td>' + esc(g.name) + '</td><td><small>' + esc(rules) + '</small></td>'
+                    + '<td><small>' + opts + '</small></td>'
+                    + '<td class="text-right">'
+                    + '<button type="button" class="btn btn-outline-primary btn-sm mod-edit-btn" data-id="' + esc(g.id) + '">Edit</button> '
+                    + '<button type="button" class="btn btn-outline-danger btn-sm mod-del-btn" data-id="' + esc(g.id) + '">Delete</button>'
+                    + '</td></tr>';
+            });
+            $('#modifier_groups_body').html(html);
+        }, function () {
+            $('#modifier_groups_body').html('<tr><td colspan="4" class="text-center text-danger">Could not load modifier groups.</td></tr>');
+        });
+    },
+    openEditor: function (id) {
+        var esc = PosnicPro.modifiers._esc;
+        var g = id ? (PosnicPro.modifiers._cache.find(function (x) { return x.id === id; }) || {}) : {};
+        var optionRow = function (o) {
+            o = o || { name: '', price_delta: 0 };
+            return '<div class="form-row mb-1 mod-opt-row">'
+                + '<div class="col-7"><input type="text" class="form-control form-control-sm mod-opt-name" maxlength="60" placeholder="e.g. Extra cheese" value="' + esc(o.name) + '"></div>'
+                + '<div class="col-4"><input type="number" step="0.01" class="form-control form-control-sm mod-opt-delta" placeholder="+/- price" value="' + (Number(o.price_delta) || 0) + '"></div>'
+                + '<div class="col-1"><a href="javascript:void(0);" class="text-danger mod-opt-remove"><i class="feather icon-x"></i></a></div>'
+                + '</div>';
+        };
+        $('#modifier_editor_modal').remove();
+        $('body').append(
+            '<div class="modal fade close_on_esc" id="modifier_editor_modal" tabindex="-1" role="dialog" aria-hidden="true">'
+            + '<div class="modal-dialog" role="document"><div class="modal-content">'
+            + '<div class="modal-header"><h5 class="modal-title">' + (id ? 'Edit' : 'New') + ' Modifier Group</h5>'
+            + '<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>'
+            + '<div class="modal-body">'
+            + '<input type="hidden" id="mod_edit_id" value="' + esc(id || '') + '">'
+            + '<div class="form-group"><label style="font-weight:600; font-size:.85rem;">Group name</label>'
+            + '<input type="text" class="form-control" id="mod_edit_name" maxlength="60" placeholder="e.g. Toppings" value="' + esc(g.name || '') + '"></div>'
+            + '<div class="form-row">'
+            + '<div class="form-group col-6"><label style="font-weight:600; font-size:.85rem;">Min picks</label>'
+            + '<input type="number" min="0" class="form-control" id="mod_edit_min" value="' + (g.min || 0) + '"></div>'
+            + '<div class="form-group col-6"><label style="font-weight:600; font-size:.85rem;">Max picks <small class="text-muted">(0 = no limit)</small></label>'
+            + '<input type="number" min="0" class="form-control" id="mod_edit_max" value="' + (g.max || 0) + '"></div>'
+            + '</div>'
+            + '<label style="font-weight:600; font-size:.85rem;">Options</label>'
+            + '<div id="mod_edit_options">' + ((g.options && g.options.length) ? g.options.map(optionRow).join('') : optionRow()) + '</div>'
+            + '<button type="button" class="btn btn-outline-secondary btn-sm mt-1" id="mod_opt_add">+ Option</button>'
+            + '</div>'
+            + '<div class="modal-footer">'
+            + '<button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>'
+            + '<button type="button" class="btn btn-outline-primary" id="mod_edit_save" onclick="PosnicPro.modifiers.save();">Save</button>'
+            + '</div></div></div></div>'
+        );
+        $('#modifier_editor_modal').modal('show');
+        $('#mod_opt_add').on('click', function () { $('#mod_edit_options').append(optionRow()); });
+        $('#modifier_editor_modal').on('click', '.mod-opt-remove', function () { $(this).closest('.mod-opt-row').remove(); });
+    },
+    save: function () {
+        var id = $('#mod_edit_id').val();
+        var payload = {
+            name: $('#mod_edit_name').val(),
+            min: $('#mod_edit_min').val(),
+            max: $('#mod_edit_max').val(),
+            options: $('.mod-opt-row').map(function () {
+                return {
+                    name: $(this).find('.mod-opt-name').val(),
+                    price_delta: $(this).find('.mod-opt-delta').val()
+                };
+            }).get()
+        };
+        var done = function (r) {
+            if (r && r.type === 'success') {
+                $('#modifier_editor_modal').modal('hide');
+                PosnicPro.alert('success', r.message);
+                PosnicPro.modifiers.loadGroups();
+            } else {
+                PosnicPro.alert((r && r.type) || 'error', (r && r.message) || 'Could not save the group.');
+            }
+        };
+        var fail = function (xhr) {
+            var resp = {};
+            try { resp = JSON.parse(xhr.responseText); } catch (e) { /* plain */ }
+            PosnicPro.alert('error', resp.message || 'Could not save the group.');
+        };
+        if (id) {
+            PosnicPro.put({ url: 'setting/modifierGroups/' + id, data: JSON.stringify(payload) }, done, fail);
+        } else {
+            PosnicPro.post({ url: 'setting/modifierGroups', data: JSON.stringify(payload) }, done, fail);
+        }
+    },
+    remove: function (id) {
+        PosnicPro.delete({ url: 'setting/modifierGroups/' + id, data: JSON.stringify({}) }, function (r) {
+            PosnicPro.alert((r && r.type) || 'error', (r && r.message) || '');
+            PosnicPro.modifiers.loadGroups();
+        }, function (xhr) {
+            var resp = {};
+            try { resp = JSON.parse(xhr.responseText); } catch (e) { /* plain */ }
+            PosnicPro.alert('error', resp.message || 'Could not delete the group.');
+        });
+    }
+};
+$(document).on('click', '.mod-edit-btn', function () { PosnicPro.modifiers.openEditor($(this).data('id')); });
+$(document).on('click', '.mod-del-btn', function () { PosnicPro.modifiers.remove($(this).data('id')); });
+
 // Delegated actions: rows repaint on every load.
 $(document).on('click', '.int-revoke-btn', function () {
     PosnicPro.integrations.revoke($(this).data('id'));
