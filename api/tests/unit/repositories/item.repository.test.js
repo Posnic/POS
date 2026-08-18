@@ -262,6 +262,16 @@ describe('ItemRepository', () => {
       expect(r.status).toBe(true);
     });
 
+    test('open_price is presence-gated: sent -> stored boolean, absent -> untouched', async () => {
+      await repo.upsertItem({ ...data, open_price: 'true' }, '', ctx);
+      expect(col.insertOne.mock.calls[0][0].open_price).toBe(true);
+
+      col.insertOne.mockClear();
+      col.findOne.mockResolvedValue(null);
+      await repo.upsertItem(data, '', ctx); // no open_price key at all
+      expect('open_price' in col.insertOne.mock.calls[0][0]).toBe(false);
+    });
+
     test('blank barcodes skip the uniqueness query entirely', async () => {
       const noBarcode = { ...data, barcode_id: '' };
       await repo.upsertItem(noBarcode, '', ctx);

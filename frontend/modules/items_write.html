@@ -178,12 +178,21 @@
                                 <div class="row">
                                     <div class="col-md-6">
                                         <label class="form-control-placeholder" for="items_selling_price">
-                                            <lang class="lang_sales_title"> Selling </lang>
+                                            <lang class="lang_sales_title"> Selling </lang><span class="text-danger">*</span>
                                         </label>
                                         <input type="text"
                                             class="form-control allow_decimal text-right clear_text_item hide_price_digit"
                                             id="items_selling_price" name="items_selling_price" minlength="1"
                                             maxlength="7" value="0.00" placeholder="Sale Price" autocomplete="off">
+                                        <!-- The honest open-price state (IC1): a deliberate
+                                             ask-at-the-till choice instead of an accidental 0.00. -->
+                                        <div class="custom-control custom-checkbox mt-1">
+                                            <input type="checkbox" class="custom-control-input" id="item_open_price"
+                                                name="item_open_price">
+                                            <label class="custom-control-label" for="item_open_price">
+                                                <lang class="lang_open_price">Price at sale (open price)</lang>
+                                            </label>
+                                        </div>
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-control-placeholder" for="items_available_quantity">
@@ -374,15 +383,16 @@
                     <div class="card m-b-30">
                         <div class="card-header">
                             <h5 class="card-title">
-                                <lang class="lang_choosesupplier_title"> Select Supplier </lang><span
-                                    class="text-danger">*</span>
+                                <lang class="lang_choosesupplier_title"> Select Supplier </lang>
                             </h5>
                         </div>
                         <div class="card-body">
                             <div class="form-row">
                                 <div class="form-group col-md-12">
+                                    <!-- Optional (IC1): items routinely arrive without a known
+                                         supplier; receiving is the supplier system of record. -->
                                     <input type="text" class="form-control" id="items_supplier" name="items_supplier"
-                                        maxlength="50" placeholder="Choose a Supplier" autocomplete="off" required>
+                                        maxlength="50" placeholder="Choose a Supplier (optional)" autocomplete="off">
                                     <input type="hidden" name="items_supplier_id" id="items_supplier_id">
                                 </div>
                             </div>

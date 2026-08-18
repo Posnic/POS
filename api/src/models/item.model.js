@@ -113,6 +113,8 @@ class ItemModel {
     items_expiry_date: { type: 'String', select: true },
     item_weight_machine_based: { type: 'Boolean', select: true },
     modifier_group_ids: { type: 'Array', select: true },
+    // IC1: deliberate ask-at-the-till pricing, set from the item form.
+    open_price: { type: 'Boolean', select: true },
     branch_access: { type: 'Array', select: false },
     branch_id: { type: 'ObjectId', select: true },
     branch_name: { type: 'String', select: true },

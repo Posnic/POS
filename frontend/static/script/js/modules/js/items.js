@@ -343,6 +343,7 @@ PosnicPro.items = {
             ecommerce: $('#item_ecommerce').is(':checked'),
             negative_stock: $('#item_negative_stock').is(':checked'),
             item_weight_machine_based: $('#item_weight_machine_based').is(':checked'),
+            open_price: $('#item_open_price').is(':checked'),
             hsn_code: hsn_code,
             hsn_description: $('#items_hsndescription').val(),
             tax_method: tax_method,
@@ -512,6 +513,7 @@ PosnicPro.items = {
                     ecommerce: $('#item_ecommerce').is(':checked'),
                     negative_stock: $('#item_negative_stock').is(':checked'),
                     item_weight_machine_based: $('#item_weight_machine_based').is(':checked'),
+                    open_price: $('#item_open_price').is(':checked'),
                     hsn_code: hsn_code,
                     hsn_description: $('#items_hsndescription').val(),
                     tax_method: tax_method,
@@ -630,7 +632,7 @@ PosnicPro.items = {
                             $('#items_supplier_id').val(defaultsupplier.supplier_id);
                             $('#items_supplier').val(defaultsupplier.supplier_name);
                         }
-                        $(".items_category").val(1).trigger('change.select2');
+                        $(".items_category").val('').trigger('change.select2');
                         $(".items_category").select2({
                             placeholder: "Choose a Category"
                         });
@@ -1024,6 +1026,7 @@ PosnicPro.items = {
                 (data.ecommerce === true) ? $('#item_ecommerce').prop('checked', true) : $('#item_ecommerce').prop("checked", false);
                 (data.negative_stock === true) ? $('#item_negative_stock').prop('checked', true) : $('#item_negative_stock').prop("checked", false);
                 (data.item_weight_machine_based === true) ? $('#item_weight_machine_based').prop('checked', true) : $('#item_weight_machine_based').prop("checked", false);
+                (data.open_price === true) ? $('#item_open_price').prop('checked', true) : $('#item_open_price').prop("checked", false);
                 $("#items_tax").val(data.tax_id).trigger("change");
                 $("#items_unit").val(data.unit_id).trigger("change");
                 var radionbutton = $('#items_discount_amount').val();
@@ -1110,6 +1113,9 @@ PosnicPro.items = {
         $('#v-pills-inventory').addClass('show active');
         $('#item_title_data').text('Add');
         $('#itemid').val('');
+        // A fresh entry: the discount fields are untouched again, so a
+        // category pick may fill them (applyCategoryDiscount checks this).
+        PosnicPro.items._discountTouched = false;
         (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('#item_button_title').text('சேமி') : $('#item_button_title').text('Save');
 
         $('.update-button').attr('disabled', 'disabled').removeClass('btn-outline-success');
@@ -1568,6 +1574,7 @@ PosnicPro.items = {
                 (data.ecommerce === true) ? $('#item_ecommerce').prop('checked', true) : $('#item_ecommerce').prop("checked", false);
                 (data.negative_stock === true) ? $('#item_negative_stock').prop('checked', true) : $('#item_negative_stock').prop("checked", false);
                 (data.item_weight_machine_based === true) ? $('#item_weight_machine_based').prop('checked', true) : $('#item_weight_machine_based').prop("checked", false);
+                (data.open_price === true) ? $('#item_open_price').prop('checked', true) : $('#item_open_price').prop("checked", false);
                 (data.tax_type === 'inclusive') ? $('#item_tax_inclusive').prop('checked', true) : $('#item_tax_exclusive').prop("checked", true);
                 $("#items_tax").val(data.tax_id).trigger("change");
                 var radionbutton = $('#items_discount_amount').val();
@@ -2112,37 +2119,34 @@ PosnicPro.items = {
     },
     applyCategoryDiscount: function(selectedOption) {
         if (!selectedOption) {
-            console.log('No selectedOption provided');
             return;
         }
-        // Get discount values using jQuery data attributes or direct attribute access
         var $option = $(selectedOption);
         var discountAmount = parseFloat($option.attr('data-item-discountamount')) || 0;
         var discountPercentage = parseFloat($option.attr('data-item-discountpercentage')) || 0;
-        
-        console.log('Category:', $option.attr('data-category-name'));
-        console.log('Discount Amount:', discountAmount);
-        console.log('Discount Percentage:', discountPercentage);
-        
-        // Check which discount type is set in the category
+
+        /*
+         * Offer, never impose (IC1): the category's discount fills the form
+         * only while the user has not touched the discount fields this entry
+         * (a dirty flag, because the shop-default discount pre-fills values
+         * and must still lose to the more specific category discount). A
+         * value the user typed survives a category change - the old code
+         * overwrote it, and reset it to 0 when the category had no discount.
+         */
+        if (PosnicPro.items._discountTouched) {
+            return;
+        }
+
         if (discountAmount > 0 && discountPercentage === 0) {
-            // Category uses amount discount
             $("#item_radio_discount_amount").prop('checked', true).trigger('click');
             $('#items_discount_percentage').attr('disabled', 'disabled').addClass('bg-white').hide();
             $('#items_discount_amount').removeAttr('disabled').removeClass('bg-white').show();
             $('#items_discount_amount').val(discountAmount);
         } else if (discountPercentage > 0) {
-            // Category uses percentage discount
             $("#item_radio_discount_percentage").prop('checked', true).trigger('click');
             $('#items_discount_amount').attr('disabled', 'disabled').addClass('bg-white').hide();
             $('#items_discount_percentage').removeAttr('disabled').removeClass('bg-white').show();
             $('#items_discount_percentage').val(discountPercentage);
-        } else {
-            // No discount set, default to amount with 0
-            $("#item_radio_discount_amount").prop('checked', true).trigger('click');
-            $('#items_discount_percentage').attr('disabled', 'disabled').addClass('bg-white').hide();
-            $('#items_discount_amount').removeAttr('disabled').removeClass('bg-white').show();
-            $('#items_discount_amount').val(0);
         }
     },
     loadSelectCategory: function () {
@@ -2153,20 +2157,20 @@ PosnicPro.items = {
         };
         PosnicPro.get(params, function (response) {
             categorySelect.empty();
+            /* IC1: a real placeholder, selected. The old code auto-picked the
+               LAST category in the list, so an untouched form filed the item
+               under an arbitrary category - misfiled catalogues by default.
+               Category is required; choosing it is one deliberate tap. */
+            categorySelect.append('<option value=""></option>');
             suggestions: $.map(response.suggestions, function (dataItem) {
                 var option;
                 option += '<option value="' + dataItem.id + '" data-category-name="' + dataItem.name + '" data-category-id="' + dataItem.id + '" data-item-discountamount="' + dataItem.discount_amount + '" data-item-discountpercentage="' + dataItem.discount_percentage + '">' + dataItem.name + ' </option>';
                 categorySelect.append(option).select2();
             });
-            $(".items_category").val(1).trigger('change.select2');
             $(".items_category").select2({
                 placeholder: "Choose a Category"
             });
-            if (response.suggestions.length > 0) {
-                var lastCategory = response.suggestions[response.suggestions.length - 1];
-                categorySelect.val(lastCategory.id).trigger('change.select2');
-                $('.error_item').css('display', 'none');
-            }
+            $(".items_category").val('').trigger('change.select2');
         }, function (xhr) {
             var response = jQuery.parseJSON(xhr.responseText);
             PosnicPro.alert(response.type, response.message);
@@ -2284,7 +2288,7 @@ PosnicPro.items = {
         $('#default_tax').show();
         $('#item_logo').val('item.svg');
         PosnicPro.items.imageParams = [];
-        $(".items_category").val(1).trigger('change.select2');
+        $(".items_category").val('').trigger('change.select2');
         $(".items_category").select2({
             placeholder: "Choose a Category"
         });
@@ -2834,6 +2838,16 @@ $(document).ready(function () {
         return true;
     }, "Please Enter a Valid Name");
 
+    /* IC1: a selling price is required unless the item is deliberately
+       open-price (ask at the till). The old form accepted the 0.00 default
+       silently, which is how shops end up with unpriced catalogues. */
+    jQuery.validator.addMethod("sellingPriceOrOpen", function (value) {
+        if ($('#item_open_price').is(':checked')) {
+            return true;
+        }
+        return (parseFloat(value) || 0) > 0;
+    }, "Enter a selling price, or tick Price at sale");
+
     $("#item_image_upload_form").validate({
         errorClass: 'error error_item',
         highlight: function (element, errorClass) {
@@ -2861,7 +2875,6 @@ $(document).ready(function () {
                 required: true
             },
             items_supplier: {
-                required: true,
                 maxlength: 250
             },
             items_itemid: {
@@ -2882,7 +2895,8 @@ $(document).ready(function () {
             },
             items_selling_price: {
                 minlength: 1,
-                maxlength: 7
+                maxlength: 7,
+                sellingPriceOrOpen: true
             },
             items_available_quantity: {
                 minlength: 1,
@@ -2947,7 +2961,6 @@ $(document).ready(function () {
                 required: "Please Choose Variant field"
             },
             items_supplier: {
-                required: "Please Choose Supplier",
                 minlength: "Item supplier must consist of at least 3 characters",
                 maxlength: "Item supplier should not be more than 250 characters"
             },
@@ -3556,9 +3569,21 @@ $(document).ready(function () {
         $('#items_supplier_id').val(defaultsupplier.supplier_id);
         $('#items_supplier').val(defaultsupplier.supplier_name);
     }
-    $(".items_category").val(1).trigger('change.select2');
+    $(".items_category").val('').trigger('change.select2');
     $(".items_category").select2({
         placeholder: "Choose a Category"
+    });
+    // Typing in either discount field marks the pair as the user's - a
+    // category pick then leaves them alone (applyCategoryDiscount).
+    $('#items_discount_amount, #items_discount_percentage').on('input', function () {
+        PosnicPro.items._discountTouched = true;
+    });
+    // Ticking open-price re-judges the selling price immediately, so the
+    // "enter a price" error clears the moment the choice is made.
+    $('#item_open_price').on('change', function () {
+        if ($('#items_selling_price').closest('form').data('validator')) {
+            $('#items_selling_price').valid();
+        }
     });
     $("#items_variant").val(1).trigger('change.select2');
     $("#items_variant").select2({
