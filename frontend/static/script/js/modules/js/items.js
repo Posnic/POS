@@ -320,7 +320,7 @@ PosnicPro.items = {
      * POSTs; the family path reads them here and sends one request.
      */
     _sharedItemFields: function () {
-        var content = $('textarea[name="items_description"]').html($('#items_description').summernote('code'));
+        var content = $('#items_description');
         var hsnValue = $("input[name='hsntax_radio_value']:checked").val();
         var tax_value, hsn_code, tax_id, tax_name, tax_method;
         if (hsnValue === 'hsncode') {
@@ -357,7 +357,7 @@ PosnicPro.items = {
             tax_id: tax_id,
             tax: tax_value,
             tax_type: $('input[name="tax_radio_value"]:checked').val(),
-            description: content.html(),
+            description: content.val(),
             image: PosnicPro.items.imageParams,
             modifier_group_ids: PosnicPro.items._modifierGroupIds(),
             barcodes: PosnicPro.items._altBarcodes(),
@@ -502,7 +502,7 @@ PosnicPro.items = {
                     };
                 }
 
-                var content = $('textarea[name="items_description"]').html($('#items_description').summernote('code'));
+                var content = $('#items_description');
                 var hsnValue = $("input[name='hsntax_radio_value']:checked").val();
                 if (hsnValue === 'hsncode') {
                     var tax_value = $('#hsn_tax').val();
@@ -540,7 +540,7 @@ PosnicPro.items = {
                     tax_id: tax_id,
                     tax: tax_value,
                     tax_type: $('input[name="tax_radio_value"]:checked').val(),
-                    description: content.html(),
+                    description: content.val(),
                     image: PosnicPro.items.imageParams,
                     modifier_group_ids: PosnicPro.items._modifierGroupIds(),
                     barcodes: PosnicPro.items._altBarcodes(),
@@ -636,7 +636,7 @@ PosnicPro.items = {
                         $('#item_logo').val('item.svg');
                         PosnicPro.items.imageParams = [];
                         $('.item_add').trigger('reset');
-                        $('#items_description').summernote('code', '');
+                        $('#items_description').val('');
                         loader.find(".loadingSpinner:first").remove();
                         $('#hsn_code_show,#hsn_tax').hide();
                         $('#default_tax').show();
@@ -975,7 +975,7 @@ PosnicPro.items = {
         $('.page_loader,#osk-container').hide();
         $('.page-title-box,#items_new').show();
         $('#items_description').html('').text('');
-        $('#items_description').summernote('code', '');
+        $('#items_description').val('');
         $('#item-display-preview').html('');
         PosnicPro.items.imageParams = [];
         var params = {
@@ -1039,9 +1039,9 @@ PosnicPro.items = {
                 }
                 $('#items_sort').val(data.sort_order);
                 if (data.description !== '') {
-                    $('#items_description').append(data.description);
-                    var htmlView = $('#items_description').text();
-                    $('#items_description').summernote('pasteHTML', htmlView);
+                    $('#items_description').val(
+                        $('<div>').html(data.description).text() || data.description
+                    );
                 }
                 (data.track_inventory === true) ? $('#item_track_inventory').prop('checked', true) : $('#item_track_inventory').prop("checked", false);
                 (data.sales_channel === true) ? $('#item_sales_channel').prop('checked', true) : $('#item_sales_channel').prop("checked", false);
@@ -1520,7 +1520,7 @@ PosnicPro.items = {
         $(".infobar-settings-sidebar-overlay").css({"background": "rgba(0,0,0,0.4)", "position": "fixed"});
         $("#infobar-settings-sidebar-item").addClass("sidebarshow");
         $('#items_description').html('').text('');
-        $('#items_description').summernote('code', '');
+        $('#items_description').val('');
         PosnicPro.get('items/' + id, function (response) {
             if (response.type === 'success') {
                 hasher.setHash('items/new');
@@ -1610,9 +1610,9 @@ PosnicPro.items = {
                     $('#items_discount_percentage').removeAttr('disabled', 'disabled').show();
                 }
                 if (data.description !== '') {
-                    $('#items_description').append(data.description);
-                    var htmlView = $('#items_description').text();
-                    $('#items_description').summernote('pasteHTML', htmlView);
+                    $('#items_description').val(
+                        $('<div>').html(data.description).text() || data.description
+                    );
                 }
                 loader.find(".loadingSpinner:first").remove();
             } else {
@@ -2271,7 +2271,7 @@ PosnicPro.items = {
     itemClearForm: function () {
         $('.error_item').css('display', 'none');
         $('#item-display-preview').html('');
-        $('#items_description').summernote('code', '');
+        $('#items_description').val('');
         $('#items_new .alert').remove();
         if ($("#product_without_variant").is(":checked")) {
             $('#show_variant_fields').hide();
@@ -3345,56 +3345,9 @@ $(document).ready(function () {
 
 });
 
-$('#items_description').summernote({
-    height: 120,
-    toolbar: [
-        ['style', ['style']],
-        ['font', ['bold', 'underline', 'clear']],
-        ['color', ['color']],
-        ['para', ['ul', 'ol', 'paragraph']],
-        ['table', ['table']],
-        ['view', ['fullscreen', 'help']],
-        ['height', ['height']],
-        ['fontsize', ['fontsize']],
-        ['fontname', ['fontname']]
-    ],
-    placeholder: 'Enter a description ...',
-    focus: true,
-    callbacks: {
-        onKeydown: function (e) {
-            var t = e.currentTarget.innerText;
-            if (t.trim().length === 0) {
-                $('#items_description').summernote('code', '');
-            }
-            if (t.trim().length >= 1000) {
-                //delete keys, arrow keys, copy, cut, select all
-                if (e.keyCode != 8 && !(e.keyCode >= 37 && e.keyCode <= 40) && e.keyCode != 46 && !(e.keyCode == 88 && e.ctrlKey) && !(e.keyCode == 67 && e.ctrlKey) && !(e.keyCode == 65 && e.ctrlKey))
-                    e.preventDefault();
-            }
-        },
-        onKeyup: function (e) {
-            var t = e.currentTarget.innerText;
-            if (t.trim().length === 0) {
-                $('#items_description').summernote('code', '');
-            }
-            $('#items_description').text(1000 - t.trim().length);
-        },
-        onPaste: function (e) {
-            var t = e.currentTarget.innerText;
-            var bufferText = ((e.originalEvent || e).clipboardData || window.clipboardData).getData('Text');
-            e.preventDefault();
-            var maxPaste = bufferText.length;
-            if (t.length + bufferText.length > 1000) {
-                maxPaste = 1000 - t.length;
-            }
-            if (maxPaste > 0) {
-                document.execCommand('insertText', false, bufferText.substring(0, maxPaste));
-            }
-            $('#items_description').text(1000 - t.length);
-        }
-    }
-
-});
+/* IC1c followup: the description is a plain textarea now (maxlength
+   in the markup). The Summernote WYSIWYG toolbar was heavyweight for
+   a 1000-char field no receipt renders rich. */
 
 // Update preview function to work with existing system
 var updateLabelPreview = function() {
