@@ -1417,6 +1417,99 @@ if ($wrapper.length) {
         $('#previewing').attr('width', '200px');
         $('#previewing').attr('height', '200px');
     },
+    /*
+     * Module On/Off for another branch (M4): the selector edits any branch
+     * of this shop without switching sessions. Remote editing deliberately
+     * rides a SEPARATE save path: the full updateCommonSetting collects the
+     * whole settings surface plus a dozen session side effects (localStorage,
+     * KOT visibility, blob rebuilds), all of which belong to the branch you
+     * are logged into, not the one you are editing.
+     */
+    _moduleToggleIds: [
+        'staff_shifts_enable', 'staff_tips_enable', 'staff_roster_enable',
+        'cash_register_enable', 'till_lock_enable',
+        'module_tax_enable', 'module_credit_enable', 'module_marketing_enable',
+        'module_messaging_enable', 'module_channels_enable', 'module_channels_kiosk_enable',
+        'module_recyclebin_enable', 'module_themes_enable', 'module_cashbook_enable',
+        'pl_include_cashbook',
+    ],
+    initModulesBranchSelect: function () {
+        var $sel = $('#modules_branch_select');
+        if (!$sel.length) { return; }
+        var sessionBranch = PosnicPro.local.get('branch_id_set');
+        var options = $('#branch_name option').filter(function () {
+            return $(this).val() && $(this).val() !== 'addbranch';
+        });
+        if (options.length < 2) { $('#modules_branch_wrap').hide(); return; }
+        var html = '';
+        options.each(function () {
+            var v = $(this).val();
+            var label = $(this).text();
+            html += '<option value="' + v + '"' + (String(v) === String(sessionBranch) ? ' selected' : '') + '>'
+                + label + (String(v) === String(sessionBranch) ? ' (this till)' : '') + '</option>';
+        });
+        $sel.html(html);
+        $('#modules_branch_wrap').show();
+    },
+    _modulesRemoteBranch: function () {
+        var v = $('#modules_branch_select').val();
+        var sessionBranch = PosnicPro.local.get('branch_id_set');
+        return v && String(v) !== String(sessionBranch) ? v : null;
+    },
+    modulesBranchChanged: function () {
+        var remote = PosnicPro.settings._modulesRemoteBranch();
+        if (!remote) {
+            $('#modules_remote_note').hide();
+            // Back home: the server is the truth for this till's switches.
+            PosnicPro.settings.viewSettings();
+            return;
+        }
+        PosnicPro.get('setting/branchModules?branch_id=' + encodeURIComponent(remote), function (response) {
+            var d = response && response.data;
+            if (!d || !d.modules) { PosnicPro.alert('error', 'Could not load that branch'); return; }
+            PosnicPro.settings._moduleToggleIds.forEach(function (key) {
+                if (d.modules[key] !== undefined) {
+                    $('#' + key).prop('checked', d.modules[key] === true);
+                }
+            });
+            PosnicPro.settings.refreshModuleCards();
+            $('#modules_remote_note span').text(
+                'Editing ' + (d.branch_name || 'another branch') + ' - saving here changes THAT branch only; this till is untouched.'
+            );
+            $('#modules_remote_note').show();
+        }, function () {
+            PosnicPro.alert('error', 'Could not load that branch');
+        });
+    },
+    saveModulesTab: function () {
+        var remote = PosnicPro.settings._modulesRemoteBranch();
+        if (!remote) {
+            PosnicPro.settings.updateCommonSetting('Module switches saved');
+            return;
+        }
+        // Toggles only + the endpoint's validation satisfiers (ignored by
+        // the server's remote path, which writes the toggle map and nothing
+        // else). NO session side effects, NO local caches, NO gating.
+        var payload = { target_branch_id: remote };
+        PosnicPro.settings._moduleToggleIds.forEach(function (key) {
+            payload[key] = $('#' + key).is(':checked') ? 'true' : 'false';
+        });
+        payload.sales_prefix = $('#sales_prefix').val() || 'SAL';
+        payload.receiving_prefix = $('#receiving_prefix').val() || 'REC';
+        var branchLabel = $('#modules_branch_select option:selected').text();
+        PosnicPro.put({
+            url: 'setting/updateCommonSettings',
+            data: JSON.stringify(payload)
+        }, function (response) {
+            if (response.type === 'success') {
+                PosnicPro.alert('success', 'Modules saved for ' + branchLabel);
+            } else {
+                PosnicPro.alert(response.type, response.message);
+            }
+        }, function () {
+            PosnicPro.alert('error', 'Could not save that branch');
+        });
+    },
     /* successLabel: what the toast says on success - each Save button names
        its own act ("Module switches saved") instead of the generic server
        line, which reads the same from four different screens. */

@@ -35,7 +35,8 @@
                                 </a>
                                 <a data-module="branch" data-access="write" class="nav-link mb-2"
                                     id="v-pills-modules-tab" data-toggle="pill" href="#v-pills-modules" role="tab"
-                                    aria-controls="v-pills-modules" aria-selected="false"><i
+                                    aria-controls="v-pills-modules" aria-selected="false"
+                                    onclick="PosnicPro.settings.initModulesBranchSelect(); $('#modules_remote_note').hide();"><i
                                         class="feather icon-grid mr-2"></i>
                                     <lang class="lang_modules">Module On/Off</lang>
                                 </a>
@@ -2185,11 +2186,21 @@
                         <div class="tab-pane fade" id="v-pills-modules" role="tabpanel"
                             aria-labelledby="v-pills-modules-tab">
                             <div class="card m-b-30">
-                                <div class="card-header">
-                                    <h5 class="card-title mb-0"><lang class="lang_modules">Module On/Off</lang></h5>
-                                    <small class="text-muted"><lang class="lang_modules_hint">A module that is off disappears from the menus. Nothing is deleted - switch it back on and everything returns.</lang></small>
+                                <div class="card-header d-flex align-items-center justify-content-between flex-wrap" style="gap:8px;">
+                                    <div>
+                                        <h5 class="card-title mb-0"><lang class="lang_modules">Module On/Off</lang></h5>
+                                        <small class="text-muted"><lang class="lang_modules_hint">A module that is off disappears from the menus. Nothing is deleted - switch it back on and everything returns.</lang></small>
+                                    </div>
+                                    <div id="modules_branch_wrap" style="display:none; min-width:220px;">
+                                        <label for="modules_branch_select" class="mb-0" style="font-size:.78rem; font-weight:600;"><lang class="lang_modules_branch">Branch</lang></label>
+                                        <select class="form-control form-control-sm" id="modules_branch_select"
+                                            onchange="PosnicPro.settings.modulesBranchChanged();"></select>
+                                    </div>
                                 </div>
                                 <div class="card-body">
+                                    <div id="modules_remote_note" class="alert alert-info py-2" style="display:none;">
+                                        <i class="feather icon-info mr-1"></i><span></span>
+                                    </div>
                                     <div class="module-grid">
 
                                         <div class="module-card">
@@ -2385,7 +2396,7 @@
                                 </div>
                                 <div class="card-footer text-right">
                                     <button type="button" class="btn btn-outline-primary"
-                                        onclick="PosnicPro.settings.updateCommonSetting('Module switches saved');"><i
+                                        onclick="PosnicPro.settings.saveModulesTab();"><i
                                             class="feather icon-save mr-2"></i>
                                         <lang class="lang_save_title">Save</lang>
                                     </button>
