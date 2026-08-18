@@ -1195,6 +1195,26 @@ app.post(['/connector/whatsapp/result', '/api/connector/whatsapp/result'], ssePr
   }
 });
 
+app.get(['/connector/whatsapp/state', '/api/connector/whatsapp/state'], sseProtect, requireCustomerWrite, async (req, res) => {
+  try {
+    if (!req.db) return res.status(503).json({ type: 'error', message: 'No shop in context' });
+    // The connector's view: every branch's link state, including the
+    // 'init_requested' rows that tell it a screen is waiting for a QR.
+    const rows = await req.db.collection('whatsapp_connector_state').find({}).toArray();
+    res.json({
+      type: 'success',
+      data: rows.map((r) => ({
+        branch_id: r.branch_id ? String(r.branch_id) : null,
+        device_id: r.device_id || '',
+        status: r.status || 'unknown',
+        updated_date: r.updated_date,
+      })),
+    });
+  } catch (e) {
+    res.status(500).json({ type: 'error', message: 'Could not read state' });
+  }
+});
+
 app.post(['/connector/whatsapp/state', '/api/connector/whatsapp/state'], sseProtect, requireCustomerWrite, async (req, res) => {
   try {
     if (!req.db) return res.status(503).json({ type: 'error', message: 'No shop in context' });

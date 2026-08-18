@@ -275,6 +275,12 @@ class ConnectorSupervisor {
       return false;
     }
 
+    /* Session state (WhatsApp auth, caches) must OUTLIVE version swaps -
+       a connector update that lost its login would page the shop for a QR
+       scan on every release. Versions are disposable; data is not. */
+    const dataDir = path.join(this.root, 'data', name);
+    try { fs.mkdirSync(dataDir, { recursive: true }); } catch (e) { /* spawn will surface it */ }
+
     const env = {
       ...process.env,
       ELECTRON_RUN_AS_NODE: '1',
@@ -283,6 +289,7 @@ class ConnectorSupervisor {
       LOCAL_API_URL: 'http://127.0.0.1:' + this.apiPort(),
       CONNECTOR_TOKEN: cfg.token,
       CONNECTOR_SETTINGS: JSON.stringify(cfg.settings || {}),
+      CONNECTOR_DATA_DIR: dataDir,
       POSNIC_APP_VERSION: this.appVersion,
       POSNIC_CONNECTOR_VERSION: engine.activeVersion(),
     };
