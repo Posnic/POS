@@ -4546,7 +4546,11 @@ $(document).on('change', '#v-pills-modules .module-card-head input.custom-contro
 // #/settings/<section>, so a refresh reopens exactly where you were.
 // The Core Settings inner tab is remembered per device the same way.
 $(function () {
-    $('#v-pills-tab').on('shown.bs.tab', 'a[data-toggle="pill"]', function () {
+    // Delegated from #settings, NOT from '#v-pills-tab': that id exists
+    // TWICE (the main sidebar rail uses it too, first in the DOM), so the
+    // original binding caught RAIL clicks - pressing Purchase wrote
+    // #/settings/purchase and Config swallowed the page.
+    $('#settings').on('shown.bs.tab', 'a[data-toggle="pill"][id^="v-pills-"]', function () {
         var m = /^v-pills-(.+?)(?:-tab)?$/.exec(this.id || '');
         if (!m) { return; }
         var target = 'settings/' + m[1];
