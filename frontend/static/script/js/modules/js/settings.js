@@ -1413,7 +1413,10 @@ if ($wrapper.length) {
         $('#previewing').attr('width', '200px');
         $('#previewing').attr('height', '200px');
     },
-    updateCommonSetting: function () {
+    /* successLabel: what the toast says on success - each Save button names
+       its own act ("Module switches saved") instead of the generic server
+       line, which reads the same from four different screens. */
+    updateCommonSetting: function (successLabel) {
         var loader = $(".loader-view-mystore");
         $("<div class='loadingSpinner'></div>").appendTo(loader);
         var taxDetail = $("#tax_percentage").select2("data");
@@ -1608,7 +1611,8 @@ if ($wrapper.length) {
                     PosnicPro.local.set('branch_has_no_registers', '');
                 }
             }
-            PosnicPro.alert(response.type, response.message);
+            PosnicPro.alert(response.type,
+                (response.type === 'success' && successLabel) ? successLabel : response.message);
             loader.find(".loadingSpinner:first").remove();
         }, function (xhr) {
             var response = jQuery.parseJSON(xhr.responseText);
@@ -4222,7 +4226,7 @@ jQuery.validator.addMethod("lettersonly", function (value, element) {
 $("#tax_discount_add").submit(function (event) {
     event.preventDefault();
     if ($('#tax_discount_add').valid()) {            // checks form for validity
-        PosnicPro.settings.updateCommonSetting();
+        PosnicPro.settings.updateCommonSetting('Core Settings saved');
     }
 });
 $("#tax_checked_all").click(function () {
