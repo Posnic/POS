@@ -185,20 +185,16 @@ PosnicPro.stocklogs = {
                             '</li>';
                     $('#list_lowstock_name').append(branch_value);
                 });
+                // The bell is the ONE notification centre now (activity feed +
+                // push opt-in live in the same dropdown), so zero low stock
+                // only hides the low-stock SECTION - it must never strip the
+                // dropdown behaviour off the bell like it used to.
                 if (totalCount === 0) {
-                    $('.low').css('display', 'none');
+                    $('.lowstock-section').hide();
                     $('#low_item_stock_count').hide();
-                    $('#notoficationlink').css({'width': '45px'});
-                    $('#notoficationlink').removeAttr('data-toggle');
-                    $('#dropdown-notification').removeClass('dropdown');
-                    $('#notoficationlink').removeClass('dropdown-toggle');
                 } else {
-                    $('.low').css('display', '');
+                    $('.lowstock-section').show();
                     $('#low_item_stock_count').show();
-                    $('#notoficationlink').css({'width': '60px'});
-                    $('#notoficationlink').attr('data-toggle', 'dropdown');
-                    $('#dropdown-notification').addClass('dropdown');
-                    $('#notoficationlink').addClass('dropdown-toggle');
                 }
                 let loader = $(".loader-login");
                 loader.find(".loadingSpinner:first").remove();

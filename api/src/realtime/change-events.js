@@ -56,6 +56,12 @@ function changeEvents(req, res, next) {
             const webhooks = require('./webhooks');
             webhooks.publish(req.db, req.db.databaseName, event).catch(() => {});
             webhooks.drainDue(req.db, req.db.databaseName).catch(() => {});
+            /* Stock moved? Maybe tell subscribed devices the shop is running
+               low. Throttled hard inside; fire-and-forget like the rest. */
+            if (entity === 'sales' || entity === 'items' || entity === 'receivings') {
+              const lowStock = require('./low-stock-push');
+              lowStock.maybeNotify(req.db).catch(() => {});
+            }
           } catch (e) {
             /* realtime is an optimisation, never a failure */
           }

@@ -2447,13 +2447,15 @@ input:checked + .slider:before {
 }
 
 /*
- * Shop-activity bell (S2; fed by the realtime channel, PosnicPro.bellFeed).
+ * Shop-activity feed (S2; fed by the realtime channel, PosnicPro.bellFeed).
+ * Lives INSIDE the one notification bell's dropdown; the dot marks unseen
+ * activity beside the numeric low-stock count.
  */
-#bell_feed_btn { position: relative; }
+#notoficationlink { position: relative; }
 #bell_feed_badge {
     position: absolute;
-    top: -4px;
-    right: -6px;
+    top: 2px;
+    right: 2px;
     min-width: 16px;
     height: 16px;
     padding: 0 4px;
@@ -2465,24 +2467,9 @@ input:checked + .slider:before {
     text-align: center;
     font-weight: 600;
 }
-#bell_feed_panel {
-    display: none;
-    position: fixed;
-    top: 64px;
-    right: 16px;
-    width: min(340px, 92vw);
-    max-height: 60vh;
+#bell_feed_list {
+    max-height: 40vh;
     overflow-y: auto;
-    z-index: 19000;
-    background: var(--theme-card-bg, #fff);
-    color: var(--theme-text-primary, #16203a);
-    border-radius: 10px;
-    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.28);
-}
-#bell_feed_head {
-    padding: 12px 16px;
-    font-weight: 600;
-    border-bottom: 1px solid rgba(127, 127, 127, 0.18);
 }
 .bellfeed-item {
     display: flex;

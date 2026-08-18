@@ -735,7 +735,12 @@ PosnicPro = {
         MAX: 20,
         _items: [],       // newest first: {entity, label, hash, count, at}
         _unseen: 0,
-        _open: false,
+        // The feed lives INSIDE the notification bell's dropdown (one bell for
+        // everything - user call, 2026-08-18); "open" is the dropdown's state.
+        _open: function () {
+            var m = document.querySelector('#dropdown-notification .dropdown-menu');
+            return !!(m && m.classList.contains('show'));
+        },
         _KINDS: {
             sales: { label: 'Sales activity', hash: 'sales', acl: ['sales', 'read'] },
             items: { label: 'Inventory updated', hash: 'items', acl: ['item', 'read'] },
@@ -766,7 +771,7 @@ PosnicPro = {
                 PosnicPro.bellFeed._unseen++;
             }
             PosnicPro.bellFeed._badge();
-            if (PosnicPro.bellFeed._open) PosnicPro.bellFeed._paint();
+            if (PosnicPro.bellFeed._open()) PosnicPro.bellFeed._paint();
         },
         _badge: function () {
             var el = document.getElementById('bell_feed_badge');
@@ -801,7 +806,7 @@ PosnicPro = {
             list.innerHTML = html;
             $(list).children('.bellfeed-item').off('click').on('click', function () {
                 var it = PosnicPro.bellFeed._items[Number($(this).data('i'))];
-                PosnicPro.bellFeed.close();
+                if (PosnicPro.bellFeed._open()) $('#notoficationlink').dropdown('toggle');
                 if (it) hasher.setHash(it.hash);
             });
         },
@@ -868,39 +873,18 @@ PosnicPro = {
                 });
             }).catch(function () { /* declined or unsupported - the bell still works */ });
         },
-        _ensureDom: function () {
-            if (document.getElementById('bell_feed_panel')) return;
-            var panel = document.createElement('div');
-            panel.id = 'bell_feed_panel';
-            panel.innerHTML = '<div id="bell_feed_head">Shop activity</div><div id="bell_feed_list"></div>'
-                + '<div id="bell_feed_foot"><button type="button" id="bell_feed_push" style="display:none;"'
-                + ' onclick="PosnicPro.bellFeed._pushClick();"></button></div>';
-            document.body.appendChild(panel);
-            PosnicPro.bellFeed._pushSetup();
-            document.addEventListener('mousedown', function (ev) {
-                if (!PosnicPro.bellFeed._open) return;
-                var p = document.getElementById('bell_feed_panel');
-                var b = document.getElementById('bell_feed_btn');
-                if (p && !p.contains(ev.target) && b && !b.contains(ev.target)) {
-                    PosnicPro.bellFeed.close();
-                }
+        /* Wire the dropdown: opening it marks activity seen, paints the feed
+           fresh, and refreshes the push button's state. */
+        init: function () {
+            var $dd = $('#dropdown-notification');
+            if (!$dd.length) return;
+            $dd.on('shown.bs.dropdown', function () {
+                PosnicPro.bellFeed._unseen = 0;
+                PosnicPro.bellFeed._badge();
+                PosnicPro.bellFeed._paint();
+                PosnicPro.bellFeed._pushSetup();
             });
-        },
-        toggle: function () {
-            PosnicPro.bellFeed._open ? PosnicPro.bellFeed.close() : PosnicPro.bellFeed.openPanel();
-        },
-        openPanel: function () {
-            PosnicPro.bellFeed._ensureDom();
-            PosnicPro.bellFeed._open = true;
-            PosnicPro.bellFeed._unseen = 0;
-            PosnicPro.bellFeed._badge();
-            document.getElementById('bell_feed_panel').style.display = 'block';
             PosnicPro.bellFeed._paint();
-        },
-        close: function () {
-            PosnicPro.bellFeed._open = false;
-            var p = document.getElementById('bell_feed_panel');
-            if (p) p.style.display = 'none';
         },
     },
 
@@ -4068,6 +4052,7 @@ $(function () {
         PosnicPro.shiftWidget.applyEnabled();
         PosnicPro.shiftWidget.syncHeader();
     }
+    if (PosnicPro.bellFeed) PosnicPro.bellFeed.init();
 });
 
 /* Labour / payout report page (#/labourreport) - a report page like the other
