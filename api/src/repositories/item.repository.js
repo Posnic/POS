@@ -1981,6 +1981,12 @@ class ItemRepository extends BaseModel {
           supplier: item.supplier_name || '',
           // Match PHP: expose items_expiry_date for frontend expiry checks
           items_expiry_date: item.items_expiry_date != null ? String(item.items_expiry_date) : '',
+          // Variant family link (V1): lets the sale grid collapse a family
+          // into one tile with a picker. Empty strings for plain items.
+          variant_group_id: item.variant_group_id ? String(item.variant_group_id) : '',
+          variant_value: item.variant_value || '',
+          variant_parent_name: item.variant_parent_name || '',
+          track_inventory: item.track_inventory === true,
         }));
 
       return {
