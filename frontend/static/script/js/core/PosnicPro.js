@@ -2033,32 +2033,32 @@ PosnicPro = {
      */
     REPORT_GROUPS: [
         { name: 'Sales', items: [
-            { hash: 'quickreport', label: 'Day-End' },
-            { hash: 'salereport', label: 'Sales' },
-            { hash: 'returnreport', label: 'Return Sale' },
-            { hash: 'pendingreport', label: 'Pending Payments' },
-            { hash: 'registerreport', label: 'Register', module: 'cash_register_enable' },
-            { hash: 'kotreport', label: 'KOT', kot: true },
-            { hash: 'kioskreport', label: 'Kiosk', module: 'module_channels_enable' },
+            { hash: 'quickreport', label: 'Day-End', icon: 'zap' },
+            { hash: 'salereport', label: 'Sales', icon: 'shopping-cart' },
+            { hash: 'returnreport', label: 'Return Sale', icon: 'refresh-ccw' },
+            { hash: 'pendingreport', label: 'Pending Payments', icon: 'clock' },
+            { hash: 'registerreport', label: 'Register', icon: 'inbox', module: 'cash_register_enable' },
+            { hash: 'kotreport', label: 'KOT', icon: 'grid', kot: true },
+            { hash: 'kioskreport', label: 'Kiosk', icon: 'monitor', module: 'module_channels_enable' },
         ] },
         { name: 'Purchase', items: [
-            { hash: 'receivingreport', label: 'Purchase' },
-            { hash: 'returnreceivingreport', label: 'Return Purchase' },
-            { hash: 'supplierreport', label: 'Supplier' },
+            { hash: 'receivingreport', label: 'Purchase', icon: 'truck' },
+            { hash: 'returnreceivingreport', label: 'Return Purchase', icon: 'refresh-ccw' },
+            { hash: 'supplierreport', label: 'Supplier', icon: 'user-check' },
         ] },
         { name: 'Inventory', items: [
-            { hash: 'itemreport', label: 'Item' },
-            { hash: 'categoryreport', label: 'Category' },
+            { hash: 'itemreport', label: 'Item', icon: 'package' },
+            { hash: 'categoryreport', label: 'Category', icon: 'layers' },
         ] },
         { name: 'People', items: [
-            { hash: 'customerreport', label: 'Customer' },
-            { hash: 'userreport', label: 'User' },
-            { hash: 'labourreport', label: 'Labour / Payout', module: 'staff_shifts_enable' },
+            { hash: 'customerreport', label: 'Customer', icon: 'users' },
+            { hash: 'userreport', label: 'User', icon: 'user-check' },
+            { hash: 'labourreport', label: 'Labour / Payout', icon: 'clock', module: 'staff_shifts_enable' },
         ] },
         { name: 'Money', items: [
-            { hash: 'paymentreport', label: 'Payment' },
-            { hash: 'taxreport', label: 'Tax', module: 'module_tax_enable' },
-            { hash: 'expensesreport', label: 'Cash Book' },
+            { hash: 'paymentreport', label: 'Payment', icon: 'dollar-sign' },
+            { hash: 'taxreport', label: 'Tax', icon: 'percent', module: 'module_tax_enable' },
+            { hash: 'expensesreport', label: 'Cash Book', icon: 'file-text' },
         ] },
     ],
     injectReportGroupTabs: function () {
@@ -2079,7 +2079,9 @@ PosnicPro = {
             if (i.module && s[i.module] === false) { return; }
             if (i.kot && PosnicPro.local.get('table_options') !== 'enable') { return; }
             html += '<li class="nav-item"><a class="nav-link' + (i.hash === hash ? ' active' : '') +
-                '" href="#/' + i.hash + '">' + i.label + '</a></li>';
+                '" href="#/' + i.hash + '">' +
+                (i.icon ? '<i class="feather icon-' + i.icon + ' mr-1"></i>' : '') +
+                i.label + '</a></li>';
         });
         html += '</ul></div>';
         var $row = $('.page_loader:visible .breadcrumbbar .row').first();
