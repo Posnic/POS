@@ -1,9 +1,38 @@
 PosnicPro.settings = {
     store_telephone: null,
+    /*
+     * #/settings/<x> serves two callers: a 24-hex Mongo id is a recycle-bin
+     * row (the original meaning), anything else is a SECTION deep link
+     * (#/settings/modules, #/settings/tax ...) so a refresh keeps the page
+     * you were on - Config sections finally have routes.
+     */
     showDetails: function (id) {
+        if (!/^[0-9a-f]{24}$/i.test(String(id))) {
+            PosnicPro.settings.openSection(String(id));
+            return;
+        }
         var loader = $(".loader-view-recyclebin");
         loader.find(".loadingSpinner:first").remove();
         PosnicPro.settings.viewRecycleBinDetails(id);
+    },
+    openSection: function (key) {
+        if (!$('#settings').is(':visible')) {
+            PosnicPro.settings.showDataTablePage();
+        }
+        // Pill ids are v-pills-<key>-tab, with a few legacy ones missing the
+        // suffix (v-pills-unit). Clicking (not tab('show')) runs the pill's
+        // own loader onclick; an already-active pill is a no-op, so the
+        // hash-sync round trip cannot loop.
+        var $pill = $('#v-pills-' + key + '-tab');
+        if (!$pill.length) { $pill = $('#v-pills-' + key); }
+        if ($pill.length && $pill.is(':visible')) { $pill[0].click(); }
+        if (key === 'general') { PosnicPro.settings.restoreCoreTab(); }
+    },
+    restoreCoreTab: function () {
+        var stored = PosnicPro.local.get('posnic_core_tab');
+        if (stored && $('#core_settings_tabs a[href="' + stored + '"]').length) {
+            $('#core_settings_tabs a[href="' + stored + '"]').tab('show');
+        }
     },
     showShortcut: function () {
         $('#shortcutkey').modal('show');
@@ -292,6 +321,7 @@ PosnicPro.settings = {
             PosnicPro.settings.settingsTable();
         }
         PosnicPro.settings.coreTabsOverflow();
+        PosnicPro.settings.restoreCoreTab();
         // Every Config open re-reads server truth. The controls used to be
         // populated only at login (the DOM carried them between visits), so
         // a change saved on another till showed stale here until re-login -
@@ -4507,3 +4537,20 @@ $(document).on('change', '#v-pills-modules .module-card-head input.custom-contro
         t = setTimeout(function () { PosnicPro.settings.coreTabsOverflow(); }, 150);
     });
 })();
+
+// Config sections carry their route: every pill switch writes
+// #/settings/<section>, so a refresh reopens exactly where you were.
+// The Core Settings inner tab is remembered per device the same way.
+$(function () {
+    $('#v-pills-tab').on('shown.bs.tab', 'a[data-toggle="pill"]', function () {
+        var m = /^v-pills-(.+?)(?:-tab)?$/.exec(this.id || '');
+        if (!m) { return; }
+        var target = 'settings/' + m[1];
+        if (window.location.hash.slice(2) !== target) {
+            hasher.setHash(target);
+        }
+    });
+    $('#core_settings_tabs').on('shown.bs.tab', 'a[data-toggle="tab"]', function () {
+        PosnicPro.local.set('posnic_core_tab', $(this).attr('href'));
+    });
+});
