@@ -246,6 +246,111 @@ PosnicPro.items = {
         $('#items_name').val(itemname);
 
     },
+    /*
+     * The fields every row of a save shares - category, supplier, tax,
+     * flags, description - read ONCE from the form. The old variant loop
+     * re-read all of these per row on its way to firing N independent
+     * POSTs; the family path reads them here and sends one request.
+     */
+    _sharedItemFields: function () {
+        var content = $('textarea[name="items_description"]').html($('#items_description').summernote('code'));
+        var hsnValue = $("input[name='hsntax_radio_value']:checked").val();
+        var tax_value, hsn_code, tax_id, tax_name, tax_method;
+        if (hsnValue === 'hsncode') {
+            tax_value = $('#hsn_tax').val();
+            hsn_code = $('#items_hsncode').val();
+            tax_id = '';
+            tax_name = '';
+            tax_method = 'hsn';
+        } else {
+            var taxDetail = $("#items_tax").select2("data");
+            tax_value = taxDetail[0].element.attributes['data-tax-value'].value;
+            tax_id = taxDetail[0].element.attributes['data-tax-id'].value;
+            tax_name = taxDetail[0].element.attributes['data-tax-name'].value;
+            hsn_code = 0;
+            tax_method = 'default';
+        }
+        var categoryDetail = $("#items_category").select2("data");
+        return {
+            supplier_id: $('#items_supplier_id').val(),
+            supplier_name: $('#items_supplier').val(),
+            category_id: categoryDetail[0].element.attributes['data-category-id'].value,
+            category_name: categoryDetail[0].element.attributes['data-category-name'].value,
+            cover_image: $('#item_logo').val(),
+            inventory: $('#item_track_inventory').is(':checked'),
+            sales_channel: $('#item_sales_channel').is(':checked'),
+            ecommerce: $('#item_ecommerce').is(':checked'),
+            negative_stock: $('#item_negative_stock').is(':checked'),
+            item_weight_machine_based: $('#item_weight_machine_based').is(':checked'),
+            hsn_code: hsn_code,
+            hsn_description: $('#items_hsndescription').val(),
+            tax_method: tax_method,
+            tax_name: tax_name,
+            tax_id: tax_id,
+            tax: tax_value,
+            tax_type: $('input[name="tax_radio_value"]:checked').val(),
+            description: content.html(),
+            image: PosnicPro.items.imageParams
+        };
+    },
+    /*
+     * Variant family creation (V1): ONE atomic request instead of one POST
+     * per value. The server validates every row before creating any and
+     * rolls back if a row fails mid-way - a network blip can no longer
+     * leave half a family behind.
+     */
+    saveVariantFamily: function (loader) {
+        var itemName = $('#items_name').val();
+        var values = $('#item_variant_list').val() || [];
+        var shared = PosnicPro.items._sharedItemFields();
+        var variantDetail = $('#items_variant').select2('data');
+        var axis = (variantDetail && variantDetail.length) ? variantDetail[0].text : '';
+        var rows = [];
+        $(values).each(function (key, variantName) {
+            var unitVariantDetail = $('#items_unit_' + key + '');
+            rows.push(Object.assign({}, shared, {
+                name: itemName + ' / ' + variantName,
+                variant_value: variantName,
+                sku_id: $('#items_itemid_' + key + '').val(),
+                barcode_id: $('#items_barcodeid_' + key + '').val(),
+                mrp_price: $('#items_mrp_price_' + key + '').val(),
+                company_price: $('#items_company_price_' + key + '').val(),
+                selling_price: $('#items_selling_price_' + key + '').val(),
+                available_quantity: $('#items_available_quantity_' + key + '').val(),
+                position: $('#items_sort_' + key + '').val(),
+                unit: unitVariantDetail.find(':selected').attr('data-unit-value'),
+                unit_id: unitVariantDetail.find(':selected').attr('data-unit-id'),
+                discount_amount: $('#items_discount_amount_' + key + '').val(),
+                discount_percentage: $('#items_discount_percentage_' + key + '').val()
+            }));
+        });
+        PosnicPro.post({
+            url: 'items/createFamily',
+            data: JSON.stringify({
+                items: rows,
+                variant_axis: axis,
+                variant_parent_name: itemName
+            })
+        }, function (response) {
+            loader.find(".loadingSpinner:first").remove();
+            if (response.type === 'success') {
+                PosnicPro.alert('success', response.message || 'Family created');
+                PosnicPro.items.addItemButton();
+                PosnicPro.items.loadSelectUnit();
+                $('#item_image_upload_form')[0].reset();
+                PosnicPro.stocklogs.viewLowStockDashboard();
+                PosnicPro.sales.itemsMenu.onlineProductList();
+                hasher.setHash('items');
+            } else {
+                PosnicPro.alert(response.type || 'error', response.message || 'Could not create the family');
+            }
+        }, function (xhr) {
+            loader.find(".loadingSpinner:first").remove();
+            var resp = {};
+            try { resp = JSON.parse(xhr.responseText); } catch (e) { /* plain */ }
+            PosnicPro.alert('error', resp.message || 'Could not create the family - nothing was kept.');
+        });
+    },
     /*This Items Function Used To Add & Edit*/
     item: function () {
         var loader = $(".loader-item");
@@ -258,6 +363,14 @@ PosnicPro.items = {
                 PosnicPro.action = 'edit';
                 method = 'PUT';
                 url += '/' + $('#itemid').val();
+            }
+
+            /* CREATE with variants: the atomic family path. Edits and
+               plain items keep the legacy flow below untouched. */
+            if (PosnicPro.action === 'add' && $('#product_with_variant').is(':checked')
+                && ($('#item_variant_list').val() || []).length > 0) {
+                PosnicPro.items.saveVariantFamily(loader);
+                return;
             }
 
             var variant_list = $('#item_variant_list').val();
