@@ -1621,18 +1621,13 @@ PosnicPro = {
                 + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
         },
         // Roster / scheduling (Phase 7) ------------------------------------
+        // The clock-button link shows staff THEIR week (#/roster, read-only);
+        // planning moved under Manage > Workforce with the rest of the
+        // module's management.
         openRoster: function () {
             if (!PosnicPro.shiftWidget._setting('staff_roster_enable', true)) { return; }
-            var now = new Date();
-            var monday = new Date(now.getTime() - ((now.getDay() + 6) % 7) * 86400000);
-            var sunday = new Date(monday.getTime() + 6 * 86400000);
-            $('#roster_from').val(PosnicPro.shiftWidget._fmtDate(monday));
-            $('#roster_to').val(PosnicPro.shiftWidget._fmtDate(sunday));
-            $('#roster_date').val(PosnicPro.shiftWidget._fmtDate(now));
-            PosnicPro.shiftWidget._loadRosterUsers();
             $('#shift_modal').modal('hide');
-            $('#roster_modal').modal('show');
-            PosnicPro.shiftWidget.runRoster();
+            hasher.setHash('roster');
         },
         _loadRosterUsers: function () {
             PosnicPro.get({ url: 'users', data: { page: 1, limit: 200, filters: '{}' } }, function (res) {
@@ -2116,6 +2111,7 @@ PosnicPro = {
         $('#manage_li_taxmodule').toggle(on('module_tax_enable'));
         $('#manage_li_tableorder').toggle(PosnicPro.local.get('table_options') === 'enable');
         $('#manage_li_cashregister').toggle(on('cash_register_enable'));
+        $('#manage_li_workforce').toggle(on('staff_shifts_enable'));
         $('#manage_li_cashbook').toggle(on('module_cashbook_enable'));
         $('#manage_li_credit').toggle(on('module_credit_enable'));
         $('#manage_li_marketingmodule').toggle(on('module_marketing_enable'));
@@ -4196,6 +4192,140 @@ PosnicPro.labourreport = {
         $('#labour_report_from').val(PosnicPro.shiftWidget._fmtDate(from));
         $('#labour_report_to').val(PosnicPro.shiftWidget._fmtDate(to));
         PosnicPro.shiftWidget.runReport();
+    }
+};
+
+/* Roster week view (#/roster) - the page a staff member opens from the clock
+ * button to see who works when. Read-only: planning lives under
+ * Manage > Workforce. The route table dispatches {module} -> PosnicPro.roster. */
+PosnicPro.roster = {
+    _monday: null,
+    showDataTablePage: function () {
+        if (!PosnicPro.shiftWidget.enabled()
+            || !PosnicPro.shiftWidget._setting('staff_roster_enable', true)) {
+            hasher.setHash('dashboard');
+            return;
+        }
+        PosnicPro.HideSideBarModal();
+        $(".vertical-layout").removeClass("toggle-menu");
+        $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
+        $(".vertical-menu li a").removeClass("active");
+        $('.page_loader,#osk-container').hide();
+        $('.page-title-box,#roster_new').show();
+        PosnicPro.roster.thisWeek();
+    },
+    thisWeek: function () {
+        var now = new Date();
+        PosnicPro.roster._monday = new Date(now.getTime() - ((now.getDay() + 6) % 7) * 86400000);
+        PosnicPro.roster.load();
+    },
+    shiftWeek: function (delta) {
+        var m = PosnicPro.roster._monday || new Date();
+        PosnicPro.roster._monday = new Date(m.getTime() + delta * 7 * 86400000);
+        PosnicPro.roster.load();
+    },
+    load: function () {
+        var fmt = PosnicPro.shiftWidget._fmtDate;
+        var monday = PosnicPro.roster._monday;
+        var sunday = new Date(monday.getTime() + 6 * 86400000);
+        var label = function (d) {
+            return d.getDate() + ' ' + d.toLocaleString(undefined, { month: 'short' });
+        };
+        $('#roster_week_label').text(label(monday) + ' – ' + label(sunday));
+        $('#roster_view_body').html('<div class="text-center text-muted p-4">Loading&hellip;</div>');
+        var url = 'shifts/schedule?from=' + encodeURIComponent(fmt(monday)) + '&to=' + encodeURIComponent(fmt(sunday));
+        PosnicPro.get(url, function (res) {
+            PosnicPro.roster._render((res && res.data) || []);
+        }, function () {
+            $('#roster_view_body').html('<div class="text-center text-danger p-4">Could not load the roster.</div>');
+        });
+    },
+    _render: function (entries) {
+        var esc = function (s) {
+            return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+            });
+        };
+        var fmt = PosnicPro.shiftWidget._fmtDate;
+        var monday = PosnicPro.roster._monday;
+        var today = fmt(new Date());
+        var byDate = {};
+        entries.forEach(function (e) {
+            (byDate[e.date] = byDate[e.date] || []).push(e);
+        });
+        var html = '';
+        for (var i = 0; i < 7; i++) {
+            var d = new Date(monday.getTime() + i * 86400000);
+            var key = fmt(d);
+            var day = byDate[key] || [];
+            var isToday = key === today;
+            html += '<div class="mb-3' + (isToday ? ' p-2 rounded" style="background:rgba(0,123,255,.06);' : '"') + '">'
+                + '<h6 class="mb-1">' + d.toLocaleString(undefined, { weekday: 'long' })
+                + ' <small class="text-muted">' + d.getDate() + ' ' + d.toLocaleString(undefined, { month: 'short' }) + '</small>'
+                + (isToday ? ' <span class="badge badge-primary">Today</span>' : '') + '</h6>';
+            if (!day.length) {
+                html += '<small class="text-muted">No one planned.</small>';
+            } else {
+                day.sort(function (a, b) { return String(a.start).localeCompare(String(b.start)); });
+                day.forEach(function (e) {
+                    html += '<div class="d-flex align-items-center" style="gap:8px; padding:2px 0;">'
+                        + '<span style="min-width:110px;">' + esc(e.start) + ' – ' + esc(e.end) + '</span>'
+                        + '<span>' + esc(e.user_name || '—') + '</span>'
+                        + '</div>';
+                });
+            }
+            html += '</div>';
+        }
+        $('#roster_view_body').html(html);
+    }
+};
+
+/* Workforce pane under Manage (#/settings/workforce) - the module's
+ * management roof: an on-shift-now board on General, roster PLANNING on
+ * Roster (the old modal's markup lives in the pane now, ids unchanged, so
+ * shiftWidget.runRoster/addRosterEntry/deleteRosterEntry work as before). */
+PosnicPro.workforce = {
+    load: function () {
+        // Roster planning follows its sub-switch; the pane itself follows
+        // the module (the Manage entry is gated the same way).
+        $('#wf_roster_subtab').toggle(PosnicPro.shiftWidget._setting('staff_roster_enable', true));
+        PosnicPro.workforce.loadOnShift();
+    },
+    loadOnShift: function () {
+        var today = PosnicPro.shiftWidget._fmtDate(new Date());
+        $('#wf_onshift_body').html('<tr><td colspan="2" class="text-center text-muted">Loading&hellip;</td></tr>');
+        PosnicPro.get('shifts/report?from=' + today + '&to=' + today, function (response) {
+            var rows = ((response && response.data && response.data.rows) || [])
+                .filter(function (r) { return r.open_shifts; });
+            if (!rows.length) {
+                $('#wf_onshift_body').html('<tr><td colspan="2" class="text-center text-muted">No one is clocked in right now.</td></tr>');
+                return;
+            }
+            var esc = function (s) {
+                return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+                    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+                });
+            };
+            var html = '';
+            rows.forEach(function (r) {
+                html += '<tr><td>' + esc(r.user_name || '—')
+                    + ' <span class="badge badge-success">on shift</span></td>'
+                    + '<td class="text-right">' + (Number(r.worked_hours) || 0).toFixed(2) + '</td></tr>';
+            });
+            $('#wf_onshift_body').html(html);
+        }, function () {
+            $('#wf_onshift_body').html('<tr><td colspan="2" class="text-center text-danger">Could not load shifts.</td></tr>');
+        });
+    },
+    openRosterTab: function () {
+        var now = new Date();
+        var monday = new Date(now.getTime() - ((now.getDay() + 6) % 7) * 86400000);
+        var sunday = new Date(monday.getTime() + 6 * 86400000);
+        $('#roster_from').val(PosnicPro.shiftWidget._fmtDate(monday));
+        $('#roster_to').val(PosnicPro.shiftWidget._fmtDate(sunday));
+        $('#roster_date').val(PosnicPro.shiftWidget._fmtDate(now));
+        PosnicPro.shiftWidget._loadRosterUsers();
+        PosnicPro.shiftWidget.runRoster();
     }
 };
 

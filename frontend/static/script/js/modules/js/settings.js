@@ -1686,6 +1686,7 @@ if ($wrapper.length) {
         $('#v-pills-theme-tab').toggle(on('module_themes_enable'));
         $('#v-pills-cashregister-tab').toggle(on('cash_register_enable'));
         $('#v-pills-cashbook-tab').toggle(on('module_cashbook_enable'));
+        $('#v-pills-workforce-tab').toggle(on('staff_shifts_enable'));
         // The header and main sidebar follow the same truth at the same
         // moment - every path that refreshes Config refreshes everywhere.
         PosnicPro.applyModuleSidebar();
