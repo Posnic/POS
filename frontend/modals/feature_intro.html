@@ -1,0 +1,30 @@
+<!-- First-run Feature picker: the Loyverse moment - show what the till can do
+     on day one, with honest one-line consequences. Saves through the M4
+     modules-only path (toggle map, nothing else); dismissing never nags again. -->
+<div class="modal fade close_on_esc" id="feature_intro_modal" tabindex="-1" role="dialog" aria-hidden="true"
+    data-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title w-100 text-center">
+                    <lang class="lang_feature_intro_title">Feature settings</lang>
+                </h5>
+            </div>
+            <div class="modal-body pt-2">
+                <p class="text-muted text-center mb-3" style="font-size:.9rem;">
+                    <lang class="lang_feature_intro_sub">Choose the features you want to use. You can change these
+                        anytime under Manage &gt; Features.</lang>
+                </p>
+                <div id="feature_intro_list"></div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-outline-secondary" id="feature_intro_skip" data-dismiss="modal">
+                    <lang class="lang_feature_intro_skip">Skip for now</lang>
+                </button>
+                <button type="button" class="btn btn-primary" id="feature_intro_save">
+                    <lang class="lang_save_title">Save</lang>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -92,6 +92,7 @@
         "modals/variant_add.html",
         "modals/denomcash.html",
         "modals/tableorder.html",
-        "modals/payment.html"
+        "modals/payment.html",
+        "modals/feature_intro.html"
     ]
 }

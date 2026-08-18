@@ -140,4 +140,24 @@ describe('updateCommonSettings remote-target dispatch', () => {
     expect(r.status).toBe(false);
     expect(r.message).toContain('full-path-marker');
   });
+
+  test('modules_only routes the SESSION branch to the toggle-map-only path', async () => {
+    // The first-run Feature picker's save: switches + validation satisfiers,
+    // no settings surface. It must write toggles and nothing else.
+    const SESSION = '64a000000000000000000aaa';
+    const rows = [{ _id: SESSION, license: LICENSE, print_url: true, receiving_prefix: 'ORI' }];
+    const model = makeModel(rows);
+    const r = await model.updateCommonSettings({
+      modules_only: 'true',
+      staff_tips_enable: 'true',
+      module_cashbook_enable: 'false',
+      receiving_prefix: 'REC', // satisfier: must NOT reach the document
+      sales_prefix: 'SAL',
+    });
+    expect(r.status).toBe(true);
+    expect(rows[0].staff_tips_enable).toBe(true);
+    expect(rows[0].module_cashbook_enable).toBe(false);
+    expect(rows[0].print_url).toBe(true);
+    expect(rows[0].receiving_prefix).toBe('ORI');
+  });
 });

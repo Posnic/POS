@@ -5244,3 +5244,104 @@ $(document).on('click', '.int-conn-enable', function () {
 $(document).on('click', '.int-conn-disable', function () {
     PosnicPro.integrations.disableConnector($(this).data('name'));
 });
+
+/*
+ * First-run Feature picker (user request, from the Loyverse pattern): the
+ * first sign-in shows what the till can do, one honest line per feature,
+ * pre-set from this branch's real state. Saving writes through the M4
+ * modules-only path (toggle map and nothing else - the full settings
+ * surface is never touched). Any dismissal marks it seen; it never nags.
+ */
+PosnicPro.features = {
+    /* key, label, consequence - the same wording as the Features cards. */
+    INTRO: [
+        ['cash_register_enable', 'Cash register', 'Openings, closings and cash counts per till.'],
+        ['staff_shifts_enable', 'Shifts & clock-in', 'Track when staff work; powers the labour report.'],
+        ['staff_tips_enable', 'Tips', 'Record tips at tender and in payouts.'],
+        ['staff_roster_enable', 'Roster', 'Plan the week; staff see their shifts.'],
+        ['till_lock_enable', 'Till PIN lock', 'Lock the screen between sales; PIN to resume.'],
+        ['module_tax_enable', 'Taxes', 'Tax rates, groups and tax on every sale.'],
+        ['module_credit_enable', 'Customer credit', 'Sell on account and settle later.'],
+        ['module_marketing_enable', 'Marketing', 'Campaigns, coupons and customer pricing.'],
+        ['module_messaging_enable', 'Messaging', 'Receipts and notices by WhatsApp or SMS.'],
+        ['module_channels_enable', 'Sales channels', 'Kiosk, QR ordering and online lists.'],
+        ['module_cashbook_enable', 'Cash book', 'Expenses and cash movements beside sales.'],
+        ['module_recyclebin_enable', 'Recycle bin', 'Deleted records are kept and restorable.'],
+        ['module_themes_enable', 'Themes', 'Change how the till looks.']
+    ],
+    _blob: function () {
+        try { return JSON.parse(PosnicPro.local.get('general_settings') || '{}'); } catch (e) { return {}; }
+    },
+    maybeShowIntro: function () {
+        if (PosnicPro.local.get('features_intro_seen')) { return; }
+        var acl = PosnicPro.userACL;
+        if (!(acl && acl.setting && acl.setting.write === true)) { return; }
+        if (!$('#feature_intro_modal').length) { return; }
+        PosnicPro.features.renderIntro();
+        $('#feature_intro_modal').modal('show');
+        // Seen is seen, however it closes - this must never nag.
+        $('#feature_intro_modal').one('hidden.bs.modal', function () {
+            PosnicPro.local.set('features_intro_seen', 'true');
+        });
+    },
+    renderIntro: function () {
+        var blob = PosnicPro.features._blob();
+        var rows = PosnicPro.features.INTRO.map(function (f) {
+            var key = f[0];
+            // The blob carries every key post-login (guard-tested); absent
+            // falls back to each key's polarity: tips/till-lock opt-in OFF,
+            // everything else opt-out ON.
+            var onByDefault = !(key === 'staff_tips_enable' || key === 'till_lock_enable');
+            var on = blob[key] === undefined ? onByDefault : blob[key] === true;
+            return '<div class="d-flex align-items-center justify-content-between py-2" style="border-bottom:1px solid rgba(128,128,128,.15);">' +
+                '<div class="pr-3"><div style="font-weight:600;">' + f[1] + '</div>' +
+                '<small class="text-muted">' + f[2] + '</small></div>' +
+                '<div class="custom-control custom-switch">' +
+                '<input type="checkbox" class="custom-control-input feature-intro-toggle" id="fi_' + key + '" data-key="' + key + '"' + (on ? ' checked' : '') + '>' +
+                '<label class="custom-control-label" for="fi_' + key + '"></label>' +
+                '</div></div>';
+        }).join('');
+        $('#feature_intro_list').html(rows);
+    },
+    saveIntro: function () {
+        var payload = { modules_only: 'true' };
+        $('.feature-intro-toggle').each(function () {
+            payload[$(this).data('key')] = $(this).is(':checked') ? 'true' : 'false';
+        });
+        // The endpoint's validation satisfiers - ignored by the modules-only
+        // path, required by the controller.
+        payload.sales_prefix = 'SAL';
+        payload.receiving_prefix = 'REC';
+        $('#feature_intro_save').prop('disabled', true);
+        PosnicPro.put({
+            url: 'setting/updateCommonSettings',
+            data: JSON.stringify(payload)
+        }, function (response) {
+            $('#feature_intro_save').prop('disabled', false);
+            if (response.type === 'success') {
+                // The session blob must agree with what was just written, and
+                // the menus react now, not at next login.
+                var blob = PosnicPro.features._blob();
+                $('.feature-intro-toggle').each(function () {
+                    blob[$(this).data('key')] = $(this).is(':checked');
+                });
+                PosnicPro.local.set('general_settings', JSON.stringify(blob));
+                if (PosnicPro.settings && PosnicPro.settings.applyModuleNav) { PosnicPro.settings.applyModuleNav(); }
+                else if (PosnicPro.applyModuleSidebar) { PosnicPro.applyModuleSidebar(); }
+                $('#feature_intro_modal').modal('hide');
+                PosnicPro.alert('success', 'Feature switches saved');
+            } else {
+                PosnicPro.alert(response.type, response.message);
+            }
+        }, function () {
+            $('#feature_intro_save').prop('disabled', false);
+            PosnicPro.alert('error', 'Could not save - you can set these later under Manage > Features');
+        });
+    }
+};
+$(document).on('click', '#feature_intro_save', function () { PosnicPro.features.saveIntro(); });
+$(document).ready(function () {
+    // After boot settles: login writes the general_settings blob and userACL
+    // before the dashboard is usable, so a short delay is enough.
+    setTimeout(function () { PosnicPro.features.maybeShowIntro(); }, 2500);
+});
