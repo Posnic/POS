@@ -306,6 +306,21 @@ PosnicPro.receivings = {
             subTaxGst = (tax_itemprice / 100) * parseFloat(param.tax);
             taxGst = subTaxGst * item_quantity;
         }
+        /*
+         * Unit conversion assist (V3): a "×N box" button when the item
+         * declares a purchase unit. The cashier types how many PACKS
+         * arrived, taps it once, and the qty becomes base units - the
+         * only thing stock has ever counted. Explicit tap, never implicit:
+         * a supplier who delivers loose pieces types pieces as always.
+         */
+        var convFactor = Number(param.conversion_factor) || 0;
+        var convUnit = String(param.purchase_unit || '').trim();
+        var convBtn = (convFactor > 1 && convUnit)
+            ? '<div class="input-group-append">' +
+              '<span class="btn btn-warning-rgba" data-toggle="tooltip" title="Convert packs to units: multiplies the quantity by ' + convFactor + '" ' +
+              'onclick="PosnicPro.receivings.applyUnitConversion(\'' + id + '\', ' + convFactor + ');">&times;' + convFactor + ' ' + convUnit + '</span>' +
+              '</div>'
+            : '';
         var addLineItemQty = '<div class="input-group" id="return_input_group_' + id + '">' +
                 '<div class="input-group-prepend">' +
                 '<span class="btn btn-secondary-rgba receive_qty_check" id = ' + id + '  onclick="PosnicPro.receivings.qtyIncrementDecrease(this.id,0);"><i class="feather icon-minus"></i></span>' +
@@ -314,6 +329,7 @@ PosnicPro.receivings = {
                 '<div class="input-group-append">' +
                 '<span class="btn btn-success-rgba receive_qty_check" id = ' + id + '  onclick="PosnicPro.receivings.qtyIncrementDecrease(this.id,1);"><i class="feather icon-plus"></i></span>' +
                 '</div>' +
+                convBtn +
                 '</div>';
         if (PosnicPro.receivings.receivingReturnAction !== 'return') {
             var remove = '<td id=addReceivingRemoveLineItem_' + id + '>' +
@@ -560,6 +576,15 @@ PosnicPro.receivings = {
         $('#addReceivingLineItemTotal_' + id).text(updateLineItemTotal);
         $('#addReceivingGstTax_' + id).text(taxGst.toFixed(2));
         PosnicPro.receivings.addReceivingTableRowCalc();
+    },
+    /* One tap: packs typed -> base units counted (V3). Reuses the normal
+       qty-change path so every price/tax cell recomputes as usual. */
+    applyUnitConversion: function (id, factor) {
+        var $qty = $('#addReceivingLineItemQty_' + id);
+        var current = parseFloat($qty.val());
+        if (!current || current <= 0 || !factor || factor <= 1) { return; }
+        $qty.val(current * factor);
+        PosnicPro.receivings.addLineReceivingChangeQty(id);
     },
     addLineReceivingChangeQty: function (id) {
         var available_quantity = PosnicPro.receiving_lineitems[id].item_quantity;
