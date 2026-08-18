@@ -2570,14 +2570,12 @@ input:checked + .slider:before {
 .core-settings-tabs { flex-wrap: nowrap; overflow: hidden; }
 .core-settings-tabs .nav-link { white-space: nowrap; }
 
-/* Config's left menu: wide enough that the longest labels (Cash
-   Denominations, SMS & WhatsApp Providers) stay on ONE line, and no wider -
-   250px wrapped them, the original ~350px wasted 40px of air. */
-@media (min-width: 992px) {
-    .settings-nav-col { flex: 0 0 auto; width: 305px; max-width: 305px; }
-    .settings-nav-col + div { flex: 1 1 0; max-width: none; }
-    .settings-nav-col .nav-link { white-space: nowrap; }
-}
+/* Config's middle layer is gone (user call): the sections live in the
+   Manage sidebar now. The pills column stays in the DOM - openSection
+   activates panes by clicking its anchors - but never renders; the
+   content takes the whole row. */
+.settings-nav-col { display: none !important; }
+.settings-nav-col + div { flex: 0 0 100%; max-width: 100%; }
 
 /*
  * Drawer body padding, take two. Killing the 30px .custom-mode-setting rule

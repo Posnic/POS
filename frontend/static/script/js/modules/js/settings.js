@@ -4569,6 +4569,9 @@ $(function () {
         if (window.location.hash.slice(2) !== target) {
             hasher.setHash(target);
         }
+        // The Manage sidebar carries the sections now: mirror the active one.
+        $('.manage-settings-entry').removeClass('active');
+        $('#manage_sec_' + m[1]).addClass('active');
     });
     $('#core_settings_tabs').on('shown.bs.tab', 'a[data-toggle="tab"]', function () {
         PosnicPro.local.set('posnic_core_tab', $(this).attr('href'));
