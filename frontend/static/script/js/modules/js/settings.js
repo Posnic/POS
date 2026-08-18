@@ -1506,7 +1506,7 @@ if ($wrapper.length) {
     saveModulesTab: function () {
         var remote = PosnicPro.settings._modulesRemoteBranch();
         if (!remote) {
-            PosnicPro.settings.updateCommonSetting('Module switches saved');
+            PosnicPro.settings.updateCommonSetting('Feature switches saved');
             return;
         }
         // Toggles only + the endpoint's validation satisfiers (ignored by
@@ -1524,7 +1524,7 @@ if ($wrapper.length) {
             data: JSON.stringify(payload)
         }, function (response) {
             if (response.type === 'success') {
-                PosnicPro.alert('success', 'Modules saved for ' + branchLabel);
+                PosnicPro.alert('success', 'Features saved for ' + branchLabel);
             } else {
                 PosnicPro.alert(response.type, response.message);
             }
