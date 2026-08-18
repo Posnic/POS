@@ -19,7 +19,8 @@ const { currentSecret } = require('../db/tenant-context');
 // single-process dev/test where no env secret is set - never a hard-coded
 // secret, and unforgeable.
 const DEV_FALLBACK = crypto.randomBytes(32).toString('hex');
-const secret = () => currentSecret('JWT_SECRET', process.env.JWT_SECRET || process.env.ENCRYPTION_KEY || DEV_FALLBACK);
+const secret = () =>
+  currentSecret('JWT_SECRET', process.env.JWT_SECRET || process.env.ENCRYPTION_KEY || DEV_FALLBACK);
 // 5 minutes: long enough that a refund approved when the return screen opens is
 // still valid when the cashier finishes and submits, short enough to limit reuse.
 const DEFAULT_TTL_MS = 5 * 60 * 1000;

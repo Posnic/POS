@@ -80,10 +80,9 @@ describe('setManagerPin', () => {
     User.updateOne.mockResolvedValue({ matchedCount: 1 });
     const r = await service.setManagerPin({ userId: VALID_ID, pin: '4821', license: 'L1' });
     expect(bcrypt.hash).toHaveBeenCalledWith('4821', 10);
-    expect(User.updateOne).toHaveBeenCalledWith(
-      expect.objectContaining({ license: 'L1' }),
-      { $set: { manager_pin: 'HASHED' } }
-    );
+    expect(User.updateOne).toHaveBeenCalledWith(expect.objectContaining({ license: 'L1' }), {
+      $set: { manager_pin: 'HASHED' },
+    });
     expect(r.status).toBe(true);
   });
 
@@ -112,12 +111,21 @@ describe('verifyManagerPin', () => {
 
   test('approves when an allowed manager PIN matches, and records the approval', async () => {
     mockCandidates([
-      { _id: 'm1', usertype: 'cashier', firstname: 'Meera', access: { pos: { void_sale: true } }, manager_pin: 'H' },
+      {
+        _id: 'm1',
+        usertype: 'cashier',
+        firstname: 'Meera',
+        access: { pos: { void_sale: true } },
+        manager_pin: 'H',
+      },
     ]);
     bcrypt.compare.mockResolvedValue(true);
     const r = await service.verifyManagerPin({
-      pin: '4821', action: 'void_sale', license: 'L1',
-      actor: { id: 'c9', name: 'Cashier Joe' }, entityId: 'S123',
+      pin: '4821',
+      action: 'void_sale',
+      license: 'L1',
+      actor: { id: 'c9', name: 'Cashier Joe' },
+      entityId: 'S123',
     });
     expect(r.status).toBe(true);
     expect(r.data.approved_by_user_id).toBe('m1');
@@ -150,9 +158,7 @@ describe('verifyManagerPin', () => {
   });
 
   test('a wrong PIN against an allowed manager -> 403', async () => {
-    mockCandidates([
-      { _id: 'm1', usertype: 'store_manager', manager_pin: 'H' },
-    ]);
+    mockCandidates([{ _id: 'm1', usertype: 'store_manager', manager_pin: 'H' }]);
     bcrypt.compare.mockResolvedValue(false);
     const r = await service.verifyManagerPin({ pin: '0000', action: 'void_sale' });
     expect(r.status).toBe(false);
@@ -197,8 +203,11 @@ describe('verifyManagerCard', () => {
   test('approves an allowed manager card and records the approval', async () => {
     mockFindOne({ _id: 'm9', usertype: 'store_manager', username: 'sup' });
     const r = await service.verifyManagerCard({
-      card_uid: '0417AABB', action: 'void_sale', license: 'L1',
-      actor: { id: 'c1', name: 'Cashier' }, entityId: 'S1',
+      card_uid: '0417AABB',
+      action: 'void_sale',
+      license: 'L1',
+      actor: { id: 'c1', name: 'Cashier' },
+      entityId: 'S1',
     });
     expect(r.status).toBe(true);
     expect(r.data.method).toBe('rfid');
@@ -221,7 +230,9 @@ describe('verifyManagerCard', () => {
   });
 
   test('missing card or action -> 400', async () => {
-    expect((await service.verifyManagerCard({ card_uid: '', action: 'void_sale' })).statusCode).toBe(400);
+    expect(
+      (await service.verifyManagerCard({ card_uid: '', action: 'void_sale' })).statusCode
+    ).toBe(400);
     expect((await service.verifyManagerCard({ card_uid: 'X', action: '' })).statusCode).toBe(400);
   });
 });

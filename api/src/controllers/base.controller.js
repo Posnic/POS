@@ -120,8 +120,17 @@ class BaseController {
      */
     if (actionKey === 'read') {
       const MATRIX_MODULES = [
-        'dashboard', 'sales', 'receiving', 'customer', 'supplier',
-        'category', 'item', 'expense', 'branch', 'report', 'user',
+        'dashboard',
+        'sales',
+        'receiving',
+        'customer',
+        'supplier',
+        'category',
+        'item',
+        'expense',
+        'branch',
+        'report',
+        'user',
       ];
       if (!MATRIX_MODULES.includes(moduleKey)) return true;
       const formedModules = Object.keys(access || {}).filter(

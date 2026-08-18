@@ -1157,7 +1157,6 @@ receivingSchema.statics.supplierReceivingReportPage = async function (value, opt
     const countResult = await collection.aggregate(countPipeline).toArray();
     const total = countResult.length;
 
-
     // Get paginated results
     const paginatedPipeline = [...pipeline, { $skip: skip }, { $limit: limit }];
     const results = await collection.aggregate(paginatedPipeline).toArray();

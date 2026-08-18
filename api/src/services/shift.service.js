@@ -52,7 +52,10 @@ class ShiftService {
         device_id: data.device_id,
         details:
           typeof worked === 'number'
-            ? { worked_minutes: worked, ...(typeof tips === 'number' ? { tips_declared: tips } : {}) }
+            ? {
+                worked_minutes: worked,
+                ...(typeof tips === 'number' ? { tips_declared: tips } : {}),
+              }
             : undefined,
       });
     }
@@ -90,20 +93,24 @@ class ShiftService {
           entity: 'shift',
           entity_id: result.data.auto_closed._id,
           device_id,
-          details: { auto: true, worked_minutes: result.data.auto_closed.worked_minutes, method: 'rfid' },
+          details: {
+            auto: true,
+            worked_minutes: result.data.auto_closed.worked_minutes,
+            method: 'rfid',
+          },
         });
       }
-      await new AuditService().record(
-        clockedOut ? AUDIT_EVENTS.CLOCK_OUT : AUDIT_EVENTS.CLOCK_IN,
-        {
-          actor_user_id: user._id,
-          actor_name: userName,
-          entity: 'shift',
-          entity_id: shift && shift._id,
-          device_id,
-          details: clockedOut && shift ? { worked_minutes: shift.worked_minutes, method: 'rfid' } : { method: 'rfid' },
-        }
-      );
+      await new AuditService().record(clockedOut ? AUDIT_EVENTS.CLOCK_OUT : AUDIT_EVENTS.CLOCK_IN, {
+        actor_user_id: user._id,
+        actor_name: userName,
+        entity: 'shift',
+        entity_id: shift && shift._id,
+        device_id,
+        details:
+          clockedOut && shift
+            ? { worked_minutes: shift.worked_minutes, method: 'rfid' }
+            : { method: 'rfid' },
+      });
     }
     return result;
   }
@@ -127,7 +134,9 @@ class ShiftService {
         const users = await User.find({ _id: { $in: ids } })
           .select('hourly_rate firstname lastname username')
           .lean();
-        users.forEach((u) => { userById[String(u._id)] = u; });
+        users.forEach((u) => {
+          userById[String(u._id)] = u;
+        });
       } catch (e) {
         userById = {};
       }
@@ -211,7 +220,11 @@ class ShiftService {
     }
     const rate = Number(hourlyRate);
     if (!Number.isFinite(rate) || rate < 0) {
-      return { status: false, statusCode: 400, message: 'Hourly rate must be a non-negative number' };
+      return {
+        status: false,
+        statusCode: 400,
+        message: 'Hourly rate must be a non-negative number',
+      };
     }
     const filter = { _id: new mongoose.Types.ObjectId(String(userId)) };
     if (license) filter.license = license;

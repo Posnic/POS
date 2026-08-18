@@ -48,7 +48,7 @@ describe('SettingsRepository', () => {
       'deleteTableOrderFiledModel',
       'editGeneralSetting',
       'updateCommonSettings',
-            'updateWay2SmsSetting',
+      'updateWay2SmsSetting',
       'updateTextLocalSmsSetting',
       'updateBranchLogoModel',
       'updateKioskImagesModel',
@@ -285,7 +285,6 @@ describe('SettingsRepository', () => {
       await settingsRepository.updateCommonSettings(data);
       expect(mockModel.updateCommonSettings).toHaveBeenCalledWith(data);
     });
-
 
     test('updateWay2SmsSetting delegates to model.updateWay2SmsSetting', async () => {
       const data = { api_key: 'key' };
@@ -550,7 +549,7 @@ describe('SettingsRepository', () => {
       'deleteTableOrder',
       'updateGeneralSetting',
       'updateCommonSettings',
-            'updateWay2SmsSetting',
+      'updateWay2SmsSetting',
       'updateTextLocalSmsSetting',
       'updateBranchLogo',
       'updateKioskImages',

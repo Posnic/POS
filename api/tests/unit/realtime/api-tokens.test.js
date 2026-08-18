@@ -14,8 +14,7 @@ const tokens = require('../../../src/utils/api-tokens');
 
 function fakeDb() {
   const rows = [];
-  const matches = (row, q) =>
-    Object.entries(q).every(([k, v]) => String(row[k]) === String(v));
+  const matches = (row, q) => Object.entries(q).every(([k, v]) => String(row[k]) === String(v));
   return {
     rows,
     collection: () => ({
@@ -26,14 +25,18 @@ function fakeDb() {
       },
       findOne: async (q) => rows.find((r) => matches(r, q)) || null,
       find: () => ({
-        sort: function () { return this; },
+        sort: function () {
+          return this;
+        },
         toArray: async () => rows.slice(),
       }),
       updateOne: async (q, u) => {
         const { ObjectId } = require('mongodb');
         const row = rows.find((r) =>
-          Object.entries(q).every(([k, v]) =>
-            String(r[k]) === String(v instanceof ObjectId ? v : v)));
+          Object.entries(q).every(
+            ([k, v]) => String(r[k]) === String(v instanceof ObjectId ? v : v)
+          )
+        );
         if (row && u.$set) Object.assign(row, u.$set);
         return { matchedCount: row ? 1 : 0 };
       },
@@ -68,7 +71,9 @@ describe('createToken / listTokens', () => {
   test('plaintext returned once, only the hash stored, list never exposes it', async () => {
     const db = fakeDb();
     const r = await tokens.createToken(db, {
-      name: 'Accounting sync', scopes: { sales: { read: true } }, creator: CREATOR,
+      name: 'Accounting sync',
+      scopes: { sales: { read: true } },
+      creator: CREATOR,
     });
     expect(r.ok).toBe(true);
     expect(r.token.startsWith('posnic_')).toBe(true);
@@ -81,7 +86,9 @@ describe('createToken / listTokens', () => {
   test('no shop context refuses the mint', async () => {
     const db = fakeDb();
     const r = await tokens.createToken(db, {
-      name: 'x', scopes: { sales: { read: true } }, creator: { _id: 'a' },
+      name: 'x',
+      scopes: { sales: { read: true } },
+      creator: { _id: 'a' },
     });
     expect(r.ok).toBe(false);
   });
@@ -91,7 +98,9 @@ describe('resolveScopedToken', () => {
   test('a valid token resolves to a lean-user-shaped principal with ONLY its scopes', async () => {
     const db = fakeDb();
     const minted = await tokens.createToken(db, {
-      name: 'Sync', scopes: { sales: { read: true }, item: { read: true, write: true } }, creator: CREATOR,
+      name: 'Sync',
+      scopes: { sales: { read: true }, item: { read: true, write: true } },
+      creator: CREATOR,
     });
     const principal = await tokens.resolveScopedToken(db, minted.token);
     expect(principal).not.toBe(null);
@@ -107,7 +116,9 @@ describe('resolveScopedToken', () => {
   test('wrong token, wrong prefix, and revoked all fail closed', async () => {
     const db = fakeDb();
     const minted = await tokens.createToken(db, {
-      name: 'Sync', scopes: { sales: { read: true } }, creator: CREATOR,
+      name: 'Sync',
+      scopes: { sales: { read: true } },
+      creator: CREATOR,
     });
     expect(await tokens.resolveScopedToken(db, 'posnic_' + 'f'.repeat(48))).toBe(null);
     expect(await tokens.resolveScopedToken(db, 'not-a-token')).toBe(null);
@@ -119,7 +130,9 @@ describe('resolveScopedToken', () => {
   test('resolution stamps last_used_at, throttled', async () => {
     const db = fakeDb();
     const minted = await tokens.createToken(db, {
-      name: 'Sync', scopes: { sales: { read: true } }, creator: CREATOR,
+      name: 'Sync',
+      scopes: { sales: { read: true } },
+      creator: CREATOR,
     });
     await tokens.resolveScopedToken(db, minted.token);
     await new Promise((r) => setTimeout(r, 10));

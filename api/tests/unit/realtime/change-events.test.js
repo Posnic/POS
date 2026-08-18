@@ -29,7 +29,12 @@ const fakeRes = (statusCode) => {
 const run = (req, res) => new Promise((resolve) => changeEvents(req, res, resolve));
 
 const listen = (dbName) => {
-  const sink = { lines: [], write(l) { this.lines.push(l); } };
+  const sink = {
+    lines: [],
+    write(l) {
+      this.lines.push(l);
+    },
+  };
   bus.subscribe(dbName, sink);
   return sink;
 };

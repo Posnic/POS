@@ -1,19 +1,39 @@
 'use strict';
 
-const { ROLE_KEYS, DEFAULT_ROLES, POS_PERMISSIONS } = require('../../../src/constants/roles.constants');
+const {
+  ROLE_KEYS,
+  DEFAULT_ROLES,
+  POS_PERMISSIONS,
+} = require('../../../src/constants/roles.constants');
 
 const byKey = (k) => DEFAULT_ROLES.find((r) => r.key === k);
 const MODULES = [
-  'dashboard', 'sales', 'receiving', 'customer', 'supplier', 'category',
-  'item', 'expense', 'branch', 'report', 'user', 'plan',
+  'dashboard',
+  'sales',
+  'receiving',
+  'customer',
+  'supplier',
+  'category',
+  'item',
+  'expense',
+  'branch',
+  'report',
+  'user',
+  'plan',
 ];
 
 describe('DEFAULT_ROLES', () => {
   test('ships the 8 standard system roles in order', () => {
     expect(DEFAULT_ROLES).toHaveLength(8);
     expect(DEFAULT_ROLES.map((r) => r.key)).toEqual([
-      'owner', 'admin', 'store_manager', 'shift_supervisor',
-      'cashier', 'inventory_clerk', 'accountant', 'api',
+      'owner',
+      'admin',
+      'store_manager',
+      'shift_supervisor',
+      'cashier',
+      'inventory_clerk',
+      'accountant',
+      'api',
     ]);
   });
 

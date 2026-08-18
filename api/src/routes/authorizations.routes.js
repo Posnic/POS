@@ -4,7 +4,8 @@ const router = express.Router();
 const authorizationsController = require('../controllers/authorizations.controller');
 const { protect } = require('../middleware/auth');
 
-const bind = (handler) => (req, res, next) => handler.call(authorizationsController, req, res, next);
+const bind = (handler) => (req, res, next) =>
+  handler.call(authorizationsController, req, res, next);
 
 router.use(protect);
 

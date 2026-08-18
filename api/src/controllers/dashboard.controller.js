@@ -228,7 +228,6 @@ class DashboardController extends BaseController {
       // Apply session filtering if user has permission
       const filteredDateRange = await sessionFilterUtil.applySessionFilter(req, originalDateRange);
 
-
       const model = req.dashboardModel;
       const result = await model.getDashboardPaymentModeDataModel({
         starting_date: filteredDateRange.start_date,
@@ -276,7 +275,6 @@ class DashboardController extends BaseController {
       // Apply session filtering if user has permission
       const filteredDateRange = await sessionFilterUtil.applySessionFilter(req, originalDateRange);
 
-
       const model = req.dashboardModel;
       const result = await model.getPendingActivitiesModel({
         starting_date: filteredDateRange.start_date,
@@ -313,7 +311,6 @@ class DashboardController extends BaseController {
    */
   async debugSessionFilter(req, res) {
     try {
-
       // Test basic user data
 
       // Test session filter utility
@@ -375,7 +372,6 @@ class DashboardController extends BaseController {
       // Apply session filtering if user has permission
       const filteredDateRange = await sessionFilterUtil.applySessionFilter(req, originalDateRange);
 
-
       const model = req.dashboardModel;
       const result = await model.getDashboardTopPerformersModel({
         starting_date: filteredDateRange.start_date,
@@ -423,7 +419,6 @@ class DashboardController extends BaseController {
 
       // Apply session filtering if user has permission
       const filteredDateRange = await sessionFilterUtil.applySessionFilter(req, originalDateRange);
-
 
       const model = req.dashboardModel;
       const result = await model.getDashboardTotalAmountsModel({
@@ -534,7 +529,6 @@ class DashboardController extends BaseController {
       // Apply session filtering if user has permission
       const filteredDateRange = await sessionFilterUtil.applySessionFilter(req, originalDateRange);
 
-
       const model = req.dashboardModel;
       const result = await model.getDashboardSalesPurchaseModel({
         filter,
@@ -583,7 +577,6 @@ class DashboardController extends BaseController {
 
       // Apply session filtering if user has permission
       const filteredDateRange = await sessionFilterUtil.applySessionFilter(req, originalDateRange);
-
 
       const model = req.dashboardModel;
       const result = await model.getDashboardBestSellingProductsModel({
@@ -698,7 +691,6 @@ class DashboardController extends BaseController {
 
       // Apply session filtering if user has permission
       const filteredDateRange = await sessionFilterUtil.applySessionFilter(req, originalDateRange);
-
 
       const result = await model.getDashboardExpiredProducts(filteredDateRange);
 

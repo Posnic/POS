@@ -33,7 +33,10 @@ describe('AuditService.record', () => {
   test('writes to audit_log and returns status:true', async () => {
     const model = makeModel();
     const r = await new AuditService(model).record(AUDIT_EVENTS.LOGIN, {
-      actor_user_id: 'u1', actor_name: 'Alice', entity: 'user', entity_id: 'u1',
+      actor_user_id: 'u1',
+      actor_name: 'Alice',
+      entity: 'user',
+      entity_id: 'u1',
     });
     expect(r.status).toBe(true);
     expect(model.getCollection).toHaveBeenCalledWith('audit_log');
@@ -67,7 +70,9 @@ describe('AuditService.record', () => {
   test('keeps a numeric amount, reason and details object', async () => {
     const model = makeModel();
     await new AuditService(model).record(AUDIT_EVENTS.SALE_REFUND, {
-      amount: 250.5, reason: 'customer return', details: { sale_no: 'S1' },
+      amount: 250.5,
+      reason: 'customer return',
+      details: { sale_no: 'S1' },
     });
     const doc = model._insertOne.mock.calls[0][0];
     expect(doc.amount).toBe(250.5);

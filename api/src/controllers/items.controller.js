@@ -1032,7 +1032,6 @@ class ItemsController extends BaseController {
    */
   async itemStockReportTable(req, res) {
     try {
-
       await this.ensureContext(req);
 
       const limit = parseInt(req.query.limit, 10) > 0 ? parseInt(req.query.limit, 10) : 5;
@@ -1047,10 +1046,8 @@ class ItemsController extends BaseController {
         ending_date: req.query.ending_date,
       };
 
-
       // Apply session filtering if user has permission and dates are provided
       if (data.starting_date || data.ending_date) {
-
         const startDate = data.starting_date ? new Date(data.starting_date) : null;
         const endDate = data.ending_date ? new Date(data.ending_date) : null;
 
@@ -1064,11 +1061,9 @@ class ItemsController extends BaseController {
           originalDateRange
         );
 
-
         // Update data with filtered dates
         data.starting_date = filteredDateRange.start_date;
         data.ending_date = filteredDateRange.end_date;
-
       } else {
       }
 
@@ -1604,14 +1599,12 @@ class ItemsController extends BaseController {
    */
   async categoryItemsReportTable(req, res) {
     try {
-
       await this.ensureContext(req);
 
       const userAccess = req.user?.access?.report?.read;
       if (userAccess !== true) {
         return this.error(res, 'Unauthorized', 403);
       }
-
 
       const limit =
         req.query.limit && parseInt(req.query.limit) > 0 ? parseInt(req.query.limit) : 5;
@@ -1620,13 +1613,11 @@ class ItemsController extends BaseController {
       let starting_date = req.query.starting_date;
       let ending_date = req.query.ending_date;
 
-
       // Apply session filtering if user has permission and dates are provided
       if (
         (starting_date && starting_date.trim() !== '') ||
         (ending_date && ending_date.trim() !== '')
       ) {
-
         const startDate = starting_date ? new Date(starting_date) : null;
         const endDate = ending_date ? new Date(ending_date) : null;
 
@@ -1640,11 +1631,9 @@ class ItemsController extends BaseController {
           originalDateRange
         );
 
-
         // Update dates with filtered values
         starting_date = filteredDateRange.start_date;
         ending_date = filteredDateRange.end_date;
-
       } else {
       }
 
@@ -1656,7 +1645,6 @@ class ItemsController extends BaseController {
         limit,
         page,
       };
-
 
       const result = await this.service.categoryItemsReportTable(params);
 
@@ -1685,14 +1673,12 @@ class ItemsController extends BaseController {
    */
   async supplierItemsReportTable(req, res) {
     try {
-
       await this.ensureContext(req);
 
       const userAccess = req.user?.access?.report?.read;
       if (userAccess !== true) {
         return this.error(res, 'Unauthorized', 403);
       }
-
 
       const limit =
         req.query.limit && parseInt(req.query.limit) > 0 ? parseInt(req.query.limit) : 5;
@@ -1701,13 +1687,11 @@ class ItemsController extends BaseController {
       let starting_date = req.query.starting_date;
       let ending_date = req.query.ending_date;
 
-
       // Apply session filtering if user has permission and dates are provided
       if (
         (starting_date && starting_date.trim() !== '') ||
         (ending_date && ending_date.trim() !== '')
       ) {
-
         const startDate = starting_date ? new Date(starting_date) : null;
         const endDate = ending_date ? new Date(ending_date) : null;
 
@@ -1721,11 +1705,9 @@ class ItemsController extends BaseController {
           originalDateRange
         );
 
-
         // Update dates with filtered values
         starting_date = filteredDateRange.start_date;
         ending_date = filteredDateRange.end_date;
-
       } else {
       }
 
@@ -1737,7 +1719,6 @@ class ItemsController extends BaseController {
         limit,
         page,
       };
-
 
       const result = await this.service.supplierItemsReportTable(params);
 

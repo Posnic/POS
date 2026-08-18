@@ -24,7 +24,10 @@ beforeEach(() => jest.clearAllMocks());
 describe('RoleService', () => {
   test('delegates listRoles through the repository/model', async () => {
     const col = {
-      find: jest.fn().mockReturnValue({ sort: jest.fn().mockReturnThis(), toArray: jest.fn().mockResolvedValue([{ key: 'owner' }]) }),
+      find: jest.fn().mockReturnValue({
+        sort: jest.fn().mockReturnThis(),
+        toArray: jest.fn().mockResolvedValue([{ key: 'owner' }]),
+      }),
     };
     const svc = new RoleService(makeModel(col));
     const r = await svc.listRoles();

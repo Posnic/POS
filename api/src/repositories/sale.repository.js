@@ -5306,7 +5306,9 @@ class SalesRepository {
           enqueue({ collection: 'sales', documentId: returnObjId, reason: REASONS.RETURN });
         }
         require('../sync/nudge').nudgeSyncAgent();
-      } catch (e) { /* accelerator only */ }
+      } catch (e) {
+        /* accelerator only */
+      }
 
       return {
         status: true,
@@ -8274,7 +8276,6 @@ class SalesRepository {
 
       const filters = { $and: andConditions };
 
-
       const limit = parseInt(options.limit, 10) > 0 ? parseInt(options.limit, 10) : BaseModel.limit;
       const page = parseInt(options.page, 10) > 0 ? parseInt(options.page, 10) : 1;
       const skip = Math.max(0, (page - 1) * limit);
@@ -8303,7 +8304,6 @@ class SalesRepository {
 
       const aggResults = await salesCollection.aggregate(pipeline).toArray();
 
-
       const list = (aggResults || []).map((doc) => {
         const id = doc._id || {};
         return {
@@ -8331,7 +8331,6 @@ class SalesRepository {
 
       const countDocs = await salesCollection.aggregate(countPipeline).toArray();
       const total = (countDocs[0] && countDocs[0].total) || 0;
-
 
       return {
         status: true,

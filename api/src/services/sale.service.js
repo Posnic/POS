@@ -1270,7 +1270,9 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
       const { enqueue, REASONS } = require('../sync/outbox');
       enqueue({ collection: 'sales', documentId: saleId, reason: REASONS.SALE });
       require('../sync/nudge').nudgeSyncAgent();
-    } catch (e) { /* accelerator only - the periodic scan still delivers */ }
+    } catch (e) {
+      /* accelerator only - the periodic scan still delivers */
+    }
 
     // Update Stock & Logs (PHP lines 696-710 for Add, 753-778 for Edit)
     const stockLogsRepository = new StockLogsRepository();
@@ -1289,7 +1291,6 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
         const newAvailable = reservation ? reservation.closing : opening - qty;
         const count = `-${qty}`;
         const isTracked = doc.track_inventory === true || doc.track_inventory === 'true';
-
 
         // Always update item stock for tracked items, even if branch
         // stock_management is disabled. The branch setting only controls

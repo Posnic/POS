@@ -73,7 +73,10 @@ describe('sanitizePosInput', () => {
 
   test('accepts true and the string "true" only', () => {
     const out = sanitizePosInput({
-      void_sale: true, refund: 'true', discount_apply: 1, void_line: 'yes',
+      void_sale: true,
+      refund: 'true',
+      discount_apply: 1,
+      void_line: 'yes',
     });
     expect(out.void_sale).toBe(true);
     expect(out.refund).toBe(true);

@@ -23,7 +23,10 @@ jest.mock('mongodb', () => {
   };
   const mockDb = { collection: jest.fn().mockReturnValue(mockCollection) };
   const mockClient = { db: jest.fn().mockReturnValue(mockDb), startSession: jest.fn() };
-  return { MongoClient: { connect: jest.fn().mockResolvedValue(mockClient) }, ObjectId: MockObjectId };
+  return {
+    MongoClient: { connect: jest.fn().mockResolvedValue(mockClient) },
+    ObjectId: MockObjectId,
+  };
 });
 
 const BaseModel = require('../../../src/models/base.model');
@@ -43,8 +46,18 @@ describe('RoleModel', () => {
   test('declares all expected fields (12)', () => {
     const f = new RoleModel().fields;
     const expected = [
-      '_id', 'license', 'name', 'key', 'is_system', 'description',
-      'branch_scope', 'access', 'pos', 'requires_manager_approval', 'created_date', 'updated_date',
+      '_id',
+      'license',
+      'name',
+      'key',
+      'is_system',
+      'description',
+      'branch_scope',
+      'access',
+      'pos',
+      'requires_manager_approval',
+      'created_date',
+      'updated_date',
     ];
     expected.forEach((n) => expect(f[n]).toBeDefined());
     expect(Object.keys(f)).toHaveLength(12);

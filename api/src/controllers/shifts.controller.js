@@ -32,9 +32,16 @@ class ShiftsController extends BaseController {
   setRequestContext(req) {
     const user = req.user || {};
     this.shiftModel.licenseId =
-      req.tenantContext?.licenseId || user.license || user.license_id || BaseModel.license || this.shiftModel.licenseId;
+      req.tenantContext?.licenseId ||
+      user.license ||
+      user.license_id ||
+      BaseModel.license ||
+      this.shiftModel.licenseId;
     this.shiftModel.branchId =
-      req.tenantContext?.branchId || user.branch_id || BaseModel.currentBranch || this.shiftModel.branchId;
+      req.tenantContext?.branchId ||
+      user.branch_id ||
+      BaseModel.currentBranch ||
+      this.shiftModel.branchId;
     this.shiftModel.user = user;
   }
 

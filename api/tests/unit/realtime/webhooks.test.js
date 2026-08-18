@@ -37,7 +37,10 @@ function fakeDb() {
         let out = rows.filter((r) => matches(r, q));
         const cursor = {
           sort: () => cursor,
-          limit: (n) => { out = out.slice(0, n); return cursor; },
+          limit: (n) => {
+            out = out.slice(0, n);
+            return cursor;
+          },
           project: () => cursor,
           toArray: async () => out.slice(),
         };
@@ -62,8 +65,12 @@ function fakeDb() {
 const flush = () => new Promise((r) => setTimeout(r, 20));
 
 let realFetch;
-beforeEach(() => { realFetch = global.fetch; });
-afterEach(() => { global.fetch = realFetch; });
+beforeEach(() => {
+  realFetch = global.fetch;
+});
+afterEach(() => {
+  global.fetch = realFetch;
+});
 
 describe('urlAllowed', () => {
   test('https yes, plain http no, loopback http yes (dev)', () => {
@@ -89,41 +96,61 @@ describe('subscriptions', () => {
 
   test('an http url or an empty event list is refused', async () => {
     const db = fakeDb();
-    expect((await wh.addSubscription(db, { url: 'http://a.example/h', events: ['sales'] })).ok).toBe(false);
-    expect((await wh.addSubscription(db, { url: 'https://a.example/h', events: [] })).ok).toBe(false);
+    expect(
+      (await wh.addSubscription(db, { url: 'http://a.example/h', events: ['sales'] })).ok
+    ).toBe(false);
+    expect((await wh.addSubscription(db, { url: 'https://a.example/h', events: [] })).ok).toBe(
+      false
+    );
   });
 });
 
 describe('publish', () => {
   test('writes the delivery row, signs the exact body, marks delivered on 2xx', async () => {
     const db = fakeDb();
-    const { secret } = await wh.addSubscription(db, { url: 'https://a.example/h', events: ['sales'] });
+    const { secret } = await wh.addSubscription(db, {
+      url: 'https://a.example/h',
+      events: ['sales'],
+    });
     const seen = [];
-    global.fetch = async (url, init) => { seen.push({ url, init }); return { status: 200 }; };
+    global.fetch = async (url, init) => {
+      seen.push({ url, init });
+      return { status: 200 };
+    };
 
     const fired = await wh.publish(db, 'shop_one', { entity: 'sales', at: 'T' });
     await flush();
 
     expect(fired).toBe(1);
     expect(seen).toHaveLength(1);
-    const expected = 'sha256=' + crypto.createHmac('sha256', secret).update(seen[0].init.body).digest('hex');
+    const expected =
+      'sha256=' + crypto.createHmac('sha256', secret).update(seen[0].init.body).digest('hex');
     expect(seen[0].init.headers['x-posnic-signature']).toBe(expected);
     const delivery = db.collection(wh.DELIVERIES).rows[0];
     expect(delivery.status).toBe('delivered');
-    expect(delivery.payload).toEqual({ event: 'change', entity: 'sales', at: 'T', shop: 'shop_one' });
+    expect(delivery.payload).toEqual({
+      event: 'change',
+      entity: 'sales',
+      at: 'T',
+      shop: 'shop_one',
+    });
   });
 
   test('only subscriptions listening to the entity fire', async () => {
     const db = fakeDb();
     await wh.addSubscription(db, { url: 'https://a.example/h', events: ['items'] });
-    global.fetch = async () => { throw new Error('should not be called'); };
+    global.fetch = async () => {
+      throw new Error('should not be called');
+    };
     expect(await wh.publish(db, 's', { entity: 'sales', at: 'T' })).toBe(0);
   });
 
   test('a failure schedules backoff; a pending delivery coalesces the next signal', async () => {
     const db = fakeDb();
     await wh.addSubscription(db, { url: 'https://a.example/h', events: ['sales'] });
-    global.fetch = async () => { throw new Error('refused'); };
+    global.fetch = async () => {
+      throw new Error('refused');
+    };
 
     await wh.publish(db, 's', { entity: 'sales', at: 'T1' });
     await flush();
@@ -138,7 +165,11 @@ describe('publish', () => {
   });
 
   test('never throws into the caller, whatever the db does', async () => {
-    const broken = { collection: () => { throw new Error('db down'); } };
+    const broken = {
+      collection: () => {
+        throw new Error('db down');
+      },
+    };
     await expect(wh.publish(broken, 's', { entity: 'sales', at: 'T' })).resolves.toBe(0);
   });
 });
@@ -149,12 +180,20 @@ describe('drainDue', () => {
     const sub = await wh.addSubscription(db, { url: 'https://a.example/h', events: ['sales'] });
     // one due retry, one orphan (subscription gone)
     await db.collection(wh.DELIVERIES).insertOne({
-      subscription_id: sub.id, payload: { event: 'change', entity: 'sales', at: 'T', shop: 's' },
-      status: 'pending', attempts: 1, nextAt: new Date(Date.now() - 1000), createdAt: new Date(),
+      subscription_id: sub.id,
+      payload: { event: 'change', entity: 'sales', at: 'T', shop: 's' },
+      status: 'pending',
+      attempts: 1,
+      nextAt: new Date(Date.now() - 1000),
+      createdAt: new Date(),
     });
     await db.collection(wh.DELIVERIES).insertOne({
-      subscription_id: 'gone', payload: { event: 'change', entity: 'sales', at: 'T', shop: 's' },
-      status: 'pending', attempts: 1, nextAt: new Date(Date.now() - 1000), createdAt: new Date(),
+      subscription_id: 'gone',
+      payload: { event: 'change', entity: 'sales', at: 'T', shop: 's' },
+      status: 'pending',
+      attempts: 1,
+      nextAt: new Date(Date.now() - 1000),
+      createdAt: new Date(),
     });
     global.fetch = async () => ({ status: 204 });
 

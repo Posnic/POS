@@ -24,7 +24,11 @@ const MANAGER_TYPES = ['owner', 'admin', 'super_admin', 'manager', 'store_manage
 
 // HID keyboard-emulation readers type the UID with assorted separators/case, so
 // normalise to bare uppercase alphanumerics before hashing/looking up.
-const normalizeCard = (uid) => String(uid || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+const normalizeCard = (uid) =>
+  String(uid || '')
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '');
 const hashCard = (uid) => {
   const norm = normalizeCard(uid);
   return norm ? crypto.createHash('sha256').update(norm).digest('hex') : null;
@@ -126,11 +130,18 @@ class AuthorizationService {
       hash = hashCard(raw);
       if (!hash) return { status: false, statusCode: 400, message: 'Invalid card' };
       // One card, one person: reject if another user already holds it.
-      const clashFilter = { rfid_hash: hash, _id: { $ne: new mongoose.Types.ObjectId(String(userId)) } };
+      const clashFilter = {
+        rfid_hash: hash,
+        _id: { $ne: new mongoose.Types.ObjectId(String(userId)) },
+      };
       if (license) clashFilter.license = license;
       const clash = await User.findOne(clashFilter).select('_id').lean();
       if (clash) {
-        return { status: false, statusCode: 409, message: 'That card is already assigned to another user' };
+        return {
+          status: false,
+          statusCode: 409,
+          message: 'That card is already assigned to another user',
+        };
       }
     }
     const filter = { _id: new mongoose.Types.ObjectId(String(userId)) };
@@ -161,7 +172,11 @@ class AuthorizationService {
     if (!action) return { status: false, statusCode: 400, message: 'action is required' };
     const m = await this.findUserByCard(card_uid, license);
     if (!m || !this._canAuthorise(m, action)) {
-      return { status: false, statusCode: 403, message: 'Card not recognised or not authorised for this action' };
+      return {
+        status: false,
+        statusCode: 403,
+        message: 'Card not recognised or not authorised for this action',
+      };
     }
     const approverName =
       [m.firstname, m.lastname].filter(Boolean).join(' ') || m.username || m.email || 'Manager';

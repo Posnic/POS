@@ -1010,7 +1010,6 @@ class ItemService {
       const effectiveEndingDate = ending_date || endingDate;
       const effectiveSupplierId = supplier_id || supplierId;
 
-
       const effectiveLimit = parseInt(limit, 10) > 0 ? parseInt(limit, 10) : 5;
       const effectivePage = parseInt(page, 10) > 0 ? parseInt(page, 10) : 1;
       const skip = (effectivePage - 1) * effectiveLimit;

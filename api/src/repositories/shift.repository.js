@@ -38,11 +38,7 @@ class ShiftRepository {
 
   _userName() {
     const u = this.model.user;
-    return (
-      (u && (u.username || u.name || u.email)) ||
-      BaseModel.loggedUserName ||
-      null
-    );
+    return (u && (u.username || u.name || u.email)) || BaseModel.loggedUserName || null;
   }
 
   /*
@@ -285,11 +281,16 @@ class ShiftRepository {
       if (patch.break_minutes !== undefined) {
         const b = Number(patch.break_minutes);
         if (!Number.isFinite(b) || b < 0) {
-          return { status: false, statusCode: 400, message: 'break_minutes must be a non-negative number' };
+          return {
+            status: false,
+            statusCode: 400,
+            message: 'break_minutes must be a non-negative number',
+          };
         }
         set.break_minutes = b;
       }
-      if (patch.note !== undefined) set.note = patch.note === null ? null : String(patch.note).trim();
+      if (patch.note !== undefined)
+        set.note = patch.note === null ? null : String(patch.note).trim();
       if (patch.tips !== undefined) {
         const tips = Number(patch.tips);
         if (!Number.isFinite(tips) || tips < 0) {
@@ -301,7 +302,8 @@ class ShiftRepository {
       // Recompute worked_minutes from the effective in/out/break.
       const effIn = set.clock_in !== undefined ? set.clock_in : shift.clock_in;
       const effOut = set.clock_out !== undefined ? set.clock_out : shift.clock_out;
-      const effBreak = set.break_minutes !== undefined ? set.break_minutes : (Number(shift.break_minutes) || 0);
+      const effBreak =
+        set.break_minutes !== undefined ? set.break_minutes : Number(shift.break_minutes) || 0;
       if (effIn && effOut) {
         const inMs = (effIn instanceof Date ? effIn : new Date(effIn)).getTime();
         const outMs = (effOut instanceof Date ? effOut : new Date(effOut)).getTime();
@@ -361,7 +363,8 @@ class ShiftRepository {
         row.tips += Number(s.tips_declared) || 0;
         if (s.status === SHIFT_STATUS.OPEN) row.open_shifts += 1;
         if (s.clock_in && (!row.first_in || s.clock_in < row.first_in)) row.first_in = s.clock_in;
-        if (s.clock_out && (!row.last_out || s.clock_out > row.last_out)) row.last_out = s.clock_out;
+        if (s.clock_out && (!row.last_out || s.clock_out > row.last_out))
+          row.last_out = s.clock_out;
         totalMinutes += Number(s.worked_minutes) || 0;
         totalTips += Number(s.tips_declared) || 0;
         totalShifts += 1;

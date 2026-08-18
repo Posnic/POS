@@ -676,7 +676,6 @@ class SupplierModel extends BaseModel {
         }
       }
 
-
       // Convert timestamps to Date objects
       const startDateObj = new Date(fromDate);
       const endDateObj = new Date(toDate);
@@ -694,7 +693,6 @@ class SupplierModel extends BaseModel {
         ],
       };
 
-
       const pipeline = [
         { $match: condition },
         {
@@ -710,7 +708,6 @@ class SupplierModel extends BaseModel {
       ];
 
       const supplierList = await receivingsCollection.aggregate(pipeline).toArray();
-
 
       const graphicalData = {};
       for (const data of supplierList) {

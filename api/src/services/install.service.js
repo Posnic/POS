@@ -140,7 +140,6 @@ class InstallService {
         },
       ];
 
-
       if (data.register_demo === true || data.register_demo === 'on') {
         // Load business-type specific demo data
         await this._insertBusinessTypeDemoData({

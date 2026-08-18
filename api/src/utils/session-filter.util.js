@@ -15,7 +15,6 @@ class SessionFilterUtil {
    * Get database connection
    */
   getDatabase(req) {
-
     if (!req.app?.locals?.mongoClient) {
       console.error('❌ No MongoDB client available in app.locals');
       return null;
@@ -49,7 +48,6 @@ class SessionFilterUtil {
     const dbName = process.env.MONGODB_URI?.split('/')?.pop()?.split('?')[0] || 'PosnicPro';
 
     try {
-
       const userSessionsCollection = db.collection(this.collectionName);
 
       // Find active session for this user
@@ -58,7 +56,6 @@ class SessionFilterUtil {
         logout_time: null,
         is_active: true,
       });
-
 
       if (sessionData) {
         return sessionData;
@@ -78,14 +75,12 @@ class SessionFilterUtil {
   async applySessionFilter(req, originalDateRange = null) {
     const user = req.user;
 
-
     // Check if user has session filter permission
     const hasPermission = this.hasSessionFilterPermission(user);
 
     if (!hasPermission) {
       return originalDateRange;
     }
-
 
     // Get user's session data
     const sessionData = await this.getUserSessionData(req);
@@ -111,7 +106,6 @@ class SessionFilterUtil {
         session_applied: true,
         session_login_time: sessionLoginTime,
       };
-
     } else {
       // No original date range, use session login time as start
       const now = new Date();
@@ -121,9 +115,7 @@ class SessionFilterUtil {
         session_applied: true,
         session_login_time: sessionLoginTime,
       };
-
     }
-
 
     return filteredDateRange;
   }
@@ -173,7 +165,6 @@ class SessionFilterUtil {
         // Add session filter to date field
         existingMatch[dateField] = { $gte: sessionLoginTime };
       }
-
     } else {
       // Add new $match stage with session filter
       pipeline.unshift({
@@ -181,7 +172,6 @@ class SessionFilterUtil {
           [dateField]: { $gte: sessionLoginTime },
         },
       });
-
     }
 
     return pipeline;

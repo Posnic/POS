@@ -107,12 +107,26 @@ async function attempt(db, delivery, sub) {
   if (outcome.ok) {
     await db.collection(DELIVERIES).updateOne(
       { _id: delivery._id },
-      { $set: { status: 'delivered', attempts, deliveredAt: new Date(), lastStatus: outcome.status } }
+      {
+        $set: {
+          status: 'delivered',
+          attempts,
+          deliveredAt: new Date(),
+          lastStatus: outcome.status,
+        },
+      }
     );
   } else if (attempts >= MAX_ATTEMPTS) {
     await db.collection(DELIVERIES).updateOne(
       { _id: delivery._id },
-      { $set: { status: 'dead', attempts, lastStatus: outcome.status, lastError: outcome.error || '' } }
+      {
+        $set: {
+          status: 'dead',
+          attempts,
+          lastStatus: outcome.status,
+          lastError: outcome.error || '',
+        },
+      }
     );
   } else {
     await db.collection(DELIVERIES).updateOne(
@@ -192,8 +206,12 @@ async function drainDue(db, dbName) {
     for (const d of due) {
       const sub = subs.get(String(d.subscription_id));
       if (!sub || !sub.active) {
-        await db.collection(DELIVERIES).updateOne(
-          { _id: d._id }, { $set: { status: 'dead', lastError: 'subscription removed' } });
+        await db
+          .collection(DELIVERIES)
+          .updateOne(
+            { _id: d._id },
+            { $set: { status: 'dead', lastError: 'subscription removed' } }
+          );
         continue;
       }
       attempt(db, d, sub).catch(() => {});
@@ -208,7 +226,21 @@ async function drainDue(db, dbName) {
 async function recentDeliveries(db, limit = 50) {
   return db
     .collection(DELIVERIES)
-    .find({}, { projection: { payload: 1, status: 1, attempts: 1, createdAt: 1, deliveredAt: 1, lastStatus: 1, lastError: 1, subscription_id: 1 } })
+    .find(
+      {},
+      {
+        projection: {
+          payload: 1,
+          status: 1,
+          attempts: 1,
+          createdAt: 1,
+          deliveredAt: 1,
+          lastStatus: 1,
+          lastError: 1,
+          subscription_id: 1,
+        },
+      }
+    )
     .sort({ createdAt: -1 })
     .limit(limit)
     .toArray();
