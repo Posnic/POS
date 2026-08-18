@@ -3208,8 +3208,12 @@ class SalesController extends BaseController {
 
       const SaleModel = this.model || Sale;
 
+      // Family view (V1 tail): optional and off by default; the export
+      // path never sends it, so exports stay per-item per the invariant.
+      const groupByFamily = req.query.group_by_family === 'true';
+
       const { total, list: rawList } = await salesService.getItemSalesReportTableData(
-        { match, skip, limit },
+        { match, skip, limit, groupByFamily },
         { SaleModel }
       );
 
@@ -3234,6 +3238,7 @@ class SalesController extends BaseController {
         sales_count: entry.sales_count || 0,
         item_quantity: roundToTwo(entry.item_quantity || 0),
         sales_profit: roundToTwo(entry.sales_profit || 0),
+        ...(groupByFamily ? { family_members: entry.family_members || 1 } : {}),
       }));
 
       return this.success(
