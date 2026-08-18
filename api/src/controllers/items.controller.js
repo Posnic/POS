@@ -371,6 +371,21 @@ class ItemsController extends BaseController {
     }
   }
 
+  /** The family strip's data: every member of one variant group (V1). */
+  async getFamily(req, res) {
+    try {
+      await this.ensureContext(req);
+      const result = await this.service.repository.getFamily(req.query.group_id, {
+        licenseId: this.model?.licenseId || null,
+      });
+      if (result && result.status) return this.success(res, result.data, result.message);
+      return this.error(res, result?.message || 'Could not load the family', 400);
+    } catch (error) {
+      console.error('Error in getFamily:', error);
+      return this.error(res, error.message, 500);
+    }
+  }
+
   /**
    * PHP: add() - Create new item (POST /items)
    */

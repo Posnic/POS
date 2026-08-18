@@ -76,8 +76,10 @@ router.post('/itemsImport', bindController(itemsController.itemsImport));
 router.post('/exportItems', bindController(itemsController.exportItems));
 
 // Raise/lower prices across many items at once; and a per-item price history.
-// V1 variant families: all-or-nothing creation of linked variant items.
+// V1 variant families: all-or-nothing creation of linked variant items,
+// and the members of one family for the edit page's strip.
 router.post('/createFamily', bindController(itemsController.createFamily));
+router.get('/family', bindController(itemsController.getFamily));
 router.post('/bulkUpdatePrices', bindController(itemsController.bulkUpdatePrices));
 router.post('/bulkPricePreview', bindController(itemsController.bulkPricePreview));
 router.post('/bulkSetMargin', bindController(itemsController.bulkSetMargin));

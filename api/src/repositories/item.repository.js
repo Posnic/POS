@@ -991,6 +991,48 @@ class ItemRepository extends BaseModel {
     return { deleted: r.deletedCount || 0 };
   }
 
+  /** Every member of one variant family, for the edit page's strip (V1). */
+  async getFamily(groupId, context = {}) {
+    if (!groupId || !ObjectId.isValid(String(groupId))) {
+      return { status: false, data: null, message: 'Not a valid family id' };
+    }
+    const filter = { variant_group_id: new ObjectId(String(groupId)) };
+    if (context.licenseId && ObjectId.isValid(String(context.licenseId))) {
+      filter.license = new ObjectId(String(context.licenseId));
+    }
+    const collection = await this.getCollection(this.collectionName);
+    const rows = await collection
+      .find(filter, {
+        projection: {
+          name: 1,
+          variant_value: 1,
+          variant_axis: 1,
+          variant_parent_name: 1,
+          selling_price: 1,
+          available_quantity: 1,
+          track_inventory: 1,
+          barcode_id: 1,
+        },
+      })
+      .sort({ variant_value: 1 })
+      .toArray();
+    return {
+      status: true,
+      data: rows.map((r) => ({
+        id: String(r._id),
+        name: r.name || '',
+        variant_value: r.variant_value || '',
+        variant_axis: r.variant_axis || '',
+        variant_parent_name: r.variant_parent_name || '',
+        selling_price: r.selling_price || 0,
+        available_quantity: r.available_quantity || 0,
+        track_inventory: r.track_inventory === true,
+        barcode_id: r.barcode_id || '',
+      })),
+      message: 'success',
+    };
+  }
+
   async upsertItem(data, id = '', context = {}) {
     try {
       const collection = await this.getCollection(this.collectionName);
