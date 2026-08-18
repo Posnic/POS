@@ -11,7 +11,11 @@ jest.mock('../../../src/constants/items.constants', () => ({
   DEFAULTS: { IMAGE: 'item.svg' },
   ITEM_STATUS: { REGULAR: 'regular', INSTANT: 'instant' },
   SUCCESS_MESSAGES: { ITEM_CREATED: 'Created', ITEM_UPDATED: 'Updated' },
-  ERROR_MESSAGES: { ITEM_NOT_FOUND: 'Not found', BRANCH_LICENSE_REQUIRED: 'Required' },
+  ERROR_MESSAGES: {
+    ITEM_NOT_FOUND: 'Not found',
+    BRANCH_LICENSE_REQUIRED: 'Required',
+    BARCODE_EXISTS: 'Barcode exists',
+  },
 }));
 
 jest.mock('mongodb', () => {
@@ -211,11 +215,60 @@ describe('ItemRepository', () => {
     });
     test('update returns success', async () => {
       col.findOne
-        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null) // identity duplicate check
+        .mockResolvedValueOnce(null) // barcode uniqueness check
         .mockResolvedValueOnce({ track_inventory: true, available_quantity: 50, name: 'Pen' });
       const r = await repo.upsertItem(data, FAKE_ID, ctx);
       expect(r.status).toBe(true);
       expect(r.message).toBe('Updated');
+    });
+
+    /*
+     * IC0: barcode uniqueness per branch. Two items answering one scan
+     * corrupts scan-to-sell, so the primary barcode and the V3 alternates
+     * are checked on both sides. Blank barcodes stay exempt.
+     */
+    test('create rejects a barcode another item already answers', async () => {
+      col.findOne
+        .mockResolvedValueOnce(null) // identity check passes
+        .mockResolvedValueOnce({ _id: { toString: () => 'other-item' } }); // barcode clash
+      const r = await repo.upsertItem(data, '', ctx);
+      expect(r.status).toBe('exist');
+      expect(r.message).toBe('Barcode exists');
+      expect(col.insertOne).not.toHaveBeenCalled();
+      const filter = col.findOne.mock.calls[1][0];
+      expect(filter.$or).toEqual([
+        { barcode_id: { $in: ['B001'] } },
+        { barcodes: { $in: ['B001'] } },
+      ]);
+    });
+
+    test('alternate barcodes are checked alongside the primary', async () => {
+      col.findOne
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({ _id: { toString: () => 'other-item' } });
+      const r = await repo.upsertItem({ ...data, barcodes: [' ALT-1 ', ''] }, '', ctx);
+      expect(r.status).toBe('exist');
+      const filter = col.findOne.mock.calls[1][0];
+      expect(filter.$or[0].barcode_id.$in).toEqual(['B001', 'ALT-1']);
+    });
+
+    test('an item may keep its own barcode on update (self-match allowed)', async () => {
+      col.findOne
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({ _id: { toString: () => FAKE_ID } }) // the clash is itself
+        .mockResolvedValueOnce({ track_inventory: false, name: 'Pen' });
+      const r = await repo.upsertItem(data, FAKE_ID, ctx);
+      expect(r.status).toBe(true);
+    });
+
+    test('blank barcodes skip the uniqueness query entirely', async () => {
+      const noBarcode = { ...data, barcode_id: '' };
+      await repo.upsertItem(noBarcode, '', ctx);
+      // No findOne carried the barcode $or filter (the other calls are the
+      // identity check and the branch lookup - one shared mock collection).
+      const barcodeQueries = col.findOne.mock.calls.filter(([f]) => f && f.$or);
+      expect(barcodeQueries).toHaveLength(0);
     });
     test('returns error without branch/license', async () => {
       const r = await repo.upsertItem(data, '', {});

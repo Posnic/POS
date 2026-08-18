@@ -1087,6 +1087,33 @@ class ItemRepository extends BaseModel {
         };
       }
 
+      /*
+       * Barcode uniqueness, per branch. Two items answering one scan corrupts
+       * scan-to-sell - the till adds whichever the index returns first. The
+       * check covers the primary barcode and the V3 alternates on BOTH sides
+       * (this item's codes vs existing primaries and alternates). Blank
+       * barcodes are exempt: most quick-entry items have none.
+       */
+      const candidateCodes = [
+        ...(data.barcode_id ? [String(data.barcode_id).trim()] : []),
+        ...(Array.isArray(data.barcodes) ? data.barcodes.map((b) => String(b).trim()) : []),
+      ].filter(Boolean);
+      if (candidateCodes.length > 0) {
+        const barcodeFilter = {
+          'branch_access.branch_id': branchObjectId,
+          license: licenseObjectId,
+          $or: [{ barcode_id: { $in: candidateCodes } }, { barcodes: { $in: candidateCodes } }],
+        };
+        const barcodeClash = await collection.findOne(barcodeFilter);
+        if (barcodeClash && barcodeClash._id.toString() !== id) {
+          return {
+            status: 'exist',
+            message: ERROR_MESSAGES.BARCODE_EXISTS,
+            data: null,
+          };
+        }
+      }
+
       // Get tax fields if tax_id provided
       let taxFields = [];
       if (data.tax_id && ObjectId.isValid(data.tax_id)) {

@@ -107,6 +107,12 @@ class ItemModel {
     variant_axis: { type: 'String', select: true },
     variant_value: { type: 'String', select: true },
     variant_parent_name: { type: 'String', select: true },
+    /* IC0: the form wrote these long before the map knew them - any read
+       projecting through this map silently dropped them. */
+    items_mfg_date: { type: 'String', select: true },
+    items_expiry_date: { type: 'String', select: true },
+    item_weight_machine_based: { type: 'Boolean', select: true },
+    modifier_group_ids: { type: 'Array', select: true },
     branch_access: { type: 'Array', select: false },
     branch_id: { type: 'ObjectId', select: true },
     branch_name: { type: 'String', select: true },
