@@ -1664,7 +1664,9 @@ if ($wrapper.length) {
         $('#v-pills-credit-tab').toggle(on('module_credit_enable'));
         $('#v-pills-marketingmodule-tab').toggle(on('module_marketing_enable'));
         $('#v-pills-messagingmodule-tab').toggle(on('module_messaging_enable'));
-        $('#v-pills-kiosk-tab').toggle(on('module_channels_enable') && on('module_channels_kiosk_enable'));
+        // The entry is the CHANNELS roof now (kiosk is its content), so it
+        // gates on the module alone.
+        $('#v-pills-kiosk-tab').toggle(on('module_channels_enable'));
         $('#v-pills-recyclebin-tab').toggle(on('module_recyclebin_enable'));
         $('#v-pills-theme-tab').toggle(on('module_themes_enable'));
         // The header and main sidebar follow the same truth at the same

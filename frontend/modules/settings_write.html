@@ -39,76 +39,48 @@
                                         class="feather icon-grid mr-2"></i>
                                     <lang class="lang_modules">Module On/Off</lang>
                                 </a>
-                                <!-- Cursor Focus controls moved into Core Settings (Sale / Receivings tabs). -->
-
-                                <div class="settings-nav-group"><lang class="lang_navgroup_salesbilling">Sales &amp; Billing</lang></div>
-                                
-                                
-                                
-                                
-                                
-                                
-
+                                <div class="settings-nav-group"><lang class="lang_navgroup_modules">Modules</lang></div>
                                 <a class="nav-link mb-2" data-module="branch" data-access="write" id="v-pills-taxmodule-tab"
                                     data-toggle="pill" href="#v-pills-taxmodule" role="tab"
                                     aria-controls="v-pills-taxmodule" aria-selected="false"><i
                                         class="feather icon-bar-chart-line- mr-2"></i>
                                     <lang class="lang_module_tax">Tax</lang>
                                 </a>
-
-                                <div class="settings-nav-group"><lang class="lang_navgroup_restaurant">Restaurant</lang></div>
                                 <a class="nav-link mb-2" data-module="branch" data-access="write"
                                     id="v-pills-tableorder-tab" data-toggle="pill" href="#v-pills-tableorder" role="tab"
                                     aria-controls="v-pills-tableorder" aria-selected="false"
                                     onclick="PosnicPro.tableOrders.tableOrdersTable();"><i
                                         class="feather icon-grid mr-2"></i>
-                                    <lang class="lang_tables_title">Tables</lang>
+                                    <lang class="lang_modules_restaurant">Restaurant</lang>
                                 </a>
-
-                                <div class="settings-nav-group"><lang class="lang_navgroup_customers_marketing">Customers &amp; Marketing</lang></div>
+                                <a class="nav-link mb-2" data-module="branch" data-access="write"
+                                    id="v-pills-credit-tab" data-toggle="pill" href="#v-pills-credit" role="tab"
+                                    aria-controls="v-pills-credit" aria-selected="false"
+                                    onclick="PosnicPro.credit.load();"><i class="feather icon-book mr-2"></i>
+                                    <lang class="lang_module_credit">Customer Credit</lang>
+                                </a>
                                 <a class="nav-link mb-2" data-module="branch" data-access="write" id="v-pills-marketingmodule-tab"
                                     data-toggle="pill" href="#v-pills-marketingmodule" role="tab"
                                     aria-controls="v-pills-marketingmodule" aria-selected="false"
                                     onclick="PosnicPro.loyalty.load();"><i class="feather icon-award mr-2"></i>
                                     <lang class="lang_module_marketing">Marketing</lang>
                                 </a>
-                                
-                                
-                                
-                                
-
-                                <a class="nav-link mb-2" data-module="branch" data-access="write"
-                                    id="v-pills-credit-tab" data-toggle="pill" href="#v-pills-credit" role="tab"
-                                    aria-controls="v-pills-credit" aria-selected="false"
-                                    onclick="PosnicPro.credit.load();"><i class="feather icon-book mr-2"></i>
-                                    <lang class="lang_credit_settings">Credit &amp; Reminders</lang>
-                                </a>
-
-                                <div class="settings-nav-group"><lang class="lang_navgroup_messaging">Messaging</lang></div>
                                 <a class="nav-link mb-2 show-superadmin-tab" data-module="branch" data-access="write" id="v-pills-messagingmodule-tab"
                                     data-toggle="pill" href="#v-pills-messagingmodule" role="tab"
                                     aria-controls="v-pills-messagingmodule" aria-selected="false"
                                     onclick="PosnicPro.messaging.load();"><i class="feather icon-cpu mr-2"></i>
                                     <lang class="lang_module_messaging">Messaging</lang>
                                 </a>
-                                
-                                
-                                
-                                
-
-                                <div class="settings-nav-group"><lang class="lang_navgroup_device_appearance">Device &amp; Appearance</lang></div>
                                 <a class="nav-link mb-2" data-module="plan" data-access="read" id="v-pills-kiosk-tab"
                                     data-toggle="pill" href="#v-pills-kiosk" role="tab" aria-controls="v-pills-kiosk"
                                     aria-selected="false"><i class="feather icon-monitor mr-2"></i>
-                                    <lang class="lang_kiosk_settings">Kiosk Settings</lang>
+                                    <lang class="lang_module_channels">Sales Channels</lang>
                                 </a>
                                 <a class="nav-link mb-2" data-module="branch" data-access="write" id="v-pills-theme-tab"
                                     data-toggle="pill" href="#v-pills-theme" role="tab" aria-controls="v-pills-theme"
                                     aria-selected="false" onclick="PosnicPro.themeManager.loadThemeSettingsUI();"><i class="feather icon-droplet mr-2"></i>
-                                    <lang class="lang_theme_settings">Theme & Appearance</lang>
+                                    <lang class="lang_module_themes">Themes</lang>
                                 </a>
-
-                                <div class="settings-nav-group"><lang class="lang_navgroup_system">System</lang></div>
                                 <a class="nav-link mb-2" data-module="plan" data-access="read"
                                     id="v-pills-recyclebin-tab" data-toggle="pill" href="#v-pills-recyclebin" role="tab"
                                     aria-controls="v-pills-recyclebin" aria-selected="false"
@@ -121,6 +93,29 @@
                                     aria-selected="false" style="display:none;"><i class="feather icon-trash mr-2"></i>
                                     <lang class="lang_eraseall">Erase All</lang>
                                 </a>
+                                <!-- Cursor Focus controls moved into Core Settings (Sale / Receivings tabs). -->
+
+                                
+                                
+                                
+                                
+                                
+                                
+
+
+
+                                
+                                
+                                
+                                
+
+
+                                
+                                
+                                
+                                
+
+
                             </div>
                         </div>
                     </div>
