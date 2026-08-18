@@ -709,7 +709,121 @@
         return matched;
     },
     /*ADD SALES LINE ITEMS ADD IN ADD SALE PRODUCT TABLE*/
+    /*
+     * Modifiers at sale time (V2): an item with option sets opens the
+     * picker before it lands on the sale. Deltas ride the UNIT price (so
+     * discounts and tax flow exactly as for any price - modifiers are
+     * taxed with their item, the industry norm), the picked names autofill
+     * the line note (which already flows to item_description and the KOT),
+     * and the structured list rides the sale payload. One line per item:
+     * re-adding the same item increments quantity with the same modifiers.
+     */
+    _lineModifiers: {},
+    _modifierDefs: null,
+    _modifierDefsAt: 0,
+    _loadModifierDefs: function (cb) {
+        if (PosnicPro.sales._modifierDefs && (Date.now() - PosnicPro.sales._modifierDefsAt) < 60000) {
+            cb(PosnicPro.sales._modifierDefs);
+            return;
+        }
+        PosnicPro.get({ url: 'setting/modifierGroups', data: {} }, function (r) {
+            PosnicPro.sales._modifierDefs = (r && r.data) || [];
+            PosnicPro.sales._modifierDefsAt = Date.now();
+            cb(PosnicPro.sales._modifierDefs);
+        }, function () { cb([]); });
+    },
+    openModifierPicker: function (params) {
+        var esc = function (s) {
+            return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+            });
+        };
+        var wanted = (params.modifier_group_ids || []).map(String);
+        PosnicPro.sales._loadModifierDefs(function (defs) {
+            var groups = defs.filter(function (g) { return wanted.indexOf(String(g.id)) >= 0; });
+            if (!groups.length) {
+                params._modifiersResolved = true;
+                PosnicPro.sales.addSalesLineItems(params);
+                return;
+            }
+            var currency = PosnicPro.local.get('currencySign');
+            var body = '';
+            groups.forEach(function (g, gi) {
+                var rules = (g.min > 0 ? 'pick at least ' + g.min : 'optional')
+                    + (g.max > 0 ? ', at most ' + g.max : '');
+                body += '<div class="mod-pick-group mb-2" data-gi="' + gi + '" data-min="' + (g.min || 0) + '" data-max="' + (g.max || 0) + '" data-gname="' + esc(g.name) + '">'
+                    + '<h6 class="mb-1">' + esc(g.name) + ' <small class="text-muted">(' + esc(rules) + ')</small></h6>';
+                g.options.forEach(function (o, oi) {
+                    var d = Number(o.price_delta) || 0;
+                    var dLabel = d ? ' <small class="text-muted">(' + (d > 0 ? '+' : '−') + currency + Math.abs(d).toFixed(2) + ')</small>' : '';
+                    body += '<div class="custom-control custom-checkbox">'
+                        + '<input type="checkbox" class="custom-control-input mod-pick" id="modpick_' + gi + '_' + oi + '" data-name="' + esc(o.name) + '" data-delta="' + d + '">'
+                        + '<label class="custom-control-label" for="modpick_' + gi + '_' + oi + '">' + esc(o.name) + dLabel + '</label>'
+                        + '</div>';
+                });
+                body += '</div>';
+            });
+            $('#sale_modifier_modal').remove();
+            $('body').append(
+                '<div class="modal fade close_on_esc" id="sale_modifier_modal" tabindex="-1" role="dialog" aria-hidden="true">'
+                + '<div class="modal-dialog modal-sm" role="document"><div class="modal-content">'
+                + '<div class="modal-header"><h5 class="modal-title">' + esc(params.item_name || params.name || '') + '</h5>'
+                + '<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>'
+                + '<div class="modal-body">' + body + '</div>'
+                + '<div class="modal-footer">'
+                + '<button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Skip</button>'
+                + '<button type="button" class="btn btn-outline-primary" id="mod_pick_confirm">Add to sale</button>'
+                + '</div></div></div></div>'
+            );
+            $('#sale_modifier_modal').modal('show');
+            var proceed = function (picked) {
+                $('#sale_modifier_modal').modal('hide');
+                var sum = picked.reduce(function (a, m) { return a + (Number(m.price_delta) || 0); }, 0);
+                var p2 = JSON.parse(JSON.stringify(params));
+                p2._modifiersResolved = true;
+                if (sum) {
+                    p2.selling_price = (Number(p2.selling_price) || 0) + sum;
+                    p2.mrp_price = (Number(p2.mrp_price) || 0) + sum;
+                }
+                var lineId = p2.id ? p2.id : p2.item_id;
+                if (picked.length) { PosnicPro.sales._lineModifiers[lineId] = picked; }
+                PosnicPro.sales.addSalesLineItems(p2);
+                if (picked.length) {
+                    // The note cell already flows to item_description and the
+                    // KOT - the picked names ride that existing path.
+                    setTimeout(function () {
+                        $('#addSalesLineItemNote_' + lineId).text(picked.map(function (m) { return m.name; }).join(', '));
+                    }, 150);
+                }
+            };
+            $('#mod_pick_confirm').on('click', function () {
+                var picked = [];
+                var problem = null;
+                $('.mod-pick-group').each(function () {
+                    var min = parseInt($(this).data('min'), 10) || 0;
+                    var max = parseInt($(this).data('max'), 10) || 0;
+                    var gname = $(this).data('gname');
+                    var chosen = $(this).find('.mod-pick:checked');
+                    if (chosen.length < min) { problem = gname + ': pick at least ' + min + '.'; return false; }
+                    if (max > 0 && chosen.length > max) { problem = gname + ': at most ' + max + '.'; return false; }
+                    chosen.each(function () {
+                        picked.push({ group: gname, name: $(this).data('name'), price_delta: Number($(this).data('delta')) || 0 });
+                    });
+                });
+                if (problem) { PosnicPro.alert('warning', problem); return; }
+                proceed(picked);
+            });
+        });
+    },
     addSalesLineItems: function (params) {
+        if (!params._modifiersResolved
+            && PosnicPro.local.get('table_options') === 'enable'
+            && Array.isArray(params.modifier_group_ids) && params.modifier_group_ids.length
+            && PosnicPro.sales.SaleAction !== 'return'
+            && PosnicPro.sales.searchItem(params.id ? params.id : params.item_id) === false) {
+            PosnicPro.sales.openModifierPicker(params);
+            return;
+        }
         var item = PosnicPro.sales.searchItem(params.id);
         // if (item !== false) {
         //     // existing item, do not add
@@ -3398,7 +3512,8 @@ PosnicPro.sales.addSale = {
                     track_inventory: $('#trackInventory_' + itemid).text(),
                     negative_stock: $('#negativeStock_' + itemid).text(),
                     item_price_total: $('#addSalesLineItemSellingPrice_' + itemid).text(),
-                    item_description: finalItemDescription
+                    item_description: finalItemDescription,
+                    modifiers: PosnicPro.sales._lineModifiers[itemid] || undefined
                 };
             }).get();
 
@@ -3931,7 +4046,8 @@ PosnicPro.sales.editSale = {
                     track_inventory: $('#trackInventory_' + itemid).text(),
                     negative_stock: $('#negativeStock_' + itemid).text(),
                     item_price_total: $('#addSalesLineItemSellingPrice_' + itemid).text(),
-                    item_description: finalItemDescription
+                    item_description: finalItemDescription,
+                    modifiers: PosnicPro.sales._lineModifiers[itemid] || undefined
                 };
             }).get();
 
@@ -5865,6 +5981,9 @@ PosnicPro.sales.calculation = {
 
 // Initialize fields for a brand new sale (/sales/new)
 PosnicPro.sales.setSaleDefaults = function () {
+
+    // A fresh sale carries no picked modifiers.
+    PosnicPro.sales._lineModifiers = {};
 
     // Tip line at tender: only for shops that switched tips on in Settings.
     $('.sale-tip-row').toggle(
