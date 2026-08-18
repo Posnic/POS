@@ -64,7 +64,7 @@
                                 <a class="nav-link mb-2" data-module="branch" data-access="write"
                                     id="v-pills-tableorder-tab" data-toggle="pill" href="#v-pills-tableorder" role="tab"
                                     aria-controls="v-pills-tableorder" aria-selected="false"
-                                    onclick="PosnicPro.tableOrders.tableOrdersTable();"><i
+                                    onclick="PosnicPro.tableOrders.tableOrdersTable(); PosnicPro.modifiers.loadGroups();"><i
                                         class="feather icon-grid mr-2"></i>
                                     <lang class="lang_modules_restaurant">Restaurant</lang>
                                 </a>
@@ -2556,6 +2556,25 @@
                                         <lang class="lang_modules_kot_hint">Restaurant / KOT mode is switched on
                                         under Settings &gt; Modules. This page manages the tables it uses.</lang>
                                     </small>
+                                </div>
+                            </div>
+                            <!-- Modifier groups (V2): the menu's option sets - Toppings, Spice level. -->
+                            <div class="card m-b-30">
+                                <div class="card-header d-flex align-items-center justify-content-between">
+                                    <h5 class="card-title mb-0"><lang class="lang_modifier_groups">Modifiers</lang></h5>
+                                    <button type="button" class="btn btn-primary-rgba btn-sm" data-module="branch" data-access="write"
+                                        onclick="PosnicPro.modifiers.openEditor();">
+                                        <i class="feather icon-plus mr-1"></i><lang class="lang_modifier_new">New Group</lang>
+                                    </button>
+                                </div>
+                                <div class="card-body">
+                                    <small class="text-muted d-block mb-2"><lang class="lang_modifier_hint">Option sets the kitchen understands - each choice can add or subtract from the price. Attach groups to items on the item page; the cashier picks at sale time.</lang></small>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead><tr><th>Group</th><th>Rules</th><th>Options</th><th class="text-right">Action</th></tr></thead>
+                                            <tbody id="modifier_groups_body"><tr><td colspan="4" class="text-center text-muted">Loading&hellip;</td></tr></tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
                             <div class="card m-b-30">
