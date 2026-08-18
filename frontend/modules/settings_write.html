@@ -55,31 +55,10 @@
                                         class="feather icon-layers mr-2"></i>
                                     <lang class="lang_taxgroup">Tax Groups</lang>
                                 </a>
-                                <a class="nav-link mb-2" data-module="branch" data-access="write" id="v-pills-unit"
-                                    data-toggle="pill" href="#v-pills-item-unit" role="tab" aria-controls="v-pills-tax"
-                                    aria-selected="false" onclick="PosnicPro.unit.unitTable();"><i
-                                        class="feather icon-type mr-2"></i>
-                                    <lang class="lang_units_title">Units</lang>
-                                </a>
-                                <a class="nav-link mb-2" data-module="branch" data-access="write"
-                                    id="v-pills-payment-tab" data-toggle="pill" href="#v-pills-payment" role="tab"
-                                    aria-controls="v-pills-payment" aria-selected="false"
-                                    onclick="PosnicPro.payment.paymentTable();"> <i
-                                        class="feather icon-dollar-sign mr-2"></i>
-                                    <lang class="lang_payment_fields">Payment Modes</lang>
-                                </a>
-                                <a class="nav-link mb-2" data-module="plan" data-access="read" id="v-pills-qr-tab"
-                                    data-toggle="pill" href="#v-pills-qr" role="tab" aria-controls="v-pills-qr"
-                                    aria-selected="false"><i class="feather icon-credit-card mr-2"></i>
-                                    <lang class="lang_payment_gateway">Payment Gateway</lang>
-                                </a>
-                                <a class="nav-link mb-2" data-module="branch" data-access="write"
-                                    id="v-pills-cashdenom-tab" data-toggle="pill" href="#v-pills-cashdenom" role="tab"
-                                    aria-controls="v-pills-cashdenom" aria-selected="false"
-                                    onclick="PosnicPro.denom.denomTable();"><i
-                                        class="feather icon-trending-up mr-2"></i>
-                                    <lang class="lang_denomination_fields">Cash Denominations</lang>
-                                </a>
+                                
+                                
+                                
+                                
 
                                 <div class="settings-nav-group"><lang class="lang_navgroup_restaurant">Restaurant</lang></div>
                                 <a class="nav-link mb-2" data-module="branch" data-access="write"
@@ -1380,112 +1359,11 @@
                         </div>
 
                         <!-- Tax Tab Start -->
-                        <div class="tab-pane fade" id="v-pills-item-unit" role="tabpanel"
-                            aria-labelledby="v-pills-unit">
-
-                            <div class="card m-b-30">
-                                <div class="card-header">
-                                    <h5 class="card-title">
-                                        <lang class="lang_taxrate_title">Types of Units</lang>
-                                    </h5>
-                                </div>
-                                <div class="card-body">
-                                    <div class="order-box">
-                                        <div class="card border m-b-30">
-                                            <div class="card-header">
-                                                <div class="row align-items-center">
-                                                    <div class="col-sm-6"></div>
-                                                    <div class="col-sm-6">
-                                                        <h6 class="mb-0"><a data-module="branch" data-access="write"
-                                                                class="btn btn-primary-rgba"
-                                                                href="#/settings/unit/new"><i
-                                                                    class="feather icon-plus mr-2"></i>
-                                                                <lang class="lang_addvariant_title">New</lang>
-                                                            </a></h6>
-                                                    </div>
-                                                </div>
-
-                                            </div>
-                                            <div class="card-body loader-table-tax">
-                                                <div class="table-responsive">
-                                                    <table id="view_unit" class="table table-borderless">
-                                                        <thead>
-                                                            <tr>
-                                                                <td class="td_align font-weight-normal">#</td>
-                                                                <td class="text-left font-weight-normal">
-                                                                    <lang class="lang_name_title">Name</lang>
-                                                                </td>
-                                                                <td class="text-right font-weight-normal">
-                                                                    <lang class="lang_value_title">Value</lang>
-                                                                </td>
-                                                                <td class="text-center font-weight-normal">
-                                                                    <lang class="lang_action_title">Action</lang>
-                                                                </td>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        
 
 
                         <!-- cash denomination Start -->
-                        <div class="tab-pane fade" id="v-pills-cashdenom" role="tabpanel"
-                            aria-labelledby="v-pills-cashdenom-tab">
-
-                            <div class="card m-b-30">
-                                <div class="card-header">
-                                    <h5 class="card-title">
-                                        <lang class="lang_denomination_fields">Denomination Fields</lang>
-                                    </h5>
-                                </div>
-                                <div class="card-body">
-                                    <div class="order-box">
-                                        <div class="card border m-b-30">
-                                            <div class="card-header">
-                                                <div class="row align-items-center">
-                                                    <div class="col-sm-6"></div>
-                                                    <div class="col-sm-6">
-                                                        <h6 class="mb-0"><a data-module="branch" data-access="write"
-                                                                class="btn btn-primary-rgba"
-                                                                href="#/settings/denom/new"><i
-                                                                    class="feather icon-plus mr-2"></i>
-                                                                <lang class="lang_addvariant_title">New</lang>
-                                                            </a></h6>
-                                                    </div>
-                                                </div>
-
-                                            </div>
-                                            <div class="card-body loader-table-tax">
-                                                <div class="table-responsive">
-                                                    <table id="view_denom" class="table table-borderless">
-                                                        <thead>
-                                                            <tr>
-                                                                <td class="td_align">#</td>
-                                                                <td class="text-right">
-                                                                    <lang class="lang_value_title">Value</lang>
-                                                                </td>
-                                                                <td class="text-center">
-                                                                    <lang class="lang_action_title">Action</lang>
-                                                                </td>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        
                         <!--Denom field end-->
 
                         <!-- table orders Start -->
@@ -1578,86 +1456,7 @@
                         <!--table orders end-->
 
                         <!-- payment field Start -->
-                        <div class="tab-pane fade" id="v-pills-payment" role="tabpanel"
-                            aria-labelledby="v-pills-payment-tab">
-
-                            <!-- Multi payment lives with the payment settings
-                                 (user call) - same control id, same save path. -->
-                            <div class="card m-b-30">
-                                <div class="card-body py-3">
-                                    <div class="form-row align-items-center mb-0">
-                                        <div class="form-group col-md-6 mb-0" data-module="plan" data-access="read">
-                                            <label for="enable_multi_payment" data-toggle="tooltip"
-                                                title="Enable(or)Disable multi payment" class="mb-0">
-                                                Multi Payment
-                                            </label>
-                                            <div class="custom-control custom-switch mt-1">
-                                                <input type="checkbox" class="custom-control-input"
-                                                    id="enable_multi_payment" name="enable_multi_payment" />
-                                                <label class="custom-control-label"
-                                                    for="enable_multi_payment"></label>
-                                            </div>
-                                            <small class="form-text text-muted">Split one sale across several
-                                                payment modes at tender.</small>
-                                        </div>
-                                        <div class="form-group col-md-6 mb-0 text-right">
-                                            <button type="button" class="btn btn-outline-primary btn-sm"
-                                                onclick="PosnicPro.settings.updateCommonSetting();"><i
-                                                    class="feather icon-save mr-1"></i>
-                                                <lang class="lang_save_title">Save</lang>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="card m-b-30">
-                                <div class="card-header">
-                                    <h5 class="card-title">
-                                        <lang class="lang_denomination_fields">Payment Fields</lang>
-                                    </h5>
-                                </div>
-                                <div class="card-body">
-                                    <div class="order-box">
-                                        <div class="card border m-b-30">
-                                            <div class="card-header">
-                                                <div class="row align-items-center">
-                                                    <div class="col-sm-6"></div>
-                                                    <div class="col-sm-6">
-                                                        <h6 class="mb-0"><a data-module="branch" data-access="write"
-                                                                class="btn btn-primary-rgba"
-                                                                href="#/settings/payment/new"><i
-                                                                    class="feather icon-plus mr-2"></i>
-                                                                <lang class="lang_addvariant_title">New</lang>
-                                                            </a></h6>
-                                                    </div>
-                                                </div>
-
-                                            </div>
-                                            <div class="card-body loader-table-tax">
-                                                <div class="table-responsive">
-                                                    <table id="view_payment" class="table table-borderless">
-                                                        <thead>
-                                                            <tr>
-                                                                <td class="td_align">#</td>
-                                                                <td class="text-right">
-                                                                    <lang class="lang_method_title">Method</lang>
-                                                                </td>
-                                                                <td class="text-center">
-                                                                    <lang class="lang_action_title">Action</lang>
-                                                                </td>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        
                         <!--Denom field end-->
 
                         <!-- Tax Tab Start -->
@@ -2366,204 +2165,7 @@
 
                         <!-- QR Setting Tab Start -->
 
-                        <div class="tab-pane fade" data-module="branch" data-access="write" id="v-pills-qr"
-                            role="tabpanel" aria-labelledby="v-pills-qr-tab">
-                            <div class="order-box">
-                                <div class="col-md-12 col-lg-12 col-xl-12">
-                                    <div class="card m-b-30">
-                                        <div class="card-header">
-                                            <h5 class="card-title">Payment Gateway</h5>
-                                        </div>
-                                        <div class="card-body">
-                                            <ul class="nav nav-tabs custom-tab-line mb-3" id="defaultTabLine"
-                                                role="tablist">
-                                                <li class="nav-item">
-                                                    <a class="nav-link active" id="home-tab-line" data-toggle="tab"
-                                                        href="#razorpay-line" role="tab" aria-controls="razorpay-line"
-                                                        aria-selected="true"><i
-                                                            class="simple-icons--phonepe"></i>Razorpay</a>
-                                                </li>
-                                                <li class="nav-item">
-                                                    <a class="nav-link" id="profile-tab-line" data-toggle="tab"
-                                                        href="#phonepe-line" role="tab" aria-controls="phonepe-line"
-                                                        aria-selected="false"><i
-                                                            class="simple-icons--razorpay"></i>Phonepe</a>
-                                                </li>
-                                            </ul>
-                                            <div class="tab-content" id="defaultTabContentLine">
-                                                <div class="tab-pane fade show active" id="razorpay-line"
-                                                    role="tabpanel" aria-labelledby="home-tab-line">
-                                                    <form class="validate" method="POST" name="qr_code"
-                                                        id="qr_code_form">
-                                                        <div class="card border m-b-30">
-                                                            <div class="card-header">
-                                                                <h5 class="card-title mb-0">Webhook</h5>
-                                                            </div>
-                                                            <div class="card-body loader-qrsetting">
-                                                                <div class="form-row">
-                                                                    <div class="form-group col-9">
-                                                                        <div class="card bg-primary-rgba m-b-30">
-                                                                            <div class="card-body">
-                                                                                <div class="row align-items-center">
-                                                                                    <div class="col-12">
-                                                                                        <h5>
-                                                                                            <span
-                                                                                                class="card-title text-primary mb-1">NOTES!</span>
-                                                                                        </h5>
-                                                                                        <p>Webhook url paste your
-                                                                                            Razorpay setting.</p>
-                                                                                        <p id="razor_url"
-                                                                                            class="mb-0 text-dark font-18">
-                                                                                        </p>
-                                                                                        <br>
-                                                                                        <p>Secret Key.</p>
-                                                                                        <p id="razor_key"
-                                                                                            class="mb-0 text-dark font-18">
-                                                                                        </p>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="form-row">
-                                                                    <div class="form-group col-9">
-                                                                        <label for="payment_gateway"
-                                                                            data-toggle="tooltip"
-                                                                            title="Enable(or)Disable payment gateway">Enable
-                                                                            (or) Disable</label>
-                                                                        <div class="custom-control custom-switch mt-2">
-                                                                            <input type="checkbox"
-                                                                                class="custom-control-input"
-                                                                                name="payment_gateway"
-                                                                                id="payment_gateway" />
-                                                                            <label class="custom-control-label"
-                                                                                for="payment_gateway"></label>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="form-row">
-                                                                    <div class="form-group col-9">
-                                                                        <label for="site_key">Key id</label>
-                                                                        <input type="text"
-                                                                            class="form-control border-control"
-                                                                            id="site_key" name="site_key"
-                                                                            placeholder="Enter Your Site Key"
-                                                                            required="true" autocomplete="off">
-                                                                    </div>
-                                                                </div>
-                                                                <div class="form-row">
-                                                                    <div class="form-group col-9">
-                                                                        <label for="secret_key">Secret Key</label>
-                                                                        <input type="text"
-                                                                            class="form-control border-control"
-                                                                            id="secret_key" name="secret_key"
-                                                                            placeholder="Enter Your Secret Key"
-                                                                            required="true" autocomplete="off">
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="card-footer text-right">
-                                                                <button type="button"
-                                                                    class="btn btn-outline-secondary infobar-settings-reset settings_edit_reset"
-                                                                    onclick="PosnicPro.settings.resetPaymentGateway();">
-                                                                    <i class="feather icon-refresh-ccw mr-2"></i>
-                                                                    <lang class="lang_reset_title">Reset</lang>
-                                                                </button>
-                                                                <button type="submit" class="btn btn-outline-primary"><i
-                                                                        class="feather icon-save mr-2"></i>Save</button>
-                                                            </div>
-                                                        </div>
-                                                    </form>
-                                                </div>
-                                                <div class="tab-pane fade" id="phonepe-line" role="tabpanel"
-                                                    aria-labelledby="profile-tab-line">
-                                                    <form class="validate" method="POST" name="phonepe_qr_code"
-                                                        id="phonepe_qr_code_form">
-                                                        <div class="card border m-b-30">
-                                                            <!-- <div class="card-header">
-                                                                <h5 class="card-title mb-0">Webhook</h5>
-                                                            </div> -->
-                                                            <div class="card-body loader-qrsetting">
-                                                                <!-- <div class="form-row">
-                                                                    <div class="form-group col-9">
-                                                                        <div class="card bg-primary-rgba m-b-30">
-                                                                            <div class="card-body">
-                                                                                <div class="row align-items-center">
-                                                                                    <div class="col-12">
-                                                                                        <h5>
-                                                                                            <span class="card-title text-primary mb-1">NOTES!</span> 
-                                                                                        </h5>
-                                                                                        <p>merchant id</p>
-                                                                                        <p id="phonepe_merchant_id_view" class="mb-0 text-dark font-18">ATMOSTUAT</p>
-                                                                                        <br>
-                                                                                        <p>salt Key.</p>
-                                                                                        <p id="phonepe_salt_key_view" class="mb-0 text-dark font-18">58a63b64-574d-417a-9214-066bee1e4caa</p>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div> -->
-                                                                <div class="form-row">
-                                                                    <div class="form-group col-9">
-                                                                        <label for="phonepe_payment_gateway"
-                                                                            data-toggle="tooltip"
-                                                                            title="Enable(or)Disable payment gateway">Enable
-                                                                            (or) Disable</label>
-                                                                        <div class="custom-control custom-switch mt-2">
-                                                                            <input type="checkbox"
-                                                                                class="custom-control-input"
-                                                                                name="phonepe_payment_gateway"
-                                                                                id="phonepe_payment_gateway" />
-                                                                            <label class="custom-control-label"
-                                                                                for="phonepe_payment_gateway"></label>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="form-row">
-                                                                    <div class="form-group col-9">
-                                                                        <label for="phonepe_merchant_id">Merchant
-                                                                            id</label>
-                                                                        <input type="text"
-                                                                            class="form-control border-control"
-                                                                            id="phonepe_merchant_id"
-                                                                            name="phonepe_merchant_id"
-                                                                            placeholder="Enter Your merchant id"
-                                                                            required="true" autocomplete="off">
-                                                                    </div>
-                                                                </div>
-                                                                <div class="form-row">
-                                                                    <div class="form-group col-9">
-                                                                        <label for="phonepe_salt_key">Salt Key</label>
-                                                                        <input type="text"
-                                                                            class="form-control border-control"
-                                                                            id="phonepe_salt_key"
-                                                                            name="phonepe_salt_key"
-                                                                            placeholder="Enter Your salt Key"
-                                                                            required="true" autocomplete="off">
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="card-footer text-right">
-                                                                <button type="button"
-                                                                    class="btn btn-outline-secondary infobar-settings-reset settings_edit_reset"
-                                                                    onclick="PosnicPro.settings.resetPhonepePaymentGateway();">
-                                                                    <i class="feather icon-refresh-ccw mr-2"></i>
-                                                                    <lang class="lang_reset_title">Reset</lang>
-                                                                </button>
-                                                                <button type="submit" class="btn btn-outline-primary"><i
-                                                                        class="feather icon-save mr-2"></i>Save</button>
-                                                            </div>
-                                                        </div>
-                                                    </form>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        
 
                         <!-- General Tab Start -->
                         <div class="tab-pane fade show active" id="v-pills-general" role="tabpanel"
@@ -2588,6 +2190,8 @@
                                                     href="#core-tab-inventory" role="tab"><lang class="lang_coretab_inventory">Inventory</lang></a></li>
                                             <li class="nav-item"><a class="nav-link" data-toggle="tab"
                                                     href="#core-tab-print" role="tab"><lang class="lang_coretab_print">Receipt Print</lang></a></li>
+                                            <li class="nav-item"><a class="nav-link" data-toggle="tab"
+                                                    href="#core-tab-payments" role="tab"><lang class="lang_coretab_payments">Payments</lang></a></li>
                                             <li class="nav-item dropdown core-tabs-more d-none">
                                                 <a class="nav-link dropdown-toggle" data-toggle="dropdown"
                                                     href="javascript:void(0)" role="button">More</a>
@@ -2942,7 +2546,20 @@
                                             </div>
 
                                             <!-- ============ INVENTORY ============ -->
+                                            
+
                                             <div class="tab-pane fade" id="core-tab-inventory" role="tabpanel">
+                                                <div class="row">
+                                                    <div class="col-lg-3">
+                                                        <div class="nav flex-column nav-pills" id="inventory_subnav" role="tablist">
+                                                            <a class="nav-link active" data-toggle="pill" href="#inv-sub-general" role="tab"><lang class="lang_common_settings">General</lang></a>
+                                                            <a class="nav-link" data-toggle="pill" href="#inv-sub-units" role="tab" onclick="PosnicPro.unit.unitTable();"><lang class="lang_units_title">Units</lang></a>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-lg-9">
+                                                        <div class="tab-content">
+                                                            <div class="tab-pane fade show active" id="inv-sub-general" role="tabpanel">
+
                                                 <div class="row">
                                                     <div class="form-group col-md-6">
                                                         <label for="notification_value" class="label-text-color">
@@ -2983,6 +2600,407 @@
                                                                     </lang>
                                                                 </span>
                                                             </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            
+                                                            </div>
+                                                            <div class="tab-pane fade" id="inv-sub-units" role="tabpanel">
+
+
+                            <div class="card m-b-30">
+                                <div class="card-header">
+                                    <h5 class="card-title">
+                                        <lang class="lang_taxrate_title">Types of Units</lang>
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="order-box">
+                                        <div class="card border m-b-30">
+                                            <div class="card-header">
+                                                <div class="row align-items-center">
+                                                    <div class="col-sm-6"></div>
+                                                    <div class="col-sm-6">
+                                                        <h6 class="mb-0"><a data-module="branch" data-access="write"
+                                                                class="btn btn-primary-rgba"
+                                                                href="#/settings/unit/new"><i
+                                                                    class="feather icon-plus mr-2"></i>
+                                                                <lang class="lang_addvariant_title">New</lang>
+                                                            </a></h6>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                            <div class="card-body loader-table-tax">
+                                                <div class="table-responsive">
+                                                    <table id="view_unit" class="table table-borderless">
+                                                        <thead>
+                                                            <tr>
+                                                                <td class="td_align font-weight-normal">#</td>
+                                                                <td class="text-left font-weight-normal">
+                                                                    <lang class="lang_name_title">Name</lang>
+                                                                </td>
+                                                                <td class="text-right font-weight-normal">
+                                                                    <lang class="lang_value_title">Value</lang>
+                                                                </td>
+                                                                <td class="text-center font-weight-normal">
+                                                                    <lang class="lang_action_title">Action</lang>
+                                                                </td>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- ============ PAYMENTS ============ -->
+                                            <div class="tab-pane fade" id="core-tab-payments" role="tabpanel">
+                                                <div class="row">
+                                                    <div class="col-lg-3">
+                                                        <div class="nav flex-column nav-pills" id="payments_subnav" role="tablist">
+                                                            <a class="nav-link active" data-toggle="pill" href="#pay-sub-general" role="tab"><lang class="lang_splitpay_title">Split Payment</lang></a>
+                                                            <a class="nav-link" data-toggle="pill" href="#pay-sub-modes" role="tab" onclick="PosnicPro.payment.paymentTable();"><lang class="lang_payment_fields">Payment Modes</lang></a>
+                                                            <a class="nav-link" data-toggle="pill" href="#pay-sub-gateway" role="tab" data-module="plan" data-access="read"><lang class="lang_payment_gateway">Payment Gateway</lang></a>
+                                                            <a class="nav-link" data-toggle="pill" href="#pay-sub-denom" role="tab" onclick="PosnicPro.denom.denomTable();"><lang class="lang_denomination_fields">Cash Denominations</lang></a>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-lg-9">
+                                                        <div class="tab-content">
+                                                            <div class="tab-pane fade show active" id="pay-sub-general" role="tabpanel">
+                                                                <div class="form-group" data-module="plan" data-access="read">
+                                                                    <label for="enable_multi_payment" class="mb-0">
+                                                                        <lang class="lang_splitpay_title">Accept Split Payments</lang>
+                                                                    </label>
+                                                                    <div class="custom-control custom-switch mt-1">
+                                                                        <input type="checkbox" class="custom-control-input"
+                                                                            id="enable_multi_payment" name="enable_multi_payment" />
+                                                                        <label class="custom-control-label" for="enable_multi_payment"></label>
+                                                                    </div>
+                                                                    <small class="form-text text-muted">One bill, several payment modes at tender -
+                                                                        a &#8377;200 bill paid as &#8377;100 UPI + &#8377;100 cash.</small>
+                                                                </div>
+                                                                <div class="text-right">
+                                                                    <button type="button" class="btn btn-outline-primary btn-sm"
+                                                                        onclick="PosnicPro.settings.updateCommonSetting();"><i
+                                                                            class="feather icon-save mr-1"></i>
+                                                                        <lang class="lang_save_title">Save</lang>
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                            <div class="tab-pane fade" id="pay-sub-modes" role="tabpanel">
+
+
+                            
+
+                            <div class="card m-b-30">
+                                <div class="card-header">
+                                    <h5 class="card-title">
+                                        <lang class="lang_denomination_fields">Payment Fields</lang>
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="order-box">
+                                        <div class="card border m-b-30">
+                                            <div class="card-header">
+                                                <div class="row align-items-center">
+                                                    <div class="col-sm-6"></div>
+                                                    <div class="col-sm-6">
+                                                        <h6 class="mb-0"><a data-module="branch" data-access="write"
+                                                                class="btn btn-primary-rgba"
+                                                                href="#/settings/payment/new"><i
+                                                                    class="feather icon-plus mr-2"></i>
+                                                                <lang class="lang_addvariant_title">New</lang>
+                                                            </a></h6>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                            <div class="card-body loader-table-tax">
+                                                <div class="table-responsive">
+                                                    <table id="view_payment" class="table table-borderless">
+                                                        <thead>
+                                                            <tr>
+                                                                <td class="td_align">#</td>
+                                                                <td class="text-right">
+                                                                    <lang class="lang_method_title">Method</lang>
+                                                                </td>
+                                                                <td class="text-center">
+                                                                    <lang class="lang_action_title">Action</lang>
+                                                                </td>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        
+                                                            </div>
+                                                            <div class="tab-pane fade" id="pay-sub-gateway" role="tabpanel">
+
+                            <div class="order-box">
+                                <div class="col-md-12 col-lg-12 col-xl-12">
+                                    <div class="card m-b-30">
+                                        <div class="card-header">
+                                            <h5 class="card-title">Payment Gateway</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <ul class="nav nav-tabs custom-tab-line mb-3" id="defaultTabLine"
+                                                role="tablist">
+                                                <li class="nav-item">
+                                                    <a class="nav-link active" id="home-tab-line" data-toggle="tab"
+                                                        href="#razorpay-line" role="tab" aria-controls="razorpay-line"
+                                                        aria-selected="true"><i
+                                                            class="simple-icons--phonepe"></i>Razorpay</a>
+                                                </li>
+                                                <li class="nav-item">
+                                                    <a class="nav-link" id="profile-tab-line" data-toggle="tab"
+                                                        href="#phonepe-line" role="tab" aria-controls="phonepe-line"
+                                                        aria-selected="false"><i
+                                                            class="simple-icons--razorpay"></i>Phonepe</a>
+                                                </li>
+                                            </ul>
+                                            <div class="tab-content" id="defaultTabContentLine">
+                                                <div class="tab-pane fade show active" id="razorpay-line"
+                                                    role="tabpanel" aria-labelledby="home-tab-line">
+                                                    <form class="validate" method="POST" name="qr_code"
+                                                        id="qr_code_form">
+                                                        <div class="card border m-b-30">
+                                                            <div class="card-header">
+                                                                <h5 class="card-title mb-0">Webhook</h5>
+                                                            </div>
+                                                            <div class="card-body loader-qrsetting">
+                                                                <div class="form-row">
+                                                                    <div class="form-group col-9">
+                                                                        <div class="card bg-primary-rgba m-b-30">
+                                                                            <div class="card-body">
+                                                                                <div class="row align-items-center">
+                                                                                    <div class="col-12">
+                                                                                        <h5>
+                                                                                            <span
+                                                                                                class="card-title text-primary mb-1">NOTES!</span>
+                                                                                        </h5>
+                                                                                        <p>Webhook url paste your
+                                                                                            Razorpay setting.</p>
+                                                                                        <p id="razor_url"
+                                                                                            class="mb-0 text-dark font-18">
+                                                                                        </p>
+                                                                                        <br>
+                                                                                        <p>Secret Key.</p>
+                                                                                        <p id="razor_key"
+                                                                                            class="mb-0 text-dark font-18">
+                                                                                        </p>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="form-row">
+                                                                    <div class="form-group col-9">
+                                                                        <label for="payment_gateway"
+                                                                            data-toggle="tooltip"
+                                                                            title="Enable(or)Disable payment gateway">Enable
+                                                                            (or) Disable</label>
+                                                                        <div class="custom-control custom-switch mt-2">
+                                                                            <input type="checkbox"
+                                                                                class="custom-control-input"
+                                                                                name="payment_gateway"
+                                                                                id="payment_gateway" />
+                                                                            <label class="custom-control-label"
+                                                                                for="payment_gateway"></label>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="form-row">
+                                                                    <div class="form-group col-9">
+                                                                        <label for="site_key">Key id</label>
+                                                                        <input type="text"
+                                                                            class="form-control border-control"
+                                                                            id="site_key" name="site_key"
+                                                                            placeholder="Enter Your Site Key"
+                                                                            required="true" autocomplete="off">
+                                                                    </div>
+                                                                </div>
+                                                                <div class="form-row">
+                                                                    <div class="form-group col-9">
+                                                                        <label for="secret_key">Secret Key</label>
+                                                                        <input type="text"
+                                                                            class="form-control border-control"
+                                                                            id="secret_key" name="secret_key"
+                                                                            placeholder="Enter Your Secret Key"
+                                                                            required="true" autocomplete="off">
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="card-footer text-right">
+                                                                <button type="button"
+                                                                    class="btn btn-outline-secondary infobar-settings-reset settings_edit_reset"
+                                                                    onclick="PosnicPro.settings.resetPaymentGateway();">
+                                                                    <i class="feather icon-refresh-ccw mr-2"></i>
+                                                                    <lang class="lang_reset_title">Reset</lang>
+                                                                </button>
+                                                                <button type="submit" class="btn btn-outline-primary"><i
+                                                                        class="feather icon-save mr-2"></i>Save</button>
+                                                            </div>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                                <div class="tab-pane fade" id="phonepe-line" role="tabpanel"
+                                                    aria-labelledby="profile-tab-line">
+                                                    <form class="validate" method="POST" name="phonepe_qr_code"
+                                                        id="phonepe_qr_code_form">
+                                                        <div class="card border m-b-30">
+                                                            <!-- <div class="card-header">
+                                                                <h5 class="card-title mb-0">Webhook</h5>
+                                                            </div> -->
+                                                            <div class="card-body loader-qrsetting">
+                                                                <!-- <div class="form-row">
+                                                                    <div class="form-group col-9">
+                                                                        <div class="card bg-primary-rgba m-b-30">
+                                                                            <div class="card-body">
+                                                                                <div class="row align-items-center">
+                                                                                    <div class="col-12">
+                                                                                        <h5>
+                                                                                            <span class="card-title text-primary mb-1">NOTES!</span> 
+                                                                                        </h5>
+                                                                                        <p>merchant id</p>
+                                                                                        <p id="phonepe_merchant_id_view" class="mb-0 text-dark font-18">ATMOSTUAT</p>
+                                                                                        <br>
+                                                                                        <p>salt Key.</p>
+                                                                                        <p id="phonepe_salt_key_view" class="mb-0 text-dark font-18">58a63b64-574d-417a-9214-066bee1e4caa</p>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div> -->
+                                                                <div class="form-row">
+                                                                    <div class="form-group col-9">
+                                                                        <label for="phonepe_payment_gateway"
+                                                                            data-toggle="tooltip"
+                                                                            title="Enable(or)Disable payment gateway">Enable
+                                                                            (or) Disable</label>
+                                                                        <div class="custom-control custom-switch mt-2">
+                                                                            <input type="checkbox"
+                                                                                class="custom-control-input"
+                                                                                name="phonepe_payment_gateway"
+                                                                                id="phonepe_payment_gateway" />
+                                                                            <label class="custom-control-label"
+                                                                                for="phonepe_payment_gateway"></label>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="form-row">
+                                                                    <div class="form-group col-9">
+                                                                        <label for="phonepe_merchant_id">Merchant
+                                                                            id</label>
+                                                                        <input type="text"
+                                                                            class="form-control border-control"
+                                                                            id="phonepe_merchant_id"
+                                                                            name="phonepe_merchant_id"
+                                                                            placeholder="Enter Your merchant id"
+                                                                            required="true" autocomplete="off">
+                                                                    </div>
+                                                                </div>
+                                                                <div class="form-row">
+                                                                    <div class="form-group col-9">
+                                                                        <label for="phonepe_salt_key">Salt Key</label>
+                                                                        <input type="text"
+                                                                            class="form-control border-control"
+                                                                            id="phonepe_salt_key"
+                                                                            name="phonepe_salt_key"
+                                                                            placeholder="Enter Your salt Key"
+                                                                            required="true" autocomplete="off">
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="card-footer text-right">
+                                                                <button type="button"
+                                                                    class="btn btn-outline-secondary infobar-settings-reset settings_edit_reset"
+                                                                    onclick="PosnicPro.settings.resetPhonepePaymentGateway();">
+                                                                    <i class="feather icon-refresh-ccw mr-2"></i>
+                                                                    <lang class="lang_reset_title">Reset</lang>
+                                                                </button>
+                                                                <button type="submit" class="btn btn-outline-primary"><i
+                                                                        class="feather icon-save mr-2"></i>Save</button>
+                                                            </div>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        
+                                                            </div>
+                                                            <div class="tab-pane fade" id="pay-sub-denom" role="tabpanel">
+
+
+                            <div class="card m-b-30">
+                                <div class="card-header">
+                                    <h5 class="card-title">
+                                        <lang class="lang_denomination_fields">Denomination Fields</lang>
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="order-box">
+                                        <div class="card border m-b-30">
+                                            <div class="card-header">
+                                                <div class="row align-items-center">
+                                                    <div class="col-sm-6"></div>
+                                                    <div class="col-sm-6">
+                                                        <h6 class="mb-0"><a data-module="branch" data-access="write"
+                                                                class="btn btn-primary-rgba"
+                                                                href="#/settings/denom/new"><i
+                                                                    class="feather icon-plus mr-2"></i>
+                                                                <lang class="lang_addvariant_title">New</lang>
+                                                            </a></h6>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                            <div class="card-body loader-table-tax">
+                                                <div class="table-responsive">
+                                                    <table id="view_denom" class="table table-borderless">
+                                                        <thead>
+                                                            <tr>
+                                                                <td class="td_align">#</td>
+                                                                <td class="text-right">
+                                                                    <lang class="lang_value_title">Value</lang>
+                                                                </td>
+                                                                <td class="text-center">
+                                                                    <lang class="lang_action_title">Action</lang>
+                                                                </td>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
