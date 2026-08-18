@@ -1049,14 +1049,18 @@ if ($wrapper.length) {
                     PosnicPro.local.set('sale_return_title', "<span style=\"font-size: 14px !important; font-weight: 900;\">Sales Return Receipt</span>");
                 }
 
+                // SET, never append: the old append-at-response after a
+                // clear-at-request duplicated the content once per
+                // overlapping load - eight Config opens read
+                // "Thank you for shopping...!" eight times over.
                 let headerContent = (data.header_print !== '') ? data.header_print : '';
-                $('#header_print').append(headerContent);
+                $('#header_print').html('').append(headerContent);
                 var htmlHeaderView = $('#header_print').text();
                 $('#header_print').summernote('code', htmlHeaderView);
                 $('.header-content').html(htmlHeaderView);
 
                 let footerContent = (data.footer_print !== '') ? data.footer_print : 'Thank you for shopping...!';
-                $('#footer_print').append(footerContent);
+                $('#footer_print').html('').append(footerContent);
                 var htmlView = $('#footer_print').text();
                 $('#footer_print').summernote('code', htmlView);
                 $('.footer-content').html(htmlView);
