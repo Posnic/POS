@@ -380,10 +380,15 @@
                                     <lang class="lang_manage_title">Manage</lang>
                                 </h5>
                             </li>
+                            <!-- Config's middle layer is gone (user call): its
+                                 sections ARE the Manage menu. Entries drive the
+                                 existing #/settings/<section> routes; module
+                                 entries follow their switches (applyModuleSidebar). -->
                             <li id="settingModule">
-                                <a data-module="branch" data-access="write" href="#/settings" id="view_config_page">
-                                    <img src="static/images/svg-icon/web-settings.svg" class="img-fluid" alt="config">
-                                    <lang class="lang_config_title">Config</lang>
+                                <a data-module="branch" data-access="write" href="#/settings/general"
+                                    class="manage-settings-entry" id="manage_sec_general">
+                                    <img src="static/images/svg-icon/web-settings.svg" class="img-fluid" alt="core settings">
+                                    <lang class="lang_generalset">Core Settings</lang>
                                 </a>
                             </li>
                             <li id="branchModule">
@@ -401,10 +406,84 @@
                                     <lang class="lang_user_title">Users</lang>
                                 </a>
                             </li>
-                            <!-- Roles is a TAB inside Users now (user call) -
-                                 one place for people and what they may do. -->
-                            <!-- Cash Register and Cash Book live under
-                                 Config > Modules now (user call). -->
+                            <li>
+                                <a data-module="branch" data-access="write" href="#/settings/modules"
+                                    class="manage-settings-entry" id="manage_sec_modules">
+                                    <img src="static/images/svg-icon/apps.svg" class="img-fluid" alt="module on/off">
+                                    <lang class="lang_modules">Module On/Off</lang>
+                                </a>
+                            </li>
+                            <li id="manage_modules_header"><div class="settings-nav-group report-group"><lang class="lang_navgroup_modules">Modules</lang></div></li>
+                            <li id="manage_li_taxmodule">
+                                <a data-module="branch" data-access="write" href="#/settings/taxmodule"
+                                    class="manage-settings-entry" id="manage_sec_taxmodule">
+                                    <img src="static/images/svg-icon/tax.svg" class="img-fluid" alt="tax">
+                                    <lang class="lang_module_tax">Tax</lang>
+                                </a>
+                            </li>
+                            <li id="manage_li_tableorder">
+                                <a data-module="branch" data-access="write" href="#/settings/tableorder"
+                                    class="manage-settings-entry" id="manage_sec_tableorder">
+                                    <img src="static/images/svg-icon/tables.svg" class="img-fluid" alt="restaurant">
+                                    <lang class="lang_modules_restaurant">Restaurant</lang>
+                                </a>
+                            </li>
+                            <li id="manage_li_cashregister">
+                                <a href="#/settings/cashregister"
+                                    class="manage-settings-entry" id="manage_sec_cashregister">
+                                    <img src="static/images/svg-icon/cash-register.svg" class="img-fluid" alt="cash register">
+                                    <lang class="lang_cash_register">Cash Register</lang>
+                                </a>
+                            </li>
+                            <li id="manage_li_cashbook">
+                                <a data-module="expense" data-access="read||write||delete" href="#/settings/cashbook"
+                                    class="manage-settings-entry" id="manage_sec_cashbook">
+                                    <img src="static/images/svg-icon/billing.svg" class="img-fluid" alt="cash book">
+                                    <lang class="lang_expense_title">Cash Book</lang>
+                                </a>
+                            </li>
+                            <li id="manage_li_credit">
+                                <a data-module="branch" data-access="write" href="#/settings/credit"
+                                    class="manage-settings-entry" id="manage_sec_credit">
+                                    <img src="static/images/svg-icon/credit.svg" class="img-fluid" alt="customer credit">
+                                    <lang class="lang_module_credit">Customer Credit</lang>
+                                </a>
+                            </li>
+                            <li id="manage_li_marketingmodule">
+                                <a data-module="branch" data-access="write" href="#/settings/marketingmodule"
+                                    class="manage-settings-entry" id="manage_sec_marketingmodule">
+                                    <img src="static/images/svg-icon/crm.svg" class="img-fluid" alt="marketing">
+                                    <lang class="lang_module_marketing">Marketing</lang>
+                                </a>
+                            </li>
+                            <li id="manage_li_messagingmodule">
+                                <a data-module="branch" data-access="write" href="#/settings/messagingmodule"
+                                    class="manage-settings-entry" id="manage_sec_messagingmodule">
+                                    <img src="static/images/svg-icon/email.svg" class="img-fluid" alt="messaging">
+                                    <lang class="lang_module_messaging">Messaging</lang>
+                                </a>
+                            </li>
+                            <li id="manage_li_kiosk">
+                                <a data-module="plan" data-access="read" href="#/settings/kiosk"
+                                    class="manage-settings-entry" id="manage_sec_kiosk">
+                                    <img src="static/images/svg-icon/shopping-online.svg" class="img-fluid" alt="sales channels">
+                                    <lang class="lang_module_channels">Sales Channels</lang>
+                                </a>
+                            </li>
+                            <li id="manage_li_theme">
+                                <a data-module="branch" data-access="write" href="#/settings/theme"
+                                    class="manage-settings-entry" id="manage_sec_theme">
+                                    <img src="static/images/svg-icon/theme.svg" class="img-fluid" alt="themes">
+                                    <lang class="lang_module_themes">Themes</lang>
+                                </a>
+                            </li>
+                            <li id="manage_li_recyclebin">
+                                <a data-module="branch" data-access="write" href="#/settings/recyclebin"
+                                    class="manage-settings-entry" id="manage_sec_recyclebin">
+                                    <img src="static/images/svg-icon/page.svg" class="img-fluid" alt="recycle bin">
+                                    <lang class="lang_recycle">Recycle Bin</lang>
+                                </a>
+                            </li>
                             <!-- Cursor Focus moved under Config (it is configuration);
                                  the #/device_setup page itself is unchanged. -->
 

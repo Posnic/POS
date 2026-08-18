@@ -2111,6 +2111,22 @@ PosnicPro = {
          * saved choice is never wiped (applyTheme, not applyPreset), so
          * switching back on restores it just as immediately.
          */
+        /* Manage-sidebar settings entries (the Config layer collapsed into
+           them) follow the same switches as the panes they open. */
+        $('#manage_li_taxmodule').toggle(on('module_tax_enable'));
+        $('#manage_li_tableorder').toggle(PosnicPro.local.get('table_options') === 'enable');
+        $('#manage_li_cashregister').toggle(on('cash_register_enable'));
+        $('#manage_li_cashbook').toggle(on('module_cashbook_enable'));
+        $('#manage_li_credit').toggle(on('module_credit_enable'));
+        $('#manage_li_marketingmodule').toggle(on('module_marketing_enable'));
+        $('#manage_li_messagingmodule').toggle(on('module_messaging_enable'));
+        $('#manage_li_kiosk').toggle(on('module_channels_enable'));
+        $('#manage_li_theme').toggle(on('module_themes_enable'));
+        $('#manage_li_recyclebin').toggle(on('module_recyclebin_enable'));
+        $('#manage_modules_header').toggle(
+            $('[id^="manage_li_"]').filter(function () { return $(this).css('display') !== 'none'; }).length > 0
+        );
+
         var themesOn = on('module_themes_enable');
         $('.themebar').closest('li').toggle(themesOn);
         var tm = PosnicPro.themeManager;
