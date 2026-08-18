@@ -842,6 +842,16 @@ class SettingModel extends BaseModel {
       if (remoteTarget) {
         return this.updateBranchModules(remoteTarget, data);
       }
+      /*
+       * modules_only: the same toggle-map-only write for the SESSION branch.
+       * The first-run Feature picker saves through here - it carries only
+       * switches (plus the controller's validation satisfiers, which this
+       * path ignores), so routing it into the full surface below would write
+       * empty printing/receipt fields read from controls it never showed.
+       */
+      if (data.modules_only === true || data.modules_only === 'true') {
+        return this.updateBranchModules(this.branchId, data);
+      }
 
       // PHP model does NOT validate field data - controller handles that
       const usersCollection = await this.getCollection('users');
