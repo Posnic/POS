@@ -45,11 +45,11 @@ function computeLineTax(line) {
   const discountPercentage = Number(line.discountPercentage) || 0;
   const gstAmount = Number(line.gstAmount) || 0;
 
-  let total = 0;
-  let tax = 0;
-  let taxForItem = 0;
-  let discount = 0;
-  let subtotal = 0;
+  let total;
+  let tax;
+  let taxForItem;
+  let discount;
+  let subtotal;
   let effectiveTax = itemTax;
   let effectiveTaxType = taxType;
 
