@@ -11,7 +11,12 @@
 
 const bus = require('../../../src/realtime/event-bus');
 
-const fakeRes = () => ({ lines: [], write(l) { this.lines.push(l); } });
+const fakeRes = () => ({
+  lines: [],
+  write(l) {
+    this.lines.push(l);
+  },
+});
 
 afterEach(() => bus.resetForTests());
 
@@ -27,7 +32,7 @@ describe('event-bus', () => {
     expect(b.lines[0]).toBe(a.lines[0]);
   });
 
-  test('one shop\'s events never reach another\'s tills', () => {
+  test("one shop's events never reach another's tills", () => {
     const mine = fakeRes();
     const theirs = fakeRes();
     bus.subscribe('shop_one', mine);
@@ -55,7 +60,11 @@ describe('event-bus', () => {
   });
 
   test('a subscriber whose write throws does not break fan-out to the rest', () => {
-    const dead = { write() { throw new Error('EPIPE'); } };
+    const dead = {
+      write() {
+        throw new Error('EPIPE');
+      },
+    };
     const alive = fakeRes();
     bus.subscribe('shop_one', dead);
     bus.subscribe('shop_one', alive);

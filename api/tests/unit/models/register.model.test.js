@@ -388,7 +388,14 @@ describe('RegisterModel — fields select:false (excluded from default projectio
     fields = new RegisterModel().fields;
   });
 
-  const selectFalseFields = ['branch_id', 'date', 'current_user_id', 'lock_device_id', 'lock_acquired_at', 'license'];
+  const selectFalseFields = [
+    'branch_id',
+    'date',
+    'current_user_id',
+    'lock_device_id',
+    'lock_acquired_at',
+    'license',
+  ];
 
   test('exactly 6 fields have select:false', () => {
     const count = Object.values(fields).filter((f) => f.select === false).length;

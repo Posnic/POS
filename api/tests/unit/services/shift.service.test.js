@@ -44,7 +44,11 @@ jest.mock('../../../src/models/user.model', () => ({
   updateOne: jest.fn(),
 }));
 
-jest.mock('../../../src/models/base.model', () => ({ license: 'L1', loggedUser: null, loggedUserName: null }));
+jest.mock('../../../src/models/base.model', () => ({
+  license: 'L1',
+  loggedUser: null,
+  loggedUserName: null,
+}));
 
 const User = require('../../../src/models/user.model');
 
@@ -108,10 +112,15 @@ describe('ShiftService', () => {
 
   test('clockByCard toggles the CARDHOLDER in and audits as that person', async () => {
     mockFindUserByCard.mockResolvedValue({ _id: 'u9', firstname: 'Meera', username: 'meera' });
-    mockToggle.mockResolvedValue({ status: true, data: { action: 'clock_in', shift: { _id: 's1' } } });
+    mockToggle.mockResolvedValue({
+      status: true,
+      data: { action: 'clock_in', shift: { _id: 's1' } },
+    });
     const r = await new ShiftService().clockByCard({ card_uid: '0417AABB', device_id: 'term1' });
     expect(r.status).toBe(true);
-    expect(mockToggle).toHaveBeenCalledWith(expect.objectContaining({ userId: 'u9', userName: 'Meera' }));
+    expect(mockToggle).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: 'u9', userName: 'Meera' })
+    );
     const [event, ctx] = mockRecord.mock.calls[0];
     expect(event).toBe('clock_in');
     expect(ctx.actor_user_id).toBe('u9'); // audited as the cardholder, not the terminal
@@ -119,7 +128,10 @@ describe('ShiftService', () => {
 
   test('clockByCard records CLOCK_OUT with worked minutes on toggle-out', async () => {
     mockFindUserByCard.mockResolvedValue({ _id: 'u9', username: 'meera' });
-    mockToggle.mockResolvedValue({ status: true, data: { action: 'clock_out', shift: { _id: 's1', worked_minutes: 120 } } });
+    mockToggle.mockResolvedValue({
+      status: true,
+      data: { action: 'clock_out', shift: { _id: 's1', worked_minutes: 120 } },
+    });
     await new ShiftService().clockByCard({ card_uid: '0417AABB' });
     const [event, ctx] = mockRecord.mock.calls[0];
     expect(event).toBe('clock_out');
@@ -141,10 +153,11 @@ describe('getReport (payout)', () => {
     });
     User.find.mockReturnValue({
       select: () => ({
-        lean: () => Promise.resolve([
-          { _id: 'u1', hourly_rate: 10 },
-          { _id: 'u2', hourly_rate: 20 },
-        ]),
+        lean: () =>
+          Promise.resolve([
+            { _id: 'u1', hourly_rate: 10 },
+            { _id: 'u2', hourly_rate: 20 },
+          ]),
       }),
     });
     const r = await new ShiftService().getReport({});
@@ -188,20 +201,31 @@ describe('editShift', () => {
 describe('setRate', () => {
   test('saves a valid wage', async () => {
     User.updateOne.mockResolvedValue({ matchedCount: 1 });
-    const r = await new ShiftService().setRate({ userId: '507f1f77bcf86cd799439011', hourlyRate: 15.5, license: 'L1' });
+    const r = await new ShiftService().setRate({
+      userId: '507f1f77bcf86cd799439011',
+      hourlyRate: 15.5,
+      license: 'L1',
+    });
     expect(r.status).toBe(true);
-    expect(User.updateOne).toHaveBeenCalledWith(
-      expect.objectContaining({ license: 'L1' }),
-      { $set: { hourly_rate: 15.5 } }
-    );
+    expect(User.updateOne).toHaveBeenCalledWith(expect.objectContaining({ license: 'L1' }), {
+      $set: { hourly_rate: 15.5 },
+    });
   });
 
   test('rejects a negative or non-numeric wage', async () => {
-    expect((await new ShiftService().setRate({ userId: '507f1f77bcf86cd799439011', hourlyRate: -5 })).statusCode).toBe(400);
-    expect((await new ShiftService().setRate({ userId: '507f1f77bcf86cd799439011', hourlyRate: 'abc' })).statusCode).toBe(400);
+    expect(
+      (await new ShiftService().setRate({ userId: '507f1f77bcf86cd799439011', hourlyRate: -5 }))
+        .statusCode
+    ).toBe(400);
+    expect(
+      (await new ShiftService().setRate({ userId: '507f1f77bcf86cd799439011', hourlyRate: 'abc' }))
+        .statusCode
+    ).toBe(400);
   });
 
   test('rejects an invalid user id', async () => {
-    expect((await new ShiftService().setRate({ userId: 'bad', hourlyRate: 10 })).statusCode).toBe(400);
+    expect((await new ShiftService().setRate({ userId: 'bad', hourlyRate: 10 })).statusCode).toBe(
+      400
+    );
   });
 });

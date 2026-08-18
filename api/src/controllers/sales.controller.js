@@ -929,7 +929,6 @@ class SalesController extends BaseController {
         parsedFilters
       );
 
-
       // Apply branch scoping similar to PHP behaviour
       const { validBranchIds } = parseBranchIdsFromRequest(req);
       const filter = { ...filteredSalesFilters };
@@ -1255,7 +1254,6 @@ class SalesController extends BaseController {
       // Apply session filtering if user has permission
       const originalDateRange = { start_date: start, end_date: end };
       const filteredDateRange = await sessionFilterUtil.applySessionFilter(req, originalDateRange);
-
 
       // Use filtered dates
       const filteredStart = filteredDateRange.start_date;
@@ -1617,7 +1615,6 @@ class SalesController extends BaseController {
       // Apply session filtering if user has permission
       const originalDateRange = { start_date: start, end_date: end };
       const filteredDateRange = await sessionFilterUtil.applySessionFilter(req, originalDateRange);
-
 
       // Use filtered dates
       const filteredStart = filteredDateRange.start_date;
@@ -2506,7 +2503,6 @@ class SalesController extends BaseController {
 
       // Apply session filtering if user has permission (same as salesSummaryReports)
       if (startDate || endDate) {
-
         const originalDateRange = {
           start_date: startDate || new Date(0),
           end_date: endDate || new Date(),
@@ -2516,7 +2512,6 @@ class SalesController extends BaseController {
           req,
           originalDateRange
         );
-
 
         // Use filtered dates
         const filteredStartDate = filteredDateRange.start_date;
@@ -2617,7 +2612,6 @@ class SalesController extends BaseController {
           originalDateRange
         );
 
-
         match.date = {};
 
         if (filteredDateRange.start_date && !Number.isNaN(filteredDateRange.start_date.valueOf())) {
@@ -2649,14 +2643,12 @@ class SalesController extends BaseController {
 
   async salesReports(req, res) {
     try {
-
       // Permission check matching PHP controller line 445
       const role = (req.user?.usertype || req.user?.role || '').toLowerCase();
 
       const hasPermission =
         req.user?.access?.report?.read === true ||
         ['super_admin', 'admin', 'manager', 'api'].includes(role);
-
 
       if (!hasPermission) {
         return res.status(403).json({
@@ -2672,22 +2664,17 @@ class SalesController extends BaseController {
       const limit = parseInt(req.query.limit, 10) > 0 ? parseInt(req.query.limit, 10) : 5;
       const page = parseInt(req.query.page, 10) > 0 ? parseInt(req.query.page, 10) : 1;
 
-
       let branchObjectIds;
       let startDate;
       let endDate;
-
-
 
       if (req.salesReportsFilters && Array.isArray(req.salesReportsFilters.branchObjectIds)) {
         branchObjectIds = req.salesReportsFilters.branchObjectIds;
         startDate = req.salesReportsFilters.startDate;
         endDate = req.salesReportsFilters.endDate;
 
-
         // Apply session filtering if user has permission (same as salesSummaryReports)
         if (startDate || endDate) {
-
           const originalDateRange = {
             start_date: startDate,
             end_date: endDate,
@@ -2698,11 +2685,9 @@ class SalesController extends BaseController {
             originalDateRange
           );
 
-
           // Use filtered dates
           startDate = filteredDateRange.start_date;
           endDate = filteredDateRange.end_date;
-
         }
       } else {
         // Parse branch IDs (can be single string or array)
@@ -2765,13 +2750,11 @@ class SalesController extends BaseController {
           originalDateRange
         );
 
-
         // Use filtered dates
         const oldStartDate = startDate;
         const oldEndDate = endDate;
         startDate = filteredDateRange.start_date;
         endDate = filteredDateRange.end_date;
-
       }
 
       // Build filter matching PHP model lines 1062-1068
@@ -2861,7 +2844,6 @@ class SalesController extends BaseController {
       if (req.reportParams && (req.reportParams.startDate || req.reportParams.endDate)) {
         // Apply session filtering if user has permission and dates are provided
         if (req.reportParams.startDate || req.reportParams.endDate) {
-
           const originalDateRange = {
             start_date: req.reportParams.startDate || new Date(0),
             end_date: req.reportParams.endDate || new Date(),
@@ -2871,7 +2853,6 @@ class SalesController extends BaseController {
             req,
             originalDateRange
           );
-
 
           // Use filtered dates
           if (filteredDateRange.start_date) {
@@ -2894,7 +2875,6 @@ class SalesController extends BaseController {
 
         // Apply session filtering if user has permission and dates are provided
         if (startDate || endDate) {
-
           const originalDateRange = {
             start_date: startDate || new Date(0),
             end_date: endDate || new Date(),
@@ -2904,7 +2884,6 @@ class SalesController extends BaseController {
             req,
             originalDateRange
           );
-
 
           // Use filtered dates
           if (filteredDateRange.start_date) {
@@ -3137,7 +3116,6 @@ class SalesController extends BaseController {
 
         // Apply session filtering if user has permission and dates are provided
         if (startDate || endDate) {
-
           const originalDateRange = {
             start_date: startDate || new Date(0),
             end_date: endDate || new Date(),
@@ -3147,7 +3125,6 @@ class SalesController extends BaseController {
             req,
             originalDateRange
           );
-
 
           // Use filtered dates
           const filteredStartDate = filteredDateRange.start_date;
@@ -3181,7 +3158,6 @@ class SalesController extends BaseController {
 
         // Apply session filtering if user has permission and dates are provided
         if (startDate || endDate) {
-
           const originalDateRange = {
             start_date: startDate || new Date(0),
             end_date: endDate || new Date(),
@@ -3191,7 +3167,6 @@ class SalesController extends BaseController {
             req,
             originalDateRange
           );
-
 
           // Use filtered dates
           const filteredStartDate = filteredDateRange.start_date;
@@ -3297,7 +3272,6 @@ class SalesController extends BaseController {
 
         // Apply session filtering if user has permission and dates are provided
         if (startDate || endDate) {
-
           const originalDateRange = {
             start_date: startDate || new Date(0),
             end_date: endDate || new Date(),
@@ -3307,7 +3281,6 @@ class SalesController extends BaseController {
             req,
             originalDateRange
           );
-
 
           // Use filtered dates
           const filteredStartDate = filteredDateRange.start_date;
@@ -3341,7 +3314,6 @@ class SalesController extends BaseController {
 
         // Apply session filtering if user has permission and dates are provided
         if (startDate || endDate) {
-
           const originalDateRange = {
             start_date: startDate || new Date(0),
             end_date: endDate || new Date(),
@@ -3351,7 +3323,6 @@ class SalesController extends BaseController {
             req,
             originalDateRange
           );
-
 
           // Use filtered dates
           const filteredStartDate = filteredDateRange.start_date;
@@ -3465,7 +3436,6 @@ class SalesController extends BaseController {
 
         // Apply session filtering if user has permission and dates are provided
         if (startDate || endDate) {
-
           const originalDateRange = {
             start_date: startDate || new Date(0),
             end_date: endDate || new Date(),
@@ -3475,7 +3445,6 @@ class SalesController extends BaseController {
             req,
             originalDateRange
           );
-
 
           // Use filtered dates
           const filteredStartDate = filteredDateRange.start_date;
@@ -3521,7 +3490,6 @@ class SalesController extends BaseController {
 
         // Apply session filtering if user has permission and dates are provided
         if (startDate || endDate) {
-
           const originalDateRange = {
             start_date: startDate || new Date(0),
             end_date: endDate || new Date(),
@@ -3531,7 +3499,6 @@ class SalesController extends BaseController {
             req,
             originalDateRange
           );
-
 
           // Use filtered dates
           const filteredStartDate = filteredDateRange.start_date;
@@ -3639,7 +3606,6 @@ class SalesController extends BaseController {
 
         // Apply session filtering if user has permission and dates are provided
         if (startDate || endDate) {
-
           const originalDateRange = {
             start_date: startDate || new Date(0),
             end_date: endDate || new Date(),
@@ -3649,7 +3615,6 @@ class SalesController extends BaseController {
             req,
             originalDateRange
           );
-
 
           // Use filtered dates
           const filteredStartDate = filteredDateRange.start_date;
@@ -3695,7 +3660,6 @@ class SalesController extends BaseController {
 
         // Apply session filtering if user has permission and dates are provided
         if (startDate || endDate) {
-
           const originalDateRange = {
             start_date: startDate || new Date(0),
             end_date: endDate || new Date(),
@@ -3705,7 +3669,6 @@ class SalesController extends BaseController {
             req,
             originalDateRange
           );
-
 
           // Use filtered dates
           const filteredStartDate = filteredDateRange.start_date;
@@ -3853,7 +3816,6 @@ class SalesController extends BaseController {
 
       // Apply session filtering if user has permission and dates are provided
       if (startDate || endDate) {
-
         const originalDateRange = {
           start_date: startDate || new Date(0),
           end_date: endDate || new Date(),
@@ -3863,7 +3825,6 @@ class SalesController extends BaseController {
           req,
           originalDateRange
         );
-
 
         // Use filtered dates
         startDate = filteredDateRange.start_date;
@@ -4039,11 +4000,9 @@ class SalesController extends BaseController {
    */
   async userReportTable(req, res) {
     try {
-
       if (!this.checkPermission('report', 'read', req.user)) {
         return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
-
 
       let options;
       let data;
@@ -4054,7 +4013,6 @@ class SalesController extends BaseController {
 
         // Apply session filtering if user has permission and dates are provided
         if (data.starting_date || data.ending_date) {
-
           const startDate = data.starting_date ? new Date(data.starting_date) : null;
           const endDate = data.ending_date ? new Date(data.ending_date) : null;
 
@@ -4068,11 +4026,9 @@ class SalesController extends BaseController {
             originalDateRange
           );
 
-
           // Update data with filtered dates
           data.starting_date = filteredDateRange.start_date;
           data.ending_date = filteredDateRange.end_date;
-
         } else {
         }
       } else {
@@ -4090,7 +4046,6 @@ class SalesController extends BaseController {
 
         // Apply session filtering if user has permission and dates are provided
         if (data.starting_date || data.ending_date) {
-
           const startDate = data.starting_date ? new Date(data.starting_date) : null;
           const endDate = data.ending_date ? new Date(data.ending_date) : null;
 
@@ -4104,11 +4059,9 @@ class SalesController extends BaseController {
             originalDateRange
           );
 
-
           // Update data with filtered dates
           data.starting_date = filteredDateRange.start_date;
           data.ending_date = filteredDateRange.end_date;
-
         } else {
         }
       }
@@ -4192,7 +4145,6 @@ class SalesController extends BaseController {
 
       // Apply session filtering if user has permission and dates are provided
       if (data.starting_date || data.ending_date) {
-
         const startDate = data.starting_date ? new Date(data.starting_date) : null;
         const endDate = data.ending_date ? new Date(data.ending_date) : null;
 
@@ -4205,7 +4157,6 @@ class SalesController extends BaseController {
           req,
           originalDateRange
         );
-
 
         // Update data with filtered dates
         data.starting_date = filteredDateRange.start_date;
@@ -4267,7 +4218,6 @@ class SalesController extends BaseController {
 
         // Apply session filtering if user has permission and dates are provided
         if (data.starting_date || data.ending_date) {
-
           const startDate = data.starting_date ? new Date(data.starting_date) : null;
           const endDate = data.ending_date ? new Date(data.ending_date) : null;
 
@@ -4280,7 +4230,6 @@ class SalesController extends BaseController {
             req,
             originalDateRange
           );
-
 
           // Update data with filtered dates
           data.starting_date = filteredDateRange.start_date;
@@ -4452,7 +4401,6 @@ class SalesController extends BaseController {
 
         // Apply session filtering if user has permission and dates are provided
         if (data.starting_date || data.ending_date) {
-
           const startDate = data.starting_date ? new Date(data.starting_date) : null;
           const endDate = data.ending_date ? new Date(data.ending_date) : null;
 
@@ -4465,7 +4413,6 @@ class SalesController extends BaseController {
             req,
             originalDateRange
           );
-
 
           // Update data with filtered dates
           data.starting_date = filteredDateRange.start_date;
@@ -4523,7 +4470,6 @@ class SalesController extends BaseController {
 
         // Apply session filtering if user has permission and dates are provided
         if (data.starting_date || data.ending_date) {
-
           const startDate = data.starting_date ? new Date(data.starting_date) : null;
           const endDate = data.ending_date ? new Date(data.ending_date) : null;
 
@@ -4536,7 +4482,6 @@ class SalesController extends BaseController {
             req,
             originalDateRange
           );
-
 
           // Update data with filtered dates
           data.starting_date = filteredDateRange.start_date;
@@ -4584,7 +4529,6 @@ class SalesController extends BaseController {
 
         // Apply session filtering if user has permission and dates are provided
         if (data.starting_date || data.ending_date) {
-
           const startDate = data.starting_date ? new Date(data.starting_date) : null;
           const endDate = data.ending_date ? new Date(data.ending_date) : null;
 
@@ -4597,7 +4541,6 @@ class SalesController extends BaseController {
             req,
             originalDateRange
           );
-
 
           // Update data with filtered dates
           data.starting_date = filteredDateRange.start_date;
@@ -4631,11 +4574,9 @@ class SalesController extends BaseController {
    */
   async paymentSalesTranscationReportTable(req, res) {
     try {
-
       if (!this.checkPermission('report', 'read', req.user)) {
         return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
-
 
       let options;
       let data;
@@ -4649,7 +4590,6 @@ class SalesController extends BaseController {
 
         // Apply session filtering if user has permission and dates are provided
         if (data.starting_date || data.ending_date) {
-
           const startDate = data.starting_date ? new Date(data.starting_date) : null;
           const endDate = data.ending_date ? new Date(data.ending_date) : null;
 
@@ -4663,11 +4603,9 @@ class SalesController extends BaseController {
             originalDateRange
           );
 
-
           // Update data with filtered dates
           data.starting_date = filteredDateRange.start_date;
           data.ending_date = filteredDateRange.end_date;
-
         } else {
         }
       } else {
@@ -4686,7 +4624,6 @@ class SalesController extends BaseController {
 
         // Apply session filtering if user has permission and dates are provided
         if (data.starting_date || data.ending_date) {
-
           const startDate = data.starting_date ? new Date(data.starting_date) : null;
           const endDate = data.ending_date ? new Date(data.ending_date) : null;
 
@@ -4700,11 +4637,9 @@ class SalesController extends BaseController {
             originalDateRange
           );
 
-
           // Update data with filtered dates
           data.starting_date = filteredDateRange.start_date;
           data.ending_date = filteredDateRange.end_date;
-
         } else {
         }
       }
@@ -4732,11 +4667,9 @@ class SalesController extends BaseController {
    */
   async paymentSaleTypeReport(req, res) {
     try {
-
       if (!this.checkPermission('report', 'read', req.user)) {
         return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
-
 
       let data;
 
@@ -4745,7 +4678,6 @@ class SalesController extends BaseController {
 
         // Apply session filtering if user has permission and dates are provided
         if (data.starting_date || data.ending_date) {
-
           const startDate = data.starting_date ? new Date(data.starting_date) : null;
           const endDate = data.ending_date ? new Date(data.ending_date) : null;
 
@@ -4759,11 +4691,9 @@ class SalesController extends BaseController {
             originalDateRange
           );
 
-
           // Update data with filtered dates
           data.starting_date = filteredDateRange.start_date;
           data.ending_date = filteredDateRange.end_date;
-
         } else {
         }
       } else {
@@ -4775,10 +4705,8 @@ class SalesController extends BaseController {
           ending_date: req.query.ending_date || '',
         };
 
-
         // Apply session filtering if user has permission and dates are provided
         if (data.starting_date || data.ending_date) {
-
           const startDate = data.starting_date ? new Date(data.starting_date) : null;
           const endDate = data.ending_date ? new Date(data.ending_date) : null;
 
@@ -4792,11 +4720,9 @@ class SalesController extends BaseController {
             originalDateRange
           );
 
-
           // Update data with filtered dates
           data.starting_date = filteredDateRange.start_date;
           data.ending_date = filteredDateRange.end_date;
-
         } else {
         }
       }
@@ -4858,7 +4784,6 @@ class SalesController extends BaseController {
 
         // Apply session filtering if user has permission and dates are provided
         if (data.starting_date || data.ending_date) {
-
           const startDate = data.starting_date ? new Date(data.starting_date) : null;
           const endDate = data.ending_date ? new Date(data.ending_date) : null;
 
@@ -4871,7 +4796,6 @@ class SalesController extends BaseController {
             req,
             originalDateRange
           );
-
 
           // Update data with filtered dates
           data.starting_date = filteredDateRange.start_date;
@@ -4916,7 +4840,6 @@ class SalesController extends BaseController {
 
       // Apply session filtering if user has permission and dates are provided
       if (data.starting_date || data.ending_date) {
-
         const startDate = data.starting_date ? new Date(data.starting_date) : null;
         const endDate = data.ending_date ? new Date(data.ending_date) : null;
 
@@ -4929,7 +4852,6 @@ class SalesController extends BaseController {
           req,
           originalDateRange
         );
-
 
         // Update data with filtered dates
         data.starting_date = filteredDateRange.start_date;
@@ -7085,18 +7007,15 @@ class SalesController extends BaseController {
 
       // Apply session filtering if user has permission and dates are provided
       if (data.starting_date || data.ending_date) {
-
         // Debug user permissions
 
         const startDate = data.starting_date ? new Date(data.starting_date) : null;
         const endDate = data.ending_date ? new Date(data.ending_date) : null;
 
-
         const originalDateRange = {
           start_date: startDate || new Date(0),
           end_date: endDate || new Date(),
         };
-
 
         try {
           const filteredDateRange = await sessionFilterUtil.applySessionFilter(
@@ -7104,13 +7023,11 @@ class SalesController extends BaseController {
             originalDateRange
           );
 
-
           // Debug date comparison
 
           // Update data with filtered dates
           data.starting_date = filteredDateRange.start_date;
           data.ending_date = filteredDateRange.end_date;
-
         } catch (error) {
           throw error;
         }

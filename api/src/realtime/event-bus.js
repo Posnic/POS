@@ -35,7 +35,9 @@ function ensureHeartbeat() {
       for (const res of subs) {
         try {
           res.write(':hb\n\n');
-        } catch (e) { /* close handler cleans it up */ }
+        } catch (e) {
+          /* close handler cleans it up */
+        }
       }
     }
   }, HEARTBEAT_MS);
@@ -72,7 +74,9 @@ function publish(dbName, event) {
     try {
       res.write(line);
       delivered++;
-    } catch (e) { /* the close handler removes it */ }
+    } catch (e) {
+      /* the close handler removes it */
+    }
   }
   return delivered;
 }

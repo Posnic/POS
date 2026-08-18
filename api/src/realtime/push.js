@@ -37,7 +37,12 @@ async function getVapid(db) {
   let row = await coll.findOne({ _id: 'vapid' });
   if (!row) {
     const keys = wp.generateVAPIDKeys();
-    row = { _id: 'vapid', publicKey: keys.publicKey, privateKey: keys.privateKey, createdAt: new Date() };
+    row = {
+      _id: 'vapid',
+      publicKey: keys.publicKey,
+      privateKey: keys.privateKey,
+      createdAt: new Date(),
+    };
     try {
       await coll.insertOne(row);
     } catch (e) {
@@ -62,7 +67,11 @@ async function subscribe(db, userId, subscription) {
     { user_id: String(userId), endpoint: subscription.endpoint },
     {
       $set: { subscription, updatedAt: new Date() },
-      $setOnInsert: { user_id: String(userId), endpoint: subscription.endpoint, createdAt: new Date() },
+      $setOnInsert: {
+        user_id: String(userId),
+        endpoint: subscription.endpoint,
+        createdAt: new Date(),
+      },
     },
     { upsert: true }
   );
@@ -79,7 +88,10 @@ async function sendToUser(db, userId, payload) {
   const vapid = await getVapid(db);
   if (!vapid) return { sent: 0 };
 
-  const rows = await db.collection(COLLECTION).find({ user_id: String(userId) }).toArray();
+  const rows = await db
+    .collection(COLLECTION)
+    .find({ user_id: String(userId) })
+    .toArray();
   let sent = 0;
   for (const row of rows) {
     try {
@@ -95,7 +107,10 @@ async function sendToUser(db, userId, payload) {
     } catch (err) {
       const code = err && err.statusCode;
       if (code === 404 || code === 410) {
-        await db.collection(COLLECTION).deleteOne({ _id: row._id }).catch(() => {});
+        await db
+          .collection(COLLECTION)
+          .deleteOne({ _id: row._id })
+          .catch(() => {});
       }
       /* Anything else: this delivery is lost, the pipe is not. */
     }

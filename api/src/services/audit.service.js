@@ -50,7 +50,8 @@ class AuditService {
         approved_by_user_id: toId(ctx.approved_by_user_id),
         approved_by_name: ctx.approved_by_name || null,
         entity: ctx.entity || null,
-        entity_id: ctx.entity_id !== null && ctx.entity_id !== undefined ? String(ctx.entity_id) : null,
+        entity_id:
+          ctx.entity_id !== null && ctx.entity_id !== undefined ? String(ctx.entity_id) : null,
         device_id: ctx.device_id || null,
         amount: typeof ctx.amount === 'number' ? ctx.amount : null,
         reason: ctx.reason || null,

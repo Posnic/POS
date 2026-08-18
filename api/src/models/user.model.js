@@ -941,9 +941,7 @@ userSchema.statics.backfillPosAccess = async function (userDoc) {
   if (userDoc.role_id) {
     try {
       const db = currentConnection(mongoose.connection).db;
-      const roleDoc = db
-        ? await db.collection('roles').findOne({ _id: userDoc.role_id })
-        : null;
+      const roleDoc = db ? await db.collection('roles').findOne({ _id: userDoc.role_id }) : null;
       if (roleDoc && roleDoc.pos && typeof roleDoc.pos === 'object') {
         pos = roleDoc.pos;
         mgr = Array.isArray(roleDoc.requires_manager_approval)
@@ -1160,9 +1158,9 @@ userSchema.statics.userInsertUpdate = async function (data, id, context) {
         const roleDb = currentConnection(mongoose.connection).db;
         const roleDoc = roleDb
           ? await roleDb.collection('roles').findOne({
-            _id: new ObjectId(data.role_id),
-            license: context.license,
-          })
+              _id: new ObjectId(data.role_id),
+              license: context.license,
+            })
           : null;
         if (roleDoc && roleDoc.access) {
           access = mergeAccess(roleDoc.access, data.access_overrides || {});
@@ -1286,7 +1284,9 @@ userSchema.statics.userInsertUpdate = async function (data, id, context) {
       role_id: data.role_id ? new ObjectId(data.role_id) : null,
       ...(registers !== null ? { registers } : {}),
       access_overrides:
-        data.access_overrides && typeof data.access_overrides === 'object' ? data.access_overrides : {},
+        data.access_overrides && typeof data.access_overrides === 'object'
+          ? data.access_overrides
+          : {},
       plan: {
         name: context.user.plan?.name || 'premium',
         max_sales: context.user.plan?.max_sales || 'unlimited',

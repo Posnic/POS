@@ -940,7 +940,6 @@ class CustomerController extends BaseController {
         ];
       }
 
-
       // Get transaction collection
       const transactionCollection = await BaseModel.prototype.getCollection.call(
         { collectionName: 'transaction' },
@@ -956,7 +955,6 @@ class CustomerController extends BaseController {
         .skip(skip)
         .limit(limit)
         .toArray();
-
 
       // Check if there are any transactions without license filter
       const totalWithoutLicense = await transactionCollection.countDocuments(filters);
@@ -1287,7 +1285,6 @@ class CustomerController extends BaseController {
    */
   async customerGraphicalReports(req, res) {
     try {
-
       this.setRequestContext(req);
 
       let startingDate = req.query.starting_date;
@@ -1295,10 +1292,8 @@ class CustomerController extends BaseController {
       const branchIds = req.query.branch || req.query['branch[]'] || [];
       const customerId = req.query.field_input || '';
 
-
       // Apply session filtering if user has permission and dates are provided
       if (startingDate || endingDate) {
-
         const startDate = startingDate ? new Date(startingDate) : null;
         const endDate = endingDate ? new Date(endingDate) : null;
 
@@ -1312,11 +1307,9 @@ class CustomerController extends BaseController {
           originalDateRange
         );
 
-
         // Update dates with filtered values
         startingDate = filteredDateRange.start_date;
         endingDate = filteredDateRange.end_date;
-
       } else {
       }
 
@@ -1329,7 +1322,6 @@ class CustomerController extends BaseController {
           data: null,
         });
       }
-
 
       const result = await this.service.getCustomerGraphicalReports({
         branchIds: Array.isArray(branchIds) ? branchIds : [branchIds],

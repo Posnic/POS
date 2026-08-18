@@ -392,7 +392,6 @@ describe('User — branch_access field', () => {
   });
 });
 
-
 // ══════════════════════════════════════════════════════════════════════════════
 // 12. access field (ACL matrix)
 // ══════════════════════════════════════════════════════════════════════════════
@@ -782,8 +781,6 @@ describe('User — instance changedPasswordAfter', () => {
     expect(user.changedPasswordAfter(recentJWTTimestamp)).toBe(false);
   });
 });
-
-
 
 // ══════════════════════════════════════════════════════════════════════════════
 // 26. Instance methods — lockAccount / unlockAccount

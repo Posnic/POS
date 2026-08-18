@@ -54,7 +54,12 @@ test('a failing migration throws before later ones run and is NOT recorded', asy
   const { db, ledgerWrites } = fakeDb([]);
   await expect(
     runMigrations(db, [
-      { id: '001-boom', up: async () => { throw new Error('boom'); } },
+      {
+        id: '001-boom',
+        up: async () => {
+          throw new Error('boom');
+        },
+      },
       { id: '002-b', up: async () => ran.push('b') },
     ])
   ).rejects.toThrow('boom');

@@ -35,7 +35,9 @@ const ENTITIES = new Set([
 /* The API router is mounted at both /api and /; the entity is the first
    meaningful path segment either way. */
 function entityFromPath(path) {
-  const parts = String(path || '').split('/').filter(Boolean);
+  const parts = String(path || '')
+    .split('/')
+    .filter(Boolean);
   if (parts[0] === 'api') parts.shift();
   return parts[0] || null;
 }
@@ -54,7 +56,9 @@ function changeEvents(req, res, next) {
             const webhooks = require('./webhooks');
             webhooks.publish(req.db, req.db.databaseName, event).catch(() => {});
             webhooks.drainDue(req.db, req.db.databaseName).catch(() => {});
-          } catch (e) { /* realtime is an optimisation, never a failure */ }
+          } catch (e) {
+            /* realtime is an optimisation, never a failure */
+          }
         }
       });
     }

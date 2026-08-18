@@ -22,7 +22,10 @@ jest.mock('mongodb', () => {
   };
   const mockDb = { collection: jest.fn().mockReturnValue(mockCollection) };
   const mockClient = { db: jest.fn().mockReturnValue(mockDb), startSession: jest.fn() };
-  return { MongoClient: { connect: jest.fn().mockResolvedValue(mockClient) }, ObjectId: MockObjectId };
+  return {
+    MongoClient: { connect: jest.fn().mockResolvedValue(mockClient) },
+    ObjectId: MockObjectId,
+  };
 });
 
 const BaseModel = require('../../../src/models/base.model');
@@ -42,9 +45,21 @@ describe('ShiftModel', () => {
   test('declares all expected fields (15)', () => {
     const f = new ShiftModel().fields;
     const expected = [
-      '_id', 'license', 'branch_id', 'user_id', 'user_name', 'status',
-      'clock_in', 'clock_out', 'break_minutes', 'worked_minutes',
-      'register_id', 'device_id', 'note', 'created_date', 'updated_date',
+      '_id',
+      'license',
+      'branch_id',
+      'user_id',
+      'user_name',
+      'status',
+      'clock_in',
+      'clock_out',
+      'break_minutes',
+      'worked_minutes',
+      'register_id',
+      'device_id',
+      'note',
+      'created_date',
+      'updated_date',
     ];
     expected.forEach((n) => expect(f[n]).toBeDefined());
     expect(Object.keys(f)).toHaveLength(15);

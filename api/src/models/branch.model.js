@@ -514,12 +514,17 @@ class BranchModel {
                 register_status: 'Opened',
                 license: new Types.ObjectId(user.license),
               },
-              { projection: { register_id: 1, current_user: 1, current_user_id: 1, register_opendate: 1 } }
+              {
+                projection: {
+                  register_id: 1,
+                  current_user: 1,
+                  current_user_id: 1,
+                  register_opendate: 1,
+                },
+              }
             )
             .toArray();
-          const byRegister = new Map(
-            openSessions.map((s) => [String(s.register_id || ''), s])
-          );
+          const byRegister = new Map(openSessions.map((s) => [String(s.register_id || ''), s]));
           for (const row of registerData) {
             const open = byRegister.get(String(row.register_id));
             if (open) {
@@ -551,10 +556,7 @@ class BranchModel {
           if (!unrestricted.includes(type)) {
             const userDoc = await this.model.db
               .collection('users')
-              .findOne(
-                { _id: new Types.ObjectId(user._id) },
-                { projection: { registers: 1 } }
-              );
+              .findOne({ _id: new Types.ObjectId(user._id) }, { projection: { registers: 1 } });
             const links = Array.isArray(userDoc?.registers) ? userDoc.registers : [];
             if (links.length) {
               const allowed = new Set(

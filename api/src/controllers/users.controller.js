@@ -550,7 +550,6 @@ class UsersController extends BaseController {
             );
             // Skip session record creation for users without permission
           } else {
-
             // Check if user already has an active session (logout_time: null, is_active: true)
             const existingSession = await userSessionsCollection.findOne({
               user_id: user._id,
@@ -649,7 +648,6 @@ class UsersController extends BaseController {
           const dbName = process.env.MONGODB_URI?.split('/')?.pop()?.split('?')[0] || 'PosnicPro';
           const db = mongoClient.db(dbName);
           const userSessionsCollection = db.collection('user_sessions');
-
 
           // Find and update active session for this user
           const logoutTime = new Date();
@@ -1316,11 +1314,9 @@ class UsersController extends BaseController {
    */
   async userstatusReportTable(req, res) {
     try {
-
       if (!this.checkPermission('report', 'read', req.user)) {
         return this.error(res, 'Unauthorized', 403);
       }
-
 
       const limit = parseInt(req.query.limit) > 0 ? parseInt(req.query.limit) : 5;
       const page = parseInt(req.query.page) > 0 ? parseInt(req.query.page) : 1;
@@ -1340,10 +1336,8 @@ class UsersController extends BaseController {
         license: req.user?.license || '',
       };
 
-
       // Apply session filtering if user has permission and dates are provided
       if (data.starting_date || data.ending_date) {
-
         const startDate = data.starting_date ? new Date(data.starting_date) : null;
         const endDate = data.ending_date ? new Date(data.ending_date) : null;
 
@@ -1357,11 +1351,9 @@ class UsersController extends BaseController {
           originalDateRange
         );
 
-
         // Update data with filtered dates
         data.starting_date = filteredDateRange.start_date;
         data.ending_date = filteredDateRange.end_date;
-
       } else {
       }
 

@@ -22,18 +22,13 @@
 
 const fs = require('fs');
 const path = require('path');
-const {
-  API_SCHEMA_VERSION,
-  SYNC_PROTOCOL_VERSION,
-} = require('../constants/runtime.constants');
+const { API_SCHEMA_VERSION, SYNC_PROTOCOL_VERSION } = require('../constants/runtime.constants');
 
 function resolveAppVersion(env, apiRoot) {
   const fromEnv = String(env.POSNIC_APP_VERSION || '').trim();
   if (/^\d+\.\d+\.\d+/.test(fromEnv)) return fromEnv;
   try {
-    const rootPkg = JSON.parse(
-      fs.readFileSync(path.join(apiRoot, '..', 'package.json'), 'utf8')
-    );
+    const rootPkg = JSON.parse(fs.readFileSync(path.join(apiRoot, '..', 'package.json'), 'utf8'));
     // The api's own package.json must never masquerade as the app version.
     if (rootPkg && rootPkg.name !== 'posnic-api' && /^\d+\.\d+\.\d+/.test(rootPkg.version || '')) {
       return rootPkg.version;

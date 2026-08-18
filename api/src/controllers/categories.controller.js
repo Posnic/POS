@@ -639,7 +639,6 @@ class CategoriesController extends BaseController {
   getCategoriesWithValidItems = asyncHandler(async (req, res) => {
     const { branch_id } = await this.resolveBranchContext(req);
 
-
     const license =
       req.user?.license?.toString?.() ||
       req.user?.license_id?.toString?.() ||
@@ -652,7 +651,6 @@ class CategoriesController extends BaseController {
       license
     );
 
-
     if (result.status) {
       // Format for legacy compatibility
       const formatted = result.data.map((cat) => ({
@@ -662,7 +660,6 @@ class CategoriesController extends BaseController {
         name: cat.name,
         description: cat.description || '',
       }));
-
 
       return this.success(res, formatted, 'Categories with valid items retrieved successfully');
     } else {

@@ -3264,12 +3264,10 @@ class ItemRepository extends BaseModel {
 
       // Apply session filtering if dates are provided
       if (data.starting_date || data.ending_date) {
-
         // Note: This is a stock report showing current inventory,
         // but applying session filter as requested
         const startDate = data.starting_date ? new Date(data.starting_date) : null;
         const endDate = data.ending_date ? new Date(data.ending_date) : null;
-
 
         // For stock reports, we could filter by items that were last updated/modified within the date range
         // but stock reports typically show current inventory regardless of date
@@ -3304,7 +3302,6 @@ class ItemRepository extends BaseModel {
 
       // Apply session filter dates to the query
       if (data.starting_date || data.ending_date) {
-
         if (data.starting_date) {
           filter.createdAt = { $gte: new Date(data.starting_date) };
         }
@@ -3424,7 +3421,6 @@ class ItemRepository extends BaseModel {
   }
 
   async categoryItemsReportTable({ countPipeline = [], paginatedPipeline = [] } = {}) {
-
     // Check if pipeline contains date filtering (session filter applied)
     const hasDateFilter = paginatedPipeline.some(
       (stage) =>
@@ -3432,7 +3428,6 @@ class ItemRepository extends BaseModel {
         stage.$match.updated_date &&
         (stage.$match.updated_date.$gte || stage.$match.updated_date.$lte)
     );
-
 
     if (hasDateFilter) {
       const dateMatchStage = paginatedPipeline.find(
@@ -3447,12 +3442,10 @@ class ItemRepository extends BaseModel {
 
     const results = await collection.aggregate(paginatedPipeline).toArray();
 
-
     return { total, results };
   }
 
   async supplierItemsReportTable({ pipeline = [], countPipeline = [] } = {}) {
-
     // Check if pipeline contains date filtering (session filter applied)
     const hasDateFilter = pipeline.some(
       (stage) =>
@@ -3460,7 +3453,6 @@ class ItemRepository extends BaseModel {
         stage.$match.updated_date &&
         (stage.$match.updated_date.$gte || stage.$match.updated_date.$lte)
     );
-
 
     if (hasDateFilter) {
       const dateMatchStage = pipeline.find((stage) => stage.$match && stage.$match.updated_date);
@@ -3471,7 +3463,6 @@ class ItemRepository extends BaseModel {
     const results = await collection.aggregate(pipeline).toArray();
     const countResults = await collection.aggregate(countPipeline).toArray();
     const total = countResults.length;
-
 
     return { total, results };
   }

@@ -222,7 +222,6 @@ class SuppliersController extends BaseController {
       (req.user?.branch_access && req.user.branch_access[0]?.branch_name) ||
       '';
 
-
     // If branch_name is empty but we have branch_id, fetch from branches collection
     if (branchId && !branchName) {
       try {

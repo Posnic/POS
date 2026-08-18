@@ -8,7 +8,11 @@
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
-const { buildRuntimeInfo, resolveMode, resolveAppVersion } = require('../../../src/utils/runtime-info');
+const {
+  buildRuntimeInfo,
+  resolveMode,
+  resolveAppVersion,
+} = require('../../../src/utils/runtime-info');
 const {
   API_SCHEMA_VERSION,
   SYNC_PROTOCOL_VERSION,
@@ -39,14 +43,20 @@ describe('resolveAppVersion', () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'rtinfo-'));
     const apiRoot = path.join(root, 'api');
     fs.mkdirSync(apiRoot);
-    fs.writeFileSync(path.join(root, 'package.json'), JSON.stringify({ name: 'posnic', version: '9.9.9' }));
+    fs.writeFileSync(
+      path.join(root, 'package.json'),
+      JSON.stringify({ name: 'posnic', version: '9.9.9' })
+    );
     expect(resolveAppVersion({}, apiRoot)).toBe('9.9.9');
   });
   test("never reports the api package's own version as the app version", () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'rtinfo-'));
     const apiRoot = path.join(root, 'api');
     fs.mkdirSync(apiRoot);
-    fs.writeFileSync(path.join(root, 'package.json'), JSON.stringify({ name: 'posnic-api', version: '2.0.0' }));
+    fs.writeFileSync(
+      path.join(root, 'package.json'),
+      JSON.stringify({ name: 'posnic-api', version: '2.0.0' })
+    );
     expect(resolveAppVersion({}, apiRoot)).toBeNull();
   });
   test('null when nothing trustworthy exists (honest unknown beats a lie)', () => {

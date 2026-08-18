@@ -23,8 +23,17 @@ const PREFIX = 'posnic_';
    pos (till actions), plan, or setting - integrations read and write
    business records; they do not approve refunds or rewire the shop. */
 const MODULES = Object.freeze([
-  'sales', 'item', 'customer', 'supplier', 'category',
-  'receiving', 'expense', 'branch', 'user', 'report', 'dashboard',
+  'sales',
+  'item',
+  'customer',
+  'supplier',
+  'category',
+  'receiving',
+  'expense',
+  'branch',
+  'user',
+  'report',
+  'dashboard',
 ]);
 const PERMS = Object.freeze(['read', 'write', 'delete']);
 
@@ -100,7 +109,10 @@ async function revokeToken(db, id) {
   if (!ObjectId.isValid(String(id))) return { ok: false };
   const r = await db
     .collection(COLLECTION)
-    .updateOne({ _id: new ObjectId(String(id)) }, { $set: { active: false, revokedAt: new Date() } });
+    .updateOne(
+      { _id: new ObjectId(String(id)) },
+      { $set: { active: false, revokedAt: new Date() } }
+    );
   return { ok: r.matchedCount === 1 };
 }
 
@@ -114,7 +126,9 @@ const LAST_USED_THROTTLE_MS = 5 * 60 * 1000;
  */
 async function resolveScopedToken(db, token) {
   if (!db || typeof token !== 'string' || !token.startsWith(PREFIX)) return null;
-  const row = await db.collection(COLLECTION).findOne({ token_hash: hashToken(token), active: true });
+  const row = await db
+    .collection(COLLECTION)
+    .findOne({ token_hash: hashToken(token), active: true });
   if (!row) return null;
 
   const now = Date.now();

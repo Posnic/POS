@@ -27,7 +27,10 @@ jest.mock('mongodb', () => {
   };
   const mockDb = { collection: jest.fn().mockReturnValue(mockCollection) };
   const mockClient = { db: jest.fn().mockReturnValue(mockDb), startSession: jest.fn() };
-  return { MongoClient: { connect: jest.fn().mockResolvedValue(mockClient) }, ObjectId: MockObjectId };
+  return {
+    MongoClient: { connect: jest.fn().mockResolvedValue(mockClient) },
+    ObjectId: MockObjectId,
+  };
 });
 
 // ─── Requires ────────────────────────────────────────────────────────────────
@@ -50,9 +53,21 @@ describe('AuditModel', () => {
   test('declares all expected fields (15)', () => {
     const f = new AuditModel().fields;
     const expected = [
-      '_id', 'license', 'branch_id', 'at', 'event', 'actor_user_id', 'actor_name',
-      'approved_by_user_id', 'approved_by_name', 'entity', 'entity_id', 'device_id',
-      'amount', 'reason', 'details',
+      '_id',
+      'license',
+      'branch_id',
+      'at',
+      'event',
+      'actor_user_id',
+      'actor_name',
+      'approved_by_user_id',
+      'approved_by_name',
+      'entity',
+      'entity_id',
+      'device_id',
+      'amount',
+      'reason',
+      'details',
     ];
     expected.forEach((n) => expect(f[n]).toBeDefined());
     expect(Object.keys(f)).toHaveLength(15);

@@ -62,7 +62,9 @@ describe('clockIn', () => {
   test('refuses a second open shift (409)', async () => {
     const col = makeCollection();
     col.findOne.mockResolvedValue({
-      _id: 'open1', status: SHIFT_STATUS.OPEN, clock_in: new Date(Date.now() - 60 * 60 * 1000),
+      _id: 'open1',
+      status: SHIFT_STATUS.OPEN,
+      clock_in: new Date(Date.now() - 60 * 60 * 1000),
     });
     const repo = makeRepo(col);
     const r = await repo.clockIn({});
@@ -75,7 +77,11 @@ describe('clockIn', () => {
     const col = makeCollection();
     const clockIn = new Date(Date.now() - 20 * 60 * 60 * 1000); // 20h ago
     col.findOne.mockResolvedValue({
-      _id: 'stale1', status: SHIFT_STATUS.OPEN, clock_in: clockIn, break_minutes: 30, note: null,
+      _id: 'stale1',
+      status: SHIFT_STATUS.OPEN,
+      clock_in: clockIn,
+      break_minutes: 30,
+      note: null,
     });
     const repo = makeRepo(col);
     const r = await repo.clockIn({});
@@ -96,7 +102,11 @@ describe('clockOut', () => {
     const col = makeCollection();
     const clockIn = new Date(Date.now() - 60 * 60 * 1000); // 60 minutes ago
     col.findOne.mockResolvedValue({
-      _id: 'open1', status: SHIFT_STATUS.OPEN, clock_in: clockIn, break_minutes: 10, note: 'x',
+      _id: 'open1',
+      status: SHIFT_STATUS.OPEN,
+      clock_in: clockIn,
+      break_minutes: 10,
+      note: 'x',
     });
     const repo = makeRepo(col);
     const r = await repo.clockOut({});
@@ -125,7 +135,10 @@ describe('toggleForUser (clock-by-card)', () => {
   test('clocks OUT when the user has an open shift', async () => {
     const col = makeCollection();
     col.findOne.mockResolvedValue({
-      _id: 'open1', status: SHIFT_STATUS.OPEN, clock_in: new Date(Date.now() - 30 * 60 * 1000), break_minutes: 0,
+      _id: 'open1',
+      status: SHIFT_STATUS.OPEN,
+      clock_in: new Date(Date.now() - 30 * 60 * 1000),
+      break_minutes: 0,
     });
     const repo = makeRepo(col);
     const r = await repo.toggleForUser({ userId: 'CARDUSER0001', userName: 'Meera' });
@@ -161,11 +174,17 @@ describe('editShift (timecard correction)', () => {
   test('recomputes worked_minutes from corrected times minus break', async () => {
     const col = makeCollection();
     col.findOne.mockResolvedValue({
-      _id: 's1', clock_in: new Date('2026-01-01T09:00:00Z'), clock_out: new Date('2026-01-01T17:00:00Z'), break_minutes: 0, status: 'closed',
+      _id: 's1',
+      clock_in: new Date('2026-01-01T09:00:00Z'),
+      clock_out: new Date('2026-01-01T17:00:00Z'),
+      break_minutes: 0,
+      status: 'closed',
     });
     const repo = makeRepo(col);
     const r = await repo.editShift('SHIFT0000001', {
-      clock_in: '2026-01-01T09:00:00Z', clock_out: '2026-01-01T17:00:00Z', break_minutes: 30,
+      clock_in: '2026-01-01T09:00:00Z',
+      clock_out: '2026-01-01T17:00:00Z',
+      break_minutes: 30,
     });
     expect(r.status).toBe(true);
     const set = col.updateOne.mock.calls[0][1].$set;
@@ -175,7 +194,12 @@ describe('editShift (timecard correction)', () => {
 
   test('rejects clock_out before clock_in', async () => {
     const col = makeCollection();
-    col.findOne.mockResolvedValue({ _id: 's1', clock_in: new Date('2026-01-01T09:00:00Z'), clock_out: null, break_minutes: 0 });
+    col.findOne.mockResolvedValue({
+      _id: 's1',
+      clock_in: new Date('2026-01-01T09:00:00Z'),
+      clock_out: null,
+      break_minutes: 0,
+    });
     const repo = makeRepo(col);
     const r = await repo.editShift('SHIFT0000001', { clock_out: '2026-01-01T08:00:00Z' });
     expect(r.statusCode).toBe(400);
@@ -196,9 +220,30 @@ describe('getShiftReport', () => {
     col.find.mockReturnValue({
       sort: jest.fn().mockReturnThis(),
       toArray: jest.fn().mockResolvedValue([
-        { user_id: 'u1', user_name: 'A', status: 'closed', worked_minutes: 120, clock_in: new Date('2026-01-01T09:00:00Z'), clock_out: new Date('2026-01-01T11:00:00Z') },
-        { user_id: 'u1', user_name: 'A', status: 'closed', worked_minutes: 60, clock_in: new Date('2026-01-02T09:00:00Z'), clock_out: new Date('2026-01-02T10:00:00Z') },
-        { user_id: 'u2', user_name: 'B', status: 'open', worked_minutes: 0, clock_in: new Date('2026-01-02T09:00:00Z'), clock_out: null },
+        {
+          user_id: 'u1',
+          user_name: 'A',
+          status: 'closed',
+          worked_minutes: 120,
+          clock_in: new Date('2026-01-01T09:00:00Z'),
+          clock_out: new Date('2026-01-01T11:00:00Z'),
+        },
+        {
+          user_id: 'u1',
+          user_name: 'A',
+          status: 'closed',
+          worked_minutes: 60,
+          clock_in: new Date('2026-01-02T09:00:00Z'),
+          clock_out: new Date('2026-01-02T10:00:00Z'),
+        },
+        {
+          user_id: 'u2',
+          user_name: 'B',
+          status: 'open',
+          worked_minutes: 0,
+          clock_in: new Date('2026-01-02T09:00:00Z'),
+          clock_out: null,
+        },
       ]),
     });
     const repo = makeRepo(col);
@@ -262,8 +307,10 @@ describe('tips declared at clock-out', () => {
   test('clockOut stores a valid tips amount rounded to 2dp', async () => {
     const col = makeCollection();
     col.findOne.mockResolvedValue({
-      _id: 'open1', status: SHIFT_STATUS.OPEN,
-      clock_in: new Date(Date.now() - 60 * 60 * 1000), break_minutes: 0,
+      _id: 'open1',
+      status: SHIFT_STATUS.OPEN,
+      clock_in: new Date(Date.now() - 60 * 60 * 1000),
+      break_minutes: 0,
     });
     const repo = makeRepo(col);
     const r = await repo.clockOut({ tips: '12.505' });
@@ -274,8 +321,10 @@ describe('tips declared at clock-out', () => {
   test('clockOut ignores an invalid or negative tips value', async () => {
     const col = makeCollection();
     col.findOne.mockResolvedValue({
-      _id: 'open1', status: SHIFT_STATUS.OPEN,
-      clock_in: new Date(Date.now() - 60 * 60 * 1000), break_minutes: 0,
+      _id: 'open1',
+      status: SHIFT_STATUS.OPEN,
+      clock_in: new Date(Date.now() - 60 * 60 * 1000),
+      break_minutes: 0,
     });
     const repo = makeRepo(col);
     await repo.clockOut({ tips: -5 });
@@ -297,8 +346,11 @@ describe('roster / schedules', () => {
     const col = makeCollection();
     const repo = makeRepo(col);
     const r = await repo.addSchedule({
-      user_id: 'USER00000001', user_name: 'Joe',
-      date: '2026-08-20', start: '09:00', end: '17:30',
+      user_id: 'USER00000001',
+      user_name: 'Joe',
+      date: '2026-08-20',
+      start: '09:00',
+      end: '17:30',
     });
     expect(r.status).toBe(true);
     const doc = col.insertOne.mock.calls[0][0];
@@ -308,15 +360,36 @@ describe('roster / schedules', () => {
 
   test('addSchedule refuses end before start and bad formats', async () => {
     const repo = makeRepo(makeCollection());
-    expect((await repo.addSchedule({
-      user_id: 'USER00000001', date: '2026-08-20', start: '17:00', end: '09:00',
-    })).statusCode).toBe(400);
-    expect((await repo.addSchedule({
-      user_id: 'USER00000001', date: '20-08-2026', start: '09:00', end: '17:00',
-    })).statusCode).toBe(400);
-    expect((await repo.addSchedule({
-      user_id: 'USER00000001', date: '2026-08-20', start: '9am', end: '17:00',
-    })).statusCode).toBe(400);
+    expect(
+      (
+        await repo.addSchedule({
+          user_id: 'USER00000001',
+          date: '2026-08-20',
+          start: '17:00',
+          end: '09:00',
+        })
+      ).statusCode
+    ).toBe(400);
+    expect(
+      (
+        await repo.addSchedule({
+          user_id: 'USER00000001',
+          date: '20-08-2026',
+          start: '09:00',
+          end: '17:00',
+        })
+      ).statusCode
+    ).toBe(400);
+    expect(
+      (
+        await repo.addSchedule({
+          user_id: 'USER00000001',
+          date: '2026-08-20',
+          start: '9am',
+          end: '17:00',
+        })
+      ).statusCode
+    ).toBe(400);
   });
 
   test('listSchedules filters by the date-string range', async () => {
@@ -345,12 +418,21 @@ describe('roster / schedules', () => {
         'date' in query
           ? [{ user_id: 'USER00000001', user_name: 'Joe', minutes: 480 }]
           : 'tip_amount' in query
-            ? [{ user_id: 'USER00000001', tip_amount: 15 }, { user_id: 'USER00000001', tip_amount: 5 }]
-            : [{
-                user_id: 'USER00000001', user_name: 'Joe', status: SHIFT_STATUS.CLOSED,
-                clock_in: new Date('2026-08-17T09:00:00Z'), clock_out: new Date('2026-08-17T17:00:00Z'),
-                worked_minutes: 450, tips_declared: 25,
-              }]
+            ? [
+                { user_id: 'USER00000001', tip_amount: 15 },
+                { user_id: 'USER00000001', tip_amount: 5 },
+              ]
+            : [
+                {
+                  user_id: 'USER00000001',
+                  user_name: 'Joe',
+                  status: SHIFT_STATUS.CLOSED,
+                  clock_in: new Date('2026-08-17T09:00:00Z'),
+                  clock_out: new Date('2026-08-17T17:00:00Z'),
+                  worked_minutes: 450,
+                  tips_declared: 25,
+                },
+              ]
       ),
     }));
     const repo = makeRepo(col);

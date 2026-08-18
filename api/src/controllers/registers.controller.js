@@ -144,12 +144,10 @@ class RegistersController extends BaseController {
   // PHP: registerReportTable()
   async registerReportTable(req, res) {
     try {
-
       await this.setRequestContext(req);
       if (!this.checkPermission('report', 'read', req.user)) {
         return this.error(res, 'Unauthorized', 403);
       }
-
 
       const limit = parseInt(req.query.limit) > 0 ? parseInt(req.query.limit) : 5;
       const page = parseInt(req.query.page) > 0 ? parseInt(req.query.page) : 1;
@@ -158,13 +156,11 @@ class RegistersController extends BaseController {
       let starting_date = req.query.starting_date;
       let ending_date = req.query.ending_date;
 
-
       // Apply session filtering if user has permission and dates are provided
       if (
         (starting_date && starting_date.trim() !== '') ||
         (ending_date && ending_date.trim() !== '')
       ) {
-
         const startDate = starting_date ? new Date(starting_date) : null;
         const endDate = ending_date ? new Date(ending_date) : null;
 
@@ -178,11 +174,9 @@ class RegistersController extends BaseController {
           originalDateRange
         );
 
-
         // Update dates with filtered values
         starting_date = filteredDateRange.start_date;
         ending_date = filteredDateRange.end_date;
-
       } else {
       }
 
@@ -191,7 +185,6 @@ class RegistersController extends BaseController {
         starting_date,
         ending_date,
       };
-
 
       const result = await this.service.registerReportPage(data, options);
 

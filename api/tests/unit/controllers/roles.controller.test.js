@@ -55,7 +55,10 @@ describe('RolesController', () => {
 
   test('create denies a user without user:write', async () => {
     const res = makeRes();
-    const req = { user: { usertype: 'cashier', access: { user: { write: false } } }, body: { name: 'X' } };
+    const req = {
+      user: { usertype: 'cashier', access: { user: { write: false } } },
+      body: { name: 'X' },
+    };
     await rolesController.create(req, res);
     expect(res.error).toHaveBeenCalledWith('You do not have permission to manage roles', null, 403);
     expect(mockSvc.createRole).not.toHaveBeenCalled();
@@ -64,7 +67,10 @@ describe('RolesController', () => {
   test('delete of a system role surfaces the repository message', async () => {
     const res = makeRes();
     const req = { user: { usertype: 'admin' }, params: { id: 'id1' } };
-    mockSvc.deleteRole.mockResolvedValue({ status: false, message: 'System roles cannot be deleted' });
+    mockSvc.deleteRole.mockResolvedValue({
+      status: false,
+      message: 'System roles cannot be deleted',
+    });
     await rolesController.remove(req, res);
     expect(res.error).toHaveBeenCalledWith('System roles cannot be deleted', null, 400);
   });
