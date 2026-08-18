@@ -11,6 +11,7 @@ PosnicPro.items = {
         // A fresh form belongs to no family.
         $('#item_family_strip').hide().find('.family-chips').html('');
         PosnicPro.items._family = null;
+        PosnicPro.items.renderModifierGroups([]);
         $('#item_discount').hide();
         $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
         $(".vertical-layout").addClass("toggle-menu");
@@ -250,6 +251,44 @@ PosnicPro.items = {
 
     },
     /*
+     * Modifier groups on the item form (V2): Restaurant-mode only. The
+     * checkbox list renders from the shop's groups; selections travel as
+     * modifier_group_ids. The key is only SENT when the section rendered -
+     * the server's presence-gating then means a retail save can never
+     * silently strip a restaurant item's groups.
+     */
+    renderModifierGroups: function (selectedIds) {
+        var wrap = $('#item_modifier_wrap');
+        if (!wrap.length) { return; }
+        if (PosnicPro.local.get('table_options') !== 'enable') { wrap.hide(); return; }
+        var chosen = (selectedIds || []).map(String);
+        PosnicPro.get({ url: 'setting/modifierGroups', data: {} }, function (r) {
+            var rows = (r && r.data) || [];
+            if (!rows.length) { wrap.hide(); return; }
+            var esc = function (s) {
+                return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+                    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+                });
+            };
+            var html = '';
+            rows.forEach(function (g) {
+                var checked = chosen.indexOf(String(g.id)) >= 0 ? ' checked' : '';
+                html += '<div class="custom-control custom-checkbox">'
+                    + '<input type="checkbox" class="custom-control-input item-modgroup" id="modgrp_' + esc(g.id) + '" value="' + esc(g.id) + '"' + checked + '>'
+                    + '<label class="custom-control-label" for="modgrp_' + esc(g.id) + '">' + esc(g.name) + '</label>'
+                    + '</div>';
+            });
+            $('#item_modifier_groups').html(html);
+            wrap.show();
+        }, function () { wrap.hide(); });
+    },
+    /* Array when the section rendered (send the key: empty = clear all);
+       undefined when it did not (omit the key: server leaves it alone). */
+    _modifierGroupIds: function () {
+        if ($('#item_modifier_wrap').css('display') === 'none') { return undefined; }
+        return $('.item-modgroup:checked').map(function () { return $(this).val(); }).get();
+    },
+    /*
      * The fields every row of a save shares - category, supplier, tax,
      * flags, description - read ONCE from the form. The old variant loop
      * re-read all of these per row on its way to firing N independent
@@ -293,7 +332,8 @@ PosnicPro.items = {
             tax: tax_value,
             tax_type: $('input[name="tax_radio_value"]:checked').val(),
             description: content.html(),
-            image: PosnicPro.items.imageParams
+            image: PosnicPro.items.imageParams,
+            modifier_group_ids: PosnicPro.items._modifierGroupIds()
         };
     },
     /*
@@ -458,7 +498,8 @@ PosnicPro.items = {
                     tax: tax_value,
                     tax_type: $('input[name="tax_radio_value"]:checked').val(),
                     description: content.html(),
-                    image: PosnicPro.items.imageParams
+                    image: PosnicPro.items.imageParams,
+                    modifier_group_ids: PosnicPro.items._modifierGroupIds()
                 };
                 var params = {
                     method: method,
@@ -898,6 +939,7 @@ PosnicPro.items = {
                 // strip is what finally makes families editable after
                 // creation - the old flow forgot the relationship entirely.
                 PosnicPro.items.renderFamilyStrip(data);
+                PosnicPro.items.renderModifierGroups(data.modifier_group_ids || []);
                 PosnicPro.record_id = id;
                 $('#itemid').val(PosnicPro.record_id);
                 $('#items_name').val(data.name);
