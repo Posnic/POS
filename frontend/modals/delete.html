@@ -155,74 +155,8 @@
 <!-- The labour / payout report is a page now (modules/labourReport.html,
      #/labourreport) - a report belongs in Reports, not in a popup. -->
 
-<!-- start Roster / scheduling modal -->
-<div class="modal fade" id="roster_modal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="feather icon-calendar mr-2"></i>Roster</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="form-row align-items-end mb-3">
-                    <div class="col">
-                        <label style="font-size:.8rem; font-weight:600;">From</label>
-                        <input type="date" class="form-control" id="roster_from">
-                    </div>
-                    <div class="col">
-                        <label style="font-size:.8rem; font-weight:600;">To</label>
-                        <input type="date" class="form-control" id="roster_to">
-                    </div>
-                    <div class="col-auto">
-                        <button type="button" class="btn btn-primary" onclick="PosnicPro.shiftWidget.runRoster();">Show</button>
-                    </div>
-                </div>
-                <div class="table-responsive" style="max-height:280px; overflow-y:auto;">
-                    <table class="table table-sm">
-                        <thead>
-                            <tr>
-                                <th>Staff</th>
-                                <th>Date</th>
-                                <th>Start</th>
-                                <th>End</th>
-                                <th class="text-right">Hours</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody id="roster_body">
-                            <tr><td colspan="6" class="text-center text-muted">Pick a range and Show.</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-                <hr>
-                <label style="font-weight:600; font-size:.85rem;">Plan a shift</label>
-                <div class="form-row align-items-end">
-                    <div class="col-md-4">
-                        <select class="form-control form-control-sm" id="roster_user"></select>
-                    </div>
-                    <div class="col-md-3">
-                        <input type="date" class="form-control form-control-sm" id="roster_date">
-                    </div>
-                    <div class="col-md-2">
-                        <input type="time" class="form-control form-control-sm" id="roster_start" value="09:00">
-                    </div>
-                    <div class="col-md-2">
-                        <input type="time" class="form-control form-control-sm" id="roster_end" value="18:00">
-                    </div>
-                    <div class="col-md-1">
-                        <button type="button" class="btn btn-sm btn-outline-primary" id="roster_add_btn"
-                                onclick="PosnicPro.shiftWidget.addRosterEntry();">Add</button>
-                    </div>
-                </div>
-                <small class="form-text text-muted">Split shifts are two entries on the same day. The labour
-                    report shows scheduled vs worked hours for the same range.</small>
-            </div>
-        </div>
-    </div>
-</div>
-<!-- end Roster / scheduling modal -->
+<!-- The roster lives in two places now: staff VIEW the week at #/roster
+     (clock button link); management PLANS it under Manage > Workforce. -->
 
 <!-- start remove line item modal -->
 <div class="modal fade" id="delete_transaction_modal" tabindex="-1" role="dialog" aria-hidden="true">

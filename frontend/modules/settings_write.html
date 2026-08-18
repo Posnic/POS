@@ -102,6 +102,13 @@
                                         class="feather icon-trash-2 mr-2"></i>
                                     <lang class="lang_recycle">Recycle Bin</lang>
                                 </a>
+                                <a class="nav-link mb-2" data-module="branch" data-access="write" id="v-pills-workforce-tab"
+                                    data-toggle="pill" href="#v-pills-workforce" role="tab"
+                                    aria-controls="v-pills-workforce" aria-selected="false"
+                                    onclick="PosnicPro.workforce.load();"><i
+                                        class="feather icon-users mr-2"></i>
+                                    <lang class="lang_module_workforce">Workforce</lang>
+                                </a>
                                 <a class="nav-link mb-2" data-module="branch" data-access="write" id="v-pills-integrations-tab"
                                     data-toggle="pill" href="#v-pills-integrations" role="tab"
                                     aria-controls="v-pills-integrations" aria-selected="false"
@@ -150,6 +157,104 @@
                 <!-- Start col -->
                 <div class="col-lg-7 col-xl-9">
                     <div class="tab-content loader-view-mystore" id="v-pills-tabContent">
+                        <div class="tab-pane fade" id="v-pills-workforce" role="tabpanel" aria-labelledby="v-pills-workforce-tab">
+                            <div class="card m-b-30">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0"><lang class="lang_module_workforce">Workforce</lang></h5>
+                                    <small class="text-muted"><lang class="lang_wf_hint">Shifts, attendance and the weekly roster. Staff see the schedule from the clock button; it is planned here.</lang></small>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-lg-3 core-subnav-col">
+                                            <div class="nav flex-column nav-pills" id="workforce_subnav" role="tablist">
+                                                <a class="nav-link active" data-toggle="pill" href="#wf-sub-general" role="tab" onclick="PosnicPro.workforce.loadOnShift();"><i class="feather icon-activity mr-2"></i><lang class="lang_wf_general">General</lang></a>
+                                                <a class="nav-link" data-toggle="pill" href="#wf-sub-roster" role="tab" id="wf_roster_subtab" onclick="PosnicPro.workforce.openRosterTab();"><i class="feather icon-calendar mr-2"></i><lang class="lang_staffroster_title">Roster</lang></a>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-9">
+                                            <div class="tab-content">
+
+                                                <div class="tab-pane fade show active" id="wf-sub-general" role="tabpanel">
+                                                    <div class="d-flex align-items-center justify-content-between mb-2">
+                                                        <h6 class="mb-0"><lang class="lang_wf_onshift_title">On shift right now</lang></h6>
+                                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="PosnicPro.workforce.loadOnShift();">
+                                                            <i class="feather icon-refresh-cw mr-1"></i><lang class="lang_wf_refresh">Refresh</lang>
+                                                        </button>
+                                                    </div>
+                                                    <div class="table-responsive">
+                                                        <table class="table table-sm">
+                                                            <thead><tr><th>Staff</th><th class="text-right">Hours today</th></tr></thead>
+                                                            <tbody id="wf_onshift_body"><tr><td colspan="2" class="text-center text-muted">Loading&hellip;</td></tr></tbody>
+                                                        </table>
+                                                    </div>
+                                                    <hr>
+                                                    <small class="text-muted d-block mb-2"><lang class="lang_wf_links_hint">Wages and staff cards live on each user; clock-in, tips and roster switches are on the Workforce card in Module On/Off.</lang></small>
+                                                    <a href="#/labourreport" class="btn btn-outline-primary btn-sm mr-2"><i class="feather icon-clock mr-1"></i><lang class="lang_labourreport_title">Labour / Payout</lang></a>
+                                                    <a href="#/users" class="btn btn-outline-primary btn-sm mr-2"><i class="feather icon-users mr-1"></i><lang class="lang_users_title">Users</lang></a>
+                                                    <a href="#/settings/modules" class="btn btn-outline-primary btn-sm"><i class="feather icon-toggle-right mr-1"></i><lang class="lang_modules">Module On/Off</lang></a>
+                                                </div>
+
+                                                <div class="tab-pane fade" id="wf-sub-roster" role="tabpanel">
+                                                    <div class="form-row align-items-end mb-3">
+                                                        <div class="col">
+                                                            <label style="font-size:.8rem; font-weight:600;">From</label>
+                                                            <input type="date" class="form-control" id="roster_from">
+                                                        </div>
+                                                        <div class="col">
+                                                            <label style="font-size:.8rem; font-weight:600;">To</label>
+                                                            <input type="date" class="form-control" id="roster_to">
+                                                        </div>
+                                                        <div class="col-auto">
+                                                            <button type="button" class="btn btn-primary" onclick="PosnicPro.shiftWidget.runRoster();">Show</button>
+                                                        </div>
+                                                    </div>
+                                                    <div class="table-responsive" style="max-height:320px; overflow-y:auto;">
+                                                        <table class="table table-sm">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th>Staff</th>
+                                                                    <th>Date</th>
+                                                                    <th>Start</th>
+                                                                    <th>End</th>
+                                                                    <th class="text-right">Hours</th>
+                                                                    <th></th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody id="roster_body">
+                                                                <tr><td colspan="6" class="text-center text-muted">Pick a range and Show.</td></tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                    <hr>
+                                                    <label style="font-weight:600; font-size:.85rem;"><lang class="lang_wf_planshift">Plan a shift</lang></label>
+                                                    <div class="form-row align-items-end">
+                                                        <div class="col-md-4">
+                                                            <select class="form-control form-control-sm" id="roster_user"></select>
+                                                        </div>
+                                                        <div class="col-md-3">
+                                                            <input type="date" class="form-control form-control-sm" id="roster_date">
+                                                        </div>
+                                                        <div class="col-md-2">
+                                                            <input type="time" class="form-control form-control-sm" id="roster_start" value="09:00">
+                                                        </div>
+                                                        <div class="col-md-2">
+                                                            <input type="time" class="form-control form-control-sm" id="roster_end" value="18:00">
+                                                        </div>
+                                                        <div class="col-md-1">
+                                                            <button type="button" class="btn btn-sm btn-outline-primary" id="roster_add_btn"
+                                                                    onclick="PosnicPro.shiftWidget.addRosterEntry();">Add</button>
+                                                        </div>
+                                                    </div>
+                                                    <small class="form-text text-muted">Split shifts are two entries on the same day. Staff see this plan at a glance from the clock button; the labour report compares it with worked hours.</small>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="tab-pane fade" id="v-pills-integrations" role="tabpanel" aria-labelledby="v-pills-integrations-tab">
                             <div class="card m-b-30">
                                 <div class="card-header">

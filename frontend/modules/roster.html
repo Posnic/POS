@@ -1,0 +1,45 @@
+<div class="vertical-layout page_loader" id="roster_new" style="display: none">
+    <!-- Start Containerbar -->
+    <div id="containerbar">
+        <!-- Start Breadcrumbbar -->
+        <div class="breadcrumbbar crumbbar_padding">
+            <div class="row align-items-center row_filter">
+                <div class="col-lg-4 col-xl-4">
+                    <h4 class="page-title break_title"><lang class="lang_staffroster_title">Roster</lang></h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Start Contentbar : the week every staff member checks - who works
+         when. Read-only here; planning lives under Manage > Workforce. -->
+    <div class="contentbar">
+        <div class="row">
+            <div class="col-md-12 col-lg-12 col-xl-12 m-t-10">
+                <div class="card m-b-30">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap" style="gap:8px;">
+                            <div class="d-flex align-items-center" style="gap:8px;">
+                                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="PosnicPro.roster.shiftWeek(-1);" aria-label="Previous week">
+                                    <i class="feather icon-chevron-left"></i>
+                                </button>
+                                <span id="roster_week_label" class="font-weight-bold" style="min-width:180px; text-align:center;">&mdash;</span>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="PosnicPro.roster.shiftWeek(1);" aria-label="Next week">
+                                    <i class="feather icon-chevron-right"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="PosnicPro.roster.thisWeek();">
+                                    <lang class="lang_roster_thisweek">This week</lang>
+                                </button>
+                            </div>
+                            <small class="text-muted"><lang class="lang_roster_readonly_hint">Planned by management under Manage &gt; Workforce.</lang></small>
+                        </div>
+                        <div id="roster_view_body">
+                            <div class="text-center text-muted p-4">Loading&hellip;</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- End Contentbar -->
+</div>
