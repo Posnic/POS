@@ -342,6 +342,36 @@ class ItemsController extends BaseController {
    */
 
   /**
+   * Create a whole variant family atomically (V1). One request replaces
+   * the old one-POST-per-variant flow whose partial failures left half a
+   * family behind. Validation and rollback live in the service.
+   */
+  async createFamily(req, res) {
+    try {
+      if (req.user?.access?.item?.write === false) {
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
+      }
+      await this.ensureContext(req);
+      const result = await this.service.createItemFamily({
+        data: req.body || {},
+        branchId: this.model?.branchId || null,
+        licenseId: this.model?.licenseId || null,
+        user: req.user || {},
+      });
+      if (result && result.status) return this.success(res, result.data, result.message);
+      return this.error(
+        res,
+        result?.message || 'Could not create the family',
+        400,
+        result?.data || null
+      );
+    } catch (error) {
+      console.error('Error in createFamily:', error);
+      return this.error(res, error.message, 500);
+    }
+  }
+
+  /**
    * PHP: add() - Create new item (POST /items)
    */
   async add(req, res) {
