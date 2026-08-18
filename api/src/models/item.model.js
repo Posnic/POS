@@ -97,6 +97,11 @@ class ItemModel {
     isAvailable: { type: 'Boolean', select: true },
     negative_stock: { type: 'Boolean', select: true },
     sort_order: { type: 'Number', select: true },
+    // Variant family link (V1) - the edit page's family strip reads these.
+    variant_group_id: { type: 'ObjectId', select: true },
+    variant_axis: { type: 'String', select: true },
+    variant_value: { type: 'String', select: true },
+    variant_parent_name: { type: 'String', select: true },
     branch_access: { type: 'Array', select: false },
     branch_id: { type: 'ObjectId', select: true },
     branch_name: { type: 'String', select: true },

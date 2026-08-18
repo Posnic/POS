@@ -8,6 +8,9 @@ PosnicPro.items = {
         $("<div class='loadingSpinner'></div>").appendTo(loader);
         loader.find(".loadingSpinner:first").remove();
         PosnicPro.HideSideBarModal();
+        // A fresh form belongs to no family.
+        $('#item_family_strip').hide().find('.family-chips').html('');
+        PosnicPro.items._family = null;
         $('#item_discount').hide();
         $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
         $(".vertical-layout").addClass("toggle-menu");
@@ -757,6 +760,116 @@ PosnicPro.items = {
             $('#item_description_value').html(desciptionInnerText.prop("innerText"));
         }
     },
+    /*
+     * The family strip (V1): the edit page finally knows an item's
+     * siblings. Chips link across the family; "+ Add" creates one new
+     * linked member through the ordinary single-item POST - the server's
+     * presence-gated passthrough stamps the link, no special endpoint.
+     */
+    renderFamilyStrip: function (data) {
+        var strip = $('#item_family_strip');
+        if (!strip.length) { return; }
+        if (!data || !data.variant_group_id) { strip.hide().find('.family-chips').html(''); return; }
+        var esc = function (s) {
+            return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+            });
+        };
+        var currentId = String(data.id || data._id || PosnicPro.record_id || '');
+        PosnicPro.get({ url: 'items/family', data: { group_id: data.variant_group_id } }, function (r) {
+            var rows = (r && r.data) || [];
+            if (rows.length < 1) { strip.hide(); return; }
+            PosnicPro.items._family = {
+                group_id: String(data.variant_group_id),
+                axis: rows[0].variant_axis || 'Variant',
+                parent: rows[0].variant_parent_name || String(rows[0].name || '').split(' / ')[0],
+            };
+            var chips = '<span class="text-muted mr-2">' + esc(PosnicPro.items._family.axis) + ':</span>';
+            rows.forEach(function (m) {
+                var isCurrent = String(m.id) === currentId;
+                chips += '<a href="#/items/' + esc(m.id) + '" class="badge ' +
+                    (isCurrent ? 'badge-primary' : 'badge-light border') + ' mr-1" style="font-size:.8rem; padding:6px 10px;">' +
+                    esc(m.variant_value || m.name) + '</a>';
+            });
+            chips += '<button type="button" class="btn btn-outline-primary btn-sm ml-2" ' +
+                'onclick="PosnicPro.items.openAddValue();"><i class="feather icon-plus mr-1"></i>Add ' +
+                esc(PosnicPro.items._family.axis) + '</button>';
+            strip.find('.family-chips').html(chips);
+            strip.show();
+        }, function () { strip.hide(); });
+    },
+    openAddValue: function () {
+        var fam = PosnicPro.items._family;
+        if (!fam) { return; }
+        $('#family_add_modal').remove();
+        $('body').append(
+            '<div class="modal fade close_on_esc" id="family_add_modal" tabindex="-1" role="dialog" aria-hidden="true">' +
+            '<div class="modal-dialog modal-sm" role="document"><div class="modal-content">' +
+            '<div class="modal-header"><h5 class="modal-title">Add ' + fam.axis + '</h5>' +
+            '<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>' +
+            '<div class="modal-body">' +
+            '<div class="form-group"><label style="font-weight:600; font-size:.85rem;">' + fam.axis + ' value</label>' +
+            '<input type="text" class="form-control" id="family_add_value" maxlength="60" placeholder="e.g. XL"></div>' +
+            '<div class="form-group"><label style="font-weight:600; font-size:.85rem;">Selling price</label>' +
+            '<input type="number" min="0" step="0.01" class="form-control" id="family_add_price" value="' + ($('#items_selling_price').val() || '') + '"></div>' +
+            '<div class="form-group"><label style="font-weight:600; font-size:.85rem;">Barcode <small class="text-muted">(optional)</small></label>' +
+            '<input type="text" class="form-control" id="family_add_barcode"></div>' +
+            '<div class="form-group mb-0"><label style="font-weight:600; font-size:.85rem;">Opening stock</label>' +
+            '<input type="number" min="0" class="form-control" id="family_add_qty" value="0"></div>' +
+            '<small class="form-text text-muted">Category, tax, supplier and the other settings copy from this item.</small>' +
+            '</div>' +
+            '<div class="modal-footer">' +
+            '<button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>' +
+            '<button type="button" class="btn btn-outline-primary" id="family_add_btn" onclick="PosnicPro.items.submitAddValue();">Add</button>' +
+            '</div></div></div></div>'
+        );
+        $('#family_add_modal').modal('show');
+        setTimeout(function () { $('#family_add_value').trigger('focus'); }, 400);
+    },
+    submitAddValue: function () {
+        var fam = PosnicPro.items._family;
+        var value = ($('#family_add_value').val() || '').trim();
+        if (!fam || !value) { PosnicPro.alert('warning', 'Enter the new value.'); return; }
+        $('#family_add_btn').prop('disabled', true);
+        var shared = PosnicPro.items._sharedItemFields();
+        var payload = Object.assign({}, shared, {
+            name: fam.parent + ' / ' + value,
+            variant_group_id: fam.group_id,
+            variant_axis: fam.axis,
+            variant_value: value,
+            variant_parent_name: fam.parent,
+            sku_id: '',
+            barcode_id: ($('#family_add_barcode').val() || '').trim(),
+            mrp_price: $('#items_mrp_price').val(),
+            company_price: $('#items_company_price').val(),
+            selling_price: $('#family_add_price').val(),
+            available_quantity: $('#family_add_qty').val() || '0',
+            position: $('#items_sort').val(),
+            unit: ($("#items_unit").select2('data')[0] || { element: { attributes: {} } }).element
+                ? ($("#items_unit").find(':selected').attr('data-unit-value') || null) : null,
+            unit_id: $("#items_unit").find(':selected').attr('data-unit-id') || null,
+            discount_amount: $('#items_discount_amount').val(),
+            discount_percentage: $('#items_discount_percentage').val()
+        });
+        PosnicPro.post({ url: 'items', data: JSON.stringify(payload) }, function (r) {
+            $('#family_add_btn').prop('disabled', false);
+            if (r.type === 'success') {
+                $('#family_add_modal').modal('hide');
+                PosnicPro.alert('success', fam.parent + ' / ' + value + ' added');
+                PosnicPro.items.renderFamilyStrip({
+                    variant_group_id: fam.group_id,
+                    id: PosnicPro.record_id
+                });
+            } else {
+                PosnicPro.alert(r.type || 'error', r.message || 'Could not add it.');
+            }
+        }, function (xhr) {
+            $('#family_add_btn').prop('disabled', false);
+            var resp = {};
+            try { resp = JSON.parse(xhr.responseText); } catch (e) { /* plain */ }
+            PosnicPro.alert('error', resp.message || 'Could not add it.');
+        });
+    },
     /*Edit item dsetails*/
     editItem: function (id) {
         var loader = $(".loader-item");
@@ -780,6 +893,11 @@ PosnicPro.items = {
                 $('#show_variant_fields').hide();
                 $('#show_price_fields').show();
                 var data = response.data;
+                // Family strip (V1): if this item belongs to a variant
+                // family, show its siblings and the add-value button. The
+                // strip is what finally makes families editable after
+                // creation - the old flow forgot the relationship entirely.
+                PosnicPro.items.renderFamilyStrip(data);
                 PosnicPro.record_id = id;
                 $('#itemid').val(PosnicPro.record_id);
                 $('#items_name').val(data.name);
