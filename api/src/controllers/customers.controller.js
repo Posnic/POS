@@ -481,6 +481,10 @@ class CustomerController extends BaseController {
         address: customer.address || '',
         balance: customer.balance || 0,
         partial_balance: customer.partial_balance || false,
+        // Price lists (V4): the category rides the suggestion so the sale
+        // screen resolves pricing at select time - no async fallback race
+        // between selecting a customer and scanning the first item.
+        category_id: customer.category_id?.toString() || '',
       }));
 
       // Return in the format expected by autocomplete: { query, suggestions }
