@@ -89,9 +89,44 @@ function registrationValid(profile, value) {
   }
 }
 
+/**
+ * The generalised component split (T2). The engine computes ONE tax; the
+ * profile says how it presents: 'split_equal' halves it intra-place and
+ * names the whole of it inter-place (today's CGST/SGST/IGST, exactly);
+ * everything else is one component under the profile's label. Amounts in,
+ * names out - this never computes tax, only dresses it.
+ *
+ * @param {object} profile         the resolved country profile
+ * @param {number} taxAmount       the line's tax
+ * @param {boolean} interPlace     place-of-supply says "across the border"
+ * @returns {Array<{name:string, amount:number}>}
+ */
+function buildTaxComponents(profile, taxAmount, interPlace) {
+  const amount = Number(taxAmount) || 0;
+  if (amount <= 0) return [];
+  const comp = (profile && profile.components) || { mode: 'single' };
+  if (comp.mode === 'split_equal') {
+    if (interPlace) {
+      const name = (comp.inter && comp.inter[0]) || 'Tax';
+      return [{ name, amount }];
+    }
+    const names = comp.intra && comp.intra.length ? comp.intra : ['Tax'];
+    const share = amount / names.length;
+    return names.map((name) => ({ name, amount: share }));
+  }
+  return [{ name: (profile && profile.label) || 'Tax', amount }];
+}
+
 /* test hook */
 function resetForTests() {
   registry = null;
 }
 
-module.exports = { loadRegistry, allProfiles, profileForBranch, registrationValid, resetForTests };
+module.exports = {
+  loadRegistry,
+  allProfiles,
+  profileForBranch,
+  registrationValid,
+  buildTaxComponents,
+  resetForTests,
+};

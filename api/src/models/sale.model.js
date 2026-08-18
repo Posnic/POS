@@ -809,6 +809,10 @@ saleSchema.pre('save', async function () {
         supplier_name: src.supplier_name != null ? src.supplier_name : '',
         item_description: src.item_description != null ? src.item_description : '',
         modifiers: Array.isArray(src.modifiers) && src.modifiers.length ? src.modifiers : undefined,
+        tax_components:
+          Array.isArray(src.tax_components) && src.tax_components.length
+            ? src.tax_components
+            : undefined,
         tax: src.tax != null ? src.tax : 0,
         tax_type: src.tax_type != null ? src.tax_type : '',
         igst_tax: src.igst_tax != null ? src.igst_tax : 0,
