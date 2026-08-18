@@ -2492,23 +2492,76 @@ input:checked + .slider:before {
 .bellfeed-time { color: var(--theme-text-muted, #5b6577); font-size: 12px; white-space: nowrap; }
 .bellfeed-empty { padding: 16px; color: var(--theme-text-muted, #5b6577); font-size: 13px; }
 
-/* Module On/Off: one row per module, switch + one-line consequence;
-   sub-toggles indent under their parent. Toggles only - configuration
-   lives in each module's own section. */
-.module-onoff .module-row {
-    padding: 14px 2px;
-    border-bottom: 1px solid rgba(127, 127, 127, 0.14);
+/*
+ * Module On/Off: one card per module - icon tile, name, switch, one-line
+ * consequence, sub-switches inside the parent card. ON cards are vivid;
+ * OFF cards desaturate and dim, so the shop's shape reads at a glance
+ * before a single label is read. Toggles only - configuration lives in
+ * each module's own section.
+ */
+.module-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+    gap: 16px;
 }
-.module-onoff .module-row:last-child { border-bottom: 0; }
-.module-onoff .custom-control-label { font-weight: 600; }
-.module-onoff .module-row > small { margin-left: 36px; margin-top: 2px; }
-.module-onoff .module-subs {
-    margin: 10px 0 0 36px;
+.module-card {
+    border: 1px solid rgba(127, 127, 127, 0.22);
+    border-radius: 10px;
+    padding: 16px;
+    background: var(--theme-card-bg, #fff);
+    transition: box-shadow .18s ease, transform .18s ease, opacity .18s ease;
+}
+.module-card:hover {
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.10);
+    transform: translateY(-2px);
+}
+.module-card-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.module-ico {
+    flex: 0 0 46px;
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, var(--theme-primary-color, #506fe4) 12%, transparent);
+    transition: filter .18s ease;
+}
+@supports not (background: color-mix(in srgb, red 10%, blue)) {
+    .module-ico { background: rgba(80, 111, 228, 0.12); }
+}
+.module-ico img { width: 28px; height: 28px; }
+.module-title {
+    flex: 1 1 auto;
+    font-weight: 700;
+    font-size: 14.5px;
+    color: var(--theme-text-primary, #16203a);
+}
+.module-switch { flex: 0 0 auto; }
+.module-desc {
+    margin: 10px 0 0;
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: var(--theme-text-muted, #5b6577);
+}
+.module-subs {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px dashed rgba(127, 127, 127, 0.25);
     display: flex;
     flex-wrap: wrap;
-    gap: 6px 28px;
+    gap: 6px 24px;
 }
-.module-onoff .module-subs .custom-control-label { font-weight: 400; }
+.module-subs .custom-control-label { font-size: 12.5px; }
+/* OFF: the whole card steps back - grey icon, dimmed text - and its
+   sub-switches disengage visually with it. */
+.module-card.is-off { opacity: 0.62; }
+.module-card.is-off .module-ico { filter: grayscale(1); }
+.module-card.is-off .module-subs { pointer-events: none; opacity: 0.55; }
 
 /* Register selection: who holds it, said before the Open click fails. */
 .register-inuse-note {

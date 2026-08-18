@@ -1,19 +1,13 @@
 PosnicPro.device_setup = {
 
+    // Cursor Focus is a Config TAB now (#v-pills-cursorfocus); the old
+    // #/device_setup route lands on Config with that tab active.
     showDataTablePage: function () {
-        PosnicPro.HideSideBarModal();
-        PosnicPro.dashboard.datePicker();
-        $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
-        $(".vertical-layout").removeClass("toggle-menu");
-        $(".vertical-menu li a").removeClass("active");
-        $('.page_loader,#osk-container,#danger_zone').hide();
-        $('.page-title-box,#devices,#dangerZone,#dangetzoneUserverify').show();
-        $('#v-pills-manage-tab').addClass('active');
-        // The entry lives in Config's left nav now (Cursor Focus is configuration).
-        $('#config_device_setup_link').addClass('active');
-        $('#v-pills-manage').addClass('show active');
-        $('.dashboard_img_menu').hide();
-        $('#image_sidebar_config').show();
+        hasher.setHash('settings');
+        setTimeout(function () {
+            $('#config_device_setup_link').click();
+            PosnicPro.device_setup.setToggleStatesFromIndexedDB();
+        }, 300);
     },
     autoFocus: function () {
         var branchid = PosnicPro.local.get('branch_id_set');

@@ -57,7 +57,6 @@
         "modules/kothistory.html",
         "modules/sales_write.html",
         "modules/settings_write.html",
-        "modules/device_write.html",
         "modules/stockactivity.html",
         "modules/supplierReport.html",
         "modules/suppliers.html",
