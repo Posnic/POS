@@ -479,12 +479,33 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
 
       const indianGstSetting = context.branchSettings?.indian_gst || 'gst_off';
 
+      const interPlace = (data.customer_state || '').trim() !== (context.branchState || '').trim();
       if (indianGstSetting === 'gst_on' && gstValue > 0) {
-        if ((data.customer_state || '').trim() !== (context.branchState || '').trim()) {
+        if (interPlace) {
           igst_value = gstValue;
         } else {
           csgst_value = gstValue / 2;
         }
+      }
+
+      /*
+       * T2 dual-write: the generalised component list beside the legacy
+       * igst/cgst/sgst fields. For an IN profile with GST on this stores
+       * exactly what those fields say, under their names; for everyone
+       * else, one component under the profile's label - the receipt and
+       * report phases read THIS, and the legacy fields retire later via
+       * a straggler audit, never by surprise.
+       */
+      let tax_components;
+      if (gstValue > 0) {
+        const taxProfiles = require('./tax-profiles');
+        const { profile } = taxProfiles.profileForBranch(context.branchSettings || {});
+        const splitApplies = indianGstSetting === 'gst_on';
+        tax_components = taxProfiles.buildTaxComponents(
+          splitApplies ? profile : { label: profile.label, components: { mode: 'single' } },
+          gstValue,
+          interPlace
+        );
       }
 
       // Determine available quantity mirror (PHP: item_available_quantity)
@@ -576,6 +597,7 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
         igst_tax: igst_value,
         cgst_tax: csgst_value,
         sgst_tax: csgst_value,
+        ...(tax_components && tax_components.length ? { tax_components } : {}),
         tax_name: lineTaxName,
         tax_amount: itemTaxAmountForItem,
         tax_fields: Array.isArray(document.tax_fields)

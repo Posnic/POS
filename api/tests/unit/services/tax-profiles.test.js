@@ -85,6 +85,37 @@ describe('registration validation', () => {
   });
 });
 
+describe('buildTaxComponents (T2) - dressing, never computing', () => {
+  const { buildTaxComponents } = profiles;
+
+  test('split_equal halves intra-place under the intra names - todays CGST/SGST exactly', () => {
+    const { profile } = profiles.profileForBranch({ sortname: 'IN' });
+    expect(buildTaxComponents(profile, 18, false)).toEqual([
+      { name: 'CGST', amount: 9 },
+      { name: 'SGST', amount: 9 },
+    ]);
+  });
+
+  test('split_equal names the whole amount inter-place - todays IGST exactly', () => {
+    const { profile } = profiles.profileForBranch({ sortname: 'IN' });
+    expect(buildTaxComponents(profile, 18, true)).toEqual([{ name: 'IGST', amount: 18 }]);
+  });
+
+  test('single mode is one component under the profile label', () => {
+    const { profile } = profiles.profileForBranch({ sortname: 'GB' });
+    expect(buildTaxComponents(profile, 20, false)).toEqual([{ name: 'VAT', amount: 20 }]);
+    expect(buildTaxComponents(profiles.profileForBranch({}).profile, 5, true)).toEqual([
+      { name: 'Tax', amount: 5 },
+    ]);
+  });
+
+  test('zero or negative tax means no components at all', () => {
+    const { profile } = profiles.profileForBranch({ sortname: 'IN' });
+    expect(buildTaxComponents(profile, 0, false)).toEqual([]);
+    expect(buildTaxComponents(null, 10, false)).toEqual([{ name: 'Tax', amount: 10 }]);
+  });
+});
+
 describe('install currency resolution (the INR hardcode fix)', () => {
   const svc = new InstallService();
 
