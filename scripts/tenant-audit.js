@@ -224,6 +224,24 @@ async function main() {
     const cosmetic = gaps.filter((g) => g.severity === 'cosmetic');
 
     console.log('\n  ' + (branch.branch_name || String(branch._id)));
+
+    /*
+     * The module map (MODULE_SYSTEM_ROADMAP M5): what this shop actually
+     * has switched on, resolved with the same parse-and-default rules the
+     * app gates on - the one shared map in setting.model. Read-only; the
+     * support question this answers is "what does that shop see?".
+     */
+    try {
+      const SettingModel = require('../api/src/models/setting.model');
+      const toggleMap = SettingModel.moduleToggleMap();
+      const off = [];
+      for (const [key, def] of Object.entries(toggleMap)) {
+        const effective = branch[key] === undefined ? def.dflt : def.parse(branch[key]);
+        if (!effective) off.push(key.replace(/^(module_|staff_)/, '').replace(/_enable$/, ''));
+      }
+      console.log('    modules: ' + (off.length ? 'all on except ' + off.join(', ') : 'all on'));
+    } catch (e) { /* the audit must not die over a map read */ }
+
     if (!gaps.length) { console.log('    nothing missing'); continue; }
     for (const g of breaks) console.log('    MISSING  ' + g.field + '  - ' + g.why);
     if (cosmetic.length) {
