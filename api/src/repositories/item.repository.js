@@ -1211,6 +1211,15 @@ class ItemRepository extends BaseModel {
       };
 
       /*
+       * Open price (IC1): the deliberate ask-at-the-till state. Presence-
+       * gated - clients that predate the checkbox omit the key and never
+       * clear a stored flag.
+       */
+      if (data.open_price !== undefined) {
+        updateData.open_price = data.open_price === true || data.open_price === 'true';
+      }
+
+      /*
        * Variant family link (VARIANT_SYSTEM_RESEARCH V1): four presence-
        * gated fields that turn the "name generator" into a real family.
        * Absent = plain item, and absent NEVER clears an existing link -

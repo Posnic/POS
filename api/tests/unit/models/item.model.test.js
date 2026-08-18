@@ -781,8 +781,8 @@ describe('Item.LegacyItemModel › class identity', () => {
     // 44 legacy fields + the four variant family-link fields (V1) +
     // alternate barcodes and unit conversion (V3) + the four the form always
     // wrote but the map never carried (IC0: mfg/expiry dates, weight flag,
-    // modifier group ids).
-    expect(Object.keys(LegacyItemModel.fields)).toHaveLength(55);
+    // modifier group ids) + open_price (IC1 ask-at-the-till).
+    expect(Object.keys(LegacyItemModel.fields)).toHaveLength(56);
     expect(LegacyItemModel.fields).toEqual(
       expect.objectContaining({
         branch_id: expect.any(Object),
