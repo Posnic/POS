@@ -680,6 +680,7 @@ PosnicPro.settings = {
                 $('#module_channels_kiosk_enable').prop('checked', data.module_channels_kiosk_enable !== false);
                 $('#module_recyclebin_enable').prop('checked', data.module_recyclebin_enable !== false);
                 $('#module_themes_enable').prop('checked', data.module_themes_enable !== false);
+                $('#pl_include_cashbook').prop('checked', data.pl_include_cashbook !== false);
 
                 // Store general settings including hardware_weight_machine_enable
                 var generalSettings = {
@@ -1477,6 +1478,7 @@ if ($wrapper.length) {
                 module_channels_kiosk_enable: $('#module_channels_kiosk_enable').is(':checked') ? 'true' : 'false',
                 module_recyclebin_enable: $('#module_recyclebin_enable').is(':checked') ? 'true' : 'false',
                 module_themes_enable: $('#module_themes_enable').is(':checked') ? 'true' : 'false',
+                pl_include_cashbook: $('#pl_include_cashbook').is(':checked') ? 'true' : 'false',
             })
         };
         PosnicPro.put(params, function (response) {
@@ -1669,6 +1671,7 @@ if ($wrapper.length) {
         $('#v-pills-kiosk-tab').toggle(on('module_channels_enable'));
         $('#v-pills-recyclebin-tab').toggle(on('module_recyclebin_enable'));
         $('#v-pills-theme-tab').toggle(on('module_themes_enable'));
+        $('#v-pills-cashregister-tab').toggle(on('cash_register_enable'));
         // The header and main sidebar follow the same truth at the same
         // moment - every path that refreshes Config refreshes everywhere.
         PosnicPro.applyModuleSidebar();

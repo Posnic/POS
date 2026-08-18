@@ -126,23 +126,18 @@ PosnicPro.expenses = {
             PosnicPro.alert(response.type, response.message);
         });
     },
+    // Cash Book lives under Config > Modules now (user call).
     showDataTablePage: function () {
+        PosnicPro.settings.showDataTablePage();
+        $('#v-pills-cashbook-tab').click();
+        PosnicPro.expenses.paneInit();
+    },
+    paneInit: function () {
         var loader = $(".loader-table-expense");
         loader.find(".loadingSpinner:first").remove();
         PosnicPro.dashboard.datePicker();
-        PosnicPro.HideSideBarModal();
-        $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
-        $(".vertical-layout").removeClass("toggle-menu");
-        $(".vertical-menu li a").removeClass("active");
-        $('.page_loader,#osk-container').hide();
-        $('.page-title-box,#expenses').show();
         $('#expenses_new,#expenses_view').modal('hide');
         PosnicPro.expenses.expensesTable('expenses');
-        $('#v-pills-manage-tab').addClass('active');
-        $('#v-pills-manage').addClass('show active');
-        $('.dashboard_img_menu').hide();
-        $('#image_sidebar_expense').show();
-
     },
     /*This expenses Function Used To Add & Edit */
     expenses: function () {

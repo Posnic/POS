@@ -2058,7 +2058,7 @@ PosnicPro = {
         { name: 'Money', items: [
             { hash: 'paymentreport', label: 'Payment' },
             { hash: 'taxreport', label: 'Tax', module: 'module_tax_enable' },
-            { hash: 'expensesreport', label: 'Expenses' },
+            { hash: 'expensesreport', label: 'Cash Book' },
         ] },
     ],
     injectReportGroupTabs: function () {
@@ -2084,6 +2084,11 @@ PosnicPro = {
         html += '</ul></div>';
         var $row = $('.page_loader:visible .breadcrumbbar .row').first();
         if ($row.length) { $row.after('<div class="row">' + html + '</div>'); }
+        // The rail entry for the CURRENT group highlights like any other
+        // menu (user call): one active group at a time.
+        var entryId = 'rgrp_' + group.name.toLowerCase() + '_page';
+        $('[id^="rgrp_"][id$="_page"]').removeClass('active');
+        $('#' + entryId).addClass('active');
     },
     /*
      * Main-sidebar entries follow Module On/Off (the Config nav already
