@@ -12,7 +12,6 @@
  * To see where they stand:  npm run test:known-failures
  */
 module.exports = [
-  'tests/unit/models/install.model.test.js',
   'tests/unit/models/register.model.test.js',
   'tests/unit/models/setting.model.test.js',
   'tests/unit/repositories/sale.repository.test.js',

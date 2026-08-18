@@ -261,7 +261,7 @@ describe('InstallModel — installInsertDocument() success flow', () => {
   test('returns status:true with success message', async () => {
     const r = await im.installInsertDocument(validData());
     expect(r.status).toBe(true);
-    expect(r.message).toBe('Posnic Account Created Successfully');
+    expect(r.message).toBe('Account created successfully');
   });
 
   test('inserts user with usertype "super_admin"', async () => {
@@ -270,11 +270,11 @@ describe('InstallModel — installInsertDocument() success flow', () => {
     expect(userDoc.usertype).toBe('super_admin');
   });
 
-  test('inserts user with free plan and max_sales:100', async () => {
+  test('inserts user with the premium unlimited plan', async () => {
     await im.installInsertDocument(validData());
     const [userDoc] = cols.users.insertOne.mock.calls[0];
-    expect(userDoc.plan.name).toBe('free');
-    expect(userDoc.plan.max_sales).toBe(100);
+    expect(userDoc.plan.name).toBe('premium');
+    expect(userDoc.plan.max_sales).toBe('unlimited');
   });
 
   test('inserts user with bcrypt-hashed secret key', async () => {
