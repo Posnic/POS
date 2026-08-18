@@ -2590,6 +2590,22 @@ input:checked + .slider:before {
     padding: 18px;
 }
 
+/*
+ * Section transitions. Pages are shown by flipping display, which repaints
+ * in one rough splash; a short fade-slide REPLAYS on every show (display
+ * none->block restarts CSS animations), so switching menus glides instead.
+ * The injected report strip and the rail's menu panes get the same ease.
+ */
+@media (prefers-reduced-motion: no-preference) {
+    @keyframes posnic-page-in {
+        from { opacity: 0; transform: translateY(6px); }
+        to { opacity: 1; transform: none; }
+    }
+    .vertical-layout.page_loader { animation: posnic-page-in .22s ease; }
+    .report-group-tabs { animation: posnic-page-in .18s ease; }
+    .vertical-menu-detail .tab-pane.fade { transition: opacity .16s linear; }
+}
+
 /* Report menu groups: quiet uppercase labels, tighter than the Config
    ones - a long list becomes five scannable clusters. */
 .vertical-menu .report-group {
