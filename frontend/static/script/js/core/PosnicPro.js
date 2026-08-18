@@ -2025,6 +2025,67 @@ PosnicPro = {
      * the switch is saved, so turning KOT on does not need a restart.
      */
     /*
+     * Reports are grouped like Config modules: the rail shows five groups,
+     * and every report page carries this injected navigator - the group's
+     * reports as tabs, current one active. One component, injected after
+     * each route lands, so the sixteen report pages need no markup of
+     * their own. Items follow Module On/Off like everything else.
+     */
+    REPORT_GROUPS: [
+        { name: 'Sales', items: [
+            { hash: 'quickreport', label: 'Day-End' },
+            { hash: 'salereport', label: 'Sales' },
+            { hash: 'returnreport', label: 'Return Sale' },
+            { hash: 'pendingreport', label: 'Pending Payments' },
+            { hash: 'registerreport', label: 'Register', module: 'cash_register_enable' },
+            { hash: 'kotreport', label: 'KOT', kot: true },
+            { hash: 'kioskreport', label: 'Kiosk', module: 'module_channels_enable' },
+        ] },
+        { name: 'Purchase', items: [
+            { hash: 'receivingreport', label: 'Purchase' },
+            { hash: 'returnreceivingreport', label: 'Return Purchase' },
+            { hash: 'supplierreport', label: 'Supplier' },
+        ] },
+        { name: 'Inventory', items: [
+            { hash: 'itemreport', label: 'Item' },
+            { hash: 'categoryreport', label: 'Category' },
+        ] },
+        { name: 'People', items: [
+            { hash: 'customerreport', label: 'Customer' },
+            { hash: 'userreport', label: 'User' },
+            { hash: 'labourreport', label: 'Labour / Payout', module: 'staff_shifts_enable' },
+        ] },
+        { name: 'Money', items: [
+            { hash: 'paymentreport', label: 'Payment' },
+            { hash: 'taxreport', label: 'Tax', module: 'module_tax_enable' },
+            { hash: 'expensesreport', label: 'Expenses' },
+        ] },
+    ],
+    injectReportGroupTabs: function () {
+        var hash = window.location.hash.replace(/^#\//, '').split('/')[0];
+        $('.report-group-tabs').remove();
+        var group = null;
+        for (var g = 0; g < PosnicPro.REPORT_GROUPS.length; g++) {
+            if (PosnicPro.REPORT_GROUPS[g].items.some(function (i) { return i.hash === hash; })) {
+                group = PosnicPro.REPORT_GROUPS[g];
+                break;
+            }
+        }
+        if (!group) { return; }
+        var s = {};
+        try { s = JSON.parse(PosnicPro.local.get('general_settings') || '{}'); } catch (e) { /* defaults */ }
+        var html = '<div class="col-12 report-group-tabs"><ul class="nav nav-tabs users-roles-tabs">';
+        group.items.forEach(function (i) {
+            if (i.module && s[i.module] === false) { return; }
+            if (i.kot && PosnicPro.local.get('table_options') !== 'enable') { return; }
+            html += '<li class="nav-item"><a class="nav-link' + (i.hash === hash ? ' active' : '') +
+                '" href="#/' + i.hash + '">' + i.label + '</a></li>';
+        });
+        html += '</ul></div>';
+        var $row = $('.page_loader:visible .breadcrumbbar .row').first();
+        if ($row.length) { $row.after('<div class="row">' + html + '</div>'); }
+    },
+    /*
      * Main-sidebar entries follow Module On/Off (the Config nav already
      * does via applyModuleNav). Runs at page load and after a modules save.
      */
@@ -4114,3 +4175,14 @@ PosnicPro.labourreport = {
         PosnicPro.shiftWidget.runReport();
     }
 };
+
+// Report group navigator rides every route change - deferred a tick so the
+// destination page is visible when the strip looks for its breadcrumb.
+$(function () {
+    if (window.hasher && hasher.changed) {
+        var paint = function () { setTimeout(PosnicPro.injectReportGroupTabs, 250); };
+        hasher.changed.add(paint);
+        hasher.initialized.add(paint);
+        paint();
+    }
+});
