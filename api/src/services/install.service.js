@@ -309,7 +309,47 @@ class InstallService {
     return { regularBodyPrint, thermalBodyPrint };
   }
 
+  /*
+   * The shop's own money, not ours: currency used to be hardcoded to INR
+   * whatever country was chosen at install (a US shop opened priced in ₹).
+   * currency.json's entries lead with the country name, so the chosen
+   * country resolves its currency; no match keeps the old default, which
+   * preserves India and anything unrecognised exactly as before.
+   */
+  _currencyForCountry(countryName) {
+    const fallback = {
+      currency: DEFAULTS.CURRENCY,
+      currency_text: DEFAULTS.CURRENCY_TEXT,
+      currency_type: DEFAULTS.CURRENCY_TYPE,
+      currency_value: [{ currency_text: 'INR', currency_sign: '₹' }],
+    };
+    const name = String(countryName || '')
+      .trim()
+      .toLowerCase();
+    if (!name) return fallback;
+    try {
+      const raw = fs.readFileSync(path.join(__dirname, '../json/currency.json'), 'utf8');
+      const list = (JSON.parse(raw).currency || []).filter((c) => c && c.value);
+      const hit = list.find((c) =>
+        c.value
+          .trim()
+          .toLowerCase()
+          .startsWith(name + ' ')
+      );
+      if (!hit || !hit.symbol || !hit.text) return fallback;
+      return {
+        currency: hit.symbol,
+        currency_text: hit.value.trim(),
+        currency_type: hit.symbol,
+        currency_value: [{ currency_text: hit.text, currency_sign: hit.symbol }],
+      };
+    } catch (e) {
+      return fallback;
+    }
+  }
+
   async _createBranch(data, licenseId, userId, now, regularBodyPrint, thermalBodyPrint) {
+    const money = this._currencyForCountry(data.register_country);
     const branchData = {
       theme: DEFAULTS.THEME,
       branch_name: data.register_companyname.trim(),
@@ -326,10 +366,10 @@ class InstallService {
       languge: '',
       indian_gst: DEFAULTS.INDIAN_GST,
       branch_gstin_number: '',
-      currency: DEFAULTS.CURRENCY,
-      currency_text: DEFAULTS.CURRENCY_TEXT,
-      currency_type: DEFAULTS.CURRENCY_TYPE,
-      currency_value: [{ currency_text: 'INR', currency_sign: '₹' }],
+      currency: money.currency,
+      currency_text: money.currency_text,
+      currency_type: money.currency_type,
+      currency_value: money.currency_value,
       time_zone: (data.register_timezone || '').trim() || 'Asia/Calcutta',
       register: [],
       cashdenom_fields: [],
