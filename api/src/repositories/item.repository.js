@@ -1197,6 +1197,19 @@ class ItemRepository extends BaseModel {
         updateData.variant_parent_name = String(data.variant_parent_name || '').trim();
       }
 
+      /* Alternate barcodes (V3): manufacturer + internal codes beside the
+         primary. Lookup checks both; labels keep printing the primary.
+         Presence-gated: sent (even empty) sets, omitted changes nothing. */
+      if (Array.isArray(data.barcodes)) {
+        updateData.barcodes = [
+          ...new Set(
+            data.barcodes
+              .map((v) => String(v || '').trim())
+              .filter((v) => v && v !== updateData.barcode_id)
+          ),
+        ];
+      }
+
       /* Modifier groups (V2): which option sets this item offers at sale
          time. Presence-gated like the variant link - a payload that sends
          the key (even empty) sets it; one that omits it changes nothing. */
@@ -1512,7 +1525,13 @@ class ItemRepository extends BaseModel {
     const collection = await this.getCollection(this.collectionName);
 
     const clauses = [
-      { $or: [{ name: { $regex: searchPattern(query), $options: 'i' } }, { barcode_id: query }] },
+      {
+        $or: [
+          { name: { $regex: searchPattern(query), $options: 'i' } },
+          { barcode_id: query },
+          { barcodes: query },
+        ],
+      },
     ];
 
     const { branchId, licenseId } = context;
@@ -1870,9 +1889,14 @@ class ItemRepository extends BaseModel {
       if (type === 'id' && query && ObjectId.isValid(query)) {
         searchConditions = [{ _id: new ObjectId(query) }];
       } else if (regex && type === 'barcode') {
-        searchConditions = [{ barcode_id: regex }];
+        searchConditions = [{ barcode_id: regex }, { barcodes: regex }];
       } else if (regex) {
-        searchConditions = [{ name: regex }, { itemid: regex }, { barcode_id: regex }];
+        searchConditions = [
+          { name: regex },
+          { itemid: regex },
+          { barcode_id: regex },
+          { barcodes: regex },
+        ];
       }
 
       // Stock availability logic
@@ -2278,8 +2302,8 @@ class ItemRepository extends BaseModel {
 
       const searchConditions =
         type === 'barcode'
-          ? [{ barcode_id: regex }]
-          : [{ name: regex }, { itemid: regex }, { barcode_id: regex }];
+          ? [{ barcode_id: regex }, { barcodes: regex }]
+          : [{ name: regex }, { itemid: regex }, { barcode_id: regex }, { barcodes: regex }];
 
       // Build the filter matching PHP logic exactly
       const whereConditions = [

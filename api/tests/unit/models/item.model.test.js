@@ -778,8 +778,9 @@ describe('Item.LegacyItemModel › class identity', () => {
   });
 
   test('fields includes direct branch metadata used for tenant scoping', () => {
-    // 44 legacy fields + the four variant family-link fields (V1).
-    expect(Object.keys(LegacyItemModel.fields)).toHaveLength(48);
+    // 44 legacy fields + the four variant family-link fields (V1) +
+    // alternate barcodes (V3).
+    expect(Object.keys(LegacyItemModel.fields)).toHaveLength(49);
     expect(LegacyItemModel.fields).toEqual(
       expect.objectContaining({
         branch_id: expect.any(Object),
