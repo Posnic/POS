@@ -26,7 +26,7 @@ PosnicPro.messaging = {
   load: function () {
     // Hard gate in the UI; the server enforces it too.
     if (!PosnicPro.messaging.isSuperAdmin()) {
-      $('#v-pills-messaging-tab').hide();
+      $('#v-pills-messagingmodule-tab').hide();
       $('#messaging_not_allowed').show();
       $('#messaging_body').hide();
       return;

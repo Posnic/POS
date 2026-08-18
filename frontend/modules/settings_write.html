@@ -64,30 +64,15 @@
                                 </a>
 
                                 <div class="settings-nav-group"><lang class="lang_navgroup_customers_marketing">Customers &amp; Marketing</lang></div>
-                                <a class="nav-link mb-2" data-module="branch" data-access="write"
-                                    id="v-pills-loyalty-tab" data-toggle="pill" href="#v-pills-loyalty" role="tab"
-                                    aria-controls="v-pills-loyalty" aria-selected="false"
+                                <a class="nav-link mb-2" data-module="branch" data-access="write" id="v-pills-marketingmodule-tab"
+                                    data-toggle="pill" href="#v-pills-marketingmodule" role="tab"
+                                    aria-controls="v-pills-marketingmodule" aria-selected="false"
                                     onclick="PosnicPro.loyalty.load();"><i class="feather icon-award mr-2"></i>
-                                    <lang class="lang_loyalty_settings">Loyalty &amp; Rewards</lang>
+                                    <lang class="lang_module_marketing">Marketing</lang>
                                 </a>
-                                <a class="nav-link mb-2" data-module="branch" data-access="write"
-                                    id="v-pills-coupons-tab" data-toggle="pill" href="#v-pills-coupons" role="tab"
-                                    aria-controls="v-pills-coupons" aria-selected="false"
-                                    onclick="PosnicPro.coupons.load();"><i class="feather icon-tag mr-2"></i>
-                                    <lang class="lang_coupons_settings">Coupons</lang>
-                                </a>
-                                <a class="nav-link mb-2" data-module="branch" data-access="write"
-                                    id="v-pills-cashback-tab" data-toggle="pill" href="#v-pills-cashback" role="tab"
-                                    aria-controls="v-pills-cashback" aria-selected="false"
-                                    onclick="PosnicPro.cashback.load();"><i class="feather icon-gift mr-2"></i>
-                                    <lang class="lang_cashback_settings">Cashback</lang>
-                                </a>
-                                <a class="nav-link mb-2" data-module="branch" data-access="write"
-                                    id="v-pills-campaigns-tab" data-toggle="pill" href="#v-pills-campaigns" role="tab"
-                                    aria-controls="v-pills-campaigns" aria-selected="false"
-                                    onclick="PosnicPro.campaigns.load();"><i class="feather icon-send mr-2"></i>
-                                    <lang class="lang_campaigns_settings">Campaigns</lang>
-                                </a>
+                                
+                                
+                                
 
                                 <a class="nav-link mb-2" data-module="branch" data-access="write"
                                     id="v-pills-credit-tab" data-toggle="pill" href="#v-pills-credit" role="tab"
@@ -97,28 +82,15 @@
                                 </a>
 
                                 <div class="settings-nav-group"><lang class="lang_navgroup_messaging">Messaging</lang></div>
-                                <a class="nav-link mb-2 show-superadmin-tab" data-module="branch" data-access="write"
-                                    id="v-pills-messaging-tab" data-toggle="pill" href="#v-pills-messaging" role="tab"
-                                    aria-controls="v-pills-messaging" aria-selected="false"
+                                <a class="nav-link mb-2 show-superadmin-tab" data-module="branch" data-access="write" id="v-pills-messagingmodule-tab"
+                                    data-toggle="pill" href="#v-pills-messagingmodule" role="tab"
+                                    aria-controls="v-pills-messagingmodule" aria-selected="false"
                                     onclick="PosnicPro.messaging.load();"><i class="feather icon-cpu mr-2"></i>
-                                    <lang class="lang_messaging_settings">SMS &amp; WhatsApp Providers</lang>
+                                    <lang class="lang_module_messaging">Messaging</lang>
                                 </a>
-                                <a class="nav-link mb-2" data-module="plan" data-access="read" id="v-pills-whatsapp-tab"
-                                    data-toggle="pill" href="#v-pills-whatsapp" role="tab" aria-controls="v-pills-whatsapp"
-                                    aria-selected="false"><i class="feather icon-message-square mr-2"></i>
-                                    <lang class="lang_whatsapp_connection">WhatsApp Connection</lang>
-                                </a>
-                                <a class="nav-link mb-2" data-module="plan" data-access="read" id="v-pills-email-tab"
-                                    data-toggle="pill" href="#v-pills-email" role="tab" aria-controls="v-pills-email"
-                                    aria-selected="false"><i class="feather icon-mail mr-2"></i>
-                                    <lang class="lang_mail">Report Email Settings</lang>
-                                </a>
-                                <a class="nav-link mb-2" data-module="plan" data-access="read" id="v-pills-sms-tab"
-                                    data-toggle="pill" href="#v-pills-sms" role="tab" aria-controls="v-pills-sms"
-                                    aria-selected="false" style="display:none;"><i
-                                        class="feather icon-message-circle mr-2"></i>
-                                    <lang class="lang_sms_set">SMS Settings</lang>
-                                </a>
+                                
+                                
+                                
 
                                 <div class="settings-nav-group"><lang class="lang_navgroup_device_appearance">Device &amp; Appearance</lang></div>
                                 <a class="nav-link mb-2" data-module="plan" data-access="read" id="v-pills-kiosk-tab"
@@ -380,114 +352,216 @@
                         <!-- Offline Tab End -->
 
                         <!-- Sms Tab Start -->
-                        <div class="tab-pane fade loader-view-sms" id="v-pills-sms" role="tabpanel"
-                            aria-labelledby="v-pills-sms-tab" style="display:none;">
-                            <div class="card m-b-30">
-                                <div class="card-header">
-                                    <h5 class="card-title">SMS Type</h5>
-                                </div>
-                                <div class="card-body">
-                                    <ul class="nav nav-tabs custom-tab-line mb-3" id="defaultTabLine" role="tablist">
-                                        <li class="nav-item">
-                                            <a class="nav-link active" id="way2sms-tab-line" data-toggle="tab"
-                                                href="#way2sms-line" role="tab" aria-controls="way2sms-line"
-                                                aria-selected="true">Way2sms</a>
-                                        </li>
-                                        <li class="nav-item">
-                                            <a class="nav-link" id="textlocal-tab-line" data-toggle="tab"
-                                                href="#textlocal-line" role="tab" aria-controls="textlocal-line"
-                                                aria-selected="false">Textlocal</a>
-                                        </li>
-                                    </ul>
-                                    <div class="tab-content">
-                                        <div class="tab-pane fade active show" id="way2sms-line" role="tabpanel"
-                                            aria-labelledby="way2sms-tab-line">
-                                            <form id="sms_setting">
-                                                <div class="form-row">
-                                                    <div class="form-group col-md-6">
-                                                        <label for="way2sms_userid">
-                                                            <lang class="lang_entermobilenumber_title">Enter mobile
-                                                                number </lang> <span class="text-danger">*</span>
-                                                        </label>
-                                                        <input name="way2sms_userid" id="way2sms_userid" type="tel"
-                                                            class="form-control border-control" minlength="3"
-                                                            maxlength="20" placeholder="Enter a mobile number" required>
-                                                    </div>
-                                                    <div class="form-group col-md-6">
-                                                        <label for="way2sms_password">
-                                                            <lang class="lang_enterpassword_title">Enter password
-                                                            </lang> <span class="text-danger">*</span>
-                                                        </label>
-                                                        <input name="way2sms_password" id="way2sms_password"
-                                                            type="password" class="form-control border-control"
-                                                            maxlength="50" placeholder="Enter a password" required
-                                                            autocomplete="new-password">
-                                                    </div>
-                                                </div>
-                                                <div class="form-row">
-                                                    <div class="form-group col-md-6">
-                                                        <label for="way2sms_api">
-                                                            <lang class="lang_apikey">API Key </lang> <span
-                                                                class="text-danger">*</span>
-                                                        </label>
-                                                        <input type="text" class="form-control border-control"
-                                                            name="way2sms_api" id="way2sms_api" maxlength="100"
-                                                            placeholder="Enter a API key" autocomplete="off" required>
-                                                    </div>
-                                                </div>
-                                                <div class="card-footer text-right">
-                                                    <button type="submit" class="btn btn-outline-primary"><i
-                                                            class="feather icon-save mr-2"></i>
-                                                        <lang class="lang_save_title">Save</lang>
-                                                    </button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                        <div class="tab-pane fade" id="textlocal-line" role="tabpanel"
-                                            aria-labelledby="textlocal-tab-line">
-                                            <form id="textlocal_setting">
-                                                <div class="form-row">
-                                                    <div class="form-group col-md-6">
-                                                        <label for="textlocal_sender">
-                                                            <lang class="lang_sendername">Sender Name</lang> <span
-                                                                class="text-danger">*</span>
-                                                        </label>
-                                                        <input name="textlocal_sender" id="textlocal_sender" type="text"
-                                                            class="form-control border-control"
-                                                            placeholder="Enter a sender name" maxlength="20" required>
-                                                    </div>
-                                                </div>
-                                                <div class="form-row">
-                                                    <div class="form-group col-md-6">
-                                                        <label for="textlocal_api">
-                                                            <lang class="lang_apikey">API Key </lang><span
-                                                                class="text-danger">*</span>
-                                                        </label>
-                                                        <input name="textlocal_api" id="textlocal_api" type="text"
-                                                            class="form-control border-control" maxlength="100"
-                                                            placeholder="Enter a API key" required>
-                                                    </div>
-                                                </div>
-                                                <div class="card-footer text-right">
-                                                    <button type="submit" class="btn btn-outline-primary"><i
-                                                            class="feather icon-save mr-2"></i>
-                                                        <lang class="lang_save_title">Save</lang>
-                                                    </button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        
                         <!-- Sms Tab End -->
 
                         <!-- Unit Tab Start -->
                         
 
                         <!-- Loyalty & Rewards Start -->
-                        <div class="tab-pane fade" id="v-pills-loyalty" role="tabpanel"
-                            aria-labelledby="v-pills-loyalty-tab">
+                        
+
+                        <!-- Coupons Start -->
+                        
+
+                        <!-- Campaigns Start -->
+                        
+
+                        <!-- SMS & WhatsApp Providers Start (super admin only) -->
+                        
+
+                        <!-- Credit & Reminders Start -->
+                        <div class="tab-pane fade" id="v-pills-credit" role="tabpanel"
+                            aria-labelledby="v-pills-credit-tab">
+                            <div class="card m-b-30">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">Credit rules</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p class="text-muted mb-3">Let customers buy on credit (khata) and collect later. A
+                                        credit limit caps how much a customer can owe; leave it 0 for no limit.</p>
+                                    <div class="form-row">
+                                        <div class="col-md-4 mb-2">
+                                            <label>Default credit limit
+                                                (<span class="credit-currency-label">currency</span>, 0 = none)</label>
+                                            <input type="number" min="0" step="0.01" class="form-control"
+                                                id="credit_default_limit" value="0">
+                                        </div>
+                                        <div class="col-md-4 mb-2">
+                                            <label>Credit terms (days, 0 = none)</label>
+                                            <input type="number" min="0" step="1" class="form-control"
+                                                id="credit_terms_days" value="0">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card m-b-30">
+                                <div class="card-header d-flex align-items-center justify-content-between">
+                                    <h5 class="card-title mb-0">Payment reminders</h5>
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input"
+                                            id="credit_reminder_enabled">
+                                        <label class="custom-control-label" for="credit_reminder_enabled">Enable
+                                            reminders</label>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <p class="text-muted mb-3">Remind customers who owe money, over SMS or WhatsApp (your
+                                        configured providers). A customer is never reminded twice in one day.</p>
+                                    <div class="form-row">
+                                        <div class="col-md-3 mb-2">
+                                            <label>Channel</label>
+                                            <select class="form-control" id="credit_reminder_channel">
+                                                <option value="sms">SMS</option>
+                                                <option value="whatsapp">WhatsApp</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3 mb-2">
+                                            <label>Only remind dues over
+                                                (<span class="credit-currency-label">currency</span>)</label>
+                                            <input type="number" min="0" step="0.01" class="form-control"
+                                                id="credit_reminder_min_due" value="0">
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="col-md-12 mb-2">
+                                            <label>Message — use {name} {due} {currency} {shop}</label>
+                                            <textarea class="form-control" id="credit_reminder_template" rows="2"
+                                                placeholder="Hi {name}, you have {currency}{due} due at {shop}. Please pay soon."></textarea>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-outline-primary mt-2" id="credit_save">
+                                        <i class="feather icon-save mr-2"></i> Save credit settings
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="card m-b-30">
+                                <div class="card-header d-flex align-items-center justify-content-between">
+                                    <h5 class="card-title mb-0">Outstanding customers —
+                                        <span id="credit_outstanding_total">0</span></h5>
+                                    <div>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm mr-1"
+                                            id="credit_remind_test">Test (dry run)</button>
+                                        <button type="button" class="btn btn-primary-rgba btn-sm"
+                                            id="credit_remind_all"><i class="feather icon-send mr-1"></i> Remind
+                                            all</button>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-borderless">
+                                            <thead>
+                                                <tr>
+                                                    <td class="font-weight-normal">Customer</td>
+                                                    <td class="font-weight-normal">Phone</td>
+                                                    <td class="font-weight-normal text-right">Due</td>
+                                                    <td class="font-weight-normal text-center">Action</td>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="credit_outstanding_body"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cashback Start -->
+                        
+
+                        <!-- Tax Tab Start -->
+                        
+
+
+                        <!-- cash denomination Start -->
+                        
+                        <!--Denom field end-->
+
+                        <!-- table orders Start -->
+                        <div class="tab-pane fade" id="v-pills-tableorder" role="tabpanel"
+                            aria-labelledby="v-pills-tableorder-tab">
+                            <div class="card m-b-30" data-module="plan" data-access="read">
+                                <div class="card-body">
+                                    <small class="form-text text-muted">
+                                        <lang class="lang_modules_kot_hint">Restaurant / KOT mode is switched on
+                                        under Settings &gt; Modules. This page manages the tables it uses.</lang>
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="card m-b-30">
+                                <div class="card-header">
+                                    <h5 class="card-title">
+                                        Tables list
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="order-box">
+                                        <div class="card border m-b-30">
+                                            <div class="card-header">
+                                                <div class="row align-items-center">
+                                                    <div class="col-sm-2">
+                                                        <select class="form-control" id="view_tableorder_per_page" onchange="PosnicPro.tableOrders.changePerPage()">
+                                                            <option value="5">5</option>
+                                                            <option value="10" selected>10</option>
+                                                            <option value="25">25</option>
+                                                            <option value="50">50</option>
+                                                            <option value="100">100</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-sm-4"></div>
+                              <div class="tab-pane fade" id="v-pills-messagingmodule" role="tabpanel" aria-labelledby="v-pills-messagingmodule-tab">
+                            <div class="card m-b-30">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0"><lang class="lang_module_messaging">Messaging</lang></h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-lg-3 core-subnav-col">
+                                            <div class="nav flex-column nav-pills" id="messaging_subnav" role="tablist">
+                                                <a class="nav-link active" data-toggle="pill" href="#msg-sub-providers" role="tab" onclick="PosnicPro.messaging.load();"><lang class="lang_messaging_settings">SMS &amp; WhatsApp Providers</lang></a>
+                                                <a class="nav-link" data-toggle="pill" href="#msg-sub-whatsapp" role="tab" data-module="plan" data-access="read"><lang class="lang_whatsapp_connection">WhatsApp Connection</lang></a>
+                                                <a class="nav-link" data-toggle="pill" href="#msg-sub-email" role="tab" data-module="plan" data-access="read"><lang class="lang_mail">Report Email Settings</lang></a>
+                                                <a class="nav-link" data-toggle="pill" href="#msg-sub-sms" role="tab" style="display:none;"><lang class="lang_sms_set">SMS Settings</lang></a>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-9">
+                                            <div class="tab-content">
+                                                <div class="tab-pane fade show active" id="msg-sub-providers" role="tabpanel">
+
+                            <div id="messaging_not_allowed" class="alert alert-warning" style="display:none;">
+                                Only a super admin can configure messaging providers.
+                            </div>
+                            <div id="messaging_body">
+                                <div class="card m-b-30">
+                                    <div class="card-header d-flex align-items-center justify-content-between">
+                                        <h5 class="card-title mb-0">SMS provider</h5>
+                                        <div class="custom-control custom-switch">
+                                            <input type="checkbox" class="custom-control-input" id="messaging_sms_enabled">
+                                            <label class="custom-control-label" for="messaging_sms_enabled">Enable
+                                                SMS</label>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text<div class="tab-pane fade" id="v-pills-marketingmodule" role="tabpanel" aria-labelledby="v-pills-marketingmodule-tab">
+                            <div class="card m-b-30">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0"><lang class="lang_module_marketing">Marketing</lang></h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-lg-3 core-subnav-col">
+                                            <div class="nav flex-column nav-pills" id="marketing_subnav" role="tablist">
+                                                <a class="nav-link active" data-toggle="pill" href="#mkt-sub-loyalty" role="tab" onclick="PosnicPro.loyalty.load();"><lang class="lang_loyalty_settings">Loyalty &amp; Rewards</lang></a>
+                                                <a class="nav-link" data-toggle="pill" href="#mkt-sub-coupons" role="tab" onclick="PosnicPro.coupons.load();"><lang class="lang_coupons_settings">Coupons</lang></a>
+                                                <a class="nav-link" data-toggle="pill" href="#mkt-sub-cashback" role="tab" onclick="PosnicPro.cashback.load();"><lang class="lang_cashback_settings">Cashback</lang></a>
+                                                <a class="nav-link" data-toggle="pill" href="#mkt-sub-campaigns" role="tab" onclick="PosnicPro.campaigns.load();"><lang class="lang_campaigns_settings">Campaigns</lang></a>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-9">
+                                            <div class="tab-content">
+                                                <div class="tab-pane fade show active" id="mkt-sub-loyalty" role="tabpanel">
+
                             <div class="card m-b-30">
                                 <div class="card-header d-flex align-items-center justify-content-between">
                                     <h5 class="card-title mb-0">
@@ -850,11 +924,10 @@
                                     </button>
                                 </div>
                             </div>
-                        </div>
+                        
+                                                </div>
+                                                <div class="tab-pane fade" id="mkt-sub-coupons" role="tabpanel">
 
-                        <!-- Coupons Start -->
-                        <div class="tab-pane fade" id="v-pills-coupons" role="tabpanel"
-                            aria-labelledby="v-pills-coupons-tab">
                             <div class="card m-b-30">
                                 <div class="card-header d-flex align-items-center justify-content-between">
                                     <h5 class="card-title mb-0">
@@ -963,11 +1036,109 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        
+                                                </div>
+                                                <div class="tab-pane fade" id="mkt-sub-cashback" role="tabpanel">
 
-                        <!-- Campaigns Start -->
-                        <div class="tab-pane fade" id="v-pills-campaigns" role="tabpanel"
-                            aria-labelledby="v-pills-campaigns-tab">
+                            <div class="card m-b-30">
+                                <div class="card-header d-flex align-items-center justify-content-between">
+                                    <h5 class="card-title mb-0">Cashback</h5>
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="cashback_enabled">
+                                        <label class="custom-control-label" for="cashback_enabled">Enable cashback</label>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <p class="text-muted mb-3">A qualifying sale gives the customer a single-use voucher
+                                        worth a percentage of the bill, to spend on their next visit before it expires.
+                                        They can redeem it at the till (type the code, or scan the printed barcode), and
+                                        it can be sent by SMS/WhatsApp.</p>
+                                    <div class="form-row">
+                                        <div class="col-md-3 mb-2">
+                                            <label>Cashback %</label>
+                                            <input type="number" min="0" max="100" step="0.1" class="form-control"
+                                                id="cashback_percent" value="0">
+                                        </div>
+                                        <div class="col-md-3 mb-2">
+                                            <label>Min bill to earn
+                                                (<span class="cashback-currency-label">currency</span>)</label>
+                                            <input type="number" min="0" step="0.01" class="form-control"
+                                                id="cashback_min_spend" value="0">
+                                        </div>
+                                        <div class="col-md-3 mb-2">
+                                            <label>Max cashback
+                                                (<span class="cashback-currency-label">currency</span>, 0=none)</label>
+                                            <input type="number" min="0" step="0.01" class="form-control"
+                                                id="cashback_max" value="0">
+                                        </div>
+                                        <div class="col-md-3 mb-2">
+                                            <label>Valid for (days)</label>
+                                            <input type="number" min="1" step="1" class="form-control"
+                                                id="cashback_validity" value="30">
+                                        </div>
+                                    </div>
+                                    <div class="form-row align-items-end">
+                                        <div class="col-md-3 mb-2">
+                                            <label>Min bill to redeem
+                                                (<span class="cashback-currency-label">currency</span>)</label>
+                                            <input type="number" min="0" step="0.01" class="form-control"
+                                                id="cashback_min_redeem" value="0">
+                                        </div>
+                                        <div class="col-md-3 mb-2">
+                                            <div class="custom-control custom-switch mt-4">
+                                                <input type="checkbox" class="custom-control-input" id="cashback_bind">
+                                                <label class="custom-control-label" for="cashback_bind">Bind to the
+                                                    customer</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3 mb-2">
+                                            <label>Send via</label>
+                                            <select class="form-control" id="cashback_channel">
+                                                <option value="none">Don't send (print only)</option>
+                                                <option value="sms">SMS</option>
+                                                <option value="whatsapp">WhatsApp</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="col-md-12 mb-2">
+                                            <label>Message — {name} {amount} {code} {currency} {shop} {expiry}</label>
+                                            <textarea class="form-control" id="cashback_template" rows="2"
+                                                placeholder="Thank you {name}! You earned {currency}{amount} cashback (code {code}). Use it before {expiry}."></textarea>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-outline-primary mt-2" id="cashback_save">
+                                        <i class="feather icon-save mr-2"></i> Save cashback settings
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="card m-b-30">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">Recently issued</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-borderless">
+                                            <thead>
+                                                <tr>
+                                                    <td class="font-weight-normal">Code</td>
+                                                    <td class="font-weight-normal text-right">Amount</td>
+                                                    <td class="font-weight-normal">Customer</td>
+                                                    <td class="font-weight-normal">Expires</td>
+                                                    <td class="font-weight-normal">Status</td>
+                                                    <td class="font-weight-normal text-center">Print</td>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="cashback_recent_body"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        
+                                                </div>
+                                                <div class="tab-pane fade" id="mkt-sub-campaigns" role="tabpanel">
+
                             <div class="card m-b-30">
                                 <div class="card-header d-flex align-items-center justify-content-between">
                                     <h5 class="card-title mb-0">
@@ -1094,26 +1265,15 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
-
-                        <!-- SMS & WhatsApp Providers Start (super admin only) -->
-                        <div class="tab-pane fade" id="v-pills-messaging" role="tabpanel"
-                            aria-labelledby="v-pills-messaging-tab">
-                            <div id="messaging_not_allowed" class="alert alert-warning" style="display:none;">
-                                Only a super admin can configure messaging providers.
-                            </div>
-                            <div id="messaging_body">
-                                <div class="card m-b-30">
-                                    <div class="card-header d-flex align-items-center justify-content-between">
-                                        <h5 class="card-title mb-0">SMS provider</h5>
-                                        <div class="custom-control custom-switch">
-                                            <input type="checkbox" class="custom-control-input" id="messaging_sms_enabled">
-                                            <label class="custom-control-label" for="messaging_sms_enabled">Enable
-                                                SMS</label>
+                        
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div class="card-body">
-                                        <p class="text-muted mb-3">SMS is sent through <strong>your own provider
+                                </div>
+                            </div>
+                        </div>
+                        -muted mb-3">SMS is sent through <strong>your own provider
                                                 account</strong> — pick your provider and enter your credentials. Your
                                             keys are stored securely on the server and are never shown again after
                                             saving.</p>
@@ -1232,246 +1392,383 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        
+                                                </div>
+                                                <div class="tab-pane fade" id="msg-sub-whatsapp" role="tabpanel">
 
-                        <!-- Credit & Reminders Start -->
-                        <div class="tab-pane fade" id="v-pills-credit" role="tabpanel"
-                            aria-labelledby="v-pills-credit-tab">
-                            <div class="card m-b-30">
-                                <div class="card-header">
-                                    <h5 class="card-title mb-0">Credit rules</h5>
-                                </div>
-                                <div class="card-body">
-                                    <p class="text-muted mb-3">Let customers buy on credit (khata) and collect later. A
-                                        credit limit caps how much a customer can owe; leave it 0 for no limit.</p>
-                                    <div class="form-row">
-                                        <div class="col-md-4 mb-2">
-                                            <label>Default credit limit
-                                                (<span class="credit-currency-label">currency</span>, 0 = none)</label>
-                                            <input type="number" min="0" step="0.01" class="form-control"
-                                                id="credit_default_limit" value="0">
-                                        </div>
-                                        <div class="col-md-4 mb-2">
-                                            <label>Credit terms (days, 0 = none)</label>
-                                            <input type="number" min="0" step="1" class="form-control"
-                                                id="credit_terms_days" value="0">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                            <!-- WhatsApp Sub-tabs Navigation -->
+                            <ul class="nav nav-tabs custom-tab-line mb-3" id="whatsappSubTabs" role="tablist">
+                                <li class="nav-item">
+                                    <a class="nav-link active" id="whatsapp-connection-tab" data-toggle="tab" href="#whatsapp-connection" role="tab" aria-controls="whatsapp-connection" aria-selected="true">
+                                        <i class="feather icon-link mr-2"></i>Connection
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" id="whatsapp-template-tab" data-toggle="tab" href="#whatsapp-template" role="tab" aria-controls="whatsapp-template" aria-selected="false">
+                                        <i class="feather icon-file-text mr-2"></i>Template
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" id="whatsapp-test-tab" data-toggle="tab" href="#whatsapp-test" role="tab" aria-controls="whatsapp-test" aria-selected="false">
+                                        <i class="feather icon-send mr-2"></i>Test Message
+                                    </a>
+                                </li>
+                            </ul>
 
-                            <div class="card m-b-30">
-                                <div class="card-header d-flex align-items-center justify-content-between">
-                                    <h5 class="card-title mb-0">Payment reminders</h5>
-                                    <div class="custom-control custom-switch">
-                                        <input type="checkbox" class="custom-control-input"
-                                            id="credit_reminder_enabled">
-                                        <label class="custom-control-label" for="credit_reminder_enabled">Enable
-                                            reminders</label>
-                                    </div>
-                                </div>
-                                <div class="card-body">
-                                    <p class="text-muted mb-3">Remind customers who owe money, over SMS or WhatsApp (your
-                                        configured providers). A customer is never reminded twice in one day.</p>
-                                    <div class="form-row">
-                                        <div class="col-md-3 mb-2">
-                                            <label>Channel</label>
-                                            <select class="form-control" id="credit_reminder_channel">
-                                                <option value="sms">SMS</option>
-                                                <option value="whatsapp">WhatsApp</option>
-                                            </select>
+                            <!-- WhatsApp Sub-tabs Content -->
+                            <div class="tab-content" id="whatsappSubTabContent">
+                                <!-- Connection/Status Tab -->
+                                <div class="tab-pane fade show active" id="whatsapp-connection" role="tabpanel" aria-labelledby="whatsapp-connection-tab">
+                                    <div class="card m-b-30">
+                                        <div class="card-header">
+                                            <h5 class="card-title mb-0">
+                                                <i class="feather icon-link mr-2"></i>WhatsApp Connection
+                                            </h5>
                                         </div>
-                                        <div class="col-md-3 mb-2">
-                                            <label>Only remind dues over
-                                                (<span class="credit-currency-label">currency</span>)</label>
-                                            <input type="number" min="0" step="0.01" class="form-control"
-                                                id="credit_reminder_min_due" value="0">
-                                        </div>
-                                    </div>
-                                    <div class="form-row">
-                                        <div class="col-md-12 mb-2">
-                                            <label>Message — use {name} {due} {currency} {shop}</label>
-                                            <textarea class="form-control" id="credit_reminder_template" rows="2"
-                                                placeholder="Hi {name}, you have {currency}{due} due at {shop}. Please pay soon."></textarea>
-                                        </div>
-                                    </div>
-                                    <button type="button" class="btn btn-outline-primary mt-2" id="credit_save">
-                                        <i class="feather icon-save mr-2"></i> Save credit settings
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div class="card m-b-30">
-                                <div class="card-header d-flex align-items-center justify-content-between">
-                                    <h5 class="card-title mb-0">Outstanding customers —
-                                        <span id="credit_outstanding_total">0</span></h5>
-                                    <div>
-                                        <button type="button" class="btn btn-outline-secondary btn-sm mr-1"
-                                            id="credit_remind_test">Test (dry run)</button>
-                                        <button type="button" class="btn btn-primary-rgba btn-sm"
-                                            id="credit_remind_all"><i class="feather icon-send mr-1"></i> Remind
-                                            all</button>
-                                    </div>
-                                </div>
-                                <div class="card-body">
-                                    <div class="table-responsive">
-                                        <table class="table table-borderless">
-                                            <thead>
-                                                <tr>
-                                                    <td class="font-weight-normal">Customer</td>
-                                                    <td class="font-weight-normal">Phone</td>
-                                                    <td class="font-weight-normal text-right">Due</td>
-                                                    <td class="font-weight-normal text-center">Action</td>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="credit_outstanding_body"></tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Cashback Start -->
-                        <div class="tab-pane fade" id="v-pills-cashback" role="tabpanel"
-                            aria-labelledby="v-pills-cashback-tab">
-                            <div class="card m-b-30">
-                                <div class="card-header d-flex align-items-center justify-content-between">
-                                    <h5 class="card-title mb-0">Cashback</h5>
-                                    <div class="custom-control custom-switch">
-                                        <input type="checkbox" class="custom-control-input" id="cashback_enabled">
-                                        <label class="custom-control-label" for="cashback_enabled">Enable cashback</label>
-                                    </div>
-                                </div>
-                                <div class="card-body">
-                                    <p class="text-muted mb-3">A qualifying sale gives the customer a single-use voucher
-                                        worth a percentage of the bill, to spend on their next visit before it expires.
-                                        They can redeem it at the till (type the code, or scan the printed barcode), and
-                                        it can be sent by SMS/WhatsApp.</p>
-                                    <div class="form-row">
-                                        <div class="col-md-3 mb-2">
-                                            <label>Cashback %</label>
-                                            <input type="number" min="0" max="100" step="0.1" class="form-control"
-                                                id="cashback_percent" value="0">
-                                        </div>
-                                        <div class="col-md-3 mb-2">
-                                            <label>Min bill to earn
-                                                (<span class="cashback-currency-label">currency</span>)</label>
-                                            <input type="number" min="0" step="0.01" class="form-control"
-                                                id="cashback_min_spend" value="0">
-                                        </div>
-                                        <div class="col-md-3 mb-2">
-                                            <label>Max cashback
-                                                (<span class="cashback-currency-label">currency</span>, 0=none)</label>
-                                            <input type="number" min="0" step="0.01" class="form-control"
-                                                id="cashback_max" value="0">
-                                        </div>
-                                        <div class="col-md-3 mb-2">
-                                            <label>Valid for (days)</label>
-                                            <input type="number" min="1" step="1" class="form-control"
-                                                id="cashback_validity" value="30">
-                                        </div>
-                                    </div>
-                                    <div class="form-row align-items-end">
-                                        <div class="col-md-3 mb-2">
-                                            <label>Min bill to redeem
-                                                (<span class="cashback-currency-label">currency</span>)</label>
-                                            <input type="number" min="0" step="0.01" class="form-control"
-                                                id="cashback_min_redeem" value="0">
-                                        </div>
-                                        <div class="col-md-3 mb-2">
-                                            <div class="custom-control custom-switch mt-4">
-                                                <input type="checkbox" class="custom-control-input" id="cashback_bind">
-                                                <label class="custom-control-label" for="cashback_bind">Bind to the
-                                                    customer</label>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="form-group">
+                                                        <label for="whatsapp_device_id">Device ID <span class="text-danger">*</span></label>
+                                                        <input type="text" class="form-control border-control" id="whatsapp_device_id" 
+                                                            placeholder="Enter unique device ID (e.g., device_001)" maxlength="50">
+                                                        <small class="form-text text-muted">Enter a unique identifier for this device</small>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="form-group">
+                                                        <label>Connection Status</label>
+                                                        <div class="d-flex align-items-center">
+                                                            <span class="badge badge-secondary" id="whatsapp_status_badge">Not Connected</span>
+                                                            <button type="button" class="btn btn-sm btn-outline-primary ml-2" id="whatsapp_refresh_status" onclick="PosnicPro.whatsapp.checkStatus();">
+                                                                <i class="feather icon-refresh-cw"></i> Refresh
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-12">
+                                                    <button type="button" class="btn btn-success" id="whatsapp_connect_btn" onclick="PosnicPro.whatsapp.connect();" style="display:none;">
+                                                        <i class="feather icon-link mr-2"></i> Connect WhatsApp
+                                                    </button>
+                                                    <button type="button" class="btn btn-danger" id="whatsapp_disconnect_btn" onclick="PosnicPro.whatsapp.disconnect();" style="display:none;">
+                                                        <i class="feather icon-log-out mr-2"></i> Disconnect
+                                                    </button>
+                                                    <div id="whatsapp_qr_container" style="display:none; margin-top:20px;">
+                                                        <div id="whatsapp_qr_code" class="text-center">
+                                                            <div class="spinner-border text-primary" role="status">
+                                                                <span class="sr-only">Loading...</span>
+                                                            </div>
+                                                            <p class="mt-2">Generating QR Code...</p>
+                                                        </div>
+                                                    </div>
+                                                    <div id="whatsapp_connected_info" style="display:none; margin-top:20px;">
+                                                        <div class="alert alert-success">
+                                                            <i class="feather icon-check-circle mr-2"></i>
+                                                            WhatsApp is connected and ready to send messages!
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div class="col-md-3 mb-2">
-                                            <label>Send via</label>
-                                            <select class="form-control" id="cashback_channel">
-                                                <option value="none">Don't send (print only)</option>
-                                                <option value="sms">SMS</option>
-                                                <option value="whatsapp">WhatsApp</option>
-                                            </select>
-                                        </div>
                                     </div>
-                                    <div class="form-row">
-                                        <div class="col-md-12 mb-2">
-                                            <label>Message — {name} {amount} {code} {currency} {shop} {expiry}</label>
-                                            <textarea class="form-control" id="cashback_template" rows="2"
-                                                placeholder="Thank you {name}! You earned {currency}{amount} cashback (code {code}). Use it before {expiry}."></textarea>
-                                        </div>
-                                    </div>
-                                    <button type="button" class="btn btn-outline-primary mt-2" id="cashback_save">
-                                        <i class="feather icon-save mr-2"></i> Save cashback settings
-                                    </button>
                                 </div>
+                                <!-- End Connection/Status Tab -->
+
+                                <!-- Template Tab -->
+                                <div class="tab-pane fade" id="whatsapp-template" role="tabpanel" aria-labelledby="whatsapp-template-tab">
+                                    <div class="card m-b-30">
+                                        <div class="card-header">
+                                            <h5 class="card-title mb-0">
+                                                <i class="feather icon-file-text mr-2"></i>WhatsApp Message Templates
+                                            </h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="alert alert-info mb-4">
+                                                <h6 class="alert-heading"><i class="feather icon-info mr-2"></i>Message Templates:</h6>
+                                                <p class="mb-0">Create and manage message templates for quick sending. These templates can be used for common messages like receipts, payment reminders, etc.</p>
+                                            </div>
+                                            
+                                            <div class="row">
+                                                <div class="col-md-12">
+                                                    <button type="button" class="btn btn-primary mb-3" onclick="PosnicPro.whatsapp.addTemplate();">
+                                                        <i class="feather icon-plus mr-2"></i> Add New Template
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div class="row">
+                                                <div class="col-md-12">
+                                                    <div class="table-responsive">
+                                                        <table class="table table-bordered" id="whatsapp_templates_table">
+                                                            <thead class="thead-light">
+                                                                <tr>
+                                                                    <th>Template Name</th>
+                                                                    <th>Message</th>
+                                                                    <th>Created Date</th>
+                                                                    <th>Actions</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <tr>
+                                                                    <td colspan="4" class="text-center text-muted">
+                                                                        <i class="feather icon-inbox mr-2"></i>
+                                                                        No templates found. Add your first template above.
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- End Template Tab -->
+
+                                <!-- Test Message Tab -->
+                                <div class="tab-pane fade" id="whatsapp-test" role="tabpanel" aria-labelledby="whatsapp-test-tab">
+                                    <div class="card m-b-30">
+                                        <div class="card-header">
+                                            <h5 class="card-title mb-0">
+                                                <i class="feather icon-send mr-2"></i>Test WhatsApp Message
+                                            </h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="form-group">
+                                                        <label for="whatsapp_test_phone">Phone Number <span class="text-danger">*</span></label>
+                                                        <input type="text" class="form-control border-control" id="whatsapp_test_phone" 
+                                                            placeholder="Enter phone number with country code (e.g., 919876543210)" maxlength="15">
+                                                        <small class="form-text text-muted">Include country code without +</small>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="form-group">
+                                                        <label for="whatsapp_test_template">Use Template (Optional)</label>
+                                                        <select class="form-control border-control" id="whatsapp_test_template">
+                                                            <option value="">Select a template...</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="row">
+                                                <div class="col-md-12">
+                                                    <div class="form-group">
+                                                        <label for="whatsapp_test_message">Message <span class="text-danger">*</span></label>
+                                                        <textarea class="form-control border-control" id="whatsapp_test_message" 
+                                                            rows="5" placeholder="Enter your test message here..." maxlength="1000"></textarea>
+                                                        <small class="form-text text-muted" id="whatsapp_test_char_count">0 / 1000 characters</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="row">
+                                                <div class="col-md-12">
+                                                    <button type="button" class="btn btn-success" id="whatsapp_test_send_btn" onclick="PosnicPro.whatsapp.sendTestMessage();">
+                                                        <i class="feather icon-send mr-2"></i> Send Test Message
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-secondary ml-2" onclick="PosnicPro.whatsapp.clearTestForm();">
+                                                        <i class="feather icon-refresh-cw mr-2"></i> Clear
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- End Test Message Tab -->
+
                             </div>
+                            <!-- End WhatsApp Sub-tabs Content -->
+                        
+                                                </div>
+                                                <div class="tab-pane fade" id="msg-sub-email" role="tabpanel">
+
+
+                            <div class="order-box">
+                                <form class="form-validate" method="post" name="email_add" id="email_add">
+                                    <div class="card border m-b-30">
+                                        <div class="card-header">
+                                            <h5 class="card-title mb-0">Report Email Settings</h5>
+                                        </div>
+                                        <div class="card-body loader-view-emailsetting">
+                                            <div class="form-row">
+                                                <div class="form-group col-9">
+                                                    <label class="form-control-placeholder" for="email_address">
+                                                        <lang class="lang_addfield">Email Address</lang> <span
+                                                            class="text-danger">*</span>
+                                                    </label>
+                                                    <div class="email-wrapper">
+                                                        <div class="email-fields">
+                                                            <div class="email-input" style="padding-bottom: 10px;">
+                                                                <input type="email" id="emailaddress[0]"
+                                                                    name="emailaddress[0]"
+                                                                    class="form-control border-control email_list"
+                                                                    maxlength="250"
+                                                                    placeholder="Enter the email address"
+                                                                    autocomplete="off" required>
+                                                                <span
+                                                                    class="remove-email-field btn-round btn-danger-rgba"><i
+                                                                        class="feather icon-trash"></i></span>
+                                                                <span
+                                                                    class="add-email-field btn-round btn-success-rgba"><i
+                                                                        class="feather icon-plus mr-2"></i></span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="form-row">
+                                                <div class="form-group col-9">
+                                                    <label for="report_type"> Sales Report Type </label>
+                                                    <select class="custom-select border-control select2"
+                                                        name="report_type" id="report_type" required>
+                                                        <option value="daily" selected>Daily</option>
+                                                        <option value="weekly">Weekly</option>
+                                                        <option value="monthly">Monthly</option>
+                                                        <option value="yearly">Yearly</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="form-row">
+                                                <div class="form-group col-9">
+                                                    <label for="send_mail"> Send Mail </label>
+                                                    <select class="custom-select border-control select2"
+                                                        name="send_mail" id="send_mail" required>
+                                                        <option value="mail_on" selected>On</option>
+                                                        <option value="mail_off">Off</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="card-footer text-right">
+                                            <button type="button"
+                                                class="btn btn-outline-secondary infobar-settings-reset settings_edit_reset"
+                                                onclick="PosnicPro.settings.resetEmailSetting();"><i
+                                                    class="feather icon-refresh-ccw mr-2"></i>
+                                                <lang class="lang_reset_title"> Reset</lang>
+                                            </button>
+                                            <button type="submit" class="btn btn-outline-primary"><i
+                                                    class="feather icon-save mr-2"></i>
+                                                <lang class="lang_save_title">Save</lang>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        
+                                                </div>
+                                                <div class="tab-pane fade" id="msg-sub-sms" role="tabpanel">
 
                             <div class="card m-b-30">
                                 <div class="card-header">
-                                    <h5 class="card-title mb-0">Recently issued</h5>
+                                    <h5 class="card-title">SMS Type</h5>
                                 </div>
                                 <div class="card-body">
-                                    <div class="table-responsive">
-                                        <table class="table table-borderless">
-                                            <thead>
-                                                <tr>
-                                                    <td class="font-weight-normal">Code</td>
-                                                    <td class="font-weight-normal text-right">Amount</td>
-                                                    <td class="font-weight-normal">Customer</td>
-                                                    <td class="font-weight-normal">Expires</td>
-                                                    <td class="font-weight-normal">Status</td>
-                                                    <td class="font-weight-normal text-center">Print</td>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="cashback_recent_body"></tbody>
-                                        </table>
+                                    <ul class="nav nav-tabs custom-tab-line mb-3" id="defaultTabLine" role="tablist">
+                                        <li class="nav-item">
+                                            <a class="nav-link active" id="way2sms-tab-line" data-toggle="tab"
+                                                href="#way2sms-line" role="tab" aria-controls="way2sms-line"
+                                                aria-selected="true">Way2sms</a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" id="textlocal-tab-line" data-toggle="tab"
+                                                href="#textlocal-line" role="tab" aria-controls="textlocal-line"
+                                                aria-selected="false">Textlocal</a>
+                                        </li>
+                                    </ul>
+                                    <div class="tab-content">
+                                        <div class="tab-pane fade active show" id="way2sms-line" role="tabpanel"
+                                            aria-labelledby="way2sms-tab-line">
+                                            <form id="sms_setting">
+                                                <div class="form-row">
+                                                    <div class="form-group col-md-6">
+                                                        <label for="way2sms_userid">
+                                                            <lang class="lang_entermobilenumber_title">Enter mobile
+                                                                number </lang> <span class="text-danger">*</span>
+                                                        </label>
+                                                        <input name="way2sms_userid" id="way2sms_userid" type="tel"
+                                                            class="form-control border-control" minlength="3"
+                                                            maxlength="20" placeholder="Enter a mobile number" required>
+                                                    </div>
+                                                    <div class="form-group col-md-6">
+                                                        <label for="way2sms_password">
+                                                            <lang class="lang_enterpassword_title">Enter password
+                                                            </lang> <span class="text-danger">*</span>
+                                                        </label>
+                                                        <input name="way2sms_password" id="way2sms_password"
+                                                            type="password" class="form-control border-control"
+                                                            maxlength="50" placeholder="Enter a password" required
+                                                            autocomplete="new-password">
+                                                    </div>
+                                                </div>
+                                                <div class="form-row">
+                                                    <div class="form-group col-md-6">
+                                                        <label for="way2sms_api">
+                                                            <lang class="lang_apikey">API Key </lang> <span
+                                                                class="text-danger">*</span>
+                                                        </label>
+                                                        <input type="text" class="form-control border-control"
+                                                            name="way2sms_api" id="way2sms_api" maxlength="100"
+                                                            placeholder="Enter a API key" autocomplete="off" required>
+                                                    </div>
+                                                </div>
+                                                <div class="card-footer text-right">
+                                                    <button type="submit" class="btn btn-outline-primary"><i
+                                                            class="feather icon-save mr-2"></i>
+                                                        <lang class="lang_save_title">Save</lang>
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                        <div class="tab-pane fade" id="textlocal-line" role="tabpanel"
+                                            aria-labelledby="textlocal-tab-line">
+                                            <form id="textlocal_setting">
+                                                <div class="form-row">
+                                                    <div class="form-group col-md-6">
+                                                        <label for="textlocal_sender">
+                                                            <lang class="lang_sendername">Sender Name</lang> <span
+                                                                class="text-danger">*</span>
+                                                        </label>
+                                                        <input name="textlocal_sender" id="textlocal_sender" type="text"
+                                                            class="form-control border-control"
+                                                            placeholder="Enter a sender name" maxlength="20" required>
+                                                    </div>
+                                                </div>
+                                                <div class="form-row">
+                                                    <div class="form-group col-md-6">
+                                                        <label for="textlocal_api">
+                                                            <lang class="lang_apikey">API Key </lang><span
+                                                                class="text-danger">*</span>
+                                                        </label>
+                                                        <input name="textlocal_api" id="textlocal_api" type="text"
+                                                            class="form-control border-control" maxlength="100"
+                                                            placeholder="Enter a API key" required>
+                                                    </div>
+                                                </div>
+                                                <div class="card-footer text-right">
+                                                    <button type="submit" class="btn btn-outline-primary"><i
+                                                            class="feather icon-save mr-2"></i>
+                                                        <lang class="lang_save_title">Save</lang>
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-
-                        <!-- Tax Tab Start -->
-                        
-
-
-                        <!-- cash denomination Start -->
-                        
-                        <!--Denom field end-->
-
-                        <!-- table orders Start -->
-                        <div class="tab-pane fade" id="v-pills-tableorder" role="tabpanel"
-                            aria-labelledby="v-pills-tableorder-tab">
-                            <div class="card m-b-30" data-module="plan" data-access="read">
-                                <div class="card-body">
-                                    <small class="form-text text-muted">
-                                        <lang class="lang_modules_kot_hint">Restaurant / KOT mode is switched on
-                                        under Settings &gt; Modules. This page manages the tables it uses.</lang>
-                                    </small>
-                                </div>
-                            </div>
-                            <div class="card m-b-30">
-                                <div class="card-header">
-                                    <h5 class="card-title">
-                                        Tables list
-                                    </h5>
-                                </div>
-                                <div class="card-body">
-                                    <div class="order-box">
-                                        <div class="card border m-b-30">
-                                            <div class="card-header">
-                                                <div class="row align-items-center">
-                                                    <div class="col-sm-2">
-                                                        <select class="form-control" id="view_tableorder_per_page" onchange="PosnicPro.tableOrders.changePerPage()">
-                                                            <option value="5">5</option>
-                                                            <option value="10" selected>10</option>
-                                                            <option value="25">25</option>
-                                                            <option value="50">50</option>
-                                                            <option value="100">100</option>
-                                                        </select>
-                                                    </div>
-                                                    <div class="col-sm-4"></div>
-                                                    <div class="col-sm-6">
+                                              <div class="col-sm-6">
                                                         <h6 class="mb-0 float-right"><a data-module="branch" data-access="write"
                                                                 class="btn btn-primary-rgba"
                                                                 href="#/settings/tableorder/new"><i
@@ -2107,81 +2404,7 @@
                         <!-- Erase Tab End -->
 
                         <!-- Email Setting Tab Start-->
-                        <div class="tab-pane fade" data-module="branch" data-access="write" id="v-pills-email"
-                            role="tabpanel" aria-labelledby="v-pills-email-tab">
-
-                            <div class="order-box">
-                                <form class="form-validate" method="post" name="email_add" id="email_add">
-                                    <div class="card border m-b-30">
-                                        <div class="card-header">
-                                            <h5 class="card-title mb-0">Report Email Settings</h5>
-                                        </div>
-                                        <div class="card-body loader-view-emailsetting">
-                                            <div class="form-row">
-                                                <div class="form-group col-9">
-                                                    <label class="form-control-placeholder" for="email_address">
-                                                        <lang class="lang_addfield">Email Address</lang> <span
-                                                            class="text-danger">*</span>
-                                                    </label>
-                                                    <div class="email-wrapper">
-                                                        <div class="email-fields">
-                                                            <div class="email-input" style="padding-bottom: 10px;">
-                                                                <input type="email" id="emailaddress[0]"
-                                                                    name="emailaddress[0]"
-                                                                    class="form-control border-control email_list"
-                                                                    maxlength="250"
-                                                                    placeholder="Enter the email address"
-                                                                    autocomplete="off" required>
-                                                                <span
-                                                                    class="remove-email-field btn-round btn-danger-rgba"><i
-                                                                        class="feather icon-trash"></i></span>
-                                                                <span
-                                                                    class="add-email-field btn-round btn-success-rgba"><i
-                                                                        class="feather icon-plus mr-2"></i></span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="form-row">
-                                                <div class="form-group col-9">
-                                                    <label for="report_type"> Sales Report Type </label>
-                                                    <select class="custom-select border-control select2"
-                                                        name="report_type" id="report_type" required>
-                                                        <option value="daily" selected>Daily</option>
-                                                        <option value="weekly">Weekly</option>
-                                                        <option value="monthly">Monthly</option>
-                                                        <option value="yearly">Yearly</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div class="form-row">
-                                                <div class="form-group col-9">
-                                                    <label for="send_mail"> Send Mail </label>
-                                                    <select class="custom-select border-control select2"
-                                                        name="send_mail" id="send_mail" required>
-                                                        <option value="mail_on" selected>On</option>
-                                                        <option value="mail_off">Off</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="card-footer text-right">
-                                            <button type="button"
-                                                class="btn btn-outline-secondary infobar-settings-reset settings_edit_reset"
-                                                onclick="PosnicPro.settings.resetEmailSetting();"><i
-                                                    class="feather icon-refresh-ccw mr-2"></i>
-                                                <lang class="lang_reset_title"> Reset</lang>
-                                            </button>
-                                            <button type="submit" class="btn btn-outline-primary"><i
-                                                    class="feather icon-save mr-2"></i>
-                                                <lang class="lang_save_title">Save</lang>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
+                        
                         <!-- Email Setting Tab End -->
 
                         <!-- QR Setting Tab Start -->
@@ -3720,195 +3943,7 @@
                         <!-- Theme Settings Tab End -->
 
                         <!-- WhatsApp Settings Tab Start -->
-                        <div class="tab-pane fade" id="v-pills-whatsapp" role="tabpanel" aria-labelledby="v-pills-whatsapp-tab">
-                            <!-- WhatsApp Sub-tabs Navigation -->
-                            <ul class="nav nav-tabs custom-tab-line mb-3" id="whatsappSubTabs" role="tablist">
-                                <li class="nav-item">
-                                    <a class="nav-link active" id="whatsapp-connection-tab" data-toggle="tab" href="#whatsapp-connection" role="tab" aria-controls="whatsapp-connection" aria-selected="true">
-                                        <i class="feather icon-link mr-2"></i>Connection
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" id="whatsapp-template-tab" data-toggle="tab" href="#whatsapp-template" role="tab" aria-controls="whatsapp-template" aria-selected="false">
-                                        <i class="feather icon-file-text mr-2"></i>Template
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" id="whatsapp-test-tab" data-toggle="tab" href="#whatsapp-test" role="tab" aria-controls="whatsapp-test" aria-selected="false">
-                                        <i class="feather icon-send mr-2"></i>Test Message
-                                    </a>
-                                </li>
-                            </ul>
-
-                            <!-- WhatsApp Sub-tabs Content -->
-                            <div class="tab-content" id="whatsappSubTabContent">
-                                <!-- Connection/Status Tab -->
-                                <div class="tab-pane fade show active" id="whatsapp-connection" role="tabpanel" aria-labelledby="whatsapp-connection-tab">
-                                    <div class="card m-b-30">
-                                        <div class="card-header">
-                                            <h5 class="card-title mb-0">
-                                                <i class="feather icon-link mr-2"></i>WhatsApp Connection
-                                            </h5>
-                                        </div>
-                                        <div class="card-body">
-                                            <div class="row">
-                                                <div class="col-md-6">
-                                                    <div class="form-group">
-                                                        <label for="whatsapp_device_id">Device ID <span class="text-danger">*</span></label>
-                                                        <input type="text" class="form-control border-control" id="whatsapp_device_id" 
-                                                            placeholder="Enter unique device ID (e.g., device_001)" maxlength="50">
-                                                        <small class="form-text text-muted">Enter a unique identifier for this device</small>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <div class="form-group">
-                                                        <label>Connection Status</label>
-                                                        <div class="d-flex align-items-center">
-                                                            <span class="badge badge-secondary" id="whatsapp_status_badge">Not Connected</span>
-                                                            <button type="button" class="btn btn-sm btn-outline-primary ml-2" id="whatsapp_refresh_status" onclick="PosnicPro.whatsapp.checkStatus();">
-                                                                <i class="feather icon-refresh-cw"></i> Refresh
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-md-12">
-                                                    <button type="button" class="btn btn-success" id="whatsapp_connect_btn" onclick="PosnicPro.whatsapp.connect();" style="display:none;">
-                                                        <i class="feather icon-link mr-2"></i> Connect WhatsApp
-                                                    </button>
-                                                    <button type="button" class="btn btn-danger" id="whatsapp_disconnect_btn" onclick="PosnicPro.whatsapp.disconnect();" style="display:none;">
-                                                        <i class="feather icon-log-out mr-2"></i> Disconnect
-                                                    </button>
-                                                    <div id="whatsapp_qr_container" style="display:none; margin-top:20px;">
-                                                        <div id="whatsapp_qr_code" class="text-center">
-                                                            <div class="spinner-border text-primary" role="status">
-                                                                <span class="sr-only">Loading...</span>
-                                                            </div>
-                                                            <p class="mt-2">Generating QR Code...</p>
-                                                        </div>
-                                                    </div>
-                                                    <div id="whatsapp_connected_info" style="display:none; margin-top:20px;">
-                                                        <div class="alert alert-success">
-                                                            <i class="feather icon-check-circle mr-2"></i>
-                                                            WhatsApp is connected and ready to send messages!
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <!-- End Connection/Status Tab -->
-
-                                <!-- Template Tab -->
-                                <div class="tab-pane fade" id="whatsapp-template" role="tabpanel" aria-labelledby="whatsapp-template-tab">
-                                    <div class="card m-b-30">
-                                        <div class="card-header">
-                                            <h5 class="card-title mb-0">
-                                                <i class="feather icon-file-text mr-2"></i>WhatsApp Message Templates
-                                            </h5>
-                                        </div>
-                                        <div class="card-body">
-                                            <div class="alert alert-info mb-4">
-                                                <h6 class="alert-heading"><i class="feather icon-info mr-2"></i>Message Templates:</h6>
-                                                <p class="mb-0">Create and manage message templates for quick sending. These templates can be used for common messages like receipts, payment reminders, etc.</p>
-                                            </div>
-                                            
-                                            <div class="row">
-                                                <div class="col-md-12">
-                                                    <button type="button" class="btn btn-primary mb-3" onclick="PosnicPro.whatsapp.addTemplate();">
-                                                        <i class="feather icon-plus mr-2"></i> Add New Template
-                                                    </button>
-                                                </div>
-                                            </div>
-
-                                            <div class="row">
-                                                <div class="col-md-12">
-                                                    <div class="table-responsive">
-                                                        <table class="table table-bordered" id="whatsapp_templates_table">
-                                                            <thead class="thead-light">
-                                                                <tr>
-                                                                    <th>Template Name</th>
-                                                                    <th>Message</th>
-                                                                    <th>Created Date</th>
-                                                                    <th>Actions</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                <tr>
-                                                                    <td colspan="4" class="text-center text-muted">
-                                                                        <i class="feather icon-inbox mr-2"></i>
-                                                                        No templates found. Add your first template above.
-                                                                    </td>
-                                                                </tr>
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <!-- End Template Tab -->
-
-                                <!-- Test Message Tab -->
-                                <div class="tab-pane fade" id="whatsapp-test" role="tabpanel" aria-labelledby="whatsapp-test-tab">
-                                    <div class="card m-b-30">
-                                        <div class="card-header">
-                                            <h5 class="card-title mb-0">
-                                                <i class="feather icon-send mr-2"></i>Test WhatsApp Message
-                                            </h5>
-                                        </div>
-                                        <div class="card-body">
-                                            <div class="row">
-                                                <div class="col-md-6">
-                                                    <div class="form-group">
-                                                        <label for="whatsapp_test_phone">Phone Number <span class="text-danger">*</span></label>
-                                                        <input type="text" class="form-control border-control" id="whatsapp_test_phone" 
-                                                            placeholder="Enter phone number with country code (e.g., 919876543210)" maxlength="15">
-                                                        <small class="form-text text-muted">Include country code without +</small>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <div class="form-group">
-                                                        <label for="whatsapp_test_template">Use Template (Optional)</label>
-                                                        <select class="form-control border-control" id="whatsapp_test_template">
-                                                            <option value="">Select a template...</option>
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div class="row">
-                                                <div class="col-md-12">
-                                                    <div class="form-group">
-                                                        <label for="whatsapp_test_message">Message <span class="text-danger">*</span></label>
-                                                        <textarea class="form-control border-control" id="whatsapp_test_message" 
-                                                            rows="5" placeholder="Enter your test message here..." maxlength="1000"></textarea>
-                                                        <small class="form-text text-muted" id="whatsapp_test_char_count">0 / 1000 characters</small>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div class="row">
-                                                <div class="col-md-12">
-                                                    <button type="button" class="btn btn-success" id="whatsapp_test_send_btn" onclick="PosnicPro.whatsapp.sendTestMessage();">
-                                                        <i class="feather icon-send mr-2"></i> Send Test Message
-                                                    </button>
-                                                    <button type="button" class="btn btn-outline-secondary ml-2" onclick="PosnicPro.whatsapp.clearTestForm();">
-                                                        <i class="feather icon-refresh-cw mr-2"></i> Clear
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <!-- End Test Message Tab -->
-
-                            </div>
-                            <!-- End WhatsApp Sub-tabs Content -->
-                        </div>
+                        
                         <!-- WhatsApp Settings Tab End -->
 
                     </div>
