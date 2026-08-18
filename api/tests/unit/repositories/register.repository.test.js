@@ -12,6 +12,7 @@ jest.mock('../../../src/constants/registers.constants', () => ({
     REGISTER_NOT_FOUND: 'Register Not Found',
     REGISTER_NOT_OPENED: 'Register is not opened',
     INVALID_REGISTER_ID: 'Invalid register ID',
+    REGISTER_SESSION_LOCKED: 'This register is already open on another device or by another user',
     FAILED_FETCH_REGISTER_REPORT: 'Failed to fetch register report',
     FAILED_FETCH_REGISTER_SALE_DETAILS: 'Failed to fetch register sale details',
     NOT_VALID_INPUT: 'Not valid Input',
@@ -880,6 +881,57 @@ describe('RegisterRepository', () => {
         registerData: {},
       });
       expect(r.status).toBe(false);
+    });
+  });
+
+  /*
+   * The session lock protects a register from OTHER USERS, never from its own
+   * holder: web device ids derive from ip+user-agent, so the same person on a
+   * new browser or network looked like "another device" and was locked out of
+   * their own session (field report: single-user shop, Resume refused).
+   */
+  describe('registeraddInsert session lock', () => {
+    const openSession = (owner) => ({
+      _id: FAKE_ID,
+      register_id: FAKE_REG,
+      register_status: REGISTER_STATUS.OPENED,
+      current_user_id: owner,
+      current_user: 'Priya',
+      lock_device_id: 'device-A',
+      lock_acquired_at: new Date('2026-08-18T00:00:00Z'),
+    });
+
+    test('same user on a DIFFERENT device resumes, and the lock transfers', async () => {
+      col.findOne.mockResolvedValue(openSession(FAKE_USER));
+      const r = await repo.registeraddInsert({
+        register_Id: FAKE_REG,
+        register_name: 'test 1',
+        opening_float: '200',
+        lock_device_id: 'device-B',
+      });
+      expect(r.status).toBe(true);
+      expect(String(r.data)).toBe(FAKE_ID);
+      expect(col.updateOne).toHaveBeenCalledWith(
+        expect.objectContaining({ register_status: REGISTER_STATUS.OPENED }),
+        expect.objectContaining({
+          $set: expect.objectContaining({ lock_device_id: 'device-B' }),
+        })
+      );
+      expect(col.insertOne).not.toHaveBeenCalled();
+    });
+
+    test('a DIFFERENT user is refused with the holder named', async () => {
+      col.findOne.mockResolvedValue(openSession('64f9a1c2e3b4d5e6f7000099'));
+      const r = await repo.registeraddInsert({
+        register_Id: FAKE_REG,
+        register_name: 'test 1',
+        opening_float: '0',
+        lock_device_id: 'device-B',
+      });
+      expect(r.status).toBe(false);
+      expect(r.statusCode).toBe(409);
+      expect(r.message).toContain('opened by Priya');
+      expect(col.updateOne).not.toHaveBeenCalled();
     });
   });
 });

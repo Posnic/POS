@@ -11,7 +11,10 @@
             <input type="hidden" id="reg_upd_id" name="reg_upd_id">
             <input type="hidden" id="register_id_hidden" name="register_id_hidden">
             <div class="col-md-12 loader-table-cashRegister">
-                <div class="row align-items-center row_filter register_details_visibledata" style = "visibility:hidden;">
+                <!-- display:none, NOT visibility:hidden - visibility reserves the row's
+     layout space, which pushed the register table to the middle of an
+     empty page whenever no session was open. -->
+<div class="row align-items-center row_filter register_details_visibledata" style="display:none;">
                     <div class="col-lg-6 col-xl-6">
                         <h4 class="page-title"><lang class="lang_register_detail">Register Details</lang></h4>
                         <div class="table-responsive">

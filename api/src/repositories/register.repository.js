@@ -584,17 +584,23 @@ class RegisterRepository {
       if (document) {
         const ownerId = document.current_user_id ? String(document.current_user_id) : '';
         const requesterId = currentUserIdToSave ? String(currentUserIdToSave) : '';
-        const ownerDevice = document.lock_device_id || '';
-        if (ownerId && (ownerId !== requesterId || (ownerDevice && ownerDevice !== deviceId))) {
+        // A DIFFERENT user is locked out. The SAME user always resumes: web
+        // device ids derive from ip+user-agent, which changes across browsers
+        // and networks, so matching on device here locked people out of their
+        // own session (single-user shop, one register, refused as "another
+        // device"). Resume transfers the lock to the requesting device; the
+        // previous device's next till action fails validateSessionOwner and
+        // asks for a reopen - last resume wins, exactly what moving tills means.
+        const holder = document.current_user ? ` (opened by ${document.current_user})` : '';
+        if (ownerId && ownerId !== requesterId) {
           return {
             status: false,
             statusCode: 409,
             data: { register_id: String(document._id), current_user: document.current_user || '' },
-            message: ERROR_MESSAGES.REGISTER_SESSION_LOCKED,
+            message: ERROR_MESSAGES.REGISTER_SESSION_LOCKED + holder,
           };
         }
 
-        // Adopt legacy open sessions once; subsequent devices cannot take over.
         await collection.updateOne(
           { _id: document._id, register_status: REGISTER_STATUS.OPENED },
           {

@@ -9,7 +9,8 @@ PosnicPro.device_setup = {
         $('.page_loader,#osk-container,#danger_zone').hide();
         $('.page-title-box,#devices,#dangerZone,#dangetzoneUserverify').show();
         $('#v-pills-manage-tab').addClass('active');
-        $('#view_device_page').addClass('active');
+        // The entry lives in Config's left nav now (Cursor Focus is configuration).
+        $('#config_device_setup_link').addClass('active');
         $('#v-pills-manage').addClass('show active');
         $('.dashboard_img_menu').hide();
         $('#image_sidebar_config').show();

@@ -570,7 +570,7 @@ PosnicPro.registers = {
                 PosnicPro.registers.printRegisterscreen(PosnicPro.local.get('cash_register_id'));
                 $('.register_details_data').hide();
                 PosnicPro.registers.renderOverview();
-                $(".register_details_visibledata").css('visibility', 'hidden');
+                $(".register_details_visibledata").hide();
                 PosnicPro.commonDate();
                 PosnicPro.alert(response.type, response.message);
             } else {
