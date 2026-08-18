@@ -13,7 +13,6 @@
  */
 module.exports = [
   'tests/unit/controllers/common-pdf.controller.test.js',
-  'tests/unit/middleware/install.validation.test.js',
   'tests/unit/models/activity-log.model.test.js',
   'tests/unit/models/install.model.test.js',
   'tests/unit/models/register.model.test.js',

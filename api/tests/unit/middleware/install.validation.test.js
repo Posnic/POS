@@ -22,16 +22,19 @@ jest.mock('../../../src/constants/install.constants', () => ({
 }));
 
 jest.mock('express-validator', () => {
-  const chain = () => ({
-    trim: jest.fn().mockReturnThis(),
-    notEmpty: jest.fn().mockReturnThis(),
-    withMessage: jest.fn().mockReturnThis(),
-    isLength: jest.fn().mockReturnThis(),
-    isEmail: jest.fn().mockReturnThis(),
-    optional: jest.fn().mockReturnThis(),
-    custom: jest.fn().mockReturnThis(),
-    isIn: jest.fn().mockReturnThis(),
-  });
+  /*
+   * A self-returning chain: every method call yields the chain again, so a
+   * validator gaining a new chain method (.if() was the one that broke the
+   * enumerated version of this mock) never fails the suite at load time.
+   */
+  const chain = () =>
+    new Proxy(function () {}, {
+      get: (target, prop) => {
+        if (prop === Symbol.toPrimitive || prop === 'then') return undefined;
+        return chain();
+      },
+      apply: () => chain(),
+    });
   return { body: jest.fn(() => chain()) };
 });
 
@@ -48,12 +51,32 @@ describe('install.validation', () => {
     expect(installValidation.validateCleanup.length).toBeGreaterThan(0);
   });
 
-  test('verifyInstallationCredentials rejects bad credentials', () => {
+  test('unconfigured means CLOSED: no POSNIC_KEY/SECRET answers 503, never lets anyone in', () => {
+    const config = require('../../../src/config/config');
+    delete config.posnic_key;
+    delete config.posnic_secret;
     const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
     const next = jest.fn();
     installValidation.verifyInstallationCredentials({ body: {}, headers: {} }, res, next);
+    expect(res.status).toHaveBeenCalledWith(503);
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  test('configured + wrong credentials answers 401', () => {
+    const config = require('../../../src/config/config');
+    config.posnic_key = 'right-key';
+    config.posnic_secret = 'right-secret';
+    const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+    const next = jest.fn();
+    installValidation.verifyInstallationCredentials(
+      { body: { key: 'wrong', secret: 'wrong' }, headers: {} },
+      res,
+      next
+    );
     expect(res.status).toHaveBeenCalledWith(401);
     expect(next).not.toHaveBeenCalled();
+    delete config.posnic_key;
+    delete config.posnic_secret;
   });
 
   test('custom objectId validation is wired', () => {
