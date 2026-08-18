@@ -1541,7 +1541,16 @@ if ($wrapper.length) {
      * nothing visible under it hides too (an empty RESTAURANT header was
      * exactly the clutter the module system exists to remove).
      */
+    /* ON cards vivid, OFF cards greyed - the state must read before the
+       labels do. Driven by each card's main switch. */
+    refreshModuleCards: function () {
+        $('#v-pills-modules .module-card').each(function () {
+            var $main = $(this).find('.module-card-head input.custom-control-input').first();
+            $(this).toggleClass('is-off', !$main.is(':checked'));
+        });
+    },
     applyModuleNav: function () {
+        PosnicPro.settings.refreshModuleCards();
         var s = {};
         try { s = JSON.parse(PosnicPro.local.get('general_settings') || '{}'); } catch (e) { /* defaults */ }
         var on = function (k) { return s[k] !== false; };
@@ -4406,4 +4415,9 @@ $('#kiosk_payment_form').on('submit', function (e) {
         var response = jQuery.parseJSON(xhr.responseText);
         PosnicPro.alert(response.type, response.message);
     });
+});
+// Module cards mirror their switch instantly (saving still goes through the
+// Save button - the card state is feedback, not a write).
+$(document).on('change', '#v-pills-modules .module-card-head input.custom-control-input', function () {
+    PosnicPro.settings.refreshModuleCards();
 });
