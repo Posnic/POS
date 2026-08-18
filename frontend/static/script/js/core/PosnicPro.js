@@ -1078,21 +1078,9 @@ PosnicPro = {
 
 
     },
-    importTableHeader: function (table) {
-        var tableHead = {
-            'customers': ['name', 'email', 'phone', 'address'],
-            'suppliers': ['name', 'email', 'phone', 'address'],
-            'categories': ['name', 'discount_amount', 'discount_percentage', 'description'],
-            'customercategory': ['name', 'description'],
-            'items': ['name', 'itemid', 'barcode_id', 'category_name', 'supplier_name', 'discount_amount', 'discount_percentage', 'hsncode', 'hsn_code', 'hsndescription', 'hsn_description', 'tax_name', 'tax', 'tax_type', 'mrp_price', 'company_price', 'selling_price', 'available_quantity', 'unit', 'sort_order'],
-            'expenses': ['amount', 'type', 'category', 'recipientname', 'approvedby', 'description']
-        };
-        var exportData = [];
-        $(tableHead).each(function (key, val) {
-            exportData = val[table];
-        });
-        return exportData;
-    },
+    /* importTableHeader lives further down (beside importHeaderAlias). A
+       second, older copy used to sit here - a duplicate object key, so the
+       later definition silently won and edits here changed nothing. */
     JSONToCSVConvertor: function (JSONData, ReportTitle, ShowLabel) {
         //If JSONData is not an object then JSON.parse will parse the JSON string in an Object
         var arrData = typeof JSONData != 'object' ? JSON.parse(JSONData) : JSONData;
