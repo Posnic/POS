@@ -268,6 +268,7 @@
                                             <div class="nav flex-column nav-pills" id="integrations_subnav" role="tablist">
                                                 <a class="nav-link active" data-toggle="pill" href="#int-sub-tokens" role="tab"><i class="feather icon-key mr-2"></i><lang class="lang_int_tokens">API Tokens</lang></a>
                                                 <a class="nav-link" data-toggle="pill" href="#int-sub-webhooks" role="tab"><i class="feather icon-send mr-2"></i><lang class="lang_int_webhooks">Webhooks</lang></a>
+                                                <a class="nav-link" data-toggle="pill" href="#int-sub-connectors" role="tab" id="int_connectors_subtab" style="display:none;" onclick="PosnicPro.integrations.loadConnectors();"><i class="feather icon-box mr-2"></i><lang class="lang_int_connectors">Connectors</lang></a>
                                             </div>
                                         </div>
                                         <div class="col-lg-9">
@@ -322,6 +323,17 @@
                                                             <tbody id="int_deliveries_body"><tr><td colspan="5" class="text-center text-muted">&mdash;</td></tr></tbody>
                                                         </table>
                                                     </div>
+                                                </div>
+
+                                                <div class="tab-pane fade" id="int-sub-connectors" role="tabpanel">
+                                                    <small class="text-muted d-block mb-2"><lang class="lang_int_connectors_hint">Signed add-ons that run beside the till - never inside it. Enabling one mints it a token that can message this shop's customers, and nothing more.</lang></small>
+                                                    <div class="table-responsive">
+                                                        <table class="table table-sm">
+                                                            <thead><tr><th>Connector</th><th>Version</th><th>Status</th><th class="text-right">Action</th></tr></thead>
+                                                            <tbody id="int_connectors_body"><tr><td colspan="4" class="text-center text-muted">Loading&hellip;</td></tr></tbody>
+                                                        </table>
+                                                    </div>
+                                                    <small class="form-text text-muted">Connectors arrive with the till's normal update checks once they are published; a connector that keeps failing parks itself without touching sales.</small>
                                                 </div>
 
                                             </div>

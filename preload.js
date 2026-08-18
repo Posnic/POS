@@ -155,6 +155,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     get: (key) => ipcRenderer.invoke('preferences:get', key),
     set: (key, value) => ipcRenderer.invoke('preferences:set', key, value)
   },
+  connectors: {
+    status:  () => ipcRenderer.invoke('connectors:status'),
+    enable:  (name, token, settings) => ipcRenderer.invoke('connectors:enable', { name, token, settings }),
+    disable: (name) => ipcRenderer.invoke('connectors:disable', { name })
+  },
   cashDrawer: {
     loadConfig:     () => ipcRenderer.invoke('cashDrawer:load-config'),
     saveConfig:     (config) => ipcRenderer.invoke('cashDrawer:save-config', config),

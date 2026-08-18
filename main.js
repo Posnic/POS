@@ -1509,6 +1509,73 @@ ipcMain.handle('cloud:check-data', async () => {
   }
 });
 
+/*
+ * Connector runtime surface (I6 enable flow). The frontend's Integrations
+ * screen mints the scoped token (it owns that flow already); THIS side only
+ * stores the enable decision and supervises. The token is written to the
+ * connector's config file, which is exactly as private as the rest of
+ * userData - same trust level as the cloud device token beside it.
+ */
+const CONNECTOR_NAME_RE = /^[a-z][a-z0-9-]{1,40}$/;
+
+ipcMain.handle('connectors:status', async () => {
+  try {
+    return { ok: true, connectors: connectorSupervisor ? connectorSupervisor.status() : [] };
+  } catch (error) {
+    return { ok: false, error: error.message, connectors: [] };
+  }
+});
+
+ipcMain.handle('connectors:enable', async (event, payload) => {
+  try {
+    const { name, token, settings } = payload || {};
+    if (!CONNECTOR_NAME_RE.test(String(name || ''))) {
+      return { ok: false, error: 'Not a valid connector name' };
+    }
+    if (typeof token !== 'string' || !token.startsWith('posnic_')) {
+      return { ok: false, error: 'That does not look like a Posnic API token' };
+    }
+    if (!connectorSupervisor) return { ok: false, error: 'Connector runtime unavailable' };
+    const file = path.join(app.getPath('userData'), 'connector-runtime', name + '.config.json');
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, JSON.stringify({
+      enabled: true,
+      token,
+      settings: settings && typeof settings === 'object' ? settings : {},
+      enabledAt: new Date().toISOString(),
+    }, null, 2));
+    connectorSupervisor.restart(name);
+    return { ok: true, connectors: connectorSupervisor.status() };
+  } catch (error) {
+    return { ok: false, error: error.message };
+  }
+});
+
+ipcMain.handle('connectors:disable', async (event, payload) => {
+  try {
+    const { name } = payload || {};
+    if (!CONNECTOR_NAME_RE.test(String(name || ''))) {
+      return { ok: false, error: 'Not a valid connector name' };
+    }
+    if (!connectorSupervisor) return { ok: false, error: 'Connector runtime unavailable' };
+    const file = path.join(app.getPath('userData'), 'connector-runtime', name + '.config.json');
+    /* Keep the token so re-enabling does not force a fresh mint; enabled:false
+       is the whole decision - no config match, no start. */
+    if (fs.existsSync(file)) {
+      try {
+        const cfg = JSON.parse(fs.readFileSync(file, 'utf8'));
+        fs.writeFileSync(file, JSON.stringify({ ...cfg, enabled: false }, null, 2));
+      } catch (e) {
+        fs.rmSync(file, { force: true });
+      }
+    }
+    connectorSupervisor.stop(name);
+    return { ok: true, connectors: connectorSupervisor.status() };
+  } catch (error) {
+    return { ok: false, error: error.message };
+  }
+});
+
 ipcMain.handle('cloud:disconnect', async () => {
   try {
     if (syncAgentManager) syncAgentManager.stop();
