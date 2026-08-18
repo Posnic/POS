@@ -3099,6 +3099,64 @@ class SalesController extends BaseController {
     }
   }
 
+  /*
+   * Tax summary by rate (T3): the generic filing report - totals per rate
+   * class over a period. Same date/branch discipline as the item report;
+   * sums stored per-line values, never recomputes.
+   */
+  async taxSummaryReportTable(req, res) {
+    try {
+      if (!this.checkPermission('report', 'read', req.user)) {
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
+      }
+      const dateFilter = {};
+      const startDate = normalizeRangeDate(req.query.starting_date);
+      const endDate = normalizeRangeDate(req.query.ending_date, { endOfDay: true });
+      if (startDate || endDate) {
+        const filtered = await sessionFilterUtil.applySessionFilter(req, {
+          start_date: startDate || new Date(0),
+          end_date: endDate || new Date(),
+        });
+        if (filtered.start_date) dateFilter.$gte = filtered.start_date;
+        if (filtered.end_date) dateFilter.$lte = filtered.end_date;
+      }
+      const { branchIds, error: branchError } = this.extractBranchObjectIds(req);
+      if (branchError) return this.error(res, branchError, 400);
+      const matchConditions = [
+        { branch_id: { $in: branchIds } },
+        { sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] } },
+      ];
+      if (Object.keys(dateFilter).length) matchConditions.push({ updated_date: dateFilter });
+
+      const { rows } = await salesService.getTaxSummaryReportData(
+        { match: { $and: matchConditions } },
+        { SaleModel: this.model || Sale }
+      );
+      const list = rows.map((r) => ({
+        rate: roundToTwo(r.rate || 0),
+        tax_name: r.tax_name || '',
+        net: roundToTwo(r.net || 0),
+        tax: roundToTwo(r.tax || 0),
+        gross: roundToTwo(r.gross || 0),
+        lines: r.lines || 0,
+      }));
+      const totals = list.reduce(
+        (acc, r) => ({
+          net: roundToTwo(acc.net + r.net),
+          tax: roundToTwo(acc.tax + r.tax),
+          gross: roundToTwo(acc.gross + r.gross),
+        }),
+        { net: 0, tax: 0, gross: 0 }
+      );
+      return this.success(res, { list, totals }, 'Tax summary retrieved successfully');
+    } catch (error) {
+      console.error('Error in taxSummaryReportTable:', error);
+      return this.error(res, 'Unable to load the tax summary. Please try again later.', 500, {
+        error: error.message,
+      });
+    }
+  }
+
   async itemSalesReportTable(req, res) {
     try {
       if (!this.checkPermission('report', 'read', req.user)) {

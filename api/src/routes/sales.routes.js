@@ -211,6 +211,8 @@ router.get(
   preparePaginatedDateRangeQuery,
   bindController(salesController.itemSalesReportTable)
 );
+// T3: the generic tax filing report - totals per rate class over a period.
+router.get('/taxSummaryReportTable', bindController(salesController.taxSummaryReportTable));
 router.get(
   '/categorySalesReportTable',
   preparePaginatedDateRangeQuery,
