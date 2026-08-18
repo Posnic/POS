@@ -2492,6 +2492,24 @@ input:checked + .slider:before {
 .bellfeed-time { color: var(--theme-text-muted, #5b6577); font-size: 12px; white-space: nowrap; }
 .bellfeed-empty { padding: 16px; color: var(--theme-text-muted, #5b6577); font-size: 13px; }
 
+/* Module On/Off: one row per module, switch + one-line consequence;
+   sub-toggles indent under their parent. Toggles only - configuration
+   lives in each module's own section. */
+.module-onoff .module-row {
+    padding: 14px 2px;
+    border-bottom: 1px solid rgba(127, 127, 127, 0.14);
+}
+.module-onoff .module-row:last-child { border-bottom: 0; }
+.module-onoff .custom-control-label { font-weight: 600; }
+.module-onoff .module-row > small { margin-left: 36px; margin-top: 2px; }
+.module-onoff .module-subs {
+    margin: 10px 0 0 36px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 28px;
+}
+.module-onoff .module-subs .custom-control-label { font-weight: 400; }
+
 /* Register selection: who holds it, said before the Open click fails. */
 .register-inuse-note {
     margin-top: 8px;
