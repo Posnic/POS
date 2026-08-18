@@ -1660,7 +1660,7 @@ if ($wrapper.length) {
         try { s = JSON.parse(PosnicPro.local.get('general_settings') || '{}'); } catch (e) { /* defaults */ }
         var on = function (k) { return s[k] !== false; };
 
-        $('#v-pills-tax-tab, #v-pills-taxgroup-tab').toggle(on('module_tax_enable'));
+        $('#v-pills-taxmodule-tab').toggle(on('module_tax_enable'));
         $('#v-pills-credit-tab').toggle(on('module_credit_enable'));
         $('#v-pills-loyalty-tab, #v-pills-coupons-tab, #v-pills-cashback-tab, #v-pills-campaigns-tab')
             .toggle(on('module_marketing_enable'));

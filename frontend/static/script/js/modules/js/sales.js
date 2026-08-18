@@ -732,6 +732,23 @@
         }
         var isDiscountAmount = params.discount_amount > 0;
         var discountDisplay = isDiscountAmount ? currencySign + addSalesLineDiscount : addSalesLineDiscount + discountSign;
+        /*
+         * Tax module OFF means STOP COLLECTING, not just hide the config
+         * (common standard - recorded sales keep their stored tax; new
+         * sales apply none). One gate at the single entry every line-item
+         * calculation flows through: exclusive, inclusive, discounts, GST
+         * fields and return lines all read lineItemTax from here.
+         */
+        var taxModuleOn = true;
+        try {
+            var gs = JSON.parse(PosnicPro.local.get('general_settings') || '{}');
+            taxModuleOn = gs.module_tax_enable !== false;
+        } catch (e) { /* default on */ }
+        if (!taxModuleOn) {
+            // Normalise the param itself: several branches below read
+            // params.tax directly, not the local copy.
+            params.tax = 0;
+        }
         var lineItemTax = params.tax;
         var lineItemTaxType = params.tax_type;
         var id = params.id ? params.id : params.item_id;
