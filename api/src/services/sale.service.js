@@ -2578,6 +2578,51 @@ module.exports = {
    * off, every variant is its own row exactly as always; exports never
    * pass the flag.
    */
+  /*
+   * Tax summary by rate (T3): the filing shape for the whole single-VAT
+   * family - period totals per rate class, net/tax/gross, with untaxed
+   * lines in their own zero bucket. Reads the SAME stored per-line values
+   * every other report reads; per the reporting rules nothing here
+   * recomputes tax, it only sums what the sale wrote.
+   */
+  getTaxSummaryReportData: async ({ match }, { SaleModel } = {}) => {
+    const Model = getModel(SaleModel);
+    const pipeline = [
+      { $match: match },
+      { $unwind: '$items' },
+      {
+        $set: {
+          _tax_amount: { $toDouble: { $ifNull: ['$items.tax_amount', 0] } },
+          _gross: { $toDouble: { $ifNull: ['$items.total_amount', 0] } },
+          _rate: { $toDouble: { $ifNull: ['$items.tax_rate', { $ifNull: ['$items.tax', 0] }] } },
+          _name: { $ifNull: ['$items.tax_name', ''] },
+        },
+      },
+      {
+        $group: {
+          _id: { rate: '$_rate', name: '$_name' },
+          tax: { $sum: '$_tax_amount' },
+          gross: { $sum: '$_gross' },
+          lines: { $sum: 1 },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          rate: '$_id.rate',
+          tax_name: '$_id.name',
+          tax: 1,
+          gross: 1,
+          net: { $subtract: ['$gross', '$tax'] },
+          lines: 1,
+        },
+      },
+      { $sort: { rate: -1, tax_name: 1 } },
+    ];
+    const rows = await salesRepository.aggregate(pipeline, { SaleModel: Model });
+    return { rows: Array.isArray(rows) ? rows : [] };
+  },
+
   getItemSalesReportTableData: async (
     { match, skip, limit, groupByFamily },
     { SaleModel } = {}
