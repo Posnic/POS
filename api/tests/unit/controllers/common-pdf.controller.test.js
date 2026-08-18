@@ -227,20 +227,26 @@ describe('CommonPdfController — generatePdf (PDF flow)', () => {
     expect(mockDoc.end).toHaveBeenCalled();
   });
 
-  test('returns 200 success response with url, fileName, and path', async () => {
+  test('streams the PDF as a download - headers set, piped to the response, no JSON envelope', async () => {
+    /*
+     * The controller used to save-then-answer {url, fileName, path}; it
+     * STREAMS now - the response IS the PDF, with a copy persisted to disk
+     * beside it. The old suite pinned the JSON envelope and went red when
+     * the download became direct.
+     */
     jest.spyOn(ctrl, 'generateInvoicePdf').mockResolvedValue();
     const res = mockRes();
     await ctrl.generatePdf(
       mockReq({ body: { content: {}, fileName: 'inv.pdf', type: 'invoice' } }),
       res
     );
-    expect(res.status).toHaveBeenCalledWith(200);
-    const body = res.json.mock.calls[0][0];
-    expect(body.type).toBe('success');
-    expect(body.data).toMatchObject({
-      url: '/pdfs/inv.pdf',
-      fileName: 'inv.pdf',
-    });
+    expect(res.setHeader).toHaveBeenCalledWith('Content-Type', 'application/pdf');
+    expect(res.setHeader).toHaveBeenCalledWith(
+      'Content-Disposition',
+      'attachment; filename="inv.pdf"'
+    );
+    expect(mockDoc.pipe).toHaveBeenCalledWith(res);
+    expect(res.json).not.toHaveBeenCalled();
   });
 
   test('returns 500 when PDFDocument constructor throws', async () => {
