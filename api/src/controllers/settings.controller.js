@@ -512,6 +512,33 @@ class SettingController extends BaseController {
     }
   }
 
+  /*
+   * One branch's module switches (M4 branch selector). Any branch of THIS
+   * license only - the model's license filter is the wall; a foreign id
+   * answers not-found, never data.
+   */
+  async getBranchModules(req, res) {
+    try {
+      const settingModel = this.createModelWithContext(req);
+      const branchId = req.query.branch_id;
+      if (!branchId) {
+        return res
+          .status(400)
+          .json({ type: 'error', message: 'branch_id is required', data: null });
+      }
+      const result = await settingModel.getBranchModules(branchId);
+      if (!result.status) {
+        return res.status(404).json({ type: 'error', message: result.message, data: null });
+      }
+      return res.json({ type: 'success', message: 'success', data: result.data });
+    } catch (error) {
+      console.error('Error in getBranchModules:', error);
+      return res
+        .status(500)
+        .json({ type: 'error', message: 'Could not read branch modules', data: null });
+    }
+  }
+
   async updateCommonSettings(req, res) {
     try {
       const settingModel = this.createModelWithContext(req);

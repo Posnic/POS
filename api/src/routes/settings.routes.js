@@ -96,6 +96,9 @@ router.put(
   bindController(settingController.updateCommonSettings)
 );
 
+// M4 branch selector: one branch's module switches, read before editing.
+router.get('/branchModules', bindController(settingController.getBranchModules));
+
 router.get('/getTaxAll', bindController(settingController.getTaxAll));
 router.get('/getTaxAjaxList', bindController(settingController.getTaxAjaxList));
 router.get('/getTaxGroup', bindController(settingController.getTaxGroup));

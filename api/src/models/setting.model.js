@@ -824,6 +824,27 @@ class SettingModel extends BaseModel {
         throw new Error('Branch context is required (branchId, licenseId, user._id)');
       }
 
+      /*
+       * Module On/Off for ANOTHER branch (M4): a multi-branch admin picks a
+       * branch on the Modules tab and flips ITS switches without switching
+       * sessions. Deliberately modules-only: the rest of this function's
+       * surface (printing, receipts, defaults) reads controls that still
+       * show the SESSION branch's values, and writing those to the target
+       * would clobber its real settings. So a remote target writes the
+       * toggle map and nothing else - same license filter as every branch
+       * write, so a foreign id is a silent no-op.
+       */
+      const { Types: BranchTypes } = require('mongoose');
+      const remoteTarget =
+        data.target_branch_id &&
+        BranchTypes.ObjectId.isValid(String(data.target_branch_id)) &&
+        String(data.target_branch_id) !== String(this.branchId)
+          ? data.target_branch_id
+          : null;
+      if (remoteTarget) {
+        return this.updateBranchModules(remoteTarget, data);
+      }
+
       // PHP model does NOT validate field data - controller handles that
       const usersCollection = await this.getCollection('users');
       const branchCollection = await this.getCollection();
@@ -1030,6 +1051,111 @@ class SettingModel extends BaseModel {
         data: null,
         message: `Update failed: ${error.message}`,
       };
+    }
+  }
+
+  /*
+   * The one shared truth about module switches: which keys exist and how a
+   * missing value parses. offOnly keys default ON (absent = enabled),
+   * onOnly keys default OFF. Both writers below and the branch read use
+   * THIS map - a key added here is a key added everywhere.
+   */
+  static moduleToggleMap() {
+    const offOnly = (v) => !(v === 'false' || v === false);
+    const onOnly = (v) => v === 'true' || v === true;
+    return {
+      staff_shifts_enable: { parse: offOnly, dflt: true },
+      staff_tips_enable: { parse: onOnly, dflt: false },
+      staff_roster_enable: { parse: offOnly, dflt: true },
+      cash_register_enable: { parse: offOnly, dflt: true },
+      till_lock_enable: { parse: onOnly, dflt: false },
+      module_tax_enable: { parse: offOnly, dflt: true },
+      module_credit_enable: { parse: offOnly, dflt: true },
+      module_marketing_enable: { parse: offOnly, dflt: true },
+      module_messaging_enable: { parse: offOnly, dflt: true },
+      module_channels_enable: { parse: offOnly, dflt: true },
+      module_channels_kiosk_enable: { parse: offOnly, dflt: true },
+      module_recyclebin_enable: { parse: offOnly, dflt: true },
+      module_themes_enable: { parse: offOnly, dflt: true },
+      module_cashbook_enable: { parse: offOnly, dflt: true },
+      pl_include_cashbook: { parse: offOnly, dflt: true },
+    };
+  }
+
+  /**
+   * Modules-only write to another branch of this license (M4 branch
+   * selector). Presence-gated like every toggle write: a payload that
+   * omits a key leaves it untouched.
+   */
+  async updateBranchModules(targetBranchId, data = {}) {
+    try {
+      const branchCollection = await this.getCollection();
+      const updateFields = {};
+      for (const [key, def] of Object.entries(SettingModel.moduleToggleMap())) {
+        if (data[key] !== undefined) {
+          updateFields[key] = def.parse(data[key]);
+        }
+      }
+      if (data.till_lock_idle_minutes !== undefined) {
+        let idle = parseInt(data.till_lock_idle_minutes, 10);
+        if (isNaN(idle) || idle < 0) idle = 0;
+        updateFields.till_lock_idle_minutes = Math.min(idle, 120);
+      }
+      if (!Object.keys(updateFields).length) {
+        return { status: true, data: null, message: 'success' };
+      }
+      const r = await branchCollection.updateOne(
+        { _id: this.normalizeId(targetBranchId), license: this.normalizeId(this.licenseId) },
+        { $set: updateFields }
+      );
+      if (!r.matchedCount) {
+        return { status: false, data: null, message: 'No such branch in this shop' };
+      }
+      return {
+        status: true,
+        data: { target_branch_id: String(targetBranchId) },
+        message: 'success',
+      };
+    } catch (error) {
+      console.error('Error in updateBranchModules:', error);
+      return { status: false, data: null, message: `Update failed: ${error.message}` };
+    }
+  }
+
+  /**
+   * The module switches of one branch of this license, parsed to booleans
+   * with the same defaults the whole app gates on - what the Modules tab's
+   * branch selector loads before editing.
+   */
+  async getBranchModules(targetBranchId) {
+    try {
+      const branchCollection = await this.getCollection();
+      const branch = await branchCollection.findOne({
+        _id: this.normalizeId(targetBranchId),
+        license: this.normalizeId(this.licenseId),
+      });
+      if (!branch) {
+        return { status: false, data: null, message: 'No such branch in this shop' };
+      }
+      const modules = {};
+      for (const [key, def] of Object.entries(SettingModel.moduleToggleMap())) {
+        modules[key] = branch[key] === undefined ? def.dflt : def.parse(branch[key]);
+      }
+      let idle = parseInt(branch.till_lock_idle_minutes, 10);
+      if (isNaN(idle) || idle < 0) idle = 0;
+      modules.till_lock_idle_minutes = Math.min(idle, 120);
+      return {
+        status: true,
+        data: {
+          branch_id: String(branch._id),
+          branch_name: branch.branch_name || '',
+          modules,
+        },
+        message: 'success',
+      };
+    } catch (error) {
+      console.error('Error in getBranchModules:', error);
+      return { status: false, data: null, message: `Read failed: ${error.message}` };
     }
   }
 
