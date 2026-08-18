@@ -2021,8 +2021,22 @@ PosnicPro = {
      * Called from three places: at startup, when settings load, and the moment
      * the switch is saved, so turning KOT on does not need a restart.
      */
+    /*
+     * Main-sidebar entries follow Module On/Off (the Config nav already
+     * does via applyModuleNav). Runs at page load and after a modules save.
+     */
+    applyModuleSidebar: function () {
+        var s = {};
+        try { s = JSON.parse(PosnicPro.local.get('general_settings') || '{}'); } catch (e) { /* defaults */ }
+        var on = function (k) { return s[k] !== false; };
+        $('#viewkioskreport_page').closest('li')
+            .toggle(on('module_channels_enable') && on('module_channels_kiosk_enable'));
+        $('#viewkotreport_page').closest('li')
+            .toggle(PosnicPro.local.get('table_options') === 'enable');
+    },
     applyKotVisibility: function (enabled) {
         $('#v-pills-tableorder-tab').toggle(!!enabled);
+        PosnicPro.applyModuleSidebar();
 
         /*
          * The Hardware Manager is a separate window with its own storage, so
@@ -4053,6 +4067,7 @@ $(function () {
         PosnicPro.shiftWidget.syncHeader();
     }
     if (PosnicPro.bellFeed) PosnicPro.bellFeed.init();
+    if (PosnicPro.applyModuleSidebar) PosnicPro.applyModuleSidebar();
 });
 
 /* Labour / payout report page (#/labourreport) - a report page like the other
