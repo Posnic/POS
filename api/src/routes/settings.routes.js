@@ -99,6 +99,11 @@ router.put(
 // M4 branch selector: one branch's module switches, read before editing.
 router.get('/branchModules', bindController(settingController.getBranchModules));
 
+// Price lists (V4): customer-group pricing, one list per category.
+router.get('/priceLists', bindController(settingController.getPriceLists));
+router.post('/priceLists', bindController(settingController.savePriceList));
+router.delete('/priceLists/:id', bindController(settingController.deletePriceList));
+
 // Modifier groups (V2): Restaurant option sets with min/max + price deltas.
 router.get('/modifierGroups', bindController(settingController.getModifierGroups));
 router.post('/modifierGroups', bindController(settingController.addModifierGroup));
