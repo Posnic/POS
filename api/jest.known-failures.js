@@ -17,5 +17,4 @@ module.exports = [
   'tests/unit/models/register.model.test.js',
   'tests/unit/models/setting.model.test.js',
   'tests/unit/repositories/sale.repository.test.js',
-  'tests/unit/services/whatsapp.service.test.js',
 ];
