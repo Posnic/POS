@@ -618,6 +618,7 @@ class SettingModel extends BaseModel {
       const module_messaging_enable = offOnly(data.module_messaging_enable);
       const module_channels_enable = offOnly(data.module_channels_enable);
       const module_channels_kiosk_enable = offOnly(data.module_channels_kiosk_enable);
+      const module_recyclebin_enable = offOnly(data.module_recyclebin_enable);
 
       /*
        * Two different forms save through here now: the Module On/Off tab
@@ -710,6 +711,7 @@ class SettingModel extends BaseModel {
         ...ifSent('module_messaging_enable', module_messaging_enable),
         ...ifSent('module_channels_enable', module_channels_enable),
         ...ifSent('module_channels_kiosk_enable', module_channels_kiosk_enable),
+        ...ifSent('module_recyclebin_enable', module_recyclebin_enable),
         ...ifSent('allow_sale_date_edit', data.allow_sale_date_edit === 'false' ? 'false' : 'true'),
         ...registerUpdate,
       };
@@ -761,6 +763,7 @@ class SettingModel extends BaseModel {
         module_messaging_enable: module_messaging_enable,
         module_channels_enable: module_channels_enable,
         module_channels_kiosk_enable: module_channels_kiosk_enable,
+        module_recyclebin_enable: module_recyclebin_enable,
       };
 
       // Update branch_name across all collections - for the branch actually

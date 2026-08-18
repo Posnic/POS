@@ -19,7 +19,7 @@
             <!-- Start row -->
             <div class="row m-t-5">
                 <!-- Start col -->
-                <div class="col-lg-5 col-xl-3">
+                <div class="col-lg-5 col-xl-3 settings-nav-col">
                     <div class="card m-b-30">
                         <div class="card-body">
                             <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist"
@@ -413,6 +413,18 @@
                                                     <label class="custom-control-label" for="module_channels_kiosk_enable"><lang class="lang_module_kiosk">Kiosk</lang></label>
                                                 </div>
                                             </div>
+                                        </div>
+
+                                        <div class="module-card">
+                                            <div class="module-card-head">
+                                                <span class="module-ico"><i class="feather icon-trash-2"></i></span>
+                                                <div class="module-title"><lang class="lang_module_recyclebin">Recycle Bin</lang></div>
+                                                <div class="custom-control custom-switch module-switch">
+                                                    <input type="checkbox" class="custom-control-input" id="module_recyclebin_enable" name="module_recyclebin_enable">
+                                                    <label class="custom-control-label" for="module_recyclebin_enable"></label>
+                                                </div>
+                                            </div>
+                                            <p class="module-desc">Keep deleted records for restore. Off: deleted records are NOT retained - deletes still sync, but cannot be undone.</p>
                                         </div>
 
                                         <div class="module-card">
