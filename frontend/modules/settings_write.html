@@ -102,6 +102,13 @@
                                         class="feather icon-trash-2 mr-2"></i>
                                     <lang class="lang_recycle">Recycle Bin</lang>
                                 </a>
+                                <a class="nav-link mb-2" data-module="branch" data-access="write" id="v-pills-integrations-tab"
+                                    data-toggle="pill" href="#v-pills-integrations" role="tab"
+                                    aria-controls="v-pills-integrations" aria-selected="false"
+                                    onclick="PosnicPro.integrations.load();"><i
+                                        class="feather icon-zap mr-2"></i>
+                                    <lang class="lang_integrations">Integrations</lang>
+                                </a>
                                 <a class="nav-link mb-2" data-module="plan" data-access="read" id="v-pills-erase-tab"
                                     data-toggle="pill" href="#v-pills-erase" role="tab" aria-controls="v-pills-erase"
                                     aria-selected="false" style="display:none;"><i class="feather icon-trash mr-2"></i>
@@ -143,6 +150,134 @@
                 <!-- Start col -->
                 <div class="col-lg-7 col-xl-9">
                     <div class="tab-content loader-view-mystore" id="v-pills-tabContent">
+                        <div class="tab-pane fade" id="v-pills-integrations" role="tabpanel" aria-labelledby="v-pills-integrations-tab">
+                            <div class="card m-b-30">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0"><lang class="lang_integrations">Integrations</lang></h5>
+                                    <small class="text-muted"><lang class="lang_integrations_hint">What may touch this shop's data from outside - tokens say who, webhooks say where the change signals go.</lang></small>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-lg-3 core-subnav-col">
+                                            <div class="nav flex-column nav-pills" id="integrations_subnav" role="tablist">
+                                                <a class="nav-link active" data-toggle="pill" href="#int-sub-tokens" role="tab"><i class="feather icon-key mr-2"></i><lang class="lang_int_tokens">API Tokens</lang></a>
+                                                <a class="nav-link" data-toggle="pill" href="#int-sub-webhooks" role="tab"><i class="feather icon-send mr-2"></i><lang class="lang_int_webhooks">Webhooks</lang></a>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-9">
+                                            <div class="tab-content">
+
+                                                <div class="tab-pane fade show active" id="int-sub-tokens" role="tabpanel">
+                                                    <div class="d-flex align-items-center justify-content-between mb-2">
+                                                        <small class="text-muted">A token is a standing credential with EXACTLY the permissions it was minted with. The secret shows once.</small>
+                                                        <button type="button" class="btn btn-primary-rgba btn-sm" onclick="PosnicPro.integrations.openMint();">
+                                                            <i class="feather icon-plus mr-1"></i><lang class="lang_int_newtoken">New Token</lang>
+                                                        </button>
+                                                    </div>
+                                                    <div id="int_token_reveal" class="alert alert-warning" style="display:none;">
+                                                        <b>Store this token now - it is not shown again.</b>
+                                                        <div class="d-flex align-items-center mt-1">
+                                                            <code id="int_token_plain" style="word-break:break-all;"></code>
+                                                            <button type="button" class="btn btn-outline-primary btn-sm ml-2" onclick="PosnicPro.integrations.copyToken();"><i class="feather icon-check mr-1"></i>Copy</button>
+                                                        </div>
+                                                    </div>
+                                                    <div class="table-responsive">
+                                                        <table class="table table-sm">
+                                                            <thead><tr><th>Name</th><th>Token</th><th>Scopes</th><th>Last used</th><th class="text-right">Action</th></tr></thead>
+                                                            <tbody id="int_tokens_body"><tr><td colspan="5" class="text-center text-muted">Loading&hellip;</td></tr></tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+
+                                                <div class="tab-pane fade" id="int-sub-webhooks" role="tabpanel">
+                                                    <div class="d-flex align-items-center justify-content-between mb-2">
+                                                        <small class="text-muted">Every change signal of the chosen entities leaves the building - receivers verify the HMAC signature and fetch with their own credentials.</small>
+                                                        <button type="button" class="btn btn-primary-rgba btn-sm" onclick="PosnicPro.integrations.openRegister();">
+                                                            <i class="feather icon-plus mr-1"></i><lang class="lang_int_newhook">New Webhook</lang>
+                                                        </button>
+                                                    </div>
+                                                    <div id="int_hook_reveal" class="alert alert-warning" style="display:none;">
+                                                        <b>Store this signing secret now - it is not shown again.</b>
+                                                        <div class="d-flex align-items-center mt-1">
+                                                            <code id="int_hook_secret" style="word-break:break-all;"></code>
+                                                            <button type="button" class="btn btn-outline-primary btn-sm ml-2" onclick="PosnicPro.integrations.copySecret();"><i class="feather icon-check mr-1"></i>Copy</button>
+                                                        </div>
+                                                    </div>
+                                                    <div class="table-responsive">
+                                                        <table class="table table-sm">
+                                                            <thead><tr><th>URL</th><th>Entities</th><th>Status</th><th class="text-right">Action</th></tr></thead>
+                                                            <tbody id="int_hooks_body"><tr><td colspan="4" class="text-center text-muted">Loading&hellip;</td></tr></tbody>
+                                                        </table>
+                                                    </div>
+                                                    <h6 class="mt-3 mb-1"><lang class="lang_int_deliveries">Recent deliveries</lang></h6>
+                                                    <div class="table-responsive">
+                                                        <table class="table table-sm">
+                                                            <thead><tr><th>Entity</th><th>URL</th><th>Status</th><th>Attempts</th><th>When</th></tr></thead>
+                                                            <tbody id="int_deliveries_body"><tr><td colspan="5" class="text-center text-muted">&mdash;</td></tr></tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Mint token modal -->
+                        <div class="modal fade close_on_esc" id="int_mint_modal" tabindex="-1" role="dialog" aria-hidden="true">
+                            <div class="modal-dialog modal-lg" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title"><i class="feather icon-key mr-2"></i><lang class="lang_int_newtoken">New Token</lang></h5>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="form-group">
+                                            <label for="int_mint_name" style="font-weight:600;">Name</label>
+                                            <input type="text" class="form-control border-control" id="int_mint_name" maxlength="80" placeholder="e.g. Accounting sync">
+                                        </div>
+                                        <label style="font-weight:600;">Scopes <small class="text-muted">- grant only what the integration needs</small></label>
+                                        <div class="table-responsive" style="border:1px solid #eae8e8; border-radius:4px;">
+                                            <table class="table table-sm" style="margin-bottom:0;">
+                                                <thead><tr><th>Module</th><th class="text-center">Read</th><th class="text-center">Write</th><th class="text-center">Delete</th></tr></thead>
+                                                <tbody id="int_mint_scopes"></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
+                                        <button type="button" class="btn btn-outline-primary" onclick="PosnicPro.integrations.mint();"><i class="feather icon-key mr-1"></i>Create Token</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Register webhook modal -->
+                        <div class="modal fade close_on_esc" id="int_hook_modal" tabindex="-1" role="dialog" aria-hidden="true">
+                            <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title"><i class="feather icon-send mr-2"></i><lang class="lang_int_newhook">New Webhook</lang></h5>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="form-group">
+                                            <label for="int_hook_url" style="font-weight:600;">Endpoint URL <small class="text-muted">(https only)</small></label>
+                                            <input type="text" class="form-control border-control" id="int_hook_url" maxlength="400" placeholder="https://example.com/posnic-hook">
+                                        </div>
+                                        <label style="font-weight:600;">Entities</label>
+                                        <div id="int_hook_entities" class="d-flex flex-wrap" style="gap:6px 18px;"></div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
+                                        <button type="button" class="btn btn-outline-primary" onclick="PosnicPro.integrations.register();"><i class="feather icon-send mr-1"></i>Register</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="tab-pane fade" id="v-pills-cashregister" role="tabpanel" aria-labelledby="v-pills-cashregister-tab">
 <div class="config-embedded-page" id="cashregisters_detail">
     <!-- Start Containerbar -->

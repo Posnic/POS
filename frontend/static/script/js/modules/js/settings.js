@@ -4581,3 +4581,201 @@ $(function () {
         PosnicPro.local.set('posnic_core_tab', $(this).attr('href'));
     });
 });
+
+
+/*
+ * Integrations admin (roadmap I3): the UI over the shipped token and
+ * webhook APIs. Secrets render ONCE into a reveal box; lists never
+ * contain them (the server projects them out).
+ */
+PosnicPro.integrations = {
+    // Mirrors the api whitelists - a scope or entity outside these is
+    // refused server-side anyway; the UI just doesn't offer it.
+    MODULES: ['sales', 'item', 'customer', 'supplier', 'category',
+        'receiving', 'expense', 'branch', 'user', 'report', 'dashboard'],
+    ENTITIES: ['sales', 'items', 'receivings', 'customers', 'suppliers',
+        'categories', 'registers', 'expenses', 'shifts', 'easytables'],
+    load: function () {
+        PosnicPro.integrations.loadTokens();
+        PosnicPro.integrations.loadHooks();
+    },
+    esc: function (v) {
+        return String(v == null ? '' : v).replace(/[&<>"]/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+        });
+    },
+    // ---- tokens ----
+    loadTokens: function () {
+        PosnicPro.get({ url: 'api-tokens', data: {} }, function (r) {
+            var rows = (r && r.data) || [];
+            var esc = PosnicPro.integrations.esc;
+            if (!rows.length) {
+                $('#int_tokens_body').html('<tr><td colspan="5" class="text-center text-muted">No tokens yet - mint one for each integration.</td></tr>');
+                return;
+            }
+            var html = '';
+            rows.forEach(function (t) {
+                var scopes = [];
+                $.each(t.access || {}, function (mod, p) {
+                    var perms = ['read', 'write', 'delete'].filter(function (x) { return p && p[x]; });
+                    if (perms.length) { scopes.push(mod + ':' + perms.join('/')); }
+                });
+                var used = t.last_used_at ? PosnicPro.convertDate(t.last_used_at) : 'never';
+                html += '<tr' + (t.active === false ? ' class="text-muted"' : '') + '>' +
+                    '<td>' + esc(t.name) + (t.active === false ? ' <span class="badge badge-secondary-inverse">revoked</span>' : '') + '</td>' +
+                    '<td><code>' + esc(t.hint) + '</code></td>' +
+                    '<td style="max-width:260px;"><small>' + esc(scopes.join(', ') || '-') + '</small></td>' +
+                    '<td><small>' + esc(used) + '</small></td>' +
+                    '<td class="text-right">' + (t.active === false ? '' :
+                        '<button type="button" class="btn btn-outline-danger btn-sm int-revoke-btn" data-id="' + esc(t.id) + '">Revoke</button>') +
+                    '</td></tr>';
+            });
+            $('#int_tokens_body').html(html);
+        }, function () {
+            $('#int_tokens_body').html('<tr><td colspan="5" class="text-center text-danger">Could not load tokens.</td></tr>');
+        });
+    },
+    openMint: function () {
+        var rows = '';
+        PosnicPro.integrations.MODULES.forEach(function (m) {
+            rows += '<tr><td>' + m + '</td>' +
+                ['read', 'write', 'delete'].map(function (p) {
+                    return '<td class="text-center"><input type="checkbox" class="int-scope" data-mod="' + m + '" data-perm="' + p + '"></td>';
+                }).join('') + '</tr>';
+        });
+        $('#int_mint_scopes').html(rows);
+        $('#int_mint_name').val('');
+        $('#int_mint_modal').modal('show');
+    },
+    mint: function () {
+        var scopes = {};
+        var granted = 0;
+        $('.int-scope:checked').each(function () {
+            var m = $(this).data('mod'), p = $(this).data('perm');
+            scopes[m] = scopes[m] || {};
+            scopes[m][p] = true;
+            granted++;
+        });
+        if (!granted) { PosnicPro.alert('error', 'Grant at least one permission - a token that can do nothing is a mistake, not a credential.'); return; }
+        PosnicPro.post({
+            url: 'api-tokens',
+            data: JSON.stringify({ name: $('#int_mint_name').val() || 'API token', scopes: scopes })
+        }, function (r) {
+            if (r && r.type === 'success' && r.data && r.data.token) {
+                $('#int_mint_modal').modal('hide');
+                $('#int_token_plain').text(r.data.token);
+                $('#int_token_reveal').show();
+                PosnicPro.integrations.loadTokens();
+            } else {
+                PosnicPro.alert((r && r.type) || 'error', (r && r.message) || 'Could not create the token.');
+            }
+        }, function (xhr) {
+            var resp = {};
+            try { resp = JSON.parse(xhr.responseText); } catch (e) { /* plain */ }
+            PosnicPro.alert('error', resp.message || 'Could not create the token.');
+        });
+    },
+    copyToken: function () {
+        navigator.clipboard.writeText($('#int_token_plain').text()).then(function () {
+            PosnicPro.alert('success', 'Token copied');
+        });
+    },
+    revoke: function (id) {
+        PosnicPro.delete({ url: 'api-tokens/' + id, data: JSON.stringify({}) }, function (r) {
+            PosnicPro.alert((r && r.type) || 'success', (r && r.message) || 'Token revoked');
+            PosnicPro.integrations.loadTokens();
+        }, function () { PosnicPro.alert('error', 'Could not revoke the token.'); });
+    },
+    // ---- webhooks ----
+    loadHooks: function () {
+        var esc = PosnicPro.integrations.esc;
+        PosnicPro.get({ url: 'webhooks', data: {} }, function (r) {
+            var rows = (r && r.data) || [];
+            if (!rows.length) {
+                $('#int_hooks_body').html('<tr><td colspan="4" class="text-center text-muted">No webhooks - register an endpoint to receive change signals.</td></tr>');
+            } else {
+                var html = '';
+                rows.forEach(function (h) {
+                    html += '<tr>' +
+                        '<td style="max-width:280px; word-break:break-all;"><small>' + esc(h.url) + '</small></td>' +
+                        '<td><small>' + esc((h.events || []).join(', ') || 'all') + '</small></td>' +
+                        '<td>' + (h.active === false ? '<span class="badge badge-secondary-inverse">off</span>' : '<span class="badge badge-success-inverse">active</span>') + '</td>' +
+                        '<td class="text-right"><button type="button" class="btn btn-outline-danger btn-sm int-removehook-btn" data-id="' + esc(h.id) + '">Remove</button></td>' +
+                        '</tr>';
+                });
+                $('#int_hooks_body').html(html);
+            }
+        }, function () {
+            $('#int_hooks_body').html('<tr><td colspan="4" class="text-center text-danger">Could not load webhooks.</td></tr>');
+        });
+        PosnicPro.get({ url: 'webhooks/deliveries', data: {} }, function (r) {
+            var rows = (r && r.data) || [];
+            if (!rows.length) {
+                $('#int_deliveries_body').html('<tr><td colspan="5" class="text-center text-muted">No deliveries yet.</td></tr>');
+                return;
+            }
+            var html = '';
+            rows.slice(0, 25).forEach(function (d) {
+                var status = d.status || '-';
+                var badge = status === 'delivered' ? 'badge-success-inverse'
+                    : status === 'dead' ? 'badge-danger-inverse' : 'badge-secondary-inverse';
+                html += '<tr>' +
+                    '<td><small>' + esc(d.entity || '-') + '</small></td>' +
+                    '<td style="max-width:240px; word-break:break-all;"><small>' + esc(d.url || '') + '</small></td>' +
+                    '<td><span class="badge ' + badge + '">' + esc(status) + '</span></td>' +
+                    '<td><small>' + esc(d.attempts != null ? d.attempts : '-') + '</small></td>' +
+                    '<td><small>' + esc(d.updatedAt ? PosnicPro.convertDate(d.updatedAt) : (d.createdAt ? PosnicPro.convertDate(d.createdAt) : '-')) + '</small></td>' +
+                    '</tr>';
+            });
+            $('#int_deliveries_body').html(html);
+        }, function () { /* the hooks table is the primary view */ });
+    },
+    openRegister: function () {
+        var html = '';
+        PosnicPro.integrations.ENTITIES.forEach(function (e) {
+            html += '<label class="mb-0" style="font-weight:400;"><input type="checkbox" class="int-entity" value="' + e + '"> ' + e + '</label>';
+        });
+        $('#int_hook_entities').html(html);
+        $('#int_hook_url').val('');
+        $('#int_hook_modal').modal('show');
+    },
+    register: function () {
+        var events = $('.int-entity:checked').map(function () { return this.value; }).get();
+        PosnicPro.post({
+            url: 'webhooks',
+            data: JSON.stringify({ url: $('#int_hook_url').val(), events: events })
+        }, function (r) {
+            if (r && r.type === 'success' && r.data && r.data.secret) {
+                $('#int_hook_modal').modal('hide');
+                $('#int_hook_secret').text(r.data.secret);
+                $('#int_hook_reveal').show();
+                PosnicPro.integrations.loadHooks();
+            } else {
+                PosnicPro.alert((r && r.type) || 'error', (r && r.message) || 'Could not register the webhook.');
+            }
+        }, function (xhr) {
+            var resp = {};
+            try { resp = JSON.parse(xhr.responseText); } catch (e) { /* plain */ }
+            PosnicPro.alert('error', resp.message || 'Could not register the webhook.');
+        });
+    },
+    copySecret: function () {
+        navigator.clipboard.writeText($('#int_hook_secret').text()).then(function () {
+            PosnicPro.alert('success', 'Secret copied');
+        });
+    },
+    removeHook: function (id) {
+        PosnicPro.delete({ url: 'webhooks/' + id, data: JSON.stringify({}) }, function (r) {
+            PosnicPro.alert((r && r.type) || 'success', (r && r.message) || 'Webhook removed');
+            PosnicPro.integrations.loadHooks();
+        }, function () { PosnicPro.alert('error', 'Could not remove the webhook.'); });
+    }
+};
+
+// Delegated actions: rows repaint on every load.
+$(document).on('click', '.int-revoke-btn', function () {
+    PosnicPro.integrations.revoke($(this).data('id'));
+});
+$(document).on('click', '.int-removehook-btn', function () {
+    PosnicPro.integrations.removeHook($(this).data('id'));
+});
