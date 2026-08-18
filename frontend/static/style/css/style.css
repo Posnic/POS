@@ -27875,7 +27875,10 @@ mark {
   border-bottom: 0;
 }
 #infobar-settings-sidebar-users {
-  width: clamp(600px, 55vw, 840px);
+  /* The user form carries credentials + branch + the whole Access Control
+     block (role, RFID, wage, till-action grid, module matrix) - it needs a
+     workspace, not a drawer slot. */
+  width: clamp(720px, 68vw, 1040px);
 }
 
 .infobar-settings-sidebar.sidebarshow,
