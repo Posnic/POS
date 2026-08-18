@@ -16,6 +16,7 @@ const { toNumberExpression } = require('../helpers/sales.helper');
 // Helper to get model instance or class
 const getModel = (SaleModel) => SaleModel || Sale;
 
+const { computeLineTax } = require('./tax-engine');
 const round2 = (value, decimals = 2) => {
   const num = typeof value === 'number' ? value : Number(value);
   if (!Number.isFinite(num)) return 0;
@@ -368,189 +369,44 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
       let effectiveItemTax = itemTax;
       let effectiveTaxType = item.tax_type || document.tax_type || '';
 
-      // CALCULATION LOGIC (Matching PHP structure)
-      if (discountAmount > 0 && itemTax > 0) {
-        itemDiscountAmountMultiple = discountAmount * itemQuantity;
-        let subTotal = itemAmount - itemDiscountAmountMultiple;
-
-        if (document.tax_type === 'exclusive') {
-          itemSubTaxTotalCalculation = (subTotal / 100) * itemTax;
-          itemDiscountAmountTotalCalculation = subTotal + itemSubTaxTotalCalculation;
-          total_data.push({ totalsales_Amount: itemDiscountAmountTotalCalculation });
-
-          tax_data.push({ tax_amount: itemSubTaxTotalCalculation });
-          discount_data.push({ discount_amount: itemDiscountAmountMultiple });
-          subtotal_data.push({ subtotal_amount: subTotal + itemDiscountAmountMultiple }); // PHP: $subTotal + $itemDiscountAmountMultiple = Initial Item Amount
-          itemTaxAmountForItem = round2(itemSubTaxTotalCalculation, 2);
-        } else {
-          // Inclusive
-          const tax_price = (sellingPrice * itemTax) / (100 + itemTax);
-          const tax_itemprice = sellingPrice - tax_price;
-          const tax_discount_multiple = tax_itemprice * itemQuantity;
-          const tax_quantity_multiple = tax_discount_multiple - itemDiscountAmountMultiple;
-
-          // Re-add tax to the discounted taxable amount
-          itemDiscountAmountTotalCalculation =
-            tax_quantity_multiple + (tax_quantity_multiple / 100) * itemTax;
-          total_data.push({ totalsales_Amount: itemDiscountAmountTotalCalculation });
-
-          subTotal = tax_quantity_multiple;
-          itemSubTaxTotalCalculation = (subTotal / 100) * itemTax;
-
-          tax_data.push({ tax_amount: itemSubTaxTotalCalculation });
-          discount_data.push({ discount_amount: itemDiscountAmountMultiple });
-          subtotal_data.push({ subtotal_amount: subTotal + itemDiscountAmountMultiple }); // approximate subtotal
-          itemTaxAmountForItem = round2(itemSubTaxTotalCalculation, 2);
-        }
-        itemDiscountPercentageMultiple = 0;
-      } else if (discountPercentage > 0 && itemTax > 0) {
-        itemDiscountPercentageMultiple = discountPercentage;
-        const itemTaxTotalCalculation = itemAmount - itemAmount * (discountPercentage / 100);
-
-        if (document.tax_type === 'exclusive') {
-          itemDiscountAmountTotalCalculation =
-            itemTaxTotalCalculation + (itemTaxTotalCalculation / 100) * itemTax;
-          total_data.push({ totalsales_Amount: itemDiscountAmountTotalCalculation });
-
-          itemSubTaxTotalCalculation = (itemTaxTotalCalculation / 100) * itemTax;
-          itemDiscountAmountMultiple = itemAmount * (discountPercentage / 100);
-
-          tax_data.push({ tax_amount: itemSubTaxTotalCalculation });
-          discount_data.push({ discount_amount: itemDiscountAmountMultiple });
-          subtotal_data.push({
-            subtotal_amount: itemTaxTotalCalculation + itemDiscountAmountMultiple,
-          });
-          itemTaxAmountForItem = round2(itemSubTaxTotalCalculation, 2);
-        } else {
-          itemDiscountAmountTotalCalculation = itemTaxTotalCalculation;
-          total_data.push({ totalsales_Amount: itemDiscountAmountTotalCalculation });
-
-          const tax_price = (sellingPrice * itemTax) / (100 + itemTax);
-          const tax_itemprice = sellingPrice - tax_price;
-          const tax_discount_multiple = tax_itemprice * itemQuantity;
-
-          itemDiscountAmountMultiple = tax_discount_multiple * (discountPercentage / 100);
-          const tax_quantity_multiple = tax_discount_multiple - itemDiscountAmountMultiple;
-          itemSubTaxTotalCalculation = (tax_quantity_multiple / 100) * itemTax;
-
-          tax_data.push({ tax_amount: itemSubTaxTotalCalculation });
-          discount_data.push({ discount_amount: itemDiscountAmountMultiple });
-          subtotal_data.push({
-            subtotal_amount: tax_quantity_multiple + itemDiscountAmountMultiple,
-          });
-          itemTaxAmountForItem = round2(itemSubTaxTotalCalculation, 2);
-        }
-        itemDiscountAmountMultiple = 0; // PHP resets this variable here for some reason
-      } else if (itemTax > 0) {
-        if (document.tax_type === 'exclusive') {
-          itemDiscountAmountTotalCalculation = itemAmount + (itemAmount / 100) * itemTax;
-          total_data.push({ totalsales_Amount: itemDiscountAmountTotalCalculation });
-
-          itemSubTaxTotalCalculation = (itemAmount / 100) * itemTax;
-          const subtotal = itemAmount + itemSubTaxTotalCalculation;
-
-          tax_data.push({ tax_amount: itemSubTaxTotalCalculation });
-          discount_data.push({ discount_amount: 0 });
-          subtotal_data.push({ subtotal_amount: subtotal - itemSubTaxTotalCalculation }); // = itemAmount
-          itemTaxAmountForItem = round2(itemSubTaxTotalCalculation, 2);
-        } else {
-          itemDiscountAmountTotalCalculation = itemAmount;
-          total_data.push({ totalsales_Amount: itemDiscountAmountTotalCalculation });
-
-          const tax_price = (sellingPrice * itemTax) / (100 + itemTax);
-          const tax_itemprice = sellingPrice - tax_price;
-          const tax_quantity_multiple = tax_itemprice * itemQuantity;
-          itemSubTaxTotalCalculation = (tax_quantity_multiple / 100) * itemTax;
-
-          tax_data.push({ tax_amount: itemSubTaxTotalCalculation });
-          discount_data.push({ discount_amount: 0 });
-          subtotal_data.push({ subtotal_amount: tax_quantity_multiple });
-          itemTaxAmountForItem = round2(itemSubTaxTotalCalculation, 2);
-        }
-      } else if (discountAmount > 0) {
-        itemDiscountAmountMultiple = discountAmount * itemQuantity;
-        const itemTaxTotalCalculation = itemAmount - itemDiscountAmountMultiple;
-        itemDiscountAmountTotalCalculation = itemTaxTotalCalculation;
-        total_data.push({ totalsales_Amount: itemDiscountAmountTotalCalculation });
-
-        tax_data.push({ tax_amount: 0 });
-        discount_data.push({ discount_amount: itemDiscountAmountMultiple });
-        subtotal_data.push({ subtotal_amount: itemAmount });
-      } else if (discountPercentage > 0) {
-        itemDiscountPercentageMultiple = discountPercentage;
-        const itemTaxTotalCalculation = itemAmount - itemAmount * (discountPercentage / 100);
-        itemDiscountAmountTotalCalculation = itemTaxTotalCalculation;
-        total_data.push({ totalsales_Amount: itemDiscountAmountTotalCalculation });
-
-        // Fallback for legacy inclusive-tax items where Node itemTax is 0
-        // but the frontend sends a per-line GST amount (item.gst).
-        // In that case, we can reconstruct PHP-style header tax, discount,
-        // and subtotal purely from:
-        //   - line total after discount (itemDiscountAmountTotalCalculation)
-        //   - per-line GST amount (item.gst)
-        //   - discountPercentage
-        // This mirrors PHP's inclusive-tax-with-discount logic without
-        // requiring a configured item.tax rate in Node.
-        const gstAmountForFallback =
-          typeof item.gst === 'number' ? item.gst : parseFloat(item.gst || 0) || 0;
-
-        if (itemTax <= 0 && gstAmountForFallback > 0 && discountPercentage > 0) {
-          const discountFactor = discountPercentage / 100;
-
-          // Line total L (inclusive, after discount)
-          const lineTotal = itemDiscountAmountTotalCalculation;
-          const taxAmountFromGst = gstAmountForFallback;
-
-          // Base after discount but before tax (PHP: tax_quantity_multiple)
-          const afterDiscountBeforeTax = lineTotal - taxAmountFromGst;
-
-          // Guard against divide-by-zero for pathological 100% discounts
-          let baseBeforeDiscount = afterDiscountBeforeTax;
-          if (discountFactor < 1) {
-            // PHP: tax_quantity_multiple = baseBeforeDiscount * (1 - discountFactor)
-            // => baseBeforeDiscount = tax_quantity_multiple / (1 - discountFactor)
-            baseBeforeDiscount = afterDiscountBeforeTax / (1 - discountFactor);
-          }
-
-          // PHP header discount: baseBeforeDiscount * discountFactor
-          const headerDiscountAmount = baseBeforeDiscount * discountFactor;
-
-          // Use the raw GST amount for header aggregation (full precision)
-          // but store a rounded per-line tax amount (2 decimals) for the
-          // item itself, while header tax keeps full precision.
-          itemSubTaxTotalCalculation = taxAmountFromGst;
-          itemTaxAmountForItem = round2(taxAmountFromGst, 2);
-          itemDiscountAmountMultiple = headerDiscountAmount;
-
-          // Derive an effective percentage rate from GST/base so that
-          // item-level `tax` and `tax_rate` fields match PHP's stored
-          // percentage (e.g. 3.0).
-          if (afterDiscountBeforeTax !== 0) {
-            effectiveItemTax = round2((taxAmountFromGst / afterDiscountBeforeTax) * 100, 2);
-          }
-          effectiveTaxType = 'inclusive';
-
-          tax_data.push({ tax_amount: itemSubTaxTotalCalculation });
-          discount_data.push({ discount_amount: itemDiscountAmountMultiple });
-          // PHP subtotal_data: base before discount (tax_quantity_multiple + discount)
-          subtotal_data.push({ subtotal_amount: baseBeforeDiscount });
-        } else {
-          // Original no-tax behaviour: discount applied directly on itemAmount
-          tax_data.push({ tax_amount: 0 });
-          discount_data.push({ discount_amount: itemAmount * (discountPercentage / 100) });
-          subtotal_data.push({ subtotal_amount: itemAmount });
-        }
-
-        itemDiscountAmountMultiple = 0;
-      } else {
-        // No tax, no discount
-        itemDiscountAmountTotalCalculation = itemAmount;
-        total_data.push({ totalsales_Amount: itemAmount });
-
-        tax_data.push({ tax_amount: 0 });
-        discount_data.push({ discount_amount: 0 });
-        subtotal_data.push({ subtotal_amount: itemAmount });
+      /*
+       * T1: the ONE tax engine computes this line. tax-engine.js carries
+       * the six branches verbatim from the block that used to live here,
+       * contract-locked by its vector suite - and the PHP-quirk locals the
+       * code below reads are reproduced exactly: the per-line discount
+       * field stays 0 for percentage branches (PHP reset it), the stored
+       * per-line tax rounds to 2dp while the header sums keep the raw
+       * value, and only the legacy GST-amount fallback may override the
+       * item's declared tax rate and type.
+       */
+      const gstAmountForFallback =
+        typeof item.gst === 'number' ? item.gst : parseFloat(item.gst || 0) || 0;
+      const engineLine = computeLineTax({
+        itemAmount,
+        sellingPrice,
+        itemQuantity,
+        itemTax,
+        taxType: document.tax_type,
+        discountAmount,
+        discountPercentage,
+        gstAmount: gstAmountForFallback,
+      });
+      itemDiscountAmountTotalCalculation = engineLine.total;
+      itemSubTaxTotalCalculation = engineLine.tax;
+      itemTaxAmountForItem = engineLine.taxForItem;
+      effectiveItemTax = engineLine.effectiveTax;
+      const legacyGstFallbackFired =
+        itemTax <= 0 && gstAmountForFallback > 0 && discountPercentage > 0 && !(discountAmount > 0);
+      if (legacyGstFallbackFired) {
+        effectiveTaxType = 'inclusive';
       }
+      itemDiscountAmountMultiple = discountAmount > 0 ? discountAmount * itemQuantity : 0;
+      itemDiscountPercentageMultiple =
+        !(discountAmount > 0) && discountPercentage > 0 ? discountPercentage : 0;
+      total_data.push({ totalsales_Amount: engineLine.total });
+      tax_data.push({ tax_amount: engineLine.tax });
+      discount_data.push({ discount_amount: engineLine.discount });
+      subtotal_data.push({ subtotal_amount: engineLine.subtotal });
 
       // Inventory check
       const availablequatity = parseFloat(document.available_quantity || 0);
