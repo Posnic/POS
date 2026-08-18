@@ -2610,8 +2610,11 @@ input:checked + .slider:before {
        one gesture reads as one motion, not staged pops. */
     .vertical-layout.page_loader { animation: posnic-page-in .26s cubic-bezier(0.16, 1, 0.3, 1); }
     .report-group-tabs { animation: posnic-page-in .26s cubic-bezier(0.16, 1, 0.3, 1); }
-    .tab-content > .tab-pane.active { animation: posnic-tab-in .18s cubic-bezier(0.16, 1, 0.3, 1); }
-    .vertical-menu-detail .tab-pane.fade { transition: opacity .16s linear; }
+    /* CONTENT panes only. The sidebar's section panes are .tab-pane too,
+       and every page-show churns their active classes - animating them
+       made the menu visibly re-render on every click. The menu must sit
+       perfectly still; only the content moves. */
+    .contentbar .tab-content > .tab-pane.active { animation: posnic-tab-in .18s cubic-bezier(0.16, 1, 0.3, 1); }
 }
 
 /* Report menu groups: quiet uppercase labels, tighter than the Config
