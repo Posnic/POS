@@ -343,11 +343,28 @@ PosnicPro.settings = {
                 country_id: countryValue[0].element.attributes['data-setting-id'].value
             };
             var formData = PosnicPro.getFormData($('#setting_add'));
+            /* The form lives on the Branch edit page now and always names its
+               target branch; registers ride along (class-collected - the
+               dynamic rows are not form-serialized). Local state refresh only
+               applies when the branch being edited IS the session branch. */
+            var target = $('#edit_branch_target').val() || '';
+            var editingCurrent = !target || target === PosnicPro.local.get('branch_id_set');
+            var registers = {
+                register: $('.be-register').map(function () { return $(this).val(); }).get()
+                    .filter(function (v) { return v && v.trim().length >= 3; })
+            };
             var params = {
                 url: 'setting/updateGeneralSetting',
-                data: JSON.stringify(Object.assign(formData, timezoneValue, countryId))
+                data: JSON.stringify(Object.assign(formData, timezoneValue, countryId, registers))
             };
             PosnicPro.put(params, function (response) {
+                if (response.type === 'success' && !editingCurrent) {
+                    loader.find(".loadingSpinner:first").remove();
+                    PosnicPro.alert(response.type, response.message);
+                    hasher.setHash('branches');
+                    PosnicPro.branches.branchesTable('branches');
+                    return;
+                }
                 if (response.type === 'success') {
                     $('.print_store_address').html(response.data['printing_address']);
                     $('.print_store_telephone').html(response.data['store_telephone']);
@@ -416,6 +433,11 @@ PosnicPro.settings = {
                         PosnicPro.local.set('gst_action', 'disable');
                     }
                     loader.find(".loadingSpinner:first").remove();
+                    // Saved from the Branch edit page: back to the list.
+                    if (target) {
+                        hasher.setHash('branches');
+                        PosnicPro.branches.branchesTable('branches');
+                    }
                 }
                 PosnicPro.alert(response.type, response.message);
             }, function (xhr) {

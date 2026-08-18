@@ -27,17 +27,88 @@ PosnicPro.branches = {
         }
         PosnicPro.branches.branchAction = 'add';
     },
+    /*
+     * Edit is a FULL PAGE now (modules/branchEdit.html): branch identity,
+     * the store/outlet fields that used to live in Config, registers and
+     * the logo - one page, one save, any branch of the license.
+     */
     showEdit: function (id) {
-        var loader = $(".loader-branch");
-        loader.find(".loadingSpinner:first").remove();
-        PosnicPro.showEditModal('branches');
-        PosnicPro.branches.editBranch(id);
+        PosnicPro.HideSideBarModal();
+        $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
+        $(".vertical-layout").removeClass("toggle-menu");
+        $(".vertical-menu li a").removeClass("active");
+        $('.page_loader,#osk-container').hide();
+        $('.page-title-box,#branchedit_new').show();
+        $('#v-pills-manage-tab').addClass('active');
         $('#v-pills-manage').addClass('show active');
+        $('.vertical-menu li a#view_branches_page').addClass('active');
         $('.mobile_tooltip').tooltip('hide');
-        $('#branch_reset').hide();
-        $('.branch_edit_reset').show();
-        $('.branch_edit_reset').attr("id", id);
         PosnicPro.branches.branchAction = 'edit';
+        PosnicPro.branches.loadFullEdit(id);
+    },
+    loadFullEdit: function (id) {
+        // Option lists first (idempotent - they repopulate by id wherever the
+        // controls live), then this branch's values over them.
+        PosnicPro.settings.loadSelectSettingCountry();
+        PosnicPro.settings.loadSelectSettingCurrency();
+        PosnicPro.settings.timeZone();
+        PosnicPro.get({ url: 'branches/getBranchDetails', data: { id: id } }, function (response) {
+            if (response.type !== 'success') { PosnicPro.alert(response.type, response.message); return; }
+            var d = response.data;
+            PosnicPro.record_id = id;
+            $('#edit_branch_target,#be_logo_target').val(id);
+            $('#be_page_branch_name').text(d.branch_name || '');
+            $('#store_name').val(d.branch_name);
+            $('#store_email').val(d.store_email);
+            $('#store_telephone').val(d.store_telephone);
+            $('#store_alternativephone').val(d.store_alternativephone);
+            $('#store_address').val(d.store_address);
+            $('#printing_address').val(d.printing_address);
+            $('#city').val(d.city);
+            $('#pincode').val(d.pincode);
+            $('#website').val(d.website);
+            $('#branch_gstin_number').val(d.branch_gstin_number);
+            // Selects fill after their (async) option lists land.
+            setTimeout(function () {
+                $('#setting_country').val(d.country).trigger('change.select2');
+                PosnicPro.settings.loadSelectSettingState(d.country_id);
+                setTimeout(function () {
+                    $('#setting_state').val(d.state).trigger('change.select2');
+                }, 400);
+                $('#currency_setting').val(d.currency_text).trigger('change.select2');
+                var cv = (d.currency_value && d.currency_value[0]) || { currency_text: 'INR', currency_sign: '₹' };
+                $('#currencyText').val(cv.currency_sign);
+                $('#currencyTextname').val(cv.currency_text);
+                $('#currency_type').empty().append(
+                    '<option value="' + cv.currency_text + '">Text( ' + cv.currency_text + ' )</option>' +
+                    '<option value="' + cv.currency_sign + '">Symbol( ' + cv.currency_sign + ' )</option>');
+                $('#currency_type').val(d.currency_type);
+                $('#time_zone').val(d.time_zone).trigger('change.select2');
+                $('#storedate').val(d.client_dateformat).trigger('change.select2');
+                $('#serverdate').val(d.server_dateformat);
+                $('#dateText').val(d.dateformat_text);
+            }, 600);
+            var image_path = (d.logo && d.logo !== 'store.png') ? d.logo : 'static/images/default/store.png';
+            $('#previewing').attr('src', image_path);
+            $('#setting_logo_value').val(d.logo || 'store.png');
+            $('#be_register_rows').empty();
+            $.each(d.register || [], function (i, r) {
+                var name = (r && (r.register_name || r.name)) || (typeof r === 'string' ? r : '');
+                if (name) { PosnicPro.branches.beAddRegisterRow(name); }
+            });
+        }, function (xhr) {
+            var response = jQuery.parseJSON(xhr.responseText);
+            PosnicPro.alert(response.type, response.message);
+        });
+    },
+    beAddRegisterRow: function (name) {
+        var row = $('<div class="input-group mb-2 be-register-row" style="max-width:340px;">' +
+            '<input type="text" class="form-control be-register" maxlength="20" placeholder="Register name">' +
+            '<div class="input-group-append"><button class="btn btn-outline-danger" type="button">' +
+            '<i class="feather icon-x"></i></button></div></div>');
+        row.find('input').val(name || '');
+        row.find('button').on('click', function () { row.remove(); });
+        $('#be_register_rows').append(row);
     },
     showDelete: function (id) {
         PosnicPro.deleteTableRowData(id, 'branches');
