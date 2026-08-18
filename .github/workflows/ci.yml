@@ -237,6 +237,16 @@ jobs:
       - name: Install
         run: npm ci --omit=optional --ignore-scripts
 
+      # The rollback drill releases the REAL artifact - the manifest signed
+      # over an actually-built frontend/public - so the suite needs the pages
+      # built first. Same steps as deploy-frontend.yml. Without this the drill
+      # fails on every run and the job has been red since it landed.
+      - name: Build the pages (the drill releases the real artifact)
+        working-directory: frontend
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build:assets
+
       - name: Startup, hardware, printing and lock tests
         run: npm test
 
