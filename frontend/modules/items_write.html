@@ -74,6 +74,16 @@
                                     </a>
                                 </div>
                             </div>
+                            <!-- IC4: the import path exists (items list > Import icon) but
+                                 nobody onboarding 500 SKUs finds it from HERE, where they
+                                 feel the pain. -->
+                            <small class="text-muted d-block">
+                                <lang class="lang_item_import_hint">Adding many items?</lang>
+                                <a href="#/items" data-module="item" data-access="write"
+                                    onclick="setTimeout(function(){PosnicPro.importTableFile('items');},300);">
+                                    <lang class="lang_item_import_link">Import them from a file</lang>
+                                </a>
+                            </small>
                         </div>
                     </div>
 
