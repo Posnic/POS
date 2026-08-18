@@ -994,6 +994,13 @@ const { subscribe: sseSubscribe } = require('./src/realtime/event-bus');
 const { protect: sseProtect } = require('./src/middleware/auth');
 app.use(changeEvents);
 
+/*
+ * /api/v1 - the versioned facade (INTEGRATIONS_ROADMAP I4). Read-only in
+ * v1.0; scoped tokens are the intended caller. Registered with both path
+ * forms like every infra endpoint.
+ */
+require('./src/v1').registerV1({ app, protect: sseProtect });
+
 const sseEvents = (req, res) => {
   if (!req.db) return res.status(503).json({ type: 'error', message: 'No shop in context' });
   /* text/event-stream is not a compressible type, so the compression
