@@ -2898,6 +2898,122 @@ class SettingModel extends BaseModel {
     }
   }
 
+  /*
+   * Price lists (variant roadmap V4): customer-group pricing. A list is
+   * keyed to a customer category and holds either a percentage rule
+   * (percent_off - negative = markup) or per-item price overrides, or
+   * both (overrides win). Resolution happens on the sale screen at line
+   * price time; discounts and tax flow after it, unchanged.
+   */
+  static normalizePriceList(data = {}) {
+    const categoryId = String(data.customer_category_id || '').trim();
+    if (!categoryId) return { error: 'Pick the customer category this list prices for.' };
+    let percent = Number(data.percent_off);
+    if (!Number.isFinite(percent)) percent = 0;
+    if (percent <= -1000 || percent >= 100) {
+      return { error: 'Percent off must be below 100 (negative means markup).' };
+    }
+    const rawOverrides = Array.isArray(data.item_overrides) ? data.item_overrides : [];
+    const overrides = [];
+    const seen = new Set();
+    for (const o of rawOverrides) {
+      const itemId = String((o && o.item_id) || '').trim();
+      const price = Number(o && o.price);
+      if (!itemId || seen.has(itemId)) continue;
+      if (!Number.isFinite(price) || price < 0) continue;
+      seen.add(itemId);
+      overrides.push({
+        item_id: itemId,
+        item_name: String((o && o.item_name) || '').trim(),
+        price,
+      });
+    }
+    if (!percent && !overrides.length) {
+      return { error: 'A list needs a percentage or at least one item price.' };
+    }
+    return {
+      value: {
+        customer_category_id: categoryId,
+        customer_category_name: String(data.customer_category_name || '').trim(),
+        percent_off: percent,
+        item_overrides: overrides,
+      },
+    };
+  }
+
+  async getPriceListsModel() {
+    try {
+      const collection = await this.getCollection('price_lists');
+      const list = await collection
+        .find(this.buildFilter())
+        .sort({ customer_category_name: 1 })
+        .toArray();
+      return {
+        status: true,
+        data: list.map((doc) => ({
+          id: doc._id.toString(),
+          customer_category_id: String(doc.customer_category_id || ''),
+          customer_category_name: doc.customer_category_name || '',
+          percent_off: doc.percent_off || 0,
+          item_overrides: (doc.item_overrides || []).map((o) => ({
+            item_id: String(o.item_id || ''),
+            item_name: o.item_name || '',
+            price: o.price,
+          })),
+        })),
+        message: 'success',
+      };
+    } catch (error) {
+      console.error('Error in getPriceListsModel:', error);
+      return { status: false, data: null, message: error.message };
+    }
+  }
+
+  async savePriceListModel(data) {
+    try {
+      const norm = SettingModel.normalizePriceList(data);
+      if (norm.error) return { status: false, data: null, message: norm.error };
+      const collection = await this.getCollection('price_lists');
+      const now = new Date();
+      /* One list per category per branch - saving again replaces it, which
+         is what a shopkeeper editing "Wholesale prices" means. */
+      await collection.updateOne(
+        { ...this.buildFilter(), customer_category_id: norm.value.customer_category_id },
+        {
+          $set: {
+            ...norm.value,
+            branch_id: this.normalizeId(this.branchId),
+            license: this.normalizeId(this.licenseId),
+            updated_date: now,
+            updated_by: this.user?.username || 'system',
+          },
+          $setOnInsert: { created_date: now, created_by: this.user?.username || 'system' },
+        },
+        { upsert: true }
+      );
+      return { status: true, data: null, message: 'Price list saved' };
+    } catch (error) {
+      console.error('Error in savePriceListModel:', error);
+      return { status: false, data: null, message: error.message };
+    }
+  }
+
+  async deletePriceListModel(id) {
+    try {
+      if (!id) return { status: false, data: null, message: 'List id required' };
+      const collection = await this.getCollection('price_lists');
+      const r = await collection.deleteOne({
+        _id: this.normalizeId(id),
+        license: this.normalizeId(this.licenseId),
+      });
+      if (!r.deletedCount) return { status: false, data: null, message: 'No such price list' };
+      return { status: true, data: null, message: 'Price list deleted' };
+    } catch (error) {
+      console.error('Error in deletePriceListModel:', error);
+      return { status: false, data: null, message: error.message };
+    }
+  }
+
   async getTableOrderAllModel() {
     try {
       const collection = await this.getCollection(this.tableOrderCollection);

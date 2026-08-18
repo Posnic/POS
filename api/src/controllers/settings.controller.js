@@ -1162,11 +1162,11 @@ class SettingController extends BaseController {
     }
   }
 
-  /* Modifier groups (V2) - Restaurant option sets; CRUD mirrors tables. */
-  async getModifierGroups(req, res) {
+  /* Price lists (V4) - customer-group pricing; one list per category. */
+  async getPriceLists(req, res) {
     try {
       const settingModel = this.createModelWithContext(req);
-      const result = await settingModel.getModifierGroupsModel();
+      const result = await settingModel.getPriceListsModel();
       const code = result.status ? 200 : 400;
       return res
         .status(code)
@@ -1175,6 +1175,59 @@ class SettingController extends BaseController {
           message: result.message,
           data: result.data,
         });
+    } catch (error) {
+      console.error('Error in getPriceLists:', error);
+      return res.status(500).json({ type: 'error', message: error.message });
+    }
+  }
+
+  async savePriceList(req, res) {
+    try {
+      const settingModel = this.createModelWithContext(req);
+      const result = await settingModel.savePriceListModel(req.body || {});
+      const code = result.status ? 200 : 400;
+      return res
+        .status(code)
+        .json({
+          type: result.status ? 'success' : 'error',
+          message: result.message,
+          data: result.data,
+        });
+    } catch (error) {
+      console.error('Error in savePriceList:', error);
+      return res.status(500).json({ type: 'error', message: error.message });
+    }
+  }
+
+  async deletePriceList(req, res) {
+    try {
+      const settingModel = this.createModelWithContext(req);
+      const result = await settingModel.deletePriceListModel(req.params.id || req.query.id);
+      const code = result.status ? 200 : 400;
+      return res
+        .status(code)
+        .json({
+          type: result.status ? 'success' : 'error',
+          message: result.message,
+          data: result.data,
+        });
+    } catch (error) {
+      console.error('Error in deletePriceList:', error);
+      return res.status(500).json({ type: 'error', message: error.message });
+    }
+  }
+
+  /* Modifier groups (V2) - Restaurant option sets; CRUD mirrors tables. */
+  async getModifierGroups(req, res) {
+    try {
+      const settingModel = this.createModelWithContext(req);
+      const result = await settingModel.getModifierGroupsModel();
+      const code = result.status ? 200 : 400;
+      return res.status(code).json({
+        type: result.status ? 'success' : 'error',
+        message: result.message,
+        data: result.data,
+      });
     } catch (error) {
       console.error('Error in getModifierGroups:', error);
       return res.status(500).json({ type: 'error', message: error.message });
@@ -1186,13 +1239,11 @@ class SettingController extends BaseController {
       const settingModel = this.createModelWithContext(req);
       const result = await settingModel.addModifierGroupModel(req.body || {});
       const code = result.status ? 200 : 400;
-      return res
-        .status(code)
-        .json({
-          type: result.status ? 'success' : 'error',
-          message: result.message,
-          data: result.data,
-        });
+      return res.status(code).json({
+        type: result.status ? 'success' : 'error',
+        message: result.message,
+        data: result.data,
+      });
     } catch (error) {
       console.error('Error in addModifierGroup:', error);
       return res.status(500).json({ type: 'error', message: error.message });
@@ -1207,13 +1258,11 @@ class SettingController extends BaseController {
         req.body || {}
       );
       const code = result.status ? 200 : 400;
-      return res
-        .status(code)
-        .json({
-          type: result.status ? 'success' : 'error',
-          message: result.message,
-          data: result.data,
-        });
+      return res.status(code).json({
+        type: result.status ? 'success' : 'error',
+        message: result.message,
+        data: result.data,
+      });
     } catch (error) {
       console.error('Error in editModifierGroup:', error);
       return res.status(500).json({ type: 'error', message: error.message });
@@ -1225,13 +1274,11 @@ class SettingController extends BaseController {
       const settingModel = this.createModelWithContext(req);
       const result = await settingModel.deleteModifierGroupModel(req.params.id || req.query.id);
       const code = result.status ? 200 : 400;
-      return res
-        .status(code)
-        .json({
-          type: result.status ? 'success' : 'error',
-          message: result.message,
-          data: result.data,
-        });
+      return res.status(code).json({
+        type: result.status ? 'success' : 'error',
+        message: result.message,
+        data: result.data,
+      });
     } catch (error) {
       console.error('Error in deleteModifierGroup:', error);
       return res.status(500).json({ type: 'error', message: error.message });
