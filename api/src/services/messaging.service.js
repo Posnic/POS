@@ -9,6 +9,15 @@ const oid = (v) => (v && ObjectId.isValid(String(v)) ? new ObjectId(String(v)) :
 const digits = (p) => String(p || '').replace(/[^\d]/g, '');
 
 /*
+ * How a 'web' (QR-linked) WhatsApp message physically leaves the building.
+ * 'inprocess' is today's whatsapp-web.js-inside-the-API; 'shadow' sends
+ * in-process AND records the send in the connector outbox for parity;
+ * 'connector' queues for the signed connector (I5/I6) and Chromium never
+ * runs in this process. Per-branch, defaulting to no change at all.
+ */
+const TRANSPORTS = ['inprocess', 'shadow', 'connector'];
+
+/*
  * Messaging settings + the SMS sender.
  *
  * SMS is the shop's own provider account. The shop picks a provider from the
@@ -71,6 +80,9 @@ class MessagingService {
       sms_template: raw.sms_template || '',
       whatsapp_enabled: !!raw.whatsapp_enabled,
       whatsapp_mode: raw.whatsapp_mode === 'cloud' ? 'cloud' : 'web',
+      whatsapp_transport: TRANSPORTS.includes(raw.whatsapp_transport)
+        ? raw.whatsapp_transport
+        : 'inprocess',
       whatsapp_device_id: raw.whatsapp_device_id || '',
       whatsapp_host: raw.whatsapp_host || '',
       whatsapp_cloud: cloud,
@@ -117,6 +129,11 @@ class MessagingService {
         data.sms_template !== undefined ? String(data.sms_template) : existing.sms_template || '',
       whatsapp_enabled: data.whatsapp_enabled === true || data.whatsapp_enabled === 'true',
       whatsapp_mode: data.whatsapp_mode === 'cloud' ? 'cloud' : 'web',
+      whatsapp_transport: TRANSPORTS.includes(data.whatsapp_transport)
+        ? data.whatsapp_transport
+        : TRANSPORTS.includes(existing.whatsapp_transport)
+          ? existing.whatsapp_transport
+          : 'inprocess',
       whatsapp_device_id:
         data.whatsapp_device_id !== undefined
           ? String(data.whatsapp_device_id)
@@ -220,19 +237,55 @@ class MessagingService {
     }
 
     // web / local device
-    const whatsappService = require('./whatsapp.service');
     const db = await BaseModel.getDb();
+    const transport = TRANSPORTS.includes(raw.whatsapp_transport)
+      ? raw.whatsapp_transport
+      : 'inprocess';
+
+    // The connector owns the session: queue and answer. The outbox's claim/
+    // retry/dead discipline takes it from here - see whatsapp-outbox.js.
+    if (transport === 'connector') {
+      const outbox = require('./whatsapp-outbox');
+      try {
+        await outbox.enqueue(db, BaseModel.license, { branch_id: branchId, phone, message });
+        return { ok: true, queued: true, error: null };
+      } catch (e) {
+        return { ok: false, error: 'Could not queue the message: ' + e.message };
+      }
+    }
+
+    const whatsappService = require('./whatsapp.service');
     const branch = branchId
       ? await db.collection('branches').findOne({ _id: oid(branchId) })
       : null;
     const deviceId = raw.whatsapp_device_id || (branch && branch.whatsapp_device_id);
     if (!deviceId) return { ok: false, error: 'No WhatsApp device linked for this branch' };
+    let result;
     try {
       const r = await whatsappService.sendMessage(deviceId, branchId, phone, message);
-      return { ok: r && r.status === true, error: r && r.message };
+      result = { ok: r && r.status === true, error: r && r.message };
     } catch (e) {
-      return { ok: false, error: e.message };
+      result = { ok: false, error: e.message };
     }
+
+    // Shadow: the in-process send above already happened and stands; the
+    // same message is recorded in the outbox with that verdict, so a week
+    // of these rows IS the parity report the cutover decision reads.
+    if (transport === 'shadow') {
+      try {
+        const outbox = require('./whatsapp-outbox');
+        await outbox.enqueue(db, BaseModel.license, {
+          branch_id: branchId,
+          phone,
+          message,
+          shadow: true,
+          inprocess: result,
+        });
+      } catch (e) {
+        /* parity recording must never fail the send */
+      }
+    }
+    return result;
   }
 
   /**
