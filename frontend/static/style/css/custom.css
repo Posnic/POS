@@ -2579,6 +2579,17 @@ input:checked + .slider:before {
     .settings-nav-col .nav-link { white-space: nowrap; }
 }
 
+/*
+ * Drawer body padding, take two. Killing the 30px .custom-mode-setting rule
+ * at the source stripped EVERY right-side popup bare - Edit Unit and its 34
+ * siblings share that wrapper class. 18px restores breathing room without
+ * the slab the 30px version was hated for. The detail-view drawers keep
+ * their explicit zero overrides (higher specificity in style.css).
+ */
+.infobar-settings-sidebar .infobar-settings-sidebar-body .custom-mode-setting {
+    padding: 18px;
+}
+
 /* Core Settings vertical submenus (Inventory, Payments): two short words
    do not need a quarter of the card - a compact rail, content takes the rest. */
 @media (min-width: 992px) {
