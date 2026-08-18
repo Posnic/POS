@@ -1017,7 +1017,7 @@ PosnicPro.users = {
         var renderClosed = function () {
             $('.register_details_data').hide();
             $('#close_register_card').show();
-            $(".register_details_visibledata").css('visibility', 'hidden');
+            $(".register_details_visibledata").hide();
 
             // Load registers for the current branch immediately
             let id = PosnicPro.local.get("branch_id_set");
@@ -1039,7 +1039,7 @@ PosnicPro.users = {
             if (data && data.register_status === 'open') {
                 $('.register_details_data').show();
                 $('#close_register_card').hide();
-                $(".register_details_visibledata").css('visibility', 'visible');
+                $(".register_details_visibledata").show();
                 PosnicPro.registers.cashReportRegister(data.register_id);
             } else {
                 renderClosed();
