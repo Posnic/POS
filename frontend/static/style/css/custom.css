@@ -2590,6 +2590,11 @@ input:checked + .slider:before {
     padding: 18px;
 }
 
+/* Users | Roles: the Core Settings tab look (underline, not pills),
+   sitting beside the page title without drawing a full-width rule. */
+.users-roles-tabs { border-bottom: 0; }
+.users-roles-tabs .nav-link { white-space: nowrap; padding: 6px 16px; }
+
 /* Core Settings vertical submenus (Inventory, Payments): two short words
    do not need a quarter of the card - a compact rail, content takes the rest. */
 @media (min-width: 992px) {
