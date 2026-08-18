@@ -127,9 +127,20 @@ async function sweepStaleDatabases(client, { keepRunId } = {}) {
     for (const { name } of databases) {
       if (!SWEEP_PATTERN.test(name)) continue; // not ours
       const runId = name.split('_').filter((p) => /^\d+$/.test(p))[0];
-      /* Leave this run's own databases, and anything from a run whose id is
-         not clearly older - a parallel job on the same commit shares the id. */
-      if (!runId || runId === current) continue;
+      /*
+       * Leave this run's own databases AND any run close enough to be
+       * running right now. The old check was `runId === current`, which
+       * missed that the CI workflow and the Test build workflow on the
+       * SAME push carry DIFFERENT run ids - each sweeper saw the other's
+       * live database as a leftover and dropped it mid-test, which is how
+       * a freshly created unique index "stopped existing" and a duplicate
+       * insert sailed through. Run ids on this instance differ by a few
+       * hundred within one push and by hundreds of thousands between
+       * pushes, so a 50k window cleanly separates "possibly concurrent"
+       * from "finished by definition".
+       */
+      if (!runId) continue;
+      if (!/^\d+$/.test(current) || Math.abs(Number(runId) - Number(current)) < 50000) continue;
       await client
         .db(name)
         .dropDatabase()
