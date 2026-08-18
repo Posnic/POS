@@ -4183,11 +4183,20 @@ PosnicPro.labourreport = {
     }
 };
 
-// Report group navigator rides every route change - deferred a tick so the
-// destination page is visible when the strip looks for its breadcrumb.
+// Report group navigator rides every route change. Injected IMMEDIATELY
+// after the route lands so the strip is part of the page's single entry
+// motion - a late strip shoved the layout and read as a second splash.
+// One short retry covers show functions that finish a beat later.
 $(function () {
     if (window.hasher && hasher.changed) {
-        var paint = function () { setTimeout(PosnicPro.injectReportGroupTabs, 250); };
+        var paint = function () {
+            setTimeout(function () {
+                PosnicPro.injectReportGroupTabs();
+                if (!$('.report-group-tabs').length) {
+                    setTimeout(PosnicPro.injectReportGroupTabs, 150);
+                }
+            }, 0);
+        };
         hasher.changed.add(paint);
         hasher.initialized.add(paint);
         paint();
