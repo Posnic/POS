@@ -33,6 +33,60 @@ function canRead(user, aclModule) {
   return !!(user && user.access && user.access[aclModule] && user.access[aclModule].read === true);
 }
 
+function canWrite(user, aclModule) {
+  return !!(user && user.access && user.access[aclModule] && user.access[aclModule].write === true);
+}
+
+/*
+ * Writes arrive per entity, deliberately (I4.5) - never leaked from legacy.
+ * customers first: the fields an integrator may set are exactly these.
+ * Deliberate omissions: balance and loyalty (money-adjacent state changes
+ * belong to the sale/credit flows that account for them), category and
+ * referrer links (referential - they need the lookup flows), tags.
+ */
+const WRITABLE = {
+  customers: {
+    fields: [
+      'name',
+      'email',
+      'phone',
+      'alternatePhone',
+      'address',
+      'city',
+      'state',
+      'country',
+      'pincode',
+      'notes',
+      'gst_number',
+      'gst_type',
+    ],
+    required: (body) =>
+      (typeof body.name === 'string' && body.name.trim()) ||
+      (typeof body.phone === 'string' && body.phone.trim())
+        ? null
+        : 'A customer needs at least a name or a phone number.',
+  },
+};
+
+/** The whitelisted subset of a write body, every value coerced to string. */
+function pickWritable(entity, body) {
+  const def = WRITABLE[entity];
+  const out = {};
+  for (const f of def.fields) {
+    if (body[f] !== undefined && body[f] !== null) out[f] = String(body[f]);
+  }
+  return out;
+}
+
+/** The branch a token principal's writes land in. */
+function writeBranchId(user) {
+  if (!user) return null;
+  if (user.branch_id) return user.branch_id;
+  const ba = user.branch_access;
+  if (Array.isArray(ba) && ba[0] && ba[0].branch_id) return ba[0].branch_id;
+  return null;
+}
+
 /* Cursor = base64url of "isoDate|id". Compound so equal timestamps can
    neither skip nor repeat - the same rule the sync checkpoints use. */
 function encodeCursor(doc) {
@@ -134,7 +188,7 @@ function openapiSpec() {
       title: 'Posnic API',
       version: '1.0.0',
       description:
-        'Read-only v1. Authenticate with a scoped API token (Manage > Integrations) via the Authorization: Bearer header. Lists are cursor-paginated; pass meta.next_cursor back as ?cursor= until it returns null.',
+        'Authenticate with a scoped API token (Manage > Integrations) via the Authorization: Bearer header. Lists are cursor-paginated; pass meta.next_cursor back as ?cursor= until it returns null. Reads cover every entity; writes exist per entity, deliberately - customers today.',
     },
     servers: [{ url: '/api/v1' }],
     components: {
@@ -194,6 +248,27 @@ function openapiSpec() {
             429: { description: 'Over ' + MAX_PER_WINDOW + ' requests per minute' },
           },
         },
+        post: {
+          summary: 'Create a record',
+          description:
+            'Writable entities: ' +
+            Object.keys(WRITABLE).join(', ') +
+            '. customers accepts: ' +
+            WRITABLE.customers.fields.join(', ') +
+            '. A customer needs at least a name or a phone.',
+          parameters: [
+            {
+              name: 'entity',
+              in: 'path',
+              required: true,
+              schema: { type: 'string', enum: Object.keys(WRITABLE) },
+            },
+          ],
+          responses: {
+            201: { description: 'The created record, wrapped as {data}' },
+            405: { description: 'This entity is read-only in v1' },
+          },
+        },
       },
       '/{entity}/{id}': {
         get: {
@@ -210,6 +285,26 @@ function openapiSpec() {
           responses: {
             200: { description: 'The record, wrapped as {data}' },
             404: { description: 'No such record in this shop' },
+          },
+        },
+        patch: {
+          summary: 'Update writable fields of one record',
+          description:
+            'Writable entities: ' +
+            Object.keys(WRITABLE).join(', ') +
+            '. Only the documented fields are accepted; anything else is ignored.',
+          parameters: [
+            {
+              name: 'entity',
+              in: 'path',
+              required: true,
+              schema: { type: 'string', enum: Object.keys(WRITABLE) },
+            },
+            { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+          ],
+          responses: {
+            200: { description: 'The updated record, wrapped as {data}' },
+            405: { description: 'This entity is read-only in v1' },
           },
         },
       },
@@ -285,6 +380,82 @@ function registerV1({ app, protect }) {
     }
   });
 
+  router.post('/:entity', async (req, res) => {
+    const def = ENTITIES[req.params.entity];
+    const wdef = WRITABLE[req.params.entity];
+    if (!def) return err(res, 404, 'unknown_entity', 'No such collection in v1.');
+    if (!wdef)
+      return err(
+        res,
+        405,
+        'read_only',
+        'v1 does not accept writes to ' + req.params.entity + ' yet.'
+      );
+    if (!canWrite(req.user, def.acl))
+      return err(res, 403, 'forbidden', 'This token has no ' + def.acl + ':write scope.');
+    if (!req.db) return err(res, 503, 'no_tenant', 'Tenant context unavailable.');
+    try {
+      const body = req.body || {};
+      const problem = wdef.required(body);
+      if (problem) return err(res, 400, 'invalid', problem);
+      const now = new Date();
+      const doc = {
+        ...pickWritable(req.params.entity, body),
+        license: req.user.license || null,
+        branch_id: writeBranchId(req.user),
+        created_date: now,
+        updated_date: now,
+        is_deleted: false,
+        created_via: 'api_v1',
+      };
+      const r = await req.db.collection(def.collection).insertOne(doc);
+      res.status(201).json({ data: { ...doc, _id: r.insertedId } });
+    } catch (e) {
+      err(res, 500, 'internal', 'Could not create the record.');
+    }
+  });
+
+  router.patch('/:entity/:id', async (req, res) => {
+    const def = ENTITIES[req.params.entity];
+    const wdef = WRITABLE[req.params.entity];
+    if (!def) return err(res, 404, 'unknown_entity', 'No such collection in v1.');
+    if (!wdef)
+      return err(
+        res,
+        405,
+        'read_only',
+        'v1 does not accept writes to ' + req.params.entity + ' yet.'
+      );
+    if (!canWrite(req.user, def.acl))
+      return err(res, 403, 'forbidden', 'This token has no ' + def.acl + ':write scope.');
+    if (!req.db) return err(res, 503, 'no_tenant', 'Tenant context unavailable.');
+    try {
+      const { ObjectId } = require('mongodb');
+      if (!ObjectId.isValid(String(req.params.id)))
+        return err(res, 400, 'bad_id', 'Not a valid id.');
+      const set = pickWritable(req.params.entity, req.body || {});
+      if (!Object.keys(set).length)
+        return err(res, 400, 'invalid', 'Nothing writable in the body.');
+      set.updated_date = new Date();
+      const and = [{ _id: new ObjectId(String(req.params.id)) }];
+      if (req.user && req.user.license) and.push({ license: req.user.license });
+      const bf = branchFilter(req.user);
+      if (bf) and.push(bf);
+      const r = await req.db
+        .collection(def.collection)
+        .findOneAndUpdate(
+          { $and: and },
+          { $set: set },
+          { returnDocument: 'after', projection: INTERNAL_FIELDS }
+        );
+      const doc = r && (r.value !== undefined ? r.value : r);
+      if (!doc || !doc._id) return err(res, 404, 'not_found', 'No such record in this shop.');
+      res.json({ data: doc });
+    } catch (e) {
+      err(res, 500, 'internal', 'Could not update the record.');
+    }
+  });
+
   /* Dual-path, always - the proxy keeps /api on this estate. */
   app.use('/v1', protect, router);
   app.use('/api/v1', protect, router);
@@ -305,4 +476,8 @@ module.exports = {
   envelope,
   openapiSpec,
   registerV1,
+  WRITABLE,
+  canWrite,
+  pickWritable,
+  writeBranchId,
 };
