@@ -73,6 +73,8 @@
       "startup-auth.js",
       "sync-agent-manager.js",
       "asset-updater.js",
+      "asset-channel.js",
+      "agent-update-apply.js",
       "window-chrome.js",
       "window-theme.js",
       "window-theme.css",
