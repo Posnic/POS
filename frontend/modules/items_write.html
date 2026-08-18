@@ -13,11 +13,14 @@
         </div>
     </div>
     <div class="contentbar">
-        <!-- Start row -->
+        <!-- IC1c: one column, named sections, essentials first (research doc).
+             Every control id/name/class is unchanged - only the containers
+             moved, so items.js payload builders and fills work untouched. -->
         <form class='item_add' name="image_upload_form" id="item_image_upload_form">
-            <div class="row">
-                <!-- Start col -->
-                <div class="col-lg-8 col-xl-8 loader-item">
+            <div class="row justify-content-center">
+                <div class="col-lg-8 col-xl-7 loader-item">
+
+                    <!-- 1 · Item -->
                     <div class="card m-b-30">
                         <div class="card-header">
                             <div class="custom-control custom-radio custom-control-inline">
@@ -47,7 +50,7 @@
                                 <div id="item_modifier_groups" class="d-flex flex-wrap" style="gap:4px 18px;"></div>
                             </div>
                             <div class="form-row">
-                                <div class="form-group col-md-12">
+                                <div class="form-group col-md-7">
                                     <label class="form-control-placeholder" for="items_name">
                                         <lang class="lang_itemname_title">Item Name </lang>
                                         <span class="text-danger">*</span>
@@ -57,10 +60,24 @@
                                         autocomplete="off" required>
                                     <input type="hidden" name="id" id="itemid">
                                 </div>
+                                <div class="form-group col-md-5">
+                                    <label class="form-control-placeholder" for="items_category">
+                                        <lang class="lang_choosecategory_title"> Select Category </lang><span
+                                            class="text-danger">*</span>
+                                    </label>
+                                    <select id='items_category' name="items_category" style='width: 100%;'
+                                        class="select2 items_category items_choose_error" required>
+                                    </select>
+                                    <a data-module="category" data-access="write" href="#/items/categories/new"
+                                        class="d-inline-block mt-1" style="font-size:.85rem;">
+                                        + <lang class="lang_add_category">Add Category</lang>
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </div>
 
+                    <!-- 2 · Variants (variant mode only) -->
                     <div class="card m-b-30" id="show_variant_fields" style="display:none;">
                         <div class="card-body">
                             <div class="form-row">
@@ -92,8 +109,81 @@
                         </div>
                     </div>
 
-                    <div class="card m-b-30" id="show_price_fields" style="display:none;">
-                        <div class="card-body">
+                    <!-- 3 · Price, stock and identification (plain items; variant
+                         rows carry their own copies). items.js shows/hides this
+                         whole wrapper on the type radios. -->
+                    <div id="show_price_fields" style="display:none;">
+                        <div class="card m-b-30">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0"><lang class="lang_price_stock_title">Price &amp; Stock</lang></h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label class="form-control-placeholder" for="items_selling_price">
+                                            <lang class="lang_sales_title"> Selling </lang><span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text"
+                                            class="form-control allow_decimal text-right clear_text_item hide_price_digit"
+                                            id="items_selling_price" name="items_selling_price" minlength="1"
+                                            maxlength="7" value="0.00" placeholder="Sale Price" autocomplete="off">
+                                        <!-- The honest open-price state (IC1): a deliberate
+                                             ask-at-the-till choice instead of an accidental 0.00. -->
+                                        <div class="custom-control custom-checkbox mt-1">
+                                            <input type="checkbox" class="custom-control-input" id="item_open_price"
+                                                name="item_open_price">
+                                            <label class="custom-control-label" for="item_open_price">
+                                                <lang class="lang_open_price">Price at sale (open price)</lang>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-control-placeholder" for="items_mrp_price">
+                                            <lang class="lang_mrp_title"> M.R.P </lang>
+                                        </label>
+                                        <input type="text"
+                                            class="form-control allow_decimal text-right clear_text_item hide_price_digit"
+                                            id="items_mrp_price" name="items_mrp_price" minlength="1" maxlength="7"
+                                            value="0.00" placeholder="M.R.P" autocomplete="off">
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label class="form-control-placeholder" for="items_company_price">
+                                            <lang class="lang_company_title"> Company </lang>
+                                        </label>
+                                        <input type="text"
+                                            class="form-control allow_decimal text-right clear_text_item hide_price_digit"
+                                            id="items_company_price" name="items_company_price" minlength="1"
+                                            maxlength="7" value="0.00" placeholder="Company Price" autocomplete="off">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-control-placeholder" for="items_available_quantity">
+                                            <lang class="lang_openquantity_title"> Quantity (Opening Stock) </lang>
+                                        </label>
+                                        <input type="text" class="form-control allow_decimal text-right clear_text_item"
+                                            id="items_available_quantity" name="items_available_quantity" min="0"
+                                            minlength="1" maxlength="10" value="0" placeholder="Available Quantity"
+                                            autocomplete="off">
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 m-t-9">
+                                        <label class="form-control-placeholder" for="items_unit">
+                                            Item Units
+                                        </label>
+                                        <select class="form-control select2 pricing-field items_unit items_choose_error"
+                                            name="items_unit" id="items_unit">
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card m-b-30">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0"><lang class="lang_identification_title">SKU &amp; Barcodes</lang></h5>
+                            </div>
                             <div class="card-body">
                                 <div class="row">
                                     <div class="col-md-6">
@@ -149,256 +239,16 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <label class="form-control-placeholder" for="items_company_price">
-                                            <lang class="lang_company_title"> Company </lang>
-                                        </label>
-                                        <input type="text"
-                                            class="form-control allow_decimal text-right clear_text_item hide_price_digit"
-                                            id="items_company_price" name="items_company_price" minlength="1"
-                                            maxlength="7" value="0.00" placeholder="Company Price" autocomplete="off">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-control-placeholder" for="items_mrp_price">
-                                            <lang class="lang_mrp_title"> M.R.P </lang>
-                                        </label>
-                                        <input type="text"
-                                            class="form-control allow_decimal text-right clear_text_item hide_price_digit"
-                                            id="items_mrp_price" name="items_mrp_price" minlength="1" maxlength="7"
-                                            value="0.00" placeholder="M.R.P" autocomplete="off">
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <label class="form-control-placeholder" for="items_selling_price">
-                                            <lang class="lang_sales_title"> Selling </lang><span class="text-danger">*</span>
-                                        </label>
-                                        <input type="text"
-                                            class="form-control allow_decimal text-right clear_text_item hide_price_digit"
-                                            id="items_selling_price" name="items_selling_price" minlength="1"
-                                            maxlength="7" value="0.00" placeholder="Sale Price" autocomplete="off">
-                                        <!-- The honest open-price state (IC1): a deliberate
-                                             ask-at-the-till choice instead of an accidental 0.00. -->
-                                        <div class="custom-control custom-checkbox mt-1">
-                                            <input type="checkbox" class="custom-control-input" id="item_open_price"
-                                                name="item_open_price">
-                                            <label class="custom-control-label" for="item_open_price">
-                                                <lang class="lang_open_price">Price at sale (open price)</lang>
-                                            </label>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-control-placeholder" for="items_available_quantity">
-                                            <lang class="lang_openquantity_title"> Quantity (Opening Stock) </lang>
-                                        </label>
-                                        <input type="text" class="form-control allow_decimal text-right clear_text_item"
-                                            id="items_available_quantity" name="items_available_quantity" min="0"
-                                            minlength="1" maxlength="10" value="0" placeholder="Available Quantity"
-                                            autocomplete="off">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-control-placeholder" for="items_sort">
-                                            <lang class="lang_showitemposition_title"> Item Position </lang>
-                                        </label>
-                                        <input type="number"
-                                            class="form-control allow_decimal text-right clear_text_item"
-                                            id="items_sort" name="items_sort" minlength="1" maxlength="10" value="99"
-                                            placeholder="Item list position" autocomplete="off">
-                                    </div>
-
-                                    <div class="col-md-6 m-t-9">
-                                        <label class="form-control-placeholder" for="items_unit">
-                                            Item Units
-                                        </label>
-                                        <select class="form-control select2 pricing-field items_unit items_choose_error"
-                                            name="items_unit" id="items_unit">
-                                        </select>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-control-placeholder" for="items_mfg_date">
-                                            <lang class="lang_mfg_title">Items MFG Date </lang>
-                                        </label>
-                                        <input type="text" class="form-control text-right" id="items_mfg_date"
-                                            name="items_mfg_date" placeholder="Enter MFG 2001-01-01" autocomplete="off">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-control-placeholder" for="items_expiry_date">
-                                            <lang class="lang_expiry_title">Items Expiry Date </lang>
-                                        </label>
-                                        <input type="text" class="form-control text-right" id="items_expiry_date"
-                                            name="items_expiry_date" placeholder="Enter Expiry 2011-01-01"
-                                            autocomplete="off">
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     </div>
 
+                    <!-- 4 · Generated per-variant price rows -->
                     <div class="card m-b-30" id="load_price_fields" style="display:none;">
 
                     </div>
 
-                    <div class="card m-b-30">
-                        <div class="card-body">
-                            <div class="form-row">
-                                <div class="col-md-12">
-                                    <label class="form-control-placeholder" for="items_description">
-                                        <lang class="lang_description_title"> Description </lang>
-                                    </label>
-                                    <textarea class="form-control" id="items_description" name="items_description"
-                                        rows="4">
-
-                                    </textarea>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card m-b-30">
-                        <div class="card-body">
-                            <div class="form-row">
-
-                                <div class="col-md-12">
-                                    <div class="mb-3">
-                                        <div class="Neon Neon-theme-dragdropbox">
-                                            <input type="hidden" id="item_upload_image_status" value="no">
-                                            <input type="file" name="ImageItemMultiple[]" id="item_upload_image"
-                                                onchange="PosnicPro.items.item_image_preview(this)"
-                                                accept=".gif, .jpg, .png, .jpeg, .bmp" multiple>
-                                            <div class="Neon-input-dragDrop">
-                                                <div class="Neon-input-inner">
-                                                    <div class="Neon-input-icon">
-                                                        <i class="fa fa-file-image-o"></i>
-                                                    </div>
-                                                    <div class="Neon-input-text m-b-20">
-                                                        <h3>
-                                                            <lang class="lang_maxfile_title"> Maximum 12 files here
-                                                            </lang>
-                                                        </h3>
-                                                    </div>
-                                                    <a class="Neon-input-choose-btn blue">
-                                                        <lang class="lang_filebrowse_title"> Browse</lang>
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                    </div>
-                                </div>
-
-                                <div class="col-12">
-                                    <div class="form-row">
-                                        <input type="hidden" name="item_logo" id="item_logo" value="item.svg">
-                                        <div id="item-display-preview"></div>
-                                    </div>
-                                </div>
-
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card m-b-30">
-                        <div class="card-body">
-                            <div class="form-row">
-                                <div class="form-group col-md-3">
-                                    <input type="checkbox" class="custom-control-input" id="item_track_inventory"
-                                        name="item_track_inventory" checked>
-                                    <label class="custom-control-label" for="item_track_inventory">
-                                        <lang class="lang_tracknontrack_title">Tracking inventory </lang>
-                                    </label>
-                                </div>
-
-                                <div class="form-group col-md-3">
-                                    <input type="checkbox" class="custom-control-input" id="item_sales_channel"
-                                        name="item_sales_channel" checked>
-                                    <label class="custom-control-label" for="item_sales_channel">
-                                        Sales channel
-                                    </label>
-                                </div>
-
-                                <div class="form-group col-md-3">
-                                    <input type="checkbox" class="custom-control-input" id="item_ecommerce"
-                                        name="item_ecommerce">
-                                    <label class="custom-control-label" for="item_ecommerce">
-                                        Kiosk
-                                    </label>
-                                </div>
-
-                                <div class="form-group col-md-3">
-                                    <input type="checkbox" class="custom-control-input" id="item_negative_stock"
-                                        name="item_negative_stock">
-                                    <label class="custom-control-label" for="item_negative_stock">
-                                        Negative stock
-                                    </label>
-                                </div>
-
-                                <!-- Shown only when the weight-machine hardware module is on -
-                                     the sales side only honours the flag then (items.js gates it). -->
-                                <div class="form-group col-md-3" id="item_weight_flag_wrap" style="display:none;">
-                                    <input type="checkbox" class="custom-control-input" id="item_weight_machine_based"
-                                        name="item_weight_machine_based">
-                                    <label class="custom-control-label" for="item_weight_machine_based">
-                                        Weight Scale Item
-                                    </label>
-                                </div>
-
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- End col -->
-                <!-- Start col -->
-                <div class="col-lg-4 col-xl-4 loader-item">
-                    <div class="card m-b-30">
-                        <div class="card-header">
-                            <h5 class="card-title">
-                                <lang class="lang_choosecategory_title"> Select Category </lang><span
-                                    class="text-danger">*</span>
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="form-row">
-                                <div class="form-group col-md-12">
-                                    <select id='items_category' name="items_category" style='width: 200px;'
-                                        class="select2 items_category items_choose_error" required>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card-footer">
-                            <a data-module="category" data-access="write" href="#/items/categories/new"
-                                class="btn btn-primary-rgba btn-lg btn-block">
-                                <lang class="lang_add_category">Add Category</lang>
-                            </a>
-                        </div>
-                    </div>
-
-                    <div class="card m-b-30">
-                        <div class="card-header">
-                            <h5 class="card-title">
-                                <lang class="lang_choosesupplier_title"> Select Supplier </lang>
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="form-row">
-                                <div class="form-group col-md-12">
-                                    <!-- Optional (IC1): items routinely arrive without a known
-                                         supplier; receiving is the supplier system of record. -->
-                                    <input type="text" class="form-control" id="items_supplier" name="items_supplier"
-                                        maxlength="50" placeholder="Choose a Supplier (optional)" autocomplete="off">
-                                    <input type="hidden" name="items_supplier_id" id="items_supplier_id">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card-footer">
-                            <a data-module="supplier" data-access="write" href="#/items/suppliers/new"
-                                class="btn btn-primary-rgba btn-lg btn-block">
-                                <lang class="lang_add_supply">Add Supplier</lang>
-                            </a>
-                        </div>
-                    </div>
-
+                    <!-- 5 · Tax -->
                     <div class="card m-b-30">
                         <div class="card-header">
                             <h5 class="card-title">
@@ -462,7 +312,7 @@
                         </div>
                     </div>
 
-
+                    <!-- 6 · Discount -->
                     <div class="card m-b-30" id="show-hide-item-discount" style="display:none;">
                         <div class="card-header">
                             <h5 class="card-title">
@@ -517,8 +367,171 @@
                         </div>
                     </div>
 
-                    <div>
-                        <div class="text-center">
+                    <!-- 7 · Details (collapsed: description, images, dates, position) -->
+                    <div class="card m-b-30">
+                        <div class="card-header" data-toggle="collapse" data-target="#item_details_collapse"
+                            style="cursor:pointer;">
+                            <h5 class="card-title mb-0">
+                                <lang class="lang_item_details_title">Details</lang>
+                                <small class="text-muted ml-2" style="font-weight:400;"><lang class="lang_item_details_hint">description, images, dates</lang></small>
+                            </h5>
+                        </div>
+                        <div class="collapse" id="item_details_collapse">
+                            <div class="card-body">
+                                <div class="form-row">
+                                    <div class="col-md-12">
+                                        <label class="form-control-placeholder" for="items_description">
+                                            <lang class="lang_description_title"> Description </lang>
+                                        </label>
+                                        <textarea class="form-control" id="items_description" name="items_description"
+                                            rows="4">
+
+                                        </textarea>
+                                    </div>
+                                </div>
+                                <div class="form-row mt-3">
+                                    <div class="col-md-12">
+                                        <div class="mb-3">
+                                            <div class="Neon Neon-theme-dragdropbox">
+                                                <input type="hidden" id="item_upload_image_status" value="no">
+                                                <input type="file" name="ImageItemMultiple[]" id="item_upload_image"
+                                                    onchange="PosnicPro.items.item_image_preview(this)"
+                                                    accept=".gif, .jpg, .png, .jpeg, .bmp" multiple>
+                                                <div class="Neon-input-dragDrop">
+                                                    <div class="Neon-input-inner">
+                                                        <div class="Neon-input-icon">
+                                                            <i class="fa fa-file-image-o"></i>
+                                                        </div>
+                                                        <div class="Neon-input-text m-b-20">
+                                                            <h3>
+                                                                <lang class="lang_maxfile_title"> Maximum 12 files here
+                                                                </lang>
+                                                            </h3>
+                                                        </div>
+                                                        <a class="Neon-input-choose-btn blue">
+                                                            <lang class="lang_filebrowse_title"> Browse</lang>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    </div>
+
+                                    <div class="col-12">
+                                        <div class="form-row">
+                                            <input type="hidden" name="item_logo" id="item_logo" value="item.svg">
+                                            <div id="item-display-preview"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-row mt-2">
+                                    <div class="col-md-4">
+                                        <label class="form-control-placeholder" for="items_mfg_date">
+                                            <lang class="lang_mfg_title">Items MFG Date </lang>
+                                        </label>
+                                        <input type="text" class="form-control text-right" id="items_mfg_date"
+                                            name="items_mfg_date" placeholder="Enter MFG 2001-01-01" autocomplete="off">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-control-placeholder" for="items_expiry_date">
+                                            <lang class="lang_expiry_title">Items Expiry Date </lang>
+                                        </label>
+                                        <input type="text" class="form-control text-right" id="items_expiry_date"
+                                            name="items_expiry_date" placeholder="Enter Expiry 2011-01-01"
+                                            autocomplete="off">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-control-placeholder" for="items_sort">
+                                            <lang class="lang_showitemposition_title"> Item Position </lang>
+                                        </label>
+                                        <input type="number"
+                                            class="form-control allow_decimal text-right clear_text_item"
+                                            id="items_sort" name="items_sort" minlength="1" maxlength="10" value="99"
+                                            placeholder="Item list position" autocomplete="off">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 8 · Channels & extras (collapsed: flags, supplier) -->
+                    <div class="card m-b-30">
+                        <div class="card-header" data-toggle="collapse" data-target="#item_extras_collapse"
+                            style="cursor:pointer;">
+                            <h5 class="card-title mb-0">
+                                <lang class="lang_item_extras_title">Channels &amp; extras</lang>
+                                <small class="text-muted ml-2" style="font-weight:400;"><lang class="lang_item_extras_hint">stock tracking, kiosk, supplier</lang></small>
+                            </h5>
+                        </div>
+                        <div class="collapse" id="item_extras_collapse">
+                            <div class="card-body">
+                                <div class="form-row">
+                                    <div class="form-group col-md-4">
+                                        <input type="checkbox" class="custom-control-input" id="item_track_inventory"
+                                            name="item_track_inventory" checked>
+                                        <label class="custom-control-label" for="item_track_inventory">
+                                            <lang class="lang_tracknontrack_title">Tracking inventory </lang>
+                                        </label>
+                                    </div>
+
+                                    <div class="form-group col-md-4">
+                                        <input type="checkbox" class="custom-control-input" id="item_sales_channel"
+                                            name="item_sales_channel" checked>
+                                        <label class="custom-control-label" for="item_sales_channel">
+                                            Sales channel
+                                        </label>
+                                    </div>
+
+                                    <div class="form-group col-md-4">
+                                        <input type="checkbox" class="custom-control-input" id="item_ecommerce"
+                                            name="item_ecommerce">
+                                        <label class="custom-control-label" for="item_ecommerce">
+                                            Kiosk
+                                        </label>
+                                    </div>
+
+                                    <div class="form-group col-md-4">
+                                        <input type="checkbox" class="custom-control-input" id="item_negative_stock"
+                                            name="item_negative_stock">
+                                        <label class="custom-control-label" for="item_negative_stock">
+                                            Negative stock
+                                        </label>
+                                    </div>
+
+                                    <!-- Shown only when the weight-machine hardware module is on -
+                                         the sales side only honours the flag then (items.js gates it). -->
+                                    <div class="form-group col-md-4" id="item_weight_flag_wrap" style="display:none;">
+                                        <input type="checkbox" class="custom-control-input" id="item_weight_machine_based"
+                                            name="item_weight_machine_based">
+                                        <label class="custom-control-label" for="item_weight_machine_based">
+                                            Weight Scale Item
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="form-row mt-2">
+                                    <div class="form-group col-md-8">
+                                        <label class="form-control-placeholder" for="items_supplier">
+                                            <lang class="lang_choosesupplier_title"> Select Supplier </lang>
+                                        </label>
+                                        <!-- Optional (IC1): items routinely arrive without a known
+                                             supplier; receiving is the supplier system of record. -->
+                                        <input type="text" class="form-control" id="items_supplier" name="items_supplier"
+                                            maxlength="50" placeholder="Choose a Supplier (optional)" autocomplete="off">
+                                        <input type="hidden" name="items_supplier_id" id="items_supplier_id">
+                                        <a data-module="supplier" data-access="write" href="#/items/suppliers/new"
+                                            class="d-inline-block mt-1" style="font-size:.85rem;">
+                                            + <lang class="lang_add_supply">Add Supplier</lang>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sticky save bar: always in reach on a long form. -->
+                    <div class="card" style="position:sticky; bottom:0; z-index:5; margin-bottom:0;">
+                        <div class="card-body py-2 text-center">
                             <button type="button" class="btn btn-outline-secondary infobar-settings-reset"
                                 id="items_reset" onclick="PosnicPro.items.itemClearForm();"><i
                                     class="feather icon-refresh-ccw mr-2"></i>
@@ -541,17 +554,17 @@
                                     <lang class="lang_save_title"> Save</lang>
                                 </span>
                             </button>
-                        </div>
-                    </div>
-                    <div class="form-row mt-3" id="show_last_created_item" style="display: none;">
-                        <div class="form-group col-md-12">
-                            <div class="text-center">
-                                <h6>Last Created Record <a href="#" id="last_created_item">View</a></h6>
+                            <div class="form-row" id="show_last_created_item" style="display: none;">
+                                <div class="form-group col-md-12 mb-0">
+                                    <div class="text-center">
+                                        <h6 class="mb-0 mt-1">Last Created Record <a href="#" id="last_created_item">View</a></h6>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
+
                 </div>
-                <!-- End col -->
             </div>
         </form>
         <!-- End row -->

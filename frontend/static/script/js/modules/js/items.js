@@ -26,6 +26,9 @@ PosnicPro.items = {
         $("#items_mfg_date").val('');
         $("#items_expiry_date").val('');
         $('#item_upload_image_status').val('no');
+        // IC1c: a fresh entry starts with the essentials; the collapsed
+        // sections open on demand (and always open on edit).
+        $('#item_details_collapse, #item_extras_collapse').collapse('hide');
         PosnicPro.items.applyHardwareGates();
         PosnicPro.items.addItemButton();
         $('#items_reset').show();
@@ -63,6 +66,9 @@ PosnicPro.items = {
 
         PosnicPro.showEditModal('items');
         PosnicPro.items.applyHardwareGates();
+        // Editing is a see-everything visit: open the collapsed sections so
+        // stored description/images/dates/flags are never hidden state.
+        $('#item_details_collapse, #item_extras_collapse').collapse('show');
         PosnicPro.items.editItem(id);
         $('#item_discount').show();
         $('#v-pills-inventory-tab').addClass('active');
@@ -356,7 +362,12 @@ PosnicPro.items = {
             modifier_group_ids: PosnicPro.items._modifierGroupIds(),
             barcodes: PosnicPro.items._altBarcodes(),
             purchase_unit: $('#items_purchase_unit').val(),
-            conversion_factor: $('#items_conversion_factor').val()
+            conversion_factor: $('#items_conversion_factor').val(),
+            // IC1c: the Details section (dates included) is visible in
+            // variant mode now, so families inherit what it shows - the old
+            // divergence where item() sent dates and this builder did not.
+            items_mfg_date: $('#items_mfg_date').val(),
+            items_expiry_date: $('#items_expiry_date').val()
         };
     },
     /*
