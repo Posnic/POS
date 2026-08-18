@@ -40,6 +40,8 @@ set -eu
 
 APP_DIR="$HOME/apps/tenants/app/api"
 ADMIN_DIR="$HOME/apps/admin"
+# Where this script (and its helpers) live - captured before any cd.
+API_DIR="$(pwd)"
 RINGS_FILE="$ADMIN_DIR/provisioning/rings.json"
 
 cd "$APP_DIR"
@@ -138,6 +140,13 @@ smoke() {
     if [ -z "$ready" ]; then
       echo "::error::no shop answered within 120s of the reload"
       exit 1
+    fi
+    # Self-healing fixture (2026-08-18): the smoke SELLS a real unit every
+    # deploy, and a heavy shipping day drained the fixture to zero - every
+    # deploy then failed its own gate for a reason unrelated to the code.
+    # Top the fixture back up before proving the ring. Never a gate itself.
+    if [ -f "$API_DIR/scripts/smoke-restock.js" ]; then
+      node "$API_DIR/scripts/smoke-restock.js" || true
     fi
     SMOKE_QUIET=true SMOKE_WRITE_TENANT="${SMOKE_WRITE_TENANT:-tech}" \
       node provisioning/smoke.js --quiet
