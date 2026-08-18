@@ -3,13 +3,16 @@
     <div id="containerbar">
         <div class="breadcrumbbar crumbbar_padding">
             <div class="row align-items-center row_filter">
-                <div class="col-lg-2 col-xl-2">
-                    <h4 class="page-title break_title"><lang class="lang_branchoutlet_title">Branches / Outlet</lang></h4>
+                <!-- Auto-width flex columns: the old fixed 12-col split
+                     wrapped the toolbar to a second line the moment any
+                     column grew. Title left, everything else right. -->
+                <div class="col-auto mr-auto">
+                    <h4 class="page-title break_title mb-0"><lang class="lang_branchoutlet_title">Branches / Outlet</lang></h4>
                 </div>
-                <div class="col-2 col-md-2 col-lg-2 col-md-3 hide-button-action text-dark text-right">
+                <div class="col-auto hide-button-action text-dark">
                <lang class="lang_branchoutlet">Current Branch/Outlet</lang>
                 </div>
-                <div class="col-md-3 col-lg-3 hide-button-action">
+                <div class="col-auto hide-button-action">
                     <div class="single-dropdown d-inline-block align-middle">
                         <div class="dropdown">
                             <a class="btn btn-primary dropdown-toggle dropdown-cursor-pointer" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -29,7 +32,7 @@
                         <i class="feather icon-edit"></i>
                     </a>
                 </div>
-                <div class="col-md-4 col-lg-4 show-button-action"></div>                  
+                <div class="col-auto show-button-action"></div>
                 <div class="col-lg-2 col-xl-2 hide-button-action tb_filter" style="display:none;">
                     <div id="view_branches_daterange" class="form-control pull-right daterange-timepicker-all daterange-style date-align">
                         <i class="feather icon-calendar"></i>&nbsp;
