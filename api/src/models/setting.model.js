@@ -636,9 +636,8 @@ class SettingModel extends BaseModel {
        * (any branch of THIS license - the license filter stays in the query);
        * absent, the session branch, exactly as before.
        */
-      const { Types } = require('mongoose');
       const targetBranchId =
-        data.target_branch_id && Types.ObjectId.isValid(String(data.target_branch_id))
+        data.target_branch_id && /^[0-9a-fA-F]{24}$/.test(String(data.target_branch_id))
           ? data.target_branch_id
           : this.branchId;
 
@@ -661,7 +660,7 @@ class SettingModel extends BaseModel {
           if (regName && String(regName).trim()) {
             const name = String(regName).trim();
             registers.push({
-              register_id: existingByName.get(name) || new Types.ObjectId(),
+              register_id: existingByName.get(name) || new ObjectId(),
               register_name: name,
             });
           }
@@ -834,10 +833,9 @@ class SettingModel extends BaseModel {
        * toggle map and nothing else - same license filter as every branch
        * write, so a foreign id is a silent no-op.
        */
-      const { Types: BranchTypes } = require('mongoose');
       const remoteTarget =
         data.target_branch_id &&
-        BranchTypes.ObjectId.isValid(String(data.target_branch_id)) &&
+        /^[0-9a-fA-F]{24}$/.test(String(data.target_branch_id)) &&
         String(data.target_branch_id) !== String(this.branchId)
           ? data.target_branch_id
           : null;
@@ -4030,9 +4028,8 @@ class SettingModel extends BaseModel {
       const logoValue = data.setting_logo_value?.trim() || 'store.png';
       // The merged Branch edit page names its target; absent, the session
       // branch as before. License filter keeps it inside this shop.
-      const { Types } = require('mongoose');
       const targetBranchId =
-        data.target_branch_id && Types.ObjectId.isValid(String(data.target_branch_id))
+        data.target_branch_id && /^[0-9a-fA-F]{24}$/.test(String(data.target_branch_id))
           ? data.target_branch_id
           : this.branchId;
 

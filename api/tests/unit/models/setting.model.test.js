@@ -692,11 +692,17 @@ describe('editGeneralSetting', () => {
   });
 
   test('staff_shifts_enable stays on unless explicitly disabled', async () => {
-    // Shipped live: an old client that does not send the field must not
-    // switch the clock-in system off.
+    /*
+     * Shipped live: an old client that does not send the field must not
+     * switch the clock-in system off. Since the branch-modules work the
+     * guarantee is presence-gating - an unsent toggle is left OUT of the
+     * $set entirely (the stored value survives untouched), instead of being
+     * rewritten to its default. Sent values still parse with the opt-out
+     * polarity.
+     */
     col.updateOne.mockResolvedValue({ matchedCount: 1 });
     await m.editGeneralSetting({ store_name: 'S' });
-    expect(col.updateOne.mock.calls[0][1].$set.staff_shifts_enable).toBe(true);
+    expect('staff_shifts_enable' in col.updateOne.mock.calls[0][1].$set).toBe(false);
 
     col.updateOne.mockClear();
     await m.editGeneralSetting({ store_name: 'S', staff_shifts_enable: 'false' });
@@ -707,12 +713,13 @@ describe('editGeneralSetting', () => {
     expect(col.updateOne.mock.calls[0][1].$set.staff_shifts_enable).toBe(true);
   });
 
-  test('tips default off (opt-in) and roster defaults on (opt-out)', async () => {
+  test('tips (opt-in) and roster (opt-out) polarities, unsent toggles untouched', async () => {
+    // Unsent: presence-gated out of the $set - the stored values survive.
     col.updateOne.mockResolvedValue({ matchedCount: 1 });
     await m.editGeneralSetting({ store_name: 'S' });
     let set = col.updateOne.mock.calls[0][1].$set;
-    expect(set.staff_tips_enable).toBe(false);
-    expect(set.staff_roster_enable).toBe(true);
+    expect('staff_tips_enable' in set).toBe(false);
+    expect('staff_roster_enable' in set).toBe(false);
 
     col.updateOne.mockClear();
     await m.editGeneralSetting({
@@ -723,6 +730,18 @@ describe('editGeneralSetting', () => {
     set = col.updateOne.mock.calls[0][1].$set;
     expect(set.staff_tips_enable).toBe(true);
     expect(set.staff_roster_enable).toBe(false);
+
+    // Polarity check: an unrecognized value falls to each toggle's default -
+    // tips opt-in (garbage means off), roster opt-out (garbage means on).
+    col.updateOne.mockClear();
+    await m.editGeneralSetting({
+      store_name: 'S',
+      staff_tips_enable: 'maybe',
+      staff_roster_enable: 'maybe',
+    });
+    set = col.updateOne.mock.calls[0][1].$set;
+    expect(set.staff_tips_enable).toBe(false);
+    expect(set.staff_roster_enable).toBe(true);
   });
 
   test('returns status:false on DB error', async () => {
@@ -863,12 +882,34 @@ describe('editTaxModel', () => {
   });
 
   test('updates related tax groups when tax is used in groups', async () => {
+    /*
+     * Groups are found with find({tax_group:'yes', 'tax_fields.tax_id': id})
+     * and each is patched with its OWN updateOne, because the group rate must
+     * be recalculated from the group's members - the edited member at its new
+     * value plus the others at theirs. A blanket updateMany could not do that.
+     */
     col.findOne.mockResolvedValue(null);
-    col.aggregate.mockReturnValue({
-      toArray: jest.fn().mockResolvedValue([{ _id: 'group1' }]),
+    col.find.mockReturnValue({
+      toArray: jest.fn().mockResolvedValue([
+        {
+          _id: 'group1',
+          tax_fields: [
+            { tax_id: BRANCH_ID, tax_name: 'GST-old', tax_value: 12 },
+            { tax_id: 'other-member', tax_name: 'Cess', tax_value: '5' },
+          ],
+        },
+      ]),
     });
     await m.editTaxModel({ tax_id: BRANCH_ID, tax_name: 'GST', tax_value: 18 });
-    expect(col.updateMany).toHaveBeenCalled();
+
+    const groupCall = col.updateOne.mock.calls.find(([filter]) => filter._id === 'group1');
+    expect(groupCall).toBeDefined();
+    const patched = groupCall[1].$set;
+    expect(patched.rate).toBe(23); // 18 (edited member, new value) + 5 (other member)
+    expect(patched.tax_fields).toEqual([
+      { tax_id: BRANCH_ID, tax_name: 'GST', tax_value: 18 },
+      { tax_id: 'other-member', tax_name: 'Cess', tax_value: 5 },
+    ]);
   });
 });
 
@@ -980,7 +1021,23 @@ describe('deleteTaxGroupModel', () => {
 // 22. paymentKeyModel
 // ─────────────────────────────────────────────────────────────────────────────
 describe('paymentKeyModel', () => {
+  /*
+   * The Razorpay key and secret are encrypted at rest (secret-field.js,
+   * AES-256-GCM) - the tests provide the ENCRYPTION_KEY the cipher needs and
+   * pin the envelope: secrets unreadable in the stored document, provider
+   * name and on/off flag still plaintext so the settings page renders
+   * without a key.
+   */
   let m, col;
+  const hadKey = Object.prototype.hasOwnProperty.call(process.env, 'ENCRYPTION_KEY');
+  const priorKey = process.env.ENCRYPTION_KEY;
+  beforeAll(() => {
+    process.env.ENCRYPTION_KEY = 'unit-test-encryption-key';
+  });
+  afterAll(() => {
+    if (hadKey) process.env.ENCRYPTION_KEY = priorKey;
+    else delete process.env.ENCRYPTION_KEY;
+  });
   beforeEach(() => {
     m = makeModel();
     col = makeMockCollection();
@@ -995,13 +1052,22 @@ describe('paymentKeyModel', () => {
     expect(r.message).toBe('Payment Gateway Updated');
   });
 
-  test('stores payment_gateway with name "razorpay"', async () => {
+  test('stores payment_gateway with name "razorpay" and the credentials encrypted', async () => {
+    const { isEncrypted, decryptCredentialObject } = require('../../../src/utils/secret-field');
     col.updateOne.mockResolvedValue({ matchedCount: 1 });
     await m.paymentKeyModel({ key: 'k', secret: 's', status: 'false' });
     const [, upd] = col.updateOne.mock.calls[0];
-    expect(upd.$set.payment_gateway.name).toBe('razorpay');
-    expect(upd.$set.payment_gateway.key).toBe('k');
-    expect(upd.$set.payment_gateway.secret).toBe('s');
+    const stored = upd.$set.payment_gateway;
+    expect(stored.name).toBe('razorpay');
+    expect(stored.status).toBe('false');
+    expect(isEncrypted(stored.key)).toBe(true);
+    expect(isEncrypted(stored.secret)).toBe(true);
+    expect(decryptCredentialObject(stored)).toEqual({
+      key: 'k',
+      secret: 's',
+      name: 'razorpay',
+      status: 'false',
+    });
   });
 
   test('returns status:false when branch not found (matchedCount 0)', async () => {

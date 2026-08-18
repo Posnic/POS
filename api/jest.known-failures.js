@@ -11,6 +11,4 @@
  *
  * To see where they stand:  npm run test:known-failures
  */
-module.exports = [
-  'tests/unit/models/setting.model.test.js',
-];
+module.exports = [];
