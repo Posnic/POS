@@ -29,6 +29,7 @@ const VALID_ACTIONS = [
   'permission_change',
   'price_change',
   'discount',
+  'refund',
   'cancel',
   'failed_login',
   'account_lockout',
@@ -78,8 +79,8 @@ describe('schema › action field', () => {
     expect(path('action').instance).toBe('String');
   });
 
-  test('enum has exactly 13 values', () => {
-    expect(path('action').enumValues).toHaveLength(13);
+  test('enum has exactly 14 values', () => {
+    expect(path('action').enumValues).toHaveLength(14);
   });
 
   test.each(VALID_ACTIONS)('enum contains "%s"', (action) => {
