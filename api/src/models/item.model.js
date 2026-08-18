@@ -99,6 +99,9 @@ class ItemModel {
     sort_order: { type: 'Number', select: true },
     // Alternate barcodes (V3) - lookup matches these beside barcode_id.
     barcodes: { type: 'Array', select: true },
+    // Unit conversion (V3) - receiving entry assist; stock stays base units.
+    purchase_unit: { type: 'String', select: true },
+    conversion_factor: { type: 'Number', select: true },
     // Variant family link (V1) - the edit page's family strip reads these.
     variant_group_id: { type: 'ObjectId', select: true },
     variant_axis: { type: 'String', select: true },

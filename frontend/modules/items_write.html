@@ -142,6 +142,17 @@
                                         <!-- V3: manufacturer / extra codes; scanning any of them finds this item. -->
                                         <input type="text" class="form-control clear_text_item mt-2" id="items_barcodes_alt"
                                             maxlength="400" placeholder="Alternate barcodes (comma separated, optional)" autocomplete="off">
+                                        <!-- V3: purchase-unit assist - "box of 24". Stock stays in base units. -->
+                                        <div class="form-row mt-2">
+                                            <div class="col-7">
+                                                <input type="text" class="form-control clear_text_item" id="items_purchase_unit"
+                                                    maxlength="30" placeholder="Purchase unit (e.g. box, optional)" autocomplete="off">
+                                            </div>
+                                            <div class="col-5">
+                                                <input type="number" min="0" step="any" class="form-control clear_text_item" id="items_conversion_factor"
+                                                    placeholder="Units per pack" autocomplete="off">
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="row">

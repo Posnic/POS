@@ -1197,6 +1197,18 @@ class ItemRepository extends BaseModel {
         updateData.variant_parent_name = String(data.variant_parent_name || '').trim();
       }
 
+      /* Unit conversion (V3): how many base units one purchase unit holds
+         (box of 24 -> 24). STOCK STAYS IN BASE UNITS - the factor only
+         powers the receiving screen's entry assist; nothing in stock or
+         reservation math reads it. Presence-gated. */
+      if (data.purchase_unit !== undefined) {
+        updateData.purchase_unit = String(data.purchase_unit || '').trim();
+      }
+      if (data.conversion_factor !== undefined) {
+        const cf = Number(data.conversion_factor);
+        updateData.conversion_factor = Number.isFinite(cf) && cf > 0 ? cf : 0;
+      }
+
       /* Alternate barcodes (V3): manufacturer + internal codes beside the
          primary. Lookup checks both; labels keep printing the primary.
          Presence-gated: sent (even empty) sets, omitted changes nothing. */
@@ -2327,6 +2339,9 @@ class ItemRepository extends BaseModel {
         selling_price: item.selling_price || 0,
         item_code: item.itemid || '',
         item_unit: item.unit || 'qty',
+        // Unit conversion (V3): the receiving screen's box->base assist.
+        purchase_unit: item.purchase_unit || '',
+        conversion_factor: Number(item.conversion_factor) || 0,
         company_price: item.company_price || 0,
         discount_amount: item.discount_amount || 0,
         discount_percentage: item.discount_percentage || 0,

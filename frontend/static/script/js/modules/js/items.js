@@ -340,7 +340,9 @@ PosnicPro.items = {
             description: content.html(),
             image: PosnicPro.items.imageParams,
             modifier_group_ids: PosnicPro.items._modifierGroupIds(),
-            barcodes: PosnicPro.items._altBarcodes()
+            barcodes: PosnicPro.items._altBarcodes(),
+            purchase_unit: $('#items_purchase_unit').val(),
+            conversion_factor: $('#items_conversion_factor').val()
         };
     },
     /*
@@ -507,7 +509,9 @@ PosnicPro.items = {
                     description: content.html(),
                     image: PosnicPro.items.imageParams,
                     modifier_group_ids: PosnicPro.items._modifierGroupIds(),
-                    barcodes: PosnicPro.items._altBarcodes()
+                    barcodes: PosnicPro.items._altBarcodes(),
+                    purchase_unit: $('#items_purchase_unit').val(),
+                    conversion_factor: $('#items_conversion_factor').val()
                 };
                 var params = {
                     method: method,
@@ -954,6 +958,8 @@ PosnicPro.items = {
                 $('#items_itemid').val(data.itemid);
                 $('#items_barcodeid').val(data.barcode_id);
                 $('#items_barcodes_alt').val(Array.isArray(data.barcodes) ? data.barcodes.join(', ') : '');
+                $('#items_purchase_unit').val(data.purchase_unit || '');
+                $('#items_conversion_factor').val(data.conversion_factor || '');
                 $('#items_hsncode').val(data.hsncode);
                 $('#items_hsndescription').val(data.hsndescription);
                 $('#items_date').val(response.data.item_date);
