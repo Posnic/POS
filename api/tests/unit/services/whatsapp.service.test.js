@@ -233,17 +233,16 @@ describe('WhatsAppService (singleton, extends EventEmitter)', () => {
     // ── event handler behaviour ────────────────────────────────────────────
 
     describe('qr event handler', () => {
-      test('calls qrcode.toDataURL with the QR string', async () => {
+      /*
+       * The service stores the RAW QR string now; the controller converts
+       * to a data URL at read time (getQRCode). The old suite pinned the
+       * conversion to the service and went red when it moved.
+       */
+      test('stores the RAW QR string - conversion belongs to the controller', async () => {
         await service.initializeClient(DEVICE_ID, BRANCH_ID);
-        const qrHandler = getCapturedHandler('qr');
-        await qrHandler('raw-qr-string');
-        expect(qrcode.toDataURL).toHaveBeenCalledWith('raw-qr-string');
-      });
-
-      test('stores QR data URL in this.qrCodes', async () => {
-        await service.initializeClient(DEVICE_ID, BRANCH_ID);
-        await getCapturedHandler('qr')('raw-qr');
-        expect(service.qrCodes.get(CLIENT_KEY)).toBe('data:image/png;base64,mockqrdataurl');
+        await getCapturedHandler('qr')('raw-qr-string');
+        expect(service.qrCodes.get(CLIENT_KEY)).toBe('raw-qr-string');
+        expect(qrcode.toDataURL).not.toHaveBeenCalled();
       });
 
       test('sets connectionStatus to "qr_ready"', async () => {
@@ -252,14 +251,14 @@ describe('WhatsAppService (singleton, extends EventEmitter)', () => {
         expect(service.connectionStatus.get(CLIENT_KEY)).toBe('qr_ready');
       });
 
-      test('emits service-level "qr" event with deviceId and qrCode', async () => {
+      test('emits service-level "qr" event with deviceId and the raw qrCode', async () => {
         await service.initializeClient(DEVICE_ID, BRANCH_ID);
         const emitted = [];
         service.once('qr', (data) => emitted.push(data));
         await getCapturedHandler('qr')('raw-qr');
         expect(emitted).toHaveLength(1);
         expect(emitted[0].deviceId).toBe(DEVICE_ID);
-        expect(emitted[0].qrCode).toBe('data:image/png;base64,mockqrdataurl');
+        expect(emitted[0].qrCode).toBe('raw-qr');
       });
     });
 
@@ -319,10 +318,18 @@ describe('WhatsAppService (singleton, extends EventEmitter)', () => {
     });
 
     describe('disconnected event handler', () => {
-      test('sets connectionStatus to "disconnected"', async () => {
+      test('cleans the client up entirely - a disconnected device reads as not_initialized', async () => {
+        /*
+         * The handler now runs the full cleanup (_safeCleanupClient), which
+         * removes the status entry along with the client and its session
+         * dir - so a fresh QR can be generated. The old suite expected a
+         * lingering "disconnected" status; the current design leaves none.
+         */
         await service.initializeClient(DEVICE_ID, BRANCH_ID);
         getCapturedHandler('disconnected')('NAVIGATION');
-        expect(service.connectionStatus.get(CLIENT_KEY)).toBe('disconnected');
+        expect(service.connectionStatus.has(CLIENT_KEY)).toBe(false);
+        expect(service.clients.has(CLIENT_KEY)).toBe(false);
+        expect(service.getConnectionStatus(DEVICE_ID, BRANCH_ID)).toBe('not_initialized');
       });
 
       test('emits service-level "disconnected" event with reason', async () => {
