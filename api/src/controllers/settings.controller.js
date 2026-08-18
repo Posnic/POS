@@ -1168,13 +1168,11 @@ class SettingController extends BaseController {
       const settingModel = this.createModelWithContext(req);
       const result = await settingModel.getTaxProfileModel();
       const code = result.status ? 200 : 400;
-      return res
-        .status(code)
-        .json({
-          type: result.status ? 'success' : 'error',
-          message: result.message,
-          data: result.data,
-        });
+      return res.status(code).json({
+        type: result.status ? 'success' : 'error',
+        message: result.message,
+        data: result.data,
+      });
     } catch (error) {
       console.error('Error in getTaxProfile:', error);
       return res.status(500).json({ type: 'error', message: error.message });
