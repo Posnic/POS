@@ -2744,6 +2744,8 @@ input:checked + .slider:before {
    (class-based; outline resets in the template cannot remove it). */
 #item_tile_swatches .tile-swatch { position: relative; display: inline-block; }
 #item_tile_swatches .tile-swatch.is-picked,
+#category_tile_swatches .tile-swatch.is-picked,
+#category_tile_shapes .tile-shape.is-picked,
 #item_tile_shapes .tile-shape.is-picked {
     box-shadow: 0 0 0 2px #fff, 0 0 0 4px #506fe4;
     transform: scale(1.08);
@@ -2752,7 +2754,8 @@ input:checked + .slider:before {
 /* clip-path clips box-shadow, outline AND pseudo-elements - the only
    selection cue that always survives is the fill itself: a picked
    shape turns accent blue and grows. */
-#item_tile_shapes .tile-shape { background: #8a94a6; }
+#item_tile_shapes .tile-shape,
+#category_tile_shapes .tile-shape { background: #8a94a6; }
 #item_tile_shapes .tile-shape.is-picked {
     background: #506fe4 !important;
     transform: scale(1.18);

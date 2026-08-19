@@ -1,4 +1,16 @@
 PosnicPro.categories = {
+    setCatTileColor: function (color) {
+        $('#category_tile_color').val(color || '');
+        $('#category_tile_swatches .tile-swatch').removeClass('is-picked').filter(function () {
+            return ($(this).data('color') || '') === (color || '');
+        }).addClass('is-picked');
+    },
+    setCatTileShape: function (shape) {
+        $('#category_tile_shape').val(shape || '');
+        $('#category_tile_shapes .tile-shape').removeClass('is-picked').filter(function () {
+            return ($(this).data('shape') || '') === (shape || '');
+        }).addClass('is-picked');
+    },
     categoryAction: 'add',
     showAdd: function () {
         PosnicPro.HideSideBarModal();
@@ -223,6 +235,8 @@ PosnicPro.categories = {
                     hasher.replaceHash('items/new');
                 } else if (hash === '/sales/categories/new') {
                     $('#category_name').val('');
+                    PosnicPro.categories.setCatTileColor('');
+                    PosnicPro.categories.setCatTileShape('');
                     hasher.replaceHash('sales/new');
                 } else {
                     hasher.setHash('categories');
@@ -334,6 +348,8 @@ PosnicPro.categories = {
                 PosnicPro.record_id = id;
                 $('#category_id').val(PosnicPro.record_id);
                 $('#category_name').val(data.name);
+                PosnicPro.categories.setCatTileColor(data.tile_color || '');
+                PosnicPro.categories.setCatTileShape(data.tile_shape || '');
                 $('#category_discount_amount').val(data.discount_amount);
                 $('#category_discount_percentage').val(data.discount_percentage);
                 $('#category_description').val(data.description);
@@ -693,3 +709,12 @@ $("#categorySubmitForm").one('click', function () {
 });
 /*end*/
 
+
+$(document).on('click', '#category_tile_swatches .tile-swatch', function () {
+    PosnicPro.categories.setCatTileColor($(this).data('color') || '');
+});
+$(document).on('click', '#category_tile_shapes .tile-shape', function () {
+    var shape = $(this).data('shape') || '';
+    if (($('#category_tile_shape').val() || '') === shape) { shape = ''; }
+    PosnicPro.categories.setCatTileShape(shape);
+});

@@ -43,6 +43,32 @@
                             <span class="text-danger">*</span> 
                         </label>
                         <input type="text" class="form-control border-control" name="name" id="category_name" minlength="3" maxlength="50" placeholder="Enter the name"  autocomplete="off" required>
+                        <label class="form-control-placeholder d-block m-t-10">
+                            <lang class="lang_tile_color">Colour on the sale screen</lang>
+                        </label>
+                        <div id="category_tile_swatches">
+                            <span class="tile-swatch" data-color="" title="None" style="width:28px;height:28px;display:inline-block;cursor:pointer;background:#fff;border:1px dashed #aab;border-radius:4px;margin-right:6px;"></span>
+                            <span class="tile-swatch" data-color="#e74c3c" style="width:28px;height:28px;display:inline-block;cursor:pointer;background:#e74c3c;border-radius:4px;margin-right:6px;"></span>
+                            <span class="tile-swatch" data-color="#e91e63" style="width:28px;height:28px;display:inline-block;cursor:pointer;background:#e91e63;border-radius:4px;margin-right:6px;"></span>
+                            <span class="tile-swatch" data-color="#f39c12" style="width:28px;height:28px;display:inline-block;cursor:pointer;background:#f39c12;border-radius:4px;margin-right:6px;"></span>
+                            <span class="tile-swatch" data-color="#a4c400" style="width:28px;height:28px;display:inline-block;cursor:pointer;background:#a4c400;border-radius:4px;margin-right:6px;"></span>
+                            <span class="tile-swatch" data-color="#27ae60" style="width:28px;height:28px;display:inline-block;cursor:pointer;background:#27ae60;border-radius:4px;margin-right:6px;"></span>
+                            <span class="tile-swatch" data-color="#2d9cdb" style="width:28px;height:28px;display:inline-block;cursor:pointer;background:#2d9cdb;border-radius:4px;margin-right:6px;"></span>
+                            <span class="tile-swatch" data-color="#8e44ad" style="width:28px;height:28px;display:inline-block;cursor:pointer;background:#8e44ad;border-radius:4px;margin-right:6px;"></span>
+                            <span class="tile-swatch" data-color="#16a085" style="width:28px;height:28px;display:inline-block;cursor:pointer;background:#16a085;border-radius:4px;margin-right:6px;"></span>
+                            <span class="tile-swatch" data-color="#d35400" style="width:28px;height:28px;display:inline-block;cursor:pointer;background:#d35400;border-radius:4px;margin-right:6px;"></span>
+                        </div>
+                        <input type="hidden" name="tile_color" id="category_tile_color" value="">
+                        <label class="form-control-placeholder d-block m-t-10">
+                            <lang class="lang_tile_shape">Shape</lang>
+                        </label>
+                        <div id="category_tile_shapes">
+                            <span class="tile-shape" data-shape="square" title="Square" style="width:28px;height:28px;display:inline-block;cursor:pointer;background:#8a94a6;border-radius:3px;margin-right:6px;"></span>
+                            <span class="tile-shape" data-shape="rounded" title="Rounded" style="width:28px;height:28px;display:inline-block;cursor:pointer;background:#8a94a6;border-radius:10px;margin-right:6px;"></span>
+                            <span class="tile-shape" data-shape="circle" title="Circle" style="width:28px;height:28px;display:inline-block;cursor:pointer;background:#8a94a6;border-radius:50%;margin-right:6px;"></span>
+                            <span class="tile-shape" data-shape="diamond" title="Diamond" style="width:28px;height:28px;display:inline-block;cursor:pointer;background:#8a94a6;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);margin-right:6px;"></span>
+                        </div>
+                        <input type="hidden" name="tile_shape" id="category_tile_shape" value="">
                         <input type="hidden" name="id" id="category_id">
                         <input type="hidden" name="image" id="category_logo">
                     </div>
