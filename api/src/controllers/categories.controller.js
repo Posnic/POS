@@ -440,6 +440,19 @@ class CategoriesController extends BaseController {
       branch_name: finalBranchName, // PHP: self::$currentBranchName
     };
 
+    // Category tiles (CATEGORY_TILE_INHERITANCE_DESIGN.md): a colour and
+    // shape items without their own can inherit at render time.
+    if (req.body.tile_color !== undefined) {
+      const tileColor = String(req.body.tile_color || '').trim();
+      categoryData.tile_color = /^#[0-9a-fA-F]{6}$/.test(tileColor) ? tileColor : '';
+    }
+    if (req.body.tile_shape !== undefined) {
+      const tileShape = String(req.body.tile_shape || '').trim();
+      categoryData.tile_shape = ['square', 'rounded', 'circle', 'diamond'].includes(tileShape)
+        ? tileShape
+        : '';
+    }
+
     const license = req.tenantContext?.licenseId || req.user?.license || req.user?.license_id;
     if (!license) {
       return this.error(res, 'License context is required', 400);
@@ -493,6 +506,19 @@ class CategoriesController extends BaseController {
     if (req.body.image !== undefined) updateData.image = req.body.image;
     if (req.body.is_active !== undefined) updateData.is_active = req.body.is_active;
     if (req.body.sort_order !== undefined) updateData.sort_order = parseInt(req.body.sort_order);
+
+    // Category tiles (CATEGORY_TILE_INHERITANCE_DESIGN.md): a colour and
+    // shape items without their own can inherit at render time.
+    if (req.body.tile_color !== undefined) {
+      const tileColor = String(req.body.tile_color || '').trim();
+      updateData.tile_color = /^#[0-9a-fA-F]{6}$/.test(tileColor) ? tileColor : '';
+    }
+    if (req.body.tile_shape !== undefined) {
+      const tileShape = String(req.body.tile_shape || '').trim();
+      updateData.tile_shape = ['square', 'rounded', 'circle', 'diamond'].includes(tileShape)
+        ? tileShape
+        : '';
+    }
 
     // Handle discount fields with mutual exclusivity
     if (req.body.discount_amount !== undefined && req.body.discount_percentage === undefined) {
