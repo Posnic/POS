@@ -91,7 +91,13 @@ describe('po-receive-bridge', () => {
 
   test('over-delivery records fulfilment at the plan, closes, never negative', async () => {
     setup(basePo(), [
-      { _id: 'r1', items: [{ item: ITEM_A, quantity: 25 }, { item: ITEM_B, quantity: 9 }] },
+      {
+        _id: 'r1',
+        items: [
+          { item: ITEM_A, quantity: 25 },
+          { item: ITEM_B, quantity: 9 },
+        ],
+      },
     ]);
     const r = await syncPoFromReceivings(PO, ctx);
     const set = mockCollections.purchase_orders.updateOne.mock.calls[0][1].$set;
