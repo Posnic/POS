@@ -3411,37 +3411,92 @@ $('#bar-fontSize').change(function () {
 
 
 
+/*
+ * HSN lookup (owner ask): search by text as well as code - "electron"
+ * finds electronics rows - and suggest codes from the item and category
+ * names. The 8,924-row list loads once on demand and stays in memory;
+ * every keystroke filters locally, nothing blocks typing.
+ */
+PosnicPro.items._hsnRows = null;
+PosnicPro.items._hsnLoad = function (done) {
+    if (PosnicPro.items._hsnRows) { done(PosnicPro.items._hsnRows); return; }
+    PosnicPro.get({ url: 'items/getJSONhsncode' }, function (data) {
+        var rows = (data && data.data && data.data.hsn) || [];
+        rows.forEach(function (r) { r._d = (r.description || '').toLowerCase(); });
+        PosnicPro.items._hsnRows = rows;
+        done(rows);
+    }, function () { done([]); });
+};
+PosnicPro.items._hsnRate = function (r) {
+    var n = parseFloat(String(r.taxrate || '').replace('%', ''));
+    return isFinite(n) ? n : 0;
+};
+PosnicPro.items._hsnApply = function (r) {
+    $('#items_hsncode').val(r.value);
+    $('#items_hsndescription').val(r.description);
+    $('#hsn_tax').val(PosnicPro.items._hsnRate(r));
+    $('#hsn_suggest_row').hide();
+};
+/* Top matches for the item + category words - the "right tax" nudge. */
+PosnicPro.items.hsnSuggest = function () {
+    if ($("input[name='hsntax_radio_value']:checked").val() !== 'hsncode') { return; }
+    if ($.trim($('#items_hsncode').val())) { return; }
+    var words = ($('#items_name').val() + ' ' + ($('.items_category option:selected').text() || ''))
+        .toLowerCase().split(/[^a-z]+/).filter(function (w) { return w.length > 3; });
+    if (!words.length) { $('#hsn_suggest_row').hide(); return; }
+    PosnicPro.items._hsnLoad(function (rows) {
+        var scored = [];
+        for (var i = 0; i < rows.length; i++) {
+            var hit = 0;
+            for (var j = 0; j < words.length; j++) {
+                if (rows[i]._d.indexOf(words[j]) !== -1) { hit++; }
+            }
+            if (hit) { scored.push([hit, rows[i]]); }
+        }
+        scored.sort(function (a, b) { return b[0] - a[0]; });
+        var top = scored.slice(0, 3).map(function (x) { return x[1]; });
+        if (!top.length) { $('#hsn_suggest_row').hide(); return; }
+        var esc = function (v) { return $('<i>').text(v == null ? '' : v).html(); };
+        $('#hsn_suggest_row').html('<small class="text-muted mr-1">Suggested:</small>' + top.map(function (r, i) {
+            return '<a href="javascript:void(0)" class="badge badge-light border mr-1 hsn-chip" data-i="' + i + '">'
+                + esc(r.value) + ' &middot; ' + esc((r.description || '').slice(0, 34))
+                + ' &middot; ' + esc(String(r.taxrate || '').replace('%', '') || '0') + '%</a>';
+        }).join('')).show().data('rows', top);
+    });
+};
+$(document).on('click', '.hsn-chip', function () {
+    var rows = $('#hsn_suggest_row').data('rows') || [];
+    var r = rows[$(this).data('i')];
+    if (r) { PosnicPro.items._hsnApply(r); }
+});
+$(document).on('change', "input[name='hsntax_radio_value']", function () {
+    setTimeout(PosnicPro.items.hsnSuggest, 50);
+});
 $('.hsnCode').one({
     click: function () {
-        var params = {
-            url: 'items/getJSONhsncode'
-        };
-        PosnicPro.get(params, function (data) {
-
+        PosnicPro.items._hsnLoad(function (rows) {
             $('.hsnCode').autocomplete({
-                lookup: data.data['hsn'],
+                lookup: rows,
                 autoSelectFirst: false,
                 minChars: 1,
-                lookupLimit: 5,
+                deferRequestBy: 80,
+                lookupLimit: 8,
                 onSelect: function (suggestion) {
-                    $('#items_hsndescription').val(suggestion.description);
-                    $('#hsn_tax').val(suggestion.taxrate);
+                    PosnicPro.items._hsnApply(suggestion);
                 },
                 lookupFilter: function (suggestion, query, queryLowerCase) {
-                    var id = suggestion.description,
-                            value = suggestion.value.toLowerCase();
-                    return id.indexOf(query) === 0 || value.indexOf(queryLowerCase) === 0;
+                    return suggestion.value.indexOf(queryLowerCase) === 0
+                        || suggestion._d.indexOf(queryLowerCase) !== -1;
                 },
-                formatResult: function (suggestion) {
-                    var description = suggestion.description;
-                    return '<div>' +
-                            $.Autocomplete.formatResult(suggestion) +
-                            '</div><span style="margin-top:-20px;">' + description + '</span><span class="pull-right" style="margin-top:-20px;">Tax :' + suggestion.taxrate + '</span>';
+                formatResult: function (suggestion, currentValue) {
+                    var rate = String(suggestion.taxrate || '').replace('%', '') || '0';
+                    return '<div class="sug-row">'
+                        + '<div class="sug-main"><div class="sug-name">'
+                        + $.Autocomplete.formatResult(suggestion, currentValue)
+                        + '</div><div class="sug-meta">' + $('<i>').text(suggestion.description || '').html()
+                        + '</div></div><div class="sug-side"><span class="sug-stock in">GST ' + rate + '%</span></div></div>';
                 }
             });
-        }, function (xhr) {
-            var response = jQuery.parseJSON(xhr.responseText);
-            PosnicPro.alert(response.type, response.message);
         });
     }
 });

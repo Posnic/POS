@@ -308,8 +308,10 @@
                             </div>
                             <div class="">
                                 <input type="text" class="form-control border-control hsnCode" id="items_hsncode"
-                                    name="items_hsncode" maxlength="8" placeholder="Enter the HSN Code" autocomplete="off">
+                                    name="items_hsncode" maxlength="60" placeholder="Type a code or a word - e.g. 8517 or electronics" autocomplete="off">
                                 <input type="hidden" id="items_hsndescription">
+                                <div id="hsn_suggest_row" class="mt-1" style="display:none;"></div>
+                                <small class="text-muted d-block mt-1">Rates shown are indicative - confirm the current GST slab.</small>
                             </div>
                         </div>
 
