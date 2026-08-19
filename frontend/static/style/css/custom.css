@@ -2851,3 +2851,35 @@ input:checked + .slider:before {
     border: 1px solid rgba(128, 128, 128, 0.25);
     background: rgba(128, 128, 128, 0.08); font-weight: 600;
 }
+
+/* ------------------------------------------------------------------ *
+ * Sale screen P1 (UX audit): the hot path grows to touch size.
+ * Nothing moves - things get big enough for fingers.
+ * ------------------------------------------------------------------ */
+/* Qty stepper: symmetric, tall enough to hit while walking. */
+.button_qty_check {
+    padding: 0 !important;
+    min-height: 42px; min-width: 46px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 8px;
+}
+.cart-qty {
+    padding: 0 6px !important;
+    min-height: 40px; font-size: 15px !important;
+}
+/* The row delete was ~22px - the smallest control on the page. */
+.custom_remove {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 44px; min-height: 40px;
+    border: none; border-radius: 8px; cursor: pointer;
+    font-size: 15px;
+}
+/* Action row: one 44px line. */
+#edit_style_button .btn { min-height: 44px; }
+/* Coupon + tip band: one height. */
+#sales_coupon_row .sales-coupon-box { height: 40px !important; }
+#sales_coupon_row .sales-coupon-apply { height: 30px !important; }
+.sale-tip-wrap input#sale_tip_input { height: 40px; }
+.tip-chips .tip-chip, .tip-chips button { min-width: 46px; height: 36px; }
+/* Sale tabs earn their touch height. */
+#defaultTabJustified .nav-link { padding: 13px 8px; }
