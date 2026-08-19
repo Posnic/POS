@@ -1987,9 +1987,9 @@ PosnicPro.items = {
                 html = html + '<div class="row">';
                 html = html + '<div class="col-md-6">';
                 html = html + '<label class="form-control-placeholder" for="items_company_price_' + key + '">';
-                html = html + '<lang class="lang_company_title"> Company </lang>';
+                html = html + '<lang class="lang_company_title"> Cost </lang>';
                 html = html + '</label>';
-                html = html + '<input type="text" class="form-control allow_decimal text-right" id="items_company_price_' + key + '" name="items_company_price_' + key + '" minlength="1" maxlength="10" value="0.00" placeholder="Company Price">';
+                html = html + '<input type="text" class="form-control allow_decimal text-right" id="items_company_price_' + key + '" name="items_company_price_' + key + '" minlength="1" maxlength="10" value="0.00" placeholder="Cost">';
                 html = html + '</div>';
                 html = html + '<div class="col-md-6">';
                 html = html + '<label class="form-control-placeholder" for="items_mrp_price_' + key + '">';
@@ -3334,7 +3334,7 @@ $("#instance_item_form").validate({
     }
 });
 
-// Auto-fill MRP and Company price when selling price is entered
+// Auto-fill MRP and cost when selling price is entered
 $(document).on('input', '#instance_items_selling_price', function() {
     var sellingPrice = $(this).val();
     if (sellingPrice && sellingPrice !== '') {

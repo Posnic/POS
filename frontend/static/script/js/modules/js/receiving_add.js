@@ -741,7 +741,7 @@ PosnicPro.receivings = {
         $('#addReceivingLineItemPrice_' + id).editable({
             type: 'text',
             pk: 1,
-            title: 'Edit company price',
+            title: 'Edit cost',
             inputclass: 'form-control form-control-sm',
             tpl: '<input size="4"></input>',
             validate: function (value) {
@@ -1101,7 +1101,7 @@ PosnicPro.receivings = {
                                 '<tr><th class="text-left"><lang class="lang_name_title">Name </lang></th>' +
                                 '<th class="text-center"><lang class="lang_qty_title">Qty </lang></th>' +
                                 '<th class="text-center"><lang class="lang_unit_title">Unit </lang></th>' +
-                                '<th class="text-right"><lang class="lang_price_title">Company Price </lang></th>' +
+                                '<th class="text-right"><lang class="lang_cost_title">Cost </lang></th>' +
                                 '<th class="text-center"><lang class="lang_tax_title">Tax </lang></th>' +
                                 '<th class="text-right"><lang class="lang_total_title">Total </lang></th>' +
                                 '</tr></thead>';

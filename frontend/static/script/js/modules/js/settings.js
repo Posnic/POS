@@ -1450,6 +1450,7 @@ if ($wrapper.length) {
      * KOT visibility, blob rebuilds), all of which belong to the branch you
      * are logged into, not the one you are editing.
      */
+    _featuresDirty: false,
     _moduleToggleIds: [
         'staff_shifts_enable', 'staff_tips_enable', 'staff_roster_enable',
         'cash_register_enable', 'till_lock_enable',
@@ -1528,6 +1529,7 @@ if ($wrapper.length) {
             data: JSON.stringify(payload)
         }, function (response) {
             if (response.type === 'success') {
+                PosnicPro.settings._featuresDirty = false;
                 PosnicPro.alert('success', 'Features saved for ' + branchLabel);
             } else {
                 PosnicPro.alert(response.type, response.message);
@@ -1614,6 +1616,7 @@ if ($wrapper.length) {
         };
         PosnicPro.put(params, function (response) {
             if (response.type === 'success') {
+                PosnicPro.settings._featuresDirty = false;
                 let htmlView = $('#footer_print').text();
                 $('.footer-content').html(htmlView);
                 let htmlHeaderView = $('#header_print').text();
@@ -4668,7 +4671,16 @@ $('#kiosk_payment_form').on('submit', function (e) {
 // Module cards mirror their switch instantly (saving still goes through the
 // Save button - the card state is feedback, not a write).
 $(document).on('change', '#v-pills-modules .module-card-head input.custom-control-input', function () {
+    PosnicPro.settings._featuresDirty = true;
     PosnicPro.settings.refreshModuleCards();
+});
+// A toggled feature that was never saved dies silently on navigation -
+// say so once (owner: inform, don't block).
+$(window).on('hashchange', function () {
+    if (PosnicPro.settings._featuresDirty && !/settings/i.test(window.location.hash || '')) {
+        PosnicPro.settings._featuresDirty = false;
+        PosnicPro.alert('warning', 'Feature changes were not saved - press Save on the Features page to keep them');
+    }
 });
 
 // Core Settings tabs refold on resize (debounced - resize storms are real).
