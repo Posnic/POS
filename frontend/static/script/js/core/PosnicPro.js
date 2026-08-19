@@ -766,6 +766,12 @@ PosnicPro = {
             doc.setDrawColor(45, 55, 72); doc.setLineWidth(0.5);
             doc.line(M, y, W - M, y);
             y += 6;
+            // The period the reader is looking at, unmissable (owner ask).
+            if (meta.range) {
+                doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(70, 78, 92);
+                doc.text('Period: ' + ex._pdfText(meta.range), M, y);
+                y += 6;
+            }
 
             /*
              * Minimal, ink-light tables (owner ask): no fills anywhere -
@@ -998,7 +1004,15 @@ PosnicPro = {
             address: PosnicPro.local.get('branchaddress') || '',
             phone: PosnicPro.local.get('branchphone') || '',
             title: cfg.title,
-            range: cfg.range ? ($(cfg.root).find(cfg.range).first().val() || $.trim($(cfg.root).find(cfg.range).first().text()) || '') : '',
+            range: (function () {
+                if (!cfg.range) { return ''; }
+                var el = $(cfg.root).find(cfg.range).first();
+                var v = el.val();
+                if (v) { return $.trim(String(v)); }
+                // Date filters that are divs (This Month pickers) - take the
+                // label text, cleaned of tooltip icon leftovers.
+                return $.trim(el.text().replace(/\s+/g, ' '));
+            })(),
             filename: cfg.file
         };
         PosnicPro.reportExport[kind](cfg.root, meta);
