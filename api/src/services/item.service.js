@@ -692,6 +692,15 @@ class ItemService {
     }
   }
 
+  async stockAdjustment(params = {}, context = {}) {
+    try {
+      return await this.repository.stockAdjustment(params, context);
+    } catch (error) {
+      console.error('Error in ItemService.stockAdjustment:', error);
+      return { status: false, data: null, message: error.message };
+    }
+  }
+
   async getReceivingItemsAjaxList(params = {}, context = {}) {
     try {
       const result = await this.repository.getReceivingItemsAjaxList(params, context);

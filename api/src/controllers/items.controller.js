@@ -1609,6 +1609,38 @@ class ItemsController extends BaseController {
     }
   }
 
+  /**
+   * Reasoned per-item stock adjustment (Loyverse study L2): Inventory count
+   * sets, Loss/Damage subtract; every change lands in stocklogs with the
+   * reason as its process.
+   */
+  async stockAdjustment(req, res) {
+    try {
+      if (req.user?.access?.item?.write === false) {
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
+      }
+      await this.setRequestContext(req);
+      const result = await this.service.stockAdjustment(
+        {
+          reason: req.body.reason,
+          note: req.body.note,
+          rows: req.body.rows,
+        },
+        {
+          branchId: this.model?.branchId || null,
+          licenseId: this.model?.licenseId || null,
+          userId: req.user?._id || null,
+          userName: req.user?.username || req.user?.email || '',
+        }
+      );
+      if (!result.status) return this.error(res, result.message || 'Adjustment failed', 400);
+      return this.success(res, result.data, result.message);
+    } catch (error) {
+      console.error('Error in stockAdjustment:', error);
+      return this.error(res, error.message, 500);
+    }
+  }
+
   async getReceivingItemsAjaxList(req, res) {
     try {
       const { query, type } = req.query;
