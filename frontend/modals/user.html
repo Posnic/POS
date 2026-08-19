@@ -247,6 +247,25 @@
                                             labour report.</small>
                                     </div>
                                 </div>
+                                <!-- Sales targets (LS1): optional per-user goals. -->
+                                <div class="row" id="targets_row" style="margin-bottom:14px; display:none;">
+                                    <div class="col-md-12">
+                                        <label style="font-weight:600;">Sales Targets
+                                            <span class="text-muted" style="font-weight:400;">(optional)</span></label>
+                                        <div class="form-row">
+                                            <div class="col-4"><input type="number" min="0" step="0.01" class="form-control border-control"
+                                                   id="user_target_daily" placeholder="Daily"></div>
+                                            <div class="col-4"><input type="number" min="0" step="0.01" class="form-control border-control"
+                                                   id="user_target_weekly" placeholder="Weekly"></div>
+                                            <div class="col-4"><input type="number" min="0" step="0.01" class="form-control border-control"
+                                                   id="user_target_monthly" placeholder="Monthly"></div>
+                                        </div>
+                                        <button type="button" class="btn btn-outline-primary btn-sm mt-1" id="user_targets_btn"
+                                                onclick="PosnicPro.users.setTargets();">Save Targets</button>
+                                        <small class="form-text text-muted">Sales goals this employee aims for - shown against
+                                            actuals in the user report.</small>
+                                    </div>
+                                </div>
                                 <div class="row" id="pos_actions_row" style="margin-bottom:14px;">
                                     <div class="col-md-12">
                                         <label style="font-weight:600;">Till / POS Actions

@@ -383,6 +383,11 @@ PosnicPro.users = {
                 $('#users_lastname').val(data.lastname);
                 $('#users_email').val(data.email);
                 $('#user_hourly_rate').val(data.hourly_rate || '');
+                $('#targets_row').show();
+                var st = data.sales_target || {};
+                $('#user_target_daily').val(st.daily === null || st.daily === undefined ? '' : st.daily);
+                $('#user_target_weekly').val(st.weekly === null || st.weekly === undefined ? '' : st.weekly);
+                $('#user_target_monthly').val(st.monthly === null || st.monthly === undefined ? '' : st.monthly);
                 $("#users_password,#users_retype_password").css({cursor: "not-allowed"}).attr('disabled', 'disabled');
                 $("#users_password,#users_retype_password").val('Demo@000');
                 $('#usertype').val(data.usertype);
@@ -728,11 +733,33 @@ PosnicPro.users = {
             PosnicPro.alert(response.type, response.message);
         }, function () { done(); });
     },
+    // Save this user's sales targets (LS1) - edit mode only, like the wage.
+    setTargets: function () {
+        var userId = $('#users_id').val();
+        if (!userId) {
+            PosnicPro.alert('warning', 'Save the user first, then set targets.');
+            return;
+        }
+        $('#user_targets_btn').prop('disabled', true);
+        var done = function () { $('#user_targets_btn').prop('disabled', false); };
+        PosnicPro.post({
+            url: 'shifts/set-targets',
+            data: JSON.stringify({
+                user_id: userId,
+                daily: $('#user_target_daily').val(),
+                weekly: $('#user_target_weekly').val(),
+                monthly: $('#user_target_monthly').val()
+            }),
+        }, function (response) {
+            done();
+            PosnicPro.alert(response.type, response.message);
+        }, function () { done(); });
+    },
     addUserButton: function () {
         var loader = $(".loader-user");
         loader.find(".loadingSpinner:first").remove();
         // A new user has no id yet, so the manager-PIN + RFID + wage controls can't apply.
-        $('#manager_pin_row, #rfid_row, #wage_row').hide();
+        $('#manager_pin_row, #rfid_row, #wage_row, #targets_row').hide();
         $('#user_manager_pin, #user_rfid_uid, #user_hourly_rate').val('');
         (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('#user_title').text('புதிய') : $('#user_title').text('Add');
         $('.user-image-label-title').html('<i class="feather icon-plus-circle mr-2"></i>Add Image');

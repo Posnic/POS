@@ -238,6 +238,27 @@ class ShiftsController extends BaseController {
       return this.error(res, error.message, 500);
     }
   }
+
+  // Sales targets per user (LS1) - same permission logic as wages.
+  async setTargets(req, res) {
+    try {
+      this.setRequestContext(req);
+      if (!this.checkPermission('user', 'write', req.user)) {
+        return this.error(res, 'You do not have permission to set targets', 403);
+      }
+      const result = await this.service.setTargets({
+        userId: req.body.user_id || req.body.userId,
+        daily: req.body.daily,
+        weekly: req.body.weekly,
+        monthly: req.body.monthly,
+        license: req.user && req.user.license,
+      });
+      if (result.status) return this.success(res, null, result.message);
+      return this.error(res, result.message, result.statusCode || 400);
+    } catch (error) {
+      return this.error(res, error.message, 500);
+    }
+  }
 }
 
 module.exports = new ShiftsController();
