@@ -450,9 +450,6 @@
                                                     <lang class="lang_tax_title">Tax </lang><span class="pull-right">+
                                                         <span id="sales_tax_return_value">0.00</span></span>
                                                 </td>
-                                                <!--                                        <td class="return_discount_show">
-                                                                                    <span class="pull-right">+ <span id="sales_tax_return_value">0.00</span></span>
-                                                                                </td>-->
 
                                                 <!-- New / Edit sale tax-->
                                                 <td class="discount-percentage-line-heigth return_discount_hide pay_amount_total"
@@ -604,33 +601,6 @@
                                                             id='refund_grand_total'>0.00</span></span>
                                                 </td>
                                             </tr>
-                                            <!--                                        <tr class="salesBalanceAmount">
-                                                                                    <td class="row displayamount tenderbadge-class">
-                                                                                        <span class="font-text pay_amount_total"><b><lang class="lang_tendered_title">Received</lang></b></span>
-                                        
-                                                                                        <div class="col-md-6">
-                                                                                            <input type="text" class="form-control allow_decimal keyboard-numinput sales_price_fields pull-right"
-                                                                                                   id="sales_new_given_amount" name="sales_new_given_amount" maxlength="20" onkeypress="return PosnicPro.isNumber(event)"
-                                                                                                   style="height:30px;width:100px; color:#489ee7;border: 1px solid #ccc;">
-                                                                                        </div>
-                                                                                        <div class="col-md-1">
-                                                                                            <button type="button" class="btn btn-success button_pading btn-sm" onclick="PosnicPro.sales.customerBalanceCheck()"><i class="feather icon-check"></i></button>
-                                        
-                                                                                        </div>
-                                                                                        <div class="col-md-1">
-                                                                                            <a href="javascript:void(0)" class="btn btn-success button_pading btn-sm" onclick="PosnicPro.sales.openTenderModel()">PAY</a>
-                                        
-                                                                                        </div>
-                                                                                    </td>
-                                        
-                                        
-                                                                                    <td class="customer-view-amount-field"> <b class="font-text pay_amount_total"><lang class="lang_change_title">Balance </lang></b> </td>
-                                                                                    <td class="text-warning total-amount-size">
-                                                                                        <span class="form-control sales_price_fields text-right"
-                                                                                              id="sales_new_balance_amount" name="sales_new_balance_amount"
-                                                                                              style="border: none; font-size: 25px; color: #0b5aea; font-weight: 700;"></span>
-                                                                                    </td>
-                                                                                </tr>-->
                                         </tbody>
                                     </table>
                                 </div>
@@ -809,41 +779,8 @@
                                 </div>
                             </div>
 
-                            <!-- <div class="email-leftbar">
-                                <div class="card m-b-30 tender-tables-card">
-                                    <div class="card-header text-center">
-                                        <strong>Tables</strong>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="row mb-2 justify-content-center" id="dine_type_toggle">
-                                            <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                                                <label class="btn btn-outline-info active" id="dinein_label">
-                                                    <input type="radio" name="dine_type" id="dine_type_dinein"
-                                                        autocomplete="off" value="Dine-in" checked> Dine-in
-                                                </label>
-                                                <label class="btn btn-outline-info" id="takeaway_label">
-                                                    <input type="radio" name="dine_type" id="dine_type_takeaway"
-                                                        autocomplete="off" value="Take away"> Take away
-                                                </label>
-                                            </div>
-                                        </div>
-                                        <div class="card-header text-center">
-                                            <strong>Tables No</strong>
-                                        </div>
-                                        <div class="row btn-group-toggle justify-content-center tables-list-hide-show"
-                                            data-toggle="buttons" id="tables_list"> -->
                             <!-- tender related amount -->
-                            <!-- </div>
-                                        <div class="card-header text-center">
-                                            <strong>PAX</strong>
-                                        </div>
-                                        <div class="row btn-group-toggle justify-content-center tables-list-hide-show"
-                                            data-toggle="buttons" id="persons_list"> -->
                             <!-- tender related amount -->
-                            <!-- </div>
-                                    </div>
-                                </div>
-                            </div> -->
 
                             <div class="email-leftbar">
                                 <div class="card m-b-30">
@@ -966,34 +903,6 @@
                                                 <!--  payment methods fields -->
                                             </div>
 
-                                            <!--                                            <div class="row btn-group-toggle qrhide" data-toggle="buttons"  id="payment_id">
-                                                                                            <div class="col-lg-4 col-md-2 col-xs-12">
-                                                                                                <label class="btn btn-block btn-payment-mode Cash_active payment_detail active save_enable cash_active">
-                                                                                                    <input type="radio" class="payment_mode" name="payment_mode" id="Cash" value="Cash"
-                                                                                                           checked="checked" style="display: none;"> <lang class="lang_cash_title">Cash</lang>
-                                                                                                </label>
-                                                                                            </div>
-                                                                                            <div class="col-lg-4 col-md-2 col-xs-12">
-                                                                                                <label class="btn btn-block btn-payment-mode Upi-Pay_active payment_detail change_active save_enable">
-                                                                                                    <input type="radio" class="payment_mode" name="payment_mode" id="Upi-Pay" value="Upi-Pay" style="display: none;"/><lang class="lang_creditcard_title"> UPI-Pay</lang>
-                                                                                                </label>
-                                                                                            </div>
-                                                                                            <div class="col-lg-4 col-md-2 col-xs-12">
-                                                                                                <label class="btn btn-block btn-payment-mode Cheque_active payment_detail change_active save_enable">
-                                                                                                    <input type="radio" class="payment_mode" name="payment_mode" id="Cheque" value="Cheque" style="display: none;"/><lang class="lang_cheque_title"> Cheque </lang>
-                                                                                                </label>
-                                                                                            </div>
-                                                                                            <div class="col-lg-4 col-md-2 col-xs-12">
-                                                                                                <label class="btn btn-block btn-payment-mode CreditCard_active payment_detail change_active save_enable">
-                                                                                                    <input type="radio" class="payment_mode" name="payment_mode" id="CreditCard" value="CreditCard" style="display: none;"/><lang class="lang_creditcard_title"> Card </lang>
-                                                                                                </label>
-                                                                                            </div>
-                                                                                            <div class="col-lg-4 col-md-2 col-xs-12">
-                                                                                                <label class="btn btn-block btn-payment-mode Qrpay_active payment_detail change_active save_enable qr_active qr_btn">
-                                                                                                    <input type="radio" class="payment_mode" name="payment_mode" id="Qrpay" value="Qrpay" style="display: none;"/><lang class="lang_qrcode_title"> Razorpay </lang>
-                                                                                                </label>
-                                                                                            </div>
-                                                                                        </div>                                      -->
                                         </div>
                                     </div>
                                 </div>
@@ -1020,17 +929,17 @@
                                             <div class="row mt-3 mb-5">
                                                 <div class="col-md-12">
                                                     <div class="form-row">
-                                                        <a href=""
+                                                        <a href="javascript:void(0)"
                                                             class="printSalesReceipt btn seven btn-lg btn-block col-md-12"><i
                                                                 class="feather icon-printer mr-2"></i>
                                                             <span>Print Receipt</span>
                                                         </a>
-                                                        <a href=""
+                                                        <a href="javascript:void(0)"
                                                             class="smsSalesReceipt btn seven btn-lg btn-block col-md-12"><i
                                                                 class="feather icon-message-square mr-2"></i>
                                                             <span>SMS Receipt</span>
                                                         </a>
-                                                        <a href="" class="printSalesWhatsAppReceipt btn seven btn-lg btn-block col-md-12"><i 
+                                                        <a href="javascript:void(0)" class="printSalesWhatsAppReceipt btn seven btn-lg btn-block col-md-12"><i 
                                                                 class="feather icon-message-circle mr-2"></i> 
                                                             <span>WhatsApp Receipt</span> 
                                                         </a>
