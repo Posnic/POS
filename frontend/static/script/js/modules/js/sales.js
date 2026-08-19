@@ -6409,10 +6409,11 @@ PosnicPro.sales.itemsMenu = {
                                 var _initial = String(list_item_name || '?').trim().charAt(0).toUpperCase();
                                 var _shape = getItemdata[i]['tile_shape'] || '';
                                 var _shapeCss = 'border-radius:6px;';
-                                if (_shape === 'rounded') { _shapeCss = 'border-radius:16px;'; }
-                                else if (_shape === 'circle') { _shapeCss = 'border-radius:50%;width:70px;margin:0 auto;'; }
-                                else if (_shape === 'diamond') { _shapeCss = 'clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);width:70px;margin:0 auto;'; }
-                                _tileHtml = '<div class="wsk-cp-img"><div style="width:100%;height:70px;' + _shapeCss + 'background:' + _tileColor + ';display:flex;align-items:center;justify-content:center;color:#fff;font-size:28px;font-weight:700;">' + _initial + '</div></div>';
+                                if (_shape === 'rounded') { _shapeCss = 'border-radius:22px;'; }
+                                else if (_shape === 'circle') { _shapeCss = 'border-radius:50%;'; }
+                                else if (_shape === 'diamond') { _shapeCss = 'clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);'; }
+                                // Same square the product image fills - card heights stay level.
+                                _tileHtml = '<div class="wsk-cp-img"><div style="width:100%;aspect-ratio:1/1;' + _shapeCss + 'background:' + _tileColor + ';display:flex;align-items:center;justify-content:center;color:#fff;font-size:44px;font-weight:700;">' + _initial + '</div></div>';
                             }
                             var product = '<div class="wsk-cp cbutton--effect-novak" id="' + getItemdata[i]['id'] + '" onclick="PosnicPro.sales.itemsMenu.addToLineItemsList(this.id)">' +
                                 '<div class="wsk-cp-product">' +
