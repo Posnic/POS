@@ -2746,10 +2746,11 @@ PosnicPro.itemdetails = {
 
 $(function () {
     $('#items_discount_percentage').attr('disabled', 'disabled').addClass('bg-white').val('0.00').hide();
-    $('#items_supplier').on('keypress keydown.autocomplete', function () {
-        var branch = PosnicPro.local.get("branch_id_set");
-        $(this).autocomplete({
+    // One-time init like the sale search: never rebuild per keystroke.
+    $('#items_supplier').autocomplete({
+        deferRequestBy: 120,
             lookup: function (query, done) {
+                var branch = PosnicPro.local.get("branch_id_set");
                 var result = {};
                 var suggestions = [];
                 var params = {
@@ -2791,7 +2792,6 @@ $(function () {
                         $.Autocomplete.formatResult(suggestion) +
                         '</div><span class="pull-right">' + phone + '</span><span class="pull-right" style="margin-top:-20px;">' + addnew + '</span>';
             }
-        });
     });
 });
 
