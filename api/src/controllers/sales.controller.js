@@ -5,6 +5,24 @@ const Sale = require('../models/sale.model');
 const BaseModel = require('../models/base.model');
 const mongoose = require('mongoose');
 const salesService = require('../services/sale.service');
+
+/* The branch doc carries the shop's own SMTP settings; owner rule is
+   theirs first, the platform chain otherwise. Absent config, bad ids
+   and read errors all fall through to the platform transport. */
+async function shopTransportOf(req) {
+  const { resolveShopTransport } = require('../utils/email');
+  let branchDoc = null;
+  try {
+    const { ObjectId } = require('mongodb');
+    const bid = req.user && req.user.branch_id;
+    if (bid && req.db && ObjectId.isValid(String(bid))) {
+      branchDoc = await req.db.collection('branches').findOne({ _id: new ObjectId(String(bid)) });
+    }
+  } catch (e) {
+    /* platform chain covers it */
+  }
+  return resolveShopTransport(branchDoc);
+}
 const ItemService = require('../services/item.service');
 const LoyaltyService = require('../services/loyalty.service');
 const loyaltyService = new LoyaltyService();
@@ -4972,23 +4990,13 @@ class SalesController extends BaseController {
         return this.error(res, ERROR_MESSAGES.SALE_NOT_FOUND, 404);
       }
 
-      // Send email receipt (basic implementation - enhance based on email service)
-      const nodemailer = require('nodemailer');
-
-      // Configure email transporter
-      const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST || 'smtp.gmail.com',
-        port: process.env.SMTP_PORT || 587,
-        secure: false,
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASSWORD,
-        },
-      });
+      // Shop SMTP first, platform chain otherwise (owner rule).
+      const resolved = await shopTransportOf(req);
+      const transporter = resolved.transporter;
 
       // Email content
       const emailContent = {
-        from: process.env.EMAIL_FROM || 'noreply@posnic.com',
+        from: `${req.user?.branch_name || 'Posnic POS'} <${resolved.from}>`,
         to: email,
         subject: `Receipt - ${sale.sales_id}`,
         html: `
@@ -5004,6 +5012,11 @@ class SalesController extends BaseController {
 
       try {
         await transporter.sendMail(emailContent);
+        /* The dev fallback transport prints to console instead of
+           delivering - say so rather than claiming a send. */
+        if (!resolved.shopOwned && transporter.options && transporter.options.jsonTransport) {
+          return this.error(res, 'Email is not configured on this server - nothing was sent', 503);
+        }
         return this.success(res, { sent: true }, 'Receipt sent successfully');
       } catch (emailError) {
         console.error('Email error:', emailError);
@@ -5282,21 +5295,13 @@ class SalesController extends BaseController {
       doc.on('end', async () => {
         const pdfBuffer = Buffer.concat(chunks);
 
-        // Send email with PDF attachment
-        const nodemailer = require('nodemailer');
-        const transporter = nodemailer.createTransport({
-          host: process.env.SMTP_HOST || 'smtp.gmail.com',
-          port: process.env.SMTP_PORT || 587,
-          secure: false,
-          auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASSWORD,
-          },
-        });
+        // Shop SMTP first, platform chain otherwise (owner rule).
+        const resolved = await shopTransportOf(req);
+        const transporter = resolved.transporter;
 
         try {
           await transporter.sendMail({
-            from: process.env.EMAIL_FROM || 'noreply@posnic.com',
+            from: `${req.user?.branch_name || 'Posnic POS'} <${resolved.from}>`,
             to: email,
             subject: `Invoice - ${sale.sales_id}`,
             html: `
@@ -5316,6 +5321,13 @@ class SalesController extends BaseController {
             ],
           });
 
+          if (!resolved.shopOwned && transporter.options && transporter.options.jsonTransport) {
+            return this.error(
+              res,
+              'Email is not configured on this server - nothing was sent',
+              503
+            );
+          }
           return this.success(res, { sent: true, email }, 'PDF invoice emailed successfully');
         } catch (emailError) {
           console.error('Email error:', emailError);
@@ -6150,8 +6162,10 @@ class SalesController extends BaseController {
       }
 
       const SaleModel = this.model || Sale;
+      const resolvedBranch = await shopTransportOf(req);
       const response = await salesService.sendDailySalesMail(input, {
         SaleModel,
+        shopTransport: resolvedBranch,
       });
 
       if (response.status) {
