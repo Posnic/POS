@@ -2751,17 +2751,14 @@ tr.add-disc-row.tip-only td.discount-input { visibility: hidden; }
     transform: scale(1.08);
 }
 #item_tile_shapes .tile-shape { transition: transform 0.1s ease; }
-/* clip-path clips box-shadow AND outline - only drop-shadow follows
-   the diamond's silhouette. */
-#item_tile_shapes .tile-shape.is-picked[data-shape="diamond"],
-#item_tile_shapes .tile-shape.is-picked[data-shape="triangle"],
-#item_tile_shapes .tile-shape.is-picked[data-shape="pentagon"],
-#item_tile_shapes .tile-shape.is-picked[data-shape="hexagon"],
-#item_tile_shapes .tile-shape.is-picked[data-shape="star"],
-#item_tile_shapes .tile-shape.is-picked[data-shape="octagon"] {
+/* clip-path clips box-shadow, outline AND pseudo-elements - the only
+   selection cue that always survives is the fill itself: a picked
+   shape turns accent blue and grows. */
+#item_tile_shapes .tile-shape { background: #8a94a6; }
+#item_tile_shapes .tile-shape.is-picked {
+    background: #506fe4 !important;
+    transform: scale(1.18);
     box-shadow: none;
-    filter: drop-shadow(0 0 3px #506fe4) drop-shadow(0 0 3px #506fe4);
-    transform: scale(1.15);
 }
 #item_tile_swatches .tile-swatch.is-picked::after {
     content: '¹3'; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
@@ -2820,3 +2817,14 @@ tr.add-disc-row.tip-only td.discount-input { visibility: hidden; }
 .rs-pill.hold { background: rgba(80, 111, 228, 0.13); color: #506fe4; }
 .rs-actions { flex: 0 0 auto; display: flex; gap: 6px; }
 .rs-act { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 9px; }
+
+/* Item images: a compact drop strip, not a hall - thumbnails stay
+   small and zoom on tap/hover through the existing preview. */
+#item_tab_details .Neon.Neon-theme-dragdropbox { min-height: 0 !important; padding: 6px 0 !important; }
+#item_tab_details .Neon-input-inner { padding: 4px 0 !important; }
+#item_tab_details .Neon-input-icon { display: none; }
+#item_tab_details .Neon-input-text h3 { font-size: 13px !important; margin: 0 0 6px !important; }
+#item_tab_details .Neon-input-text { margin-bottom: 6px !important; }
+#item-display-preview img,
+#item_tab_details .imagezoom { width: 56px !important; height: 56px !important; object-fit: cover; border-radius: 8px; transition: transform 0.12s ease; cursor: zoom-in; }
+#item-display-preview img:hover { transform: scale(1.6); z-index: 3; position: relative; }
