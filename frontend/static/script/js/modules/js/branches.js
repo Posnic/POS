@@ -303,6 +303,7 @@ PosnicPro.branches = {
                         PosnicPro.local.set('branchemail', response.data['store_email']);
                         PosnicPro.local.set('branchphone', response.data['store_telephone']);
                         PosnicPro.local.set('branchaddress', response.data['store_address']);
+                    PosnicPro.local.set('branchgstin', response.data['branch_gstin_number'] || '');
                         let branchRecord = [];
                         branchRecord.push({name: response.data['branch_name'], phone: response.data['store_telephone'], email: response.data['store_email'], address: response.data['store_address'], image: response.data['branch_image']});
                         db.customerDisplay.put({id: '2', 'clear': 'no', 'get': 'no', branch: branchRecord});

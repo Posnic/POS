@@ -923,7 +923,7 @@ PosnicPro = {
         },
         /* Email the exact PDF the user would download - address typed in a
            small modal, the send happens server-side. */
-        email: function (elId, meta) {
+        email: function (elId, meta, builder) {
             var ex = PosnicPro.reportExport;
             if (!$('#report_email_modal').length) {
                 $('body').append(
@@ -947,7 +947,8 @@ PosnicPro = {
                     }
                     var m = PosnicPro.reportExport._emailJob || {};
                     $('#report_email_send').prop('disabled', true);
-                    PosnicPro.reportExport._withPdf(m.elId, m.meta, function (doc) {
+                    var build = m.builder || function (cb) { PosnicPro.reportExport._withPdf(m.elId, m.meta, cb); };
+                    build(function (doc) {
                         var b64 = String(doc.output('datauristring')).split(',')[1] || '';
                         PosnicPro.post({
                             url: 'reports/email',
@@ -964,8 +965,8 @@ PosnicPro = {
                     });
                 });
             }
-            PosnicPro.reportExport._emailJob = { elId: elId, meta: meta };
-            $('#report_email_to').val('');
+            PosnicPro.reportExport._emailJob = { elId: elId, meta: meta, builder: builder };
+            $('#report_email_to').val((meta && meta.to) || '');
             $('#report_email_modal').modal('show');
         },
         xls: function (elId, meta) {

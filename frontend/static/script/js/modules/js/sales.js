@@ -7273,7 +7273,8 @@ PosnicPro.quotes = {
         $('.page-title-box,#quotes_new').show();
         $('#quotes_view_card').hide();
         $('#quotes_list_card').show();
-        $('#view_quotes_page').addClass('active');
+        $('#v-pills-purchase-tab,#view_quotes_page').addClass('active');
+        $('#v-pills-purchase').addClass('show active');
         PosnicPro.get({ url: 'quotes', data: {} }, function (r) {
             PosnicPro.quotes._rows = (r && r.data) || [];
             PosnicPro.quotes.renderList();
@@ -7326,62 +7327,378 @@ PosnicPro.quotes = {
         $('#quotes_list_rows').html(html);
     },
     showDetails: function (id) {
+        PosnicPro.HideSideBarModal();
+        $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
+        $('.vertical-menu li a').removeClass('active');
+        $('.page_loader,#osk-container').hide();
+        $('.page-title-box,#quotes_new').show();
+        $('#v-pills-purchase-tab,#view_quotes_page').addClass('active');
+        $('#v-pills-purchase').addClass('show active');
+        $('#quotes_list_card').hide();
         PosnicPro.get({ url: 'quotes/' + id, data: {} }, function (r) {
             var q = r && r.data;
             if (!q) { PosnicPro.alert('error', 'Quote not found'); return; }
             PosnicPro.quotes._current = q;
             var esc = PosnicPro.quotes._esc;
-            $('.page_loader,#osk-container').hide();
-            $('.page-title-box,#quotes_new').show();
-            $('#quotes_list_card').hide();
-            var body = '<h5>' + esc(q.quote_id) + ' &middot; ' + esc(q.customer_name || 'Walk-in') + '</h5>' +
-                '<div class="text-muted m-b-10">' + (q.valid_until ? 'Valid till ' + esc(new Date(q.valid_until).toLocaleDateString('en-IN')) : 'No validity set') +
-                (q.note ? ' &middot; ' + esc(q.note) : '') + '</div>' +
-                '<table class="table table-bordered"><tr><th>Item</th><th class="text-right">Qty</th><th class="text-right">Price</th><th class="text-right">Total</th></tr>';
-            (q.items || []).forEach(function (l) {
-                body += '<tr><td>' + esc(l.item_name) + '</td><td class="text-right">' + esc(l.qty) + '</td>' +
-                    '<td class="text-right">' + PosnicPro.quotes._money(l.unit_price) + '</td>' +
-                    '<td class="text-right">' + PosnicPro.quotes._money(l.line_total) + '</td></tr>';
+            var money = PosnicPro.quotes._money;
+            var open = q.status === 'open';
+            var d = function (v) { return v ? new Date(v).toLocaleDateString('en-IN') : ''; };
+            /* Inline-editable field: contenteditable on an open quote,
+               plain text once converted or cancelled. */
+            var ed = function (f, val, ph) {
+                if (!open) { return esc(val) || '<span class="text-muted">-</span>'; }
+                return '<span class="q-edit" contenteditable="true" data-f="' + f + '" data-ph="' + ph + '">' + (esc(val) || '') + '</span>';
+            };
+            /*
+             * International quotation layout: seller identity + logo left,
+             * QUOTATION / number / dates right; Bill To; items; totals;
+             * payment, bank and terms footer; signature. Everything
+             * owner-editable in place while the quote is open.
+             */
+            var logo = PosnicPro.local.get('branchimage');
+            var body = '<div class="q-sheet">'
+                + '<div class="q-head">'
+                + '<div class="q-seller">'
+                + (logo && logo !== 'store.png' ? '<img class="q-logo" src="' + esc(logo) + '" alt="">' : '')
+                + '<div class="q-shop">' + esc(PosnicPro.local.get('branchname') || '') + '</div>'
+                + '<div class="q-muted">' + esc(PosnicPro.local.get('branchaddress') || '') + '</div>'
+                + '<div class="q-muted">' + esc(PosnicPro.local.get('branchphone') || '')
+                + (PosnicPro.local.get('branchemail') ? ' &middot; ' + esc(PosnicPro.local.get('branchemail')) : '') + '</div>'
+                + (PosnicPro.local.get('branchgstin') ? '<div class="q-muted">GSTIN: ' + esc(PosnicPro.local.get('branchgstin')) + '</div>' : '')
+                + '</div>'
+                + '<div class="q-title-block">'
+                + '<div class="q-doc-title">QUOTATION</div>'
+                + '<div class="q-num">' + esc(q.quote_id) + '</div>'
+                + '<div class="q-muted">Date: ' + d(q.created_date) + '</div>'
+                + '<div class="q-muted">Valid till: ' + ed('valid_until', d(q.valid_until), 'dd/mm/yyyy') + '</div>'
+                + (!open ? '<div class="q-status">' + esc(String(q.status).toUpperCase()) + '</div>' : '')
+                + '</div>'
+                + '</div>'
+                + '<div class="q-billto"><div class="q-label">Bill To</div>'
+                + '<div class="q-cust">' + ed('customer_name', q.customer_name || 'Walk-in customer', 'Customer name') + '</div>'
+                + '<div class="q-muted">' + ed('customer_address', q.customer_address, 'Address') + '</div>'
+                + '<div class="q-muted">Phone: ' + ed('customer_phone', q.customer_phone, 'phone')
+                + ' &middot; GSTIN: ' + ed('customer_gstin', q.customer_gstin, 'GSTIN') + '</div>'
+                + '<div class="q-muted">Email: ' + ed('customer_email', q.customer_email, 'email') + '</div>'
+                + '</div>'
+                + '<div class="table-responsive"><table class="q-items"><thead><tr>'
+                + '<th>#</th><th>Item</th><th class="text-right">Qty</th>'
+                + '<th class="text-right">Unit price</th><th class="text-right">Amount</th>'
+                + '</tr></thead><tbody>';
+            (q.items || []).forEach(function (l, i) {
+                body += '<tr><td>' + (i + 1) + '</td><td>' + esc(l.item_name) + '</td>'
+                    + '<td class="text-right">' + esc(l.qty) + '</td>'
+                    + '<td class="text-right">' + money(l.unit_price) + '</td>'
+                    + '<td class="text-right">' + money(l.line_total) + '</td></tr>';
             });
-            body += '<tr><th colspan="3" class="text-right">Total</th><th class="text-right">' + PosnicPro.quotes._money(q.total) + '</th></tr></table>';
+            body += '</tbody><tfoot>'
+                + '<tr class="q-sub"><td colspan="4" class="text-right">Subtotal</td>'
+                + '<td class="text-right">' + money(q.subtotal) + '</td></tr>'
+                + (Number(q.tax_total) > 0
+                    ? '<tr class="q-sub"><td colspan="4" class="text-right">Tax</td><td class="text-right">' + money(q.tax_total) + '</td></tr>'
+                    : '')
+                + '<tr class="q-grand"><th colspan="4" class="text-right">TOTAL</th>'
+                + '<th class="text-right">' + money(q.total) + '</th></tr>'
+                + '</tfoot></table></div>'
+                + '<div class="q-footer">'
+                + '<div class="q-block"><div class="q-label">Payment method</div>' + ed('payment_method', q.payment_method, 'e.g. Bank transfer / UPI / Cash') + '</div>'
+                + '<div class="q-block"><div class="q-label">Bank details</div>' + ed('bank_details', q.bank_details, 'Account name, number, IFSC') + '</div>'
+                + '<div class="q-block"><div class="q-label">Terms &amp; conditions</div>' + ed('terms', q.terms || q.note, 'e.g. 50% advance confirms the order. Prices valid till the date above.') + '</div>'
+                + '</div>'
+                + '<div class="q-sign">Authorised signatory</div>'
+                + '</div>';
             $('#quotes_view_body').html(body);
-            var act = '<button type="button" class="btn btn-sm btn-secondary-rgba" onclick="hasher.setHash(\'quotes\');">Back</button> ' +
-                '<button type="button" class="btn btn-sm btn-primary-rgba" onclick="PosnicPro.quotes.printNow();">Print</button> ' +
-                '<button type="button" class="btn btn-sm btn-danger-rgba" onclick="PosnicPro.quotes.print();">PDF</button> ' +
-                '<button type="button" class="btn btn-sm btn-secondary-rgba" onclick="PosnicPro.quotes.emailQuote();">Email</button> ' +
-                '<button type="button" class="btn btn-sm btn-success-rgba" onclick="PosnicPro.quotes.whatsappQuote();">WhatsApp</button> ';
-            if (q.status === 'open') {
-                act += '<button type="button" class="btn btn-sm btn-success-rgba" onclick="PosnicPro.quotes.convert();">Convert to sale</button> ' +
-                    '<button type="button" class="btn btn-sm btn-warning-rgba" onclick="PosnicPro.quotes.cancel();">Cancel quote</button> ' +
-                    '<button type="button" class="btn btn-sm btn-danger-rgba" onclick="PosnicPro.quotes.remove();">Delete</button>';
+            var act = '<button type="button" class="btn btn-sm btn-secondary-rgba" onclick="hasher.setHash(\'quotes\');">Back</button> ';
+            if (open) {
+                act += '<button type="button" class="btn btn-sm btn-success-rgba" onclick="PosnicPro.quotes.saveEdits();">Save changes</button> ';
+            }
+            act += '<button type="button" class="btn btn-sm btn-primary-rgba" onclick="PosnicPro.quotes.printNow();">Print</button> '
+                + '<button type="button" class="btn btn-sm btn-danger-rgba" onclick="PosnicPro.quotes.print();">PDF</button> '
+                + '<button type="button" class="btn btn-sm btn-secondary-rgba" onclick="PosnicPro.quotes.emailQuote();">Email</button> '
+                + '<button type="button" class="btn btn-sm btn-success-rgba" onclick="PosnicPro.quotes.whatsappQuote();">WhatsApp</button> ';
+            if (open) {
+                act += '<button type="button" class="btn btn-sm btn-success-rgba" onclick="PosnicPro.quotes.convert();">Convert to sale</button> '
+                    + '<button type="button" class="btn btn-sm btn-warning-rgba" onclick="PosnicPro.quotes.cancel();">Cancel quote</button> '
+                    + '<button type="button" class="btn btn-sm btn-danger-rgba" onclick="PosnicPro.quotes.remove();">Delete</button>';
             }
             $('#quotes_view_actions').html(act);
             $('#quotes_view_card').show();
         }, function () { PosnicPro.alert('error', 'Could not load the quote'); });
     },
-    _meta: function () {
-        var q = PosnicPro.quotes._current || {};
+    /* Persist the preview's inline edits - open quotes only, the server
+       enforces the same rule. */
+    saveEdits: function () {
+        var q = PosnicPro.quotes._current;
+        if (!q || q.status !== 'open') { return; }
+        var read = function (f) { return $.trim($('.q-edit[data-f="' + f + '"]').text() || ''); };
+        var vu = read('valid_until');
+        var m = vu.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+        var vuIso = m ? (m[3] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[1]).slice(-2)) : '';
+        var payload = {
+            items: (q.items || []).map(function (l) {
+                return { item_id: String(l.item_id), item_name: l.item_name, barcode_id: l.barcode_id, qty: l.qty, unit_price: l.unit_price };
+            }),
+            customer_id: q.customer_id ? String(q.customer_id) : '',
+            customer_name: read('customer_name'),
+            customer_address: read('customer_address'),
+            customer_phone: read('customer_phone'),
+            customer_gstin: read('customer_gstin'),
+            customer_email: read('customer_email'),
+            payment_method: read('payment_method'),
+            bank_details: read('bank_details'),
+            terms: read('terms'),
+            valid_until: vuIso,
+            tax_total: q.tax_total,
+            total: q.total
+        };
+        PosnicPro.request({ method: 'PUT', url: 'quotes/' + q._id, data: JSON.stringify(payload) }, function (r) {
+            PosnicPro.alert(r.type, r.message);
+            if (r.type === 'success') { PosnicPro.quotes.showDetails(String(q._id)); }
+        }, function (xhr) {
+            var resp = {}; try { resp = JSON.parse(xhr.responseText); } catch (e) { /* plain */ }
+            PosnicPro.alert('error', resp.message || 'Could not save the quote');
+        });
+    },
+    _seller: function () {
         return {
-            shop: PosnicPro.local.get('branchname') || '',
+            name: PosnicPro.local.get('branchname') || '',
             address: PosnicPro.local.get('branchaddress') || '',
             phone: PosnicPro.local.get('branchphone') || '',
-            title: 'Quotation ' + (q.quote_id || ''),
-            range: q.valid_until ? 'Valid till ' + new Date(q.valid_until).toLocaleDateString('en-IN') : '',
-            filename: (q.quote_id || 'quote').toLowerCase()
+            email: PosnicPro.local.get('branchemail') || '',
+            gstin: PosnicPro.local.get('branchgstin') || ''
         };
     },
+    /* jsPDF + the shop logo (as a canvas data URL) resolved async, then
+       the builder runs. A logo that will not load never blocks the doc. */
+    _withQuoteDoc: function (use) {
+        var q = PosnicPro.quotes._current;
+        if (!q) { PosnicPro.alert('warning', 'Open a quote first.'); return; }
+        PosnicPro.lazy.load('jspdf').then(function () {
+            var C = (window.jspdf && typeof window.jspdf.jsPDF === 'function') ? window.jspdf.jsPDF
+                : (typeof window.jsPDF === 'function') ? window.jsPDF
+                : (typeof window.jspdf === 'function') ? window.jspdf : null;
+            if (!C) { PosnicPro.alert('error', 'PDF tools not loaded - refresh and retry.'); return; }
+            var src = PosnicPro.local.get('branchimage');
+            var done = false;
+            var go = function (logo) {
+                if (done) { return; }
+                done = true;
+                use(PosnicPro.quotes._buildPdf(C, q, PosnicPro.quotes._seller(), logo));
+            };
+            if (!src || src === 'store.png') { go(null); return; }
+            var img = new Image();
+            img.onload = function () {
+                try {
+                    var cv = document.createElement('canvas');
+                    cv.width = img.naturalWidth; cv.height = img.naturalHeight;
+                    cv.getContext('2d').drawImage(img, 0, 0);
+                    go({ data: cv.toDataURL('image/png'), w: img.naturalWidth, h: img.naturalHeight });
+                } catch (e) { go(null); }
+            };
+            img.onerror = function () { go(null); };
+            setTimeout(function () { go(null); }, 1500);
+            img.src = src;
+        });
+    },
+    /* The professional quotation document. Layout verified numerically
+       (margins, column edges, leading, pagination) before shipping. */
+    _buildPdf: function (C, q, seller, logo) {
+      var doc = new C({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+        var W = 210, M = 16, R = W - M, bottom = 278;
+        var y = M + 2;
+        var totalAlias = typeof doc.getNumberOfPages === 'function' ? '{tp}' : '{tp}';
+        var txt = function (t) {
+          return String(t == null ? '' : t)
+            .replace(/\u20b9\s?/g, 'Rs ').replace(/\u20ac\s?/g, 'EUR ').replace(/\u00a3\s?/g, 'GBP ')
+            .replace(/\s+/g, ' ').trim();
+        };
+        var money = function (n) {
+          return 'Rs ' + Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        };
+        var dmy = function (v) {
+          if (!v) { return ''; }
+          var d = new Date(v);
+          if (isNaN(d)) { return ''; }
+          var p = function (x) { return (x < 10 ? '0' : '') + x; };
+          return p(d.getDate()) + '/' + p(d.getMonth() + 1) + '/' + d.getFullYear();
+        };
+        var pageFooter = function () {
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(140, 148, 160);
+          doc.text(txt(q.quote_id) + '  -  ' + txt(seller.name), M, 289);
+          doc.text('Page ' + doc.internal.getNumberOfPages() + ' of ' + totalAlias, R, 289, { align: 'right' });
+        };
+        var ensure = function (h) {
+          if (y + h > bottom) { pageFooter(); doc.addPage(); y = M + 2; }
+        };
+
+        /* header band: seller identity left, document identity right */
+        var leftY = y;
+        if (logo && logo.data) {
+          var lw = 30, lh = 12;
+          if (logo.w && logo.h) {
+            var r0 = Math.min(30 / logo.w, 12 / logo.h);
+            lw = logo.w * r0; lh = logo.h * r0;
+          }
+          try { doc.addImage(logo.data, 'PNG', M, leftY, lw, lh); leftY += lh + 4; } catch (e) { /* no logo */ }
+        }
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(12.5); doc.setTextColor(26, 32, 44);
+        var nameLines = doc.splitTextToSize(txt(seller.name), 104).slice(0, 2);
+        nameLines.forEach(function (ln) { doc.text(ln, M, leftY + 4); leftY += 5.8; });
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(103, 112, 127);
+        doc.splitTextToSize(txt(seller.address), 104).slice(0, 2).forEach(function (ln) {
+          doc.text(ln, M, leftY + 3.5); leftY += 4.3;
+        });
+        var contact = [seller.phone, seller.email].filter(Boolean).map(txt).join('  -  ');
+        if (contact) { doc.text(contact, M, leftY + 3.5); leftY += 4.3; }
+        if (seller.gstin) { doc.text('GSTIN: ' + txt(seller.gstin), M, leftY + 3.5); leftY += 4.3; }
+
+        var rightY = y;
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(17); doc.setTextColor(45, 55, 72);
+        doc.text('QUOTATION', R, rightY + 6, { align: 'right' });
+        doc.setFontSize(10.5); doc.setTextColor(26, 32, 44);
+        doc.text(txt(q.quote_id), R, rightY + 12.5, { align: 'right' });
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(103, 112, 127);
+        doc.text('Date: ' + dmy(q.created_date), R, rightY + 17.5, { align: 'right' });
+        if (q.valid_until) { doc.text('Valid till: ' + dmy(q.valid_until), R, rightY + 21.5, { align: 'right' }); }
+        if (q.status && q.status !== 'open') {
+          doc.setFont('helvetica', 'bold');
+          doc.text(String(q.status).toUpperCase(), R, rightY + 26, { align: 'right' });
+        }
+
+        y = Math.max(leftY + 3, rightY + 25);
+        doc.setDrawColor(45, 55, 72); doc.setLineWidth(0.6);
+        doc.line(M, y, R, y);
+        y += 7;
+
+        /* bill to */
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(138, 148, 166);
+        doc.text('BILL TO', M, y);
+        y += 5;
+        doc.setFontSize(10.5); doc.setTextColor(26, 32, 44);
+        doc.text(txt(q.customer_name || 'Walk-in customer'), M, y);
+        y += 4.6;
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(103, 112, 127);
+        if (q.customer_address) {
+          doc.splitTextToSize(txt(q.customer_address), 100).slice(0, 2).forEach(function (ln) {
+            doc.text(ln, M, y); y += 4.3;
+          });
+        }
+        var cLine = [q.customer_phone ? 'Phone: ' + txt(q.customer_phone) : '',
+          q.customer_gstin ? 'GSTIN: ' + txt(q.customer_gstin) : ''].filter(Boolean).join('   ');
+        if (cLine) { doc.text(cLine, M, y); y += 4.3; }
+        if (q.customer_email) { doc.text(txt(q.customer_email), M, y); y += 4.3; }
+        y += 4;
+
+        /* items table: fixed professional columns */
+        var colIdx = 9, colQty = 16, colPrice = 28, colAmt = 31;
+        var tableW = R - M;
+        var colItem = tableW - colIdx - colQty - colPrice - colAmt;
+        var xIdx = M, xItem = M + colIdx, xQty = xItem + colItem, xPrice = xQty + colQty, xAmt = xPrice + colPrice;
+        var padY = 2.1, lineH = 4.1;
+        var chunkFit = function (t, wAvail) {
+          var out = [], cur = '';
+          String(t).split('').forEach(function (ch) {
+            if (cur && doc.getTextWidth(cur + ch) > wAvail) { out.push(cur); cur = ch; }
+            else { cur += ch; }
+          });
+          if (cur) { out.push(cur); }
+          return out.length ? out : [''];
+        };
+        var tableHead = function () {
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(45, 55, 72);
+          doc.text('#', xIdx, y + 4);
+          doc.text('ITEM', xItem, y + 4);
+          doc.text('QTY', xQty + colQty - 1, y + 4, { align: 'right' });
+          doc.text('UNIT PRICE', xPrice + colPrice - 1, y + 4, { align: 'right' });
+          doc.text('AMOUNT', xAmt + colAmt, y + 4, { align: 'right' });
+          doc.setDrawColor(45, 55, 72); doc.setLineWidth(0.4);
+          doc.line(M, y + 6, R, y + 6);
+          y += 6;
+        };
+        ensure(24);
+        tableHead();
+        (q.items || []).forEach(function (l, i) {
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(8.8);
+          var wAvail = colItem - 4;
+          var lines = [];
+          doc.splitTextToSize(txt(l.item_name), wAvail).forEach(function (ln) {
+            if (doc.getTextWidth(ln) <= wAvail) { lines.push(ln); }
+            else { chunkFit(ln, wAvail).forEach(function (p2) { lines.push(p2); }); }
+          });
+          lines = lines.slice(0, 3);
+          var rowH = lines.length * lineH + padY * 2;
+          if (y + rowH > bottom) { pageFooter(); doc.addPage(); y = M + 2; tableHead(); }
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(8.8); doc.setTextColor(26, 32, 44);
+          var base = y + padY + lineH * 0.78;
+          doc.text(String(i + 1), xIdx, base);
+          lines.forEach(function (ln, li) { doc.text(ln, xItem, base + li * lineH); });
+          doc.text(String(l.qty), xQty + colQty - 1, base, { align: 'right' });
+          doc.text(money(l.unit_price), xPrice + colPrice - 1, base, { align: 'right' });
+          doc.text(money(l.line_total), xAmt + colAmt, base, { align: 'right' });
+          doc.setDrawColor(228, 232, 238); doc.setLineWidth(0.12);
+          doc.line(M, y + rowH, R, y + rowH);
+          y += rowH;
+        });
+
+        /* totals: right-hand block */
+        var totX = 128;
+        ensure(26);
+        y += 3;
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(70, 78, 92);
+        doc.text('Subtotal', totX, y + 4);
+        doc.text(money(q.subtotal), R, y + 4, { align: 'right' });
+        y += 6;
+        if (Number(q.tax_total) > 0) {
+          doc.text('Tax', totX, y + 4);
+          doc.text(money(q.tax_total), R, y + 4, { align: 'right' });
+          y += 6;
+        }
+        doc.setDrawColor(45, 55, 72); doc.setLineWidth(0.4);
+        doc.line(totX, y + 1.5, R, y + 1.5);
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(26, 32, 44);
+        doc.text('TOTAL', totX, y + 8);
+        doc.text(money(q.total), R, y + 8, { align: 'right' });
+        y += 14;
+
+        /* payment, bank, terms - stacked, skipped when empty */
+        var block = function (label, text) {
+          if (!text) { return; }
+          var lines = doc.splitTextToSize(txt(text), tableW);
+          ensure(8 + lines.length * 4.3);
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(138, 148, 166);
+          doc.text(label, M, y + 4);
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(60, 68, 82);
+          lines.forEach(function (ln, i) { doc.text(ln, M, y + 8.5 + i * 4.3); });
+          y += 8.5 + lines.length * 4.3 + 2;
+        };
+        block('PAYMENT METHOD', q.payment_method);
+        block('BANK DETAILS', q.bank_details);
+        block('TERMS & CONDITIONS', q.terms || q.note);
+
+        /* signature */
+        ensure(34);
+        y = Math.min(Math.max(y + 12, 240), bottom - 14);
+        doc.setDrawColor(138, 148, 166); doc.setLineWidth(0.3);
+        doc.line(138, y + 10, R, y + 10);
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(103, 112, 127);
+        doc.text('Authorised signatory', (138 + R) / 2, y + 14.5, { align: 'center' });
+
+        pageFooter();
+        if (typeof doc.putTotalPages === 'function') { doc.putTotalPages(totalAlias); }
+        return doc;
+    },
     printNow: function () {
-        PosnicPro.reportExport.printPdf('quotes_view_body', PosnicPro.quotes._meta());
+        PosnicPro.quotes._withQuoteDoc(function (doc) {
+            if (typeof doc.autoPrint === 'function') { doc.autoPrint(); }
+            var url = doc.output('bloburl');
+            var w = window.open(url, '_blank');
+            if (!w) { PosnicPro.alert('warning', 'Allow pop-ups so the quote can print.'); }
+        });
     },
     print: function () {
         var q = PosnicPro.quotes._current || {};
-        PosnicPro.reportExport.pdf('quotes_view_body', {
-            shop: PosnicPro.local.get('branchname') || '',
-            address: PosnicPro.local.get('branchaddress') || '',
-            phone: PosnicPro.local.get('branchphone') || '',
-            title: 'Quotation ' + (q.quote_id || ''),
-            range: q.valid_until ? 'Valid till ' + new Date(q.valid_until).toLocaleDateString('en-IN') : '',
-            filename: (q.quote_id || 'quote').toLowerCase()
+        PosnicPro.quotes._withQuoteDoc(function (doc) {
+            doc.save((q.quote_id || 'quote').toLowerCase() + '.pdf');
         });
     },
     convert: function () {
@@ -7438,34 +7755,10 @@ PosnicPro.quotes = {
             };
         }).get().filter(Boolean);
         if (!lines.length) { PosnicPro.alert('warning', 'Add at least one item, then save the quote.'); return false; }
-        // Validity and terms belong on a quote (owner ask) - one small
-        // dialog before the save, defaulting a week of validity.
-        if (!$('#quote_save_modal').length) {
-            $('body').append(
-                '<div class="modal fade" id="quote_save_modal" tabindex="-1" role="dialog" aria-hidden="true">'
-                + '<div class="modal-dialog modal-dialog-centered modal-sm" role="document"><div class="modal-content">'
-                + '<div class="modal-header py-2"><h5 class="modal-title">Save as quote</h5>'
-                + '<button type="button" class="close" data-dismiss="modal">&times;</button></div>'
-                + '<div class="modal-body">'
-                + '<label class="mb-0 small text-muted" for="quote_valid_until">Valid until</label>'
-                + '<input type="date" class="form-control mb-2" id="quote_valid_until">'
-                + '<label class="mb-0 small text-muted" for="quote_note">Note / payment terms</label>'
-                + '<textarea class="form-control" id="quote_note" rows="3" maxlength="500" placeholder="e.g. 50% advance, delivery in 3 days"></textarea>'
-                + '</div>'
-                + '<div class="modal-footer py-2">'
-                + '<button type="button" class="btn btn-secondary-rgba" data-dismiss="modal">Cancel</button>'
-                + '<button type="button" class="btn btn-primary" id="quote_save_confirm">Save quote</button>'
-                + '</div></div></div></div>');
-            $(document).on('click', '#quote_save_confirm', function () {
-                $('#quote_save_modal').modal('hide');
-                PosnicPro.quotes._submit();
-            });
-        }
-        var week = new Date(Date.now() + 7 * 86400000);
-        $('#quote_valid_until').val(week.toISOString().slice(0, 10));
-        $('#quote_note').val('');
+        // Owner flow: no questions at save - the quote lands on its A4
+        // preview where everything edits in place.
         PosnicPro.quotes._pendingLines = lines;
-        $('#quote_save_modal').modal('show');
+        PosnicPro.quotes._submit();
         } catch (e) {
             PosnicPro.alert('error', 'Quote could not be built: ' + e.message);
         }
@@ -7475,12 +7768,15 @@ PosnicPro.quotes = {
         var lines = PosnicPro.quotes._pendingLines || [];
         PosnicPro.quotes._pendingLines = null;
         if (!lines.length) { return; }
+        var week = new Date(Date.now() + 7 * 86400000);
         var payload = {
             items: lines,
             customer_id: $('#sales_new_customer_id').val() || '',
             customer_name: $('#sales_new_customer_name').val() || '',
-            valid_until: $('#quote_valid_until').val() || '',
-            note: $.trim($('#quote_note').val() || ''),
+            customer_phone: $('#sales_new_customer_phone').val() || '',
+            customer_address: $('#sales_new_customer_address').val() || '',
+            customer_gstin: $('#sales_new_customer_gst_number').val() || '',
+            valid_until: week.toISOString().slice(0, 10),
             total: parseFloat(String($('#grand_total').val() || '').replace(/,/g, '')) || 0
         };
         PosnicPro.post({ url: 'quotes', data: JSON.stringify(payload) }, function (r) {
@@ -7498,13 +7794,10 @@ PosnicPro.quotes = {
     emailQuote: function () {
         var q = PosnicPro.quotes._current || {};
         PosnicPro.reportExport.email('quotes_view_body', {
-            shop: PosnicPro.local.get('branchname') || '',
-            address: PosnicPro.local.get('branchaddress') || '',
-            phone: PosnicPro.local.get('branchphone') || '',
             title: 'Quotation ' + (q.quote_id || ''),
-            range: q.valid_until ? 'Valid till ' + new Date(q.valid_until).toLocaleDateString('en-IN') : '',
-            filename: (q.quote_id || 'quote').toLowerCase()
-        });
+            filename: (q.quote_id || 'quote').toLowerCase(),
+            to: q.customer_email || ''
+        }, PosnicPro.quotes._withQuoteDoc);
     },
     whatsappQuote: function () {
         var q = PosnicPro.quotes._current || {};

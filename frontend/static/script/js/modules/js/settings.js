@@ -451,6 +451,7 @@ PosnicPro.settings = {
                     PosnicPro.local.set('branchemail', response.data['store_email']);
                     PosnicPro.local.set('branchphone', response.data['store_telephone']);
                     PosnicPro.local.set('branchaddress', response.data['store_address']);
+                    PosnicPro.local.set('branchgstin', response.data['branch_gstin_number'] || '');
                     
                     // Store general settings including hardware_weight_machine_enable
                     var generalSettings = {
