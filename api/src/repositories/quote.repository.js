@@ -12,7 +12,19 @@
 const BaseModel = require('../models/base.model');
 const { ObjectId } = require('mongodb');
 
-const STATUSES = Object.freeze(['open', 'converted', 'cancelled']);
+const STATUSES = Object.freeze([
+  'open',
+  'draft',
+  'sent',
+  'accepted',
+  'declined',
+  'converted',
+  'cancelled',
+]);
+/* draft and sent behave like open: still editable, still convertible.
+   accepted freezes edits (the promise is made); declined/converted/
+   cancelled are history. */
+const EDITABLE = Object.freeze(['open', 'draft', 'sent']);
 
 class QuoteRepository extends BaseModel {
   constructor() {
@@ -43,27 +55,115 @@ class QuoteRepository extends BaseModel {
     return 'QUO-' + String(max + 1).padStart(6, '0');
   }
 
+  static _round2(n) {
+    return Math.round(n * 100) / 100;
+  }
+
+  /* One optional discount, per line or quote-level: percent of the gross
+     (0-100) or a flat amount capped at the gross. Anything malformed means
+     "no discount", never a rejected save. */
+  static _discountOf(raw, gross) {
+    if (!raw || typeof raw !== 'object') return null;
+    const type = raw.type === 'percent' ? 'percent' : raw.type === 'amount' ? 'amount' : null;
+    const value = Number(raw.value);
+    if (!type || !Number.isFinite(value) || value <= 0) return null;
+    const computed =
+      type === 'percent'
+        ? QuoteRepository._round2((gross * Math.min(value, 100)) / 100)
+        : QuoteRepository._round2(Math.min(value, gross));
+    return { type, value: QuoteRepository._round2(value), computed };
+  }
+
+  /*
+   * Lines, generalized (QUOTATION_MODULE_DESIGN Q1): a row is either a
+   * catalog item snapshot (kind 'item') or free text (kind 'custom'). Edits
+   * live HERE - the catalog is never touched by a quote. A row with a name
+   * but no valid item id heals into a custom row rather than vanishing.
+   */
   _normalizeLines(rows) {
     if (!Array.isArray(rows) || rows.length === 0) return { error: 'Add at least one line' };
     if (rows.length > 500) return { error: 'At most 500 lines per quote' };
     const lines = [];
     for (const row of rows) {
-      if (!row || !ObjectId.isValid(String(row.item_id))) continue;
+      if (!row) continue;
+      const hasItem = ObjectId.isValid(String(row.item_id));
+      const name = String(row.item_name || row.name || '').trim();
+      if (!hasItem && !name) continue;
       const qty = Number(row.qty);
       const price = Number(row.unit_price);
       if (!Number.isFinite(qty) || qty <= 0) continue;
       const unitPrice = Number.isFinite(price) && price >= 0 ? price : 0;
+      const gross = QuoteRepository._round2(qty * unitPrice);
+      const discount = QuoteRepository._discountOf(row.discount, gross);
       lines.push({
-        item_id: new ObjectId(String(row.item_id)),
-        item_name: String(row.item_name || '').trim(),
+        kind: hasItem && row.kind !== 'custom' ? 'item' : 'custom',
+        item_id: hasItem && row.kind !== 'custom' ? new ObjectId(String(row.item_id)) : null,
+        item_name: name.slice(0, 200),
+        description: String(row.description || '')
+          .trim()
+          .slice(0, 500),
         barcode_id: String(row.barcode_id || '').trim(),
         qty,
         unit_price: unitPrice,
-        line_total: Math.round(qty * unitPrice * 100) / 100,
+        discount,
+        line_total: QuoteRepository._round2(gross - (discount ? discount.computed : 0)),
       });
     }
-    if (!lines.length) return { error: 'No valid lines - each needs an item and a quantity' };
+    if (!lines.length)
+      return { error: 'No valid lines - each needs an item or a name, and a quantity' };
     return { lines };
+  }
+
+  /* Named charge/adjustment rows - "tax in any name" (CGST 9%, Freight,
+     Installation), percent-of-base or flat, sign -1 for named deductions. */
+  _normalizeCharges(rows) {
+    if (!Array.isArray(rows)) return [];
+    const charges = [];
+    for (const row of rows.slice(0, 20)) {
+      if (!row || typeof row !== 'object') continue;
+      const name = String(row.name || '')
+        .trim()
+        .slice(0, 60);
+      const type = row.type === 'percent' ? 'percent' : row.type === 'amount' ? 'amount' : null;
+      const value = Number(row.value);
+      if (!name || !type || !Number.isFinite(value) || value < 0) continue;
+      charges.push({
+        name,
+        type,
+        value: QuoteRepository._round2(value),
+        sign: Number(row.sign) === -1 ? -1 : 1,
+        computed: 0,
+      });
+    }
+    return charges;
+  }
+
+  _normalizeBlocks(rows) {
+    if (!Array.isArray(rows)) return [];
+    const blocks = [];
+    for (const row of rows.slice(0, 10)) {
+      if (!row || typeof row !== 'object') continue;
+      const title = String(row.title || '')
+        .trim()
+        .slice(0, 80);
+      const text = String(row.text || '')
+        .trim()
+        .slice(0, 2000);
+      if (!title && !text) continue;
+      blocks.push({ title, text });
+    }
+    return blocks;
+  }
+
+  _normalizeLayout(value) {
+    const KNOWN = ['billto', 'items', 'charges', 'payment', 'bank', 'terms', 'notes', 'custom'];
+    if (!Array.isArray(value)) return null;
+    const out = [];
+    for (const v of value) {
+      const t = String(v || '').trim();
+      if (KNOWN.includes(t) && !out.includes(t)) out.push(t);
+    }
+    return out.length ? out : null;
   }
 
   _validUntil(value) {
@@ -78,10 +178,32 @@ class QuoteRepository extends BaseModel {
       const wall = this._wall(context);
       if (!wall) return { status: false, data: null, message: 'Branch ID not found' };
 
-      const parsed = this._normalizeLines(data.items);
+      const parsed = this._normalizeLines(data.lines || data.items);
       if (parsed.error) return { status: false, data: null, message: parsed.error };
 
-      const subtotal = Math.round(parsed.lines.reduce((s, l) => s + l.line_total, 0) * 100) / 100;
+      const subtotal = QuoteRepository._round2(parsed.lines.reduce((s, l) => s + l.line_total, 0));
+      const charges = this._normalizeCharges(data.charges);
+      const quoteDiscount = QuoteRepository._discountOf(data.discount, subtotal);
+      const chargeBase = QuoteRepository._round2(
+        subtotal - (quoteDiscount ? quoteDiscount.computed : 0)
+      );
+      let chargesTotal = 0;
+      for (const c of charges) {
+        c.computed =
+          c.type === 'percent' ? QuoteRepository._round2((chargeBase * c.value) / 100) : c.value;
+        chargesTotal += c.sign * c.computed;
+      }
+      chargesTotal = QuoteRepository._round2(chargesTotal);
+      const computedTotal = Math.max(0, QuoteRepository._round2(chargeBase + chargesTotal));
+      /*
+       * Money authority (QUOTATION_MODULE_DESIGN rule 4): the moment any of
+       * the new money fields is used (charges, quote discount, line
+       * discounts), the server's arithmetic is the stored truth and the
+       * client's total is advisory. The legacy sale-screen path - plain
+       * lines plus the cart's own grand total - keeps its behavior.
+       */
+      const hasNewMoney =
+        charges.length > 0 || quoteDiscount !== null || parsed.lines.some((l) => l.discount);
       const taxTotal = Number(data.tax_total);
       const total = Number(data.total);
 
@@ -118,9 +240,17 @@ class QuoteRepository extends BaseModel {
           .trim()
           .slice(0, 1500),
         items: parsed.lines,
+        charges,
+        discount: quoteDiscount,
+        charges_total: chargesTotal,
+        custom_blocks: this._normalizeBlocks(data.custom_blocks),
+        layout: this._normalizeLayout(data.layout),
+        notes: String(data.notes || '')
+          .trim()
+          .slice(0, 2000),
         subtotal,
         tax_total: Number.isFinite(taxTotal) && taxTotal >= 0 ? taxTotal : 0,
-        total: Number.isFinite(total) && total > 0 ? total : subtotal,
+        total: hasNewMoney ? computedTotal : Number.isFinite(total) && total > 0 ? total : subtotal,
         valid_until: this._validUntil(data.valid_until),
         note: String(data.note || '')
           .trim()
@@ -135,11 +265,15 @@ class QuoteRepository extends BaseModel {
           return { status: false, data: null, message: 'Invalid quote id' };
         }
         const result = await collection.updateOne(
-          { _id: new ObjectId(String(id)), ...wall, status: 'open' },
+          { _id: new ObjectId(String(id)), ...wall, status: { $in: EDITABLE } },
           { $set: doc }
         );
         if (!result.matchedCount) {
-          return { status: false, data: null, message: 'Only an open quote can be edited' };
+          return {
+            status: false,
+            data: null,
+            message: 'This quote can no longer be edited - it is accepted, converted or closed',
+          };
         }
         return { status: true, data: { id: String(id) }, message: 'Quote updated' };
       }
@@ -250,14 +384,32 @@ class QuoteRepository extends BaseModel {
       if (!doc) return { status: false, data: null, message: 'Quote not found' };
 
       if (action === 'cancel') {
-        if (doc.status !== 'open') {
-          return { status: false, data: null, message: 'Only an open quote can be cancelled' };
+        if (doc.status === 'converted' || doc.status === 'cancelled') {
+          return { status: false, data: null, message: 'This quote is already closed' };
         }
         await collection.updateOne(
           { _id: doc._id },
           { $set: { status: 'cancelled', updated_date: new Date() } }
         );
         return { status: true, data: { id: String(doc._id) }, message: 'Quote cancelled' };
+      }
+
+      /* The customer said yes / no. Accepting freezes edits - the numbers
+         are now a promise; converting is still allowed (that IS the point). */
+      if (action === 'accept' || action === 'decline') {
+        if (!EDITABLE.includes(doc.status)) {
+          return {
+            status: false,
+            data: null,
+            message: 'Only an open quote can be accepted or declined',
+          };
+        }
+        const status = action === 'accept' ? 'accepted' : 'declined';
+        await collection.updateOne(
+          { _id: doc._id },
+          { $set: { status, [action + 'ed_date']: new Date(), updated_date: new Date() } }
+        );
+        return { status: true, data: { id: String(doc._id) }, message: 'Quote ' + status };
       }
 
       if (action === 'convert') {
@@ -272,8 +424,12 @@ class QuoteRepository extends BaseModel {
             ? { status: true, data: { id: String(doc._id) }, message: 'Quote already converted' }
             : { status: false, data: null, message: 'This quote was already converted to a sale' };
         }
-        if (doc.status !== 'open') {
-          return { status: false, data: null, message: 'Only an open quote can be converted' };
+        if (!EDITABLE.includes(doc.status) && doc.status !== 'accepted') {
+          return {
+            status: false,
+            data: null,
+            message: 'Only an open or accepted quote can be converted',
+          };
         }
         await collection.updateOne(
           { _id: doc._id },
@@ -308,7 +464,7 @@ class QuoteRepository extends BaseModel {
       const result = await collection.deleteOne({
         _id: new ObjectId(String(id)),
         ...wall,
-        status: 'open',
+        status: { $in: EDITABLE },
       });
       if (!result.deletedCount) {
         return { status: false, data: null, message: 'Only an open quote can be deleted' };

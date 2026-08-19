@@ -7750,9 +7750,19 @@ PosnicPro.quotes = {
         var lapsed = !!(q.valid_until && new Date(q.valid_until) < new Date());
         PosnicPro.sales._sourceQuoteId = String(q._id);
         PosnicPro.sales._quoteHonoured = !lapsed;
-        var lines = (q.items || []).map(function (l) {
-            return { item_id: String(l.item_id), qty: Number(l.qty) || 1, unit_price: Number(l.unit_price) || 0 };
+        // custom rows have no catalog item behind them - they stay on the
+        // quote and the cashier is told, instead of a broken cart line
+        var customCount = 0;
+        var lines = [];
+        (q.items || []).forEach(function (l) {
+            if (l.kind === 'custom' || !l.item_id) { customCount += 1; return; }
+            lines.push({ item_id: String(l.item_id), qty: Number(l.qty) || 1, unit_price: Number(l.unit_price) || 0 });
         });
+        if (!lines.length) {
+            PosnicPro.alert('warning', 'This quote has only custom lines - there is no catalog item to load on a sale.');
+            PosnicPro.sales._sourceQuoteId = null;
+            return;
+        }
         hasher.setHash('sales/new');
         var tries = 0;
         var t = setInterval(function () {
@@ -7791,10 +7801,12 @@ PosnicPro.quotes = {
                             PosnicPro.alert('warning', 'Quote ' + (q.quote_id || '') + ' lapsed on '
                                 + new Date(q.valid_until).toLocaleDateString('en-IN')
                                 + ' - items loaded at today\'s prices. Quoted total was '
-                                + Number(q.total || 0).toFixed(2) + '.');
+                                + Number(q.total || 0).toFixed(2) + '.'
+                                + (customCount ? ' ' + customCount + ' custom line(s) stay on the quote.' : ''));
                         } else {
                             PosnicPro.alert('success', 'Quote ' + (q.quote_id || '')
-                                + ' loaded at its quoted prices.');
+                                + ' loaded at its quoted prices.'
+                                + (customCount ? ' ' + customCount + ' custom line(s) stay on the quote - add equivalents on the sale if needed.' : ''));
                         }
                     }
                 }, 300);

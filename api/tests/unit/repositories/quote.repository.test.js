@@ -102,12 +102,82 @@ describe('QuoteRepository', () => {
     expect(doc.terms).toBe('50% advance confirms the order.');
   });
 
+  test('server math is the stored truth: line discounts, quote discount, named charges', async () => {
+    mockCollection.insertOne.mockResolvedValue({ insertedId: new ObjectId(QUOTE_ID) });
+    const r = await repo.upsertQuote(
+      {
+        items: [
+          { item_id: ITEM, item_name: 'Rice', qty: 2, unit_price: 50, discount: { type: 'percent', value: 10 } },
+          { kind: 'custom', item_name: 'Install and calibrate', qty: 1, unit_price: 100, discount: { type: 'amount', value: 20 } },
+        ],
+        discount: { type: 'amount', value: 5 },
+        charges: [
+          { name: 'CGST 9%', type: 'percent', value: 9 },
+          { name: 'Freight', type: 'amount', value: 40 },
+          { name: 'Loyalty rebate', type: 'amount', value: 10, sign: -1 },
+        ],
+        total: 999999,
+      },
+      '',
+      ctx
+    );
+    expect(r.status).toBe(true);
+    const doc = mockCollection.insertOne.mock.calls[0][0];
+    expect(doc.items[0].line_total).toBe(90);
+    expect(doc.items[1].kind).toBe('custom');
+    expect(doc.items[1].item_id).toBeNull();
+    expect(doc.items[1].line_total).toBe(80);
+    expect(doc.subtotal).toBe(170);
+    expect(doc.discount.computed).toBe(5);
+    expect(doc.charges[0].computed).toBe(14.85);
+    expect(doc.charges[1].computed).toBe(40);
+    expect(doc.charges[2].computed).toBe(10);
+    expect(doc.charges_total).toBe(44.85);
+    /* 165 + 44.85 - the client's 999999 is advisory and ignored */
+    expect(doc.total).toBe(209.85);
+  });
+
+  test('a row with a name but no valid item id heals into a custom row', async () => {
+    mockCollection.insertOne.mockResolvedValue({ insertedId: new ObjectId(QUOTE_ID) });
+    const r = await repo.upsertQuote(
+      { items: [{ item_id: 'null', item_name: 'Delivery charge', qty: 1, unit_price: 50 }] },
+      '',
+      ctx
+    );
+    expect(r.status).toBe(true);
+    const doc = mockCollection.insertOne.mock.calls[0][0];
+    expect(doc.items[0].kind).toBe('custom');
+    expect(doc.items[0].item_id).toBeNull();
+    expect(doc.total).toBe(50);
+  });
+
+  test('accepting freezes edits; converting an accepted quote still works', async () => {
+    mockCollection.findOne.mockResolvedValue({ _id: new ObjectId(QUOTE_ID), status: 'open' });
+    mockCollection.updateOne.mockResolvedValue({ matchedCount: 1 });
+    const acc = await repo.transition(QUOTE_ID, 'accept', {}, ctx);
+    expect(acc.status).toBe(true);
+    expect(mockCollection.updateOne.mock.calls[0][1].$set.status).toBe('accepted');
+
+    mockCollection.updateOne.mockResolvedValue({ matchedCount: 0 });
+    const edit = await repo.upsertQuote(
+      { items: [{ item_id: ITEM, item_name: 'Rice', qty: 1, unit_price: 10 }] },
+      QUOTE_ID,
+      ctx
+    );
+    expect(edit.status).toBe(false);
+
+    mockCollection.findOne.mockResolvedValue({ _id: new ObjectId(QUOTE_ID), status: 'accepted' });
+    mockCollection.updateOne.mockResolvedValue({ matchedCount: 1 });
+    const conv = await repo.transition(QUOTE_ID, 'convert', { sale_id: SALE }, ctx);
+    expect(conv.status).toBe(true);
+  });
+
   test('create refuses an empty line list', async () => {
     const r = await repo.upsertQuote({ items: [] }, '', ctx);
     expect(r.status).toBe(false);
   });
 
-  test('update touches open quotes only - the filter says so', async () => {
+  test('update touches the editable family only - the filter says so', async () => {
     mockCollection.updateOne.mockResolvedValue({ matchedCount: 0 });
     const r = await repo.upsertQuote(
       { items: [{ item_id: ITEM, qty: 1, unit_price: 10 }] },
@@ -116,7 +186,8 @@ describe('QuoteRepository', () => {
     );
     expect(r.status).toBe(false);
     const filter = mockCollection.updateOne.mock.calls[0][0];
-    expect(filter.status).toBe('open');
+    /* accepted/declined/converted/cancelled stay immutable via the query */
+    expect(filter.status).toEqual({ $in: ['open', 'draft', 'sent'] });
   });
 
   test('convert stamps the sale and is replay-safe for the same sale', async () => {
@@ -152,12 +223,12 @@ describe('QuoteRepository', () => {
     expect(r.status).toBe(false);
   });
 
-  test('delete is open-only in the query itself', async () => {
+  test('delete touches the editable family only, in the query itself', async () => {
     mockCollection.deleteOne.mockResolvedValue({ deletedCount: 0 });
     const r = await repo.deleteQuote(QUOTE_ID, ctx);
     expect(r.status).toBe(false);
     const filter = mockCollection.deleteOne.mock.calls[0][0];
-    expect(filter.status).toBe('open');
+    expect(filter.status).toEqual({ $in: ['open', 'draft', 'sent'] });
   });
 
   test('every method fails closed without a branch wall', async () => {
