@@ -3575,7 +3575,7 @@ PosnicPro.sales.addSale = {
             } else {
                 payment_mode_val = $('.payment_mode').val();
             }
-            let register_id = PosnicPro.local.get('cash_register_id');
+            let register_id = PosnicPro.sales.saleRegisterId();
             var isKotNewSale = (PosnicPro.sales.saleProcess === 'KOT');
             var newSaleTableNumber = '';
             var newSalePersonCount = '';
@@ -4118,7 +4118,7 @@ PosnicPro.sales.editSale = {
                 sale_process = 'Add';
             }
 
-            var register_id = PosnicPro.local.get('cash_register_id');
+            var register_id = PosnicPro.sales.saleRegisterId();
 
             let payment_mode_val;
             let payments = PosnicPro.sales.getPaymentObject();
@@ -4510,7 +4510,7 @@ PosnicPro.sales.holdSale = {
             console.log('multi_payment:', payments);
             
             var SalesDocumentId = PosnicPro.sales.editSaleId;
-            let register_id = PosnicPro.local.get('cash_register_id');
+            let register_id = PosnicPro.sales.saleRegisterId();
             var data = {
                 items: PosnicPro.sales.addSalesLineTable,
                 sales_total: $("#grand_total").val(),
@@ -7455,6 +7455,16 @@ PosnicPro.sales.defaultDenominations = function () {
         'Rs': [1, 2, 5, 10, 20, 50, 100, 500, 1000, 5000]
     };
     return (SETS[sign] || [1, 2, 5, 10, 20, 50, 100, 200, 500]).slice();
+};
+/* A sale carries a register session only while the Cash Register feature
+   is ON - with it off, a register id left in localStorage from before the
+   switch must not lock anyone out of tendering. */
+PosnicPro.sales.saleRegisterId = function () {
+    try {
+        var gs = JSON.parse(PosnicPro.local.get('general_settings') || '{}');
+        if (gs.cash_register_enable === false) { return ''; }
+    } catch (e) { /* feature defaults on */ }
+    return PosnicPro.local.get('cash_register_id') || '';
 };
 PosnicPro.sales.applyQuickSaleGate = function () {
     var on = true;
