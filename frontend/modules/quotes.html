@@ -13,6 +13,7 @@
                 <div class="card m-b-30" id="quotes_list_card">
                     <div class="card-body">
                         <div class="m-b-10 d-flex align-items-center flex-wrap" style="gap:8px;" id="quotes_filter_chips">
+                            <button type="button" class="btn btn-sm btn-primary" onclick="hasher.setHash('quotes/new');">+ New quotation</button>
                             <input type="text" class="form-control form-control-sm" id="quotes_search"
                                 placeholder="Search customer or quote #" autocomplete="off"
                                 style="max-width:240px;" oninput="PosnicPro.quotes.renderList();">
@@ -22,6 +23,85 @@
                             <button type="button" class="btn btn-sm btn-secondary-rgba quotes-chip" data-status="cancelled">Cancelled</button>
                         </div>
                         <div id="quotes_list_rows" class="text-muted">Loading quotes ...</div>
+                    </div>
+                </div>
+                <!-- Quotation editor (QUOTATION_MODULE_DESIGN Q2): the authoring
+                     page - catalog rows or custom rows, discounts, named charges,
+                     live totals mirroring the server's math. -->
+                <div class="card m-b-30" id="quotes_edit_card" style="display:none;">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center m-b-15 flex-wrap" style="gap:8px;">
+                            <h5 class="mb-0" id="qe_title">New quotation</h5>
+                            <div>
+                                <button type="button" class="btn btn-sm btn-secondary-rgba" onclick="PosnicPro.quotes.edCancel();">Cancel</button>
+                                <button type="button" class="btn btn-sm btn-primary" onclick="PosnicPro.quotes.edSave();">Save quotation</button>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-8">
+                                <div class="qe-sec">
+                                    <div class="q-label">Bill to</div>
+                                    <input type="text" id="qe_cust_search" class="form-control form-control-sm mb-2"
+                                        placeholder="Search an existing customer by name or phone" autocomplete="off">
+                                    <div class="form-row">
+                                        <div class="col-md-6 mb-2"><input type="text" id="qe_cust_name" class="form-control form-control-sm" maxlength="120" placeholder="Customer name"></div>
+                                        <div class="col-md-6 mb-2"><input type="text" id="qe_cust_phone" class="form-control form-control-sm" maxlength="20" placeholder="Phone"></div>
+                                        <div class="col-md-6 mb-2"><input type="email" id="qe_cust_email" class="form-control form-control-sm" maxlength="120" placeholder="Email"></div>
+                                        <div class="col-md-6 mb-2"><input type="text" id="qe_cust_gstin" class="form-control form-control-sm" maxlength="20" placeholder="GSTIN"></div>
+                                        <div class="col-12 mb-2"><input type="text" id="qe_cust_address" class="form-control form-control-sm" maxlength="300" placeholder="Address"></div>
+                                    </div>
+                                </div>
+                                <div class="qe-sec">
+                                    <div class="q-label">Lines</div>
+                                    <input type="text" id="qe_item_search" class="form-control form-control-sm mb-2"
+                                        placeholder="Search an item to add a line" autocomplete="off">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm mb-1" id="qe_lines_table">
+                                            <thead><tr>
+                                                <th style="min-width:200px;">Item</th><th>Qty</th><th>Unit price</th>
+                                                <th>Line discount</th><th class="text-right">Total</th><th></th>
+                                            </tr></thead>
+                                            <tbody id="qe_lines"></tbody>
+                                        </table>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-secondary-rgba" onclick="PosnicPro.quotes.edAddCustom();">+ Custom line</button>
+                                </div>
+                                <div class="qe-sec">
+                                    <div class="q-label">Charges &amp; taxes - any name</div>
+                                    <div id="qe_charges"></div>
+                                    <button type="button" class="btn btn-sm btn-secondary-rgba" onclick="PosnicPro.quotes.edAddCharge();">+ Charge / tax</button>
+                                </div>
+                            </div>
+                            <div class="col-lg-4">
+                                <div class="qe-sec">
+                                    <div class="q-label">Quote discount</div>
+                                    <div class="input-group input-group-sm mb-2">
+                                        <select id="qe_disc_type" class="form-control" style="max-width:110px;">
+                                            <option value="">None</option>
+                                            <option value="percent">Percent</option>
+                                            <option value="amount">Amount</option>
+                                        </select>
+                                        <input type="number" id="qe_disc_value" min="0" step="0.01" class="form-control" placeholder="0">
+                                    </div>
+                                    <div class="q-label">Valid until</div>
+                                    <input type="date" id="qe_valid_until" class="form-control form-control-sm mb-2">
+                                    <div class="q-label">Payment method</div>
+                                    <input type="text" id="qe_payment" class="form-control form-control-sm mb-2" maxlength="60">
+                                    <div class="q-label">Bank details</div>
+                                    <textarea id="qe_bank" class="form-control form-control-sm mb-2" rows="2" maxlength="500"></textarea>
+                                    <div class="q-label">Terms</div>
+                                    <textarea id="qe_terms" class="form-control form-control-sm mb-2" rows="3" maxlength="1500"></textarea>
+                                    <div class="q-label">Notes (printed on the quote)</div>
+                                    <textarea id="qe_notes" class="form-control form-control-sm mb-2" rows="2" maxlength="2000"></textarea>
+                                </div>
+                                <div class="qe-sec qe-totals">
+                                    <div class="d-flex justify-content-between"><span>Subtotal</span><b id="qe_subtotal">0.00</b></div>
+                                    <div class="d-flex justify-content-between" id="qe_disc_row" style="display:none !important;"><span>Discount</span><b id="qe_disc_out">0.00</b></div>
+                                    <div id="qe_charges_out"></div>
+                                    <div class="d-flex justify-content-between qe-grand"><span>TOTAL</span><b id="qe_total">0.00</b></div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="card m-b-30" id="quotes_view_card" style="display:none;">

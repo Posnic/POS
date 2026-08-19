@@ -7280,7 +7280,7 @@ PosnicPro.quotes = {
         $('.vertical-menu li a').removeClass('active');
         $('.page_loader,#osk-container').hide();
         $('.page-title-box,#quotes_new').show();
-        $('#quotes_view_card').hide();
+        $('#quotes_view_card,#quotes_edit_card').hide();
         $('#quotes_list_card').show();
         $('#v-pills-purchase-tab,#view_quotes_page').addClass('active');
         $('#v-pills-purchase').addClass('show active');
@@ -7289,7 +7289,254 @@ PosnicPro.quotes = {
             PosnicPro.quotes.renderList();
         }, function () { $('#quotes_list_rows').text('Could not load quotes - try again.'); });
     },
-    showAdd: function () { PosnicPro.quotes.showDataTablePage(); },
+    /* ---- Quotation editor (QUOTATION_MODULE_DESIGN Q2) ---- */
+    _ed: null,
+    _edBlank: function () {
+        var week = new Date(Date.now() + 7 * 86400000);
+        return { id: '', quote_id: '', customer_id: '', lines: [], charges: [], valid_until: week.toISOString().slice(0, 10) };
+    },
+    _edShell: function () {
+        PosnicPro.HideSideBarModal();
+        $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
+        $('.vertical-menu li a').removeClass('active');
+        $('.page_loader,#osk-container').hide();
+        $('.page-title-box,#quotes_new').show();
+        $('#v-pills-purchase-tab,#view_quotes_page').addClass('active');
+        $('#v-pills-purchase').addClass('show active');
+        $('#quotes_list_card,#quotes_view_card').hide();
+        $('#quotes_edit_card').show();
+    },
+    showAdd: function () {
+        PosnicPro.quotes._ed = PosnicPro.quotes._edBlank();
+        PosnicPro.quotes._edShell();
+        $('#qe_title').text('New quotation');
+        $('#qe_cust_search,#qe_cust_name,#qe_cust_phone,#qe_cust_email,#qe_cust_gstin,#qe_cust_address').val('');
+        $('#qe_item_search,#qe_payment,#qe_bank,#qe_terms,#qe_notes,#qe_disc_value').val('');
+        $('#qe_disc_type').val('');
+        $('#qe_valid_until').val(PosnicPro.quotes._ed.valid_until);
+        PosnicPro.quotes.edRender();
+    },
+    showEdit: function (id) {
+        PosnicPro.get({ url: 'quotes/' + id, data: {} }, function (r) {
+            var q = r && r.data;
+            if (!q) { PosnicPro.alert('error', 'Quote not found'); return; }
+            if (['open', 'draft', 'sent'].indexOf(q.status) === -1) {
+                PosnicPro.alert('warning', 'This quote is ' + q.status + ' - it can no longer be edited.');
+                hasher.setHash('quotes/' + id);
+                return;
+            }
+            var ed = PosnicPro.quotes._edBlank();
+            ed.id = String(q._id);
+            ed.quote_id = q.quote_id || '';
+            ed.customer_id = q.customer_id ? String(q.customer_id) : '';
+            ed.lines = (q.items || []).map(function (l) {
+                return {
+                    kind: l.kind === 'custom' || !l.item_id ? 'custom' : 'item',
+                    item_id: l.item_id ? String(l.item_id) : '',
+                    item_name: l.item_name || '',
+                    description: l.description || '',
+                    barcode_id: l.barcode_id || '',
+                    qty: Number(l.qty) || 1,
+                    unit_price: Number(l.unit_price) || 0,
+                    dtype: l.discount ? l.discount.type : '',
+                    dval: l.discount ? l.discount.value : ''
+                };
+            });
+            ed.charges = (q.charges || []).map(function (c) {
+                return { name: c.name || '', type: c.type === 'amount' ? 'amount' : 'percent', value: Number(c.value) || 0, sign: Number(c.sign) === -1 ? -1 : 1 };
+            });
+            PosnicPro.quotes._ed = ed;
+            PosnicPro.quotes._edShell();
+            $('#qe_title').text('Edit ' + (q.quote_id || 'quotation'));
+            $('#qe_cust_search,#qe_item_search').val('');
+            $('#qe_cust_name').val(q.customer_name || '');
+            $('#qe_cust_phone').val(q.customer_phone || '');
+            $('#qe_cust_email').val(q.customer_email || '');
+            $('#qe_cust_gstin').val(q.customer_gstin || '');
+            $('#qe_cust_address').val(q.customer_address || '');
+            $('#qe_payment').val(q.payment_method || '');
+            $('#qe_bank').val(q.bank_details || '');
+            $('#qe_terms').val(q.terms || q.note || '');
+            $('#qe_notes').val(q.notes || '');
+            $('#qe_disc_type').val(q.discount ? q.discount.type : '');
+            $('#qe_disc_value').val(q.discount ? q.discount.value : '');
+            $('#qe_valid_until').val(q.valid_until ? new Date(q.valid_until).toISOString().slice(0, 10) : '');
+            PosnicPro.quotes.edRender();
+        }, function () { PosnicPro.alert('error', 'Could not load the quote'); });
+    },
+    _edR2: function (n) { return Math.round(n * 100) / 100; },
+    /* One line's total, the same arithmetic the server stores. */
+    _edLineTotal: function (l) {
+        var r2 = PosnicPro.quotes._edR2;
+        var gross = r2((Number(l.qty) || 0) * (Number(l.unit_price) || 0));
+        var v = Number(l.dval);
+        if (l.dtype === 'percent' && v > 0) { return r2(gross - r2((gross * Math.min(v, 100)) / 100)); }
+        if (l.dtype === 'amount' && v > 0) { return r2(gross - Math.min(v, gross)); }
+        return gross;
+    },
+    edRender: function () {
+        var ed = PosnicPro.quotes._ed;
+        if (!ed) { return; }
+        var esc = PosnicPro.quotes._esc;
+        var html = '';
+        ed.lines.forEach(function (l, i) {
+            html += '<tr data-i="' + i + '">'
+                + '<td><input type="text" class="qe-l-name form-control form-control-sm" maxlength="200" placeholder="' + (l.kind === 'custom' ? 'Custom line name' : 'Item') + '" value="' + esc(l.item_name) + '">'
+                + '<input type="text" class="qe-l-desc form-control form-control-sm mt-1" maxlength="500" placeholder="Description (optional)" value="' + esc(l.description) + '"></td>'
+                + '<td><input type="number" class="qe-l-qty form-control form-control-sm" min="0" step="any" value="' + esc(l.qty) + '"></td>'
+                + '<td><input type="number" class="qe-l-price form-control form-control-sm" min="0" step="0.01" value="' + esc(l.unit_price) + '"></td>'
+                + '<td><div class="input-group input-group-sm" style="min-width:150px;">'
+                + '<select class="qe-l-dtype form-control" style="max-width:64px;"><option value=""' + (!l.dtype ? ' selected' : '') + '>-</option>'
+                + '<option value="percent"' + (l.dtype === 'percent' ? ' selected' : '') + '>%</option>'
+                + '<option value="amount"' + (l.dtype === 'amount' ? ' selected' : '') + '>amt</option></select>'
+                + '<input type="number" class="qe-l-dval form-control" min="0" step="0.01" value="' + esc(l.dval) + '"></div></td>'
+                + '<td class="text-right qe-l-total" style="white-space:nowrap; padding-top:12px;">' + PosnicPro.quotes._edLineTotal(l).toFixed(2) + '</td>'
+                + '<td><button type="button" class="btn btn-sm btn-danger-rgba qe-l-del" title="Remove line">&times;</button></td>'
+                + '</tr>';
+        });
+        $('#qe_lines').html(html || '<tr><td colspan="6" class="text-center text-muted">Search an item above, or add a custom line.</td></tr>');
+        var chtml = '';
+        ed.charges.forEach(function (c, i) {
+            chtml += '<div class="input-group input-group-sm mb-1 qe-charge" data-i="' + i + '">'
+                + '<input type="text" class="qe-c-name form-control" maxlength="60" placeholder="e.g. CGST 9% / Freight / Installation" value="' + esc(c.name) + '">'
+                + '<select class="qe-c-type form-control" style="max-width:80px;"><option value="percent"' + (c.type === 'percent' ? ' selected' : '') + '>%</option>'
+                + '<option value="amount"' + (c.type === 'amount' ? ' selected' : '') + '>amt</option></select>'
+                + '<input type="number" class="qe-c-val form-control" style="max-width:100px;" min="0" step="0.01" value="' + esc(c.value) + '">'
+                + '<select class="qe-c-sign form-control" style="max-width:80px;"><option value="1"' + (c.sign !== -1 ? ' selected' : '') + '>add</option>'
+                + '<option value="-1"' + (c.sign === -1 ? ' selected' : '') + '>less</option></select>'
+                + '<span class="input-group-text qe-c-out">0.00</span>'
+                + '<div class="input-group-append"><button type="button" class="btn btn-outline-danger qe-c-del">&times;</button></div>'
+                + '</div>';
+        });
+        $('#qe_charges').html(chtml || '<div class="text-muted small mb-1">No charges yet - add GST, freight, installation, anything, under its own name.</div>');
+        PosnicPro.quotes.edRecalc();
+    },
+    edRecalc: function () {
+        var ed = PosnicPro.quotes._ed;
+        if (!ed) { return 0; }
+        var r2 = PosnicPro.quotes._edR2;
+        var subtotal = 0;
+        ed.lines.forEach(function (l, i) {
+            var t = PosnicPro.quotes._edLineTotal(l);
+            subtotal += t;
+            $('#qe_lines tr[data-i="' + i + '"] .qe-l-total').text(t.toFixed(2));
+        });
+        subtotal = r2(subtotal);
+        var dtype = $('#qe_disc_type').val();
+        var dval = Number($('#qe_disc_value').val());
+        var qdisc = 0;
+        if (dtype === 'percent' && dval > 0) { qdisc = r2((subtotal * Math.min(dval, 100)) / 100); }
+        if (dtype === 'amount' && dval > 0) { qdisc = r2(Math.min(dval, subtotal)); }
+        var base = r2(subtotal - qdisc);
+        var chargesSum = 0;
+        var outHtml = '';
+        ed.charges.forEach(function (c, i) {
+            var computed = c.type === 'percent' ? r2((base * (Number(c.value) || 0)) / 100) : r2(Number(c.value) || 0);
+            chargesSum += (c.sign === -1 ? -1 : 1) * computed;
+            $('#qe_charges .qe-charge[data-i="' + i + '"] .qe-c-out').text((c.sign === -1 ? '-' : '') + computed.toFixed(2));
+            if (c.name) {
+                outHtml += '<div><span>' + PosnicPro.quotes._esc(c.name) + '</span><b>' + (c.sign === -1 ? '-' : '') + computed.toFixed(2) + '</b></div>';
+            }
+        });
+        chargesSum = r2(chargesSum);
+        var total = Math.max(0, r2(base + chargesSum));
+        $('#qe_subtotal').text(subtotal.toFixed(2));
+        $('#qe_disc_row').css('display', qdisc > 0 ? 'flex' : 'none');
+        $('#qe_disc_out').text('-' + qdisc.toFixed(2));
+        $('#qe_charges_out').html(outHtml);
+        $('#qe_total').text(total.toFixed(2));
+        return total;
+    },
+    edAddCustom: function () {
+        if (!PosnicPro.quotes._ed) { return; }
+        PosnicPro.quotes._ed.lines.push({ kind: 'custom', item_id: '', item_name: '', description: '', barcode_id: '', qty: 1, unit_price: 0, dtype: '', dval: '' });
+        PosnicPro.quotes.edRender();
+        $('#qe_lines tr:last .qe-l-name').focus();
+    },
+    edAddItem: function (itemId) {
+        PosnicPro.get('items/' + itemId, function (r) {
+            var d = (r && r.data) || {};
+            if (!PosnicPro.quotes._ed) { return; }
+            PosnicPro.quotes._ed.lines.push({
+                kind: 'item', item_id: String(itemId),
+                item_name: d.item_name || '', description: '',
+                barcode_id: d.barcode_id || '',
+                qty: 1, unit_price: Number(d.selling_price) || 0, dtype: '', dval: ''
+            });
+            PosnicPro.quotes.edRender();
+        }, function () { PosnicPro.alert('error', 'Could not load that item'); });
+    },
+    edAddCharge: function () {
+        if (!PosnicPro.quotes._ed) { return; }
+        PosnicPro.quotes._ed.charges.push({ name: '', type: 'percent', value: 0, sign: 1 });
+        PosnicPro.quotes.edRender();
+        $('#qe_charges .qe-charge:last .qe-c-name').focus();
+    },
+    edCancel: function () {
+        var ed = PosnicPro.quotes._ed || {};
+        hasher.setHash(ed.id ? 'quotes/' + ed.id : 'quotes');
+    },
+    edSave: function () {
+        var ed = PosnicPro.quotes._ed;
+        if (!ed) { return; }
+        var lines = ed.lines.filter(function (l) {
+            return (String(l.item_name).trim() || l.item_id) && Number(l.qty) > 0;
+        });
+        if (!lines.length) { PosnicPro.alert('warning', 'Add at least one line with a name and quantity.'); return; }
+        var payload = {
+            lines: lines.map(function (l) {
+                var out = {
+                    kind: l.kind, item_id: l.item_id || '', item_name: l.item_name,
+                    description: l.description, barcode_id: l.barcode_id,
+                    qty: Number(l.qty), unit_price: Number(l.unit_price) || 0
+                };
+                if (l.dtype && Number(l.dval) > 0) { out.discount = { type: l.dtype, value: Number(l.dval) }; }
+                return out;
+            }),
+            charges: ed.charges.filter(function (c) { return String(c.name).trim() && Number(c.value) > 0; }),
+            customer_id: ed.customer_id || '',
+            customer_name: $.trim($('#qe_cust_name').val()),
+            customer_phone: $.trim($('#qe_cust_phone').val()),
+            customer_email: $.trim($('#qe_cust_email').val()),
+            customer_gstin: $.trim($('#qe_cust_gstin').val()),
+            customer_address: $.trim($('#qe_cust_address').val()),
+            payment_method: $.trim($('#qe_payment').val()),
+            bank_details: $.trim($('#qe_bank').val()),
+            terms: $.trim($('#qe_terms').val()),
+            notes: $.trim($('#qe_notes').val()),
+            valid_until: $('#qe_valid_until').val() || '',
+            total: PosnicPro.quotes.edRecalc()
+        };
+        var dtype = $('#qe_disc_type').val();
+        if (dtype && Number($('#qe_disc_value').val()) > 0) {
+            payload.discount = { type: dtype, value: Number($('#qe_disc_value').val()) };
+        }
+        var done = function (r) {
+            PosnicPro.alert(r.type, r.message);
+            if (r.type === 'success') {
+                var id = ed.id || (r.data && r.data.id);
+                hasher.setHash(id ? 'quotes/' + id : 'quotes');
+            }
+        };
+        var fail = function (xhr) {
+            var resp = {}; try { resp = JSON.parse(xhr.responseText); } catch (e) { /* plain */ }
+            PosnicPro.alert('error', resp.message || 'Could not save the quotation');
+        };
+        if (ed.id) {
+            PosnicPro.request({ method: 'PUT', url: 'quotes/' + ed.id, data: JSON.stringify(payload) }, done, fail);
+        } else {
+            PosnicPro.post({ url: 'quotes', data: JSON.stringify(payload) }, done, fail);
+        }
+    },
+    /* accept / decline from the preview (server enforces the from-states) */
+    setStatus: function (action) {
+        var q = PosnicPro.quotes._current;
+        if (!q) { return; }
+        PosnicPro.post({ url: 'quotes/' + q._id + '/transition', data: JSON.stringify({ action: action }) }, function (r) {
+            PosnicPro.alert(r.type, r.message);
+            if (r.type === 'success') { PosnicPro.quotes.showDetails(String(q._id)); }
+        });
+    },
     _page: 1,
     PAGE_SIZE: 20,
     renderList: function (keepPage) {
@@ -7315,9 +7562,13 @@ PosnicPro.quotes = {
             + '</tr></thead><tbody>';
         shown.forEach(function (q) {
             var qty = (q.items || []).reduce(function (a, l) { return a + (Number(l.qty) || 0); }, 0);
-            var pill = q.status === 'open' ? '<span class="rs-pill hold">Open</span>'
-                : q.status === 'converted' ? '<span class="rs-pill paid">Converted</span>'
-                : '<span class="rs-pill unpaid">Cancelled</span>';
+            var label = String(q.status || 'open');
+            label = label.charAt(0).toUpperCase() + label.slice(1);
+            var pill = q.status === 'converted' || q.status === 'accepted'
+                ? '<span class="rs-pill paid">' + label + '</span>'
+                : q.status === 'cancelled' || q.status === 'declined'
+                    ? '<span class="rs-pill unpaid">' + label + '</span>'
+                    : '<span class="rs-pill hold">' + label + '</span>';
             var expired = q.status === 'open' && q.valid_until && new Date(q.valid_until) < new Date();
             html += '<tr class="quotes-row highlight-select" data-id="' + esc(q._id) + '" style="cursor:pointer;">'
                 + '<td>' + esc(q.quote_id) + '</td>'
@@ -7343,14 +7594,14 @@ PosnicPro.quotes = {
         $('.page-title-box,#quotes_new').show();
         $('#v-pills-purchase-tab,#view_quotes_page').addClass('active');
         $('#v-pills-purchase').addClass('show active');
-        $('#quotes_list_card').hide();
+        $('#quotes_list_card,#quotes_edit_card').hide();
         PosnicPro.get({ url: 'quotes/' + id, data: {} }, function (r) {
             var q = r && r.data;
             if (!q) { PosnicPro.alert('error', 'Quote not found'); return; }
             PosnicPro.quotes._current = q;
             var esc = PosnicPro.quotes._esc;
             var money = PosnicPro.quotes._money;
-            var open = q.status === 'open';
+            var open = ['open', 'draft', 'sent'].indexOf(q.status) !== -1;
             var d = function (v) { return v ? new Date(v).toLocaleDateString('en-IN') : ''; };
             /* Inline-editable field: contenteditable on an open quote,
                plain text once converted or cancelled. */
@@ -7403,6 +7654,15 @@ PosnicPro.quotes = {
             body += '</tbody><tfoot>'
                 + '<tr class="q-sub"><td colspan="4" class="text-right">Subtotal</td>'
                 + '<td class="text-right">' + money(q.subtotal) + '</td></tr>'
+                + (q.discount && q.discount.computed > 0
+                    ? '<tr class="q-sub"><td colspan="4" class="text-right">Discount'
+                        + (q.discount.type === 'percent' ? ' (' + q.discount.value + '%)' : '')
+                        + '</td><td class="text-right">-' + money(q.discount.computed) + '</td></tr>'
+                    : '')
+                + (q.charges || []).map(function (c) {
+                    return '<tr class="q-sub"><td colspan="4" class="text-right">' + esc(c.name)
+                        + '</td><td class="text-right">' + (c.sign === -1 ? '-' : '') + money(c.computed) + '</td></tr>';
+                }).join('')
                 + (Number(q.tax_total) > 0
                     ? '<tr class="q-sub"><td colspan="4" class="text-right">Tax</td><td class="text-right">' + money(q.tax_total) + '</td></tr>'
                     : '')
@@ -7414,19 +7674,28 @@ PosnicPro.quotes = {
                 + '<div class="q-block"><div class="q-label">Bank details</div>' + ed('bank_details', q.bank_details, 'Account name, number, IFSC') + '</div>'
                 + '<div class="q-block"><div class="q-label">Terms &amp; conditions</div>' + ed('terms', q.terms || q.note, 'e.g. 50% advance confirms the order. Prices valid till the date above.') + '</div>'
                 + '</div>'
+                + (q.custom_blocks || []).map(function (b) {
+                    return '<div class="q-block m-t-10"><div class="q-label">' + esc(b.title || '') + '</div>' + esc(b.text || '') + '</div>';
+                }).join('')
+                + (q.notes ? '<div class="q-block m-t-10"><div class="q-label">Notes</div>' + esc(q.notes) + '</div>' : '')
                 + '<div class="q-sign">Authorised signatory</div>'
                 + '</div>';
             $('#quotes_view_body').html(body);
             var act = '<button type="button" class="btn btn-sm btn-secondary-rgba" onclick="hasher.setHash(\'quotes\');">Back</button> ';
             if (open) {
-                act += '<button type="button" class="btn btn-sm btn-success-rgba" onclick="PosnicPro.quotes.saveEdits();">Save changes</button> ';
+                act += '<button type="button" class="btn btn-sm btn-primary" onclick="hasher.setHash(\'quotes/' + String(q._id) + '/edit\');">Edit</button> '
+                    + '<button type="button" class="btn btn-sm btn-success-rgba" onclick="PosnicPro.quotes.saveEdits();">Save changes</button> ';
             }
             act += '<button type="button" class="btn btn-sm btn-primary-rgba" onclick="PosnicPro.quotes.printNow();">Print</button> '
                 + '<button type="button" class="btn btn-sm btn-danger-rgba" onclick="PosnicPro.quotes.print();">PDF</button> '
                 + '<button type="button" class="btn btn-sm btn-secondary-rgba" onclick="PosnicPro.quotes.emailQuote();">Email</button> '
                 + '<button type="button" class="btn btn-sm btn-success-rgba" onclick="PosnicPro.quotes.whatsappQuote();">WhatsApp</button> ';
+            if (open || q.status === 'accepted') {
+                act += '<button type="button" class="btn btn-sm btn-success-rgba" onclick="PosnicPro.quotes.convert();">Convert to sale</button> ';
+            }
             if (open) {
-                act += '<button type="button" class="btn btn-sm btn-success-rgba" onclick="PosnicPro.quotes.convert();">Convert to sale</button> '
+                act += '<button type="button" class="btn btn-sm btn-success-rgba" onclick="PosnicPro.quotes.setStatus(\'accept\');">Mark accepted</button> '
+                    + '<button type="button" class="btn btn-sm btn-secondary-rgba" onclick="PosnicPro.quotes.setStatus(\'decline\');">Mark declined</button> '
                     + '<button type="button" class="btn btn-sm btn-warning-rgba" onclick="PosnicPro.quotes.cancel();">Cancel quote</button> '
                     + '<button type="button" class="btn btn-sm btn-danger-rgba" onclick="PosnicPro.quotes.remove();">Delete</button>';
             }
@@ -7438,15 +7707,30 @@ PosnicPro.quotes = {
        enforces the same rule. */
     saveEdits: function () {
         var q = PosnicPro.quotes._current;
-        if (!q || q.status !== 'open') { return; }
+        if (!q || ['open', 'draft', 'sent'].indexOf(q.status) === -1) { return; }
         var read = function (f) { return $.trim($('.q-edit[data-f="' + f + '"]').text() || ''); };
         var vu = read('valid_until');
         var m = vu.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
         var vuIso = m ? (m[3] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[1]).slice(-2)) : '';
+        // the preview edits only the header/footer text - lines, charges,
+        // discounts and blocks pass through UNCHANGED so an inline save can
+        // never strip what the editor authored
         var payload = {
             items: (q.items || []).map(function (l) {
-                return { item_id: String(l.item_id), item_name: l.item_name, barcode_id: l.barcode_id, qty: l.qty, unit_price: l.unit_price };
+                return {
+                    kind: l.kind, item_id: l.item_id ? String(l.item_id) : '',
+                    item_name: l.item_name, description: l.description || '',
+                    barcode_id: l.barcode_id, qty: l.qty, unit_price: l.unit_price,
+                    discount: l.discount ? { type: l.discount.type, value: l.discount.value } : undefined
+                };
             }),
+            charges: (q.charges || []).map(function (c) {
+                return { name: c.name, type: c.type, value: c.value, sign: c.sign };
+            }),
+            discount: q.discount ? { type: q.discount.type, value: q.discount.value } : undefined,
+            custom_blocks: q.custom_blocks || [],
+            layout: q.layout || undefined,
+            notes: q.notes || '',
             customer_id: q.customer_id ? String(q.customer_id) : '',
             customer_name: read('customer_name'),
             customer_address: read('customer_address'),
@@ -9802,3 +10086,89 @@ PosnicPro.sales.openRegisterFromSales = function () {
     });
     return false;
 };
+
+/* ---- Quotation editor wiring (Q2): state follows every keystroke ---- */
+$(document).on('input change', '#qe_lines input, #qe_lines select', function () {
+    var i = $(this).closest('tr').data('i');
+    var ed = PosnicPro.quotes._ed;
+    if (!ed || !ed.lines[i]) { return; }
+    var l = ed.lines[i];
+    var $t = $(this);
+    if ($t.hasClass('qe-l-name')) { l.item_name = $t.val(); }
+    else if ($t.hasClass('qe-l-desc')) { l.description = $t.val(); }
+    else if ($t.hasClass('qe-l-qty')) { l.qty = $t.val(); }
+    else if ($t.hasClass('qe-l-price')) { l.unit_price = $t.val(); }
+    else if ($t.hasClass('qe-l-dtype')) { l.dtype = $t.val(); }
+    else if ($t.hasClass('qe-l-dval')) { l.dval = $t.val(); }
+    PosnicPro.quotes.edRecalc();
+});
+$(document).on('click', '#qe_lines .qe-l-del', function () {
+    var i = $(this).closest('tr').data('i');
+    if (PosnicPro.quotes._ed) { PosnicPro.quotes._ed.lines.splice(i, 1); PosnicPro.quotes.edRender(); }
+});
+$(document).on('input change', '#qe_charges input, #qe_charges select', function () {
+    var i = $(this).closest('.qe-charge').data('i');
+    var ed = PosnicPro.quotes._ed;
+    if (!ed || !ed.charges[i]) { return; }
+    var c = ed.charges[i];
+    var $t = $(this);
+    if ($t.hasClass('qe-c-name')) { c.name = $t.val(); }
+    else if ($t.hasClass('qe-c-type')) { c.type = $t.val(); }
+    else if ($t.hasClass('qe-c-val')) { c.value = $t.val(); }
+    else if ($t.hasClass('qe-c-sign')) { c.sign = Number($t.val()); }
+    PosnicPro.quotes.edRecalc();
+});
+$(document).on('click', '#qe_charges .qe-c-del', function () {
+    var i = $(this).closest('.qe-charge').data('i');
+    if (PosnicPro.quotes._ed) { PosnicPro.quotes._ed.charges.splice(i, 1); PosnicPro.quotes.edRender(); }
+});
+$(document).on('input change', '#qe_disc_type, #qe_disc_value', function () {
+    PosnicPro.quotes.edRecalc();
+});
+$(function () {
+    if (!$.fn.autocomplete) { return; }
+    $('#qe_item_search').autocomplete({
+        deferRequestBy: 120,
+        lookup: function (query, done) {
+            PosnicPro.get({ url: 'items/getOnlineItemsAjaxList', data: 'query=' + query + '&type=normal' }, function (response) {
+                var suggestions = [];
+                ((response && response.suggestions) || []).forEach(function (d) {
+                    suggestions.push({ value: d.item_name || d.value || '', data: d });
+                });
+                done({ suggestions: suggestions });
+            });
+        },
+        onSelect: function (s2) {
+            $('#qe_item_search').val('');
+            var d = s2.data || {};
+            var id = d.item_id || d.id;
+            if (id) { PosnicPro.quotes.edAddItem(String(id)); }
+        },
+        autoSelectFirst: true,
+        triggerSelectOnValidInput: false
+    });
+    $('#qe_cust_search').autocomplete({
+        deferRequestBy: 120,
+        lookup: function (query, done) {
+            PosnicPro.get({ url: 'customers/getCustomersAjaxList', data: 'query=' + query }, function (response) {
+                var suggestions = [];
+                ((response && response.suggestions) || []).forEach(function (d) {
+                    suggestions.push({ value: d.name || '', data: d });
+                });
+                done({ suggestions: suggestions });
+            });
+        },
+        onSelect: function (s2) {
+            var d = s2.data || {};
+            $('#qe_cust_search').val('');
+            if (PosnicPro.quotes._ed) { PosnicPro.quotes._ed.customer_id = String(d.id || ''); }
+            $('#qe_cust_name').val(d.name || '');
+            $('#qe_cust_phone').val(d.phone || '');
+            $('#qe_cust_email').val(d.email || '');
+            $('#qe_cust_gstin').val(d.gst_number || '');
+            $('#qe_cust_address').val(d.address || '');
+        },
+        autoSelectFirst: true,
+        triggerSelectOnValidInput: false
+    });
+});
