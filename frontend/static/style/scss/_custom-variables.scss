@@ -192,7 +192,10 @@
 
 
 $bg-body: #f2f3f7;
-$font-primary: 'Mukta Vaani', sans-serif;
+// The theme font must reach every component the template names by
+// selector (dialogs, popovers, datepickers, charts, tour) - so the
+// primary font IS the theme variable, with the old face as fallback.
+$font-primary: var(--theme-font-family, 'Mukta Vaani', sans-serif);
 $base-font: 16px;
 $white: #ffffff;
 $black: #141d46;
