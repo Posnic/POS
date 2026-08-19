@@ -1587,12 +1587,6 @@ input[type="checkbox"]:checked:after, .checkbox input[type="checkbox"]:checked:a
     margin-left: 10px;
 }
 
-/* Payment screen: visually keep Tender button, but make it non-clickable */
-.email-leftbar .list-group-item:first-child .input-group-append .btn-info {
-    pointer-events: none;
-    cursor: default;
-}
-
 /*tamil translation*/
 .tamil_verticalmenu > li > a{
     font-size: 14px !important;
@@ -2948,3 +2942,22 @@ input:checked + .slider:before {
 .q-edit:empty::before { content: attr(data-ph); color: #b3bac6; }
 .q-edit:focus { outline: none; border-bottom-color: #506fe4; background: #f6f8ff; }
 @media (max-width: 767px) { .q-sheet { padding: 18px 14px; } .q-head { flex-direction: column; } .q-title-block { text-align: left; } .q-footer { grid-template-columns: 1fr; } }
+
+/* P4 (partial): tender drawer touch targets - enlarge, never move. */
+.infobar-settings-sidebar .infobar-settings-sidebar-head .infobar-tender-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+}
+#wallet_balance + .custom-control-label::before,
+#wallet_balance + .custom-control-label::after {
+    width: 22px;
+    height: 22px;
+    top: 0.05rem;
+}
+#wallet_balance + .custom-control-label {
+    padding-left: 8px;
+    line-height: 24px;
+}
