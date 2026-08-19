@@ -353,6 +353,13 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    // Sales targets (Lightspeed study LS1): optional per-user goals the
+    // user report compares against. null = no target.
+    sales_target: {
+      daily: { type: Number, default: null },
+      weekly: { type: Number, default: null },
+      monthly: { type: Number, default: null },
+    },
     address: {
       street: String,
       city: String,

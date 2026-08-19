@@ -232,6 +232,30 @@ class ShiftService {
     if (!result.matchedCount) return { status: false, statusCode: 404, message: 'User not found' };
     return { status: true, message: 'Hourly rate saved' };
   }
+
+  /*
+   * Sales targets per user (Lightspeed study LS1): three optional numbers.
+   * Empty/absent clears - a target of nothing means no target, not zero.
+   */
+  async setTargets({ userId, daily, weekly, monthly, license }) {
+    if (!userId || !mongoose.Types.ObjectId.isValid(String(userId))) {
+      return { status: false, statusCode: 400, message: 'A valid user_id is required' };
+    }
+    const clean = (v) => {
+      if (v === '' || v === null || v === undefined) return null;
+      const n = Number(v);
+      return Number.isFinite(n) && n >= 0 ? n : NaN;
+    };
+    const target = { daily: clean(daily), weekly: clean(weekly), monthly: clean(monthly) };
+    if (Object.values(target).some(Number.isNaN)) {
+      return { status: false, statusCode: 400, message: 'Targets must be non-negative numbers' };
+    }
+    const filter = { _id: new mongoose.Types.ObjectId(String(userId)) };
+    if (license) filter.license = license;
+    const result = await User.updateOne(filter, { $set: { sales_target: target } });
+    if (!result.matchedCount) return { status: false, statusCode: 404, message: 'User not found' };
+    return { status: true, message: 'Sales targets saved' };
+  }
 }
 
 module.exports = ShiftService;
