@@ -7458,12 +7458,20 @@ $(document).ready(function () {
     if ('BarcodeDetector' in window && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         $('#camera_scan_btn').show();
     }
-    // Quick Sale is a feature, default ON - hide the pad when switched off.
+    // Quick Sale is a feature, default ON - the pad follows the switch
+    // live: re-checked on every navigation (the settings save rewrites the
+    // local blob) and on cross-tab storage writes, so no refresh needed.
+    PosnicPro.sales.applyQuickSaleGate();
+    $(window).on('hashchange storage', PosnicPro.sales.applyQuickSaleGate);
+});
+PosnicPro.sales.applyQuickSaleGate = function () {
+    var on = true;
     try {
         var gs = JSON.parse(PosnicPro.local.get('general_settings') || '{}');
-        if (gs.quick_sale_enable === false) { $('#quick_sale_btn').hide(); }
+        on = gs.quick_sale_enable !== false;
     } catch (e) { /* default on */ }
-});
+    $('#quick_sale_btn').toggle(on);
+};
 
 /*
  * Quick Sale (Square study Q1): the busy-counter mode - type an amount,
