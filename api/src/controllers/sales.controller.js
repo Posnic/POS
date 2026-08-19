@@ -5159,6 +5159,87 @@ class SalesController extends BaseController {
   }
 
   /**
+   * Permanent customer invoice link (Square study Q2, cloud edition): the
+   * same invoice PDF, uploaded once to S3 under a 128-bit random key - the
+   * key IS the secret, so the link is unguessable and never expires (the
+   * owner's "anytime he can access" rules out presigned URLs). Idempotent:
+   * a sale keeps ONE link for life; re-calling answers the stored key.
+   * Degrades honestly when the server has no bucket configured.
+   */
+  async createInvoiceLink(req, res) {
+    try {
+      if (!this.checkPermission('sales', 'read', req.user)) {
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
+      }
+      const { s3Config, getS3Client, publicUrlFor } = require('../utils/s3');
+      if (!s3Config().bucket) {
+        return this.error(res, 'Invoice links are not configured on this server', 503);
+      }
+      const id = req.params.id;
+      if (!id) return this.error(res, ERROR_MESSAGES.SALE_ID_IS_REQUIRED, 400);
+
+      const SaleModel = this.model || Sale;
+      const sale = await salesService.getSaleForPdf(id, { SaleModel });
+      if (!sale) return this.error(res, ERROR_MESSAGES.SALE_NOT_FOUND, 404);
+
+      if (sale.invoice_key) {
+        return this.success(res, { url: publicUrlFor(sale.invoice_key) }, 'Invoice link');
+      }
+
+      const branchId = sale.branch || sale.branch_id || sale.branchId;
+      const branch = branchId ? await salesService.getBranchById(branchId) : null;
+
+      /* Collect the PDF into a buffer - the generator writes to a response,
+         so hand it a stream wearing a response's hat. */
+      const { PassThrough } = require('stream');
+      const { generateInvoicePDF } = require('../utils/pdfGenerator');
+      const sink = new PassThrough();
+      sink.setHeader = () => {};
+      const chunks = [];
+      sink.on('data', (c) => chunks.push(c));
+      const done = new Promise((resolve, reject) => {
+        sink.on('end', resolve);
+        sink.on('error', reject);
+      });
+      generateInvoicePDF({
+        data: sale,
+        branch: branch,
+        res: sink,
+        config: {
+          title: 'Sales Invoice.',
+          idField: 'sales_id',
+          itemsField: 'items',
+          customerField: 'customer',
+          dateField: 'date',
+        },
+      });
+      await done;
+      const pdfBuffer = Buffer.concat(chunks);
+
+      const crypto = require('crypto');
+      const year = new Date().getFullYear();
+      const licensePart = String(sale.license || 'shop').slice(-8);
+      const key = `invoices/${licensePart}/${year}/${crypto.randomBytes(16).toString('hex')}.pdf`;
+
+      const { PutObjectCommand } = require('@aws-sdk/client-s3');
+      await getS3Client().send(
+        new PutObjectCommand({
+          Bucket: s3Config().bucket,
+          Key: key,
+          Body: pdfBuffer,
+          ContentType: 'application/pdf',
+        })
+      );
+
+      await SaleModel.updateOne({ _id: sale._id }, { $set: { invoice_key: key } });
+      return this.success(res, { url: publicUrlFor(key) }, 'Invoice link created');
+    } catch (error) {
+      console.error('Error in createInvoiceLink:', error);
+      return this.error(res, error.message, 500);
+    }
+  }
+
+  /**
    * PHP: salesMailPdf()
    * Generate PDF invoice and email to customer
    * @param {Object} req - Express request object

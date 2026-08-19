@@ -90,6 +90,7 @@ async function deleteObject(key) {
 }
 
 module.exports = {
+  s3Config,
   getS3Client,
   resetS3Client,
   uploadObject,

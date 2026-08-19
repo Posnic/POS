@@ -46,6 +46,7 @@ jest.mock('../../../src/controllers/sales.controller', () => ({
   salesReceipt: jest.fn(),
   getCustomerPrint: jest.fn(),
   salesPdf: jest.fn(),
+  createInvoiceLink: jest.fn(),
   salesMailPdf: jest.fn(),
   returnSales: jest.fn(),
   exportSales: jest.fn(),

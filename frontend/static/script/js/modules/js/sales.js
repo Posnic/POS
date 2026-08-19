@@ -523,6 +523,8 @@
                     var price = parseFloat(row.sales_total).toFixed(2);
 
                     var pdf_icon = '<a href="#/sales/' + row._id + '/pdf" target="_blank" data-module="sales" data-access="read" data-id="sales/' + row._id + '/pdf" data-toggle="tooltip" title="Pdf" class="point-cursor mobile_tooltip"><i class="feather icon-file"></i></a>';
+                    // Q2: permanent S3 invoice link - copied to the clipboard.
+                    var link_icon = '<a href="javascript:void(0)" data-module="sales" data-access="read" data-sale-id="' + row._id + '" data-toggle="tooltip" title="Copy invoice link" class="point-cursor mobile_tooltip sale-invoice-link"><i class="feather icon-link"></i></a>';
                     var print_icon = '<a data-module="sales" data-access="read" data-toggle="tooltip" title="Sale Print" href="#/sales/' + row._id + '/print" data-id="sales/' + row._id + '/print" class="point-cursor mobile_tooltip"><i class="feather icon-printer"></i></a>';
                     var return_icon = '<a data-module="sales" data-access="write" href="#/sales/' + row._id + '/return" data-id="sales/' + row._id + '/return" id="return_sales_' + row._id + '" data-toggle="tooltip" title="Sales Return" class="point-cursor mobile_tooltip"><i class="feather icon-corner-up-left"></i></a>';
                     var view_icon = '<a data-module="sales" data-access="read" href="#/sales/' + row._id + '" data-id="sales/' + row._id + '" data-toggle="tooltip" title="View" class="point-cursor mobile_tooltip"><i class="feather icon-eye"></i></a>';
@@ -596,7 +598,7 @@
 
                     var action = '<div id="onclick-toolbar-options_' + i + '" class="hidden">' +
                         '<span id="show_print_icon" style="display:none;">' + print_icon + ' </span>' +
-                        '<span id="show_pdf_icon" style="display:none;">' + pdf_icon + ' </span>' +
+                        '<span id="show_pdf_icon" style="display:none;">' + pdf_icon + link_icon + ' </span>' +
                         '<span id="show_return_icon" style="display:none;">' + return_icon + ' </span>' +
                         '<span id="show_view_icon" style="display:none;">' + view_icon + ' </span>' +
                         '<span id="show_edit_icon" style="display:none;">' + edit_icon + ' </span>' +
@@ -7469,6 +7471,25 @@ $(document).ready(function () {
  * receipts and sync see an ordinary sale; the line is priced tax-INCLUSIVE
  * against the shop's default tax, exactly like a normal inclusive item.
  */
+/* Q2: mint (or fetch) the sale's permanent invoice link and copy it. */
+$(document).on('click', '.sale-invoice-link', function () {
+    var saleId = $(this).data('sale-id');
+    PosnicPro.post({ url: 'sales/' + saleId + '/invoiceLink', data: JSON.stringify({}) }, function (response) {
+        var url = response && response.data && response.data.url;
+        if (response.type === 'success' && url) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(url);
+            }
+            PosnicPro.alert('success', 'Invoice link copied - it works forever');
+        } else {
+            PosnicPro.alert(response.type || 'error', response.message || 'Could not create the link');
+        }
+    }, function (xhr) {
+        var resp = {}; try { resp = JSON.parse(xhr.responseText); } catch (e) { /* plain */ }
+        PosnicPro.alert('error', resp.message || 'Could not create the link');
+    });
+});
+
 /* Tip quick-picks (owner feedback): focus the tip box, tap an amount. */
 $(document).on('focus', '#sale_tip_input', function () {
     var $chips = $('.tip-chips');
