@@ -6445,6 +6445,29 @@
         }
       }
     },
+    "/items/bySupplier": {
+      "get": {
+        "summary": "getItemsBySupplier",
+        "operationId": "get_items_bySupplier",
+        "tags": [
+          "Items"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
     "/items/updateKioskStatus": {
       "post": {
         "summary": "updateKioskStatus",

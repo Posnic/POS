@@ -1577,6 +1577,38 @@ class ItemsController extends BaseController {
    * @param {Object} req - Express request object
    * @param {Object} res - Express response object
    */
+  /**
+   * All of a supplier's items, or only the low-stock ones (Loyverse study
+   * L2) - the receiving screen's autofill. Same row shape as the receiving
+   * autocomplete so the client reuses its add-line path unchanged.
+   */
+  async getItemsBySupplier(req, res) {
+    try {
+      if (req.user?.access?.receiving?.read === false) {
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
+      }
+      await this.setRequestContext(req);
+      const result = await this.service.getItemsBySupplier(
+        {
+          supplierId: req.query.supplier_id,
+          lowStockOnly: req.query.low_stock === 'true',
+          notificationRange: req.query.notificationrange,
+        },
+        {
+          branchId: this.model?.branchId || null,
+          licenseId: this.model?.licenseId || null,
+        }
+      );
+      if (!result.status) {
+        return this.error(res, result.message || 'Item Not Found', 400, null);
+      }
+      return this.success(res, result.data, 'success');
+    } catch (error) {
+      console.error('Error in getItemsBySupplier:', error);
+      return this.error(res, error.message, 500);
+    }
+  }
+
   async getReceivingItemsAjaxList(req, res) {
     try {
       const { query, type } = req.query;

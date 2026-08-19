@@ -262,6 +262,38 @@ PosnicPro.receivings = {
         return matched;
     },
 //ADD LINE ITEM FOR receiving
+    /* Loyverse study L2: fill the order from the chosen supplier - every
+       item they supply, or only the ones at/below the low-stock range the
+       dashboard already uses. Each row rides the normal add-line path, so
+       duplicates increment and all the line math stays untouched. */
+    autofillFromSupplier: function (lowStockOnly) {
+        var supplierId = $('#receiving_add_supplier_id').val();
+        if (!supplierId) {
+            PosnicPro.alert('warning', 'Choose a supplier first');
+            return;
+        }
+        var range = localStorage.getItem('notificationrange') || 10;
+        PosnicPro.get({
+            url: 'items/bySupplier',
+            data: 'supplier_id=' + encodeURIComponent(supplierId) +
+                '&low_stock=' + (lowStockOnly ? 'true' : 'false') +
+                '&notificationrange=' + encodeURIComponent(range)
+        }, function (response) {
+            var rows = (response && response.data) || [];
+            if (!rows.length) {
+                PosnicPro.alert('info', lowStockOnly
+                    ? 'No low-stock items for this supplier'
+                    : 'No items linked to this supplier');
+                return;
+            }
+            rows.forEach(function (row) {
+                PosnicPro.receivings.addReceivingLineItems(row);
+            });
+            PosnicPro.alert('success', rows.length + (lowStockOnly ? ' low-stock' : '') + ' item(s) added from the supplier');
+        }, function () {
+            PosnicPro.alert('error', 'Could not load the supplier items');
+        });
+    },
     addReceivingLineItems: function (param) {
         $('table#receiving_print tr#cart_content_area').remove();
         $('#receving_tab_list').show();

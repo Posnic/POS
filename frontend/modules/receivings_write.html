@@ -30,6 +30,18 @@
                                                 <span class="btn" id="button-addon3"><i class="feather icon-search"></i></span>
                                             </div>
                                         </div>
+                                        <!-- Loyverse study L2: fill the order from the chosen
+                                             supplier instead of typing every line. -->
+                                        <small class="text-muted d-block mt-1" id="receiving_autofill_row">
+                                            <lang class="lang_autofill_hint">Fill from supplier:</lang>
+                                            <a href="javascript:void(0)" onclick="PosnicPro.receivings.autofillFromSupplier(false);">
+                                                <lang class="lang_autofill_all">all items</lang>
+                                            </a>
+                                            ·
+                                            <a href="javascript:void(0)" onclick="PosnicPro.receivings.autofillFromSupplier(true);">
+                                                <lang class="lang_autofill_low">low-stock items</lang>
+                                            </a>
+                                        </small>
                                     </div>
                                 </div>
                                 <!--start row-->

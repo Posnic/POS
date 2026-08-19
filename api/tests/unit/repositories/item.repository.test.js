@@ -510,6 +510,47 @@ describe('ItemRepository', () => {
     });
   });
 
+  describe('getItemsBySupplier', () => {
+    const ctx = { branchId: FAKE_BRANCH, licenseId: FAKE_LICENSE };
+
+    test('lists a supplier`s items in the receiving-autocomplete row shape', async () => {
+      col.find.mockReturnValue(
+        mkChain([{ _id: FAKE_ID, name: 'Oil 1L', itemid: '7', available_quantity: 3 }])
+      );
+      const r = await repo.getItemsBySupplier({ supplierId: FAKE_ID }, ctx);
+      expect(r.status).toBe(true);
+      expect(r.data[0]).toMatchObject({
+        item_id: FAKE_ID,
+        item_name: 'Oil 1L',
+        item_code: '7',
+        available_quantity: 3,
+      });
+      const filter = col.find.mock.calls[0][0];
+      const flat = Object.assign({}, ...filter.$and);
+      expect(String(flat.supplier_id)).toBe(FAKE_ID);
+      expect('available_quantity' in flat).toBe(false); // no low-stock cut
+    });
+
+    test('low_stock narrows to tracked items at/below the range', async () => {
+      col.find.mockReturnValue(mkChain([]));
+      await repo.getItemsBySupplier(
+        { supplierId: FAKE_ID, lowStockOnly: true, notificationRange: '5' },
+        ctx
+      );
+      const flat = Object.assign({}, ...col.find.mock.calls[0][0].$and);
+      expect(flat.track_inventory).toBe(true);
+      expect(flat.available_quantity).toEqual({ $lte: 5 });
+    });
+
+    test('a missing or invalid supplier id is refused, not an unscoped query', async () => {
+      const ObjectIdMock = require('mongodb').ObjectId;
+      ObjectIdMock.isValid.mockReturnValueOnce(false);
+      const r = await repo.getItemsBySupplier({ supplierId: 'nope' }, ctx);
+      expect(r.status).toBe(false);
+      expect(col.find).not.toHaveBeenCalled();
+    });
+  });
+
   describe('accessKiosk', () => {
     test('returns kiosk data', async () => {
       const branchCol = {
