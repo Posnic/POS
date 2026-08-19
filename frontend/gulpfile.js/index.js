@@ -77,6 +77,7 @@ function copyLazyScripts(cb) {
         ['static/script/js/plugins/apexcharts/apexcharts.min.js', 'apexcharts.js'],
         ['static/script/js/jspdf.debug.js', 'jspdf.js'],
         ['static/script/js/html2canvas.min.js', 'html2canvas.js'],
+        ['static/script/js/sortable.min.js', 'sortable.js'],
     ];
     const outDir = pathx.join(process.cwd(), publicDir, 'script', 'lazy');
     fsx.mkdirSync(outDir, { recursive: true });

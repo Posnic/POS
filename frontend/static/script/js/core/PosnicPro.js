@@ -654,6 +654,7 @@ PosnicPro = {
             apexcharts: ['script/lazy/apexcharts.js'],
             jspdf: ['script/lazy/jspdf.js'],
             html2canvas: ['script/lazy/html2canvas.js'],
+            sortable: ['script/lazy/sortable.js'],
         },
         _loads: {},
         _script: function (url) {
