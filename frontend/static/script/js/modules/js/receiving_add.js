@@ -1452,8 +1452,9 @@ PosnicPro.receivings = {
 
 };
 $(function () {
-    $('#receiving_add_supplier_name').on('keydown.autocomplete', function () {
-        $(this).autocomplete({
+    // One-time init like the sale search: never rebuild per keystroke.
+    $('#receiving_add_supplier_name').autocomplete({
+        deferRequestBy: 120,
             lookup: function (query, done) {
                 var result = {};
                 var suggestions = [];
@@ -1505,7 +1506,6 @@ $(function () {
                         '</div><span class="pull-right" style="margin-top:-20px;">' + phone + '</span>';
             }
 
-        });
     });
 });
 $('#receiving_add_supplier_name').click(function () {
