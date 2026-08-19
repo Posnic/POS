@@ -6140,8 +6140,8 @@ class SalesController extends BaseController {
         return this.error(res, ERROR_MESSAGES.VALID_EMAIL_REQUIRED, 400);
       }
 
-      const userAccess = req.user?.access?.report?.read;
-      if (userAccess !== true) {
+      // Standard check - the raw read lacked the owner-class bypass.
+      if (!this.checkPermission('report', 'read', req.user)) {
         return this.error(res, 'Unauthorized', 403);
       }
 
@@ -6157,7 +6157,8 @@ class SalesController extends BaseController {
       if (response.status) {
         return this.success(res, response.data, response.message || 'Mail sent');
       } else {
-        return this.error(res, response.message || 'Mail failed', 502);
+        // 503 with the real reason - a mail-config gap is not a gateway fault.
+        return this.error(res, response.message || 'Email is not configured on this server', 503);
       }
     } catch (error) {
       console.error('Error in dailySalesMail:', error);
