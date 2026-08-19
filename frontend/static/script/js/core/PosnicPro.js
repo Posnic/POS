@@ -774,36 +774,45 @@ PosnicPro = {
             }
 
             /*
-             * Minimal, ink-light tables (owner ask): no fills anywhere -
-             * bold header over a strong rule, hairline row separators,
-             * column widths measured from the actual content so numbers
-             * sit in straight columns, numeric columns right-aligned
-             * header included.
+             * Proven table engine (verified against a rendered reproduction):
+             * body-measured natural widths, headers wrap at 22mm instead of
+             * forcing columns, font autoscales down (8.3 -> 6.6) until wide
+             * tables fit one line per cell, long tokens soft-chunk, numeric
+             * columns right-align header included. No fills - print-friendly.
              */
-            var lineH = 3.9, padX = 1.5, padY = 1.7;
+            var padX = 1.5, padY = 1.7;
             sections.forEach(function (sec) {
                 var cols = 0;
                 sec.rows.forEach(function (r) { cols = Math.max(cols, r.cells.length); });
                 if (!cols) { return; }
+                var tableW = W - M * 2;
 
-                doc.setFont('helvetica', 'normal');
-                doc.setFontSize(8.3);
-                var maxW = [], numCount = [], bodyRows = 0;
-                for (var c0 = 0; c0 < cols; c0++) { maxW.push(8); numCount.push(0); }
-                sec.rows.forEach(function (r, ri) {
-                    if (ri > 0) { bodyRows++; }
-                    r.cells.forEach(function (cell, c) {
-                        var w = doc.getTextWidth(ex._pdfText(cell)) + padX * 2 + 2;
-                        if (w > maxW[c]) { maxW[c] = Math.min(w, 80); }
-                        if (ri > 0 && ex._isNum(cell)) { numCount[c] += 1; }
+                var fs = 8.3, maxW = [], numCount = [], bodyRows = 0;
+                for (var attempt = 0; attempt < 6; attempt++) {
+                    doc.setFont('helvetica', 'normal'); doc.setFontSize(fs);
+                    maxW = []; numCount = []; bodyRows = 0;
+                    for (var c0 = 0; c0 < cols; c0++) { maxW.push(6); numCount.push(0); }
+                    sec.rows.forEach(function (r, ri) {
+                        if (ri > 0) { bodyRows++; }
+                        r.cells.forEach(function (cell, c) {
+                            var measured = doc.getTextWidth(ex._pdfText(cell)) + padX * 2 + 2;
+                            var w = (ri === 0 && sec.rows.length > 1) ? Math.min(measured, 22) : Math.min(measured, 70);
+                            if (w > maxW[c]) { maxW[c] = w; }
+                            if (ri > 0 && ex._isNum(cell)) { numCount[c] += 1; }
+                        });
                     });
-                });
+                    var need = maxW.reduce(function (a, b) { return a + b; }, 0);
+                    if (need <= tableW || fs <= 6.6) { break; }
+                    fs -= 0.4;
+                }
+                var lineH = fs * 0.47;
                 var rightCol = maxW.map(function (_, c) {
                     return bodyRows > 0 && numCount[c] >= bodyRows * 0.6;
                 });
-                var tableW = W - M * 2;
                 var wSum = maxW.reduce(function (a, b) { return a + b; }, 0);
-                var colW = maxW.map(function (w) { return (w / wSum) * tableW; });
+                var scaleW = wSum > tableW ? tableW / wSum : 1;
+                var colW = maxW.map(function (w) { return w * scaleW; });
+                var usedW = colW.reduce(function (a, b) { return a + b; }, 0);
 
                 if (y + 14 > bottom) { footer(); doc.addPage(); y = M; }
                 if (sec.title) {
@@ -812,26 +821,29 @@ PosnicPro = {
                     y += 5;
                 }
                 var headRow = sec.rows.length > 1 ? sec.rows[0] : null;
-                // splitTextToSize only breaks on spaces - a long SKU or
-                // number would sail out of its column. Clamp every line.
-                var clampLine = function (line, width) {
-                    if (doc.getTextWidth(line) <= width) { return line; }
-                    var t = line;
-                    while (t.length > 1 && doc.getTextWidth(t + '…') > width) {
-                        t = t.slice(0, -1);
-                    }
-                    return t + '…';
+                var chunkFit = function (txt, wAvail) {
+                    var out = [], cur = '';
+                    String(txt).split('').forEach(function (ch) {
+                        if (cur && doc.getTextWidth(cur + ch) > wAvail) { out.push(cur); cur = ch; }
+                        else { cur += ch; }
+                    });
+                    if (cur) { out.push(cur); }
+                    return out.length ? out : [''];
                 };
                 var drawRow = function (r, isHead) {
-                    doc.setFontSize(8.3);
+                    doc.setFont('helvetica', isHead || r.head ? 'bold' : 'normal');
+                    doc.setFontSize(fs);
                     var linesPer = r.cells.map(function (cell, c) {
                         var wAvail = colW[Math.min(c, colW.length - 1)] - padX * 2;
-                        return doc.splitTextToSize(ex._pdfText(cell), wAvail).map(function (ln) {
-                            return clampLine(ln, wAvail);
+                        var lines = [];
+                        doc.splitTextToSize(ex._pdfText(cell), wAvail).forEach(function (ln) {
+                            if (doc.getTextWidth(ln) <= wAvail) { lines.push(ln); }
+                            else { chunkFit(ln, wAvail).forEach(function (p2) { lines.push(p2); }); }
                         });
+                        return lines.slice(0, 3);
                     });
                     var maxLines = 1;
-                    linesPer.forEach(function (l) { maxLines = Math.max(maxLines, Math.min(l.length, 3)); });
+                    linesPer.forEach(function (l) { maxLines = Math.max(maxLines, l.length); });
                     var rowH = maxLines * lineH + padY * 2;
                     if (y + rowH > bottom) {
                         footer(); doc.addPage(); y = M;
@@ -842,7 +854,7 @@ PosnicPro = {
                     var x = M;
                     for (var c = 0; c < r.cells.length; c++) {
                         var wCol = colW[Math.min(c, colW.length - 1)];
-                        var lines = linesPer[c].slice(0, 3);
+                        var lines = linesPer[c];
                         var right = rightCol[Math.min(c, rightCol.length - 1)];
                         for (var li = 0; li < lines.length; li++) {
                             if (right) { doc.text(lines[li], x + wCol - padX, y + padY + lineH * (li + 0.78), { align: 'right' }); }
@@ -850,12 +862,9 @@ PosnicPro = {
                         }
                         x += wCol;
                     }
-                    if (isHead) {
-                        doc.setDrawColor(45, 55, 72); doc.setLineWidth(0.4);
-                    } else {
-                        doc.setDrawColor(228, 232, 238); doc.setLineWidth(0.12);
-                    }
-                    doc.line(M, y + rowH, M + tableW, y + rowH);
+                    if (isHead) { doc.setDrawColor(45, 55, 72); doc.setLineWidth(0.4); }
+                    else { doc.setDrawColor(228, 232, 238); doc.setLineWidth(0.12); }
+                    doc.line(M, y + rowH, M + usedW, y + rowH);
                     y += rowH;
                 };
                 sec.rows.forEach(function (r, i) {
