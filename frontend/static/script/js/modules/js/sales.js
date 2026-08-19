@@ -7900,19 +7900,53 @@ PosnicPro.sales.applyCustomerPick = function (data) {
         category_id: data.category_id
     }, 'id');
 };
+PosnicPro.sales._customerSeed = null;
 PosnicPro.sales.renderRecentCustomers = function () {
-    var list = PosnicPro.sales._recentGet('recent_customers');
+    var recents = PosnicPro.sales._recentGet('recent_customers');
     var wrap = $('#sales_recent_customers');
-    if (!list.length) { wrap.html('').hide(); return; }
-    wrap.html(list.map(function (c, i) {
-        return '<a href="javascript:void(0)" class="sales-customer-pop-action recent-customer-row" data-i="' + i + '">' +
-            '<i class="feather icon-clock mr-2"></i>' + $('<span>').text(c.name).html() +
-            (c.phone ? ' <small class="text-muted">' + $('<span>').text(c.phone).html() + '</small>' : '') +
-            '</a>';
-    }).join('')).show();
+    var paint = function (rows) {
+        if (!rows.length) { wrap.html('').hide(); return; }
+        PosnicPro.sales._recentRendered = rows;
+        wrap.html(rows.map(function (c, i) {
+            var icon = c._seed ? 'icon-user' : 'icon-clock';
+            return '<a href="javascript:void(0)" class="sales-customer-pop-action recent-customer-row" data-i="' + i + '">' +
+                '<i class="feather ' + icon + ' mr-2"></i>' + $('<span>').text(c.name).html() +
+                (c.phone ? ' <small class="text-muted">' + $('<span>').text(c.phone).html() + '</small>' : '') +
+                '</a>';
+        }).join('')).show();
+    };
+    /* Recents lead; the plain paged customer list (an indexed find, no
+       aggregation) fills the card to 10 so it is never empty on a fresh
+       till - the seed is cached per session. */
+    var fill = function (seed) {
+        var have = {};
+        recents.forEach(function (c) { have[String(c.id)] = 1; });
+        var rows = recents.slice();
+        (seed || []).forEach(function (c) {
+            if (rows.length >= 10 || have[String(c.id)]) { return; }
+            rows.push(c);
+        });
+        paint(rows);
+    };
+    if (recents.length >= 10) { paint(recents); return; }
+    if (PosnicPro.sales._customerSeed) { fill(PosnicPro.sales._customerSeed); return; }
+    fill([]); // paint what we have instantly; the seed follows
+    PosnicPro.get({ url: 'customers', data: { page: 1, limit: 10 } }, function (response) {
+        var list = (response && response.data && response.data.list) || [];
+        PosnicPro.sales._customerSeed = list.map(function (c) {
+            return {
+                id: c._id || c.id, name: c.name, phone: c.phone, email: c.email,
+                address: c.address, state: c.state, country: c.country,
+                gst_type: c.gst_type, gst_number: c.gst_number,
+                partial_balance: c.partial_balance, balance: c.balance,
+                category_id: c.category_id, _seed: true
+            };
+        }).filter(function (c) { return c.id && c.name && c.name !== 'Walk-In-Customer'; });
+        fill(PosnicPro.sales._customerSeed);
+    }, function () { /* recents alone, or empty - never an error popup */ });
 };
 $(document).on('click', '.recent-customer-row', function () {
-    var list = PosnicPro.sales._recentGet('recent_customers');
+    var list = PosnicPro.sales._recentRendered || [];
     var c = list[$(this).data('i')];
     if (c) { PosnicPro.sales.applyCustomerPick(c); }
 });
