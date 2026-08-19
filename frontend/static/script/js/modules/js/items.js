@@ -1388,14 +1388,27 @@ PosnicPro.items = {
         $('#stock_adjust_note').val('');
         $('#stock_adjust_search').val('');
         $('#stock_adjust_reason').val('Inventory count');
+        $('#stock_adjust_custom').val('');
+        $('#stock_adjust_custom_wrap').hide();
         PosnicPro.items.renderAdjRows();
         $('#stock_adjust_modal').modal('show');
         setTimeout(function () { $('#stock_adjust_search').focus(); }, 400);
     },
-    renderAdjRows: function () {
+    /* The direction in force: seeded reasons imply theirs, custom says its own. */
+    _adjMode: function () {
         var reason = $('#stock_adjust_reason').val();
-        var isCount = reason === 'Inventory count';
-        $('#stock_adjust_qty_head').text(isCount ? 'Counted' : 'Qty lost');
+        if (reason === '__custom__') { return $('#stock_adjust_mode').val() || 'subtract'; }
+        if (reason === 'Inventory count') { return 'set'; }
+        if (reason === 'Stock found') { return 'add'; }
+        return 'subtract';
+    },
+    adjReasonChanged: function () {
+        $('#stock_adjust_custom_wrap').toggle($('#stock_adjust_reason').val() === '__custom__');
+        PosnicPro.items.renderAdjRows();
+    },
+    renderAdjRows: function () {
+        var mode = PosnicPro.items._adjMode();
+        $('#stock_adjust_qty_head').text(mode === 'set' ? 'Counted' : mode === 'add' ? 'Qty found' : 'Qty lost');
         var keys = Object.keys(PosnicPro.items._adjRows);
         if (!keys.length) {
             $('#stock_adjust_rows').html('<tr><td colspan="5" class="text-center text-muted">Search and pick items to adjust.</td></tr>');
@@ -1404,7 +1417,7 @@ PosnicPro.items = {
         var html = keys.map(function (id) {
             var r = PosnicPro.items._adjRows[id];
             var qty = Number(r.qty) || 0;
-            var after = isCount ? qty : Math.max(0, (Number(r.stock) || 0) - qty);
+            var after = mode === 'set' ? qty : mode === 'add' ? (Number(r.stock) || 0) + qty : Math.max(0, (Number(r.stock) || 0) - qty);
             return '<tr>' +
                 '<td>' + $('<span>').text(r.name).html() + '</td>' +
                 '<td class="text-right">' + (Number(r.stock) || 0) + '</td>' +
@@ -1424,10 +1437,18 @@ PosnicPro.items = {
             return;
         }
         $('#stock_adjust_submit').prop('disabled', true);
+        var reasonSel = $('#stock_adjust_reason').val();
+        var reason = reasonSel === '__custom__' ? ($('#stock_adjust_custom').val() || '').trim() : reasonSel;
+        if (!reason) {
+            PosnicPro.alert('warning', 'Name the custom reason');
+            $('#stock_adjust_submit').prop('disabled', false);
+            return;
+        }
         PosnicPro.post({
             url: 'items/stockAdjustment',
             data: JSON.stringify({
-                reason: $('#stock_adjust_reason').val(),
+                reason: reason,
+                mode: PosnicPro.items._adjMode(),
                 note: $('#stock_adjust_note').val(),
                 rows: rows
             })
@@ -3752,9 +3773,9 @@ $(document).ready(function () {
         if (PosnicPro.items._adjRows[id]) {
             PosnicPro.items._adjRows[id].qty = Number($(this).val()) || 0;
             // Update only the computed cell, keep focus in the input.
-            var reason = $('#stock_adjust_reason').val();
+            var mode = PosnicPro.items._adjMode();
             var r = PosnicPro.items._adjRows[id];
-            var after = reason === 'Inventory count' ? r.qty : Math.max(0, r.stock - r.qty);
+            var after = mode === 'set' ? r.qty : mode === 'add' ? r.stock + r.qty : Math.max(0, r.stock - r.qty);
             $(this).closest('tr').find('td').eq(3).text(after);
         }
     });

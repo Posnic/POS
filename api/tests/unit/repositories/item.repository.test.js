@@ -578,13 +578,32 @@ describe('ItemRepository', () => {
       expect(col.updateOne.mock.calls[0][1].$set.available_quantity).toBe(0);
     });
 
-    test('an unknown reason is refused before any write', async () => {
+    test('an unknown reason with no direction is refused before any write', async () => {
       const r = await repo.stockAdjustment(
         { reason: 'Shrinkage', rows: [{ item_id: FAKE_ID, qty: 1 }] },
         ctx
       );
       expect(r.status).toBe(false);
       expect(col.updateOne).not.toHaveBeenCalled();
+    });
+
+    test('a custom reason with an explicit direction is honoured (LS1)', async () => {
+      col.findOne.mockResolvedValue(tracked);
+      const r = await repo.stockAdjustment(
+        { reason: 'Theft', mode: 'subtract', rows: [{ item_id: FAKE_ID, qty: 3 }] },
+        ctx
+      );
+      expect(r.status).toBe(true);
+      expect(col.updateOne.mock.calls[0][1].$set.available_quantity).toBe(7);
+    });
+
+    test('Stock found ADDS (the new positive direction)', async () => {
+      col.findOne.mockResolvedValue(tracked);
+      await repo.stockAdjustment(
+        { reason: 'Stock found', rows: [{ item_id: FAKE_ID, qty: 2 }] },
+        ctx
+      );
+      expect(col.updateOne.mock.calls[0][1].$set.available_quantity).toBe(12);
     });
 
     test('items outside the branch/license are skipped, never written', async () => {
