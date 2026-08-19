@@ -353,6 +353,11 @@
     },
     showHold: function (id) {
         PosnicPro.kotorder.kotHideShow();
+        // Resuming a parked sale means collecting now - Paid is the
+        // default, not the hold's stored Unpaid (owner ask).
+        setTimeout(function () {
+            $('#unpaid_payment_toggle').prop('checked', true).trigger('change');
+        }, 600);
         PosnicPro.sales.defaultCustomer = false;
         $('[data-toggle="tooltip"]').tooltip("hide");
         $('#time-format').removeClass('commonDate');
