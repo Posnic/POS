@@ -277,22 +277,6 @@
                                         <input type="text" class="form-control clear_text_item" id="items_barcodeid"
                                             name="items_barcodeid" minlength="1" maxlength="100"
                                             placeholder="Scan From Bar Code Reader" autocomplete="off">
-                                        <!-- V3: manufacturer / extra codes; scanning any of them finds this item. -->
-                                        <input type="text" class="form-control clear_text_item mt-2" id="items_barcodes_alt"
-                                            name="items_barcodes_alt" maxlength="400"
-                                            placeholder="Alternate barcodes (comma separated, optional)" autocomplete="off">
-                                        <!-- V3: purchase-unit assist - "box of 24". Stock stays in base units. -->
-                                        <div class="form-row mt-2">
-                                            <div class="col-7">
-                                                <input type="text" class="form-control clear_text_item" id="items_purchase_unit"
-                                                    name="items_purchase_unit" maxlength="30"
-                                                    placeholder="Purchase unit (e.g. box, optional)" autocomplete="off">
-                                            </div>
-                                            <div class="col-5">
-                                                <input type="number" min="0" step="any" class="form-control clear_text_item" id="items_conversion_factor"
-                                                    name="items_conversion_factor" placeholder="Units per pack" autocomplete="off">
-                                            </div>
-                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -519,6 +503,32 @@
                     <!-- 8 · Channels & extras (collapsed: flags, supplier) -->
                     </div>
                     <div class="tab-pane fade" id="item_tab_more" role="tabpanel">
+
+                    <!-- The power codes moved here from the SKU card (owner: too
+                         many fields there) - one barcode is plenty on screen one. -->
+                    <div class="card m-b-30">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0"><lang class="lang_codes_packs_title">Extra barcodes &amp; packs</lang></h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- V3: manufacturer / extra codes; scanning any of them finds this item. -->
+                            <input type="text" class="form-control clear_text_item" id="items_barcodes_alt"
+                                name="items_barcodes_alt" maxlength="400"
+                                placeholder="Alternate barcodes (comma separated, optional)" autocomplete="off">
+                            <!-- V3: purchase-unit assist - "box of 24". Stock stays in base units. -->
+                            <div class="form-row mt-2">
+                                <div class="col-7">
+                                    <input type="text" class="form-control clear_text_item" id="items_purchase_unit"
+                                        name="items_purchase_unit" maxlength="30"
+                                        placeholder="Purchase unit (e.g. box, optional)" autocomplete="off">
+                                </div>
+                                <div class="col-5">
+                                    <input type="number" min="0" step="any" class="form-control clear_text_item" id="items_conversion_factor"
+                                        name="items_conversion_factor" placeholder="Units per pack" autocomplete="off">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
                     <div class="card m-b-30" id="show-hide-item-discount" style="display:none;">
                         <div class="card-header">
