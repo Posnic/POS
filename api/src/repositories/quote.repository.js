@@ -452,6 +452,39 @@ class QuoteRepository extends BaseModel {
     }
   }
 
+  /* Share metadata: which S3 object currently represents this quote. Any
+     status may share - sending a converted quote's record is legitimate.
+     Revisions are the caller's job; this only persists the newest one. */
+  async recordShare(id, share, context) {
+    try {
+      const wall = this._wall(context);
+      if (!wall) return { status: false, data: null, message: 'Branch ID not found' };
+      if (!ObjectId.isValid(String(id))) {
+        return { status: false, data: null, message: 'Invalid quote id' };
+      }
+      const collection = await this.getCollection(this.collectionName);
+      const result = await collection.updateOne(
+        { _id: new ObjectId(String(id)), ...wall },
+        {
+          $set: {
+            share: {
+              key: String(share.key || ''),
+              url: String(share.url || ''),
+              rev: Number(share.rev) || 1,
+              at: new Date(),
+            },
+            updated_date: new Date(),
+          },
+        }
+      );
+      if (!result.matchedCount) return { status: false, data: null, message: 'Quote not found' };
+      return { status: true, data: { rev: Number(share.rev) || 1 }, message: 'Share recorded' };
+    } catch (error) {
+      console.error('Error in QuoteRepository.recordShare:', error);
+      return { status: false, data: null, message: error.message };
+    }
+  }
+
   /* Delete: open quotes only, enforced in the query itself. */
   async deleteQuote(id, context = {}) {
     try {
