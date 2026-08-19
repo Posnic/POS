@@ -7938,7 +7938,9 @@ PosnicPro.autoTile = function (name) {
     var str = String(name || '');
     for (var i = 0; i < str.length; i++) { h = (h * 31 + str.charCodeAt(i)) >>> 0; }
     var COLORS = ['#e74c3c', '#e91e63', '#f39c12', '#a4c400', '#27ae60', '#2d9cdb', '#8e44ad', '#16a085', '#d35400'];
-    var SHAPES = ['square', 'rounded', 'circle', 'diamond', 'triangle', 'pentagon', 'hexagon', 'star', 'octagon'];
+    // Auto-dress keeps to the calm four; the renderers still draw
+    // every shape ever saved.
+    var SHAPES = ['square', 'rounded', 'circle', 'diamond'];
     return { color: COLORS[h % COLORS.length], shape: SHAPES[(h >> 4) % SHAPES.length] };
 };
 /* One suggestion row for every item typeahead (sale + purchase): thumb,
