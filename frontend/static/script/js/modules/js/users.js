@@ -2243,8 +2243,9 @@ $('#panel-collapse').on('show.bs.collapse', function (e) {
 $("#users_password").on("input", function () {
     $("#check_password").val('yes');
 });
-$('#search_user_name').on('keydown.autocomplete', function () {
-    $(this).autocomplete({
+$(function () {
+    $('#search_user_name').autocomplete({
+        deferRequestBy: 120,
         lookup: function (query, done) {
             var result = {};
             var suggestions = [];

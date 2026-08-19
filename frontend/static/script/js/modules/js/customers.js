@@ -1156,8 +1156,8 @@ $('#upload_file_transaction').change(function () {
 });
 
 $(function () {
-    $('#customer_referrer_name').on('keypress keydown.autocomplete', function () {
-        $(this).autocomplete({
+    $('#customer_referrer_name').autocomplete({
+        deferRequestBy: 120,
             lookup: function (query, done) {
                 var result = {};
                 var suggestions = [];
@@ -1191,7 +1191,6 @@ $(function () {
                         $.Autocomplete.formatResult(suggestion) +
                         '</div><span class="pull-right">' + phone + '</span>';
             }
-        });
     });
 
     PosnicPro.customers.customer_phone = window.intlTelInput(document.querySelector("#customer_phone"), {
