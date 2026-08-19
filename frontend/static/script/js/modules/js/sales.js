@@ -1004,7 +1004,6 @@
             $('.salesBalanceAmount').hide();
             (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('.changeSalesBtnText').text('à®¤à®¿à®°à¯à®®à¯à®ª à®µà®¿à®±à¯à®ªà®©à¯ˆ') : $('.changeSalesBtnText').text('Return');
             $('#closeSaleButton').show();
-            $('#closeEditButton').hide();
             $("#return_disc").css("display", "none");
             $('#sales_new_customer_name').val(PosnicPro.sales.EditRecentSaleParams.customer_name);
             $(".vertical-layout").removeClass("toggle-menu");

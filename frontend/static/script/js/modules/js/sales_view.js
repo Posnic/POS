@@ -578,8 +578,8 @@ PosnicPro.sales.view = {
                 if (data.sale_process === 'Add' || data.sale_process === 'Edit' || data.sale_process === 'Hold' || data.sale_process === 'PartialReturn' || data.sale_process === 'KOT') {
                     $('#receiving_add_item_name,#sales_new_item_name').val('');
                     if (!(PosnicPro.sales.kotPaymentMode === true && PosnicPro.sales.paymentOnlyMode === true)) {
-                        $('.page_loader,#osk-container,#clearSaleButton,#closeSaleButton,.return_discount_show').hide();
-                        $('.page-title-box,#sales_new_item_name,#sales_new,#closeEditButton,.return_discount_hide').show();
+                        $('.page_loader,#osk-container,#clearSaleButton,.return_discount_show').hide();
+                        $('.page-title-box,#sales_new_item_name,#sales_new,#closeSaleButton,.return_discount_hide').show();
                         (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('.changeSalesBtnText').text('புதுப்பி') : $('.changeSalesBtnText').text('Update');
                     }
                     // As an additional safeguard, if this edit page was reached via
