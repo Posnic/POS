@@ -7654,9 +7654,16 @@ PosnicPro.sales.quickSale = {
         });
     }
 };
-$('#sales_new_item_name').on('keydown.autocomplete keyup.autocomplete', function () {
-    $(this).autocomplete({
+/* Owner: typing here must NEVER wait. One-time widget init (the old code
+   re-created the whole autocomplete on every keydown AND keyup), requests
+   trail the keystrokes by 120ms, and late responses for stale queries are
+   dropped. The lookup itself is async - the input never blocks on it. */
+$(function () {
+    var itemLookupSeq = 0;
+    $('#sales_new_item_name').autocomplete({
+        deferRequestBy: 120,
         lookup: function (query, done) {
+            var seq = ++itemLookupSeq;
             var result = {};
             var suggestions = [];
             var params = {
@@ -7664,6 +7671,7 @@ $('#sales_new_item_name').on('keydown.autocomplete keyup.autocomplete', function
                 data: 'query=' + query + '&type=normal'
             };
             PosnicPro.get(params, function (response) {
+                if (seq !== itemLookupSeq) { return; }
                 if (response.suggestions.length > 0) {
                     suggestions: $.map(response.suggestions, function (dataItem) {
                         let timeZone = PosnicPro.local.get('timezone');
@@ -7676,7 +7684,7 @@ $('#sales_new_item_name').on('keydown.autocomplete keyup.autocomplete', function
                         }
                     });
                 } else {
-                    suggestions.push({ value: $('#sales_new_item_name').val() + ' ', data: -1 });
+                    suggestions.push({ value: query + ' ', data: -1 });
                 }
                 result["suggestions"] = suggestions;
                 done(result);
@@ -7702,7 +7710,16 @@ $('#sales_new_item_name').on('keydown.autocomplete keyup.autocomplete', function
                     PosnicPro.sales.addSalesLineItems(itemData);
                 }
             } else {
-                hasher.setHash('items/new/addnewitem');
+                var typed = (suggestion.value || '').trim();
+                var quickOn = true;
+                try {
+                    var gs = JSON.parse(PosnicPro.local.get('general_settings') || '{}');
+                    quickOn = gs.quick_sale_enable !== false;
+                } catch (e) { /* default on */ }
+                if (!quickOn) { hasher.setHash('items/new/addnewitem'); return; }
+                $('#sales_new_item_name').val('');
+                PosnicPro.sales.quickSale.open();
+                $('#quick_sale_note').val(typed);
             }
         },
         autoSelectFirst: true,
@@ -7767,12 +7784,10 @@ $('#sales_new_item_name').on('keydown.autocomplete keyup.autocomplete', function
                     $.Autocomplete.formatResult(suggestion, currentValue) +
                     '</div><span>' + action + '</span>';
             } else {
-                let data = "item.svg";
-                let price = "( Add new )";
-                return '<img src="static/images/default/item.svg" height="40" width="40" style="border-radius: 25%;" /> ' +
+                return '<span style="display:inline-block;height:40px;width:40px;border-radius:25%;background:#fff3cd;text-align:center;line-height:40px;"><i class="feather icon-zap text-warning"></i></span> ' +
                     '<div class="suggestion-name">' +
                     $.Autocomplete.formatResult(suggestion, currentValue) +
-                    '</div><span>' + price + '</span>';
+                    '</div><span>Not in your items - tap to sell it as a quick sale</span>';
             }
         }
     });
@@ -7938,10 +7953,14 @@ $(document).on('click', '.recent-customer-row', function () {
 });
 
 /******** START SALES SEARCH CUSTOMER FUNCTION ONLINE ********/
-$('#sales_new_customer_name').on('keydown.autocomplete', function () {
-    /*Autocomplete API call customer search*/
-    $(this).autocomplete({
+/* Same never-block treatment as the item box: init once, debounce,
+   drop stale responses. */
+$(function () {
+    var customerLookupSeq = 0;
+    $('#sales_new_customer_name').autocomplete({
+        deferRequestBy: 120,
         lookup: function (query, done) {
+            var seq = ++customerLookupSeq;
             var result = {};
             var suggestions = [];
             var params = {
@@ -7949,12 +7968,13 @@ $('#sales_new_customer_name').on('keydown.autocomplete', function () {
                 data: 'query=' + query
             };
             PosnicPro.get(params, function (response) {
+                if (seq !== customerLookupSeq) { return; }
                 if (response.suggestions.length > 0) {
                     suggestions: $.map(response.suggestions, function (dataItem) {
                         suggestions.push({ "value": dataItem.name, "data": dataItem });
                     });
                 } else {
-                    suggestions.push({ value: $('#sales_new_customer_name').val() + ' ', data: -1 });
+                    suggestions.push({ value: query + ' ', data: -1 });
                 }
                 result["suggestions"] = suggestions;
                 done(result);
