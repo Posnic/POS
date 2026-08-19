@@ -197,6 +197,30 @@ describe('QuoteRepository', () => {
     expect(sendCall[1].$set.status).toBe('sent');
   });
 
+  test('per-line tax: inclusive stays in the price, exclusive adds; tax total is computed', async () => {
+    mockCollection.insertOne.mockResolvedValue({ insertedId: new ObjectId(QUOTE_ID) });
+    const r = await repo.upsertQuote(
+      {
+        items: [
+          { item_id: ITEM, item_name: 'Incl', qty: 1, unit_price: 118, tax_name: 'GST 18%', tax_value: 18, tax_type: 'inclusive' },
+          { item_id: ITEM, item_name: 'Excl', qty: 1, unit_price: 100, tax_name: 'VAT 10%', tax_value: 10, tax_type: 'exclusive' },
+        ],
+        tax_total: 999,
+      },
+      '',
+      ctx
+    );
+    expect(r.status).toBe(true);
+    const doc = mockCollection.insertOne.mock.calls[0][0];
+    expect(doc.items[0].tax_amount).toBe(18);
+    expect(doc.items[0].line_total).toBe(118);
+    expect(doc.items[1].tax_amount).toBe(10);
+    expect(doc.items[1].line_total).toBe(110);
+    expect(doc.subtotal).toBe(228);
+    /* our sum, not the client's 999 */
+    expect(doc.tax_total).toBe(28);
+  });
+
   test('create refuses an empty line list', async () => {
     const r = await repo.upsertQuote({ items: [] }, '', ctx);
     expect(r.status).toBe(false);

@@ -75,7 +75,7 @@ function copyLazyScripts(cb) {
         ['static/script/js/plugins/amcharts/charts.js', 'amcharts-charts.js'],
         ['static/script/js/plugins/amcharts/theme/animated.js', 'amcharts-animated.js'],
         ['static/script/js/plugins/apexcharts/apexcharts.min.js', 'apexcharts.js'],
-        ['static/script/js/jspdf.debug.js', 'jspdf.js'],
+        ['static/script/js/jspdf.umd.min.js', 'jspdf.js'],
         ['static/script/js/html2canvas.min.js', 'html2canvas.js'],
         ['static/script/js/sortable.min.js', 'sortable.js'],
     ];

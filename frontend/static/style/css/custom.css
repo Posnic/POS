@@ -2972,7 +2972,7 @@ input:checked + .slider:before {
 }
 
 /* Quotation editor */
-#quotes_edit_card { max-width: 1100px; margin: 0 auto; }
+#quotes_edit_card { max-width: none; }
 .qe-sec { border: 1px solid #e3e7ee; border-radius: 6px; padding: 12px 14px; margin-bottom: 14px; background: #fff; }
 .qe-totals { font-size: 14px; }
 .qe-totals > div, .qe-totals #qe_charges_out > div { display: flex; justify-content: space-between; padding: 3px 0; }
@@ -2988,3 +2988,18 @@ input:checked + .slider:before {
 .q-sortable .q-label { cursor: grab; }
 .q-sortable .q-label:active { cursor: grabbing; }
 .q-sortable .q-block.sortable-ghost { opacity: 0.4; background: #f6f8ff; border-radius: 4px; }
+
+/* Split editor: live A4 paper on the right, sticky while the left scrolls */
+.qe-paper-wrap { position: sticky; top: 70px; max-height: calc(100vh - 90px); overflow-y: auto; background: #eceff3; padding: 14px; border-radius: 6px; }
+.qe-paper { box-shadow: 0 2px 10px rgba(30, 40, 60, 0.15); font-size: 12.5px; }
+.qe-paper .q-doc-title { font-size: 17px; }
+.qe-paper .q-shop { font-size: 15px; }
+/* the line-row delete: a cross the eye can actually find */
+#qe_lines .qe-l-del {
+    color: #c53030 !important;
+    background: rgba(197, 48, 48, 0.08) !important;
+    border: 1px solid rgba(197, 48, 48, 0.35);
+    min-width: 30px; height: 30px; line-height: 1;
+    font-size: 16px; font-weight: 700; padding: 0;
+}
+#qe_lines .qe-l-tax { font-size: 11px; color: #67707f; margin-top: 2px; }

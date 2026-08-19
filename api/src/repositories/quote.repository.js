@@ -95,6 +95,25 @@ class QuoteRepository extends BaseModel {
       const unitPrice = Number.isFinite(price) && price >= 0 ? price : 0;
       const gross = QuoteRepository._round2(qty * unitPrice);
       const discount = QuoteRepository._discountOf(row.discount, gross);
+      /*
+       * Per-line tax (owner: "each line item will have different tax -
+       * indian GST like that"), seeded from the item's own configured tax.
+       * Inclusive stays inside the price; exclusive adds on top - the same
+       * convention the sale runs, so a converted quote's tax matches by
+       * construction.
+       */
+      const taxRateRaw = Number(row.tax_value !== undefined ? row.tax_value : row.tax);
+      const taxRate = Number.isFinite(taxRateRaw) && taxRateRaw > 0 ? Math.min(taxRateRaw, 100) : 0;
+      const taxTypeRaw = String(row.tax_type || '').toLowerCase();
+      const taxType =
+        taxRate > 0 ? (taxTypeRaw.indexOf('ex') === 0 ? 'exclusive' : 'inclusive') : '';
+      const taxable = QuoteRepository._round2(gross - (discount ? discount.computed : 0));
+      const taxAmount =
+        taxRate > 0
+          ? taxType === 'exclusive'
+            ? QuoteRepository._round2((taxable * taxRate) / 100)
+            : QuoteRepository._round2(taxable - taxable / (1 + taxRate / 100))
+          : 0;
       lines.push({
         kind: hasItem && row.kind !== 'custom' ? 'item' : 'custom',
         item_id: hasItem && row.kind !== 'custom' ? new ObjectId(String(row.item_id)) : null,
@@ -106,7 +125,14 @@ class QuoteRepository extends BaseModel {
         qty,
         unit_price: unitPrice,
         discount,
-        line_total: QuoteRepository._round2(gross - (discount ? discount.computed : 0)),
+        tax_name: String(row.tax_name || '')
+          .trim()
+          .slice(0, 40),
+        tax_value: taxRate,
+        tax_type: taxType,
+        tax_amount: taxAmount,
+        line_total:
+          taxType === 'exclusive' ? QuoteRepository._round2(taxable + taxAmount) : taxable,
       });
     }
     if (!lines.length)
@@ -204,6 +230,12 @@ class QuoteRepository extends BaseModel {
        */
       const hasNewMoney =
         charges.length > 0 || quoteDiscount !== null || parsed.lines.some((l) => l.discount);
+      /* Lines carrying their own tax make the tax total OURS to compute;
+         the legacy path (sale-screen carts) keeps sending its own figure. */
+      const linesCarryTax = parsed.lines.some((l) => l.tax_value > 0);
+      const computedTaxTotal = QuoteRepository._round2(
+        parsed.lines.reduce((s, l) => s + (l.tax_amount || 0), 0)
+      );
       const taxTotal = Number(data.tax_total);
       const total = Number(data.total);
 
@@ -249,7 +281,11 @@ class QuoteRepository extends BaseModel {
           .trim()
           .slice(0, 2000),
         subtotal,
-        tax_total: Number.isFinite(taxTotal) && taxTotal >= 0 ? taxTotal : 0,
+        tax_total: linesCarryTax
+          ? computedTaxTotal
+          : Number.isFinite(taxTotal) && taxTotal >= 0
+            ? taxTotal
+            : 0,
         total: hasNewMoney ? computedTotal : Number.isFinite(total) && total > 0 ? total : subtotal,
         valid_until: this._validUntil(data.valid_until),
         note: String(data.note || '')

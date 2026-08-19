@@ -40,7 +40,7 @@
                             </div>
                         </div>
                         <div class="row">
-                            <div class="col-lg-8">
+                            <div class="col-lg-6" id="qe_edit_col">
                                 <div class="qe-sec">
                                     <div class="q-label">Bill to</div>
                                     <input type="text" id="qe_cust_search" class="form-control form-control-sm mb-2"
@@ -49,7 +49,7 @@
                                         <div class="col-md-6 mb-2"><input type="text" id="qe_cust_name" class="form-control form-control-sm" maxlength="120" placeholder="Customer name"></div>
                                         <div class="col-md-6 mb-2"><input type="text" id="qe_cust_phone" class="form-control form-control-sm" maxlength="20" placeholder="Phone"></div>
                                         <div class="col-md-6 mb-2"><input type="email" id="qe_cust_email" class="form-control form-control-sm" maxlength="120" placeholder="Email"></div>
-                                        <div class="col-md-6 mb-2"><input type="text" id="qe_cust_gstin" class="form-control form-control-sm" maxlength="20" placeholder="GSTIN"></div>
+                                        <div class="col-md-6 mb-2"><input type="text" id="qe_cust_gstin" class="form-control form-control-sm" maxlength="20" placeholder="GSTIN / Tax ID"></div>
                                         <div class="col-12 mb-2"><input type="text" id="qe_cust_address" class="form-control form-control-sm" maxlength="300" placeholder="Address"></div>
                                     </div>
                                 </div>
@@ -60,7 +60,7 @@
                                     <div class="table-responsive">
                                         <table class="table table-sm mb-1" id="qe_lines_table">
                                             <thead><tr>
-                                                <th style="min-width:200px;">Item</th><th>Qty</th><th>Unit price</th>
+                                                <th style="min-width:170px;">Item</th><th>Qty</th><th>Unit price</th>
                                                 <th>Line discount</th><th class="text-right">Total</th><th></th>
                                             </tr></thead>
                                             <tbody id="qe_lines"></tbody>
@@ -73,34 +73,36 @@
                                     <div id="qe_charges"></div>
                                     <button type="button" class="btn btn-sm btn-secondary-rgba" onclick="PosnicPro.quotes.edAddCharge();">+ Charge / tax</button>
                                 </div>
-                            </div>
-                            <div class="col-lg-4">
                                 <div class="qe-sec">
-                                    <div class="q-label">Quote discount</div>
-                                    <div class="input-group input-group-sm mb-2">
-                                        <select id="qe_disc_type" class="form-control" style="max-width:110px;">
-                                            <option value="">None</option>
-                                            <option value="percent">Percent</option>
-                                            <option value="amount">Amount</option>
-                                        </select>
-                                        <input type="number" id="qe_disc_value" min="0" step="0.01" class="form-control" placeholder="0">
+                                    <div class="form-row">
+                                        <div class="col-md-6 mb-2">
+                                            <div class="q-label">Quote discount</div>
+                                            <div class="input-group input-group-sm">
+                                                <select id="qe_disc_type" class="form-control" style="max-width:110px;">
+                                                    <option value="">None</option>
+                                                    <option value="percent">Percent</option>
+                                                    <option value="amount">Amount</option>
+                                                </select>
+                                                <input type="number" id="qe_disc_value" min="0" step="0.01" class="form-control" placeholder="0">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-2">
+                                            <div class="q-label">Valid until</div>
+                                            <input type="date" id="qe_valid_until" class="form-control form-control-sm">
+                                        </div>
                                     </div>
-                                    <div class="q-label">Valid until</div>
-                                    <input type="date" id="qe_valid_until" class="form-control form-control-sm mb-2">
-                                    <div class="q-label">Payment method</div>
-                                    <input type="text" id="qe_payment" class="form-control form-control-sm mb-2" maxlength="60">
-                                    <div class="q-label">Bank details</div>
-                                    <textarea id="qe_bank" class="form-control form-control-sm mb-2" rows="2" maxlength="500"></textarea>
+                                    <div class="q-label">Payment details</div>
+                                    <input type="text" id="qe_payment" class="form-control form-control-sm mb-1" maxlength="60" placeholder="Method - e.g. Bank transfer / UPI / Cash">
+                                    <textarea id="qe_bank" class="form-control form-control-sm mb-2" rows="2" maxlength="500" placeholder="Bank details - account name, number, IFSC"></textarea>
                                     <div class="q-label">Terms</div>
-                                    <textarea id="qe_terms" class="form-control form-control-sm mb-2" rows="3" maxlength="1500"></textarea>
+                                    <textarea id="qe_terms" class="form-control form-control-sm mb-2" rows="2" maxlength="1500"></textarea>
                                     <div class="q-label">Notes (printed on the quote)</div>
                                     <textarea id="qe_notes" class="form-control form-control-sm mb-2" rows="2" maxlength="2000"></textarea>
                                 </div>
-                                <div class="qe-sec qe-totals">
-                                    <div class="d-flex justify-content-between"><span>Subtotal</span><b id="qe_subtotal">0.00</b></div>
-                                    <div class="d-flex justify-content-between" id="qe_disc_row" style="display:none !important;"><span>Discount</span><b id="qe_disc_out">0.00</b></div>
-                                    <div id="qe_charges_out"></div>
-                                    <div class="d-flex justify-content-between qe-grand"><span>TOTAL</span><b id="qe_total">0.00</b></div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="qe-paper-wrap">
+                                    <div id="qe_preview" class="q-sheet qe-paper"></div>
                                 </div>
                             </div>
                         </div>

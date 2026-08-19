@@ -7282,6 +7282,7 @@ PosnicPro.quotes = {
         $('.page-title-box,#quotes_new').show();
         $('#quotes_view_card,#quotes_edit_card').hide();
         $('#quotes_list_card').show();
+        $('.vertical-layout').removeClass('toggle-menu');
         $('#v-pills-purchase-tab,#view_quotes_page').addClass('active');
         $('#v-pills-purchase').addClass('show active');
         PosnicPro.get({ url: 'quotes', data: {} }, function (r) {
@@ -7305,6 +7306,7 @@ PosnicPro.quotes = {
         $('#v-pills-purchase').addClass('show active');
         $('#quotes_list_card,#quotes_view_card').hide();
         $('#quotes_edit_card').show();
+        $('.vertical-layout').addClass('toggle-menu');
         PosnicPro.quotes._edInitSort();
     },
     /* Row drag (Q5): SortableJS rides the lazy rail; a failed load only
@@ -7361,7 +7363,10 @@ PosnicPro.quotes = {
                     qty: Number(l.qty) || 1,
                     unit_price: Number(l.unit_price) || 0,
                     dtype: l.discount ? l.discount.type : '',
-                    dval: l.discount ? l.discount.value : ''
+                    dval: l.discount ? l.discount.value : '',
+                    tax_name: l.tax_name || '',
+                    tax_value: Number(l.tax_value) || 0,
+                    tax_type: l.tax_type || ''
                 };
             });
             ed.charges = (q.charges || []).map(function (c) {
@@ -7387,14 +7392,38 @@ PosnicPro.quotes = {
         }, function () { PosnicPro.alert('error', 'Could not load the quote'); });
     },
     _edR2: function (n) { return Math.round(n * 100) / 100; },
+    /* "GST 18%" already names its rate - never print it twice */
+    _taxNote: function (l) {
+        var esc = PosnicPro.quotes._esc;
+        var name = String(l.tax_name || 'Tax');
+        if (name.indexOf(l.tax_value + '%') === -1) { name += ' ' + l.tax_value + '%'; }
+        return esc(name);
+    },
     /* One line's total, the same arithmetic the server stores. */
     _edLineTotal: function (l) {
         var r2 = PosnicPro.quotes._edR2;
         var gross = r2((Number(l.qty) || 0) * (Number(l.unit_price) || 0));
         var v = Number(l.dval);
-        if (l.dtype === 'percent' && v > 0) { return r2(gross - r2((gross * Math.min(v, 100)) / 100)); }
-        if (l.dtype === 'amount' && v > 0) { return r2(gross - Math.min(v, gross)); }
-        return gross;
+        var taxable = gross;
+        if (l.dtype === 'percent' && v > 0) { taxable = r2(gross - r2((gross * Math.min(v, 100)) / 100)); }
+        else if (l.dtype === 'amount' && v > 0) { taxable = r2(gross - Math.min(v, gross)); }
+        var rate = Number(l.tax_value) || 0;
+        if (rate > 0 && l.tax_type === 'exclusive') { return r2(taxable + r2((taxable * rate) / 100)); }
+        return taxable;
+    },
+    /* the tax inside (inclusive) or on top of (exclusive) one line */
+    _edLineTax: function (l) {
+        var r2 = PosnicPro.quotes._edR2;
+        var rate = Number(l.tax_value) || 0;
+        if (!(rate > 0)) { return 0; }
+        var gross = r2((Number(l.qty) || 0) * (Number(l.unit_price) || 0));
+        var v = Number(l.dval);
+        var taxable = gross;
+        if (l.dtype === 'percent' && v > 0) { taxable = r2(gross - r2((gross * Math.min(v, 100)) / 100)); }
+        else if (l.dtype === 'amount' && v > 0) { taxable = r2(gross - Math.min(v, gross)); }
+        return l.tax_type === 'exclusive'
+            ? r2((taxable * rate) / 100)
+            : r2(taxable - taxable / (1 + rate / 100));
     },
     edRender: function () {
         var ed = PosnicPro.quotes._ed;
@@ -7405,7 +7434,12 @@ PosnicPro.quotes = {
             html += '<tr data-i="' + i + '">'
                 + '<td><span class="qe-l-grip" title="Drag to reorder">&#x2630;</span>'
                 + '<input type="text" class="qe-l-name form-control form-control-sm" maxlength="200" placeholder="' + (l.kind === 'custom' ? 'Custom line name' : 'Item') + '" value="' + esc(l.item_name) + '">'
-                + '<input type="text" class="qe-l-desc form-control form-control-sm mt-1" maxlength="500" placeholder="Description (optional)" value="' + esc(l.description) + '"></td>'
+                + '<input type="text" class="qe-l-desc form-control form-control-sm mt-1" maxlength="500" placeholder="Description (optional)" value="' + esc(l.description) + '">'
+                + (Number(l.tax_value) > 0
+                    ? '<div class="qe-l-tax">' + PosnicPro.quotes._taxNote(l) + ' '
+                        + (l.tax_type === 'exclusive' ? 'added on top' : 'included') + '</div>'
+                    : '')
+                + '</td>'
                 + '<td><input type="number" class="qe-l-qty form-control form-control-sm" min="0" step="any" value="' + esc(l.qty) + '"></td>'
                 + '<td><input type="number" class="qe-l-price form-control form-control-sm" min="0" step="0.01" value="' + esc(l.unit_price) + '"></td>'
                 + '<td><div class="input-group input-group-sm" style="min-width:150px;">'
@@ -7414,7 +7448,7 @@ PosnicPro.quotes = {
                 + '<option value="amount"' + (l.dtype === 'amount' ? ' selected' : '') + '>amt</option></select>'
                 + '<input type="number" class="qe-l-dval form-control" min="0" step="0.01" value="' + esc(l.dval) + '"></div></td>'
                 + '<td class="text-right qe-l-total" style="white-space:nowrap; padding-top:12px;">' + PosnicPro.quotes._edLineTotal(l).toFixed(2) + '</td>'
-                + '<td><button type="button" class="btn btn-sm btn-danger-rgba qe-l-del" title="Remove line">&times;</button></td>'
+                + '<td><button type="button" class="btn qe-l-del" title="Remove line">&times;</button></td>'
                 + '</tr>';
         });
         $('#qe_lines').html(html || '<tr><td colspan="6" class="text-center text-muted">Search an item above, or add a custom line.</td></tr>');
@@ -7439,12 +7473,15 @@ PosnicPro.quotes = {
         if (!ed) { return 0; }
         var r2 = PosnicPro.quotes._edR2;
         var subtotal = 0;
+        var taxSum = 0;
         ed.lines.forEach(function (l, i) {
             var t = PosnicPro.quotes._edLineTotal(l);
             subtotal += t;
+            taxSum += PosnicPro.quotes._edLineTax(l);
             $('#qe_lines tr[data-i="' + i + '"] .qe-l-total').text(t.toFixed(2));
         });
         subtotal = r2(subtotal);
+        taxSum = r2(taxSum);
         var dtype = $('#qe_disc_type').val();
         var dval = Number($('#qe_disc_value').val());
         var qdisc = 0;
@@ -7452,39 +7489,111 @@ PosnicPro.quotes = {
         if (dtype === 'amount' && dval > 0) { qdisc = r2(Math.min(dval, subtotal)); }
         var base = r2(subtotal - qdisc);
         var chargesSum = 0;
-        var outHtml = '';
+        var chargeRows = [];
         ed.charges.forEach(function (c, i) {
             var computed = c.type === 'percent' ? r2((base * (Number(c.value) || 0)) / 100) : r2(Number(c.value) || 0);
             chargesSum += (c.sign === -1 ? -1 : 1) * computed;
             $('#qe_charges .qe-charge[data-i="' + i + '"] .qe-c-out').text((c.sign === -1 ? '-' : '') + computed.toFixed(2));
-            if (c.name) {
-                outHtml += '<div><span>' + PosnicPro.quotes._esc(c.name) + '</span><b>' + (c.sign === -1 ? '-' : '') + computed.toFixed(2) + '</b></div>';
-            }
+            if (c.name) { chargeRows.push({ name: c.name, sign: c.sign, computed: computed }); }
         });
         chargesSum = r2(chargesSum);
         var total = Math.max(0, r2(base + chargesSum));
-        $('#qe_subtotal').text(subtotal.toFixed(2));
-        $('#qe_disc_row').css('display', qdisc > 0 ? 'flex' : 'none');
-        $('#qe_disc_out').text('-' + qdisc.toFixed(2));
-        $('#qe_charges_out').html(outHtml);
-        $('#qe_total').text(total.toFixed(2));
+        PosnicPro.quotes._edPreviewRender({
+            subtotal: subtotal, taxSum: taxSum, qdisc: qdisc, dtype: dtype, dval: dval,
+            chargeRows: chargeRows, total: total
+        });
         return total;
+    },
+    /* The right-hand paper: the SAME sheet the customer gets, live. */
+    _edPreviewRender: function (m) {
+        var ed = PosnicPro.quotes._ed;
+        if (!ed) { return; }
+        var esc = PosnicPro.quotes._esc;
+        var money = PosnicPro.quotes._money;
+        var taxLabel = PosnicPro.local.get('gst_action') === 'enable' ? 'GSTIN' : 'Tax ID';
+        var logo = PosnicPro.local.get('branchimage');
+        var custName = $.trim($('#qe_cust_name').val());
+        var vu = $('#qe_valid_until').val();
+        var h = '<div class="q-head">'
+            + '<div class="q-seller">'
+            + (logo && logo !== 'store.png' ? '<img class="q-logo" src="' + esc(logo) + '" alt="">' : '')
+            + '<div class="q-shop">' + esc(PosnicPro.local.get('branchname') || '') + '</div>'
+            + '<div class="q-muted">' + esc(PosnicPro.local.get('branchaddress') || '') + '</div>'
+            + '<div class="q-muted">' + esc(PosnicPro.local.get('branchphone') || '') + '</div>'
+            + (PosnicPro.local.get('branchgstin') ? '<div class="q-muted">' + taxLabel + ': ' + esc(PosnicPro.local.get('branchgstin')) + '</div>' : '')
+            + '</div>'
+            + '<div class="q-title-block"><div class="q-doc-title">QUOTATION</div>'
+            + '<div class="q-num">' + esc(ed.quote_id || 'New') + '</div>'
+            + (vu ? '<div class="q-muted">Valid till: ' + esc(vu.split('-').reverse().join('/')) + '</div>' : '')
+            + '</div></div>'
+            + '<div class="q-billto"><div class="q-label">Bill To</div>'
+            + '<div class="q-cust">' + (esc(custName) || 'Walk-in customer') + '</div>'
+            + '<div class="q-muted">' + esc($.trim($('#qe_cust_address').val())) + '</div>'
+            + '<div class="q-muted">' + esc($.trim($('#qe_cust_phone').val()))
+            + ($.trim($('#qe_cust_gstin').val()) ? ' &middot; ' + taxLabel + ': ' + esc($.trim($('#qe_cust_gstin').val())) : '') + '</div>'
+            + '</div>'
+            + '<table class="q-items"><thead><tr><th>#</th><th>Item</th><th class="text-right">Qty</th>'
+            + '<th class="text-right">Price</th><th class="text-right">Amount</th></tr></thead><tbody>';
+        ed.lines.forEach(function (l, i) {
+            var note = esc(l.description || '');
+            if (l.dtype && Number(l.dval) > 0) {
+                note += (note ? ' &middot; ' : '') + (l.dtype === 'percent' ? l.dval + '% off' : money(l.dval) + ' off');
+            }
+            if (Number(l.tax_value) > 0) {
+                note += (note ? ' &middot; ' : '') + PosnicPro.quotes._taxNote(l)
+                    + (l.tax_type === 'exclusive' ? ' added' : ' incl.');
+            }
+            h += '<tr><td>' + (i + 1) + '</td><td>' + (esc(l.item_name) || '<span class="text-muted">(unnamed)</span>')
+                + (note ? '<div class="q-muted" style="font-size:11px;">' + note + '</div>' : '') + '</td>'
+                + '<td class="text-right">' + esc(l.qty) + '</td>'
+                + '<td class="text-right">' + money(l.unit_price) + '</td>'
+                + '<td class="text-right">' + money(PosnicPro.quotes._edLineTotal(l)) + '</td></tr>';
+        });
+        h += '</tbody><tfoot>'
+            + '<tr class="q-sub"><td colspan="4" class="text-right">Subtotal</td><td class="text-right">' + money(m.subtotal) + '</td></tr>'
+            + (m.taxSum > 0 ? '<tr class="q-sub"><td colspan="4" class="text-right">Tax</td><td class="text-right">' + money(m.taxSum) + '</td></tr>' : '')
+            + (m.qdisc > 0 ? '<tr class="q-sub"><td colspan="4" class="text-right">Discount' + (m.dtype === 'percent' ? ' (' + m.dval + '%)' : '') + '</td><td class="text-right">-' + money(m.qdisc) + '</td></tr>' : '');
+        m.chargeRows.forEach(function (c) {
+            h += '<tr class="q-sub"><td colspan="4" class="text-right">' + esc(c.name) + '</td><td class="text-right">' + (c.sign === -1 ? '-' : '') + money(c.computed) + '</td></tr>';
+        });
+        h += '<tr class="q-grand"><th colspan="4" class="text-right">TOTAL</th><th class="text-right">' + money(m.total) + '</th></tr>'
+            + '</tfoot></table>';
+        var pay = $.trim($('#qe_payment').val());
+        var bank = $.trim($('#qe_bank').val());
+        var terms = $.trim($('#qe_terms').val());
+        var notes = $.trim($('#qe_notes').val());
+        if (pay || bank) {
+            h += '<div class="q-block m-t-10"><div class="q-label">Payment details</div>'
+                + (pay ? '<div>' + esc(pay) + '</div>' : '')
+                + (bank ? '<div class="q-muted">' + esc(bank) + '</div>' : '') + '</div>';
+        }
+        if (terms) { h += '<div class="q-block m-t-10"><div class="q-label">Terms &amp; conditions</div>' + esc(terms) + '</div>'; }
+        if (notes) { h += '<div class="q-block m-t-10"><div class="q-label">Notes</div>' + esc(notes) + '</div>'; }
+        h += '<div class="q-sign">Authorised signatory</div>';
+        $('#qe_preview').html(h);
     },
     edAddCustom: function () {
         if (!PosnicPro.quotes._ed) { return; }
-        PosnicPro.quotes._ed.lines.push({ kind: 'custom', item_id: '', item_name: '', description: '', barcode_id: '', qty: 1, unit_price: 0, dtype: '', dval: '' });
+        PosnicPro.quotes._ed.lines.push({ kind: 'custom', item_id: '', item_name: '', description: '', barcode_id: '', qty: 1, unit_price: 0, dtype: '', dval: '', tax_name: '', tax_value: 0, tax_type: '' });
         PosnicPro.quotes.edRender();
         $('#qe_lines tr:last .qe-l-name').focus();
     },
-    edAddItem: function (itemId) {
+    edAddItem: function (itemId, seedName) {
         PosnicPro.get('items/' + itemId, function (r) {
             var d = (r && r.data) || {};
             if (!PosnicPro.quotes._ed) { return; }
             PosnicPro.quotes._ed.lines.push({
                 kind: 'item', item_id: String(itemId),
-                item_name: d.item_name || '', description: '',
+                // the item doc's field is `name`; item_name appears on some
+                // rows only - and the tapped suggestion always knows it
+                item_name: d.item_name || d.name || seedName || '',
+                description: '',
                 barcode_id: d.barcode_id || '',
-                qty: 1, unit_price: Number(d.selling_price) || 0, dtype: '', dval: ''
+                qty: 1, unit_price: Number(d.selling_price) || 0, dtype: '', dval: '',
+                // the item's own configured tax rides the line (GST style)
+                tax_name: d.tax_name || '',
+                tax_value: Number(d.tax) || 0,
+                tax_type: String(d.tax_type || '').toLowerCase().indexOf('ex') === 0 ? 'exclusive' : 'inclusive'
             });
             PosnicPro.quotes.edRender();
         }, function () { PosnicPro.alert('error', 'Could not load that item'); });
@@ -7511,7 +7620,9 @@ PosnicPro.quotes = {
                 var out = {
                     kind: l.kind, item_id: l.item_id || '', item_name: l.item_name,
                     description: l.description, barcode_id: l.barcode_id,
-                    qty: Number(l.qty), unit_price: Number(l.unit_price) || 0
+                    qty: Number(l.qty), unit_price: Number(l.unit_price) || 0,
+                    tax_name: l.tax_name || '', tax_value: Number(l.tax_value) || 0,
+                    tax_type: l.tax_type || ''
                 };
                 if (l.dtype && Number(l.dval) > 0) { out.discount = { type: l.dtype, value: Number(l.dval) }; }
                 return out;
@@ -7618,6 +7729,7 @@ PosnicPro.quotes = {
         $('#v-pills-purchase-tab,#view_quotes_page').addClass('active');
         $('#v-pills-purchase').addClass('show active');
         $('#quotes_list_card,#quotes_edit_card').hide();
+        $('.vertical-layout').removeClass('toggle-menu');
         PosnicPro.get({ url: 'quotes/' + id, data: {} }, function (r) {
             var q = r && r.data;
             if (!q) { PosnicPro.alert('error', 'Quote not found'); return; }
@@ -7625,6 +7737,7 @@ PosnicPro.quotes = {
             var esc = PosnicPro.quotes._esc;
             var money = PosnicPro.quotes._money;
             var open = ['open', 'draft', 'sent'].indexOf(q.status) !== -1;
+            var taxLabel = PosnicPro.local.get('gst_action') === 'enable' ? 'GSTIN' : 'Tax ID';
             var d = function (v) { return v ? new Date(v).toLocaleDateString('en-IN') : ''; };
             /* Inline-editable field: contenteditable on an open quote,
                plain text once converted or cancelled. */
@@ -7647,7 +7760,7 @@ PosnicPro.quotes = {
                 + '<div class="q-muted">' + esc(PosnicPro.local.get('branchaddress') || '') + '</div>'
                 + '<div class="q-muted">' + esc(PosnicPro.local.get('branchphone') || '')
                 + (PosnicPro.local.get('branchemail') ? ' &middot; ' + esc(PosnicPro.local.get('branchemail')) : '') + '</div>'
-                + (PosnicPro.local.get('branchgstin') ? '<div class="q-muted">GSTIN: ' + esc(PosnicPro.local.get('branchgstin')) + '</div>' : '')
+                + (PosnicPro.local.get('branchgstin') ? '<div class="q-muted">' + taxLabel + ': ' + esc(PosnicPro.local.get('branchgstin')) + '</div>' : '')
                 + '</div>'
                 + '<div class="q-title-block">'
                 + '<div class="q-doc-title">QUOTATION</div>'
@@ -7661,7 +7774,7 @@ PosnicPro.quotes = {
                 + '<div class="q-cust">' + ed('customer_name', q.customer_name || 'Walk-in customer', 'Customer name') + '</div>'
                 + '<div class="q-muted">' + ed('customer_address', q.customer_address, 'Address') + '</div>'
                 + '<div class="q-muted">Phone: ' + ed('customer_phone', q.customer_phone, 'phone')
-                + ' &middot; GSTIN: ' + ed('customer_gstin', q.customer_gstin, 'GSTIN') + '</div>'
+                + ' &middot; ' + taxLabel + ': ' + ed('customer_gstin', q.customer_gstin, taxLabel) + '</div>'
                 + '<div class="q-muted">Email: ' + ed('customer_email', q.customer_email, 'email') + '</div>'
                 + '</div>'
                 + '<div class="table-responsive"><table class="q-items"><thead><tr>'
@@ -7669,7 +7782,20 @@ PosnicPro.quotes = {
                 + '<th class="text-right">Unit price</th><th class="text-right">Amount</th>'
                 + '</tr></thead><tbody>';
             (q.items || []).forEach(function (l, i) {
-                body += '<tr><td>' + (i + 1) + '</td><td>' + esc(l.item_name) + '</td>'
+                var note = esc(l.description || '');
+                if (l.discount && l.discount.value > 0) {
+                    var dTxt = l.discount.type === 'percent'
+                        ? l.discount.value + '% off'
+                        : money(l.discount.value) + ' off';
+                    note += (note ? ' &middot; ' : '') + dTxt;
+                }
+                if (Number(l.tax_value) > 0) {
+                    note += (note ? ' &middot; ' : '') + PosnicPro.quotes._taxNote(l)
+                        + (l.tax_type === 'exclusive' ? ' added' : ' incl.');
+                }
+                body += '<tr><td>' + (i + 1) + '</td><td>' + esc(l.item_name)
+                    + (note ? '<div class="q-muted" style="font-size:11.5px;">' + note + '</div>' : '')
+                    + '</td>'
                     + '<td class="text-right">' + esc(l.qty) + '</td>'
                     + '<td class="text-right">' + money(l.unit_price) + '</td>'
                     + '<td class="text-right">' + money(l.line_total) + '</td></tr>';
@@ -7697,15 +7823,16 @@ PosnicPro.quotes = {
                        to reorder on an open quote); unlisted tokens keep the
                        default order. Same rule the PDF builder runs. */
                     var sections = {
-                        payment: '<div class="q-label">Payment method</div>' + ed('payment_method', q.payment_method, 'e.g. Bank transfer / UPI / Cash'),
-                        bank: '<div class="q-label">Bank details</div>' + ed('bank_details', q.bank_details, 'Account name, number, IFSC'),
+                        payment: '<div class="q-label">Payment details</div>'
+                            + '<div>' + ed('payment_method', q.payment_method, 'e.g. Bank transfer / UPI / Cash') + '</div>'
+                            + '<div class="q-muted">' + ed('bank_details', q.bank_details, 'Account name, number, IFSC') + '</div>',
                         terms: '<div class="q-label">Terms &amp; conditions</div>' + ed('terms', q.terms || q.note, 'e.g. 50% advance confirms the order. Prices valid till the date above.'),
                         custom: (q.custom_blocks || []).map(function (b) {
                             return '<div class="q-label">' + esc(b.title || '') + '</div><div class="mb-2">' + esc(b.text || '') + '</div>';
                         }).join(''),
                         notes: q.notes ? '<div class="q-label">Notes</div>' + esc(q.notes) : ''
                     };
-                    var tokens = ['payment', 'bank', 'terms', 'custom', 'notes'];
+                    var tokens = ['payment', 'terms', 'custom', 'notes'];
                     var order = [];
                     (q.layout || []).forEach(function (t) {
                         if (tokens.indexOf(t) !== -1 && order.indexOf(t) === -1) { order.push(t); }
@@ -7828,7 +7955,8 @@ PosnicPro.quotes = {
             address: PosnicPro.local.get('branchaddress') || '',
             phone: PosnicPro.local.get('branchphone') || '',
             email: PosnicPro.local.get('branchemail') || '',
-            gstin: PosnicPro.local.get('branchgstin') || ''
+            gstin: PosnicPro.local.get('branchgstin') || '',
+            taxLabel: PosnicPro.local.get('gst_action') === 'enable' ? 'GSTIN' : 'Tax ID'
         };
     },
     /* jsPDF + the shop logo (as a canvas data URL) resolved async, then
@@ -7913,7 +8041,8 @@ PosnicPro.quotes = {
         });
         var contact = [seller.phone, seller.email].filter(Boolean).map(txt).join('  -  ');
         if (contact) { doc.text(contact, M, leftY + 3.5); leftY += 4.3; }
-        if (seller.gstin) { doc.text('GSTIN: ' + txt(seller.gstin), M, leftY + 3.5); leftY += 4.3; }
+        var taxLabel = seller.taxLabel || 'GSTIN';
+        if (seller.gstin) { doc.text(taxLabel + ': ' + txt(seller.gstin), M, leftY + 3.5); leftY += 4.3; }
 
         var rightY = y;
         doc.setFont('helvetica', 'bold'); doc.setFontSize(17); doc.setTextColor(45, 55, 72);
@@ -7947,7 +8076,7 @@ PosnicPro.quotes = {
           });
         }
         var cLine = [q.customer_phone ? 'Phone: ' + txt(q.customer_phone) : '',
-          q.customer_gstin ? 'GSTIN: ' + txt(q.customer_gstin) : ''].filter(Boolean).join('   ');
+          q.customer_gstin ? taxLabel + ': ' + txt(q.customer_gstin) : ''].filter(Boolean).join('   ');
         if (cLine) { doc.text(cLine, M, y); y += 4.3; }
         if (q.customer_email) { doc.text(txt(q.customer_email), M, y); y += 4.3; }
         y += 4;
@@ -7994,6 +8123,12 @@ PosnicPro.quotes = {
           if (l.discount && l.discount.value > 0) {
             var dNote = l.discount.type === 'percent' ? l.discount.value + '% off' : money(l.discount.value) + ' off';
             subText = subText ? subText + '  -  ' + dNote : dNote;
+          }
+          if (Number(l.tax_value) > 0) {
+            var tName = txt(l.tax_name || 'Tax');
+            if (tName.indexOf(l.tax_value + '%') === -1) { tName += ' ' + l.tax_value + '%'; }
+            var tNote = tName + (l.tax_type === 'exclusive' ? ' added' : ' incl.');
+            subText = subText ? subText + '  -  ' + tNote : tNote;
           }
           var subLines = [];
           if (subText) {
@@ -8072,7 +8207,7 @@ PosnicPro.quotes = {
         };
         /* Footer sections obey the quote's own layout order (dragged on the
            preview); anything unlisted follows in the default order. */
-        var footerTokens = ['payment', 'bank', 'terms', 'custom', 'notes'];
+        var footerTokens = ['payment', 'terms', 'custom', 'notes'];
         var order = [];
         (q.layout || []).forEach(function (t) {
           if (footerTokens.indexOf(t) !== -1 && order.indexOf(t) === -1) { order.push(t); }
@@ -8081,8 +8216,23 @@ PosnicPro.quotes = {
           if (order.indexOf(t) === -1) { order.push(t); }
         });
         order.forEach(function (t) {
-          if (t === 'payment') { block('PAYMENT METHOD', q.payment_method); }
-          else if (t === 'bank') { block('BANK DETAILS', q.bank_details); }
+          if (t === 'payment') {
+            /* Owner ask: method and bank read as ONE "Payment details" section -
+               two wrapped paragraphs under a single label. */
+            var paras = [q.payment_method, q.bank_details].filter(Boolean).map(txt);
+            if (paras.length) {
+              var payLines = [];
+              paras.forEach(function (para) {
+                doc.splitTextToSize(para, tableW).forEach(function (ln) { payLines.push(ln); });
+              });
+              ensure(8 + payLines.length * 4.3);
+              doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(138, 148, 166);
+              doc.text('PAYMENT DETAILS', M, y + 4);
+              doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(60, 68, 82);
+              payLines.forEach(function (ln, i) { doc.text(ln, M, y + 8.5 + i * 4.3); });
+              y += 8.5 + payLines.length * 4.3 + 2;
+            }
+          }
           else if (t === 'terms') { block('TERMS & CONDITIONS', q.terms || q.note); }
           else if (t === 'custom') {
             (q.custom_blocks || []).forEach(function (b) {
@@ -8151,19 +8301,35 @@ PosnicPro.quotes = {
      * If any line no longer lands, the quote STAYS open - _sourceQuoteId is
      * cleared so saving the partial sale cannot stamp it converted.
      */
+    /*
+     * Convert v2 (owner: "all we can match and proceed to receipt"): the
+     * sale must equal the quote. Line discounts fold into the NET taxable
+     * unit price (the sale re-applies the item's own tax, so tax matches by
+     * construction); the quote discount and any named deductions become the
+     * sale's extra discount; positive charges land as their own named
+     * instant lines. A lapsed quote still loads at today's prices.
+     */
     convert: function () {
         var q = PosnicPro.quotes._current;
         if (!q) { return; }
         var lapsed = !!(q.valid_until && new Date(q.valid_until) < new Date());
         PosnicPro.sales._sourceQuoteId = String(q._id);
         PosnicPro.sales._quoteHonoured = !lapsed;
-        // custom rows have no catalog item behind them - they stay on the
-        // quote and the cashier is told, instead of a broken cart line
         var customCount = 0;
         var lines = [];
         (q.items || []).forEach(function (l) {
             if (l.kind === 'custom' || !l.item_id) { customCount += 1; return; }
-            lines.push({ item_id: String(l.item_id), qty: Number(l.qty) || 1, unit_price: Number(l.unit_price) || 0 });
+            var qty = Number(l.qty) || 1;
+            var lt = Number(l.line_total) || 0;
+            var taxAmt = Number(l.tax_amount) || 0;
+            // sale-side price semantics: Exc items get tax added on top, so
+            // hand them the pre-tax figure; Inc prices already carry it
+            var net = l.tax_type === 'exclusive' ? lt - taxAmt : lt;
+            lines.push({
+                item_id: String(l.item_id),
+                qty: qty,
+                unit_price: net > 0 ? Math.round((net / qty) * 100) / 100 : (Number(l.unit_price) || 0)
+            });
         });
         if (!lines.length) {
             PosnicPro.alert('warning', 'This quote has only custom lines - there is no catalog item to load on a sale.');
@@ -8179,8 +8345,6 @@ PosnicPro.quotes = {
                 lines.forEach(function (l) {
                     PosnicPro.sales.itemsMenu.addToLineItemsList(l.item_id);
                 });
-                // rows land async (item fetch per line) - settle each as it
-                // appears: quantity first, then the quoted price on top
                 var pending = lines.slice();
                 var waited = 0;
                 var t2 = setInterval(function () {
@@ -8204,17 +8368,85 @@ PosnicPro.quotes = {
                             PosnicPro.alert('warning', pending.length + ' of ' + lines.length
                                 + ' quoted items are no longer sellable and were skipped - quote '
                                 + (q.quote_id || '') + ' stays open.');
-                        } else if (lapsed) {
-                            PosnicPro.alert('warning', 'Quote ' + (q.quote_id || '') + ' lapsed on '
-                                + new Date(q.valid_until).toLocaleDateString('en-IN')
-                                + ' - items loaded at today\'s prices. Quoted total was '
-                                + Number(q.total || 0).toFixed(2) + '.'
-                                + (customCount ? ' ' + customCount + ' custom line(s) stay on the quote.' : ''));
-                        } else {
-                            PosnicPro.alert('success', 'Quote ' + (q.quote_id || '')
-                                + ' loaded at its quoted prices.'
-                                + (customCount ? ' ' + customCount + ' custom line(s) stay on the quote - add equivalents on the sale if needed.' : ''));
+                            return;
                         }
+                        // quote discount + named deductions -> the sale's
+                        // extra discount, as a flat amount
+                        var extra = (!lapsed && q.discount && q.discount.computed > 0) ? q.discount.computed : 0;
+                        if (!lapsed) {
+                            (q.charges || []).forEach(function (c) {
+                                if (c.sign === -1) { extra += Number(c.computed) || 0; }
+                            });
+                        }
+                        if (extra > 0) {
+                            $('#percentIcon').addClass('d-none');
+                            $('#rupeeIcon').removeClass('d-none');
+                            $('#extraDisc').text(extra.toFixed(2));
+                            try { PosnicPro.sales.calculation.extraDiscoundCalculation(); } catch (e) { /* next edit refreshes */ }
+                        }
+                        // positive charges become their own named lines
+                        var posCharges = lapsed ? [] : (q.charges || []).filter(function (c) {
+                            return c.sign !== -1 && Number(c.computed) > 0;
+                        });
+                        var chargeCount = posCharges.length;
+                        var queue = posCharges.slice();
+                        var finish = function () {
+                            var extras = [];
+                            if (chargeCount) { extras.push(chargeCount + ' charge line(s) added'); }
+                            if (extra > 0) { extras.push('quote discount applied'); }
+                            if (customCount) { extras.push(customCount + ' custom line(s) stay on the quote'); }
+                            var tail = extras.length ? ' ' + extras.join('; ') + '.' : '';
+                            if (lapsed) {
+                                PosnicPro.alert('warning', 'Quote ' + (q.quote_id || '') + ' lapsed on '
+                                    + new Date(q.valid_until).toLocaleDateString('en-IN')
+                                    + ' - items loaded at today\'s prices. Quoted total was '
+                                    + Number(q.total || 0).toFixed(2) + '.'
+                                    + (customCount ? ' ' + customCount + ' custom line(s) stay on the quote.' : ''));
+                            } else {
+                                PosnicPro.alert('success', 'Quote ' + (q.quote_id || '')
+                                    + ' loaded at its quoted prices.' + tail);
+                            }
+                        };
+                        var addNext = function () {
+                            var c = queue.shift();
+                            if (!c) { finish(); return; }
+                            PosnicPro.post({
+                                url: 'items/instanceItemInsert',
+                                data: JSON.stringify({
+                                    items_name: c.name,
+                                    items_quantity: 1,
+                                    items_mrp_price: c.computed,
+                                    items_selling_price: c.computed,
+                                    items_company_price: 0,
+                                    items_discount_amount: 0,
+                                    items_discount_percentage: 0,
+                                    items_tax_id: '',
+                                    items_tax_name: '',
+                                    items_tax: 0,
+                                    items_tax_type: 'inclusive',
+                                    items_sku: 'QUOTE-CHARGE',
+                                    items_category_id: '',
+                                    items_category_name: '',
+                                    items_unit: 'qty'
+                                })
+                            }, function (resp) {
+                                if (resp.type === 'success' && resp.data) {
+                                    var d = resp.data;
+                                    PosnicPro.sales.addSalesLineItems({
+                                        item_id: d.id, item_name: d.name, selling_price: d.selling_price,
+                                        barcode_id: d.barcode_id, item_quantity: d.available_quantity,
+                                        discount_amount: d.discount_amount, discount_percentage: d.discount_percentage,
+                                        tax: d.tax, company_price: d.company_price, category_id: d.category_id,
+                                        category_name: d.category_name, tax_type: d.tax_type,
+                                        sales_type: 'instant', instant_status: 'ok', unit: d.unit
+                                    });
+                                } else {
+                                    chargeCount -= 1;
+                                }
+                                addNext();
+                            }, function () { chargeCount -= 1; addNext(); });
+                        };
+                        addNext();
                     }
                 }, 300);
             }
@@ -10299,7 +10531,7 @@ $(document).on('click', '#qe_charges .qe-c-del', function () {
     var i = $(this).closest('.qe-charge').data('i');
     if (PosnicPro.quotes._ed) { PosnicPro.quotes._ed.charges.splice(i, 1); PosnicPro.quotes.edRender(); }
 });
-$(document).on('input change', '#qe_disc_type, #qe_disc_value', function () {
+$(document).on('input change', '#qe_disc_type, #qe_disc_value, #qe_cust_name, #qe_cust_phone, #qe_cust_email, #qe_cust_gstin, #qe_cust_address, #qe_payment, #qe_bank, #qe_terms, #qe_notes, #qe_valid_until', function () {
     PosnicPro.quotes.edRecalc();
 });
 $(function () {
@@ -10319,7 +10551,7 @@ $(function () {
             $('#qe_item_search').val('');
             var d = s2.data || {};
             var id = d.item_id || d.id;
-            if (id) { PosnicPro.quotes.edAddItem(String(id)); }
+            if (id) { PosnicPro.quotes.edAddItem(String(id), d.item_name || d.name || s2.value || ''); }
         },
         autoSelectFirst: true,
         triggerSelectOnValidInput: false
