@@ -2763,3 +2763,8 @@ tr.add-disc-row.tip-only td.discount-input { visibility: hidden; }
 
 /* GSTR section headers: themed, not inline blue - readable on every theme. */
 .gstr-head { color: var(--theme-primary-color, #007bff); font-weight: 600; }
+
+/* Sale Details: room to breathe - a document, not a strip. */
+#sales_view .modal-dialog { max-width: min(1100px, 94vw); }
+#sales_view .modal-body { padding: 20px 30px; }
+#sales_view .modal-body table { width: 100%; }
