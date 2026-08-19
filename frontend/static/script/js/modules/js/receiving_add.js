@@ -978,11 +978,18 @@ PosnicPro.receivings = {
                     items: PosnicPro.receivings.addLineReceivingTable,
                     id: PosnicPro.receivings.receivingAddId,
                     image: PosnicPro.receivings.imageParams,
-                    exclusive_tax: ($('#exclusive_tax').is(':checked', true)) ? 'on' : 'off'
+                    exclusive_tax: ($('#exclusive_tax').is(':checked', true)) ? 'on' : 'off',
+                    // PO receive bridge: set when this receiving was opened
+                    // from a purchase order's Receive button.
+                    source_po_id: PosnicPro.receivings._sourcePoId || undefined
                 })
             };
             PosnicPro.post(params, function (response) {
                 if (response.type === 'success') {
+                    // The PO link is single-use: the next receiving on this
+                    // screen is its own document unless Receive is pressed
+                    // again.
+                    PosnicPro.receivings._sourcePoId = null;
                     PosnicPro.receivings.clearReceivingForm();
                     PosnicPro.commonDate();
                     if (response.data.print === true) {
@@ -1733,4 +1740,362 @@ $('#exclusive_tax').click(function () {
             PosnicPro.receivings.addLineReceivingChangeQty(itemId);
         }
     }
+});
+/*
+ * Purchase orders (PO_LIFECYCLE_DESIGN.md): the plan that never touches
+ * stock. List / form / view sections on one page; Receive opens the
+ * ordinary receiving screen pre-filled with the outstanding quantities and
+ * stamps source_po_id so the bridge can mirror what arrived.
+ */
+PosnicPro.purchaseorders = {
+    _lines: {},
+    _detail: null,
+    showDataTablePage: function () {
+        PosnicPro.HideSideBarModal();
+        $('.page_loader,#osk-container').hide();
+        $('.page-title-box,#purchaseorders_new').show();
+        $('#po_form_section,#po_view_section').hide();
+        $('#po_list_section').show();
+        PosnicPro.purchaseorders.loadList(1);
+    },
+    showAdd: function () { PosnicPro.purchaseorders.showDataTablePage(); PosnicPro.purchaseorders.openForm(''); },
+    showEdit: function (id) { PosnicPro.purchaseorders.showDataTablePage(); PosnicPro.purchaseorders.openForm(id); },
+    showDetails: function (id) { PosnicPro.purchaseorders.showDataTablePage(); PosnicPro.purchaseorders.openView(id); },
+    loadList: function (page) {
+        var status = $('#po_filter_status').val() || '';
+        PosnicPro.get({
+            url: 'purchaseOrders',
+            data: 'page=' + (page || 1) + '&limit=10' + (status ? '&status=' + encodeURIComponent(status) : '')
+        }, function (response) {
+            var d = (response && response.data) || {};
+            var rows = d.list || [];
+            if (!rows.length) {
+                $('#po_list_rows').html('<tr><td colspan="8" class="text-center text-muted">No purchase orders yet.</td></tr>');
+                $('#po_list_paging').html('');
+                return;
+            }
+            var currency = PosnicPro.local.get('currencySign');
+            var html = rows.map(function (po, i) {
+                var pct = po.ordered_qty > 0 ? Math.min(100, Math.round(po.received_qty * 100 / po.ordered_qty)) : 0;
+                var progress = '<div class="progress" style="height:6px;"><div class="progress-bar" style="width:' + pct + '%;"></div></div>' +
+                    '<small class="text-muted">' + po.received_qty + ' of ' + po.ordered_qty + '</small>';
+                var expected = po.expected_date ? String(po.expected_date).slice(0, 10) : '-';
+                return '<tr class="point-cursor po-list-row" data-id="' + po.id + '">' +
+                    '<td>' + ((d.current_page - 1) * d.per_page + i + 1) + '</td>' +
+                    '<td>' + po.po_id + '</td>' +
+                    '<td>' + String(po.order_date).slice(0, 10) + '</td>' +
+                    '<td>' + $('<span>').text(po.supplier_name).html() + '</td>' +
+                    '<td class="text-center"><span class="badge badge-primary-inverse">' + po.status + '</span></td>' +
+                    '<td>' + progress + '</td>' +
+                    '<td>' + expected + '</td>' +
+                    '<td class="text-right">' + currency + '&nbsp;' + (Number(po.grand_total) || 0).toFixed(2) + '</td>' +
+                    '</tr>';
+            }).join('');
+            $('#po_list_rows').html(html);
+            var paging = '';
+            for (var p = 1; p <= (d.total_pages || 1); p++) {
+                paging += '<a href="javascript:void(0)" class="btn btn-sm ' + (p === d.current_page ? 'btn-primary-rgba' : '') + '" onclick="PosnicPro.purchaseorders.loadList(' + p + ');">' + p + '</a> ';
+            }
+            $('#po_list_paging').html((d.total_pages || 1) > 1 ? paging : '');
+        }, function () {
+            $('#po_list_rows').html('<tr><td colspan="8" class="text-center text-danger">Could not load purchase orders.</td></tr>');
+        });
+    },
+    backToList: function () {
+        $('#po_form_section,#po_view_section').hide();
+        $('#po_list_section').show();
+        PosnicPro.purchaseorders.loadList(1);
+    },
+    /* ---- form ---- */
+    openForm: function (id) {
+        PosnicPro.purchaseorders._lines = {};
+        $('#po_form_id').val('');
+        $('#po_supplier_name,#po_supplier_id,#po_expected_date,#po_notes,#po_item_search').val('');
+        $('#po_cost_rows').html('');
+        $('#po_form_verb').text(id ? 'Edit' : 'Create');
+        PosnicPro.purchaseorders.renderLines();
+        $('#po_list_section,#po_view_section').hide();
+        $('#po_form_section').show();
+        if (id) {
+            PosnicPro.get({ url: 'purchaseOrders/' + id, data: '' }, function (response) {
+                var po = response && response.data;
+                if (!po) { return; }
+                $('#po_form_id').val(id);
+                $('#po_supplier_name').val(po.supplier_name);
+                $('#po_supplier_id').val(po.supplier_id || '');
+                $('#po_expected_date').val(po.expected_date ? String(po.expected_date).slice(0, 10) : '');
+                $('#po_notes').val(po.notes || '');
+                (po.items || []).forEach(function (line) {
+                    PosnicPro.purchaseorders._lines[String(line.item_id)] = {
+                        name: line.item_name, barcode: line.barcode_id || '',
+                        stock: '', incoming: '',
+                        qty: line.qty_ordered, cost: line.unit_cost
+                    };
+                });
+                (po.additional_costs || []).forEach(function (c) {
+                    PosnicPro.purchaseorders.addCostRow(c.label, c.amount);
+                });
+                PosnicPro.purchaseorders.renderLines();
+            });
+        }
+    },
+    addLine: function (row) {
+        var key = String(row.item_id);
+        if (!PosnicPro.purchaseorders._lines[key]) {
+            PosnicPro.purchaseorders._lines[key] = {
+                name: row.item_name, barcode: row.barcode_id || '',
+                stock: (row.available_quantity === undefined ? '' : row.available_quantity),
+                incoming: (row.incoming === undefined ? '' : row.incoming),
+                qty: 1, cost: Number(row.company_price) || 0
+            };
+        }
+        PosnicPro.purchaseorders.renderLines();
+    },
+    renderLines: function () {
+        var keys = Object.keys(PosnicPro.purchaseorders._lines);
+        if (!keys.length) {
+            $('#po_form_rows').html('<tr><td colspan="7" class="text-center text-muted">Search or fill from the supplier.</td></tr>');
+            $('#po_form_total').text('0.00');
+            return;
+        }
+        var html = keys.map(function (id) {
+            var l = PosnicPro.purchaseorders._lines[id];
+            var amount = (Number(l.qty) || 0) * (Number(l.cost) || 0);
+            return '<tr>' +
+                '<td>' + $('<span>').text(l.name).html() + '</td>' +
+                '<td class="text-right">' + (l.stock === '' ? '-' : l.stock) + '</td>' +
+                '<td class="text-right">' + (l.incoming === '' ? '-' : l.incoming) + '</td>' +
+                '<td class="text-right"><input type="number" min="0.001" step="any" class="form-control form-control-sm text-right po-line-qty" data-id="' + id + '" value="' + l.qty + '"></td>' +
+                '<td class="text-right"><input type="number" min="0" step="any" class="form-control form-control-sm text-right po-line-cost" data-id="' + id + '" value="' + l.cost + '"></td>' +
+                '<td class="text-right">' + amount.toFixed(2) + '</td>' +
+                '<td><a href="javascript:void(0)" class="text-danger po-line-remove" data-id="' + id + '">&times;</a></td>' +
+                '</tr>';
+        }).join('');
+        $('#po_form_rows').html(html);
+        PosnicPro.purchaseorders.renderTotal();
+    },
+    renderTotal: function () {
+        var total = 0;
+        Object.keys(PosnicPro.purchaseorders._lines).forEach(function (id) {
+            var l = PosnicPro.purchaseorders._lines[id];
+            total += (Number(l.qty) || 0) * (Number(l.cost) || 0);
+        });
+        $('#po_cost_rows .po-cost-amount').each(function () { total += Number($(this).val()) || 0; });
+        $('#po_form_total').text(total.toFixed(2));
+    },
+    addCostRow: function (label, amount) {
+        $('#po_cost_rows').append(
+            '<div class="form-row align-items-center mb-1 po-cost-row">' +
+            '<div class="col-5"><input type="text" class="form-control form-control-sm po-cost-label" maxlength="100" placeholder="e.g. freight" value="' + $('<span>').text(label || '').html() + '"></div>' +
+            '<div class="col-3"><input type="number" min="0" step="any" class="form-control form-control-sm text-right po-cost-amount" value="' + (amount || '') + '"></div>' +
+            '<div class="col-1"><a href="javascript:void(0)" class="text-danger po-cost-remove">&times;</a></div>' +
+            '</div>');
+    },
+    fillFromSupplier: function (lowStockOnly) {
+        var supplierId = $('#po_supplier_id').val();
+        if (!supplierId) { PosnicPro.alert('warning', 'Choose a supplier first'); return; }
+        var range = localStorage.getItem('notificationrange') || 10;
+        PosnicPro.get({
+            url: 'items/bySupplier',
+            data: 'supplier_id=' + encodeURIComponent(supplierId) + '&low_stock=' + (lowStockOnly ? 'true' : 'false') + '&notificationrange=' + encodeURIComponent(range)
+        }, function (response) {
+            var rows = (response && response.data) || [];
+            if (!rows.length) { PosnicPro.alert('info', 'No items for this supplier'); return; }
+            rows.forEach(function (row) { PosnicPro.purchaseorders.addLine(row); });
+        }, function () { PosnicPro.alert('error', 'Could not load the supplier items'); });
+    },
+    save: function (status) {
+        var id = $('#po_form_id').val();
+        var items = Object.keys(PosnicPro.purchaseorders._lines).map(function (key) {
+            var l = PosnicPro.purchaseorders._lines[key];
+            return { item_id: key, item_name: l.name, barcode_id: l.barcode, qty_ordered: Number(l.qty) || 0, unit_cost: Number(l.cost) || 0 };
+        });
+        var costs = $('#po_cost_rows .po-cost-row').map(function () {
+            return { label: $(this).find('.po-cost-label').val(), amount: Number($(this).find('.po-cost-amount').val()) || 0 };
+        }).get().filter(function (c) { return c.label; });
+        var payload = {
+            supplier_id: $('#po_supplier_id').val() || undefined,
+            supplier_name: $('#po_supplier_name').val(),
+            status: status,
+            expected_date: $('#po_expected_date').val() || undefined,
+            notes: $('#po_notes').val(),
+            items: items,
+            additional_costs: costs
+        };
+        var params = id
+            ? { url: 'purchaseOrders/' + id, data: JSON.stringify(payload) }
+            : { url: 'purchaseOrders', data: JSON.stringify(payload) };
+        (id ? PosnicPro.put : PosnicPro.post)(params, function (response) {
+            PosnicPro.alert(response.type, response.message);
+            if (response.type === 'success') { PosnicPro.purchaseorders.backToList(); }
+        }, function (xhr) {
+            var resp = {}; try { resp = JSON.parse(xhr.responseText); } catch (e) { /* plain */ }
+            PosnicPro.alert('error', resp.message || 'Could not save the purchase order');
+        });
+    },
+    /* ---- view ---- */
+    openView: function (id) {
+        PosnicPro.get({ url: 'purchaseOrders/' + id, data: '' }, function (response) {
+            var po = response && response.data;
+            if (!po) { return; }
+            PosnicPro.purchaseorders._detail = po;
+            var currency = PosnicPro.local.get('currencySign');
+            $('#po_view_id').text(po.po_id);
+            $('#po_view_status').text(po.status);
+            $('#po_view_supplier').text(po.supplier_name);
+            $('#po_view_date').text(String(po.order_date).slice(0, 10));
+            $('#po_view_expected').text(po.expected_date ? String(po.expected_date).slice(0, 10) : '-');
+            var ordered = 0, received = 0, rows = '';
+            (po.items || []).forEach(function (line) {
+                ordered += Number(line.qty_ordered) || 0;
+                received += Number(line.qty_received) || 0;
+                rows += '<tr><td>' + $('<span>').text(line.item_name).html() + '</td>' +
+                    '<td class="text-right">' + line.qty_ordered + '</td>' +
+                    '<td class="text-right">' + line.qty_received + '</td>' +
+                    '<td class="text-right">' + (Number(line.unit_cost) || 0).toFixed(2) + '</td>' +
+                    '<td class="text-right">' + (Number(line.line_total) || 0).toFixed(2) + '</td></tr>';
+            });
+            $('#po_view_rows').html(rows);
+            var pct = ordered > 0 ? Math.min(100, Math.round(received * 100 / ordered)) : 0;
+            $('#po_view_progress').html('<div class="progress" style="height:8px;"><div class="progress-bar" style="width:' + pct + '%;"></div></div><small class="text-muted">Received ' + received + ' of ' + ordered + '</small>');
+            var costs = '';
+            (po.additional_costs || []).forEach(function (c) {
+                costs += '<div><small class="text-muted">' + $('<span>').text(c.label).html() + '</small> ' + currency + '&nbsp;' + (Number(c.amount) || 0).toFixed(2) + '</div>';
+            });
+            $('#po_view_costs').html(costs);
+            $('#po_view_total').text(currency + ' ' + (Number(po.grand_total) || 0).toFixed(2));
+            $('#po_view_notes').text(po.notes || '');
+            var actions = '<button type="button" class="btn btn-sm btn-outline-secondary mr-1" onclick="PosnicPro.purchaseorders.backToList();">Back</button>';
+            if (po.status === 'draft') {
+                actions += '<button type="button" class="btn btn-sm btn-outline-primary mr-1" data-act="order">Place order</button>' +
+                    '<button type="button" class="btn btn-sm btn-outline-secondary mr-1" data-act="edit">Edit</button>' +
+                    '<button type="button" class="btn btn-sm btn-outline-danger mr-1" data-act="delete">Delete</button>';
+            }
+            if (po.status === 'ordered' || po.status === 'partial') {
+                actions += '<button type="button" class="btn btn-sm btn-outline-primary mr-1" data-act="receive">Receive</button>';
+                if (po.status === 'ordered') {
+                    actions += '<button type="button" class="btn btn-sm btn-outline-secondary mr-1" data-act="edit">Edit</button>';
+                }
+                actions += '<button type="button" class="btn btn-sm btn-outline-danger mr-1" data-act="cancel_remaining">Cancel remaining</button>';
+            }
+            $('#po_view_actions').html(actions).data('po-id', String(po._id));
+            $('#po_list_section,#po_form_section').hide();
+            $('#po_view_section').show();
+        });
+    },
+    transition: function (id, action) {
+        PosnicPro.post({ url: 'purchaseOrders/' + id + '/transition', data: JSON.stringify({ action: action }) }, function (response) {
+            PosnicPro.alert(response.type, response.message);
+            if (response.type === 'success') { PosnicPro.purchaseorders.openView(id); }
+        });
+    },
+    removeDraft: function (id) {
+        PosnicPro.delete({ url: 'purchaseOrders/' + id, data: JSON.stringify({}) }, function (response) {
+            PosnicPro.alert(response.type, response.message);
+            if (response.type === 'success') { PosnicPro.purchaseorders.backToList(); }
+        });
+    },
+    /*
+     * Receive: open the ORDINARY receiving screen pre-filled with the
+     * outstanding quantities. The item rows come from items/bySupplier (the
+     * full autocomplete shape), quantities and costs overridden from the PO;
+     * source_po_id rides the receiving payload so the bridge mirrors back.
+     */
+    receive: function (id) {
+        var po = PosnicPro.purchaseorders._detail;
+        if (!po || String(po._id) !== String(id)) { PosnicPro.alert('error', 'Open the order first'); return; }
+        PosnicPro.get({
+            url: 'items/bySupplier',
+            data: 'supplier_id=' + encodeURIComponent(po.supplier_id || '') + '&low_stock=false'
+        }, function (response) {
+            var byId = {};
+            ((response && response.data) || []).forEach(function (row) { byId[row.item_id] = row; });
+            var prefill = [];
+            (po.items || []).forEach(function (line) {
+                var outstanding = (Number(line.qty_ordered) || 0) - (Number(line.qty_received) || 0);
+                if (outstanding <= 0) { return; }
+                var row = byId[String(line.item_id)];
+                if (!row) { return; } // item vanished; the receiving screen can add it manually
+                prefill.push(Object.assign({}, row, {
+                    item_quantity: outstanding,
+                    company_price: Number(line.unit_cost) || row.company_price
+                }));
+            });
+            if (!prefill.length) { PosnicPro.alert('info', 'Nothing outstanding on this order'); return; }
+            PosnicPro.receivings._poPrefill = { source_po_id: String(po._id), supplier: po, rows: prefill };
+            hasher.setHash('receivings/new');
+        }, function () { PosnicPro.alert('error', 'Could not load the order items'); });
+    }
+};
+$(document).on('click', '.po-list-row', function () {
+    PosnicPro.purchaseorders.openView($(this).data('id'));
+});
+$(document).on('click', '#po_view_actions [data-act]', function () {
+    var id = $('#po_view_actions').data('po-id');
+    var act = $(this).data('act');
+    if (act === 'edit') { PosnicPro.purchaseorders.openForm(id); }
+    else if (act === 'delete') { PosnicPro.purchaseorders.removeDraft(id); }
+    else if (act === 'receive') { PosnicPro.purchaseorders.receive(id); }
+    else { PosnicPro.purchaseorders.transition(id, act); }
+});
+$(document).on('input', '.po-line-qty, .po-line-cost', function () {
+    var id = $(this).data('id');
+    var l = PosnicPro.purchaseorders._lines[id];
+    if (!l) { return; }
+    if ($(this).hasClass('po-line-qty')) { l.qty = Number($(this).val()) || 0; }
+    else { l.cost = Number($(this).val()) || 0; }
+    var amount = (l.qty * l.cost).toFixed(2);
+    $(this).closest('tr').find('td').eq(5).text(amount);
+    PosnicPro.purchaseorders.renderTotal();
+});
+$(document).on('input', '.po-cost-amount, .po-cost-label', function () { PosnicPro.purchaseorders.renderTotal(); });
+$(document).on('click', '.po-cost-remove', function () { $(this).closest('.po-cost-row').remove(); PosnicPro.purchaseorders.renderTotal(); });
+$(document).on('click', '.po-line-remove', function () {
+    delete PosnicPro.purchaseorders._lines[$(this).data('id')];
+    PosnicPro.purchaseorders.renderLines();
+});
+$(document).ready(function () {
+    // Supplier + item autocompletes for the PO form.
+    $('#po_supplier_name').autocomplete({
+        lookup: function (query, done) {
+            PosnicPro.get({ url: 'suppliers/getSuppliersAjaxList', data: 'query=' + encodeURIComponent(query) }, function (response) {
+                done({ suggestions: $.map(response.suggestions || [], function (d) { return { value: d.name, data: d }; }) });
+            }, function () { done({ suggestions: [] }); });
+        },
+        onSelect: function (suggestion) {
+            if (suggestion.data) { $('#po_supplier_id').val(suggestion.data.id); }
+        },
+        autoSelectFirst: true,
+        triggerSelectOnValidInput: false
+    });
+    $('#po_item_search').autocomplete({
+        lookup: function (query, done) {
+            PosnicPro.get({ url: 'items/getReceivingItemsAjaxList', data: 'query=' + encodeURIComponent(query) + '&type=normal' }, function (response) {
+                done({ suggestions: $.map(response.suggestions || [], function (d) { return { value: d.item_name, data: d }; }) });
+            }, function () { done({ suggestions: [] }); });
+        },
+        onSelect: function (suggestion) {
+            if (suggestion.data && suggestion.data.item_id) { PosnicPro.purchaseorders.addLine(suggestion.data); }
+            var $box = $('#po_item_search');
+            $box.val('');
+            if ($box.data('autocomplete')) { $box.autocomplete('clear'); }
+            setTimeout(function () { $box.focus(); }, 0);
+        },
+        autoSelectFirst: true,
+        triggerSelectOnValidInput: false
+    });
+    // Arriving from a PO's Receive button: prefill the receiving screen.
+    // Runs on hash change into receivings/new via the stashed state.
+    var poPrefillTimer = setInterval(function () {
+        var prefill = PosnicPro.receivings && PosnicPro.receivings._poPrefill;
+        if (!prefill) { return; }
+        if (!$('#receivings_new').is(':visible') && !$('#receiving_add_supplier_name').is(':visible')) { return; }
+        PosnicPro.receivings._poPrefill = null;
+        PosnicPro.receivings._sourcePoId = prefill.source_po_id;
+        $('#receiving_add_supplier_id').val(prefill.supplier.supplier_id || '');
+        $('#receiving_add_supplier_name').val(prefill.supplier.supplier_name || '');
+        prefill.rows.forEach(function (row) { PosnicPro.receivings.addReceivingLineItems(row); });
+        PosnicPro.alert('info', 'Receiving pre-filled from ' + (prefill.supplier.po_id || 'the purchase order'));
+    }, 600);
+    void poPrefillTimer;
 });
