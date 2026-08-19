@@ -6059,7 +6059,10 @@ PosnicPro.sales.setSaleDefaults = function () {
     // Tip sits beside the coupon now; the Workforce switch is the only gate.
     // Tip sits beside the coupon now; the Workforce tips switch is the
     // only gate.
+    // Tips are a CHILD of Workforce: parent off means tips off, whatever
+    // the sub-switch remembers (owner report - tip showed with Workforce off).
     var _tipsOn = !!(PosnicPro.shiftWidget
+        && PosnicPro.shiftWidget._setting('staff_shifts_enable', true)
         && PosnicPro.shiftWidget._setting('staff_tips_enable', false));
     $('.sale-tip-wrap').toggle(_tipsOn);
     // Coupons belong to Marketing - feature off, box gone (owner report).
