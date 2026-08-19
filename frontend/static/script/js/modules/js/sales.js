@@ -7305,6 +7305,28 @@ PosnicPro.quotes = {
         $('#v-pills-purchase').addClass('show active');
         $('#quotes_list_card,#quotes_view_card').hide();
         $('#quotes_edit_card').show();
+        PosnicPro.quotes._edInitSort();
+    },
+    /* Row drag (Q5): SortableJS rides the lazy rail; a failed load only
+       costs the drag - typing still works. */
+    _edSortable: null,
+    _edInitSort: function () {
+        PosnicPro.lazy.load('sortable').then(function () {
+            if (PosnicPro.quotes._edSortable || !window.Sortable) { return; }
+            var el = document.getElementById('qe_lines');
+            if (!el) { return; }
+            PosnicPro.quotes._edSortable = window.Sortable.create(el, {
+                handle: '.qe-l-grip',
+                animation: 120,
+                onEnd: function (evt) {
+                    var ed = PosnicPro.quotes._ed;
+                    if (!ed || evt.oldIndex === evt.newIndex) { return; }
+                    var moved = ed.lines.splice(evt.oldIndex, 1)[0];
+                    if (moved) { ed.lines.splice(evt.newIndex, 0, moved); }
+                    PosnicPro.quotes.edRender();
+                }
+            });
+        }).catch(function () { /* drag is a nicety */ });
     },
     showAdd: function () {
         PosnicPro.quotes._ed = PosnicPro.quotes._edBlank();
@@ -7381,7 +7403,8 @@ PosnicPro.quotes = {
         var html = '';
         ed.lines.forEach(function (l, i) {
             html += '<tr data-i="' + i + '">'
-                + '<td><input type="text" class="qe-l-name form-control form-control-sm" maxlength="200" placeholder="' + (l.kind === 'custom' ? 'Custom line name' : 'Item') + '" value="' + esc(l.item_name) + '">'
+                + '<td><span class="qe-l-grip" title="Drag to reorder">&#x2630;</span>'
+                + '<input type="text" class="qe-l-name form-control form-control-sm" maxlength="200" placeholder="' + (l.kind === 'custom' ? 'Custom line name' : 'Item') + '" value="' + esc(l.item_name) + '">'
                 + '<input type="text" class="qe-l-desc form-control form-control-sm mt-1" maxlength="500" placeholder="Description (optional)" value="' + esc(l.description) + '"></td>'
                 + '<td><input type="number" class="qe-l-qty form-control form-control-sm" min="0" step="any" value="' + esc(l.qty) + '"></td>'
                 + '<td><input type="number" class="qe-l-price form-control form-control-sm" min="0" step="0.01" value="' + esc(l.unit_price) + '"></td>'
