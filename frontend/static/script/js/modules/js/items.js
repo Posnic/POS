@@ -98,6 +98,15 @@ PosnicPro.items = {
             return ($(this).data('color') || '') === (color || '');
         }).css('outline', '3px solid #506fe4');
     },
+    /* Services (Q3): a service holds no stock - the stock-ish inputs step
+       aside and the pricing unit select appears. The server forces
+       track_inventory off regardless, so this is presentation only. */
+    applyServiceMode: function () {
+        var isService = $('#item_is_service').is(':checked');
+        $('#item_service_unit').attr('style', isService ? 'width:auto;' : 'width:auto; display:none !important;');
+        $('#items_available_quantity, #items_reorder_point').closest('.col-md-6').toggle(!isService);
+        $('#items_barcodes_alt, #items_purchase_unit, #items_conversion_factor').closest('.form-row').toggle(!isService);
+    },
     /* The weight-scale flag only means anything when the weight-machine
        hardware module is on - the sales side gates on the same setting. */
     applyHardwareGates: function () {
@@ -365,6 +374,8 @@ PosnicPro.items = {
             item_weight_machine_based: $('#item_weight_machine_based').is(':checked'),
             open_price: $('#item_open_price').is(':checked'),
             tile_color: $('#item_tile_color').val(),
+            item_kind: $('#item_is_service').is(':checked') ? 'service' : 'product',
+            service_unit: $('#item_service_unit').val() || 'fixed',
             brand: $('#items_brand').val(),
             tags: PosnicPro.items._tagList(),
             reorder_point: $('#items_reorder_point').val() === '' ? undefined : Number($('#items_reorder_point').val()),
@@ -552,6 +563,8 @@ PosnicPro.items = {
                     item_weight_machine_based: $('#item_weight_machine_based').is(':checked'),
                     open_price: $('#item_open_price').is(':checked'),
                     tile_color: $('#item_tile_color').val(),
+                    item_kind: $('#item_is_service').is(':checked') ? 'service' : 'product',
+                    service_unit: $('#item_service_unit').val() || 'fixed',
                     brand: $('#items_brand').val(),
                     tags: PosnicPro.items._tagList(),
                     reorder_point: $('#items_reorder_point').val() === '' ? undefined : Number($('#items_reorder_point').val()),
@@ -1071,6 +1084,9 @@ PosnicPro.items = {
                 (data.negative_stock === true) ? $('#item_negative_stock').prop('checked', true) : $('#item_negative_stock').prop("checked", false);
                 (data.item_weight_machine_based === true) ? $('#item_weight_machine_based').prop('checked', true) : $('#item_weight_machine_based').prop("checked", false);
                 (data.open_price === true) ? $('#item_open_price').prop('checked', true) : $('#item_open_price').prop("checked", false);
+                $('#item_is_service').prop('checked', data.item_kind === 'service');
+                $('#item_service_unit').val(data.service_unit || 'fixed');
+                PosnicPro.items.applyServiceMode();
                 $('#items_brand').val(data.brand || '');
                 $('#items_tags').val(Array.isArray(data.tags) ? data.tags.join(', ') : '');
                 $('#items_reorder_point').val(data.reorder_point === null || data.reorder_point === undefined ? '' : data.reorder_point);
@@ -1713,6 +1729,9 @@ PosnicPro.items = {
                 (data.negative_stock === true) ? $('#item_negative_stock').prop('checked', true) : $('#item_negative_stock').prop("checked", false);
                 (data.item_weight_machine_based === true) ? $('#item_weight_machine_based').prop('checked', true) : $('#item_weight_machine_based').prop("checked", false);
                 (data.open_price === true) ? $('#item_open_price').prop('checked', true) : $('#item_open_price').prop("checked", false);
+                $('#item_is_service').prop('checked', data.item_kind === 'service');
+                $('#item_service_unit').val(data.service_unit || 'fixed');
+                PosnicPro.items.applyServiceMode();
                 $('#items_brand').val(data.brand || '');
                 $('#items_tags').val(Array.isArray(data.tags) ? data.tags.join(', ') : '');
                 $('#items_reorder_point').val(data.reorder_point === null || data.reorder_point === undefined ? '' : data.reorder_point);
@@ -3706,6 +3725,9 @@ $(document).ready(function () {
     });
     // Typing in either discount field marks the pair as the user's - a
     // category pick then leaves them alone (applyCategoryDiscount).
+    $(document).on('change', '#item_is_service', function () {
+        PosnicPro.items.applyServiceMode();
+    });
     $(document).on('click', '#item_tile_swatches .tile-swatch', function () {
         PosnicPro.items.setTileColor($(this).data('color') || '');
     });

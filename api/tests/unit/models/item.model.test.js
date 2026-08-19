@@ -783,7 +783,7 @@ describe('Item.LegacyItemModel › class identity', () => {
     // wrote but the map never carried (IC0: mfg/expiry dates, weight flag,
     // modifier group ids) + open_price (IC1 ask-at-the-till) + tile_color
     // (the no-image sale-grid tile) + brand/tags/reorder_point (LS1).
-    expect(Object.keys(LegacyItemModel.fields)).toHaveLength(60);
+    expect(Object.keys(LegacyItemModel.fields)).toHaveLength(62);
     expect(LegacyItemModel.fields).toEqual(
       expect.objectContaining({
         branch_id: expect.any(Object),

@@ -117,6 +117,9 @@ class ItemModel {
     open_price: { type: 'Boolean', select: true },
     // Loyverse study L2: the no-image sale-grid tile's colour.
     tile_color: { type: 'String', select: true },
+    // Square study Q3: services - a second sellable kind, no stock.
+    item_kind: { type: 'String', select: true },
+    service_unit: { type: 'String', select: true },
     // Lightspeed study LS1: brand, tags, per-item reorder point.
     brand: { type: 'String', select: true },
     tags: { type: 'Array', select: true },
