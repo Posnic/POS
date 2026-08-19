@@ -14249,7 +14249,8 @@ PosnicPro.quotes = {
             body += '<tr><th colspan="3" class="text-right">Total</th><th class="text-right">' + PosnicPro.quotes._money(q.total) + '</th></tr></table>';
             $('#quotes_view_body').html(body);
             var act = '<button type="button" class="btn btn-sm btn-secondary-rgba" onclick="hasher.setHash(\'quotes\');">Back</button> ' +
-                '<button type="button" class="btn btn-sm btn-danger-rgba" onclick="PosnicPro.quotes.print();">Print / PDF</button> ' +
+                '<button type="button" class="btn btn-sm btn-primary-rgba" onclick="PosnicPro.quotes.printNow();">Print</button> ' +
+                '<button type="button" class="btn btn-sm btn-danger-rgba" onclick="PosnicPro.quotes.print();">PDF</button> ' +
                 '<button type="button" class="btn btn-sm btn-secondary-rgba" onclick="PosnicPro.quotes.emailQuote();">Email</button> ' +
                 '<button type="button" class="btn btn-sm btn-success-rgba" onclick="PosnicPro.quotes.whatsappQuote();">WhatsApp</button> ';
             if (q.status === 'open') {
@@ -14260,6 +14261,20 @@ PosnicPro.quotes = {
             $('#quotes_view_actions').html(act);
             $('#quotes_view_card').show();
         }, function () { PosnicPro.alert('error', 'Could not load the quote'); });
+    },
+    _meta: function () {
+        var q = PosnicPro.quotes._current || {};
+        return {
+            shop: PosnicPro.local.get('branchname') || '',
+            address: PosnicPro.local.get('branchaddress') || '',
+            phone: PosnicPro.local.get('branchphone') || '',
+            title: 'Quotation ' + (q.quote_id || ''),
+            range: q.valid_until ? 'Valid till ' + new Date(q.valid_until).toLocaleDateString('en-IN') : '',
+            filename: (q.quote_id || 'quote').toLowerCase()
+        };
+    },
+    printNow: function () {
+        PosnicPro.reportExport.printPdf('quotes_view_body', PosnicPro.quotes._meta());
     },
     print: function () {
         var q = PosnicPro.quotes._current || {};
