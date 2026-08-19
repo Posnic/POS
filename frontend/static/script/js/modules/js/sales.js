@@ -3656,6 +3656,14 @@ PosnicPro.sales.addSale = {
                     window.intlTelInputGlobals.getInstance(document.querySelector("#customer_sms_phone")).setCountry(response.data.country_sort);
                     $('#extraDisc').text(0);
                     $('#extraDisc').editable('setValue', 0);
+                    // A sale born from a quote stamps it converted (fire-safe).
+                    if (PosnicPro.sales._sourceQuoteId) {
+                        var qid = PosnicPro.sales._sourceQuoteId;
+                        PosnicPro.sales._sourceQuoteId = null;
+                        var sid = (response && response.data && (response.data.id || response.data._id)) || null;
+                        PosnicPro.post({ url: 'quotes/' + qid + '/transition', data: JSON.stringify({ action: 'convert', sale_id: sid }) },
+                            function () { /* stamped */ }, function () { /* quote stays open - visible on the Quotes page */ });
+                    }
                     $('#sale_tip_input').val('');
                     $("#save_submit").addClass("disabled");
                     $('.smsSalesReceipt').hide();
@@ -7216,6 +7224,178 @@ PosnicPro.sales.parkedMenu = {
         });
     }
 };
+/*
+ * Quotes (LS2): list and view here; a quote is BORN on the sale screen
+ * (Save as quote) and DIES into a sale (Convert). v1 converts at the
+ * items' CURRENT prices - honest to today's pricing; quoted-price
+ * override is a noted follow-up. Feature-gated by quotes_enable.
+ */
+PosnicPro.quotes = {
+    _rows: [],
+    _status: '',
+    _esc: function (v) { return $('<i>').text(v == null ? '' : v).html(); },
+    _money: function (n) { return (PosnicPro.local.get('currencySign') || '') + '&nbsp;' + Number(n || 0).toFixed(2); },
+    showDataTablePage: function () {
+        PosnicPro.HideSideBarModal();
+        $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
+        $('.vertical-menu li a').removeClass('active');
+        $('.page_loader,#osk-container').hide();
+        $('.page-title-box,#quotes_new').show();
+        $('#quotes_view_card').hide();
+        $('#quotes_list_card').show();
+        $('#view_quotes_page').addClass('active');
+        PosnicPro.get({ url: 'quotes', data: {} }, function (r) {
+            PosnicPro.quotes._rows = (r && r.data) || [];
+            PosnicPro.quotes.renderList();
+        }, function () { $('#quotes_list_rows').text('Could not load quotes - try again.'); });
+    },
+    showAdd: function () { PosnicPro.quotes.showDataTablePage(); },
+    renderList: function () {
+        var esc = PosnicPro.quotes._esc;
+        var rows = PosnicPro.quotes._rows.filter(function (q) {
+            return !PosnicPro.quotes._status || q.status === PosnicPro.quotes._status;
+        });
+        if (!rows.length) {
+            $('#quotes_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">No quotes here yet - press Save as quote on a sale and it lands in this list.</div>');
+            return;
+        }
+        var html = '';
+        rows.forEach(function (q) {
+            var pill = q.status === 'open' ? '<span class="rs-pill hold">Open</span>'
+                : q.status === 'converted' ? '<span class="rs-pill paid">Converted</span>'
+                : '<span class="rs-pill unpaid">Cancelled</span>';
+            var until = q.valid_until ? new Date(q.valid_until).toLocaleDateString('en-IN') : '';
+            html += '<div class="rs-row quotes-row" data-id="' + esc(q._id) + '" style="cursor:pointer;">' +
+                '<div class="rs-main"><div class="rs-cust">' + esc(q.customer_name || 'Walk-in') + '</div>' +
+                '<div class="rs-meta">' + esc(q.quote_id) + ' &middot; ' + ((q.items && q.items.length) || 0) + ' lines' + (until ? ' &middot; valid till ' + esc(until) : '') + '</div></div>' +
+                '<div class="rs-side"><div class="rs-amt">' + PosnicPro.quotes._money(q.total) + '</div>' + pill + '</div>' +
+                '</div>';
+        });
+        $('#quotes_list_rows').html(html);
+    },
+    showDetails: function (id) {
+        PosnicPro.get({ url: 'quotes/' + id, data: {} }, function (r) {
+            var q = r && r.data;
+            if (!q) { PosnicPro.alert('error', 'Quote not found'); return; }
+            PosnicPro.quotes._current = q;
+            var esc = PosnicPro.quotes._esc;
+            $('.page_loader,#osk-container').hide();
+            $('.page-title-box,#quotes_new').show();
+            $('#quotes_list_card').hide();
+            var body = '<h5>' + esc(q.quote_id) + ' &middot; ' + esc(q.customer_name || 'Walk-in') + '</h5>' +
+                '<div class="text-muted m-b-10">' + (q.valid_until ? 'Valid till ' + esc(new Date(q.valid_until).toLocaleDateString('en-IN')) : 'No validity set') +
+                (q.note ? ' &middot; ' + esc(q.note) : '') + '</div>' +
+                '<table class="table table-bordered"><tr><th>Item</th><th class="text-right">Qty</th><th class="text-right">Price</th><th class="text-right">Total</th></tr>';
+            (q.items || []).forEach(function (l) {
+                body += '<tr><td>' + esc(l.item_name) + '</td><td class="text-right">' + esc(l.qty) + '</td>' +
+                    '<td class="text-right">' + PosnicPro.quotes._money(l.unit_price) + '</td>' +
+                    '<td class="text-right">' + PosnicPro.quotes._money(l.line_total) + '</td></tr>';
+            });
+            body += '<tr><th colspan="3" class="text-right">Total</th><th class="text-right">' + PosnicPro.quotes._money(q.total) + '</th></tr></table>';
+            $('#quotes_view_body').html(body);
+            var act = '<button type="button" class="btn btn-sm btn-secondary-rgba" onclick="hasher.setHash(\'quotes\');">Back</button> ' +
+                '<button type="button" class="btn btn-sm btn-danger-rgba" onclick="PosnicPro.quotes.print();">Print / PDF</button> ';
+            if (q.status === 'open') {
+                act += '<button type="button" class="btn btn-sm btn-success-rgba" onclick="PosnicPro.quotes.convert();">Convert to sale</button> ' +
+                    '<button type="button" class="btn btn-sm btn-warning-rgba" onclick="PosnicPro.quotes.cancel();">Cancel quote</button> ' +
+                    '<button type="button" class="btn btn-sm btn-danger-rgba" onclick="PosnicPro.quotes.remove();">Delete</button>';
+            }
+            $('#quotes_view_actions').html(act);
+            $('#quotes_view_card').show();
+        }, function () { PosnicPro.alert('error', 'Could not load the quote'); });
+    },
+    print: function () {
+        var q = PosnicPro.quotes._current || {};
+        PosnicPro.reportExport.pdf('quotes_view_body', {
+            shop: PosnicPro.local.get('branchname') || '',
+            address: PosnicPro.local.get('branchaddress') || '',
+            phone: PosnicPro.local.get('branchphone') || '',
+            title: 'Quotation ' + (q.quote_id || ''),
+            range: q.valid_until ? 'Valid till ' + new Date(q.valid_until).toLocaleDateString('en-IN') : '',
+            filename: (q.quote_id || 'quote').toLowerCase()
+        });
+    },
+    convert: function () {
+        var q = PosnicPro.quotes._current;
+        if (!q) { return; }
+        PosnicPro.sales._sourceQuoteId = String(q._id);
+        PosnicPro.sales._quotePrefill = (q.items || []).map(function (l) {
+            return { item_id: String(l.item_id), qty: Number(l.qty) || 1 };
+        });
+        hasher.setHash('sales/new');
+        var tries = 0;
+        var t = setInterval(function () {
+            tries += 1;
+            if ($('#sales_new_item_name').is(':visible') || tries > 20) {
+                clearInterval(t);
+                (PosnicPro.sales._quotePrefill || []).forEach(function (l) {
+                    PosnicPro.sales.itemsMenu.addToLineItemsList(l.item_id);
+                });
+                PosnicPro.sales._quotePrefill = null;
+                PosnicPro.alert('success', 'Quote loaded - items at current prices. Quoted total was ' + Number(q.total || 0).toFixed(2) + '.');
+            }
+        }, 300);
+    },
+    cancel: function () {
+        var q = PosnicPro.quotes._current;
+        if (!q) { return; }
+        PosnicPro.post({ url: 'quotes/' + q._id + '/transition', data: JSON.stringify({ action: 'cancel' }) }, function (r) {
+            PosnicPro.alert(r.type, r.message);
+            if (r.type === 'success') { hasher.setHash('quotes'); PosnicPro.quotes.showDataTablePage(); }
+        });
+    },
+    remove: function () {
+        var q = PosnicPro.quotes._current;
+        if (!q) { return; }
+        PosnicPro.request({ method: 'DELETE', url: 'quotes/' + q._id, data: '{}' }, function (r) {
+            PosnicPro.alert(r.type, r.message);
+            if (r.type === 'success') { hasher.setHash('quotes'); PosnicPro.quotes.showDataTablePage(); }
+        }, function () { PosnicPro.alert('error', 'Could not delete the quote'); });
+    },
+    /* Save the CART as a quote - born on the sale screen. */
+    saveFromSale: function () {
+        var lines = $('#sales_new_items_table tbody tr').map(function () {
+            var itemid = $(this).find(':nth-child(9)').text();
+            if (!itemid) { return null; }
+            return {
+                item_id: $('#addSalesLineItemId_' + itemid).text(),
+                item_name: $('#addSalesLineItemName_' + itemid).text(),
+                barcode_id: $('#addSalesLineItemBarcodeId_' + itemid).text(),
+                qty: parseFloat($('#touchsale_item_qty' + itemid).val()) || 1,
+                unit_price: parseFloat(String($('#addSalesLineItemPrice_' + itemid).text()).replace(/,/g, '')) || 0
+            };
+        }).get().filter(Boolean);
+        if (!lines.length) { PosnicPro.alert('warning', 'Add at least one item, then save the quote.'); return false; }
+        var payload = {
+            items: lines,
+            customer_id: $('#sales_new_customer_id').val() || '',
+            customer_name: $('#sales_new_customer_name').val() || '',
+            total: parseFloat(String($('#grand_total').val() || '').replace(/,/g, '')) || 0
+        };
+        PosnicPro.post({ url: 'quotes', data: JSON.stringify(payload) }, function (r) {
+            if (r.type !== 'success') { PosnicPro.alert(r.type, r.message); return; }
+            PosnicPro.alert('success', 'Quote ' + ((r.data && r.data.quote_id) || '') + ' saved');
+            PosnicPro.resetForm('sale');
+        }, function (xhr) {
+            var resp = {}; try { resp = JSON.parse(xhr.responseText); } catch (e) { /* plain */ }
+            PosnicPro.alert('error', resp.message || 'Could not save the quote');
+        });
+        return false;
+    }
+};
+$(function () {
+    // The quote button follows its feature switch, live like quick sale.
+    var applyQuotesGate = function () {
+        var on = true;
+        try {
+            var gs = JSON.parse(PosnicPro.local.get('general_settings') || '{}');
+            on = gs.quotes_enable !== false;
+        } catch (e) { /* default on */ }
+        $('#saveQuoteButton').toggle(on);
+    };
+    applyQuotesGate();
+    $(window).on('hashchange storage', applyQuotesGate);
+});
 /******** END SALES RECENT ADD EDIT SALES MENU & RECENT ADDED ITEMS MENU ********/
 
 /******** START SALES RECENT ADD EDIT SALES MENU & RECENT ADDED ITEMS MENU ********/
@@ -8106,6 +8286,15 @@ PosnicPro.sales.renderRecentCustomers = function () {
         fill(PosnicPro.sales._customerSeed);
     }, function () { /* recents alone, or empty - never an error popup */ });
 };
+$(document).on('click', '.quotes-row', function () {
+    hasher.setHash('quotes/' + $(this).data('id'));
+});
+$(document).on('click', '.quotes-chip', function () {
+    $('.quotes-chip').removeClass('btn-primary-rgba').addClass('btn-secondary-rgba');
+    $(this).removeClass('btn-secondary-rgba').addClass('btn-primary-rgba');
+    PosnicPro.quotes._status = $(this).data('status') || '';
+    PosnicPro.quotes.renderList();
+});
 $(document).on('click', '.recent-customer-row', function () {
     var list = PosnicPro.sales._recentRendered || [];
     var c = list[$(this).data('i')];
