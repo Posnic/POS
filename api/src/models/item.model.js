@@ -115,8 +115,9 @@ class ItemModel {
     modifier_group_ids: { type: 'Array', select: true },
     // IC1: deliberate ask-at-the-till pricing, set from the item form.
     open_price: { type: 'Boolean', select: true },
-    // Loyverse study L2: the no-image sale-grid tile's colour.
+    // Loyverse study L2: the no-image sale-grid tile's colour and shape.
     tile_color: { type: 'String', select: true },
+    tile_shape: { type: 'String', select: true },
     // Square study Q3: services - a second sellable kind, no stock.
     item_kind: { type: 'String', select: true },
     service_unit: { type: 'String', select: true },

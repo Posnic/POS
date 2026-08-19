@@ -91,6 +91,12 @@ PosnicPro.items = {
             .map(function (t) { return t.trim(); })
             .filter(function (t) { return t.length > 0; });
     },
+    setTileShape: function (shape) {
+        $('#item_tile_shape').val(shape || '');
+        $('#item_tile_shapes .tile-shape').removeClass('is-picked').filter(function () {
+            return ($(this).data('shape') || '') === (shape || '');
+        }).addClass('is-picked');
+    },
     setTileColor: function (color) {
         $('#item_tile_color').val(color || '');
         $('#item_tile_swatches .tile-swatch').removeClass('is-picked').filter(function () {
@@ -373,6 +379,7 @@ PosnicPro.items = {
             item_weight_machine_based: $('#item_weight_machine_based').is(':checked'),
             open_price: $('#item_open_price').is(':checked'),
             tile_color: $('#item_tile_color').val(),
+            tile_shape: $('#item_tile_shape').val() || '',
             item_kind: $('#item_is_service').is(':checked') ? 'service' : 'product',
             service_unit: $('#item_service_unit').val() || 'fixed',
             brand: $('#items_brand').val(),
@@ -562,6 +569,7 @@ PosnicPro.items = {
                     item_weight_machine_based: $('#item_weight_machine_based').is(':checked'),
                     open_price: $('#item_open_price').is(':checked'),
                     tile_color: $('#item_tile_color').val(),
+            tile_shape: $('#item_tile_shape').val() || '',
                     item_kind: $('#item_is_service').is(':checked') ? 'service' : 'product',
                     service_unit: $('#item_service_unit').val() || 'fixed',
                     brand: $('#items_brand').val(),
@@ -1090,6 +1098,7 @@ PosnicPro.items = {
                 $('#items_tags').val(Array.isArray(data.tags) ? data.tags.join(', ') : '');
                 $('#items_reorder_point').val(data.reorder_point === null || data.reorder_point === undefined ? '' : data.reorder_point);
                 PosnicPro.items.setTileColor(data.tile_color || '');
+                PosnicPro.items.setTileShape(data.tile_shape || '');
                 $("#items_tax").val(data.tax_id).trigger("change");
                 $("#items_unit").val(data.unit_id).trigger("change");
                 var radionbutton = $('#items_discount_amount').val();
@@ -1735,6 +1744,7 @@ PosnicPro.items = {
                 $('#items_tags').val(Array.isArray(data.tags) ? data.tags.join(', ') : '');
                 $('#items_reorder_point').val(data.reorder_point === null || data.reorder_point === undefined ? '' : data.reorder_point);
                 PosnicPro.items.setTileColor(data.tile_color || '');
+                PosnicPro.items.setTileShape(data.tile_shape || '');
                 (data.tax_type === 'inclusive') ? $('#item_tax_inclusive').prop('checked', true) : $('#item_tax_exclusive').prop("checked", true);
                 $("#items_tax").val(data.tax_id).trigger("change");
                 var radionbutton = $('#items_discount_amount').val();
@@ -3529,6 +3539,12 @@ $(document).ready(function () {
     });
     $(document).on('click', '#item_tile_swatches .tile-swatch', function () {
         PosnicPro.items.setTileColor($(this).data('color') || '');
+    });
+    $(document).on('click', '#item_tile_shapes .tile-shape', function () {
+        var shape = $(this).data('shape') || '';
+        // Tap the picked shape again to clear it back to the default square.
+        if (($('#item_tile_shape').val() || '') === shape) { shape = ''; }
+        PosnicPro.items.setTileShape(shape);
     });
     $('#items_discount_amount, #items_discount_percentage').on('input', function () {
         PosnicPro.items._discountTouched = true;

@@ -6407,7 +6407,12 @@ PosnicPro.sales.itemsMenu = {
                             var _tileColor = getItemdata[i]['tile_color'];
                             if (getItemdata[i]['image'] === 'item.svg' && _tileColor) {
                                 var _initial = String(list_item_name || '?').trim().charAt(0).toUpperCase();
-                                _tileHtml = '<div class="wsk-cp-img"><div style="width:100%;height:70px;border-radius:6px;background:' + _tileColor + ';display:flex;align-items:center;justify-content:center;color:#fff;font-size:28px;font-weight:700;">' + _initial + '</div></div>';
+                                var _shape = getItemdata[i]['tile_shape'] || '';
+                                var _shapeCss = 'border-radius:6px;';
+                                if (_shape === 'rounded') { _shapeCss = 'border-radius:16px;'; }
+                                else if (_shape === 'circle') { _shapeCss = 'border-radius:50%;width:70px;margin:0 auto;'; }
+                                else if (_shape === 'diamond') { _shapeCss = 'clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);width:70px;margin:0 auto;'; }
+                                _tileHtml = '<div class="wsk-cp-img"><div style="width:100%;height:70px;' + _shapeCss + 'background:' + _tileColor + ';display:flex;align-items:center;justify-content:center;color:#fff;font-size:28px;font-weight:700;">' + _initial + '</div></div>';
                             }
                             var product = '<div class="wsk-cp cbutton--effect-novak" id="' + getItemdata[i]['id'] + '" onclick="PosnicPro.sales.itemsMenu.addToLineItemsList(this.id)">' +
                                 '<div class="wsk-cp-product">' +
@@ -7735,7 +7740,10 @@ PosnicPro.sugRow = function (d, nameHtml, o) {
     if (d.image && d.image !== 'item.svg') {
         thumb = '<img class="sug-thumb" src="' + esc(d.image) + '" loading="lazy" alt="">';
     } else if (d.tile_color) {
-        thumb = '<span class="sug-tile" style="background:' + esc(d.tile_color) + '">'
+        var shapeCss = d.tile_shape === 'circle' ? 'border-radius:50%;'
+            : d.tile_shape === 'diamond' ? 'clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);'
+            : d.tile_shape === 'rounded' ? 'border-radius:14px;' : '';
+        thumb = '<span class="sug-tile" style="' + shapeCss + 'background:' + esc(d.tile_color) + '">'
             + esc((d.item_name || '?').charAt(0).toUpperCase()) + '</span>';
     } else {
         thumb = '<img class="sug-thumb" src="static/images/default/item.svg" alt="">';
