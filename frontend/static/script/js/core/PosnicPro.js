@@ -284,8 +284,16 @@ PosnicPro = {
         });
     },
     defaultcustomerSet: function () {
-        let customerDefaultData = JSON.parse(PosnicPro.local.get('defaultcustomer'));
-        if (!customerDefaultData)
+        /*
+         * A branch without a configured default customer sells to Walk-In -
+         * fetching with an empty id is what threw "customer required" 400s
+         * on every branch except the one that had a default set.
+         */
+        let customerDefaultData = null;
+        try {
+            customerDefaultData = JSON.parse(PosnicPro.local.get('defaultcustomer'));
+        } catch (e) { return; }
+        if (!customerDefaultData || !customerDefaultData.customer_id)
             return;
         var params = {
             url: 'setting/getDefaultCustomer',
@@ -317,9 +325,10 @@ PosnicPro = {
                 customerRecord.push({ name: responseData['customer_name'], phone: responseData['customer_phone'], email: responseData['customer_email'], address: responseData['customer_address'] });
                 db.customerDisplay.put({ id: '1', 'clear': 'no', 'get': 'no', customer: customerRecord });
             } else {
-                PosnicPro.alert(response.type, response.message);
+                // This branch simply has no default customer - Walk-In it is.
+                // An error toast on every sale-page load taught nothing.
             }
-        });
+        }, function () { /* same: absent default is a state, not an error */ });
 
         // When we are in the dedicated KOT sales edit flow (kotsales/{id}/edit
         // or kotorder/{id}/edit), keep the primary button label as "Update"
