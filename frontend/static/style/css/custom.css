@@ -2751,7 +2751,13 @@ tr.add-disc-row.tip-only td.discount-input { visibility: hidden; }
     transform: scale(1.08);
 }
 #item_tile_shapes .tile-shape { transition: transform 0.1s ease; }
-#item_tile_shapes .tile-shape.is-picked[data-shape="diamond"] { box-shadow: none; outline: 3px solid #506fe4; outline-offset: 3px; }
+/* clip-path clips box-shadow AND outline - only drop-shadow follows
+   the diamond's silhouette. */
+#item_tile_shapes .tile-shape.is-picked[data-shape="diamond"] {
+    box-shadow: none;
+    filter: drop-shadow(0 0 3px #506fe4) drop-shadow(0 0 3px #506fe4);
+    transform: scale(1.15);
+}
 #item_tile_swatches .tile-swatch.is-picked::after {
     content: '¹3'; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
     display: flex; align-items: center; justify-content: center;
