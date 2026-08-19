@@ -57,6 +57,8 @@ jobs:
           AWS_REGION: ${{ secrets.AWS_REGION }}
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          BREVO_API_KEY: ${{ secrets.BREVO_API_KEY }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
         run: |
           if [ -z "$AWS_ACCESS_KEY_ID" ] || [ -z "$AWS_SECRET_ACCESS_KEY" ] || [ -z "$AWS_S3_BUCKET" ]; then
             echo "::warning::S3 secrets not set in this repo; skipping env write - uploads will keep falling back to local disk"
@@ -68,6 +70,10 @@ jobs:
             echo "AWS_REGION=${AWS_REGION:-ap-south-1}"
             echo "AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID"
             echo "AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY"
+            # Platform mail (Brevo) - the proven send path; empty until the
+            # BREVO_API_KEY secret is set, and harmless while empty.
+            [ -n "$BREVO_API_KEY" ] && echo "BREVO_API_KEY=$BREVO_API_KEY"
+            [ -n "$EMAIL_FROM" ] && echo "EMAIL_FROM=$EMAIL_FROM"
           } | ssh -i ~/.ssh/deploy.pem "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
             'umask 077; cat > ~/apps/tenants/app/api/.env && echo "storage env written ($(grep -c = ~/apps/tenants/app/api/.env) keys)"'
 
