@@ -187,6 +187,9 @@
                                         class="form-control border-control osk-trigger clear-sale-text" required
                                         autocomplete="off">
                                 </div>
+                                <!-- Recency (owner feedback): the last 10 customers picked
+                                     on this till, rendered from a localStorage LRU. -->
+                                <div id="sales_recent_customers" style="display:none; max-height:220px; overflow-y:auto;"></div>
                                 <a data-module="customer" data-access="write" href="#/sales/customers/new"
                                     class="sales-customer-pop-action" id="sales_customer_add_new">
                                     <i class="feather icon-user-plus mr-2"></i>Add new customer
