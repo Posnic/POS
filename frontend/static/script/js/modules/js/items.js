@@ -84,6 +84,14 @@ PosnicPro.items = {
     showDelete: function (id) {
         PosnicPro.deleteTableRowData(id, 'items');
     },
+    /* Tile colour: keep the hidden input and the swatch highlight in step. */
+    setTileColor: function (color) {
+        $('#item_tile_color').val(color || '');
+        $('#item_tile_swatches .tile-swatch').css('outline', 'none');
+        $('#item_tile_swatches .tile-swatch').filter(function () {
+            return ($(this).data('color') || '') === (color || '');
+        }).css('outline', '3px solid #506fe4');
+    },
     /* The weight-scale flag only means anything when the weight-machine
        hardware module is on - the sales side gates on the same setting. */
     applyHardwareGates: function () {
@@ -350,6 +358,7 @@ PosnicPro.items = {
             negative_stock: $('#item_negative_stock').is(':checked'),
             item_weight_machine_based: $('#item_weight_machine_based').is(':checked'),
             open_price: $('#item_open_price').is(':checked'),
+            tile_color: $('#item_tile_color').val(),
             hsn_code: hsn_code,
             hsn_description: $('#items_hsndescription').val(),
             tax_method: tax_method,
@@ -533,6 +542,7 @@ PosnicPro.items = {
                     negative_stock: $('#item_negative_stock').is(':checked'),
                     item_weight_machine_based: $('#item_weight_machine_based').is(':checked'),
                     open_price: $('#item_open_price').is(':checked'),
+                    tile_color: $('#item_tile_color').val(),
                     hsn_code: hsn_code,
                     hsn_description: $('#items_hsndescription').val(),
                     tax_method: tax_method,
@@ -1049,6 +1059,7 @@ PosnicPro.items = {
                 (data.negative_stock === true) ? $('#item_negative_stock').prop('checked', true) : $('#item_negative_stock').prop("checked", false);
                 (data.item_weight_machine_based === true) ? $('#item_weight_machine_based').prop('checked', true) : $('#item_weight_machine_based').prop("checked", false);
                 (data.open_price === true) ? $('#item_open_price').prop('checked', true) : $('#item_open_price').prop("checked", false);
+                PosnicPro.items.setTileColor(data.tile_color || '');
                 $("#items_tax").val(data.tax_id).trigger("change");
                 $("#items_unit").val(data.unit_id).trigger("change");
                 var radionbutton = $('#items_discount_amount').val();
@@ -1666,6 +1677,7 @@ PosnicPro.items = {
                 (data.negative_stock === true) ? $('#item_negative_stock').prop('checked', true) : $('#item_negative_stock').prop("checked", false);
                 (data.item_weight_machine_based === true) ? $('#item_weight_machine_based').prop('checked', true) : $('#item_weight_machine_based').prop("checked", false);
                 (data.open_price === true) ? $('#item_open_price').prop('checked', true) : $('#item_open_price').prop("checked", false);
+                PosnicPro.items.setTileColor(data.tile_color || '');
                 (data.tax_type === 'inclusive') ? $('#item_tax_inclusive').prop('checked', true) : $('#item_tax_exclusive').prop("checked", true);
                 $("#items_tax").val(data.tax_id).trigger("change");
                 var radionbutton = $('#items_discount_amount').val();
@@ -3655,6 +3667,9 @@ $(document).ready(function () {
     });
     // Typing in either discount field marks the pair as the user's - a
     // category pick then leaves them alone (applyCategoryDiscount).
+    $(document).on('click', '#item_tile_swatches .tile-swatch', function () {
+        PosnicPro.items.setTileColor($(this).data('color') || '');
+    });
     $('#items_discount_amount, #items_discount_percentage').on('input', function () {
         PosnicPro.items._discountTouched = true;
     });
