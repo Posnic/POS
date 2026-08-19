@@ -1934,6 +1934,15 @@ receivingSchema.statics.receivingInsertUpdate = async function (data, id) {
       license: new ObjectId(license),
     };
 
+    /* PO receive bridge (PO_LIFECYCLE_DESIGN step 2): a receiving born from
+       a purchase order carries the PO's id, presence-gated - ordinary
+       receivings never gain the field, and an edit that omits it never
+       clears an existing link. The PO write-back happens in the controller
+       AFTER this commit, recomputed from all linked receivings. */
+    if (data.source_po_id && ObjectId.isValid(String(data.source_po_id))) {
+      updateData.source_po_id = new ObjectId(String(data.source_po_id));
+    }
+
     if (!id) {
       // INSERT new receiving
       const receivingData = { ...insertData, ...updateData };
