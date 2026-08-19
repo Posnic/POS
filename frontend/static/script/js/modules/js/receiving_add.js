@@ -1978,6 +1978,9 @@ PosnicPro.purchaseorders = {
                 }
                 actions += '<button type="button" class="btn btn-sm btn-outline-danger mr-1" data-act="cancel_remaining">Cancel remaining</button>';
             }
+            if ((po.items || []).length) {
+                actions += '<button type="button" class="btn btn-sm btn-outline-secondary mr-1" data-act="labels">Print labels</button>';
+            }
             $('#po_view_actions').html(actions).data('po-id', String(po._id));
             $('#po_list_section,#po_form_section').hide();
             $('#po_view_section').show();
@@ -1994,6 +1997,60 @@ PosnicPro.purchaseorders = {
             PosnicPro.alert(response.type, response.message);
             if (response.type === 'success') { PosnicPro.purchaseorders.backToList(); }
         });
+    },
+    /*
+     * Bulk labels from the open order (Loyverse study L3): one label per
+     * ordered unit, name + barcode, rendered with the bundled JsBarcode and
+     * printed from a plain window. Lines without any code are skipped and
+     * counted honestly; the sheet caps at 500 labels so a typo in a
+     * quantity cannot hang the browser.
+     */
+    printLabels: function () {
+        var po = PosnicPro.purchaseorders._detail;
+        if (!po) { return; }
+        var labels = [];
+        var skipped = 0;
+        (po.items || []).forEach(function (line) {
+            var code = String(line.barcode_id || '').trim();
+            if (!code) { skipped += 1; return; }
+            var copies = Math.max(1, Math.round(Number(line.qty_ordered) || 1));
+            for (var c = 0; c < copies && labels.length < 500; c++) {
+                labels.push({ name: line.item_name, code: code });
+            }
+        });
+        if (!labels.length) {
+            PosnicPro.alert('warning', 'No lines with a barcode to print');
+            return;
+        }
+        // Render each unique code once, reuse the SVG per copy.
+        var svgByCode = {};
+        var $work = $('<div style="position:absolute;left:-9999px;top:0;"></div>').appendTo('body');
+        Object.keys(labels.reduce(function (acc, l) { acc[l.code] = 1; return acc; }, {})).forEach(function (code) {
+            var $svg = $('<svg></svg>').appendTo($work);
+            try {
+                $svg.JsBarcode(code, { format: 'CODE128', height: 40, width: 1.6, fontSize: 12, margin: 4, displayValue: true });
+                svgByCode[code] = $work.children().last().prop('outerHTML');
+            } catch (e) { svgByCode[code] = ''; }
+        });
+        $work.remove();
+        var cells = labels.map(function (l) {
+            return '<div class="lbl"><div class="lbl-name">' + $('<span>').text(l.name).html() + '</div>' + (svgByCode[l.code] || '') + '</div>';
+        }).join('');
+        var w = window.open('', '_blank');
+        if (!w) { PosnicPro.alert('error', 'Allow pop-ups to print labels'); return; }
+        w.document.write('<html><head><title>Labels ' + (po.po_id || '') + '</title><style>' +
+            'body{margin:0;font-family:sans-serif;}' +
+            '.sheet{display:flex;flex-wrap:wrap;}' +
+            '.lbl{width:38mm;padding:2mm;border:1px dotted #ccc;text-align:center;page-break-inside:avoid;}' +
+            '.lbl-name{font-size:9px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}' +
+            'svg{max-width:100%;}' +
+            '@media print{.lbl{border:none;}}' +
+            '</style></head><body><div class="sheet">' + cells + '</div></body></html>');
+        w.document.close();
+        setTimeout(function () { w.print(); }, 400);
+        if (skipped > 0) {
+            PosnicPro.alert('info', skipped + ' line(s) had no barcode and were skipped');
+        }
     },
     /*
      * Receive: open the ORDINARY receiving screen pre-filled with the
@@ -2036,6 +2093,7 @@ $(document).on('click', '#po_view_actions [data-act]', function () {
     if (act === 'edit') { PosnicPro.purchaseorders.openForm(id); }
     else if (act === 'delete') { PosnicPro.purchaseorders.removeDraft(id); }
     else if (act === 'receive') { PosnicPro.purchaseorders.receive(id); }
+    else if (act === 'labels') { PosnicPro.purchaseorders.printLabels(); }
     else { PosnicPro.purchaseorders.transition(id, act); }
 });
 $(document).on('input', '.po-line-qty, .po-line-cost', function () {
