@@ -93,10 +93,9 @@ PosnicPro.items = {
     },
     setTileColor: function (color) {
         $('#item_tile_color').val(color || '');
-        $('#item_tile_swatches .tile-swatch').css('outline', 'none');
-        $('#item_tile_swatches .tile-swatch').filter(function () {
+        $('#item_tile_swatches .tile-swatch').removeClass('is-picked').filter(function () {
             return ($(this).data('color') || '') === (color || '');
-        }).css('outline', '3px solid #506fe4');
+        }).addClass('is-picked');
     },
     /* Services (Q3): a service holds no stock - the stock-ish inputs step
        aside and the pricing unit select appears. The server forces
