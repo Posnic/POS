@@ -716,6 +716,76 @@ class DashboardController extends BaseController {
       });
     }
   }
+
+  /**
+   * Setup checklist (Lightspeed study LS1): what a new shop has not done
+   * yet, answered from LIVE state - never a stored done-flag that can lie.
+   * The dashboard shows a card per undone check and the strip disappears
+   * by itself the moment reality changes.
+   */
+  async getSetupChecklist(req, res) {
+    try {
+      const { ObjectId } = require('mongodb');
+      const BaseModel = require('../models/base.model');
+      const branchIdRaw =
+        req.tenantContext?.branchId ||
+        req.user?.branch_id ||
+        req.user?.branch_access?.[0]?.branch_id;
+      const licenseRaw = req.tenantContext?.licenseId || req.user?.license || req.user?.license_id;
+      if (!branchIdRaw || !ObjectId.isValid(String(branchIdRaw))) {
+        return res.status(400).json({ type: 'error', message: 'Branch not found', data: null });
+      }
+      const branchId = new ObjectId(String(branchIdRaw));
+      const license =
+        licenseRaw && ObjectId.isValid(String(licenseRaw))
+          ? new ObjectId(String(licenseRaw))
+          : null;
+      const store = new BaseModel('branches');
+
+      const branches = await store.getCollection('branches');
+      const items = await store.getCollection('items');
+      const users = await store.getCollection('users');
+      const taxes = await store.getCollection('grouptax');
+
+      const branchDoc = await branches.findOne(
+        { _id: branchId },
+        { projection: { store_address: 1, store_telephone: 1, branch_image: 1 } }
+      );
+      const itemFilter = { 'branch_access.branch_id': branchId, item_status: { $ne: 'instant' } };
+      const taxFilter = { branch_id: branchId };
+      const userFilter = {};
+      if (license) {
+        itemFilter.license = license;
+        taxFilter.license = license;
+        userFilter.license = license;
+      }
+      const [itemCount, userCount, taxCount] = await Promise.all([
+        items.countDocuments(itemFilter),
+        users.countDocuments(userFilter),
+        taxes.countDocuments(taxFilter),
+      ]);
+
+      const checks = [
+        {
+          key: 'outlet',
+          done: Boolean(
+            (branchDoc?.store_address || '').trim() && (branchDoc?.store_telephone || '').trim()
+          ),
+        },
+        { key: 'items', done: itemCount > 0 },
+        {
+          key: 'receipt',
+          done: Boolean(branchDoc?.branch_image && branchDoc.branch_image !== 'store.png'),
+        },
+        { key: 'employees', done: userCount > 1 },
+        { key: 'taxes', done: taxCount > 0 },
+      ];
+      return res.json({ type: 'success', message: 'success', data: { checks } });
+    } catch (error) {
+      console.error('Error in getSetupChecklist:', error);
+      return res.status(500).json({ type: 'error', message: error.message, data: null });
+    }
+  }
 }
 
 module.exports = new DashboardController();

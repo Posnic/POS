@@ -1249,3 +1249,41 @@ $("#logout").on("click", function () {
         PosnicPro.users.logoutCheck();
     }, function () {});
 });
+
+/*
+ * Setup checklist (Lightspeed study LS1). Cards come from LIVE server-side
+ * checks - the strip disappears the moment reality changes, and Dismiss is
+ * a per-browser choice, never a stored "done" that can lie.
+ */
+PosnicPro.dashboard.SETUP_CARDS = {
+    outlet: { label: 'Set up your outlet info', hint: 'Address and phone print on receipts', hash: '#/settings/branches' },
+    items: { label: 'Add your first items', hint: 'Or import them from a file', hash: '#/items/new' },
+    receipt: { label: 'Add your logo', hint: 'It shows on receipts and the dashboard', hash: '#/settings/branches' },
+    employees: { label: 'Add your employees', hint: 'Each gets their own login and role', hash: '#/users' },
+    taxes: { label: 'Set up taxes', hint: 'Rates apply to every sale automatically', hash: '#/settings/taxmodule' }
+};
+PosnicPro.dashboard.loadSetupChecklist = function () {
+    if (PosnicPro.local.get('setup_checklist_dismissed') === 'true') { return; }
+    PosnicPro.get({ url: 'dashboard/setupChecklist', data: '' }, function (response) {
+        var checks = (response && response.data && response.data.checks) || [];
+        var undone = checks.filter(function (c) { return !c.done; });
+        if (!undone.length) { $('#setup_checklist_strip').hide(); return; }
+        var html = undone.map(function (c) {
+            var card = PosnicPro.dashboard.SETUP_CARDS[c.key];
+            if (!card) { return ''; }
+            return '<a href="' + card.hash + '" class="border rounded p-2 d-block" style="min-width:180px;text-decoration:none;">' +
+                '<div style="font-weight:600;font-size:.85rem;"><i class="feather icon-circle mr-1"></i>' + card.label + '</div>' +
+                '<small class="text-muted">' + card.hint + '</small>' +
+                '</a>';
+        }).join('');
+        $('#setup_checklist_cards').html(html);
+        $('#setup_checklist_strip').show();
+    }, function () { /* the dashboard must never break over a nicety */ });
+};
+PosnicPro.dashboard.dismissSetupChecklist = function () {
+    PosnicPro.local.set('setup_checklist_dismissed', 'true');
+    $('#setup_checklist_strip').hide();
+};
+$(document).ready(function () {
+    setTimeout(function () { PosnicPro.dashboard.loadSetupChecklist(); }, 1800);
+});
