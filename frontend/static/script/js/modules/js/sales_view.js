@@ -1406,7 +1406,7 @@ PosnicPro.sales.view = {
                             if ((val.amount).toFixed(2) > 0.00) {
                                 rowHTMLTaxLine += ' <tr> ' +
                                     '    <td style="display:none;">' + val.tax_id + '</td>' +
-                                    '    <td style="font-size: 12px; font-family: "Open Sans", sans-serif; color: #5b5b5b; line-height: 20px; vertical-align: top; ">' + val.tax_name + '%</td>' +
+                                    '    <td class="print-deatils-size-family" style="color: #5b5b5b; line-height: 20px; vertical-align: top;">' + val.tax_name + '%</td>' +
                                     '    <td class="print-deatils-size-family print-footer-align" style="white-space:nowrap;" width="80">' + currency + '&nbsp;<span class="number">' + val.amount + '</span> </td>' +
                                     '</tr>';
                             }
@@ -1624,7 +1624,7 @@ PosnicPro.sales.view = {
                             if ((val.amount).toFixed(2) > 0.00) {
                                 rowHTMLTaxLine += ' <tr> ' +
                                     '    <td style="display:none;">' + val.tax_id + '</td>' +
-                                    '    <td style="font-size: 12px; font-family: "Open Sans", sans-serif; color: #5b5b5b; line-height: 20px; vertical-align: top; ">' + val.tax_name + '%</td>' +
+                                    '    <td class="print-deatils-size-family" style="color: #5b5b5b; line-height: 20px; vertical-align: top;">' + val.tax_name + '%</td>' +
                                     '    <td class="print-deatils-size-family print-footer-align" style="white-space:nowrap;" width="80">' + currency + '&nbsp;<span class="number">' + val.amount + '</span> </td>' +
                                     '</tr>';
                             }
@@ -1927,7 +1927,7 @@ PosnicPro.sales.view = {
                         if ((val.amount).toFixed(2) > 0.00) {
                             rowHTMLTaxLine += ' <tr> ' +
                                 '    <td style="display:none;">' + val.tax_id + '</td>' +
-                                '    <td style="font-size: 12px; font-family: "Open Sans", sans-serif; color: #5b5b5b; line-height: 20px; vertical-align: top; ">' + val.tax_name + '%</td>' +
+                                '    <td class="print-deatils-size-family" style="color: #5b5b5b; line-height: 20px; vertical-align: top;">' + val.tax_name + '%</td>' +
                                 '    <td class="print-deatils-size-family print-footer-align" style="white-space:nowrap;" width="80">' + currency + '&nbsp;<span class="number">' + val.amount + '</span> </td>' +
                                 '</tr>';
                         }
