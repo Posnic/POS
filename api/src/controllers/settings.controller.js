@@ -282,14 +282,9 @@ class SettingController extends BaseController {
       const data = req.query?.data || this.parseNestedQueryParam(req.query, 'data') || {};
       const customerId = data.customer || req.query.customer;
 
-      if (!customerId) {
-        return res.status(400).json({
-          type: 'error',
-          message: 'Customer ID is required',
-          data: null,
-        });
-      }
-
+      // No early refusal: the model self-heals a missing id from the branch
+      // context (finds or creates the branch's Walk-in) and only a truly
+      // contextless call fails. The 400 here kept the heal dead code.
       const settingModel = this.createModelWithContext(req);
       const result = await settingModel.getDefaultCustomer(customerId);
 
@@ -325,14 +320,7 @@ class SettingController extends BaseController {
       const data = req.query?.data || this.parseNestedQueryParam(req.query, 'data') || {};
       const supplierId = data.supplier || req.query.supplier;
 
-      if (!supplierId) {
-        return res.status(400).json({
-          type: 'error',
-          message: 'Supplier ID is required',
-          data: null,
-        });
-      }
-
+      // Same rule as the customer: heal in the model, never refuse here.
       const settingModel = this.createModelWithContext(req);
       const result = await settingModel.getDefaultSupplier(supplierId);
 
@@ -365,14 +353,7 @@ class SettingController extends BaseController {
       const customerId = data.customer || req.query.customer || req.query.customer_id;
       const supplierId = data.supplier || req.query.supplier || req.query.supplier_id;
 
-      if (!customerId || !supplierId) {
-        return res.status(400).json({
-          type: 'error',
-          message: 'Customer and supplier ids are required',
-          data: null,
-        });
-      }
-
+      // Both ids heal in the model from the branch context.
       const settingModel = this.createModelWithContext(req);
       const result = await settingModel.getDefaultCustomerSupplier(customerId, supplierId);
 

@@ -397,15 +397,10 @@ describe('getDefaultCustomer', () => {
     expect(mockModel.getDefaultCustomer).toHaveBeenCalledWith('c2');
   });
 
-  test('400 when customer ID missing', async () => {
+  test('missing customer ID passes through - the model heals or refuses', async () => {
     const res = mockRes();
     await ctrl.getDefaultCustomer(mockReq({ query: {} }), res);
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json.mock.calls[0][0]).toMatchObject({
-      type: 'error',
-      message: 'Customer ID is required',
-    });
-    expect(mockModel.getDefaultCustomer).not.toHaveBeenCalled();
+    expect(mockModel.getDefaultCustomer).toHaveBeenCalledWith(undefined);
   });
 
   test('404 when customer not found', async () => {
@@ -434,11 +429,10 @@ describe('getDefaultSupplier', () => {
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
-  test('400 when supplier ID missing', async () => {
+  test('missing supplier ID passes through - the model heals or refuses', async () => {
     const res = mockRes();
     await ctrl.getDefaultSupplier(mockReq({ query: {} }), res);
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json.mock.calls[0][0].message).toBe('Supplier ID is required');
+    expect(mockModel.getDefaultSupplier).toHaveBeenCalledWith(undefined);
   });
 
   test('404 when supplier not found', async () => {
@@ -471,16 +465,16 @@ describe('getDefaultCustomerSupplier', () => {
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
-  test('400 when customer ID missing', async () => {
+  test('missing customer ID passes through - the model heals both defaults', async () => {
     const res = mockRes();
     await ctrl.getDefaultCustomerSupplier(mockReq({ query: { supplier: 's1' } }), res);
-    expect(res.status).toHaveBeenCalledWith(400);
+    expect(mockModel.getDefaultCustomerSupplier).toHaveBeenCalledWith(undefined, 's1');
   });
 
-  test('400 when supplier ID missing', async () => {
+  test('missing supplier ID passes through - the model heals both defaults', async () => {
     const res = mockRes();
     await ctrl.getDefaultCustomerSupplier(mockReq({ query: { customer: 'c1' } }), res);
-    expect(res.status).toHaveBeenCalledWith(400);
+    expect(mockModel.getDefaultCustomerSupplier).toHaveBeenCalledWith('c1', undefined);
   });
 
   test('404 when model returns "Not found" message', async () => {

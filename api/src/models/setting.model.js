@@ -238,6 +238,58 @@ class SettingModel extends BaseModel {
    * Get default supplier details by ID
    */
   async getDefaultSupplier(supplierId) {
+    /*
+     * Heal like the customer: with a branch context a missing id resolves
+     * to the branch's General Supplier - found or created, branch doc
+     * repointed. Contextless still refuses below.
+     */
+    if (!supplierId && this.branchId) {
+      try {
+        const suppliers = await this.getCollection('suppliers');
+        const healLicense = this.licenseId ? { license: this.normalizeId(this.licenseId) } : {};
+        const branchIdNorm = this.normalizeId(this.branchId);
+        let general = await suppliers.findOne({
+          branch_id: branchIdNorm,
+          name: { $regex: /general supplier/i },
+          ...healLicense,
+        });
+        if (!general) {
+          const now = new Date();
+          const seed = {
+            branch_id: branchIdNorm,
+            name: 'General Supplier',
+            email: `anonymous-supplier-${branchIdNorm}@posnic.local`,
+            phone: '',
+            address: '',
+            sortname: '',
+            country: '',
+            state: '',
+            city: '',
+            gst: 'disable',
+            gst_number: '',
+            gst_type: 'consumer',
+            created_date: now,
+            updated_date: now,
+          };
+          if (this.licenseId) seed.license = this.normalizeId(this.licenseId);
+          const ins = await suppliers.insertOne(seed);
+          general = { ...seed, _id: ins.insertedId };
+        }
+        try {
+          const branches = await this.getCollection('branch');
+          await branches.updateOne(
+            { _id: branchIdNorm },
+            { $set: { default_supplier: general._id } }
+          );
+        } catch (e) {
+          /* best-effort pointer */
+        }
+        supplierId = general._id;
+      } catch (e) {
+        /* fall through to the plain refusal below */
+      }
+    }
+
     if (!supplierId) {
       return {
         status: false,

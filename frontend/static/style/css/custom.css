@@ -2914,3 +2914,7 @@ input:checked + .slider:before {
     background: #fff; border: 1px solid #e3e7ee; color: inherit;
 }
 .tip-chips .tip-chip:hover, .tip-chips button:hover { border-color: #506fe4; }
+
+/* One settings title: the global header names the page; pane-internal
+   breadcrumbs (Register Details, Cash Book) stand down. */
+#settings .contentbar .breadcrumbbar { display: none; }
