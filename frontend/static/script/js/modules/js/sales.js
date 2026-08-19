@@ -7439,6 +7439,134 @@ $(document).ready(function () {
         $('#camera_scan_btn').show();
     }
 });
+
+/*
+ * Quick Sale (Square study Q1): the busy-counter mode - type an amount,
+ * it becomes a line, tender as normal. Rides the instant-item rail end to
+ * end (items/instanceItemInsert -> addSalesLineItems), so stock, reports,
+ * receipts and sync see an ordinary sale; the line is priced tax-INCLUSIVE
+ * against the shop's default tax, exactly like a normal inclusive item.
+ */
+PosnicPro.sales.quickSale = {
+    _tax: null,
+    _count: 0,
+    open: function () {
+        if (!$('#quick_sale_modal').length) {
+            $('body').append(
+                '<div class="modal fade" id="quick_sale_modal" tabindex="-1" role="dialog" aria-hidden="true">' +
+                '<div class="modal-dialog modal-sm modal-dialog-centered" role="document"><div class="modal-content">' +
+                '<div class="modal-header py-2"><h5 class="modal-title"><i class="feather icon-zap mr-2"></i>Quick sale</h5>' +
+                '<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>' +
+                '<div class="modal-body">' +
+                '<input type="number" min="0" step="any" class="form-control form-control-lg text-right mb-2" id="quick_sale_amount" placeholder="0.00" autocomplete="off" style="font-size:1.6rem;">' +
+                '<input type="text" class="form-control mb-2" id="quick_sale_note" maxlength="100" placeholder="Note (optional)" autocomplete="off">' +
+                '<small class="text-muted d-block" id="quick_sale_hint"></small>' +
+                '<small class="text-muted d-block" id="quick_sale_added"></small>' +
+                '</div>' +
+                '<div class="modal-footer py-2">' +
+                '<button type="button" class="btn btn-outline-secondary btn-sm" data-dismiss="modal">Done</button>' +
+                '<button type="button" class="btn btn-warning-rgba" id="quick_sale_add" onclick="PosnicPro.sales.quickSale.add();">Add to sale</button>' +
+                '</div></div></div></div>');
+            $('#quick_sale_amount').on('keydown', function (e) {
+                if (e.key === 'Enter') { PosnicPro.sales.quickSale.add(); }
+            });
+        }
+        PosnicPro.sales.quickSale._count = 0;
+        $('#quick_sale_added').text('');
+        $('#quick_sale_amount,#quick_sale_note').val('');
+        // The shop's default tax, fetched once - the amount is treated as
+        // tax-inclusive against it, like any inclusive-priced item.
+        if (PosnicPro.sales.quickSale._tax === null) {
+            if (PosnicPro.local.get('default_tax_enable_disable') === 'false') {
+                PosnicPro.sales.quickSale._tax = { id: '', name: '', value: 0 };
+                $('#quick_sale_hint').text('No tax applied');
+            } else {
+                PosnicPro.get({ url: 'setting/getTaxAjaxList', data: 'query=' }, function (response) {
+                    var wanted = PosnicPro.local.get('default_tax_id');
+                    var found = null;
+                    (response.suggestions || []).forEach(function (t) {
+                        if (String(t.tax_id) === String(wanted)) { found = t; }
+                    });
+                    PosnicPro.sales.quickSale._tax = found
+                        ? { id: found.tax_id, name: found.tax_name, value: Number(found.tax_value) || 0 }
+                        : { id: '', name: '', value: 0 };
+                    $('#quick_sale_hint').text(found
+                        ? found.tax_name + ' (' + found.tax_value + '%) included in the price'
+                        : 'No tax applied');
+                }, function () {
+                    PosnicPro.sales.quickSale._tax = { id: '', name: '', value: 0 };
+                });
+            }
+        } else {
+            var t = PosnicPro.sales.quickSale._tax;
+            $('#quick_sale_hint').text(t.id ? t.name + ' (' + t.value + '%) included in the price' : 'No tax applied');
+        }
+        $('#quick_sale_modal').modal('show');
+        setTimeout(function () { $('#quick_sale_amount').focus(); }, 400);
+    },
+    add: function () {
+        var amount = parseFloat($('#quick_sale_amount').val());
+        if (!Number.isFinite(amount) || amount <= 0) {
+            $('#quick_sale_amount').focus();
+            return;
+        }
+        var note = ($('#quick_sale_note').val() || '').trim();
+        var tax = PosnicPro.sales.quickSale._tax || { id: '', name: '', value: 0 };
+        $('#quick_sale_add').prop('disabled', true);
+        PosnicPro.post({
+            url: 'items/instanceItemInsert',
+            data: JSON.stringify({
+                items_name: note || 'Quick sale',
+                items_quantity: 1,
+                items_mrp_price: amount,
+                items_selling_price: amount,
+                items_company_price: 0,
+                items_discount_amount: 0,
+                items_discount_percentage: 0,
+                items_tax_id: tax.id,
+                items_tax_name: tax.name,
+                items_tax: tax.value,
+                items_tax_type: 'inclusive',
+                items_sku: '',
+                items_category_id: '',
+                items_category_name: '',
+                items_unit: 'qty'
+            })
+        }, function (response) {
+            $('#quick_sale_add').prop('disabled', false);
+            if (response.type !== 'success') {
+                PosnicPro.alert(response.type, response.message);
+                return;
+            }
+            var data = response.data;
+            PosnicPro.sales.addSalesLineItems({
+                item_id: data.id,
+                item_name: data.name,
+                selling_price: data.selling_price,
+                barcode_id: data.barcode_id,
+                item_quantity: data.available_quantity,
+                discount_amount: data.discount_amount,
+                discount_percentage: data.discount_percentage,
+                tax: data.tax,
+                company_price: data.company_price,
+                category_id: data.category_id,
+                category_name: data.category_name,
+                tax_type: data.tax_type,
+                sales_type: 'instant',
+                instant_status: 'ok',
+                unit: data.unit
+            });
+            PosnicPro.sales.quickSale._count += 1;
+            $('#quick_sale_added').text(PosnicPro.sales.quickSale._count + ' line(s) added to this sale');
+            $('#quick_sale_amount,#quick_sale_note').val('');
+            $('#quick_sale_amount').focus();
+        }, function (xhr) {
+            $('#quick_sale_add').prop('disabled', false);
+            var resp = {}; try { resp = JSON.parse(xhr.responseText); } catch (e) { /* plain */ }
+            PosnicPro.alert('error', resp.message || 'Could not add the quick sale line');
+        });
+    }
+};
 $('#sales_new_item_name').on('keydown.autocomplete keyup.autocomplete', function () {
     $(this).autocomplete({
         lookup: function (query, done) {
