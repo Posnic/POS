@@ -1133,6 +1133,30 @@ class SettingModel extends BaseModel {
         ...(data.email_smtp_from !== undefined
           ? { email_smtp_from: String(data.email_smtp_from || '').trim() }
           : {}),
+        // Quotation defaults: prefilled into every NEW quote server-side,
+        // still editable per quote on its preview. Presence-gated so older
+        // tills that do not send them cannot wipe them.
+        ...(data.quote_default_payment_method !== undefined
+          ? {
+              quote_default_payment_method: String(data.quote_default_payment_method || '')
+                .trim()
+                .slice(0, 60),
+            }
+          : {}),
+        ...(data.quote_default_bank_details !== undefined
+          ? {
+              quote_default_bank_details: String(data.quote_default_bank_details || '')
+                .trim()
+                .slice(0, 500),
+            }
+          : {}),
+        ...(data.quote_default_terms !== undefined
+          ? {
+              quote_default_terms: String(data.quote_default_terms || '')
+                .trim()
+                .slice(0, 1500),
+            }
+          : {}),
         indian_gst: data.indian_gst,
         receiving_prefix: data.receiving_prefix,
         branch_gstin_number: data.branch_gstin_number || '',
