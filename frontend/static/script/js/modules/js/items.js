@@ -59,7 +59,7 @@ PosnicPro.items = {
         $('#product_with_variant').prop('checked', false);
 
         $('#show_variant_fields').hide();
-        $('#show_price_fields').show();
+        $('#show_price_fields,#sku_card_col').show();
         $("#load_price_fields").html('');
         $("#show-hide-item-discount").show();
         $('#item_variant_header').hide();
@@ -287,11 +287,11 @@ PosnicPro.items = {
         PosnicPro.items.showAdd();
         $('#item_variant_header').hide();
         $('#show_variant_fields').hide();
-        $('#show_price_fields').show();
+        $('#show_price_fields,#sku_card_col').show();
         $('#product_without_variant').prop('checked', true);
         $('#product_with_variant').prop('checked', false);
         $('#show_variant_fields').hide();
-        $('#show_price_fields').show();
+        $('#show_price_fields,#sku_card_col').show();
         $("#load_price_fields").html('');
         $("#show-hide-item-discount").show();
         if ($('#sales_new_item_name').val() !== '') {
@@ -464,7 +464,7 @@ PosnicPro.items = {
                    Variant mode resets to the plain-item state. */
                 $('#load_price_fields').html('').hide();
                 $('#show_variant_fields').hide();
-                $('#show_price_fields').show();
+                $('#show_price_fields,#sku_card_col').show();
                 $('#product_without_variant').prop('checked', true);
                 PosnicPro.items.itemClearForm();
                 $('#items_name').focus();
@@ -1037,7 +1037,7 @@ PosnicPro.items = {
             if (response.type === 'success') {
                 loader.find(".loadingSpinner:first").remove();
                 $('#show_variant_fields').hide();
-                $('#show_price_fields').show();
+                $('#show_price_fields,#sku_card_col').show();
                 var data = response.data;
                 // Family strip (V1): if this item belongs to a variant
                 // family, show its siblings and the add-value button. The
@@ -1207,11 +1207,11 @@ PosnicPro.items = {
 
         if ($("#product_without_variant").is(":checked")) {
             $('#show_variant_fields').hide();
-            $('#show_price_fields').show();
+            $('#show_price_fields,#sku_card_col').show();
             $("#load_price_fields").html('');
             $("#show-hide-item-discount").show();
         } else {
-            $('#show_price_fields').hide();
+            $('#show_price_fields,#sku_card_col').hide();
             $('#show_variant_fields').show();
             $('#show_variant_fields').css("display", "block");
             $("#show-hide-item-discount").hide();
@@ -2430,10 +2430,10 @@ PosnicPro.items = {
         $('#items_new .alert').remove();
         if ($("#product_without_variant").is(":checked")) {
             $('#show_variant_fields').hide();
-            $('#show_price_fields').show();
+            $('#show_price_fields,#sku_card_col').show();
             $('#product_without_variant').prop('checked', true);
         } else {
-            $('#show_price_fields').hide();
+            $('#show_price_fields,#sku_card_col').hide();
             $('#show_variant_fields').show();
             $('#show_variant_fields').css("display", "block");
             $('#item_variant_list').empty().trigger('change');
@@ -2828,11 +2828,11 @@ $(function () {
     $("#product_without_variant, #product_with_variant").change(function () {
         if ($("#product_without_variant").is(":checked")) {
             $('#show_variant_fields').hide();
-            $('#show_price_fields').show();
+            $('#show_price_fields,#sku_card_col').show();
             $("#load_price_fields").html('');
             $("#show-hide-item-discount").show();
         } else {
-            $('#show_price_fields').hide();
+            $('#show_price_fields,#sku_card_col').hide();
             $('#show_variant_fields').show();
             $("#show-hide-item-discount").hide();
         }
