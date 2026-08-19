@@ -7726,6 +7726,10 @@ PosnicPro.sales.applyQuickSaleGate = function () {
         var gs = JSON.parse(PosnicPro.local.get('general_settings') || '{}');
         on = gs.quick_sale_enable !== false;
     } catch (e) { /* default on */ }
+    // Per-user grant (owner ask): deny only when the checkbox was
+    // explicitly unticked - old permission sets lack the key entirely.
+    var pos = PosnicPro.userACL && PosnicPro.userACL.pos;
+    if (pos && typeof pos === 'object' && pos.quick_sale === false) { on = false; }
     $('#quick_sale_btn').toggle(on);
 };
 

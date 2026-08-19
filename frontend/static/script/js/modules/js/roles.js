@@ -12,12 +12,13 @@ PosnicPro.roles = {
     // Till actions mirror POS_PERMISSIONS in api/src/constants/roles.constants.js.
     POS_KEYS: ['discount_apply', 'price_override', 'void_line', 'void_sale', 'refund',
         'reprint_receipt', 'no_sale_open_drawer', 'register_open', 'register_close',
-        'cash_in_out', 'cash_drop'],
+        'cash_in_out', 'cash_drop', 'quick_sale'],
     POS_LABELS: {
         discount_apply: 'Apply discount', price_override: 'Price override',
         void_line: 'Void a line', void_sale: 'Void a sale', refund: 'Refund / return',
         reprint_receipt: 'Reprint receipt', no_sale_open_drawer: 'No-sale open drawer',
         register_open: 'Open register', register_close: 'Close register',
+        quick_sale: 'Quick sale / instant items',
         cash_in_out: 'Cash in / out', cash_drop: 'Cash drop',
     },
     listCache: [],
