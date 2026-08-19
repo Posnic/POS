@@ -2731,12 +2731,12 @@ tr.add-disc-row.tip-only td.discount-input { visibility: hidden; }
 
 /* Owner (repeated ask): every clickable icon answers hover and touch.
    The grey works on light and dark themes alike. */
-.infobar-settings-close {
+.infobar-settings-close:not(.btn) {
     display: inline-flex; align-items: center; justify-content: center;
     width: 34px; height: 34px; border-radius: 8px;
     transition: background 0.12s ease;
 }
-.infobar-settings-close:hover, .infobar-settings-close:active { background: rgba(128, 128, 128, 0.18); }
+.infobar-settings-close:not(.btn):hover, .infobar-settings-close:not(.btn):active { background: rgba(128, 128, 128, 0.18); }
 .modal .close { border-radius: 8px; padding: 4px 10px; transition: background 0.12s ease; }
 .modal .close:hover, .modal .close:active { background: rgba(128, 128, 128, 0.18); }
 .mobile_tooltip { transition: background 0.12s ease, box-shadow 0.12s ease; }
