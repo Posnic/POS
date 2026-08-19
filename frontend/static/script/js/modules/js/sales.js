@@ -874,7 +874,8 @@
             PosnicPro.sales._recentPush('recent_items', {
                 id: params.id || params.item_id,
                 name: params.item_name || params.name,
-                price: params.selling_price
+                price: params.selling_price,
+                image: params.image || 'item.svg'
             }, 'id');
         }
         // Price list first, so modifier deltas ride the customer's price.
@@ -7526,15 +7527,18 @@ PosnicPro.sales.renderRecentItems = function () {
     }
     var input = $('#sales_new_item_name');
     var off = input.offset();
+    var currency = PosnicPro.local.get('currencySign');
     box.html(list.map(function (it, i) {
+        var img = (it.image && it.image !== 'item.svg') ? it.image : 'static/images/default/item.svg';
         return '<div class="autocomplete-suggestion recent-item-row" data-i="' + i + '" style="cursor:pointer;">' +
-            '<i class="feather icon-clock mr-1"></i>' + $('<span>').text(it.name).html() +
-            ' <span class="pull-right">' + (Number(it.price) || 0).toFixed(2) + '</span></div>';
+            '<img src="' + img + '" height="40" width="40" style="border-radius: 25%;" /> ' +
+            '<div class="suggestion-name">' + $('<span>').text(it.name).html() + '</div>' +
+            '<span><span class="suggestion-price pull-right">' + currency + '&nbsp;' + (Number(it.price) || 0).toFixed(2) + '</span></span></div>';
     }).join(''))
         .css({ top: off.top + input.outerHeight(), left: off.left, width: input.outerWidth() })
         .show();
 };
-$(document).on('focus', '#sales_new_item_name', function () {
+$(document).on('click', '#sales_new_item_name', function () {
     if (($(this).val() || '').trim() === '') { PosnicPro.sales.renderRecentItems(); }
 });
 $(document).on('input blur', '#sales_new_item_name', function () {
