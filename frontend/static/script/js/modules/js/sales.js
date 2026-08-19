@@ -866,6 +866,15 @@
         });
     },
     addSalesLineItems: function (params) {
+        // Recency (owner feedback): every added item feeds the recent list -
+        // written here so search, scan, camera, tiles and recents all count.
+        if (PosnicPro.sales._recentPush && params.sales_type !== 'instant') {
+            PosnicPro.sales._recentPush('recent_items', {
+                id: params.id || params.item_id,
+                name: params.item_name || params.name,
+                price: params.selling_price
+            }, 'id');
+        }
         // Price list first, so modifier deltas ride the customer's price.
         if (PosnicPro.sales.SaleAction !== 'return'
             && PosnicPro.sales.searchItem(params.id ? params.id : params.item_id) === false) {
@@ -7478,6 +7487,42 @@ $(document).on('mousedown', '.tip-chip', function (e) {
     $('#sale_tip_input').val($(this).data('v'));
 });
 
+/* Recent items under the sale search: rendered from the same LRU, picked
+   straight into the cart. */
+PosnicPro.sales.renderRecentItems = function () {
+    var list = PosnicPro.sales._recentGet('recent_items');
+    var box = $('#sales_recent_items');
+    if (!list.length) { box.hide(); return; }
+    if (!box.length) {
+        box = $('<div id="sales_recent_items" class="autocomplete-suggestions" style="position:absolute; z-index:1050; display:none; max-height:280px; overflow-y:auto;"></div>').appendTo('body');
+        $(document).on('mousedown', '.recent-item-row', function (e) {
+            e.preventDefault();
+            var l = PosnicPro.sales._recentGet('recent_items');
+            var it = l[$(this).data('i')];
+            $('#sales_recent_items').hide();
+            if (it) { PosnicPro.sales.itemsMenu.addToLineItemsList(it.id); }
+        });
+    }
+    var input = $('#sales_new_item_name');
+    var off = input.offset();
+    box.html(list.map(function (it, i) {
+        return '<div class="autocomplete-suggestion recent-item-row" data-i="' + i + '" style="cursor:pointer;">' +
+            '<i class="feather icon-clock mr-1"></i>' + $('<span>').text(it.name).html() +
+            ' <span class="pull-right">' + (Number(it.price) || 0).toFixed(2) + '</span></div>';
+    }).join(''))
+        .css({ top: off.top + input.outerHeight(), left: off.left, width: input.outerWidth() })
+        .show();
+};
+$(document).on('focus', '#sales_new_item_name', function () {
+    if (($(this).val() || '').trim() === '') { PosnicPro.sales.renderRecentItems(); }
+});
+$(document).on('input blur', '#sales_new_item_name', function () {
+    var self = this;
+    setTimeout(function () {
+        if (($(self).val() || '').trim() !== '' || !$(self).is(':focus')) { $('#sales_recent_items').hide(); }
+    }, 200);
+});
+
 PosnicPro.sales.quickSale = {
     _tax: null,
     _count: 0,
@@ -7772,6 +7817,81 @@ var substringMatcher = function (strs) {
         cb(matches);
     };
 };
+/*
+ * Recency lists (owner feedback): the pickers open with the last 10 picks
+ * of THIS till, kept as a tiny localStorage LRU written at pick time - the
+ * international "recents" pattern, zero server queries, zero aggregation.
+ */
+PosnicPro.sales._recentGet = function (key) {
+    try { return JSON.parse(PosnicPro.local.get(key) || '[]'); } catch (e) { return []; }
+};
+PosnicPro.sales._recentPush = function (key, entry, idField) {
+    if (!entry || !entry[idField]) { return; }
+    var list = PosnicPro.sales._recentGet(key).filter(function (r) {
+        return String(r[idField]) !== String(entry[idField]);
+    });
+    list.unshift(entry);
+    PosnicPro.local.set(key, JSON.stringify(list.slice(0, 10)));
+};
+/* ONE customer-pick path: search results and recent rows both land here. */
+PosnicPro.sales.applyCustomerPick = function (data) {
+    var customerRecord = [];
+    PosnicPro.local.set('customerName', data.name);
+    PosnicPro.local.set('customerPhone', data.phone);
+    PosnicPro.local.set('customerEmail', data.email);
+    PosnicPro.local.set('customerAddress', data.address);
+    $('#sales_new_customer_id').val(data.id);
+    $('#sales_new_customer_name').val(data.name);
+    $('#sales_new_customer_address').val(data.address);
+    $('#sales_new_customer_phone').val(data.phone);
+    $('#sales_new_customer_email').val(data.email);
+    $('#sales_new_customer_state').val(data.state);
+    $('#sales_new_customer_country').val(data.country);
+    $('#sales_new_customer_gst_type').val(data.gst_type);
+    $('#sales_new_customer_gst_number').val(data.gst_number);
+    $('#sales_new_customer_partial_balance').val(data.partial_balance);
+    $('#customer_current_balance').val(data.balance);
+    // Price lists (V4): remember this customer's category so newly added
+    // lines price from their list; fetch when the payload lacks it.
+    PosnicPro.sales._customerCategoryId = String(data.category_id || '');
+    if (!PosnicPro.sales._customerCategoryId && data.id) {
+        PosnicPro.get('customers/' + data.id, function (r) {
+            if (r && r.data) {
+                PosnicPro.sales._customerCategoryId = String(r.data.category_id || '');
+            }
+        }, function () { /* no category, no list */ });
+    }
+    customerRecord.push({ name: data.name, phone: data.phone, email: data.email, address: data.address });
+    db.customerDisplay.put({ id: '1', clear: 'no', 'get': 'no', customer: customerRecord });
+    PosnicPro.sales.calculation.salesTableRowCart();
+    if (PosnicPro.loyalty) PosnicPro.loyalty.tillShow(data.id);
+    if (PosnicPro.sales.updateCustomerChip) PosnicPro.sales.updateCustomerChip();
+    $('.toggle-customer-user').hide();
+    PosnicPro.sales._recentPush('recent_customers', {
+        id: data.id, name: data.name, phone: data.phone, email: data.email,
+        address: data.address, state: data.state, country: data.country,
+        gst_type: data.gst_type, gst_number: data.gst_number,
+        partial_balance: data.partial_balance, balance: data.balance,
+        category_id: data.category_id
+    }, 'id');
+};
+PosnicPro.sales.renderRecentCustomers = function () {
+    var list = PosnicPro.sales._recentGet('recent_customers');
+    var wrap = $('#sales_recent_customers');
+    if (!list.length) { wrap.html('').hide(); return; }
+    wrap.html(list.map(function (c, i) {
+        return '<a href="javascript:void(0)" class="sales-customer-pop-action recent-customer-row" data-i="' + i + '">' +
+            '<i class="feather icon-clock mr-2"></i>' + $('<span>').text(c.name).html() +
+            (c.phone ? ' <small class="text-muted">' + $('<span>').text(c.phone).html() + '</small>' : '') +
+            '</a>';
+    }).join('')).show();
+};
+$(document).on('click', '.recent-customer-row', function () {
+    var list = PosnicPro.sales._recentGet('recent_customers');
+    var c = list[$(this).data('i')];
+    if (c) { PosnicPro.sales.applyCustomerPick(c); }
+});
+
 /******** START SALES SEARCH CUSTOMER FUNCTION ONLINE ********/
 $('#sales_new_customer_name').on('keydown.autocomplete', function () {
     /*Autocomplete API call customer search*/
@@ -7796,43 +7916,11 @@ $('#sales_new_customer_name').on('keydown.autocomplete', function () {
             });
         },
         onSelect: function (suggestion) {
-            var customerRecord = [];
             if (suggestion.data !== -1) {
-                PosnicPro.local.set('customerName', suggestion.data.name);
-                PosnicPro.local.set('customerPhone', suggestion.data.phone);
-                PosnicPro.local.set('customerEmail', suggestion.data.email);
-                PosnicPro.local.set('customerAddress', suggestion.data.address);
-                $('#sales_new_customer_id').val(suggestion.data.id);
-                $('#sales_new_customer_address').val(suggestion.data.address);
-                $('#sales_new_customer_phone').val(suggestion.data.phone);
-                $('#sales_new_customer_email').val(suggestion.data.email);
-                $('#sales_new_customer_state').val(suggestion.data.state);
-                $('#sales_new_customer_country').val(suggestion.data.country);
-                $('#sales_new_customer_gst_type').val(suggestion.data.gst_type);
-                $('#sales_new_customer_gst_number').val(suggestion.data.gst_number);
-                $('#sales_new_customer_partial_balance').val(suggestion.data.partial_balance);
-                $('#customer_current_balance').val(suggestion.data.balance);
-                // Price lists (V4): remember this customer's category so
-                // newly added lines price from their list. Falls back to a
-                // fetch when the suggestion payload lacks the category.
-                PosnicPro.sales._customerCategoryId = String(suggestion.data.category_id || '');
-                if (!PosnicPro.sales._customerCategoryId && suggestion.data.id) {
-                    PosnicPro.get('customers/' + suggestion.data.id, function (r) {
-                        if (r && r.data) {
-                            PosnicPro.sales._customerCategoryId = String(r.data.category_id || '');
-                        }
-                    }, function () { /* no category, no list */ });
-                }
-                customerRecord.push({ name: suggestion.data.name, phone: suggestion.data.phone, email: suggestion.data.email, address: suggestion.data.address });
-                db.customerDisplay.put({ id: '1', clear: 'no', 'get': 'no', customer: customerRecord });
-                PosnicPro.sales.calculation.salesTableRowCart();
-                if (PosnicPro.loyalty) PosnicPro.loyalty.tillShow(suggestion.data.id);
-                if (PosnicPro.sales.updateCustomerChip) PosnicPro.sales.updateCustomerChip();
-                $('.toggle-customer-user').hide();
+                PosnicPro.sales.applyCustomerPick(suggestion.data);
             } else {
                 hasher.setHash('sales/customers/new');
             }
-
         },
         autoSelectFirst: true,
         triggerSelectOnValidInput: false,
@@ -7933,6 +8021,7 @@ $('.toggle-user-input').click(function () {
     var $pop = $('.toggle-customer-user');
     $pop.toggle();
     if ($pop.is(':visible')) {
+        PosnicPro.sales.renderRecentCustomers();
         setTimeout(function () { $('#sales_new_customer_name').trigger('focus'); }, 0);
     }
 });
