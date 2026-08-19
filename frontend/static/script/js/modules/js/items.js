@@ -3467,10 +3467,25 @@ PosnicPro.items._hsnRate = function (r) {
     var n = parseFloat(String(r.taxrate || '').replace('%', ''));
     return isFinite(n) ? n : 0;
 };
+/* GST 2.0 (CBIC Notif. 9/2025, eff. 22 Sep 2025) retired the 12% and 28%
+   slabs. Rows still carrying them are pre-2025 data: never auto-fill a
+   dead slab - name it and make the owner pick the current one. */
+PosnicPro.items._hsnDeadSlab = function (r) {
+    var n = PosnicPro.items._hsnRate(r);
+    return n === 12 || n === 28;
+};
 PosnicPro.items._hsnApply = function (r) {
     $('#items_hsncode').val(r.value);
     $('#items_hsndescription').val(r.description);
-    $('#hsn_tax').val(PosnicPro.items._hsnRate(r));
+    if (PosnicPro.items._hsnDeadSlab(r)) {
+        $('#hsn_tax').val('');
+        PosnicPro.alert('info', 'This code\'s stored rate (' + PosnicPro.items._hsnRate(r)
+            + '%) predates GST 2.0 - most such goods moved to '
+            + (PosnicPro.items._hsnRate(r) === 12 ? '5% or 18%' : '18% or 40%')
+            + '. Set the current slab (Notif. 9/2025, eff. 22 Sep 2025).');
+    } else {
+        $('#hsn_tax').val(PosnicPro.items._hsnRate(r));
+    }
     $('#hsn_suggest_row').hide();
 };
 /* Top matches for the item + category words - the "right tax" nudge. */
@@ -3494,9 +3509,11 @@ PosnicPro.items.hsnSuggest = function () {
         if (!top.length) { $('#hsn_suggest_row').hide(); return; }
         var esc = function (v) { return $('<i>').text(v == null ? '' : v).html(); };
         $('#hsn_suggest_row').html('<small class="text-muted mr-1">Suggested:</small>' + top.map(function (r, i) {
+            var rate = String(r.taxrate || '').replace('%', '') || '0';
+            var rateLabel = PosnicPro.items._hsnDeadSlab(r) ? rate + '% (pre-2025)' : rate + '%';
             return '<a href="javascript:void(0)" class="badge badge-light border mr-1 hsn-chip" data-i="' + i + '">'
                 + esc(r.value) + ' &middot; ' + esc((r.description || '').slice(0, 34))
-                + ' &middot; ' + esc(String(r.taxrate || '').replace('%', '') || '0') + '%</a>';
+                + ' &middot; ' + esc(rateLabel) + '</a>';
         }).join('')).show().data('rows', top);
     });
 };
@@ -3526,11 +3543,13 @@ $('.hsnCode').one({
                 },
                 formatResult: function (suggestion, currentValue) {
                     var rate = String(suggestion.taxrate || '').replace('%', '') || '0';
+                    var dead = PosnicPro.items._hsnDeadSlab(suggestion);
                     return '<div class="sug-row">'
                         + '<div class="sug-main"><div class="sug-name">'
                         + $.Autocomplete.formatResult(suggestion, currentValue)
                         + '</div><div class="sug-meta">' + $('<i>').text(suggestion.description || '').html()
-                        + '</div></div><div class="sug-side"><span class="sug-stock in">GST ' + rate + '%</span></div></div>';
+                        + '</div></div><div class="sug-side"><span class="sug-stock ' + (dead ? 'low' : 'in') + '">GST '
+                        + rate + '%' + (dead ? ' pre-2025' : '') + '</span></div></div>';
                 }
             });
         });
