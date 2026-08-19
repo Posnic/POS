@@ -6039,16 +6039,10 @@ PosnicPro.sales.setSaleDefaults = function () {
 
     // Tip at tender (owner feedback: SAME line as the discount - the sale
     // page must never scroll). When the discount row itself is hidden
-    // (inline discount off) but tips are on, the row shows tip-only.
-    var _tipsOn = !!(PosnicPro.shiftWidget && PosnicPro.shiftWidget._setting('staff_tips_enable', false));
+    // Tip sits beside the coupon now; the Workforce switch is the only gate.
     $('.sale-tip-wrap').toggle(_tipsOn);
     var _discRow = $('.add-disc-row');
-    _discRow.removeClass('tip-only');
-    if (_tipsOn && !_discRow.is(':visible')) {
-        _discRow.addClass('tip-only').show();
-    } else if (!_tipsOn && _discRow.hasClass('tip-only')) {
-        _discRow.hide();
-    }
+
 
     // Check if register is required and open before allowing sales.
     // ONLY when the module is on: a shop that disabled cash registers in

@@ -2705,9 +2705,7 @@ input:checked + .slider:before {
 
 /* Tip-only mode of the discount row: tips are on but the inline discount is
    off - the row shows just the tip, its discount cells go quiet. */
-tr.add-disc-row.tip-only .disc-note-text,
-tr.add-disc-row.tip-only td.discount-label,
-tr.add-disc-row.tip-only td.discount-input { visibility: hidden; }
+/* tip-only row mode retired - the tip lives beside the coupon now. */
 
 /* Typeahead rows (sale + purchase): one layout - thumb, name + meta,
    price + stock. Actions (quick sale / create item) reuse the row. */
@@ -2834,3 +2832,22 @@ tr.add-disc-row.tip-only td.discount-input { visibility: hidden; }
 .wsk-cp-img { aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center; overflow: hidden; }
 .wsk-cp-img img { width: 100%; height: 100%; object-fit: contain; }
 .wsk-cp-img > div { height: 100%; }
+
+/* Sale actions: Park, Quote, Clear, Close hold ONE line at every width. */
+#edit_style_button { display: flex; gap: 6px; align-items: stretch; }
+#edit_style_button > span { flex: 1 1 0; display: block; min-width: 0; }
+#edit_style_button > span > .btn, #edit_style_button > a.btn { width: 100%; max-width: none; float: none; }
+#edit_style_button > a.btn { flex: 1.4 1 0; display: inline-flex; align-items: center; justify-content: center; }
+
+/* Tip beside the coupon: same visual language as the coupon box. */
+.sale-tip-wrap { display: inline-flex; align-items: center; gap: 6px; }
+.sale-tip-wrap input#sale_tip_input {
+    height: 34px; width: 92px; border: 1px solid #eae8e8; border-radius: 6px;
+    text-align: right; padding: 0 8px;
+}
+.sale-tip-wrap input#sale_tip_input:focus { border-color: #506fe4; outline: none; }
+.tip-chips .tip-chip, .tip-chips button {
+    min-width: 44px; height: 32px; border-radius: 8px;
+    border: 1px solid rgba(128, 128, 128, 0.25);
+    background: rgba(128, 128, 128, 0.08); font-weight: 600;
+}

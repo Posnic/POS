@@ -343,6 +343,15 @@
                                         </div>
                                         <div id="sales_coupon_status" class="small mt-1 text-right"></div>
                                     </div>
+                                    <!-- Tip beside the coupon (owner ask); the Workforce tips
+                                         switch decides whether it shows at all. -->
+                                    <span class="sale-tip-wrap mt-1" style="display:none; white-space:nowrap;">
+                                        <lang class="lang_tip_title">Tip</lang>
+                                        <span class="tip-chips" style="display:none;"></span>
+                                        <span class="display-currency"></span>&nbsp;<input
+                                            type="number" min="0" step="0.01" id="sale_tip_input"
+                                            placeholder="0.00" title="Recorded with the sale - not added to the bill">
+                                    </span>
                                 </div>
                             </div>
 
@@ -456,16 +465,6 @@
                                                     <a href="#" id="discount_description"
                                                         class="discount_description customer-display-hide"
                                                         style="display:none;"></a></span>
-                                                    <!-- Tip lives here now - same line as the discount,
-                                                         no extra row, chips on focus for one-tap amounts. -->
-                                                    <span class="sale-tip-wrap" style="display:none; white-space:nowrap;">
-                                                        <lang class="lang_tip_title">Tip</lang>
-                                                        <span class="tip-chips" style="display:none;"></span>
-                                                        <span class="display-currency"></span>&nbsp;<input
-                                                            type="number" min="0" step="0.01" id="sale_tip_input"
-                                                            placeholder="0.00" title="Recorded with the sale - not added to the bill"
-                                                            style="width:70px; text-align:right; border:1px solid #eae8e8; border-radius:3px;">
-                                                    </span>
                                                 </td>
 
                                                 <!-- MIDDLE: Additional Discount label -->
@@ -522,7 +521,7 @@
                                                     <span data-toggle="tooltip" data-placement="top"
                                                         data-original-title="Save as quote">
                                                         <button type="button"
-                                                            class="col-xs-12 col-md-12 col-lg-2 btn btn-primary-rgba open_register_disabled"
+                                                            class="col-xs-12 col-md-12 col-lg-2 btn btn-info-rgba open_register_disabled"
                                                             id="saveQuoteButton"
                                                             onclick="return PosnicPro.quotes.saveFromSale();">
                                                             <span class="feather icon-file-text"
