@@ -2,6 +2,7 @@
 
 jest.mock('../../../src/controllers/dashboard.controller', () => ({
   getDashboardCurrentWish: jest.fn(),
+  getSetupChecklist: jest.fn(),
   getDashboardPaymentModeData: jest.fn(),
   getPendingActivities: jest.fn(),
   getDashboardTopPerformers: jest.fn(),

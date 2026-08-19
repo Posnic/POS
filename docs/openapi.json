@@ -4848,6 +4848,29 @@
         }
       }
     },
+    "/dashboard/setupChecklist": {
+      "get": {
+        "summary": "getSetupChecklist",
+        "operationId": "get_dashboard_setupChecklist",
+        "tags": [
+          "Dashboard"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
     "/easy-table/data": {
       "get": {
         "summary": "getTableData",

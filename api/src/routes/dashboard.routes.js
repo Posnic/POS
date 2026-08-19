@@ -71,4 +71,7 @@ router.get(
 // Debug endpoint for session filter testing
 router.get('/debug-session-filter', bindController(dashboardController.debugSessionFilter));
 
+// Setup checklist: what a new shop has not done yet, from live state.
+router.get('/setupChecklist', bindController(dashboardController.getSetupChecklist));
+
 module.exports = router;
