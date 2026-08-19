@@ -7450,6 +7450,11 @@ $(function () {
             var gs = JSON.parse(PosnicPro.local.get('general_settings') || '{}');
             on = gs.quotes_enable !== false;
         } catch (e) { /* default on */ }
+        // Toggle the tooltip WRAPPER too - hiding only the button left an
+        // orphaned hoverable tooltip and an empty flex slot (owner report).
+        var $wrap = $('#saveQuoteButton').closest('span[data-toggle="tooltip"]');
+        try { $wrap.tooltip('hide'); } catch (e) { /* tooltip not initialised */ }
+        ($wrap.length ? $wrap : $('#saveQuoteButton')).toggle(on);
         $('#saveQuoteButton').toggle(on);
     };
     applyQuotesGate();
