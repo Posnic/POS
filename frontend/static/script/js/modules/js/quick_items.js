@@ -559,4 +559,80 @@
             PosnicPro.bulkitems.status('info', 'Unsaved rows cleared. Items already saved are untouched.');
         }
     };
+
+    /*
+     * The same create flow as this page, as a popup - the sale and purchase
+     * searches open it when a typed name matches nothing. Name and price
+     * now, everything else later on the Items page.
+     */
+    PosnicPro.quickitems.popup = function (name, onCreated) {
+        if (!$('#quick_item_modal').length) {
+            $('body').append(
+                '<div class="modal fade" id="quick_item_modal" tabindex="-1" role="dialog" aria-hidden="true">' +
+                '<div class="modal-dialog modal-dialog-centered modal-sm" role="document"><div class="modal-content">' +
+                '<div class="modal-header py-2"><h5 class="modal-title">New item</h5>' +
+                '<button type="button" class="close" data-dismiss="modal">&times;</button></div>' +
+                '<div class="modal-body">' +
+                '<label class="mb-0 small text-muted" for="quick_item_name">Name</label>' +
+                '<input type="text" class="form-control mb-2" id="quick_item_name" maxlength="100" autocomplete="off">' +
+                '<label class="mb-0 small text-muted" for="quick_item_price">Selling price</label>' +
+                '<input type="number" min="0" step="any" class="form-control mb-2 text-right" id="quick_item_price" placeholder="0.00" autocomplete="off">' +
+                '<label class="mb-0 small text-muted" for="quick_item_qty">Stock on hand</label>' +
+                '<input type="number" min="0" step="any" class="form-control text-right" id="quick_item_qty" placeholder="0" autocomplete="off">' +
+                '<small class="text-muted d-block mt-2">Saved to your items - add details anytime from the Items page.</small>' +
+                '</div>' +
+                '<div class="modal-footer py-2">' +
+                '<button type="button" class="btn btn-secondary-rgba" data-dismiss="modal">Cancel</button>' +
+                '<button type="button" class="btn btn-primary" id="quick_item_save">Save item</button>' +
+                '</div></div></div></div>');
+            $('#quick_item_price,#quick_item_qty').on('keydown', function (e) {
+                if (e.key === 'Enter') { e.preventDefault(); $('#quick_item_save').click(); }
+            });
+            $('#quick_item_save').on('click', function () { PosnicPro.quickitems._popupSave(); });
+        }
+        PosnicPro.quickitems._onCreated = onCreated || null;
+        $('#quick_item_name').val(name || '');
+        $('#quick_item_price,#quick_item_qty').val('');
+        $('#quick_item_modal').modal('show');
+        setTimeout(function () { $(name ? '#quick_item_price' : '#quick_item_name').focus(); }, 400);
+    };
+
+    PosnicPro.quickitems._popupSave = function () {
+        var name = $.trim($('#quick_item_name').val());
+        if (!name) { $('#quick_item_name').focus(); return; }
+        var price = parseFloat($('#quick_item_price').val());
+        var qty = parseFloat($('#quick_item_qty').val());
+        // The sale page caches the shop default tax for quick sales - a new
+        // item born at the till inherits it when available.
+        var t = (PosnicPro.sales && PosnicPro.sales.quickSale && PosnicPro.sales.quickSale._tax) || null;
+        $('#quick_item_save').prop('disabled', true);
+        createItem({
+            name: name,
+            selling_price: isNaN(price) ? 0 : price,
+            mrp_price: isNaN(price) ? 0 : price,
+            quantity: isNaN(qty) ? 0 : qty,
+            tax_id: (t && t.id) || '',
+            tax_name: (t && t.name) || '',
+            tax: (t && t.value) || 0,
+            inventory: true
+        }, function (result) {
+            $('#quick_item_save').prop('disabled', false);
+            if (!result.ok) {
+                PosnicPro.alert(result.duplicate ? 'warning' : 'error', result.message);
+                return;
+            }
+            $('#quick_item_modal').modal('hide');
+            PosnicPro.alert('success', 'Item saved');
+            var id = (result.data && (result.data.id || result.data._id)) || '';
+            var cb = PosnicPro.quickitems._onCreated;
+            PosnicPro.quickitems._onCreated = null;
+            if (cb) {
+                cb(id, {
+                    name: name,
+                    selling_price: isNaN(price) ? 0 : price,
+                    quantity: isNaN(qty) ? 0 : qty
+                });
+            }
+        });
+    };
 }());

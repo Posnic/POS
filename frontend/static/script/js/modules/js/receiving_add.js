@@ -1552,16 +1552,21 @@ $('#receiving_add_item_name').scannerDetection({
         $('#receiving_add_item_name').val($('#receiving_add_item_name').val() + string).trigger('input');
     }
 });
-$('#receiving_add_item_name').on('click keydown.autocomplete keyup.autocomplete', function () {
-    var id = $('#receiving_add_supplier_id').val();
-    var name = $('#receiving_add_supplier_name').val();
-    if (name === '') {
-        $('#receiving_add_supplier_name').focus();
-        PosnicPro.alert('error', 'Enter a supplier name.');
-        return false;
-    }
-    $(this).autocomplete({
+/* Same never-block treatment as the sale search: init once, debounce,
+   drop stale responses. The supplier check moved to focus time. */
+$(function () {
+    var receivingLookupSeq = 0;
+    $('#receiving_add_item_name').on('focus', function () {
+        if ($('#receiving_add_supplier_name').val() === '') {
+            $('#receiving_add_supplier_name').focus();
+            PosnicPro.alert('error', 'Enter a supplier name.');
+        }
+    });
+    $('#receiving_add_item_name').autocomplete({
+        deferRequestBy: 120,
         lookup: function (query, done) {
+            var seq = ++receivingLookupSeq;
+            var id = $('#receiving_add_supplier_id').val();
             var result = {};
             var suggestions = [];
             var params = {
@@ -1569,18 +1574,47 @@ $('#receiving_add_item_name').on('click keydown.autocomplete keyup.autocomplete'
                 data: 'query=' + query + '&id=' + id + '&type=normal'
             };
             PosnicPro.get(params, function (response) {
+                if (seq !== receivingLookupSeq) { return; }
                 if (response.suggestions.length > 0) {
                     suggestions: $.map(response.suggestions, function (dataItem) {
                         suggestions.push({"value": dataItem.item_name, "data": dataItem});
                     });
                 } else {
-                    suggestions.push({value: $('#receiving_add_item_name').val() + ' ', data: -1});
+                    suggestions.push({ value: query + ' ', data: { __action: 'create' } });
                 }
                 result["suggestions"] = suggestions;
                 done(result);
             });
         },
         onSelect: function (suggestion) {
+            if (suggestion.data && suggestion.data.__action === 'create') {
+                var typed = (suggestion.value || '').trim();
+                $('#receiving_add_item_name').val('');
+                PosnicPro.quickitems.popup(typed, function (newId, f) {
+                    if (!newId) { return; }
+                    PosnicPro.receivings.addReceivingLineItems({
+                        item_id: newId,
+                        item_name: f.name,
+                        selling_price: f.selling_price,
+                        item_code: '',
+                        item_unit: 'qty',
+                        purchase_unit: '',
+                        conversion_factor: 0,
+                        company_price: 0,
+                        discount_amount: 0,
+                        discount_percentage: 0,
+                        tax: 0,
+                        tax_type: '',
+                        category_id: '',
+                        category_name: '',
+                        image: 'item.svg',
+                        supplier_id: $('#receiving_add_supplier_id').val() || '',
+                        supplier_name: $('#receiving_add_supplier_name').val() || '',
+                        available_quantity: f.quantity || 0
+                    });
+                });
+                return;
+            }
             if (suggestion.data !== -1) {
                 PosnicPro.receivings.suggestionParam = [suggestion.data];
                 $('#receiving_add_selling_price').val(suggestion.data.selling_price);
@@ -1597,52 +1631,23 @@ $('#receiving_add_item_name').on('click keydown.autocomplete keyup.autocomplete'
                 $box.val('');
                 if ($box.data('autocomplete')) { $box.autocomplete('clear'); }
                 setTimeout(function () { $box.focus(); }, 0);
-            } else {
-                hasher.setHash('items/new/addnewitem');
             }
         },
         autoSelectFirst: true,
         triggerSelectOnValidInput: false,
         formatResult: function (suggestion, currentValue) {
-            if (suggestion.data !== -1) {
-                var data = suggestion.data.image;
-                var price = 0;
-                var currency = PosnicPro.local.get('currencySign');
-                let sellingPrice = suggestion.data.company_price;
-                let tax = suggestion.data.tax;
-                let taxType = suggestion.data.tax_type;
-                let taxPrice = (sellingPrice * tax) / (100 + tax);
-                var inclusive_price = sellingPrice - taxPrice.toFixed(2);
-                if (tax > 0) {
-                    if (taxType === 'exclusive') {
-                        price = sellingPrice + (sellingPrice * tax / 100);
-                    } else {
-                        price = inclusive_price + (inclusive_price / 100) * tax;
-                    }
-                } else {
-                    price = sellingPrice;
-                }
-                var final_price = '<span class="suggestion-price pull-right">' + currency + '&nbsp;' + price.toFixed(2) + '</span>';
-                var del_price = '<div class="pull-right font-12" style="margin-top:-20px;"><del>' + currency + '&nbsp;' + sellingPrice.toFixed(2) + '</del></div>';
-                if (sellingPrice.toFixed(2) === price.toFixed(2)) {
-                    del_price = '<span style="display:none;"></span>';
-                }
-
-                var action = '' + final_price + '' +
-                        '' + del_price + '';
-                var image_path = (data !== "item.svg") ? data : 'static/images/default/' + data;
-                return '<img src="' + image_path + '" height="40" width="40" style="border-radius: 25%;" /> ' +
-                        '<div class="suggestion-name">' +
-                        $.Autocomplete.formatResult(suggestion, currentValue) +
-                        '</div><span>' + action + '</span>';
-            } else {
-                let data = "item.svg";
-                let price = "( Add new )";
-                return '<img src="static/images/default/item.svg" height="40" width="40" style="border-radius: 25%;" /> ' +
-                        '<div class="suggestion-name">' +
-                        $.Autocomplete.formatResult(suggestion, currentValue) +
-                        '</div><span>' + price + '</span>';
+            if (suggestion.data && suggestion.data.__action === 'create') {
+                var typedName = $('<i>').text((suggestion.value || '').trim()).html();
+                return PosnicPro.sugActionRow('icon-plus-circle', 'create',
+                    'Create item &quot;' + typedName + '&quot;',
+                    'Name and price now - details anytime later');
             }
+            var currency = PosnicPro.local.get('currencySign');
+            return PosnicPro.sugRow(suggestion.data,
+                $.Autocomplete.formatResult(suggestion, currentValue), {
+                    currency: currency,
+                    price: Number(suggestion.data.company_price) || 0
+                });
         }
     });
 });

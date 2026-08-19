@@ -2058,6 +2058,8 @@ class ItemRepository extends BaseModel {
               negative_stock: 1,
               barcode_id: 1,
               items_expiry_date: 1,
+              item_kind: 1,
+              tile_color: 1,
             },
           },
         ])
@@ -2084,6 +2086,8 @@ class ItemRepository extends BaseModel {
         negative_stock: item.negative_stock === true,
         barcode_id: item.barcode_id || '',
         items_expiry_date: item.items_expiry_date != null ? String(item.items_expiry_date) : '',
+        item_kind: item.item_kind || 'product',
+        tile_color: item.tile_color || '',
       }));
 
       return {
@@ -2450,6 +2454,10 @@ class ItemRepository extends BaseModel {
         supplier_name: item.supplier_name || '',
         // Additive: the stock-adjustment search shows current stock.
         available_quantity: item.available_quantity || 0,
+        // Additive: the redesigned typeahead rows show stock state.
+        track_inventory: item.track_inventory !== false,
+        item_kind: item.item_kind || 'product',
+        tile_color: item.tile_color || '',
       }));
 
       return { status: true, data: list, message: 'success' };
