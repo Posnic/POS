@@ -2825,7 +2825,22 @@ $(function () {
         if ($('#items_discount_amount').val() === '')
             $('#items_discount_amount').val('0');
     });
+    var syncVariantLink = function () {
+        $('#variant_mode_link').text($('#product_with_variant').is(':checked')
+            ? 'Remove variants' : '+ This item has variants');
+    };
+    $(document).on('click', '#variant_mode_link', function () {
+        var withVariant = $('#product_with_variant').is(':checked');
+        $(withVariant ? '#product_without_variant' : '#product_with_variant')
+            .prop('checked', true).trigger('change');
+    });
+    $(window).on('hashchange', function () {
+        if (/items\/(new|[^/]+\/(edit|clone))/.test(window.location.hash)) {
+            setTimeout(syncVariantLink, 400);
+        }
+    });
     $("#product_without_variant, #product_with_variant").change(function () {
+        syncVariantLink();
         if ($("#product_without_variant").is(":checked")) {
             $('#show_variant_fields').hide();
             $('#show_price_fields,#sku_card_col').show();

@@ -31,22 +31,20 @@
                     <div class="tab-content" id="item_form_tabs_content">
                     <div class="tab-pane fade show active" id="item_tab_main" role="tabpanel">
 
+                    <!-- Item and Price side by side (owner ask): both cards on
+                         screen at once, no scroll. -->
+                    <div class="row">
+                    <div class="col-lg-6 d-flex flex-column">
                     <!-- 1 · Item -->
-                    <div class="card m-b-30">
-                        <div class="card-header">
-                            <div class="custom-control custom-radio custom-control-inline">
-                                <input type="radio" id="product_without_variant" name="product_radio_variant"
-                                    class="custom-control-input" checked>
-                                <label class="custom-control-label" for="product_without_variant">
-                                    <lang class="lang_without_variant">Item without variant</lang>
-                                </label>
-                            </div>
-                            <div class="custom-control custom-radio custom-control-inline" id="item_variant_header">
-                                <input type="radio" id="product_with_variant" name="product_radio_variant"
-                                    class="custom-control-input">
-                                <label class="custom-control-label" for="product_with_variant">
-                                    <lang class="lang_with_variant">Item with variant</lang>
-                                </label>
+                    <div class="card m-b-30 flex-grow-1">
+                        <div class="card-header d-flex align-items-center justify-content-between">
+                            <h5 class="card-title mb-0"><lang class="lang_item_title">Item</lang></h5>
+                            <!-- The radios stay in the DOM (hidden) - every mode check
+                                 and fill in items.js keeps working; the link drives them. -->
+                            <a href="javascript:void(0)" id="variant_mode_link" style="font-size:.85rem;">+ This item has variants</a>
+                            <div style="display:none;">
+                                <input type="radio" id="product_without_variant" name="product_radio_variant" checked>
+                                <input type="radio" id="product_with_variant" name="product_radio_variant">
                             </div>
                         </div>
                         <div class="card-body">
@@ -116,37 +114,8 @@
                     </div>
 
                     <!-- 2 · Variants (variant mode only) -->
-                    <div class="card m-b-30" id="show_variant_fields" style="display:none;">
-                        <div class="card-body">
-                            <div class="form-row">
-                                <div class="form-group col-md-12">
-                                    <label class="form-control-placeholder" for="items_variant">
-                                        <lang class="lang_selectvariant_title">Select Variant </lang>
-                                        <span class="text-danger">*</span>
-                                    </label>
-                                    <select id='items_variant' name="items_variant" style='width: 200px;'
-                                        class="select2 items_choose_error" required>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group col-md-12">
-                                    <label for="item_variant_list">
-                                        <lang class="lang_variantfield_title"> Variant Fields </lang>
-                                        <span class="text-danger">*</span>
-                                    </label>
-                                    <select class="form-control select2 border-control items_choose_error"
-                                        name="item_variant_list[]" id="item_variant_list" multiple="multiple"
-                                        data-placeholder="Select variant fields" style="width: 100%;" required>
-                                        <option></option>
-                                    </select>
-                                </div>
-                            </div>
-                            <!-- IC2: the Apply button is gone - the per-variant price
-                                 rows render the moment the values are chosen. -->
-                        </div>
                     </div>
-
+                    <div class="col-lg-6 d-flex flex-column">
                     <!-- 3 · Price, stock and identification (plain items; variant
                          rows carry their own copies). items.js shows/hides this
                          whole wrapper on the type radios. -->
@@ -226,6 +195,40 @@
                             </div>
                         </div>
                     </div>
+                    </div>
+                    </div>
+
+                    <div class="card m-b-30" id="show_variant_fields" style="display:none;">
+                        <div class="card-body">
+                            <div class="form-row">
+                                <div class="form-group col-md-12">
+                                    <label class="form-control-placeholder" for="items_variant">
+                                        <lang class="lang_selectvariant_title">Select Variant </lang>
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <select id='items_variant' name="items_variant" style='width: 200px;'
+                                        class="select2 items_choose_error" required>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group col-md-12">
+                                    <label for="item_variant_list">
+                                        <lang class="lang_variantfield_title"> Variant Fields </lang>
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-control select2 border-control items_choose_error"
+                                        name="item_variant_list[]" id="item_variant_list" multiple="multiple"
+                                        data-placeholder="Select variant fields" style="width: 100%;" required>
+                                        <option></option>
+                                    </select>
+                                </div>
+                            </div>
+                            <!-- IC2: the Apply button is gone - the per-variant price
+                                 rows render the moment the values are chosen. -->
+                        </div>
+                    </div>
+
 
                     <!-- 4 · Generated per-variant price rows -->
                     <div class="card m-b-30" id="load_price_fields" style="display:none;">
