@@ -468,7 +468,7 @@ select{
     min-width:100px;
     background:transparent;
     margin-bottom:-5px;
-    font-family:Lato,sans-serif;
+    font-family: var(--theme-font-family, sans-serif);
     font-weight:500
 }
 .tableFixHead{

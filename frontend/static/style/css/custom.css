@@ -2760,3 +2760,6 @@ tr.add-disc-row.tip-only td.discount-input { visibility: hidden; }
    does until tip-in-total ships from its written design. */
 .sale-tip-wrap { background: rgba(128, 128, 128, 0.08); border-radius: 8px; padding: 2px 8px; }
 .sale-tip-wrap input#sale_tip_input { background: transparent; }
+
+/* GSTR section headers: themed, not inline blue - readable on every theme. */
+.gstr-head { color: var(--theme-primary-color, #007bff); font-weight: 600; }
