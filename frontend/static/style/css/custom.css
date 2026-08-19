@@ -2728,3 +2728,35 @@ tr.add-disc-row.tip-only td.discount-input { visibility: hidden; }
 .sug-action .sug-tile { background: #fff3cd; color: #d9820e; }
 .sug-action.create .sug-tile { background: rgba(43, 183, 111, 0.15); color: #23985c; }
 .sug-action .sug-name { color: inherit; }
+
+/* Owner (repeated ask): every clickable icon answers hover and touch.
+   The grey works on light and dark themes alike. */
+.infobar-settings-close {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 34px; height: 34px; border-radius: 8px;
+    transition: background 0.12s ease;
+}
+.infobar-settings-close:hover, .infobar-settings-close:active { background: rgba(128, 128, 128, 0.18); }
+.modal .close { border-radius: 8px; padding: 4px 10px; transition: background 0.12s ease; }
+.modal .close:hover, .modal .close:active { background: rgba(128, 128, 128, 0.18); }
+.mobile_tooltip { transition: background 0.12s ease, box-shadow 0.12s ease; }
+.mobile_tooltip:hover { box-shadow: inset 0 0 0 100px rgba(128, 128, 128, 0.10); }
+
+/* Tile swatches: the picked colour must read at a glance - ring + tick
+   (class-based; outline resets in the template cannot remove it). */
+#item_tile_swatches .tile-swatch { position: relative; display: inline-block; }
+#item_tile_swatches .tile-swatch.is-picked {
+    box-shadow: 0 0 0 2px #fff, 0 0 0 4px #506fe4;
+    transform: scale(1.08);
+}
+#item_tile_swatches .tile-swatch.is-picked::after {
+    content: '¹3'; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 700; font-size: 14px;
+    text-shadow: 0 0 3px rgba(0, 0, 0, 0.65);
+}
+
+/* Tip beside the discount: a quiet labelled chip, honest about what it
+   does until tip-in-total ships from its written design. */
+.sale-tip-wrap { background: rgba(128, 128, 128, 0.08); border-radius: 8px; padding: 2px 8px; }
+.sale-tip-wrap input#sale_tip_input { background: transparent; }
