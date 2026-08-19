@@ -1549,6 +1549,15 @@ if ($wrapper.length) {
         var loader = $(".loader-view-mystore");
         $("<div class='loadingSpinner'></div>").appendTo(loader);
         var taxDetail = $("#tax_percentage").select2("data");
+        /*
+         * A branch with no taxes configured has an empty select - reading
+         * [0].element of nothing threw here and the PUT never fired: the
+         * Save button spun forever (owner report). Empty tax is a valid
+         * state; the id reads below all go through this helper.
+         */
+        var _taxId = (taxDetail && taxDetail[0] && taxDetail[0].element
+            && taxDetail[0].element.attributes['data-tax-id'])
+            ? taxDetail[0].element.attributes['data-tax-id'].value : '';
         var content = $('textarea[name="footer_print"]').html($('#footer_print').summernote('code'));
         var contentHeader = $('textarea[name="header_print"]').html($('#header_print').summernote('code'));
         var params = {
@@ -1556,7 +1565,7 @@ if ($wrapper.length) {
             data: JSON.stringify({
                 default_customer: $('#customers_default_value').val(),
                 default_supplier: $('#suppliers_default_value').val(),
-                default_tax: taxDetail[0].element.attributes['data-tax-id'].value,
+                default_tax: _taxId,
                 notification_value: $('#notification_value').val(),
                 discount_percentage: $('#discount_percentage').val(),
                 discount_amount: $('#discount_amount').val(),
@@ -1626,11 +1635,13 @@ if ($wrapper.length) {
                 $('.footer-content').html(htmlView);
                 let htmlHeaderView = $('#header_print').text();
                 $('.header-content').html(htmlHeaderView);
-                $(".items_tax").val(taxDetail[0].element.attributes['data-tax-id'].value).trigger("change");
-                PosnicPro.local.set('default_tax_id', taxDetail[0].element.attributes['data-tax-id'].value);
+                if (_taxId) {
+                    $(".items_tax").val(_taxId).trigger("change");
+                    PosnicPro.local.set('default_tax_id', _taxId);
+                }
                 var roundOff = ($('#decimal_Round').is(":checked")) ? true : false;
                 PosnicPro.roundoff = roundOff;
-                $("#tax_percentage").val(taxDetail[0].element.attributes['data-tax-id'].value).trigger("change");
+                if (_taxId) { $("#tax_percentage").val(_taxId).trigger("change"); }
                 var print_value = $('#print_type').val(); 
                 PosnicPro.local.set('print_type', print_value);
                 PosnicPro.local.set('printing_size', $('#print_size').val());
