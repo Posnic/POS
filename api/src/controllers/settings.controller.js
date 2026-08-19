@@ -527,18 +527,26 @@ class SettingController extends BaseController {
 
       const data = req.body;
 
-      // Sales prefix validation (exact length check not in middleware)
-      if (data.sales_prefix && data.sales_prefix.length !== 3) {
+      /*
+       * Prefixes: 1-6 characters. The old exactly-3 rule rejected the
+       * form's own default ('S'), so every settings save on such shops
+       * failed with a 400 and the form reset - toggles never persisted
+       * (owner's "I enabled quote and I see reset form").
+       */
+      if (data.sales_prefix && (data.sales_prefix.length < 1 || data.sales_prefix.length > 6)) {
         return res.status(400).json({
           type: 'error',
-          message: 'Data Not Valid: sales_prefix required (exactly 3 chars)',
+          message: 'Data Not Valid: sales_prefix must be 1-6 characters',
           data: null,
         });
       }
-      if (!data.receiving_prefix || data.receiving_prefix.length !== 3) {
+      if (
+        data.receiving_prefix !== undefined &&
+        (String(data.receiving_prefix).length < 1 || String(data.receiving_prefix).length > 6)
+      ) {
         return res.status(400).json({
           type: 'error',
-          message: 'Data Not Valid: receiving_prefix required (exactly 3 chars)',
+          message: 'Data Not Valid: receiving_prefix must be 1-6 characters',
           data: null,
         });
       }

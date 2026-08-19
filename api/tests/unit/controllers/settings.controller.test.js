@@ -613,25 +613,29 @@ describe('updateCommonSettings', () => {
     expect(res.json.mock.calls[0][0].type).toBe('success');
   });
 
-  test('400 when sales_prefix is not exactly 3 chars', async () => {
+  test('400 when sales_prefix exceeds 6 chars - short ones are fine now', async () => {
+    // The old exactly-3 rule rejected the form's own default ('S') and
+    // silently reset every save; 1-6 characters are all valid.
     const res = mockRes();
-    await ctrl.updateCommonSettings(mockReq({ body: { ...validBody, sales_prefix: 'SA' } }), res);
+    await ctrl.updateCommonSettings(
+      mockReq({ body: { ...validBody, sales_prefix: 'TOOLONGX' } }),
+      res
+    );
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json.mock.calls[0][0].message).toMatch(/sales_prefix/);
     expect(settingsService.updateCommonSettings).not.toHaveBeenCalled();
   });
 
-  test('400 when receiving_prefix missing', async () => {
+  test('missing receiving_prefix passes - absent means keep', async () => {
     const res = mockRes();
     await ctrl.updateCommonSettings(mockReq({ body: { notification_value: 10 } }), res);
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json.mock.calls[0][0].message).toMatch(/receiving_prefix/);
+    expect(res.status).not.toHaveBeenCalledWith(400);
   });
 
-  test('400 when receiving_prefix is not exactly 3 chars', async () => {
+  test('400 when receiving_prefix exceeds 6 chars', async () => {
     const res = mockRes();
     await ctrl.updateCommonSettings(
-      mockReq({ body: { receiving_prefix: 'RE', notification_value: 10 } }),
+      mockReq({ body: { receiving_prefix: 'TOOLONGX', notification_value: 10 } }),
       res
     );
     expect(res.status).toHaveBeenCalledWith(400);

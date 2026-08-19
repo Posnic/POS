@@ -7280,7 +7280,10 @@ PosnicPro.quotes = {
         }, function () { $('#quotes_list_rows').text('Could not load quotes - try again.'); });
     },
     showAdd: function () { PosnicPro.quotes.showDataTablePage(); },
-    renderList: function () {
+    _page: 1,
+    PAGE_SIZE: 20,
+    renderList: function (keepPage) {
+        if (!keepPage) { PosnicPro.quotes._page = 1; }
         var esc = PosnicPro.quotes._esc;
         var rows = PosnicPro.quotes._rows.filter(function (q) {
             return !PosnicPro.quotes._status || q.status === PosnicPro.quotes._status;
@@ -7289,8 +7292,9 @@ PosnicPro.quotes = {
             $('#quotes_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">No quotes here yet - press Save as quote on a sale and it lands in this list.</div>');
             return;
         }
+        var shown = rows.slice(0, PosnicPro.quotes._page * PosnicPro.quotes.PAGE_SIZE);
         var html = '';
-        rows.forEach(function (q) {
+        shown.forEach(function (q) {
             var pill = q.status === 'open' ? '<span class="rs-pill hold">Open</span>'
                 : q.status === 'converted' ? '<span class="rs-pill paid">Converted</span>'
                 : '<span class="rs-pill unpaid">Cancelled</span>';
@@ -7301,6 +7305,9 @@ PosnicPro.quotes = {
                 '<div class="rs-side"><div class="rs-amt">' + PosnicPro.quotes._money(q.total) + '</div>' + pill + '</div>' +
                 '</div>';
         });
+        if (shown.length < rows.length) {
+            html += '<div class="text-center p-t-10"><button type="button" class="btn btn-sm btn-secondary-rgba" onclick="PosnicPro.quotes._page += 1; PosnicPro.quotes.renderList(true);">Show more (' + (rows.length - shown.length) + ' left)</button></div>';
+        }
         $('#quotes_list_rows').html(html);
     },
     showDetails: function (id) {
@@ -7399,24 +7406,61 @@ PosnicPro.quotes = {
             };
         }).get().filter(Boolean);
         if (!lines.length) { PosnicPro.alert('warning', 'Add at least one item, then save the quote.'); return false; }
+        // Validity and terms belong on a quote (owner ask) - one small
+        // dialog before the save, defaulting a week of validity.
+        if (!$('#quote_save_modal').length) {
+            $('body').append(
+                '<div class="modal fade" id="quote_save_modal" tabindex="-1" role="dialog" aria-hidden="true">'
+                + '<div class="modal-dialog modal-dialog-centered modal-sm" role="document"><div class="modal-content">'
+                + '<div class="modal-header py-2"><h5 class="modal-title">Save as quote</h5>'
+                + '<button type="button" class="close" data-dismiss="modal">&times;</button></div>'
+                + '<div class="modal-body">'
+                + '<label class="mb-0 small text-muted" for="quote_valid_until">Valid until</label>'
+                + '<input type="date" class="form-control mb-2" id="quote_valid_until">'
+                + '<label class="mb-0 small text-muted" for="quote_note">Note / payment terms</label>'
+                + '<textarea class="form-control" id="quote_note" rows="3" maxlength="500" placeholder="e.g. 50% advance, delivery in 3 days"></textarea>'
+                + '</div>'
+                + '<div class="modal-footer py-2">'
+                + '<button type="button" class="btn btn-secondary-rgba" data-dismiss="modal">Cancel</button>'
+                + '<button type="button" class="btn btn-primary" id="quote_save_confirm">Save quote</button>'
+                + '</div></div></div></div>');
+            $(document).on('click', '#quote_save_confirm', function () {
+                $('#quote_save_modal').modal('hide');
+                PosnicPro.quotes._submit();
+            });
+        }
+        var week = new Date(Date.now() + 7 * 86400000);
+        $('#quote_valid_until').val(week.toISOString().slice(0, 10));
+        $('#quote_note').val('');
+        PosnicPro.quotes._pendingLines = lines;
+        $('#quote_save_modal').modal('show');
+        } catch (e) {
+            PosnicPro.alert('error', 'Quote could not be built: ' + e.message);
+        }
+        return false;
+    },
+    _submit: function () {
+        var lines = PosnicPro.quotes._pendingLines || [];
+        PosnicPro.quotes._pendingLines = null;
+        if (!lines.length) { return; }
         var payload = {
             items: lines,
             customer_id: $('#sales_new_customer_id').val() || '',
             customer_name: $('#sales_new_customer_name').val() || '',
+            valid_until: $('#quote_valid_until').val() || '',
+            note: $.trim($('#quote_note').val() || ''),
             total: parseFloat(String($('#grand_total').val() || '').replace(/,/g, '')) || 0
         };
         PosnicPro.post({ url: 'quotes', data: JSON.stringify(payload) }, function (r) {
             if (r.type !== 'success') { PosnicPro.alert(r.type, r.message); return; }
             PosnicPro.alert('success', 'Quote ' + ((r.data && r.data.quote_id) || '') + ' saved');
             PosnicPro.resetForm('sale');
+            // Land on the quote itself - print, email or WhatsApp it right there.
+            if (r.data && r.data.id) { hasher.setHash('quotes/' + r.data.id); }
         }, function (xhr) {
             var resp = {}; try { resp = JSON.parse(xhr.responseText); } catch (e) { /* plain */ }
             PosnicPro.alert('error', resp.message || 'Could not save the quote');
         });
-        } catch (e) {
-            // A silent dead button taught nothing - say what broke.
-            PosnicPro.alert('error', 'Quote could not be built: ' + e.message);
-        }
         return false;
     },
     emailQuote: function () {
