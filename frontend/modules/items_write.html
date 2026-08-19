@@ -175,6 +175,11 @@
                                             id="items_available_quantity" name="items_available_quantity" min="0"
                                             minlength="1" maxlength="10" value="0" placeholder="Available Quantity"
                                             autocomplete="off">
+                                        <!-- LS1: this item's own low-stock threshold; empty
+                                             falls back to the shop-wide range. -->
+                                        <input type="number" min="0" step="any" class="form-control clear_text_item mt-2 text-right"
+                                            id="items_reorder_point" name="items_reorder_point"
+                                            placeholder="Reorder point (optional)" autocomplete="off">
                                     </div>
                                 </div>
                                 <div class="row">
@@ -432,6 +437,26 @@
                                             <input type="hidden" name="item_logo" id="item_logo" value="item.svg">
                                             <div id="item-display-preview"></div>
                                         </div>
+                                    </div>
+                                </div>
+                                <!-- LS1: brand + tags - filtering today, the community
+                                     catalog tomorrow. -->
+                                <div class="form-row mt-2">
+                                    <div class="col-md-6">
+                                        <label class="form-control-placeholder" for="items_brand">
+                                            <lang class="lang_brand_title">Brand</lang>
+                                        </label>
+                                        <input type="text" class="form-control clear_text_item" id="items_brand"
+                                            name="items_brand" maxlength="100" placeholder="Brand (optional)"
+                                            autocomplete="off">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-control-placeholder" for="items_tags">
+                                            <lang class="lang_tags_title">Tags</lang>
+                                        </label>
+                                        <input type="text" class="form-control clear_text_item" id="items_tags"
+                                            name="items_tags" maxlength="300"
+                                            placeholder="Tags, comma separated (optional)" autocomplete="off">
                                     </div>
                                 </div>
                                 <div class="form-row mt-2">

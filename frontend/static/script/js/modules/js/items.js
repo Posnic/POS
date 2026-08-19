@@ -85,6 +85,12 @@ PosnicPro.items = {
         PosnicPro.deleteTableRowData(id, 'items');
     },
     /* Tile colour: keep the hidden input and the swatch highlight in step. */
+    /* LS1: the comma-separated tags field as a clean array. */
+    _tagList: function () {
+        return ($('#items_tags').val() || '').split(',')
+            .map(function (t) { return t.trim(); })
+            .filter(function (t) { return t.length > 0; });
+    },
     setTileColor: function (color) {
         $('#item_tile_color').val(color || '');
         $('#item_tile_swatches .tile-swatch').css('outline', 'none');
@@ -359,6 +365,9 @@ PosnicPro.items = {
             item_weight_machine_based: $('#item_weight_machine_based').is(':checked'),
             open_price: $('#item_open_price').is(':checked'),
             tile_color: $('#item_tile_color').val(),
+            brand: $('#items_brand').val(),
+            tags: PosnicPro.items._tagList(),
+            reorder_point: $('#items_reorder_point').val() === '' ? undefined : Number($('#items_reorder_point').val()),
             hsn_code: hsn_code,
             hsn_description: $('#items_hsndescription').val(),
             tax_method: tax_method,
@@ -543,6 +552,9 @@ PosnicPro.items = {
                     item_weight_machine_based: $('#item_weight_machine_based').is(':checked'),
                     open_price: $('#item_open_price').is(':checked'),
                     tile_color: $('#item_tile_color').val(),
+                    brand: $('#items_brand').val(),
+                    tags: PosnicPro.items._tagList(),
+                    reorder_point: $('#items_reorder_point').val() === '' ? undefined : Number($('#items_reorder_point').val()),
                     hsn_code: hsn_code,
                     hsn_description: $('#items_hsndescription').val(),
                     tax_method: tax_method,
@@ -1059,6 +1071,9 @@ PosnicPro.items = {
                 (data.negative_stock === true) ? $('#item_negative_stock').prop('checked', true) : $('#item_negative_stock').prop("checked", false);
                 (data.item_weight_machine_based === true) ? $('#item_weight_machine_based').prop('checked', true) : $('#item_weight_machine_based').prop("checked", false);
                 (data.open_price === true) ? $('#item_open_price').prop('checked', true) : $('#item_open_price').prop("checked", false);
+                $('#items_brand').val(data.brand || '');
+                $('#items_tags').val(Array.isArray(data.tags) ? data.tags.join(', ') : '');
+                $('#items_reorder_point').val(data.reorder_point === null || data.reorder_point === undefined ? '' : data.reorder_point);
                 PosnicPro.items.setTileColor(data.tile_color || '');
                 $("#items_tax").val(data.tax_id).trigger("change");
                 $("#items_unit").val(data.unit_id).trigger("change");
@@ -1677,6 +1692,9 @@ PosnicPro.items = {
                 (data.negative_stock === true) ? $('#item_negative_stock').prop('checked', true) : $('#item_negative_stock').prop("checked", false);
                 (data.item_weight_machine_based === true) ? $('#item_weight_machine_based').prop('checked', true) : $('#item_weight_machine_based').prop("checked", false);
                 (data.open_price === true) ? $('#item_open_price').prop('checked', true) : $('#item_open_price').prop("checked", false);
+                $('#items_brand').val(data.brand || '');
+                $('#items_tags').val(Array.isArray(data.tags) ? data.tags.join(', ') : '');
+                $('#items_reorder_point').val(data.reorder_point === null || data.reorder_point === undefined ? '' : data.reorder_point);
                 PosnicPro.items.setTileColor(data.tile_color || '');
                 (data.tax_type === 'inclusive') ? $('#item_tax_inclusive').prop('checked', true) : $('#item_tax_exclusive').prop("checked", true);
                 $("#items_tax").val(data.tax_id).trigger("change");

@@ -782,8 +782,8 @@ describe('Item.LegacyItemModel › class identity', () => {
     // alternate barcodes and unit conversion (V3) + the four the form always
     // wrote but the map never carried (IC0: mfg/expiry dates, weight flag,
     // modifier group ids) + open_price (IC1 ask-at-the-till) + tile_color
-    // (the no-image sale-grid tile).
-    expect(Object.keys(LegacyItemModel.fields)).toHaveLength(57);
+    // (the no-image sale-grid tile) + brand/tags/reorder_point (LS1).
+    expect(Object.keys(LegacyItemModel.fields)).toHaveLength(60);
     expect(LegacyItemModel.fields).toEqual(
       expect.objectContaining({
         branch_id: expect.any(Object),

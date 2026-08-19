@@ -117,6 +117,10 @@ class ItemModel {
     open_price: { type: 'Boolean', select: true },
     // Loyverse study L2: the no-image sale-grid tile's colour.
     tile_color: { type: 'String', select: true },
+    // Lightspeed study LS1: brand, tags, per-item reorder point.
+    brand: { type: 'String', select: true },
+    tags: { type: 'Array', select: true },
+    reorder_point: { type: 'Number', select: true },
     branch_access: { type: 'Array', select: false },
     branch_id: { type: 'ObjectId', select: true },
     branch_name: { type: 'String', select: true },
