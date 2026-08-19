@@ -7970,6 +7970,28 @@ PosnicPro.sales.quickSale = {
         });
     }
 };
+/*
+ * Discounts are a POS power (owner ask): the discount_apply permission
+ * gates the sale-screen discount editor; a cashier without it gets the
+ * manager PIN prompt, the same rail as price edits and refunds. The
+ * capture-phase listener beats the x-editable's own direct binding.
+ */
+document.addEventListener('click', function (e) {
+    var t = e.target.closest && e.target.closest('#extraDisc, #percentIcon, #rupeeIcon, #click_discount_description');
+    if (!t) { return; }
+    if (PosnicPro._discountApproved) { PosnicPro._discountApproved = false; return; }
+    if (PosnicPro.posCan && !PosnicPro.posCan('discount_apply')) {
+        e.preventDefault();
+        e.stopPropagation();
+        PosnicPro.requireManagerApproval('discount_apply',
+            { prompt: "Applying a discount needs a manager's approval." },
+            function () {
+                PosnicPro._discountApproved = true;
+                t.click();
+            });
+    }
+}, true);
+
 /* One shape vocabulary for every tile renderer. */
 PosnicPro.tileShapeCss = function (shape, baseRadius) {
     var CLIPS = {
