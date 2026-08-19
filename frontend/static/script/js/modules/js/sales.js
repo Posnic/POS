@@ -7687,7 +7687,8 @@ PosnicPro.quotes = {
             $('#quotes_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">No quotes here yet - press Save as quote on a sale and it lands in this list.</div>');
             return;
         }
-        var shown = rows.slice(0, PosnicPro.quotes._page * PosnicPro.quotes.PAGE_SIZE);
+        var startAt = (PosnicPro.quotes._page - 1) * PosnicPro.quotes.PAGE_SIZE;
+        var shown = rows.slice(startAt, startAt + PosnicPro.quotes.PAGE_SIZE);
         var d = function (v) { return v ? new Date(v).toLocaleDateString('en-IN') : '-'; };
         var html = '<div class="table-responsive"><table class="table table-borderless">'
             + '<thead><tr>'
@@ -7715,8 +7716,16 @@ PosnicPro.quotes = {
                 + '</tr>';
         });
         html += '</tbody></table></div>';
-        if (shown.length < rows.length) {
-            html += '<div class="text-center p-t-10"><button type="button" class="btn btn-sm btn-secondary-rgba" onclick="PosnicPro.quotes._page += 1; PosnicPro.quotes.renderList(true);">Show more (' + (rows.length - shown.length) + ' left)</button></div>';
+        var pages = Math.max(1, Math.ceil(rows.length / PosnicPro.quotes.PAGE_SIZE));
+        if (pages > 1) {
+            var cur = PosnicPro.quotes._page;
+            html += '<div class="text-center p-t-10">'
+                + '<button type="button" class="btn btn-sm btn-secondary-rgba mr-2"' + (cur <= 1 ? ' disabled' : '')
+                + ' onclick="PosnicPro.quotes._page -= 1; PosnicPro.quotes.renderList(true);">&laquo; Prev</button>'
+                + '<span class="text-muted">Page ' + cur + ' of ' + pages + '</span>'
+                + '<button type="button" class="btn btn-sm btn-secondary-rgba ml-2"' + (cur >= pages ? ' disabled' : '')
+                + ' onclick="PosnicPro.quotes._page += 1; PosnicPro.quotes.renderList(true);">Next &raquo;</button>'
+                + '</div>';
         }
         $('#quotes_list_rows').html(html);
     },
@@ -8516,7 +8525,8 @@ PosnicPro.quotes = {
             // silently (the quote holds the lines now), no Reset Form modal.
             PosnicPro.sales.clear.cartItems(false);
             // Land on the quote itself - print, email or WhatsApp it right there.
-            if (r.data && r.data.id) { hasher.setHash('quotes/' + r.data.id); }
+            // straight into the editor - polish and share from there
+            if (r.data && r.data.id) { hasher.setHash('quotes/' + r.data.id + '/edit'); }
         }, function (xhr) {
             var resp = {}; try { resp = JSON.parse(xhr.responseText); } catch (e) { /* plain */ }
             PosnicPro.alert('error', resp.message || 'Could not save the quote');
