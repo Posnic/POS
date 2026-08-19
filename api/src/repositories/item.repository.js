@@ -1252,6 +1252,23 @@ class ItemRepository extends BaseModel {
       }
 
       /*
+       * Services (Square study Q3): a second sellable kind. A service holds
+       * no stock - track_inventory is forced off at write time so no code
+       * path ever counts it - and prices fixed, per hour or per day (the
+       * quantity column carries the hours/days, the engine sees an ordinary
+       * line). Presence-gated; absent = product, forever untouched.
+       */
+      if (data.item_kind !== undefined) {
+        const kind = data.item_kind === 'service' ? 'service' : 'product';
+        updateData.item_kind = kind;
+        if (kind === 'service') {
+          updateData.track_inventory = false;
+          const unit = String(data.service_unit || 'fixed');
+          updateData.service_unit = ['fixed', 'hour', 'day'].includes(unit) ? unit : 'fixed';
+        }
+      }
+
+      /*
        * Variant family link (VARIANT_SYSTEM_RESEARCH V1): four presence-
        * gated fields that turn the "name generator" into a real family.
        * Absent = plain item, and absent NEVER clears an existing link -

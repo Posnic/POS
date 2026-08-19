@@ -77,6 +77,21 @@
                             <!-- IC4: the import path exists (items list > Import icon) but
                                  nobody onboarding 500 SKUs finds it from HERE, where they
                                  feel the pain. -->
+                            <!-- Services (Q3): a second sellable kind - no stock, priced
+                                 fixed / per hour / per day. -->
+                            <div class="custom-control custom-checkbox mt-1">
+                                <input type="checkbox" class="custom-control-input" id="item_is_service"
+                                    name="item_is_service">
+                                <label class="custom-control-label" for="item_is_service">
+                                    <lang class="lang_is_service">This is a service (no stock)</lang>
+                                </label>
+                                <select class="form-control form-control-sm d-inline-block ml-2" id="item_service_unit"
+                                    style="width:auto; display:none !important;">
+                                    <option value="fixed">Fixed price</option>
+                                    <option value="hour">Per hour</option>
+                                    <option value="day">Per day</option>
+                                </select>
+                            </div>
                             <small class="text-muted d-block">
                                 <lang class="lang_item_import_hint">Adding many items?</lang>
                                 <a href="#/items" data-module="item" data-access="write"
