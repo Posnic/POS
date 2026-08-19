@@ -998,7 +998,11 @@ PosnicPro = {
      * screen shows - same principle as the day-end summary.
      */
     reportPages: [
-        { root: '#salereport_new', title: 'Sales Report', range: '#view_sale_report_daterange', file: 'sales-report' },
+        { root: '#salereport_new', title: 'Sales Report', range: '#view_sale_report_daterange', file: 'sales-report',
+            full: [
+                { when: '#sale-view-tab-line', table: '#view_salereport', per: '#view_salereport_per_page', load: 'salereport.salereportTable' },
+                { when: '#instant-tab-line', table: '#view_instantreport', per: '#view_instantreport_per_page', load: 'instantreport.instantreportTable' }
+            ] },
         { root: '#categoryreport_new', title: 'Category Report', range: '.view_category_report_daterange', file: 'category-report' },
         { root: '#customerreport_new', title: 'Customer Report', range: '#view_customer_report_daterange', file: 'customer-report' },
         { root: '#expensesreport_new', title: 'Expense Report', range: '#view_expenses_report_daterange', file: 'expense-report' },
@@ -1021,6 +1025,55 @@ PosnicPro = {
         { root: '#gstr_three', title: 'GSTR3B Report', range: '#gst_form_three_daterange_one', file: 'gstr3b' },
         { root: '#gstrNine', title: 'GSTR9 Report', range: '#gst_form_nine_daterange_one', file: 'gstr9' },
     ],
+    /*
+     * Full-duration export (owner report: "pdf reports are taking first
+     * records only"). Pages that declare `full` get their page size bumped
+     * to the server's own total, their normal loader re-renders every row
+     * for the selected range, the export runs, and the cashier's paged
+     * view is restored. Everything else keeps exporting what the screen
+     * shows. runAsync(done) MUST call done() when the export has finished
+     * reading the DOM; a failsafe restores the view after 25s regardless.
+     */
+    _fullExportRun: function (cfg, runAsync, fallback) {
+        var spec = null;
+        (cfg.full || []).forEach(function (f) {
+            if (!spec && (!f.when || $(f.when).hasClass('active'))) { spec = f; }
+        });
+        if (!spec) { fallback(); return; }
+        var $table = $(spec.table);
+        var $per = $(spec.per);
+        var total = parseInt($table.data('total'), 10) || 0;
+        var rowsNow = $table.children('tbody').find('tr').length;
+        if (!$table.length || !$per.length || !total || total <= rowsNow) { fallback(); return; }
+        var loader = spec.load.split('.').reduce(function (o, k) { return o && o[k]; }, PosnicPro);
+        if (typeof loader !== 'function') { fallback(); return; }
+        var perBefore = $per.val();
+        // the loaders read the SELECTED OPTION'S TEXT as the page size
+        var $opt = $('<option selected>' + total + '</option>');
+        $per.append($opt);
+        $table.data('current_page', 1);
+        var restored = false;
+        var restore = function () {
+            if (restored) { return; }
+            restored = true;
+            $opt.remove();
+            $per.val(perBefore);
+            $table.data('current_page', 1);
+            loader();
+        };
+        var failsafe = setTimeout(restore, 25000);
+        loader();
+        var waited = 0;
+        var t = setInterval(function () {
+            waited += 300;
+            var busy = $(cfg.root).find('.loadingSpinner').length > 0;
+            var n = $table.children('tbody').find('tr').length;
+            if ((!busy && n >= total) || waited > 20000) {
+                clearInterval(t);
+                runAsync(function () { clearTimeout(failsafe); restore(); });
+            }
+        }, 300);
+    },
     pageExport: function (i, kind) {
         var cfg = PosnicPro.reportPages[i];
         if (!cfg) { return false; }
@@ -1040,7 +1093,33 @@ PosnicPro = {
             })(),
             filename: cfg.file
         };
-        PosnicPro.reportExport[kind](cfg.root, meta);
+        var ex = PosnicPro.reportExport;
+        if (kind === 'email') {
+            // the email modal builds its PDF at Send-click; the full-load
+            // wrap rides the builder so the send also carries every row
+            ex.email(cfg.root, meta, cfg.full ? function (cb) {
+                PosnicPro._fullExportRun(cfg, function (done) {
+                    ex._withPdf(cfg.root, meta, function (doc) { cb(doc); done(); });
+                }, function () {
+                    ex._withPdf(cfg.root, meta, cb);
+                });
+            } : undefined);
+            return false;
+        }
+        if (kind === 'pdf') {
+            PosnicPro._fullExportRun(cfg, function (done) {
+                ex._withPdf(cfg.root, meta, function (doc) {
+                    doc.save((meta.filename || 'report') + '.pdf');
+                    done();
+                });
+            }, function () { ex.pdf(cfg.root, meta); });
+            return false;
+        }
+        // csv / xls gather synchronously
+        PosnicPro._fullExportRun(cfg, function (done) {
+            ex[kind](cfg.root, meta);
+            done();
+        }, function () { ex[kind](cfg.root, meta); });
         return false;
     },
     injectReportExportButtons: function () {
