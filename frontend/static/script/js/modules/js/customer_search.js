@@ -345,8 +345,9 @@ PosnicPro.customersearch = {
         }
     },
 };
-$('#sales_new_item_name').on('keydown.autocomplete', function () {
-    $(this).autocomplete({
+$(function () {
+    $('#sales_new_item_name').autocomplete({
+        deferRequestBy: 120,
         lookup: function (query, done) {
             var result = {};
             var suggestions = [];
