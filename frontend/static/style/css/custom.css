@@ -2562,6 +2562,33 @@ input:checked + .slider:before {
 .module-card.is-off { opacity: 0.62; }
 .module-card.is-off .module-ico { filter: grayscale(1); }
 .module-card.is-off .module-subs { pointer-events: none; opacity: 0.55; }
+/* An active feature should look alive (owner feedback): an accent edge,
+   a warmer icon tile, and a small On chip beside the title. */
+.module-card:not(.is-off) {
+    border-left: 4px solid var(--theme-primary-color, #506fe4);
+}
+.module-card:not(.is-off) .module-ico {
+    background: color-mix(in srgb, var(--theme-primary-color, #506fe4) 22%, transparent);
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--theme-primary-color, #506fe4) 25%, transparent);
+}
+@supports not (background: color-mix(in srgb, red 10%, blue)) {
+    .module-card:not(.is-off) .module-ico { background: rgba(80, 111, 228, 0.22); }
+}
+.module-card:not(.is-off) .module-title::after {
+    content: 'On';
+    display: inline-block;
+    margin-left: 8px;
+    padding: 1px 8px;
+    border-radius: 99px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    vertical-align: middle;
+    color: #fff;
+    background: var(--theme-primary-color, #506fe4);
+}
+/* Feature search (owner feedback): filter the grid as you type. */
+.module-card.search-miss { display: none; }
 /* Icon-font tiles (modules without a matching svg, e.g. Recycle Bin). */
 .module-ico i { font-size: 22px; color: var(--theme-primary-color, #506fe4); }
 

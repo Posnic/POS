@@ -621,6 +621,7 @@ class SettingModel extends BaseModel {
       const module_recyclebin_enable = offOnly(data.module_recyclebin_enable);
       const module_themes_enable = offOnly(data.module_themes_enable);
       const module_cashbook_enable = offOnly(data.module_cashbook_enable);
+      const quick_sale_enable = offOnly(data.quick_sale_enable);
 
       /*
        * Two different forms save through here now: the Module On/Off tab
@@ -768,6 +769,7 @@ class SettingModel extends BaseModel {
         module_recyclebin_enable: module_recyclebin_enable,
         module_themes_enable: module_themes_enable,
         module_cashbook_enable: module_cashbook_enable,
+        quick_sale_enable: quick_sale_enable,
       };
 
       // Update branch_name across all collections - for the branch actually
@@ -1018,6 +1020,7 @@ class SettingModel extends BaseModel {
         module_recyclebin_enable: offOnly,
         module_themes_enable: offOnly,
         module_cashbook_enable: offOnly,
+        quick_sale_enable: offOnly,
         pl_include_cashbook: offOnly,
       };
       for (const [key, parse] of Object.entries(TOGGLES)) {
@@ -1086,6 +1089,7 @@ class SettingModel extends BaseModel {
       module_recyclebin_enable: { parse: offOnly, dflt: true },
       module_themes_enable: { parse: offOnly, dflt: true },
       module_cashbook_enable: { parse: offOnly, dflt: true },
+      quick_sale_enable: { parse: offOnly, dflt: true },
       pl_include_cashbook: { parse: offOnly, dflt: true },
     };
   }
