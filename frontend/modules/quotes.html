@@ -1,0 +1,34 @@
+<!-- Quotes (LS2): a priced offer - list and view; creation happens on
+     the sale screen via Save as quote. Server: /quotes (a4bc115). -->
+<div class="vertical-layout page_loader" id="quotes_new" style="display: none">
+    <div id="containerbar">
+        <div class="rightbar">
+            <div class="breadcrumbbar">
+                <div class="row align-items-center">
+                    <div class="col-md-6 col-6">
+                        <h4 class="page-title break_title mb-0"><lang class="lang_quotes_title">Quotes</lang></h4>
+                    </div>
+                </div>
+            </div>
+            <div class="contentbar">
+                <div class="card m-b-30" id="quotes_list_card">
+                    <div class="card-body">
+                        <div class="m-b-10" id="quotes_filter_chips">
+                            <button type="button" class="btn btn-sm btn-primary-rgba quotes-chip" data-status="">All</button>
+                            <button type="button" class="btn btn-sm btn-secondary-rgba quotes-chip" data-status="open">Open</button>
+                            <button type="button" class="btn btn-sm btn-secondary-rgba quotes-chip" data-status="converted">Converted</button>
+                            <button type="button" class="btn btn-sm btn-secondary-rgba quotes-chip" data-status="cancelled">Cancelled</button>
+                        </div>
+                        <div id="quotes_list_rows" class="text-muted">Loading quotes ...</div>
+                    </div>
+                </div>
+                <div class="card m-b-30" id="quotes_view_card" style="display:none;">
+                    <div class="card-body">
+                        <div class="m-b-10 text-right" id="quotes_view_actions"></div>
+                        <div id="quotes_view_body"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

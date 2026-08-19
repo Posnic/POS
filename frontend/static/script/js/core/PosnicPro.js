@@ -2375,6 +2375,7 @@ PosnicPro = {
         $('#manage_li_cashregister').toggle(on('cash_register_enable'));
         $('#manage_li_workforce').toggle(on('staff_shifts_enable'));
         $('#manage_li_cashbook').toggle(on('module_cashbook_enable'));
+        $('#li_quotes').toggle(on('quotes_enable'));
         $('#manage_li_credit').toggle(on('module_credit_enable'));
         $('#manage_li_marketingmodule').toggle(on('module_marketing_enable'));
         $('#manage_li_messagingmodule').toggle(on('module_messaging_enable'));
