@@ -32,7 +32,7 @@
                         <div class="col-xs-5 col-md-3 col-lg-3 col-xl-3 pull-right" style="padding-right: 5px; display: none;" id="weight_machine_container">
                             <div style="display: flex; align-items: center; gap: 10px;">
                                 <a href="javascript:void(0)" id="sales_read_weight_btn_top"
-                                    class="btn btn-info-rgba open_register_disabled"
+                                    class="btn btn-info-rgba"
                                     style="height:38px;border: transparent;border-radius: 4px; flex: 1; min-width: 0;"
                                     onclick="PosnicPro.sales.readWeightFromMachine()">
                                     <i class="feather icon-anchor"></i> Weight
@@ -45,7 +45,7 @@
                     </div>
                     <div class="row">
 
-                        <div class=" col-xs-12 col-md-6 col-lg-6 col-xl-6 return_sale_only_show"
+                        <div class="col-xs-12 col-md-6 col-lg-6 col-xl-6 return_sale_only_show"
                             id="table_return_page_parent" style="display: none;">
                             <div class="col-12">
                                 <div class="row">
@@ -128,13 +128,13 @@
                                 <div class="col-12 input-group bootstrap-touchspin" style="padding-right: 18px;">
                                     <input type="text" placeholder="Find item name, sku or barcode"
                                         name="sales_new_item_name" id="sales_new_item_name"
-                                        class="form-control border-control osk-trigger open_register_disabled">
+                                        class="form-control border-control osk-trigger">
 
                                     <!-- Camera scan (Loyverse study L3): shown only where the
                                          browser has BarcodeDetector - sales.js gates it. -->
                                     <a href="javascript:void(0)" id="camera_scan_btn"
                                         style="height:38px;border: transparent;border-radius: 0px;display:none;"
-                                        class="btn btn-primary-rgba open_register_disabled"
+                                        class="btn btn-primary-rgba"
                                         onclick="PosnicPro.sales.cameraScan.open();"
                                         data-toggle="tooltip" title="Scan with the camera">
                                         <i class="feather icon-camera"></i>
@@ -143,14 +143,14 @@
                                          recorded - the busy-counter mode. -->
                                     <a href="javascript:void(0)" id="quick_sale_btn"
                                         style="height:38px;border: transparent;border-radius: 0px;"
-                                        class="btn btn-warning-rgba open_register_disabled"
+                                        class="btn btn-warning-rgba"
                                         onclick="PosnicPro.sales.quickSale.open();"
                                         data-toggle="tooltip" title="Quick sale - just an amount">
                                         <i class="feather icon-zap"></i>
                                     </a>
                                     <span class="input-group-btn" id="employee_box">
                                         <span id="sales_customer_btn"
-                                            class="btn btn-primary-rgba toggle-user-input open_register_disabled sales-customer-btn"
+                                            class="btn btn-primary-rgba toggle-user-input sales-customer-btn"
                                             data-toggle="tooltip" data-placement="top"
                                             title="Walk-in customer — click to choose or add"
                                             data-original-title="Walk-in customer — click to choose or add">
@@ -217,7 +217,7 @@
                                 <ul class="nav nav-tabs nav-justified mb-3" id="defaultTabJustified" role="tablist"
                                     style="background: #f9fbfc;">
                                     <li class="nav-item">
-                                        <a class="nav-link active open_register_disabled items_head"
+                                        <a class="nav-link active items_head"
                                             id="home-tab-justified" data-toggle="tab" href="#home-justified" role="tab"
                                             aria-controls="home" aria-selected="true"
                                             onclick="PosnicPro.sales.itemsMenu.onlineProductList();"><i class="feather icon-package mr-1"></i>
@@ -225,7 +225,7 @@
                                         </a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link open_register_disabled items_head" id="profile-tab-justified"
+                                        <a class="nav-link items_head" id="profile-tab-justified"
                                             data-toggle="tab" href="#profile-justified" role="tab"
                                             aria-controls="profile" aria-selected="false"
                                             onclick="PosnicPro.sales.categoryMenu.listCategories();"><i class="feather icon-list mr-1"></i>
@@ -233,7 +233,7 @@
                                         </a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link open_register_disabled items_head" id="parked-tab-justified"
+                                        <a class="nav-link items_head" id="parked-tab-justified"
                                             data-toggle="tab" href="#home-justified" role="tab"
                                             aria-controls="parked" aria-selected="false"
                                             onclick="PosnicPro.sales.parkedMenu.list();"><i class="feather icon-pause-circle mr-1"></i>
@@ -241,7 +241,7 @@
                                         </a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link open_register_disabled items_head" id="contact-tab-justified"
+                                        <a class="nav-link items_head" id="contact-tab-justified"
                                             data-toggle="tab" href="#contact-justified" role="tab"
                                             aria-controls="contact" aria-selected="false"
                                             onclick="PosnicPro.sales.recentMenu.salesList();"><i class="feather icon-shopping-cart mr-1"></i>
@@ -517,7 +517,7 @@
                                                     <span data-toggle="tooltip" data-placement="top"
                                                         data-original-title="Park Sale">
                                                         <button type="button"
-                                                            class="col-xs-12 col-md-12 col-lg-2 btn btn-warning-rgba open_register_disabled"
+                                                            class="col-xs-12 col-md-12 col-lg-2 btn btn-warning-rgba"
                                                             id="holdSaleButton"
                                                             onclick="return PosnicPro.sales.holdSale.holdOrderSubmit();">
                                                             <span class="feather icon-pause"
@@ -527,7 +527,7 @@
                                                     <span data-toggle="tooltip" data-placement="top"
                                                         data-original-title="Save as quote">
                                                         <button type="button"
-                                                            class="col-xs-12 col-md-12 col-lg-2 btn btn-info-rgba open_register_disabled"
+                                                            class="col-xs-12 col-md-12 col-lg-2 btn btn-info-rgba"
                                                             id="saveQuoteButton"
                                                             onclick="return PosnicPro.quotes.saveFromSale();">
                                                             <span class="feather icon-file-text"
@@ -537,20 +537,20 @@
                                                     <span data-toggle="tooltip" data-placement="top"
                                                         data-original-title="Clear Sale">
                                                         <button type="button" id="clearSaleButton"
-                                                            class="col-xs-12 col-md-12 col-lg-2 btn btn-secondary-rgba open_register_disabled"
+                                                            class="col-xs-12 col-md-12 col-lg-2 btn btn-secondary-rgba"
                                                             onclick="return PosnicPro.resetForm('sale');"
                                                             style="display: none;"><i class="feather icon-refresh-ccw"
                                                                 style="margin-left:-5px;"></i>
                                                         </button>
                                                     </span>
                                                     <a href='#/sales' id="closeSaleButton"
-                                                        class="col-xs-12 col-md-12 col-lg-5 btn btn-danger-rgba open_register_disabled"
+                                                        class="col-xs-12 col-md-12 col-lg-5 btn btn-danger-rgba"
                                                         style="display: none;"><i
                                                             class="feather icon-x-circle mr-2"></i>
                                                         <lang class="lang_close_title"> Close</lang>
                                                     </a>
                                                     <a href='#/sales' id="closeEditButton"
-                                                        class="col-xs-12 col-md-12 col-lg-5 btn btn-danger-rgba open_register_disabled"
+                                                        class="col-xs-12 col-md-12 col-lg-5 btn btn-danger-rgba"
                                                         style="display: none;"><i
                                                             class="feather icon-x-circle mr-2"></i>
                                                         <lang class="lang_close_title"> Close</lang>
@@ -564,7 +564,7 @@
 
                                                     <span id="sales_save_button" style="display:none;">
                                                         <button type="button" name="submit"
-                                                            class="col-xs-12 col-md-12 col-lg-6 btn btn-success-rgba wav_pad save_return_submit open_register_disabled"
+                                                            class="col-xs-12 col-md-12 col-lg-6 btn btn-success-rgba wav_pad save_return_submit"
                                                             onclick="PosnicPro.sales.addSale.cartOrderSubmit();"
                                                             style="display:none;"><i class="feather icon-save mr-2"></i>
                                                             <span class="changeSalesBtnText"></span>
@@ -625,7 +625,7 @@
                                         
                                         
                                                                                     <td class="customer-view-amount-field"> <b class="font-text pay_amount_total"><lang class="lang_change_title">Balance </lang></b> </td>
-                                                                                    <td class=" text-warning total-amount-size">
+                                                                                    <td class="text-warning total-amount-size">
                                                                                         <span class="form-control sales_price_fields text-right"
                                                                                               id="sales_new_balance_amount" name="sales_new_balance_amount"
                                                                                               style="border: none; font-size: 25px; color: #0b5aea; font-weight: 700;"></span>
@@ -688,7 +688,7 @@
                     <input type='hidden' name='sales_total_company_price' class="sales_price_fields"
                         id='sales_total_company_price' />
                     <input type="hidden" name="grand_total" id="grand_total"
-                        class=" form-control amount-input sales_price_fields" disabled="disabled" />
+                        class="form-control amount-input sales_price_fields" disabled="disabled" />
                     <input name="sales_new_customer_id" id="sales_new_customer_id" type="hidden">
                     <input name="sales_new_customer_phone" id="sales_new_customer_phone" type="hidden">
                     <input name="sales_new_customer_address" id="sales_new_customer_address" type="hidden">
@@ -1052,7 +1052,7 @@
                                 <button type="button"
                                     class="col-4 btn btn-outline-secondary infobar-tender-close">Cancel</button>
                                 <button type="button" name="submit" id="save_btn"
-                                    class="col-4 save_btn btn btn-outline-success wav_pad save_return_submit open_register_disabled"
+                                    class="col-4 save_btn btn btn-outline-success wav_pad save_return_submit"
                                     onclick="return PosnicPro.sales.addSale.cartOrderSubmit()">
                                     <span class="changeSalesBtnText">Save</span>
                                     <span class="save_text" style="display:none">Save</span>
