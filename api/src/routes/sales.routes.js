@@ -315,6 +315,9 @@ router.post('/salesReceipt', bindController(salesController.salesReceipt));
 // Frontend: sales_view.js expects this endpoint for PDF open
 router.get('/salesPdf', bindController(salesController.salesPdf));
 
+// Permanent S3 invoice link (cloud): the key is the secret.
+router.post('/:id/invoiceLink', bindController(salesController.createInvoiceLink));
+
 // PHP: salesMailPdf() - Generate and email PDF invoice
 router.get('/salesMailPdf', bindController(salesController.salesMailPdf));
 
