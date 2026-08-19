@@ -1,8 +1,15 @@
 <div class="vertical-layout page_loader" id="settings" style="display: none">
     <!-- Start Containerbar -->
     <div id="containerbar">
-        <!-- The stale "Config" breadcrumb is gone (owner feedback) - each
-             card names itself, and the middle nav layer no longer exists. -->
+        <!-- The page header names the CURRENT settings page (owner: content
+             sat under the top banner once the old Config title left). -->
+        <div class="breadcrumbbar">
+            <div class="row align-items-center">
+                <div class="col-md-8 col-12">
+                    <h4 class="page-title mb-0" id="settings_page_title">Core Settings</h4>
+                </div>
+            </div>
+        </div>
         <!-- Start Contentbar -->
         <div class="contentbar">
             <!-- Start row -->
@@ -246,8 +253,7 @@
                         </div>
 
                         <div class="tab-pane fade" id="v-pills-integrations" role="tabpanel" aria-labelledby="v-pills-integrations-tab">
-                            <h4 class="page-title m-b-15"><lang class="lang_integrations">Integrations</lang></h4>
-                            <div class="card m-b-30">
+                                                        <div class="card m-b-30">
                                 <div class="card-header">
                                     <h5 class="card-title mb-0"><lang class="lang_integrations">Integrations</lang></h5>
                                     <small class="text-muted"><lang class="lang_integrations_hint">What may touch this shop's data from outside - tokens say who, webhooks say where the change signals go.</lang></small>
@@ -2203,8 +2209,7 @@
                              #/device_setup page so Config holds all configuration. -->
                         <div class="tab-pane fade" id="v-pills-modules" role="tabpanel"
                             aria-labelledby="v-pills-modules-tab">
-                            <h4 class="page-title m-b-15"><lang class="lang_modules">Features</lang></h4>
-                            <div class="card m-b-30">
+                                                        <div class="card m-b-30">
                                 <div class="card-header d-flex align-items-center justify-content-between flex-wrap" style="gap:8px;">
                                     <div>
                                         <h5 class="card-title mb-0"><lang class="lang_modules">Features</lang></h5>
@@ -3278,8 +3283,7 @@
                         <!-- General Tab Start -->
                         <div class="tab-pane fade show active" id="v-pills-general" role="tabpanel"
                             aria-labelledby="v-pills-general-tab">
-                            <h4 class="page-title m-b-15"><lang class="lang_generalset">Core Settings</lang></h4>
-                            <form class="form-validate" method="post" name="tax_discount_add" id="tax_discount_add">
+                                                        <form class="form-validate" method="post" name="tax_discount_add" id="tax_discount_add">
                                 <div class="card m-b-30">
                                     <div class="card-header">
                                         <h5 class="card-title mb-0">

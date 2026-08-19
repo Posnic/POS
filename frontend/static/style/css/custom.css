@@ -2896,3 +2896,21 @@ input:checked + .slider:before {
     align-items: center;
 }
 #sales_coupon_row .sale-tip-wrap { margin-top: 0 !important; }
+
+/* Coupon + tip: crisp, not grayed-out - white fields, clear borders,
+   accent focus. The disabled look was the gray fills. */
+#sales_coupon_row .sales-coupon-box {
+    background: #fff !important;
+    border: 1px solid #e3e7ee !important;
+    box-shadow: none;
+}
+#sales_coupon_row .sales-coupon-box:focus-within { border-color: #506fe4 !important; }
+.sale-tip-wrap { background: transparent; padding: 0; }
+.sale-tip-wrap input#sale_tip_input {
+    background: #fff; border: 1px solid #e3e7ee;
+}
+.sale-tip-wrap input#sale_tip_input:focus { border-color: #506fe4; }
+.tip-chips .tip-chip, .tip-chips button {
+    background: #fff; border: 1px solid #e3e7ee; color: inherit;
+}
+.tip-chips .tip-chip:hover, .tip-chips button:hover { border-color: #506fe4; }

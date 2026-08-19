@@ -6062,6 +6062,10 @@ PosnicPro.sales.setSaleDefaults = function () {
     var _tipsOn = !!(PosnicPro.shiftWidget
         && PosnicPro.shiftWidget._setting('staff_tips_enable', false));
     $('.sale-tip-wrap').toggle(_tipsOn);
+    // Coupons belong to Marketing - feature off, box gone (owner report).
+    var _marketingOn = !!(PosnicPro.shiftWidget
+        && PosnicPro.shiftWidget._setting('module_marketing_enable', true));
+    $('#sales_coupon_panel').toggle(_marketingOn);
 
 
     // Check if register is required and open before allowing sales.
@@ -7784,6 +7788,12 @@ $(document).on('mousedown', '.tip-chip', function (e) {
    straight into the cart. */
 PosnicPro.sales.renderRecentItems = function () {
     var list = PosnicPro.sales._recentGet('recent_items');
+    if (!list.length && PosnicPro.sales._itemSeed) { list = PosnicPro.sales._itemSeed; }
+    if (!list.length) {
+        PosnicPro.sales.seedRecentItems(function (seed) {
+            if (seed.length) { PosnicPro.sales.renderRecentItems(); }
+        });
+    }
     var box = $('#sales_recent_items');
     if (!list.length) { box.hide(); return; }
     if (!box.length) {
@@ -7812,6 +7822,19 @@ PosnicPro.sales.renderRecentItems = function () {
 $(document).on('click', '#sales_new_item_name', function () {
     if (($(this).val() || '').trim() === '') { PosnicPro.sales.renderRecentItems(); }
 });
+/* A fresh till has no pick history - seed the recents once from the
+   ordinary item list (one small indexed fetch, cached for the session). */
+PosnicPro.sales._itemSeed = null;
+PosnicPro.sales.seedRecentItems = function (done) {
+    if (PosnicPro.sales._itemSeed) { done(PosnicPro.sales._itemSeed); return; }
+    PosnicPro.get({ url: 'items/getOnlineItemsAjaxList', data: 'query=&type=normal' }, function (r) {
+        var rows = (r && r.suggestions) || [];
+        PosnicPro.sales._itemSeed = rows.map(function (d) {
+            return { id: d.item_id, name: d.item_name, price: d.selling_price, image: d.image };
+        }).filter(function (x) { return x.id && x.name; });
+        done(PosnicPro.sales._itemSeed);
+    }, function () { done([]); });
+};
 $(document).on('input blur', '#sales_new_item_name', function () {
     var self = this;
     setTimeout(function () {

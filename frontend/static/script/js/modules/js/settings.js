@@ -5403,3 +5403,9 @@ PosnicPro.settings.filterModuleCards = function (query) {
         $(this).toggleClass('search-miss', !hit);
     });
 };
+
+/* The settings header names whichever page the pill opened. */
+$(document).on('shown.bs.tab', '#v-pills-tab a[data-toggle="pill"]', function () {
+    var t = $.trim($(this).text());
+    if (t) { $('#settings_page_title').text(t); }
+});
