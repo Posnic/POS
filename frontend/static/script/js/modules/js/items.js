@@ -927,7 +927,7 @@ PosnicPro.items = {
                 'onclick="PosnicPro.items.openAddValue();"><i class="feather icon-plus mr-1"></i>Add ' +
                 esc(PosnicPro.items._family.axis) + '</button>';
             strip.find('.family-chips').html(chips);
-            strip.show();
+            strip.css('display', 'flex');
         }, function () { strip.hide(); });
     },
     openAddValue: function () {
