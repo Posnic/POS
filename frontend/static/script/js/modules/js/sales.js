@@ -14296,6 +14296,7 @@ PosnicPro.quotes = {
     cancel: function () {
         var q = PosnicPro.quotes._current;
         if (!q) { return; }
+        if (!window.confirm('Cancel quote ' + (q.quote_id || '') + '? The customer can no longer accept it.')) { return; }
         PosnicPro.post({ url: 'quotes/' + q._id + '/transition', data: JSON.stringify({ action: 'cancel' }) }, function (r) {
             PosnicPro.alert(r.type, r.message);
             if (r.type === 'success') { hasher.setHash('quotes'); PosnicPro.quotes.showDataTablePage(); }
@@ -14304,6 +14305,7 @@ PosnicPro.quotes = {
     remove: function () {
         var q = PosnicPro.quotes._current;
         if (!q) { return; }
+        if (!window.confirm('Delete quote ' + (q.quote_id || '') + ' permanently? This cannot be undone.')) { return; }
         PosnicPro.request({ method: 'DELETE', url: 'quotes/' + q._id, data: '{}' }, function (r) {
             PosnicPro.alert(r.type, r.message);
             if (r.type === 'success') { hasher.setHash('quotes'); PosnicPro.quotes.showDataTablePage(); }
