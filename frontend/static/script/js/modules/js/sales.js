@@ -6741,68 +6741,71 @@ PosnicPro.sales.recentMenu = {
         $('#sales_new_categoryList').hide();
         $('#item-lists').remove();
         $('#sales_new_productList').append(' <div id="item-lists" style="margin-left: 7px;"/>');
-        var recentSalesapp = "<div class='m-b-30'><div class=''><div class='wishlist-box'><div class='table-responsive'><table id='recent_sales_table' class='table table-borderless' cellpadding='1'>" +
-            "<thead><tr><th scope='col'>Sales Id</th><th scope='col'>Customer</th><th scope='col' class='text-center'>Total</th><th scope='col' class='text-center'>Action</th></tr></thead>" +
-            "<tbody></tbody></table></div></div></div></div>";
-        $('#item-lists').append(recentSalesapp);
+        $('#item-lists').append("<div id='recent_sales_list' class='m-b-30'></div>");
         PosnicPro.get('sales/getLatestSales', function (response) {
             if (response.type === 'success') {
                 PosnicPro.sales.recentSaleAction = true;
                 loader.find(".loadingSpinner:first").remove();
                 var item_data = jQuery.parseJSON(response.data);
                 var currency = PosnicPro.local.get('currencySign');
-                $('#recent_sales_table tbody').html('');
+                var esc = function (v) { return $('<i>').text(v == null ? '' : v).html(); };
+                var ago = function (d) {
+                    if (!d) { return ''; }
+                    var mins = Math.max(0, Math.round((Date.now() - d.getTime()) / 60000));
+                    if (mins < 1) { return 'just now'; }
+                    if (mins < 60) { return mins + 'm ago'; }
+                    if (mins < 1440) { return Math.round(mins / 60) + 'h ago'; }
+                    return Math.round(mins / 1440) + 'd ago';
+                };
+                $('#recent_sales_list').html('');
                 if (item_data.length > 0) {
+                    var listHtml = '';
                     $(item_data).each(function (index, params) {
                         var id = params.sales_document_id;
                         var paymentStatus = params.payment_status || '';
                         var isPaid = (String(paymentStatus).toLowerCase() === 'paid');
-                        // Check if KOT is enabled in settings
                         var kotEnabled = (PosnicPro.local.get('table_options') === 'enable');
-                        //var isKotSale = (kotEnabled);
-                        // For KOT sales (when KOT is enabled), show only View icon
-                        // For Paid sales, hide Edit icon
-                        // For other sales, show all icons
                         var editIcon = (isPaid || kotEnabled)
                             ? ''
-                            : '<i><a data-module = "sales"  data-access = "write" href="#/sales/' + id + '/edit" class="btn-sm btn-success-rgba" data-toggle="tooltip" title="Edit"><i class="feather icon-edit-2"></a></i>';
+                            : '<a data-module="sales" data-access="write" href="#/sales/' + id + '/edit" class="rs-act btn-success-rgba" data-toggle="tooltip" title="Edit"><i class="feather icon-edit-2"></i></a>';
                         var returnIcon = kotEnabled
                             ? ''
-                            : '<i><a data-module = "sales"  data-access = "write" href="#/sales/' + id + '/return" class="btn-sm btn-secondary-rgba" data-toggle="tooltip" title="Return"><i class="feather icon-corner-up-left"></a></i>';
+                            : '<a data-module="sales" data-access="write" href="#/sales/' + id + '/return" class="rs-act btn-secondary-rgba" data-toggle="tooltip" title="Return"><i class="feather icon-corner-up-left"></i></a>';
                         var deleteIcon = kotEnabled
                             ? ''
-                            : '<i><a data-module = "sales" data-access = "delete" href="#/sales/' + id + '/delete" class="btn-sm btn-danger-rgba" data-toggle="tooltip" title="Delete"><i class="feather icon-trash"></a></i>';
-
-                        // Parked (held) sale: mark it and offer a one-click Retrieve
-                        // that loads it back into the cart. Hide Edit/Return - a
-                        // parked sale is a draft, not a completed transaction.
+                            : '<a data-module="sales" data-access="delete" href="#/sales/' + id + '/delete" class="rs-act btn-danger-rgba" data-toggle="tooltip" title="Delete"><i class="feather icon-trash"></i></a>';
                         var isParked = (String(params.sale_process) === 'Hold');
-                        var parkedBadge = isParked ? ' <span class="badge badge-warning-inverse" style="font-size:9px;padding:2px 5px;">Parked</span>' : '';
                         var retrieveIcon = isParked
-                            ? '<i><a data-module="sales" data-access="write" href="#/sales/' + id + '/hold" class="btn-sm btn-success-rgba" data-toggle="tooltip" title="Retrieve parked sale"><i class="feather icon-play-circle"></i></a></i>'
+                            ? '<a data-module="sales" data-access="write" href="#/sales/' + id + '/hold" class="rs-act btn-success-rgba" data-toggle="tooltip" title="Retrieve parked sale"><i class="feather icon-play-circle"></i></a>'
                             : '';
                         if (isParked) { editIcon = ''; returnIcon = ''; }
-
-                        var recentSalerowHTMLLine = '<tr id="recent_sales_table_row_' + id + '" class="highlight-select touch-sales-hover-effect"> ' +
-                            '    <td id="recentSalesId_' + id + '" data-toggle="tooltip" title="' + params.sales_id + '" class="suggestion-name-wrap">' + params.sales_id + parkedBadge + '</td>' +
-                            '    <td class="suggestion-name-wrap text-center" data-toggle="tooltip" title="' + params.customer_name + '">' + params.customer_name + '</td>' +
-                            '    <td class="text-right">' + currency + '&nbsp;<span class="number">' + params.total_amount.toFixed(2) + '</span></td>' +
-                            '    <td id="recentSalesEditItem_' + id + '">' +
-                            '    <i><a data-module = "sales"  data-access = "read" href="#/sales/' + id + '" class="btn-sm btn-primary-rgba" data-toggle="tooltip" title="View"><i class="feather icon-eye"></a></i>' +
-                            retrieveIcon +
-                            editIcon +
-                            returnIcon +
-                            deleteIcon +
-                            '    </td>';
-                        '</tr>';
-                        var reverseTable = $('#recent_sales_table tbody').append(recentSalerowHTMLLine);
-                        reverseTable.find('tbody').reverseChildren('tr');
-                        PosnicPro.ACLForModule('sales');
+                        var pill = isParked
+                            ? '<span class="rs-pill hold">Parked</span>'
+                            : isPaid
+                                ? '<span class="rs-pill paid">Paid</span>'
+                                : '<span class="rs-pill unpaid">' + esc(paymentStatus || 'Unpaid') + '</span>';
+                        var when = '';
+                        try { when = ago(PosnicPro.mongoIdToDate(id)); } catch (e) { /* no time, no label */ }
+                        var meta = [esc(params.sales_id), params.number_of_items + ' item' + (params.number_of_items === 1 ? '' : 's')];
+                        if (when) { meta.push(when); }
+                        listHtml += '<div class="rs-row highlight-select" id="recent_sales_table_row_' + id + '">' +
+                            '<div class="rs-main">' +
+                            '<div class="rs-cust">' + esc(params.customer_name || 'Walk-in') + '</div>' +
+                            '<div class="rs-meta">' + meta.join(' &middot; ') + '</div>' +
+                            '</div>' +
+                            '<div class="rs-side">' +
+                            '<div class="rs-amt">' + currency + '&nbsp;' + Number(params.total_amount || 0).toFixed(2) + '</div>' + pill +
+                            '</div>' +
+                            '<div class="rs-actions">' +
+                            '<a data-module="sales" data-access="read" href="#/sales/' + id + '" class="rs-act btn-primary-rgba" data-toggle="tooltip" title="View"><i class="feather icon-eye"></i></a>' +
+                            retrieveIcon + editIcon + returnIcon + deleteIcon +
+                            '</div></div>';
                     });
+                    $('#recent_sales_list').html(listHtml);
+                    PosnicPro.ACLForModule('sales');
                 } else {
-                    $('table#recent_sales_table tbody').append('<tr class="sales_new_tablerow_content_area" id="sales_new_tablerow_content_area"><td colspan="7"><div class="text-center text-dark"> <p class="table_cart_content">There Are No Recent Sales Order</p></div></td></tr>');
+                    $('#recent_sales_list').html('<div class="text-center text-muted p-t-30 p-b-30">No sales yet today - they will appear here as you bill.</div>');
                 }
-                $('span.number').number(true, 2);
             } else {
                 PosnicPro.alert(response.type, response.message);
             }
