@@ -551,6 +551,69 @@ describe('ItemRepository', () => {
     });
   });
 
+  describe('stockAdjustment', () => {
+    const ctx = { branchId: FAKE_BRANCH, licenseId: FAKE_LICENSE, userId: 'u1', userName: 'admin' };
+    const tracked = {
+      _id: FAKE_ID,
+      name: 'Oil 1L',
+      barcode_id: 'B1',
+      available_quantity: 10,
+      track_inventory: true,
+    };
+
+    test('Inventory count SETS stock to what was counted', async () => {
+      col.findOne.mockResolvedValue(tracked);
+      const r = await repo.stockAdjustment(
+        { reason: 'Inventory count', rows: [{ item_id: FAKE_ID, qty: 7 }] },
+        ctx
+      );
+      expect(r.status).toBe(true);
+      expect(r.data.updated).toBe(1);
+      expect(col.updateOne.mock.calls[0][1].$set.available_quantity).toBe(7);
+    });
+
+    test('Loss SUBTRACTS and clamps at zero', async () => {
+      col.findOne.mockResolvedValue(tracked);
+      await repo.stockAdjustment({ reason: 'Loss', rows: [{ item_id: FAKE_ID, qty: 99 }] }, ctx);
+      expect(col.updateOne.mock.calls[0][1].$set.available_quantity).toBe(0);
+    });
+
+    test('an unknown reason is refused before any write', async () => {
+      const r = await repo.stockAdjustment(
+        { reason: 'Shrinkage', rows: [{ item_id: FAKE_ID, qty: 1 }] },
+        ctx
+      );
+      expect(r.status).toBe(false);
+      expect(col.updateOne).not.toHaveBeenCalled();
+    });
+
+    test('items outside the branch/license are skipped, never written', async () => {
+      col.findOne.mockResolvedValue(null); // scoped fetch finds nothing
+      const r = await repo.stockAdjustment(
+        { reason: 'Damage', rows: [{ item_id: FAKE_ID, qty: 1 }] },
+        ctx
+      );
+      expect(r.status).toBe(true);
+      expect(r.data.updated).toBe(0);
+      expect(r.data.skipped).toBe(1);
+      expect(col.updateOne).not.toHaveBeenCalled();
+      // calls[0] is the branch-doc lookup (one shared mock collection);
+      // calls[1] is the scoped item fetch under test.
+      const filter = col.findOne.mock.calls[1][0];
+      expect(String(filter['branch_access.branch_id'])).toBe(FAKE_BRANCH);
+    });
+
+    test('a no-op count (stock already matches) is skipped without a log', async () => {
+      col.findOne.mockResolvedValue(tracked);
+      const r = await repo.stockAdjustment(
+        { reason: 'Inventory count', rows: [{ item_id: FAKE_ID, qty: 10 }] },
+        ctx
+      );
+      expect(r.data.updated).toBe(0);
+      expect(col.updateOne).not.toHaveBeenCalled();
+    });
+  });
+
   describe('accessKiosk', () => {
     test('returns kiosk data', async () => {
       const branchCol = {

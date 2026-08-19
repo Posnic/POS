@@ -110,6 +110,9 @@ router.get('/getReceivingItemsAjaxList', bindController(itemsController.getRecei
 // All (or only low-stock) items of one supplier - the receiving autofill.
 router.get('/bySupplier', bindController(itemsController.getItemsBySupplier));
 
+// Reasoned per-item stock adjustment: count sets, loss/damage subtract.
+router.post('/stockAdjustment', bindController(itemsController.stockAdjustment));
+
 // PHP: updateKioskStatus() - Update kiosk status
 router.post('/updateKioskStatus', bindController(itemsController.updateKioskStatus));
 

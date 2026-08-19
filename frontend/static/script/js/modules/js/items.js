@@ -1351,6 +1351,75 @@ PosnicPro.items = {
 
     // ---- Bulk stock update: add/remove stock across items or a category, with
     // a note carried into the stock log. Mirrors bulk price; no MRP/cost rules. ----
+    /* Stock adjustment with reasons (Loyverse study L2). Inventory count
+       SETS stock to what was counted; Loss and Damage SUBTRACT what
+       disappeared. Rows are picked via the receiving autocomplete endpoint
+       (it carries current stock); the server logs every change with the
+       reason as its process. */
+    _adjRows: {},
+    openStockAdjustment: function () {
+        PosnicPro.items._adjRows = {};
+        $('#stock_adjust_note').val('');
+        $('#stock_adjust_search').val('');
+        $('#stock_adjust_reason').val('Inventory count');
+        PosnicPro.items.renderAdjRows();
+        $('#stock_adjust_modal').modal('show');
+        setTimeout(function () { $('#stock_adjust_search').focus(); }, 400);
+    },
+    renderAdjRows: function () {
+        var reason = $('#stock_adjust_reason').val();
+        var isCount = reason === 'Inventory count';
+        $('#stock_adjust_qty_head').text(isCount ? 'Counted' : 'Qty lost');
+        var keys = Object.keys(PosnicPro.items._adjRows);
+        if (!keys.length) {
+            $('#stock_adjust_rows').html('<tr><td colspan="5" class="text-center text-muted">Search and pick items to adjust.</td></tr>');
+            return;
+        }
+        var html = keys.map(function (id) {
+            var r = PosnicPro.items._adjRows[id];
+            var qty = Number(r.qty) || 0;
+            var after = isCount ? qty : Math.max(0, (Number(r.stock) || 0) - qty);
+            return '<tr>' +
+                '<td>' + $('<span>').text(r.name).html() + '</td>' +
+                '<td class="text-right">' + (Number(r.stock) || 0) + '</td>' +
+                '<td class="text-right"><input type="number" min="0" class="form-control form-control-sm text-right adj-qty" data-id="' + id + '" value="' + qty + '" style="width:100px;display:inline-block;"></td>' +
+                '<td class="text-right">' + after + '</td>' +
+                '<td><a href="javascript:void(0)" class="text-danger adj-remove" data-id="' + id + '">&times;</a></td>' +
+                '</tr>';
+        }).join('');
+        $('#stock_adjust_rows').html(html);
+    },
+    submitStockAdjustment: function () {
+        var rows = Object.keys(PosnicPro.items._adjRows).map(function (id) {
+            return { item_id: id, qty: Number(PosnicPro.items._adjRows[id].qty) || 0 };
+        });
+        if (!rows.length) {
+            PosnicPro.alert('warning', 'Pick at least one item');
+            return;
+        }
+        $('#stock_adjust_submit').prop('disabled', true);
+        PosnicPro.post({
+            url: 'items/stockAdjustment',
+            data: JSON.stringify({
+                reason: $('#stock_adjust_reason').val(),
+                note: $('#stock_adjust_note').val(),
+                rows: rows
+            })
+        }, function (response) {
+            $('#stock_adjust_submit').prop('disabled', false);
+            PosnicPro.alert(response.type, response.message);
+            if (response.type === 'success') {
+                $('#stock_adjust_modal').modal('hide');
+                PosnicPro.items.itemsTable('items');
+                PosnicPro.stocklogs.viewLowStockDashboard();
+            }
+        }, function (xhr) {
+            $('#stock_adjust_submit').prop('disabled', false);
+            var resp = {};
+            try { resp = JSON.parse(xhr.responseText); } catch (e) { /* plain */ }
+            PosnicPro.alert('error', resp.message || 'Could not adjust stock');
+        });
+    },
     openBulkStock: function () {
         $('input[name="bulk_stock_scope"][value="all"]').prop('checked', true);
         $('.bulk-stock-category-row').hide();
@@ -3611,6 +3680,55 @@ $(document).ready(function () {
             $(this).val(picker.startDate.format('YYYY-MM-DD')).trigger('change');
         });
     }
+    // Stock adjustment: pick items via the receiving autocomplete (it
+    // carries current stock); edit quantities in place; remove rows.
+    $('#stock_adjust_search').autocomplete({
+        lookup: function (query, done) {
+            PosnicPro.get({
+                url: 'items/getReceivingItemsAjaxList',
+                data: 'query=' + encodeURIComponent(query) + '&type=normal'
+            }, function (response) {
+                done({
+                    suggestions: $.map(response.suggestions || [], function (d) {
+                        return { value: d.item_name, data: d };
+                    })
+                });
+            }, function () { done({ suggestions: [] }); });
+        },
+        onSelect: function (suggestion) {
+            var d = suggestion.data;
+            if (!d || !d.item_id) { return; }
+            if (!PosnicPro.items._adjRows[d.item_id]) {
+                PosnicPro.items._adjRows[d.item_id] = {
+                    name: d.item_name,
+                    stock: Number(d.available_quantity) || 0,
+                    qty: 0
+                };
+            }
+            PosnicPro.items.renderAdjRows();
+            var $box = $('#stock_adjust_search');
+            $box.val('');
+            if ($box.data('autocomplete')) { $box.autocomplete('clear'); }
+            setTimeout(function () { $box.focus(); }, 0);
+        },
+        autoSelectFirst: true,
+        triggerSelectOnValidInput: false
+    });
+    $(document).on('input', '.adj-qty', function () {
+        var id = $(this).data('id');
+        if (PosnicPro.items._adjRows[id]) {
+            PosnicPro.items._adjRows[id].qty = Number($(this).val()) || 0;
+            // Update only the computed cell, keep focus in the input.
+            var reason = $('#stock_adjust_reason').val();
+            var r = PosnicPro.items._adjRows[id];
+            var after = reason === 'Inventory count' ? r.qty : Math.max(0, r.stock - r.qty);
+            $(this).closest('tr').find('td').eq(3).text(after);
+        }
+    });
+    $(document).on('click', '.adj-remove', function () {
+        delete PosnicPro.items._adjRows[$(this).data('id')];
+        PosnicPro.items.renderAdjRows();
+    });
     $("#items_variant").val(1).trigger('change.select2');
     $("#items_variant").select2({
         placeholder: "Choose a Variant"

@@ -2388,6 +2388,8 @@ class ItemRepository extends BaseModel {
         image: item.image || DEFAULTS.IMAGE,
         supplier_id: item.supplier_id?.toString() || '',
         supplier_name: item.supplier_name || '',
+        // Additive: the stock-adjustment search shows current stock.
+        available_quantity: item.available_quantity || 0,
       }));
 
       return { status: true, data: list, message: 'success' };
@@ -2457,6 +2459,138 @@ class ItemRepository extends BaseModel {
       return { status: true, data: list, message: 'success' };
     } catch (error) {
       console.error('Error in ItemRepository.getItemsBySupplier:', error);
+      return { status: false, data: null, message: error.message };
+    }
+  }
+
+  /*
+   * Reasoned per-item stock adjustment (Loyverse study L2). Three reasons,
+   * two behaviours: an Inventory count SETS stock to what was counted; Loss
+   * and Damage SUBTRACT what disappeared (clamped at zero). Every change is
+   * a stock-log row with the reason as its process - an adjustment is a
+   * movement with an audit trail, never a silent overwrite. Receiving stock
+   * is deliberately not a reason here: that is the receiving screen's job.
+   */
+  async stockAdjustment({ reason, note, rows } = {}, context = {}) {
+    try {
+      const REASONS = {
+        'Inventory count': 'set',
+        Loss: 'subtract',
+        Damage: 'subtract',
+      };
+      const mode = REASONS[reason];
+      if (!mode) {
+        return {
+          status: false,
+          data: null,
+          message: 'Pick a reason: Inventory count, Loss or Damage',
+        };
+      }
+      if (!Array.isArray(rows) || rows.length === 0) {
+        return { status: false, data: null, message: 'Add at least one item to adjust' };
+      }
+      if (rows.length > 200) {
+        return { status: false, data: null, message: 'At most 200 items per adjustment' };
+      }
+      const branchId = context.branchId;
+      if (!branchId) return { status: false, data: null, message: 'Branch ID not found' };
+      const branchObjectId = new ObjectId(String(branchId));
+      const licenseObjectId =
+        context.licenseId && ObjectId.isValid(String(context.licenseId))
+          ? new ObjectId(String(context.licenseId))
+          : null;
+
+      const collection = await this.getCollection(this.collectionName);
+      const branchesCollection = await this.getCollection('branches');
+      const branchDoc = await branchesCollection.findOne({ _id: branchObjectId });
+      const stockLogStatus = branchDoc?.stock_management_log !== false;
+      const stockLogsRepository = new StockLogsRepository();
+      const cleanNote = String(note || '')
+        .trim()
+        .slice(0, 500);
+      const now = new Date();
+
+      let updated = 0;
+      let skipped = 0;
+      for (const row of rows) {
+        const qty = Number(row && row.qty);
+        if (!row || !ObjectId.isValid(String(row.item_id)) || !Number.isFinite(qty) || qty < 0) {
+          skipped += 1;
+          continue;
+        }
+        const filter = {
+          _id: new ObjectId(String(row.item_id)),
+          'branch_access.branch_id': branchObjectId,
+        };
+        if (licenseObjectId) filter.license = licenseObjectId;
+        const item = await collection.findOne(filter, {
+          projection: {
+            available_quantity: 1,
+            name: 1,
+            barcode_id: 1,
+            track_inventory: 1,
+            branch_id: 1,
+          },
+        });
+        if (!item) {
+          skipped += 1;
+          continue;
+        }
+        const oldV = Number(item.available_quantity) || 0;
+        const newV = mode === 'set' ? qty : Math.max(0, oldV - qty);
+        if (newV === oldV) {
+          skipped += 1;
+          continue;
+        }
+        await collection.updateOne(
+          { _id: item._id },
+          {
+            $set: {
+              available_quantity: newV,
+              updated_date: now,
+              updated_by: context.userName || '',
+              updated_by_id: context.userId || null,
+            },
+          }
+        );
+        updated += 1;
+
+        if (item.track_inventory === true) {
+          // Same count convention as every other stock writer: old - new,
+          // negated when stock went up.
+          const diff = oldV - newV;
+          const count = diff < 0 ? String(Math.abs(diff)) : '-' + String(diff);
+          await stockLogsRepository
+            .createStockLog({
+              stocklog: stockLogStatus,
+              branch_id: branchObjectId || item.branch_id || null,
+              view_item_id: item._id,
+              item_barcode_id: item.barcode_id,
+              item_name: item.name,
+              item_quantity: String(newV),
+              process: reason,
+              reference: item.barcode_id,
+              note: cleanNote,
+              date: now,
+              action: 'Add',
+              opening_balance: String(oldV),
+              closing_balance: String(newV),
+              count: count,
+              changed_by_userid: context.userId,
+              changed_by: context.userName,
+            })
+            .catch(() => {});
+        }
+      }
+
+      return {
+        status: true,
+        data: { updated, skipped },
+        message:
+          updated > 0 ? `Adjusted ${updated} item(s)` : 'Nothing changed - stock already matched',
+      };
+    } catch (error) {
+      console.error('Error in ItemRepository.stockAdjustment:', error);
       return { status: false, data: null, message: error.message };
     }
   }
