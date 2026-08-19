@@ -715,7 +715,9 @@ PosnicPro = {
                     if (t) { title = t; }
                     return;
                 }
-                if (!$(this).is(':visible')) { return; }
+                // Export-only tables ride along even though hidden on screen
+                // (the day-end summary numbers live in cards, not tables).
+                if (!$(this).is(':visible') && !$(this).is('[data-export-include]')) { return; }
                 // Identity blocks (page titles, shop headers) opt out - the
                 // PDF draws its own header band.
                 if ($(this).closest('[data-export-skip]').length || $(this).is('[data-export-skip]')) { return; }
