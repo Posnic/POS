@@ -25,7 +25,6 @@
                          is untouched - the payload builders never notice. -->
                     <ul class="nav nav-tabs nav-justified m-b-15" id="item_form_tabs" role="tablist">
                         <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#item_tab_main" role="tab"><i class="feather icon-box mr-1"></i><lang class="lang_item_title">Item</lang></a></li>
-                        <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#item_tab_price" role="tab"><i class="feather icon-tag mr-1"></i><lang class="lang_tab_price_codes">Price &amp; codes</lang></a></li>
                         <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#item_tab_details" role="tab"><i class="feather icon-image mr-1"></i><lang class="lang_item_details_title">Details</lang></a></li>
                         <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#item_tab_more" role="tab"><i class="feather icon-sliders mr-1"></i><lang class="lang_tab_more">More</lang></a></li>
                     </ul>
@@ -145,9 +144,6 @@
                                  rows render the moment the values are chosen. -->
                         </div>
                     </div>
-
-                    </div>
-                    <div class="tab-pane fade" id="item_tab_price" role="tabpanel">
 
                     <!-- 3 · Price, stock and identification (plain items; variant
                          rows carry their own copies). items.js shows/hides this
@@ -426,7 +422,7 @@
                                 <small class="text-muted ml-2" style="font-weight:400;"><lang class="lang_item_details_hint">description, images, dates</lang></small>
                             </h5>
                         </div>
-                        <div class="collapse" id="item_details_collapse">
+                        <div class="collapse show" id="item_details_collapse">
                             <div class="card-body">
                                 <div class="form-row">
                                     <div class="col-md-12">
