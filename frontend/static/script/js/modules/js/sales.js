@@ -2356,28 +2356,6 @@
         }, 100);
     },
 
-    instanceClearForm: function () {
-        $('.error').css('display', 'none');
-        $('#instance_item_form')[0].reset();
-
-        $("#instance_items_category").select2({
-            placeholder: "Choose a Category"
-        });
-        $('#instance_items_category').val(1).trigger('change.select2');
-        $("#instance_items_tax").select2({
-            placeholder: "Choose a Tax"
-        });
-        if (PosnicPro.local.get('default_tax_enable_disable') === 'false') {
-            $('#instance_items_tax').val(1).trigger('change.select2');
-        } else {
-            var defaultTaxId = PosnicPro.local.get('default_tax_id');
-            if (defaultTaxId && $('#instance_items_tax option[value="' + defaultTaxId + '"]').length) {
-                $('#instance_items_tax').val(defaultTaxId).trigger('change.select2');
-            } else {
-                $('#instance_items_tax').val(1).trigger('change.select2');
-            }
-        }
-    }, 
     editItemPricingSale: function (index) {
         var id = $(index).data('id');
         let priceText = $('#addSalesLineItemPrice_' + id).text().trim();
@@ -7568,7 +7546,7 @@ PosnicPro.sales.quickSale = {
                 '<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>' +
                 '<div class="modal-body">' +
                 '<input type="number" min="0" step="any" class="form-control form-control-lg text-right mb-2" id="quick_sale_amount" placeholder="0.00" autocomplete="off" style="font-size:1.6rem;">' +
-                '<input type="text" class="form-control mb-2" id="quick_sale_note" maxlength="100" placeholder="Note (optional)" autocomplete="off">' +
+                '<input type="text" class="form-control mb-2" id="quick_sale_note" maxlength="100" placeholder="Item name (optional)" autocomplete="off">' +
                 '<small class="text-muted d-block" id="quick_sale_hint"></small>' +
                 '<small class="text-muted d-block" id="quick_sale_added"></small>' +
                 '</div>' +

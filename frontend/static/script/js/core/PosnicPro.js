@@ -3841,11 +3841,6 @@ $('.custom_report_search_input').on('keypress keydown.autocomplete', function ()
     });
 });
 $(".infobar-settings-close").on("click", function (e) {
-    var instant = 'sales/instant/new';
-    if (currentHash === instant) {
-        hasher.changed.active = true;
-        hasher.replaceHash('sales/new');
-    }
     var category = 'sales/categories/new';
     if (currentHash === category) {
         hasher.changed.active = true;
@@ -3875,14 +3870,7 @@ $(".infobar-settings-close").on("click", function (e) {
     }
 
     let stringData = $(this).data("id");
-    let hash = window.location.hash.slice(1);
-    if (stringData === 'category' && hash === '/sales/new') {
-        $("#infobar-settings-sidebar-instance").addClass("sidebarshow");
-        $("#infobar-settings-sidebar-category").removeClass("sidebarshow");
-        hasher.replaceHash('sales/instant/new');
-    } else {
-        $("#infobar-settings-sidebar-category").removeClass("sidebarshow");
-    }
+    $("#infobar-settings-sidebar-category").removeClass("sidebarshow");
     e.preventDefault();
     $(".infobar-settings-sidebar-overlay").css({ "background": "transparent", "position": "initial" });
     $("#infobar-settings-sidebar-" + stringData).removeClass("sidebarshow");

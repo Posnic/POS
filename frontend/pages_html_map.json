@@ -79,7 +79,6 @@
         "modals/expense.html",
         "modals/export.html",
         "modals/import_customer.html",
-        "modals/instance_item.html",
         "modals/items_read.html",
         "modals/profile.html",
         "modals/receivings.html",

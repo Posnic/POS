@@ -223,7 +223,7 @@ PosnicPro.categories = {
                     hasher.replaceHash('items/new');
                 } else if (hash === '/sales/categories/new') {
                     $('#category_name').val('');
-                    hasher.replaceHash('sales/instant/new');
+                    hasher.replaceHash('sales/new');
                 } else {
                     hasher.setHash('categories');
                 }

@@ -2743,170 +2743,6 @@ PosnicPro.itemdetails = {
     }
 };
 
-PosnicPro.instant = {
-    triggerModules: function () {
-        if ($('#instance_items_discount_amount').val() > 0) {
-            $("#instance_item_radio_discount_amount").prop('checked', 'checked');
-            $('#instance_items_discount_percentage').attr('disabled', 'disabled').addClass('bg-white').hide();
-            $('#instance_items_discount_amount').removeAttr('disabled', 'disabled').show();
-            $('#instance_items_discount_amount').val($('#instance_items_discount_amount').val());
-        } else if ($('#instance_items_discount_percentage').val() > 0) {
-            $("#instance_item_radio_discount_percentage").prop('checked', 'checked');
-            $('#instance_items_discount_amount').attr('disabled', 'disabled').addClass('bg-white').hide();
-            $('#instance_items_discount_percentage').removeAttr('disabled', 'disabled').show();
-            $('#instance_items_discount_percentage').val($('#instance_items_discount_percentage').val());
-        } else {
-            $("#instance_item_radio_discount_amount").prop('checked', 'checked');
-            $('#instance_items_discount_percentage').attr('disabled', 'disabled').addClass('bg-white').hide().val('0');
-            $('#instance_items_discount_amount').removeAttr('disabled', 'disabled').show();
-            $('#instance_items_discount_amount').val('0.00');
-        }
-        
-        // Open modal first
-        PosnicPro.showAddModal('instance');
-        
-        // Load tax options with callback to set default after success
-        var data = {
-            tax_group: 'all'
-        };
-        var params = {
-            url: 'setting/getTaxAll',
-            data: data
-        };
-        PosnicPro.get(params, function (response) {
-            if (response.type === 'success') {
-                var data = response.data;
-                var taxOption = '';
-                if (data.length > 0) {
-                    $.each(data, function (index, value) {
-                        taxOption += '<option value="' + value.tax_id + '" data-tax-id="' + value.tax_id + '" data-tax-name="' + value.tax_name + '" data-tax-value="' + value.tax_value + '">' + value.tax_name + '</option>';
-                    });
-                } else {
-                    taxOption += '<option selected="selected" value="0">No tax</option>';
-                }
-                $('#instance_items_tax').html(taxOption);
-                
-                // Set default tax AFTER options are loaded successfully
-                if (PosnicPro.local.get('default_tax_enable_disable') === 'false') {
-                    $('#instance_items_tax').val(1).trigger('change.select2');
-                } else {
-                    var defaultTaxId = PosnicPro.local.get('default_tax_id');
-                    if (defaultTaxId && $('#instance_items_tax option[value="' + defaultTaxId + '"]').length) {
-                        $('#instance_items_tax').val(defaultTaxId).trigger('change.select2');
-                    } else {
-                        $('#instance_items_tax').val(1).trigger('change.select2');
-                    }
-                }
-            } else {
-                PosnicPro.alert(response.type, response.message);
-            }
-        });
-    },
-    instanceItemAdd: function () {
-        var loader = $(".loader-instance");
-        $("<div class='loadingSpinner'></div>").appendTo(loader);
-        $("#save_submit").removeClass("disabled");
-
-        let unitDetail = $("#instance_items_unit").select2("data") || [];
-        var taxDetail = $("#instance_items_tax").select2("data") || [];
-
-        var tax_value = '0';
-        var tax_id = '1';
-        var tax_name = 'No Tax';
-
-        if (taxDetail.length > 0 && taxDetail[0] && taxDetail[0].element) {
-            tax_value = taxDetail[0].element.getAttribute('data-tax-value') || tax_value;
-            tax_id = taxDetail[0].element.getAttribute('data-tax-id') || tax_id;
-            tax_name = taxDetail[0].element.getAttribute('data-tax-name') || tax_name;
-        } else {
-            var taxOptionEl = $("#instance_items_tax").find('option:selected')[0];
-            if (taxOptionEl) {
-                tax_value = taxOptionEl.getAttribute('data-tax-value') || tax_value;
-                tax_id = taxOptionEl.getAttribute('data-tax-id') || tax_id;
-                tax_name = taxOptionEl.getAttribute('data-tax-name') || tax_name;
-            }
-        }
-
-        var categoryDetail = $("#instance_items_category").select2("data") || [];
-        var categoryEl = null;
-        if (categoryDetail.length > 0 && categoryDetail[0] && categoryDetail[0].element) {
-            categoryEl = categoryDetail[0].element;
-        } else {
-            categoryEl = $("#instance_items_category").find('option:selected')[0];
-        }
-
-        var category_id = categoryEl ? (categoryEl.getAttribute('data-category-id') || categoryEl.value || '') : '';
-        var category_name = categoryEl ? (categoryEl.getAttribute('data-category-name') || categoryEl.textContent || '') : '';
-
-        var unitValue = null;
-        if (unitDetail.length > 0 && unitDetail[0] && unitDetail[0].element) {
-            unitValue = unitDetail[0].element.getAttribute('data-unit-value') || null;
-        } else {
-            var unitOptionEl = $("#instance_items_unit").find('option:selected')[0];
-            if (unitOptionEl) {
-                unitValue = unitOptionEl.getAttribute('data-unit-value') || null;
-            }
-        }
-
-        var params = {
-            url: 'items/instanceItemInsert',
-            data: JSON.stringify({
-                "items_name": $("#instance_items_name").val(),
-                "items_quantity": $("#instance_items_quantity").val(),
-                "items_mrp_price": $("#instance_items_mrp_price").val(),
-                "items_selling_price": $("#instance_items_selling_price").val(),
-                "items_company_price": $("#instance_items_company_price").val(),
-                "items_discount_amount": $("#instance_items_discount_amount").val(),
-                "items_discount_percentage": $("#instance_items_discount_percentage").val(),
-                "items_tax_id": tax_id,
-                "items_tax_name": tax_name,
-                "items_tax": tax_value,
-                "items_tax_type": $('input[name=tax_instant_radio_value]:checked').val(),
-                "items_sku": $("#instance_items_itemid").val(),
-                "items_category_id": category_id,
-                "items_category_name": category_name,
-                "items_unit": unitValue
-            })
-        };
-        PosnicPro.post(params, function (response) {
-
-            if (response.type === 'success') {
-                var data = response.data;
-                var itemDetails = {
-                    "item_id": data.id,
-                    "item_name": data.name,
-                    "selling_price": data.selling_price,
-                    "barcode_id": data.barcode_id,
-                    "item_quantity": data.available_quantity,
-                    "discount_amount": data.discount_amount,
-                    "discount_percentage": data.discount_percentage,
-                    "tax": data.tax,
-                    "company_price": data.company_price,
-                    "category_id": data.category_id,
-                    "category_name": data.category_name,
-                    "tax_type": data.tax_type,
-                    "sales_type": 'instant',
-                    "instant_status": 'ok',
-                    "unit": data.unit
-                };
-                hasher.changed.active = false; //disable changed signal
-                hasher.replaceHash('sales/new');
-                PosnicPro.sales.addSalesLineItems(itemDetails);
-                $(".infobar-settings-sidebar-overlay").css({"background": "transparent", "position": "initial"});
-                $("#infobar-settings-sidebar-instance").removeClass("sidebarshow");
-                PosnicPro.sales.instanceClearForm();
-                PosnicPro.items.loadSelectUnit();
-                hasher.changed.active = true; //enable changed signal
-                loader.find(".loadingSpinner:first").remove();
-            } else {
-                PosnicPro.alert(response.type, response.message);
-            }
-        }, function (xhr) {
-            var response = jQuery.parseJSON(xhr.responseText);
-            PosnicPro.alert(response.type, response.message);
-        });
-    }
-};
 
 $(function () {
     $('#items_discount_percentage').attr('disabled', 'disabled').addClass('bg-white').val('0.00').hide();
@@ -2989,9 +2825,9 @@ $(function () {
 
 /*for display client validation of the form details*/
 $(document).ready(function () {
-    $("#instance_item_radio_discount_amount,#item_radio_discount_amount").prop('checked', 'checked');
-    $('#instance_items_discount_percentage,#items_discount_percentage').attr('disabled', 'disabled').val('0').hide();
-    $('#instance_items_discount_amount, #items_discount_amount').removeAttr('disabled', 'disabled').val('0').show();
+    $("#item_radio_discount_amount").prop('checked', 'checked');
+    $('#items_discount_percentage').attr('disabled', 'disabled').val('0').hide();
+    $('#items_discount_amount').removeAttr('disabled', 'disabled').val('0').show();
     jQuery.validator.addMethod("alphanumeric", function (value, element) {
         if ((/[*|\":<>[\]{}`\\';@&#!]/.test(value))) {
             return false;
@@ -3253,102 +3089,11 @@ $(document).ready(function () {
         }
     });
 
-    $("#instance_item_radio_discount_amount, #instance_item_radio_discount_percentage").change(function () {
-        if ($("#instance_item_radio_discount_amount").is(":checked")) {
-            $('#instance_items_discount_percentage').attr('disabled', 'disabled').addClass('bg-white').val('0').hide();
-            $('#instance_items_discount_amount').removeAttr('disabled', 'disabled').show().focus().select();
-        } else {
-            $('#instance_items_discount_amount').attr('disabled', 'disabled').addClass('bg-white').val('0.00').hide();
-            $('#instance_items_discount_percentage').removeAttr('disabled', 'disabled').show().focus().select();
-        }
-    });
-
 });
 $('.modal').on('show.bs.modal', function () {
     $('#categories_view').css('z-index', 1051);
 });
 
-$("#instance_item_form").validate({
-    highlight: function (element, errorClass) {
-        $(element).css("border-color", "#f9616d");
-    },
-    unhighlight: function (element, errorClass) {
-        $(element).css("border-color", "#eae8e8");
-    },
-    errorPlacement: function (label, element) {
-        if (element.hasClass('instance_items_choose_error') && element.next('.select2-container').length) {
-            label.insertAfter(element.next('.select2-container'));
-        } else {
-            label.addClass('mt-2 text-danger');
-            label.insertAfter(element);
-        }
-    },
-    rules: {
-        instance_items_name: {
-            required: true,
-            minlength: 3,
-            maxlength: 500
-        },
-        instance_items_category: {
-            required: true
-        },
-        instance_items_quantity: {
-            required: true,
-            minlength: 1,
-            maxlength: 7
-        },
-        instance_items_mrp_price: {
-            minlength: 1,
-            maxlength: 7
-        },
-        instance_items_tax: {
-            required: true
-        }
-    },
-    messages: {
-        instance_items_name: {
-            required: "Please Enter Item Name",
-            minlength: "Item Name must consist of at least 3 characters",
-            maxlength: "Item Name should not be more than 500 characters"
-        },
-        instance_items_category: {
-            required: "Choose Item Category"
-        },
-        instance_items_quantity: {
-            required: "Please Enter Item Qty",
-            minlength: "Qty must consist of at least 1 characters",
-            maxlength: "Qty should not be more than 7 characters"
-        },
-        instance_items_selling_price: {
-            required: "Please Enter Selling Price",
-            minlength: "Selling Price must consist of at least 1 characters",
-            maxlength: "Selling Price should not be more than 10 characters"
-        },
-        instance_items_mrp_price: {
-            minlength: "This field must consist of at least 1 characters",
-            maxlength: "This field should not be more than 7 characters"
-        },
-        instance_items_tax: {
-            required: "Choose Item Tax"
-        }
-    }
-});
-
-// Auto-fill MRP and cost when selling price is entered
-$(document).on('input', '#instance_items_selling_price', function() {
-    var sellingPrice = $(this).val();
-    if (sellingPrice && sellingPrice !== '') {
-        $('#instance_items_mrp_price').val(sellingPrice);
-        $('#instance_items_company_price').val(sellingPrice);
-    }
-});
-
-$("#instance_item_form").submit(function (event) {
-    event.preventDefault();
-    if ($('#instance_item_form').valid()) {            // checks form for validity
-        PosnicPro.instant.instanceItemAdd();
-    }
-});
 
 $(document).ready(function () {
 
@@ -3854,18 +3599,6 @@ $('.items_category').one('change', function () {
         if (hash === '/items/new') {
             // Use the common function to apply discount
             PosnicPro.items.applyCategoryDiscount(data.element);
-        } else if (hash === '/sales/instant/new') {
-            if (data.element.attributes['data-item-discountamount'].value > 0) {
-                $("#instance_item_radio_discount_amount").prop('checked', 'checked');
-                $('#instance_items_discount_percentage').attr('disabled', 'disabled').addClass('bg-white').hide();
-                $('#instance_items_discount_amount').removeAttr('disabled', 'disabled').show();
-                $('#instance_items_discount_amount').val(data.element.attributes['data-item-discountamount'].value);
-            } else {
-                $("#instance_item_radio_discount_percentage").prop('checked', 'checked');
-                $('#instance_items_discount_amount').attr('disabled', 'disabled').addClass('bg-white').hide();
-                $('#instance_items_discount_percentage').removeAttr('disabled', 'disabled').show();
-                $('#instance_items_discount_percentage').val(data.element.attributes['data-item-discountpercentage'].value);
-            }
         }
     });
 });
