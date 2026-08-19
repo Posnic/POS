@@ -2768,3 +2768,15 @@ tr.add-disc-row.tip-only td.discount-input { visibility: hidden; }
 #sales_view .modal-dialog { max-width: min(1100px, 94vw); }
 #sales_view .modal-body { padding: 20px 30px; }
 #sales_view .modal-body table { width: 100%; }
+
+/* Variant families read as a stack of choices before you tap - two
+   offset card edges behind the tile (owner: variants must look a
+   little different on the sale grid). */
+.wsk-variant { position: relative; }
+.wsk-variant::before, .wsk-variant::after {
+    content: ''; position: absolute; left: 5px; right: 5px; height: 5px;
+    border: 1px solid rgba(128, 128, 128, 0.28); border-top: none;
+    border-radius: 0 0 7px 7px; background: rgba(128, 128, 128, 0.07);
+}
+.wsk-variant::before { bottom: -5px; }
+.wsk-variant::after { bottom: -9px; left: 10px; right: 10px; opacity: 0.6; }
