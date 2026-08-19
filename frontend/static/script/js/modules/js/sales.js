@@ -7324,7 +7324,9 @@ PosnicPro.quotes = {
             body += '<tr><th colspan="3" class="text-right">Total</th><th class="text-right">' + PosnicPro.quotes._money(q.total) + '</th></tr></table>';
             $('#quotes_view_body').html(body);
             var act = '<button type="button" class="btn btn-sm btn-secondary-rgba" onclick="hasher.setHash(\'quotes\');">Back</button> ' +
-                '<button type="button" class="btn btn-sm btn-danger-rgba" onclick="PosnicPro.quotes.print();">Print / PDF</button> ';
+                '<button type="button" class="btn btn-sm btn-danger-rgba" onclick="PosnicPro.quotes.print();">Print / PDF</button> ' +
+                '<button type="button" class="btn btn-sm btn-secondary-rgba" onclick="PosnicPro.quotes.emailQuote();">Email</button> ' +
+                '<button type="button" class="btn btn-sm btn-success-rgba" onclick="PosnicPro.quotes.whatsappQuote();">WhatsApp</button> ';
             if (q.status === 'open') {
                 act += '<button type="button" class="btn btn-sm btn-success-rgba" onclick="PosnicPro.quotes.convert();">Convert to sale</button> ' +
                     '<button type="button" class="btn btn-sm btn-warning-rgba" onclick="PosnicPro.quotes.cancel();">Cancel quote</button> ' +
@@ -7384,6 +7386,7 @@ PosnicPro.quotes = {
     },
     /* Save the CART as a quote - born on the sale screen. */
     saveFromSale: function () {
+        try {
         var lines = $('#sales_new_items_table tbody tr').map(function () {
             var itemid = $(this).find(':nth-child(9)').text();
             if (!itemid) { return null; }
@@ -7410,7 +7413,33 @@ PosnicPro.quotes = {
             var resp = {}; try { resp = JSON.parse(xhr.responseText); } catch (e) { /* plain */ }
             PosnicPro.alert('error', resp.message || 'Could not save the quote');
         });
+        } catch (e) {
+            // A silent dead button taught nothing - say what broke.
+            PosnicPro.alert('error', 'Quote could not be built: ' + e.message);
+        }
         return false;
+    },
+    emailQuote: function () {
+        var q = PosnicPro.quotes._current || {};
+        PosnicPro.reportExport.email('quotes_view_body', {
+            shop: PosnicPro.local.get('branchname') || '',
+            address: PosnicPro.local.get('branchaddress') || '',
+            phone: PosnicPro.local.get('branchphone') || '',
+            title: 'Quotation ' + (q.quote_id || ''),
+            range: q.valid_until ? 'Valid till ' + new Date(q.valid_until).toLocaleDateString('en-IN') : '',
+            filename: (q.quote_id || 'quote').toLowerCase()
+        });
+    },
+    whatsappQuote: function () {
+        var q = PosnicPro.quotes._current || {};
+        var shop = PosnicPro.local.get('branchname') || 'Our shop';
+        var msg = 'Quotation ' + (q.quote_id || '') + ' from ' + shop
+            + '\nTotal: ' + Number(q.total || 0).toFixed(2)
+            + (q.valid_until ? '\nValid till ' + new Date(q.valid_until).toLocaleDateString('en-IN') : '')
+            + '\n\nItems:\n' + (q.items || []).map(function (l) {
+                return '- ' + l.item_name + ' x' + l.qty + ' = ' + Number(l.line_total || 0).toFixed(2);
+            }).join('\n');
+        window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
     }
 };
 $(function () {
