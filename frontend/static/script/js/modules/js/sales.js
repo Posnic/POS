@@ -2354,6 +2354,20 @@
     },
 
     editItemPricingSale: function (index) {
+        /*
+         * On-demand price power (owner ask - fish priced daily): editing a
+         * cart price is the price_override permission. A cashier without it
+         * gets the manager PIN prompt, same rail as refunds.
+         */
+        if (PosnicPro.posCan && !PosnicPro.posCan('price_override')) {
+            PosnicPro.requireManagerApproval('price_override',
+                { prompt: "Changing a price needs a manager's approval." },
+                function () { PosnicPro.sales._editItemPricingSaleNow(index); });
+            return;
+        }
+        PosnicPro.sales._editItemPricingSaleNow(index);
+    },
+    _editItemPricingSaleNow: function (index) {
         var id = $(index).data('id');
         let priceText = $('#addSalesLineItemPrice_' + id).text().trim();
 
