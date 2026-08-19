@@ -107,6 +107,9 @@ router.post('/uploadItemMultiImage', bindController(itemsController.uploadItemMu
 // PHP: getReceivingItemsAjaxList() - Receiving autocomplete
 router.get('/getReceivingItemsAjaxList', bindController(itemsController.getReceivingItemsAjaxList));
 
+// All (or only low-stock) items of one supplier - the receiving autofill.
+router.get('/bySupplier', bindController(itemsController.getItemsBySupplier));
+
 // PHP: updateKioskStatus() - Update kiosk status
 router.post('/updateKioskStatus', bindController(itemsController.updateKioskStatus));
 

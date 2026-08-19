@@ -683,6 +683,15 @@ class ItemService {
     }
   }
 
+  async getItemsBySupplier(params = {}, context = {}) {
+    try {
+      return await this.repository.getItemsBySupplier(params, context);
+    } catch (error) {
+      console.error('Error in ItemService.getItemsBySupplier:', error);
+      return { status: false, data: null, message: error.message };
+    }
+  }
+
   async getReceivingItemsAjaxList(params = {}, context = {}) {
     try {
       const result = await this.repository.getReceivingItemsAjaxList(params, context);

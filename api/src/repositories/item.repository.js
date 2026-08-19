@@ -2397,6 +2397,70 @@ class ItemRepository extends BaseModel {
     }
   }
 
+  /*
+   * Every item a supplier supplies, optionally only the ones running low
+   * (Loyverse study L2: the receiving screen's "all items from supplier /
+   * low-stock items from supplier" autofill). Same row shape as the
+   * receiving autocomplete so the client's add-line path is reused as-is.
+   * Low stock uses the caller's notification range - the same number the
+   * low-stock dashboard runs on - and only counts tracked items.
+   */
+  async getItemsBySupplier(params = {}, context = {}) {
+    try {
+      const { supplierId, lowStockOnly, notificationRange } = params || {};
+      const branchId = context.branchId;
+      const licenseId = context.licenseId;
+
+      if (!branchId) return { status: false, data: null, message: 'Branch ID not found' };
+      if (!supplierId || !ObjectId.isValid(String(supplierId))) {
+        return { status: false, data: null, message: 'A valid supplier is required' };
+      }
+
+      const collection = await this.getCollection(this.collectionName);
+      const conditions = [
+        { 'branch_access.branch_id': new ObjectId(String(branchId)) },
+        { item_status: { $ne: ITEM_STATUS.INSTANT } },
+        { supplier_id: new ObjectId(String(supplierId)) },
+      ];
+      if (licenseId && ObjectId.isValid(String(licenseId))) {
+        conditions.push({ license: new ObjectId(String(licenseId)) });
+      }
+      if (lowStockOnly) {
+        const range = parseInt(notificationRange, 10);
+        conditions.push({ track_inventory: true });
+        conditions.push({ available_quantity: { $lte: Number.isFinite(range) ? range : 10 } });
+      }
+
+      const items = await collection.find({ $and: conditions }).limit(500).toArray();
+
+      const list = items.map((item) => ({
+        item_id: item._id?.toString() || '',
+        item_name: item.name || '',
+        selling_price: item.selling_price || 0,
+        item_code: item.itemid || '',
+        item_unit: item.unit || 'qty',
+        purchase_unit: item.purchase_unit || '',
+        conversion_factor: Number(item.conversion_factor) || 0,
+        company_price: item.company_price || 0,
+        discount_amount: item.discount_amount || 0,
+        discount_percentage: item.discount_percentage || 0,
+        tax: item.tax || 0,
+        tax_type: item.tax_type || '',
+        category_id: item.category_id?.toString() || '',
+        category_name: item.category_name || '',
+        image: item.image || DEFAULTS.IMAGE,
+        supplier_id: item.supplier_id?.toString() || '',
+        supplier_name: item.supplier_name || '',
+        available_quantity: item.available_quantity || 0,
+      }));
+
+      return { status: true, data: list, message: 'success' };
+    } catch (error) {
+      console.error('Error in ItemRepository.getItemsBySupplier:', error);
+      return { status: false, data: null, message: error.message };
+    }
+  }
+
   async accessKiosk(branchStoreId) {
     try {
       const branchCollection = await this.getCollection('branches');
