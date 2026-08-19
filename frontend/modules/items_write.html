@@ -58,8 +58,10 @@
                                 <label class="mb-1" style="font-weight:600; font-size:.85rem;"><lang class="lang_modifier_groups">Modifiers</lang></label>
                                 <div id="item_modifier_groups" class="d-flex flex-wrap" style="gap:4px 18px;"></div>
                             </div>
+                            <!-- The three things every item genuinely needs, in ONE row
+                                 (owner ask). Everything below is optional with defaults. -->
                             <div class="form-row">
-                                <div class="form-group col-md-7">
+                                <div class="form-group col-md-6">
                                     <label class="form-control-placeholder" for="items_name">
                                         <lang class="lang_itemname_title">Item Name </lang>
                                         <span class="text-danger">*</span>
@@ -69,13 +71,40 @@
                                         autocomplete="off" required>
                                     <input type="hidden" name="id" id="itemid">
                                 </div>
+                                <div class="form-group col-md-3">
+                                    <label class="form-control-placeholder" for="items_selling_price">
+                                        <lang class="lang_sales_title"> Selling </lang><span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text"
+                                        class="form-control allow_decimal text-right clear_text_item hide_price_digit"
+                                        id="items_selling_price" name="items_selling_price" minlength="1"
+                                        maxlength="7" value="0.00" placeholder="Sale Price" autocomplete="off">
+                                    <div class="custom-control custom-checkbox mt-1">
+                                        <input type="checkbox" class="custom-control-input" id="item_open_price"
+                                            name="item_open_price">
+                                        <label class="custom-control-label" for="item_open_price">
+                                            <lang class="lang_open_price">Price at sale (open price)</lang>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="form-group col-md-3" id="item_opening_wrap">
+                                    <label class="form-control-placeholder" for="items_available_quantity">
+                                        <lang class="lang_openquantity_title"> In stock (opening) </lang>
+                                    </label>
+                                    <input type="text" class="form-control allow_decimal text-right clear_text_item"
+                                        id="items_available_quantity" name="items_available_quantity" min="0"
+                                        minlength="1" maxlength="10" value="0" placeholder="Available Quantity"
+                                        autocomplete="off">
+                                </div>
+                            </div>
+                            <div class="form-row">
                                 <div class="form-group col-md-5">
                                     <label class="form-control-placeholder" for="items_category">
-                                        <lang class="lang_choosecategory_title"> Select Category </lang><span
-                                            class="text-danger">*</span>
+                                        <lang class="lang_choosecategory_title"> Select Category </lang>
+                                        <small class="text-muted">(<lang class="lang_optional">optional</lang>)</small>
                                     </label>
                                     <select id='items_category' name="items_category" style='width: 100%;'
-                                        class="select2 items_category items_choose_error" required>
+                                        class="select2 items_category items_choose_error">
                                     </select>
                                     <a data-module="category" data-access="write" href="#/items/categories/new"
                                         class="d-inline-block mt-1" style="font-size:.85rem;">
@@ -143,24 +172,6 @@
                             <div class="card-body">
                                 <div class="row">
                                     <div class="col-md-4">
-                                        <label class="form-control-placeholder" for="items_selling_price">
-                                            <lang class="lang_sales_title"> Selling </lang><span class="text-danger">*</span>
-                                        </label>
-                                        <input type="text"
-                                            class="form-control allow_decimal text-right clear_text_item hide_price_digit"
-                                            id="items_selling_price" name="items_selling_price" minlength="1"
-                                            maxlength="7" value="0.00" placeholder="Sale Price" autocomplete="off">
-                                        <!-- The honest open-price state (IC1): a deliberate
-                                             ask-at-the-till choice instead of an accidental 0.00. -->
-                                        <div class="custom-control custom-checkbox mt-1">
-                                            <input type="checkbox" class="custom-control-input" id="item_open_price"
-                                                name="item_open_price">
-                                            <label class="custom-control-label" for="item_open_price">
-                                                <lang class="lang_open_price">Price at sale (open price)</lang>
-                                            </label>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
                                         <label class="form-control-placeholder" for="items_company_price">
                                             <lang class="lang_company_title"> Cost </lang>
                                         </label>
@@ -180,15 +191,6 @@
                                     </div>
                                 </div>
                                 <div class="row">
-                                    <div class="col-md-4">
-                                        <label class="form-control-placeholder" for="items_available_quantity">
-                                            <lang class="lang_openquantity_title"> In stock (opening) </lang>
-                                        </label>
-                                        <input type="text" class="form-control allow_decimal text-right clear_text_item"
-                                            id="items_available_quantity" name="items_available_quantity" min="0"
-                                            minlength="1" maxlength="10" value="0" placeholder="Available Quantity"
-                                            autocomplete="off">
-                                    </div>
                                     <div class="col-md-4">
                                         <label class="form-control-placeholder" for="items_reorder_point">
                                             <lang class="lang_reorder_point">Reorder point</lang>

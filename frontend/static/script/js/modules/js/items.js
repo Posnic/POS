@@ -30,6 +30,7 @@ PosnicPro.items = {
         // sections open on demand (and always open on edit).
         // Owner: these sections stay open - nothing on the form hides behind a click.
         PosnicPro.items.applyHardwareGates();
+        PosnicPro.items.applyTaxGate();
         PosnicPro.items.addItemButton();
         $('#items_reset').show();
         $('.items_edit_reset').hide();
@@ -109,8 +110,16 @@ PosnicPro.items = {
     applyServiceMode: function () {
         var isService = $('#item_is_service').is(':checked');
         $('#item_service_unit').attr('style', isService ? 'width:auto;' : 'width:auto; display:none !important;');
-        $('#items_available_quantity, #items_reorder_point').closest('.col-md-6').toggle(!isService);
+        // a service holds no stock: opening qty and reorder vanish wherever
+        // their column lives (the old .col-md-6 anchor rotted silently)
+        $('#items_available_quantity, #items_reorder_point').closest('[class*="col-"]').toggle(!isService);
         $('#items_barcodes_alt, #items_purchase_unit, #items_conversion_factor').closest('.form-row').toggle(!isService);
+    },
+    /* A shop with tax switched off never sees the Tax card (owner ask). */
+    applyTaxGate: function () {
+        var taxOff = PosnicPro.local.get('default_tax_enable_disable') === 'false'
+            && PosnicPro.local.get('gst_action') !== 'enable';
+        $("input[name='hsntax_radio_value']").closest('.card').toggle(!taxOff);
     },
     /* The weight-scale flag only means anything when the weight-machine
        hardware module is on - the sales side gates on the same setting. */
@@ -377,7 +386,7 @@ PosnicPro.items = {
         return {
             supplier_id: $('#items_supplier_id').val(),
             supplier_name: $('#items_supplier').val(),
-            category_id: categoryDetail[0].element.attributes['data-category-id'].value,
+            category_id: (categoryDetail.length && categoryDetail[0].element.attributes['data-category-id']) ? categoryDetail[0].element.attributes['data-category-id'].value : '',
             category_name: categoryDetail[0].element.attributes['data-category-name'].value,
             cover_image: $('#item_logo').val(),
             inventory: $('#item_track_inventory').is(':checked'),
@@ -568,7 +577,7 @@ PosnicPro.items = {
                     name: name,
                     supplier_id: $('#items_supplier_id').val(),
                     supplier_name: $('#items_supplier').val(),
-                    category_id: categoryDetail[0].element.attributes['data-category-id'].value,
+                    category_id: (categoryDetail.length && categoryDetail[0].element.attributes['data-category-id']) ? categoryDetail[0].element.attributes['data-category-id'].value : '',
                     category_name: categoryDetail[0].element.attributes['data-category-name'].value,
                     cover_image: $('#item_logo').val(),
                     inventory: $('#item_track_inventory').is(':checked'),

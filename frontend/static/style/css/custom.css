@@ -3003,3 +3003,9 @@ input:checked + .slider:before {
     font-size: 16px; font-weight: 700; padding: 0;
 }
 #qe_lines .qe-l-tax { font-size: 11px; color: #67707f; margin-top: 2px; }
+
+/* Add Item: checkbox rows share one baseline and spacing */
+#items_new .custom-control.custom-checkbox { min-height: 24px; display: flex; align-items: center; }
+#items_new .custom-control.custom-checkbox .custom-control-label { line-height: 24px; }
+#items_new .custom-control.custom-checkbox .custom-control-label::before,
+#items_new .custom-control.custom-checkbox .custom-control-label::after { top: 4px; }
