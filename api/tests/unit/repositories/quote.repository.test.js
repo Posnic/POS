@@ -172,6 +172,31 @@ describe('QuoteRepository', () => {
     expect(conv.status).toBe(true);
   });
 
+  test('sharing marks an open quote sent; send transition is idempotent', async () => {
+    mockCollection.updateOne.mockResolvedValue({ matchedCount: 1 });
+    const r = await repo.recordShare(
+      QUOTE_ID,
+      { key: 'quotes/x/y.pdf', url: 'https://b.s3/x.pdf', rev: 1 },
+      ctx
+    );
+    expect(r.status).toBe(true);
+    /* second write flips open/draft to sent, scoped in the query itself */
+    const statusCall = mockCollection.updateOne.mock.calls[1];
+    expect(statusCall[0].status).toEqual({ $in: ['open', 'draft'] });
+    expect(statusCall[1].$set.status).toBe('sent');
+
+    mockCollection.findOne.mockResolvedValue({ _id: new ObjectId(QUOTE_ID), status: 'sent' });
+    const again = await repo.transition(QUOTE_ID, 'send', {}, ctx);
+    expect(again.status).toBe(true);
+    expect(again.message).toBe('Quote already sent');
+
+    mockCollection.findOne.mockResolvedValue({ _id: new ObjectId(QUOTE_ID), status: 'open' });
+    const sent = await repo.transition(QUOTE_ID, 'send', {}, ctx);
+    expect(sent.status).toBe(true);
+    const sendCall = mockCollection.updateOne.mock.calls[mockCollection.updateOne.mock.calls.length - 1];
+    expect(sendCall[1].$set.status).toBe('sent');
+  });
+
   test('create refuses an empty line list', async () => {
     const r = await repo.upsertQuote({ items: [] }, '', ctx);
     expect(r.status).toBe(false);
