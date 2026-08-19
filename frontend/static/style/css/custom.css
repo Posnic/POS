@@ -2828,3 +2828,9 @@ tr.add-disc-row.tip-only td.discount-input { visibility: hidden; }
 #item-display-preview img,
 #item_tab_details .imagezoom { width: 56px !important; height: 56px !important; object-fit: cover; border-radius: 8px; transition: transform 0.12s ease; cursor: zoom-in; }
 #item-display-preview img:hover { transform: scale(1.6); z-index: 3; position: relative; }
+
+/* Sale grid: every card's media slot is the SAME square - photo,
+   default illustration or colour shape alike (owner: perfect match). */
+.wsk-cp-img { aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.wsk-cp-img img { width: 100%; height: 100%; object-fit: contain; }
+.wsk-cp-img > div { height: 100%; }
