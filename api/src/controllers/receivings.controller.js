@@ -154,6 +154,16 @@ class ReceivingsController extends BaseController {
 
       const result = await Receiving.receivingInsertUpdate(data, null);
       if (result.status === true) {
+        /* PO receive bridge: a receiving born from a purchase order updates
+           the PO's mirror AFTER the receipt is real. Fire-safe - the receipt
+           never fails because the mirror hiccuped. */
+        if (data.source_po_id) {
+          const { syncPoFromReceivings } = require('../services/po-receive-bridge');
+          await syncPoFromReceivings(data.source_po_id, {
+            branchId: req.tenantContext?.branchId || BaseModel.currentBranch,
+            licenseId: req.tenantContext?.licenseId || BaseModel.license,
+          }).catch(() => {});
+        }
         return this.success(res, result.data, result.message || 'Receiving created successfully');
       }
 
@@ -203,6 +213,14 @@ class ReceivingsController extends BaseController {
       console.log('🔧 UPDATE - Result message:', result.message);
 
       if (result.status === true) {
+        // Same bridge as create: edited quantities re-sync the PO mirror.
+        if (data.source_po_id) {
+          const { syncPoFromReceivings } = require('../services/po-receive-bridge');
+          await syncPoFromReceivings(data.source_po_id, {
+            branchId: req.tenantContext?.branchId || BaseModel.currentBranch,
+            licenseId: req.tenantContext?.licenseId || BaseModel.license,
+          }).catch(() => {});
+        }
         return this.success(res, result.data, result.message || 'Receiving updated successfully');
       }
 
