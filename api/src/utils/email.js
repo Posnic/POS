@@ -134,7 +134,6 @@ const sendEmail = async (options) => {
  * chain above). Pass the branch doc (settings live on it) - absent or
  * incomplete config falls through to the platform chain.
  */
-const nodemailer = require('nodemailer');
 const resolveShopTransport = (branchDoc) => {
   const b = branchDoc || {};
   if (b.email_smtp_host && b.email_smtp_username) {

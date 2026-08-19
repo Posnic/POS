@@ -1154,11 +1154,24 @@ app.post(
           .replace(/[^a-z0-9-_]/gi, '')
           .slice(0, 60) || 'report';
       const title = String(req.body?.title || 'Report').slice(0, 120);
-      const { Email } = require('./src/utils/email');
-      const transporter = new Email({ email: to, name: to }, '').newTransport();
+      // Owner rule: the shop's own SMTP first, the platform chain otherwise.
+      const { resolveShopTransport } = require('./src/utils/email');
+      let branchDoc = null;
+      try {
+        const bid = req.user && req.user.branch_id;
+        if (bid && req.db) {
+          branchDoc = await req.db
+            .collection('branches')
+            .findOne({ _id: new (require('mongodb').ObjectId)(String(bid)) });
+        }
+      } catch (e) {
+        /* platform chain covers it */
+      }
+      const resolved = resolveShopTransport(branchDoc);
+      const transporter = resolved.transporter;
       const shopName = (req.user && req.user.branch_name) || 'Posnic POS';
       const info = await transporter.sendMail({
-        from: `${shopName} <${process.env.EMAIL_FROM || 'no-reply@posnic.local'}>`,
+        from: `${shopName} <${resolved.from}>`,
         to,
         subject: `${title} - ${shopName}`,
         text: `Please find attached: ${title}.`,
@@ -1166,7 +1179,7 @@ app.post(
       });
       /* The dev fallback transport prints to console instead of delivering -
          say so rather than claiming a send that never left the box. */
-      if (transporter.options && transporter.options.jsonTransport) {
+      if (!resolved.shopOwned && transporter.options && transporter.options.jsonTransport) {
         return res.status(503).json({
           type: 'error',
           message: 'Email is not configured on this server - the PDF was generated but not sent',
