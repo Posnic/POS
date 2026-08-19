@@ -448,12 +448,22 @@
                                             <tr class="add-disc-row addDisc-hide-show">
                                                 <!-- LEFT: Discount Note -->
                                                 <td class="discount_dcription items_head" id="discount_note">
-                                                    Discount Note &nbsp;
+                                                    <span class="disc-note-text">Discount Note &nbsp;
                                                     <a href="#" id="click_discount_description">[<i
                                                             class="feather icon-edit-1"></i>]</a>
                                                     <a href="#" id="discount_description"
                                                         class="discount_description customer-display-hide"
-                                                        style="display:none;"></a>
+                                                        style="display:none;"></a></span>
+                                                    <!-- Tip lives here now - same line as the discount,
+                                                         no extra row, chips on focus for one-tap amounts. -->
+                                                    <span class="sale-tip-wrap" style="display:none; white-space:nowrap;">
+                                                        <lang class="lang_tip_title">Tip</lang>
+                                                        <span class="tip-chips" style="display:none;"></span>
+                                                        <span class="display-currency"></span>&nbsp;<input
+                                                            type="number" min="0" step="0.01" id="sale_tip_input"
+                                                            placeholder="0.00"
+                                                            style="width:70px; text-align:right; border:1px solid #eae8e8; border-radius:3px;">
+                                                    </span>
                                                 </td>
 
                                                 <!-- MIDDLE: Additional Discount label -->
@@ -493,20 +503,6 @@
                                                 </td>
                                             </tr>
 
-                                            <tr style="display: none" class="sale-tip-row">
-                                                <td class="customer-display-hide"></td>
-                                                <td class="discount-percentage-line-heigth">
-                                                    <lang class="lang_tip_title">Tip</lang>
-                                                </td>
-                                                <td class="discount-percentage-line-heigth">
-                                                    <span class="pull-right">
-                                                        <span class="display-currency"></span>&nbsp;<input
-                                                            type="number" min="0" step="0.01" id="sale_tip_input"
-                                                            placeholder="0.00"
-                                                            style="width:80px; text-align:right; border:1px solid #eae8e8; border-radius:3px;">
-                                                    </span>
-                                                </td>
-                                            </tr>
 
 
                                             <tr>

@@ -6042,10 +6042,18 @@ PosnicPro.sales.setSaleDefaults = function () {
     PosnicPro.sales._customerCategoryId = '';
     PosnicPro.sales._loadPriceLists();
 
-    // Tip line at tender: only for shops that switched tips on in Settings.
-    $('.sale-tip-row').toggle(
-        !!(PosnicPro.shiftWidget && PosnicPro.shiftWidget._setting('staff_tips_enable', false))
-    );
+    // Tip at tender (owner feedback: SAME line as the discount - the sale
+    // page must never scroll). When the discount row itself is hidden
+    // (inline discount off) but tips are on, the row shows tip-only.
+    var _tipsOn = !!(PosnicPro.shiftWidget && PosnicPro.shiftWidget._setting('staff_tips_enable', false));
+    $('.sale-tip-wrap').toggle(_tipsOn);
+    var _discRow = $('.add-disc-row');
+    _discRow.removeClass('tip-only');
+    if (_tipsOn && !_discRow.is(':visible')) {
+        _discRow.addClass('tip-only').show();
+    } else if (!_tipsOn && _discRow.hasClass('tip-only')) {
+        _discRow.hide();
+    }
 
     // Check if register is required and open before allowing sales.
     // ONLY when the module is on: a shop that disabled cash registers in
@@ -7452,6 +7460,24 @@ $(document).ready(function () {
  * receipts and sync see an ordinary sale; the line is priced tax-INCLUSIVE
  * against the shop's default tax, exactly like a normal inclusive item.
  */
+/* Tip quick-picks (owner feedback): focus the tip box, tap an amount. */
+$(document).on('focus', '#sale_tip_input', function () {
+    var $chips = $('.tip-chips');
+    if (!$chips.children().length) {
+        $chips.html([10, 20, 50, 100].map(function (v) {
+            return '<button type="button" class="btn btn-sm btn-outline-secondary tip-chip" data-v="' + v + '" style="padding:0 8px; margin-right:3px;">' + v + '</button>';
+        }).join(''));
+    }
+    $chips.show();
+});
+$(document).on('blur', '#sale_tip_input', function () {
+    setTimeout(function () { $('.tip-chips').hide(); }, 250);
+});
+$(document).on('mousedown', '.tip-chip', function (e) {
+    e.preventDefault();
+    $('#sale_tip_input').val($(this).data('v'));
+});
+
 PosnicPro.sales.quickSale = {
     _tax: null,
     _count: 0,
