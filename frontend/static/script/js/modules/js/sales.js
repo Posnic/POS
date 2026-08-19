@@ -3656,6 +3656,10 @@ PosnicPro.sales.addSale = {
                     extra_discount: parseFloat($('#extraDisc').text()),
                     extra_discount_type: !$('#percentIcon').hasClass('d-none') ? "percent" : "price",
                     tip_amount: parseFloat($('#sale_tip_input').val()) || 0,
+                    // India default: a tip is for staff, not the bill. The
+                    // per-sale opt-in makes the server grow the due by it.
+                    tip_in_total: ($('#sale_tip_in_total').is(':checked')
+                        && (parseFloat($('#sale_tip_input').val()) || 0) > 0) ? 'true' : 'false',
                     multi_payment: payments,
                     enable_multi_payment: PosnicPro.local.get('enable_multi_payment'),
                     table_number: newSaleTableNumber,
@@ -3684,6 +3688,7 @@ PosnicPro.sales.addSale = {
                             function () { /* stamped */ }, function () { /* quote stays open - visible on the Quotes page */ });
                     }
                     $('#sale_tip_input').val('');
+                    $('#sale_tip_in_total').prop('checked', false);
                     $("#save_submit").addClass("disabled");
                     $('.smsSalesReceipt').hide();
                     if (response.data.sms === true) {
