@@ -2708,3 +2708,23 @@ input:checked + .slider:before {
 tr.add-disc-row.tip-only .disc-note-text,
 tr.add-disc-row.tip-only td.discount-label,
 tr.add-disc-row.tip-only td.discount-input { visibility: hidden; }
+
+/* Typeahead rows (sale + purchase): one layout - thumb, name + meta,
+   price + stock. Actions (quick sale / create item) reuse the row. */
+.sug-row { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.sug-thumb { flex: 0 0 40px; height: 40px; width: 40px; border-radius: 10px; object-fit: cover; background: #f1f3f5; }
+.sug-tile { flex: 0 0 40px; height: 40px; width: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 600; color: #fff; font-size: 16px; }
+.sug-main { flex: 1 1 auto; min-width: 0; }
+.sug-name { font-weight: 600; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sug-meta { font-size: 11px; color: #8a94a6; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sug-side { flex: 0 0 auto; text-align: right; }
+.sug-price { font-weight: 600; font-variant-numeric: tabular-nums; }
+.sug-price del { color: #8a94a6; font-weight: 400; font-size: 11px; margin-left: 4px; }
+.sug-stock { display: inline-block; font-size: 10.5px; line-height: 1; padding: 3px 7px; border-radius: 9px; margin-top: 3px; white-space: nowrap; }
+.sug-stock.in { background: rgba(43, 183, 111, 0.12); color: #23985c; }
+.sug-stock.low { background: rgba(255, 159, 67, 0.14); color: #d9820e; }
+.sug-stock.out { background: rgba(249, 97, 109, 0.14); color: #e05260; }
+.sug-stock.na { background: rgba(138, 148, 166, 0.12); color: #8a94a6; }
+.sug-action .sug-tile { background: #fff3cd; color: #d9820e; }
+.sug-action.create .sug-tile { background: rgba(43, 183, 111, 0.15); color: #23985c; }
+.sug-action .sug-name { color: inherit; }

@@ -7668,6 +7668,52 @@ PosnicPro.sales.quickSale = {
         });
     }
 };
+/* One suggestion row for every item typeahead (sale + purchase): thumb,
+   name + meta (SKU / category), price + live stock badge. */
+PosnicPro.sugRow = function (d, nameHtml, o) {
+    o = o || {};
+    var esc = function (v) { return $('<i>').text(v == null ? '' : v).html(); };
+    var thumb;
+    if (d.image && d.image !== 'item.svg') {
+        thumb = '<img class="sug-thumb" src="' + esc(d.image) + '" loading="lazy" alt="">';
+    } else if (d.tile_color) {
+        thumb = '<span class="sug-tile" style="background:' + esc(d.tile_color) + '">'
+            + esc((d.item_name || '?').charAt(0).toUpperCase()) + '</span>';
+    } else {
+        thumb = '<img class="sug-thumb" src="static/images/default/item.svg" alt="">';
+    }
+    var meta = [];
+    if (d.itemid || d.item_code) { meta.push(esc(d.itemid || d.item_code)); }
+    if (d.category_name) { meta.push(esc(d.category_name)); }
+    var stock;
+    if (d.item_kind === 'service') {
+        stock = '<span class="sug-stock na">Service</span>';
+    } else if (d.track_inventory === false) {
+        stock = '<span class="sug-stock na">Not tracked</span>';
+    } else {
+        var q = Number(d.available_quantity) || 0;
+        var low = parseFloat(PosnicPro.local.get('notificationrange'));
+        if (!isFinite(low) || low <= 0) { low = 5; }
+        if (q <= 0) { stock = '<span class="sug-stock out">Out of stock</span>'; }
+        else if (q <= low) { stock = '<span class="sug-stock low">' + q + ' left</span>'; }
+        else { stock = '<span class="sug-stock in">In stock ' + q + '</span>'; }
+    }
+    var priceHtml = o.price != null
+        ? '<div class="sug-price">' + o.currency + '&nbsp;' + Number(o.price).toFixed(2)
+            + (o.was != null ? '<del>' + o.currency + '&nbsp;' + Number(o.was).toFixed(2) + '</del>' : '')
+            + '</div>'
+        : '';
+    return '<div class="sug-row">' + thumb
+        + '<div class="sug-main"><div class="sug-name">' + nameHtml + '</div>'
+        + (meta.length ? '<div class="sug-meta">' + meta.join(' &middot; ') + '</div>' : '')
+        + '</div><div class="sug-side">' + priceHtml + stock + '</div></div>';
+};
+PosnicPro.sugActionRow = function (icon, cls, title, meta) {
+    return '<div class="sug-row sug-action ' + cls + '">'
+        + '<span class="sug-tile"><i class="feather ' + icon + '"></i></span>'
+        + '<div class="sug-main"><div class="sug-name">' + title + '</div>'
+        + '<div class="sug-meta">' + meta + '</div></div></div>';
+};
 /* Owner: typing here must NEVER wait. One-time widget init (the old code
    re-created the whole autocomplete on every keydown AND keyup), requests
    trail the keystrokes by 120ms, and late responses for stale queries are
@@ -7698,13 +7744,33 @@ $(function () {
                         }
                     });
                 } else {
-                    suggestions.push({ value: query + ' ', data: -1 });
+                    var quickOn = true;
+                    try {
+                        var gsq = JSON.parse(PosnicPro.local.get('general_settings') || '{}');
+                        quickOn = gsq.quick_sale_enable !== false;
+                    } catch (e) { /* default on */ }
+                    if (quickOn) { suggestions.push({ value: query + ' ', data: { __action: 'quick' } }); }
+                    suggestions.push({ value: query + '  ', data: { __action: 'create' } });
                 }
                 result["suggestions"] = suggestions;
                 done(result);
             });
         },
         onSelect: function (suggestion) {
+            var act = suggestion.data && suggestion.data.__action;
+            if (act) {
+                var typed = (suggestion.value || '').trim();
+                $('#sales_new_item_name').val('');
+                if (act === 'quick') {
+                    PosnicPro.sales.quickSale.open();
+                    $('#quick_sale_note').val(typed);
+                } else {
+                    PosnicPro.quickitems.popup(typed, function (newId) {
+                        if (newId) { PosnicPro.sales.itemsMenu.addToLineItemsList(newId); }
+                    });
+                }
+                return;
+            }
             if (suggestion.data !== -1) {
                 $('#sales_new_item_name').val('');
                 $('#sales_new_item_name').focus();
@@ -7723,24 +7789,23 @@ $(function () {
                     // Fallback to previous behaviour if no usable id is found
                     PosnicPro.sales.addSalesLineItems(itemData);
                 }
-            } else {
-                var typed = (suggestion.value || '').trim();
-                var quickOn = true;
-                try {
-                    var gs = JSON.parse(PosnicPro.local.get('general_settings') || '{}');
-                    quickOn = gs.quick_sale_enable !== false;
-                } catch (e) { /* default on */ }
-                if (!quickOn) { hasher.setHash('items/new/addnewitem'); return; }
-                $('#sales_new_item_name').val('');
-                PosnicPro.sales.quickSale.open();
-                $('#quick_sale_note').val(typed);
             }
         },
         autoSelectFirst: true,
         triggerSelectOnValidInput: false,
         formatResult: function (suggestion, currentValue) {
-            if (suggestion.data !== -1) {
-                var data = suggestion.data.image;
+            var act = suggestion.data && suggestion.data.__action;
+            if (act) {
+                var typedName = $('<i>').text((suggestion.value || '').trim()).html();
+                return act === 'quick'
+                    ? PosnicPro.sugActionRow('icon-zap', 'quick',
+                        'Sell &quot;' + typedName + '&quot; as a quick sale',
+                        'Nothing saved - just enter the amount')
+                    : PosnicPro.sugActionRow('icon-plus-circle', 'create',
+                        'Create item &quot;' + typedName + '&quot;',
+                        'Name and price now - details anytime later');
+            }
+            {
                 var currency = PosnicPro.local.get('currencySign');
                 var price = 0;
                 let sellingPrice = suggestion.data.selling_price;
@@ -7783,25 +7848,12 @@ $(function () {
                 } else {
                     price = suggestion.data.selling_price;
                 }
-                var final_price = '<span class="suggestion-price pull-right">' + currency + '&nbsp;' + price.toFixed(2) + '</span>';
-                var del_price = '<div class="pull-right font-12" style="margin-top:-20px;"><del>' + currency + '&nbsp;' + sellingPrice.toFixed(2) + '</del></div>';
-
-                if (sellingPrice.toFixed(2) === price.toFixed(2)) {
-                    del_price = '<span style="display:none;"></span>';
-                }
-
-                var action = '' + final_price + '' +
-                    '' + del_price + '';
-                var image_path = (data !== "item.svg") ? data : 'static/images/default/' + data;
-                return '<img src="' + image_path + '" height="40" width="40" style="border-radius: 25%;" /> ' +
-                    '<div class="suggestion-name">' +
-                    $.Autocomplete.formatResult(suggestion, currentValue) +
-                    '</div><span>' + action + '</span>';
-            } else {
-                return '<span style="display:inline-block;height:40px;width:40px;border-radius:25%;background:#fff3cd;text-align:center;line-height:40px;"><i class="feather icon-zap text-warning"></i></span> ' +
-                    '<div class="suggestion-name">' +
-                    $.Autocomplete.formatResult(suggestion, currentValue) +
-                    '</div><span>Not in your items - tap to sell it as a quick sale</span>';
+                return PosnicPro.sugRow(suggestion.data,
+                    $.Autocomplete.formatResult(suggestion, currentValue), {
+                        currency: currency,
+                        price: price,
+                        was: (sellingPrice.toFixed(2) === price.toFixed(2)) ? null : sellingPrice
+                    });
             }
         }
     });
