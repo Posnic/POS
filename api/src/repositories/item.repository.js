@@ -1229,6 +1229,12 @@ class ItemRepository extends BaseModel {
         updateData.tile_color = /^#[0-9a-fA-F]{6}$/.test(tileColor) ? tileColor : '';
       }
 
+      // Quick code (owner ask): digits only, up to 6, or empty clears.
+      if (data.plu_code !== undefined) {
+        const plu = String(data.plu_code || '').trim();
+        updateData.plu_code = /^\d{1,6}$/.test(plu) ? plu : '';
+      }
+
       // The tile's shape rides the same rules: a known shape or empty.
       if (data.tile_shape !== undefined) {
         const tileShape = String(data.tile_shape || '').trim();
@@ -2021,6 +2027,10 @@ class ItemRepository extends BaseModel {
           { barcode_id: regex },
           { barcodes: regex },
         ];
+        // An all-digits query is how quick codes are typed.
+        if (/^\d{1,6}$/.test(String(query))) {
+          searchConditions.push({ plu_code: String(query) });
+        }
       }
 
       // Stock availability logic
@@ -2079,6 +2089,7 @@ class ItemRepository extends BaseModel {
               item_kind: 1,
               tile_color: 1,
               tile_shape: 1,
+              plu_code: 1,
             },
           },
         ])
@@ -2108,7 +2119,15 @@ class ItemRepository extends BaseModel {
         item_kind: item.item_kind || 'product',
         tile_color: item.tile_color || '',
         tile_shape: item.tile_shape || '',
+        plu_code: item.plu_code || '',
       }));
+
+      // Exact quick-code hits lead the list - Enter carts them instantly.
+      if (/^\d{1,6}$/.test(String(query))) {
+        suggestions.sort(
+          (a, b) => (b.plu_code === String(query) ? 1 : 0) - (a.plu_code === String(query) ? 1 : 0)
+        );
+      }
 
       return {
         status: true,
@@ -2319,6 +2338,8 @@ class ItemRepository extends BaseModel {
         image: DEFAULTS.IMAGE,
         sort_order: 0,
         track_inventory: false,
+        // Instant lines sell any quantity - stock never blocks them.
+        negative_stock: true,
         sales_channel: true,
         ecommerce: false,
         item_status: ITEM_STATUS.INSTANT,

@@ -387,6 +387,7 @@ PosnicPro.items = {
             open_price: $('#item_open_price').is(':checked'),
             tile_color: $('#item_tile_color').val() || PosnicPro.autoTile($('#items_name').val()).color,
             tile_shape: $('#item_tile_shape').val() || PosnicPro.autoTile($('#items_name').val()).shape,
+            plu_code: $('#items_plu_code').val() || '',
             item_kind: $('#item_is_service').is(':checked') ? 'service' : 'product',
             service_unit: $('#item_service_unit').val() || 'fixed',
             brand: $('#items_brand').val(),
@@ -577,6 +578,7 @@ PosnicPro.items = {
                     open_price: $('#item_open_price').is(':checked'),
                     tile_color: $('#item_tile_color').val() || PosnicPro.autoTile($('#items_name').val()).color,
             tile_shape: $('#item_tile_shape').val() || PosnicPro.autoTile($('#items_name').val()).shape,
+            plu_code: $('#items_plu_code').val() || '',
                     item_kind: $('#item_is_service').is(':checked') ? 'service' : 'product',
                     service_unit: $('#item_service_unit').val() || 'fixed',
                     brand: $('#items_brand').val(),
@@ -1106,6 +1108,7 @@ PosnicPro.items = {
                 $('#items_reorder_point').val(data.reorder_point === null || data.reorder_point === undefined ? '' : data.reorder_point);
                 PosnicPro.items.setTileColor(data.tile_color || '');
                 PosnicPro.items.setTileShape(data.tile_shape || '');
+                $('#items_plu_code').val(data.plu_code || '');
                 $("#items_tax").val(data.tax_id).trigger("change");
                 $("#items_unit").val(data.unit_id).trigger("change");
                 var radionbutton = $('#items_discount_amount').val();
@@ -1752,6 +1755,7 @@ PosnicPro.items = {
                 $('#items_reorder_point').val(data.reorder_point === null || data.reorder_point === undefined ? '' : data.reorder_point);
                 PosnicPro.items.setTileColor(data.tile_color || '');
                 PosnicPro.items.setTileShape(data.tile_shape || '');
+                $('#items_plu_code').val(data.plu_code || '');
                 (data.tax_type === 'inclusive') ? $('#item_tax_inclusive').prop('checked', true) : $('#item_tax_exclusive').prop("checked", true);
                 $("#items_tax").val(data.tax_id).trigger("change");
                 var radionbutton = $('#items_discount_amount').val();

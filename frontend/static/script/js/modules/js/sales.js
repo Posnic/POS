@@ -4674,7 +4674,7 @@ PosnicPro.sales.quantity = {
             value = parseFloat(oldValue) + unit.step;
             value = PosnicPro.sales.quantity.applyPrecision(value, unit);
             var available_quantity = PosnicPro.sales.SaleTableLineItems[id].available_quantity;
-            if (track_inventory === 'true' && negative_stock === 'false') {
+            if (track_inventory === 'true' && negative_stock === 'false' && $('#instantStatus_' + id).text() !== 'ok') {
                 if (PosnicPro.sales.SaleAction === 'edit') {
                     PosnicPro.get('items/' + id, function (response) {
                         if (response.type === 'success') {
@@ -6043,8 +6043,11 @@ PosnicPro.sales.setSaleDefaults = function () {
     // Tip at tender (owner feedback: SAME line as the discount - the sale
     // page must never scroll). When the discount row itself is hidden
     // Tip sits beside the coupon now; the Workforce switch is the only gate.
+    // Tip sits beside the coupon now; the Workforce tips switch is the
+    // only gate.
+    var _tipsOn = !!(PosnicPro.shiftWidget
+        && PosnicPro.shiftWidget._setting('staff_tips_enable', false));
     $('.sale-tip-wrap').toggle(_tipsOn);
-    var _discRow = $('.add-disc-row');
 
 
     // Check if register is required and open before allowing sales.
@@ -6411,7 +6414,9 @@ PosnicPro.sales.itemsMenu = {
                             var _tileHtml = '<div class="wsk-cp-img"><img src="' + image_path + '" alt="Product" class="img-responsive" /></div>';
                             var _tileColor = getItemdata[i]['tile_color'];
                             if (getItemdata[i]['image'] === 'item.svg' && _tileColor) {
-                                var _initial = String(list_item_name || '?').trim().charAt(0).toUpperCase();
+                                var _initial = getItemdata[i]['plu_code']
+                                    ? String(getItemdata[i]['plu_code'])
+                                    : String(list_item_name || '?').trim().charAt(0).toUpperCase();
                                 var _shapeCss = PosnicPro.tileShapeCss(getItemdata[i]['tile_shape'] || '', '8px');
                                 // Same square slot the product image fills, but the shape
                                 // sits centered at ~62% with breathing room - the default
@@ -7951,7 +7956,7 @@ PosnicPro.sugRow = function (d, nameHtml, o) {
     } else if (d.tile_color) {
         var shapeCss = d.tile_shape ? PosnicPro.tileShapeCss(d.tile_shape, '10px') : '';
         thumb = '<span class="sug-tile" style="' + shapeCss + 'background:' + esc(d.tile_color) + '">'
-            + esc((d.item_name || '?').charAt(0).toUpperCase()) + '</span>';
+            + esc(d.plu_code || (d.item_name || '?').charAt(0).toUpperCase()) + '</span>';
     } else {
         thumb = '<img class="sug-thumb" src="static/images/default/item.svg" alt="">';
     }
