@@ -186,9 +186,10 @@ PosnicPro.items = {
                     // A colour/shape item shows its tile in the Image column -
                     // that is what the colour is FOR (owner report).
                     var _listTile = '';
-                    if ((!row.image || row.image === 'item.svg') && row.tile_color) {
-                        var _lShape = PosnicPro.tileShapeCss(row.tile_shape || '', '4px');
-                        _listTile = '<span style="display:inline-flex;width:30px;height:30px;' + _lShape + 'background:' + row.tile_color + ';color:#fff;font-weight:700;font-size:13px;align-items:center;justify-content:center;">' + String(row.name || '?').trim().charAt(0).toUpperCase() + '</span>';
+                    var _lrt = (PosnicPro.resolveTile ? PosnicPro.resolveTile(row) : { color: row.tile_color, shape: row.tile_shape });
+                    if ((!row.image || row.image === 'item.svg') && _lrt.color) {
+                        var _lShape = PosnicPro.tileShapeCss(_lrt.shape || '', '4px');
+                        _listTile = '<span style="display:inline-flex;width:30px;height:30px;' + _lShape + 'background:' + _lrt.color + ';color:#fff;font-weight:700;font-size:13px;align-items:center;justify-content:center;">' + String(row.name || '?').trim().charAt(0).toUpperCase() + '</span>';
                     }
                     let process_class = '';
                     let edit_icon = '<a data-module = "item" data-access = "write" href="#/items/' + row._id + '/edit" data-id="items/' + row._id + '/edit"  data-toggle="tooltip" title="Edit Item" class="point-cursor mobile_tooltip"><i class="feather icon-edit"></i></a>';

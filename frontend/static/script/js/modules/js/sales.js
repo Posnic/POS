@@ -6426,12 +6426,13 @@ PosnicPro.sales.itemsMenu = {
                                image but with a chosen colour renders a coloured tile
                                with its initial - an image always wins. */
                             var _tileHtml = '<div class="wsk-cp-img"><img src="' + image_path + '" alt="Product" class="img-responsive" /></div>';
-                            var _tileColor = getItemdata[i]['tile_color'];
+                            var _rt = PosnicPro.resolveTile(getItemdata[i]);
+                            var _tileColor = _rt.color;
                             if (getItemdata[i]['image'] === 'item.svg' && _tileColor) {
                                 var _initial = getItemdata[i]['plu_code']
                                     ? String(getItemdata[i]['plu_code'])
                                     : String(list_item_name || '?').trim().charAt(0).toUpperCase();
-                                var _shapeCss = PosnicPro.tileShapeCss(getItemdata[i]['tile_shape'] || '', '8px');
+                                var _shapeCss = PosnicPro.tileShapeCss(_rt.shape || '', '8px');
                                 // Same square slot the product image fills, but the shape
                                 // sits centered at ~62% with breathing room - the default
                                 // illustration has built-in whitespace, and the tile should
@@ -6649,6 +6650,7 @@ PosnicPro.sales.categoryMenu = {
                         var image_path = (categorydata[i]['category_img'] !== "category.svg")
                             ? categorydata[i]['category_img']
                             : 'static/images/default/' + categorydata[i]['category_img'];
+                        var _cat = PosnicPro.sales._catTiles[String(categorydata[i]['id'] || '')];
 
                         app += '<div class="wsk-cp cbutton--effect-novak col-lg-3 col-md-4 col-sm-6 col-12 mb-3" ' +
                             'id="' + categorydata[i]['id'] + '" ' +
@@ -7692,6 +7694,7 @@ $(document).ready(function () {
     // local blob) and on cross-tab storage writes, so no refresh needed.
     PosnicPro.sales.applyQuickSaleGate();
     $(window).on('hashchange storage', PosnicPro.sales.applyQuickSaleGate);
+    PosnicPro.sales.loadCatTiles();
 });
 /* LS2 (Lightspeed study): cash counting offers the till's real notes and
    coins by currency. Shop-defined denominations in Settings always win;
@@ -7963,6 +7966,40 @@ PosnicPro.autoTile = function (name) {
     var SHAPES = ['square', 'rounded', 'circle', 'diamond'];
     return { color: COLORS[h % COLORS.length], shape: SHAPES[(h >> 4) % SHAPES.length] };
 };
+/* Category tile inheritance (CATEGORY_TILE_INHERITANCE_DESIGN.md):
+   one render-time rule everywhere - photo beats the item's own tile,
+   which beats the category's, which beats the name-hash dressing. */
+PosnicPro.sales._catTiles = {};
+PosnicPro.sales.loadCatTiles = function () {
+    PosnicPro.get({
+        url: 'categories',
+        data: { page: 1, limit: 200, branch_id: PosnicPro.local.get('branch_id_set') }
+    }, function (r) {
+        var rows = (r && r.data && (r.data.list || r.data)) || [];
+        if (!rows.forEach) { rows = []; }
+        var map = {};
+        rows.forEach(function (c) {
+            var id = String(c._id || c.id || '');
+            if (id && (c.tile_color || c.tile_shape)) {
+                map[id] = { color: c.tile_color || '', shape: c.tile_shape || '' };
+            }
+        });
+        PosnicPro.sales._catTiles = map;
+    }, function () { /* no map, no inheritance - never an error */ });
+};
+PosnicPro.resolveTile = function (d) {
+    var color = d.tile_color || '';
+    var shape = d.tile_shape || '';
+    if (!color) {
+        var cat = PosnicPro.sales._catTiles[String(d.category_id || '')];
+        if (cat) { color = cat.color || ''; shape = shape || cat.shape || ''; }
+    }
+    if (!color && PosnicPro.autoTile) {
+        var auto = PosnicPro.autoTile(d.item_name || d.name || '');
+        color = auto.color; shape = shape || auto.shape;
+    }
+    return { color: color, shape: shape };
+};
 /* One suggestion row for every item typeahead (sale + purchase): thumb,
    name + meta (SKU / category), price + live stock badge. */
 PosnicPro.sugRow = function (d, nameHtml, o) {
@@ -7971,12 +8008,11 @@ PosnicPro.sugRow = function (d, nameHtml, o) {
     var thumb;
     if (d.image && d.image !== 'item.svg') {
         thumb = '<img class="sug-thumb" src="' + esc(d.image) + '" loading="lazy" alt="">';
-    } else if (d.tile_color) {
-        var shapeCss = d.tile_shape ? PosnicPro.tileShapeCss(d.tile_shape, '10px') : '';
-        thumb = '<span class="sug-tile" style="' + shapeCss + 'background:' + esc(d.tile_color) + '">'
-            + esc(d.plu_code || (d.item_name || '?').charAt(0).toUpperCase()) + '</span>';
     } else {
-        thumb = '<img class="sug-thumb" src="static/images/default/item.svg" alt="">';
+        var rt = PosnicPro.resolveTile(d);
+        var shapeCss = rt.shape ? PosnicPro.tileShapeCss(rt.shape, '10px') : '';
+        thumb = '<span class="sug-tile" style="' + shapeCss + 'background:' + esc(rt.color || '#8a94a6') + '">'
+            + esc(d.plu_code || (d.item_name || '?').charAt(0).toUpperCase()) + '</span>';
     }
     var meta = [];
     if (d.itemid || d.item_code) { meta.push(esc(d.itemid || d.item_code)); }
