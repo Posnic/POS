@@ -1005,6 +1005,20 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
         data.tip_in_total !== undefined
           ? String(data.tip_in_total) === 'true'
           : existingSale?.tip_in_total || false,
+      // A sale born from a quote remembers its origin and whether the
+      // quoted prices were honoured (QUOTED_PRICE_ON_CONVERT_DESIGN).
+      // Presence-gated on create; an edit that does not resend them keeps
+      // the recorded lineage, same rule as the tip fields above.
+      ...(data.source_quote_id && ObjectId.isValid(String(data.source_quote_id))
+        ? { source_quote_id: new ObjectId(String(data.source_quote_id)) }
+        : existingSale?.source_quote_id
+          ? { source_quote_id: existingSale.source_quote_id }
+          : {}),
+      ...(data.quote_price_honoured !== undefined
+        ? { quote_price_honoured: String(data.quote_price_honoured) === 'true' }
+        : existingSale?.quote_price_honoured !== undefined
+          ? { quote_price_honoured: existingSale.quote_price_honoured }
+          : {}),
 
       // ...
       sale_method: saleMethod,
