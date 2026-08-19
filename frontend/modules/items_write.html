@@ -110,6 +110,22 @@
                                     </a>
                                 </small>
                             </div>
+                                <div class="form-row mt-2">
+                                    <div class="form-group col-md-12 mb-0">
+                                        <label class="form-control-placeholder" for="items_supplier">
+                                            <lang class="lang_choosesupplier_title"> Select Supplier </lang>
+                                        </label>
+                                        <!-- Optional (IC1): items routinely arrive without a known
+                                             supplier; receiving is the supplier system of record. -->
+                                        <input type="text" class="form-control" id="items_supplier" name="items_supplier"
+                                            maxlength="50" placeholder="Choose a Supplier (optional)" autocomplete="off">
+                                        <input type="hidden" name="items_supplier_id" id="items_supplier_id">
+                                        <a data-module="supplier" data-access="write" href="#/items/suppliers/new"
+                                            class="d-inline-block mt-1" style="font-size:.85rem;">
+                                            + <lang class="lang_add_supply">Add Supplier</lang>
+                                        </a>
+                                    </div>
+                                </div>
                         </div>
                     </div>
 
@@ -371,7 +387,7 @@
                         <div class="collapse show" id="item_details_collapse">
                             <div class="card-body">
                                 <div class="form-row">
-                                    <div class="col-md-12">
+                                    <div class="col-lg-6">
                                         <label class="form-control-placeholder" for="items_description">
                                             <lang class="lang_description_title"> Description </lang>
                                         </label>
@@ -379,9 +395,7 @@
                                             rows="4" maxlength="1000"
                                             placeholder="Enter a description ..."></textarea>
                                     </div>
-                                </div>
-                                <div class="form-row mt-3">
-                                    <div class="col-md-12">
+                                    <div class="col-lg-6">
                                         <div class="mb-3">
                                             <div class="Neon Neon-theme-dragdropbox">
                                                 <input type="hidden" id="item_upload_image_status" value="no">
@@ -409,11 +423,8 @@
                                         </div>
                                     </div>
 
-                                    <div class="col-12">
-                                        <div class="form-row">
-                                            <input type="hidden" name="item_logo" id="item_logo" value="item.svg">
-                                            <div id="item-display-preview"></div>
-                                        </div>
+                                        <input type="hidden" name="item_logo" id="item_logo" value="item.svg">
+                                        <div id="item-display-preview"></div>
                                     </div>
                                 </div>
                                 <!-- LS1: brand + tags - filtering today, the community
@@ -478,11 +489,6 @@
                                             <span class="tile-shape" data-shape="rounded" title="Rounded" style="width:28px;height:28px;display:inline-block;cursor:pointer;background:#8a94a6;border-radius:10px;margin-right:6px;"></span>
                                             <span class="tile-shape" data-shape="circle" title="Circle" style="width:28px;height:28px;display:inline-block;cursor:pointer;background:#8a94a6;border-radius:50%;margin-right:6px;"></span>
                                             <span class="tile-shape" data-shape="diamond" title="Diamond" style="width:28px;height:28px;display:inline-block;cursor:pointer;background:#8a94a6;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);margin-right:6px;"></span>
-                                            <span class="tile-shape" data-shape="triangle" title="Triangle" style="width:28px;height:28px;display:inline-block;cursor:pointer;background:#8a94a6;clip-path:polygon(50% 0,100% 100%,0 100%);margin-right:6px;"></span>
-                                            <span class="tile-shape" data-shape="pentagon" title="Pentagon" style="width:28px;height:28px;display:inline-block;cursor:pointer;background:#8a94a6;clip-path:polygon(50% 0,100% 38%,82% 100%,18% 100%,0 38%);margin-right:6px;"></span>
-                                            <span class="tile-shape" data-shape="hexagon" title="Hexagon" style="width:28px;height:28px;display:inline-block;cursor:pointer;background:#8a94a6;clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%);margin-right:6px;"></span>
-                                            <span class="tile-shape" data-shape="star" title="Star" style="width:28px;height:28px;display:inline-block;cursor:pointer;background:#8a94a6;clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);margin-right:6px;"></span>
-                                            <span class="tile-shape" data-shape="octagon" title="Octagon" style="width:28px;height:28px;display:inline-block;cursor:pointer;background:#8a94a6;clip-path:polygon(30% 0,70% 0,100% 30%,100% 70%,70% 100%,30% 100%,0 70%,0 30%);margin-right:6px;"></span>
                                         </div>
                                         <input type="hidden" id="item_tile_shape" value="">
                                         <div id="item_tile_swatches" class="d-flex flex-wrap" style="gap:6px;">
@@ -598,7 +604,7 @@
                                 <small class="text-muted ml-2" style="font-weight:400;"><lang class="lang_item_extras_hint">stock tracking, kiosk, supplier</lang></small>
                             </h5>
                         </div>
-                        <div class="collapse" id="item_extras_collapse">
+                        <div class="collapse show" id="item_extras_collapse">
                             <div class="card-body">
                                 <div class="form-row">
                                     <div class="form-group col-md-4">
@@ -641,22 +647,6 @@
                                         <label class="custom-control-label" for="item_weight_machine_based">
                                             Weight Scale Item
                                         </label>
-                                    </div>
-                                </div>
-                                <div class="form-row mt-2">
-                                    <div class="form-group col-md-8">
-                                        <label class="form-control-placeholder" for="items_supplier">
-                                            <lang class="lang_choosesupplier_title"> Select Supplier </lang>
-                                        </label>
-                                        <!-- Optional (IC1): items routinely arrive without a known
-                                             supplier; receiving is the supplier system of record. -->
-                                        <input type="text" class="form-control" id="items_supplier" name="items_supplier"
-                                            maxlength="50" placeholder="Choose a Supplier (optional)" autocomplete="off">
-                                        <input type="hidden" name="items_supplier_id" id="items_supplier_id">
-                                        <a data-module="supplier" data-access="write" href="#/items/suppliers/new"
-                                            class="d-inline-block mt-1" style="font-size:.85rem;">
-                                            + <lang class="lang_add_supply">Add Supplier</lang>
-                                        </a>
                                     </div>
                                 </div>
                             </div>
