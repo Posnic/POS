@@ -469,7 +469,8 @@ PosnicPro.settings = {
                         module_channels_kiosk_enable: response.data['module_channels_kiosk_enable'] !== false,
                         module_recyclebin_enable: response.data['module_recyclebin_enable'] !== false,
                         module_themes_enable: response.data['module_themes_enable'] !== false,
-                        module_cashbook_enable: response.data['module_cashbook_enable'] !== false
+                        module_cashbook_enable: response.data['module_cashbook_enable'] !== false,
+                        quick_sale_enable: response.data['quick_sale_enable'] !== false
                     };
                     PosnicPro.local.set('general_settings', JSON.stringify(generalSettings));
                     PosnicPro.shiftWidget.applyEnabled();
@@ -708,6 +709,7 @@ PosnicPro.settings = {
                 $('#module_themes_enable').prop('checked', data.module_themes_enable !== false);
                 $('#pl_include_cashbook').prop('checked', data.pl_include_cashbook !== false);
                 $('#module_cashbook_enable').prop('checked', data.module_cashbook_enable !== false);
+                $('#quick_sale_enable').prop('checked', data.quick_sale_enable !== false);
 
                 // Store general settings including hardware_weight_machine_enable
                 var generalSettings = {
@@ -726,7 +728,8 @@ PosnicPro.settings = {
                     module_channels_kiosk_enable: data.module_channels_kiosk_enable !== false,
                     module_recyclebin_enable: data.module_recyclebin_enable !== false,
                     module_themes_enable: data.module_themes_enable !== false,
-                    module_cashbook_enable: data.module_cashbook_enable !== false
+                    module_cashbook_enable: data.module_cashbook_enable !== false,
+                    quick_sale_enable: data.quick_sale_enable !== false
                 };
                 PosnicPro.local.set('general_settings', JSON.stringify(generalSettings));
                 PosnicPro.shiftWidget.applyEnabled();
@@ -1453,6 +1456,7 @@ if ($wrapper.length) {
         'module_tax_enable', 'module_credit_enable', 'module_marketing_enable',
         'module_messaging_enable', 'module_channels_enable', 'module_channels_kiosk_enable',
         'module_recyclebin_enable', 'module_themes_enable', 'module_cashbook_enable',
+        'quick_sale_enable',
         'pl_include_cashbook',
     ],
     initModulesBranchSelect: function () {
@@ -1605,6 +1609,7 @@ if ($wrapper.length) {
                 module_themes_enable: $('#module_themes_enable').is(':checked') ? 'true' : 'false',
                 pl_include_cashbook: $('#pl_include_cashbook').is(':checked') ? 'true' : 'false',
                 module_cashbook_enable: $('#module_cashbook_enable').is(':checked') ? 'true' : 'false',
+                quick_sale_enable: $('#quick_sale_enable').is(':checked') ? 'true' : 'false',
             })
         };
         PosnicPro.put(params, function (response) {
@@ -1710,7 +1715,8 @@ if ($wrapper.length) {
                     module_channels_kiosk_enable: $('#module_channels_kiosk_enable').is(':checked'),
                     module_recyclebin_enable: $('#module_recyclebin_enable').is(':checked'),
                     module_themes_enable: $('#module_themes_enable').is(':checked'),
-                    module_cashbook_enable: $('#module_cashbook_enable').is(':checked')
+                    module_cashbook_enable: $('#module_cashbook_enable').is(':checked'),
+                    quick_sale_enable: $('#quick_sale_enable').is(':checked')
                 };
                 PosnicPro.local.set('general_settings', JSON.stringify(generalSettings));
                 // Show or hide the header clock button to match, right away.
@@ -5266,6 +5272,7 @@ PosnicPro.features = {
         ['module_messaging_enable', 'Messaging', 'Receipts and notices by WhatsApp or SMS.'],
         ['module_channels_enable', 'Sales channels', 'Kiosk, QR ordering and online lists.'],
         ['module_cashbook_enable', 'Cash book', 'Expenses and cash movements beside sales.'],
+        ['quick_sale_enable', 'Quick sale', 'Type an amount, take payment - the busy-counter pad on the sale screen.'],
         ['module_recyclebin_enable', 'Recycle bin', 'Deleted records are kept and restorable.'],
         ['module_themes_enable', 'Themes', 'Change how the till looks.']
     ],
@@ -5367,4 +5374,14 @@ PosnicPro.settings.copyDisplayUrl = function () {
         document.execCommand('copy');
         PosnicPro.alert('success', 'Address copied - open it on the display device');
     }
+};
+
+/* Feature search (owner feedback): filter the cards by anything visible on
+   them - title, description, sub-toggle labels. */
+PosnicPro.settings.filterModuleCards = function (query) {
+    var q = String(query || '').trim().toLowerCase();
+    $('.module-grid .module-card').each(function () {
+        var hit = !q || $(this).text().toLowerCase().indexOf(q) !== -1;
+        $(this).toggleClass('search-miss', !hit);
+    });
 };

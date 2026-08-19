@@ -2229,6 +2229,9 @@
                                     <div id="modules_remote_note" class="alert alert-info py-2" style="display:none;">
                                         <i class="feather icon-info mr-1"></i><span></span>
                                     </div>
+                                    <input type="text" class="form-control mb-3" id="modules_search"
+                                        placeholder="Search features…" autocomplete="off" style="max-width:320px;"
+                                        oninput="PosnicPro.settings.filterModuleCards(this.value);">
                                     <div class="module-grid">
 
                                         <div class="module-card">
@@ -2263,6 +2266,18 @@
                                                 </div>
                                             </div>
                                             <p class="module-desc">Till sessions, floats and register reports. Off: sales work without any register ceremony.</p>
+                                        </div>
+
+                                        <div class="module-card">
+                                            <div class="module-card-head">
+                                                <span class="module-ico"><i class="feather icon-zap"></i></span>
+                                                <div class="module-title"><lang class="lang_quicksale_enable">Quick Sale</lang></div>
+                                                <div class="custom-control custom-switch module-switch">
+                                                    <input type="checkbox" class="custom-control-input" id="quick_sale_enable" name="quick_sale_enable">
+                                                    <label class="custom-control-label" for="quick_sale_enable"></label>
+                                                </div>
+                                            </div>
+                                            <p class="module-desc">Type an amount, take payment - the busy-counter pad on the sale screen.</p>
                                         </div>
 
                                         <div class="module-card">

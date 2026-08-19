@@ -7438,6 +7438,11 @@ $(document).ready(function () {
     if ('BarcodeDetector' in window && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         $('#camera_scan_btn').show();
     }
+    // Quick Sale is a feature, default ON - hide the pad when switched off.
+    try {
+        var gs = JSON.parse(PosnicPro.local.get('general_settings') || '{}');
+        if (gs.quick_sale_enable === false) { $('#quick_sale_btn').hide(); }
+    } catch (e) { /* default on */ }
 });
 
 /*
