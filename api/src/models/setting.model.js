@@ -1113,6 +1113,26 @@ class SettingModel extends BaseModel {
         discount_percentage: parseFloat(data.discount_percentage),
         discount_amount: parseFloat(data.discount_amount),
         sales_prefix: data.sales_prefix,
+        // Shop's own outgoing mail (owner rule: theirs first, ours as the
+        // cloud fallback). Password stored as given - it must be usable.
+        ...(data.email_smtp_host !== undefined
+          ? { email_smtp_host: String(data.email_smtp_host || '').trim() }
+          : {}),
+        ...(data.email_smtp_port !== undefined
+          ? { email_smtp_port: String(data.email_smtp_port || '').trim() }
+          : {}),
+        ...(data.email_smtp_secure !== undefined
+          ? { email_smtp_secure: String(data.email_smtp_secure) === 'true' }
+          : {}),
+        ...(data.email_smtp_username !== undefined
+          ? { email_smtp_username: String(data.email_smtp_username || '').trim() }
+          : {}),
+        ...(data.email_smtp_password !== undefined
+          ? { email_smtp_password: String(data.email_smtp_password || '') }
+          : {}),
+        ...(data.email_smtp_from !== undefined
+          ? { email_smtp_from: String(data.email_smtp_from || '').trim() }
+          : {}),
         indian_gst: data.indian_gst,
         receiving_prefix: data.receiving_prefix,
         branch_gstin_number: data.branch_gstin_number || '',

@@ -128,7 +128,40 @@ const sendEmail = async (options) => {
   }
 };
 
+/*
+ * Owner rule: a shop that configured its own SMTP sends through it; a
+ * cloud shop without one rides the platform transport (the Email class
+ * chain above). Pass the branch doc (settings live on it) - absent or
+ * incomplete config falls through to the platform chain.
+ */
+const nodemailer = require('nodemailer');
+const resolveShopTransport = (branchDoc) => {
+  const b = branchDoc || {};
+  if (b.email_smtp_host && b.email_smtp_username) {
+    return {
+      transporter: nodemailer.createTransport({
+        host: String(b.email_smtp_host),
+        port: parseInt(b.email_smtp_port, 10) || 587,
+        secure: b.email_smtp_secure === true,
+        auth: {
+          user: String(b.email_smtp_username),
+          pass: String(b.email_smtp_password || ''),
+        },
+      }),
+      from: String(b.email_smtp_from || b.email_smtp_username),
+      shopOwned: true,
+    };
+  }
+  const platform = new Email({ email: 'noreply', name: 'noreply' }, '').newTransport();
+  return {
+    transporter: platform,
+    from: process.env.EMAIL_FROM || 'no-reply@posnic.local',
+    shopOwned: false,
+  };
+};
+
 module.exports = {
   Email,
   sendEmail,
+  resolveShopTransport,
 };
