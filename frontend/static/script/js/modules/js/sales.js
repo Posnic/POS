@@ -6467,7 +6467,7 @@ PosnicPro.sales.itemsMenu = {
             ? rows[0]['image'] : 'static/images/default/' + rows[0]['image'];
         var stockHtml = tracked
             ? '<div class="text-center wsk-cp-stock">' + stock + ' in stock</div>' : '';
-        return '<div class="wsk-cp cbutton--effect-novak" ' +
+        return '<div class="wsk-cp wsk-variant cbutton--effect-novak" ' +
             'onclick="PosnicPro.sales.itemsMenu.openVariantPicker(\'' + esc(rows[0]['variant_group_id']) + '\')">' +
             '<div class="wsk-cp-product">' +
             '<div class="description-prod">' +
