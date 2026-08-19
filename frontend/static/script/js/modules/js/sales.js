@@ -7145,7 +7145,9 @@ PosnicPro.sales.recentMenu = {
         }
     },
     recentSalesTabDetails: function () {
-        if ($('a#contact-tab-justified').hasClass('active')) {
+        if ($('a#parked-tab-justified').hasClass('active')) {
+            PosnicPro.sales.parkedMenu.list();
+        } else if ($('a#contact-tab-justified').hasClass('active')) {
             PosnicPro.sales.recentSaleAction = true;
             PosnicPro.sales.recentMenu.salesList();
         } else if ($('a#profile-tab-justified').hasClass('active')) {
@@ -7157,6 +7159,52 @@ PosnicPro.sales.recentMenu = {
         }
     }
 
+};
+/*
+ * Parked sales (owner ask): held sales live one tab away from the items,
+ * so a busy till parks and resumes without leaving the billing screen.
+ * List = the recent-sales endpoint with type=hold (holds only, up to 20);
+ * resume = the existing hold route.
+ */
+PosnicPro.sales.parkedMenu = {
+    list: function () {
+        var loader = $(".loader-product");
+        $("<div class='loadingSpinner'></div>").appendTo(loader);
+        $('#sales_new_productList').show();
+        $('#sales_new_categoryList').hide();
+        $('#item-lists').remove();
+        $('#sales_new_productList').append(' <div id="item-lists" style="margin-left: 7px;"/>');
+        $('#item-lists').append(
+            "<div class='m-b-30'><div class='wishlist-box'><div class='table-responsive'><table id='parked_sales_table' class='table table-borderless' cellpadding='1'>" +
+            "<thead><tr><th scope='col'>Customer</th><th scope='col' class='text-center'>Items</th><th scope='col' class='text-center'>Total</th><th scope='col' class='text-center'>Resume</th></tr></thead>" +
+            "<tbody></tbody></table></div></div></div>");
+        PosnicPro.get('sales/getLatestSales?type=hold', function (response) {
+            loader.find(".loadingSpinner:first").remove();
+            var rows = [];
+            try { rows = jQuery.parseJSON(response.data) || []; } catch (e) { rows = []; }
+            var currency = PosnicPro.local.get('currencySign');
+            var esc = function (v) { return $('<i>').text(v == null ? '' : v).html(); };
+            if (!rows.length) {
+                $('#parked_sales_table tbody').html(
+                    "<tr><td colspan='4' class='text-center text-muted p-t-20'>Nothing parked - press Hold on a sale and it waits here.</td></tr>");
+                return;
+            }
+            var html = '';
+            $(rows).each(function (i, r) {
+                html += '<tr>' +
+                    '<td>' + esc(r.customer_name || 'Walk-in') + '<br><small class="text-muted">' + esc(r.sales_id || '') + '</small></td>' +
+                    '<td class="text-center">' + esc(r.number_of_items) + '</td>' +
+                    '<td class="text-center">' + currency + '&nbsp;' + Number(r.total_amount || 0).toFixed(2) + '</td>' +
+                    '<td class="text-center"><a href="#/sales/' + esc(r.sales_document_id) + '/hold" class="btn btn-success-rgba btn-sm" title="Resume this sale"><i class="feather icon-play"></i></a></td>' +
+                    '</tr>';
+            });
+            $('#parked_sales_table tbody').html(html);
+        }, function () {
+            loader.find(".loadingSpinner:first").remove();
+            $('#parked_sales_table tbody').html(
+                "<tr><td colspan='4' class='text-center text-muted p-t-20'>Could not load parked sales - try again.</td></tr>");
+        });
+    }
 };
 /******** END SALES RECENT ADD EDIT SALES MENU & RECENT ADDED ITEMS MENU ********/
 

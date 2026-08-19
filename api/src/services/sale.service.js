@@ -1778,7 +1778,7 @@ const getSalesByProduct = async ({ branchId, startDate, endDate }, { SaleModel }
  * @param {mongoose.Model} [options.SaleModel]
  * @returns {Promise<Array>} list of simplified latest sale rows
  */
-const getLatestSales = async ({ branchId, licenseId }, { SaleModel } = {}) => {
+const getLatestSales = async ({ branchId, licenseId, holdOnly }, { SaleModel } = {}) => {
   const Model = getModel(SaleModel);
 
   const branchMatch = [];
@@ -1799,7 +1799,8 @@ const getLatestSales = async ({ branchId, licenseId }, { SaleModel } = {}) => {
   const baseFilter = {
     // Include 'Hold' so parked sales surface in the New Sale "Recent Sales" tab
     // for one-click retrieval, without leaving the billing screen.
-    sale_process: { $in: ['Add', 'Edit', 'Hold'] },
+    // The Parked tab asks for holds alone and gets a longer list.
+    sale_process: holdOnly ? { $in: ['Hold'] } : { $in: ['Add', 'Edit', 'Hold'] },
   };
 
   if (branchMatch.length) {
@@ -1810,7 +1811,7 @@ const getLatestSales = async ({ branchId, licenseId }, { SaleModel } = {}) => {
     baseFilter.license = licenseId;
   }
 
-  const pipeline = [{ $match: baseFilter }, { $sort: { _id: -1 } }, { $limit: 6 }];
+  const pipeline = [{ $match: baseFilter }, { $sort: { _id: -1 } }, { $limit: holdOnly ? 20 : 6 }];
 
   const sales = await salesRepository.aggregate(pipeline, { SaleModel: Model });
 
