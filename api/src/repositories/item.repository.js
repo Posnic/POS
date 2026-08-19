@@ -2534,19 +2534,33 @@ class ItemRepository extends BaseModel {
    * movement with an audit trail, never a silent overwrite. Receiving stock
    * is deliberately not a reason here: that is the receiving screen's job.
    */
-  async stockAdjustment({ reason, note, rows } = {}, context = {}) {
+  async stockAdjustment(params = {}, context = {}) {
+    const { reason, note, rows } = params;
     try {
-      const REASONS = {
+      /*
+       * LS1: reasons are configurable text now, each with an explicit
+       * direction. The three originals keep their implied modes so older
+       * clients stay correct; anything else must SAY its direction - a
+       * custom reason with no mode is refused, never guessed.
+       */
+      const SEED_REASONS = {
         'Inventory count': 'set',
         Loss: 'subtract',
         Damage: 'subtract',
+        'Stock found': 'add',
       };
-      const mode = REASONS[reason];
-      if (!mode) {
+      const cleanReason = String(reason || '')
+        .trim()
+        .slice(0, 60);
+      const requestedMode = params && params.mode;
+      const mode = ['set', 'subtract', 'add'].includes(requestedMode)
+        ? requestedMode
+        : SEED_REASONS[cleanReason];
+      if (!cleanReason || !mode) {
         return {
           status: false,
           data: null,
-          message: 'Pick a reason: Inventory count, Loss or Damage',
+          message: 'Pick a reason and its direction (count sets, loss/damage subtract, found adds)',
         };
       }
       if (!Array.isArray(rows) || rows.length === 0) {
@@ -2600,7 +2614,7 @@ class ItemRepository extends BaseModel {
           continue;
         }
         const oldV = Number(item.available_quantity) || 0;
-        const newV = mode === 'set' ? qty : Math.max(0, oldV - qty);
+        const newV = mode === 'set' ? qty : mode === 'add' ? oldV + qty : Math.max(0, oldV - qty);
         if (newV === oldV) {
           skipped += 1;
           continue;
@@ -2631,7 +2645,7 @@ class ItemRepository extends BaseModel {
               item_barcode_id: item.barcode_id,
               item_name: item.name,
               item_quantity: String(newV),
-              process: reason,
+              process: cleanReason,
               reference: item.barcode_id,
               note: cleanNote,
               date: now,

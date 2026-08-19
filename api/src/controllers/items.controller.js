@@ -1623,6 +1623,7 @@ class ItemsController extends BaseController {
       const result = await this.service.stockAdjustment(
         {
           reason: req.body.reason,
+          mode: req.body.mode,
           note: req.body.note,
           rows: req.body.rows,
         },

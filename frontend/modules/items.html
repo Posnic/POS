@@ -720,11 +720,22 @@
                 <div class="form-row">
                     <div class="form-group col-md-4">
                         <label for="stock_adjust_reason"><lang class="lang_stock_adjust_reason">Reason</lang></label>
-                        <select class="form-control" id="stock_adjust_reason" onchange="PosnicPro.items.renderAdjRows();">
+                        <select class="form-control" id="stock_adjust_reason" onchange="PosnicPro.items.adjReasonChanged();">
                             <option value="Inventory count">Inventory count</option>
                             <option value="Loss">Loss</option>
                             <option value="Damage">Damage</option>
+                            <option value="Stock found">Stock found</option>
+                            <option value="__custom__">Custom reason…</option>
                         </select>
+                        <div id="stock_adjust_custom_wrap" style="display:none;" class="mt-1">
+                            <input type="text" class="form-control form-control-sm mb-1" id="stock_adjust_custom"
+                                maxlength="60" placeholder="Reason (e.g. Theft, Expiry)" autocomplete="off">
+                            <select class="form-control form-control-sm" id="stock_adjust_mode" onchange="PosnicPro.items.renderAdjRows();">
+                                <option value="subtract">Removes stock</option>
+                                <option value="add">Adds stock</option>
+                                <option value="set">Sets stock to the count</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="form-group col-md-8">
                         <label for="stock_adjust_note"><lang class="lang_stock_adjust_note">Note (optional)</lang></label>
