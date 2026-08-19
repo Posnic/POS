@@ -71,6 +71,8 @@ const POS_PERMISSIONS = {
   REGISTER_CLOSE: 'register_close',
   CASH_IN_OUT: 'cash_in_out',
   CASH_DROP: 'cash_drop',
+  // Owner ask: quick sale grantable per cashier; deny only when unticked.
+  QUICK_SALE: 'quick_sale',
 };
 
 const pos = (o = {}) => ({
