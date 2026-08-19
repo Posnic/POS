@@ -652,7 +652,7 @@ PosnicPro = {
                 'script/lazy/amcharts-animated.js',
             ],
             apexcharts: ['script/lazy/apexcharts.js'],
-            jspdf: ['script/lazy/jspdf.js'],
+            jspdf: ['script/lazy/jspdf2.js'],
             html2canvas: ['script/lazy/html2canvas.js'],
             sortable: ['script/lazy/sortable.js'],
         },
