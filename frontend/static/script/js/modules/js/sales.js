@@ -7689,7 +7689,8 @@ PosnicPro.quotes = {
             act += '<button type="button" class="btn btn-sm btn-primary-rgba" onclick="PosnicPro.quotes.printNow();">Print</button> '
                 + '<button type="button" class="btn btn-sm btn-danger-rgba" onclick="PosnicPro.quotes.print();">PDF</button> '
                 + '<button type="button" class="btn btn-sm btn-secondary-rgba" onclick="PosnicPro.quotes.emailQuote();">Email</button> '
-                + '<button type="button" class="btn btn-sm btn-success-rgba" onclick="PosnicPro.quotes.whatsappQuote();">WhatsApp</button> ';
+                + '<button type="button" class="btn btn-sm btn-success-rgba" onclick="PosnicPro.quotes.whatsappQuote();">WhatsApp</button> '
+                + '<button type="button" class="btn btn-sm btn-secondary-rgba" onclick="PosnicPro.quotes.shareLink();">Copy link</button> ';
             if (open || q.status === 'accepted') {
                 act += '<button type="button" class="btn btn-sm btn-success-rgba" onclick="PosnicPro.quotes.convert();">Convert to sale</button> ';
             }
@@ -8176,16 +8177,59 @@ PosnicPro.quotes = {
             to: q.customer_email || ''
         }, PosnicPro.quotes._withQuoteDoc);
     },
+    /*
+     * Share link (Q3): the professional PDF the user sees, uploaded to S3
+     * under an unguessable key; the newest revision rides the quote. With a
+     * callback, hands the URL over (or null); without one, copies it.
+     */
+    shareLink: function (then) {
+        var q = PosnicPro.quotes._current;
+        if (!q) { if (then) { then(null); } return; }
+        PosnicPro.quotes._withQuoteDoc(function (doc) {
+            var b64 = String(doc.output('datauristring')).split(',')[1] || '';
+            PosnicPro.post({
+                url: 'quotes/' + q._id + '/share',
+                data: JSON.stringify({ pdf_base64: b64 })
+            }, function (r) {
+                if (r.type !== 'success' || !r.data || !r.data.url) {
+                    PosnicPro.alert(r.type === 'success' ? 'error' : r.type, r.message || 'Could not create the link');
+                    if (then) { then(null); }
+                    return;
+                }
+                q.share = { url: r.data.url, rev: r.data.rev };
+                if (then) { then(r.data.url); return; }
+                var url = r.data.url;
+                var copied = function () { PosnicPro.alert('success', 'Link copied - paste it anywhere. ' + url); };
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(url).then(copied, function () { window.prompt('Copy the quote link:', url); });
+                } else {
+                    window.prompt('Copy the quote link:', url);
+                }
+            }, function (xhr) {
+                var resp = {}; try { resp = JSON.parse(xhr.responseText); } catch (e) { /* plain */ }
+                PosnicPro.alert('warning', resp.message || 'Could not create the link');
+                if (then) { then(null); }
+            });
+        });
+    },
     whatsappQuote: function () {
         var q = PosnicPro.quotes._current || {};
         var shop = PosnicPro.local.get('branchname') || 'Our shop';
-        var msg = 'Quotation ' + (q.quote_id || '') + ' from ' + shop
+        var openWa = function (msg) { window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank'); };
+        var head = 'Quotation ' + (q.quote_id || '') + ' from ' + shop
             + '\nTotal: ' + Number(q.total || 0).toFixed(2)
-            + (q.valid_until ? '\nValid till ' + new Date(q.valid_until).toLocaleDateString('en-IN') : '')
-            + '\n\nItems:\n' + (q.items || []).map(function (l) {
+            + (q.valid_until ? '\nValid till ' + new Date(q.valid_until).toLocaleDateString('en-IN') : '');
+        // link-first: the message carries the PDF's URL; servers without S3
+        // fall back to the text summary, same as before
+        PosnicPro.quotes.shareLink(function (url) {
+            if (url) {
+                openWa(head + '\n\nView or download the quotation:\n' + url);
+                return;
+            }
+            openWa(head + '\n\nItems:\n' + (q.items || []).map(function (l) {
                 return '- ' + l.item_name + ' x' + l.qty + ' = ' + Number(l.line_total || 0).toFixed(2);
-            }).join('\n');
-        window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+            }).join('\n'));
+        });
     }
 };
 $(function () {

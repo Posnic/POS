@@ -13,6 +13,7 @@ router.get('/', controller.list);
 router.get('/:id', controller.getById);
 router.put('/:id', controller.update);
 router.post('/:id/transition', controller.transition);
+router.post('/:id/share', controller.share);
 router.delete('/:id', controller.remove);
 
 module.exports = router;
