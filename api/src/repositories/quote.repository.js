@@ -97,6 +97,26 @@ class QuoteRepository extends BaseModel {
             : null,
         customer_name: String(data.customer_name || '').trim(),
         customer_phone: String(data.customer_phone || '').trim(),
+        // Professional quotation fields (owner spec): all presence-tolerant
+        // strings the preview edits in place.
+        customer_address: String(data.customer_address || '')
+          .trim()
+          .slice(0, 300),
+        customer_gstin: String(data.customer_gstin || '')
+          .trim()
+          .slice(0, 20),
+        customer_email: String(data.customer_email || '')
+          .trim()
+          .slice(0, 120),
+        payment_method: String(data.payment_method || '')
+          .trim()
+          .slice(0, 60),
+        bank_details: String(data.bank_details || '')
+          .trim()
+          .slice(0, 500),
+        terms: String(data.terms || '')
+          .trim()
+          .slice(0, 1500),
         items: parsed.lines,
         subtotal,
         tax_total: Number.isFinite(taxTotal) && taxTotal >= 0 ? taxTotal : 0,
