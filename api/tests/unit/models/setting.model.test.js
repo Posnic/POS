@@ -549,6 +549,8 @@ describe('getDefaultSupplier', () => {
   });
 
   test('returns status:false when no supplierId', async () => {
+    // With a branch context the supplier self-heals; only contextless refuses.
+    m.branchId = null;
     const r = await m.getDefaultSupplier(null);
     expect(r.status).toBe(false);
     expect(r.message).toMatch(/required/i);
