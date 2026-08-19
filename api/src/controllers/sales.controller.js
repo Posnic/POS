@@ -1196,6 +1196,8 @@ class SalesController extends BaseController {
         {
           branchId,
           licenseId: BaseModel.license,
+          // type=hold: the sale screen's Parked tab - holds only, more rows.
+          holdOnly: req.query?.type === 'hold',
         },
         { SaleModel }
       );
