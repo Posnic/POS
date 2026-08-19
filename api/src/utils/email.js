@@ -151,6 +151,57 @@ const resolveShopTransport = (branchDoc) => {
       shopOwned: true,
     };
   }
+  /*
+   * The platform's PROVEN mail path is Brevo (the daily reports arrive
+   * through it); the legacy SMTP env rejects with EAUTH. So: Brevo when
+   * its key exists, legacy chain only as the last resort. The from stays
+   * the platform address while the DISPLAY NAME is the shop's (owner:
+   * "white label from later; name is shop name").
+   */
+  const brevoKey = process.env.SENDINBLUE_KEY || process.env.BREVO_API_KEY || '';
+  if (brevoKey) {
+    return {
+      transporter: {
+        options: { brevo: true },
+        sendMail: async (mail) => {
+          const { BrevoClient } = require('@getbrevo/brevo');
+          const client = new BrevoClient({ apiKey: brevoKey });
+          const m = String(mail.from || '').match(/^(.*)<([^>]+)>\s*$/);
+          const sender = m
+            ? { name: m[1].trim().replace(/(^"|"$)/g, ''), email: m[2].trim() }
+            : { email: String(mail.from || process.env.EMAIL_FROM || 'info@posnic.com').trim() };
+          const to = String(mail.to || '')
+            .split(',')
+            .map((e) => ({ email: e.trim() }))
+            .filter((x) => x.email);
+          const payload = {
+            sender,
+            to,
+            subject: String(mail.subject || ''),
+            ...(mail.html ? { htmlContent: String(mail.html) } : {}),
+            ...(!mail.html && mail.text ? { textContent: String(mail.text) } : {}),
+            ...(Array.isArray(mail.attachments) && mail.attachments.length
+              ? {
+                  attachment: mail.attachments.map((a) => ({
+                    name: a.filename || 'attachment.pdf',
+                    content: Buffer.isBuffer(a.content)
+                      ? a.content.toString('base64')
+                      : String(a.content),
+                  })),
+                }
+              : {}),
+          };
+          const result = await client.transactionalEmails.sendTransacEmail(payload);
+          return {
+            messageId:
+              (result && (result.messageId || (result.body && result.body.messageId))) || 'brevo',
+          };
+        },
+      },
+      from: process.env.EMAIL_FROM || 'info@posnic.com',
+      shopOwned: false,
+    };
+  }
   const platform = new Email({ email: 'noreply', name: 'noreply' }, '').newTransport();
   return {
     transporter: platform,
