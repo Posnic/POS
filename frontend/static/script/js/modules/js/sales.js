@@ -4563,6 +4563,9 @@ PosnicPro.sales.holdSale = {
             PosnicPro.request(params, function (response) {
                 if (response.type === 'success') {
                     PosnicPro.sales.setDefaults();
+                    // The visible tab reflects the park IMMEDIATELY (owner ask) -
+                    // the dispatcher refreshes whichever pane is showing.
+                    PosnicPro.sales.recentMenu.recentSalesTabDetails();
                 }
                 PosnicPro.alert(response.type, response.message);
             }, function (xhr) {
