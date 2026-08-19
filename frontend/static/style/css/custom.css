@@ -2984,3 +2984,7 @@ input:checked + .slider:before {
 .qe-l-grip { cursor: grab; color: #8a94a6; user-select: none; float: left; padding: 7px 6px 0 0; font-size: 12px; }
 .qe-l-grip:active { cursor: grabbing; }
 #qe_lines tr.sortable-ghost { opacity: 0.4; background: #f6f8ff; }
+/* Open-quote preview: footer sections drag by their labels */
+.q-sortable .q-label { cursor: grab; }
+.q-sortable .q-label:active { cursor: grabbing; }
+.q-sortable .q-block.sortable-ghost { opacity: 0.4; background: #f6f8ff; border-radius: 4px; }

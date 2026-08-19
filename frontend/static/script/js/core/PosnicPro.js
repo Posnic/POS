@@ -957,7 +957,10 @@ PosnicPro = {
                         }, function (r) {
                             $('#report_email_send').prop('disabled', false);
                             PosnicPro.alert(r.type, r.message);
-                            if (r.type === 'success') { $('#report_email_modal').modal('hide'); }
+                            if (r.type === 'success') {
+                                $('#report_email_modal').modal('hide');
+                                if (m.meta && typeof m.meta.onSent === 'function') { m.meta.onSent(); }
+                            }
                         }, function (xhr) {
                             $('#report_email_send').prop('disabled', false);
                             var resp = {}; try { resp = JSON.parse(xhr.responseText); } catch (e) { /* plain */ }

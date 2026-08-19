@@ -7692,15 +7692,32 @@ PosnicPro.quotes = {
                 + '<tr class="q-grand"><th colspan="4" class="text-right">TOTAL</th>'
                 + '<th class="text-right">' + money(q.total) + '</th></tr>'
                 + '</tfoot></table></div>'
-                + '<div class="q-footer">'
-                + '<div class="q-block"><div class="q-label">Payment method</div>' + ed('payment_method', q.payment_method, 'e.g. Bank transfer / UPI / Cash') + '</div>'
-                + '<div class="q-block"><div class="q-label">Bank details</div>' + ed('bank_details', q.bank_details, 'Account name, number, IFSC') + '</div>'
-                + '<div class="q-block"><div class="q-label">Terms &amp; conditions</div>' + ed('terms', q.terms || q.note, 'e.g. 50% advance confirms the order. Prices valid till the date above.') + '</div>'
-                + '</div>'
-                + (q.custom_blocks || []).map(function (b) {
-                    return '<div class="q-block m-t-10"><div class="q-label">' + esc(b.title || '') + '</div>' + esc(b.text || '') + '</div>';
-                }).join('')
-                + (q.notes ? '<div class="q-block m-t-10"><div class="q-label">Notes</div>' + esc(q.notes) + '</div>' : '')
+                + (function () {
+                    /* Footer sections follow q.layout (drag a section label
+                       to reorder on an open quote); unlisted tokens keep the
+                       default order. Same rule the PDF builder runs. */
+                    var sections = {
+                        payment: '<div class="q-label">Payment method</div>' + ed('payment_method', q.payment_method, 'e.g. Bank transfer / UPI / Cash'),
+                        bank: '<div class="q-label">Bank details</div>' + ed('bank_details', q.bank_details, 'Account name, number, IFSC'),
+                        terms: '<div class="q-label">Terms &amp; conditions</div>' + ed('terms', q.terms || q.note, 'e.g. 50% advance confirms the order. Prices valid till the date above.'),
+                        custom: (q.custom_blocks || []).map(function (b) {
+                            return '<div class="q-label">' + esc(b.title || '') + '</div><div class="mb-2">' + esc(b.text || '') + '</div>';
+                        }).join(''),
+                        notes: q.notes ? '<div class="q-label">Notes</div>' + esc(q.notes) : ''
+                    };
+                    var tokens = ['payment', 'bank', 'terms', 'custom', 'notes'];
+                    var order = [];
+                    (q.layout || []).forEach(function (t) {
+                        if (tokens.indexOf(t) !== -1 && order.indexOf(t) === -1) { order.push(t); }
+                    });
+                    tokens.forEach(function (t) { if (order.indexOf(t) === -1) { order.push(t); } });
+                    var out = '<div class="q-footer' + (open ? ' q-sortable' : '') + '" id="q_footer_sort">';
+                    order.forEach(function (t) {
+                        if (!sections[t]) { return; }
+                        out += '<div class="q-block" data-tok="' + t + '">' + sections[t] + '</div>';
+                    });
+                    return out + '</div>';
+                })()
                 + '<div class="q-sign">Authorised signatory</div>'
                 + '</div>';
             $('#quotes_view_body').html(body);
@@ -7725,7 +7742,36 @@ PosnicPro.quotes = {
             }
             $('#quotes_view_actions').html(act);
             $('#quotes_view_card').show();
+            if (open) { PosnicPro.quotes._pvInitSort(); }
         }, function () { PosnicPro.alert('error', 'Could not load the quote'); });
+    },
+    /* Drag a footer section by its label to reorder the printed document;
+       the order saves onto the quote and the PDF obeys it. */
+    _pvSortable: null,
+    _pvInitSort: function () {
+        PosnicPro.lazy.load('sortable').then(function () {
+            if (!window.Sortable) { return; }
+            var el = document.getElementById('q_footer_sort');
+            if (!el) { return; }
+            if (PosnicPro.quotes._pvSortable) {
+                try { PosnicPro.quotes._pvSortable.destroy(); } catch (e) { /* stale */ }
+                PosnicPro.quotes._pvSortable = null;
+            }
+            PosnicPro.quotes._pvSortable = window.Sortable.create(el, {
+                handle: '.q-label',
+                animation: 120,
+                onEnd: function () {
+                    var q = PosnicPro.quotes._current;
+                    if (!q) { return; }
+                    var order = [];
+                    $('#q_footer_sort .q-block').each(function () {
+                        order.push($(this).data('tok'));
+                    });
+                    q.layout = ['billto', 'items', 'charges'].concat(order);
+                    PosnicPro.quotes.saveEdits();
+                }
+            });
+        }).catch(function () { /* drag is a nicety */ });
     },
     /* Persist the preview's inline edits - open quotes only, the server
        enforces the same rule. */
@@ -8024,13 +8070,26 @@ PosnicPro.quotes = {
           lines.forEach(function (ln, i) { doc.text(ln, M, y + 8.5 + i * 4.3); });
           y += 8.5 + lines.length * 4.3 + 2;
         };
-        block('PAYMENT METHOD', q.payment_method);
-        block('BANK DETAILS', q.bank_details);
-        block('TERMS & CONDITIONS', q.terms || q.note);
-        (q.custom_blocks || []).forEach(function (b) {
-          block(String(b.title || 'NOTE').toUpperCase().slice(0, 60), b.text);
+        /* Footer sections obey the quote's own layout order (dragged on the
+           preview); anything unlisted follows in the default order. */
+        var footerTokens = ['payment', 'bank', 'terms', 'custom', 'notes'];
+        var order = [];
+        (q.layout || []).forEach(function (t) {
+          if (footerTokens.indexOf(t) !== -1 && order.indexOf(t) === -1) { order.push(t); }
         });
-        block('NOTES', q.notes);
+        footerTokens.forEach(function (t) {
+          if (order.indexOf(t) === -1) { order.push(t); }
+        });
+        order.forEach(function (t) {
+          if (t === 'payment') { block('PAYMENT METHOD', q.payment_method); }
+          else if (t === 'bank') { block('BANK DETAILS', q.bank_details); }
+          else if (t === 'terms') { block('TERMS & CONDITIONS', q.terms || q.note); }
+          else if (t === 'custom') {
+            (q.custom_blocks || []).forEach(function (b) {
+              block(String(b.title || 'NOTE').toUpperCase().slice(0, 60), b.text);
+            });
+          } else if (t === 'notes') { block('NOTES', q.notes); }
+        });
 
         /* signature */
         ensure(34);
@@ -8237,7 +8296,18 @@ PosnicPro.quotes = {
         PosnicPro.reportExport.email('quotes_view_body', {
             title: 'Quotation ' + (q.quote_id || ''),
             filename: (q.quote_id || 'quote').toLowerCase(),
-            to: q.customer_email || ''
+            to: q.customer_email || '',
+            // a delivered email means the quote went out - open/draft
+            // become 'sent' (server no-ops anything else)
+            onSent: function () {
+                if (!q._id) { return; }
+                PosnicPro.post({
+                    url: 'quotes/' + q._id + '/transition',
+                    data: JSON.stringify({ action: 'send' })
+                }, function () {
+                    if (q.status === 'open' || q.status === 'draft') { q.status = 'sent'; }
+                }, function () { /* the email still went - status is cosmetic */ });
+            }
         }, PosnicPro.quotes._withQuoteDoc);
     },
     /*

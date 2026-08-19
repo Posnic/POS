@@ -394,6 +394,25 @@ class QuoteRepository extends BaseModel {
         return { status: true, data: { id: String(doc._id) }, message: 'Quote cancelled' };
       }
 
+      /*
+       * The quote left the shop (emailed, WhatsApped, linked): open/draft
+       * become 'sent'. Idempotent and quiet - re-sending an already-sent
+       * quote succeeds without touching it, and history states refuse.
+       */
+      if (action === 'send') {
+        if (doc.status === 'sent') {
+          return { status: true, data: { id: String(doc._id) }, message: 'Quote already sent' };
+        }
+        if (!EDITABLE.includes(doc.status)) {
+          return { status: false, data: null, message: 'This quote is closed - nothing to send' };
+        }
+        await collection.updateOne(
+          { _id: doc._id },
+          { $set: { status: 'sent', sent_date: new Date(), updated_date: new Date() } }
+        );
+        return { status: true, data: { id: String(doc._id) }, message: 'Quote marked sent' };
+      }
+
       /* The customer said yes / no. Accepting freezes edits - the numbers
          are now a promise; converting is still allowed (that IS the point). */
       if (action === 'accept' || action === 'decline') {
@@ -478,6 +497,12 @@ class QuoteRepository extends BaseModel {
         }
       );
       if (!result.matchedCount) return { status: false, data: null, message: 'Quote not found' };
+      /* A shared quote has been SENT - open/draft move on; anything else
+         (sent already, accepted, history) is left exactly as it is. */
+      await collection.updateOne(
+        { _id: new ObjectId(String(id)), ...wall, status: { $in: ['open', 'draft'] } },
+        { $set: { status: 'sent', sent_date: new Date() } }
+      );
       return { status: true, data: { rev: Number(share.rev) || 1 }, message: 'Share recorded' };
     } catch (error) {
       console.error('Error in QuoteRepository.recordShare:', error);
