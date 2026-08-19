@@ -350,7 +350,13 @@
                                         <span class="tip-chips" style="display:none;"></span>
                                         <span class="display-currency"></span>&nbsp;<input
                                             type="number" min="0" step="0.01" id="sale_tip_input"
-                                            placeholder="0.00" title="Recorded with the sale - not added to the bill">
+                                            placeholder="0.00" title="Tip for staff - tick Add to bill to collect it with the sale">
+                                        <span class="custom-control custom-checkbox d-inline-block ml-1 align-middle">
+                                            <input type="checkbox" class="custom-control-input" id="sale_tip_in_total">
+                                            <label class="custom-control-label small" for="sale_tip_in_total"
+                                                title="Unticked, the tip is recorded for staff but the bill stays as-is (the usual way here). Ticked, the customer pays it with the sale."><lang
+                                                    class="lang_tip_in_bill">Add to bill</lang></label>
+                                        </span>
                                     </span>
                                 </div>
                             </div>
