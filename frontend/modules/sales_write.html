@@ -139,6 +139,15 @@
                                             <i class="feather icon-plus-square"></i>
                                         </span>
                                     </a>
+                                    <!-- Camera scan (Loyverse study L3): shown only where the
+                                         browser has BarcodeDetector - sales.js gates it. -->
+                                    <a href="javascript:void(0)" id="camera_scan_btn"
+                                        style="height:38px;border: transparent;border-radius: 0px;display:none;"
+                                        class="btn btn-primary-rgba open_register_disabled"
+                                        onclick="PosnicPro.sales.cameraScan.open();"
+                                        data-toggle="tooltip" title="Scan with the camera">
+                                        <i class="feather icon-camera"></i>
+                                    </a>
                                     <span class="input-group-btn" id="employee_box">
                                         <span id="sales_customer_btn"
                                             class="btn btn-primary-rgba toggle-user-input open_register_disabled sales-customer-btn"
