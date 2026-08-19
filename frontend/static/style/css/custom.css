@@ -2961,3 +2961,14 @@ input:checked + .slider:before {
     padding-left: 8px;
     line-height: 24px;
 }
+/* P4: denomination pads grow to touch size (their styles are inline, hence
+   the importants). Nothing moves; things grow. */
+#render_amount [id^="controls-"] button {
+    height: 40px !important;
+    line-height: 38px !important;
+    font-size: 22px !important;
+}
+#render_amount [id^="denom-btn-"] {
+    min-height: 44px !important;
+    font-size: 14px !important;
+}
