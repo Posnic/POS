@@ -2468,6 +2468,17 @@ class ItemRepository extends BaseModel {
         available_quantity: item.available_quantity || 0,
       }));
 
+      /* Incoming (PO step 3): what is already on an open order, so a shop
+         does not double-order it. Display-only, fail-safe to zero. */
+      const { incomingByItem } = require('../services/incoming-stock');
+      const incoming = await incomingByItem(
+        { branchId, licenseId },
+        list.map((row) => row.item_id)
+      );
+      for (const row of list) {
+        row.incoming = incoming[row.item_id] || 0;
+      }
+
       return { status: true, data: list, message: 'success' };
     } catch (error) {
       console.error('Error in ItemRepository.getItemsBySupplier:', error);
