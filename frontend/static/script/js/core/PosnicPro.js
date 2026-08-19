@@ -786,6 +786,7 @@ PosnicPro = {
                 sec.rows.forEach(function (r) { cols = Math.max(cols, r.cells.length); });
                 if (!cols) { return; }
 
+                doc.setFont('helvetica', 'normal');
                 doc.setFontSize(8.3);
                 var maxW = [], numCount = [], bodyRows = 0;
                 for (var c0 = 0; c0 < cols; c0++) { maxW.push(8); numCount.push(0); }
@@ -811,10 +812,23 @@ PosnicPro = {
                     y += 5;
                 }
                 var headRow = sec.rows.length > 1 ? sec.rows[0] : null;
+                // splitTextToSize only breaks on spaces - a long SKU or
+                // number would sail out of its column. Clamp every line.
+                var clampLine = function (line, width) {
+                    if (doc.getTextWidth(line) <= width) { return line; }
+                    var t = line;
+                    while (t.length > 1 && doc.getTextWidth(t + '…') > width) {
+                        t = t.slice(0, -1);
+                    }
+                    return t + '…';
+                };
                 var drawRow = function (r, isHead) {
                     doc.setFontSize(8.3);
                     var linesPer = r.cells.map(function (cell, c) {
-                        return doc.splitTextToSize(ex._pdfText(cell), colW[Math.min(c, colW.length - 1)] - padX * 2);
+                        var wAvail = colW[Math.min(c, colW.length - 1)] - padX * 2;
+                        return doc.splitTextToSize(ex._pdfText(cell), wAvail).map(function (ln) {
+                            return clampLine(ln, wAvail);
+                        });
                     });
                     var maxLines = 1;
                     linesPer.forEach(function (l) { maxLines = Math.max(maxLines, Math.min(l.length, 3)); });
