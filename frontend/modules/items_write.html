@@ -155,7 +155,7 @@
                             </div>
                             <div class="card-body">
                                 <div class="row">
-                                    <div class="col-md-6">
+                                    <div class="col-md-4">
                                         <label class="form-control-placeholder" for="items_selling_price">
                                             <lang class="lang_sales_title"> Selling </lang><span class="text-danger">*</span>
                                         </label>
@@ -173,7 +173,7 @@
                                             </label>
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-md-4">
                                         <label class="form-control-placeholder" for="items_mrp_price">
                                             <lang class="lang_mrp_title"> M.R.P </lang>
                                         </label>
@@ -182,9 +182,7 @@
                                             id="items_mrp_price" name="items_mrp_price" minlength="1" maxlength="7"
                                             value="0.00" placeholder="M.R.P" autocomplete="off">
                                     </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-6">
+                                    <div class="col-md-4">
                                         <label class="form-control-placeholder" for="items_company_price">
                                             <lang class="lang_company_title"> Cost </lang>
                                         </label>
@@ -193,7 +191,9 @@
                                             id="items_company_price" name="items_company_price" minlength="1"
                                             maxlength="7" value="0.00" placeholder="Cost" autocomplete="off">
                                     </div>
-                                    <div class="col-md-6">
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4">
                                         <label class="form-control-placeholder" for="items_available_quantity">
                                             <lang class="lang_openquantity_title"> In stock (opening) </lang>
                                         </label>
@@ -201,15 +201,18 @@
                                             id="items_available_quantity" name="items_available_quantity" min="0"
                                             minlength="1" maxlength="10" value="0" placeholder="Available Quantity"
                                             autocomplete="off">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-control-placeholder" for="items_reorder_point">
+                                            <lang class="lang_reorder_point">Reorder point</lang>
+                                        </label>
                                         <!-- LS1: this item's own low-stock threshold; empty
                                              falls back to the shop-wide range. -->
-                                        <input type="number" min="0" step="any" class="form-control clear_text_item mt-2 text-right"
+                                        <input type="number" min="0" step="any" class="form-control clear_text_item text-right"
                                             id="items_reorder_point" name="items_reorder_point"
                                             placeholder="Reorder point (optional)" autocomplete="off">
                                     </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-6 m-t-9">
+                                    <div class="col-md-4 m-t-9">
                                         <label class="form-control-placeholder" for="items_unit">
                                             Item Units
                                         </label>
@@ -356,61 +359,6 @@
                     </div>
 
                     <!-- 6 · Discount -->
-                    <div class="card m-b-30" id="show-hide-item-discount" style="display:none;">
-                        <div class="card-header">
-                            <h5 class="card-title">
-                                <lang class="lang_discount_title"> Discount </lang>
-                                <span id="item_discount" data-toggle="tooltip" data-placement="top" title=""
-                                    data-original-title="This changes does not apply to Existing products">
-                                    <i class="feather icon-help-circle"></i>
-                                </span>
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="form-row">
-                                <div class="form-group col-md-12">
-                                    <div class="row">
-                                        <div class="col-md-9">
-                                            <div class="custom-control custom-radio custom-control-inline">
-                                                <input type="radio" id="item_radio_discount_amount"
-                                                    name="radio_discount" class="custom-control-input"
-                                                    checked="checked">
-                                                <label class="custom-control-label" for="item_radio_discount_amount">
-                                                    <lang class="lang_amount_title"> Amount </lang>( <span
-                                                        class="display-currency"></span> )
-                                                </label>
-                                            </div>
-                                            <div class="custom-control custom-radio custom-control-inline">
-                                                <input type="radio" id="item_radio_discount_percentage"
-                                                    name="radio_discount" class="custom-control-input">
-                                                <label class="custom-control-label"
-                                                    for="item_radio_discount_percentage">
-                                                    <lang class="lang_percentages"> Percentage </lang>( % )
-                                                </label>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-3" style="padding: 0 !important;">
-                                            <div class="floating-label">
-                                                <input name="items_discount_amount" id="items_discount_amount"
-                                                    type="text" aria-describedby="basic-addon1"
-                                                    class="form-control border-control allow_decimal text-right" min="0"
-                                                    minlength="1" maxlength="10" value="0">
-
-                                                <input name="items_discount_percentage" id="items_discount_percentage"
-                                                    type="number" aria-describedby="basic-addon1"
-                                                    class="form-control border-control text-right" min="0" max="100"
-                                                    minlength="1" maxlength="4"
-                                                    onkeyup="this.value = PosnicPro.minmax(this.value, 0, 100)"
-                                                    onkeypress="return PosnicPro.isNumber(event)" value="0">
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 7 · Details (collapsed: description, images, dates, position) -->
                     </div>
                     <div class="tab-pane fade" id="item_tab_details" role="tabpanel">
 
@@ -560,6 +508,63 @@
                     <!-- 8 · Channels & extras (collapsed: flags, supplier) -->
                     </div>
                     <div class="tab-pane fade" id="item_tab_more" role="tabpanel">
+
+                    <div class="card m-b-30" id="show-hide-item-discount" style="display:none;">
+                        <div class="card-header">
+                            <h5 class="card-title">
+                                <lang class="lang_discount_title"> Discount </lang>
+                                <span id="item_discount" data-toggle="tooltip" data-placement="top" title=""
+                                    data-original-title="This changes does not apply to Existing products">
+                                    <i class="feather icon-help-circle"></i>
+                                </span>
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-row">
+                                <div class="form-group col-md-12">
+                                    <div class="row">
+                                        <div class="col-md-9">
+                                            <div class="custom-control custom-radio custom-control-inline">
+                                                <input type="radio" id="item_radio_discount_amount"
+                                                    name="radio_discount" class="custom-control-input"
+                                                    checked="checked">
+                                                <label class="custom-control-label" for="item_radio_discount_amount">
+                                                    <lang class="lang_amount_title"> Amount </lang>( <span
+                                                        class="display-currency"></span> )
+                                                </label>
+                                            </div>
+                                            <div class="custom-control custom-radio custom-control-inline">
+                                                <input type="radio" id="item_radio_discount_percentage"
+                                                    name="radio_discount" class="custom-control-input">
+                                                <label class="custom-control-label"
+                                                    for="item_radio_discount_percentage">
+                                                    <lang class="lang_percentages"> Percentage </lang>( % )
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3" style="padding: 0 !important;">
+                                            <div class="floating-label">
+                                                <input name="items_discount_amount" id="items_discount_amount"
+                                                    type="text" aria-describedby="basic-addon1"
+                                                    class="form-control border-control allow_decimal text-right" min="0"
+                                                    minlength="1" maxlength="10" value="0">
+
+                                                <input name="items_discount_percentage" id="items_discount_percentage"
+                                                    type="number" aria-describedby="basic-addon1"
+                                                    class="form-control border-control text-right" min="0" max="100"
+                                                    minlength="1" maxlength="4"
+                                                    onkeyup="this.value = PosnicPro.minmax(this.value, 0, 100)"
+                                                    onkeypress="return PosnicPro.isNumber(event)" value="0">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 7 · Details (collapsed: description, images, dates, position) -->
+
 
                     <div class="card m-b-30">
                         <div class="card-header" data-toggle="collapse" data-target="#item_extras_collapse"
