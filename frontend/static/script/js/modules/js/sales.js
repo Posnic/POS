@@ -7861,7 +7861,9 @@ PosnicPro.quotes = {
         PosnicPro.post({ url: 'quotes', data: JSON.stringify(payload) }, function (r) {
             if (r.type !== 'success') { PosnicPro.alert(r.type, r.message); return; }
             PosnicPro.alert('success', 'Quote ' + ((r.data && r.data.quote_id) || '') + ' saved');
-            PosnicPro.resetForm('sale');
+            // Owner rule: no questions after a quote save - the cart clears
+            // silently (the quote holds the lines now), no Reset Form modal.
+            PosnicPro.sales.clear.cartItems(false);
             // Land on the quote itself - print, email or WhatsApp it right there.
             if (r.data && r.data.id) { hasher.setHash('quotes/' + r.data.id); }
         }, function (xhr) {
