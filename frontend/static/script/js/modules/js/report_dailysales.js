@@ -688,20 +688,99 @@ PosnicPro.quickreport = {
     // either. Both go through the page path that already exists.
     if (width === 'a4' || !window.electronAPI || !window.electronAPI.printer
         || !window.electronAPI.printer.printReport) {
-      // Web / A4: print exactly the on-screen report (never the whole page,
-      // which prints blank through the app's print stylesheets).
-      PosnicPro.quickreport._captureReport(function (canvas) {
-        var img = canvas.toDataURL('image/png');
-        var w = window.open('', '_blank');
-        if (!w) { PosnicPro.alert('warning', 'Allow pop-ups so the report can print.'); return; }
-        w.document.write('<html><head><title>Day-End Summary</title>'
-          + '<style>@page{margin:12mm;}body{margin:0;}img{width:100%;display:block;}</style></head>'
-          + '<body><img src="' + img + '" onload="setTimeout(function(){window.focus();window.print();},60);"></body></html>');
-        w.document.close();
-      });
+      // Web / A4: a real vector PDF on its own white palette - never a
+      // themed screenshot (owner: professional A4 layout, theme-free).
+      PosnicPro.reportExport.printPdf('export_daily_report', PosnicPro.quickreport._exportMeta());
       return false;
     }
 
+    PosnicPro.quickreport._printSlipElectron(report, width);
+    return false;
+  },
+
+  /* Export identity shared by PDF / CSV / Excel. */
+  _exportMeta: function () {
+    var report = PosnicPro.quickreport.lastReport || {};
+    var b = report.branch || {};
+    return {
+      shop: b.branch_name || '',
+      address: b.branch_address || b.address || '',
+      phone: b.branch_telephone || b.phone || '',
+      title: 'Day-End Summary',
+      range: (report.from && report.to) ? report.from + ' - ' + report.to : '',
+      filename: 'day-end-summary'
+    };
+  },
+
+  exportCsv: function () {
+    if (!PosnicPro.quickreport.lastReport) { PosnicPro.alert('warning', 'Run the report first, then export it.'); return false; }
+    PosnicPro.reportExport.csv('export_daily_report', PosnicPro.quickreport._exportMeta());
+    return false;
+  },
+
+  exportXls: function () {
+    if (!PosnicPro.quickreport.lastReport) { PosnicPro.alert('warning', 'Run the report first, then export it.'); return false; }
+    PosnicPro.reportExport.xls('export_daily_report', PosnicPro.quickreport._exportMeta());
+    return false;
+  },
+
+  /*
+   * The dedicated day-close slip (owner: many shops have ONLY thermal
+   * printers). Desktop prints through the thermal rail; the web renders
+   * the same slip narrow and hands it to the browser's print dialog, so
+   * a driver-connected thermal printer works there too.
+   */
+  printDaySlip: function () {
+    var report = PosnicPro.quickreport.lastReport;
+    if (!report) { PosnicPro.alert('warning', 'Run the report first, then print the slip.'); return false; }
+    var width = PosnicPro.resolvePaperWidth();
+    if (window.electronAPI && window.electronAPI.printer && window.electronAPI.printer.printReport
+        && width !== 'a4') {
+      PosnicPro.quickreport._printSlipElectron(report, width);
+      return false;
+    }
+    var doc = PosnicPro.quickreport._slipDoc(report);
+    var esc = function (v) { return $('<i>').text(v == null ? '' : v).html(); };
+    var h = '<div class="slip">';
+    h += '<div class="c b big">' + esc(doc.shop) + '</div>';
+    h += '<div class="c b">' + esc(doc.title) + '</div><hr>';
+    doc.meta.forEach(function (m) { h += '<div class="r"><span>' + esc(m.label) + '</span><span>' + esc(m.value) + '</span></div>'; });
+    doc.sections.forEach(function (sec) {
+      h += '<hr>';
+      if (sec.name) { h += '<div class="b">' + esc(sec.name) + '</div>'; }
+      if (sec.type === 'pairs' || sec.type === 'blanks') {
+        (sec.rows || []).forEach(function (row) {
+          if (typeof row === 'string') { h += '<div class="r"><span>' + esc(row) + '</span><span class="fill"></span></div>'; }
+          else { h += '<div class="r"><span>' + esc(row.label) + '</span><span>' + esc(row.value) + '</span></div>'; }
+        });
+        if (sec.total) { h += '<div class="r b"><span>' + esc(sec.total.label) + '</span><span>' + esc(sec.total.value) + '</span></div>'; }
+      } else if (sec.type === 'total') {
+        h += '<div class="r b big"><span>' + esc(sec.label) + '</span><span>' + esc(sec.value) + '</span></div>';
+      } else if (sec.type === 'items') {
+        (sec.rows || []).forEach(function (row) {
+          h += '<div class="r"><span>' + esc(row.name) + ' x' + esc(row.qty) + '</span><span>' + esc(row.amount) + '</span></div>';
+        });
+      } else if (sec.type === 'note') {
+        h += '<div class="note">' + esc(sec.text) + '</div>';
+      }
+    });
+    h += '</div>';
+    var w = window.open('', '_blank');
+    if (!w) { PosnicPro.alert('warning', 'Allow pop-ups so the slip can print.'); return false; }
+    w.document.write('<html><head><title>Day-Close Slip</title><style>'
+      + '@page{margin:4mm;}body{margin:0;font-family:Consolas,Menlo,monospace;font-size:12px;color:#000;background:#fff;}'
+      + '.slip{width:72mm;}.c{text-align:center;}.b{font-weight:700;}.big{font-size:15px;}'
+      + '.r{display:flex;justify-content:space-between;gap:6px;padding:1px 0;}'
+      + '.fill{flex:1;border-bottom:1px dotted #000;margin-left:6px;}'
+      + 'hr{border:none;border-top:1px dashed #000;margin:5px 0;}.note{margin-top:6px;font-size:10px;}'
+      + '</style></head><body>' + h
+      + '<script>setTimeout(function(){window.focus();window.print();},80);<' + '/script></body></html>');
+    w.document.close();
+    return false;
+  },
+
+  /* The slip document, one builder for both print rails. */
+  _slipDoc: function (report) {
     var money = function (n) { return Number(n || 0).toFixed(2); };
 
     // Cash is the figure the slip exists for, so it is named rather than left
@@ -758,7 +837,11 @@ PosnicPro.quickreport = {
         { type: 'note', text: 'Full item detail is on the A4 copy and the emailed PDF.' }
       ]
     };
+    return doc;
+  },
 
+  _printSlipElectron: function (report, width) {
+    var doc = PosnicPro.quickreport._slipDoc(report);
     Promise.resolve(PosnicPro.resolveReceiptPrinter())
     .then(function (chosen) {
       return chosen || window.electronAPI.printer.getDefault();
@@ -824,6 +907,11 @@ PosnicPro.quickreport = {
   },
 
   _buildPdf: function () {
+    PosnicPro.reportExport.pdf('export_daily_report', PosnicPro.quickreport._exportMeta());
+    return false;
+  },
+
+  _buildPdfLegacyScreenshot: function () {
     // The bundled jsPDF exposes its constructor differently across builds:
     // window.jspdf.jsPDF (2.x UMD returning {jsPDF}), window.jsPDF (1.x global),
     // or window.jspdf itself when the UMD returns the constructor directly (our

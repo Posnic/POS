@@ -107,9 +107,30 @@
                                                             <button class="btn btn-primary-rgba pull-right blur_val"
                                                                 onclick="return PosnicPro.quickreport.printDailyReport();"
                                                                 data-toggle="tooltip" data-placement="top"
-                                                                title="Print" type="button"
+                                                                title="Print (A4)" type="button"
                                                                 style="margin-right: 5px;font-size: 20px;">
                                                                 <i class="fa fa-print"></i>
+                                                            </button>
+                                                            <button class="btn btn-success-rgba pull-right blur_val"
+                                                                onclick="return PosnicPro.quickreport.printDaySlip();"
+                                                                data-toggle="tooltip" data-placement="top"
+                                                                title="Day-close slip (thermal)" type="button"
+                                                                style="margin-right: 5px;font-size: 20px;">
+                                                                <i class="fa fa-sticky-note-o"></i>
+                                                            </button>
+                                                            <button class="btn btn-secondary-rgba pull-right blur_val"
+                                                                onclick="return PosnicPro.quickreport.exportCsv();"
+                                                                data-toggle="tooltip" data-placement="top"
+                                                                title="Export CSV" type="button"
+                                                                style="margin-right: 5px;font-size: 20px;">
+                                                                <i class="fa fa-file-text-o"></i>
+                                                            </button>
+                                                            <button class="btn btn-secondary-rgba pull-right blur_val"
+                                                                onclick="return PosnicPro.quickreport.exportXls();"
+                                                                data-toggle="tooltip" data-placement="top"
+                                                                title="Export Excel" type="button"
+                                                                style="margin-right: 5px;font-size: 20px;">
+                                                                <i class="fa fa-file-excel-o"></i>
                                                             </button>
                                                             <button class="btn btn-danger-rgba pull-right blur_val"
                                                                 onclick="return PosnicPro.quickreport.dailyReportPdf();"

@@ -674,6 +674,211 @@ PosnicPro = {
     },
 
     /*
+     * Report exports (owner ask): every report should leave the screen as a
+     * professional A4 PDF, a CSV, or an Excel sheet - never a themed
+     * screenshot. gather() walks the on-screen report so every export agrees
+     * with the page; the PDF is drawn as real text on white with its own
+     * fixed palette, independent of the app theme.
+     */
+    reportExport: {
+        /* Currency signs jsPDF's built-in fonts cannot draw. */
+        _pdfText: function (t) {
+            return String(t == null ? '' : t)
+                .replace(/\u20b9\s?/g, 'Rs ')
+                .replace(/\u20ac\s?/g, 'EUR ')
+                .replace(/\u00a3\s?/g, 'GBP ')
+                .replace(/\s+/g, ' ').trim();
+        },
+        _isNum: function (t) {
+            var c = String(t || '').replace(/[\u20b9$\u20ac\u00a3,%\s]|Rs/g, '');
+            return c !== '' && /^-?[\d.,]+$/.test(c);
+        },
+        /* Headings and tables in DOM order; a heading names the tables after it. */
+        gather: function (elId) {
+            var el = document.getElementById(elId);
+            if (!el) { return null; }
+            var out = [];
+            var title = '';
+            $(el).find('h1,h2,h3,h4,h5,h6,table').each(function () {
+                if (this.tagName !== 'TABLE') {
+                    var t = $.trim($(this).text()).replace(/\s+/g, ' ');
+                    if (t) { title = t; }
+                    return;
+                }
+                if (!$(this).is(':visible')) { return; }
+                var rows = [];
+                $(this).find('tr').each(function () {
+                    var cells = [];
+                    $(this).children('th,td').each(function () {
+                        cells.push($.trim($(this).text()).replace(/\s+/g, ' '));
+                    });
+                    if (cells.join('') !== '') { rows.push({ head: $(this).children('th').length > 0, cells: cells }); }
+                });
+                if (rows.length) { out.push({ title: title, rows: rows }); title = ''; }
+            });
+            return out.length ? out : null;
+        },
+        _buildDoc: function (elId, meta, jsPDFCtor) {
+            var ex = PosnicPro.reportExport;
+            var sections = ex.gather(elId);
+            if (!sections) { PosnicPro.alert('warning', 'Run the report first, then export it.'); return null; }
+            var doc = new jsPDFCtor({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+            var W = 210, M = 14, bottom = 283;
+            var y = M;
+            var totalAlias = '{tp}';
+            var footer = function () {
+                doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(140, 148, 160);
+                doc.text('Page ' + doc.internal.getNumberOfPages() + ' of ' + totalAlias, W - M, 292, { align: 'right' });
+                doc.text(ex._pdfText(meta.shop || '') + '  -  generated ' + new Date().toLocaleString('en-IN'), M, 292);
+            };
+            // Header band: shop identity left, report identity right.
+            doc.setTextColor(26, 32, 44);
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(14);
+            doc.text(ex._pdfText(meta.shop || 'Report'), M, y + 2);
+            doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(110, 118, 130);
+            var sub = [meta.address, meta.phone].filter(Boolean).map(ex._pdfText);
+            for (var i = 0; i < sub.length; i++) { doc.text(sub[i], M, y + 7 + i * 4); }
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(26, 32, 44);
+            doc.text(ex._pdfText(meta.title || 'Report'), W - M, y + 2, { align: 'right' });
+            doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(110, 118, 130);
+            if (meta.range) { doc.text(ex._pdfText(meta.range), W - M, y + 7, { align: 'right' }); }
+            y += 7 + Math.max(sub.length, 1) * 4 + 3;
+            doc.setDrawColor(45, 55, 72); doc.setLineWidth(0.5);
+            doc.line(M, y, W - M, y);
+            y += 6;
+
+            var lineH = 3.9, padX = 2, padY = 1.6;
+            sections.forEach(function (sec) {
+                var cols = 0;
+                sec.rows.forEach(function (r) { cols = Math.max(cols, r.cells.length); });
+                if (!cols) { return; }
+                // Column widths: text-heavy columns take double weight.
+                var sample = (sec.rows[1] || sec.rows[0]).cells;
+                var weights = [];
+                for (var c = 0; c < cols; c++) {
+                    weights.push(ex._isNum(sample[c]) || String((sec.rows[0].cells[c] || '')).length <= 5 ? 1 : 2.2);
+                }
+                var wSum = weights.reduce(function (a, b) { return a + b; }, 0);
+                var tableW = W - M * 2;
+                var colW = weights.map(function (w) { return (w / wSum) * tableW; });
+
+                if (y + 14 > bottom) { footer(); doc.addPage(); y = M; }
+                if (sec.title) {
+                    doc.setFont('helvetica', 'bold'); doc.setFontSize(10.5); doc.setTextColor(26, 32, 44);
+                    doc.text(ex._pdfText(sec.title), M, y);
+                    y += 4.5;
+                }
+                var headRow = sec.rows[0].head ? sec.rows[0] : null;
+                var drawRow = function (r, isHead, zebra) {
+                    doc.setFontSize(8.3);
+                    var linesPer = r.cells.map(function (cell, c) {
+                        return doc.splitTextToSize(ex._pdfText(cell), colW[Math.min(c, colW.length - 1)] - padX * 2);
+                    });
+                    var maxLines = 1;
+                    linesPer.forEach(function (l) { maxLines = Math.max(maxLines, Math.min(l.length, 3)); });
+                    var rowH = maxLines * lineH + padY * 2;
+                    if (y + rowH > bottom) {
+                        footer(); doc.addPage(); y = M;
+                        if (headRow && !isHead) { drawRow(headRow, true, false); }
+                    }
+                    if (isHead) { doc.setFillColor(45, 55, 72); doc.rect(M, y, tableW, rowH, 'F'); }
+                    else if (zebra) { doc.setFillColor(247, 248, 250); doc.rect(M, y, tableW, rowH, 'F'); }
+                    doc.setFont('helvetica', isHead ? 'bold' : 'normal');
+                    if (isHead) { doc.setTextColor(255, 255, 255); } else { doc.setTextColor(40, 46, 58); }
+                    var x = M;
+                    for (var c = 0; c < r.cells.length; c++) {
+                        var wCol = colW[Math.min(c, colW.length - 1)];
+                        var lines = linesPer[c].slice(0, 3);
+                        var right = !isHead && ex._isNum(r.cells[c]);
+                        for (var li = 0; li < lines.length; li++) {
+                            if (right) { doc.text(lines[li], x + wCol - padX, y + padY + lineH * (li + 0.78), { align: 'right' }); }
+                            else { doc.text(lines[li], x + padX, y + padY + lineH * (li + 0.78)); }
+                        }
+                        x += wCol;
+                    }
+                    doc.setDrawColor(226, 230, 236); doc.setLineWidth(0.15);
+                    doc.line(M, y + rowH, M + tableW, y + rowH);
+                    y += rowH;
+                };
+                var zebra = false;
+                sec.rows.forEach(function (r, i) {
+                    var isHead = r.head && i === 0;
+                    drawRow(r, isHead, !isHead && zebra);
+                    if (!isHead) { zebra = !zebra; }
+                });
+                y += 7;
+            });
+            footer();
+            if (typeof doc.putTotalPages === 'function') { doc.putTotalPages(totalAlias); }
+            return doc;
+        },
+        _withPdf: function (elId, meta, use) {
+            PosnicPro.lazy.load('jspdf').then(function () {
+                var C = (window.jspdf && typeof window.jspdf.jsPDF === 'function') ? window.jspdf.jsPDF
+                    : (typeof window.jsPDF === 'function') ? window.jsPDF
+                    : (typeof window.jspdf === 'function') ? window.jspdf : null;
+                if (!C) { PosnicPro.alert('error', 'PDF tools not loaded - refresh and retry.'); return; }
+                var doc = PosnicPro.reportExport._buildDoc(elId, meta, C);
+                if (doc) { use(doc); }
+            });
+        },
+        pdf: function (elId, meta) {
+            PosnicPro.reportExport._withPdf(elId, meta, function (doc) {
+                doc.save((meta.filename || 'report') + '.pdf');
+            });
+        },
+        printPdf: function (elId, meta) {
+            PosnicPro.reportExport._withPdf(elId, meta, function (doc) {
+                if (typeof doc.autoPrint === 'function') { doc.autoPrint(); }
+                var url = doc.output('bloburl');
+                var w = window.open(url, '_blank');
+                if (!w) { PosnicPro.alert('warning', 'Allow pop-ups so the report can print.'); }
+            });
+        },
+        _download: function (blob, filename) {
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 400);
+        },
+        csv: function (elId, meta) {
+            var sections = PosnicPro.reportExport.gather(elId);
+            if (!sections) { PosnicPro.alert('warning', 'Run the report first, then export it.'); return; }
+            var esc = function (v) { return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+            var lines = [];
+            if (meta.title) { lines.push(esc(meta.title + (meta.range ? ' (' + meta.range + ')' : ''))); lines.push(''); }
+            sections.forEach(function (sec) {
+                if (sec.title) { lines.push(esc(sec.title)); }
+                sec.rows.forEach(function (r) { lines.push(r.cells.map(esc).join(',')); });
+                lines.push('');
+            });
+            var blob = new Blob(['\ufeff' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+            PosnicPro.reportExport._download(blob, (meta.filename || 'report') + '.csv');
+        },
+        xls: function (elId, meta) {
+            var sections = PosnicPro.reportExport.gather(elId);
+            if (!sections) { PosnicPro.alert('warning', 'Run the report first, then export it.'); return; }
+            var esc = function (v) { return $('<i>').text(v).html(); };
+            var html = '<html><head><meta charset="utf-8"><style>td,th{border:1px solid #ccc;padding:4px 8px;font-family:Arial;font-size:12px;}th{background:#2d3748;color:#fff;}h3{font-family:Arial;}</style></head><body>';
+            if (meta.title) { html += '<h2>' + esc(meta.title) + '</h2>' + (meta.range ? '<p>' + esc(meta.range) + '</p>' : ''); }
+            sections.forEach(function (sec) {
+                if (sec.title) { html += '<h3>' + esc(sec.title) + '</h3>'; }
+                html += '<table>';
+                sec.rows.forEach(function (r) {
+                    var tag = r.head ? 'th' : 'td';
+                    html += '<tr>' + r.cells.map(function (c) { return '<' + tag + '>' + esc(c) + '</' + tag + '>'; }).join('') + '</tr>';
+                });
+                html += '</table><br>';
+            });
+            html += '</body></html>';
+            var blob = new Blob(['\ufeff' + html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+            PosnicPro.reportExport._download(blob, (meta.filename || 'report') + '.xls');
+        },
+    },
+
+    /*
      * Realtime (S2): the till listens instead of asking.
      *
      * One SSE connection per till. The server publishes a coarse
