@@ -988,6 +988,7 @@ PosnicPro = {
      * screen shows - same principle as the day-end summary.
      */
     reportPages: [
+        { root: '#salereport_new', title: 'Sales Report', range: '#view_sale_report_daterange', file: 'sales-report' },
         { root: '#categoryreport_new', title: 'Category Report', range: '.view_category_report_daterange', file: 'category-report' },
         { root: '#customerreport_new', title: 'Customer Report', range: '#view_customer_report_daterange', file: 'customer-report' },
         { root: '#expensesreport_new', title: 'Expense Report', range: '#view_expenses_report_daterange', file: 'expense-report' },
