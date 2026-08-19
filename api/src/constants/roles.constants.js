@@ -89,6 +89,8 @@ const pos = (o = {}) => ({
   register_close: !!o.register_close,
   cash_in_out: !!o.cash_in_out,
   cash_drop: !!o.cash_drop,
+  // Default allowed: selling fast is the norm; deny is the explicit act.
+  quick_sale: o.quick_sale !== false,
 });
 const POS_FULL = {
   discount_apply: true,
@@ -103,6 +105,7 @@ const POS_FULL = {
   register_close: true,
   cash_in_out: true,
   cash_drop: true,
+  quick_sale: true,
 };
 
 const ROLE_KEYS = {

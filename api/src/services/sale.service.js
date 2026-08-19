@@ -772,6 +772,18 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
     let paymentPending = 0.0;
 
     // PHP line 547-552: Check if partial_check is 'true'
+    /*
+     * Tip in the bill (TIP_IN_TOTAL_DESIGN.md, revised): India default keeps
+     * the tip OUT of the payable; when the till ticked "add to bill"
+     * (tip_in_total), the amount due grows by the tip. Flag absent =>
+     * effectiveDue === finalSaleTotAmount and every comparison below is
+     * byte-identical to before.
+     */
+    const tipInTotal = String(data.tip_in_total) === 'true' && parseFloat(data.tip_amount || 0) > 0;
+    const effectiveDue =
+      finalSaleTotAmount +
+      (tipInTotal ? Math.max(0, round2(parseFloat(data.tip_amount) || 0, 2)) : 0);
+
     if (isset(data.partial_check) && String(data.partial_check) === 'true') {
       // PHP line 548: $partialCheck = $data['partial_check']; (stores string 'true', not boolean)
       partialCheck = data.partial_check;
@@ -782,25 +794,25 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
       paymentStatus =
         process === 'Hold'
           ? 'Unpaid'
-          : finalSaleTotAmount <= parseFloat(data.partial_balance)
+          : effectiveDue <= parseFloat(data.partial_balance)
             ? 'Paid'
             : 'Partialy Paid';
       // PHP line 551: $paymentPending = ($process === 'Hold') ? 0.00 : ($sale_tot_amount <= $data['partial_balance'] ? 0.00 : $sale_tot_amount - (float) $data['partial_balance']);
       paymentPending =
         process === 'Hold'
           ? 0.0
-          : finalSaleTotAmount <= parseFloat(data.partial_balance)
+          : effectiveDue <= parseFloat(data.partial_balance)
             ? 0.0
-            : finalSaleTotAmount - parseFloat(data.partial_balance);
+            : effectiveDue - parseFloat(data.partial_balance);
     }
 
     // PHP line 571-579: If unpaid toggle is set or payment_mode is empty, force Unpaid status
     if (!empty(data.unpaid) && String(data.unpaid) === 'true') {
       paymentStatus = 'Unpaid';
-      paymentPending = finalSaleTotAmount;
+      paymentPending = effectiveDue;
     } else if (empty(data.payment_mode) || String(data.payment_mode).trim() === '') {
       paymentStatus = 'Unpaid';
-      paymentPending = finalSaleTotAmount;
+      paymentPending = effectiveDue;
     }
 
     // Derive paid_amount and balance so Mongoose pre-save hook preserves PHP semantics
@@ -988,6 +1000,11 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
         data.tip_amount !== undefined && data.tip_amount !== null
           ? Math.max(0, round2(parseFloat(data.tip_amount) || 0, 2))
           : existingSale?.tip_amount || 0,
+      // Presence-gated: only an explicit tick ever sets it; edits keep it.
+      tip_in_total:
+        data.tip_in_total !== undefined
+          ? String(data.tip_in_total) === 'true'
+          : existingSale?.tip_in_total || false,
 
       // ...
       sale_method: saleMethod,
