@@ -7313,13 +7313,9 @@ $(window).resize(function () {
         $(v).width(colWidth[i]);
     });
 }).resize();
-$('#sales_new_item_name').scannerDetection({
-    timeBeforeScanTest: 200, // wait for the next character for upto 200ms
-    avgTimeByChar: 40, // it's not a barcode if a character takes longer than 100ms
-    preventDefault: true,
-    endChar: [13],
-    onComplete: function (barcode, qty) {
-        validScan = true;
+/* ONE resolution path for every way a barcode arrives - hardware scanner
+   wedge or the camera (L3). Looks the code up, stock-checks, adds the line. */
+PosnicPro.sales.addByBarcode = function (barcode) {
         var params = {
             url: 'items/getOnlineItemsAjaxList',
             data: 'query=' + barcode + '&type=barcode'
@@ -7367,9 +7363,80 @@ $('#sales_new_item_name').scannerDetection({
             var response = jQuery.parseJSON(xhr.responseText);
             PosnicPro.alert(response.type, response.message);
         });
+};
+$('#sales_new_item_name').scannerDetection({
+    timeBeforeScanTest: 200, // wait for the next character for upto 200ms
+    avgTimeByChar: 40, // it's not a barcode if a character takes longer than 100ms
+    preventDefault: true,
+    endChar: [13],
+    onComplete: function (barcode, qty) {
+        validScan = true;
+        PosnicPro.sales.addByBarcode(barcode);
     },
     onError: function (string, qty) {
         $('#sales_new_item_name').val($('#sales_new_item_name').val() + string).trigger('input');
+    }
+});
+
+/*
+ * Camera scan (Loyverse study L3): the browser's BarcodeDetector where it
+ * exists (Chromium on Android/desktop - exactly the cheap devices busy
+ * shops carry). The button only shows when the capability is real; codes
+ * land in the SAME addByBarcode path as the hardware wedge.
+ */
+PosnicPro.sales.cameraScan = {
+    _stream: null,
+    _timer: null,
+    open: function () {
+        if (!('BarcodeDetector' in window)) {
+            PosnicPro.alert('warning', 'Camera scanning needs Chrome or Edge on this device');
+            return;
+        }
+        if (!$('#camera_scan_modal').length) {
+            $('body').append(
+                '<div class="modal fade" id="camera_scan_modal" tabindex="-1" role="dialog" aria-hidden="true">' +
+                '<div class="modal-dialog modal-dialog-centered" role="document"><div class="modal-content">' +
+                '<div class="modal-header"><h5 class="modal-title"><i class="feather icon-camera mr-2"></i>Scan an item</h5>' +
+                '<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>' +
+                '<div class="modal-body p-2 text-center">' +
+                '<video id="camera_scan_video" autoplay playsinline muted style="width:100%;border-radius:6px;background:#000;min-height:240px;"></video>' +
+                '<small class="text-muted d-block mt-1">Point the camera at a barcode</small>' +
+                '</div></div></div></div>');
+            $('#camera_scan_modal').on('hidden.bs.modal', PosnicPro.sales.cameraScan.stop);
+        }
+        var self = PosnicPro.sales.cameraScan;
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }).then(function (stream) {
+            self._stream = stream;
+            var video = document.getElementById('camera_scan_video');
+            $('#camera_scan_modal').modal('show');
+            video.srcObject = stream;
+            var detector = new window.BarcodeDetector();
+            self._timer = setInterval(function () {
+                if (!video.videoWidth) { return; }
+                detector.detect(video).then(function (codes) {
+                    if (codes && codes.length && codes[0].rawValue) {
+                        var code = codes[0].rawValue;
+                        $('#camera_scan_modal').modal('hide');
+                        PosnicPro.sales.addByBarcode(code);
+                    }
+                }).catch(function () { /* keep looking */ });
+            }, 350);
+        }).catch(function () {
+            PosnicPro.alert('error', 'Could not open the camera - check permission');
+        });
+    },
+    stop: function () {
+        var self = PosnicPro.sales.cameraScan;
+        if (self._timer) { clearInterval(self._timer); self._timer = null; }
+        if (self._stream) {
+            self._stream.getTracks().forEach(function (t) { t.stop(); });
+            self._stream = null;
+        }
+    }
+};
+$(document).ready(function () {
+    if ('BarcodeDetector' in window && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        $('#camera_scan_btn').show();
     }
 });
 $('#sales_new_item_name').on('keydown.autocomplete keyup.autocomplete', function () {
