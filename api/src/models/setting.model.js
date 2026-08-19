@@ -294,19 +294,68 @@ class SettingModel extends BaseModel {
   }
 
   async getDefaultCustomerSupplier(customerId, supplierId) {
-    if (!customerId || !supplierId) {
+    if (!customerId || (!supplierId && !this.branchId)) {
       return {
         status: false,
         data: null,
         message: 'Customer and supplier ids are required',
       };
     }
+    // (supplier may be empty - with a branch context it self-heals below)
 
     try {
       const [customersCollection, suppliersCollection] = await Promise.all([
         this.getCollection('customers'),
         this.getCollection('suppliers'),
       ]);
+
+      /*
+       * Self-heal on branch switch (owner report): a branch without a
+       * default supplier gets its General Supplier found or created and
+       * the branch doc repointed - same medicine as the Walk-in customer.
+       */
+      if (!supplierId && this.branchId) {
+        const healLicense = this.licenseId ? { license: this.normalizeId(this.licenseId) } : {};
+        const branchIdNorm = this.normalizeId(this.branchId);
+        let general = await suppliersCollection.findOne({
+          branch_id: branchIdNorm,
+          name: { $regex: /general supplier/i },
+          ...healLicense,
+        });
+        if (!general) {
+          const now = new Date();
+          const seed = {
+            branch_id: branchIdNorm,
+            name: 'General Supplier',
+            // suppliers carries a unique index on email - unique per branch.
+            email: `anonymous-supplier-${branchIdNorm}@posnic.local`,
+            phone: '',
+            address: '',
+            sortname: '',
+            country: '',
+            state: '',
+            city: '',
+            gst: 'disable',
+            gst_number: '',
+            gst_type: 'consumer',
+            created_date: now,
+            updated_date: now,
+          };
+          if (this.licenseId) seed.license = this.normalizeId(this.licenseId);
+          const ins = await suppliersCollection.insertOne(seed);
+          general = { ...seed, _id: ins.insertedId };
+        }
+        try {
+          const branches = await this.getCollection('branch');
+          await branches.updateOne(
+            { _id: branchIdNorm },
+            { $set: { default_supplier: general._id } }
+          );
+        } catch (e) {
+          /* pointer update is best-effort */
+        }
+        supplierId = general._id;
+      }
 
       const licenseFilter = this.licenseId ? { license: this.normalizeId(this.licenseId) } : {};
 
