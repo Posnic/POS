@@ -2799,3 +2799,19 @@ tr.add-disc-row.tip-only td.discount-input { visibility: hidden; }
     -webkit-overflow-scrolling: touch;
 }
 #item_form_tabs .nav-link { padding: 12px 8px; }
+
+/* Recent sales: rows a till can read and tap - customer leads, amount
+   and status on the right, actions as round touch targets. */
+.rs-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-bottom: 1px solid rgba(128, 128, 128, 0.14); transition: background 0.12s ease; }
+.rs-row:hover { background: rgba(128, 128, 128, 0.07); }
+.rs-main { flex: 1 1 auto; min-width: 0; }
+.rs-cust { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rs-meta { font-size: 11.5px; color: #8a94a6; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rs-side { flex: 0 0 auto; text-align: right; }
+.rs-amt { font-weight: 700; font-variant-numeric: tabular-nums; }
+.rs-pill { display: inline-block; font-size: 10.5px; line-height: 1; padding: 3px 8px; border-radius: 9px; margin-top: 3px; }
+.rs-pill.paid { background: rgba(43, 183, 111, 0.13); color: #23985c; }
+.rs-pill.unpaid { background: rgba(255, 159, 67, 0.15); color: #d9820e; }
+.rs-pill.hold { background: rgba(80, 111, 228, 0.13); color: #506fe4; }
+.rs-actions { flex: 0 0 auto; display: flex; gap: 6px; }
+.rs-act { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 9px; }
