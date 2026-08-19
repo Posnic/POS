@@ -706,6 +706,9 @@ PosnicPro = {
                     return;
                 }
                 if (!$(this).is(':visible')) { return; }
+                // Identity blocks (page titles, shop headers) opt out - the
+                // PDF draws its own header band.
+                if ($(this).closest('[data-export-skip]').length || $(this).is('[data-export-skip]')) { return; }
                 var rows = [];
                 $(this).find('tr').each(function () {
                     var cells = [];
@@ -714,7 +717,12 @@ PosnicPro = {
                     });
                     if (cells.join('') !== '') { rows.push({ head: $(this).children('th').length > 0, cells: cells }); }
                 });
-                if (rows.length) { out.push({ title: title, rows: rows }); title = ''; }
+                if (rows.length) {
+                    // Reports often mark their header row with styled <td>s,
+                    // not <th> - treat the first of several rows as the header.
+                    if (rows.length > 1) { rows[0].head = true; }
+                    out.push({ title: title, rows: rows }); title = '';
+                }
             });
             return out.length ? out : null;
         },
