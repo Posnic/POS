@@ -15,6 +15,7 @@ jest.mock('../../../src/controllers/receivings.controller', () => ({
   returnReceiving: jest.fn(),
   getDataChanges: jest.fn(),
   receivingsPdf: jest.fn(),
+  emailToSupplier: jest.fn(),
   exportReceivings: jest.fn(),
   supplierReceivingDetails: jest.fn(),
   uploadReceivingImage: jest.fn(),

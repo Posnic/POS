@@ -1103,6 +1103,31 @@ PosnicPro.receivings.view = {
         window.open(API_URL + 'receivings/receivingsPdf?id=' + id, "_blank");
         hasher.setHash('receivings');
     },
+    /* Loyverse study L2: the same PDF, mailed to the supplier. Leave the
+       address empty to use the supplier's saved email - the server owns
+       that lookup and answers honestly when there is none. */
+    emailToSupplier: function (id) {
+        swal({
+            title: 'Email purchase order',
+            text: 'Leave empty to use the supplier\'s saved email address',
+            input: 'text',
+            inputPlaceholder: 'supplier@example.com (optional)',
+            showCancelButton: true,
+            confirmButtonText: 'Send'
+        }).then(function (result) {
+            if (result.dismiss) { return; }
+            PosnicPro.post({
+                url: 'receivings/emailToSupplier',
+                data: JSON.stringify({ id: id, to: (result.value || '').trim() || undefined })
+            }, function (response) {
+                PosnicPro.alert(response.type, response.message);
+            }, function (xhr) {
+                var resp = {};
+                try { resp = JSON.parse(xhr.responseText); } catch (e) { /* plain */ }
+                PosnicPro.alert('error', resp.message || 'Could not send the email');
+            });
+        });
+    },
     exportReceivings: function () {
         PosnicPro.exportTableData(PosnicPro.receivings_checkbox, 'receivings');
     },

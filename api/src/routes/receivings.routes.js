@@ -83,6 +83,9 @@ router.get('/getDataChanges', bindController(receivingsController.getDataChanges
 // PHP: receivingsPdf() - Generate PDF
 router.get('/receivingsPdf', bindController(receivingsController.receivingsPdf));
 
+// Email the same PDF to the supplier (outward-facing: receiving write).
+router.post('/emailToSupplier', bindController(receivingsController.emailToSupplier));
+
 // PHP: exportReceivings() - Excel export
 router.post('/exportReceivings', bindController(receivingsController.exportReceivings));
 

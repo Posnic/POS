@@ -1244,6 +1244,116 @@ class ReceivingsController extends BaseController {
   }
 
   /**
+   * Email a receiving/purchase order to its supplier as a PDF attachment
+   * (Loyverse study L2). The PDF is the same document receivingsPdf streams,
+   * collected into a buffer instead of a response. Outward-facing, so it
+   * requires receiving WRITE. Degrades honestly when the server has no mail
+   * transport configured.
+   */
+  async emailToSupplier(req, res) {
+    try {
+      if (req.user?.access?.receiving?.write === false) {
+        return this.error(res, 'Unauthorized access', 403);
+      }
+      const { generateReceivingPDF } = require('../utils/pdfGenerator');
+      const { PassThrough } = require('stream');
+      const id = req.body.id;
+      if (!id) return this.error(res, 'Receiving ID is required', 400);
+
+      const receivingQuery = req.tenantContext
+        ? Receiving.findOne({
+            _id: id,
+            branch_id: req.tenantContext.branchId,
+            branch_name: req.tenantContext.branchName,
+            license: req.tenantContext.licenseId,
+          })
+        : Receiving.findById(id);
+      const receiving = await receivingQuery
+        .populate('supplier', 'supplier_name supplier_phone supplier_email supplier_address')
+        .populate('items.item', 'item_name item_unit')
+        .lean();
+      if (!receiving) return this.error(res, 'Receiving Details Not Found', 404);
+
+      const branchId = req.tenantContext?.branchId;
+      const branch = await (
+        req.tenantContext
+          ? Branch.findOne({ _id: branchId, license: req.tenantContext.licenseId })
+          : Branch.findById(branchId)
+      ).lean();
+      if (!branch) return this.error(res, 'Branch Details Not Found', 404);
+
+      const to = String(req.body.to || receiving.supplier?.supplier_email || '').trim();
+      if (!to || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
+        return this.error(
+          res,
+          'The supplier has no email address - add one on the supplier, or type an address',
+          400
+        );
+      }
+
+      /* Collect the PDF into a buffer: the generator writes to a response,
+         so hand it a stream wearing a response's hat. */
+      const sink = new PassThrough();
+      sink.setHeader = () => {};
+      const chunks = [];
+      sink.on('data', (c) => chunks.push(c));
+      const done = new Promise((resolve, reject) => {
+        sink.on('end', resolve);
+        sink.on('error', reject);
+      });
+      generateReceivingPDF({
+        data: receiving,
+        branch,
+        res: sink,
+        config: {
+          title: 'Purchase Invoice.',
+          idField: 'receiving_id',
+          itemsField: 'items',
+          supplierField: 'supplier',
+          dateField: 'date',
+        },
+      });
+      await done;
+      const pdfBuffer = Buffer.concat(chunks);
+
+      const { Email } = require('../utils/email');
+      const transporter = new Email(
+        { email: to, name: receiving.supplier?.supplier_name },
+        ''
+      ).newTransport();
+      const shopName = branch.branch_name || 'Posnic POS';
+      const orderId = receiving.receiving_id || String(receiving._id);
+      const info = await transporter.sendMail({
+        from: `${shopName} <${process.env.EMAIL_FROM || 'no-reply@posnic.local'}>`,
+        to,
+        subject:
+          String(req.body.subject || '').trim() || `Purchase order from ${shopName} (${orderId})`,
+        text:
+          String(req.body.message || '').trim() ||
+          `Please find attached purchase order ${orderId} from ${shopName}.`,
+        attachments: [{ filename: `${orderId}.pdf`, content: pdfBuffer }],
+      });
+      /* The dev fallback transport prints to console instead of delivering -
+         say so rather than claiming a send that never left the box. */
+      if (transporter.options && transporter.options.jsonTransport) {
+        return this.error(
+          res,
+          'Email is not configured on this server - the PDF was generated but not sent',
+          503
+        );
+      }
+      return this.success(
+        res,
+        { to, messageId: info.messageId || '' },
+        'Purchase order emailed to supplier'
+      );
+    } catch (error) {
+      console.error('Error in emailToSupplier:', error);
+      return this.error(res, error.message, 500);
+    }
+  }
+
+  /**
    * Alias for getOne - used by route GET /receivings/:id
    */
   async getById(req, res) {

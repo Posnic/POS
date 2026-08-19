@@ -175,6 +175,8 @@ PosnicPro.receivings = {
                     var process_class = "";
                     var print_icon = '<a data-module = "receiving" data-access = "read" data-toggle="tooltip" title="Receiving Print" href="#/receivings/' + row._id + '/print" data-id="receivings/' + row._id + '/print" class="point-cursor mobile_tooltip"><i class="feather icon-printer"></i></a>';
                     var pdf_icon = '<a data-module = "receiving" data-access = "read" href="#/receivings/' + row._id + '/pdf" data-id="receivings/' + row._id + '/pdf"  data-toggle="tooltip" title="Pdf" class="point-cursor mobile_tooltip"><i class="feather icon-file"></i></a>';
+                    // Loyverse study L2: send the same PDF to the supplier.
+                    var email_icon = '<a data-module = "receiving" data-access = "write" href="javascript:void(0)" onclick="PosnicPro.receivings.view.emailToSupplier(\'' + row._id + '\');" data-toggle="tooltip" title="Email to supplier" class="point-cursor mobile_tooltip"><i class="feather icon-mail"></i></a>';
                     var view_icon = '<a data-module = "receiving" data-access = "read"  href="#/receivings/' + row._id + '" data-id="receivings/' + row._id + '"   data-toggle="tooltip" title="View" class="point-cursor mobile_tooltip"><i class="feather icon-eye"></i></a>';
                     var edit_icon = '<a data-module = "receiving" data-access = "write" href="#/receivings/' + row._id + '/edit" data-id="receivings/' + row._id + '/edit" id="edit_receiving_' + row._id + '" data-toggle="tooltip" title="Edit" class="point-cursor mobile_tooltip"><i class="feather icon-edit"></i></a>';
                     var return_icon = '<a data-module = "receiving" data-access = "write" href="#/receivings/' + row._id + '/return" data-id="receivings/' + row._id + '/return" id="return_receiving_' + row._id + '" data-toggle="tooltip" title="Receiving Return" class="point-cursor mobile_tooltip"><i class="feather icon-corner-up-left"></i></a>';
@@ -189,6 +191,7 @@ PosnicPro.receivings = {
                             var receiving_status = 'FullReturn';
                             process_class = "badge badge-danger-inverse";
                             pdf_icon = '<span class="show_pdf_icon" style="display:none;"></span>';
+                            email_icon = '<span class="show_email_icon" style="display:none;"></span>';
                             print_icon = '<span class="show_print_icon" style="display:none;"></span>';
                             return_icon = '<span class="show_return_icon" style="display:none;"></span>';
                             edit_icon = '<span class="show_edit_icon" style="display:none;"></span>';
@@ -210,6 +213,7 @@ PosnicPro.receivings = {
                     var action = '<div id="onclick-toolbar-options_' + i + '" class="hidden">' +
                             '<span class="show_print_icon" style="display:none;">' + print_icon + ' </span>' +
                             '<span class="show_pdf_icon" style="display:none;">' + pdf_icon + ' </span>' +
+                            '<span class="show_email_icon" style="display:none;">' + email_icon + ' </span>' +
                             '<span class="show_return_icon" style="display:none;">' + return_icon + ' </span>' +
                             '<span class="show_received_icon" style="display:none;">' + received_icon + ' </span>' +
                             '<span class="show_view_icon" style="display:none;">' + view_icon + ' </span>' +
