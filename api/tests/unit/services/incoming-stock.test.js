@@ -32,7 +32,12 @@ describe('incoming-stock', () => {
   test('sums outstanding across open orders, per item', async () => {
     setup([
       { items: [{ item_id: ITEM_A, qty_ordered: 10, qty_received: 4 }] },
-      { items: [{ item_id: ITEM_A, qty_ordered: 5, qty_received: 0 }, { item_id: ITEM_B, qty_ordered: 3, qty_received: 3 }] },
+      {
+        items: [
+          { item_id: ITEM_A, qty_ordered: 5, qty_received: 0 },
+          { item_id: ITEM_B, qty_ordered: 3, qty_received: 3 },
+        ],
+      },
     ]);
     const r = await incomingByItem({ branchId: BRANCH });
     expect(r[ITEM_A]).toBe(11); // 6 + 5
@@ -45,7 +50,12 @@ describe('incoming-stock', () => {
 
   test('itemIds narrows the answer', async () => {
     setup([
-      { items: [{ item_id: ITEM_A, qty_ordered: 10, qty_received: 0 }, { item_id: ITEM_B, qty_ordered: 7, qty_received: 0 }] },
+      {
+        items: [
+          { item_id: ITEM_A, qty_ordered: 10, qty_received: 0 },
+          { item_id: ITEM_B, qty_ordered: 7, qty_received: 0 },
+        ],
+      },
     ]);
     const r = await incomingByItem({ branchId: BRANCH }, [ITEM_B]);
     expect(r).toEqual({ [ITEM_B]: 7 });
