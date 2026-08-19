@@ -1232,7 +1232,17 @@ class ItemRepository extends BaseModel {
       // The tile's shape rides the same rules: a known shape or empty.
       if (data.tile_shape !== undefined) {
         const tileShape = String(data.tile_shape || '').trim();
-        updateData.tile_shape = ['square', 'rounded', 'circle', 'diamond'].includes(tileShape)
+        updateData.tile_shape = [
+          'square',
+          'rounded',
+          'circle',
+          'diamond',
+          'triangle',
+          'pentagon',
+          'hexagon',
+          'star',
+          'octagon',
+        ].includes(tileShape)
           ? tileShape
           : '';
       }
@@ -2184,7 +2194,7 @@ class ItemRepository extends BaseModel {
           track_inventory: item.track_inventory === true,
           // Tile colour (Loyverse study L2): the no-image tile's look.
           tile_color: item.tile_color || '',
-        tile_shape: item.tile_shape || '',
+          tile_shape: item.tile_shape || '',
         }));
 
       return {

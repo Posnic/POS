@@ -54,6 +54,9 @@
             // item later by unchecking "allow negative stock" on it.
             negative_stock: true,
             item_weight_machine_based: false,
+            // Imageless items dress themselves (stable from the name).
+            tile_color: (PosnicPro.autoTile && PosnicPro.autoTile(f.name).color) || '',
+            tile_shape: (PosnicPro.autoTile && PosnicPro.autoTile(f.name).shape) || '',
             description: ''
         };
     }

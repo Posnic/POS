@@ -187,9 +187,7 @@ PosnicPro.items = {
                     // that is what the colour is FOR (owner report).
                     var _listTile = '';
                     if ((!row.image || row.image === 'item.svg') && row.tile_color) {
-                        var _lShape = row.tile_shape === 'circle' ? 'border-radius:50%;'
-                            : row.tile_shape === 'diamond' ? 'clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);'
-                            : row.tile_shape === 'rounded' ? 'border-radius:10px;' : 'border-radius:4px;';
+                        var _lShape = PosnicPro.tileShapeCss(row.tile_shape || '', '4px');
                         _listTile = '<span style="display:inline-flex;width:30px;height:30px;' + _lShape + 'background:' + row.tile_color + ';color:#fff;font-weight:700;font-size:13px;align-items:center;justify-content:center;">' + String(row.name || '?').trim().charAt(0).toUpperCase() + '</span>';
                     }
                     let process_class = '';
@@ -387,8 +385,8 @@ PosnicPro.items = {
             negative_stock: $('#item_negative_stock').is(':checked'),
             item_weight_machine_based: $('#item_weight_machine_based').is(':checked'),
             open_price: $('#item_open_price').is(':checked'),
-            tile_color: $('#item_tile_color').val(),
-            tile_shape: $('#item_tile_shape').val() || '',
+            tile_color: $('#item_tile_color').val() || PosnicPro.autoTile($('#items_name').val()).color,
+            tile_shape: $('#item_tile_shape').val() || PosnicPro.autoTile($('#items_name').val()).shape,
             item_kind: $('#item_is_service').is(':checked') ? 'service' : 'product',
             service_unit: $('#item_service_unit').val() || 'fixed',
             brand: $('#items_brand').val(),
@@ -577,8 +575,8 @@ PosnicPro.items = {
                     negative_stock: $('#item_negative_stock').is(':checked'),
                     item_weight_machine_based: $('#item_weight_machine_based').is(':checked'),
                     open_price: $('#item_open_price').is(':checked'),
-                    tile_color: $('#item_tile_color').val(),
-            tile_shape: $('#item_tile_shape').val() || '',
+                    tile_color: $('#item_tile_color').val() || PosnicPro.autoTile($('#items_name').val()).color,
+            tile_shape: $('#item_tile_shape').val() || PosnicPro.autoTile($('#items_name').val()).shape,
                     item_kind: $('#item_is_service').is(':checked') ? 'service' : 'product',
                     service_unit: $('#item_service_unit').val() || 'fixed',
                     brand: $('#items_brand').val(),
