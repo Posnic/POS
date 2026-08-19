@@ -2753,7 +2753,12 @@ tr.add-disc-row.tip-only td.discount-input { visibility: hidden; }
 #item_tile_shapes .tile-shape { transition: transform 0.1s ease; }
 /* clip-path clips box-shadow AND outline - only drop-shadow follows
    the diamond's silhouette. */
-#item_tile_shapes .tile-shape.is-picked[data-shape="diamond"] {
+#item_tile_shapes .tile-shape.is-picked[data-shape="diamond"],
+#item_tile_shapes .tile-shape.is-picked[data-shape="triangle"],
+#item_tile_shapes .tile-shape.is-picked[data-shape="pentagon"],
+#item_tile_shapes .tile-shape.is-picked[data-shape="hexagon"],
+#item_tile_shapes .tile-shape.is-picked[data-shape="star"],
+#item_tile_shapes .tile-shape.is-picked[data-shape="octagon"] {
     box-shadow: none;
     filter: drop-shadow(0 0 3px #506fe4) drop-shadow(0 0 3px #506fe4);
     transform: scale(1.15);

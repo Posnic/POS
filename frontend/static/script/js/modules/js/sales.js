@@ -6407,11 +6407,7 @@ PosnicPro.sales.itemsMenu = {
                             var _tileColor = getItemdata[i]['tile_color'];
                             if (getItemdata[i]['image'] === 'item.svg' && _tileColor) {
                                 var _initial = String(list_item_name || '?').trim().charAt(0).toUpperCase();
-                                var _shape = getItemdata[i]['tile_shape'] || '';
-                                var _shapeCss = 'border-radius:6px;';
-                                if (_shape === 'rounded') { _shapeCss = 'border-radius:22px;'; }
-                                else if (_shape === 'circle') { _shapeCss = 'border-radius:50%;'; }
-                                else if (_shape === 'diamond') { _shapeCss = 'clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);'; }
+                                var _shapeCss = PosnicPro.tileShapeCss(getItemdata[i]['tile_shape'] || '', '8px');
                                 // Same square slot the product image fills, but the shape
                                 // sits centered at ~62% with breathing room - the default
                                 // illustration has built-in whitespace, and the tile should
@@ -7740,6 +7736,31 @@ PosnicPro.sales.quickSale = {
         });
     }
 };
+/* One shape vocabulary for every tile renderer. */
+PosnicPro.tileShapeCss = function (shape, baseRadius) {
+    var CLIPS = {
+        triangle: 'polygon(50% 0,100% 100%,0 100%)',
+        pentagon: 'polygon(50% 0,100% 38%,82% 100%,18% 100%,0 38%)',
+        hexagon: 'polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%)',
+        star: 'polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)',
+        octagon: 'polygon(30% 0,70% 0,100% 30%,100% 70%,70% 100%,30% 100%,0 70%,0 30%)',
+        diamond: 'polygon(50% 0,100% 50%,50% 100%,0 50%)'
+    };
+    if (shape === 'circle') { return 'border-radius:50%;'; }
+    if (shape === 'rounded') { return 'border-radius:22%;'; }
+    if (CLIPS[shape]) { return 'clip-path:' + CLIPS[shape] + ';'; }
+    return 'border-radius:' + (baseRadius || '6px') + ';';
+};
+/* New imageless items dress themselves: a stable colour and shape from
+   the name, changeable any time (owner ask - never a bare placeholder). */
+PosnicPro.autoTile = function (name) {
+    var h = 0;
+    var str = String(name || '');
+    for (var i = 0; i < str.length; i++) { h = (h * 31 + str.charCodeAt(i)) >>> 0; }
+    var COLORS = ['#e74c3c', '#e91e63', '#f39c12', '#a4c400', '#27ae60', '#2d9cdb', '#8e44ad', '#16a085', '#d35400'];
+    var SHAPES = ['square', 'rounded', 'circle', 'diamond', 'triangle', 'pentagon', 'hexagon', 'star', 'octagon'];
+    return { color: COLORS[h % COLORS.length], shape: SHAPES[(h >> 4) % SHAPES.length] };
+};
 /* One suggestion row for every item typeahead (sale + purchase): thumb,
    name + meta (SKU / category), price + live stock badge. */
 PosnicPro.sugRow = function (d, nameHtml, o) {
@@ -7749,9 +7770,7 @@ PosnicPro.sugRow = function (d, nameHtml, o) {
     if (d.image && d.image !== 'item.svg') {
         thumb = '<img class="sug-thumb" src="' + esc(d.image) + '" loading="lazy" alt="">';
     } else if (d.tile_color) {
-        var shapeCss = d.tile_shape === 'circle' ? 'border-radius:50%;'
-            : d.tile_shape === 'diamond' ? 'clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);'
-            : d.tile_shape === 'rounded' ? 'border-radius:14px;' : '';
+        var shapeCss = d.tile_shape ? PosnicPro.tileShapeCss(d.tile_shape, '10px') : '';
         thumb = '<span class="sug-tile" style="' + shapeCss + 'background:' + esc(d.tile_color) + '">'
             + esc((d.item_name || '?').charAt(0).toUpperCase()) + '</span>';
     } else {
