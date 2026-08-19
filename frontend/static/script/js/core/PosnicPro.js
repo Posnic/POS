@@ -293,11 +293,12 @@ PosnicPro = {
         try {
             customerDefaultData = JSON.parse(PosnicPro.local.get('defaultcustomer'));
         } catch (e) { return; }
-        if (!customerDefaultData || !customerDefaultData.customer_id)
-            return;
+        // Even with no stored id the server now answers: it finds or
+        // creates this branch's Walk-in and heals the branch pointer.
+        var defId = (customerDefaultData && customerDefaultData.customer_id) || '';
         var params = {
             url: 'setting/getDefaultCustomer',
-            data: { data: { customer: customerDefaultData.customer_id } }
+            data: { data: { customer: defId } }
         };
         PosnicPro.get(params, function (response) {
             if (response.type === 'success') {

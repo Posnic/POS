@@ -125,15 +125,65 @@ class SettingModel extends BaseModel {
    * Get default customer details by ID
    */
   async getDefaultCustomer(customerId) {
-    if (!customerId) {
-      return {
-        status: false,
-        data: null,
-        message: 'Customer ID is required',
-      };
-    }
-
     try {
+      /*
+       * Self-heal (owner ask): a branch without a configured default
+       * customer sells to Walk-In. Asked with no id, find - or create -
+       * this branch's Walk-in and repoint the branch doc, instead of
+       * failing every till on that branch with "Customer ID is required".
+       */
+      if (!customerId && this.branchId) {
+        const customersHeal = await this.getCollection('customers');
+        const healLicense = this.licenseId ? { license: this.normalizeId(this.licenseId) } : {};
+        const branchIdNorm = this.normalizeId(this.branchId);
+        let walkin = await customersHeal.findOne({
+          branch_id: branchIdNorm,
+          name: { $regex: /walk[- ]?in/i },
+          ...healLicense,
+        });
+        if (!walkin) {
+          const now = new Date();
+          const seed = {
+            branch_id: branchIdNorm,
+            name: 'Walk-in Customer',
+            date: now,
+            phone: '',
+            // No email key: customers carries a unique sparse index on it.
+            address: '',
+            sortname: '',
+            country: '',
+            state: '',
+            city: '',
+            gst: 'disable',
+            gst_number: '',
+            gst_type: 'consumer',
+            created_date: now,
+            updated_date: now,
+          };
+          if (this.licenseId) seed.license = this.normalizeId(this.licenseId);
+          const ins = await customersHeal.insertOne(seed);
+          walkin = { ...seed, _id: ins.insertedId };
+        }
+        try {
+          const branches = await this.getCollection('branch');
+          await branches.updateOne(
+            { _id: branchIdNorm },
+            { $set: { default_customer: walkin._id } }
+          );
+        } catch (e) {
+          /* pointer update is best-effort - the lookup below still answers */
+        }
+        customerId = walkin._id;
+      }
+
+      if (!customerId) {
+        return {
+          status: false,
+          data: null,
+          message: 'Customer ID is required',
+        };
+      }
+
       const customersCollection = await this.getCollection('customers');
       const licenseFilter = this.licenseId ? { license: this.normalizeId(this.licenseId) } : {};
 

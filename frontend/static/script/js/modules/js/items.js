@@ -28,7 +28,7 @@ PosnicPro.items = {
         $('#item_upload_image_status').val('no');
         // IC1c: a fresh entry starts with the essentials; the collapsed
         // sections open on demand (and always open on edit).
-        $('#item_details_collapse, #item_extras_collapse').collapse('hide');
+        // Owner: these sections stay open - nothing on the form hides behind a click.
         PosnicPro.items.applyHardwareGates();
         PosnicPro.items.addItemButton();
         $('#items_reset').show();

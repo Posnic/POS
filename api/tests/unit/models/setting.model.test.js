@@ -497,7 +497,10 @@ describe('getDefaultCustomer', () => {
     jest.spyOn(m, 'getCollection').mockResolvedValue(col);
   });
 
-  test('returns status:false when no customerId', async () => {
+  test('returns status:false when no customerId and no branch context', async () => {
+    // With a branch context a missing id self-heals to the branch's
+    // Walk-in; only the truly contextless call still refuses.
+    m.branchId = null;
     const r = await m.getDefaultCustomer(null);
     expect(r.status).toBe(false);
     expect(r.message).toMatch(/required/i);
