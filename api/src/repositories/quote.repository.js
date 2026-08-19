@@ -144,6 +144,42 @@ class QuoteRepository extends BaseModel {
         return { status: true, data: { id: String(id) }, message: 'Quote updated' };
       }
 
+      /* A new quote starts from the shop's quotation defaults (settings)
+         wherever the sale screen sent nothing - each stays editable on the
+         quote's preview. A defaults lookup that fails is only a nicety
+         missed, never a failed save. */
+      if (!doc.payment_method || !doc.bank_details || !doc.terms) {
+        try {
+          const branches = await this.getCollection('branches');
+          const b = await branches.findOne(
+            { _id: wall.branch_id },
+            {
+              projection: {
+                quote_default_payment_method: 1,
+                quote_default_bank_details: 1,
+                quote_default_terms: 1,
+              },
+            }
+          );
+          if (b) {
+            if (!doc.payment_method)
+              doc.payment_method = String(b.quote_default_payment_method || '')
+                .trim()
+                .slice(0, 60);
+            if (!doc.bank_details)
+              doc.bank_details = String(b.quote_default_bank_details || '')
+                .trim()
+                .slice(0, 500);
+            if (!doc.terms)
+              doc.terms = String(b.quote_default_terms || '')
+                .trim()
+                .slice(0, 1500);
+          }
+        } catch (e) {
+          /* defaults are a nicety */
+        }
+      }
+
       doc.quote_id = await this._nextQuoteId(collection, wall);
       doc.status = 'open';
       doc.converted_sale_id = null;

@@ -671,6 +671,9 @@ PosnicPro.settings = {
                 $('#email_smtp_username').val(data.email_smtp_username || '');
                 $('#email_smtp_password').val(data.email_smtp_password || '');
                 $('#email_smtp_from').val(data.email_smtp_from || '');
+                $('#quote_default_payment_method').val(data.quote_default_payment_method || '');
+                $('#quote_default_bank_details').val(data.quote_default_bank_details || '');
+                $('#quote_default_terms').val(data.quote_default_terms || '');
                 $('#receiving_prefix').val(data.receiving_prefix || 'P');
                 $('#allow_sale_date_edit').prop('checked', data.allow_sale_date_edit !== 'false' && data.allow_sale_date_edit !== false);
                 PosnicPro.local.set('allow_sale_date_edit', (data.allow_sale_date_edit === 'false' || data.allow_sale_date_edit === false) ? 'false' : 'true');
@@ -1583,6 +1586,9 @@ if ($wrapper.length) {
                 email_smtp_username: $('#email_smtp_username').val() || '',
                 email_smtp_password: $('#email_smtp_password').val() || '',
                 email_smtp_from: $('#email_smtp_from').val() || '',
+                quote_default_payment_method: $('#quote_default_payment_method').val() || '',
+                quote_default_bank_details: $('#quote_default_bank_details').val() || '',
+                quote_default_terms: $('#quote_default_terms').val() || '',
                 receiving_prefix: $('#receiving_prefix').val(),
                 allow_sale_date_edit: ($('#allow_sale_date_edit').is(":checked")) ? 'true' : 'false',
                 indian_gst: $('#indian_gst').val(),

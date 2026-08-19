@@ -66,13 +66,40 @@ describe('QuoteRepository', () => {
     );
     expect(r.status).toBe(true);
     expect(r.data.quote_id).toBe('QUO-000001');
-    expect([...new Set(mockRequestedCollections)]).toEqual(['quotes']);
+    /* branches is READ for the quotation-defaults prefill; every WRITE
+       still lands only in quotes - the invariant this file exists for. */
+    expect([...new Set(mockRequestedCollections)]).toEqual(['quotes', 'branches']);
+    expect(mockCollection.insertOne).toHaveBeenCalledTimes(1);
+    expect(mockCollection.updateOne).not.toHaveBeenCalled();
+    expect(mockCollection.deleteOne).not.toHaveBeenCalled();
     const doc = mockCollection.insertOne.mock.calls[0][0];
     expect(doc.status).toBe('open');
     expect(doc.subtotal).toBe(100);
     expect(doc.total).toBe(100);
     expect(String(doc.branch_id)).toBe(BRANCH);
     expect(String(doc.license)).toBe(LICENSE);
+  });
+
+  test('a new quote starts from the shop quotation defaults, without overwriting what the till sent', async () => {
+    mockCollection.insertOne.mockResolvedValue({ insertedId: new ObjectId(QUOTE_ID) });
+    mockCollection.findOne.mockResolvedValue({
+      quote_default_payment_method: 'UPI or bank transfer',
+      quote_default_bank_details: 'HDFC0001234 / 50100234567890',
+      quote_default_terms: '50% advance confirms the order.',
+    });
+    const r = await repo.upsertQuote(
+      {
+        items: [{ item_id: ITEM, item_name: 'Rice', qty: 2, unit_price: 50 }],
+        payment_method: 'Cash only',
+      },
+      '',
+      ctx
+    );
+    expect(r.status).toBe(true);
+    const doc = mockCollection.insertOne.mock.calls[0][0];
+    expect(doc.payment_method).toBe('Cash only');
+    expect(doc.bank_details).toBe('HDFC0001234 / 50100234567890');
+    expect(doc.terms).toBe('50% advance confirms the order.');
   });
 
   test('create refuses an empty line list', async () => {

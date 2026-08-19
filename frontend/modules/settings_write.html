@@ -2324,6 +2324,26 @@
                                                 </div>
                                             </div>
                                             <p class="module-desc">Price an offer today, convert it to a sale when the customer says yes.</p>
+                                            <div class="mt-2">
+                                                <label for="quote_default_payment_method" style="font-size:12.5px;" class="mb-1">
+                                                    <lang class="lang_quote_default_payment">Payment method on new quotes</lang>
+                                                </label>
+                                                <input type="text" name="quote_default_payment_method" id="quote_default_payment_method"
+                                                    class="form-control form-control-sm border-control" maxlength="60"
+                                                    placeholder="e.g. Bank transfer (NEFT/RTGS) or UPI" autocomplete="off">
+                                                <label for="quote_default_bank_details" style="font-size:12.5px;" class="mb-1 mt-2">
+                                                    <lang class="lang_quote_default_bank">Bank details on new quotes</lang>
+                                                </label>
+                                                <textarea name="quote_default_bank_details" id="quote_default_bank_details"
+                                                    class="form-control form-control-sm border-control" rows="2" maxlength="500"
+                                                    placeholder="Account name, number, IFSC"></textarea>
+                                                <label for="quote_default_terms" style="font-size:12.5px;" class="mb-1 mt-2">
+                                                    <lang class="lang_quote_default_terms">Terms on new quotes</lang>
+                                                </label>
+                                                <textarea name="quote_default_terms" id="quote_default_terms"
+                                                    class="form-control form-control-sm border-control" rows="3" maxlength="1500"
+                                                    placeholder="e.g. 50% advance confirms the order. Prices valid till the date on the quote."></textarea>
+                                            </div>
                                         </div>
 
                                         <div class="module-card">
