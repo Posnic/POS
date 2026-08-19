@@ -1230,6 +1230,28 @@ class ItemRepository extends BaseModel {
       }
 
       /*
+       * Lightspeed study LS1 trio, all presence-gated: brand (a name, for
+       * filtering and the future community catalog), tags (free keywords),
+       * reorder_point (this item's own low-stock threshold - overrides the
+       * shop-wide notification range where set; empty clears it).
+       */
+      if (data.brand !== undefined) {
+        updateData.brand = String(data.brand || '')
+          .trim()
+          .slice(0, 100);
+      }
+      if (data.tags !== undefined) {
+        updateData.tags = (Array.isArray(data.tags) ? data.tags : [])
+          .map((t) => String(t || '').trim())
+          .filter(Boolean)
+          .slice(0, 20);
+      }
+      if (data.reorder_point !== undefined) {
+        const rp = Number(data.reorder_point);
+        updateData.reorder_point = Number.isFinite(rp) && rp >= 0 ? rp : null;
+      }
+
+      /*
        * Variant family link (VARIANT_SYSTEM_RESEARCH V1): four presence-
        * gated fields that turn the "name generator" into a real family.
        * Absent = plain item, and absent NEVER clears an existing link -
@@ -1800,7 +1822,16 @@ class ItemRepository extends BaseModel {
           : null;
 
       if (!Number.isNaN(parsedNotification)) {
-        conditions.push({ available_quantity: { $lte: parsedNotification } });
+        /* LS1: an item's own reorder point overrides the shop-wide
+           notification range where set; absent falls back as before. */
+        conditions.push({
+          $expr: {
+            $lte: [
+              { $convert: { input: '$available_quantity', to: 'double', onError: 0, onNull: 0 } },
+              { $ifNull: ['$reorder_point', parsedNotification] },
+            ],
+          },
+        });
       }
 
       conditions.push({ item_status: { $ne: 'instant' } });
@@ -2441,8 +2472,17 @@ class ItemRepository extends BaseModel {
       }
       if (lowStockOnly) {
         const range = parseInt(notificationRange, 10);
+        const fallback = Number.isFinite(range) ? range : 10;
         conditions.push({ track_inventory: true });
-        conditions.push({ available_quantity: { $lte: Number.isFinite(range) ? range : 10 } });
+        // The item's own reorder point wins where set (LS1).
+        conditions.push({
+          $expr: {
+            $lte: [
+              { $convert: { input: '$available_quantity', to: 'double', onError: 0, onNull: 0 } },
+              { $ifNull: ['$reorder_point', fallback] },
+            ],
+          },
+        });
       }
 
       const items = await collection.find({ $and: conditions }).limit(500).toArray();

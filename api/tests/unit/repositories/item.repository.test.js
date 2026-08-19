@@ -531,7 +531,7 @@ describe('ItemRepository', () => {
       expect('available_quantity' in flat).toBe(false); // no low-stock cut
     });
 
-    test('low_stock narrows to tracked items at/below the range', async () => {
+    test('low_stock narrows to tracked items at/below the range - the item`s own reorder point winning where set', async () => {
       col.find.mockReturnValue(mkChain([]));
       await repo.getItemsBySupplier(
         { supplierId: FAKE_ID, lowStockOnly: true, notificationRange: '5' },
@@ -539,7 +539,7 @@ describe('ItemRepository', () => {
       );
       const flat = Object.assign({}, ...col.find.mock.calls[0][0].$and);
       expect(flat.track_inventory).toBe(true);
-      expect(flat.available_quantity).toEqual({ $lte: 5 });
+      expect(flat.$expr.$lte[1]).toEqual({ $ifNull: ['$reorder_point', 5] });
     });
 
     test('a missing or invalid supplier id is refused, not an unscoped query', async () => {
