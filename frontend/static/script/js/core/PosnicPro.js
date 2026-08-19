@@ -865,6 +865,53 @@ PosnicPro = {
             var blob = new Blob(['\ufeff' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
             PosnicPro.reportExport._download(blob, (meta.filename || 'report') + '.csv');
         },
+        /* Email the exact PDF the user would download - address typed in a
+           small modal, the send happens server-side. */
+        email: function (elId, meta) {
+            var ex = PosnicPro.reportExport;
+            if (!$('#report_email_modal').length) {
+                $('body').append(
+                    '<div class="modal fade" id="report_email_modal" tabindex="-1" role="dialog" aria-hidden="true">'
+                    + '<div class="modal-dialog modal-dialog-centered modal-sm" role="document"><div class="modal-content">'
+                    + '<div class="modal-header py-2"><h5 class="modal-title">Email this report</h5>'
+                    + '<button type="button" class="close" data-dismiss="modal">&times;</button></div>'
+                    + '<div class="modal-body">'
+                    + '<label class="mb-0 small text-muted" for="report_email_to">Send to</label>'
+                    + '<input type="email" class="form-control" id="report_email_to" placeholder="name@example.com" autocomplete="off">'
+                    + '</div>'
+                    + '<div class="modal-footer py-2">'
+                    + '<button type="button" class="btn btn-secondary-rgba" data-dismiss="modal">Cancel</button>'
+                    + '<button type="button" class="btn btn-primary" id="report_email_send">Send</button>'
+                    + '</div></div></div></div>');
+                $(document).on('click', '#report_email_send', function () {
+                    var to = $.trim($('#report_email_to').val());
+                    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
+                        PosnicPro.alert('error', 'Enter a valid email address');
+                        return;
+                    }
+                    var m = PosnicPro.reportExport._emailJob || {};
+                    $('#report_email_send').prop('disabled', true);
+                    PosnicPro.reportExport._withPdf(m.elId, m.meta, function (doc) {
+                        var b64 = String(doc.output('datauristring')).split(',')[1] || '';
+                        PosnicPro.post({
+                            url: 'reports/email',
+                            data: JSON.stringify({ to: to, pdf_base64: b64, filename: (m.meta || {}).filename, title: (m.meta || {}).title })
+                        }, function (r) {
+                            $('#report_email_send').prop('disabled', false);
+                            PosnicPro.alert(r.type, r.message);
+                            if (r.type === 'success') { $('#report_email_modal').modal('hide'); }
+                        }, function (xhr) {
+                            $('#report_email_send').prop('disabled', false);
+                            var resp = {}; try { resp = JSON.parse(xhr.responseText); } catch (e) { /* plain */ }
+                            PosnicPro.alert('error', resp.message || 'Could not email the report');
+                        });
+                    });
+                });
+            }
+            PosnicPro.reportExport._emailJob = { elId: elId, meta: meta };
+            $('#report_email_to').val('');
+            $('#report_email_modal').modal('show');
+        },
         xls: function (elId, meta) {
             var sections = PosnicPro.reportExport.gather(elId);
             if (!sections) { PosnicPro.alert('warning', 'Run the report first, then export it.'); return; }
@@ -941,7 +988,8 @@ PosnicPro = {
                 '<div class="report-export-bar text-right m-b-10">'
                 + '<button type="button" class="btn btn-danger-rgba btn-sm" onclick="return PosnicPro.pageExport(' + i + ', \'pdf\');" title="Download A4 PDF"><i class="fa fa-file-pdf-o mr-1"></i>PDF</button> '
                 + '<button type="button" class="btn btn-secondary-rgba btn-sm" onclick="return PosnicPro.pageExport(' + i + ', \'csv\');" title="Export CSV"><i class="fa fa-file-text-o mr-1"></i>CSV</button> '
-                + '<button type="button" class="btn btn-secondary-rgba btn-sm" onclick="return PosnicPro.pageExport(' + i + ', \'xls\');" title="Export Excel"><i class="fa fa-file-excel-o mr-1"></i>Excel</button>'
+                + '<button type="button" class="btn btn-secondary-rgba btn-sm" onclick="return PosnicPro.pageExport(' + i + ', \'xls\');" title="Export Excel"><i class="fa fa-file-excel-o mr-1"></i>Excel</button> '
+                + '<button type="button" class="btn btn-secondary-rgba btn-sm" onclick="return PosnicPro.pageExport(' + i + ', \'email\');" title="Email this report"><i class="fa fa-envelope-o mr-1"></i>Email</button>'
                 + '</div>');
         });
     },
