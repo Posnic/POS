@@ -1559,10 +1559,7 @@
             // Use denominations from database (preferred method)
             denominations = PosnicPro.sales.SaleDenomination.map(d => parseFloat(d.amount)).sort((a, b) => a - b);
         } else {
-            // Generate universal denominations (works for most currencies)
-            // Pattern: 1, 2, 5, 10, 20, 50, 100, 200, 500
-            // This pattern works for: INR, USD, EUR, GBP, AUD, CAD, SGD, MYR, etc.
-            denominations = [1, 2, 5, 10, 20, 50, 100, 200, 500];
+            denominations = PosnicPro.sales.defaultDenominations();
         }
         
         // Build denomination HTML
@@ -2102,7 +2099,7 @@
         if (PosnicPro.sales.SaleDenomination && PosnicPro.sales.SaleDenomination.length > 0) {
             denominations = PosnicPro.sales.SaleDenomination.map(d => parseFloat(d.amount)).sort((a, b) => b - a);
         } else {
-            denominations = [500, 200, 100, 50, 20, 10, 5, 2, 1];
+            denominations = PosnicPro.sales.defaultDenominations().sort(function (a, b) { return b - a; });
         }
         
         // Reset all denomination counts
@@ -7442,6 +7439,23 @@ $(document).ready(function () {
     PosnicPro.sales.applyQuickSaleGate();
     $(window).on('hashchange storage', PosnicPro.sales.applyQuickSaleGate);
 });
+/* LS2 (Lightspeed study): cash counting offers the till's real notes and
+   coins by currency. Shop-defined denominations in Settings always win;
+   this only replaces the one-size-fits-all fallback. */
+PosnicPro.sales.defaultDenominations = function () {
+    var sign = (PosnicPro.local.get('currencySign') || '').trim();
+    var SETS = {
+        '₹': [1, 2, 5, 10, 20, 50, 100, 200, 500],
+        '$': [0.01, 0.05, 0.1, 0.25, 1, 5, 10, 20, 50, 100],
+        '€': [0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200],
+        '£': [0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50],
+        'RM': [0.05, 0.1, 0.2, 0.5, 1, 5, 10, 20, 50, 100],
+        '฿': [0.25, 0.5, 1, 2, 5, 10, 20, 50, 100, 500, 1000],
+        'د.إ': [0.25, 0.5, 1, 5, 10, 20, 50, 100, 200, 500, 1000],
+        'Rs': [1, 2, 5, 10, 20, 50, 100, 500, 1000, 5000]
+    };
+    return (SETS[sign] || [1, 2, 5, 10, 20, 50, 100, 200, 500]).slice();
+};
 PosnicPro.sales.applyQuickSaleGate = function () {
     var on = true;
     try {

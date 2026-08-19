@@ -1110,7 +1110,7 @@ PosnicPro.registers.initRegisterDenominationButtons = function() {
     if (PosnicPro.sales.SaleDenomination && PosnicPro.sales.SaleDenomination.length > 0) {
         denominations = PosnicPro.sales.SaleDenomination.map(d => parseFloat(d.amount)).sort((a, b) => a - b);
     } else {
-        denominations = [1, 2, 5, 10, 20, 50, 100, 200, 500];
+        denominations = PosnicPro.sales.defaultDenominations();
     }
     
     // Build denomination HTML
