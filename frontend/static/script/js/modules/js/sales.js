@@ -7920,12 +7920,36 @@ PosnicPro.quotes = {
             else { chunkFit(ln, wAvail).forEach(function (p2) { lines.push(p2); }); }
           });
           lines = lines.slice(0, 3);
-          var rowH = lines.length * lineH + padY * 2;
+          /* description + a per-line discount note ride under the name, gray */
+          var subText = txt(l.description || '');
+          if (l.discount && l.discount.value > 0) {
+            var dNote = l.discount.type === 'percent' ? l.discount.value + '% off' : money(l.discount.value) + ' off';
+            subText = subText ? subText + '  -  ' + dNote : dNote;
+          }
+          var subLines = [];
+          if (subText) {
+            doc.setFontSize(7.6);
+            doc.splitTextToSize(subText, wAvail).forEach(function (ln) {
+              if (doc.getTextWidth(ln) <= wAvail) { subLines.push(ln); }
+              else { chunkFit(ln, wAvail).forEach(function (p2) { subLines.push(p2); }); }
+            });
+            subLines = subLines.slice(0, 2);
+            doc.setFontSize(8.8);
+          }
+          var subH = subLines.length * 3.6;
+          var rowH = lines.length * lineH + subH + padY * 2;
           if (y + rowH > bottom) { pageFooter(); doc.addPage(); y = M + 2; tableHead(); }
           doc.setFont('helvetica', 'normal'); doc.setFontSize(8.8); doc.setTextColor(26, 32, 44);
           var base = y + padY + lineH * 0.78;
           doc.text(String(i + 1), xIdx, base);
           lines.forEach(function (ln, li) { doc.text(ln, xItem, base + li * lineH); });
+          if (subLines.length) {
+            doc.setFontSize(7.6); doc.setTextColor(120, 128, 140);
+            subLines.forEach(function (ln, li) {
+              doc.text(ln, xItem, base + lines.length * lineH + li * 3.6);
+            });
+            doc.setFontSize(8.8); doc.setTextColor(26, 32, 44);
+          }
           doc.text(String(l.qty), xQty + colQty - 1, base, { align: 'right' });
           doc.text(money(l.unit_price), xPrice + colPrice - 1, base, { align: 'right' });
           doc.text(money(l.line_total), xAmt + colAmt, base, { align: 'right' });
@@ -7942,6 +7966,18 @@ PosnicPro.quotes = {
         doc.text('Subtotal', totX, y + 4);
         doc.text(money(q.subtotal), R, y + 4, { align: 'right' });
         y += 6;
+        if (q.discount && Number(q.discount.computed) > 0) {
+          var dLabel = 'Discount' + (q.discount.type === 'percent' ? ' (' + q.discount.value + '%)' : '');
+          doc.text(dLabel, totX, y + 4);
+          doc.text('-' + money(q.discount.computed), R, y + 4, { align: 'right' });
+          y += 6;
+        }
+        (q.charges || []).forEach(function (c) {
+          ensure(12);
+          doc.text(txt(c.name).slice(0, 34), totX, y + 4);
+          doc.text((c.sign === -1 ? '-' : '') + money(c.computed), R, y + 4, { align: 'right' });
+          y += 6;
+        });
         if (Number(q.tax_total) > 0) {
           doc.text('Tax', totX, y + 4);
           doc.text(money(q.tax_total), R, y + 4, { align: 'right' });
@@ -7968,6 +8004,10 @@ PosnicPro.quotes = {
         block('PAYMENT METHOD', q.payment_method);
         block('BANK DETAILS', q.bank_details);
         block('TERMS & CONDITIONS', q.terms || q.note);
+        (q.custom_blocks || []).forEach(function (b) {
+          block(String(b.title || 'NOTE').toUpperCase().slice(0, 60), b.text);
+        });
+        block('NOTES', q.notes);
 
         /* signature */
         ensure(34);
