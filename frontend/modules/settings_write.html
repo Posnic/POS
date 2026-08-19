@@ -3292,6 +3292,19 @@
 
                                             <!-- ============ SALE ============ -->
                                             <div class="tab-pane fade show active" id="core-tab-sale" role="tabpanel">
+                                                <!-- Customer display pairing (Loyverse study L3): the page
+                                                     already serves on the LAN - this card just tells the
+                                                     shop where it lives. -->
+                                                <div class="border rounded p-2 mb-3">
+                                                    <label class="d-block mb-1" style="font-weight:600;"><lang class="lang_display_pair_title">Customer display</lang></label>
+                                                    <small class="text-muted d-block mb-1"><lang class="lang_display_pair_hint">Open this address in a browser on the customer-facing screen (same network as this till). It follows the sale live.</lang></small>
+                                                    <div class="input-group input-group-sm" style="max-width:480px;">
+                                                        <input type="text" class="form-control" id="display_pair_url" readonly>
+                                                        <div class="input-group-append">
+                                                            <button type="button" class="btn btn-primary-rgba" onclick="PosnicPro.settings.copyDisplayUrl();"><i class="feather icon-copy"></i></button>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                                 <div class="row">
                                                     <div class="form-group col-md-6">
                                                         <input type="checkbox" id="default_customer_enable_disable"

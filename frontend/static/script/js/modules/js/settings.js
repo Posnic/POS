@@ -5345,3 +5345,26 @@ $(document).ready(function () {
     // before the dashboard is usable, so a short delay is enough.
     setTimeout(function () { PosnicPro.features.maybeShowIntro(); }, 2500);
 });
+
+/* Customer display pairing (Loyverse study L3): fill the address card with
+   this till's own origin - the display page has always been served there,
+   it was just never told to anyone. */
+$(document).ready(function () {
+    try {
+        var origin = window.location.origin || (window.location.protocol + '//' + window.location.host);
+        $('#display_pair_url').val(origin + '/customerview.html');
+    } catch (e) { /* leave blank */ }
+});
+PosnicPro.settings.copyDisplayUrl = function () {
+    var url = $('#display_pair_url').val();
+    if (!url) { return; }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(function () {
+            PosnicPro.alert('success', 'Address copied - open it on the display device');
+        });
+    } else {
+        $('#display_pair_url').select();
+        document.execCommand('copy');
+        PosnicPro.alert('success', 'Address copied - open it on the display device');
+    }
+};
