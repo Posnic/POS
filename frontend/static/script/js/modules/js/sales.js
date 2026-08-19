@@ -6405,12 +6405,21 @@ PosnicPro.sales.itemsMenu = {
                                 _aq = (_aq === undefined || _aq === null || _aq === '') ? 0 : _aq;
                                 _stockHtml = '<div class="text-center wsk-cp-stock">' + _aq + ' in stock</div>';
                             }
+                            /* Tile colour (Loyverse study L2): an item without a real
+                               image but with a chosen colour renders a coloured tile
+                               with its initial - an image always wins. */
+                            var _tileHtml = '<div class="wsk-cp-img"><img src="' + image_path + '" alt="Product" class="img-responsive" /></div>';
+                            var _tileColor = getItemdata[i]['tile_color'];
+                            if (getItemdata[i]['image'] === 'item.svg' && _tileColor) {
+                                var _initial = String(list_item_name || '?').trim().charAt(0).toUpperCase();
+                                _tileHtml = '<div class="wsk-cp-img"><div style="width:100%;height:70px;border-radius:6px;background:' + _tileColor + ';display:flex;align-items:center;justify-content:center;color:#fff;font-size:28px;font-weight:700;">' + _initial + '</div></div>';
+                            }
                             var product = '<div class="wsk-cp cbutton--effect-novak" id="' + getItemdata[i]['id'] + '" onclick="PosnicPro.sales.itemsMenu.addToLineItemsList(this.id)">' +
                                 '<div class="wsk-cp-product">' +
                                 '<div class="description-prod">' +
                                 '<p data-searchval="' + list_item_name + '" data-toggle="tooltip" title="' + list_item_name + '">' + PosnicPro.textOverflowEllipsis(list_item_name, 30, true) + '</p>' +
                                 '</div>' +
-                                '<div class="wsk-cp-img"><img src="' + image_path + '" alt="Product" class="img-responsive" /></div>' +
+                                _tileHtml +
                                 '<div class="wsk-cp-text mt-3">' +
                                 '<div class="price-text-color">' +
                                 '<div class="text-center"><span class="price">' + currency + '&nbsp;' + price.toFixed(2) + '</span></div>' +

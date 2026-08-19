@@ -1220,6 +1220,16 @@ class ItemRepository extends BaseModel {
       }
 
       /*
+       * Tile colour (Loyverse study L2): how a no-image item looks on the
+       * sale grid. Presence-gated; only a hex colour or empty (= letter
+       * tile) ever writes - garbage never does.
+       */
+      if (data.tile_color !== undefined) {
+        const tileColor = String(data.tile_color || '').trim();
+        updateData.tile_color = /^#[0-9a-fA-F]{6}$/.test(tileColor) ? tileColor : '';
+      }
+
+      /*
        * Variant family link (VARIANT_SYSTEM_RESEARCH V1): four presence-
        * gated fields that turn the "name generator" into a real family.
        * Absent = plain item, and absent NEVER clears an existing link -
@@ -2110,6 +2120,8 @@ class ItemRepository extends BaseModel {
           variant_value: item.variant_value || '',
           variant_parent_name: item.variant_parent_name || '',
           track_inventory: item.track_inventory === true,
+          // Tile colour (Loyverse study L2): the no-image tile's look.
+          tile_color: item.tile_color || '',
         }));
 
       return {
