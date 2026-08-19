@@ -6457,9 +6457,9 @@ class SalesRepository {
     }
   }
 
-  async sendDailySalesMail(input, { SaleModel } = {}) {
+  async sendDailySalesMail(input, { SaleModel, shopTransport } = {}) {
     const Model = this.getModel(SaleModel);
-    return Model.sendDailySalesMail(input);
+    return Model.sendDailySalesMail(input, shopTransport);
   }
 
   async salesPaymentCloseModel(data, { SaleModel } = {}) {

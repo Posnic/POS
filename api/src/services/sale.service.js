@@ -3591,9 +3591,10 @@ module.exports = {
     salesRepository.gstOneReportPageJson(data, {
       SaleModel: getModel(SaleModel),
     }),
-  sendDailySalesMail: async (input, { SaleModel } = {}) =>
+  sendDailySalesMail: async (input, { SaleModel, shopTransport } = {}) =>
     salesRepository.sendDailySalesMail(input, {
       SaleModel: getModel(SaleModel),
+      shopTransport,
     }),
   salesPaymentCloseModel: async (data, { SaleModel } = {}) =>
     salesRepository.salesPaymentCloseModel(data, {

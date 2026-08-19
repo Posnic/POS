@@ -1334,15 +1334,14 @@ class ReceivingsController extends BaseController {
       await done;
       const pdfBuffer = Buffer.concat(chunks);
 
-      const { Email } = require('../utils/email');
-      const transporter = new Email(
-        { email: to, name: receiving.supplier?.supplier_name },
-        ''
-      ).newTransport();
+      // Owner rule: the shop's own SMTP first, the platform chain otherwise.
+      const { resolveShopTransport } = require('../utils/email');
+      const resolved = resolveShopTransport(branch);
+      const transporter = resolved.transporter;
       const shopName = branch.branch_name || 'Posnic POS';
       const orderId = receiving.receiving_id || String(receiving._id);
       const info = await transporter.sendMail({
-        from: `${shopName} <${process.env.EMAIL_FROM || 'no-reply@posnic.local'}>`,
+        from: `${shopName} <${resolved.from}>`,
         to,
         subject:
           String(req.body.subject || '').trim() || `Purchase order from ${shopName} (${orderId})`,
@@ -1353,7 +1352,7 @@ class ReceivingsController extends BaseController {
       });
       /* The dev fallback transport prints to console instead of delivering -
          say so rather than claiming a send that never left the box. */
-      if (transporter.options && transporter.options.jsonTransport) {
+      if (!resolved.shopOwned && transporter.options && transporter.options.jsonTransport) {
         return this.error(
           res,
           'Email is not configured on this server - the PDF was generated but not sent',

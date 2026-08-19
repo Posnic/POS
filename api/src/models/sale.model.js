@@ -1043,7 +1043,7 @@ Sale.LegacySaleModel = LegacySaleModel;
  * @param {Object} input - { email, data: { product_details, payment_details, tax_details, branch_details, dine_details, table_summary, extra_discount } }
  * @returns {Promise<Object>}
  */
-Sale.sendDailySalesMail = async function (input) {
+Sale.sendDailySalesMail = async function (input, shopTransport = null) {
   try {
     const { BrevoClient } = require('@getbrevo/brevo');
     const config = require('../config');
@@ -1199,6 +1199,29 @@ Sale.sendDailySalesMail = async function (input) {
     // Brevo / Sendinblue setup
     const apiKey =
       config.sendinblue_key || process.env.SENDINBLUE_KEY || process.env.BREVO_API_KEY || '';
+
+    /* Owner rule: a shop that configured its own SMTP sends through it -
+       before Brevo, before the platform chain. */
+    if (shopTransport && shopTransport.shopOwned) {
+      const subject = ((sales_type ? sales_type + ' ' : '') + 'sales report').trim();
+      const text = [
+        `Sales report from ${from_date || '-'} to ${to_date || '-'}`,
+        '',
+        `Total quantity: ${qty_total}`,
+        `Subtotal: ${currency} ${price_total.toFixed(2)}`,
+        `Grand total: ${currency} ${amount_total.toFixed(2)}`,
+        `Profit: ${currency} ${profit_total.toFixed(2)}`,
+        `Tax total: ${currency} ${tax_total.toFixed(2)}`,
+        `Tender total: ${currency} ${tender_total.toFixed(2)}`,
+      ].join('\n');
+      await shopTransport.transporter.sendMail({
+        from: `${branch.branch_name || 'Posnic POS'} <${shopTransport.from}>`,
+        to: input.email,
+        subject,
+        text,
+      });
+      return { status: true, data: { sent: true }, message: 'Mail sent successfully' };
+    }
 
     if (apiKey) {
       // Preferred path: use Brevo transactional template
