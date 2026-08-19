@@ -183,6 +183,15 @@ PosnicPro.items = {
                     }
 
                     let image_path = (row.image && row.image !== "item.svg") ? row.image : 'static/images/default/item.svg';
+                    // A colour/shape item shows its tile in the Image column -
+                    // that is what the colour is FOR (owner report).
+                    var _listTile = '';
+                    if ((!row.image || row.image === 'item.svg') && row.tile_color) {
+                        var _lShape = row.tile_shape === 'circle' ? 'border-radius:50%;'
+                            : row.tile_shape === 'diamond' ? 'clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);'
+                            : row.tile_shape === 'rounded' ? 'border-radius:10px;' : 'border-radius:4px;';
+                        _listTile = '<span style="display:inline-flex;width:30px;height:30px;' + _lShape + 'background:' + row.tile_color + ';color:#fff;font-weight:700;font-size:13px;align-items:center;justify-content:center;">' + String(row.name || '?').trim().charAt(0).toUpperCase() + '</span>';
+                    }
                     let process_class = '';
                     let edit_icon = '<a data-module = "item" data-access = "write" href="#/items/' + row._id + '/edit" data-id="items/' + row._id + '/edit"  data-toggle="tooltip" title="Edit Item" class="point-cursor mobile_tooltip"><i class="feather icon-edit"></i></a>';
                     if (row.item_status === 'instant') {
@@ -205,7 +214,7 @@ PosnicPro.items = {
                             '<input type="checkbox" id="kiosk_' + row._id + '" class="kiosk-toggle" ' + isChecked + '>' +
                             '<span class="slider round"></span>' +
                             '</label>';
-                    var trow = '<tr> <th><input type="checkbox" class="items-row-id" id="' + row._id + '" name="id[]" value="' + row._id + '" onclick="PosnicPro.checkboxSelectOne(this,\'items\');"></th> <th scope="row">' + row_no + '</th>  <td width="30%"><a href="#/items/' + row._id + '"><i class="table_model_item">' + row.name + '</i></a></td> <td><img src=' + image_path + ' width=30 height=20 class="imagezoom" id="' + row.image + '" onerror="this.onerror=null;this.src=\'static/images/default/item.svg\';" onclick="PosnicPro.viewImage(this.id,\'item\');"></td> <td class="text-center">' + row.itemid + '</td> <td class="text-right">' + row.available_quantity + ' ' + item_unit + '</td> <td class="text-center"><span class="' + process_class + '">' + row.item_status + '</span></td> <td class="text-right">' + currency + '&nbsp;<span class="number">' + row.selling_price + '</span></td> ' +
+                    var trow = '<tr> <th><input type="checkbox" class="items-row-id" id="' + row._id + '" name="id[]" value="' + row._id + '" onclick="PosnicPro.checkboxSelectOne(this,\'items\');"></th> <th scope="row">' + row_no + '</th>  <td width="30%"><a href="#/items/' + row._id + '"><i class="table_model_item">' + row.name + '</i></a></td> <td>' + (_listTile !== '' ? _listTile : '<img src=' + image_path + ' width=30 height=20 class="imagezoom" id="' + row.image + '" onerror="this.onerror=null;this.src=\'static/images/default/item.svg\';" onclick="PosnicPro.viewImage(this.id,\'item\');">') + '</td> <td class="text-center">' + row.itemid + '</td> <td class="text-right">' + row.available_quantity + ' ' + item_unit + '</td> <td class="text-center"><span class="' + process_class + '">' + row.item_status + '</span></td> <td class="text-right">' + currency + '&nbsp;<span class="number">' + row.selling_price + '</span></td> ' +
                             '<td class="text-center kiosk-column">' + kioskToggle + '</td>' + '<td class="text-center"><span>' + action + ' </span></td></tr>';
 
                     $('#view_items').children('tbody').append(trow);
