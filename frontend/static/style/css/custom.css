@@ -2839,6 +2839,8 @@ input:checked + .slider:before {
 /* Sale actions: Park, Quote, Clear, Close hold ONE line at every width. */
 #edit_style_button { display: flex; gap: 6px; align-items: stretch; }
 #edit_style_button > span { flex: 1 1 0; display: block; min-width: 0; }
+/* PAY is the most-clicked control on the page - double width. */
+#edit_style_button > span.salesBalanceAmount { flex: 2 1 0; }
 #edit_style_button > span > .btn, #edit_style_button > a.btn { width: 100%; max-width: none; float: none; }
 #edit_style_button > a.btn { flex: 1.4 1 0; display: inline-flex; align-items: center; justify-content: center; }
 
@@ -2886,3 +2888,11 @@ input:checked + .slider:before {
 .tip-chips .tip-chip, .tip-chips button { min-width: 46px; height: 36px; }
 /* Sale tabs earn their touch height. */
 #defaultTabJustified .nav-link { padding: 13px 8px; }
+
+/* Coupon left, tip right - one row, no wasted band. */
+#sales_coupon_row > .col-12 {
+    flex-direction: row !important;
+    justify-content: space-between;
+    align-items: center;
+}
+#sales_coupon_row .sale-tip-wrap { margin-top: 0 !important; }
