@@ -634,7 +634,10 @@ function assetCacheHeaders(res, filePath) {
 
 if (UPDATED_ASSETS && fs.existsSync(UPDATED_ASSETS)) {
   console.log('[assets] serving updated assets from ' + UPDATED_ASSETS);
-  app.use('/', express.static(UPDATED_ASSETS, { fallthrough: true, setHeaders: assetCacheHeaders }));
+  app.use(
+    '/',
+    express.static(UPDATED_ASSETS, { fallthrough: true, setHeaders: assetCacheHeaders })
+  );
 }
 
 // Serve transformed frontend assets (used for login page, etc.)
@@ -703,7 +706,10 @@ app.get('/print/:token', (req, res) => {
 });
 
 // The compiled stylesheets reference ../fonts, which resolves to /fonts.
-app.use('/fonts', express.static(path.join(BUILT_STATIC, 'fonts'), { fallthrough: true, maxAge: STATIC_MAX_AGE }));
+app.use(
+  '/fonts',
+  express.static(path.join(BUILT_STATIC, 'fonts'), { fallthrough: true, maxAge: STATIC_MAX_AGE })
+);
 
 // Serving backend-specific static files (exports, uploads, etc.)
 app.use(express.static(path.join(__dirname, 'public')));
@@ -1052,9 +1058,10 @@ app.get(['/push/key', '/api/push/key'], sseProtect, async (req, res) => {
 });
 app.post(['/push/subscribe', '/api/push/subscribe'], sseProtect, async (req, res) => {
   try {
-    const result = req.db && req.user
-      ? await pushInfra.subscribe(req.db, req.user._id, req.body && req.body.subscription)
-      : { ok: false };
+    const result =
+      req.db && req.user
+        ? await pushInfra.subscribe(req.db, req.user._id, req.body && req.body.subscription)
+        : { ok: false };
     if (!result.ok) return res.status(400).json({ type: 'error', message: 'Invalid subscription' });
     res.json({ type: 'success', data: null, message: 'Subscribed' });
   } catch (e) {
@@ -1079,8 +1086,12 @@ app.get(['/webhooks', '/api/webhooks'], sseProtect, requireBranchWrite, async (r
     res.json({
       type: 'success',
       data: rows.map((r) => ({
-        id: r._id, url: r.url, events: r.events,
-        description: r.description, active: r.active, createdAt: r.createdAt,
+        id: r._id,
+        url: r.url,
+        events: r.events,
+        description: r.description,
+        active: r.active,
+        createdAt: r.createdAt,
       })),
     });
   } catch (e) {
@@ -1091,21 +1102,87 @@ app.post(['/webhooks', '/api/webhooks'], sseProtect, requireBranchWrite, async (
   try {
     const result = await webhookInfra.addSubscription(req.db, req.body || {});
     if (!result.ok) return res.status(400).json({ type: 'error', message: result.reason });
-    res.json({ type: 'success', data: { id: result.id, secret: result.secret },
-      message: 'Webhook registered. Store the secret now - it is not shown again.' });
+    res.json({
+      type: 'success',
+      data: { id: result.id, secret: result.secret },
+      message: 'Webhook registered. Store the secret now - it is not shown again.',
+    });
   } catch (e) {
     res.status(500).json({ type: 'error', message: 'Could not register webhook' });
   }
 });
-app.delete(['/webhooks/:id', '/api/webhooks/:id'], sseProtect, requireBranchWrite, async (req, res) => {
-  try {
-    const result = await webhookInfra.removeSubscription(req.db, req.params.id);
-    res.json({ type: result.ok ? 'success' : 'error', data: null,
-      message: result.ok ? 'Webhook removed' : 'Not found' });
-  } catch (e) {
-    res.status(500).json({ type: 'error', message: 'Could not remove webhook' });
+app.delete(
+  ['/webhooks/:id', '/api/webhooks/:id'],
+  sseProtect,
+  requireBranchWrite,
+  async (req, res) => {
+    try {
+      const result = await webhookInfra.removeSubscription(req.db, req.params.id);
+      res.json({
+        type: result.ok ? 'success' : 'error',
+        data: null,
+        message: result.ok ? 'Webhook removed' : 'Not found',
+      });
+    } catch (e) {
+      res.status(500).json({ type: 'error', message: 'Could not remove webhook' });
+    }
   }
-});
+);
+/*
+ * Report email (owner ask): the client renders the exact PDF the user
+ * saw on screen and posts it here; the server only addresses and sends
+ * it through the same transport chain as the purchase-order mailer.
+ * Branch-write holders: mailing a report sends shop data outward.
+ */
+app.post(
+  ['/reports/email', '/api/reports/email'],
+  sseProtect,
+  requireBranchWrite,
+  express.json({ limit: '12mb' }),
+  async (req, res) => {
+    try {
+      const to = String(req.body?.to || '').trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
+        return res.status(400).json({ type: 'error', message: 'Enter a valid email address' });
+      }
+      const b64 = String(req.body?.pdf_base64 || '');
+      if (!b64 || b64.length > 12 * 1024 * 1024) {
+        return res.status(400).json({ type: 'error', message: 'Report PDF missing or too large' });
+      }
+      const filename =
+        String(req.body?.filename || 'report')
+          .replace(/[^a-z0-9-_]/gi, '')
+          .slice(0, 60) || 'report';
+      const title = String(req.body?.title || 'Report').slice(0, 120);
+      const { Email } = require('./src/utils/email');
+      const transporter = new Email({ email: to, name: to }, '').newTransport();
+      const shopName = (req.user && req.user.branch_name) || 'Posnic POS';
+      const info = await transporter.sendMail({
+        from: `${shopName} <${process.env.EMAIL_FROM || 'no-reply@posnic.local'}>`,
+        to,
+        subject: `${title} - ${shopName}`,
+        text: `Please find attached: ${title}.`,
+        attachments: [{ filename: `${filename}.pdf`, content: Buffer.from(b64, 'base64') }],
+      });
+      /* The dev fallback transport prints to console instead of delivering -
+         say so rather than claiming a send that never left the box. */
+      if (transporter.options && transporter.options.jsonTransport) {
+        return res.status(503).json({
+          type: 'error',
+          message: 'Email is not configured on this server - the PDF was generated but not sent',
+        });
+      }
+      return res.json({
+        type: 'success',
+        data: { to, messageId: info.messageId || '' },
+        message: 'Report emailed',
+      });
+    } catch (e) {
+      console.error('Error in reports/email:', e);
+      return res.status(500).json({ type: 'error', message: 'Could not email the report' });
+    }
+  }
+);
 /*
  * Scoped API tokens (integration platform step 2) - minted with an explicit
  * ACL subset, hashed at rest, plaintext shown exactly once. Branch-write
@@ -1118,8 +1195,13 @@ app.get(['/api-tokens', '/api/api-tokens'], sseProtect, requireBranchWrite, asyn
     res.json({
       type: 'success',
       data: rows.map((r) => ({
-        id: r._id, name: r.name, hint: r.token_hint, access: r.access,
-        active: r.active, createdAt: r.createdAt, last_used_at: r.last_used_at,
+        id: r._id,
+        name: r.name,
+        hint: r.token_hint,
+        access: r.access,
+        active: r.active,
+        createdAt: r.createdAt,
+        last_used_at: r.last_used_at,
       })),
     });
   } catch (e) {
@@ -1143,23 +1225,36 @@ app.post(['/api-tokens', '/api/api-tokens'], sseProtect, requireBranchWrite, asy
     res.status(500).json({ type: 'error', message: 'Could not create token' });
   }
 });
-app.delete(['/api-tokens/:id', '/api/api-tokens/:id'], sseProtect, requireBranchWrite, async (req, res) => {
-  try {
-    const result = await apiTokens.revokeToken(req.db, req.params.id);
-    res.json({ type: result.ok ? 'success' : 'error', data: null,
-      message: result.ok ? 'Token revoked' : 'Not found' });
-  } catch (e) {
-    res.status(500).json({ type: 'error', message: 'Could not revoke token' });
+app.delete(
+  ['/api-tokens/:id', '/api/api-tokens/:id'],
+  sseProtect,
+  requireBranchWrite,
+  async (req, res) => {
+    try {
+      const result = await apiTokens.revokeToken(req.db, req.params.id);
+      res.json({
+        type: result.ok ? 'success' : 'error',
+        data: null,
+        message: result.ok ? 'Token revoked' : 'Not found',
+      });
+    } catch (e) {
+      res.status(500).json({ type: 'error', message: 'Could not revoke token' });
+    }
   }
-});
+);
 
-app.get(['/webhooks/deliveries', '/api/webhooks/deliveries'], sseProtect, requireBranchWrite, async (req, res) => {
-  try {
-    res.json({ type: 'success', data: await webhookInfra.recentDeliveries(req.db) });
-  } catch (e) {
-    res.status(500).json({ type: 'error', message: 'Could not list deliveries' });
+app.get(
+  ['/webhooks/deliveries', '/api/webhooks/deliveries'],
+  sseProtect,
+  requireBranchWrite,
+  async (req, res) => {
+    try {
+      res.json({ type: 'success', data: await webhookInfra.recentDeliveries(req.db) });
+    } catch (e) {
+      res.status(500).json({ type: 'error', message: 'Could not list deliveries' });
+    }
   }
-});
+);
 
 /*
  * WhatsApp connector lane (I6): the signed connector (I5) drains the
@@ -1174,68 +1269,95 @@ const requireCustomerWrite = (req, res, next) => {
   return res.status(403).json({ type: 'error', message: 'This token cannot message customers' });
 };
 
-app.post(['/connector/whatsapp/claim', '/api/connector/whatsapp/claim'], sseProtect, requireCustomerWrite, async (req, res) => {
-  try {
-    if (!req.db) return res.status(503).json({ type: 'error', message: 'No shop in context' });
-    const rows = await waOutbox.claim(req.db, req.user.license, { limit: (req.body || {}).limit });
-    res.json({ type: 'success', data: rows });
-  } catch (e) {
-    res.status(500).json({ type: 'error', message: 'Claim failed' });
+app.post(
+  ['/connector/whatsapp/claim', '/api/connector/whatsapp/claim'],
+  sseProtect,
+  requireCustomerWrite,
+  async (req, res) => {
+    try {
+      if (!req.db) return res.status(503).json({ type: 'error', message: 'No shop in context' });
+      const rows = await waOutbox.claim(req.db, req.user.license, {
+        limit: (req.body || {}).limit,
+      });
+      res.json({ type: 'success', data: rows });
+    } catch (e) {
+      res.status(500).json({ type: 'error', message: 'Claim failed' });
+    }
   }
-});
+);
 
-app.post(['/connector/whatsapp/result', '/api/connector/whatsapp/result'], sseProtect, requireCustomerWrite, async (req, res) => {
-  try {
-    if (!req.db) return res.status(503).json({ type: 'error', message: 'No shop in context' });
-    const { id, ok, error } = req.body || {};
-    const r = await waOutbox.report(req.db, req.user.license, id, { ok: ok === true, error });
-    res.json({ type: 'success', data: r });
-  } catch (e) {
-    res.status(500).json({ type: 'error', message: 'Report failed' });
+app.post(
+  ['/connector/whatsapp/result', '/api/connector/whatsapp/result'],
+  sseProtect,
+  requireCustomerWrite,
+  async (req, res) => {
+    try {
+      if (!req.db) return res.status(503).json({ type: 'error', message: 'No shop in context' });
+      const { id, ok, error } = req.body || {};
+      const r = await waOutbox.report(req.db, req.user.license, id, { ok: ok === true, error });
+      res.json({ type: 'success', data: r });
+    } catch (e) {
+      res.status(500).json({ type: 'error', message: 'Report failed' });
+    }
   }
-});
+);
 
-app.get(['/connector/whatsapp/state', '/api/connector/whatsapp/state'], sseProtect, requireCustomerWrite, async (req, res) => {
-  try {
-    if (!req.db) return res.status(503).json({ type: 'error', message: 'No shop in context' });
-    // The connector's view: every branch's link state, including the
-    // 'init_requested' rows that tell it a screen is waiting for a QR.
-    const rows = await req.db.collection('whatsapp_connector_state').find({}).toArray();
-    res.json({
-      type: 'success',
-      data: rows.map((r) => ({
-        branch_id: r.branch_id ? String(r.branch_id) : null,
-        device_id: r.device_id || '',
-        status: r.status || 'unknown',
-        updated_date: r.updated_date,
-      })),
-    });
-  } catch (e) {
-    res.status(500).json({ type: 'error', message: 'Could not read state' });
+app.get(
+  ['/connector/whatsapp/state', '/api/connector/whatsapp/state'],
+  sseProtect,
+  requireCustomerWrite,
+  async (req, res) => {
+    try {
+      if (!req.db) return res.status(503).json({ type: 'error', message: 'No shop in context' });
+      // The connector's view: every branch's link state, including the
+      // 'init_requested' rows that tell it a screen is waiting for a QR.
+      const rows = await req.db.collection('whatsapp_connector_state').find({}).toArray();
+      res.json({
+        type: 'success',
+        data: rows.map((r) => ({
+          branch_id: r.branch_id ? String(r.branch_id) : null,
+          device_id: r.device_id || '',
+          status: r.status || 'unknown',
+          updated_date: r.updated_date,
+        })),
+      });
+    } catch (e) {
+      res.status(500).json({ type: 'error', message: 'Could not read state' });
+    }
   }
-});
+);
 
-app.post(['/connector/whatsapp/state', '/api/connector/whatsapp/state'], sseProtect, requireCustomerWrite, async (req, res) => {
-  try {
-    if (!req.db) return res.status(503).json({ type: 'error', message: 'No shop in context' });
-    const { branch_id, device_id, status, qr } = req.body || {};
-    await waOutbox.recordState(req.db, req.user.license, { branch_id, device_id, status, qr });
-    res.json({ type: 'success' });
-  } catch (e) {
-    res.status(500).json({ type: 'error', message: 'State update failed' });
+app.post(
+  ['/connector/whatsapp/state', '/api/connector/whatsapp/state'],
+  sseProtect,
+  requireCustomerWrite,
+  async (req, res) => {
+    try {
+      if (!req.db) return res.status(503).json({ type: 'error', message: 'No shop in context' });
+      const { branch_id, device_id, status, qr } = req.body || {};
+      await waOutbox.recordState(req.db, req.user.license, { branch_id, device_id, status, qr });
+      res.json({ type: 'success' });
+    } catch (e) {
+      res.status(500).json({ type: 'error', message: 'State update failed' });
+    }
   }
-});
+);
 
 app.post(['/push/test', '/api/push/test'], sseProtect, async (req, res) => {
   try {
-    const result = req.db && req.user
-      ? await pushInfra.sendToUser(req.db, req.user._id, {
-          title: 'Posnic',
-          body: 'Notifications are working on this device.',
-          url: '/dashboard.html#/dashboard',
-        })
-      : { sent: 0 };
-    res.json({ type: 'success', data: result, message: result.sent ? 'Sent' : 'No subscriptions on this device yet' });
+    const result =
+      req.db && req.user
+        ? await pushInfra.sendToUser(req.db, req.user._id, {
+            title: 'Posnic',
+            body: 'Notifications are working on this device.',
+            url: '/dashboard.html#/dashboard',
+          })
+        : { sent: 0 };
+    res.json({
+      type: 'success',
+      data: result,
+      message: result.sent ? 'Sent' : 'No subscriptions on this device yet',
+    });
   } catch (e) {
     res.status(500).json({ type: 'error', message: 'Send failed' });
   }
@@ -1262,15 +1384,30 @@ app.use('/suppliers', suppliersRoutes);
 // Serve frontend static files
 const frontendPath = path.join(__dirname, '..', 'frontend');
 app.use('/static', express.static(path.join(frontendPath, 'static'), { maxAge: STATIC_MAX_AGE }));
-app.use('/images', express.static(path.join(frontendPath, 'static', 'images'), { maxAge: STATIC_MAX_AGE }));
-app.use('/fonts', express.static(path.join(frontendPath, 'static', 'fonts'), { maxAge: STATIC_MAX_AGE }));
-app.use('/style', express.static(path.join(frontendPath, 'public', 'style'), { setHeaders: assetCacheHeaders }));
-app.use('/script', express.static(path.join(frontendPath, 'public', 'script'), { setHeaders: assetCacheHeaders }));
+app.use(
+  '/images',
+  express.static(path.join(frontendPath, 'static', 'images'), { maxAge: STATIC_MAX_AGE })
+);
+app.use(
+  '/fonts',
+  express.static(path.join(frontendPath, 'static', 'fonts'), { maxAge: STATIC_MAX_AGE })
+);
+app.use(
+  '/style',
+  express.static(path.join(frontendPath, 'public', 'style'), { setHeaders: assetCacheHeaders })
+);
+app.use(
+  '/script',
+  express.static(path.join(frontendPath, 'public', 'script'), { setHeaders: assetCacheHeaders })
+);
 // Serve static files from /public/static for pages loaded from /public/
 app.use('/public/static', express.static(path.join(frontendPath, 'static')));
 app.use('/public/images', express.static(path.join(frontendPath, 'static', 'images')));
 app.use('/public/fonts', express.static(path.join(frontendPath, 'static', 'fonts')));
-app.use('/public', express.static(path.join(frontendPath, 'public'), { setHeaders: assetCacheHeaders }));
+app.use(
+  '/public',
+  express.static(path.join(frontendPath, 'public'), { setHeaders: assetCacheHeaders })
+);
 app.use(express.static(path.join(frontendPath, 'public'), { setHeaders: assetCacheHeaders }));
 
 // Also mount API routes at root for backward compatibility
