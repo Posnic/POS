@@ -3660,6 +3660,10 @@ PosnicPro.sales.addSale = {
                     // per-sale opt-in makes the server grow the due by it.
                     tip_in_total: ($('#sale_tip_in_total').is(':checked')
                         && (parseFloat($('#sale_tip_input').val()) || 0) > 0) ? 'true' : 'false',
+                    // quote lineage rides only on a conversion (both cleared after save)
+                    source_quote_id: PosnicPro.sales._sourceQuoteId || '',
+                    quote_price_honoured: PosnicPro.sales._sourceQuoteId
+                        ? (PosnicPro.sales._quoteHonoured ? 'true' : 'false') : undefined,
                     multi_payment: payments,
                     enable_multi_payment: PosnicPro.local.get('enable_multi_payment'),
                     table_number: newSaleTableNumber,
@@ -3683,6 +3687,7 @@ PosnicPro.sales.addSale = {
                     if (PosnicPro.sales._sourceQuoteId) {
                         var qid = PosnicPro.sales._sourceQuoteId;
                         PosnicPro.sales._sourceQuoteId = null;
+                        PosnicPro.sales._quoteHonoured = null;
                         var sid = (response && response.data && (response.data.id || response.data._id)) || null;
                         PosnicPro.post({ url: 'quotes/' + qid + '/transition', data: JSON.stringify({ action: 'convert', sale_id: sid }) },
                             function () { /* stamped */ }, function () { /* quote stays open - visible on the Quotes page */ });
@@ -7706,12 +7711,48 @@ PosnicPro.quotes = {
             doc.save((q.quote_id || 'quote').toLowerCase() + '.pdf');
         });
     },
+    /* Apply a quoted unit price to a landed cart row - the SAME math the
+       manual price edit runs, so tax (inclusive and exclusive) and totals
+       recompute through the one engine. */
+    _applyQuotedPrice: function (id, newValue) {
+        $('#saleInlineItemPrice_' + id).text(newValue.toFixed(2));
+        $('#addSalesLineItemPrice_' + id).text(newValue.toFixed(2));
+        $('#addSalesLineItemSellingPrice_' + id).text(newValue.toFixed(2));
+        var taxType = $('#addSalesLineItemTaxType_' + id).text();
+        var TaxValue = parseFloat($('#addSalesLineItemTax_' + id).text()) || 0;
+        var mrpPrice = taxType === 'Exc' ? newValue : newValue / (1 + TaxValue / 100);
+        $('#addSalesLineItemSubTotal_' + id).text(mrpPrice.toFixed(2));
+        if (PosnicPro.local.get('inline_sale') === 'enable') {
+            // inline mode keeps an edit icon inside the price cell - rebuild
+            // it the same way the manual price editor does
+            $('#addSalesLineItemPrice_' + id).replaceWith(
+                '<td name="addSalesLineItemPrice" id="addSalesLineItemPrice_' + id + '" class="font_size14">' +
+                mrpPrice.toFixed(2) +
+                '&nbsp;&nbsp;<span class="sales-inline-hide">' +
+                '<i class="feather icon-edit-1 text-primary" ' +
+                'onclick="return PosnicPro.sales.editItemPricingSale(this);" ' +
+                'data-id="' + id + '" data-toggle="tooltip" title="Price change" style="cursor:pointer;"></i>' +
+                '</span></td>'
+            );
+        }
+        PosnicPro.sales.commonInlineCalculation(id, taxType, TaxValue);
+    },
+    /*
+     * Convert (QUOTED_PRICE_ON_CONVERT_DESIGN): inside validity the sale
+     * honours the QUOTED unit prices - a quotation is a price promise.
+     * Lapsed quotes convert at today's prices with an explicit notice (the
+     * cashier can still override per line through the price_override rail).
+     * If any line no longer lands, the quote STAYS open - _sourceQuoteId is
+     * cleared so saving the partial sale cannot stamp it converted.
+     */
     convert: function () {
         var q = PosnicPro.quotes._current;
         if (!q) { return; }
+        var lapsed = !!(q.valid_until && new Date(q.valid_until) < new Date());
         PosnicPro.sales._sourceQuoteId = String(q._id);
-        PosnicPro.sales._quotePrefill = (q.items || []).map(function (l) {
-            return { item_id: String(l.item_id), qty: Number(l.qty) || 1 };
+        PosnicPro.sales._quoteHonoured = !lapsed;
+        var lines = (q.items || []).map(function (l) {
+            return { item_id: String(l.item_id), qty: Number(l.qty) || 1, unit_price: Number(l.unit_price) || 0 };
         });
         hasher.setHash('sales/new');
         var tries = 0;
@@ -7719,11 +7760,45 @@ PosnicPro.quotes = {
             tries += 1;
             if ($('#sales_new_item_name').is(':visible') || tries > 20) {
                 clearInterval(t);
-                (PosnicPro.sales._quotePrefill || []).forEach(function (l) {
+                lines.forEach(function (l) {
                     PosnicPro.sales.itemsMenu.addToLineItemsList(l.item_id);
                 });
-                PosnicPro.sales._quotePrefill = null;
-                PosnicPro.alert('success', 'Quote loaded - items at current prices. Quoted total was ' + Number(q.total || 0).toFixed(2) + '.');
+                // rows land async (item fetch per line) - settle each as it
+                // appears: quantity first, then the quoted price on top
+                var pending = lines.slice();
+                var waited = 0;
+                var t2 = setInterval(function () {
+                    waited += 300;
+                    pending = pending.filter(function (l) {
+                        var $qty = $('#touchsale_item_qty' + l.item_id);
+                        if (!$qty.length) { return true; }
+                        if (l.qty > 1 && parseFloat($qty.val()) !== l.qty) {
+                            $qty.val(l.qty).trigger('keyup');
+                        }
+                        if (!lapsed && l.unit_price > 0) {
+                            PosnicPro.quotes._applyQuotedPrice(l.item_id, l.unit_price);
+                        }
+                        return false;
+                    });
+                    if (!pending.length || waited > 9000) {
+                        clearInterval(t2);
+                        if (pending.length) {
+                            PosnicPro.sales._sourceQuoteId = null;
+                            PosnicPro.sales._quoteHonoured = null;
+                            PosnicPro.alert('warning', pending.length + ' of ' + lines.length
+                                + ' quoted items are no longer sellable and were skipped - quote '
+                                + (q.quote_id || '') + ' stays open.');
+                        } else if (lapsed) {
+                            PosnicPro.alert('warning', 'Quote ' + (q.quote_id || '') + ' lapsed on '
+                                + new Date(q.valid_until).toLocaleDateString('en-IN')
+                                + ' - items loaded at today\'s prices. Quoted total was '
+                                + Number(q.total || 0).toFixed(2) + '.');
+                        } else {
+                            PosnicPro.alert('success', 'Quote ' + (q.quote_id || '')
+                                + ' loaded at its quoted prices.');
+                        }
+                    }
+                }, 300);
             }
         }, 300);
     },
