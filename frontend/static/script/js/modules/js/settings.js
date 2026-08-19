@@ -4691,12 +4691,16 @@ $(document).on('change', '#v-pills-modules .module-card-head input.custom-contro
     PosnicPro.settings._featuresDirty = true;
     PosnicPro.settings.refreshModuleCards();
 });
-// A toggled feature that was never saved dies silently on navigation -
-// say so once (owner: inform, don't block).
+// Unsaved feature changes get a real decision (owner upgrade from the
+// toast): Stay pulls you back with every selection intact; Leave
+// discards knowingly.
 $(window).on('hashchange', function () {
     if (PosnicPro.settings._featuresDirty && !/settings/i.test(window.location.hash || '')) {
+        if (!window.confirm('You have unsaved feature changes. Leave without saving?')) {
+            hasher.replaceHash('settings/modules');
+            return;
+        }
         PosnicPro.settings._featuresDirty = false;
-        PosnicPro.alert('warning', 'Feature changes were not saved - press Save on the Features page to keep them');
     }
 });
 
