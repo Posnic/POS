@@ -6643,8 +6643,9 @@ class SalesController extends BaseController {
    */
   async getNewSale(req, res) {
     try {
-      const userAccess = req.user?.access?.sales?.write;
-      if (userAccess !== true) {
+      // The standard check carries the owner-class bypass the raw access
+      // read lacked - super admins 403d here on the unpaid path.
+      if (!this.checkPermission('sales', 'write', req.user)) {
         return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
 
