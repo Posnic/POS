@@ -336,6 +336,19 @@ PosnicPro.quickreport = {
             return { name: row[0], qty: safeNum(row[2]), total: safeNum(row[6]) };
           }),
         };
+
+        // The PDF's Summary section - the on-screen stat cards are divs the
+        // exporter cannot gather, so the numbers ride this hidden table.
+        (function () {
+          var money = function (n) { return Number(n || 0).toFixed(2); };
+          var rows = '<tr><td>Total sales</td><td class="text-right">' + money(PosnicPro.quickreport.lastReport.total) + '</td></tr>'
+            + '<tr><td>Items sold</td><td class="text-right">' + PosnicPro.quickreport.lastReport.qty + '</td></tr>'
+            + '<tr><td>Payments received</td><td class="text-right">' + money(PosnicPro.quickreport.lastReport.tenderTotal) + '</td></tr>';
+          PosnicPro.quickreport.lastReport.payments.forEach(function (p) {
+            rows += '<tr><td>' + $('<i>').text(p.label).html() + '</td><td class="text-right">' + money(p.amount) + '</td></tr>';
+          });
+          $('#dayend_export_summary_body').html(rows);
+        })();
         
         // Clear existing rows
         $("#daily_report_extra_discount_details tbody").children("tr").remove();

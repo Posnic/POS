@@ -150,6 +150,11 @@
 
 
                                                     <div id="export_daily_report">
+                                                        <h5 style="display:none;">Summary</h5>
+                                                        <table id="dayend_export_summary" data-export-include style="display:none;">
+                                                            <thead><tr><th>Summary</th><th class="text-right">Value</th></tr></thead>
+                                                            <tbody id="dayend_export_summary_body"></tbody>
+                                                        </table>
                                                         <!-- From and To on one line, right-aligned, with a modest top
                                                              gap (was m-t-50 on two stacked tables) so the report fits
                                                              without scrolling. Span ids are kept for the JS that fills them. -->
