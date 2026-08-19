@@ -664,6 +664,12 @@ PosnicPro.settings = {
                 $('#textlocal_sender').val(data.textlocal_sender);
                 $('#textlocal_api').val(data.textlocal_api);
                 $('#sales_prefix').val(data.sales_prefix || 'S');
+                $('#email_smtp_host').val(data.email_smtp_host || '');
+                $('#email_smtp_port').val(data.email_smtp_port || '');
+                $('#email_smtp_secure').prop('checked', data.email_smtp_secure === true || data.email_smtp_secure === 'true');
+                $('#email_smtp_username').val(data.email_smtp_username || '');
+                $('#email_smtp_password').val(data.email_smtp_password || '');
+                $('#email_smtp_from').val(data.email_smtp_from || '');
                 $('#receiving_prefix').val(data.receiving_prefix || 'P');
                 $('#allow_sale_date_edit').prop('checked', data.allow_sale_date_edit !== 'false' && data.allow_sale_date_edit !== false);
                 PosnicPro.local.set('allow_sale_date_edit', (data.allow_sale_date_edit === 'false' || data.allow_sale_date_edit === false) ? 'false' : 'true');
@@ -1570,6 +1576,12 @@ if ($wrapper.length) {
                 discount_percentage: $('#discount_percentage').val(),
                 discount_amount: $('#discount_amount').val(),
                 sales_prefix: $('#sales_prefix').val(),
+                email_smtp_host: $('#email_smtp_host').val() || '',
+                email_smtp_port: $('#email_smtp_port').val() || '',
+                email_smtp_secure: $('#email_smtp_secure').is(':checked') ? 'true' : 'false',
+                email_smtp_username: $('#email_smtp_username').val() || '',
+                email_smtp_password: $('#email_smtp_password').val() || '',
+                email_smtp_from: $('#email_smtp_from').val() || '',
                 receiving_prefix: $('#receiving_prefix').val(),
                 allow_sale_date_edit: ($('#allow_sale_date_edit').is(":checked")) ? 'true' : 'false',
                 indian_gst: $('#indian_gst').val(),
