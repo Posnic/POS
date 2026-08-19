@@ -294,7 +294,18 @@ class SettingModel extends BaseModel {
   }
 
   async getDefaultCustomerSupplier(customerId, supplierId) {
-    if (!customerId || (!supplierId && !this.branchId)) {
+    /*
+     * Branch switch lands here with whatever the previous branch left in
+     * localStorage - possibly nothing. With a branch context BOTH defaults
+     * self-heal: the customer through the Walk-in heal, the supplier below.
+     */
+    if (!customerId && this.branchId) {
+      const healed = await this.getDefaultCustomer('');
+      if (healed.status && healed.data && healed.data.customer_id) {
+        customerId = healed.data.customer_id;
+      }
+    }
+    if ((!customerId || !supplierId) && !this.branchId) {
       return {
         status: false,
         data: null,
