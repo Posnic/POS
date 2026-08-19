@@ -118,6 +118,8 @@ class ItemModel {
     // Loyverse study L2: the no-image sale-grid tile's colour and shape.
     tile_color: { type: 'String', select: true },
     tile_shape: { type: 'String', select: true },
+    // Quick code (owner ask): "22 is hamam soap" - typed + Enter carts it.
+    plu_code: { type: 'String', select: true },
     // Square study Q3: services - a second sellable kind, no stock.
     item_kind: { type: 'String', select: true },
     service_unit: { type: 'String', select: true },
