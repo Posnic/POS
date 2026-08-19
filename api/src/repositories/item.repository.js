@@ -1229,6 +1229,14 @@ class ItemRepository extends BaseModel {
         updateData.tile_color = /^#[0-9a-fA-F]{6}$/.test(tileColor) ? tileColor : '';
       }
 
+      // The tile's shape rides the same rules: a known shape or empty.
+      if (data.tile_shape !== undefined) {
+        const tileShape = String(data.tile_shape || '').trim();
+        updateData.tile_shape = ['square', 'rounded', 'circle', 'diamond'].includes(tileShape)
+          ? tileShape
+          : '';
+      }
+
       /*
        * Lightspeed study LS1 trio, all presence-gated: brand (a name, for
        * filtering and the future community catalog), tags (free keywords),
@@ -2060,6 +2068,7 @@ class ItemRepository extends BaseModel {
               items_expiry_date: 1,
               item_kind: 1,
               tile_color: 1,
+              tile_shape: 1,
             },
           },
         ])
@@ -2088,6 +2097,7 @@ class ItemRepository extends BaseModel {
         items_expiry_date: item.items_expiry_date != null ? String(item.items_expiry_date) : '',
         item_kind: item.item_kind || 'product',
         tile_color: item.tile_color || '',
+        tile_shape: item.tile_shape || '',
       }));
 
       return {
@@ -2174,6 +2184,7 @@ class ItemRepository extends BaseModel {
           track_inventory: item.track_inventory === true,
           // Tile colour (Loyverse study L2): the no-image tile's look.
           tile_color: item.tile_color || '',
+        tile_shape: item.tile_shape || '',
         }));
 
       return {
@@ -2458,6 +2469,7 @@ class ItemRepository extends BaseModel {
         track_inventory: item.track_inventory !== false,
         item_kind: item.item_kind || 'product',
         tile_color: item.tile_color || '',
+        tile_shape: item.tile_shape || '',
       }));
 
       return { status: true, data: list, message: 'success' };
