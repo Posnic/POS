@@ -953,3 +953,40 @@ describe('Sale.getQrStatusModel', () => {
     expect(result.message).toContain('DB failure');
   });
 });
+
+// ─── Stock snapshots must never fail validation ────────────────────────────────
+
+describe('item_available_quantity is a snapshot, not a constraint', () => {
+  /*
+   * It records what the item's stock WAS when the line was sold. Stock goes
+   * negative on items whose negative_stock flag permits overselling, and the
+   * item model puts no floor on available_quantity - so a floor here made the
+   * two disagree. The cost was not a bad number: min:0 refused the whole
+   * SALE ("Path `item_available_quantity` (-1) is less than minimum allowed
+   * value (0)"), so a single item already in the red stopped the cashier
+   * taking money for the entire basket.
+   */
+  test('no minimum is declared on the snapshot', () => {
+    expect(pi('item_available_quantity').options.min).toBeUndefined();
+  });
+
+  test('a line recording negative stock passes validation', () => {
+    // mongoose returns null from doValidateSync when the value is acceptable
+    expect(pi('item_available_quantity').doValidateSync(-1)).toBeNull();
+    expect(pi('item_available_quantity').doValidateSync(0)).toBeNull();
+  });
+
+  test('a real quantity being SOLD still has its floor', () => {
+    // the fix is scoped to the snapshot; selling -1 of something stays invalid
+    expect(pi('item_discount').options.min).toBe(0);
+    expect(saleItemSchema.path('total_amount').options.min).toBe(0);
+  });
+
+  test('the item model it mirrors has no floor either', () => {
+    const Item = require('../../../src/models/item.model');
+    const schema = Item.schema || (Item.LegacyItemModel && null);
+    if (schema && schema.path('available_quantity')) {
+      expect(schema.path('available_quantity').options.min).toBeUndefined();
+    }
+  });
+});
