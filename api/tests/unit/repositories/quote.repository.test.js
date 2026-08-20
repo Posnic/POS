@@ -39,11 +39,20 @@ const ITEM = '64b000000000000000000004';
 const SALE = '64b000000000000000000005';
 const ctx = { branchId: BRANCH, licenseId: LICENSE, userName: 'tester' };
 
-const mkFindChain = (rows) => ({
-  find: () => mkFindChain(rows),
-  sort: () => mkFindChain(rows),
-  limit: () => mkFindChain(rows),
-  project: () => mkFindChain(rows),
+/* `calls` collects what the chain was asked for, so paging tests can assert
+   the repository skipped and limited rather than trusting the row array. */
+const mkFindChain = (rows, calls = {}) => ({
+  find: () => mkFindChain(rows, calls),
+  sort: () => mkFindChain(rows, calls),
+  skip: (n) => {
+    calls.skip = n;
+    return mkFindChain(rows, calls);
+  },
+  limit: (n) => {
+    calls.limit = n;
+    return mkFindChain(rows, calls);
+  },
+  project: () => mkFindChain(rows, calls),
   toArray: async () => rows,
 });
 
@@ -55,6 +64,7 @@ describe('QuoteRepository', () => {
     mockRequestedCollections.length = 0;
     repo = new QuoteRepository();
     mockCollection.find.mockReturnValue(mkFindChain([]));
+    mockCollection.countDocuments = jest.fn().mockResolvedValue(0);
   });
 
   test('create writes only the quotes collection and numbers QUO-000001', async () => {
@@ -307,6 +317,61 @@ describe('QuoteRepository', () => {
     expect(r.status).toBe(false);
     const filter = mockCollection.deleteOne.mock.calls[0][0];
     expect(filter.status).toEqual({ $in: ['open', 'draft', 'sent'] });
+  });
+
+  /*
+   * Listing: status, search and paging are the SERVER's job. They used to be
+   * done in the browser over the first 100 rows, so past 100 quotes a search
+   * for an older one answered "no quotes" for a quote that exists.
+   */
+  test('search matches customer name or quote number, case-insensitively', async () => {
+    await repo.listQuotes({ search: 'acme' }, ctx);
+    const filter = mockCollection.find.mock.calls[0][0];
+    expect(filter.$or).toHaveLength(2);
+    expect(filter.$or[0].customer_name).toBeInstanceOf(RegExp);
+    expect(filter.$or[0].customer_name.flags).toContain('i');
+    expect(filter.$or[0].customer_name.test('ACME Traders')).toBe(true);
+    expect(filter.$or[1].quote_id.test('QUO-000012')).toBe(false);
+  });
+
+  test('a search term full of regex metacharacters is matched literally', async () => {
+    // Unescaped, '(' alone is an invalid regex and this call would throw.
+    const r = await repo.listQuotes({ search: 'a+b(c' }, ctx);
+    expect(r.status).toBe(true);
+    const filter = mockCollection.find.mock.calls[0][0];
+    expect(filter.$or[0].customer_name.test('a+b(c ltd')).toBe(true);
+    expect(filter.$or[0].customer_name.test('aaab')).toBe(false);
+  });
+
+  test('paging skips whole pages and reports the true total', async () => {
+    mockCollection.countDocuments.mockResolvedValue(137);
+    const calls = {};
+    mockCollection.find.mockReturnValue(mkFindChain([], calls));
+    const r = await repo.listQuotes({ page: 3, limit: 20 }, ctx);
+    expect(calls.skip).toBe(40);
+    expect(calls.limit).toBe(20);
+    // the pager needs the count of ALL matches, not of this page's rows
+    expect(r.meta).toEqual({ total: 137, page: 3, limit: 20, pages: 7 });
+  });
+
+  test('the count is taken over the same filter the rows are read with', async () => {
+    await repo.listQuotes({ search: 'acme', status: 'open' }, ctx);
+    expect(mockCollection.countDocuments).toHaveBeenCalledWith(
+      mockCollection.find.mock.calls[0][0]
+    );
+  });
+
+  test('a hostile page size cannot ask for the whole collection', async () => {
+    const calls = {};
+    mockCollection.find.mockReturnValue(mkFindChain([], calls));
+    await repo.listQuotes({ limit: 100000, page: 0 }, ctx);
+    expect(calls.limit).toBe(200);
+    expect(calls.skip).toBe(0); // page 0 is clamped to the first page
+  });
+
+  test('an unknown status is ignored rather than filtering everything out', async () => {
+    await repo.listQuotes({ status: 'not-a-status' }, ctx);
+    expect(mockCollection.find.mock.calls[0][0].status).toBeUndefined();
   });
 
   test('every method fails closed without a branch wall', async () => {

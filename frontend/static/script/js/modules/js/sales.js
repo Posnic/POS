@@ -7668,10 +7668,7 @@ PosnicPro.quotes = {
         $('.vertical-layout').removeClass('toggle-menu');
         $('#v-pills-dashboard-tab,#view_quotes_page').addClass('active');
         $('#v-pills-dashboard').addClass('show active');
-        PosnicPro.get({ url: 'quotes', data: {} }, function (r) {
-            PosnicPro.quotes._rows = (r && r.data) || [];
-            PosnicPro.quotes.renderList();
-        }, function () { $('#quotes_list_rows').text('Could not load quotes - try again.'); });
+        PosnicPro.quotes.load();
     },
     /* ---- Quotation editor (QUOTATION_MODULE_DESIGN Q2) ---- */
     _ed: null,
@@ -8138,22 +8135,48 @@ PosnicPro.quotes = {
     },
     _page: 1,
     PAGE_SIZE: 20,
-    renderList: function (keepPage) {
+    /*
+     * The server decides status, search and paging now. It used to hand
+     * over its first 100 quotes and the browser filtered those - so past
+     * 100 quotes, searching for an older one found nothing and the pager
+     * never reached the rest. _seq drops a slow response that lands after
+     * a newer one (type fast enough and the old answer used to win).
+     */
+    _seq: 0,
+    load: function (keepPage) {
         if (!keepPage) { PosnicPro.quotes._page = 1; }
-        var esc = PosnicPro.quotes._esc;
-        var term = $.trim(($('#quotes_search').val() || '').toLowerCase());
-        var rows = PosnicPro.quotes._rows.filter(function (q) {
-            if (PosnicPro.quotes._status && q.status !== PosnicPro.quotes._status) { return false; }
-            if (!term) { return true; }
-            return String(q.customer_name || '').toLowerCase().indexOf(term) !== -1
-                || String(q.quote_id || '').toLowerCase().indexOf(term) !== -1;
+        var mine = ++PosnicPro.quotes._seq;
+        var params = {
+            page: PosnicPro.quotes._page,
+            limit: PosnicPro.quotes.PAGE_SIZE
+        };
+        if (PosnicPro.quotes._status) { params.status = PosnicPro.quotes._status; }
+        var term = $.trim($('#quotes_search').val() || '');
+        if (term) { params.search = term; }
+        PosnicPro.get({ url: 'quotes', data: params }, function (r) {
+            if (mine !== PosnicPro.quotes._seq) { return; }
+            PosnicPro.quotes._rows = (r && r.data) || [];
+            PosnicPro.quotes._meta = (r && r.meta) || null;
+            PosnicPro.quotes.renderList();
+        }, function () {
+            if (mine !== PosnicPro.quotes._seq) { return; }
+            $('#quotes_list_rows').text('Could not load quotes - try again.');
         });
+    },
+    renderList: function () {
+        var esc = PosnicPro.quotes._esc;
+        var rows = PosnicPro.quotes._rows || [];
+        var meta = PosnicPro.quotes._meta;
         if (!rows.length) {
-            $('#quotes_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">No quotes here yet - press Save as quote on a sale and it lands in this list.</div>');
+            var searching = $.trim($('#quotes_search').val() || '') !== '' || PosnicPro.quotes._status;
+            $('#quotes_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">'
+                + (searching
+                    ? 'No quotes match this search.'
+                    : 'No quotes here yet - press Save as quote on a sale and it lands in this list.')
+                + '</div>');
             return;
         }
-        var startAt = (PosnicPro.quotes._page - 1) * PosnicPro.quotes.PAGE_SIZE;
-        var shown = rows.slice(startAt, startAt + PosnicPro.quotes.PAGE_SIZE);
+        var shown = rows;
         var d = function (v) { return v ? new Date(v).toLocaleDateString('en-IN') : '-'; };
         var html = '<div class="table-responsive"><table class="table table-borderless">'
             + '<thead><tr>'
@@ -8181,15 +8204,16 @@ PosnicPro.quotes = {
                 + '</tr>';
         });
         html += '</tbody></table></div>';
-        var pages = Math.max(1, Math.ceil(rows.length / PosnicPro.quotes.PAGE_SIZE));
+        var pages = (meta && meta.pages) || 1;
+        var cur = (meta && meta.page) || 1;
         if (pages > 1) {
-            var cur = PosnicPro.quotes._page;
             html += '<div class="text-center p-t-10">'
                 + '<button type="button" class="btn btn-sm btn-secondary-rgba mr-2"' + (cur <= 1 ? ' disabled' : '')
-                + ' onclick="PosnicPro.quotes._page -= 1; PosnicPro.quotes.renderList(true);">&laquo; Prev</button>'
-                + '<span class="text-muted">Page ' + cur + ' of ' + pages + '</span>'
+                + ' onclick="PosnicPro.quotes._page = ' + (cur - 1) + '; PosnicPro.quotes.load(true);">&laquo; Prev</button>'
+                + '<span class="text-muted">Page ' + cur + ' of ' + pages
+                + ' <small>(' + meta.total + ' quotes)</small></span>'
                 + '<button type="button" class="btn btn-sm btn-secondary-rgba ml-2"' + (cur >= pages ? ' disabled' : '')
-                + ' onclick="PosnicPro.quotes._page += 1; PosnicPro.quotes.renderList(true);">Next &raquo;</button>'
+                + ' onclick="PosnicPro.quotes._page = ' + (cur + 1) + '; PosnicPro.quotes.load(true);">Next &raquo;</button>'
                 + '</div>';
         }
         $('#quotes_list_rows').html(html);
@@ -10066,7 +10090,14 @@ $(document).on('click', '.quotes-chip', function () {
     $('.quotes-chip').removeClass('btn-primary-rgba').addClass('btn-secondary-rgba');
     $(this).removeClass('btn-secondary-rgba').addClass('btn-primary-rgba');
     PosnicPro.quotes._status = $(this).data('status') || '';
-    PosnicPro.quotes.renderList();
+    PosnicPro.quotes.load();
+});
+// search asks the SERVER now, so debounce it rather than querying per keypress
+$(document).on('input', '#quotes_search', function () {
+    clearTimeout(PosnicPro.quotes._searchTimer);
+    PosnicPro.quotes._searchTimer = setTimeout(function () {
+        PosnicPro.quotes.load();
+    }, 300);
 });
 $(document).on('click', '.recent-customer-row', function () {
     var list = PosnicPro.sales._recentRendered || [];

@@ -31,7 +31,10 @@ function can(req, perm) {
 
 const fail = (res, message, code = 400) =>
   res.status(code).json({ type: 'error', message, data: null });
-const ok = (res, data, message) => res.json({ type: 'success', message, data });
+// `meta` rides alongside data (paging totals); omitted when there is none,
+// so every existing caller sees exactly the payload it saw before.
+const ok = (res, data, message, meta) =>
+  res.json({ type: 'success', message, data, ...(meta ? { meta } : {}) });
 
 module.exports = {
   async create(req, res) {
@@ -104,10 +107,15 @@ module.exports = {
     try {
       if (!can(req, 'read')) return fail(res, 'Unauthorized access', 403);
       const r = await repository.listQuotes(
-        { status: req.query.status, limit: req.query.limit },
+        {
+          status: req.query.status,
+          limit: req.query.limit,
+          page: req.query.page,
+          search: req.query.search,
+        },
         contextOf(req)
       );
-      return r.status ? ok(res, r.data, r.message) : fail(res, r.message);
+      return r.status ? ok(res, r.data, r.message, r.meta) : fail(res, r.message);
     } catch (error) {
       console.error('Error in quotes list:', error);
       return fail(res, error.message, 500);
