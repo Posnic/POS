@@ -134,6 +134,10 @@
       "description": "Mounted at /sales"
     },
     {
+      "name": "Settings groups",
+      "description": "Mounted at /settings/group"
+    },
+    {
       "name": "Settings",
       "description": "Mounted at /settings"
     },
@@ -11563,6 +11567,71 @@
             "description": "Server error"
           }
         }
+      }
+    },
+    "/settings/group/{group}": {
+      "get": {
+        "summary": "read",
+        "operationId": "get_settings_group_group",
+        "tags": [
+          "Settings groups"
+        ],
+        "parameters": [
+          {
+            "name": "group",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      },
+      "put": {
+        "summary": "write",
+        "operationId": "put_settings_group_group",
+        "tags": [
+          "Settings groups"
+        ],
+        "parameters": [
+          {
+            "name": "group",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
     "/settings/getJSONCountry": {
