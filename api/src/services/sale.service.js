@@ -1019,6 +1019,31 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
         : existingSale?.quote_price_honoured !== undefined
           ? { quote_price_honoured: existingSale.quote_price_honoured }
           : {}),
+      // Document-level charges (parcel, service, freight - owner spec):
+      // stored as sent, capped and cleaned; an edit that does not resend
+      // them keeps them, and a sale that HAS them stays editable even
+      // when the shop toggle is off (common software practice).
+      ...(Array.isArray(data.charges)
+        ? {
+            charges: data.charges.slice(0, 20).flatMap((c) => {
+              const name = String((c && c.name) || '')
+                .trim()
+                .slice(0, 60);
+              const amount = round2(parseFloat(c && c.amount) || 0, 2);
+              if (!name || !(amount > 0)) return [];
+              return [
+                {
+                  name,
+                  amount,
+                  taxed: c && (c.taxed === true || c.taxed === 'true'),
+                  source: c && c.source === 'quote' ? 'quote' : 'manual',
+                },
+              ];
+            }),
+          }
+        : existingSale?.charges
+          ? { charges: existingSale.charges }
+          : {}),
 
       // ...
       sale_method: saleMethod,

@@ -472,7 +472,8 @@ PosnicPro.settings = {
                         module_themes_enable: response.data['module_themes_enable'] !== false,
                         module_cashbook_enable: response.data['module_cashbook_enable'] !== false,
                         quick_sale_enable: response.data['quick_sale_enable'] !== false,
-                        quotes_enable: response.data['quotes_enable'] !== false
+                        quotes_enable: response.data['quotes_enable'] !== false,
+                        custom_charges_enable: response.data['custom_charges_enable'] === true
                     };
                     PosnicPro.local.set('general_settings', JSON.stringify(generalSettings));
                     PosnicPro.shiftWidget.applyEnabled();
@@ -731,6 +732,7 @@ PosnicPro.settings = {
                 $('#module_cashbook_enable').prop('checked', data.module_cashbook_enable !== false);
                 $('#quick_sale_enable').prop('checked', data.quick_sale_enable !== false);
                 $('#quotes_enable').prop('checked', data.quotes_enable !== false);
+                $('#custom_charges_enable').prop('checked', data.custom_charges_enable === true);
 
                 // Store general settings including hardware_weight_machine_enable
                 var generalSettings = {
@@ -751,7 +753,8 @@ PosnicPro.settings = {
                     module_themes_enable: data.module_themes_enable !== false,
                     module_cashbook_enable: data.module_cashbook_enable !== false,
                     quick_sale_enable: data.quick_sale_enable !== false,
-                    quotes_enable: data.quotes_enable !== false
+                    quotes_enable: data.quotes_enable !== false,
+                    custom_charges_enable: data.custom_charges_enable === true
                 };
                 PosnicPro.local.set('general_settings', JSON.stringify(generalSettings));
                 PosnicPro.shiftWidget.applyEnabled();
@@ -1481,6 +1484,7 @@ if ($wrapper.length) {
         'module_recyclebin_enable', 'module_themes_enable', 'module_cashbook_enable',
         'quick_sale_enable',
         'quotes_enable',
+        'custom_charges_enable',
         'pl_include_cashbook',
     ],
     initModulesBranchSelect: function () {
