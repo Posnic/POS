@@ -116,7 +116,15 @@ const saleItemSchema = new mongoose.Schema(
     item_available_quantity: {
       type: Number,
       default: 0,
-      min: 0,
+      /*
+       * No `min`. This is a SNAPSHOT of the item's stock at sale time, not
+       * a quantity being sold - and stock legitimately goes negative on
+       * items whose `negative_stock` flag allows overselling. With min: 0
+       * the whole sale was refused ("Path `item_available_quantity` (-1) is
+       * less than minimum allowed value (0)"), so one item already in the
+       * red blocked the cashier from taking money for the entire basket.
+       * A record of what stock WAS must never be able to fail validation.
+       */
     },
     item_id: {
       type: String,
