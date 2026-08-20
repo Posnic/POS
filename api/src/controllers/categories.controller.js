@@ -241,6 +241,63 @@ class CategoriesController extends BaseController {
    * Get all categories with pagination
    * GET /categories
    */
+  /**
+   * GET /categories/getDataChanges
+   *
+   * The route for this has been live and calling a method that was never
+   * written, so the endpoint answered 500 to anything that asked. Nothing in
+   * the frontend calls it today, which is the only reason it went unnoticed -
+   * a sync client picking it up would have found it broken.
+   *
+   * Thin by design: the service and repository already implement the query,
+   * exactly as customer-categories does. All this adds is the branch the
+   * changes are scoped to, resolved the same way every other method here
+   * resolves it rather than trusting a query parameter.
+   */
+  getDataChanges = asyncHandler(async (req, res) => {
+    try {
+      const from = req.query.from || '';
+      if (!from) {
+        return res.status(400).json({
+          type: 'error',
+          message: 'A "from" date is required',
+          data: null,
+        });
+      }
+
+      const { branch_id: branchId } = await this.resolveBranchContext(req);
+      if (!branchId) {
+        return res.status(400).json({
+          type: 'error',
+          message: 'Branch could not be resolved',
+          data: null,
+        });
+      }
+
+      const result = await this.service.getDataChanges(from, branchId);
+      if (!result.status) {
+        return res.status(200).json({
+          type: 'error',
+          message: result.message || 'Not valid Input',
+          data: result.data || null,
+        });
+      }
+
+      return res.status(200).json({
+        type: 'success',
+        message: 'Changes Retrieved',
+        data: result.data,
+      });
+    } catch (error) {
+      console.error('Error in getDataChanges:', error);
+      return res.status(500).json({
+        type: 'error',
+        message: error.message,
+        data: null,
+      });
+    }
+  });
+
   getAll = asyncHandler(async (req, res) => {
     if (!this.checkPermission('category', 'read', req.user)) {
       return this.error(res, 'Unauthorized', 403);
