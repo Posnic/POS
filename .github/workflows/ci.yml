@@ -48,6 +48,11 @@ concurrency:
 # silently does nothing on the runner - which is the one place it was needed.
 env:
   TZ: Asia/Kolkata
+  # puppeteer arrives as a transitive dependency (whatsapp-web.js) and its
+  # postinstall downloads a whole Chrome from Google's CDN - which 403s
+  # often enough to fail unrelated commits at `npm ci`. No CI job launches
+  # a browser, so the download is pure risk with no benefit.
+  PUPPETEER_SKIP_DOWNLOAD: '1'
 
 # Least privilege for GITHUB_TOKEN.
 #
