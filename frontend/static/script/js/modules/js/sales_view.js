@@ -302,6 +302,19 @@ PosnicPro.sales.view = {
                 '<td class="pull-right">' + currency + "&nbsp;" + '-' + '<span class="number">' + data.sale_extra_discount + '</span></td>';
         }
         $('#extra_discount_view').html(extraDiscount);
+        // Charges itemized on the view page too, mirroring the receipt rows
+        $('.charge-view-row').remove();
+        if (Array.isArray(data.charges) && data.charges.length) {
+            var chargeViewRows = '';
+            data.charges.forEach(function (c) {
+                var cTax = Number(c.tax_amount) || 0;
+                chargeViewRows += '<tr class="charge-view-row"><td>' + $('<i>').text(c.name || 'Charge').html()
+                    + (cTax > 0 ? ' <small>(+' + (c.tax_name ? $('<i>').text(c.tax_name).html() : 'tax') + ' ' + cTax.toFixed(2) + ')</small>' : '')
+                    + ' :</td>'
+                    + '<td class="pull-right">' + currency + '&nbsp;<span class="number">' + (Number(c.amount) || 0).toFixed(2) + '</span></td></tr>';
+            });
+            $('#extra_discount_view').after(chargeViewRows);
+        }
         $('#total_amount_view').number(data.items_total, 2);
         $('#subtotal_amount_view').number(data.items_subtotal, 2);
 
@@ -996,6 +1009,32 @@ PosnicPro.sales.view = {
                 }
                 $('#extra_disc_print_view').html(extraDiscPrintView);
                 $('#extra_disc_standard_print').html(extraDiscStandardPrint);
+                // Charge rows on the receipt (queue #6): every named charge
+                // prints as its own footer row, after the discount row and
+                // before Round-Off - with its tax when it carries one.
+                // Inserted as SIBLINGS (the containers are single rows) and
+                // swept first so a reprint can never stack duplicates.
+                $('.charge-print-row, .charge-print-row-std').remove();
+                if (name === 'sale' && Array.isArray(data.charges) && data.charges.length) {
+                    var chargesA4 = '';
+                    var chargesStd = '';
+                    data.charges.forEach(function (c) {
+                        var cName = $('<i>').text(c.name || 'Charge').html();
+                        var cAmt = (Number(c.amount) || 0).toFixed(2);
+                        var cTax = Number(c.tax_amount) || 0;
+                        var taxNote = cTax > 0
+                            ? ' <small>(+' + (c.tax_name ? $('<i>').text(c.tax_name).html() : 'tax') + ' ' + cTax.toFixed(2) + ')</small>'
+                            : '';
+                        chargesA4 += '<tr class="charge-print-row">' +
+                            '<td class="print-deatils-size-family print-footer-align">' + cName + ':' + taxNote + ' &nbsp; &nbsp; </td>' +
+                            '<td class="print-deatils-size-family print-footer-align">' + currency + '&nbsp;<span class="number">' + cAmt + '</span></td></tr>';
+                        chargesStd += '<div class="row charge-print-row-std">' +
+                            '<div class="col-md-8 col-sm-8 col-xs-6"><div class="invoice-footer-value">' + cName + taxNote + '</div></div>' +
+                            '<div class="col-md-4 col-sm-4 col-xs-6"><div class="invoice-footer-value invoice-payment text-dark">' + currency + '&nbsp;' + cAmt + '</div></div></div>';
+                    });
+                    $('#extra_disc_print_view').after(chargesA4);
+                    $('#extra_disc_standard_print').after(chargesStd);
+                }
                 if (name === 'sale') {
                     var subtotal = data.items_subtotal;
                     var salesLineTotal = Number(data.items_total).toFixed(2);
