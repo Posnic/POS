@@ -23,7 +23,10 @@
                     <!-- Tabbed, no page scroll (owner ask): the form is four
                          touch-size tabs and a sticky save bar. Every field id
                          is untouched - the payload builders never notice. -->
-                    <ul class="nav nav-tabs nav-justified m-b-15" id="item_form_tabs" role="tablist">
+                    <!-- Sized to their labels, not stretched across the page:
+                         nav-justified gave each tab a third of the width, so
+                         three short words spanned 1300px. -->
+                    <ul class="nav nav-tabs m-b-15" id="item_form_tabs" role="tablist">
                         <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#item_tab_main" role="tab"><i class="feather icon-box mr-1"></i><lang class="lang_item_title">Item</lang></a></li>
                         <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#item_tab_details" role="tab"><i class="feather icon-image mr-1"></i><lang class="lang_item_details_title">Details</lang></a></li>
                         <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#item_tab_more" role="tab"><i class="feather icon-sliders mr-1"></i><lang class="lang_tab_more">More</lang></a></li>

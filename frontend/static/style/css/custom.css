@@ -3124,8 +3124,17 @@ input:checked + .slider:before {
 #qe_lines .qe-l-tax { font-size: 11px; color: #67707f; margin-top: 2px; }
 
 /* Add Item: checkbox rows share one baseline and spacing */
-#items_new .custom-control.custom-checkbox { min-height: 24px; display: flex; align-items: center; }
+/* NOT display:flex. This rule centred a one-line checkbox, but the open-price
+   checkbox now carries a hint line under its label - as a flex row those two
+   became side-by-side columns barely wide enough for one word each. Block
+   flow (Bootstrap's own) stacks them; min-height and line-height do the
+   centring the flex was there for. */
+#items_new .custom-control.custom-checkbox { min-height: 24px; }
 #items_new .custom-control.custom-checkbox .custom-control-label { line-height: 24px; }
+/* Tabs take the width of their words. */
+#item_form_tabs { justify-content: flex-start; }
+#item_form_tabs .nav-item { flex: 0 0 auto; }
+#item_form_tabs .nav-link { padding: 8px 18px; }
 #items_new .custom-control.custom-checkbox .custom-control-label::before,
 #items_new .custom-control.custom-checkbox .custom-control-label::after { top: 4px; }
 
@@ -3576,17 +3585,60 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
    is display:none while reading, so it is not a flex item and does not
    disturb the split.
    ============================================================ */
-#quotes_new .contentbar.quotes-split { display: flex; gap: 14px; align-items: flex-start; }
+/* ONE surface, not two cards with a gap. The outer border belongs to the
+   split itself; the panes give up their own borders, shadows and corners so
+   the only line between them is the divider the rail carries. Stretch, not
+   flex-start, so that divider runs the full height - a rail that stops short
+   of the document reads as two things sitting near each other again. */
+#quotes_new .contentbar.quotes-split {
+    display: flex;
+    gap: 0;
+    align-items: stretch;
+    background: #fff;
+    border: 1px solid #d0d7de;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(31, 35, 40, 0.05);
+}
+#quotes_new .contentbar.quotes-split > #quotes_list_card,
+#quotes_new .contentbar.quotes-split > #quotes_view_card {
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    margin-bottom: 0 !important;
+    background: transparent;
+}
+/* Each pane scrolls on its own, so a long document never drags the list out
+   of reach and the search box never leaves the top of the rail. */
 #quotes_new .contentbar.quotes-split > #quotes_list_card {
     flex: 0 0 330px;
     max-width: 330px;
     min-width: 0;
-    position: sticky;
-    top: 76px;
-    max-height: calc(100vh - 96px);
+    border-right: 1px solid #d0d7de;
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 150px);
+}
+#quotes_new .contentbar.quotes-split > #quotes_list_card > .card-body {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding: 12px 10px;
+}
+/* min-height:0 on both, or a flex child refuses to shrink below its content
+   and the scrollbar lands on the page instead of inside the rail. */
+.quotes-split #quotes_list_card #quotes_filter_chips { flex: 0 0 auto; }
+.quotes-split #quotes_list_card #quotes_list_rows {
+    flex: 1 1 auto;
+    min-height: 0;
     overflow-y: auto;
 }
-#quotes_new .contentbar.quotes-split > #quotes_view_card { flex: 1 1 auto; min-width: 0; }
+#quotes_new .contentbar.quotes-split > #quotes_view_card {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-y: auto;
+    max-height: calc(100vh - 150px);
+}
 
 /* Collapsed rail: the quote takes the full width, the toggle brings it back. */
 #quotes_new .contentbar.quotes-split.rail-collapsed > #quotes_list_card { display: none; }
@@ -3607,3 +3659,42 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 #quotes_list_rows tr.quotes-row:hover { background: #eef3ff; }
 #quotes_list_rows tr.quotes-row.is-active { background: #e3ecfd; box-shadow: inset 3px 0 0 #0969da; }
 #quotes_list_rows tr.quotes-row.is-active td:first-child { font-weight: 600; }
+
+/* The pager sits at the foot of the rail and always states the count, so the
+   list says how much of itself you are seeing even on a single page. */
+.q-pager {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 4px 2px;
+    margin-top: 6px;
+    border-top: 1px solid #eaeef2;
+}
+.q-pg-count { font-size: 12px; color: #57606a; }
+.q-pg-btn { min-width: 30px; padding: 2px 8px; line-height: 1.5; }
+
+/* The sheet keeps its paper border - it is a preview of the printed thing -
+   but not the doubled padding of a card inside a card. If the document is
+   still wider than the pane it scrolls itself rather than the page. */
+.quotes-split #quotes_view_card > .card-body { padding: 12px 14px; }
+.quotes-split #quotes_view_card .q-sheet { padding: 24px 26px; }
+.quotes-split #quotes_view_body { overflow-x: auto; }
+
+/* Dark themes: the joined surface and its divider are the whole effect, so
+   they have to follow the theme rather than stay light-mode grey. */
+[data-theme] #quotes_new .contentbar.quotes-split {
+    background: var(--theme-card-bg);
+    border-color: var(--theme-border-color);
+}
+[data-theme] #quotes_new .contentbar.quotes-split > #quotes_list_card {
+    border-right-color: var(--theme-border-color);
+}
+[data-theme] .q-pager { border-top-color: var(--theme-border-color); }
+[data-theme] .q-pg-count { color: var(--theme-text-secondary); }
+[data-theme] #quotes_list_rows tr.quotes-row:hover { background: var(--theme-table-row-hover); }
+[data-theme] #quotes_list_rows tr.quotes-row.is-active {
+    background: var(--theme-table-row-hover);
+    box-shadow: inset 3px 0 0 var(--theme-primary-color);
+}
