@@ -7764,6 +7764,43 @@ PosnicPro.quotes = {
         if (name.indexOf(l.tax_value + '%') === -1) { name += ' ' + l.tax_value + '%'; }
         return esc(name);
     },
+    /*
+     * Queue #8: group line taxes for the totals block so CGST and SGST
+     * get their own rows. Groups by tax label; with Indian GST on, a
+     * combined 'GST n%' group splits into equal CGST/SGST halves
+     * (second half takes the rounding remainder so the sum is exact).
+     * Labels already split (CGST/SGST/IGST) pass through untouched.
+     */
+    _taxBreakup: function (lines, amountOf) {
+        var groups = {}, order = [];
+        (lines || []).forEach(function (l) {
+            var amt = amountOf(l);
+            if (!(amt > 0)) { return; }
+            var name = $.trim(String(l.tax_name || ''));
+            var rate = Number(l.tax_value) || 0;
+            var label = name || 'Tax';
+            if (!/\d/.test(label) && rate > 0) { label += ' ' + rate + '%'; }
+            if (!groups[label]) { groups[label] = 0; order.push(label); }
+            groups[label] += amt;
+        });
+        var r2 = function (n) { return Math.round(n * 100) / 100; };
+        var gstOn = PosnicPro.local.get('gst_action') === 'enable';
+        var rows = [];
+        order.forEach(function (label) {
+            var amt = r2(groups[label]);
+            var m = gstOn && /^\s*gst\b/i.test(label) && !/[cs]gst|igst/i.test(label)
+                ? label.match(/([\d.]+)\s*%/) : null;
+            if (m) {
+                var half = r2(amt / 2);
+                var halfRate = Number(m[1]) / 2;
+                rows.push({ label: 'CGST ' + halfRate + '%', amount: half });
+                rows.push({ label: 'SGST ' + halfRate + '%', amount: r2(amt - half) });
+            } else {
+                rows.push({ label: label, amount: amt });
+            }
+        });
+        return rows;
+    },
     /* One line's total, the same arithmetic the server stores. */
     _edLineTotal: function (l) {
         var r2 = PosnicPro.quotes._edR2;
@@ -7878,6 +7915,7 @@ PosnicPro.quotes = {
         var total = Math.max(0, r2(base + chargesSum));
         PosnicPro.quotes._edPreviewRender({
             subtotal: subtotal, taxSum: taxSum, qdisc: qdisc, dtype: dtype, dval: dval,
+            taxRows: PosnicPro.quotes._taxBreakup(ed.lines, PosnicPro.quotes._edLineTax),
             chargeRows: chargeRows, total: total
         });
         return total;
@@ -7929,7 +7967,11 @@ PosnicPro.quotes = {
         });
         h += '</tbody><tfoot>'
             + '<tr class="q-sub"><td colspan="4" class="text-right">Subtotal</td><td class="text-right">' + money(m.subtotal) + '</td></tr>'
-            + (m.taxSum > 0 ? '<tr class="q-sub"><td colspan="4" class="text-right">Tax</td><td class="text-right">' + money(m.taxSum) + '</td></tr>' : '')
+            + (m.taxRows && m.taxRows.length
+                ? m.taxRows.map(function (t) {
+                    return '<tr class="q-sub"><td colspan="4" class="text-right">' + esc(t.label) + '</td><td class="text-right">' + money(t.amount) + '</td></tr>';
+                }).join('')
+                : (m.taxSum > 0 ? '<tr class="q-sub"><td colspan="4" class="text-right">Tax</td><td class="text-right">' + money(m.taxSum) + '</td></tr>' : ''))
             + (m.qdisc > 0 ? '<tr class="q-sub"><td colspan="4" class="text-right">Discount' + (m.dtype === 'percent' ? ' (' + m.dval + '%)' : '') + '</td><td class="text-right">-' + money(m.qdisc) + '</td></tr>' : '');
         m.chargeRows.forEach(function (c) {
             h += '<tr class="q-sub"><td colspan="4" class="text-right">' + esc(c.name) + '</td><td class="text-right">' + (c.sign === -1 ? '-' : '') + money(c.computed) + '</td></tr>';
@@ -8210,9 +8252,17 @@ PosnicPro.quotes = {
                     return '<tr class="q-sub"><td colspan="4" class="text-right">' + esc(c.name)
                         + '</td><td class="text-right">' + (c.sign === -1 ? '-' : '') + money(c.computed) + '</td></tr>';
                 }).join('')
-                + (Number(q.tax_total) > 0
-                    ? '<tr class="q-sub"><td colspan="4" class="text-right">Tax</td><td class="text-right">' + money(q.tax_total) + '</td></tr>'
-                    : '')
+                + (function () {
+                    if (!(Number(q.tax_total) > 0)) { return ''; }
+                    var rows = PosnicPro.quotes._taxBreakup(q.items, function (l) { return Number(l.tax_amount) || 0; });
+                    if (!rows.length) {
+                        // older quotes without per-line tax figures keep one row
+                        rows = [{ label: 'Tax', amount: Number(q.tax_total) }];
+                    }
+                    return rows.map(function (t) {
+                        return '<tr class="q-sub"><td colspan="4" class="text-right">' + esc(t.label) + '</td><td class="text-right">' + money(t.amount) + '</td></tr>';
+                    }).join('');
+                })()
                 + '<tr class="q-grand"><th colspan="4" class="text-right">TOTAL</th>'
                 + '<th class="text-right">' + money(q.total) + '</th></tr>'
                 + '</tfoot></table></div>'
@@ -8596,9 +8646,14 @@ PosnicPro.quotes = {
           y += 6;
         });
         if (Number(q.tax_total) > 0) {
-          doc.text('Tax', totX, y + 4);
-          doc.text(money(q.tax_total), R, y + 4, { align: 'right' });
-          y += 6;
+          var taxRows = PosnicPro.quotes._taxBreakup(q.items, function (l) { return Number(l.tax_amount) || 0; });
+          if (!taxRows.length) { taxRows = [{ label: 'Tax', amount: Number(q.tax_total) }]; }
+          taxRows.forEach(function (t) {
+            ensure(12);
+            doc.text(txt(t.label).slice(0, 34), totX, y + 4);
+            doc.text(money(t.amount), R, y + 4, { align: 'right' });
+            y += 6;
+          });
         }
         doc.setDrawColor(45, 55, 72); doc.setLineWidth(0.4);
         doc.line(totX, y + 1.5, R, y + 1.5);
