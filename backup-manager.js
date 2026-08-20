@@ -25,7 +25,7 @@ const crypto = require('crypto');
 class BackupManager {
   constructor(options = {}) {
     this.userDataPath = options.userDataPath || process.cwd();
-    this.getMongoUri = options.getMongoUri || (() => process.env.MONGODB_URI || `mongodb://localhost:${process.env.POSNIC_MONGO_PORT || 47017}/PosnicPro`);
+    this.getMongoUri = options.getMongoUri || (() => process.env.MONGODB_URI || `mongodb://127.0.0.1:${process.env.POSNIC_MONGO_PORT || 47017}/PosnicPro`);
     this.dbName = options.dbName || 'PosnicPro';
     
     this.configPath = path.join(this.userDataPath, 'backup-config.json');

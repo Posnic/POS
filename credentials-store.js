@@ -122,18 +122,22 @@ function read(candidatePaths, baseDir, safeStorage) {
  * credentials.
  */
 function buildUri({ username, password }, previousUri) {
-  const fallback = `mongodb://localhost:${process.env.POSNIC_MONGO_PORT || 47017}/PosnicPro?authSource=admin`;
+  const fallback = `mongodb://127.0.0.1:${process.env.POSNIC_MONGO_PORT || 47017}/PosnicPro?authSource=admin`;
   const source = previousUri || fallback;
 
   try {
     const url = new URL(source);
+    /* The bundled mongod intentionally listens on IPv4 loopback only. Older
+       credentials used `localhost`, which can resolve to ::1 first on Linux;
+       normalize those records as they are read so upgrades recover too. */
+    if (url.hostname === 'localhost') url.hostname = '127.0.0.1';
     url.username = encodeURIComponent(username);
     url.password = encodeURIComponent(password);
     return url.toString();
   } catch {
     /* A stored uri we cannot parse. Build a plain one rather than returning
        something that will fail later in a less obvious place. */
-    const tail = fallback.slice(fallback.indexOf('localhost'));
+    const tail = fallback.slice(fallback.indexOf('127.0.0.1'));
     return `mongodb://${encodeURIComponent(username)}:${encodeURIComponent(password)}@${tail}`;
   }
 }

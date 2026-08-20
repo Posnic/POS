@@ -958,7 +958,7 @@ async function runScheduledTaskAndExit(taskName) {
     } else if (!process.env.MONGODB_URI) {
       /* No stored credentials: an install where MongoDB runs without
          authentication. The derived port still has to be right. */
-      process.env.MONGODB_URI = `mongodb://localhost:${process.env.POSNIC_MONGO_PORT || 47017}/PosnicPro`;
+      process.env.MONGODB_URI = `mongodb://127.0.0.1:${process.env.POSNIC_MONGO_PORT || 47017}/PosnicPro`;
     }
 
     const result = await getBackupManager().runBackup({
@@ -3295,7 +3295,7 @@ async function clearRendererStorage() {
 
 async function dropPosnicDatabase() {
   const { MongoClient } = require('mongodb');
-  const uri = process.env.MONGODB_URI || `mongodb://localhost:${process.env.POSNIC_MONGO_PORT || 47017}/PosnicPro`;
+  const uri = process.env.MONGODB_URI || `mongodb://127.0.0.1:${process.env.POSNIC_MONGO_PORT || 47017}/PosnicPro`;
   const client = new MongoClient(uri, {
     serverSelectionTimeoutMS: 5000,
     connectTimeoutMS: 5000
@@ -3436,7 +3436,7 @@ function getBackupManager() {
   if (!backupManager) {
     backupManager = new BackupManager({
       userDataPath: app.getPath('userData'),
-      getMongoUri: () => process.env.MONGODB_URI || `mongodb://localhost:${process.env.POSNIC_MONGO_PORT || 47017}/PosnicPro`,
+      getMongoUri: () => process.env.MONGODB_URI || `mongodb://127.0.0.1:${process.env.POSNIC_MONGO_PORT || 47017}/PosnicPro`,
       dbName: 'PosnicPro'
     });
 
@@ -4086,7 +4086,10 @@ app.whenReady().then(async () => {
     process.env.POSNIC_MONGO_PORT = String(ports.mongoPort);
     process.env.PORT = String(ports.apiPort);
     if (!process.env.MONGODB_URI) {
-      process.env.MONGODB_URI = `mongodb://localhost:${ports.mongoPort}/PosnicPro`;
+      /* mongod is deliberately bound to IPv4 loopback only. `localhost` may
+         resolve to ::1 first on Linux, which leaves a healthy bundled database
+         unreachable and makes first launch look like an installation failure. */
+      process.env.MONGODB_URI = `mongodb://127.0.0.1:${ports.mongoPort}/PosnicPro`;
     }
     console.log(`  - database port: ${ports.mongoPort}${ports.reused ? ' (as before)' : ''}`);
     console.log(`  - application port: ${ports.apiPort}`);
@@ -4731,19 +4734,20 @@ function startServer() {
           <html>
           <head>
             <style>
-              body { 
-                font-family: Arial; 
-                padding: 40px; 
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-                color: white; 
+              body {
+                font-family: Arial, sans-serif;
+                margin: 0;
+                padding: 40px;
+                background: #f5f7fa;
+                color: #17233c;
               }
               .container {
                 max-width: 700px;
                 margin: 0 auto;
-                background: rgba(255,255,255,0.1);
+                background: #fff;
                 padding: 40px;
-                border-radius: 15px;
-                box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+                border: 1px solid #d8e0eb;
+                border-radius: 8px;
               }
               h1 { 
                 margin-bottom: 20px; 
@@ -4751,64 +4755,45 @@ function startServer() {
                 text-align: center;
               }
               .option {
-                background: rgba(255,255,255,0.15);
+                background: #f8fafc;
                 padding: 20px;
                 margin: 15px 0;
-                border-radius: 10px;
-                border-left: 4px solid #ffd700;
+                border-radius: 6px;
+                border-left: 4px solid #3f8fd2;
               }
               .option h3 {
                 margin-top: 0;
-                color: #ffd700;
+                color: #17233c;
               }
               .option ol {
                 text-align: left;
                 line-height: 1.8;
               }
-              .recommended {
-                border-left-color: #00ff00;
-              }
-              .recommended h3 {
-                color: #00ff00;
-              }
-              a { color: #ffd700; text-decoration: none; font-weight: bold; }
-              a:hover { text-decoration: underline; }
+              .detail { color: #52627a; line-height: 1.6; }
+              button { border-radius: 6px !important; }
             </style>
           </head>
           <body>
             <div class="container">
-              <h1> MongoDB Service Not Running</h1>
-              
+              <h1>Posnic could not start its local database</h1>
+              <p class="detail">Your data has not been removed. Posnic includes its own database, so you do not need to install MongoDB or run the app as an administrator.</p>
+
               <div class="option recommended">
-                <h3> Option 1: Quick Start (Recommended)</h3>
+                <h3>Try again</h3>
                 <ol>
-                  <li>Find <strong>start-mongodb.bat</strong> in the app folder</li>
-                  <li>Right-click it and select <strong>"Run as administrator"</strong></li>
-                  <li>Restart this application</li>
+                  <li>Close Posnic and open it once more.</li>
+                  <li>If it still does not start, open the log below.</li>
+                  <li>Send the log to <strong>support@posnic.com</strong> so the exact cause can be fixed.</li>
                 </ol>
               </div>
 
               <div class="option">
-                <h3> Option 2: Manual Start</h3>
-                <ol>
-                  <li>Open Command Prompt as Administrator</li>
-                  <li>Run: <code style="background: rgba(0,0,0,0.3); padding: 5px;">net start MongoDB</code></li>
-                  <li>Restart this application</li>
-                </ol>
-              </div>
-
-              <div class="option">
-                <h3> Option 3: Install MongoDB</h3>
-                <p>If MongoDB is not installed:</p>
-                <ol>
-                  <li>Download from: <a href="https://www.mongodb.com/try/download/community" target="_blank">mongodb.com</a></li>
-                  <li>Install with "Install as Service" option</li>
-                  <li>Use Option 1 or 2 above</li>
-                </ol>
+                <h3>What to include</h3>
+                <p class="detail">Mention your operating system, what happened immediately before this screen, and attach the application log. Do not send a database backup unless support specifically requests it.</p>
               </div>
               <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px">
-                <button onclick="window.electronAPI?.startup?.retry()" style="background:#fff;color:#667eea;border:none;border-radius:8px;padding:12px 20px;font-weight:600;cursor:pointer">Restart App</button>
-                <button onclick="window.electronAPI?.desktop?.open('log')" style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.5);border-radius:8px;padding:12px 20px;cursor:pointer">Open Log</button>
+                <button onclick="window.electronAPI?.startup?.retry()" style="background:#3f8fd2;color:#fff;border:none;padding:12px 20px;font-weight:600;cursor:pointer">Restart Posnic</button>
+                <button onclick="window.electronAPI?.desktop?.open('log')" style="background:#fff;color:#17233c;border:1px solid #b8c4d4;padding:12px 20px;cursor:pointer">Open Log</button>
               </div>
             </div>
           </body>

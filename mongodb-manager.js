@@ -385,7 +385,7 @@ class MongoDBManager {
        * .mongodb-credentials.json deliberately carries no credentials at all -
        * credentials-store rebuilds it on read, after decrypting. Reading the
        * file directly, as this did, therefore produced
-       * mongodb://localhost:<port>/PosnicPro?authSource=admin and connected
+       * mongodb://127.0.0.1:<port>/PosnicPro?authSource=admin and connected
        * anonymously to a server started with --auth.
        *
        * Which is why closing was slow. The shutdown command was refused, the

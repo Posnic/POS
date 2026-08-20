@@ -1036,7 +1036,7 @@ class InstallService {
       let connected = false;
 
       // Strategy 1: Try to connect WITH the provided credentials (user already exists)
-      const authUri = `mongodb://${dbUsername}:${encodeURIComponent(dbPassword)}@localhost:${process.env.POSNIC_MONGO_PORT || 47017}/admin?authSource=admin`;
+      const authUri = `mongodb://${dbUsername}:${encodeURIComponent(dbPassword)}@127.0.0.1:${process.env.POSNIC_MONGO_PORT || 47017}/admin?authSource=admin`;
 
       try {
         console.log('📡 Strategy 1: Connect with provided credentials...');
@@ -1052,7 +1052,7 @@ class InstallService {
       if (!connected) {
         try {
           console.log('📡 Strategy 2: Connect without authentication...');
-          const unauthUri = `mongodb://localhost:${process.env.POSNIC_MONGO_PORT || 47017}`;
+          const unauthUri = `mongodb://127.0.0.1:${process.env.POSNIC_MONGO_PORT || 47017}`;
           client = new MongoClient(unauthUri, { serverSelectionTimeoutMS: 5000 });
           await client.connect();
           adminDb = client.db('admin');
@@ -1158,7 +1158,7 @@ class InstallService {
 
       // Reconnect mongoose with authenticated URI for subsequent operations
       const mongoose = require('mongoose');
-      const newUri = `mongodb://${dbUsername}:${encodeURIComponent(dbPassword)}@localhost:${process.env.POSNIC_MONGO_PORT || 47017}/PosnicPro?authSource=admin`;
+      const newUri = `mongodb://${dbUsername}:${encodeURIComponent(dbPassword)}@127.0.0.1:${process.env.POSNIC_MONGO_PORT || 47017}/PosnicPro?authSource=admin`;
 
       if (mongoose.connection.readyState !== 0) {
         console.log('🔄 Reconnecting mongoose with authenticated connection...');
@@ -1267,7 +1267,7 @@ class InstallService {
        * server.js assigns the real URI to process.env.MONGODB_URI at startup -
        * after dotenv has run, so the assignment wins.
        */
-      const host = `localhost:${process.env.POSNIC_MONGO_PORT || 47017}`;
+      const host = `127.0.0.1:${process.env.POSNIC_MONGO_PORT || 47017}`;
 
       /* The real one. Needed in memory - the running session connects with it,
          and credentials-store keeps its host, port and database while dropping

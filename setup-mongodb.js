@@ -24,6 +24,7 @@ const path = require('path');
 const { execSync } = require('child_process');
 
 async function isAdmin() {
+  if (process.platform !== 'win32') return false;
   try {
     // 'net session' command only works if user has admin privileges
     execSync('net session', { stdio: 'ignore' });
@@ -131,7 +132,7 @@ function loadCredentials() {
 }
 
 // Use credentials if available, otherwise default local URI
-const MONGODB_URI = loadCredentials() || process.env.MONGODB_URI || `mongodb://localhost:${process.env.POSNIC_MONGO_PORT || 47017}`;
+const MONGODB_URI = loadCredentials() || process.env.MONGODB_URI || `mongodb://127.0.0.1:${process.env.POSNIC_MONGO_PORT || 47017}`;
 const DB_NAME = 'PosnicPro';
 const SETUP_FLAG_FILE = path.join(getWritableBasePath(), '.mongodb-setup-done');
 
@@ -146,6 +147,10 @@ async function checkServiceExists(serviceName) {
 }
 
 async function startMongoDBService() {
+  if (process.platform !== 'win32') {
+    console.warn('Bundled MongoDB did not become available; system-service recovery is Windows-only.');
+    return false;
+  }
   try {
     console.log('🔄 Attempting to start MongoDB service...');
     
@@ -216,8 +221,8 @@ async function checkMongoDBInstalled() {
   const uris = [];
   if (credUri) uris.push(credUri);
   uris.push(MONGODB_URI);
-  uris.push(`mongodb://localhost:${process.env.POSNIC_MONGO_PORT || 47017}/PosnicPro`);
-  uris.push('mongodb://localhost:27017');
+  uris.push(`mongodb://127.0.0.1:${process.env.POSNIC_MONGO_PORT || 47017}/PosnicPro`);
+  uris.push('mongodb://127.0.0.1:27017');
   
   for (const uri of uris) {
     try {
@@ -320,7 +325,7 @@ async function getWorkingMongoUri() {
   }
   
   // Strategy 2: Try without authentication
-  const unauthUri = `mongodb://localhost:${process.env.POSNIC_MONGO_PORT || 47017}/PosnicPro`;
+  const unauthUri = `mongodb://127.0.0.1:${process.env.POSNIC_MONGO_PORT || 47017}/PosnicPro`;
   try {
     console.log('📡 Trying unauthenticated connection...');
     const client = new MongoClient(unauthUri, {

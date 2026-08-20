@@ -159,7 +159,7 @@ class BaseModel {
      * optimisation - it is a bug fix.
      *
      * MONGODB_URI is set twice during startup. main.js sets a bare
-     * mongodb://localhost:<port>/PosnicPro as a fallback, and server.js later
+     * mongodb://127.0.0.1:<port>/PosnicPro as a fallback, and server.js later
      * replaces it with the credentialed URI that setup-mongodb.js validated.
      * Requiring the API's routes constructs repositories, each of which builds
      * a BaseModel, whose constructor starts connecting immediately - with
