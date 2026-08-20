@@ -3447,6 +3447,10 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 .modal-header .close:focus { background-color: rgba(120, 120, 120, 0.18) !important; }
 [data-theme] .modal-header .close:hover,
 [data-theme] .modal-header .close:focus { background-color: rgba(255, 255, 255, 0.26) !important; }
+/* ...except the image picker's header, which forces itself white even under a
+   theme - a white wash on white would be the same invisible hover again. */
+[data-theme] .modal-header.image-header-content .close:hover,
+[data-theme] .modal-header.image-header-content .close:focus { background-color: rgba(120, 120, 120, 0.18) !important; }
 
 /* The cart line editor specifically: give the fields room and make the two
    commit choices read as primary and secondary rather than two equal blocks. */
