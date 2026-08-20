@@ -86,13 +86,6 @@ $(document).ready(function () {
             PosnicPro.updateSaleNoteFlag('click_payment_description', 'feather icon-edit-1', val);
         }
     });
-    $('#click_payment_description').click(function (e) {
-        e.stopPropagation();
-        e.preventDefault();
-        $('#payment_description').text('');
-        $('#payment_description').show();
-        $('#payment_description').editable('toggle');
-    });
 
     $('#sales_description').editable({
         type: 'textarea',
@@ -113,13 +106,6 @@ $(document).ready(function () {
             $('#sales_description').hide();
             PosnicPro.updateSaleNoteFlag('click_sales_description', 'feather icon-edit-1', val);
         }
-    });
-    $('#click_sales_description').click(function (e) {
-        e.stopPropagation();
-        e.preventDefault();
-        $('#sales_description').text('');
-        $('#sales_description').show();
-        $('#sales_description').editable('toggle');
     });
 
     $('#discount_description').editable({
@@ -149,46 +135,14 @@ $(document).ready(function () {
         }
     });
 
-    $('#discount_description').on('shown', function () {
-        var attempts = 0;
-        var focusInterval = setInterval(function () {
-            attempts++;
-            try {
-                var $input = $('.editable-container:visible textarea, .editable-container:visible input, .popover:visible textarea, .popover:visible input');
-                if ($input.length) {
-                    $input.first().focus();
-                    var el = $input.get(0);
 
-                    if (el && typeof el.value === 'string' && el.setSelectionRange) {
-                        var len = el.value.length;
-                        el.setSelectionRange(len, len);
-                    }
-                }
-            } catch (ex) {
-                // ignore and retry until attempts exhausted
-            }
-            if (attempts >= 10) {
-                clearInterval(focusInterval);
-            }
-        }, 80);
-    });
-
-    $('#click_discount_description').click(function (e) {
-        e.stopPropagation();
-        e.preventDefault();
-
-        $('#discount_description').text('');
-        $('#discount_description').show();
-        $('#discount_description').editable('toggle');
-
-        // Ensure the Discount Note popup gets focus shortly after it opens
-        setTimeout(function () {
-            var $el = $('.editable-container:last textarea, .editable-container:last input');
-            if ($el.length) {
-                $el.focus();
-            }
-        }, 300);
-    });
+    /*
+     * The three sale-page notes (payment, sale, discount) open an inline
+     * editor now - PosnicPro.sales.noteEdit, bound in sales.js. Their
+     * popup openers are gone from here; the .editable() setup above stays
+     * because setDefaults still calls editable('setValue', null) on these
+     * elements to clear them between sales.
+     */
 
     $('#register_add_payment_description').editable({
         type: 'textarea',
