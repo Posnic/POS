@@ -2954,6 +2954,12 @@ input:checked + .slider:before {
 .q-footer .q-block:last-child { grid-column: 1 / -1; }
 .q-block { font-size: 12.5px; line-height: 1.55; color: #3c4452; }
 .q-sign { margin-top: 48px; padding-top: 6px; border-top: 1px solid #8a94a6; width: 220px; margin-left: auto; text-align: center; font-size: 12px; color: #67707f; }
+/* The rule is a border-TOP on the caption, so anything inside that block
+   renders below the line. The signature image therefore sits in its own
+   block above it - matching the PDF, which already drew image, line,
+   caption in that order. */
+.q-sign-img { width: 220px; margin: 48px 0 0 auto; text-align: center; }
+.q-sign-img + .q-sign { margin-top: 4px; }
 .q-edit { border-bottom: 1px dashed #c5ccd8; min-width: 40px; display: inline-block; padding: 0 2px; }
 .q-edit:empty::before { content: attr(data-ph); color: #b3bac6; }
 .q-edit:focus { outline: none; border-bottom-color: #506fe4; background: #f6f8ff; }
@@ -3037,7 +3043,25 @@ input:checked + .slider:before {
     margin: 0 0 4px;
     padding: 0;
 }
-.qe-sec > .q-label {
+/* Only the FIRST label in a card is its header. Payment details, Terms,
+   Notes and Authorised signature all live inside ONE .qe-sec, so giving
+   every direct-child label the full-bleed bar stacked four of them through
+   the middle of the card, their negative margins overlapping the fields
+   above and below - exactly the overlap reported. The later ones are
+   sub-headings: a divider and some air, no bleed. */
+.qe-sec > .q-label:not(:first-child) {
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: #2d3748;
+    background: none;
+    border: 0;
+    border-top: 1px solid #eef1f6;
+    margin: 18px 0 8px;
+    padding: 12px 0 0;
+}
+.qe-sec > .q-label:first-child {
     text-transform: none;
     letter-spacing: 0;
     font-size: 13.5px;
