@@ -5929,14 +5929,20 @@ PosnicPro.sales.cellEdit = {
         if ($cell.find('.sale-cell-input').length) { return; }
         var cur = PosnicPro.sales.cellEdit._current(field, itemId);
         $cell.data('orig-html', $cell.html());
-        $cell.html('<input type="text" class="form-control form-control-sm sale-cell-input" value="' + cur + '" style="max-width:90px; display:inline-block; text-align:right;">'
-            + (field === 'disc' ? '<small class="text-muted d-block">number = amount, add % for percent</small>' : ''));
+        var isPct = field === 'disc' && /%/.test(String(cur));
+        $cell.html((field === 'disc'
+                ? '<button type="button" class="btn btn-sm sale-disc-mode" title="Tap to switch amount / percent">'
+                    + (isPct ? '%' : (PosnicPro.local.get('currencySign') || '₹')) + '</button>'
+                : '')
+            + '<input type="text" class="form-control form-control-sm sale-cell-input" value="' + parseFloat(cur) + '" style="max-width:80px; display:inline-block; text-align:right;">');
+        $cell.data('disc-pct', isPct);
         var $in = $cell.find('.sale-cell-input').focus().select();
         var done = false;
         var commit = function () {
             if (done) { return; }
             done = true;
             var raw = $.trim($in.val());
+            if (field === 'disc' && raw !== '' && $cell.data('disc-pct')) { raw += '%'; }
             $cell.html($cell.data('orig-html'));
             if (raw === '' || raw === String(cur)) { return; }
             PosnicPro.sales.cellEdit._confirm(field, itemId, raw);
@@ -6024,6 +6030,14 @@ PosnicPro.sales.cellEdit = {
         }
     }
 };
+$(document).on('mousedown', '.sale-disc-mode', function (e) {
+    e.preventDefault();
+    var $cell = $(this).parent();
+    var pct = !$cell.data('disc-pct');
+    $cell.data('disc-pct', pct);
+    $(this).text(pct ? '%' : (PosnicPro.local.get('currencySign') || '₹'));
+    $cell.find('.sale-cell-input').focus();
+});
 $(document).on('dblclick', '[id^="addSalesLineItemPrice_"]', function () {
     var id = this.id.replace('addSalesLineItemPrice_', '');
     PosnicPro.sales.cellEdit.start('price', id, $(this));
@@ -6068,9 +6082,22 @@ PosnicPro.sales.renderCharges = function () {
     }
 };
 $(document).on('click', '#sale_add_discount', function () {
-    // opens the existing additional-discount editor - same ACL rail
-    $('.addDisc-hide-show').show();
-    $('#extraDisc').trigger('click');
+    // one action: the user already said "add discount" - the editor opens
+    // with the cursor in it. editable('show') skips the click gate, so the
+    // same discount_apply rail runs here explicitly.
+    var open = function () {
+        $('.addDisc-hide-show').show();
+        setTimeout(function () {
+            try { $('#extraDisc').editable('show'); } catch (e) { $('#extraDisc').trigger('click'); }
+            setTimeout(function () { $('.editable-input input').focus().select(); }, 120);
+        }, 60);
+    };
+    if (PosnicPro.posCan && !PosnicPro.posCan('discount_apply')) {
+        PosnicPro.requireManagerApproval('discount_apply',
+            { prompt: "Applying a discount needs a manager's approval." }, open);
+        return;
+    }
+    open();
 });
 $(document).on('click', '#sale_add_charge', function () {
     var name = window.prompt('Charge name (e.g. Parcel charge, Service charge):', '');
