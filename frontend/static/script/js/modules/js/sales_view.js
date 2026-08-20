@@ -1269,15 +1269,27 @@ PosnicPro.sales.view = {
                         }
                     }
                 }
+                /*
+                 * A4 is an INVOICE, not a till slip, and the two have different
+                 * rules. "Print customer details" is a sensible thing to switch
+                 * off for a thermal roll handed to a walk-in - but an invoice
+                 * without a buyer on it is not an invoice, so A4 always carries
+                 * the customer when the sale has one. Under Indian GST it is
+                 * also headed TAX INVOICE rather than Sales Receipt, which is
+                 * the wording the law expects.
+                 */
+                var _isInvoice = PosnicPro.sales.view._isA4();
+                var _hasCustomer = $.trim(data.customer_name || '') !== '';
                 $('.hide_customer_details').hide();
-                if (data.customer_print === true) {
+                if (data.customer_print === true || (_isInvoice && _hasCustomer)) {
                     $('.hide_customer_details').show();
-                    $('.print-custom-title').html('Customer Details');
+                    $('.print-custom-title').html(_isInvoice ? 'Bill To' : 'Customer Details');
                     $('.print-name').html(data.customer_name);
                     $('.print-phone').html(data.customer_phone);
                     $('.print-email').html(data.customer_email);
                     $('.print-address').html(data.customer_address);
                 }
+
 
                 // Thermal & A4 print: show table number, order type and payment status with conditional hide
                 var isA4Print = PosnicPro.sales.view._isA4();
@@ -1399,6 +1411,13 @@ PosnicPro.sales.view = {
                 var itemPrintTaxDetails = [];
                 if (name === 'sale') {
                     $('.print-title').html(PosnicPro.local.get('sale_title'));
+                    // set AFTER sale_title, which would otherwise overwrite it
+                    if (PosnicPro.sales.view._isA4()
+                        && (branchGstin || PosnicPro.local.get('gst_action') === 'enable')) {
+                        $('.print-title').html(
+                            '<span style="font-size:16px !important; font-weight:900; letter-spacing:1px;">TAX INVOICE</span>'
+                        );
+                    }
                     $('.print_date').text(data.created_date);
                     if (PosnicPro.sales.view._isA4()) {
                         var rowHTMLTaxLine;
