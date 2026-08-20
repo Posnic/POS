@@ -5480,3 +5480,31 @@ $(document).on('click', '#quote_signature_clear', function () {
     $('#quote_signature_thumb').hide().attr('src', '');
     $(this).hide();
 });
+
+/* Quotation settings live in their own popup off the Features card - the
+   card itself stays a clean on/off (owner rule: toggles toggle, config
+   configures). Same field ids as ever, so the existing loads fill them. */
+$(document).on('click', '#quotes_config_open', function () {
+    $('#quote_settings_modal').modal('show');
+});
+$(document).on('click', '#quote_settings_save', function () {
+    var payload = {
+        quote_default_payment_method: $('#quote_default_payment_method').val() || '',
+        quote_default_bank_details: $('#quote_default_bank_details').val() || '',
+        quote_default_terms: $('#quote_default_terms').val() || '',
+        quote_default_signature: $('#quote_default_signature').val() || ''
+    };
+    $('#quote_settings_save').prop('disabled', true);
+    PosnicPro.post({ url: 'setting/updateCommonSettings', data: JSON.stringify(payload) }, function (r) {
+        $('#quote_settings_save').prop('disabled', false);
+        PosnicPro.alert(r.type, r.type === 'success' ? 'Quotation settings saved' : r.message);
+        if (r.type === 'success') {
+            PosnicPro.local.set('quotesignature', payload.quote_default_signature);
+            $('#quote_settings_modal').modal('hide');
+        }
+    }, function (xhr) {
+        $('#quote_settings_save').prop('disabled', false);
+        var resp = {}; try { resp = JSON.parse(xhr.responseText); } catch (e) { /* plain */ }
+        PosnicPro.alert('error', resp.message || 'Could not save quotation settings');
+    });
+});

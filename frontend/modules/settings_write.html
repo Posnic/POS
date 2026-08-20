@@ -2322,36 +2322,7 @@
                                                 </div>
                                             </div>
                                             <p class="module-desc">Price an offer today, convert it to a sale when the customer says yes.</p>
-                                            <div class="mt-2">
-                                                <label for="quote_default_payment_method" style="font-size:12.5px;" class="mb-1">
-                                                    <lang class="lang_quote_default_payment">Payment method on new quotes</lang>
-                                                </label>
-                                                <input type="text" name="quote_default_payment_method" id="quote_default_payment_method"
-                                                    class="form-control form-control-sm border-control" maxlength="60"
-                                                    placeholder="e.g. Bank transfer (NEFT/RTGS) or UPI" autocomplete="off">
-                                                <label for="quote_default_bank_details" style="font-size:12.5px;" class="mb-1 mt-2">
-                                                    <lang class="lang_quote_default_bank">Bank details on new quotes</lang>
-                                                </label>
-                                                <textarea name="quote_default_bank_details" id="quote_default_bank_details"
-                                                    class="form-control form-control-sm border-control" rows="2" maxlength="500"
-                                                    placeholder="Account name, number, IFSC"></textarea>
-                                                <label for="quote_default_terms" style="font-size:12.5px;" class="mb-1 mt-2">
-                                                    <lang class="lang_quote_default_terms">Terms on new quotes</lang>
-                                                </label>
-                                                <textarea name="quote_default_terms" id="quote_default_terms"
-                                                    class="form-control form-control-sm border-control" rows="3" maxlength="1500"
-                                                    placeholder="e.g. 50% advance confirms the order. Prices valid till the date on the quote."></textarea>
-                                                <label style="font-size:12.5px;" class="mb-1 mt-2">
-                                                    <lang class="lang_quote_signature">Authorised signature (image)</lang>
-                                                </label>
-                                                <input type="file" accept="image/*" class="form-control-file" id="quote_signature_file" style="font-size:12px;">
-                                                <input type="hidden" id="quote_default_signature">
-                                                <div class="mt-1">
-                                                    <img id="quote_signature_thumb" src="" alt="" style="max-height:48px; max-width:160px; display:none; border:1px solid #e3e7ee; border-radius:4px; padding:2px;">
-                                                    <a href="javascript:void(0)" id="quote_signature_clear" class="small text-danger ml-2" style="display:none;">Remove</a>
-                                                </div>
-                                                <small class="text-muted d-block">No image = no signatory line on the quote.</small>
-                                            </div>
+                                            <a href="javascript:void(0)" class="module-config-link" id="quotes_config_open">&#9881; <lang class="lang_quote_settings">Quotation settings</lang></a>
                                         </div>
 
                                         <div class="module-card">
@@ -4931,4 +4902,47 @@
     </div>
     <!-- End Containerbar -->
 </div>
-<!--</div>-->
+<!--</div>
+<div class="modal fade" id="quote_settings_modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h5 class="modal-title"><lang class="lang_quote_settings">Quotation settings</lang></h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label style="font-size:12.5px;" class="mb-1"><lang class="lang_quote_default_payment">Payment method on new quotes</lang></label>
+                        <input type="text" name="quote_default_payment_method" id="quote_default_payment_method"
+                            class="form-control form-control-sm mb-2" maxlength="60"
+                            placeholder="e.g. Bank transfer (NEFT/RTGS) or UPI" autocomplete="off">
+                        <label style="font-size:12.5px;" class="mb-1"><lang class="lang_quote_default_bank">Bank details on new quotes</lang></label>
+                        <textarea name="quote_default_bank_details" id="quote_default_bank_details"
+                            class="form-control form-control-sm mb-2" rows="3" maxlength="500"
+                            placeholder="Account name, number, IFSC"></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label style="font-size:12.5px;" class="mb-1"><lang class="lang_quote_default_terms">Terms on new quotes</lang></label>
+                        <textarea name="quote_default_terms" id="quote_default_terms"
+                            class="form-control form-control-sm mb-2" rows="4" maxlength="1500"
+                            placeholder="e.g. 50% advance confirms the order. Prices valid till the date on the quote."></textarea>
+                        <label style="font-size:12.5px;" class="mb-1"><lang class="lang_quote_signature">Authorised signature (image)</lang></label>
+                        <input type="file" accept="image/*" class="form-control-file" id="quote_signature_file" style="font-size:12px;">
+                        <input type="hidden" id="quote_default_signature">
+                        <div class="mt-1">
+                            <img id="quote_signature_thumb" src="" alt="" style="max-height:48px; max-width:160px; display:none; border:1px solid #e3e7ee; border-radius:4px; padding:2px;">
+                            <a href="javascript:void(0)" id="quote_signature_clear" class="small text-danger ml-2" style="display:none;">Remove</a>
+                        </div>
+                        <small class="text-muted d-block">No image = no signatory line on the quote.</small>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-secondary-rgba" data-dismiss="modal"><lang class="lang_close_title">Close</lang></button>
+                <button type="button" class="btn btn-primary" id="quote_settings_save"><lang class="lang_save_title">Save</lang></button>
+            </div>
+        </div>
+    </div>
+</div>
+-->

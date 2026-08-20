@@ -3033,3 +3033,6 @@ input:checked + .slider:before {
 /* Discount slides into the Tax slot while the Tax cell is hidden */
 #return_discount.disc-solo { text-align: right; }
 #return_discount.disc-solo .pull-right { float: none !important; margin-left: 8px; }
+
+/* Feature cards: config lives behind a soft link, never inside the card */
+.module-config-link { font-size: 12.5px; color: #506fe4; display: inline-block; margin-top: 4px; }
