@@ -106,6 +106,81 @@ class SettingsRepository extends BaseModel {
     return branches.findOne({ _id: ids.branch, license: ids.license });
   }
 
+  /*
+   * Write one group (S2 - dual write).
+   *
+   * Only the keys ACTUALLY SENT are written, and only those belonging to this
+   * group. That is the whole point of the split: the old path built one $set
+   * from the entire settings form, so a four-key payload wrote undefined over
+   * every control the caller never showed. Here a key that was not sent
+   * cannot appear in the update at all, so that bug is not merely fixed - it
+   * is unsayable.
+   *
+   * Dual write: the same keys also go to the legacy branches document, which
+   * stays the source of truth until the migration finishes. Both stores are
+   * true at once, so rolling back means deleting the new rows and nothing is
+   * lost. `level: 'account'` writes the inherited row (branch_id null).
+   */
+  async saveGroup(group, values = {}, context = {}, options = {}) {
+    const collectionName = COLLECTION_OF[group];
+    if (!collectionName) {
+      return { status: false, data: null, message: 'Unknown settings group' };
+    }
+    const ids = this._ids(context);
+    if (!ids) return { status: false, data: null, message: 'Branch context is required' };
+
+    const owned = new Set(GROUPS[group] || []);
+    const accepted = {};
+    const rejected = [];
+    for (const [key, value] of Object.entries(values || {})) {
+      if (owned.has(key)) {
+        accepted[key] = value;
+      } else {
+        rejected.push(key);
+      }
+    }
+    if (rejected.length) {
+      // refused, not ignored - a setting that vanishes without a word is the
+      // failure mode this whole design exists to end
+      return {
+        status: false,
+        data: { rejected },
+        message: 'These keys do not belong to ' + group + ': ' + rejected.join(', '),
+      };
+    }
+    if (!Object.keys(accepted).length) {
+      return { status: true, data: { written: [] }, message: 'Nothing to write' };
+    }
+
+    try {
+      const isAccount = options.level === 'account';
+      const collection = await this.getCollection(collectionName);
+      await collection.updateOne(
+        { license: ids.license, branch_id: isAccount ? null : ids.branch },
+        { $set: { ...accepted, license: ids.license, branch_id: isAccount ? null : ids.branch } },
+        { upsert: true }
+      );
+
+      /* Legacy mirror. An account-level write has no single branch to mirror
+         to, so it deliberately does not touch the old document - the resolver
+         already falls back to it, and account values are new behaviour that
+         no legacy reader knows about. */
+      if (!isAccount) {
+        const branches = await this.getCollection('branches');
+        await branches.updateOne({ _id: ids.branch, license: ids.license }, { $set: accepted });
+      }
+
+      return {
+        status: true,
+        data: { written: Object.keys(accepted), level: isAccount ? 'account' : 'branch' },
+        message: 'success',
+      };
+    } catch (error) {
+      console.error('Error in SettingsRepository.saveGroup:', error);
+      return { status: false, data: null, message: error.message };
+    }
+  }
+
   /* Every group at once, for the screens that still show all of it. */
   async resolveAll(context = {}) {
     const out = {};
