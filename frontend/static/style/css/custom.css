@@ -3315,11 +3315,55 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 }
 /* the image block was a full square and set the tile's height on its own */
 #sales_new .wsk-cp-img { aspect-ratio: 4 / 3; }
-#sales_new .wsk-cp-product { margin: 0 auto; }
 #sales_new .wsk-cp { margin-bottom: 10px !important; }
+
+/* Making the tiles denser cost them their separation: white cards on a
+   white page have no edges, so the grid read as continuous columns rather
+   than as products. The standard fix - and the answer to "what is standard
+   ux way to eye better feeling" - is a faintly tinted ground with white
+   cards on it, a hairline border, and a shadow that deepens on hover so the
+   card lifts slightly under the cursor. Pure white on pure white gives the
+   eye nothing to land on; a near-white ground does, without adding colour
+   noise to a screen the cashier stares at all day. */
+#sales_new #item-lists, #sales_new #sales_new_productList { background: #f4f6fa; border-radius: 10px; padding: 8px; }
+#sales_new .wsk-cp-product {
+    margin: 0 auto;
+    border: 1px solid #e6eaf1;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(35, 45, 70, 0.05);
+    overflow: hidden;
+    height: 100%;
+    transition: box-shadow .15s ease, border-color .15s ease, transform .12s ease;
+}
+#sales_new .wsk-cp:hover .wsk-cp-product {
+    border-color: #c3d0f0;
+    box-shadow: 0 4px 12px rgba(35, 45, 70, 0.12);
+    transform: translateY(-1px);
+    cursor: pointer;
+}
 #sales_new .wsk-cp .price-text-color { padding: 3px; margin-top: -8px; font-size: 14px; }
 #sales_new .wsk-cp .description-prod { padding: 4px 5px; max-height: 40px; }
 /* the name lives in .description-prod > p in this grid */
 #sales_new .wsk-cp .description-prod p { font-size: 13.5px; line-height: 1.25; margin-bottom: 0; }
 #sales_new .wsk-cp .wsk-cp-text { margin-top: 6px !important; }
 #sales_new .wsk-cp .wsk-cp-stock { font-size: 11px; }
+
+/* ============================================================
+   After a sale — the done panel
+   Four identical full-width bars said Print, SMS, WhatsApp and New sale
+   were all equally likely. They are not: the cashier starts the next sale
+   far more often than anything else, so that leads; printing sits under it
+   with the paper choice beside it; sending is quieter still.
+   ============================================================ */
+.sale-done-actions { display: flex; flex-direction: column; gap: 10px; }
+.sale-done-primary { font-size: 16px; padding: 12px; font-weight: 600; }
+.sale-done-print { display: flex; gap: 6px; }
+.sale-done-print-main { flex: 1 1 auto; }
+.sale-done-paper { flex: 0 0 auto; min-width: 64px; font-size: 13px; }
+.sale-done-send { display: flex; gap: 6px; }
+.sale-done-send .btn { flex: 1 1 0; font-size: 13.5px; color: #5a6478; }
+.sale-done-send .btn:hover { background: #eef3ff; color: #2f5fe0; }
+/* a send button with no channel configured is hidden by sales.js, so an
+   empty row should not leave a gap */
+.sale-done-send:empty { display: none; }
