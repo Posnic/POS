@@ -1557,9 +1557,12 @@ $('#receiving_add_item_name').scannerDetection({
 $(function () {
     var receivingLookupSeq = 0;
     $('#receiving_add_item_name').on('focus', function () {
+        // Guide, don't scold: the page auto-focuses this field on open
+        // (racing the default-supplier fill), so an empty supplier just
+        // moves the cursor to the supplier box - the submit path still
+        // enforces it with words when it actually matters.
         if ($('#receiving_add_supplier_name').val() === '') {
             $('#receiving_add_supplier_name').focus();
-            PosnicPro.alert('error', 'Enter a supplier name.');
         }
     });
     $('#receiving_add_item_name').autocomplete({
