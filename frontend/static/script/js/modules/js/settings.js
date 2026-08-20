@@ -5485,7 +5485,41 @@ $(document).on('click', '#quote_signature_clear', function () {
    card itself stays a clean on/off (owner rule: toggles toggle, config
    configures). Same field ids as ever, so the existing loads fill them. */
 $(document).on('click', '#quotes_config_open', function () {
-    $('#quote_settings_modal').modal('show');
+    // the modal markup ships inside a tab pane; a hidden parent swallows
+    // the dialog - body is the only safe home for a modal
+    $('#quote_settings_modal').appendTo('body').modal('show');
+});
+
+/*
+ * The generic feature-settings popup (owner rule): EVERY feature's
+ * configuration opens here - a big scrollable dialog that can hold even
+ * list pages. It ADOPTS an existing pane's children on open and returns
+ * them on close, so pages keep working when reached the normal way too.
+ */
+PosnicPro.settings.openFeatureModal = function (title, paneSelector) {
+    if (!$('#feature_settings_modal').length) {
+        $('body').append(
+            '<div class="modal fade" id="feature_settings_modal" tabindex="-1" role="dialog" aria-hidden="true">'
+            + '<div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" role="document">'
+            + '<div class="modal-content">'
+            + '<div class="modal-header py-2"><h5 class="modal-title" id="feature_settings_title"></h5>'
+            + '<button type="button" class="close" data-dismiss="modal">&times;</button></div>'
+            + '<div class="modal-body" id="feature_settings_body"></div>'
+            + '</div></div></div>');
+        $('#feature_settings_modal').on('hidden.bs.modal', function () {
+            var home = $('#feature_settings_body').data('home');
+            if (home) { $(home).append($('#feature_settings_body').children()); }
+            $('#feature_settings_body').empty().removeData('home');
+        });
+    }
+    var $pane = $(paneSelector);
+    if (!$pane.length) { return; }
+    $('#feature_settings_title').text(title);
+    $('#feature_settings_body').data('home', paneSelector).append($pane.children());
+    $('#feature_settings_modal').modal('show');
+};
+$(document).on('click', '.feature-pane-open', function () {
+    PosnicPro.settings.openFeatureModal($(this).data('title') || 'Settings', $(this).data('pane'));
 });
 $(document).on('click', '#quote_settings_save', function () {
     var payload = {
