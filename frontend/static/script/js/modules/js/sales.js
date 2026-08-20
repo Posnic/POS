@@ -11342,7 +11342,12 @@ $(document).on('click', '#print_receipt_a4, #print_receipt_thermal', function ()
     var id = $('.printSalesReceipt').data('sale-id');
     if (!id) { return; }
     var layout = (this.id === 'print_receipt_a4') ? 'a4' : 'standard';
-    if (PosnicPro.sales.view && PosnicPro.sales.view.printSale) {
-        PosnicPro.sales.view.printSale(id, 'sale', false, layout);
-    }
+    var view = PosnicPro.sales.view;
+    if (!view || !view.printSale) { return; }
+    // the chosen paper decides which template must be present, so set it
+    // before asking for the templates, then print once they are there
+    view._layoutOverride = layout;
+    view._ensurePrintTemplates(function () {
+        view.printSale(id, 'sale', false, layout);
+    });
 });
