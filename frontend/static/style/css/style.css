@@ -27736,6 +27736,11 @@ mark {
   margin-top: -1px;
 }
 
+#sales_new .breadcrumbbar,
+#dashboard .breadcrumbbar {
+  margin-top: 100px;
+}
+
 .breadcrumbbar {
   margin: 75px 30px 0 30px;
 }
