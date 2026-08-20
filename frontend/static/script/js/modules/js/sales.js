@@ -6185,6 +6185,18 @@ PosnicPro.sales.calculation = {
             outputVal = outputVal - billDisc;
             if (outputVal < 0) outputVal = 0;
         }
+        // Tax visibility (owner rule): the module toggle gates NEW tax,
+        // recorded tax always shows. Column and totals row hide only when
+        // the feature is off AND no line on this sale carries any tax.
+        var anyLineTax = false;
+        $('[id^="addSalesLineItemTax_"]').each(function () {
+            if ((parseFloat($(this).text()) || 0) > 0) { anyLineTax = true; }
+        });
+        var taxFeatureOff = PosnicPro.local.get('default_tax_enable_disable') === 'false'
+            && PosnicPro.local.get('gst_action') !== 'enable';
+        var showTaxCol = !taxFeatureOff || anyLineTax;
+        $('#return_table thead th').has('.lang_tax_title').toggle(showTaxCol);
+        $('[id^="addSalesLineItemTax_"]').toggle(showTaxCol);
         // named charges join the payable after discounts, before round-off
         var chargesSum = PosnicPro.sales.chargesTotal();
         if (chargesSum > 0) { outputVal = outputVal + chargesSum; }
