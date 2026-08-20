@@ -82,10 +82,6 @@ const defines = (src, name) => {
  * stop.
  */
 const KNOWN_MISSING = [
-  // Deletes a customer transaction, which moves that customer's BALANCE.
-  // Writing it blind is how books get corrupted; it needs the reversal rules
-  // written down first, so it is reported rather than guessed at.
-  'customers.routes.js  customersController.deleteTransaction',
   // A PHP-era sync endpoint with no caller in the frontend. Harmless today -
   // it 500s only if something starts calling it.
   'categories.routes.js  categoriesController.getDataChanges',
