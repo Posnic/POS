@@ -3295,3 +3295,31 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     border: 1px solid #f0d9b5; border-radius: 999px;
     padding: 2px 3px;
 }
+
+/* ============================================================
+   Sale item grid — density (owner: "one line itself we can have 6 or
+   five boxes. too big aso not required... show many products in
+   visible area")
+
+   Four big squares per row meant a cashier scrolled to reach the eighth
+   item. The tile keeps everything it had - name, image, price, stock -
+   at a size that still reads across a counter, but five fit on a laptop
+   and six on a wide till, so most of a category is reachable without
+   scrolling at all.
+   ============================================================ */
+@media (min-width: 992px) {
+    #sales_new .wsk-cp.col-lg-3 { flex: 0 0 20%; max-width: 20%; }
+}
+@media (min-width: 1400px) {
+    #sales_new .wsk-cp.col-lg-3 { flex: 0 0 16.6667%; max-width: 16.6667%; }
+}
+/* the image block was a full square and set the tile's height on its own */
+#sales_new .wsk-cp-img { aspect-ratio: 4 / 3; }
+#sales_new .wsk-cp-product { margin: 0 auto; }
+#sales_new .wsk-cp { margin-bottom: 10px !important; }
+#sales_new .wsk-cp .price-text-color { padding: 3px; margin-top: -8px; font-size: 14px; }
+#sales_new .wsk-cp .description-prod { padding: 4px 5px; max-height: 40px; }
+/* the name lives in .description-prod > p in this grid */
+#sales_new .wsk-cp .description-prod p { font-size: 13.5px; line-height: 1.25; margin-bottom: 0; }
+#sales_new .wsk-cp .wsk-cp-text { margin-top: 6px !important; }
+#sales_new .wsk-cp .wsk-cp-stock { font-size: 11px; }
