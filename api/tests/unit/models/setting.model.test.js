@@ -795,6 +795,97 @@ describe('updateCommonSettings', () => {
     expect(branchUpdateCall[1].$set).toHaveProperty('enable_notification_reminders', true);
   });
 
+  /*
+   * Partial-save safety. This endpoint takes small PATCH-style payloads
+   * (the quotation-defaults card, the signature upload) as well as the whole
+   * settings form. It used to build ONE $set from the entire form, so a
+   * payload carrying four keys wrote undefined/false over every control it
+   * never showed - a signature upload could wipe printing, receipts,
+   * reminders and business defaults in one go. The rule: a field whose
+   * SOURCE key was not sent must not appear in the $set at all.
+   */
+  const setOf = (col) => {
+    const calls = col.updateOne.mock.calls;
+    return calls[calls.length - 1][1].$set;
+  };
+
+  test('a signature-only save writes the signature and nothing else', async () => {
+    m.user.access = { plan: { read: true } };
+    await m.updateCommonSettings({ quote_default_signature: 'data:image/png;base64,AAA' });
+    const $set = setOf(col);
+    expect($set).toHaveProperty('quote_default_signature');
+    // none of the surface the caller never showed
+    for (const untouched of [
+      'printing_size',
+      'print_type',
+      'header_print',
+      'footer_print',
+      'receipt_barcode',
+      'roundOff',
+      'default_customer',
+      'default_supplier',
+      'notification_range',
+      'sales_prefix',
+      'keyboard_view',
+    ]) {
+      expect($set).not.toHaveProperty(untouched);
+    }
+  });
+
+  test('the quotation-defaults card cannot disturb printing or receipts', async () => {
+    m.user.access = { plan: { read: true } };
+    await m.updateCommonSettings({
+      quote_default_payment_method: 'Bank transfer',
+      quote_default_bank_details: 'A/C 123',
+      quote_default_terms: 'Pay within 15 days',
+    });
+    const $set = setOf(col);
+    expect($set).toHaveProperty('quote_default_terms', 'Pay within 15 days');
+    expect($set).not.toHaveProperty('print_type');
+    expect($set).not.toHaveProperty('receipt_barcode');
+  });
+
+  test('a full settings form still writes its whole surface', async () => {
+    m.user.access = { plan: { read: true } };
+    await m.updateCommonSettings({
+      default_customer: '6a6a538091a0321d0198ff51',
+      default_supplier: '6a867545f869a9e82c420d59',
+      notification_value: '5',
+      sales_prefix: 'S',
+      print_type: 'standard',
+      print_size: 'receipt_medium',
+      receipt_barcode: 'true',
+      roundOff: 'false',
+    });
+    const $set = setOf(col);
+    for (const written of [
+      'sales_prefix',
+      'printing_size',
+      'print_type',
+      'receipt_barcode',
+      'roundOff',
+      'notification_range',
+    ]) {
+      expect($set).toHaveProperty(written);
+    }
+  });
+
+  test('a key sent EMPTY is still written - absent means keep, empty means clear', async () => {
+    m.user.access = { plan: { read: true } };
+    await m.updateCommonSettings({ header_print: '', footer_print: '' });
+    const $set = setOf(col);
+    expect($set).toHaveProperty('header_print', '');
+    expect($set).toHaveProperty('footer_print', '');
+  });
+
+  test('a payload with no printing fields does not touch the user printing_design', async () => {
+    // getCollection is mocked to one collection, so a skipped users-write
+    // shows up as one updateOne call instead of two.
+    m.user.access = { plan: { read: true } };
+    await m.updateCommonSettings({ quote_default_signature: 'data:image/png;base64,AAA' });
+    expect(col.updateOne).toHaveBeenCalledTimes(1);
+  });
+
   test('returns status:false on error (missing user._id)', async () => {
     m.user._id = null;
     const r = await m.updateCommonSettings({});
