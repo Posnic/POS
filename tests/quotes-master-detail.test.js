@@ -554,3 +554,25 @@ test('whichever of list and quote lands second places the highlight', () => {
   const render = blockAt(quotesNamespace, 'renderList: function () {');
   assert.match(render, /is-active/, 'and renderList keeps doing it from _current');
 });
+
+/*
+ * Add Item: capped, but LEFT (owner: "all boxes centered. not good").
+ *
+ * Capping the width is right - a form is read down a column, and a 1900px row
+ * pushes a label miles from its field. Centring the capped block was not: the
+ * page title and the tab strip sit hard left, so the cards floated away from
+ * them and left a dead gutter down the left of the screen.
+ */
+test('the Add Item tabs are width-capped but stay left-aligned', () => {
+  const rule = cssRule('#items_new #item_tab_main,');
+  assert.match(rule, /max-width:\s*\d+px/, 'a form should not span a 1900px monitor');
+  assert.match(
+    rule,
+    /margin-left:\s*0/,
+    'the cap decides where content ENDS, never where it starts',
+  );
+  assert.ok(
+    !/margin-left:\s*auto/.test(rule),
+    'auto on the left centres the block and abandons the page left edge',
+  );
+});

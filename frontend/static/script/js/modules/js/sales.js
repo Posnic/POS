@@ -10365,7 +10365,7 @@ $(document).on('click', '#sds_void', function () {
 
     clearTimeout(PosnicPro.sales._voidArm);
     $btn.data('armed', false).prop('disabled', true).text('Voiding...');
-    PosnicPro.get({ url: 'sales/cancel/' + id, data: {} }, function (r) {
+    PosnicPro.post({ url: 'sales/cancel/' + id, data: '{}' }, function (r) {
         PosnicPro.alert(r.type, r.message);
         if (r.type === 'success') {
             $('#show_last_created_sale').hide();

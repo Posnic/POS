@@ -3400,10 +3400,20 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
    Everything here caps line length instead of filling the screen.
    ============================================================ */
 
-/* The three tabs and their cards stop spanning the whole page. */
+/*
+ * The three tabs and their cards stop spanning the whole page - but they stay
+ * LEFT, not centred.
+ *
+ * Capping the width is right: a form is read down a column, and a 1900px row
+ * pushes a label miles from its field. Centring the capped block was not: the
+ * page title and the tab strip sit hard left, so the cards floated away from
+ * them and left a dead gutter down the left of the screen. Everything on a
+ * page should share one left edge for the eye to run down - the cap decides
+ * where the content ENDS, never where it starts.
+ */
 #items_new #item_tab_main,
 #items_new #item_tab_details,
-#items_new #item_tab_more { max-width: 1140px; margin-left: auto; margin-right: auto; }
+#items_new #item_tab_more { max-width: 1140px; margin-left: 0; margin-right: auto; }
 
 /* Short values get a sane field width; long-form keeps the room it needs. */
 #items_new #items_brand,

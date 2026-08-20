@@ -115,7 +115,21 @@ router.post(
 
 // ── Kiosk / mobile-app routes (no JWT auth required, branch_id in body) ──
 router.post('/qrOrder', bindController(salesController.qrOrder));
-router.get('/getNewSale', bindController(salesController.getNewSale));
+/*
+ * getNewSale sits in the no-JWT block but its handler requires sales:write.
+ * With no auth middleware at all, req.user was never populated - so the
+ * permission check saw undefined and answered 403 to EVERYONE, signed in or
+ * not. It is the only route in this block that was missing optionalProtect;
+ * its siblings all carry it. With the session read, a logged-in till passes
+ * the permission check as intended, and anything genuinely anonymous still
+ * has to present this installation's kiosk key.
+ */
+router.get(
+  '/getNewSale',
+  optionalProtect,
+  protectOrKioskKey,
+  bindController(salesController.getNewSale)
+);
 router.post(
   '/getOrderHistory',
   optionalProtect,
@@ -486,9 +500,43 @@ router
   .post(prepareCreateSalePayload, bindController(salesController.holdSale))
   .put(prepareCreateSalePayload, bindController(salesController.holdSale));
 
-// KOT cancel endpoint - must be before generic /:id routes
-// Frontend: PosnicPro.get('sales/cancel/' + saleId)
-router.get('/cancel/:id', ensureValidSaleIdParam, bindController(salesController.cancel));
+/*
+ * Cancelling a sale must not be a GET.
+ *
+ * A GET is meant to be safe to repeat and safe for anything to follow.
+ * Browsers prefetch them, link scanners and antivirus fetch them, and - the
+ * part that matters - a bare `<img src="https://.../sales/cancel/ID">` on any
+ * page reached while logged in fires one WITH cookies, because SameSite=Lax
+ * still sends them on top-level GETs. That is a working CSRF vector against a
+ * destructive operation.
+ *
+ * POST is the real route now. The GET stays only because tills already
+ * deployed still call it (KOT cancel, two call sites), and it is hardened so
+ * it cannot be triggered from another site: X-Requested-With is a header no
+ * <img>, <script>, form or navigation can set, and cross-origin XHR cannot
+ * set it either - the CORS allowlist refuses the preflight. So the legacy path
+ * keeps working for real clients and is dead to an attacker page.
+ *
+ * Remove the GET once no shipped till calls it.
+ */
+const requireXhrForLegacyCancel = (req, res, next) => {
+  if (String(req.get('x-requested-with') || '').toLowerCase() === 'xmlhttprequest') {
+    return next();
+  }
+  return res.status(405).json({
+    type: 'error',
+    message: 'Cancelling a sale requires POST',
+    data: null,
+  });
+};
+
+router.post('/cancel/:id', ensureValidSaleIdParam, bindController(salesController.cancel));
+router.get(
+  '/cancel/:id',
+  requireXhrForLegacyCancel,
+  ensureValidSaleIdParam,
+  bindController(salesController.cancel)
+);
 
 // Single sale routes
 // Legacy edit screens request /sales/:id/edit expecting same payload as /sales/:id
