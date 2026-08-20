@@ -1025,7 +1025,8 @@
                 '<span class="btn btn-success-rgba button_qty_check" id = ' + id + '  onclick="PosnicPro.sales.quantity.qtyIncreaseDecrease(this.id,1,\'' + params.track_inventory + '\',\'' + params.negative_stock + '\');" style="width:45px;"><i class="feather icon-plus custom_plus" style="margin-left:-7px;"></i></span>' +
                 '</div>' +
                 '</div>';
-            var removeLineItem = '<button type="button" class="btn-danger-rgba mb-1 custom_remove" onclick="PosnicPro.sales.removeAddsalesLineRowItems(\'' + id + '\');"><i class="feather icon-trash"></i></button>';
+            // matches the edit pencil beside it: same size, same hover plate
+            var removeLineItem = '<a href="javascript:void(0)" class="sale-line-act sale-line-del custom_remove" title="Remove this line" onclick="PosnicPro.sales.removeAddsalesLineRowItems(\'' + id + '\');"><i class="feather icon-trash-2"></i></a>';
         }
         var returnqty = 0;
         var updatePrice = params.selling_price * item_quantity;
@@ -1125,7 +1126,7 @@
         var colWidth = (PosnicPro.sales.saleProcess === 'KOT') ? 'width="60%"' : 'width="30%"';
         // whole-line editor door (owner ask): one pencil, every field
         var saleEditIcon = (PosnicPro.local.get('sale_quick_edit') === 'disable') ? '' :
-            '<a href="javascript:void(0)" class="sale-line-edit" data-id="' + id + '" title="Edit price, qty, discount, tax"><i class="feather icon-edit-2"></i></a>';
+            '<a href="javascript:void(0)" class="sale-line-act sale-line-edit" data-id="' + id + '" title="Edit price, qty, discount, tax"><i class="feather icon-edit-2"></i></a>';
         var rowHTMLLine = '<tr id="touch_row_' + id + '" class="touch-sales-hover-effect border-top pt-3"> ' +
             '    <td id="addSalesLineItemName_' + id + '" class="font_size14" data-id="' + item_name + '" ' + colWidth + '>' + item_name + inlineNote + '</td>' +
             '    <td id="addSalesLineItemQty_' + id + '" class="text-center add_circle font_size14">' + addLineItemQty + '</td>' +
@@ -1415,6 +1416,9 @@
         var current_balance = $('#customer_current_balance').val();
         $('.walletbalance').number(current_balance);
         let checked = $("#sales_new_customer_partial_balance").val();
+        // walk-in sales must not be refused: fill from the cached default
+        // customer when nothing was chosen (see ensureCustomer)
+        if (PosnicPro.sales.ensureCustomer) { PosnicPro.sales.ensureCustomer(); }
         var customer_name = $("#sales_new_customer_name").val();
         // In payment-only tender (opened from Add Payment icon), align Unpaid toggle with
         // the existing sale payment_status so that Paid/Unpaid from history is reflected.
@@ -3512,6 +3516,9 @@ PosnicPro.sales.addSale = {
             // }
         }
 
+        // walk-in sales must not be refused: fill from the cached default
+        // customer when nothing was chosen (see ensureCustomer)
+        if (PosnicPro.sales.ensureCustomer) { PosnicPro.sales.ensureCustomer(); }
         var customer_name = $("#sales_new_customer_name").val();
         // Skip customer / item validation in payment-only mode (items already from DB)
         if (!PosnicPro.sales.paymentOnlyMode && ($('#sales_new_items_table tbody tr').find(':nth-child(8)').text() === '' || customer_name === '')) {
@@ -3939,6 +3946,9 @@ PosnicPro.sales.editSale = {
         }
 
         //salesAction = (PosnicPro.sales.salesExchange === true) ? 'exchange' : salesAction;
+        // walk-in sales must not be refused: fill from the cached default
+        // customer when nothing was chosen (see ensureCustomer)
+        if (PosnicPro.sales.ensureCustomer) { PosnicPro.sales.ensureCustomer(); }
         var customer_name = $("#sales_new_customer_name").val();
         // Skip customer/item validation entirely in payment-only mode (items already loaded from DB)
         if (!PosnicPro.sales.paymentOnlyMode && ($('#sales_new_items_table tbody tr').find(':nth-child(8)').text() === '' || customer_name === '')) {
@@ -4487,6 +4497,9 @@ PosnicPro.sales.holdSale = {
     /*Hold Sales Order*/
 
     holdOrderSubmit: function () {
+        // walk-in sales must not be refused: fill from the cached default
+        // customer when nothing was chosen (see ensureCustomer)
+        if (PosnicPro.sales.ensureCustomer) { PosnicPro.sales.ensureCustomer(); }
         var customer_name = $("#sales_new_customer_name").val();
         if ($('#sales_new_items_table tbody tr').find(':nth-child(8)').text() === '' || customer_name === '') {
 
@@ -5907,145 +5920,11 @@ PosnicPro.sales.quantity = {
  * discounts ride discount_apply, and "update item" needs item write on
  * the server as well.
  */
-PosnicPro.sales.cellEdit = {
-    _pending: null,
-    _perm: { price: 'price_override', tax: 'price_override', disc: 'discount_apply' },
-    start: function (field, itemId, $cell) {
-        if (PosnicPro.local.get('sale_quick_edit') === 'disable') { return; }
-        var perm = PosnicPro.sales.cellEdit._perm[field];
-        var go = function () { PosnicPro.sales.cellEdit._open(field, itemId, $cell); };
-        if (PosnicPro.posCan && !PosnicPro.posCan(perm)) {
-            PosnicPro.requireManagerApproval(perm,
-                { prompt: 'Changing this needs a manager\'s approval.' }, go);
-            return;
-        }
-        go();
-    },
-    _current: function (field, itemId) {
-        if (field === 'price') { return parseFloat($('#addSalesLineItemPrice_' + itemId).text()) || 0; }
-        if (field === 'tax') { return parseFloat($('#addSalesLineItemTax_' + itemId).text()) || 0; }
-        var v = parseFloat($('#addSalesLineItemDiscount_' + itemId).text()) || 0;
-        var sign = $('#discountSign' + itemId).text() === '%' ? '%' : '';
-        return v > 0 ? v + sign : 0;
-    },
-    _open: function (field, itemId, $cell) {
-        if ($cell.find('.sale-cell-input').length) { return; }
-        var cur = PosnicPro.sales.cellEdit._current(field, itemId);
-        $cell.data('orig-html', $cell.html());
-        var isPct = field === 'disc' && /%/.test(String(cur));
-        $cell.html((field === 'disc'
-                ? '<button type="button" class="btn btn-sm sale-disc-mode" title="Tap to switch amount / percent">'
-                    + (isPct ? '%' : (PosnicPro.local.get('currencySign') || '₹')) + '</button>'
-                : '')
-            + '<input type="text" class="form-control form-control-sm sale-cell-input" value="' + parseFloat(cur) + '" style="max-width:80px; display:inline-block; text-align:right;">');
-        $cell.data('disc-pct', isPct);
-        var $in = $cell.find('.sale-cell-input').focus().select();
-        var done = false;
-        var commit = function () {
-            if (done) { return; }
-            done = true;
-            var raw = $.trim($in.val());
-            if (field === 'disc' && raw !== '' && $cell.data('disc-pct')) { raw += '%'; }
-            $cell.html($cell.data('orig-html'));
-            if (raw === '' || raw === String(cur)) { return; }
-            PosnicPro.sales.cellEdit._confirm(field, itemId, raw);
-        };
-        $in.on('keydown', function (e) {
-            if (e.key === 'Enter') { commit(); }
-            if (e.key === 'Escape') { done = true; $cell.html($cell.data('orig-html')); }
-        });
-        $in.on('blur', function () { setTimeout(commit, 120); });
-    },
-    _confirm: function (field, itemId, raw) {
-        PosnicPro.sales.cellEdit._pending = { field: field, itemId: itemId, raw: raw };
-        if (!$('#sale_cell_confirm').length) {
-            $('body').append(
-                '<div class="modal fade" id="sale_cell_confirm" tabindex="-1" role="dialog" aria-hidden="true">'
-                + '<div class="modal-dialog modal-dialog-centered modal-sm" role="document"><div class="modal-content">'
-                + '<div class="modal-header py-2"><h5 class="modal-title">Apply this change</h5>'
-                + '<button type="button" class="close" data-dismiss="modal">&times;</button></div>'
-                + '<div class="modal-body"><div id="sale_cell_confirm_text" class="mb-1"></div>'
-                + '<small class="text-muted">Item records remember the change for every future sale.</small></div>'
-                + '<div class="modal-footer py-2 d-flex" style="gap:6px;">'
-                + '<button type="button" class="btn btn-primary flex-fill" id="sale_cell_only">This sale only</button>'
-                + '<button type="button" class="btn btn-outline-primary flex-fill" id="sale_cell_both">Sale + update item</button>'
-                + '</div></div></div></div>');
-            $(document).on('click', '#sale_cell_only', function () {
-                $('#sale_cell_confirm').modal('hide');
-                PosnicPro.sales.cellEdit._apply(false);
-            });
-            $(document).on('click', '#sale_cell_both', function () {
-                $('#sale_cell_confirm').modal('hide');
-                PosnicPro.sales.cellEdit._apply(true);
-            });
-        }
-        var label = field === 'price' ? 'Price' : field === 'tax' ? 'Tax %' : 'Line discount';
-        $('#sale_cell_confirm_text').text(label + ' \u2192 ' + raw);
-        $('#sale_cell_confirm').modal('show');
-    },
-    _apply: function (updateItem) {
-        var pnd = PosnicPro.sales.cellEdit._pending;
-        PosnicPro.sales.cellEdit._pending = null;
-        if (!pnd) { return; }
-        var id = pnd.itemId;
-        var taxType = $('#addSalesLineItemTaxType_' + id).text();
-        var TaxValue = parseFloat($('#addSalesLineItemTax_' + id).text()) || 0;
-        var patch = { id: $('#addSalesLineItemId_' + id).text() || id };
-        if (pnd.field === 'price') {
-            var np = parseFloat(pnd.raw);
-            if (!isFinite(np) || np < 0) { return; }
-            $('#saleInlineItemPrice_' + id).text(np.toFixed(2));
-            $('#addSalesLineItemPrice_' + id).text(np.toFixed(2));
-            $('#addSalesLineItemSellingPrice_' + id).text(np.toFixed(2));
-            var mrp = taxType === 'Exc' ? np : np / (1 + TaxValue / 100);
-            $('#addSalesLineItemSubTotal_' + id).text(mrp.toFixed(2));
-            patch.selling_price = np;
-        } else if (pnd.field === 'tax') {
-            var nt = parseFloat(pnd.raw);
-            if (!isFinite(nt) || nt < 0 || nt > 100) { return; }
-            $('#addSalesLineItemTax_' + id).html(nt + '<span>%</span>');
-            TaxValue = nt;
-            patch.tax = nt;
-        } else {
-            var isPct = /%\s*$/.test(pnd.raw);
-            var nv = parseFloat(pnd.raw);
-            if (!isFinite(nv) || nv < 0) { return; }
-            if (isPct) {
-                $('#addSalesLineItemDiscount_' + id).html(nv + '<span id="discountSign' + id + '">%</span>');
-                $('#addSalesLineDiscountPercentage_' + id).text(nv);
-                $('#addSalesLineDiscountAmount_' + id).text(0);
-                $('#addSalesLineItemDiscountprint_' + id).text(nv + '%');
-                patch.discount_percentage = nv;
-            } else {
-                $('#addSalesLineItemDiscount_' + id).html(nv.toFixed(2) + '<span id="discountSign' + id + '">' + (PosnicPro.local.get('currencySign') || '') + '</span>');
-                $('#addSalesLineDiscountAmount_' + id).text(nv.toFixed(2));
-                $('#addSalesLineDiscountPercentage_' + id).text(0);
-                $('#addSalesLineItemDiscountprint_' + id).text(nv.toFixed(2));
-                patch.discount_amount = nv;
-            }
-        }
-        PosnicPro.sales.commonInlineCalculation(id, taxType, TaxValue);
-        if (updateItem) {
-            PosnicPro.post({ url: 'items/quickPatch', data: JSON.stringify(patch) }, function (r) {
-                PosnicPro.alert(r.type, r.type === 'success' ? 'Item record updated too' : r.message);
-                if (PosnicPro.sales.itemCache) { PosnicPro.sales.itemCache.clear(); }
-            }, function () { PosnicPro.alert('warning', 'Sale updated; the item record could not be'); });
-        }
-    }
-};
-$(document).on('mousedown', '.sale-disc-mode', function (e) {
-    e.preventDefault();
-    var $cell = $(this).parent();
-    var pct = !$cell.data('disc-pct');
-    $cell.data('disc-pct', pct);
-    $(this).text(pct ? '%' : (PosnicPro.local.get('currencySign') || '₹'));
-    $cell.find('.sale-cell-input').focus();
-});
 /*
  * Whole-line editor (owner ask): the pencil on each cart row opens ONE
  * popup with price, qty, discount and tax together - one approval, one
  * save, instead of three double-click edits when a queue is waiting.
- * Same rails as cellEdit: the sale_quick_edit toggle, the ACL perms with
+ * Same rails the per-cell editor used: the sale_quick_edit toggle, the ACL perms with
  * a manager-PIN fallback, and items/quickPatch when the item record
  * should learn the change. JS-built and body-appended, the only modal
  * pattern that has never broken here.
@@ -6172,19 +6051,13 @@ PosnicPro.sales.lineEdit = {
 $(document).on('click', '.sale-line-edit', function () {
     PosnicPro.sales.lineEdit.open(String($(this).data('id')));
 });
-$(document).on('dblclick', '[id^="addSalesLineItemPrice_"]', function () {
-    var id = this.id.replace('addSalesLineItemPrice_', '');
-    PosnicPro.sales.cellEdit.start('price', id, $(this));
-});
-$(document).on('dblclick', '[id^="addSalesLineItemTax_"]', function () {
-    var id = this.id.replace('addSalesLineItemTax_', '');
-    PosnicPro.sales.cellEdit.start('tax', id, $(this));
-});
-$(document).on('dblclick', '[id^="addSalesLineItemDiscountprint_"]', function () {
-    var id = this.id.replace('addSalesLineItemDiscountprint_', '');
-    PosnicPro.sales.cellEdit.start('disc', id, $(this));
-});
-
+/*
+ * Double-click cell editing is retired (owner, 2026-08-20: "inline edit of
+ * sale not required. we can edit via clicking action edit button"). The
+ * pencil in the Action column opens the whole line at once, which is the
+ * quicker move with a queue at the counter. The per-cell editor it
+ * replaced is gone with it - it had no entry point left.
+ */
 PosnicPro.sales.charges = [];
 PosnicPro.sales.chargesTotal = function () {
     var t = 0;
@@ -6469,10 +6342,6 @@ PosnicPro.sales.calculation = {
         // totals row: with no Tax cell the Discount slides into its place
         // on the right; when tax returns, Discount goes back left
         $('#return_discount').toggleClass('disc-solo', !showTaxCol);
-        // discoverability (spreadsheet standard): hover cue + tooltip on
-        // every double-click-editable cell
-        $('[id^="addSalesLineItemPrice_"], [id^="addSalesLineItemDiscountprint_"], [id^="addSalesLineItemTax_"]')
-            .addClass('sale-editable-cell').attr('title', 'Double-click to edit');
         // named charges join the payable after discounts, before round-off;
         // a taxed charge brings its tax with it
         var chargesSum = PosnicPro.sales.chargesTotal();
@@ -6660,9 +6529,17 @@ PosnicPro.sales.setSaleDefaults = function () {
     }
 
     $('#sales_new_item_name').focus();
-    (PosnicPro.local.get('default_customer_enable_disable') === 'false')
-        ? $('#sales_new_customer_id,#sales_new_customer_name,#sales_new_customer_address,#sales_new_customer_phone,#sales_new_customer_email,#sales_new_customer_state,#sales_new_customer_gst_type,#sales_new_customer_gst_number,#sales_new_customer_partial_balance').val('')
-        : PosnicPro.defaultcustomerSet();
+    /*
+     * A sale is always billed to SOMEONE. With the default-customer setting
+     * off this used to blank every field and stop there - so the chip said
+     * "Walk-in" while no customer existed at all, and Pay answered "Enter a
+     * customer name" on a shop that had chosen not to prefill one. The
+     * fields are still cleared of the previous customer, but the branch's
+     * own Walk-in is then resolved (the server finds or creates it), which
+     * is exactly what the chip has been claiming all along.
+     */
+    $('#sales_new_customer_id,#sales_new_customer_name,#sales_new_customer_address,#sales_new_customer_phone,#sales_new_customer_email,#sales_new_customer_state,#sales_new_customer_gst_type,#sales_new_customer_gst_number,#sales_new_customer_partial_balance').val('');
+    PosnicPro.defaultcustomerSet();
     if (PosnicPro.loyalty) PosnicPro.loyalty.tillClear();
     if (PosnicPro.coupons) PosnicPro.coupons.tillClear();
     if (PosnicPro.sales.updateCustomerChip) PosnicPro.sales.updateCustomerChip();
@@ -10289,6 +10166,29 @@ $('.tableFixHead').on('scroll', function () {
 // (muted user icon) when no customer is set; the customer's name (accent,
 // checked icon, name + phone on hover) once one is chosen. Kept in sync from
 // the autocomplete select, the new-sale reset and the edit-sale load.
+/*
+ * Last line of defence before a save: a sale is always billed to someone,
+ * so if no customer is set, fall back to the branch's cached Walk-in.
+ * defaultcustomerSet() fills the fields from the server and caches the
+ * record, but it is ASYNC - a cashier who scans and hits Pay immediately
+ * can beat it. This is the synchronous half, reading that cache, so the
+ * save path never has to refuse a walk-in sale.
+ */
+PosnicPro.sales.ensureCustomer = function () {
+    if ($.trim($('#sales_new_customer_name').val() || '') !== '') { return; }
+    var def = null;
+    try { def = JSON.parse(PosnicPro.local.get('defaultcustomer') || 'null'); } catch (e) { return; }
+    if (!def || !def.customer_name) { return; }
+    $('#sales_new_customer_id').val(def.customer_id || '');
+    $('#sales_new_customer_name').val(def.customer_name);
+    $('#sales_new_customer_address').val(def.customer_address || '');
+    $('#sales_new_customer_phone').val(def.customer_phone || '');
+    $('#sales_new_customer_email').val(def.customer_email || '');
+    $('#sales_new_customer_state').val(def.customer_state || '');
+    $('#sales_new_customer_gst_type').val(def.customer_gst_type || '');
+    $('#sales_new_customer_gst_number').val(def.customer_gst_number || '');
+    if (PosnicPro.sales.updateCustomerChip) { PosnicPro.sales.updateCustomerChip(); }
+};
 PosnicPro.sales.updateCustomerChip = function () {
     var $btn = $('#sales_customer_btn');
     if (!$btn.length) { return; }
@@ -10362,9 +10262,7 @@ $(document).on('click', '#sales_customer_walkin', function (e) {
      * Save answered "Enter a customer name". Shops that deliberately run
      * without a default customer keep the blank fields.
      */
-    if (PosnicPro.local.get('default_customer_enable_disable') !== 'false') {
-        try { PosnicPro.defaultcustomerSet(); } catch (err) { /* chip still updates below */ }
-    }
+    try { PosnicPro.defaultcustomerSet(); } catch (err) { /* chip still updates below */ }
     if (PosnicPro.sales.updateCustomerChip) { PosnicPro.sales.updateCustomerChip(); }
     if (PosnicPro.loyalty && PosnicPro.loyalty.tillClear) { PosnicPro.loyalty.tillClear(); }
     if (PosnicPro.sales.calculation && PosnicPro.sales.calculation.salesTableRowCart) {

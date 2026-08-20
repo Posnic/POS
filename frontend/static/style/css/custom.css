@@ -3038,9 +3038,16 @@ input:checked + .slider:before {
 #sale_charges_list .sale-charge-row { border-radius: 4px; transition: background .15s ease; }
 #sale_charges_list .sale-charge-row:hover { background: #f6f8fc; }
 
-/* Whole-line edit pencil on each cart row */
-.sale-line-edit { color: #4680ff; padding: 4px 7px; border-radius: 4px; display: inline-block; margin-right: 2px; }
-.sale-line-edit:hover { background: #eef3ff; }
+/* Cart row actions: edit and delete are the SAME control, twice - same
+   box, same icon size, same hover plate, only the colour differs */
+.sale-line-act { display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; border-radius: 5px; margin: 0 1px; line-height: 1;
+    background: transparent; border: 0; transition: background .15s ease; }
+.sale-line-act i { font-size: 15px; }
+.sale-line-edit { color: #4680ff; }
+.sale-line-edit:hover { background: #eef3ff; color: #2f5fe0; }
+.sale-line-del { color: #e2523d; }
+.sale-line-del:hover { background: #fdeeeb; color: #c53c28; }
 #sale_line_edit .le-label { font-size: 12px; color: #67707f; text-transform: uppercase; letter-spacing: .3px; margin-bottom: 2px; }
 #sale_line_edit input.form-control { font-size: 15px; height: 38px; }
 
@@ -3066,8 +3073,8 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 #qe_valid_label { min-height: 16px; }
 
 /* Double-click editable cells: the spreadsheet affordance */
-.sale-editable-cell { cursor: cell; }
-.sale-editable-cell:hover { background: #f2f6ff; box-shadow: inset 0 -2px 0 #506fe4; }
+/* double-click cell editing retired - the Action pencil opens the whole
+   line instead, so the cells no longer advertise themselves as editable */
 /* Discount slides into the Tax slot while the Tax cell is hidden */
 #return_discount.disc-solo { text-align: right; }
 #return_discount.disc-solo .pull-right { float: none !important; margin-left: 8px; }
@@ -3106,7 +3113,6 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 .loyalty-inline { font-size: 14px; }
 #sales_loyalty_redeem_wrap .input-group-text, #sales_loyalty_redeem_wrap .form-control { font-size: 13px; }
 /* Line-discount editor: the symbol IS the mode - tap it to flip */
-.sale-disc-mode { border: 1px solid #c5ccd8; background: #f6f8ff; color: #506fe4; font-weight: 700; min-width: 30px; height: 31px; padding: 0 6px; margin-right: 4px; }
 /* Feature PAGE: same reading styles the modal had, now on the page */
 #v-pills-featureconf .fd-shots { display: flex; gap: 10px; overflow-x: auto; margin-bottom: 14px; }
 #v-pills-featureconf .fd-shots img { height: 180px; aspect-ratio: 8/5; object-fit: cover; border: 1px solid #e3e7ee; border-radius: 8px; }
