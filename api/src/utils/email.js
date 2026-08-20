@@ -136,7 +136,9 @@ const sendEmail = async (options) => {
  */
 const resolveShopTransport = (branchDoc) => {
   const b = branchDoc || {};
-  if (b.email_smtp_host && b.email_smtp_username) {
+  /* A HALF-filled card (password missing) must not outrank the working
+     platform path - 'Missing credentials for PLAIN' taught this. */
+  if (b.email_smtp_host && b.email_smtp_username && b.email_smtp_password) {
     return {
       transporter: nodemailer.createTransport({
         host: String(b.email_smtp_host),

@@ -7530,6 +7530,7 @@ PosnicPro.quotes = {
     showAdd: function () {
         PosnicPro.quotes._ed = PosnicPro.quotes._edBlank();
         PosnicPro.quotes._edShell();
+        PosnicPro.quotes._loadTaxList(function () { PosnicPro.quotes.edRender(); });
         $('#qe_title').text('New quotation');
         $('#qe_cust_search,#qe_cust_name,#qe_cust_phone,#qe_cust_email,#qe_cust_gstin,#qe_cust_address').val('');
         $('#qe_item_search,#qe_payment,#qe_bank,#qe_terms,#qe_notes,#qe_disc_value').val('');
@@ -7574,6 +7575,7 @@ PosnicPro.quotes = {
             });
             PosnicPro.quotes._ed = ed;
             PosnicPro.quotes._edShell();
+            PosnicPro.quotes._loadTaxList(function () { PosnicPro.quotes.edRender(); });
             $('#qe_title').text('Edit ' + (q.quote_id || 'quotation'));
             $('#qe_cust_search,#qe_item_search').val('');
             $('#qe_cust_name').val(q.customer_name || '');
@@ -7593,6 +7595,16 @@ PosnicPro.quotes = {
         }, function () { PosnicPro.alert('error', 'Could not load the quote'); });
     },
     _edR2: function (n) { return Math.round(n * 100) / 100; },
+    /* Shop taxes for the custom-line picker - catalog items bring their
+       own; a custom line picks from what the shop configured. */
+    _taxList: null,
+    _loadTaxList: function (done) {
+        if (PosnicPro.quotes._taxList) { done(PosnicPro.quotes._taxList); return; }
+        PosnicPro.get({ url: 'setting/getTaxAjaxList', data: 'query=' }, function (response) {
+            PosnicPro.quotes._taxList = (response && response.suggestions) || [];
+            done(PosnicPro.quotes._taxList);
+        }, function () { PosnicPro.quotes._taxList = []; done([]); });
+    },
     /* "GST 18%" already names its rate - never print it twice */
     _taxNote: function (l) {
         var esc = PosnicPro.quotes._esc;
@@ -7636,9 +7648,22 @@ PosnicPro.quotes = {
                 + '<td><span class="qe-l-grip" title="Drag to reorder">&#x2630;</span>'
                 + '<input type="text" class="qe-l-name form-control form-control-sm" maxlength="200" placeholder="' + (l.kind === 'custom' ? 'Custom line name' : 'Item') + '" value="' + esc(l.item_name) + '">'
                 + '<input type="text" class="qe-l-desc form-control form-control-sm mt-1" maxlength="500" placeholder="Description (optional)" value="' + esc(l.description) + '">'
+                + (l.kind === 'custom'
+                    ? '<select class="qe-l-taxsel form-control form-control-sm mt-1" style="max-width:170px;">'
+                        + '<option value="">No tax</option>'
+                        + ((PosnicPro.quotes._taxList || []).map(function (t) {
+                            var sel = Number(l.tax_value) > 0 && String(l.tax_name) === String(t.tax_name) ? ' selected' : '';
+                            return '<option value="' + esc(t.tax_value) + '" data-name="' + esc(t.tax_name) + '"' + sel + '>'
+                                + esc(t.tax_name) + ' (' + esc(t.tax_value) + '%)</option>';
+                        }).join(''))
+                        + '</select>'
+                    : '')
                 + (Number(l.tax_value) > 0
                     ? '<div class="qe-l-tax">' + PosnicPro.quotes._taxNote(l) + ' '
-                        + (l.tax_type === 'exclusive' ? 'added on top' : 'included') + '</div>'
+                        + (l.kind === 'custom'
+                            ? '<a href="javascript:void(0)" class="qe-l-taxflip">' + (l.tax_type === 'exclusive' ? 'added on top' : 'included') + '</a>'
+                            : (l.tax_type === 'exclusive' ? 'added on top' : 'included'))
+                        + '</div>'
                     : '')
                 + '</td>'
                 + '<td><input type="number" class="qe-l-qty form-control form-control-sm" min="0" step="any" value="' + esc(l.qty) + '"></td>'
@@ -10722,6 +10747,24 @@ $(document).on('input change', '#qe_lines input, #qe_lines select', function () 
     else if ($t.hasClass('qe-l-dtype')) { l.dtype = $t.val(); }
     else if ($t.hasClass('qe-l-dval')) { l.dval = $t.val(); }
     PosnicPro.quotes.edRecalc();
+});
+$(document).on('change', '#qe_lines .qe-l-taxsel', function () {
+    var i = $(this).closest('tr').data('i');
+    var ed = PosnicPro.quotes._ed;
+    if (!ed || !ed.lines[i]) { return; }
+    var $opt = $(this).find('option:selected');
+    ed.lines[i].tax_value = Number($opt.val()) || 0;
+    ed.lines[i].tax_name = $opt.data('name') || '';
+    if (!ed.lines[i].tax_type) { ed.lines[i].tax_type = 'inclusive'; }
+    if (!(Number($opt.val()) > 0)) { ed.lines[i].tax_type = ''; }
+    PosnicPro.quotes.edRender();
+});
+$(document).on('click', '#qe_lines .qe-l-taxflip', function () {
+    var i = $(this).closest('tr').data('i');
+    var ed = PosnicPro.quotes._ed;
+    if (!ed || !ed.lines[i]) { return; }
+    ed.lines[i].tax_type = ed.lines[i].tax_type === 'exclusive' ? 'inclusive' : 'exclusive';
+    PosnicPro.quotes.edRender();
 });
 $(document).on('click', '#qe_lines .qe-l-del', function () {
     var i = $(this).closest('tr').data('i');
