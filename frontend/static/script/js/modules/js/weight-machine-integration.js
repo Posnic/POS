@@ -1,6 +1,13 @@
 /**
  * Weight Machine Integration Module for POS Sales
  * Handles manual and automatic weight reading from Electron hardware
+ *
+ * Every message here used to call PosnicPro.toastr, which does not exist and
+ * never did - the app's toast helper is PosnicPro.alert(type, message), taking
+ * the same two arguments. So all eight threw "PosnicPro.toastr is not a
+ * function", and because the throw lands mid-handler the code after it never
+ * ran either: an unavailable weight machine produced silence instead of the
+ * warning that explains why nothing happened.
  */
 
 (function() {
@@ -17,13 +24,13 @@
             const settingsStr = PosnicPro.local.get('general_settings');
             const settings = settingsStr ? JSON.parse(settingsStr) : null;
             if (!settings || !settings.hardware_weight_machine_enable) {
-                PosnicPro.toastr('warning', 'Weight machine is not enabled in settings');
+                PosnicPro.alert('warning', 'Weight machine is not enabled in settings');
                 return;
             }
 
             // Check if WeightBridge is available
             if (!window.WeightBridge || !window.WeightBridge.isAvailable()) {
-                PosnicPro.toastr('warning', 'Weight machine not available. Please use the desktop app.');
+                PosnicPro.alert('warning', 'Weight machine not available. Please use the desktop app.');
                 window.WeightBridge && window.WeightBridge.showBrowserWarning();
                 return;
             }
@@ -37,7 +44,7 @@
                 const weight = await window.WeightBridge.getCurrentWeight();
 
                 if (weight === null || weight <= 0) {
-                    PosnicPro.toastr('error', 'Could not read weight. Please ensure the weight machine is connected.');
+                    PosnicPro.alert('error', 'Could not read weight. Please ensure the weight machine is connected.');
                     return;
                 }
 
@@ -52,7 +59,7 @@
                     // Fill the focused input field
                     $(activeElement).val(weight.toFixed(3));
                     $(activeElement).trigger('change');
-                    PosnicPro.toastr('success', `Weight ${weight.toFixed(3)} kg filled`);
+                    PosnicPro.alert('success', `Weight ${weight.toFixed(3)} kg filled`);
                 } else {
                     // Update quantity of last added item in cart
                     const lastRow = $('.register-item-content tbody tr').last();
@@ -61,18 +68,18 @@
                         if (qtyInput.length) {
                             qtyInput.val(weight.toFixed(3));
                             qtyInput.trigger('change');
-                            PosnicPro.toastr('success', `Weight ${weight.toFixed(3)} kg set for last item`);
+                            PosnicPro.alert('success', `Weight ${weight.toFixed(3)} kg set for last item`);
                         } else {
-                            PosnicPro.toastr('warning', 'No quantity field found for last item');
+                            PosnicPro.alert('warning', 'No quantity field found for last item');
                         }
                     } else {
-                        PosnicPro.toastr('warning', 'No items in cart. Please add an item first.');
+                        PosnicPro.alert('warning', 'No items in cart. Please add an item first.');
                     }
                 }
 
             } catch (error) {
                 console.error('Weight reading error:', error);
-                PosnicPro.toastr('error', 'Error reading weight: ' + error.message);
+                PosnicPro.alert('error', 'Error reading weight: ' + error.message);
             } finally {
                 // Reset button
                 $('#sales_read_weight_btn').html('<i class="feather icon-anchor"></i> Weight');
