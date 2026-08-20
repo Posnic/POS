@@ -3067,3 +3067,5 @@ input:checked + .slider:before {
 /* Loyalty on the sale page: ONE line, readable - counter space is gold */
 .loyalty-inline { font-size: 14px; }
 #sales_loyalty_redeem_wrap .input-group-text, #sales_loyalty_redeem_wrap .form-control { font-size: 13px; }
+/* Line-discount editor: the symbol IS the mode - tap it to flip */
+.sale-disc-mode { border: 1px solid #c5ccd8; background: #f6f8ff; color: #506fe4; font-weight: 700; min-width: 30px; height: 31px; padding: 0 6px; margin-right: 4px; }
