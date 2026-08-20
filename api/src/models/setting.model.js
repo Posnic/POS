@@ -1031,27 +1031,33 @@ class SettingModel extends BaseModel {
 
       // Update user printing_design using positional operator (matches PHP logic line 330-339)
       // Wrapped in try-catch: if user doesn't have printing_design for this branch, continue anyway
-      try {
-        await usersCollection.updateOne(
-          {
-            _id: this.normalizeId(this.user._id),
-            'printing_design.branch_id': this.normalizeId(this.branchId),
-          },
-          {
-            $set: {
-              'printing_design.$.printing_design': data.print_type,
-              'printing_design.$.printing_max_char': data.print_character,
-              'printing_design.$.printing_size': data.print_size,
-              // Paper width in millimetres. Added alongside the others rather
-              // than replacing any: printing_size is the font size, this is
-              // the roll the receipt has to fit on.
-              'printing_design.$.print_width': data.print_width,
+      // Skipped entirely for partial payloads that carry no printing fields.
+      if (data.print_type !== undefined) {
+        try {
+          await usersCollection.updateOne(
+            {
+              _id: this.normalizeId(this.user._id),
+              'printing_design.branch_id': this.normalizeId(this.branchId),
             },
-          }
-        );
-      } catch (userPrintError) {
-        // Non-blocking: continue even if user printing update fails
-        console.warn('User printing_design update failed (non-critical):', userPrintError.message);
+            {
+              $set: {
+                'printing_design.$.printing_design': data.print_type,
+                'printing_design.$.printing_max_char': data.print_character,
+                'printing_design.$.printing_size': data.print_size,
+                // Paper width in millimetres. Added alongside the others rather
+                // than replacing any: printing_size is the font size, this is
+                // the roll the receipt has to fit on.
+                'printing_design.$.print_width': data.print_width,
+              },
+            }
+          );
+        } catch (userPrintError) {
+          // Non-blocking: continue even if user printing update fails
+          console.warn(
+            'User printing_design update failed (non-critical):',
+            userPrintError.message
+          );
+        }
       }
 
       // Default values - matches PHP lines 342-351
@@ -1258,6 +1264,67 @@ class SettingModel extends BaseModel {
         let idle = parseInt(data.till_lock_idle_minutes, 10);
         if (isNaN(idle) || idle < 0) idle = 0;
         updateFields.till_lock_idle_minutes = Math.min(idle, 120);
+      }
+
+      /*
+       * Partial-save safety: this endpoint also takes small PATCH-style
+       * payloads (the quotation defaults card, the signature upload from the
+       * quote page). Any $set field whose SOURCE key was not sent is dropped
+       * here, so a partial payload can never wipe the rest of the shop's
+       * settings with undefined/false derived from absent controls. Full
+       * settings-form saves send every key, so they are unaffected.
+       */
+      const SOURCE_OF = {
+        default_customer: 'default_customer',
+        default_supplier: 'default_supplier',
+        default_tax: 'default_tax',
+        notification_range: 'notification_value',
+        discount_percentage: 'discount_percentage',
+        discount_amount: 'discount_amount',
+        sales_prefix: 'sales_prefix',
+        indian_gst: 'indian_gst',
+        receiving_prefix: 'receiving_prefix',
+        branch_gstin_number: 'branch_gstin_number',
+        roundOff: 'roundOff',
+        receipt_barcode: 'receipt_barcode',
+        stock_management: 'stock_management',
+        stock_management_log: 'stock_log_management',
+        printall: 'printall',
+        sales_mail: 'sales_mail',
+        customer_print: 'customer_print',
+        print_url: 'print_url',
+        print_logoimg: 'print_logoimg',
+        print_sale_notes: 'print_sale_notes',
+        sales_sms: 'sales_sms',
+        auto_sms: 'auto_sms',
+        enable_sms_reminders: 'enable_sms_reminders',
+        enable_sms_auto_send: 'enable_sms_auto_send',
+        sms_auto_send_time: 'enable_sms_auto_send',
+        sms_retry_period: 'enable_sms_auto_send',
+        sms_max_retries: 'enable_sms_auto_send',
+        keyboard_view: 'keyboard_view',
+        whatsapp_receipt: 'whatsapp_receipt',
+        balance_view: 'balance_view',
+        customer_checkbox: 'customer_checkbox',
+        supplier_checkbox: 'supplier_checkbox',
+        tax_checkbox: 'tax_checkbox',
+        print_type: 'print_type',
+        printing_size: 'print_size',
+        print_width: 'print_width',
+        print_character: 'print_character',
+        header_print: 'header_print',
+        footer_print: 'footer_print',
+        sale_inline_editor: 'sale_inline_editor',
+        enable_multi_payment: 'enable_multi_payment',
+        table_options: 'table_options',
+        hardware_weight_machine_enable: 'hardware_weight_machine_enable',
+        enable_notification_reminders: 'enable_notification_reminders',
+        enable_email_reminders: 'enable_email_reminders',
+      };
+      for (const [field, src] of Object.entries(SOURCE_OF)) {
+        if (data[src] === undefined && field in updateFields) {
+          delete updateFields[field];
+        }
       }
 
       // Update branch collection (matches PHP $set logic line 389-434)
