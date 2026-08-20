@@ -916,7 +916,24 @@ PosnicPro.sales.view = {
         });
     },
     /*sold order printing process held by this function for normal sale order*/
-    printSale: function (id, name, isKotHistoryPrint) {
+    /*
+     * Which paper this print uses. Normally the shop's Print Type setting
+     * decides, but the post-sale panel can ask for one explicitly (owner:
+     * "Print recept i would like to have thermal as well a4 option"), so an
+     * override wins for the duration of that one print and is cleared after.
+     */
+    _layoutOverride: null,
+    _isA4: function () {
+        if (PosnicPro.sales.view._layoutOverride) {
+            return PosnicPro.sales.view._layoutOverride === 'a4';
+        }
+        // read the setting directly here - this IS the base case
+        return typeof print_type !== 'undefined' && print_type && String(print_type.value) === 'a4';
+    },
+    printSale: function (id, name, isKotHistoryPrint, layoutOverride) {
+        PosnicPro.sales.view._layoutOverride =
+            (layoutOverride === 'a4' || layoutOverride === 'standard') ? layoutOverride : null;
+
         $('.Hide-Disc').show();
         $('.gst-text-value,.print_igst_tax_view,.cgst-text-value,.print_csgst_tax_view').html('');
 
@@ -971,7 +988,7 @@ PosnicPro.sales.view = {
                 $('.tax-print-hideshow,.amount-print-hideshow,.print-payment-status-hide').hide();
 
                 // Determine whether current print is A4 or thermal (standard) layout
-                var isA4Layout = (typeof print_type !== 'undefined' && print_type.value === 'a4');
+                var isA4Layout = PosnicPro.sales.view._isA4();
 
                 // Reset thermal-only partial payment rows on every print
                 $('.thermal-partial-row').hide();
@@ -1195,7 +1212,7 @@ PosnicPro.sales.view = {
                     }
 
                     // Mark the payment block row so it can be styled (centered with lines)
-                    var $printContainer = (typeof print_type !== 'undefined' && print_type.value === 'a4')
+                    var $printContainer = PosnicPro.sales.view._isA4()
                         ? $(".print-modal-a4-body")
                         : $(".print-modal-body");
                     var $paymentRow = $printContainer.find('.print-invoice-payment-mode').closest('.row');
@@ -1241,7 +1258,7 @@ PosnicPro.sales.view = {
                 }
 
                 // Thermal & A4 print: show table number, order type and payment status with conditional hide
-                var isA4Print = (typeof print_type !== 'undefined' && print_type.value === 'a4');
+                var isA4Print = PosnicPro.sales.view._isA4();
                 var tableNumber = (data.table_number || '').toString().trim();
                 var orderType = (data.dine_type || '').toString().trim();
                 var paymentStatus = (typeof (data.payment_status) === 'undefined' || data.payment_status === null)
@@ -1361,7 +1378,7 @@ PosnicPro.sales.view = {
                 if (name === 'sale') {
                     $('.print-title').html(PosnicPro.local.get('sale_title'));
                     $('.print_date').text(data.created_date);
-                    if (print_type.value === 'a4') {
+                    if (PosnicPro.sales.view._isA4()) {
                         var rowHTMLTaxLine;
                         var igst = 0;
                         var cgst = 0;
@@ -1578,7 +1595,7 @@ PosnicPro.sales.view = {
                     $('.print-payment-status-hide').hide();
                     $('.print-title').html(PosnicPro.local.get('sale_return_title'));
                     $('.print_date').text(data.updated_date);
-                    if (print_type.value === 'a4') {
+                    if (PosnicPro.sales.view._isA4()) {
                         var rowHTMLTaxLine;
                         var igst = 0;
                         var cgst = 0;
@@ -1781,7 +1798,7 @@ PosnicPro.sales.view = {
                     }
                 } else {
                     $('.indian-gstr').hide();
-                    if (print_type.value === 'a4') {
+                    if (PosnicPro.sales.view._isA4()) {
                         if (parseFloat(itemTotalTax) > 0) {
                             $('.tax_print_hide').show();
                             $('#tax_print_hide').show();
@@ -1798,7 +1815,7 @@ PosnicPro.sales.view = {
 
                 // KOT History prints: temporarily hide plain 'Payment' / 'Payment Status' labels.
                 // Non-KOT prints: always restore these labels so Sales/Settlement prints are unaffected.
-                var $printContainer = (typeof print_type !== 'undefined' && print_type.value === 'a4')
+                var $printContainer = PosnicPro.sales.view._isA4()
                     ? $(".print-modal-a4-body")
                     : $(".print-modal-body");
 
@@ -1822,7 +1839,7 @@ PosnicPro.sales.view = {
                 var canvas = document.getElementById("canvasTarget");
                 var img = data.receipt_barcode === true ? canvas.toDataURL("image/png") : '';
 
-                PosnicPro.printView(print_type.value === 'a4' ? contentone : contents, img);
+                PosnicPro.printView(PosnicPro.sales.view._isA4() ? contentone : contents, img);
 
                 $('.invoice-table-content div').empty();
             } else {
@@ -1876,7 +1893,7 @@ PosnicPro.sales.view = {
                 var subTotal = 0;
                 var grandTotal = 0;
                 var length = response.data.return_data.length;
-                if (print_type.value === 'a4') {
+                if (PosnicPro.sales.view._isA4()) {
                     var rowHTMLTaxLine;
                     var igst = 0;
                     var cgst = 0;
@@ -2099,7 +2116,7 @@ PosnicPro.sales.view = {
                     }
                 } else {
                     $('.indian-gstr').hide();
-                    if (print_type.value === 'a4') {
+                    if (PosnicPro.sales.view._isA4()) {
                         if (data.partial_check === 'true' && data.sale_process !== 'PartialReturn' && data.sale_process !== 'FullReturn') {
                             $('.print-payment-status-hide').hide();
                             $('.print-payment-balance').html(currency + '&nbsp;' + data.partial_balance.toFixed(2));
@@ -2161,7 +2178,7 @@ PosnicPro.sales.view = {
                 var contentone = $(".print-modal-a4-body").html();
                 var canvas = document.getElementById("canvasTarget");
                 var img = data.receipt_barcode === true ? canvas.toDataURL("image/png") : '';
-                PosnicPro.printView(print_type.value === 'a4' ? contentone : contents, img);
+                PosnicPro.printView(PosnicPro.sales.view._isA4() ? contentone : contents, img);
                 $('.invoice-table-content div').empty();
 
             } else {

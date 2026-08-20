@@ -930,26 +930,33 @@
                                             </div>
                                             <div class="row mt-3 mb-5">
                                                 <div class="col-md-12">
-                                                    <div class="form-row">
-                                                        <a href="javascript:void(0)"
-                                                            class="printSalesReceipt btn seven btn-lg btn-block col-md-12"><i
-                                                                class="feather icon-printer mr-2"></i>
-                                                            <span>Print Receipt</span>
+                                                    <!-- After a sale the cashier does one of two things: start the
+                                                         next sale, or hand the customer a receipt. Four identical
+                                                         full-width bars said all four were equally likely. New sale
+                                                         leads; printing sits under it with the paper choice beside
+                                                         it; sending is quieter still and each button only appears
+                                                         when its feature is on. -->
+                                                    <div class="sale-done-actions">
+                                                        <a href="#/sales/new" class="btn btn-primary btn-block sale-done-primary infobar-tender-close">
+                                                            <i class="feather icon-plus mr-2"></i><span>New sale</span>
                                                         </a>
-                                                        <a href="javascript:void(0)"
-                                                            class="smsSalesReceipt btn seven btn-lg btn-block col-md-12"><i
-                                                                class="feather icon-message-square mr-2"></i>
-                                                            <span>SMS Receipt</span>
-                                                        </a>
-                                                        <a href="javascript:void(0)" class="printSalesWhatsAppReceipt btn seven btn-lg btn-block col-md-12"><i 
-                                                                class="feather icon-message-circle mr-2"></i> 
-                                                            <span>WhatsApp Receipt</span> 
-                                                        </a>
-                                                        <a href="#/sales/new"
-                                                            class="btn seven btn-lg infobar-tender-close btn-block col-md-12"><i
-                                                                class="feather icon-plus mr-2"></i>
-                                                            <span>New sale</span>
-                                                        </a>
+                                                        <div class="sale-done-print">
+                                                            <a href="javascript:void(0)" class="printSalesReceipt btn btn-outline-primary sale-done-print-main">
+                                                                <i class="feather icon-printer mr-2"></i><span>Print receipt</span>
+                                                            </a>
+                                                            <a href="javascript:void(0)" class="btn btn-outline-primary sale-done-paper" id="print_receipt_thermal"
+                                                               title="Print on the till roll">Thermal</a>
+                                                            <a href="javascript:void(0)" class="btn btn-outline-primary sale-done-paper" id="print_receipt_a4"
+                                                               title="Print a full A4 invoice">A4</a>
+                                                        </div>
+                                                        <div class="sale-done-send">
+                                                            <a href="javascript:void(0)" class="smsSalesReceipt btn btn-light">
+                                                                <i class="feather icon-message-square mr-2"></i><span>SMS</span>
+                                                            </a>
+                                                            <a href="javascript:void(0)" class="printSalesWhatsAppReceipt btn btn-light">
+                                                                <i class="feather icon-message-circle mr-2"></i><span>WhatsApp</span>
+                                                            </a>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>

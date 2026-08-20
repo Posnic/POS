@@ -3710,9 +3710,9 @@ PosnicPro.sales.addSale = {
                     if (response.data.sms === true) {
                         $('.smsSalesReceipt').show();
                     }
-                    $('.printSalesWhatsappReceipt').hide();
+                    $('.printSalesWhatsAppReceipt').hide();
                     if (response.data.whatsapp === true) {
-                        $('.printSalesWhatsappReceipt').show();
+                        $('.printSalesWhatsAppReceipt').show();
                     }
                     if ($('.payment_mode').val() === 'Qrpay') {
                         var params = {
@@ -3753,7 +3753,7 @@ PosnicPro.sales.addSale = {
                         .data('sale-id', response.data.sales_id);
                     let phone = (response.data.phone !== '') ? path + '/' + response.data.phone + '/' + response.data.name + '/sms' : path + '/ /' + response.data.name + '/sms';
                     $('.smsSalesReceipt').attr('href', phone);
-                    $('.printSalesWhatsappReceipt').attr('href', 'javascript:void(0)').attr('onclick', `PosnicPro.sales.showWhatsAppReceipt('${response.data.sales_id}', '${response.data.phone}', '${response.data.name}')`);
+                    $('.printSalesWhatsAppReceipt').attr('href', 'javascript:void(0)').attr('onclick', `PosnicPro.sales.showWhatsAppReceipt('${response.data.sales_id}', '${response.data.phone}', '${response.data.name}')`);
                     $('#qr_view').modal('hide');
                     $('#Partial_amount').val('');
                     loader.find(".loadingSpinner:first").remove();
@@ -4386,7 +4386,7 @@ PosnicPro.sales.editSale = {
                         .attr('href', saleId + '/print')
                         .data('sale-id', saleId);
                     $('.smsSalesReceipt').attr('href', saleId + '/sms');
-                    $('.printSalesWhatsappReceipt').attr('href', 'javascript:void(0)').attr('onclick', `PosnicPro.sales.showWhatsAppReceipt('${saleId}', '${phone}', '${name}')`);
+                    $('.printSalesWhatsAppReceipt').attr('href', 'javascript:void(0)').attr('onclick', `PosnicPro.sales.showWhatsAppReceipt('${saleId}', '${phone}', '${name}')`);
 
                     // Auto-print on KOT settlement when printall setting is enabled
                     if (isKotPaymentOnlyFlow &&
@@ -5993,8 +5993,7 @@ PosnicPro.sales.lineEdit = {
         $('#le_tax').val(curTax);
         // owner rule: the tax field lives under the tax toggle - hidden when
         // the feature is off, unless this line already carries recorded tax
-        var taxOff = PosnicPro.local.get('default_tax_enable_disable') === 'false'
-            && PosnicPro.local.get('gst_action') !== 'enable';
+        var taxOff = !PosnicPro.sales.taxFeatureOn();
         $('#le_tax_group').toggle(!taxOff || curTax > 0);
         $('#sale_line_edit').modal('show');
         setTimeout(function () { $('#le_price').focus().select(); }, 350);
@@ -6067,6 +6066,25 @@ $(document).on('click', '.sale-line-edit', function () {
  * quicker move with a queue at the counter. The per-cell editor it
  * replaced is gone with it - it had no entry point left.
  */
+/*
+ * Is the tax feature actually on for this shop?
+ *
+ * The old answer read `default_tax_enable_disable`, which settings.js only
+ * writes when someone OPENS the Settings page. On a till that went straight
+ * to the sale screen the key is absent, `=== 'false'` is false, and the Tax
+ * column showed a row of 0% on a shop with tax switched off - which is why
+ * this kept coming back. The cached general_settings blob carries
+ * module_tax_enable, so ask that first; absent everywhere now means OFF.
+ */
+PosnicPro.sales.taxFeatureOn = function () {
+    if (PosnicPro.local.get('gst_action') === 'enable') { return true; }
+    try {
+        var gs = JSON.parse(PosnicPro.local.get('general_settings') || '{}');
+        if (typeof gs.module_tax_enable === 'boolean') { return gs.module_tax_enable; }
+        if (typeof gs.tax_checkbox === 'boolean') { return gs.tax_checkbox; }
+    } catch (e) { /* fall through to the legacy flag */ }
+    return PosnicPro.local.get('default_tax_enable_disable') === 'true';
+};
 PosnicPro.sales.charges = [];
 PosnicPro.sales.chargesTotal = function () {
     var t = 0;
@@ -6091,7 +6109,7 @@ PosnicPro.sales.chargeTax = {
     ensure: function () {
         if (PosnicPro.sales.chargeTax._tax !== null) { return; }
         PosnicPro.sales.chargeTax._tax = { name: '', value: 0 };
-        if (PosnicPro.local.get('default_tax_enable_disable') === 'false') { return; }
+        if (!PosnicPro.sales.taxFeatureOn()) { return; }
         PosnicPro.get({ url: 'setting/getTaxAjaxList', data: 'query=' }, function (response) {
             var wanted = PosnicPro.local.get('default_tax_id');
             var found = null;
@@ -6333,9 +6351,9 @@ PosnicPro.sales.calculation = {
         $('[id^="addSalesLineItemTax_"]').each(function () {
             if ((parseFloat($(this).text()) || 0) > 0) { anyLineTax = true; }
         });
-        var taxFeatureOff = PosnicPro.local.get('default_tax_enable_disable') === 'false'
-            && PosnicPro.local.get('gst_action') !== 'enable';
-        var showTaxCol = !taxFeatureOff || anyLineTax;
+        // the column follows the DATA first: a Tax column of nothing but 0%
+        // is noise, and it reappears the moment a taxed line lands
+        var showTaxCol = anyLineTax || PosnicPro.sales.taxFeatureOn();
         // header AND cells as ONE unit - via ONE class on the table with
         // !important CSS. The old per-element toggling kept desyncing:
         // any other flow calling .show() on the kot-hide headers restored
@@ -6367,8 +6385,7 @@ PosnicPro.sales.calculation = {
         }
         // tax feature off AND nothing taxed on this sale: no Tax row at all
         var taxShown = parseFloat($('#tax').text()) || 0;
-        var taxOff = PosnicPro.local.get('default_tax_enable_disable') === 'false'
-            && PosnicPro.local.get('gst_action') !== 'enable';
+        var taxOff = !PosnicPro.sales.taxFeatureOn();
         $('#return_tax').toggle(!(taxOff && taxShown === 0));
         let roundOffValue = (PosnicPro.roundoff === true) ? Math.round(outputVal) - outputVal : 0.00;
         let sign = roundOffValue >= 0 ? '+' : '-';
@@ -9585,7 +9602,7 @@ PosnicPro.sales.quickSale = {
         // The shop's default tax, fetched once - the amount is treated as
         // tax-inclusive against it, like any inclusive-priced item.
         if (PosnicPro.sales.quickSale._tax === null) {
-            if (PosnicPro.local.get('default_tax_enable_disable') === 'false') {
+            if (!PosnicPro.sales.taxFeatureOn()) {
                 PosnicPro.sales.quickSale._tax = { id: '', name: '', value: 0 };
                 $('#quick_sale_hint').text('No tax applied');
             } else {
@@ -11312,4 +11329,20 @@ $(document).on('change', '#qe_sig_file', function () {
         });
     };
     reader.readAsDataURL(f);
+});
+
+/*
+ * Paper choice at print time (owner: "Print recept i would like to have
+ * thermal as well a4 option based user preference"). The main button follows
+ * the shop's Print Type setting; these two override it for one print without
+ * changing the setting, because the choice is usually per customer - a walk-in
+ * wants the roll, a business customer wants the A4 invoice for their books.
+ */
+$(document).on('click', '#print_receipt_a4, #print_receipt_thermal', function () {
+    var id = $('.printSalesReceipt').data('sale-id');
+    if (!id) { return; }
+    var layout = (this.id === 'print_receipt_a4') ? 'a4' : 'standard';
+    if (PosnicPro.sales.view && PosnicPro.sales.view.printSale) {
+        PosnicPro.sales.view.printSale(id, 'sale', false, layout);
+    }
 });
