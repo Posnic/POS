@@ -82,9 +82,16 @@
                                     <div class="custom-control custom-checkbox mt-1">
                                         <input type="checkbox" class="custom-control-input" id="item_open_price"
                                             name="item_open_price">
-                                        <label class="custom-control-label" for="item_open_price">
-                                            <lang class="lang_open_price">Price at sale (open price)</lang>
+                                        <!-- "Price at sale (open price)" told nobody what it did.
+                                             It means the item has no fixed price: the cashier
+                                             types one on the sale screen every time. -->
+                                        <label class="custom-control-label" for="item_open_price"
+                                            title="No fixed price - the cashier types the amount on the sale screen each time. Use it for loose goods, custom jobs and anything priced on the spot.">
+                                            <lang class="lang_open_price">Cashier types the price</lang>
                                         </label>
+                                        <small class="d-block text-muted" style="font-size:11.5px; line-height:1.35;">
+                                            <lang class="lang_open_price_hint">No fixed price - asked at each sale</lang>
+                                        </small>
                                     </div>
                                 </div>
                                 <div class="form-group col-md-3" id="item_opening_wrap">
@@ -97,8 +104,11 @@
                                         autocomplete="off">
                                 </div>
                             </div>
+                            <!-- Category and supplier are both optional pickers of the
+                                 same shape, so they share one row instead of eating a
+                                 line each (owner ask). -->
                             <div class="form-row">
-                                <div class="form-group col-md-5">
+                                <div class="form-group col-md-6">
                                     <label class="form-control-placeholder" for="items_category">
                                         <lang class="lang_choosecategory_title"> Select Category </lang>
                                         <small class="text-muted">(<lang class="lang_optional">optional</lang>)</small>
@@ -109,6 +119,21 @@
                                     <a data-module="category" data-access="write" href="#/items/categories/new"
                                         class="d-inline-block mt-1" style="font-size:.85rem;">
                                         + <lang class="lang_add_category">Add Category</lang>
+                                    </a>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label class="form-control-placeholder" for="items_supplier">
+                                        <lang class="lang_choosesupplier_title"> Select Supplier </lang>
+                                        <small class="text-muted">(<lang class="lang_optional">optional</lang>)</small>
+                                    </label>
+                                    <!-- Optional (IC1): items routinely arrive without a known
+                                         supplier; receiving is the supplier system of record. -->
+                                    <input type="text" class="form-control" id="items_supplier" name="items_supplier"
+                                        maxlength="50" placeholder="Choose a Supplier (optional)" autocomplete="off">
+                                    <input type="hidden" name="items_supplier_id" id="items_supplier_id">
+                                    <a data-module="supplier" data-access="write" href="#/items/suppliers/new"
+                                        class="d-inline-block mt-1" style="font-size:.85rem;">
+                                        + <lang class="lang_add_supply">Add Supplier</lang>
                                     </a>
                                 </div>
                             </div>
@@ -139,22 +164,6 @@
                                     </a>
                                 </small>
                             </div>
-                                <div class="form-row mt-2">
-                                    <div class="form-group col-md-6 mb-0">
-                                        <label class="form-control-placeholder" for="items_supplier">
-                                            <lang class="lang_choosesupplier_title"> Select Supplier </lang>
-                                        </label>
-                                        <!-- Optional (IC1): items routinely arrive without a known
-                                             supplier; receiving is the supplier system of record. -->
-                                        <input type="text" class="form-control" id="items_supplier" name="items_supplier"
-                                            maxlength="50" placeholder="Choose a Supplier (optional)" autocomplete="off">
-                                        <input type="hidden" name="items_supplier_id" id="items_supplier_id">
-                                        <a data-module="supplier" data-access="write" href="#/items/suppliers/new"
-                                            class="d-inline-block mt-1" style="font-size:.85rem;">
-                                            + <lang class="lang_add_supply">Add Supplier</lang>
-                                        </a>
-                                    </div>
-                                </div>
                         </div>
                     </div>
 
@@ -524,8 +533,12 @@
                     <div class="tab-pane fade" id="item_tab_more" role="tabpanel">
 
                     <!-- The power codes moved here from the SKU card (owner: too
-                         many fields there) - one barcode is plenty on screen one. -->
-                    <div class="card m-b-30">
+                         many fields there) - one barcode is plenty on screen one.
+                         Barcodes and Discount are both short cards, so they sit
+                         side by side instead of each taking a full row. -->
+                    <div class="row" id="item_more_pair">
+                    <div class="col-lg-6 d-flex flex-column">
+                    <div class="card m-b-30 flex-fill">
                         <div class="card-header">
                             <h5 class="card-title mb-0"><lang class="lang_codes_packs_title">Extra barcodes &amp; packs</lang></h5>
                         </div>
@@ -549,7 +562,9 @@
                         </div>
                     </div>
 
-                    <div class="card m-b-30" id="show-hide-item-discount" style="display:none;">
+                    </div>
+                    <div class="col-lg-6 d-flex flex-column">
+                    <div class="card m-b-30 flex-fill" id="show-hide-item-discount" style="display:none;">
                         <div class="card-header">
                             <h5 class="card-title">
                                 <lang class="lang_discount_title"> Discount </lang>
@@ -601,6 +616,9 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+
+                    </div>
                     </div>
 
                     <!-- 7 · Details (collapsed: description, images, dates, position) -->

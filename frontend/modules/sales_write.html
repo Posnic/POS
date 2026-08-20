@@ -377,16 +377,24 @@
                                             <tr>
                                                 <td class="payment_note items_head" id="payment_note">
 
-                                                    <lang class="lang_paymentnote_title">Payment Note </lang> &nbsp;<a
-                                                        href="#" id="click_payment_description">[<i
-                                                            class="feather icon-edit-1"></i>]</a>
+                                                    <!-- One action bar (owner: "lot of free space... make it
+                                                         better"). Three notes and the two add-actions were spread
+                                                         down three table rows with a whole cell each; they are all
+                                                         low-frequency, equal-weight actions, so they read better as
+                                                         one line of chips than as three labelled rows. Every id is
+                                                         unchanged - the note editors and save payload still find
+                                                         exactly what they expect. -->
+                                                    <div class="sale-actionbar customer-display-hide">
+                                                        <a href="javascript:void(0)" class="sale-chip" id="click_payment_description" data-label="Payment note">[<i class="feather icon-edit-1"></i>]</a>
+                                                        <a href="javascript:void(0)" class="sale-chip" id="click_sales_description" data-label="Sale note">[<i class="feather icon-edit-1"></i>]</a>
+                                                        <a href="javascript:void(0)" class="sale-chip" id="click_discount_description" data-label="Discount note">[<i class="feather icon-edit-1"></i>]</a>
+                                                        <span class="sale-actionbar-sep"></span>
+                                                        <a href="javascript:void(0)" class="sale-chip sale-chip-do" id="sale_add_discount">+ <lang class="lang_add_discount">Add discount</lang></a>
+                                                        <a href="javascript:void(0)" class="sale-chip sale-chip-do" id="sale_add_charge" style="display:none;">+ <lang class="lang_add_charge">Add charge</lang></a>
+                                                    </div>
                                                     <a href="#" id="payment_description"
                                                         class="payment_description customer-display-hide"
                                                         style="display:none;"></a>
-                                                    <div class="sale-soft-links customer-display-hide">
-                                                        <a href="javascript:void(0)" id="sale_add_charge" style="display:none;">+ <lang class="lang_add_charge">Add charge</lang></a>
-                                                        <a href="javascript:void(0)" id="sale_add_discount" class="ml-2">+ <lang class="lang_add_discount">Add discount</lang></a>
-                                                    </div>
                                                     <div id="sale_charges_list" class="customer-display-hide"></div>
                                                 </td>
                                                 <td class="payable-total pay_amount_total" id="sub_hide">
@@ -414,9 +422,6 @@
                                             <tr>
                                                 <td class="sale_dcription customer-display-hide items_head"
                                                     id="sale_dcrption">
-                                                    <lang class="lang_saledescription_title">Sale Note </lang> &nbsp;<a
-                                                        href="#" id="click_sales_description">[<i
-                                                            class="feather icon-edit-1"></i>]</a>
                                                     <a href="#" id="sales_description"
                                                         class="sales_description customer-display-hide"
                                                         style="display:none;"></a>
@@ -467,12 +472,9 @@
                                             <tr class="add-disc-row addDisc-hide-show">
                                                 <!-- LEFT: Discount Note -->
                                                 <td class="discount_dcription items_head" id="discount_note">
-                                                    <span class="disc-note-text">Discount Note &nbsp;
-                                                    <a href="#" id="click_discount_description">[<i
-                                                            class="feather icon-edit-1"></i>]</a>
                                                     <a href="#" id="discount_description"
                                                         class="discount_description customer-display-hide"
-                                                        style="display:none;"></a></span>
+                                                        style="display:none;"></a>
                                                 </td>
 
                                                 <!-- MIDDLE: Additional Discount label -->

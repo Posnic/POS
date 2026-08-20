@@ -1346,6 +1346,14 @@
 
     /*add new trash remove if unwanted addline items in touch sale order*/
     removeAddsalesLineRowItems: function (id) {
+        /*
+         * No confirmation (owner: "its not destructive. he can add back").
+         * Taking a line off an unsaved cart is undone by scanning the item
+         * again, and a modal between the cashier and that is pure friction
+         * at the counter. Voiding a SAVED sale is the destructive one, and
+         * that keeps its manager gate.
+         */
+        PosnicPro.sales.deleteConfirmation = true;
         if (PosnicPro.sales.deleteConfirmation) {
             if ($('#instantStatus_' + id).text() === 'ok') {
                 var params = {
@@ -6623,6 +6631,8 @@ PosnicPro.sales.setDefaults = function () {
         // way - a tint alone left last sale's note text sitting on screen
         PosnicPro.updateSaleNoteFlag('click_discount_description', 'feather icon-edit-1', '');
     }
+    // the chips are rebuilt above, so the lock badges go back on after them
+    if (PosnicPro.sales.markLockedActions) { PosnicPro.sales.markLockedActions(); }
     if (PosnicPro.sales.defaultCustomer === true) {
         // second copy of the reset above - same rule: clear the previous
         // customer, then resolve the branch Walk-in so the sale is billable
@@ -10212,6 +10222,28 @@ $('.tableFixHead').on('scroll', function () {
  * The hidden <a> keeps being the value carrier, so every save payload
  * still reads $('#payment_description').val() exactly as it did before.
  */
+/*
+ * Actions that a manager PIN can unlock wear a small lock (owner ask): a
+ * cashier who cannot discount on their own should SEE that the button still
+ * works and why it will ask for a PIN, rather than pressing it and being
+ * surprised. Hovering says so in words. Actions the user can simply perform
+ * carry no lock, so the badge means exactly one thing.
+ */
+PosnicPro.sales.markLockedActions = function () {
+    var mark = function (sel, perm, what) {
+        var $el = $(sel);
+        if (!$el.length) { return; }
+        var locked = PosnicPro.posCan && !PosnicPro.posCan(perm);
+        $el.toggleClass('needs-approval', !!locked);
+        if (locked) {
+            $el.attr('title', what + ' needs a manager\'s approval - you can still do it, a manager just enters their PIN.');
+        } else if (($el.attr('title') || '').indexOf('manager') !== -1) {
+            $el.removeAttr('title');
+        }
+    };
+    mark('#sale_add_discount', 'discount_apply', 'Applying a discount');
+    mark('#sale_add_charge', 'discount_apply', 'Adding a charge');
+};
 PosnicPro.sales.noteEdit = {
     open: function (linkId, fieldId, placeholder, maxLen) {
         var $link = $('#' + linkId);
