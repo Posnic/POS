@@ -2721,6 +2721,24 @@ input:checked + .slider:before {
 .sug-action.create .sug-tile { background: rgba(43, 183, 111, 0.15); color: #23985c; }
 .sug-action .sug-name { color: inherit; }
 
+/* A selected row sits on the theme's blue, and with autoSelectFirst the top
+   row is selected the moment the list opens. These colours are all tuned for
+   a white row, so on the blue the sub-line and the tile disappeared - the
+   "Create item" row read as a blank blue bar. Everything inside a selected
+   row is repainted for that background instead. */
+.autocomplete-suggestion.autocomplete-selected .sug-name,
+.autocomplete-suggestion.autocomplete-selected .sug-price { color: #fff; }
+.autocomplete-suggestion.autocomplete-selected .sug-meta,
+.autocomplete-suggestion.autocomplete-selected .sug-price del { color: rgba(255, 255, 255, 0.82); }
+.autocomplete-suggestion.autocomplete-selected .sug-tile,
+.autocomplete-suggestion.autocomplete-selected .sug-action .sug-tile,
+.autocomplete-suggestion.autocomplete-selected .sug-action.create .sug-tile {
+    background: rgba(255, 255, 255, 0.22); color: #fff;
+}
+.autocomplete-suggestion.autocomplete-selected .sug-stock {
+    background: rgba(255, 255, 255, 0.22); color: #fff;
+}
+
 /* Owner (repeated ask): every clickable icon answers hover and touch.
    The grey works on light and dark themes alike. */
 .infobar-settings-close:not(.btn) {
@@ -3119,6 +3137,8 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 /* Loyalty on the sale page: ONE line, readable - counter space is gold */
 .loyalty-inline { font-size: 14px; }
 #sales_loyalty_redeem_wrap .input-group-text, #sales_loyalty_redeem_wrap .form-control { font-size: 13px; }
+/* the loyalty line sat flush against the item search box above it */
+#sales_loyalty_panel { margin-top: 3px; }
 /* Line-discount editor: the symbol IS the mode - tap it to flip */
 /* Feature PAGE: same reading styles the modal had, now on the page */
 #v-pills-featureconf .fd-shots { display: flex; gap: 10px; overflow-x: auto; margin-bottom: 14px; }
