@@ -5484,11 +5484,7 @@ $(document).on('click', '#quote_signature_clear', function () {
 /* Quotation settings live in their own popup off the Features card - the
    card itself stays a clean on/off (owner rule: toggles toggle, config
    configures). Same field ids as ever, so the existing loads fill them. */
-$(document).on('click', '#quotes_config_open', function () {
-    // the modal markup ships inside a tab pane; a hidden parent swallows
-    // the dialog - body is the only safe home for a modal
-    $('#quote_settings_modal').appendTo('body').modal('show');
-});
+
 
 /*
  * The generic feature-settings popup (owner rule): EVERY feature's
@@ -5541,4 +5537,250 @@ $(document).on('click', '#quote_settings_save', function () {
         var resp = {}; try { resp = JSON.parse(xhr.responseText); } catch (e) { /* plain */ }
         PosnicPro.alert('error', resp.message || 'Could not save quotation settings');
     });
+});
+
+/*
+ * Feature detail dialogs (FEATURE_PAGES_DESIGN): every Core feature opens
+ * like a marketplace listing - readable while OFF, toggle in the hero,
+ * screenshots and benefits when provided, and ALL of its settings adopted
+ * into one place. JS-built and body-appended: the only modal pattern that
+ * has never broken in this codebase.
+ */
+PosnicPro.settings.featureInfo = {
+    quotes_enable: {
+        tagline: 'Price an offer today, convert it to a sale when the customer says yes.',
+        about: 'A quotation is a price promise with a validity date. Build it from your catalog or free lines, discount per line or per quote, add charges in any name, and share it as a professional A4 PDF.',
+        benefits: [
+            'Professional A4 document with your logo, GSTIN and signature',
+            'Share by PDF, print, email, WhatsApp or a copy-paste link',
+            'Accepted quotes freeze their numbers - the promise is kept',
+            'Convert loads the sale at the QUOTED prices, discounts visible'
+        ],
+        how: [
+            'Turn the feature on - Quotes appears in the home menu',
+            'New quotation: pick a customer, add lines, set validity',
+            'Share it; mark Accepted when the customer says yes',
+            'Convert to sale - the receipt total matches the quote'
+        ],
+        adoptQuoteFields: true
+    },
+    staff_shifts_enable: {
+        tagline: 'Staff clock in and out from the header clock; labour report and payroll exports.',
+        about: 'Workforce turns the till into the timesheet: clock in/out, shift history, labour costing and payroll exports - with tips and rosters as optional pieces below.',
+        benefits: [
+            'One tap clock in/out right on the till header',
+            'Labour report shows who worked when, and what it cost',
+            'Payroll exports ready for your accountant',
+            'Tips at clock-out and rosters when you want them'
+        ],
+        how: [
+            'Turn it on and the clock appears in the header',
+            'Staff tap to clock in and out through their day',
+            'Review hours in the Labour report under Reports'
+        ]
+    },
+    table_options: {
+        tagline: 'Dine-in orders by table, KOTs to the kitchen.',
+        about: 'Restaurant mode adds tables, dine-in order flow and kitchen order tickets. Manage your table list right here.',
+        benefits: [
+            'Orders held per table until the bill is asked for',
+            'KOTs reach the kitchen as they are fired',
+            'Table list managed from this dialog'
+        ],
+        how: [
+            'Turn it on, then add your tables below',
+            'On a sale, pick dine-in and the table number',
+            'Fire KOTs; settle the table when the meal ends'
+        ],
+        settingsPane: '#v-pills-tableorder'
+    },
+    custom_charges_enable: {
+        tagline: 'Parcel, service or delivery charges added on a sale.',
+        about: 'Named amounts that join the bill after the item math - never fake line items. Sales that already carry charges stay editable even when this is off, and charges arriving from a quotation always work.',
+        benefits: [
+            'Any name: parcel, service, delivery, installation',
+            'Joins the payable after discounts - honest totals',
+            'Quote-borne charges work regardless of this switch'
+        ],
+        how: [
+            'Turn it on; “+ Add charge” appears beside the Payment Note',
+            'Name it, amount it - it lists right there, removable',
+            'The Pay Total carries it; the sale stores it'
+        ]
+    },
+    quick_sale_enable: {
+        tagline: 'Type an amount, take payment - the busy-counter pad on the sale screen.',
+        about: 'For the queue that cannot wait for item search: an amount (and optional name) becomes a sale line instantly.',
+        benefits: [
+            'Fastest possible line for rush hours',
+            'Optional name keeps the receipt honest',
+            'Default tax applied the way your shop configures it'
+        ],
+        how: [
+            'On the sale screen, type an amount in the item search',
+            'Pick the quick-sale suggestion; add to sale',
+            'Tender as usual'
+        ]
+    },
+    cash_register_enable: {
+        tagline: 'Till sessions, floats and register reports.',
+        about: 'Registers add the open-count-close ceremony: a float to start, a session per till, and a register report to reconcile. Off: sales work without any register ceremony.',
+        benefits: [
+            'Every rupee in the drawer accounted per session',
+            'Register report reconciles float, sales and payouts',
+            'Resume your own session across devices'
+        ],
+        how: [
+            'Turn it on; login asks which register to open',
+            'Count the float, trade the day',
+            'Close with a count - the report shows the difference'
+        ]
+    },
+    module_tax_enable: {
+        tagline: 'Tax Rates and Tax Groups. Off hides both sections; saved taxes keep.',
+        about: 'Configure the taxes your items carry. Items bring their own tax to sales and quotations; documents show tax the moment any line carries it - even if you later switch this off.',
+        benefits: [
+            'Per-item rates - GST style, every line its own tax',
+            'Inclusive or added-on-top, per item',
+            'Recorded tax always shows, whatever the toggle says'
+        ],
+        how: [
+            'Turn it on; set Tax Rates under Core Settings',
+            'Assign a tax on each item (or via HSN suggestion)',
+            'Sales and quotes carry it automatically'
+        ]
+    },
+    till_lock_enable: {
+        tagline: 'Staff unlock with a 4-digit PIN instead of a password.',
+        about: 'The till locks to a PIN pad - fast for staff, safe for the counter. Choose an idle timeout below.',
+        benefits: [
+            'One tap lock, 4-digit unlock',
+            'Idle auto-lock keeps an unattended till safe'
+        ],
+        how: [
+            'Turn it on; staff set their PINs',
+            'Pick when the till should lock by itself'
+        ]
+    }
+};
+
+PosnicPro.settings._fdAdopted = [];
+PosnicPro.settings._fdAdopt = function ($nodes, $into) {
+    $nodes.each(function () {
+        var $n = $(this);
+        var $ph = $('<span class="fd-placeholder" style="display:none;"></span>');
+        $n.before($ph);
+        PosnicPro.settings._fdAdopted.push({ node: $n, ph: $ph });
+        $into.append($n);
+    });
+};
+PosnicPro.settings._fdReturnAll = function () {
+    PosnicPro.settings._fdAdopted.forEach(function (a) {
+        a.ph.replaceWith(a.node);
+    });
+    PosnicPro.settings._fdAdopted = [];
+};
+
+PosnicPro.settings.openFeatureDetail = function ($card) {
+    var $main = $card.find('.module-card-head input.custom-control-input').first();
+    var key = $main.attr('id') || '';
+    var info = PosnicPro.settings.featureInfo[key] || {};
+    var title = $.trim($card.find('.module-title').text());
+    var desc = $.trim($card.find('.module-desc').text());
+    var iconHtml = $card.find('.module-ico').html() || '';
+
+    if (!$('#feature_detail_modal').length) {
+        $('body').append(
+            '<div class="modal fade" id="feature_detail_modal" tabindex="-1" role="dialog" aria-hidden="true">'
+            + '<div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" role="document">'
+            + '<div class="modal-content">'
+            + '<div class="modal-header fd-hero">'
+            + '<span class="module-ico fd-ico" id="fd_icon"></span>'
+            + '<div class="fd-head-main">'
+            + '<div class="fd-title-row"><h5 class="modal-title mb-0" id="fd_title"></h5>'
+            + '<span class="badge fd-state" id="fd_state"></span></div>'
+            + '<div class="text-muted" id="fd_tagline" style="font-size:.85rem;"></div>'
+            + '</div>'
+            + '<div class="custom-control custom-switch fd-toggle">'
+            + '<input type="checkbox" class="custom-control-input" id="fd_master">'
+            + '<label class="custom-control-label" for="fd_master"></label>'
+            + '</div>'
+            + '<button type="button" class="close ml-2" data-dismiss="modal">&times;</button>'
+            + '</div>'
+            + '<div class="modal-body">'
+            + '<div id="fd_shots" class="fd-shots"></div>'
+            + '<div id="fd_about_wrap"><div class="q-label">About</div><p id="fd_about" class="fd-text"></p></div>'
+            + '<div id="fd_benefits_wrap"><div class="q-label">Why use it</div><ul id="fd_benefits" class="fd-list"></ul></div>'
+            + '<div id="fd_how_wrap"><div class="q-label">How it works</div><ol id="fd_how" class="fd-list"></ol></div>'
+            + '<div id="fd_settings_wrap"><div class="q-label">Settings</div><div id="fd_settings" class="fd-settings"></div></div>'
+            + '<p class="text-muted mt-3 mb-0" style="font-size:.8rem;">Switching off never deletes anything - switch back on and everything returns.</p>'
+            + '</div>'
+            + '</div></div></div>');
+        $('#feature_detail_modal').on('hidden.bs.modal', function () {
+            PosnicPro.settings._fdReturnAll();
+            PosnicPro.settings._fdCard = null;
+        });
+        $(document).on('change', '#fd_master', function () {
+            var $c = PosnicPro.settings._fdCard;
+            if (!$c) { return; }
+            var $sw = $c.find('.module-card-head input.custom-control-input').first();
+            $sw.prop('checked', $(this).is(':checked')).trigger('change');
+            $('#fd_state').text($(this).is(':checked') ? 'On' : 'Off')
+                .toggleClass('badge-success', $(this).is(':checked'))
+                .toggleClass('badge-light', !$(this).is(':checked'));
+        });
+    }
+
+    PosnicPro.settings._fdCard = $card;
+    $('#fd_icon').html(iconHtml);
+    $('#fd_title').text(title);
+    $('#fd_tagline').text(info.tagline || desc);
+    var on = $main.is(':checked');
+    $('#fd_master').prop('checked', on);
+    $('#fd_state').text(on ? 'On' : 'Off')
+        .toggleClass('badge-success', on)
+        .toggleClass('badge-light', !on);
+
+    var shots = info.shots || [];
+    $('#fd_shots').html(shots.map(function (src) {
+        return '<img src="' + src + '" alt="" loading="lazy">';
+    }).join('')).toggle(shots.length > 0);
+    $('#fd_about').text(info.about || desc);
+    $('#fd_benefits').html((info.benefits || []).map(function (b) {
+        return '<li>' + $('<i>').text(b).html() + '</li>';
+    }).join(''));
+    $('#fd_benefits_wrap').toggle((info.benefits || []).length > 0);
+    $('#fd_how').html((info.how || []).map(function (h) {
+        return '<li>' + $('<i>').text(h).html() + '</li>';
+    }).join(''));
+    $('#fd_how_wrap').toggle((info.how || []).length > 0);
+
+    // SETTINGS adoption: the card's own sub-controls, a dedicated fieldset,
+    // or a whole pane - moved in, returned on close, ids untouched
+    var $set = $('#fd_settings').empty();
+    var $inline = $card.children().not('.module-card-head, .module-desc, .module-config-link');
+    if ($inline.length) { PosnicPro.settings._fdAdopt($inline, $set); }
+    if (info.adoptQuoteFields && $('#quote_settings_modal').length) {
+        PosnicPro.settings._fdAdopt($('#quote_settings_modal .modal-body').children(), $set);
+        PosnicPro.settings._fdAdopt($('#quote_settings_modal #quote_settings_save'), $set);
+    }
+    if (info.settingsPane && $(info.settingsPane).length) {
+        PosnicPro.settings._fdAdopt($(info.settingsPane).children(), $set);
+    }
+    $('#fd_settings_wrap').toggle($set.children().length > 0);
+
+    $('#feature_detail_modal').modal('show');
+};
+
+// The whole card is the door (marketplace pattern); the switch and any
+// control on the card still work inline without opening it.
+$(document).on('click', '#v-pills-modules .module-card', function (e) {
+    if ($(e.target).closest('input, select, textarea, label, a, button, .custom-control').length) { return; }
+    PosnicPro.settings.openFeatureDetail($(this));
+});
+$(document).on('click', '#quotes_config_open', function () {
+    PosnicPro.settings.openFeatureDetail($(this).closest('.module-card'));
+});
+$(document).on('click', '.feature-pane-open', function () {
+    PosnicPro.settings.openFeatureDetail($(this).closest('.module-card'));
 });
