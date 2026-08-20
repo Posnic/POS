@@ -218,9 +218,14 @@ test('the item form tabs take the width of their words', () => {
 const quotesHtml = fs.readFileSync(path.join(ROOT, 'frontend', 'modules', 'quotes.html'), 'utf8');
 
 test('the selection is the near edge of the document, not a tinted row', () => {
-  const active = cssRule('.quotes-split #quotes_list_rows tr.quotes-row.is-active {');
+  // the row and its cells are painted together, so the rule is a group
+  const active = cssRule('.quotes-split #quotes_list_rows tr.quotes-row.is-active,');
   // the pane's ground, so the two read as one surface
-  assert.match(active, /background:\s*#fff/i, 'the active row must share the pane background');
+  assert.match(
+    active,
+    /background:\s*#fff\s*!important/i,
+    'the active row must share the pane background, and beat the global .card rule',
+  );
 
   // nothing may draw a line down its right - that is what breaks the join
   assert.ok(
@@ -376,4 +381,47 @@ test('and the labels reserve a line so inputs share a baseline', () => {
   const rule = cssRule('#items_new .form-row > .form-group > label.form-control-placeholder,');
   assert.match(rule, /min-height:\s*21px/, 'a bare inline label lets its input float up');
   assert.match(rule, /display:\s*block/);
+});
+
+/*
+ * "The full row needs to be highlighted, not only the left blue border."
+ *
+ * It already was white - but a plain global rule sets .card and .card-body
+ * background from the theme with !important, which forced the LIST white too.
+ * A white row on a white list is not a highlight, so all that read was the
+ * blue edge. The ground has to win first; the row highlight depends on it.
+ */
+test('the list ground wins against the global card rule', () => {
+  for (const sel of [
+    '#quotes_new .contentbar.quotes-split > #quotes_list_card {',
+    '#quotes_new .contentbar.quotes-split > #quotes_list_card > .card-body {',
+  ]) {
+    const rule = cssRule(sel);
+    assert.match(
+      rule,
+      /background:\s*#f6f8fa\s*!important/i,
+      `${sel} must beat the global .card background rule, or the list stays white`,
+    );
+  }
+});
+
+test('the whole row is the highlight, not a mark on its edge', () => {
+  const cells = cssRule('.quotes-split #quotes_list_rows tr.quotes-row.is-active,');
+  // every CELL is painted, so the highlight spans the full width
+  assert.ok(
+    cells.includes('background'),
+    'the cells must be painted or the row highlight stops at the first one',
+  );
+  /* `.is-active > td` appears twice - once in the group that paints it, once
+     in the rule that emphasises it. [^}] cannot cross a closing brace, so
+     this matches the emphasis rule rather than the first occurrence. */
+  assert.match(
+    css,
+    /is-active > td \{[^}]*font-weight:\s*600/,
+    'the whole row reads as selected, not one cell',
+  );
+
+  // unselected rows must NOT be painted white, or nothing stands out
+  const others = cssRule('.quotes-split #quotes_list_rows tr.quotes-row > td {');
+  assert.match(others, /background:\s*transparent/, 'unselected rows sit on the grey');
 });
