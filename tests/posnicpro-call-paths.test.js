@@ -7,17 +7,18 @@ const path = require('path');
  * Every PosnicPro.<name>(...) call must name something that exists.
  *
  * This is the cheapest bug in the codebase to write and among the more
- * expensive to notice. `PosnicPro.toastr(...)` was called eight times in the
- * weight-machine module; it does not exist and never did - the helper is
- * PosnicPro.alert. Every one threw "PosnicPro.toastr is not a function", and
- * because the throw lands mid-handler the rest of the handler never ran: an
- * unavailable weight machine produced silence instead of the warning that
- * would have explained it.
+ * expensive to notice. PosnicPro.confirm and PosnicPro.escapeHtml were both
+ * written in a single session, in live files, and caught only by reading the
+ * diff back. Nothing else catches the shape: the file parses, the build
+ * passes, lint is silent, and the call sits on a branch that only runs when
+ * something has already gone wrong - which is exactly when its message
+ * mattered most.
  *
- * The same shape was written twice more in a single session (PosnicPro.confirm
- * and PosnicPro.escapeHtml) and caught only by reading. Nothing else catches
- * it: the file parses, the build passes, and the branch only runs when a
- * particular thing goes wrong - which is precisely when the message mattered.
+ * A third instance, PosnicPro.toastr called eight times, turned out to live in
+ * a module that was never in the build manifest at all. Worth remembering as
+ * its own lesson: "this function does not exist" and "this file never runs"
+ * look identical from inside the file, and only the manifest tells them
+ * apart.
  *
  * Scope is deliberately the DIRECT call, PosnicPro.foo(). Namespaced calls
  * (PosnicPro.sales.foo()) are left to sales-call-paths.test.js, which can
