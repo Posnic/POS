@@ -587,12 +587,25 @@ class SalesController extends BaseController {
       // Then earn on what they actually paid (already net of the redemption).
       const amount = Number(sale.sales_total || sale.total || 0);
       if (amount > 0) {
-        await loyaltyService.earn(sale.customer_id, {
+        const earned = await loyaltyService.earn(sale.customer_id, {
           amount,
           saleId: sale._id || saleId,
           reference: sale.sales_id || '',
           ctx,
         });
+        /* Hand the points back to the till. This runs before the response is
+           written, so attaching them here puts them in it - and the cashier
+           can tell the customer what they just earned while they are still
+           standing there, which is the only moment it is worth anything.
+           Absent or zero simply means the strip says nothing about loyalty. */
+        const pts = Number(earned?.data?.points) || 0;
+        if (pts > 0) {
+          saleData.loyalty_earned = {
+            points: pts,
+            balance: Number(earned?.data?.balance) || 0,
+            tier: earned?.data?.tier || '',
+          };
+        }
         // If this is the referred customer's first qualifying purchase, reward
         // both them and whoever referred them.
         await loyaltyService.grantReferralIfEligible(sale.customer_id, {
