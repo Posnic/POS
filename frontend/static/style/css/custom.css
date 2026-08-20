@@ -3660,13 +3660,20 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     display: flex;
     flex-direction: column;
     max-height: calc(100vh - 150px);
-    background: #f6f8fa;
+    /* !important again, and this one is not even theme-scoped: a plain global
+       rule on .card and .card-body sets background-color from the theme with
+       !important, and was forcing this white. With the list white the
+       SELECTED row - also white - had nothing to stand against, so only its
+       blue edge showed. (No braces in this comment on purpose: the CSS reader
+       in the tests slices a rule at its first closing brace.) */
+    background: #f6f8fa !important;
 }
 #quotes_new .contentbar.quotes-split > #quotes_list_card > .card-body {
     display: flex;
     flex-direction: column;
     min-height: 0;
     padding: 0 !important;
+    background: #f6f8fa !important;
 }
 /* min-height:0 on both, or a flex child refuses to shrink below its content
    and the scrollbar lands on the page instead of inside the rail. */
@@ -3674,7 +3681,7 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     flex: 0 0 auto;
     margin-bottom: 0;
     padding: 12px 10px;
-    background: #f6f8fa;
+    background: #f6f8fa !important;
     border-bottom: 1px solid #d8dee4;
 }
 .quotes-split #quotes_list_card #quotes_list_rows {
@@ -3748,10 +3755,27 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 /* Inside the split the active row IS the document's near edge: same white,
    flush to it, marked only by an accent down its left. Nothing draws a line
    on its right - that is what would break the join. */
-.quotes-split #quotes_list_rows tr.quotes-row.is-active {
-    background: #fff;
-    box-shadow: inset 3px 0 0 #0969da;
+/* The selected row is lifted OUT of the grey list and onto the document's
+   white, across its whole width - the row itself is the highlight, not a mark
+   on its edge. The hairlines above and below separate it from its neighbours
+   the way a raised card would, and nothing is drawn on its right, so it runs
+   straight into the quote beside it. */
+.quotes-split #quotes_list_rows tr.quotes-row.is-active,
+.quotes-split #quotes_list_rows tr.quotes-row.is-active > td {
+    background: #fff !important;
 }
+.quotes-split #quotes_list_rows tr.quotes-row.is-active {
+    box-shadow: inset 3px 0 0 #0969da,
+                0 1px 0 rgba(27, 31, 36, 0.08),
+                0 -1px 0 rgba(27, 31, 36, 0.08);
+}
+.quotes-split #quotes_list_rows tr.quotes-row.is-active > td {
+    font-weight: 600;
+    color: #1f2328;
+}
+/* Unselected rows sit ON the grey, so nothing may paint them white. */
+.quotes-split #quotes_list_rows tr.quotes-row > td { background: transparent; }
+.quotes-split #quotes_list_rows tr.quotes-row:hover > td { background: #eaeef2; }
 
 /* The pager sits at the foot of the rail and always states the count, so the
    list says how much of itself you are seeing even on a single page. */
@@ -3780,17 +3804,25 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     background: var(--theme-card-bg);
     border-color: var(--theme-border-color);
 }
-[data-theme] #quotes_new .contentbar.quotes-split > #quotes_list_card {
-    background: var(--theme-body-bg, var(--theme-card-bg));
+[data-theme] #quotes_new .contentbar.quotes-split > #quotes_list_card,
+[data-theme] #quotes_new .contentbar.quotes-split > #quotes_list_card > .card-body,
+[data-theme] .quotes-split #quotes_list_card #quotes_filter_chips {
+    background: var(--theme-body-bg, var(--theme-card-bg)) !important;
 }
 /* The connected selection is the whole effect, so its ground and the pane's
    must be the SAME variable - two near-identical colours would show a seam. */
 [data-theme] #quotes_new .contentbar.quotes-split > #quotes_view_card,
-[data-theme] .quotes-split #quotes_list_rows tr.quotes-row.is-active {
-    background: var(--theme-card-bg);
+[data-theme] .quotes-split #quotes_list_rows tr.quotes-row.is-active,
+[data-theme] .quotes-split #quotes_list_rows tr.quotes-row.is-active > td {
+    background: var(--theme-card-bg) !important;
+}
+[data-theme] .quotes-split #quotes_list_rows tr.quotes-row.is-active > td {
+    color: var(--theme-text-primary);
+}
+[data-theme] .quotes-split #quotes_list_rows tr.quotes-row:hover > td {
+    background: var(--theme-table-row-hover);
 }
 [data-theme] .quotes-split #quotes_list_card #quotes_filter_chips {
-    background: var(--theme-body-bg, var(--theme-card-bg));
     border-bottom-color: var(--theme-border-color);
 }
 [data-theme] .quotes-split #quotes_list_card thead th {
