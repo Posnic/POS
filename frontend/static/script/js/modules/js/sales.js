@@ -7337,7 +7337,9 @@ PosnicPro.quotes = {
         $('#qe_cust_search,#qe_cust_name,#qe_cust_phone,#qe_cust_email,#qe_cust_gstin,#qe_cust_address').val('');
         $('#qe_item_search,#qe_payment,#qe_bank,#qe_terms,#qe_notes,#qe_disc_value').val('');
         $('#qe_disc_type').val('');
-        $('#qe_valid_until').val(PosnicPro.quotes._ed.valid_until);
+        $('#qe_valid_until').val(PosnicPro.quotes._ed.valid_until).hide();
+        $('.qe-valid-chip').removeClass('btn-primary').addClass('btn-secondary-rgba');
+        $('.qe-valid-chip[data-days="7"]').removeClass('btn-secondary-rgba').addClass('btn-primary');
         PosnicPro.quotes.edRender();
     },
     showEdit: function (id) {
@@ -7569,7 +7571,10 @@ PosnicPro.quotes = {
         }
         if (terms) { h += '<div class="q-block m-t-10"><div class="q-label">Terms &amp; conditions</div>' + esc(terms) + '</div>'; }
         if (notes) { h += '<div class="q-block m-t-10"><div class="q-label">Notes</div>' + esc(notes) + '</div>'; }
-        h += '<div class="q-sign">Authorised signatory</div>';
+        var sig = PosnicPro.local.get('quotesignature');
+        if (sig) {
+            h += '<div class="q-sign"><img src="' + sig + '" alt="" style="max-height:40px; max-width:160px; display:block; margin:0 auto 4px;">Authorised signatory</div>';
+        }
         $('#qe_preview').html(h);
     },
     edAddCustom: function () {
@@ -7592,7 +7597,7 @@ PosnicPro.quotes = {
                 qty: 1, unit_price: Number(d.selling_price) || 0, dtype: '', dval: '',
                 // the item's own configured tax rides the line (GST style)
                 tax_name: d.tax_name || '',
-                tax_value: Number(d.tax) || 0,
+                tax_value: Number(d.tax !== undefined && d.tax !== null && d.tax !== '' ? d.tax : d.tax_value) || 0,
                 tax_type: String(d.tax_type || '').toLowerCase().indexOf('ex') === 0 ? 'exclusive' : 'inclusive'
             });
             PosnicPro.quotes.edRender();
@@ -7854,7 +7859,9 @@ PosnicPro.quotes = {
                     });
                     return out + '</div>';
                 })()
-                + '<div class="q-sign">Authorised signatory</div>'
+                + (PosnicPro.local.get('quotesignature')
+                    ? '<div class="q-sign"><img src="' + esc(PosnicPro.local.get('quotesignature')) + '" alt="" style="max-height:40px; max-width:160px; display:block; margin:0 auto 4px;">Authorised signatory</div>'
+                    : '')
                 + '</div>';
             $('#quotes_view_body').html(body);
             var act = '<button type="button" class="btn btn-sm btn-secondary-rgba" onclick="hasher.setHash(\'quotes\');">Back</button> ';
@@ -7965,7 +7972,8 @@ PosnicPro.quotes = {
             phone: PosnicPro.local.get('branchphone') || '',
             email: PosnicPro.local.get('branchemail') || '',
             gstin: PosnicPro.local.get('branchgstin') || '',
-            taxLabel: PosnicPro.local.get('gst_action') === 'enable' ? 'GSTIN' : 'Tax ID'
+            taxLabel: PosnicPro.local.get('gst_action') === 'enable' ? 'GSTIN' : 'Tax ID',
+            signature: PosnicPro.local.get('quotesignature') || ''
         };
     },
     /* jsPDF + the shop logo (as a canvas data URL) resolved async, then
@@ -8250,13 +8258,17 @@ PosnicPro.quotes = {
           } else if (t === 'notes') { block('NOTES', q.notes); }
         });
 
-        /* signature */
-        ensure(34);
-        y = Math.min(Math.max(y + 12, 240), bottom - 14);
-        doc.setDrawColor(138, 148, 166); doc.setLineWidth(0.3);
-        doc.line(138, y + 10, R, y + 10);
-        doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(103, 112, 127);
-        doc.text('Authorised signatory', (138 + R) / 2, y + 14.5, { align: 'center' });
+        /* signature - ONLY when the shop uploaded one (owner rule: no image,
+           no signatory line at all) */
+        if (seller.signature) {
+          ensure(40);
+          y = Math.min(Math.max(y + 12, 236), bottom - 24);
+          try { doc.addImage(seller.signature, 'PNG', 150, y - 4, 36, 12); } catch (e) { /* bad image, line still prints */ }
+          doc.setDrawColor(138, 148, 166); doc.setLineWidth(0.3);
+          doc.line(138, y + 10, R, y + 10);
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(103, 112, 127);
+          doc.text('Authorised signatory', (138 + R) / 2, y + 14.5, { align: 'center' });
+        }
 
         pageFooter();
         if (typeof doc.putTotalPages === 'function') { doc.putTotalPages(totalAlias); }
@@ -10541,6 +10553,18 @@ $(document).on('click', '#qe_charges .qe-c-del', function () {
     var i = $(this).closest('.qe-charge').data('i');
     if (PosnicPro.quotes._ed) { PosnicPro.quotes._ed.charges.splice(i, 1); PosnicPro.quotes.edRender(); }
 });
+$(document).on('click', '.qe-valid-chip', function () {
+    var days = Number($(this).data('days')) || 7;
+    var d = new Date(Date.now() + days * 86400000);
+    $('#qe_valid_until').val(d.toISOString().slice(0, 10)).hide();
+    $('.qe-valid-chip').removeClass('btn-primary').addClass('btn-secondary-rgba');
+    $(this).removeClass('btn-secondary-rgba').addClass('btn-primary');
+    PosnicPro.quotes.edRecalc();
+});
+$(document).on('click', '#qe_valid_custom', function () {
+    $('.qe-valid-chip').removeClass('btn-primary').addClass('btn-secondary-rgba');
+    $('#qe_valid_until').show().focus();
+});
 $(document).on('input change', '#qe_disc_type, #qe_disc_value, #qe_cust_name, #qe_cust_phone, #qe_cust_email, #qe_cust_gstin, #qe_cust_address, #qe_payment, #qe_bank, #qe_terms, #qe_notes, #qe_valid_until', function () {
     PosnicPro.quotes.edRecalc();
 });
@@ -10586,6 +10610,7 @@ $(function () {
             $('#qe_cust_email').val(d.email || '');
             $('#qe_cust_gstin').val(d.gst_number || '');
             $('#qe_cust_address').val(d.address || '');
+            PosnicPro.quotes.edRecalc();
         },
         autoSelectFirst: true,
         triggerSelectOnValidInput: false

@@ -2343,6 +2343,16 @@
                                                 <textarea name="quote_default_terms" id="quote_default_terms"
                                                     class="form-control form-control-sm border-control" rows="3" maxlength="1500"
                                                     placeholder="e.g. 50% advance confirms the order. Prices valid till the date on the quote."></textarea>
+                                                <label style="font-size:12.5px;" class="mb-1 mt-2">
+                                                    <lang class="lang_quote_signature">Authorised signature (image)</lang>
+                                                </label>
+                                                <input type="file" accept="image/*" class="form-control-file" id="quote_signature_file" style="font-size:12px;">
+                                                <input type="hidden" id="quote_default_signature">
+                                                <div class="mt-1">
+                                                    <img id="quote_signature_thumb" src="" alt="" style="max-height:48px; max-width:160px; display:none; border:1px solid #e3e7ee; border-radius:4px; padding:2px;">
+                                                    <a href="javascript:void(0)" id="quote_signature_clear" class="small text-danger ml-2" style="display:none;">Remove</a>
+                                                </div>
+                                                <small class="text-muted d-block">No image = no signatory line on the quote.</small>
                                             </div>
                                         </div>
 
