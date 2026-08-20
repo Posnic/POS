@@ -1891,7 +1891,10 @@ main {
     width: 100%;
     /*    padding-right: 10px;*/
     padding-left: 5px;
-    margin-top:-20px;
+    /* margin-top:-20px REMOVED (owner spotted it): it pulled every tile up
+       over the row above, and the card's own `margin: 20px auto` existed
+       only to cancel it. Verified first that .wsk-cp appears nowhere but
+       sales.js, so nothing outside the sale grid relied on the pull. */
 }
 
 .img-responsive{

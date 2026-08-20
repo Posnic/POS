@@ -7144,7 +7144,7 @@ PosnicPro.sales.categoryMenu = {
                 $('#sales_new_categoryList').append('<div class="col col-xs-12" id="item-lists">');
 
                 var currency = PosnicPro.local.get('currencySign') || '';
-                var app = '<div class="row mb-3">' +
+                var app = '<div class="row mb-3 sale-tile-grid">' +
                     '<button type="button" class="btn btn-dark-rgba font-18" onclick="PosnicPro.sales.categoryMenu.listCategories();">' +
                     '<i class="feather icon-arrow-left profile_left_slide slick-arrow mr-2"></i></button></div><div class="row">';
 
