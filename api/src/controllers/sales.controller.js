@@ -63,14 +63,43 @@ const path = require('path');
 const fs = require('fs');
 const { getRequestDeviceId } = require('../utils/device-id.util');
 
+/*
+ * The sale screen sends several of these fields as DISPLAY text, straight out
+ * of the totals row - "1,459.00", not 1459. Number.parseFloat stops at the
+ * thousands separator and returns 1, which made a 34-rupee discount look like
+ * 3400% of the bill and tripped the manager-approval cap on every discounted
+ * sale over a thousand rupees. The role's discount cap was therefore broken
+ * for exactly the bills big enough to need it.
+ *
+ * So: strip anything that is not part of a number, then work out which
+ * separator is the decimal one. The rightmost of '.' and ',' wins when both
+ * appear ("1,459.00" and "1.459,00" both parse); a lone comma is a thousands
+ * group only when every group is three digits, otherwise it is a decimal
+ * comma. NaN is preserved for genuinely non-numeric text because
+ * auditFirstNumber relies on it to fall through to the next candidate field.
+ */
+const parseAuditNumber = (value) => {
+  if (typeof value === 'number') return value;
+  let s = String(value === null || value === undefined ? '' : value).trim();
+  if (!s) return NaN;
+  s = s.replace(/[^\d.,-]/g, '');
+  const lastDot = s.lastIndexOf('.');
+  const lastComma = s.lastIndexOf(',');
+  if (lastDot >= 0 && lastComma >= 0) {
+    s = lastComma > lastDot ? s.replace(/\./g, '').replace(',', '.') : s.replace(/,/g, '');
+  } else if (lastComma >= 0) {
+    s = /^-?\d{1,3}(,\d{3})+$/.test(s) ? s.replace(/,/g, '') : s.replace(',', '.');
+  }
+  return Number.parseFloat(s);
+};
 const auditNumber = (value) => {
-  const parsed = Number.parseFloat(value);
+  const parsed = parseAuditNumber(value);
   return Number.isFinite(parsed) ? parsed : 0;
 };
 const auditFirstNumber = (...values) => {
   for (const value of values) {
     if (value === null || value === undefined || value === '' || value === 'undefined') continue;
-    const parsed = Number.parseFloat(value);
+    const parsed = parseAuditNumber(value);
     if (Number.isFinite(parsed)) return parsed;
   }
   return 0;
@@ -7349,3 +7378,10 @@ class SalesController extends BaseController {
 }
 
 module.exports = new SalesController();
+/*
+ * Exposed for tests: the discount-cap estimate decides whether a sale is
+ * refused for want of manager approval, and it is worth pinning directly
+ * rather than only through a full request.
+ */
+module.exports.estimateManualDiscountPct = estimateManualDiscountPct;
+module.exports.auditNumber = auditNumber;
