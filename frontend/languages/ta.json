@@ -879,5 +879,6 @@
     "lang_cashregister_enable": "பண ரிஜிஸ்டர் (கல்லா அமர்வுகள்)",
     "lang_discountnote_title": "தள்ளுபடி குறிப்பு",
     "lang_add_discount": "தள்ளுபடி சேர்",
-    "lang_add_charge": "கட்டணம் சேர்"
+    "lang_add_charge": "கட்டணம் சேர்",
+    "lang_autoprint_paper_hint": "மேலே உள்ள அச்சு வகையைப் பயன்படுத்துகிறது"
 }

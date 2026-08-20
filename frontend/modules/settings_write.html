@@ -4345,12 +4345,19 @@
                                                             style="margin-top:0px;background: #fdfdfd;">
                                                             <input type="checkbox" class="autoprint" name="print"
                                                                 id="printall" />
+                                                            <!-- Auto print uses the Print Type chosen above, so
+                                                                 there is no second paper setting to keep in sync.
+                                                                 The cashier can still print the other paper for one
+                                                                 customer from the buttons after a sale. -->
                                                             <label for="printall" data-toggle="tooltip"
-                                                                title="Enable(or)Disable Sales/Receiving Auto Print">
+                                                                title="Print a receipt automatically after every sale and receiving. It uses the Print Type selected above (Thermal or Regular/A4); after a sale you can still print the other one on request.">
                                                                 <span style="font-size:13px;">
                                                                     <lang class="lang_autoprintaftersale_title">Auto
                                                                         Print</lang>
                                                                 </span>
+                                                                <small class="d-block text-muted" style="font-size:11.5px; line-height:1.35;">
+                                                                    <lang class="lang_autoprint_paper_hint">Uses the Print Type above</lang>
+                                                                </small>
                                                             </label>
                                                         </div>
                                                     </div>
