@@ -215,3 +215,5 @@ module.exports = {
   sendEmail,
   resolveShopTransport,
 };
+
+/* env note: BREVO_API_KEY arrives via the deploy env-write (4c875ca). */
