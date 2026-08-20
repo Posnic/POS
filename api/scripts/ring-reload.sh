@@ -44,6 +44,15 @@ ADMIN_DIR="$HOME/apps/admin"
 API_DIR="$(pwd)"
 RINGS_FILE="$ADMIN_DIR/provisioning/rings.json"
 
+# A planned reload is not an outage. The watchdog honors ~/maintenance and
+# stays quiet while it exists - without this, every deploy mailed the owner
+# an ALERT + recovered pair the moment its blip crossed a watchdog tick.
+# The trap clears it on ANY exit: after a FAILED deploy the processes are
+# genuinely down and the very next tick should alert as loudly as ever.
+MAINTENANCE_FLAG="$HOME/maintenance"
+touch "$MAINTENANCE_FLAG"
+trap 'rm -f "$MAINTENANCE_FLAG"' EXIT
+
 cd "$APP_DIR"
 
 online_names() {
