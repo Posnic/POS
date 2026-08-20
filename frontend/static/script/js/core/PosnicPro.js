@@ -1047,6 +1047,8 @@ PosnicPro = {
         { root: '#supplierreport_new', title: 'Supplier Report', range: '.view_supplier_report_daterange', file: 'supplier-report',
             full: [{ table: '#view_supplierreport', per: '#view_supplierreport_per_page', load: 'supplierreport.supplierreportTable' }] },
         { root: '#taxsummaryreport_new', title: 'Tax Summary', range: '', file: 'tax-summary' },
+        // scans the whole catalogue already - no paging to expand
+        { root: '#gstreadiness_new', title: 'GST 2.0 Readiness', range: '', file: 'gst-readiness' },
         { root: '#taxdiscountreport_new', title: 'Tax Report', range: '.view_tax_sales_report_daterange', file: 'tax-report' },
         { root: '#userreport_new', title: 'User Report', range: '.view_user_report_daterange', file: 'user-report',
             full: [{ table: '#view_userreport', per: '#view_userreport_per_page', load: 'userreport.userreportTable' }] },
@@ -2539,6 +2541,7 @@ PosnicPro = {
             { hash: 'paymentreport', label: 'Payment', icon: 'dollar-sign' },
             { hash: 'taxreport', label: 'Tax', icon: 'percent', module: 'module_tax_enable' },
             { hash: 'taxsummaryreport', label: 'Tax Summary', icon: 'layers', module: 'module_tax_enable' },
+            { hash: 'gstreadiness', label: 'GST 2.0 Readiness', icon: 'check-square', module: 'module_tax_enable' },
             { hash: 'expensesreport', label: 'Cash Book', icon: 'file-text', module: 'module_cashbook_enable' },
         ] },
     ],
@@ -4670,6 +4673,107 @@ PosnicPro.labourreport = {
         PosnicPro.shiftWidget.runReport();
     }
 };
+
+/*
+ * GST 2.0 readiness (#/gstreadiness) - the migration checklist from
+ * HSN_GST2_RATE_REFRESH_DESIGN increment 2. Read-only by design: it names
+ * items whose rate deserves a look and links out to the item, and never
+ * writes a rate itself. The server decides what qualifies; this renders it.
+ */
+PosnicPro.gstreadiness = {
+    _last: null,
+    showDataTablePage: function () {
+        PosnicPro.HideSideBarModal();
+        $(".vertical-layout").removeClass("toggle-menu");
+        $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
+        $(".vertical-menu li a").removeClass("active");
+        $('.page_loader,#osk-container').hide();
+        $('.page-title-box,#gstreadiness_new').show();
+        $('#v-pills-report-tab').addClass('active');
+        $('#v-pills-report').addClass('show active');
+        PosnicPro.gstreadiness.run();
+    },
+    _esc: function (s) {
+        return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+        });
+    },
+    run: function () {
+        var esc = PosnicPro.gstreadiness._esc;
+        $('#gstready_retired').html('<tr><td colspan="4" class="text-center text-muted">Scanning&hellip;</td></tr>');
+        $('#gstready_differs').html('<tr><td colspan="5" class="text-center text-muted">Scanning&hellip;</td></tr>');
+        PosnicPro.get('items/gstReadiness', function (response) {
+            var d = (response && response.data) || {};
+            PosnicPro.gstreadiness._last = d;
+            var retired = d.retired || [];
+            var differs = d.differs || [];
+
+            $('#gstready_counts').text(
+                (retired.length + differs.length) + ' of ' + (d.examined || 0) + ' items need a look'
+            );
+            $('#gstready_notice').text(d.notice || '').toggle(!!d.notice);
+
+            if (!retired.length) {
+                $('#gstready_retired').html('<tr><td colspan="4" class="text-center text-muted">'
+                    + 'Nothing on a withdrawn slab - this part is done.</td></tr>');
+            } else {
+                $('#gstready_retired').html(retired.map(function (r) {
+                    return '<tr class="gstready-row" data-id="' + esc(r.id) + '" style="cursor:pointer;">'
+                        + '<td>' + esc(r.name) + '</td>'
+                        + '<td>' + (esc(r.hsncode) || '<span class="text-muted">not set</span>') + '</td>'
+                        + '<td class="text-right text-danger font-weight-bold">' + r.rate + '%</td>'
+                        + '<td class="text-muted">' + esc(r.reason) + '</td></tr>';
+                }).join(''));
+            }
+
+            if (!differs.length) {
+                $('#gstready_differs').html('<tr><td colspan="5" class="text-center text-muted">'
+                    + 'No item disagrees with a live reference rate.</td></tr>');
+            } else {
+                $('#gstready_differs').html(differs.map(function (r) {
+                    return '<tr class="gstready-row" data-id="' + esc(r.id) + '" style="cursor:pointer;">'
+                        + '<td>' + esc(r.name) + '</td>'
+                        + '<td>' + esc(r.hsncode) + '</td>'
+                        + '<td class="text-right">' + r.rate + '%</td>'
+                        + '<td class="text-right">' + r.reference_rate + '%</td>'
+                        + '<td class="text-muted">HSN ' + esc(r.matched_on) + '</td></tr>';
+                }).join(''));
+            }
+        }, function () {
+            $('#gstready_retired').html('<tr><td colspan="4" class="text-center text-muted">Could not run the scan - try again.</td></tr>');
+            $('#gstready_differs').html('');
+        });
+    },
+    exportCsv: function () {
+        var d = PosnicPro.gstreadiness._last;
+        if (!d) { PosnicPro.alert('warning', 'Run the scan first.'); return; }
+        var rows = [['Section', 'Item', 'HSN', 'Current rate', 'Reference rate', 'Note']];
+        (d.retired || []).forEach(function (r) {
+            rows.push(['Withdrawn slab', r.name, r.hsncode, r.rate + '%', '', r.reason]);
+        });
+        (d.differs || []).forEach(function (r) {
+            rows.push(['Differs from reference', r.name, r.hsncode, r.rate + '%', r.reference_rate + '%', r.reason]);
+        });
+        var csv = rows.map(function (row) {
+            return row.map(function (cell) {
+                return '"' + String(cell == null ? '' : cell).replace(/"/g, '""') + '"';
+            }).join(',');
+        }).join('\n');
+        var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        var url = URL.createObjectURL(blob);
+        var link = document.createElement('a');
+        link.href = url;
+        link.download = 'gst-readiness.csv';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    }
+};
+$(document).on('click', '.gstready-row', function () {
+    var id = $(this).data('id');
+    if (id) { hasher.setHash('items/' + id + '/edit'); }
+});
 
 /* Tax summary report (#/taxsummaryreport, T3) - totals per rate class over
  * a period, straight off the generic endpoint. The route table dispatches

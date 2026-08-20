@@ -131,6 +131,10 @@ router.post('/updateItemQuantity', bindController(itemsController.updateItemQuan
 // Sale-screen inline edit: targeted money-field patch (write ACL)
 router.post('/quickPatch', bindController(itemsController.quickPatch));
 
+// GST 2.0 readiness checklist - read-only, report ACL. Declared before the
+// /:id route so 'gstReadiness' is not read as an item id.
+router.get('/gstReadiness', bindController(itemsController.gstReadiness));
+
 // PHP: categoryProductDetails() - Category product details
 router.get('/categoryProductDetails', bindController(itemsController.categoryProductDetails));
 

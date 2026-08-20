@@ -1,0 +1,81 @@
+<div class="vertical-layout page_loader" id="gstreadiness_new" style="display: none">
+    <!-- Start Containerbar -->
+    <div id="containerbar">
+        <div class="breadcrumbbar crumbbar_padding">
+            <div class="row align-items-center row_filter">
+                <div class="col-lg-6 col-xl-6">
+                    <h4 class="page-title break_title"><lang class="lang_gstreadiness_title">GST 2.0 Readiness</lang></h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Start Contentbar : a checklist, not a fixer. Nothing on this page
+         changes a tax rate - it lists items worth a human look before
+         filing under the GST 2.0 slabs. -->
+    <div class="contentbar">
+        <div class="row">
+            <div class="col-md-12 col-lg-12 col-xl-12 m-t-10">
+                <div class="card m-b-30">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center flex-wrap mb-3" style="gap:10px;">
+                            <button type="button" class="btn btn-primary-rgba" onclick="PosnicPro.gstreadiness.run();">
+                                <i class="feather icon-refresh-cw mr-1"></i>Scan items
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" onclick="PosnicPro.gstreadiness.exportCsv();">
+                                <i class="feather icon-download mr-1"></i>CSV
+                            </button>
+                            <span class="text-muted" id="gstready_counts" style="font-size:14px;"></span>
+                        </div>
+
+                        <div class="alert alert-warning" id="gstready_notice" style="font-size:13.5px; display:none;"></div>
+
+                        <div class="fc-title mt-2">Items on a withdrawn slab</div>
+                        <p class="text-muted" style="font-size:13.5px;">
+                            The 12% and 28% slabs were withdrawn on 22 September 2025. These items still
+                            carry one, so every sale of them uses a rate that no longer exists.
+                        </p>
+                        <div class="table-responsive">
+                            <table class="table table-borderless" cellspacing="0" width="100%">
+                                <thead>
+                                    <tr>
+                                        <th>Item</th>
+                                        <th>HSN</th>
+                                        <th class="text-right">Current rate</th>
+                                        <th>Why it is listed</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="gstready_retired">
+                                    <tr><td colspan="4" class="text-center text-muted">Press Scan items.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="fc-title mt-4">Rate differs from the HSN reference</div>
+                        <p class="text-muted" style="font-size:13.5px;">
+                            Suggestions only, and shown only where the reference still names a live slab.
+                            Check each against the notification before changing anything.
+                        </p>
+                        <div class="table-responsive">
+                            <table class="table table-borderless" cellspacing="0" width="100%">
+                                <thead>
+                                    <tr>
+                                        <th>Item</th>
+                                        <th>HSN</th>
+                                        <th class="text-right">Current rate</th>
+                                        <th class="text-right">Reference says</th>
+                                        <th>Matched on</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="gstready_differs">
+                                    <tr><td colspan="5" class="text-center text-muted">Press Scan items.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- End Contentbar -->
+</div>

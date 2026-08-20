@@ -7,6 +7,7 @@ const { ERROR_MESSAGES, SUCCESS_MESSAGES } = require('../constants/items.constan
 const sessionFilterUtil = require('../utils/session-filter.util');
 const { toObjectId } = require('../utils/tenant-context');
 const { isKioskConfigured } = require('../utils/kiosk');
+const { scanItems } = require('../services/gst-readiness');
 
 class ItemsController extends BaseController {
   constructor() {
@@ -881,6 +882,32 @@ class ItemsController extends BaseController {
       return this.success(res, null, 'Item updated');
     } catch (error) {
       console.error('Error in quickPatch:', error);
+      return this.error(res, error.message, 500);
+    }
+  }
+
+  /*
+   * GST 2.0 readiness (HSN_GST2_RATE_REFRESH_DESIGN increment 2): a
+   * read-only checklist of items whose tax rate needs a human look -
+   * those on a withdrawn slab, and those disagreeing with the bundled
+   * HSN reference where that reference still names a live slab. Report
+   * ACL, because it is a report; it writes nothing.
+   */
+  async gstReadiness(req, res) {
+    try {
+      if (req.user?.access?.report?.read !== true) {
+        return this.error(res, 'Unauthorized access', 403);
+      }
+      this.setRequestContext(req);
+      const { branchId, licenseId } = req.itemContext || {};
+      if (!branchId || !licenseId) {
+        return this.error(res, 'Branch context is required', 400);
+      }
+      const items = await this.service.listForGstReadiness({ branchId, licenseId });
+      const result = scanItems(items || []);
+      return this.success(res, result, 'GST readiness scan complete');
+    } catch (error) {
+      console.error('Error in gstReadiness:', error);
       return this.error(res, error.message, 500);
     }
   }

@@ -3525,6 +3525,26 @@ class ItemRepository extends BaseModel {
    * choice: only the fields the cashier actually changed, nothing else on
    * the item is touched.
    */
+  /*
+   * Every item this branch can sell, reduced to the four fields the GST
+   * readiness scan compares. Scoped by branch_access + license like the
+   * paged list above (branch_id/branch_name are stale legacy fields).
+   * Projected rather than fetched whole: this walks the entire catalogue.
+   */
+  async listForGstReadiness({ branchId, licenseId } = {}) {
+    const collection = await this.getCollection(this.collectionName);
+    const filter = {
+      'branch_access.branch_id': this.toObjectId(branchId),
+      license: this.toObjectId(licenseId),
+    };
+    return collection
+      .find(filter, {
+        projection: { item_name: 1, name: 1, tax: 1, hsncode: 1, hsndescription: 1 },
+      })
+      .sort({ item_name: 1 })
+      .toArray();
+  }
+
   async quickPatch(id, fields) {
     try {
       const collection = await this.getCollection(this.collectionName);

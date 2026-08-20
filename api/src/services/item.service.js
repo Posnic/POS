@@ -896,6 +896,15 @@ class ItemService {
     }
   }
 
+  async listForGstReadiness(scope) {
+    try {
+      return await this.repository.listForGstReadiness(scope || {});
+    } catch (error) {
+      console.error('Error in ItemService.listForGstReadiness:', error);
+      return [];
+    }
+  }
+
   async quickPatch(id, fields) {
     try {
       return await this.repository.quickPatch(id, fields || {});
