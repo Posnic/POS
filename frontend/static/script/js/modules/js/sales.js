@@ -113,6 +113,7 @@
         PosnicPro.sales.setSaleDefaults();
         $('.page_loader,#osk-container,#closeSaleButton,#closeEditButton,.return_discount_show').hide();
         $('.page-title-box,#holdSaleButton,#clearSaleButton,.return_discount_hide').show();
+                        if (PosnicPro.sales && PosnicPro.sales.syncActionTooltips) { PosnicPro.sales.syncActionTooltips(); }
         /*New Sales*/
         var displayPage = 'sales';
         $('#' + displayPage + '_new').show();
@@ -6683,6 +6684,7 @@ PosnicPro.sales.setDefaults = function () {
     }
     // the chips are rebuilt above, so the lock badges go back on after them
     if (PosnicPro.sales.markLockedActions) { PosnicPro.sales.markLockedActions(); }
+    if (PosnicPro.sales.syncActionTooltips) { PosnicPro.sales.syncActionTooltips(); }
     if (PosnicPro.sales.defaultCustomer === true) {
         // second copy of the reset above - same rule: clear the previous
         // customer, then resolve the branch Walk-in so the sale is billable
@@ -10341,6 +10343,31 @@ PosnicPro.sales.syncNotesCellSpan = function () {
 $(document).on('click', '#sale_add_discount', function () {
     setTimeout(function () { PosnicPro.sales.syncNotesCellSpan(); }, 80);
 });
+/*
+ * Keep each action's tooltip wrapper in step with its button.
+ *
+ * Every button in the sale action row sits inside a
+ * <span data-toggle="tooltip">, and the code hides the BUTTON. The span
+ * keeps its width and its tooltip, so resuming a parked sale left an
+ * invisible Clear Sale that still said "Clear Sale" on hover - a tooltip
+ * for a control that is not there.
+ *
+ * The button's inline display is the thing to read, not :visible: once the
+ * wrapper is hidden every child reports invisible, and the button could
+ * never be shown again.
+ */
+PosnicPro.sales.syncActionTooltips = function () {
+    $('#edit_style_button > span[data-toggle="tooltip"]').each(function () {
+        var btn = $(this).children('button, a').get(0);
+        if (!btn) { return; }
+        var hidden = btn.style.display === 'none';
+        $(this).css('display', hidden ? 'none' : '');
+        if (hidden) {
+            // a tooltip already on screen when its button goes must go too
+            try { $(this).tooltip('hide'); } catch (e) { /* not initialised yet */ }
+        }
+    });
+};
 PosnicPro.sales.markLockedActions = function () {
     var mark = function (sel, perm, what) {
         var $el = $(sel);
