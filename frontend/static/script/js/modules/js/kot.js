@@ -1916,7 +1916,7 @@ PosnicPro.kot = {
                 $('#kot_view_modal').modal('hide');
                 PosnicPro.kothistory.cancel(saleId);
             } else if (confirm('Are you sure you want to cancel this KOT?')) {
-                PosnicPro.get('sales/cancel/' + saleId, function (response) {
+                PosnicPro.post({ url: 'sales/cancel/' + saleId, data: '{}' }, function (response) {
                     PosnicPro.alert(response.type, response.message);
                     if (response.type === 'success') {
                         $('#kot_view_modal').modal('hide');
@@ -2495,7 +2495,7 @@ PosnicPro.kot = {
 
             // If no items left, cancel the order instead of updating
             if (items.length === 0) {
-                PosnicPro.get('sales/cancel/' + saleId, function (res) {
+                PosnicPro.post({ url: 'sales/cancel/' + saleId, data: '{}' }, function (res) {
                     spinner.remove();
                     if (res.type === 'success') {
                         PosnicPro.alert('success', 'Order cancelled - all items were removed.');
