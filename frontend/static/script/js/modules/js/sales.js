@@ -6811,6 +6811,10 @@ PosnicPro.sales.itemsMenu = {
                             continue;
                         }
                         var list_item_name = getItemdata[i]['item_name'] ? getItemdata[i]['item_name'] : getItemdata[i]['name'];
+                        // the name reaches two attributes and a text node; escape
+                        // once. It used to be truncated at 30 chars in JS, which is
+                        // why the two-line CSS clamp had nothing to wrap.
+                        var _escName = $('<i>').text(list_item_name == null ? '' : list_item_name).html();
                         var price = 0;
                         let sellingPrice = getItemdata[i]['selling_price'];
                         let discountAmount = getItemdata[i]['discount_amount'];
@@ -6890,7 +6894,7 @@ PosnicPro.sales.itemsMenu = {
                             var product = '<div class="wsk-cp cbutton--effect-novak" id="' + getItemdata[i]['id'] + '" onclick="PosnicPro.sales.itemsMenu.addToLineItemsList(this.id)">' +
                                 '<div class="wsk-cp-product">' +
                                 '<div class="description-prod">' +
-                                '<p data-searchval="' + list_item_name + '" data-toggle="tooltip" title="' + list_item_name + '">' + PosnicPro.textOverflowEllipsis(list_item_name, 30, true) + '</p>' +
+                                '<p data-searchval="' + _escName + '" data-toggle="tooltip" title="' + _escName + '">' + _escName + '</p>' +
                                 '</div>' +
                                 _tileHtml +
                                 '<div class="wsk-cp-text mt-3">' +
@@ -6950,7 +6954,7 @@ PosnicPro.sales.itemsMenu = {
             '<div class="wsk-cp-product">' +
             '<div class="description-prod">' +
             '<p data-searchval="' + esc(parent) + '" data-toggle="tooltip" title="' + esc(parent) + '">' +
-            PosnicPro.textOverflowEllipsis(parent, 30, true) +
+            esc(parent) +
             ' <span class="badge badge-light">' + rows.length + '</span></p>' +
             '</div>' +
             '<div class="wsk-cp-img"><img src="' + esc(image) + '" alt="Product" class="img-responsive" /></div>' +
