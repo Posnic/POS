@@ -8067,7 +8067,10 @@ PosnicPro.quotes = {
         if (notes) { h += '<div class="q-block m-t-10"><div class="q-label">Notes</div>' + esc(notes) + '</div>'; }
         var sig = PosnicPro.local.get('quotesignature');
         if (sig) {
-            h += '<div class="q-sign"><img src="' + sig + '" alt="" style="max-height:40px; max-width:160px; display:block; margin:0 auto 4px;">Authorised signatory</div>';
+            // the image sits ABOVE the rule - the line is what one signs on,
+            // and the uploaded signature stands in for that stroke
+            h += '<div class="q-sign-img"><img src="' + sig + '" alt="" style="max-height:40px; max-width:160px; display:block; margin:0 auto;"></div>'
+                + '<div class="q-sign">Authorised signatory</div>';
         }
         $('#qe_preview').html(h);
     },
@@ -8397,7 +8400,8 @@ PosnicPro.quotes = {
                     return out + '</div>';
                 })()
                 + (PosnicPro.local.get('quotesignature')
-                    ? '<div class="q-sign"><img src="' + esc(PosnicPro.local.get('quotesignature')) + '" alt="" style="max-height:40px; max-width:160px; display:block; margin:0 auto 4px;">Authorised signatory</div>'
+                    ? '<div class="q-sign-img"><img src="' + esc(PosnicPro.local.get('quotesignature')) + '" alt="" style="max-height:40px; max-width:160px; display:block; margin:0 auto;"></div>'
+                        + '<div class="q-sign">Authorised signatory</div>'
                     : '')
                 + '</div>';
             $('#quotes_view_body').html(body);
