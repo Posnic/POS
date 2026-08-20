@@ -3064,3 +3064,6 @@ input:checked + .slider:before {
 .fc-section:last-of-type { border-bottom: none; }
 .fc-title { font-size: 15px; font-weight: 700; margin-bottom: 10px; }
 #fc_quotes .row label, #fc_quotes small { font-size: 13px !important; }
+/* Loyalty on the sale page: ONE line, readable - counter space is gold */
+.loyalty-inline { font-size: 14px; }
+#sales_loyalty_redeem_wrap .input-group-text, #sales_loyalty_redeem_wrap .form-control { font-size: 13px; }
