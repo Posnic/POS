@@ -934,6 +934,12 @@ class SettingModel extends BaseModel {
         module_cashbook_enable: module_cashbook_enable,
         quick_sale_enable: quick_sale_enable,
         quotes_enable: quotes_enable,
+        ...(data.custom_charges_enable !== undefined
+          ? {
+              custom_charges_enable:
+                data.custom_charges_enable === true || data.custom_charges_enable === 'true',
+            }
+          : {}),
       };
 
       // Update branch_name across all collections - for the branch actually
@@ -1306,6 +1312,7 @@ class SettingModel extends BaseModel {
       module_cashbook_enable: { parse: offOnly, dflt: true },
       quick_sale_enable: { parse: offOnly, dflt: true },
       quotes_enable: { parse: offOnly, dflt: true },
+      custom_charges_enable: { parse: (v) => v === true || v === 'true', dflt: false },
       pl_include_cashbook: { parse: offOnly, dflt: true },
     };
   }

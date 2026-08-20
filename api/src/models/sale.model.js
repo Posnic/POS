@@ -953,6 +953,7 @@ class LegacySaleModel {
     tip_in_total: { type: 'Boolean', select: true },
     source_quote_id: { type: 'ObjectId', select: true },
     quote_price_honoured: { type: 'Boolean', select: true },
+    charges: { type: 'Mixed', select: true },
     discount_description: { type: 'String', select: true },
     return_extra_discount: { type: 'Number', select: true },
     extra_discount_type: { type: 'String', select: true },

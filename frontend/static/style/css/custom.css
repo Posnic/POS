@@ -3009,3 +3009,15 @@ input:checked + .slider:before {
 #items_new .custom-control.custom-checkbox .custom-control-label { line-height: 24px; }
 #items_new .custom-control.custom-checkbox .custom-control-label::before,
 #items_new .custom-control.custom-checkbox .custom-control-label::after { top: 4px; }
+
+/* Quote preview action bar: grouped, one primary per group */
+.q-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 0; }
+.q-act-group { display: flex; gap: 6px; padding: 0 10px; border-right: 1px solid #e3e7ee; }
+.q-act-group:first-child { padding-left: 0; }
+.q-act-group:last-child { border-right: none; }
+.q-act-far { margin-left: auto; border-right: none; }
+/* Sale charges rail beside the Payment Note */
+.sale-soft-links a { font-size: 12.5px; color: #506fe4; }
+#sale_charges_list .sale-charge-row { display: flex; align-items: center; gap: 8px; font-size: 12.5px; padding: 2px 0; }
+#sale_charges_list .sale-charge-row b { font-variant-numeric: tabular-nums; }
+#sale_charges_list .sale-charge-del { font-weight: 700; }
