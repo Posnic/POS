@@ -107,8 +107,20 @@ describe('QuoteRepository', () => {
     const r = await repo.upsertQuote(
       {
         items: [
-          { item_id: ITEM, item_name: 'Rice', qty: 2, unit_price: 50, discount: { type: 'percent', value: 10 } },
-          { kind: 'custom', item_name: 'Install and calibrate', qty: 1, unit_price: 100, discount: { type: 'amount', value: 20 } },
+          {
+            item_id: ITEM,
+            item_name: 'Rice',
+            qty: 2,
+            unit_price: 50,
+            discount: { type: 'percent', value: 10 },
+          },
+          {
+            kind: 'custom',
+            item_name: 'Install and calibrate',
+            qty: 1,
+            unit_price: 100,
+            discount: { type: 'amount', value: 20 },
+          },
         ],
         discount: { type: 'amount', value: 5 },
         charges: [
@@ -193,7 +205,8 @@ describe('QuoteRepository', () => {
     mockCollection.findOne.mockResolvedValue({ _id: new ObjectId(QUOTE_ID), status: 'open' });
     const sent = await repo.transition(QUOTE_ID, 'send', {}, ctx);
     expect(sent.status).toBe(true);
-    const sendCall = mockCollection.updateOne.mock.calls[mockCollection.updateOne.mock.calls.length - 1];
+    const sendCall =
+      mockCollection.updateOne.mock.calls[mockCollection.updateOne.mock.calls.length - 1];
     expect(sendCall[1].$set.status).toBe('sent');
   });
 
@@ -202,8 +215,24 @@ describe('QuoteRepository', () => {
     const r = await repo.upsertQuote(
       {
         items: [
-          { item_id: ITEM, item_name: 'Incl', qty: 1, unit_price: 118, tax_name: 'GST 18%', tax_value: 18, tax_type: 'inclusive' },
-          { item_id: ITEM, item_name: 'Excl', qty: 1, unit_price: 100, tax_name: 'VAT 10%', tax_value: 10, tax_type: 'exclusive' },
+          {
+            item_id: ITEM,
+            item_name: 'Incl',
+            qty: 1,
+            unit_price: 118,
+            tax_name: 'GST 18%',
+            tax_value: 18,
+            tax_type: 'inclusive',
+          },
+          {
+            item_id: ITEM,
+            item_name: 'Excl',
+            qty: 1,
+            unit_price: 100,
+            tax_name: 'VAT 10%',
+            tax_value: 10,
+            tax_type: 'exclusive',
+          },
         ],
         tax_total: 999,
       },
