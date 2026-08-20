@@ -3637,7 +3637,7 @@ PosnicPro.sales.addSale = {
                 data: JSON.stringify({
                     items: PosnicPro.sales.addSalesLineTable,
                     sales_total: $("#grand_total").val(),
-                    sales_sub_total: $('#sales_new_subtotal').text(),
+                    sales_sub_total: String($('#sales_new_subtotal').text() || '').replace(/,/g, ''),
                     customer_id: $('#sales_new_customer_id').val(),
                     redeem_points: (PosnicPro.loyalty ? PosnicPro.loyalty.redeemPointsForPayload() : 0),
                     coupon_code: (PosnicPro.coupons ? PosnicPro.coupons.codeForPayload() : ''),
@@ -3651,8 +3651,8 @@ PosnicPro.sales.addSale = {
                     customer_gst_number: $('#sales_new_customer_gst_number').val(),
                     sales_total_company_price: TotalCompanyPrice,
                     date: $('#time-format').val(),
-                    tax: parseFloat($("#tax").text()),
-                    payment_descriptiondiscount: $("#discount_sale_amount").text(),
+                    tax: parseFloat(String($("#tax").text() || '').replace(/,/g, '')),
+                    payment_descriptiondiscount: String($("#discount_sale_amount").text() || '').replace(/,/g, ''),
                     payment_mode: payment_mode_val,
                     payment_description: $('#payment_description').val(),
                     sales_description: $('#sales_description').val(),
@@ -4068,8 +4068,8 @@ PosnicPro.sales.editSale = {
                 addInventory: false,
                 items: PosnicPro.sales.returnSalesLineTable,
                 items_return: PosnicPro.sales.returnitemSalesLineTable,
-                tax: $("#tax").text(),
-                discount: $("#discount_sale_amount").text(),
+                tax: String($("#tax").text() || '').replace(/,/g, ''),
+                discount: String($("#discount_sale_amount").text() || '').replace(/,/g, ''),
                 payment_pending: PosnicPro.sales.EditRecentSaleParams.payment_pending,
                 partial_check: PosnicPro.sales.EditRecentSaleParams.partial_check,
                 extra_discount: parseFloat($('#extraDisc').text()),
@@ -4269,8 +4269,8 @@ PosnicPro.sales.editSale = {
                 customer_gst_number: $('#sales_new_customer_gst_number').val(),
                 payment_mode: payment_mode_val,
                 payment_description: $('#payment_description').val(),
-                tax: parseFloat($("#tax").text()),
-                discount: $("#discount_sale_amount").text(),
+                tax: parseFloat(String($("#tax").text() || '').replace(/,/g, '')),
+                discount: String($("#discount_sale_amount").text() || '').replace(/,/g, ''),
                 addInventory: false,
                 items: PosnicPro.sales.addSalesLineTable,
                 sales_total_company_price: editSalesCompanyPrice,
@@ -4569,7 +4569,7 @@ PosnicPro.sales.holdSale = {
             var data = {
                 items: PosnicPro.sales.addSalesLineTable,
                 sales_total: $("#grand_total").val(),
-                sales_sub_total: $('#sales_new_subtotal').text(),
+                sales_sub_total: String($('#sales_new_subtotal').text() || '').replace(/,/g, ''),
                 customer_id: $('#sales_new_customer_id').val(),
                 customer_name: $('#sales_new_customer_name').val(),
                 customer_address: $('#sales_new_customer_address').val(),
@@ -4581,8 +4581,8 @@ PosnicPro.sales.holdSale = {
                 customer_gst_number: $('#sales_new_customer_gst_number').val(),
                 sales_total_company_price: TotalCompanyPrice,
                 date: $('#time-format').val(),
-                tax: parseFloat($("#tax").text()),
-                discount: $("#discount_sale_amount").text(),
+                tax: parseFloat(String($("#tax").text() || '').replace(/,/g, '')),
+                discount: String($("#discount_sale_amount").text() || '').replace(/,/g, ''),
                 payment_mode: '',
                 payment_description: $('#payment_description').val(),
                 partial_check: partial_check,
@@ -6417,7 +6417,14 @@ PosnicPro.sales.calculation = {
             PosnicPro.sales._chargeTaxShown = chargesTax > 0;
         }
         // tax feature off AND nothing taxed on this sale: no Tax row at all
-        var taxShown = parseFloat($('#tax').text()) || 0;
+        /* #tax is written with .number(), which adds thousand separators, so
+           parseFloat('1,234.56') would be 1. This particular use only asks
+           "is it zero", which truncation can never get wrong - but the rule is
+           uniform on purpose: every read of a formatted display strips the
+           separators, so nobody has to work out whether this one is the safe
+           exception. Reading display text as a number without stripping is
+           what made a Rs34 discount measure 3400% (c57e23a). */
+        var taxShown = parseFloat(String($('#tax').text() || '').replace(/,/g, '')) || 0;
         var taxOff = !PosnicPro.sales.taxFeatureOn();
         $('#return_tax').toggle(!(taxOff && taxShown === 0));
         let roundOffValue = (PosnicPro.roundoff === true) ? Math.round(outputVal) - outputVal : 0.00;
