@@ -24,6 +24,7 @@ jest.mock('../../../src/services/category.service', () =>
     getCategoriesWithItems: jest.fn(),
     getActiveCategories: jest.fn(),
     bulkImport: jest.fn(),
+    getDataChanges: jest.fn(),
   }))
 );
 
@@ -148,6 +149,7 @@ beforeEach(() => {
     getCategoriesWithItems: jest.fn(),
     getActiveCategories: jest.fn(),
     bulkImport: jest.fn(),
+    getDataChanges: jest.fn(),
   };
   controller.service = svc;
 
@@ -1461,5 +1463,66 @@ describe('uploadCategoryImage', () => {
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({ message: 'Image not uploaded' })
     );
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// getDataChanges — the route was live and the method did not exist
+// ═══════════════════════════════════════════════════════════════════════════════
+describe('CategoriesController — getDataChanges', () => {
+  const mkRes = () => {
+    const res = {};
+    res.status = jest.fn().mockReturnValue(res);
+    res.json = jest.fn().mockReturnValue(res);
+    return res;
+  };
+  const mkReq = (over = {}) => ({
+    query: { from: '2026-01-01' },
+    tenantContext: { branchId: 'b1', branchName: 'Main' },
+    ...over,
+  });
+
+  test('it exists at all - the route had been calling a missing method', () => {
+    expect(typeof controller.getDataChanges).toBe('function');
+  });
+
+  test('a missing "from" is refused rather than returning everything', () => {
+    /* Sync endpoints answer "what changed since X". Without an X the honest
+       answers are an error or the entire table, and the entire table is the
+       one that quietly melts a client. */
+    const res = mkRes();
+    return controller.getDataChanges(mkReq({ query: {} }), res).then(() => {
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(controller.service.getDataChanges).not.toHaveBeenCalled();
+    });
+  });
+
+  test('the branch comes from the request context, not a query parameter', async () => {
+    controller.service.getDataChanges.mockResolvedValue({ status: true, data: [{ _id: 'c1' }] });
+    await controller.getDataChanges(
+      mkReq({ query: { from: '2026-01-01', branch_id: 'someone-else' } }),
+      mkRes()
+    );
+
+    const [, branchId] = controller.service.getDataChanges.mock.calls[0];
+    expect(branchId).toBe('b1');
+    expect(branchId).not.toBe('someone-else');
+  });
+
+  test('changes come back as success with the data', async () => {
+    controller.service.getDataChanges.mockResolvedValue({ status: true, data: [{ _id: 'c1' }] });
+    const res = mkRes();
+    await controller.getDataChanges(mkReq(), res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json.mock.calls[0][0].type).toBe('success');
+    expect(res.json.mock.calls[0][0].data).toEqual([{ _id: 'c1' }]);
+  });
+
+  test('a service failure is reported, not thrown away', async () => {
+    controller.service.getDataChanges.mockResolvedValue({ status: false, message: 'nope' });
+    const res = mkRes();
+    await controller.getDataChanges(mkReq(), res);
+    expect(res.json.mock.calls[0][0].type).toBe('error');
   });
 });

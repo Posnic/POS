@@ -81,11 +81,7 @@ const defines = (src, name) => {
  * to a method nobody wrote, which is the whole failure this test exists to
  * stop.
  */
-const KNOWN_MISSING = [
-  // A PHP-era sync endpoint with no caller in the frontend. Harmless today -
-  // it 500s only if something starts calling it.
-  'categories.routes.js  categoriesController.getDataChanges',
-];
+const KNOWN_MISSING = [];
 
 function missingHandlers() {
   const missing = new Set();
