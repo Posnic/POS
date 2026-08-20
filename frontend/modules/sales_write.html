@@ -375,7 +375,7 @@
                                         </td>
                                         <tbody>
                                             <tr>
-                                                <td class="payment_note items_head" id="payment_note">
+                                                <td class="payment_note items_head sale-notes-cell" id="payment_note" rowspan="3">
 
                                                     <!-- One action bar (owner: "lot of free space... make it
                                                          better"). Three notes and the two add-actions were spread
@@ -392,8 +392,20 @@
                                                         <a href="javascript:void(0)" class="sale-chip sale-chip-do" id="sale_add_discount">+ <lang class="lang_add_discount">Add discount</lang></a>
                                                         <a href="javascript:void(0)" class="sale-chip sale-chip-do" id="sale_add_charge" style="display:none;">+ <lang class="lang_add_charge">Add charge</lang></a>
                                                     </div>
+                                                    <!-- Value carriers for all three notes live here now: the
+                                                         cell spans the Sub Total / Discount / Additional Discount
+                                                         rows, so the chips use that whole block of space instead
+                                                         of stretching the first row while two cells sat empty
+                                                         underneath (owner). They stay in the DOM because the save
+                                                         payload reads .val() off them. -->
                                                     <a href="#" id="payment_description"
                                                         class="payment_description customer-display-hide"
+                                                        style="display:none;"></a>
+                                                    <a href="#" id="sales_description"
+                                                        class="sales_description customer-display-hide"
+                                                        style="display:none;"></a>
+                                                    <a href="#" id="discount_description"
+                                                        class="discount_description customer-display-hide"
                                                         style="display:none;"></a>
                                                     <div id="sale_charges_list" class="customer-display-hide"></div>
                                                 </td>
@@ -420,12 +432,6 @@
                                             </tr>
 
                                             <tr>
-                                                <td class="sale_dcription customer-display-hide items_head"
-                                                    id="sale_dcrption">
-                                                    <a href="#" id="sales_description"
-                                                        class="sales_description customer-display-hide"
-                                                        style="display:none;"></a>
-                                                </td>
                                                 <td class="return_discount_show pay_amount_total"
                                                     style="display:none;border: 0.5px dashed lightgrey">
                                                     <lang class="lang_discount_title"> Discount</lang> <span
@@ -471,11 +477,6 @@
 
                                             <tr class="add-disc-row addDisc-hide-show">
                                                 <!-- LEFT: Discount Note -->
-                                                <td class="discount_dcription items_head" id="discount_note">
-                                                    <a href="#" id="discount_description"
-                                                        class="discount_description customer-display-hide"
-                                                        style="display:none;"></a>
-                                                </td>
 
                                                 <!-- MIDDLE: Additional Discount label -->
                                                 <td class="discount-label text-center">
