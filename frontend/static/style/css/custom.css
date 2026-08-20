@@ -3469,8 +3469,10 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
       their colours from the theme variables and only fall back to the light
       values when no theme is set.
    ============================================================ */
+/* NOT tbody td:last-child - a dozen display:none cells follow the action
+   cell in every row, so that selector styles a hidden one. The action cell
+   is addressed by its own id prefix. */
 #sales_new #return_table thead th:last-child,
-#sales_new #return_table tbody td:last-child,
 #sales_new #return_table td[id^="addSalesRemoveLineItem_"] {
     white-space: nowrap;
     min-width: 86px;
