@@ -147,6 +147,29 @@ class CustomerRepository extends BaseModel {
       is_deleted: false,
     };
 
+    /*
+     * S7 step one (D5). Customers are branch-scoped here while every
+     * comparable product keeps them account-level: a customer who buys at one
+     * shop is the same person at the next, and today their loyalty, credit and
+     * consent fragment across branches.
+     *
+     * This writes the relation ITEMS already use - branch_access[] - alongside
+     * the existing branch_id, seeded with the branch that owns the record.
+     * Nothing moves and nothing reads it yet: with access listing only the
+     * owning branch, every customer stays exactly as visible as before.
+     * Sharing one is then a deliberate grant, not a migration side effect.
+     *
+     * The rule that matters for the phase after this: LINK, never merge. Two
+     * shops may hold same-name customers with different balances, and deciding
+     * they are one person is the owner's call, not a script's.
+     */
+    if (!Array.isArray(document.branch_access)) {
+      const owning = document.branch_id || BaseModel.currentBranch || null;
+      document.branch_access = owning
+        ? [{ branch_id: owning, branch_name: document.branch_name || '' }]
+        : [];
+    }
+
     const result = await collection.insertOne(document);
     return await this.findById(result.insertedId);
   }

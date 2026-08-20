@@ -19,6 +19,11 @@ class CustomerModel extends BaseModel {
       // Branch Information
       branch_id: { type: 'ObjectId', select: true },
       branch_name: { type: 'String', select: true },
+      /* S7 (D5): the account-level relation, mirroring items. Seeded with the
+         owning branch so nothing moves; sharing a customer between shops is a
+         deliberate grant, never a migration side effect. select:false keeps it
+         out of list payloads, exactly as items do. */
+      branch_access: { type: 'Array', select: false },
 
       // Basic Information
       name: { type: 'String', select: true, required: true },

@@ -437,6 +437,44 @@ describe('CustomerRepository (class, extends BaseModel)', () => {
       );
     });
 
+    /*
+     * S7 (D5) step one. Customers are branch-scoped here while every
+     * comparable product keeps them account-level. This writes the relation
+     * items already use - branch_access[] - alongside branch_id, seeded with
+     * the owning branch, so NOTHING becomes visible anywhere new. Sharing a
+     * customer is then a deliberate grant rather than a migration side effect.
+     */
+    test('a new customer records the branch that owns it', async () => {
+      await repository.create({ ...NEW_DATA, branch_id: 'b1', branch_name: 'Main' });
+      const doc = mockCollection.insertOne.mock.calls[0][0];
+      expect(doc.branch_access).toEqual([{ branch_id: 'b1', branch_name: 'Main' }]);
+      // and the legacy field is untouched - this is additive, not a move
+      expect(doc.branch_id).toBe('b1');
+    });
+
+    test('access lists ONLY the owning branch, so nothing is shared by default', async () => {
+      await repository.create({ ...NEW_DATA, branch_id: 'b1', branch_name: 'Main' });
+      const doc = mockCollection.insertOne.mock.calls[0][0];
+      expect(doc.branch_access).toHaveLength(1);
+    });
+
+    test('an explicit branch_access is respected, never overwritten', async () => {
+      const shared = [
+        { branch_id: 'b1', branch_name: 'Main' },
+        { branch_id: 'b2', branch_name: 'Second' },
+      ];
+      await repository.create({ ...NEW_DATA, branch_id: 'b1', branch_access: shared });
+      expect(mockCollection.insertOne.mock.calls[0][0].branch_access).toEqual(shared);
+    });
+
+    test('no branch context yields an empty list rather than a bogus entry', async () => {
+      const prev = BaseModel.currentBranch;
+      BaseModel.currentBranch = null;
+      await repository.create({ name: 'Orphan' });
+      expect(mockCollection.insertOne.mock.calls[0][0].branch_access).toEqual([]);
+      BaseModel.currentBranch = prev;
+    });
+
     test('calls findById to retrieve the inserted document', async () => {
       await repository.create(NEW_DATA);
       expect(repository.getCollection).toHaveBeenCalledWith('customers');
