@@ -76,10 +76,18 @@ module.exports = {
         return fail(res, 'Unauthorized access', 403);
       }
 
-      const r = await repository.resolveGroup(group, contextOf(req));
+      /* ?level=account reads what the ACCOUNT itself decides, unresolved.
+         Editing a shop-wide rule must not start from one branch's override -
+         saving that back would push that branch's choice onto every other
+         shop without anyone asking for it. */
+      const wantsAccount = String(req.query?.level || '') === 'account';
+      const r = wantsAccount
+        ? await repository.accountGroup(group, contextOf(req))
+        : await repository.resolveGroup(group, contextOf(req));
       if (!r.status) return fail(res, r.message);
 
       if (group === 'secrets') {
+        // values, and now `inherited` too, never leave for this group
         return ok(res, { group, configured: describeSecrets(r.data.values) }, 'success');
       }
       return ok(res, r.data, 'success');
