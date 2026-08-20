@@ -3139,11 +3139,11 @@ input:checked + .slider:before {
 #items_new .custom-control.custom-checkbox .custom-control-label::after { top: 4px; }
 
 /* Quote preview action bar: grouped, one primary per group */
-.q-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 0; }
-.q-act-group { display: flex; gap: 6px; padding: 0 10px; border-right: 1px solid #e3e7ee; }
-.q-act-group:first-child { padding-left: 0; }
-.q-act-group:last-child { border-right: none; }
-.q-act-far { margin-left: auto; border-right: none; }
+/* One row of four controls now that Share and More carry the rest.
+   justify-content:flex-end keeps the primary action at the right edge,
+   nearest the close button, which is where the eye finishes. */
+.q-actions { display: flex; flex-wrap: wrap; align-items: center;
+    justify-content: flex-end; gap: 6px; }
 /* Sale charges rail beside the Payment Note */
 /* One line per charge, readable size (owner space rule) - the name gives
    way with an ellipsis so the numbers never wrap */
@@ -3619,46 +3619,117 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     flex-direction: column;
     max-height: calc(100vh - 150px);
 }
+/* Full-bleed rows. The rail keeps no horizontal padding of its own, so a row
+   reaches the divider - which is what lets the SELECTED row connect to the
+   document beside it. Padding moves onto the header and the cells. */
 #quotes_new .contentbar.quotes-split > #quotes_list_card > .card-body {
     display: flex;
     flex-direction: column;
     min-height: 0;
-    padding: 12px 10px;
+    padding: 0;
 }
 /* min-height:0 on both, or a flex child refuses to shrink below its content
    and the scrollbar lands on the page instead of inside the rail. */
-.quotes-split #quotes_list_card #quotes_filter_chips { flex: 0 0 auto; }
+.quotes-split #quotes_list_card #quotes_filter_chips {
+    flex: 0 0 auto;
+    margin-bottom: 0;
+    padding: 12px 10px;
+    border-bottom: 1px solid #d8dee4;
+}
 .quotes-split #quotes_list_card #quotes_list_rows {
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
 }
+/* The toolbar is pinned and only the document scrolls - the mail-app
+   arrangement, and the reason the Share and More menus are not clipped: a
+   dropdown inside an overflow:auto ancestor would be cut off at its edge. */
 #quotes_new .contentbar.quotes-split > #quotes_view_card {
     flex: 1 1 auto;
     min-width: 0;
-    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
     max-height: calc(100vh - 150px);
+    background: #fff;
+}
+#quotes_new .contentbar.quotes-split > #quotes_view_card > .card-body {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding: 12px 14px;
+}
+.quotes-split #quotes_view_head { flex: 0 0 auto; }
+.quotes-split #quotes_view_body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
 }
 
 /* Collapsed rail: the quote takes the full width, the toggle brings it back. */
 #quotes_new .contentbar.quotes-split.rail-collapsed > #quotes_list_card { display: none; }
 
-/* In the rail there is no room for six columns, so the three that identify a
-   quote survive - number, who it is for, what it comes to - plus its status.
-   Hidden with CSS rather than a second render path, so one table serves both. */
-.quotes-split #quotes_list_card .q-col-date,
-.quotes-split #quotes_list_card .q-col-valid,
-.quotes-split #quotes_list_card .q-col-qty { display: none; }
+/* The list sits on a slightly recessed ground and the READING PANE is white.
+   The selected row is white too, so it stops looking like a highlighted row in
+   a list and starts looking like the near edge of the document - the mail-app
+   move. The connector below finishes it by painting out the 1px divider for
+   exactly the height of that row. */
+#quotes_new .contentbar.quotes-split > #quotes_list_card { background: #f6f8fa; }
+.quotes-split #quotes_list_card #quotes_filter_chips { background: #f6f8fa; }
+.quotes-split #quotes_list_card table { font-size: 12.5px; margin-bottom: 0; }
+.quotes-split #quotes_list_card td,
+.quotes-split #quotes_list_card th { padding: 8px 10px; }
+.quotes-split #quotes_list_card thead th {
+    background: #f6f8fa;
+    border-bottom: 1px solid #d8dee4;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
 .quotes-split #quotes_list_card #quotes_filter_chips .btn { font-size: 11.5px; padding: 3px 7px; }
 .quotes-split #quotes_list_card #quotes_search { max-width: 100% !important; }
-.quotes-split #quotes_list_card table { font-size: 12.5px; }
-.quotes-split #quotes_list_card td, .quotes-split #quotes_list_card th { padding: 6px 5px; }
 
-/* Rows answer the cursor, and the one being read stays marked. */
+/* Under about 1500px the rail cannot carry six columns, so the three that
+   identify a quote survive - number, who it is for, what it comes to - plus
+   its status. On a wide screen there is room for all of them, which is what
+   the owner asked for. One table serves both; only CSS changes. */
+@media (max-width: 1499px) {
+    .quotes-split #quotes_list_card .q-col-date,
+    .quotes-split #quotes_list_card .q-col-valid,
+    .quotes-split #quotes_list_card .q-col-qty { display: none; }
+}
+@media (min-width: 1500px) {
+    #quotes_new .contentbar.quotes-split > #quotes_list_card {
+        flex: 0 0 560px;
+        max-width: 560px;
+    }
+}
+
+/* Rows answer the cursor, and the one being read joins the document. */
 #quotes_list_rows tr.quotes-row { transition: background .12s ease; }
 #quotes_list_rows tr.quotes-row:hover { background: #eef3ff; }
 #quotes_list_rows tr.quotes-row.is-active { background: #e3ecfd; box-shadow: inset 3px 0 0 #0969da; }
 #quotes_list_rows tr.quotes-row.is-active td:first-child { font-weight: 600; }
+
+/* Inside the split the active row takes the PANE's ground rather than a blue
+   tint, so the two read as one surface. */
+.quotes-split #quotes_list_rows tr.quotes-row.is-active {
+    background: #fff;
+    box-shadow: inset 3px 0 0 #0969da;
+}
+.quotes-split #quotes_list_rows tr.quotes-row.is-active td:last-child { position: relative; }
+/* The connector: 1px of the pane's ground laid over the divider, for the
+   height of the selected row only. This is the join the owner asked for -
+   the selection and the document share an edge instead of facing each
+   other across one. */
+.quotes-split #quotes_list_rows tr.quotes-row.is-active td:last-child::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: -1px;
+    width: 1px;
+    background: #fff;
+}
 
 /* The pager sits at the foot of the rail and always states the count, so the
    list says how much of itself you are seeing even on a single page. */
@@ -3680,7 +3751,6 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
    still wider than the pane it scrolls itself rather than the page. */
 .quotes-split #quotes_view_card > .card-body { padding: 12px 14px; }
 .quotes-split #quotes_view_card .q-sheet { padding: 24px 26px; }
-.quotes-split #quotes_view_body { overflow-x: auto; }
 
 /* Dark themes: the joined surface and its divider are the whole effect, so
    they have to follow the theme rather than stay light-mode grey. */
@@ -3690,6 +3760,22 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 }
 [data-theme] #quotes_new .contentbar.quotes-split > #quotes_list_card {
     border-right-color: var(--theme-border-color);
+    background: var(--theme-body-bg, var(--theme-card-bg));
+}
+/* The connected selection is the whole effect, so its ground and the pane's
+   must be the SAME variable - two near-identical colours would show a seam. */
+[data-theme] #quotes_new .contentbar.quotes-split > #quotes_view_card,
+[data-theme] .quotes-split #quotes_list_rows tr.quotes-row.is-active,
+[data-theme] .quotes-split #quotes_list_rows tr.quotes-row.is-active td:last-child::after {
+    background: var(--theme-card-bg);
+}
+[data-theme] .quotes-split #quotes_list_card #quotes_filter_chips {
+    background: var(--theme-body-bg, var(--theme-card-bg));
+    border-bottom-color: var(--theme-border-color);
+}
+[data-theme] .quotes-split #quotes_list_card thead th {
+    background: var(--theme-body-bg, var(--theme-card-bg));
+    border-bottom-color: var(--theme-border-color);
 }
 [data-theme] .q-pager { border-top-color: var(--theme-border-color); }
 [data-theme] .q-pg-count { color: var(--theme-text-secondary); }

@@ -64,8 +64,14 @@ function blockAt(source, marker) {
 const quotesNamespace = blockAt(salesSource, 'PosnicPro.quotes = {');
 
 /* The declarations of the first CSS rule whose selector text contains `sel`. */
-function cssRule(sel) {
-  const at = css.indexOf(sel);
+function cssRule(sel, fromMarker) {
+  /* Several selectors appear first inside a GROUPED rule (".. > #list_card,
+     .. > #view_card {"), so a bare indexOf would return that rule's
+     declarations instead of the one being asked about. fromMarker moves the
+     search past it - the same anchoring hazard as the JS lookups above. */
+  const from = fromMarker ? css.indexOf(fromMarker) : 0;
+  assert.notStrictEqual(from, -1, `anchor not found in css: ${fromMarker}`);
+  const at = css.indexOf(sel, from);
   assert.notStrictEqual(at, -1, `no CSS rule mentions: ${sel}`);
   const open = css.indexOf('{', at);
   const close = css.indexOf('}', open);
@@ -186,4 +192,134 @@ test('the item form tabs take the width of their words', () => {
     'nav-justified gives each tab an equal share of the full page width',
   );
   assert.ok(/nav-tabs/.test(ul), 'they are still tabs');
+});
+
+/*
+ * The reading pane, second pass.
+ *
+ * The owner's brief: a mail app. The list and the document connect, the
+ * SELECTED row is the near edge of the document rather than a highlighted
+ * line in a list, there is no Back (the list never left - there is a Close),
+ * and the toolbar stops shouting eleven buttons at once.
+ */
+
+const quotesHtml = fs.readFileSync(path.join(ROOT, 'frontend', 'modules', 'quotes.html'), 'utf8');
+
+test('the selection is the near edge of the document, not a tinted row', () => {
+  const active = cssRule('.quotes-split #quotes_list_rows tr.quotes-row.is-active {');
+  // the pane's ground, so the two read as one surface
+  assert.match(active, /background:\s*#fff/i, 'the active row must share the pane background');
+
+  const connector = cssRule(
+    '.quotes-split #quotes_list_rows tr.quotes-row.is-active td:last-child::after {',
+  );
+  assert.match(connector, /right:\s*-1px/, 'the connector must sit ON the divider');
+  assert.match(connector, /background:\s*#fff/i, 'it paints the divider out with the pane ground');
+
+  // and the list itself is recessed, or there is nothing for white to stand against
+  const rail = cssRule('#quotes_new .contentbar.quotes-split > #quotes_list_card { background');
+  assert.match(rail, /#f6f8fa/i, 'the list needs a recessed ground');
+});
+
+test('the rail has no side padding, or the selection cannot reach the divider', () => {
+  const body = cssRule('#quotes_new .contentbar.quotes-split > #quotes_list_card > .card-body {');
+  assert.match(body, /padding:\s*0\s*;/, 'full-bleed rows are what make the join possible');
+});
+
+test('a wide screen shows the whole list AND the quote', () => {
+  // the columns are hidden by a max-width query now, not unconditionally
+  const at = css.indexOf('.quotes-split #quotes_list_card .q-col-date');
+  assert.notStrictEqual(at, -1);
+  const before = css.slice(0, at);
+  const lastMedia = before.lastIndexOf('@media');
+  assert.match(
+    before.slice(lastMedia, lastMedia + 40),
+    /max-width:\s*1499px/,
+    'the columns must only disappear when the rail is actually narrow',
+  );
+});
+
+test('Back is gone; closing is what returns the full list', () => {
+  const view = blockAt(quotesNamespace, 'showDetails: function (id) {');
+  assert.ok(!/&larr; Back/.test(view), 'a reading pane has nothing to go back to');
+  assert.ok(quotesHtml.includes('id="quotes_view_close"'), 'there must be a close control');
+  const handler = blockAt(salesSource, "$(document).on('click', '#quotes_view_close', function () {");
+  assert.ok(
+    handler.includes('showDataTablePage'),
+    'closing must hand the list the full width again',
+  );
+});
+
+test('the toolbar is four controls, with the rest under Share and More', () => {
+  const view = blockAt(quotesNamespace, 'showDetails: function (id) {');
+  const bar = view.slice(view.indexOf('var mi = function'), view.indexOf("$('#quotes_view_actions')"));
+
+  // everything that only sends a copy somewhere is a menu item, not a button
+  for (const shared of ['Print', 'Download PDF', 'Email', 'WhatsApp', 'Copy link']) {
+    assert.ok(bar.includes(shared), `${shared} should still be reachable`);
+  }
+  const buttons = bar.match(/<button type="button" class="btn btn-sm/g) || [];
+  assert.ok(
+    buttons.length <= 5,
+    `the visible toolbar grew back to ${buttons.length} buttons`,
+  );
+  // green is reserved for "succeeded" now, so no action wears it
+  assert.strictEqual(
+    (bar.match(/btn-success/g) || []).length,
+    0,
+    'an action must not be green - green means an outcome',
+  );
+  assert.ok(bar.includes('Convert to sale'), 'the primary action must still be there');
+});
+
+test('destroying a quote is a menu item, never a button next to Print', () => {
+  const view = blockAt(quotesNamespace, 'showDetails: function (id) {');
+  const bar = view.slice(view.indexOf('var mi = function'), view.indexOf("$('#quotes_view_actions')"));
+  for (const danger of ['Cancel quote', 'Delete quote']) {
+    const at = bar.indexOf(danger);
+    assert.notStrictEqual(at, -1, `${danger} disappeared entirely`);
+    // it is rendered through mi(), the dropdown-item helper
+    assert.match(bar.slice(Math.max(0, at - 120), at), /mi\('PosnicPro\.quotes\./, `${danger} must be a menu item`);
+  }
+});
+
+test('Save changes stays hidden until something is actually edited', () => {
+  const view = blockAt(quotesNamespace, 'showDetails: function (id) {');
+  const at = view.indexOf('id="q_save_edits"');
+  assert.notStrictEqual(at, -1, 'the save button is gone');
+  assert.match(
+    view.slice(at, at + 120),
+    /style="display:none;"/,
+    'it must start hidden - an always-lit save button teaches people to ignore it',
+  );
+  const reveal = blockAt(salesSource, "$(document).on('input', '#quotes_view_body .q-edit', function () {");
+  assert.ok(reveal.includes("$('#q_save_edits').show()"), 'editing must reveal it');
+});
+
+test('New sits in the page header like every other list screen', () => {
+  assert.ok(
+    !/New quotation<\/button>/.test(quotesHtml),
+    'the green block inside the list is what the owner objected to',
+  );
+  const bar = quotesHtml.slice(
+    quotesHtml.indexOf('<div class="breadcrumbbar">'),
+    quotesHtml.indexOf('<div class="contentbar">'),
+  );
+  assert.ok(bar.includes('widgetbar'), 'it belongs in the header widgetbar');
+  assert.ok(
+    bar.includes('btn-primary-rgba'),
+    'and takes the same class as Customers and Items, not a one-off green',
+  );
+});
+
+test('the toolbar is pinned so its menus are not clipped', () => {
+  // a dropdown inside an overflow:auto ancestor gets cut off at its edge
+  const pane = cssRule(
+    '#quotes_new .contentbar.quotes-split > #quotes_view_card {',
+    'The toolbar is pinned',
+  );
+  assert.ok(!/overflow-y:\s*auto/.test(pane), 'the card itself must not be the scroller');
+  assert.match(pane, /flex-direction:\s*column/);
+  const docBody = cssRule('.quotes-split #quotes_view_body {');
+  assert.match(docBody, /overflow:\s*auto/, 'the document scrolls instead');
 });

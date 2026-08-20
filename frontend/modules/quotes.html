@@ -7,13 +7,24 @@
                     <div class="col-md-6 col-6">
                         <h4 class="page-title break_title mb-0"><lang class="lang_quotes_title">Quotes</lang></h4>
                     </div>
+                    <!-- New belongs in the page header with every other list
+                         screen (customers, items), not as a green block inside
+                         the list itself. Same markup, same class, same place. -->
+                    <div class="col-md-6 col-6 text-right">
+                        <div class="widgetbar">
+                            <a href="#/quotes/new" class="btn btn-primary-rgba dash_sale_count add_new_tooltip"
+                                data-toggle="tooltip" title="New quotation">
+                                <i class="feather icon-plus mr-2"></i>
+                                <lang class="lang_addvariant_title">New</lang>
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="contentbar">
                 <div class="card m-b-30" id="quotes_list_card">
                     <div class="card-body">
                         <div class="m-b-10 d-flex align-items-center flex-wrap" style="gap:8px;" id="quotes_filter_chips">
-                            <button type="button" class="btn btn-sm btn-primary" onclick="hasher.setHash('quotes/new');">+ New quotation</button>
                             <input type="text" class="form-control form-control-sm" id="quotes_search"
                                 placeholder="Search customer or quote #" autocomplete="off"
                                 style="max-width:240px;">
@@ -130,12 +141,19 @@
                              is read on the right, so moving between quotes does not
                              mean going back each time. The rail collapses when the
                              document needs the whole width. -->
-                        <div class="d-flex align-items-center m-b-10" style="gap:8px;">
+                        <div class="d-flex align-items-center m-b-10" style="gap:8px;" id="quotes_view_head">
                             <button type="button" class="btn btn-sm btn-light" id="quotes_rail_toggle"
                                 title="Show or hide the quote list">
                                 <i class="feather icon-sidebar"></i>
                             </button>
                             <div class="flex-fill text-right" id="quotes_view_actions"></div>
+                            <!-- Close, not Back (owner ask): in a reading pane
+                                 there is nowhere to go back TO - the list never
+                                 left. Closing hands it the whole width again. -->
+                            <button type="button" class="btn btn-sm btn-light" id="quotes_view_close"
+                                title="Close this quote and show the full list" aria-label="Close">
+                                <i class="feather icon-x"></i>
+                            </button>
                         </div>
                         <div id="quotes_view_body"></div>
                     </div>
