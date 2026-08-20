@@ -121,6 +121,73 @@ describe('settings read path', () => {
     expect(mockCollections.branch_features.findOne).not.toHaveBeenCalled();
   });
 
+  /*
+   * Writes (S2). The property that matters: a key that was NOT sent cannot
+   * appear in the update. The old path built one $set from the whole settings
+   * form, so a four-key payload wrote undefined over every control the caller
+   * never showed - a signature upload could wipe printing and receipts. Here
+   * that is not a bug to avoid, it is unsayable.
+   */
+  const seedWrite = () => {
+    for (const name of Object.keys(mockCollections)) delete mockCollections[name];
+    for (const name of ['branch_features', 'branch_secrets', 'branches']) {
+      mockCollections[name] = {
+        findOne: jest.fn().mockResolvedValue(null),
+        updateOne: jest.fn().mockResolvedValue({ matchedCount: 1 }),
+      };
+    }
+  };
+
+  test('only the keys sent are written - nothing else can appear in the update', async () => {
+    seedWrite();
+    await repo.saveGroup('features', { quotes_enable: true }, ctx);
+    const $set = mockCollections.branch_features.updateOne.mock.calls[0][1].$set;
+    expect($set.quotes_enable).toBe(true);
+    // every other feature key must be absent, not undefined-valued
+    expect(Object.keys($set).sort()).toEqual(['branch_id', 'license', 'quotes_enable']);
+  });
+
+  test('the same keys are mirrored to the legacy branches document', async () => {
+    seedWrite();
+    await repo.saveGroup('features', { quotes_enable: true }, ctx);
+    const legacy$set = mockCollections.branches.updateOne.mock.calls[0][1].$set;
+    expect(legacy$set).toEqual({ quotes_enable: true });
+  });
+
+  test('a key from another group is REFUSED, not quietly dropped', async () => {
+    seedWrite();
+    const r = await repo.saveGroup('features', { quotes_enable: true, print_type: 'a4' }, ctx);
+    expect(r.status).toBe(false);
+    expect(r.data.rejected).toEqual(['print_type']);
+    // and nothing at all was written
+    expect(mockCollections.branch_features.updateOne).not.toHaveBeenCalled();
+    expect(mockCollections.branches.updateOne).not.toHaveBeenCalled();
+  });
+
+  test('an account-level write targets branch_id null and does NOT touch the legacy doc', async () => {
+    seedWrite();
+    const r = await repo.saveGroup('features', { quotes_enable: true }, ctx, { level: 'account' });
+    expect(r.data.level).toBe('account');
+    expect(mockCollections.branch_features.updateOne.mock.calls[0][0].branch_id).toBeNull();
+    // no single branch to mirror an account value to
+    expect(mockCollections.branches.updateOne).not.toHaveBeenCalled();
+  });
+
+  test('secrets write to their own collection and nowhere near the others', async () => {
+    seedWrite();
+    await repo.saveGroup('secrets', { email_smtp_password: 'hunter2' }, ctx);
+    expect(mockCollections.branch_secrets.updateOne).toHaveBeenCalled();
+    expect(mockCollections.branch_features.updateOne).not.toHaveBeenCalled();
+  });
+
+  test('an empty payload writes nothing rather than upserting a bare row', async () => {
+    seedWrite();
+    const r = await repo.saveGroup('features', {}, ctx);
+    expect(r.status).toBe(true);
+    expect(r.data.written).toEqual([]);
+    expect(mockCollections.branch_features.updateOne).not.toHaveBeenCalled();
+  });
+
   test('the account row is looked up with branch_id null, not a missing field', async () => {
     seed({ legacy: {} });
     await repo.resolveGroup('features', ctx);
