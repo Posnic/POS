@@ -218,6 +218,16 @@
       }
     }
 }
+/* Most pages clear the fixed topbar at 75px. The sale screen and the
+   dashboard need the original 100px: on those two the first .breadcrumbbar
+   is an EMPTY spacer and the real title sits in a second one that pulls
+   itself up 20px, so trimming the spacer tucked the title under the topbar.
+   Only margin-top is set here - the second bar's own inline margin still
+   wins for itself, and the side margins stay with the base rule. */
+#sales_new .breadcrumbbar,
+#dashboard .breadcrumbbar {
+    margin-top: 100px;
+}
 .breadcrumbbar {
     margin: 75px 30px 0 30px;
     .page-title {
