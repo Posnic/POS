@@ -4,7 +4,7 @@ const BranchModel = BranchModule.BranchModel;
 const branchesService = require('../services/branch.service');
 const User = require('../models/user.model');
 const { ObjectId } = require('mongodb');
-const { redactBranchSecrets } = require('../services/settings-groups');
+const { redactBranchSecrets, stripBranchSecrets } = require('../services/settings-groups');
 
 class BranchesController extends BaseController {
   constructor() {
@@ -52,7 +52,9 @@ class BranchesController extends BaseController {
 
       if (result.status === true) {
         if (result.data && result.data.list) {
-          result.data.list = this.mongoIDFilter(result.data.list);
+          /* Credentials never belong in a LIST - unstripped this hands out
+             every branch's mail and SMS passwords in one response. */
+          result.data.list = stripBranchSecrets(this.mongoIDFilter(result.data.list));
         }
         return this.success(res, result.data, result.message, 200);
       } else {
@@ -101,7 +103,11 @@ class BranchesController extends BaseController {
         return this.error(res, 'Branch Not found', 404);
       }
 
-      return this.success(res, result.data, result.message || 'Branch retrieved successfully');
+      return this.success(
+        res,
+        stripBranchSecrets(result.data),
+        result.message || 'Branch retrieved successfully'
+      );
     } catch (error) {
       console.error('Error in getOne branch:', error);
       return this.error(res, 'Failed to retrieve branch', 500);
@@ -132,7 +138,7 @@ class BranchesController extends BaseController {
         return this.error(res, result.message, 404, result.data);
       }
 
-      return this.success(res, result.data, result.message, 200);
+      return this.success(res, stripBranchSecrets(result.data), result.message, 200);
     } catch (error) {
       console.error('Error in add branch:', error);
       return this.error(res, 'Failed to create branch: ' + error.message, 500);
@@ -164,7 +170,7 @@ class BranchesController extends BaseController {
         return this.error(res, result.message, 404);
       }
 
-      return this.success(res, result.data, result.message);
+      return this.success(res, stripBranchSecrets(result.data), result.message);
     } catch (error) {
       console.error('Error in edit branch:', error);
       return this.error(res, 'Failed to update branch: ' + error.message, 500);
@@ -541,7 +547,7 @@ class BranchesController extends BaseController {
         return this.error(res, 'Branch not found', 404);
       }
 
-      return this.success(res, branch, 'Branch details retrieved successfully');
+      return this.success(res, stripBranchSecrets(branch), 'Branch details retrieved successfully');
     } catch (error) {
       console.error('Error in getBranchDetails:', error);
       return this.error(res, error.message, 500);

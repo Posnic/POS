@@ -197,3 +197,29 @@ describe('an empty credential means unchanged, never blank it', () => {
     });
   });
 });
+
+describe('the list stripper', () => {
+  const { stripBranchSecrets } = require('../../../src/services/settings-groups');
+
+  test('it clears credentials from every document in a list', () => {
+    const out = stripBranchSecrets([
+      { branch_name: 'Main', email_smtp_password: 'hunter2' },
+      { branch_name: 'Second', textlocal_api: 'tl-key' },
+    ]);
+    const asText = JSON.stringify(out);
+    expect(asText).not.toContain('hunter2');
+    expect(asText).not.toContain('tl-key');
+    expect(out).toHaveLength(2);
+    expect(out[1].branch_name).toBe('Second');
+  });
+
+  test('it does NOT add a configured map - a list is not a settings card', () => {
+    const out = stripBranchSecrets([{ branch_name: 'Main', email_smtp_password: 'x' }]);
+    expect(out[0].secrets_configured).toBeUndefined();
+  });
+
+  test('junk in gives junk back', () => {
+    expect(stripBranchSecrets(null)).toBeNull();
+    expect(stripBranchSecrets([])).toEqual([]);
+  });
+});
