@@ -759,6 +759,40 @@ describe('BranchesController — getOneStore', () => {
     await ctrl.getOneStore(mockReq(), res);
     expect(res.status).toHaveBeenCalledWith(500);
   });
+
+  /*
+   * S4. This endpoint returns the whole branch document and the settings
+   * screen reads its email and SMS cards from it - so an SMTP password, an
+   * SMS gateway password and two API keys were being handed to the browser
+   * of anyone who could open Settings, and cached in that response.
+   */
+  test('no credential value leaves the server', async () => {
+    branchesService.normalizeBranchId.mockReturnValue('b1');
+    bm.getBranchDetails.mockResolvedValue({
+      status: true,
+      data: {
+        branch_name: 'Main',
+        email_smtp_username: 'billing@shop.in',
+        email_smtp_password: 'hunter2',
+        smtp_password: 'legacy-pass',
+        way2sms_password: 'sms-pass',
+        way2sms_api: 'w2s-key',
+        textlocal_api: 'tl-key',
+      },
+    });
+    const res = mockRes();
+    await ctrl.getOneStore(mockReq({ query: { id: 'b1' } }), res);
+
+    const body = JSON.stringify(res.json.mock.calls[0][0]);
+    for (const secret of ['hunter2', 'legacy-pass', 'sms-pass', 'w2s-key', 'tl-key']) {
+      expect(body).not.toContain(secret);
+    }
+    const { data } = res.json.mock.calls[0][0];
+    // the card still knows what to show, and the username is not a credential
+    expect(data.secrets_configured.email_smtp_password).toBe(true);
+    expect(data.email_smtp_username).toBe('billing@shop.in');
+    expect(data.branch_name).toBe('Main');
+  });
 });
 
 // =============================================================================

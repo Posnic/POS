@@ -3,6 +3,7 @@ const BaseModel = require('./base.model');
 const { ObjectId } = require('mongodb');
 const fs = require('fs');
 const path = require('path');
+const { secretUpdate } = require('../services/settings-groups');
 
 class SettingModel extends BaseModel {
   constructor() {
@@ -1141,9 +1142,11 @@ class SettingModel extends BaseModel {
         ...(data.email_smtp_username !== undefined
           ? { email_smtp_username: String(data.email_smtp_username || '').trim() }
           : {}),
-        ...(data.email_smtp_password !== undefined
-          ? { email_smtp_password: String(data.email_smtp_password || '') }
-          : {}),
+        /* S4: the password is never sent to the browser any more, so the form
+           loads with this field empty. Empty therefore means "keep the saved
+           one" - writing it through would blank the shop's mail the first
+           time anyone saved an unrelated setting. */
+        ...secretUpdate('email_smtp_password', data.email_smtp_password),
         ...(data.email_smtp_from !== undefined
           ? { email_smtp_from: String(data.email_smtp_from || '').trim() }
           : {}),
@@ -2569,15 +2572,17 @@ class SettingModel extends BaseModel {
       if (type === 'way2sms') {
         updateData = {
           ...updateData,
-          way2sms_api: data.way2sms_api?.trim() || '',
+          // the userid is an identifier; the key and password are credentials
+          // and are no longer sent back to the form, so empty means unchanged
           way2sms_userid: data.way2sms_userid?.trim() || '',
-          way2sms_password: data.way2sms_password?.trim() || '',
+          ...secretUpdate('way2sms_api', data.way2sms_api),
+          ...secretUpdate('way2sms_password', data.way2sms_password),
         };
       } else if (type === 'textlocal') {
         updateData = {
           ...updateData,
           textlocal_sender: data.textlocal_sender?.trim() || '',
-          textlocal_api: data.textlocal_api?.trim() || '',
+          ...secretUpdate('textlocal_api', data.textlocal_api),
         };
       }
 

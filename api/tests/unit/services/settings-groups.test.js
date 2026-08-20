@@ -105,3 +105,95 @@ describe('settings grouping', () => {
     expect(splitByGroup(undefined).features).toEqual({});
   });
 });
+
+/*
+ * S4 - credentials stop travelling outwards.
+ *
+ * Two halves that only work together. Redaction alone would be a data-loss
+ * bug: the settings form round-trips what it was given, so the first save
+ * after the password stops coming back would write the empty field over the
+ * stored one and silence the shop's mail. Empty therefore means "unchanged",
+ * and clearing has to be said out loud.
+ */
+const {
+  BRANCH_CREDENTIALS,
+  CLEAR_SECRET,
+  redactBranchSecrets,
+  secretUpdate,
+} = require('../../../src/services/settings-groups');
+
+describe('branch credentials leave the server only as a yes/no', () => {
+  const branch = {
+    name: 'Sridhar',
+    roundOff: true,
+    email_smtp_username: 'billing@shop.in',
+    email_smtp_password: 'hunter2',
+    smtp_password: 'legacy-pass',
+    way2sms_password: 'sms-pass',
+    way2sms_api: 'w2s-key',
+    way2sms_userid: 'shopuser',
+    textlocal_api: '',
+  };
+
+  test('no credential value survives the response', () => {
+    const out = redactBranchSecrets(branch);
+    const asText = JSON.stringify(out);
+    for (const secret of ['hunter2', 'legacy-pass', 'sms-pass', 'w2s-key']) {
+      expect(asText).not.toContain(secret);
+    }
+    for (const key of BRANCH_CREDENTIALS) {
+      expect(out[key]).toBeUndefined();
+    }
+  });
+
+  test('but the card can still say which are configured', () => {
+    const out = redactBranchSecrets(branch);
+    expect(out.secrets_configured.email_smtp_password).toBe(true);
+    expect(out.secrets_configured.way2sms_api).toBe(true);
+    // an empty string is absent, not a set password
+    expect(out.secrets_configured.textlocal_api).toBe(false);
+  });
+
+  test('identifiers are not credentials and stay readable', () => {
+    const out = redactBranchSecrets(branch);
+    expect(out.email_smtp_username).toBe('billing@shop.in');
+    expect(out.way2sms_userid).toBe('shopuser');
+    expect(out.roundOff).toBe(true);
+  });
+
+  test('the source document is not mutated on the way out', () => {
+    redactBranchSecrets(branch);
+    expect(branch.email_smtp_password).toBe('hunter2');
+  });
+
+  test('junk in gives junk back rather than throwing', () => {
+    expect(redactBranchSecrets(null)).toBeNull();
+    expect(redactBranchSecrets('nope')).toBe('nope');
+  });
+});
+
+describe('an empty credential means unchanged, never blank it', () => {
+  test('absent or empty writes nothing at all', () => {
+    expect(secretUpdate('email_smtp_password', undefined)).toEqual({});
+    expect(secretUpdate('email_smtp_password', null)).toEqual({});
+    expect(secretUpdate('email_smtp_password', '')).toEqual({});
+  });
+
+  test('a real value is written', () => {
+    expect(secretUpdate('email_smtp_password', 'hunter2')).toEqual({
+      email_smtp_password: 'hunter2',
+    });
+  });
+
+  test('clearing is possible, but has to be said out loud', () => {
+    expect(secretUpdate('email_smtp_password', CLEAR_SECRET)).toEqual({
+      email_smtp_password: '',
+    });
+  });
+
+  test('the value is not trimmed - a password may end in a space', () => {
+    expect(secretUpdate('email_smtp_password', ' pw ')).toEqual({
+      email_smtp_password: ' pw ',
+    });
+  });
+});
