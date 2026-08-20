@@ -1022,7 +1022,17 @@ PosnicPro = {
             full: [{ table: '#view_itemreport', per: '#view_itemreport_per_page', load: 'itemreport.itemreportTable' }] },
         { root: '#kioskreport_new', title: 'Kiosk Report', range: '#view_kiosk_report_daterange', file: 'kiosk-report',
             full: [{ table: '#view_kioskreport', per: '#view_kioskreport_per_page', load: 'kioskreport.kioskreportTable' }] },
-        { root: '#kotreport_new', title: 'KOT Report', range: '#view_kot_report_daterange', file: 'kot-report' },
+        // KOT is five reports behind one date range; the active tab decides
+        // which table the full-range export loads.
+        { root: '#kotreport_new', title: 'KOT Report', range: '#view_kot_report_daterange', file: 'kot-report',
+            // (sales-summary is not paginated - it has no per-page selector,
+            //  so its export already carries every row)
+            full: [
+                { when: '#kot-itemwise-tab', table: '#view_kotitemreport', per: '#view_kotitemreport_per_page', load: 'kotitemreport.kotitemreportTable' },
+                { when: '#kot-discount-tab', table: '#view_kotdiscountreport', per: '#view_kotdiscountreport_per_page', load: 'kotdiscountreport.kotdiscountreportTable' },
+                { when: '#kot-cancellation-tab', table: '#view_kotcancellation', per: '#view_kotcancellation_per_page', load: 'kotcancellation.kotcancellationTable' },
+                { when: '#kot-open-item-tab', table: '#view_kotopenitemreport', per: '#view_kotopenitemreport_per_page', load: 'kotopenitemreport.kotopenitemreportTable' }
+            ] },
         { root: '#labourreport_new', title: 'Labour / Payout', range: '', file: 'labour-report' },
         { root: '#paymentreport_new', title: 'Payment Report', range: '#view_paymentransaction_transaction_daterange', file: 'payment-report',
             full: [{ table: '#view_paymentransaction', per: '#view_paymentransaction_per_page', load: 'paymentransaction.paymentransactionTable' }] },
