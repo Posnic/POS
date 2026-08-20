@@ -6616,13 +6616,18 @@ PosnicPro.sales.setDefaults = function () {
     $('#sales_new_radio_discountamount,#sales_new_radio_discountpercent').text('').val('');
     $('#sales_new_radio_discountamount').editable('setValue', '0');
     $('#sales_new_radio_discountpercent').editable('setValue', '0');
-    $('#click_discount_description').css({ color: '#506fe4' });
     if (PosnicPro.updateSaleNoteFlag) {
         PosnicPro.updateSaleNoteFlag('click_payment_description', 'feather icon-edit-1', '');
         PosnicPro.updateSaleNoteFlag('click_sales_description', 'feather icon-edit-1', '');
+        // the discount note carries the same flag now, so it resets the same
+        // way - a tint alone left last sale's note text sitting on screen
+        PosnicPro.updateSaleNoteFlag('click_discount_description', 'feather icon-edit-1', '');
     }
     if (PosnicPro.sales.defaultCustomer === true) {
-        (PosnicPro.local.get('default_customer_enable_disable') === 'false') ? $('#sales_new_customer_id,#sales_new_customer_name,#sales_new_customer_address,#sales_new_customer_phone,#sales_new_customer_email,#sales_new_customer_state,#sales_new_customer_gst_type,#sales_new_customer_gst_number').val('') : PosnicPro.defaultcustomerSet();
+        // second copy of the reset above - same rule: clear the previous
+        // customer, then resolve the branch Walk-in so the sale is billable
+        $('#sales_new_customer_id,#sales_new_customer_name,#sales_new_customer_address,#sales_new_customer_phone,#sales_new_customer_email,#sales_new_customer_state,#sales_new_customer_gst_type,#sales_new_customer_gst_number').val('');
+        PosnicPro.defaultcustomerSet();
     }
     PosnicPro.sales.SaleTableLineItems = [];
     PosnicPro.sales.sale_offlineadditems = [];
@@ -10197,6 +10202,71 @@ $('.tableFixHead').on('scroll', function () {
 // (muted user icon) when no customer is set; the customer's name (accent,
 // checked icon, name + phone on hover) once one is chosen. Kept in sync from
 // the autocomplete select, the new-sale reset and the edit-sale load.
+/*
+ * Notes edit in place (owner: the popup "can be better. UX Feel").
+ * Clicking the pencil opens an input right where the note lives, with the
+ * cursor already in it - Enter saves, Escape cancels, clicking away saves.
+ * The popup it replaces was a dialog for one short line of text, and it
+ * needed a polling loop just to land focus inside its own textarea.
+ *
+ * The hidden <a> keeps being the value carrier, so every save payload
+ * still reads $('#payment_description').val() exactly as it did before.
+ */
+PosnicPro.sales.noteEdit = {
+    open: function (linkId, fieldId, placeholder, maxLen) {
+        var $link = $('#' + linkId);
+        var $field = $('#' + fieldId);
+        if (!$link.length || !$field.length) { return; }
+        var $open = $link.next('.note-inline');
+        if ($open.length) { $open.find('input').focus(); return; }
+
+        var before = String($field.val() || '');
+        var $wrap = $('<span class="note-inline"></span>');
+        var $in = $('<input type="text" class="form-control form-control-sm note-inline-input">')
+            .attr({ maxlength: maxLen || 500, placeholder: placeholder || 'Add a note' })
+            .val(before);
+        var $ok = $('<a href="javascript:void(0)" class="note-inline-ok" title="Save note"><i class="feather icon-check"></i></a>');
+        $wrap.append($in).append($ok);
+        $link.hide().after($wrap);
+
+        var done = false;
+        var close = function (save) {
+            if (done) { return; }
+            done = true;
+            var text = save ? $.trim($in.val()) : before;
+            $field.val(text);
+            $wrap.remove();
+            $link.show();
+            if (PosnicPro.updateSaleNoteFlag) {
+                PosnicPro.updateSaleNoteFlag(linkId, 'feather icon-edit-1', text);
+            }
+        };
+        // mousedown, not click: blur would fire first and close the editor
+        $ok.on('mousedown', function (e) { e.preventDefault(); close(true); });
+        $in.on('keydown', function (e) {
+            if (e.key === 'Enter') { e.preventDefault(); close(true); }
+            if (e.key === 'Escape') { e.preventDefault(); close(false); }
+        });
+        $in.on('blur', function () { setTimeout(function () { close(true); }, 120); });
+        setTimeout(function () {
+            $in.focus();
+            var el = $in.get(0);
+            if (el && el.setSelectionRange) { el.setSelectionRange(el.value.length, el.value.length); }
+        }, 0);
+    }
+};
+$(document).on('click', '#click_payment_description', function (e) {
+    e.preventDefault(); e.stopPropagation();
+    PosnicPro.sales.noteEdit.open('click_payment_description', 'payment_description', 'Payment note', 500);
+});
+$(document).on('click', '#click_sales_description', function (e) {
+    e.preventDefault(); e.stopPropagation();
+    PosnicPro.sales.noteEdit.open('click_sales_description', 'sales_description', 'Sale note', 500);
+});
+$(document).on('click', '#click_discount_description', function (e) {
+    e.preventDefault(); e.stopPropagation();
+    PosnicPro.sales.noteEdit.open('click_discount_description', 'discount_description', 'Why this discount?', 2500);
+});
 /*
  * Last line of defence before a save: a sale is always billed to someone,
  * so if no customer is set, fall back to the branch's cached Walk-in.

@@ -3060,6 +3060,13 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 .inline-container .toggle-icon { display: inline-flex; align-items: center; justify-content: center; min-width: 26px; height: 26px; border: 1px solid #d8dee8; border-radius: 5px; background: #fff; font-size: 13px; transition: all .15s ease; }
 .inline-container .toggle-icon:hover { background: #eef3ff; border-color: #4680ff; }
 
+/* Sale notes edit in place - one line, readable, tick to confirm */
+.note-inline { display: inline-flex; align-items: center; gap: 5px; vertical-align: middle; }
+.note-inline .note-inline-input { font-size: 14px; height: 28px; padding: 2px 8px; min-width: 190px; max-width: 320px; }
+.note-inline .note-inline-ok { color: #2ca77b; display: inline-flex; align-items: center;
+    justify-content: center; width: 26px; height: 26px; border-radius: 5px; transition: background .15s ease; }
+.note-inline .note-inline-ok:hover { background: #e8f7f1; }
+
 /* Inline add-charge entry: one line, readable, numbers right-aligned */
 #sale_charge_entry { display: flex; gap: 6px; align-items: center; padding: 2px 0; }
 #sale_charge_entry input { font-size: 14px; height: 28px; padding: 2px 6px; }
