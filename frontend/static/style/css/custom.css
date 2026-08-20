@@ -3398,12 +3398,23 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     overflow: hidden;
     transition: border-color .15s ease, box-shadow .15s ease;
 }
+/* A tile is a button, so it should answer the cursor plainly: the border
+   takes the accent, the card lifts a little and the name darkens. Subtle
+   enough for a screen full of them, obvious enough to show which one the
+   finger is over on a busy counter. */
+#sales_new .wsk-cp { cursor: pointer; }
 #sales_new .wsk-cp:hover .wsk-cp-product {
-    border-color: #8c959f;
-    box-shadow: 0 3px 8px rgba(31, 35, 40, 0.12);
+    border-color: #0969da;
+    box-shadow: 0 4px 12px rgba(9, 105, 218, 0.18);
+    transform: translateY(-2px);
 }
+#sales_new .wsk-cp:active .wsk-cp-product { transform: translateY(0); box-shadow: 0 2px 5px rgba(31, 35, 40, 0.14); }
+#sales_new .wsk-cp:hover .description-prod p { color: #0969da; }
+#sales_new .wsk-cp:hover .wsk-cp-img { background: #f6f8fa; }
 /* the image sat 40px up on small screens; inside a bordered card it must not */
-#sales_new .wsk-cp .wsk-cp-img { top: 0 !important; aspect-ratio: 4 / 3; padding: 6px; }
+/* shorter than it was: the name gets its two lines back and more tiles fit */
+#sales_new .wsk-cp .wsk-cp-img { top: 0 !important; aspect-ratio: 3 / 2; padding: 8px; transition: background .15s ease; }
+#sales_new .wsk-cp .wsk-cp-img img { object-fit: contain; }
 #sales_new .wsk-cp .price-text-color { margin-top: 0; padding: 2px 8px 6px; font-size: 14px; color: #0969da; }
 #sales_new .wsk-cp .description-prod {
     padding: 8px 8px 4px;
@@ -3413,7 +3424,10 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 }
 #sales_new .wsk-cp .description-prod p {
     font-size: 13px; line-height: 1.3; margin-bottom: 0; color: #1f2328;
-    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    /* two lines, and every tile reserves the same height so a one-line name
+       does not make its card shorter than the one beside it */
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden; min-height: 34px; transition: color .15s ease;
 }
 #sales_new .wsk-cp .wsk-cp-text { margin-top: auto !important; }
 #sales_new .wsk-cp .wsk-cp-stock { font-size: 11px; color: #656d76; padding-bottom: 6px; }
