@@ -126,7 +126,17 @@
                 </div>
                 <div class="card m-b-30" id="quotes_view_card" style="display:none;">
                     <div class="card-body">
-                        <div class="m-b-10 text-right" id="quotes_view_actions"></div>
+                        <!-- Master-detail: the list stays on the left while a quote
+                             is read on the right, so moving between quotes does not
+                             mean going back each time. The rail collapses when the
+                             document needs the whole width. -->
+                        <div class="d-flex align-items-center m-b-10" style="gap:8px;">
+                            <button type="button" class="btn btn-sm btn-light" id="quotes_rail_toggle"
+                                title="Show or hide the quote list">
+                                <i class="feather icon-sidebar"></i>
+                            </button>
+                            <div class="flex-fill text-right" id="quotes_view_actions"></div>
+                        </div>
                         <div id="quotes_view_body"></div>
                     </div>
                 </div>

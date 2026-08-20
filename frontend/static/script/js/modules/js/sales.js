@@ -7754,6 +7754,9 @@ PosnicPro.quotes = {
         $('.page-title-box,#quotes_new').show();
         $('#quotes_view_card,#quotes_edit_card').hide();
         $('#quotes_list_card').show();
+        // back to the plain full-width list
+        $('#quotes_new .contentbar').removeClass('quotes-split rail-collapsed');
+        $('#quotes_list_rows tr.quotes-row').removeClass('is-active');
         $('.vertical-layout').removeClass('toggle-menu');
         $('#v-pills-dashboard-tab,#view_quotes_page').addClass('active');
         $('#v-pills-dashboard').addClass('show active');
@@ -8272,8 +8275,8 @@ PosnicPro.quotes = {
         var d = function (v) { return v ? new Date(v).toLocaleDateString('en-IN') : '-'; };
         var html = '<div class="table-responsive"><table class="table table-borderless">'
             + '<thead><tr>'
-            + '<th>Quote #</th><th>Customer</th><th>Date</th><th>Valid till</th>'
-            + '<th class="text-right">Qty</th><th class="text-right">Total</th><th class="text-center">Status</th>'
+            + '<th>Quote #</th><th>Customer</th><th class="q-col-date">Date</th><th class="q-col-valid">Valid till</th>'
+            + '<th class="text-right q-col-qty">Qty</th><th class="text-right">Total</th><th class="text-center">Status</th>'
             + '</tr></thead><tbody>';
         shown.forEach(function (q) {
             var qty = (q.items || []).reduce(function (a, l) { return a + (Number(l.qty) || 0); }, 0);
@@ -8288,9 +8291,9 @@ PosnicPro.quotes = {
             html += '<tr class="quotes-row highlight-select" data-id="' + esc(q._id) + '" style="cursor:pointer;">'
                 + '<td>' + esc(q.quote_id) + '</td>'
                 + '<td>' + esc(q.customer_name || 'Walk-in') + '</td>'
-                + '<td>' + d(q.created_date) + '</td>'
-                + '<td>' + (expired ? '<span class="text-danger">' + d(q.valid_until) + '</span>' : d(q.valid_until)) + '</td>'
-                + '<td class="text-right">' + qty + '</td>'
+                + '<td class="q-col-date">' + d(q.created_date) + '</td>'
+                + '<td class="q-col-valid">' + (expired ? '<span class="text-danger">' + d(q.valid_until) + '</span>' : d(q.valid_until)) + '</td>'
+                + '<td class="text-right q-col-qty">' + qty + '</td>'
                 + '<td class="text-right">' + PosnicPro.quotes._money(q.total) + '</td>'
                 + '<td class="text-center">' + pill + '</td>'
                 + '</tr>';
@@ -8309,6 +8312,11 @@ PosnicPro.quotes = {
                 + '</div>';
         }
         $('#quotes_list_rows').html(html);
+        // a re-render (search, filter, page) must not lose which quote is open
+        if (PosnicPro.quotes._current && PosnicPro.quotes._current._id) {
+            $('#quotes_list_rows tr.quotes-row[data-id="' + PosnicPro.quotes._current._id + '"]')
+                .addClass('is-active');
+        }
     },
     showDetails: function (id) {
         PosnicPro.HideSideBarModal();
@@ -8318,7 +8326,13 @@ PosnicPro.quotes = {
         $('.page-title-box,#quotes_new').show();
         $('#v-pills-dashboard-tab,#view_quotes_page').addClass('active');
         $('#v-pills-dashboard').addClass('show active');
-        $('#quotes_list_card,#quotes_edit_card').hide();
+        /* Master-detail: the list stays, the quote opens beside it. Reading a
+           second quote is then one click rather than back-then-forward. */
+        $('#quotes_edit_card').hide();
+        $('#quotes_list_card').show();
+        $('#quotes_new .contentbar').addClass('quotes-split');
+        $('#quotes_list_rows tr.quotes-row').removeClass('is-active')
+            .filter('[data-id="' + id + '"]').addClass('is-active');
         $('.vertical-layout').removeClass('toggle-menu');
         PosnicPro.get({ url: 'quotes/' + id, data: {} }, function (r) {
             var q = r && r.data;
@@ -10178,6 +10192,11 @@ PosnicPro.sales.renderRecentCustomers = function () {
 };
 $(document).on('click', '.quotes-row', function () {
     hasher.setHash('quotes/' + $(this).data('id'));
+});
+/* Jira-style: give the document the whole width when the list is in the way,
+   and bring it back with the same button. */
+$(document).on('click', '#quotes_rail_toggle', function () {
+    $('#quotes_new .contentbar').toggleClass('rail-collapsed');
 });
 $(document).on('click', '.quotes-chip', function () {
     $('.quotes-chip').removeClass('btn-primary-rgba').addClass('btn-secondary-rgba');

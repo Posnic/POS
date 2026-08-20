@@ -3564,3 +3564,46 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
    probably abandoned rather than pending, so it says so in colour. */
 #parked_sales_table .parked-ago { font-size: 12.5px; color: #656d76; white-space: nowrap; }
 #parked_sales_table .parked-ago.stale { color: #b5761a; font-weight: 600; }
+
+/* ============================================================
+   Quotes master-detail (owner: "i can see quotes by left side clicking
+   instead of go back and see... user want we can hide left list by click
+   any button like jira")
+
+   Reading quotes used to mean list -> quote -> back -> quote. The list
+   stays on the left now and the quote fills the right, so moving between
+   them is one click. The editor card sits between the two in the DOM but
+   is display:none while reading, so it is not a flex item and does not
+   disturb the split.
+   ============================================================ */
+#quotes_new .contentbar.quotes-split { display: flex; gap: 14px; align-items: flex-start; }
+#quotes_new .contentbar.quotes-split > #quotes_list_card {
+    flex: 0 0 330px;
+    max-width: 330px;
+    min-width: 0;
+    position: sticky;
+    top: 76px;
+    max-height: calc(100vh - 96px);
+    overflow-y: auto;
+}
+#quotes_new .contentbar.quotes-split > #quotes_view_card { flex: 1 1 auto; min-width: 0; }
+
+/* Collapsed rail: the quote takes the full width, the toggle brings it back. */
+#quotes_new .contentbar.quotes-split.rail-collapsed > #quotes_list_card { display: none; }
+
+/* In the rail there is no room for six columns, so the three that identify a
+   quote survive - number, who it is for, what it comes to - plus its status.
+   Hidden with CSS rather than a second render path, so one table serves both. */
+.quotes-split #quotes_list_card .q-col-date,
+.quotes-split #quotes_list_card .q-col-valid,
+.quotes-split #quotes_list_card .q-col-qty { display: none; }
+.quotes-split #quotes_list_card #quotes_filter_chips .btn { font-size: 11.5px; padding: 3px 7px; }
+.quotes-split #quotes_list_card #quotes_search { max-width: 100% !important; }
+.quotes-split #quotes_list_card table { font-size: 12.5px; }
+.quotes-split #quotes_list_card td, .quotes-split #quotes_list_card th { padding: 6px 5px; }
+
+/* Rows answer the cursor, and the one being read stays marked. */
+#quotes_list_rows tr.quotes-row { transition: background .12s ease; }
+#quotes_list_rows tr.quotes-row:hover { background: #eef3ff; }
+#quotes_list_rows tr.quotes-row.is-active { background: #e3ecfd; box-shadow: inset 3px 0 0 #0969da; }
+#quotes_list_rows tr.quotes-row.is-active td:first-child { font-weight: 600; }
