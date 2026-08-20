@@ -3026,3 +3026,10 @@ input:checked + .slider:before {
    discount row prints at all */
 #qe_disc_value { max-width: 90px; }
 #qe_valid_label { min-height: 16px; }
+
+/* Double-click editable cells: the spreadsheet affordance */
+.sale-editable-cell { cursor: cell; }
+.sale-editable-cell:hover { background: #f2f6ff; box-shadow: inset 0 -2px 0 #506fe4; }
+/* Discount slides into the Tax slot while the Tax cell is hidden */
+#return_discount.disc-solo { text-align: right; }
+#return_discount.disc-solo .pull-right { float: none !important; margin-left: 8px; }

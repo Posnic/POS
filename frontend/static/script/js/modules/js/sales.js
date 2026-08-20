@@ -6072,6 +6072,11 @@ PosnicPro.sales.renderCharges = function () {
     $('#sale_add_charge').toggle(PosnicPro.sales.chargesEnabled() || list.length > 0);
     PosnicPro.sales.calculation.extraDiscoundCalculation();
 };
+$(document).on('click', '#sale_add_discount', function () {
+    // opens the existing additional-discount editor - same ACL rail
+    $('.addDisc-hide-show').show();
+    $('#extraDisc').trigger('click');
+});
 $(document).on('click', '#sale_add_charge', function () {
     var name = window.prompt('Charge name (e.g. Parcel charge, Service charge):', '');
     if (!name || !name.trim()) { return; }
@@ -6195,8 +6200,19 @@ PosnicPro.sales.calculation = {
         var taxFeatureOff = PosnicPro.local.get('default_tax_enable_disable') === 'false'
             && PosnicPro.local.get('gst_action') !== 'enable';
         var showTaxCol = !taxFeatureOff || anyLineTax;
-        $('#return_table thead th').has('.lang_tax_title').toggle(showTaxCol);
+        // header AND cells together - a th that stays while its tds hide
+        // shifts every later column under the wrong heading
+        $('#sales_new thead th').filter(function () {
+            return $(this).find('.lang_tax_title').length > 0;
+        }).toggle(showTaxCol);
         $('[id^="addSalesLineItemTax_"]').toggle(showTaxCol);
+        // totals row: with no Tax cell the Discount slides into its place
+        // on the right; when tax returns, Discount goes back left
+        $('#return_discount').toggleClass('disc-solo', !showTaxCol);
+        // discoverability (spreadsheet standard): hover cue + tooltip on
+        // every double-click-editable cell
+        $('[id^="addSalesLineItemPrice_"], [id^="addSalesLineItemDiscountprint_"], [id^="addSalesLineItemTax_"]')
+            .addClass('sale-editable-cell').attr('title', 'Double-click to edit');
         // named charges join the payable after discounts, before round-off
         var chargesSum = PosnicPro.sales.chargesTotal();
         if (chargesSum > 0) { outputVal = outputVal + chargesSum; }
