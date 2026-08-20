@@ -36,12 +36,7 @@
                                         class="feather icon-grid mr-2"></i>
                                     <lang class="lang_modules">Features</lang>
                                 </a>
-                                <a data-module="branch" data-access="write" class="nav-link mb-2"
-                                    id="v-pills-featureconf-tab" data-toggle="pill" href="#v-pills-featureconf" role="tab"
-                                    aria-controls="v-pills-featureconf" aria-selected="false"><i
-                                        class="feather icon-sliders mr-2"></i>
-                                    <lang class="lang_featureconf">Feature settings</lang>
-                                </a>
+                                
                                 <div class="settings-nav-group"><lang class="lang_navgroup_modules">Features</lang></div>
                                 <a class="nav-link mb-2" id="v-pills-cashregister-tab"
                                     data-toggle="pill" href="#v-pills-cashregister" role="tab"
@@ -2617,12 +2612,32 @@
                         <!--Denom field end-->
 
                         <!-- table orders Start -->
-                        <div class="tab-pane fade" id="v-pills-featureconf" role="tabpanel" aria-labelledby="v-pills-featureconf-tab">
+                        <div class="tab-pane fade" id="v-pills-featureconf" role="tabpanel">
                             <div class="card m-b-30">
-                                <div class="card-header">
-                                    <small class="text-muted"><lang class="lang_featureconf_hint">Each feature's own knobs, in one place. The Features page turns them on and off.</lang></small>
+                                <div class="card-header d-flex align-items-center" style="gap:12px; background:#fff;">
+                                    <a href="javascript:void(0)" id="fp_back" class="btn btn-sm btn-light border">&larr; <lang class="lang_features_back">Features</lang></a>
+                                    <span class="module-ico" id="fp_icon" style="width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;background:#eef3ff;border-radius:10px;"></span>
+                                    <div style="flex:1 1 auto; min-width:0;">
+                                        <div class="d-flex align-items-center" style="gap:8px;">
+                                            <h5 class="mb-0" id="fp_title" style="color:#1a202c !important; font-size:18px;"></h5>
+                                            <span class="badge" id="fp_state"></span>
+                                        </div>
+                                        <div id="fp_tagline" style="color:#67707f; font-size:14px;"></div>
+                                    </div>
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="fp_master">
+                                        <label class="custom-control-label" for="fp_master"></label>
+                                    </div>
                                 </div>
                                 <div class="card-body">
+                                    <div id="fp_info"></div>
+                                    <div class="fc-title mt-3" id="fp_settings_title" style="display:none;"><lang class="lang_settings">Settings</lang></div>
+                                    <div id="fp_settings"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="feature_sections_store" style="display:none;">
+
                                     <div class="fc-section" id="fc_workforce">
                                         <h6 class="fc-title"><lang class="lang_staffshifts_title">Workforce</lang></h6>
                                             <div class="module-subs">
@@ -2689,12 +2704,7 @@
                                         <h6 class="fc-title"><lang class="lang_modules_restaurant">Restaurant</lang></h6>
                                         <a href="javascript:void(0)" onclick="$('#v-pills-tableorder-tab').click();" class="module-config-link"><lang class="lang_modules_managetables">Manage tables</lang></a>
                                     </div>
-                                    <div class="text-right mt-3">
-                                        <button type="button" class="btn btn-primary" onclick="PosnicPro.settings.saveModulesTab();"><lang class="lang_save_title">Save</lang></button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                                                            </div>
                         <div class="tab-pane fade" id="v-pills-tableorder" role="tabpanel"
                             aria-labelledby="v-pills-tableorder-tab">
                             <div class="card m-b-30" data-module="plan" data-access="read">
