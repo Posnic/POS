@@ -338,7 +338,6 @@
     "lang_salesexdisc_title": "விற்பனை (பிரத்தியேக தள்ளுபடி)",
     "lang_salesreturn_title": "விற்பனை வருமானம்",
     "lang_addsales_title": "விற்பனை சேர்க்க",
-    "lang_qty_title": "அளவு",
     "lang_saleqty_title": "அளவுகள்",
     "lang_refund": "பணத்தைத் திரும்பப்பெறுதல்",
     "lang_netrecpt": "நிகர ரசீதுகள்",
@@ -877,5 +876,8 @@
     "lang_upi_title": "UPI-Pay",
     "lang_weightmachine_title": "எடை இயந்திரம்",
     "lang_register_overview": "ரிஜிஸ்டர்கள்",
-    "lang_cashregister_enable": "பண ரிஜிஸ்டர் (கல்லா அமர்வுகள்)"
+    "lang_cashregister_enable": "பண ரிஜிஸ்டர் (கல்லா அமர்வுகள்)",
+    "lang_discountnote_title": "தள்ளுபடி குறிப்பு",
+    "lang_add_discount": "தள்ளுபடி சேர்",
+    "lang_add_charge": "கட்டணம் சேர்"
 }
