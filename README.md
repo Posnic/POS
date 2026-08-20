@@ -4,10 +4,11 @@
 
 # Posnic
 
-**Point of sale that never goes down.**
+**Free, open-source point of sale that keeps core checkout local.**
 
-A complete, offline-first POS for shops, restaurants and pharmacies.
-Your data lives on your own computer. No internet required, ever.
+An offline-first POS for retail shops and restaurants. The primary API and
+database run on the shop computer; electronic payments, optional cloud
+services, downloads and integrations can still need a network.
 
 [![CI](https://github.com/Posnic/POS/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Posnic/POS/actions/workflows/ci.yml)
 [![Release](https://github.com/Posnic/POS/actions/workflows/release.yml/badge.svg)](https://github.com/Posnic/POS/actions/workflows/release.yml)
@@ -21,7 +22,7 @@ Your data lives on your own computer. No internet required, ever.
 
 ### [⬇ Download for Windows](https://github.com/Posnic/POS/releases/latest) · [macOS](https://github.com/Posnic/POS/releases/latest) · [Linux](https://github.com/Posnic/POS/releases/latest)
 
-[User guide](docs/USER_GUIDE.md) · [Developer guide](docs/DEVELOPMENT.md) · [Architecture](docs/ARCHITECTURE.md) · [API](docs/API.md) · [Discussions](https://github.com/Posnic/POS/discussions)
+[Website](https://posnic.com/) · [Verified product facts](https://posnic.com/posnic-facts) · [User guide](docs/USER_GUIDE.md) · [Developer guide](docs/DEVELOPMENT.md) · [Architecture](docs/ARCHITECTURE.md) · [API](docs/API.md) · [Discussions](https://github.com/Posnic/POS/discussions)
 
 </div>
 
@@ -29,14 +30,19 @@ Your data lives on your own computer. No internet required, ever.
 
 ## Why Posnic
 
-Most point-of-sale software stops working when the internet does. Posnic runs
-its database and its API on the till itself, so a dropped connection is not an
-outage — it is nothing at all. A shop can unplug the router and keep selling.
+Posnic runs its primary database and API on the till itself. In a bounded
+v1.3.0 Windows test, one synthetic cash sale completed and reopened while
+external hosts were blocked inside Electron. This does not prove an
+operating-system-wide outage, complete shift, payment-terminal path, power-loss
+recovery or every workflow. Review the
+[versioned evidence and limitations](https://posnic.com/posnic-facts).
 
-- **Free forever, and complete.** Not a trial, not a crippled edition. A shop
-  can run its entire business on it without paying anyone.
-- **Your data stays yours.** It is on your machine. No account, no signup, no
-  telemetry. See [PRIVACY.md](PRIVACY.md).
+- **Free local edition.** The desktop application is AGPL-3.0-only, has no
+  trial clock and has a zero software price. Hardware, support, backups,
+  optional services and downtime can still create operating costs.
+- **Local data path.** The local edition needs no Posnic account, and its
+  published privacy policy says it sends no analytics or telemetry to Posnic.
+  See [PRIVACY.md](PRIVACY.md).
 - **Open source under AGPL-3.0-only.** Read it, change it, self-host it, fork it.
 
 ## Features
@@ -48,7 +54,7 @@ outage — it is nothing at all. A shop can unplug the router and keep selling.
 | **Customers** | Customer accounts, categories with their own pricing, outstanding balances |
 | **Tax** | GST invoices, IGST and CGST/SGST, HSN codes, GST reports for filing |
 | **Restaurants** | Kitchen order tickets, table management, kiosk and customer displays |
-| **Hardware** | Thermal printers, barcode scanners, cash drawers, weighing scales, second displays |
+| **Hardware** | Documented paths for thermal printers, barcode scanners, cash drawers, weighing scales and second displays; verify the exact device in the [hardware matrix](docs/HARDWARE_MATRIX.md) |
 | **Reports** | Sales, purchases, inventory, expenses, profit, staff activity — all exportable |
 | **Branches** | Multiple outlets, per-branch stock, staff roles and permissions |
 
@@ -97,9 +103,9 @@ service for shops that want more than one till.
 
 | | Posnic (this repo) | Posnic Cloud |
 |---|---|---|
-| Full POS, offline, unlimited items and sales | ✅ | ✅ |
+| Selected local workflows and local operational records | ✅ | ✅ |
 | Local database and backups | ✅ | ✅ |
-| Hardware: printers, scanners, drawers, scales | ✅ | ✅ |
+| Documented printer, scanner, drawer and scale paths | ✅ | ✅ |
 | GST invoicing and reports | ✅ | ✅ |
 | Sync across tills and branches | | ✅ |
 | Off-site backups, remote dashboard | | ✅ |
@@ -157,7 +163,7 @@ little back is what keeps the next release coming.
 | | |
 |---|---|
 | ☕ **[Buy us a chai](https://github.com/sponsors/Posnic)** | one-off or monthly, from a dollar up |
-| ☁️ **[Posnic Cloud](https://posnic.com/pricing.html)** | sync, off-site backups, remote dashboards — the paid service that funds this one |
+| ☁️ **[Posnic Cloud](https://posnic.com/pricing)** | sync, off-site backups, remote dashboards — the paid service that funds this one |
 | 🏢 **Commercial licence** | keep your modifications private — **info@posnic.com** |
 
 Sponsors are named in releases unless they would rather not be.
