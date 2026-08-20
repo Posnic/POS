@@ -610,6 +610,70 @@ class WhatsAppController extends BaseController {
   /**
    * Save WhatsApp template
    */
+  /*
+   * Edit a template that already exists.
+   *
+   * The route for this has been live and calling a method that was never
+   * written, so every "Template updated" attempt returned a 500. Express did
+   * not catch it at startup because the route wraps the call in an arrow
+   * function - the wrapper IS a function, so registration succeeds and the
+   * TypeError only surfaces when someone actually presses save.
+   *
+   * Scoped the same way saveTemplate scopes: the lookup carries templateScope,
+   * so a template id from another shop finds nothing rather than being
+   * rewritten. Never trust the id alone.
+   */
+  async updateTemplate(req, res) {
+    try {
+      const { template_id, name, message, template_type } = req.body;
+
+      if (!template_id) {
+        return res.json({ type: 'error', message: 'Template id is required' });
+      }
+      if (!name || !message) {
+        return res.json({
+          type: 'error',
+          message: 'Template name and message are required',
+        });
+      }
+
+      const branchId = activeBranchId(req);
+      if (!branchId && !req.tenantContext) {
+        return res.json({
+          type: 'error',
+          message: 'Branch ID not found. Please ensure you are logged in.',
+        });
+      }
+
+      const Template = require('../models/whatsapp-template.model');
+      const template = await Template.findOneAndUpdate(
+        { _id: template_id, ...templateScope(req) },
+        {
+          $set: {
+            name,
+            message,
+            template_type: template_type || 'general',
+            updated_at: new Date(),
+          },
+        },
+        { new: true }
+      );
+
+      if (!template) {
+        return res.json({ type: 'error', message: 'Template not found' });
+      }
+
+      return res.json({
+        type: 'success',
+        message: 'Template updated successfully',
+        data: template,
+      });
+    } catch (error) {
+      console.error('Error in updateTemplate:', error);
+      return res.json({ type: 'error', message: error.message });
+    }
+  }
+
   async saveTemplate(req, res) {
     try {
       const { name, message, template_type } = req.body;

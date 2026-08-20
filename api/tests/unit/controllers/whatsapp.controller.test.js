@@ -1000,10 +1000,37 @@ describe('security: no sensitive data in responses', () => {
 // Production bug documentation
 // ═══════════════════════════════════════════════════════════════════════════════
 describe('known production issues', () => {
-  test('DOCUMENTED BUG: updateTemplate method is undefined (route exists, method missing)', () => {
-    // whatsapp.routes.js: router.post('/updateTemplate', (req, res) => whatsappController.updateTemplate(req, res))
-    // whatsapp.controller.js: updateTemplate is NOT defined in the class
-    expect(typeof ctrl.updateTemplate).toBe('undefined');
+  /*
+   * FIXED. This used to assert the method was undefined - the route called it,
+   * the class never defined it, and every "Template updated" returned a 500.
+   * Express did not catch it at startup because the route wraps the call in an
+   * arrow function: the wrapper IS a function, so registration succeeds and
+   * the TypeError waits for a real person to press save.
+   *
+   * Now it asserts the fix, and the route-handler guard
+   * (tests/unit/routes/route-handlers-exist.test.js) stops the class recurring.
+   */
+  test('updateTemplate exists - the route had been calling a missing method', () => {
+    expect(typeof ctrl.updateTemplate).toBe('function');
+  });
+
+  test('updateTemplate refuses a request with no template id', async () => {
+    const res = { json: jest.fn() };
+    await ctrl.updateTemplate({ body: { name: 'n', message: 'm' }, session: {} }, res);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'error', message: expect.stringMatching(/template id/i) })
+    );
+  });
+
+  test('updateTemplate refuses a blank name or message', async () => {
+    const res = { json: jest.fn() };
+    await ctrl.updateTemplate(
+      { body: { template_id: 't1', name: '', message: 'm' }, session: {} },
+      res
+    );
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'error', message: expect.stringMatching(/required/i) })
+    );
   });
 
   test('DOCUMENTED: saveTemplate uses hardcoded fallback branch ID when session.userId present', () => {
