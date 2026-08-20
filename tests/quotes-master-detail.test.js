@@ -336,3 +336,44 @@ test('the toolbar is pinned so its menus are not clipped', () => {
   const docBody = cssRule('.quotes-split #quotes_view_body {');
   assert.match(docBody, /overflow:\s*auto/, 'the document scrolls instead');
 });
+
+/*
+ * Add Item alignment.
+ *
+ * The Item card sits at half the page width. Three fields across it left each
+ * one about 135px, so "In stock (opening)" and the open-price label wrapped
+ * to two lines while "Selling" stayed on one - and every input beneath them
+ * started at a different height. Widening the columns is the fix; the label
+ * rule is the belt to its braces.
+ */
+test('Add Item fields have room, so their labels do not wrap unevenly', () => {
+  const html = fs.readFileSync(path.join(ROOT, 'frontend', 'modules', 'items_write.html'), 'utf8');
+  const colOf = (fieldId) => {
+    const at = html.indexOf(`for="${fieldId}"`);
+    assert.notStrictEqual(at, -1, `${fieldId} not found`);
+    const before = html.slice(0, at);
+    const div = before.slice(before.lastIndexOf('<div'));
+    const m = div.match(/col-md-(\d+)/);
+    assert.ok(m, `${fieldId} is not in a column`);
+    return Number(m[1]);
+  };
+
+  // the name gets its own line; price and stock pair up beneath it
+  assert.strictEqual(colOf('items_name'), 12, 'the item name needs the full card width');
+  assert.strictEqual(colOf('items_selling_price'), 6);
+  assert.strictEqual(colOf('items_available_quantity'), 6);
+
+  // Price & Stock is a clean 2x2 rather than four thirds wrapping 3+1
+  for (const f of ['items_company_price', 'items_mrp_price', 'items_reorder_point', 'items_unit']) {
+    assert.strictEqual(colOf(f), 6, `${f} should be half the card`);
+  }
+
+  // m-t-9 was a one-off nudge that pushed Item Units out of line with its pair
+  assert.ok(!html.includes('m-t-9'), 'a one-off margin is what breaks a shared baseline');
+});
+
+test('and the labels reserve a line so inputs share a baseline', () => {
+  const rule = cssRule('#items_new .form-row > .form-group > label.form-control-placeholder,');
+  assert.match(rule, /min-height:\s*21px/, 'a bare inline label lets its input float up');
+  assert.match(rule, /display:\s*block/);
+});

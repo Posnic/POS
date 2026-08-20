@@ -3131,6 +3131,25 @@ input:checked + .slider:before {
    centring the flex was there for. */
 #items_new .custom-control.custom-checkbox { min-height: 24px; }
 #items_new .custom-control.custom-checkbox .custom-control-label { line-height: 24px; }
+/* Every input in a row must start at the same height. These labels are plain
+   inline-block <label>s with no styling of their own, so a long one wrapped
+   to two lines and pushed ITS input down while the neighbour's stayed up -
+   that ragged step is what the owner was seeing. Reserving one line and a
+   fixed gap settles them; the wider columns in the markup stop the wrapping
+   that caused it in the first place.
+   The rows come in two shapes here - .form-row > .form-group in the Item card
+   and .row > .col-md-* in Price & Stock - so both are named. */
+#items_new .form-row > .form-group > label.form-control-placeholder,
+#items_new .card-body .row > [class*="col-md"] > label.form-control-placeholder {
+    display: block;
+    min-height: 21px;
+    line-height: 1.35;
+    margin-bottom: 6px;
+}
+/* A row of paired fields needs the pairs to sit on a shared baseline even
+   when one of them carries a hint underneath. */
+#items_new .card-body .row > [class*="col-md"] { margin-bottom: 12px; }
+
 /* Tabs take the width of their words. */
 #item_form_tabs { justify-content: flex-start; }
 #item_form_tabs .nav-item { flex: 0 0 auto; }
