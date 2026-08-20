@@ -168,6 +168,83 @@ class SettingsRepository extends BaseModel {
     }
   }
 
+  /*
+   * S6 (D4). Make one branch behave like another.
+   *
+   * WHAT GETS COPIED is the whole design question. Copying the resolved value
+   * of every key would bake the source's entire configuration into the target
+   * as explicit overrides - and the target would then never follow an
+   * account-level change again. Copying only the target-collection row would
+   * copy almost nothing today, because most shops still hold their values in
+   * the legacy branches document.
+   *
+   * So: copy the keys the source branch DECIDES - source 'branch' or 'legacy'
+   * - and skip the ones it merely INHERITS. The target ends up behaving like
+   * the source, while both keep inheriting the shop-wide rules together. That
+   * is the difference the design draws between copying, which drifts, and
+   * inheritance, which stays true.
+   *
+   * Secrets are never copied. Credentials belong to the shop that owns them,
+   * and a copy would silently duplicate a password into a branch nobody
+   * intended to give it to.
+   */
+  async copyGroups(groups, fromBranchId, toBranchId, context = {}) {
+    const wanted = Array.isArray(groups) ? groups : [];
+    if (!wanted.length) {
+      return { status: false, data: null, message: 'Pick at least one group to copy' };
+    }
+    if (wanted.includes('secrets')) {
+      return {
+        status: false,
+        data: { refused: ['secrets'] },
+        message: 'Credentials are never copied between branches',
+      };
+    }
+    const unknown = wanted.filter((g) => !COLLECTION_OF[g]);
+    if (unknown.length) {
+      return {
+        status: false,
+        data: { unknown },
+        message: 'Unknown settings group: ' + unknown.join(', '),
+      };
+    }
+    if (!fromBranchId || !toBranchId || String(fromBranchId) === String(toBranchId)) {
+      return { status: false, data: null, message: 'Pick two different branches' };
+    }
+
+    const licenseId = context.licenseId;
+    const copied = {};
+    try {
+      for (const group of wanted) {
+        const read = await this.resolveGroup(group, { branchId: fromBranchId, licenseId });
+        if (!read.status) return read;
+
+        const own = {};
+        for (const [key, where] of Object.entries(read.data.source || {})) {
+          // 'account' means the source inherits it too - leave the target to
+          // inherit it as well rather than freezing today's answer into it
+          if (where === 'branch' || where === 'legacy') own[key] = read.data.values[key];
+        }
+
+        if (!Object.keys(own).length) {
+          copied[group] = [];
+          continue;
+        }
+        const write = await this.saveGroup(group, own, { branchId: toBranchId, licenseId });
+        if (!write.status) return write;
+        copied[group] = write.data.written;
+      }
+      return {
+        status: true,
+        data: { from: String(fromBranchId), to: String(toBranchId), copied },
+        message: 'success',
+      };
+    } catch (error) {
+      console.error('Error in SettingsRepository.copyGroups:', error);
+      return { status: false, data: null, message: error.message };
+    }
+  }
+
   async saveGroup(group, values = {}, context = {}, options = {}) {
     const collectionName = COLLECTION_OF[group];
     if (!collectionName) {

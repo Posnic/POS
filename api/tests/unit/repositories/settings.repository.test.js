@@ -334,3 +334,91 @@ describe('the account level read on its own', () => {
     expect(r.data.set).toEqual(['quotes_enable']);
   });
 });
+
+/*
+ * S6 - copy settings between branches.
+ *
+ * The design question is WHAT gets copied. Copying every resolved value would
+ * bake the source's whole configuration into the target as explicit
+ * overrides, and the target would never follow an account-level change again.
+ * Copying only the new-collection row would copy almost nothing today,
+ * because most shops still hold their values in the legacy branches doc.
+ *
+ * So the rule is: copy what the source DECIDES, skip what it INHERITS.
+ */
+describe('copying settings to another branch', () => {
+  let repo;
+  const OTHER = '64b000000000000000000009';
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    repo = new SettingsRepository();
+  });
+
+  test('a key the source merely inherits is NOT copied', async () => {
+    // quotes_enable comes from the account; quick_sale_enable is this branch's own
+    seed({
+      branchRow: { quick_sale_enable: true },
+      accountRow: { quotes_enable: true },
+    });
+    mockCollections.branch_features.updateOne = jest.fn().mockResolvedValue({});
+    mockCollections.branches.updateOne = jest.fn().mockResolvedValue({});
+
+    const r = await repo.copyGroups(['features'], BRANCH, OTHER, { licenseId: LICENSE });
+    expect(r.status).toBe(true);
+
+    const written = mockCollections.branch_features.updateOne.mock.calls[0][1].$set;
+    expect(written.quick_sale_enable).toBe(true);
+    // freezing this in would stop the target following a shop-wide change
+    expect('quotes_enable' in written).toBe(false);
+    expect(r.data.copied.features).toEqual(['quick_sale_enable']);
+  });
+
+  test('legacy values count as the branch own decision', async () => {
+    // the common case today: nothing in the new collection at all
+    seed({ legacy: { quotes_enable: true } });
+    mockCollections.branch_features.updateOne = jest.fn().mockResolvedValue({});
+    mockCollections.branches.updateOne = jest.fn().mockResolvedValue({});
+
+    const r = await repo.copyGroups(['features'], BRANCH, OTHER, { licenseId: LICENSE });
+    expect(r.data.copied.features).toEqual(['quotes_enable']);
+  });
+
+  test('it writes to the DESTINATION branch, not the source', async () => {
+    seed({ branchRow: { quick_sale_enable: true } });
+    mockCollections.branch_features.updateOne = jest.fn().mockResolvedValue({});
+    mockCollections.branches.updateOne = jest.fn().mockResolvedValue({});
+
+    await repo.copyGroups(['features'], BRANCH, OTHER, { licenseId: LICENSE });
+    const filter = mockCollections.branch_features.updateOne.mock.calls[0][0];
+    expect(String(filter.branch_id)).toBe(OTHER);
+  });
+
+  test('credentials are refused by name, never quietly dropped', async () => {
+    const r = await repo.copyGroups(['features', 'secrets'], BRANCH, OTHER, {
+      licenseId: LICENSE,
+    });
+    expect(r.status).toBe(false);
+    expect(r.data.refused).toEqual(['secrets']);
+    expect(r.message).toMatch(/never copied/i);
+  });
+
+  test('copying a branch onto itself is refused', async () => {
+    const r = await repo.copyGroups(['features'], BRANCH, BRANCH, { licenseId: LICENSE });
+    expect(r.status).toBe(false);
+    expect(r.message).toMatch(/two different branches/i);
+  });
+
+  test('an empty group list does nothing rather than everything', async () => {
+    const r = await repo.copyGroups([], BRANCH, OTHER, { licenseId: LICENSE });
+    expect(r.status).toBe(false);
+    expect(r.message).toMatch(/at least one group/i);
+  });
+
+  test('an unknown group is named back', async () => {
+    const r = await repo.copyGroups(['wibble'], BRANCH, OTHER, { licenseId: LICENSE });
+    expect(r.status).toBe(false);
+    expect(r.data.unknown).toEqual(['wibble']);
+  });
+});

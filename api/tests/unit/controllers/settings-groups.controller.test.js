@@ -16,6 +16,7 @@
 
 const mockResolve = jest.fn();
 const mockSave = jest.fn();
+const mockCopy = jest.fn();
 
 jest.mock('../../../src/repositories/settings.repository', () => {
   return class MockRepo {
@@ -24,6 +25,9 @@ jest.mock('../../../src/repositories/settings.repository', () => {
     }
     saveGroup(...a) {
       return mockSave(...a);
+    }
+    copyGroups(...a) {
+      return mockCopy(...a);
     }
   };
 });
@@ -54,6 +58,7 @@ describe('settings group endpoints', () => {
     jest.spyOn(console, 'error').mockImplementation(() => {});
     mockResolve.mockResolvedValue({ status: true, data: { group: 'features', values: {} } });
     mockSave.mockResolvedValue({ status: true, data: { written: [] } });
+    mockCopy.mockResolvedValue({ status: true, data: { copied: { features: [] } } });
   });
 
   test('an unknown group is a 404, never a guess', async () => {
@@ -184,6 +189,17 @@ describe('settings group endpoints', () => {
  * fall back ON, so "reset to inherited" would delete what it meant to inherit.
  */
 describe('inheritance', () => {
+  /* These blocks sit OUTSIDE the first describe, so they do not inherit its
+     beforeEach - without this the mocks accumulate across tests and an
+     assertion on mock.calls[0] reads a call some earlier test made. */
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    mockResolve.mockResolvedValue({ status: true, data: { group: 'features', values: {} } });
+    mockSave.mockResolvedValue({ status: true, data: { written: [] } });
+    mockCopy.mockResolvedValue({ status: true, data: { copied: { features: [] } } });
+  });
+
   test('reading the account level does not start from a branch override', async () => {
     const accountRead = jest.fn().mockResolvedValue({
       status: true,
@@ -256,5 +272,101 @@ describe('inheritance', () => {
     const asText = JSON.stringify(res.json.mock.calls[0][0]);
     expect(asText).not.toContain('hunter2');
     expect(asText).not.toContain('account-level-secret');
+  });
+});
+
+/*
+ * S6 - copying settings between branches.
+ *
+ * The destination is the dangerous parameter: it is the branch being
+ * overwritten. So access is checked on BOTH branches, and the copy is
+ * owner-class only - deciding that one shop should now behave like another is
+ * not a cashier's call.
+ */
+describe('copying settings between branches', () => {
+  /* These blocks sit OUTSIDE the first describe, so they do not inherit its
+     beforeEach - without this the mocks accumulate across tests and an
+     assertion on mock.calls[0] reads a call some earlier test made. */
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    mockResolve.mockResolvedValue({ status: true, data: { group: 'features', values: {} } });
+    mockSave.mockResolvedValue({ status: true, data: { written: [] } });
+    mockCopy.mockResolvedValue({ status: true, data: { copied: { features: [] } } });
+  });
+
+  const A = '64b00000000000000000000a';
+  const B = '64b00000000000000000000b';
+
+  test('a copy names both branches and the groups', async () => {
+    const res = mkRes();
+    await controller.copy(
+      mkReq({ body: { from: A, to: B, groups: ['features', 'preferences'] } }),
+      res
+    );
+    expect(mockCopy).toHaveBeenCalledWith(['features', 'preferences'], A, B, expect.anything());
+    expect(res.status).not.toHaveBeenCalledWith(400);
+  });
+
+  test('without a destination it refuses rather than guessing', async () => {
+    const res = mkRes();
+    await controller.copy(mkReq({ body: { from: A, groups: ['features'] } }), res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(mockCopy).not.toHaveBeenCalled();
+  });
+
+  test('a cashier cannot make one shop behave like another', async () => {
+    const res = mkRes();
+    await controller.copy(
+      mkReq({
+        body: { from: A, to: B, groups: ['features'] },
+        user: {
+          usertype: 'cashier',
+          license: 'L',
+          branch_id: A,
+          access: { setting: { read: true, write: true } },
+        },
+      }),
+      res
+    );
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(mockCopy).not.toHaveBeenCalled();
+  });
+
+  test('a branch the account cannot reach is refused - destination included', async () => {
+    const restricted = {
+      usertype: 'manager',
+      license: 'L',
+      branch_id: A,
+      branch_access: [{ branch_id: A }],
+      access: { setting: { read: true, write: true } },
+    };
+    const res = mkRes();
+    await controller.copy(
+      mkReq({ body: { from: A, to: B, groups: ['features'] }, user: restricted }),
+      res
+    );
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.json.mock.calls[0][0].message).toMatch(/destination/i);
+    expect(mockCopy).not.toHaveBeenCalled();
+  });
+
+  test('an unrestricted account (no branch_access list) may copy', async () => {
+    const res = mkRes();
+    await controller.copy(mkReq({ body: { from: A, to: B, groups: ['features'] } }), res);
+    expect(mockCopy).toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalledWith(403);
+  });
+
+  test('a refusal from the repository is reported with its reason', async () => {
+    mockCopy.mockResolvedValue({
+      status: false,
+      data: { refused: ['secrets'] },
+      message: 'Credentials are never copied between branches',
+    });
+    const res = mkRes();
+    await controller.copy(mkReq({ body: { from: A, to: B, groups: ['secrets'] } }), res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json.mock.calls[0][0].data.refused).toEqual(['secrets']);
   });
 });
