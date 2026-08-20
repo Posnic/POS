@@ -1123,6 +1123,9 @@
         let item_unit = (typeof (params.unit) != "undefined" && params.unit !== null) ? params.unit : "qty";
         var kotHideStyle = (PosnicPro.sales.saleProcess === 'KOT') ? ' style="display:none;" ' : '';
         var colWidth = (PosnicPro.sales.saleProcess === 'KOT') ? 'width="60%"' : 'width="30%"';
+        // whole-line editor door (owner ask): one pencil, every field
+        var saleEditIcon = (PosnicPro.local.get('sale_quick_edit') === 'disable') ? '' :
+            '<a href="javascript:void(0)" class="sale-line-edit" data-id="' + id + '" title="Edit price, qty, discount, tax"><i class="feather icon-edit-2"></i></a>';
         var rowHTMLLine = '<tr id="touch_row_' + id + '" class="touch-sales-hover-effect border-top pt-3"> ' +
             '    <td id="addSalesLineItemName_' + id + '" class="font_size14" data-id="' + item_name + '" ' + colWidth + '>' + item_name + inlineNote + '</td>' +
             '    <td id="addSalesLineItemQty_' + id + '" class="text-center add_circle font_size14">' + addLineItemQty + '</td>' +
@@ -1131,7 +1134,7 @@
             '    <td name ="addSalesLineItemDiscount" id="addSalesLineItemDiscountprint_' + id + '" class="text-center font_size14" ' + kotHideStyle + '>' + discount_percentages + inlineDiscount + '</td>' +
             '    <td name="addSalesLineItemTax" id="addSalesLineItemTax_' + id + '" class="text-center font_size14" ' + kotHideStyle + '>' + lineItemTax + '<span>%</span></td>' +
             '    <td name ="addSalesLineTotal" id="addSalesLineTotal_' + id + '" class="font_size14" ' + kotHideStyle + '>' + line_total.toFixed(2) + '</td>' +
-            '    <td id="addSalesRemoveLineItem_' + id + '" class="text-center font_size14">' + removeLineItem +
+            '    <td id="addSalesRemoveLineItem_' + id + '" class="text-center font_size14">' + saleEditIcon + removeLineItem +
             '    </td>' +
             '    <td name="addSalesLineItemId" id="addSalesLineItemId_' + id + '" style="display:none;">' + id + '</td>' +
             '    <td id="addSalesLineItemTaxType_' + id + '" style="display:none;"><span class="badge badge-info-inverse">' + taxTypeText + '</span></td>' +
@@ -6038,6 +6041,137 @@ $(document).on('mousedown', '.sale-disc-mode', function (e) {
     $(this).text(pct ? '%' : (PosnicPro.local.get('currencySign') || '₹'));
     $cell.find('.sale-cell-input').focus();
 });
+/*
+ * Whole-line editor (owner ask): the pencil on each cart row opens ONE
+ * popup with price, qty, discount and tax together - one approval, one
+ * save, instead of three double-click edits when a queue is waiting.
+ * Same rails as cellEdit: the sale_quick_edit toggle, the ACL perms with
+ * a manager-PIN fallback, and items/quickPatch when the item record
+ * should learn the change. JS-built and body-appended, the only modal
+ * pattern that has never broken here.
+ */
+PosnicPro.sales.lineEdit = {
+    _id: null,
+    open: function (itemId) {
+        if (PosnicPro.local.get('sale_quick_edit') === 'disable') { return; }
+        var go = function () { PosnicPro.sales.lineEdit._show(itemId); };
+        if (PosnicPro.posCan && !(PosnicPro.posCan('price_override') && PosnicPro.posCan('discount_apply'))) {
+            PosnicPro.requireManagerApproval('price_override',
+                { prompt: 'Editing a line needs a manager\'s approval.' }, go);
+            return;
+        }
+        go();
+    },
+    _show: function (id) {
+        PosnicPro.sales.lineEdit._id = id;
+        if (!$('#sale_line_edit').length) {
+            $('body').append(
+                '<div class="modal fade" id="sale_line_edit" tabindex="-1" role="dialog" aria-hidden="true">'
+                + '<div class="modal-dialog modal-dialog-centered" role="document"><div class="modal-content">'
+                + '<div class="modal-header py-2" style="background:#fff;"><h5 class="modal-title" id="sale_line_edit_name" style="color:#1a202c !important;">Edit line</h5>'
+                + '<button type="button" class="close" data-dismiss="modal" style="color:#1a202c;">&times;</button></div>'
+                + '<div class="modal-body pb-2">'
+                + '<div class="form-row">'
+                + '<div class="form-group col-6"><label class="le-label">Price</label><input type="number" min="0" step="any" class="form-control text-right" id="le_price"></div>'
+                + '<div class="form-group col-6"><label class="le-label">Quantity</label><input type="number" min="0" step="any" class="form-control text-right" id="le_qty"></div>'
+                + '<div class="form-group col-6"><label class="le-label">Discount</label>'
+                + '<div class="input-group"><div class="input-group-prepend"><button type="button" class="btn btn-outline-secondary" id="le_disc_mode" title="Tap to switch amount / percent">%</button></div>'
+                + '<input type="number" min="0" step="any" class="form-control text-right" id="le_disc"></div></div>'
+                + '<div class="form-group col-6" id="le_tax_group"><label class="le-label">Tax %</label><input type="number" min="0" max="100" step="any" class="form-control text-right" id="le_tax"></div>'
+                + '</div>'
+                + '<small class="text-muted">"Sale + update item" also writes the change back to the item record for every future sale.</small>'
+                + '</div>'
+                + '<div class="modal-footer py-2 d-flex" style="gap:6px;">'
+                + '<button type="button" class="btn btn-primary flex-fill" id="le_save_sale">Only this sale</button>'
+                + '<button type="button" class="btn btn-outline-primary flex-fill" id="le_save_both">Sale + update item</button>'
+                + '</div></div></div></div>');
+            $(document).on('click', '#le_disc_mode', function () {
+                var pct = $(this).data('pct') !== true;
+                $(this).data('pct', pct).text(pct ? '%' : (PosnicPro.local.get('currencySign') || '₹'));
+            });
+            $(document).on('click', '#le_save_sale', function () { PosnicPro.sales.lineEdit._save(false); });
+            $(document).on('click', '#le_save_both', function () { PosnicPro.sales.lineEdit._save(true); });
+            $(document).on('keydown', '#sale_line_edit input', function (e) {
+                if (e.key === 'Enter') { e.preventDefault(); PosnicPro.sales.lineEdit._save(false); }
+            });
+        }
+        $('#sale_line_edit_name').text($('#addSalesLineItemName_' + id).data('id') || 'Edit line');
+        $('#le_price').val(parseFloat($('#addSalesLineItemPrice_' + id).text()) || 0);
+        $('#le_qty').val(parseFloat($('#touchsale_item_qty' + id).val()) || 1);
+        var isPct = $('#discountSign' + id).text() === '%';
+        $('#le_disc').val(parseFloat($('#addSalesLineItemDiscount_' + id).text()) || 0);
+        $('#le_disc_mode').data('pct', isPct).text(isPct ? '%' : (PosnicPro.local.get('currencySign') || '₹'));
+        var curTax = parseFloat($('#addSalesLineItemTax_' + id).text()) || 0;
+        $('#le_tax').val(curTax);
+        // owner rule: the tax field lives under the tax toggle - hidden when
+        // the feature is off, unless this line already carries recorded tax
+        var taxOff = PosnicPro.local.get('default_tax_enable_disable') === 'false'
+            && PosnicPro.local.get('gst_action') !== 'enable';
+        $('#le_tax_group').toggle(!taxOff || curTax > 0);
+        $('#sale_line_edit').modal('show');
+        setTimeout(function () { $('#le_price').focus().select(); }, 350);
+    },
+    _save: function (updateItem) {
+        var id = PosnicPro.sales.lineEdit._id;
+        if (!id || !$('#touch_row_' + id).length) { $('#sale_line_edit').modal('hide'); return; }
+        $('#sale_line_edit').modal('hide');
+        var taxType = $('#addSalesLineItemTaxType_' + id).text();
+        var patch = { id: $('#addSalesLineItemId_' + id).text() || id };
+        var np = parseFloat($('#le_price').val());
+        var nq = parseFloat($('#le_qty').val());
+        var nd = parseFloat($('#le_disc').val());
+        var ntx = parseFloat($('#le_tax').val());
+        var pct = $('#le_disc_mode').data('pct') === true;
+        var curPrice = parseFloat($('#addSalesLineItemPrice_' + id).text()) || 0;
+        var curTax = parseFloat($('#addSalesLineItemTax_' + id).text()) || 0;
+        var curDisc = parseFloat($('#addSalesLineItemDiscount_' + id).text()) || 0;
+        var curPct = $('#discountSign' + id).text() === '%';
+        var TaxValue = curTax;
+        if (isFinite(np) && np >= 0 && np !== curPrice) {
+            $('#saleInlineItemPrice_' + id).text(np.toFixed(2));
+            $('#addSalesLineItemPrice_' + id).text(np.toFixed(2));
+            $('#addSalesLineItemSellingPrice_' + id).text(np.toFixed(2));
+            patch.selling_price = np;
+        }
+        if ($('#le_tax_group').is(':visible') && isFinite(ntx) && ntx >= 0 && ntx <= 100 && ntx !== curTax) {
+            $('#addSalesLineItemTax_' + id).html(ntx + '<span>%</span>');
+            TaxValue = ntx;
+            patch.tax = ntx;
+        }
+        var priceNow = parseFloat($('#addSalesLineItemPrice_' + id).text()) || 0;
+        var mrp = taxType === 'Exc' ? priceNow : priceNow / (1 + TaxValue / 100);
+        $('#addSalesLineItemSubTotal_' + id).text(mrp.toFixed(2));
+        if (isFinite(nd) && nd >= 0 && (nd !== curDisc || pct !== curPct)) {
+            if (pct) {
+                $('#addSalesLineItemDiscount_' + id).html(nd + '<span id="discountSign' + id + '">%</span>');
+                $('#addSalesLineDiscountPercentage_' + id).text(nd);
+                $('#addSalesLineDiscountAmount_' + id).text(0);
+                $('#addSalesLineItemDiscountprint_' + id).text(nd + '%');
+                patch.discount_percentage = nd;
+            } else {
+                $('#addSalesLineItemDiscount_' + id).html(nd.toFixed(2) + '<span id="discountSign' + id + '">' + (PosnicPro.local.get('currencySign') || '') + '</span>');
+                $('#addSalesLineDiscountAmount_' + id).text(nd.toFixed(2));
+                $('#addSalesLineDiscountPercentage_' + id).text(0);
+                $('#addSalesLineItemDiscountprint_' + id).text(nd.toFixed(2));
+                patch.discount_amount = nd;
+            }
+        }
+        // quantity flows through its own input so every listener runs
+        if (isFinite(nq) && nq > 0 && nq !== (parseFloat($('#touchsale_item_qty' + id).val()) || 0)) {
+            $('#touchsale_item_qty' + id).val(nq).trigger('change');
+        }
+        PosnicPro.sales.commonInlineCalculation(id, taxType, TaxValue);
+        if (updateItem && Object.keys(patch).length > 1) {
+            PosnicPro.post({ url: 'items/quickPatch', data: JSON.stringify(patch) }, function (r) {
+                PosnicPro.alert(r.type, r.type === 'success' ? 'Item record updated too' : r.message);
+                if (PosnicPro.sales.itemCache) { PosnicPro.sales.itemCache.clear(); }
+            }, function () { PosnicPro.alert('warning', 'Sale updated; the item record could not be'); });
+        }
+    }
+};
+$(document).on('click', '.sale-line-edit', function () {
+    PosnicPro.sales.lineEdit.open(String($(this).data('id')));
+});
 $(document).on('dblclick', '[id^="addSalesLineItemPrice_"]', function () {
     var id = this.id.replace('addSalesLineItemPrice_', '');
     PosnicPro.sales.cellEdit.start('price', id, $(this));
@@ -6309,15 +6443,17 @@ PosnicPro.sales.calculation = {
         var taxFeatureOff = PosnicPro.local.get('default_tax_enable_disable') === 'false'
             && PosnicPro.local.get('gst_action') !== 'enable';
         var showTaxCol = !taxFeatureOff || anyLineTax;
-        // header AND cells as ONE unit. Two trs carry sales_new_class in
-        // the built page, so scope to the cart table and take the 6th
-        // column of ITS header row; if that th cannot be pinned, hide
-        // nothing - a visible extra column is noise, a shifted table is
-        // broken.
-        var $taxTh = $('#sales_new #return_table thead tr').first().find('th').eq(5);
-        if ($taxTh.length === 1) {
-            $taxTh.toggle(showTaxCol);
-            $('[id^="addSalesLineItemTax_"]').toggle(showTaxCol);
+        // header AND cells as ONE unit - via ONE class on the table with
+        // !important CSS. The old per-element toggling kept desyncing:
+        // any other flow calling .show() on the kot-hide headers restored
+        // the Tax th with inline style while the cells stayed hidden, and
+        // the whole body shifted a column. A class cannot half-apply.
+        var $cart = $('#sales_new #return_table');
+        $cart.toggleClass('tax-col-off', !showTaxCol);
+        if (showTaxCol && PosnicPro.sales.saleProcess !== 'KOT') {
+            // sweep stale inline display the old path left behind
+            $cart.find('thead th.th-tax-col').css('display', '');
+            $('[id^="addSalesLineItemTax_"]').css('display', '');
         }
         // totals row: with no Tax cell the Discount slides into its place
         // on the right; when tax returns, Discount goes back left
