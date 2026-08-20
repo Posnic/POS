@@ -367,6 +367,14 @@ class QuoteRepository extends BaseModel {
     }
   }
 
+  /*
+   * Quote list: status filter, free-text search and paging all decided
+   * HERE. They used to be decided in the browser over whatever the first
+   * 100 rows happened to be, which was not merely slow - past 100 quotes a
+   * search for an older one returned "no quotes here yet" for a quote that
+   * plainly exists, and the pager only ever walked that same first 100.
+   * `meta` carries the true total so the pager knows how far the list goes.
+   */
   async listQuotes(params = {}, context = {}) {
     try {
       const wall = this._wall(context);
@@ -375,10 +383,30 @@ class QuoteRepository extends BaseModel {
       if (params.status && STATUSES.includes(String(params.status))) {
         filter.status = String(params.status);
       }
-      const limit = Math.min(Number(params.limit) || 100, 200);
+      const term = String(params.search || '')
+        .trim()
+        .slice(0, 80);
+      if (term) {
+        // user text becomes a regex: escape it, or a stray '(' is a 500
+        const rx = new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+        filter.$or = [{ customer_name: rx }, { quote_id: rx }];
+      }
+      const limit = Math.min(Math.max(Number(params.limit) || 100, 1), 200);
+      const page = Math.max(Number(params.page) || 1, 1);
       const collection = await this.getCollection(this.collectionName);
-      const rows = await collection.find(filter).sort({ created_date: -1 }).limit(limit).toArray();
-      return { status: true, data: rows, message: 'success' };
+      const total = await collection.countDocuments(filter);
+      const rows = await collection
+        .find(filter)
+        .sort({ created_date: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .toArray();
+      return {
+        status: true,
+        data: rows,
+        meta: { total, page, limit, pages: Math.max(1, Math.ceil(total / limit)) },
+        message: 'success',
+      };
     } catch (error) {
       console.error('Error in QuoteRepository.listQuotes:', error);
       return { status: false, data: null, message: error.message };
