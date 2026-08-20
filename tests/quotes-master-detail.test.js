@@ -446,3 +446,37 @@ test('the whole row is the highlight, not a mark on its edge', () => {
   const others = cssRule('.quotes-split #quotes_list_rows tr.quotes-row > td {');
   assert.match(others, /background:\s*transparent/, 'unselected rows sit on the grey');
 });
+
+/*
+ * The bridge (owner ask): black, not blue, and the same line on both sides.
+ *
+ * An accent-coloured rule reads as decoration; a plain dark rule reads as
+ * structure. The selection and the document wear the SAME line so the two
+ * horizontal borders carry the eye out of the list and around the quote,
+ * rather than stopping dead at the divider.
+ */
+test('the selection is drawn in ink, not in the accent colour', () => {
+  /* `is-active > td` heads two rules - the one that paints the row and the one
+     that borders it - so pick the block by CONTENT. Matching the first
+     occurrence lands on the background rule, which has no border at all and
+     would pass this test for the wrong reason. */
+  const blocks = [...css.matchAll(/is-active > td[^{]*\{[^}]*\}/g)].map((m) => m[0]);
+  const bordered = blocks.filter((b) => /border-top:|border-left:/.test(b));
+  assert.ok(bordered.length >= 2, 'expected the border rules for the row and its first cell');
+  for (const b of bordered) {
+    assert.ok(
+      !/#0969da/i.test(b),
+      'the owner asked for black - an accent-coloured border reads as decoration',
+    );
+    assert.match(b, /#1f2328/i, 'the selection is drawn in ink');
+  }
+});
+
+test('the document wears the same line, which is what bridges them', () => {
+  const sheet = cssRule('.quotes-split #quotes_view_card .q-sheet {');
+  assert.match(
+    sheet,
+    /border-color:\s*#1f2328/i,
+    'a different colour either side of the divider is two boxes, not a bridge',
+  );
+});
