@@ -447,11 +447,13 @@ test('the selection is drawn in ink, not in the accent colour', () => {
       !/#0969da/i.test(line),
       'an accent-coloured border reads as decoration, not structure',
     );
-    assert.ok(
-      !/#1f2328/i.test(line),
-      'near-black was correct as structure and too hard to look at (owner: "very rude")',
-    );
-    assert.match(line, /#57606a/i, 'the selection is drawn in dark grey');
+    for (const tooDark of ['#1f2328', '#57606a']) {
+      assert.ok(
+        !new RegExp(tooDark, 'i').test(line),
+        `${tooDark} overshot - the selection needs to be more than its neighbours, not dark`,
+      );
+    }
+    assert.match(line, /#8c959f/i, 'one clear step darker than the ordinary border');
   }
 });
 

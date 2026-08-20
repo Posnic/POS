@@ -3887,13 +3887,13 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
    which is the whole point of the join. .table-borderless means the last cell
    simply has no right border to remove. */
 .quotes-split #quotes_list_rows tr.quotes-row.is-active > td {
-    border-top: 1px solid #57606a !important;
-    border-bottom: 1px solid #57606a !important;
+    border-top: 1px solid #8c959f !important;
+    border-bottom: 1px solid #8c959f !important;
     font-weight: 600;
     color: #1f2328;
 }
 .quotes-split #quotes_list_rows tr.quotes-row.is-active > td:first-child {
-    border-left: 3px solid #57606a !important;
+    border-left: 3px solid #8c959f !important;
 }
 /* Unselected rows sit ON the grey, so nothing may paint them white. */
 .quotes-split #quotes_list_rows tr.quotes-row > td { background: transparent; }
@@ -3920,9 +3920,12 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 .quotes-split #quotes_view_card > .card-body { padding: 12px 14px; }
 /* The A4 quote keeps its own, lighter paper edge (owner ask: leave the
    document design alone). Only the SELECTION is drawn darker - in #57606a
-   rather than near-black, which was correct as structure and too hard to
-   look at. Dark grey still reads as a rule rather than an accent, which is
-   the point; it just stops shouting. */
+   one clear step darker than the ordinary #d0d7de border, and no further.
+   Two attempts overshot: near-black read as a bar rather than a rule, and
+   #57606a was still heavier than the list around it. The selection only has
+   to be MORE than its neighbours, not dark in absolute terms - the eye finds
+   it by contrast with the rows above and below, so the smallest step that
+   creates that contrast is the right one. */
 .quotes-split #quotes_view_card .q-sheet { padding: 24px 26px; }
 
 /* Dark themes: the joined surface and its divider are the whole effect, so
@@ -3945,11 +3948,11 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 }
 [data-theme] .quotes-split #quotes_list_rows tr.quotes-row.is-active > td {
     color: var(--theme-text-primary);
-    border-top-color: var(--theme-text-secondary, #57606a) !important;
-    border-bottom-color: var(--theme-text-secondary, #57606a) !important;
+    border-top-color: var(--theme-text-muted, #8c959f) !important;
+    border-bottom-color: var(--theme-text-muted, #8c959f) !important;
 }
 [data-theme] .quotes-split #quotes_list_rows tr.quotes-row.is-active > td:first-child {
-    border-left-color: var(--theme-text-secondary, #57606a) !important;
+    border-left-color: var(--theme-text-muted, #8c959f) !important;
 }
 [data-theme] .quotes-split #quotes_list_rows tr.quotes-row:hover > td {
     background: var(--theme-table-row-hover);
