@@ -18,6 +18,10 @@ class SupplierModel extends BaseModel {
     _id: { type: 'ObjectId', select: true, name: 'id' },
     branch_id: { type: 'ObjectId', select: false },
     branch_name: { type: 'String', select: false },
+    /* S7 (D5): the account-level relation, same shape as items and customers.
+       Seeded with the owning branch so nothing moves; sharing a supplier
+       between shops is a deliberate grant. */
+    branch_access: { type: 'Array', select: false },
     name: { type: 'String', select: true },
     email: { type: 'String', select: true },
     phone: { type: 'String', select: true },

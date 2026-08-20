@@ -254,8 +254,9 @@ describe('SupplierModel — fields schema definition', () => {
     expect(m.fields).toBeUndefined();
   });
 
-  test('static fields has exactly 20 entries', () => {
-    expect(Object.keys(SupplierModel.fields)).toHaveLength(20);
+  test('static fields has exactly 21 entries', () => {
+    // 21 since S7 added branch_access - the account-level branch relation
+    expect(Object.keys(SupplierModel.fields)).toHaveLength(21);
   });
 
   test('all expected field names are present', () => {
@@ -263,6 +264,7 @@ describe('SupplierModel — fields schema definition', () => {
       '_id',
       'branch_id',
       'branch_name',
+      'branch_access',
       'name',
       'email',
       'phone',
@@ -420,8 +422,10 @@ describe('SupplierModel — fields select:false (hidden from default projection)
     'license',
   ];
 
-  test('exactly 7 fields have select:false', () => {
-    expect(Object.values(fields).filter((f) => f.select === false)).toHaveLength(7);
+  test('exactly 8 fields have select:false', () => {
+    // branch_access joins them: it is a relation, not list-payload data,
+    // exactly as items treat theirs
+    expect(Object.values(fields).filter((f) => f.select === false)).toHaveLength(8);
   });
 
   selectFalseFields.forEach((fieldName) => {
@@ -1178,6 +1182,6 @@ describe('SupplierModel — instance independence', () => {
     const m1 = new SupplierModel();
     expect(m1.fields).toBeUndefined();
     expect(SupplierModel.fields).toBeDefined();
-    expect(Object.keys(SupplierModel.fields)).toHaveLength(20);
+    expect(Object.keys(SupplierModel.fields)).toHaveLength(21);
   });
 });
