@@ -467,3 +467,41 @@ test('the A4 quote keeps its own paper edge', () => {
   );
   assert.match(sheet, /padding:/, 'it still gets its tighter padding inside the split');
 });
+
+/*
+ * Add Item, Details and More tabs (owner queue #32).
+ *
+ * "Brand, Tags, this width not required... Browse button too big... images
+ * unorganised." Three complaints with one cause: the fields run the full
+ * width of whatever column holds them, so a wide screen gives a 700px box for
+ * a brand name. A short value does not become easier to type in a wider box,
+ * and without a consistent right-hand edge the form scans as a spreadsheet.
+ */
+test('short fields on the Details and More tabs are capped', () => {
+  const rule = cssRule('#items_new #item_tab_details input.form-control,');
+  assert.match(rule, /max-width:\s*420px/, 'a brand name does not need 700px');
+});
+
+test('the description keeps more room than the short fields, but not the page', () => {
+  const desc = cssRule('#items_new #items_description {');
+  const m = desc.match(/max-width:\s*(\d+)px/);
+  assert.ok(m, 'the description needs a cap too');
+  assert.ok(Number(m[1]) > 420, 'it holds sentences, so it gets more than a brand name');
+  assert.ok(Number(m[1]) <= 800, 'but a text column past ~800px is hard to read back');
+});
+
+test('the dropzone is one control on a tab, not a landing page', () => {
+  const heading = cssRule('#items_new .Neon-input-text h3 {');
+  const m = heading.match(/font-size:\s*([\d.]+)px/);
+  assert.ok(m && Number(m[1]) <= 15, 'an h3 caption is what made it read as oversized');
+
+  const btn = cssRule('#items_new .Neon-input-choose-btn {');
+  assert.match(btn, /font-size:/, 'the Browse button needs sizing down with it');
+});
+
+test('image previews lay out as a wrapping row rather than however they fall', () => {
+  const preview = cssRule('#items_new #item-display-preview {');
+  assert.match(preview, /display:\s*flex/);
+  assert.match(preview, /flex-wrap:\s*wrap/);
+  assert.match(preview, /gap:/, 'thumbnails need space between them to read as separate');
+});

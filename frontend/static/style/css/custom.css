@@ -3220,6 +3220,53 @@ input:checked + .slider:before {
 [data-theme] .sds-sub { color: var(--theme-text-secondary); }
 [data-theme] #sds_loyalty { color: var(--theme-success-color, #1a7f37); }
 
+/*
+ * Add Item, Details and More tabs (owner queue #32).
+ *
+ * Three complaints, one cause: the fields run the full width of whatever
+ * column holds them. On a wide screen that gives a 700px box for a brand name
+ * and a dropzone with an <h3> in it, and the eye loses the right-hand edge to
+ * follow. A short value does not become easier to type in a wider box.
+ *
+ * Capping the SHORT fields and letting the long ones stay long is what makes
+ * a form scan as a column rather than a spreadsheet.
+ */
+#items_new #item_tab_details input.form-control,
+#items_new #item_tab_details select.form-control,
+#items_new #item_tab_more input.form-control,
+#items_new #item_tab_more select.form-control {
+    max-width: 420px;
+}
+/* the description holds sentences, so it gets more room - but not the page */
+#items_new #items_description { max-width: 640px; }
+
+/* The dropzone was sized like a landing page: an <h3> caption and a button to
+   match. It is one control among many on a tab, so it reads as one. */
+#items_new .Neon-theme-dragdropbox { max-width: 420px; }
+#items_new .Neon-input-dragDrop { padding: 14px 12px; }
+#items_new .Neon-input-text h3 {
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 0;
+}
+#items_new .Neon-input-text.m-b-20 { margin-bottom: 8px !important; }
+#items_new .Neon-input-icon i { font-size: 22px; }
+#items_new .Neon-input-choose-btn {
+    padding: 3px 14px;
+    font-size: 12.5px;
+    line-height: 1.6;
+}
+
+/* Thumbnails in a row that wraps, rather than however they happened to fall.
+   The existing hover scale is kept - it is genuinely useful for checking an
+   image - so the row leaves headroom for it instead of clipping. */
+#items_new #item-display-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding-top: 4px;
+}
+
 /* Tabs take the width of their words. */
 #item_form_tabs { justify-content: flex-start; }
 #item_form_tabs .nav-item { flex: 0 0 auto; }
