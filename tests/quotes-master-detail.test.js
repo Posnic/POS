@@ -162,8 +162,20 @@ test('the two panes read as one surface, not two cards', () => {
   assert.match(panes, /border:\s*0/, 'the panes must give up their own borders');
   assert.match(panes, /box-shadow:\s*none/, 'two shadows would redraw the seam');
 
+  // and the panes must beat the theme, which sets .card borders !important
+  assert.match(panes, /border:\s*0\s*!important/, 'a plain rule loses to the theme');
+  assert.match(panes, /margin:\s*0\s*!important/, 'a stray card margin is the gap');
+
+  // NO divider: the owner counted the borders, so the change of ground does it
   const rail = cssRule('#quotes_new .contentbar.quotes-split > #quotes_list_card {');
-  assert.match(rail, /border-right:\s*1px/, 'the rail carries the only line between the panes');
+  assert.ok(
+    !/border-right:\s*1px/.test(rail),
+    'the list must not draw a right border - that line is what breaks the join',
+  );
+  assert.match(rail, /background:\s*#f6f8fa/i, 'the list is the recessed side');
+
+  // and it must not butt into the breadcrumb bar above it
+  assert.match(split, /margin:\s*20px\s+30px/, 'the split needs a top gap and page gutters');
 });
 
 test('each pane scrolls itself, so neither drags the other out of reach', () => {
@@ -210,20 +222,21 @@ test('the selection is the near edge of the document, not a tinted row', () => {
   // the pane's ground, so the two read as one surface
   assert.match(active, /background:\s*#fff/i, 'the active row must share the pane background');
 
-  const connector = cssRule(
-    '.quotes-split #quotes_list_rows tr.quotes-row.is-active td:last-child::after {',
+  // nothing may draw a line down its right - that is what breaks the join
+  assert.ok(
+    !/border-right/.test(active),
+    'a right border on the selected row would cut it off from the document',
   );
-  assert.match(connector, /right:\s*-1px/, 'the connector must sit ON the divider');
-  assert.match(connector, /background:\s*#fff/i, 'it paints the divider out with the pane ground');
-
-  // and the list itself is recessed, or there is nothing for white to stand against
-  const rail = cssRule('#quotes_new .contentbar.quotes-split > #quotes_list_card { background');
-  assert.match(rail, /#f6f8fa/i, 'the list needs a recessed ground');
+  const pane = cssRule(
+    '#quotes_new .contentbar.quotes-split > #quotes_view_card {',
+    'The toolbar is pinned',
+  );
+  assert.match(pane, /background:\s*#fff/i, 'the document is the white side of the pair');
 });
 
 test('the rail has no side padding, or the selection cannot reach the divider', () => {
   const body = cssRule('#quotes_new .contentbar.quotes-split > #quotes_list_card > .card-body {');
-  assert.match(body, /padding:\s*0\s*;/, 'full-bleed rows are what make the join possible');
+  assert.match(body, /padding:\s*0\s*!important/, 'full-bleed rows are what make the join possible');
 });
 
 test('a wide screen shows the whole list AND the quote', () => {

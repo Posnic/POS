@@ -3590,43 +3590,64 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
    the only line between them is the divider the rail carries. Stretch, not
    flex-start, so that divider runs the full height - a rail that stops short
    of the document reads as two things sitting near each other again. */
+/*
+ * ONE surface, ONE border.
+ *
+ * Every declaration that removes a pane's own box carries !important, and it
+ * has to: custom.css loads BEFORE theme-variables.css, and the theme sets
+ * `[data-theme="github"] .card { border: 1px solid !important; border-radius:
+ * 6px !important }`. An !important declaration beats a plain one however
+ * specific the plain selector is, so without this the panes keep their own
+ * bordered, rounded boxes INSIDE the outer border - three borders and a moat
+ * between them, which is exactly what the owner was looking at.
+ *
+ * The contentbar's 30px padding goes too, and becomes a margin, or that
+ * padding is a white moat between the outer border and the panes.
+ */
 #quotes_new .contentbar.quotes-split {
     display: flex;
     gap: 0;
     align-items: stretch;
+    padding: 0 !important;
+    /* the contentbar's own 30px padding became a moat between the outer
+       border and the panes, so it moves out here as a margin - keeping the
+       page gutters, and the top gap that stops this butting into the
+       breadcrumb bar above it. */
+    margin: 20px 30px 30px 30px;
     background: #fff;
     border: 1px solid #d0d7de;
     border-radius: 8px;
     overflow: hidden;
-    box-shadow: 0 1px 2px rgba(31, 35, 40, 0.05);
 }
 #quotes_new .contentbar.quotes-split > #quotes_list_card,
 #quotes_new .contentbar.quotes-split > #quotes_view_card {
-    border: 0;
-    border-radius: 0;
-    box-shadow: none;
-    margin-bottom: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    margin: 0 !important;
     background: transparent;
 }
-/* Each pane scrolls on its own, so a long document never drags the list out
-   of reach and the search box never leaves the top of the rail. */
+
+/* The list is recessed; the document is white. NO divider between them - the
+   owner counted the borders, and the change of ground already says where one
+   ends and the other begins. The selected row takes the document's white and
+   runs full width, so the selection and the document are one continuous
+   shape: that is the connection, drawn with colour instead of yet another
+   line. */
 #quotes_new .contentbar.quotes-split > #quotes_list_card {
     flex: 0 0 330px;
     max-width: 330px;
     min-width: 0;
-    border-right: 1px solid #d0d7de;
     display: flex;
     flex-direction: column;
     max-height: calc(100vh - 150px);
+    background: #f6f8fa;
 }
-/* Full-bleed rows. The rail keeps no horizontal padding of its own, so a row
-   reaches the divider - which is what lets the SELECTED row connect to the
-   document beside it. Padding moves onto the header and the cells. */
 #quotes_new .contentbar.quotes-split > #quotes_list_card > .card-body {
     display: flex;
     flex-direction: column;
     min-height: 0;
-    padding: 0;
+    padding: 0 !important;
 }
 /* min-height:0 on both, or a flex child refuses to shrink below its content
    and the scrollbar lands on the page instead of inside the rail. */
@@ -3634,6 +3655,7 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     flex: 0 0 auto;
     margin-bottom: 0;
     padding: 12px 10px;
+    background: #f6f8fa;
     border-bottom: 1px solid #d8dee4;
 }
 .quotes-split #quotes_list_card #quotes_list_rows {
@@ -3641,6 +3663,7 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     min-height: 0;
     overflow-y: auto;
 }
+
 /* The toolbar is pinned and only the document scrolls - the mail-app
    arrangement, and the reason the Share and More menus are not clipped: a
    dropdown inside an overflow:auto ancestor would be cut off at its edge. */
@@ -3656,7 +3679,7 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     display: flex;
     flex-direction: column;
     min-height: 0;
-    padding: 12px 14px;
+    padding: 12px 14px !important;
 }
 .quotes-split #quotes_view_head { flex: 0 0 auto; }
 .quotes-split #quotes_view_body {
@@ -3668,13 +3691,6 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 /* Collapsed rail: the quote takes the full width, the toggle brings it back. */
 #quotes_new .contentbar.quotes-split.rail-collapsed > #quotes_list_card { display: none; }
 
-/* The list sits on a slightly recessed ground and the READING PANE is white.
-   The selected row is white too, so it stops looking like a highlighted row in
-   a list and starts looking like the near edge of the document - the mail-app
-   move. The connector below finishes it by painting out the 1px divider for
-   exactly the height of that row. */
-#quotes_new .contentbar.quotes-split > #quotes_list_card { background: #f6f8fa; }
-.quotes-split #quotes_list_card #quotes_filter_chips { background: #f6f8fa; }
 .quotes-split #quotes_list_card table { font-size: 12.5px; margin-bottom: 0; }
 .quotes-split #quotes_list_card td,
 .quotes-split #quotes_list_card th { padding: 8px 10px; }
@@ -3710,25 +3726,12 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 #quotes_list_rows tr.quotes-row.is-active { background: #e3ecfd; box-shadow: inset 3px 0 0 #0969da; }
 #quotes_list_rows tr.quotes-row.is-active td:first-child { font-weight: 600; }
 
-/* Inside the split the active row takes the PANE's ground rather than a blue
-   tint, so the two read as one surface. */
+/* Inside the split the active row IS the document's near edge: same white,
+   flush to it, marked only by an accent down its left. Nothing draws a line
+   on its right - that is what would break the join. */
 .quotes-split #quotes_list_rows tr.quotes-row.is-active {
     background: #fff;
     box-shadow: inset 3px 0 0 #0969da;
-}
-.quotes-split #quotes_list_rows tr.quotes-row.is-active td:last-child { position: relative; }
-/* The connector: 1px of the pane's ground laid over the divider, for the
-   height of the selected row only. This is the join the owner asked for -
-   the selection and the document share an edge instead of facing each
-   other across one. */
-.quotes-split #quotes_list_rows tr.quotes-row.is-active td:last-child::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    right: -1px;
-    width: 1px;
-    background: #fff;
 }
 
 /* The pager sits at the foot of the rail and always states the count, so the
@@ -3759,14 +3762,12 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     border-color: var(--theme-border-color);
 }
 [data-theme] #quotes_new .contentbar.quotes-split > #quotes_list_card {
-    border-right-color: var(--theme-border-color);
     background: var(--theme-body-bg, var(--theme-card-bg));
 }
 /* The connected selection is the whole effect, so its ground and the pane's
    must be the SAME variable - two near-identical colours would show a seam. */
 [data-theme] #quotes_new .contentbar.quotes-split > #quotes_view_card,
-[data-theme] .quotes-split #quotes_list_rows tr.quotes-row.is-active,
-[data-theme] .quotes-split #quotes_list_rows tr.quotes-row.is-active td:last-child::after {
+[data-theme] .quotes-split #quotes_list_rows tr.quotes-row.is-active {
     background: var(--theme-card-bg);
 }
 [data-theme] .quotes-split #quotes_list_card #quotes_filter_chips {
