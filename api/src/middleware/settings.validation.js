@@ -191,8 +191,20 @@ const validatePayment = [
  * Validation for updateCommonSettings
  * PHP: setting.php lines 672-691
  */
+/*
+ * This endpoint takes PARTIAL payloads - the quotation-defaults card and the
+ * signature upload each send a handful of their own keys and nothing else.
+ * Demanding fields they never carry made an image upload fail with "Default
+ * customer is required", which is a question the form never asked the user.
+ *
+ * So each rule is skipped when its key is absent (`.optional()`), and only
+ * validated when the caller actually sends it. A full settings-form save
+ * sends both keys and is checked exactly as before. Absent means "leave it
+ * alone"; present-but-empty is still refused.
+ */
 const validateCommonSettings = [
   body('default_customer')
+    .optional()
     .trim()
     .notEmpty()
     .withMessage('Default customer is required')
@@ -205,6 +217,7 @@ const validateCommonSettings = [
     ),
 
   body('default_supplier')
+    .optional()
     .trim()
     .notEmpty()
     .withMessage('Default supplier is required')
