@@ -269,6 +269,40 @@ describe('SalesService', () => {
       expect(salesRepository.create).toHaveBeenCalledTimes(1);
     });
 
+    test('a taxed charge keeps its tax figures; an untaxed one is scrubbed', async () => {
+      // Tax on a charge (queue #5): tax_name/tax_amount persist ONLY while
+      // taxed is true - a flag flipped off can never leave a stale figure.
+      const data = makeSaleData({
+        charges: [
+          { name: 'Parcel', amount: '50', taxed: 'true', tax_name: 'GST 9%', tax_amount: '4.5' },
+          { name: 'Service', amount: '20', taxed: false, tax_name: 'GST 9%', tax_amount: '1.8' },
+        ],
+      });
+      await salesService.processSale(data, '', 'Add', makeContext());
+      expect(salesRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          charges: [
+            {
+              name: 'Parcel',
+              amount: 50,
+              taxed: true,
+              tax_name: 'GST 9%',
+              tax_amount: 4.5,
+              source: 'manual',
+            },
+            {
+              name: 'Service',
+              amount: 20,
+              taxed: false,
+              tax_name: '',
+              tax_amount: 0,
+              source: 'manual',
+            },
+          ],
+        })
+      );
+    });
+
     test('generates a till-tagged INV sales_id for new sale', async () => {
       salesRepository.nextSalesNumberForBranch.mockResolvedValue(1);
       await salesService.processSale(makeSaleData(), '', 'Add', makeContext());

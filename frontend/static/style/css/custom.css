@@ -3018,9 +3018,13 @@ input:checked + .slider:before {
 .q-act-far { margin-left: auto; border-right: none; }
 /* Sale charges rail beside the Payment Note */
 .sale-soft-links a { font-size: 12.5px; color: #506fe4; }
-#sale_charges_list .sale-charge-row { display: flex; align-items: center; gap: 8px; font-size: 12.5px; padding: 2px 0; }
+/* One line per charge, readable size (owner space rule) - the name gives
+   way with an ellipsis so the numbers never wrap */
+#sale_charges_list .sale-charge-row { display: flex; align-items: center; gap: 8px; font-size: 14px; padding: 2px 0; }
+#sale_charges_list .sale-charge-row > span:first-child { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #sale_charges_list .sale-charge-row b { font-variant-numeric: tabular-nums; }
 #sale_charges_list .sale-charge-del { font-weight: 700; }
+#sale_charges_list .sale-charge-tax { font-size: 11.5px; cursor: pointer; }
 
 /* Quote editor: compact discount value; the None option means no
    discount row prints at all */

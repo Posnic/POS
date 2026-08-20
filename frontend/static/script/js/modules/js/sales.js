@@ -6063,11 +6063,62 @@ PosnicPro.sales.chargesEnabled = function () {
         return gs.custom_charges_enable === true;
     } catch (e) { return false; }
 };
+/*
+ * Tax on a charge (queue #5): a charge marked taxed carries the shop's
+ * DEFAULT tax on top of its amount - parcel/service charges are quoted
+ * net and tax rides on top, the industry norm. The rate resolves once
+ * from the same list the quick sale uses; rate 0 (tax feature off, or
+ * no default tax) hides the affordance entirely.
+ */
+PosnicPro.sales.chargeTax = {
+    _tax: null,
+    ensure: function () {
+        if (PosnicPro.sales.chargeTax._tax !== null) { return; }
+        PosnicPro.sales.chargeTax._tax = { name: '', value: 0 };
+        if (PosnicPro.local.get('default_tax_enable_disable') === 'false') { return; }
+        PosnicPro.get({ url: 'setting/getTaxAjaxList', data: 'query=' }, function (response) {
+            var wanted = PosnicPro.local.get('default_tax_id');
+            var found = null;
+            (response.suggestions || []).forEach(function (t) {
+                if (String(t.tax_id) === String(wanted)) { found = t; }
+            });
+            if (found && (Number(found.tax_value) || 0) > 0) {
+                PosnicPro.sales.chargeTax._tax = { name: found.tax_name, value: Number(found.tax_value) };
+                PosnicPro.sales.renderCharges();
+            }
+        }, function () { /* stays 0; charges simply offer no tax */ });
+    },
+    rate: function () {
+        return (PosnicPro.sales.chargeTax._tax && PosnicPro.sales.chargeTax._tax.value) || 0;
+    },
+    taxName: function () {
+        return (PosnicPro.sales.chargeTax._tax && PosnicPro.sales.chargeTax._tax.name) || '';
+    },
+    amountFor: function (c) {
+        if (!c || c.taxed !== true) { return 0; }
+        return Math.round((Number(c.amount) || 0) * PosnicPro.sales.chargeTax.rate()) / 100;
+    }
+};
+PosnicPro.sales.chargesTax = function () {
+    var t = 0;
+    (PosnicPro.sales.charges || []).forEach(function (c) { t += PosnicPro.sales.chargeTax.amountFor(c); });
+    return Math.round(t * 100) / 100;
+};
 PosnicPro.sales.renderCharges = function () {
+    PosnicPro.sales.chargeTax.ensure();
     var list = PosnicPro.sales.charges || [];
+    var rate = PosnicPro.sales.chargeTax.rate();
     var html = '';
     list.forEach(function (c, i) {
+        // keep the payload fields current: the sale save sends these objects as-is
+        c.tax_amount = PosnicPro.sales.chargeTax.amountFor(c);
+        c.tax_name = c.taxed === true ? PosnicPro.sales.chargeTax.taxName() : '';
         html += '<div class="sale-charge-row"><span>' + $('<i>').text(c.name).html() + '</span>'
+            + (rate > 0
+                ? '<a href="javascript:void(0)" class="sale-charge-tax badge ' + (c.taxed === true ? 'badge-primary' : 'badge-light') + '" data-i="' + i
+                    + '" title="Tax on this charge (' + rate + '%)">'
+                    + (c.taxed === true ? '+tax ' + c.tax_amount.toFixed(2) : '+tax') + '</a>'
+                : '')
             + '<b>' + Number(c.amount).toFixed(2) + '</b>'
             + '<a href="javascript:void(0)" class="sale-charge-del text-danger" data-i="' + i + '">&times;</a></div>';
     });
@@ -6109,6 +6160,12 @@ $(document).on('click', '#sale_add_charge', function () {
 });
 $(document).on('click', '.sale-charge-del', function () {
     PosnicPro.sales.charges.splice($(this).data('i'), 1);
+    PosnicPro.sales.renderCharges();
+});
+$(document).on('click', '.sale-charge-tax', function () {
+    var c = (PosnicPro.sales.charges || [])[$(this).data('i')];
+    if (!c) { return; }
+    c.taxed = c.taxed !== true;
     PosnicPro.sales.renderCharges();
 });
 
@@ -6239,9 +6296,20 @@ PosnicPro.sales.calculation = {
         // every double-click-editable cell
         $('[id^="addSalesLineItemPrice_"], [id^="addSalesLineItemDiscountprint_"], [id^="addSalesLineItemTax_"]')
             .addClass('sale-editable-cell').attr('title', 'Double-click to edit');
-        // named charges join the payable after discounts, before round-off
+        // named charges join the payable after discounts, before round-off;
+        // a taxed charge brings its tax with it
         var chargesSum = PosnicPro.sales.chargesTotal();
-        if (chargesSum > 0) { outputVal = outputVal + chargesSum; }
+        var chargesTax = PosnicPro.sales.chargesTax();
+        if (chargesSum > 0) { outputVal = outputVal + chargesSum + chargesTax; }
+        // the bill's Tax figure = line taxes + charge taxes. Line taxes are
+        // re-read from their cells (never from #tax itself) so this stays
+        // idempotent however many times the recalc runs.
+        if (chargesTax > 0 || PosnicPro.sales._chargeTaxShown) {
+            var lineTaxSum = 0;
+            $('[id^="addSalesGstTax_"]').each(function () { lineTaxSum += parseFloat($(this).text()) || 0; });
+            $('#tax').number(Math.round((lineTaxSum + chargesTax) * 100) / 100, 2);
+            PosnicPro.sales._chargeTaxShown = chargesTax > 0;
+        }
         // tax feature off AND nothing taxed on this sale: no Tax row at all
         var taxShown = parseFloat($('#tax').text()) || 0;
         var taxOff = PosnicPro.local.get('default_tax_enable_disable') === 'false'
