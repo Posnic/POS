@@ -11592,8 +11592,13 @@ $(document).on('change', '#qe_sig_file', function () {
     var reader = new FileReader();
     reader.onload = function (e) {
         var dataUrl = e.target.result;
+        /* The documents endpoint, not the god endpoint. This exact call is
+           what returned "Default customer is required" (69bc0cd): the old
+           validator demanded fields that belong to another group on every
+           save, including a one-key one like this. An endpoint that knows
+           only `documents` cannot ask for them. */
         PosnicPro.put({
-            url: 'setting/updateCommonSettings',
+            url: 'settings/group/documents',
             data: JSON.stringify({ quote_default_signature: dataUrl })
         }, function (r) {
             $(input).val('');

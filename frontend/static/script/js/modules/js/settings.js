@@ -5380,17 +5380,21 @@ PosnicPro.features = {
         $('#feature_intro_list').html(rows);
     },
     saveIntro: function () {
-        var payload = { modules_only: 'true' };
+        /* Toggles only. This used to send sales_prefix:'SAL' and
+           receiving_prefix:'REC' - invented values, purely to satisfy a
+           validator for two fields this screen does not own. They were
+           described as ignored, but nothing guaranteed that: the day the
+           modules-only path stopped skipping them, every shop saving a
+           feature toggle would have had its receipt numbering overwritten
+           with "SAL" and "REC". The features endpoint knows only its own
+           keys, so it cannot ask for them and would refuse them by name. */
+        var payload = {};
         $('.feature-intro-toggle').each(function () {
             payload[$(this).data('key')] = $(this).is(':checked') ? 'true' : 'false';
         });
-        // The endpoint's validation satisfiers - ignored by the modules-only
-        // path, required by the controller.
-        payload.sales_prefix = 'SAL';
-        payload.receiving_prefix = 'REC';
         $('#feature_intro_save').prop('disabled', true);
         PosnicPro.put({
-            url: 'setting/updateCommonSettings',
+            url: 'settings/group/features',
             data: JSON.stringify(payload)
         }, function (response) {
             $('#feature_intro_save').prop('disabled', false);
@@ -5561,7 +5565,8 @@ $(document).on('click', '#quote_settings_save', function () {
         quote_default_signature: $('#quote_default_signature').val() || ''
     };
     $('#quote_settings_save').prop('disabled', true);
-    PosnicPro.put({ url: 'setting/updateCommonSettings', data: JSON.stringify(payload) }, function (r) {
+    // four keys, all of them documents - so the documents endpoint
+    PosnicPro.put({ url: 'settings/group/documents', data: JSON.stringify(payload) }, function (r) {
         $('#quote_settings_save').prop('disabled', false);
         PosnicPro.alert(r.type, r.type === 'success' ? 'Quotation settings saved' : r.message);
         if (r.type === 'success') {
