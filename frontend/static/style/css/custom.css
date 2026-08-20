@@ -3081,7 +3081,6 @@ input:checked + .slider:before {
 .q-act-group:last-child { border-right: none; }
 .q-act-far { margin-left: auto; border-right: none; }
 /* Sale charges rail beside the Payment Note */
-.sale-soft-links a { font-size: 12.5px; color: #506fe4; }
 /* One line per charge, readable size (owner space rule) - the name gives
    way with an ellipsis so the numbers never wrap */
 #sale_charges_list .sale-charge-row { display: flex; align-items: center; gap: 8px; font-size: 14px; padding: 2px 0; }
@@ -3096,9 +3095,6 @@ input:checked + .slider:before {
 #sales_new #return_table.tax-col-off thead th.th-tax-col { display: none !important; }
 #sales_new #return_table.tax-col-off td[id^="addSalesLineItemTax_"] { display: none !important; }
 
-/* Soft action links (+ Add charge / + Add discount): visible hover */
-.sale-soft-links a { padding: 2px 8px; border-radius: 4px; transition: background .15s ease; display: inline-block; }
-.sale-soft-links a:hover { background: #eef3ff; text-decoration: none; }
 #sale_charges_list .sale-charge-row { border-radius: 4px; transition: background .15s ease; }
 #sale_charges_list .sale-charge-row:hover { background: #f6f8fc; }
 
