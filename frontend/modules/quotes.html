@@ -88,14 +88,14 @@
                                         </div>
                                         <div class="col-md-6 mb-2">
                                             <div class="q-label">Valid until</div>
-                                            <div class="btn-group btn-group-sm d-flex mb-1" role="group">
-                                                <button type="button" class="btn btn-secondary-rgba qe-valid-chip" data-days="7">7 days</button>
-                                                <button type="button" class="btn btn-secondary-rgba qe-valid-chip" data-days="15">15 days</button>
-                                                <button type="button" class="btn btn-secondary-rgba qe-valid-chip" data-days="30">30 days</button>
-                                                <button type="button" class="btn btn-secondary-rgba" id="qe_valid_custom" title="Pick an exact date">&#128197;</button>
+                                            <div class="d-flex align-items-center mb-1" style="gap:6px;">
+                                                <div class="btn-group btn-group-sm" role="group">
+                                                    <button type="button" class="btn btn-secondary-rgba qe-valid-chip" data-days="7">7 days</button>
+                                                    <button type="button" class="btn btn-secondary-rgba qe-valid-chip" data-days="15">15 days</button>
+                                                    <button type="button" class="btn btn-secondary-rgba qe-valid-chip" data-days="30">30 days</button>
+                                                </div>
+                                                <input type="date" id="qe_valid_until" class="form-control form-control-sm" style="width:150px;">
                                             </div>
-                                            <div class="small text-muted mb-1" id="qe_valid_label"></div>
-                                            <input type="date" id="qe_valid_until" class="form-control form-control-sm" style="display:none;">
                                         </div>
                                     </div>
                                     <div class="q-label">Payment details</div>

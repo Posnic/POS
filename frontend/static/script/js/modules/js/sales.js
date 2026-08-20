@@ -7552,10 +7552,9 @@ PosnicPro.quotes = {
         $('#qe_cust_search,#qe_cust_name,#qe_cust_phone,#qe_cust_email,#qe_cust_gstin,#qe_cust_address').val('');
         $('#qe_item_search,#qe_payment,#qe_bank,#qe_terms,#qe_notes,#qe_disc_value').val('');
         $('#qe_disc_type').val('');
-        $('#qe_valid_until').val(PosnicPro.quotes._ed.valid_until).hide();
+        $('#qe_valid_until').val(PosnicPro.quotes._ed.valid_until);
         $('.qe-valid-chip').removeClass('btn-primary').addClass('btn-secondary-rgba');
         $('.qe-valid-chip[data-days="7"]').removeClass('btn-secondary-rgba').addClass('btn-primary');
-        PosnicPro.quotes.edValidLabel();
         PosnicPro.quotes.edRender();
     },
     showEdit: function (id) {
@@ -7608,7 +7607,6 @@ PosnicPro.quotes = {
             $('#qe_disc_type').val(q.discount ? q.discount.type : '');
             $('#qe_disc_value').val(q.discount ? q.discount.value : '');
             $('#qe_valid_until').val(q.valid_until ? new Date(q.valid_until).toISOString().slice(0, 10) : '');
-            PosnicPro.quotes.edValidLabel();
             PosnicPro.quotes.edRender();
         }, function () { PosnicPro.alert('error', 'Could not load the quote'); });
     },
@@ -10800,24 +10798,17 @@ $(document).on('click', '#qe_charges .qe-c-del', function () {
     if (PosnicPro.quotes._ed) { PosnicPro.quotes._ed.charges.splice(i, 1); PosnicPro.quotes.edRender(); }
 });
 
-PosnicPro.quotes.edValidLabel = function () {
-    var v = $('#qe_valid_until').val();
-    $('#qe_valid_label').text(v ? 'Valid till ' + v.split('-').reverse().join('/') : '');
-};
 $(document).on('click', '.qe-valid-chip', function () {
     var days = Number($(this).data('days')) || 7;
     var d = new Date(Date.now() + days * 86400000);
-    $('#qe_valid_until').val(d.toISOString().slice(0, 10)).hide();
-    PosnicPro.quotes.edValidLabel();
+    $('#qe_valid_until').val(d.toISOString().slice(0, 10));
     $('.qe-valid-chip').removeClass('btn-primary').addClass('btn-secondary-rgba');
     $(this).removeClass('btn-secondary-rgba').addClass('btn-primary');
     PosnicPro.quotes.edRecalc();
 });
-$(document).on('click', '#qe_valid_custom', function () {
+$(document).on('input', '#qe_valid_until', function () {
     $('.qe-valid-chip').removeClass('btn-primary').addClass('btn-secondary-rgba');
-    $('#qe_valid_until').show().focus();
 });
-$(document).on('input change', '#qe_valid_until', function () { PosnicPro.quotes.edValidLabel(); });
 $(document).on('input change', '#qe_disc_type, #qe_disc_value, #qe_cust_name, #qe_cust_phone, #qe_cust_email, #qe_cust_gstin, #qe_cust_address, #qe_payment, #qe_bank, #qe_terms, #qe_notes, #qe_valid_until', function () {
     PosnicPro.quotes.edRecalc();
 });
