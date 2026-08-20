@@ -36,6 +36,7 @@
         "modules/labourReport.html",
         "modules/roster.html",
         "modules/taxSummaryReport.html",
+        "modules/gstReadiness.html",
         "modules/purchaseOrders.html",
         "modules/quotes.html",
         "modules/paymentReport.html",

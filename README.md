@@ -15,7 +15,7 @@ Your data lives on your own computer. No internet required, ever.
 [![Latest release](https://img.shields.io/github/v/release/Posnic/POS?include_prereleases&label=latest&color=blue)](https://github.com/Posnic/POS/releases/latest)
 [![Tests](https://img.shields.io/badge/tests-9%2C000%2B%20passing-brightgreen)](docs/DEVELOPMENT.md#running-the-tests)
 [![Coverage](https://img.shields.io/badge/coverage-66%25%20statements-yellow)](docs/DEVELOPMENT.md#running-the-tests)
-[![API](https://img.shields.io/badge/REST%20API-579%20endpoints-blue)](docs/API.md)
+[![API](https://img.shields.io/badge/REST%20API-580%20endpoints-blue)](docs/API.md)
 [![Licence](https://img.shields.io/badge/licence-AGPL--3.0-blue)](LICENSE)
 [![Platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](https://github.com/Posnic/POS/releases/latest)
 
@@ -116,7 +116,7 @@ the free edition worse. This is written down in [GOVERNANCE.md](GOVERNANCE.md).
 | [User guide](docs/USER_GUIDE.md) | Running a shop with Posnic, first sale to closing the till |
 | [Developer guide](docs/DEVELOPMENT.md) | Setup, tests, conventions, good first issues |
 | [Architecture](docs/ARCHITECTURE.md) | How it fits together, and the parts that bite |
-| [REST API](docs/API.md) | 579 endpoints, generated from the routes |
+| [REST API](docs/API.md) | 580 endpoints, generated from the routes |
 | [Hardware](docs/HARDWARE_MATRIX.md) | Printers, scanners, drawers, scales — and how far each claim is checked |
 | [Backups](docs/BACKUP_POLICY.md) | What is backed up, when, and what it does not protect you from |
 | [Disaster recovery](docs/DISASTER_RECOVERY.md) | Getting back to working, with RPO and RTO as numbers |
