@@ -550,17 +550,12 @@ class SettingController extends BaseController {
           data: null,
         });
       }
-      if (
-        data.notification_value === undefined ||
-        data.notification_value === null ||
-        data.notification_value === ''
-      ) {
-        return res.status(400).json({
-          type: 'error',
-          message: 'Data Not Valid: notification_value required',
-          data: null,
-        });
-      }
+      /*
+       * notification_value is OPTIONAL. Requiring it non-empty broke every
+       * shop that simply has no notification range configured: the Features
+       * save and the signature save both 400'd on a field their forms don't
+       * own. Empty means "none" and partial payloads may omit it entirely.
+       */
 
       const result = await settingsService.updateCommonSettings(data);
 

@@ -641,20 +641,23 @@ describe('updateCommonSettings', () => {
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
-  test('400 when notification_value is empty string', async () => {
+  test('empty notification_value passes - shops with no range configured must save', async () => {
+    // Requiring it broke every Features save and the signature save on
+    // shops that simply never set a notification range.
+    settingsService.updateCommonSettings.mockResolvedValue(ok());
     const res = mockRes();
     await ctrl.updateCommonSettings(
       mockReq({ body: { receiving_prefix: 'REC', notification_value: '' } }),
       res
     );
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json.mock.calls[0][0].message).toMatch(/notification_value/);
+    expect(res.status).toHaveBeenCalledWith(200);
   });
 
-  test('400 when notification_value is undefined', async () => {
+  test('omitted notification_value passes - partial payloads are legal', async () => {
+    settingsService.updateCommonSettings.mockResolvedValue(ok());
     const res = mockRes();
     await ctrl.updateCommonSettings(mockReq({ body: { receiving_prefix: 'REC' } }), res);
-    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.status).toHaveBeenCalledWith(200);
   });
 
   test('404 when service returns status:false', async () => {
