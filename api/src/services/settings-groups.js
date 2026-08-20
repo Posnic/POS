@@ -154,6 +154,20 @@ const redactBranchSecrets = (doc) => {
   return out;
 };
 
+/* The same removal without the configured map, for the endpoints that return
+   branch documents for other reasons - the branch LIST, and the echo after a
+   create or update. The list is the worse of the two: unstripped it hands out
+   every branch's credentials in a single response. Accepts a document or an
+   array of them. */
+const stripBranchSecrets = (docOrList) => {
+  if (Array.isArray(docOrList)) return docOrList.map(stripBranchSecrets);
+  if (!docOrList || typeof docOrList !== 'object') return docOrList;
+  const plain = docOrList.toObject ? docOrList.toObject() : docOrList;
+  const out = { ...plain };
+  for (const key of BRANCH_CREDENTIALS) delete out[key];
+  return out;
+};
+
 /*
  * The partial $set for one credential the caller sent.
  *
@@ -215,4 +229,5 @@ module.exports = {
   CLEAR_SECRET,
   secretUpdate,
   redactBranchSecrets,
+  stripBranchSecrets,
 };

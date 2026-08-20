@@ -140,6 +140,34 @@ describe('BranchesController — getAll', () => {
     expect(res.json.mock.calls[0][0].type).toBe('success');
   });
 
+  /* A LIST is the worst place for a credential to appear: one response
+     carries every branch the user can see. */
+  test('the branch list carries no credentials at all', async () => {
+    bm.branchPage.mockResolvedValue({
+      status: true,
+      message: 'OK',
+      data: {
+        list: [
+          { _id: 'b1', branch_name: 'Main', email_smtp_password: 'hunter2', way2sms_api: 'w2s' },
+          { _id: 'b2', branch_name: 'Second', textlocal_api: 'tl-key' },
+        ],
+        total: 2,
+      },
+    });
+    const res = mockRes();
+    await ctrl.getAll(mockReq({ query: { limit: '10', page: '1' } }), res);
+
+    const body = JSON.stringify(res.json.mock.calls[0][0]);
+    for (const secret of ['hunter2', 'w2s', 'tl-key']) {
+      expect(body).not.toContain(secret);
+    }
+    // and the list still works
+    const { data } = res.json.mock.calls[0][0];
+    expect(data.list).toHaveLength(2);
+    expect(data.list[0].branch_name).toBe('Main');
+    expect(data.total).toBe(2);
+  });
+
   test('applies default limit=5 and page=1 when query params absent', async () => {
     bm.branchPage.mockResolvedValue({ status: true, message: 'OK', data: { list: [] } });
     await ctrl.getAll(mockReq(), mockRes());
