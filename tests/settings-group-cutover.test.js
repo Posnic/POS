@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('fs');
 const path = require('path');
+const { blockAt } = require('./helpers/source-lookup');
 
 /*
  * Frontend cutover to the per-group settings endpoints (design step S3).
@@ -36,23 +37,6 @@ const salesJs = fs.readFileSync(
 );
 const GROUPS = require(path.join(ROOT, 'api', 'src', 'services', 'settings-groups')).GROUPS;
 
-function blockAt(source, marker) {
-  const start = source.indexOf(marker);
-  assert.notStrictEqual(start, -1, `not found: ${marker}`);
-  const open = source.indexOf('{', start);
-  let depth = 0;
-  for (let i = open; i < source.length; i++) {
-    if (source[i] === '{') depth++;
-    else if (source[i] === '}') {
-      depth--;
-      if (depth === 0) {
-        assert.ok(i > start, 'block ends before it begins');
-        return source.slice(start, i + 1);
-      }
-    }
-  }
-  assert.fail(`unbalanced block after: ${marker}`);
-}
 
 test('the signature upload posts to the documents endpoint', () => {
   const handler = blockAt(salesJs, "$(document).on('change', '#qe_sig_file', function () {");

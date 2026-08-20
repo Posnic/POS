@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('fs');
 const path = require('path');
+const { stripComments } = require('./helpers/source-lookup');
 
 /*
  * Every PosnicPro.<name>(...) call must name something that exists.
@@ -42,25 +43,6 @@ function sources(dir, acc = []) {
   return acc;
 }
 
-/* Comments are not code. The first pass of this check reported four missing
-   members; three were commented-out calls or commented-out definitions, and
-   chasing them wasted the time the test was meant to save. */
-function stripComments(src) {
-  return src
-    .replace(/\/\*[\s\S]*?\*\//g, ' ')
-    .split('\n')
-    .map((line) => {
-      const at = line.indexOf('//');
-      if (at === -1) return line;
-      // don't cut inside a string or a URL like https://
-      const before = line.slice(0, at);
-      const quotes = (before.match(/['"`]/g) || []).length;
-      if (quotes % 2 === 1) return line;
-      if (before.endsWith(':')) return line;
-      return before;
-    })
-    .join('\n');
-}
 
 const files = sources(ROOT).map((f) => ({ ...f, code: stripComments(f.text) }));
 
