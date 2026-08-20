@@ -311,17 +311,23 @@ describe('SupplierRepository', () => {
       );
     });
 
-    test('adds branch filter when provided', async () => {
+    test('scopes to the branch WITHOUT losing the search terms', async () => {
+      /* S7: the scope accepts branch_access OR the legacy branch_id, and rides
+         under $and because this query already owns the top-level $or for
+         name/company/email/phone. A second $or would replace those terms, and
+         a search that loses its terms quietly returns every supplier. */
       col.find.mockReturnValue(mkChain([]));
       col.countDocuments.mockResolvedValue(0);
 
       await repo.search('test', { branchId: FAKE_BRANCH });
 
-      expect(col.find).toHaveBeenCalledWith(
-        expect.objectContaining({
-          branch_id: expect.anything(),
-        })
-      );
+      const filter = col.find.mock.calls[0][0];
+      expect(filter.$or).toHaveLength(4);
+      expect(filter.$and).toHaveLength(1);
+      expect(filter.$and[0].$or.map((o) => Object.keys(o)[0])).toEqual([
+        'branch_access.branch_id',
+        'branch_id',
+      ]);
     });
 
     test('handles empty search term', async () => {
@@ -764,6 +770,52 @@ describe('SupplierRepository', () => {
       const pipeline = recvCol.aggregate.mock.calls[0][0];
       const matchStage = pipeline.find((s) => s.$match);
       expect(matchStage.$match).not.toHaveProperty('branch_id');
+    });
+  });
+
+  /*
+   * S7 (D5) - suppliers become account-level, same shape as customers.
+   *
+   * Additive only: access lists the owning branch, so nothing becomes visible
+   * anywhere new. Purchase reporting across branches becomes POSSIBLE; it does
+   * not just happen.
+   */
+  describe('SupplierRepository — branch_access (S7)', () => {
+    test('a new supplier records the branch that owns it', async () => {
+      await repo.create({ name: 'Acme', branch_id: 'b1', branch_name: 'Main' });
+      const doc = col.insertOne.mock.calls[0][0];
+      expect(doc.branch_access).toEqual([{ branch_id: 'b1', branch_name: 'Main' }]);
+      expect(doc.branch_id).toBe('b1');
+    });
+
+    test('only the owning branch, so nothing is shared by default', async () => {
+      await repo.create({ name: 'Acme', branch_id: 'b1', branch_name: 'Main' });
+      expect(col.insertOne.mock.calls[0][0].branch_access).toHaveLength(1);
+    });
+
+    test('an explicit branch_access is respected, never overwritten', async () => {
+      const shared = [
+        { branch_id: 'b1', branch_name: 'Main' },
+        { branch_id: 'b2', branch_name: 'Second' },
+      ];
+      await repo.create({ name: 'Acme', branch_id: 'b1', branch_access: shared });
+      expect(col.insertOne.mock.calls[0][0].branch_access).toEqual(shared);
+    });
+
+    test('duplicate detection is NOT widened - that would merge by stealth', () => {
+      /* findByNamePhoneBranch answers "does this supplier already exist HERE"
+         during import. Widening it to branch_access would let an import in one
+         branch match a supplier in another and skip creating one, which is
+         merging - the thing the link-not-merge rule exists to prevent. */
+      const src = require('fs').readFileSync(
+        require('path').join(__dirname, '../../../src/repositories/supplier.repository.js'),
+        'utf8'
+      );
+      const at = src.indexOf('async findByNamePhoneBranch');
+      expect(at).toBeGreaterThan(-1);
+      const body = src.slice(at, src.indexOf('\n  }', at));
+      expect(body).not.toContain('withBranchScope');
+      expect(body).toContain('branch_id');
     });
   });
 });

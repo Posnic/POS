@@ -1,6 +1,7 @@
 // src/repositories/supplier.repository.js
 const BaseModel = require('../models/base.model');
 const { ObjectId } = require('mongodb');
+const { withBranchScope } = require('../services/branch-scope');
 
 /**
  * Supplier Repository
@@ -50,12 +51,16 @@ class SupplierRepository extends BaseModel {
    */
   async findById(id) {
     const collection = await this.getCollection(this.collectionName);
-    return await collection.findOne({
-      _id: new ObjectId(id),
-      license: BaseModel.license,
-      ...(BaseModel.currentBranch ? { branch_id: BaseModel.currentBranch } : {}),
-      is_deleted: { $ne: true },
-    });
+    return await collection.findOne(
+      withBranchScope(
+        {
+          _id: new ObjectId(id),
+          license: BaseModel.license,
+          is_deleted: { $ne: true },
+        },
+        BaseModel.currentBranch
+      )
+    );
   }
 
   /**
@@ -102,7 +107,7 @@ class SupplierRepository extends BaseModel {
   async search(searchTerm, options = {}) {
     const { page = 1, limit = 10, branchId = null } = options;
 
-    const query = {
+    let query = {
       license: BaseModel.license,
       is_deleted: { $ne: true },
       $or: [
@@ -113,8 +118,11 @@ class SupplierRepository extends BaseModel {
       ],
     };
 
+    /* Under $and, not a second top-level $or - this query already owns one
+       for name/company/email/phone, and replacing it would turn a search into
+       a full-table read. */
     if (branchId) {
-      query.branch_id = new ObjectId(branchId);
+      query = withBranchScope(query, branchId);
     }
 
     const collection = await this.getCollection(this.collectionName);
@@ -147,6 +155,17 @@ class SupplierRepository extends BaseModel {
       updated_date: new Date(),
       is_deleted: false,
     };
+
+    /* S7 (D5), as for customers: record the branch that owns this supplier in
+       the account-level relation, alongside the legacy branch_id. Access lists
+       only that branch, so nothing becomes visible anywhere new - purchase
+       reporting across branches becomes POSSIBLE, it does not just happen. */
+    if (!Array.isArray(document.branch_access)) {
+      const owning = document.branch_id || BaseModel.currentBranch || null;
+      document.branch_access = owning
+        ? [{ branch_id: owning, branch_name: document.branch_name || '' }]
+        : [];
+    }
 
     const result = await collection.insertOne(document);
     return await this.findById(result.insertedId);
