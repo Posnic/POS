@@ -923,6 +923,44 @@ PosnicPro.sales.view = {
      * override wins for the duration of that one print and is cleared after.
      */
     _layoutOverride: null,
+    /*
+     * Amount in words - a required line on an Indian tax invoice and the
+     * usual defence against a hand-altered figure. Indian grouping
+     * (crore / lakh / thousand), not the Western short scale, because that
+     * is what the document is read against here.
+     */
+    _amountInWords: function (amount) {
+        var n = Math.abs(Number(amount) || 0);
+        var whole = Math.floor(n);
+        var frac = Math.round((n - whole) * 100);
+        var ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
+            'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen',
+            'Seventeen', 'Eighteen', 'Nineteen'];
+        var tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+        function two(x) {
+            if (x < 20) { return ones[x]; }
+            return tens[Math.floor(x / 10)] + (x % 10 ? ' ' + ones[x % 10] : '');
+        }
+        function three(x) {
+            var h = Math.floor(x / 100), r = x % 100;
+            return (h ? ones[h] + ' Hundred' + (r ? ' and ' : '') : '') + (r ? two(r) : '');
+        }
+        function indian(x) {
+            if (x === 0) { return 'Zero'; }
+            var parts = [];
+            var crore = Math.floor(x / 10000000); x %= 10000000;
+            var lakh = Math.floor(x / 100000); x %= 100000;
+            var thousand = Math.floor(x / 1000); x %= 1000;
+            if (crore) { parts.push(indian(crore) + ' Crore'); }
+            if (lakh) { parts.push(two(lakh) + ' Lakh'); }
+            if (thousand) { parts.push(two(thousand) + ' Thousand'); }
+            if (x) { parts.push(three(x)); }
+            return parts.join(' ');
+        }
+        var out = indian(whole) + (whole === 1 ? ' Rupee' : ' Rupees');
+        if (frac > 0) { out += ' and ' + two(frac) + (frac === 1 ? ' Paisa' : ' Paise'); }
+        return out + ' Only';
+    },
     _isA4: function () {
         if (PosnicPro.sales.view._layoutOverride) {
             return PosnicPro.sales.view._layoutOverride === 'a4';
@@ -1881,6 +1919,36 @@ PosnicPro.sales.view = {
                     $paymentLabels.hide();
                 } else {
                     $paymentLabels.show();
+                }
+
+                /*
+                 * The pieces that make an A4 read as an invoice rather than a
+                 * long receipt: the total written out, the shop's terms, and
+                 * somewhere to sign. Added here rather than in the stored
+                 * template because every shop already holds its own copy of
+                 * that template - editing the file would reach new shops only.
+                 * Swept first so a reprint cannot stack them.
+                 */
+                $('.a4-invoice-extras').remove();
+                if (PosnicPro.sales.view._isA4() && name === 'sale') {
+                    var _escX = function (v) { return $('<i>').text(v == null ? '' : v).html(); };
+                    var _gstShop = !!branchGstin || PosnicPro.local.get('gst_action') === 'enable';
+                    var _terms = $.trim(PosnicPro.local.get('invoice_terms') || '');
+                    var _sig = $.trim(PosnicPro.local.get('quotesignature') || '');
+                    var _x = '<div class="a4-invoice-extras" style="margin-top:18px; font-size:12px; color:#5b5b5b;">';
+                    if (_gstShop) {
+                        _x += '<div style="padding:6px 0; border-top:1px solid #d8d8d8;"><b>Amount in words:</b> '
+                            + _escX(PosnicPro.sales.view._amountInWords(data.items_total)) + '</div>';
+                    }
+                    if (_terms) {
+                        _x += '<div style="padding:6px 0;"><b>Terms &amp; conditions</b><br>'
+                            + _escX(_terms).split(String.fromCharCode(10)).join('<br>') + '</div>';
+                    }
+                    _x += '<div style="margin-top:26px; width:220px; margin-left:auto; text-align:center;">'
+                        + (_sig ? '<img src="' + _escX(_sig) + '" alt="" style="max-height:38px; max-width:170px; display:block; margin:0 auto;">' : '')
+                        + '<div style="border-top:1px solid #8a94a6; padding-top:5px;">Authorised signatory</div>'
+                        + '</div></div>';
+                    $('.print-modal-a4-body').append(_x);
                 }
 
                 var contents = $(".print-modal-body").html();
