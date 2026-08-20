@@ -375,6 +375,44 @@ class QuoteRepository extends BaseModel {
    * plainly exists, and the pager only ever walked that same first 100.
    * `meta` carries the true total so the pager knows how far the list goes.
    */
+  /*
+   * The index the quote list needs.
+   *
+   * Without it every list request is a full collection scan, and the cost is
+   * paid three times over:
+   *
+   *   - the scan itself, on a filter that is always branch + license
+   *   - AGAIN for countDocuments, which the pager needs and which runs the
+   *     same filter a second time on every request
+   *   - and the sort. Sorting created_date with no index behind it happens in
+   *     memory, which Mongo caps at 32MB. Past that it does not get slower, it
+   *     ERRORS - so the list would go from working to "Could not load quotes"
+   *     at some unannounced number of quotes.
+   *
+   * `{ branch_id, license, created_date }` fixes all three: Mongo walks only
+   * this branch's quotes, already in the order the list wants them.
+   *
+   * It does NOT help the search regex - /term/i is unanchored and
+   * case-insensitive, so no index can serve it. But the wall runs first, so
+   * the regex is then tested against one branch's quotes rather than every
+   * quote in the database, which is where the real cost was.
+   *
+   * Best-effort and once per process, following the sales precedent: an index
+   * build that fails must never fail a page load.
+   */
+  async _ensureListIndex(collection) {
+    if (this.constructor._listIndexEnsured) return;
+    try {
+      await collection.createIndex(
+        { branch_id: 1, license: 1, created_date: -1 },
+        { name: 'quote_list_by_branch' }
+      );
+      this.constructor._listIndexEnsured = true;
+    } catch (e) {
+      /* try again on a later request rather than break this one */
+    }
+  }
+
   async listQuotes(params = {}, context = {}) {
     try {
       const wall = this._wall(context);
@@ -394,6 +432,7 @@ class QuoteRepository extends BaseModel {
       const limit = Math.min(Math.max(Number(params.limit) || 100, 1), 200);
       const page = Math.max(Number(params.page) || 1, 1);
       const collection = await this.getCollection(this.collectionName);
+      await this._ensureListIndex(collection);
       const total = await collection.countDocuments(filter);
       const rows = await collection
         .find(filter)

@@ -65,6 +65,9 @@ describe('QuoteRepository', () => {
     repo = new QuoteRepository();
     mockCollection.find.mockReturnValue(mkFindChain([]));
     mockCollection.countDocuments = jest.fn().mockResolvedValue(0);
+    mockCollection.createIndex = jest.fn().mockResolvedValue('quote_list_by_branch');
+    // the index is ensured once per PROCESS, so reset the latch between tests
+    Object.getPrototypeOf(repo).constructor._listIndexEnsured = false;
   });
 
   test('create writes only the quotes collection and numbers QUO-000001', async () => {
@@ -381,5 +384,50 @@ describe('QuoteRepository', () => {
     expect((await repo.transition(QUOTE_ID, 'cancel', {}, {})).status).toBe(false);
     expect((await repo.deleteQuote(QUOTE_ID, {})).status).toBe(false);
     expect(mockRequestedCollections).toEqual([]);
+  });
+
+  /*
+   * The index the list needs.
+   *
+   * Without it every list request is a full collection scan, paid three times:
+   * the scan, then countDocuments running the same filter again for the pager,
+   * then an in-memory sort of created_date. That last one is the dangerous
+   * part - Mongo caps in-memory sorts at 32MB and ERRORS past it, so the list
+   * would go from working to "Could not load quotes" at some unannounced
+   * number of quotes rather than merely getting slower.
+   */
+  describe('QuoteRepository — list index', () => {
+    test('the list ensures an index that covers wall + sort order', async () => {
+      await repo.listQuotes({}, ctx);
+      expect(mockCollection.createIndex).toHaveBeenCalled();
+
+      const [keys] = mockCollection.createIndex.mock.calls[0];
+      // the wall comes first so Mongo walks only this branch's quotes...
+      expect(Object.keys(keys).slice(0, 2)).toEqual(['branch_id', 'license']);
+      // ...already in the order the list asks for, so the sort is free
+      expect(keys.created_date).toBe(-1);
+    });
+
+    test('it is ensured before the count, not after the read', async () => {
+      await repo.listQuotes({}, ctx);
+      const indexOrder = mockCollection.createIndex.mock.invocationCallOrder[0];
+      const countOrder = mockCollection.countDocuments.mock.invocationCallOrder[0];
+      expect(indexOrder).toBeLessThan(countOrder);
+    });
+
+    test('a failed index build never fails the list', async () => {
+      /* Best-effort by design: a shop mid-build, or a permission quirk, must
+         not turn into a blank quotes page. It simply tries again next request. */
+      mockCollection.createIndex.mockRejectedValue(new Error('index build busy'));
+      const r = await repo.listQuotes({}, ctx);
+      expect(r.status).toBe(true);
+    });
+
+    test('it is built once per process, not on every request', async () => {
+      await repo.listQuotes({}, ctx);
+      await repo.listQuotes({}, ctx);
+      await repo.listQuotes({}, ctx);
+      expect(mockCollection.createIndex).toHaveBeenCalledTimes(1);
+    });
   });
 });
