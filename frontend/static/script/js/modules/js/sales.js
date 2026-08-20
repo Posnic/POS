@@ -8372,6 +8372,14 @@ PosnicPro.quotes = {
             $('#quotes_list_card').show();
             $('#quotes_new .contentbar').addClass('quotes-split');
             $('.vertical-layout').removeClass('toggle-menu');
+            /* Arriving straight at a quote - a refresh, a bookmark, a shared
+               link - means the rail has never been filled. Only
+               showDataTablePage used to load it, so the document appeared
+               beside an empty list that said "Loading quotes ..." forever.
+               Moving BETWEEN quotes must not reload it (that is the flicker
+               this guard exists to prevent), so it belongs here, inside the
+               page-entry branch. */
+            PosnicPro.quotes.load();
         }
         $('#quotes_list_rows tr.quotes-row').removeClass('is-active')
             .filter('[data-id="' + id + '"]').addClass('is-active');
@@ -8379,6 +8387,11 @@ PosnicPro.quotes = {
             var q = r && r.data;
             if (!q) { PosnicPro.alert('error', 'Quote not found'); return; }
             PosnicPro.quotes._current = q;
+            /* The rail and the document load in parallel on a fresh arrival,
+               so whichever lands second has to place the highlight - renderList
+               does it when the list wins, this does it when the quote wins. */
+            $('#quotes_list_rows tr.quotes-row').removeClass('is-active')
+                .filter('[data-id="' + String(q._id) + '"]').addClass('is-active');
             var esc = PosnicPro.quotes._esc;
             var money = PosnicPro.quotes._money;
             var open = ['open', 'draft', 'sent'].indexOf(q.status) !== -1;

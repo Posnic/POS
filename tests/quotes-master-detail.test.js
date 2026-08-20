@@ -507,3 +507,50 @@ test('image previews lay out as a wrapping row rather than however they fall', (
   assert.match(preview, /flex-wrap:\s*wrap/);
   assert.match(preview, /gap:/, 'thumbnails need space between them to read as separate');
 });
+
+/*
+ * Arriving straight at a quote - refresh, bookmark, shared link.
+ *
+ * The URL #/quotes/<id> routes to showDetails, which builds the split and
+ * fetches the document. It never filled the RAIL: only showDataTablePage
+ * loaded the list, so a refresh left the quote sitting beside a list that
+ * still said "Loading quotes ...". Clicking through from the list hid it,
+ * because by then the rail was already populated.
+ */
+test('arriving directly at a quote fills the list too', () => {
+  const view = blockAt(quotesNamespace, 'showDetails: function (id) {');
+  const entry = blockAt(view, 'if (!PosnicPro.quotes._inSplit()) {');
+  assert.ok(
+    entry.includes('PosnicPro.quotes.load()'),
+    'a refresh onto a quote URL would otherwise show an empty rail',
+  );
+});
+
+test('but moving between quotes does NOT reload the list', () => {
+  /* The load belongs inside the page-entry branch. Outside it, every row
+     click would refetch and repaint the rail - which is the flicker the
+     guard was added to stop in the first place. */
+  const view = blockAt(quotesNamespace, 'showDetails: function (id) {');
+  const entry = blockAt(view, 'if (!PosnicPro.quotes._inSplit()) {');
+  const outside = view.replace(entry, '');
+  assert.ok(
+    !outside.includes('PosnicPro.quotes.load()'),
+    'reloading the rail on every row click reintroduces the flicker',
+  );
+});
+
+test('whichever of list and quote lands second places the highlight', () => {
+  /* They load in parallel on a fresh arrival. renderList marks the row when
+     the list wins; showDetails must mark it when the quote wins, or a refresh
+     shows the document with nothing selected beside it. */
+  const view = blockAt(quotesNamespace, 'showDetails: function (id) {');
+  const afterCurrent = view.slice(view.indexOf('PosnicPro.quotes._current = q;'));
+  assert.match(
+    afterCurrent,
+    /is-active/,
+    'the highlight must also be applied once the quote itself arrives',
+  );
+
+  const render = blockAt(quotesNamespace, 'renderList: function () {');
+  assert.match(render, /is-active/, 'and renderList keeps doing it from _current');
+});
