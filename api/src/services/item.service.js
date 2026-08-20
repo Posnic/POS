@@ -896,6 +896,15 @@ class ItemService {
     }
   }
 
+  async quickPatch(id, fields) {
+    try {
+      return await this.repository.quickPatch(id, fields || {});
+    } catch (error) {
+      console.error('Error in ItemService.quickPatch:', error);
+      return { status: false, data: null, message: error.message };
+    }
+  }
+
   async updateItemQuantity(id, value) {
     try {
       const result = await this.repository.updateItemQuantity(id, value);

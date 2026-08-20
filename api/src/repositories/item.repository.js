@@ -3520,6 +3520,51 @@ class ItemRepository extends BaseModel {
     }
   }
 
+  /*
+   * Targeted money-field patch from the sale screen's "update item too"
+   * choice: only the fields the cashier actually changed, nothing else on
+   * the item is touched.
+   */
+  async quickPatch(id, fields) {
+    try {
+      const collection = await this.getCollection(this.collectionName);
+      const objectId = ObjectId.isValid(id) ? new ObjectId(id) : id;
+      const set = {};
+      if (fields.selling_price !== undefined) {
+        const v = parseFloat(fields.selling_price);
+        if (Number.isFinite(v) && v >= 0) set.selling_price = Math.round(v * 100) / 100;
+      }
+      if (fields.tax !== undefined) {
+        const v = parseFloat(fields.tax);
+        if (Number.isFinite(v) && v >= 0 && v <= 100) set.tax = v;
+      }
+      if (fields.discount_percentage !== undefined) {
+        const v = parseFloat(fields.discount_percentage);
+        if (Number.isFinite(v) && v >= 0 && v <= 100) {
+          set.discount_percentage = v;
+          set.discount_amount = 0;
+        }
+      }
+      if (fields.discount_amount !== undefined) {
+        const v = parseFloat(fields.discount_amount);
+        if (Number.isFinite(v) && v >= 0) {
+          set.discount_amount = Math.round(v * 100) / 100;
+          set.discount_percentage = 0;
+        }
+      }
+      if (!Object.keys(set).length) {
+        return { status: false, message: 'Nothing to update' };
+      }
+      set.updated_date = new Date();
+      const result = await collection.updateOne({ _id: objectId }, { $set: set });
+      if (!result.matchedCount) return { status: false, message: 'Item not found' };
+      return { status: true, message: 'Item updated' };
+    } catch (error) {
+      console.error('Error in ItemRepository.quickPatch:', error);
+      throw error;
+    }
+  }
+
   async updateItemQuantity(id, value) {
     try {
       const collection = await this.getCollection(this.collectionName);

@@ -862,6 +862,29 @@ class ItemsController extends BaseController {
     }
   }
 
+  /*
+   * The sale screen's inline editors: when the cashier chooses "update
+   * the item too", only the changed money fields land on the record.
+   * Item write ACL - the same right the full edit form needs.
+   */
+  async quickPatch(req, res) {
+    try {
+      if (req.user?.access?.item?.write === false) {
+        return this.error(res, 'Unauthorized access', 403);
+      }
+      const { id } = req.body || {};
+      if (!id) return this.error(res, 'Item id is required', 400);
+      const result = await this.service.quickPatch(id, req.body);
+      if (!result || result.status !== true) {
+        return this.error(res, (result && result.message) || 'Could not update the item', 400);
+      }
+      return this.success(res, null, 'Item updated');
+    } catch (error) {
+      console.error('Error in quickPatch:', error);
+      return this.error(res, error.message, 500);
+    }
+  }
+
   async updateItemQuantity(req, res) {
     try {
       const { id, value } = req.body;
