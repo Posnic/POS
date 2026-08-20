@@ -3199,8 +3199,9 @@ html:not([data-theme]) .infobar-settings-sidebar-head {
 /* =====================================================================
    GitHub theme (Primer light) - the look & feel of github.com:
    white canvas + #f6f8fa insets, #d0d7de bordered boxes with 6px corners,
-   GitHub-blue (#0969da) links/accents, GREEN (#1f883d) primary buttons,
-   and GitHub's native system-font stack (Segoe UI on Windows).
+   GitHub-blue (#0969da) links, accents AND primary buttons - one accent
+   colour rather than github.com's blue-plus-green pair, so green is left to
+   mean "succeeded" - and GitHub's native system-font stack.
    ===================================================================== */
 [data-theme="github"] {
     --theme-primary-color: #0969da;
@@ -3219,7 +3220,8 @@ html:not([data-theme]) .infobar-settings-sidebar-head {
     --theme-menu-text: #1f2328;
     --theme-menu-active-bg: #0969da;
     --theme-menu-active-text: #ffffff;
-    --theme-btn-primary-bg: #1f883d;
+    /* the accent, not the green - see the .btn-primary note further down */
+    --theme-btn-primary-bg: #0969da;
     --theme-btn-primary-text: #ffffff;
     --theme-success-color: #1a7f37;
     --theme-warning-color: #9a6700;
@@ -3238,10 +3240,15 @@ html:not([data-theme]) .infobar-settings-sidebar-head {
 [data-theme="github"] .card > .card-body:first-child { border-top-left-radius: 6px !important; border-top-right-radius: 6px !important; }
 [data-theme="github"] .card > .card-body:last-child,
 [data-theme="github"] .card > .card-footer:last-child { border-bottom-left-radius: 6px !important; border-bottom-right-radius: 6px !important; }
-/* Primary action buttons are GREEN on GitHub; links/accents stay blue. */
+/* github.com puts its primary buttons in green while its links stay blue.
+   Copied literally that gives a screen running two accent colours at once,
+   and green ends up meaning BOTH "this is the main action" and "this
+   succeeded" - which is what made a lone green New Sale sitting under a blue
+   heading read as out of place (owner, twice).
+   So: one accent for actions, and green kept for success alone. */
 [data-theme="github"] .btn-primary,
-[data-theme="github"] thead.btn-primary { background-color: #1f883d !important; border-color: rgba(27, 31, 36, 0.15) !important; color: #ffffff !important; }
-[data-theme="github"] .btn-primary:hover { background-color: #1a7f37 !important; }
+[data-theme="github"] thead.btn-primary { background-color: #0969da !important; border-color: rgba(27, 31, 36, 0.15) !important; color: #ffffff !important; }
+[data-theme="github"] .btn-primary:hover { background-color: #0860ca !important; }
 /* Default (GitHub) keeps the classic blue icon rail, per preference. */
 [data-theme="github"] .vertical-menu-icon { background-color: #506fe4 !important; }
 /* Active icon: a soft white overlay reads better than the old dark overlay

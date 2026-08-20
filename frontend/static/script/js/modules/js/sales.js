@@ -8497,38 +8497,59 @@ PosnicPro.quotes = {
                     : '')
                 + '</div>';
             $('#quotes_view_body').html(body);
-            /* One visual language (owner ask): neutral share buttons, ONE
-               primary per group, danger only where it destroys. */
-            var g1 = '<button type="button" class="btn btn-sm btn-light border" onclick="hasher.setHash(\'quotes\');">&larr; Back</button>';
+            /* Eleven buttons across two rows was the whole toolbar shouting at
+               once (owner: "too many buttons... move under actions / share").
+               What stays visible is what a quote is FOR - convert it, or open
+               it to edit. Everything that only sends a copy somewhere lives
+               under Share; everything that changes its state or destroys it
+               lives under More, where a mis-click is far less likely.
+               ONE primary, and danger only where it destroys. */
+            var mi = function (call, label, cls) {
+                return '<a class="dropdown-item' + (cls ? ' ' + cls : '')
+                    + '" href="javascript:void(0)" onclick="' + call + '">' + label + '</a>';
+            };
+            var menu = function (label, items) {
+                return '<div class="btn-group">'
+                    + '<button type="button" class="btn btn-sm btn-light border dropdown-toggle"'
+                    + ' data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">' + label + '</button>'
+                    + '<div class="dropdown-menu dropdown-menu-right">' + items + '</div>'
+                    + '</div>';
+            };
+
+            var share = menu('Share', ''
+                + mi('PosnicPro.quotes.printNow();', 'Print')
+                + mi('PosnicPro.quotes.print();', 'Download PDF')
+                + mi('PosnicPro.quotes.emailQuote();', 'Email')
+                + mi('PosnicPro.quotes.whatsappQuote();', 'WhatsApp')
+                + mi('PosnicPro.quotes.shareLink();', 'Copy link'));
+
+            var moreItems = '';
             if (open) {
-                g1 += '<button type="button" class="btn btn-sm btn-primary" onclick="hasher.setHash(\'quotes/' + String(q._id) + '/edit\');">Edit</button>'
-                    + '<button type="button" class="btn btn-sm btn-light border" onclick="PosnicPro.quotes.saveEdits();">Save changes</button>';
+                moreItems += mi('PosnicPro.quotes.setStatus(\'accept\');', 'Mark accepted')
+                    + mi('PosnicPro.quotes.setStatus(\'decline\');', 'Mark declined')
+                    + '<div class="dropdown-divider"></div>'
+                    + mi('PosnicPro.quotes.cancel();', 'Cancel quote', 'text-danger')
+                    + mi('PosnicPro.quotes.remove();', 'Delete quote', 'text-danger');
             }
-            var g2 = '<button type="button" class="btn btn-sm btn-light border" onclick="PosnicPro.quotes.printNow();">Print</button>'
-                + '<button type="button" class="btn btn-sm btn-light border" onclick="PosnicPro.quotes.print();">PDF</button>'
-                + '<button type="button" class="btn btn-sm btn-light border" onclick="PosnicPro.quotes.emailQuote();">Email</button>'
-                + '<button type="button" class="btn btn-sm btn-light border" onclick="PosnicPro.quotes.whatsappQuote();">WhatsApp</button>'
-                + '<button type="button" class="btn btn-sm btn-light border" onclick="PosnicPro.quotes.shareLink();">Copy link</button>';
-            var g3 = '';
+
+            var visible = '';
+            if (open) {
+                visible += '<button type="button" class="btn btn-sm btn-light border" onclick="hasher.setHash(\'quotes/'
+                    + String(q._id) + '/edit\');">Edit</button>'
+                    /* Save appears only once an inline field has actually been
+                       touched - otherwise it sits there all day inviting a
+                       click that would do nothing. */
+                    + '<button type="button" class="btn btn-sm btn-primary" id="q_save_edits"'
+                    + ' style="display:none;" onclick="PosnicPro.quotes.saveEdits();">Save changes</button>';
+            }
+            visible += share;
+            if (moreItems) { visible += menu('More', moreItems); }
             if (open || q.status === 'accepted') {
-                g3 += '<button type="button" class="btn btn-sm btn-success" onclick="PosnicPro.quotes.convert();">Convert to sale</button>';
+                /* The accent, not green: green now means "succeeded", and
+                   converting a quote is an action, not an outcome. */
+                visible += '<button type="button" class="btn btn-sm btn-primary" onclick="PosnicPro.quotes.convert();">Convert to sale</button>';
             }
-            if (open) {
-                g3 += '<button type="button" class="btn btn-sm btn-light border" onclick="PosnicPro.quotes.setStatus(\'accept\');">Accept</button>'
-                    + '<button type="button" class="btn btn-sm btn-light border" onclick="PosnicPro.quotes.setStatus(\'decline\');">Decline</button>';
-            }
-            var g4 = '';
-            if (open) {
-                g4 = '<button type="button" class="btn btn-sm btn-outline-danger" onclick="PosnicPro.quotes.cancel();">Cancel</button>'
-                    + '<button type="button" class="btn btn-sm btn-outline-danger" onclick="PosnicPro.quotes.remove();">Delete</button>';
-            }
-            var act = '<div class="q-actions">'
-                + '<div class="q-act-group">' + g1 + '</div>'
-                + '<div class="q-act-group">' + g2 + '</div>'
-                + (g3 ? '<div class="q-act-group">' + g3 + '</div>' : '')
-                + (g4 ? '<div class="q-act-group q-act-far">' + g4 + '</div>' : '')
-                + '</div>';
-            $('#quotes_view_actions').html(act);
+            $('#quotes_view_actions').html('<div class="q-actions">' + visible + '</div>');
             $('#quotes_view_card').show();
             if (open) { PosnicPro.quotes._pvInitSort(); }
         }, function () { PosnicPro.alert('error', 'Could not load the quote'); });
@@ -10226,6 +10247,17 @@ PosnicPro.sales.renderRecentCustomers = function () {
 };
 $(document).on('click', '.quotes-row', function () {
     hasher.setHash('quotes/' + $(this).data('id'));
+});
+/* Close, not Back: the list never went anywhere, so there is nothing behind
+   this to return to - closing simply hands the list the full width again. */
+$(document).on('click', '#quotes_view_close', function () {
+    hasher.setHash('quotes');
+    PosnicPro.quotes.showDataTablePage();
+});
+/* Save changes stays hidden until an inline field is actually edited. A save
+   button that is always lit teaches people to ignore it. */
+$(document).on('input', '#quotes_view_body .q-edit', function () {
+    $('#q_save_edits').show();
 });
 /* Jira-style: give the document the whole width when the list is in the way,
    and bring it back with the same button. */
