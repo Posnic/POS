@@ -3328,22 +3328,40 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
    inside the sale grid and let normal flow plus a gap do the spacing.
    Colours follow GitHub's: #f6f8fa canvas, #d0d7de borders, #1f2328 text.
    ============================================================ */
-@media (min-width: 992px) {
-    #sales_new .wsk-cp.col-lg-3 { flex: 0 0 20%; max-width: 20%; }
+/*
+ * A real grid, not flex percentages on top of Bootstrap's negative margins.
+ *
+ * The item tiles carry NO column classes at all (the category tiles do), so
+ * percentage rules written against .col-lg-3 never touched them - which is
+ * why the density change appeared to do nothing here. What did reach them
+ * was the row's negative side margins, pulling the first and last tile out
+ * past the container so their outer borders were clipped while the middle
+ * ones looked fine.
+ *
+ * auto-fill + minmax does the whole job: as many columns as fit, equal gaps
+ * including at both ends, and it reflows on any screen without a media
+ * query per breakpoint.
+ */
+/* the canvas the white cards sit on - without it they have no edges */
+#sales_new #item-lists,
+#sales_new #category-lists,
+#sales_new #sales_new_productList { background: #f6f8fa; }
+#sales_new #item-lists > div,
+#sales_new #category-lists > div.row {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+    gap: 10px;
+    padding: 10px;
+    margin: 0 !important;
 }
-@media (min-width: 1400px) {
-    #sales_new .wsk-cp.col-lg-3 { flex: 0 0 16.6667%; max-width: 16.6667%; }
-}
-
-/* the canvas the cards sit on */
-#sales_new #item-lists, #sales_new #sales_new_productList { background: #f6f8fa; }
-#sales_new #item-lists { padding: 6px 2px; }
-
-/* no negative pull anywhere in this grid - gaps come from padding */
-#sales_new .wsk-cp {
-    margin-top: 0 !important;
-    margin-bottom: 0 !important;
-    padding: 6px !important;
+#sales_new #item-lists .wsk-cp,
+#sales_new #category-lists .wsk-cp {
+    flex: none !important;
+    width: auto !important;
+    max-width: none !important;
+    min-width: 0;
+    margin: 0 !important;
+    padding: 0 !important;
     display: flex;
 }
 #sales_new .wsk-cp .wsk-cp-product {
