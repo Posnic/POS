@@ -6189,11 +6189,10 @@ PosnicPro.sales.calculation = {
         var taxFeatureOff = PosnicPro.local.get('default_tax_enable_disable') === 'false'
             && PosnicPro.local.get('gst_action') !== 'enable';
         var showTaxCol = !taxFeatureOff || anyLineTax;
-        // header AND cells together - a th that stays while its tds hide
-        // shifts every later column under the wrong heading
-        $('#sales_new thead th').filter(function () {
-            return $(this).find('.lang_tax_title').length > 0;
-        }).toggle(showTaxCol);
+        // header AND cells together. The build strips <lang> wrappers, so
+        // class selectors on header text MISS in production - the template
+        // position (6th column: Item, Qty, Unit, Price, Disc, TAX) cannot.
+        $('#sales_new tr.sales_new_class th').eq(5).toggle(showTaxCol);
         $('[id^="addSalesLineItemTax_"]').toggle(showTaxCol);
         // totals row: with no Tax cell the Discount slides into its place
         // on the right; when tax returns, Discount goes back left

@@ -3037,18 +3037,30 @@ input:checked + .slider:before {
 /* Feature cards: config lives behind a soft link, never inside the card */
 .module-config-link { font-size: 12.5px; color: #506fe4; display: inline-block; margin-top: 4px; }
 
-/* Feature detail dialog: the marketplace anatomy */
-#v-pills-modules .module-card { cursor: pointer; transition: box-shadow .15s; }
+/* Feature detail dialog: information page, readable, theme-honest */
+#v-pills-modules .module-card { cursor: pointer; transition: box-shadow .15s; min-height: 132px; }
 #v-pills-modules .module-card:hover { box-shadow: 0 3px 14px rgba(30, 40, 60, 0.12); }
-#feature_detail_modal .fd-hero { align-items: center; gap: 12px; display: flex; }
-#feature_detail_modal .fd-ico { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; background: #eef3ff; border-radius: 10px; font-size: 20px; flex: 0 0 44px; }
+#feature_detail_modal .modal-header.fd-hero {
+    background: #fff !important;
+    border-bottom: 1px solid #e3e7ee;
+    align-items: center; gap: 12px; display: flex;
+}
+#feature_detail_modal .fd-hero .modal-title { color: #1a202c; font-size: 18px; }
+#feature_detail_modal .fd-hero .close { color: #1a202c; opacity: .6; text-shadow: none; }
+#feature_detail_modal .fd-ico { width: 48px; height: 48px; display: inline-flex; align-items: center; justify-content: center; background: #eef3ff; border-radius: 10px; font-size: 22px; flex: 0 0 48px; }
+#feature_detail_modal .fd-ico img { max-width: 26px; max-height: 26px; }
 #feature_detail_modal .fd-head-main { flex: 1 1 auto; min-width: 0; }
 #feature_detail_modal .fd-title-row { display: flex; align-items: center; gap: 8px; }
+#feature_detail_modal #fd_tagline { color: #67707f !important; font-size: 14px !important; }
 #feature_detail_modal .fd-state.badge-success { background: #2bb76f; }
 #feature_detail_modal .fd-toggle { margin-right: 4px; }
 #feature_detail_modal .fd-shots { display: flex; gap: 10px; overflow-x: auto; margin-bottom: 14px; }
-#feature_detail_modal .fd-shots img { height: 160px; aspect-ratio: 8/5; object-fit: cover; border: 1px solid #e3e7ee; border-radius: 8px; }
-#feature_detail_modal .fd-text { font-size: 13.5px; color: #3c4452; line-height: 1.6; }
-#feature_detail_modal .fd-list { font-size: 13.5px; color: #3c4452; line-height: 1.7; padding-left: 20px; }
-#feature_detail_modal .q-label { margin-top: 14px; }
-#feature_detail_modal .fd-settings { border: 1px solid #e3e7ee; border-radius: 8px; padding: 12px 14px; background: #fafbfd; }
+#feature_detail_modal .fd-shots img { height: 180px; aspect-ratio: 8/5; object-fit: cover; border: 1px solid #e3e7ee; border-radius: 8px; }
+#feature_detail_modal .fd-text { font-size: 14px; color: #3c4452; line-height: 1.65; margin-bottom: 0; }
+#feature_detail_modal .fd-list { font-size: 14px; color: #3c4452; line-height: 1.8; padding-left: 20px; margin-bottom: 0; }
+#feature_detail_modal .q-label { margin-top: 16px; font-size: 12px; }
+/* Feature settings page sections */
+.fc-section { padding: 14px 0; border-bottom: 1px solid #eef1f5; }
+.fc-section:last-of-type { border-bottom: none; }
+.fc-title { font-size: 15px; font-weight: 700; margin-bottom: 10px; }
+#fc_quotes .row label, #fc_quotes small { font-size: 13px !important; }

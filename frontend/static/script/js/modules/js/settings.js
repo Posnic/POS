@@ -5562,9 +5562,10 @@ PosnicPro.settings.featureInfo = {
             'Share it; mark Accepted when the customer says yes',
             'Convert to sale - the receipt total matches the quote'
         ],
-        adoptQuoteFields: true
+        settingsAnchor: '#fc_quotes'
     },
     staff_shifts_enable: {
+        settingsAnchor: '#fc_workforce',
         tagline: 'Staff clock in and out from the header clock; labour report and payroll exports.',
         about: 'Workforce turns the till into the timesheet: clock in/out, shift history, labour costing and payroll exports - with tips and rosters as optional pieces below.',
         benefits: [
@@ -5592,7 +5593,7 @@ PosnicPro.settings.featureInfo = {
             'On a sale, pick dine-in and the table number',
             'Fire KOTs; settle the table when the meal ends'
         ],
-        settingsPane: '#v-pills-tableorder'
+        settingsAnchor: '#v-pills-tableorder'
     },
     custom_charges_enable: {
         tagline: 'Parcel, service or delivery charges added on a sale.',
@@ -5651,6 +5652,7 @@ PosnicPro.settings.featureInfo = {
         ]
     },
     till_lock_enable: {
+        settingsAnchor: '#fc_tillpin',
         tagline: 'Staff unlock with a 4-digit PIN instead of a password.',
         about: 'The till locks to a PIN pad - fast for staff, safe for the counter. Choose an idle timeout below.',
         benefits: [
@@ -5712,7 +5714,7 @@ PosnicPro.settings.openFeatureDetail = function ($card) {
             + '<div id="fd_about_wrap"><div class="q-label">About</div><p id="fd_about" class="fd-text"></p></div>'
             + '<div id="fd_benefits_wrap"><div class="q-label">Why use it</div><ul id="fd_benefits" class="fd-list"></ul></div>'
             + '<div id="fd_how_wrap"><div class="q-label">How it works</div><ol id="fd_how" class="fd-list"></ol></div>'
-            + '<div id="fd_settings_wrap"><div class="q-label">Settings</div><div id="fd_settings" class="fd-settings"></div></div>'
+            + '<div id="fd_settings_wrap" class="mt-3"></div>'
             + '<p class="text-muted mt-3 mb-0" style="font-size:.8rem;">Switching off never deletes anything - switch back on and everything returns.</p>'
             + '</div>'
             + '</div></div></div>');
@@ -5755,19 +5757,12 @@ PosnicPro.settings.openFeatureDetail = function ($card) {
     }).join(''));
     $('#fd_how_wrap').toggle((info.how || []).length > 0);
 
-    // SETTINGS adoption: the card's own sub-controls, a dedicated fieldset,
-    // or a whole pane - moved in, returned on close, ids untouched
-    var $set = $('#fd_settings').empty();
-    var $inline = $card.children().not('.module-card-head, .module-desc, .module-config-link');
-    if ($inline.length) { PosnicPro.settings._fdAdopt($inline, $set); }
-    if (info.adoptQuoteFields && $('#quote_settings_modal').length) {
-        PosnicPro.settings._fdAdopt($('#quote_settings_modal .modal-body').children(), $set);
-        PosnicPro.settings._fdAdopt($('#quote_settings_modal #quote_settings_save'), $set);
-    }
-    if (info.settingsPane && $(info.settingsPane).length) {
-        PosnicPro.settings._fdAdopt($(info.settingsPane).children(), $set);
-    }
-    $('#fd_settings_wrap').toggle($set.children().length > 0);
+    // information only (owner rule) - settings live on their own page;
+    // the door to them sits at the bottom when the feature has any
+    var anchor = info.settingsAnchor || '';
+    $('#fd_settings_wrap').html(anchor
+        ? '<button type="button" class="btn btn-outline-primary" id="fd_open_settings" data-anchor="' + anchor + '">Open settings &rarr;</button>'
+        : '').toggle(!!anchor);
 
     $('#feature_detail_modal').modal('show');
 };
@@ -5778,9 +5773,16 @@ $(document).on('click', '#v-pills-modules .module-card', function (e) {
     if ($(e.target).closest('input, select, textarea, label, a, button, .custom-control').length) { return; }
     PosnicPro.settings.openFeatureDetail($(this));
 });
-$(document).on('click', '#quotes_config_open', function () {
-    PosnicPro.settings.openFeatureDetail($(this).closest('.module-card'));
-});
-$(document).on('click', '.feature-pane-open', function () {
-    PosnicPro.settings.openFeatureDetail($(this).closest('.module-card'));
+$(document).on('click', '#fd_open_settings', function () {
+    var anchor = $(this).data('anchor');
+    $('#feature_detail_modal').modal('hide');
+    if (anchor === '#v-pills-tableorder') {
+        $('#v-pills-tableorder-tab').click();
+        return;
+    }
+    $('#v-pills-featureconf-tab').click();
+    setTimeout(function () {
+        var el = document.querySelector(anchor);
+        if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    }, 250);
 });

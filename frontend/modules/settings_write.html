@@ -36,6 +36,12 @@
                                         class="feather icon-grid mr-2"></i>
                                     <lang class="lang_modules">Features</lang>
                                 </a>
+                                <a data-module="branch" data-access="write" class="nav-link mb-2"
+                                    id="v-pills-featureconf-tab" data-toggle="pill" href="#v-pills-featureconf" role="tab"
+                                    aria-controls="v-pills-featureconf" aria-selected="false"><i
+                                        class="feather icon-sliders mr-2"></i>
+                                    <lang class="lang_featureconf">Feature settings</lang>
+                                </a>
                                 <div class="settings-nav-group"><lang class="lang_navgroup_modules">Features</lang></div>
                                 <a class="nav-link mb-2" id="v-pills-cashregister-tab"
                                     data-toggle="pill" href="#v-pills-cashregister" role="tab"
@@ -2276,16 +2282,6 @@
                                                 </div>
                                             </div>
                                             <p class="module-desc">Staff clock in/out from the header clock; labour report and payroll exports.</p>
-                                            <div class="module-subs">
-                                                <div class="custom-control custom-switch">
-                                                    <input type="checkbox" class="custom-control-input" id="staff_tips_enable" name="staff_tips_enable">
-                                                    <label class="custom-control-label" for="staff_tips_enable"><lang class="lang_stafftips_title">Tips at clock-out</lang></label>
-                                                </div>
-                                                <div class="custom-control custom-switch">
-                                                    <input type="checkbox" class="custom-control-input" id="staff_roster_enable" name="staff_roster_enable">
-                                                    <label class="custom-control-label" for="staff_roster_enable"><lang class="lang_staffroster_title">Roster</lang></label>
-                                                </div>
-                                            </div>
                                         </div>
 
                                         <div class="module-card">
@@ -2322,8 +2318,7 @@
                                                 </div>
                                             </div>
                                             <p class="module-desc">Price an offer today, convert it to a sale when the customer says yes.</p>
-                                            <a href="javascript:void(0)" class="module-config-link" id="quotes_config_open">&#9881; <lang class="lang_quote_settings">Quotation settings</lang></a>
-                                        </div>
+</div>
 
                                         <div class="module-card">
                                             <div class="module-card-head">
@@ -2347,21 +2342,7 @@
                                                 </div>
                                             </div>
                                             <p class="module-desc">Staff unlock with a 4-digit PIN instead of a password.</p>
-                                            <div class="module-subs">
-                                                <div class="form-group mb-0" style="min-width:200px;">
-                                                    <label for="till_lock_idle_minutes" style="font-size:12.5px;" class="mb-1">
-                                                        <lang class="lang_tilllockidle_title">Lock when idle</lang>
-                                                    </label>
-                                                    <select name="till_lock_idle_minutes" id="till_lock_idle_minutes"
-                                                        class="form-control form-control-sm border-control">
-                                                        <option value="0">Only when asked</option>
-                                                        <option value="2">After 2 minutes</option>
-                                                        <option value="5">After 5 minutes</option>
-                                                        <option value="10">After 10 minutes</option>
-                                                        <option value="30">After 30 minutes</option>
-                                                    </select>
-                                                </div>
-                                            </div>
+                                            
                                         </div>
 
                                         <div class="module-card" data-module="plan" data-access="read">
@@ -2374,7 +2355,7 @@
                                                 </div>
                                             </div>
                                             <p class="module-desc">Dine-in orders by table, KOTs to the kitchen.
-                                                <a href="javascript:void(0)" class="feature-pane-open module-config-link" data-title="Restaurant tables" data-pane="#v-pills-tableorder"><lang class="lang_modules_managetables">Manage tables</lang></a>
+                                                
                                             </p>
                                         </div>
 
@@ -2636,6 +2617,84 @@
                         <!--Denom field end-->
 
                         <!-- table orders Start -->
+                        <div class="tab-pane fade" id="v-pills-featureconf" role="tabpanel" aria-labelledby="v-pills-featureconf-tab">
+                            <div class="card m-b-30">
+                                <div class="card-header">
+                                    <small class="text-muted"><lang class="lang_featureconf_hint">Each feature's own knobs, in one place. The Features page turns them on and off.</lang></small>
+                                </div>
+                                <div class="card-body">
+                                    <div class="fc-section" id="fc_workforce">
+                                        <h6 class="fc-title"><lang class="lang_staffshifts_title">Workforce</lang></h6>
+                                            <div class="module-subs">
+                                                <div class="custom-control custom-switch">
+                                                    <input type="checkbox" class="custom-control-input" id="staff_tips_enable" name="staff_tips_enable">
+                                                    <label class="custom-control-label" for="staff_tips_enable"><lang class="lang_stafftips_title">Tips at clock-out</lang></label>
+                                                </div>
+                                                <div class="custom-control custom-switch">
+                                                    <input type="checkbox" class="custom-control-input" id="staff_roster_enable" name="staff_roster_enable">
+                                                    <label class="custom-control-label" for="staff_roster_enable"><lang class="lang_staffroster_title">Roster</lang></label>
+                                                </div>
+                                            </div>
+                                    </div>
+                                    <div class="fc-section" id="fc_tillpin">
+                                        <h6 class="fc-title"><lang class="lang_tilllock_title">Till PIN Lock</lang></h6>
+                                        <div class="module-subs">
+                                                <div class="form-group mb-0" style="min-width:200px;">
+                                                    <label for="till_lock_idle_minutes" style="font-size:12.5px;" class="mb-1">
+                                                        <lang class="lang_tilllockidle_title">Lock when idle</lang>
+                                                    </label>
+                                                    <select name="till_lock_idle_minutes" id="till_lock_idle_minutes"
+                                                        class="form-control form-control-sm border-control">
+                                                        <option value="0">Only when asked</option>
+                                                        <option value="2">After 2 minutes</option>
+                                                        <option value="5">After 5 minutes</option>
+                                                        <option value="10">After 10 minutes</option>
+                                                        <option value="30">After 30 minutes</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                    </div>
+                                    <div class="fc-section" id="fc_quotes">
+                                        <h6 class="fc-title"><lang class="lang_quotes_title">Quotes</lang></h6>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <label style="font-size:12.5px;" class="mb-1"><lang class="lang_quote_default_payment">Payment method on new quotes</lang></label>
+                        <input type="text" name="quote_default_payment_method" id="quote_default_payment_method"
+                            class="form-control form-control-sm mb-2" maxlength="60"
+                            placeholder="e.g. Bank transfer (NEFT/RTGS) or UPI" autocomplete="off">
+                        <label style="font-size:12.5px;" class="mb-1"><lang class="lang_quote_default_bank">Bank details on new quotes</lang></label>
+                        <textarea name="quote_default_bank_details" id="quote_default_bank_details"
+                            class="form-control form-control-sm mb-2" rows="3" maxlength="500"
+                            placeholder="Account name, number, IFSC"></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label style="font-size:12.5px;" class="mb-1"><lang class="lang_quote_default_terms">Terms on new quotes</lang></label>
+                        <textarea name="quote_default_terms" id="quote_default_terms"
+                            class="form-control form-control-sm mb-2" rows="4" maxlength="1500"
+                            placeholder="e.g. 50% advance confirms the order. Prices valid till the date on the quote."></textarea>
+                        <label style="font-size:12.5px;" class="mb-1"><lang class="lang_quote_signature">Authorised signature (image)</lang></label>
+                        <input type="file" accept="image/*" class="form-control-file" id="quote_signature_file" style="font-size:12px;">
+                        <input type="hidden" id="quote_default_signature">
+                        <div class="mt-1">
+                            <img id="quote_signature_thumb" src="" alt="" style="max-height:48px; max-width:160px; display:none; border:1px solid #e3e7ee; border-radius:4px; padding:2px;">
+                            <a href="javascript:void(0)" id="quote_signature_clear" class="small text-danger ml-2" style="display:none;">Remove</a>
+                        </div>
+                        <small class="text-muted d-block">No image = no signatory line on the quote.</small>
+                    </div>
+                </div>
+                                        <button type="button" class="btn btn-primary btn-sm mt-2" id="quote_settings_save"><lang class="lang_save_title">Save quotation settings</lang></button>
+                                    </div>
+                                    <div class="fc-section" id="fc_restaurant">
+                                        <h6 class="fc-title"><lang class="lang_modules_restaurant">Restaurant</lang></h6>
+                                        <a href="javascript:void(0)" onclick="$('#v-pills-tableorder-tab').click();" class="module-config-link"><lang class="lang_modules_managetables">Manage tables</lang></a>
+                                    </div>
+                                    <div class="text-right mt-3">
+                                        <button type="button" class="btn btn-primary" onclick="PosnicPro.settings.saveModulesTab();"><lang class="lang_save_title">Save</lang></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <div class="tab-pane fade" id="v-pills-tableorder" role="tabpanel"
                             aria-labelledby="v-pills-tableorder-tab">
                             <div class="card m-b-30" data-module="plan" data-access="read">
@@ -4903,46 +4962,5 @@
     <!-- End Containerbar -->
 </div>
 <!--</div>
-<div class="modal fade" id="quote_settings_modal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" role="document">
-        <div class="modal-content">
-            <div class="modal-header py-2">
-                <h5 class="modal-title"><lang class="lang_quote_settings">Quotation settings</lang></h5>
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <label style="font-size:12.5px;" class="mb-1"><lang class="lang_quote_default_payment">Payment method on new quotes</lang></label>
-                        <input type="text" name="quote_default_payment_method" id="quote_default_payment_method"
-                            class="form-control form-control-sm mb-2" maxlength="60"
-                            placeholder="e.g. Bank transfer (NEFT/RTGS) or UPI" autocomplete="off">
-                        <label style="font-size:12.5px;" class="mb-1"><lang class="lang_quote_default_bank">Bank details on new quotes</lang></label>
-                        <textarea name="quote_default_bank_details" id="quote_default_bank_details"
-                            class="form-control form-control-sm mb-2" rows="3" maxlength="500"
-                            placeholder="Account name, number, IFSC"></textarea>
-                    </div>
-                    <div class="col-md-6">
-                        <label style="font-size:12.5px;" class="mb-1"><lang class="lang_quote_default_terms">Terms on new quotes</lang></label>
-                        <textarea name="quote_default_terms" id="quote_default_terms"
-                            class="form-control form-control-sm mb-2" rows="4" maxlength="1500"
-                            placeholder="e.g. 50% advance confirms the order. Prices valid till the date on the quote."></textarea>
-                        <label style="font-size:12.5px;" class="mb-1"><lang class="lang_quote_signature">Authorised signature (image)</lang></label>
-                        <input type="file" accept="image/*" class="form-control-file" id="quote_signature_file" style="font-size:12px;">
-                        <input type="hidden" id="quote_default_signature">
-                        <div class="mt-1">
-                            <img id="quote_signature_thumb" src="" alt="" style="max-height:48px; max-width:160px; display:none; border:1px solid #e3e7ee; border-radius:4px; padding:2px;">
-                            <a href="javascript:void(0)" id="quote_signature_clear" class="small text-danger ml-2" style="display:none;">Remove</a>
-                        </div>
-                        <small class="text-muted d-block">No image = no signatory line on the quote.</small>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer py-2">
-                <button type="button" class="btn btn-secondary-rgba" data-dismiss="modal"><lang class="lang_close_title">Close</lang></button>
-                <button type="button" class="btn btn-primary" id="quote_settings_save"><lang class="lang_save_title">Save</lang></button>
-            </div>
-        </div>
-    </div>
-</div>
+
 -->
