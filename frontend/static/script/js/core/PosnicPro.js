@@ -325,6 +325,11 @@ PosnicPro = {
                 var customerRecord = [];
                 customerRecord.push({ name: responseData['customer_name'], phone: responseData['customer_phone'], email: responseData['customer_email'], address: responseData['customer_address'] });
                 db.customerDisplay.put({ id: '1', 'clear': 'no', 'get': 'no', customer: customerRecord });
+                // the fields arrive asynchronously - refresh the chip, or it
+                // keeps showing whoever the previous sale was for
+                if (PosnicPro.sales && PosnicPro.sales.updateCustomerChip) {
+                    PosnicPro.sales.updateCustomerChip();
+                }
             } else {
                 // This branch simply has no default customer - Walk-In it is.
                 // An error toast on every sale-page load taught nothing.

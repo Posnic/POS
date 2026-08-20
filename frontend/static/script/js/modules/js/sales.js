@@ -6239,9 +6239,20 @@ PosnicPro.sales.chargesTax = function () {
     return Math.round(t * 100) / 100;
 };
 PosnicPro.sales.renderCharges = function () {
-    PosnicPro.sales.chargeTax.ensure();
+    /*
+     * NOTHING in here may throw. This runs at the top of clear.cartItems,
+     * before setDefaults - and an exception here aborts that chain, so the
+     * walk-in customer is never filled and the sale dies on "Enter a
+     * customer name". That regression has now happened twice (the tax-rate
+     * lookup below was the second cause: it touches PosnicPro.local and
+     * PosnicPro.get, neither of which is guaranteed on first paint).
+     */
+    try {
+        PosnicPro.sales.chargeTax.ensure();
+    } catch (e) { /* no rate yet: charges simply render without the tax chip */ }
     var list = PosnicPro.sales.charges || [];
-    var rate = PosnicPro.sales.chargeTax.rate();
+    var rate = 0;
+    try { rate = PosnicPro.sales.chargeTax.rate(); } catch (e) { rate = 0; }
     var html = '';
     list.forEach(function (c, i) {
         // keep the payload fields current: the sale save sends these objects as-is
@@ -6767,11 +6778,21 @@ PosnicPro.sales.setDefaults = function () {
 // "Sales cancelled" notification when isFalse is not explicitly false.
 PosnicPro.sales.clear = PosnicPro.sales.clear || {};
 PosnicPro.sales.clear.cartItems = function (isFalse) {
-    PosnicPro.sales.charges = [];
-    PosnicPro.sales.renderCharges();
-    $('#sales_new_item_name').val('');
-    $('.tax-sales-line-total').html('0.00');
-    $("#tax").val('').trigger('change');
+    /*
+     * setDefaults fills the walk-in customer, so NOTHING before it may
+     * abort this function - a throw up here is exactly how the sale page
+     * ended up demanding a customer name with walk-in already chosen.
+     * The cosmetic resets are best-effort; the default is not.
+     */
+    try {
+        PosnicPro.sales.charges = [];
+        PosnicPro.sales.renderCharges();
+        $('#sales_new_item_name').val('');
+        $('.tax-sales-line-total').html('0.00');
+        $("#tax").val('').trigger('change');
+    } catch (e) {
+        if (window.console) { console.error('[sale] cart reset partially failed:', e); }
+    }
     PosnicPro.sales.setDefaults();
     PosnicPro.sales.SaleTableLineItems = [];
     PosnicPro.sales.customerViewDisplay();
@@ -10275,7 +10296,17 @@ PosnicPro.sales.updateCustomerChip = function () {
     var name = ($('#sales_new_customer_name').val() || '').trim();
     var phone = ($('#sales_new_customer_phone').val() || '').trim();
     var $icon = $btn.children('i.feather');
+    // The branch's own Walk-in record is a real customer with a real id, so
+    // reading the chip off the id alone showed its record name where the
+    // cashier expects "Walk-in". Treat "customer is the default" as walk-in.
+    var isDefaultCustomer = false;
     if (id) {
+        try {
+            var def = JSON.parse(PosnicPro.local.get('defaultcustomer') || '{}');
+            isDefaultCustomer = !!(def && def.customer_id && String(def.customer_id) === String(id));
+        } catch (e) { isDefaultCustomer = false; }
+    }
+    if (id && !isDefaultCustomer) {
         $('#sales_customer_btn_label').text(name || 'Customer');
         $btn.addClass('has-customer');
         $icon.removeClass('icon-user').addClass('icon-user-check');
@@ -10324,6 +10355,16 @@ $(document).on('click', '#sales_customer_pop_close', function () {
 $(document).on('click', '#sales_customer_walkin', function (e) {
     e.preventDefault();
     $('#sales_new_customer_id,#sales_new_customer_name,#sales_new_customer_address,#sales_new_customer_phone,#sales_new_customer_email,#sales_new_customer_state,#sales_new_customer_gst_type,#sales_new_customer_gst_number,#sales_new_customer_partial_balance').val('');
+    /*
+     * Walk-in means the branch's OWN Walk-in customer record - the same one
+     * a fresh sale starts with - not "no customer at all". Blanking every
+     * field left the sale unsaveable: the picker offered Walk-in and then
+     * Save answered "Enter a customer name". Shops that deliberately run
+     * without a default customer keep the blank fields.
+     */
+    if (PosnicPro.local.get('default_customer_enable_disable') !== 'false') {
+        try { PosnicPro.defaultcustomerSet(); } catch (err) { /* chip still updates below */ }
+    }
     if (PosnicPro.sales.updateCustomerChip) { PosnicPro.sales.updateCustomerChip(); }
     if (PosnicPro.loyalty && PosnicPro.loyalty.tillClear) { PosnicPro.loyalty.tillClear(); }
     if (PosnicPro.sales.calculation && PosnicPro.sales.calculation.salesTableRowCart) {
