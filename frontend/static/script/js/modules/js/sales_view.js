@@ -955,6 +955,10 @@ PosnicPro.sales.view = {
     printSale: function (id, name, isKotHistoryPrint, layoutOverride) {
         PosnicPro.sales.view._layoutOverride =
             (layoutOverride === 'a4' || layoutOverride === 'standard') ? layoutOverride : null;
+        /* The PAPER has to follow the same choice. printView resolves the page
+           size and stylesheet from the shop setting, so picking A4 content
+           without this printed the invoice onto an 80mm thermal page. */
+        PosnicPro._printTypeOverride = PosnicPro.sales.view._layoutOverride;
 
         $('.Hide-Disc').show();
         $('.gst-text-value,.print_igst_tax_view,.cgst-text-value,.print_csgst_tax_view').html('');
@@ -1881,6 +1885,9 @@ PosnicPro.sales.view = {
                 var img = data.receipt_barcode === true ? canvas.toDataURL("image/png") : '';
 
                 PosnicPro.printView(PosnicPro.sales.view._isA4() ? contentone : contents, img);
+                // one print only - the next follows the shop setting again
+                PosnicPro._printTypeOverride = null;
+                PosnicPro.sales.view._layoutOverride = null;
 
                 $('.invoice-table-content div').empty();
             } else {

@@ -2405,7 +2405,15 @@ PosnicPro = {
      * the bare global, because that only exists on three pages and none of them
      * is the one people print from.
      */
+    /* One print asked for a specific paper (the A4 / Thermal buttons after a
+       sale). It wins over the shop setting for that print only, and the caller
+       clears it afterwards. Without this the content came out A4 while the
+       PAPER and stylesheet stayed thermal - an invoice squeezed into 80mm. */
+    _printTypeOverride: null,
     resolvePrintType: function () {
+        if (PosnicPro._printTypeOverride) {
+            return PosnicPro._printTypeOverride;
+        }
         if (typeof print_type !== 'undefined' && print_type && print_type.value) {
             return print_type.value;
         }
