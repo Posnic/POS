@@ -1834,3 +1834,99 @@ describe('CustomerController — transactionDetails', () => {
     expect(res.status).toHaveBeenCalledWith(200);
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// deleteTransaction — the route was live and the method did not exist
+// ═══════════════════════════════════════════════════════════════════════════════
+describe('CustomerController — deleteTransaction', () => {
+  const OID = '64b000000000000000000001';
+  const CUST = '64b000000000000000000002';
+
+  const mkRes = () => {
+    const res = {};
+    res.status = jest.fn().mockReturnValue(res);
+    res.json = jest.fn().mockReturnValue(res);
+    return res;
+  };
+
+  /* Two collections come back from getCollection in call order: transaction,
+     then customers. */
+  const wire = (txnDoc, balance = 0) => {
+    const txn = {
+      findOne: jest.fn().mockResolvedValue(txnDoc),
+      deleteOne: jest.fn().mockResolvedValue({ deletedCount: txnDoc ? 1 : 0 }),
+      aggregate: jest.fn().mockReturnValue({
+        toArray: jest.fn().mockResolvedValue(balance === null ? [] : [{ balance }]),
+      }),
+    };
+    const customers = { updateOne: jest.fn().mockResolvedValue({}) };
+    mockGetCollection.mockReset();
+    mockGetCollection.mockResolvedValueOnce(txn).mockResolvedValueOnce(customers);
+    return { txn, customers };
+  };
+
+  test('it exists at all - the route had been calling a missing method', () => {
+    expect(typeof ctrl.deleteTransaction).toBe('function');
+  });
+
+  test('both ids are required, so an id alone cannot delete anything', async () => {
+    const res = mkRes();
+    await ctrl.deleteTransaction({ body: { id: OID } }, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  test('the lookup is scoped by customer AND license, never by id alone', async () => {
+    const { txn } = wire({ _id: OID, amount: 50, type: 'in' }, 120);
+    await ctrl.deleteTransaction({ body: { id: OID, customer_id: CUST } }, mkRes());
+
+    const scope = txn.findOne.mock.calls[0][0];
+    expect(scope).toHaveProperty('customer_id');
+    expect(scope).toHaveProperty('license');
+    // and the delete uses the same scope, not a looser one
+    expect(txn.deleteOne.mock.calls[0][0]).toEqual(scope);
+  });
+
+  test('a transaction belonging to a sale is refused, not deleted', async () => {
+    /* The UI shows a link icon rather than a trash for these, but the server
+       must not trust that: deleting one would leave the sale believing it was
+       paid while the ledger disagrees, with nothing flagging the gap. */
+    const { txn } = wire({ _id: OID, sale_id: 'S-1', amount: 50, type: 'out' });
+    const res = mkRes();
+    await ctrl.deleteTransaction({ body: { id: OID, customer_id: CUST } }, res);
+
+    expect(txn.deleteOne).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json.mock.calls[0][0].message).toMatch(/belongs to a sale/i);
+  });
+
+  test('a missing transaction is a 404, not a silent recalculation', async () => {
+    const { txn, customers } = wire(null);
+    const res = mkRes();
+    await ctrl.deleteTransaction({ body: { id: OID, customer_id: CUST } }, res);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(txn.deleteOne).not.toHaveBeenCalled();
+    expect(customers.updateOne).not.toHaveBeenCalled();
+  });
+
+  test('the balance is re-derived after the delete, not adjusted by hand', async () => {
+    const { txn, customers } = wire({ _id: OID, amount: 50, type: 'in' }, 70);
+    const res = mkRes();
+    await ctrl.deleteTransaction({ body: { id: OID, customer_id: CUST } }, res);
+
+    // it re-runs the same sum(in) - sum(out) aggregate the add path uses
+    const pipeline = txn.aggregate.mock.calls[0][0];
+    const group = pipeline.find((s) => s.$group);
+    expect(group.$group.totalIn).toBeDefined();
+    expect(group.$group.totalOut).toBeDefined();
+
+    expect(customers.updateOne.mock.calls[0][1].$set.balance).toBe(70);
+    expect(res.json.mock.calls[0][0].data).toBe(70);
+  });
+
+  test('deleting the last transaction leaves a balance of zero, not undefined', async () => {
+    const { customers } = wire({ _id: OID, amount: 50, type: 'in' }, null);
+    await ctrl.deleteTransaction({ body: { id: OID, customer_id: CUST } }, mkRes());
+    expect(customers.updateOne.mock.calls[0][1].$set.balance).toBe(0);
+  });
+});

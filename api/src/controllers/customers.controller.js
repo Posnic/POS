@@ -1204,6 +1204,126 @@ class CustomerController extends BaseController {
   });
 
   /**
+   * DELETE /customers/deleteTransaction
+   *
+   * The route for this has been live and calling a method that was never
+   * written, so the trash icon on a customer's transaction list returned 500
+   * every time. Express did not catch it at startup because the route wraps
+   * the call in an arrow function - the wrapper IS a function, so the server
+   * boots clean and the TypeError waits for someone to press delete.
+   *
+   * WHY THIS IS SAFE TO WRITE, when reversing a money record usually is not:
+   * the balance here is DERIVED, not maintained. `transaction` above computes
+   * it as sum(in) - sum(out) over every transaction for the customer and $sets
+   * the result. So a delete does not need bespoke reversal arithmetic that
+   * could drift from the original - it removes the row and re-runs the exact
+   * same derivation. The aggregate below is a copy of that one deliberately;
+   * if the definition of balance ever changes, both must change together.
+   *
+   * A transaction that belongs to a SALE is refused. The UI already shows a
+   * link icon rather than a trash for those, but the server must not trust
+   * that: deleting one would leave the sale believing it had been paid while
+   * the customer's ledger says otherwise, and nothing would flag the gap.
+   */
+  deleteTransaction = asyncHandler(async (req, res) => {
+    try {
+      const { id, customer_id } = req.body || {};
+      if (!id || !customer_id) {
+        return res.status(400).json({
+          type: 'error',
+          message: 'Transaction id and customer id are required',
+          data: null,
+        });
+      }
+
+      const transactionCollection = await BaseModel.prototype.getCollection.call(
+        { collectionName: 'transaction' },
+        'transaction'
+      );
+
+      /* Scoped by customer AND license, never by id alone: an id on its own
+         would let one customer's row be deleted from another's screen. */
+      const scope = {
+        _id: new ObjectId(id),
+        customer_id: new ObjectId(customer_id),
+        license: BaseModel.license,
+      };
+
+      const existing = await transactionCollection.findOne(scope);
+      if (!existing) {
+        return res.status(404).json({
+          type: 'error',
+          message: 'Transaction not found',
+          data: null,
+        });
+      }
+
+      if (existing.sale_id) {
+        return res.status(400).json({
+          type: 'error',
+          message: 'This transaction belongs to a sale. Cancel the sale instead.',
+          data: null,
+        });
+      }
+
+      await transactionCollection.deleteOne(scope);
+
+      // Recalculate customer balance from all transactions - the same
+      // derivation the add path uses, so the two can never disagree.
+      const aggregateResult = await transactionCollection
+        .aggregate([
+          {
+            $match: {
+              customer_id: new ObjectId(customer_id),
+              license: BaseModel.license,
+            },
+          },
+          {
+            $group: {
+              _id: null,
+              totalIn: {
+                $sum: { $cond: [{ $eq: ['$type', 'in'] }, '$amount', 0] },
+              },
+              totalOut: {
+                $sum: { $cond: [{ $eq: ['$type', 'out'] }, '$amount', 0] },
+              },
+            },
+          },
+          {
+            $addFields: {
+              balance: { $subtract: ['$totalIn', '$totalOut'] },
+            },
+          },
+        ])
+        .toArray();
+
+      const newBalance = aggregateResult.length > 0 ? aggregateResult[0].balance : 0;
+
+      const customerCollection = await BaseModel.prototype.getCollection.call(
+        { collectionName: 'customers' },
+        'customers'
+      );
+      await customerCollection.updateOne(
+        { _id: new ObjectId(customer_id), license: BaseModel.license },
+        { $set: { balance: newBalance, updated_date: new Date() } }
+      );
+
+      return res.status(200).json({
+        type: 'success',
+        message: 'Transaction deleted successfully',
+        data: newBalance,
+      });
+    } catch (error) {
+      console.error('Error in deleteTransaction:', error);
+      return res.status(500).json({
+        type: 'error',
+        message: error.message,
+        data: null,
+      });
+    }
+  });
+
+  /**
    * PHP: uploadTransactionImage()
    * Upload transaction image
    * POST /customers/uploadTransactionImage
