@@ -14,24 +14,43 @@ $(document).ready(function () {
     // empty resets to the plain blue pencil. The old behaviour only tinted the
     // tiny pencil, which was too subtle to notice that a note had been saved.
     window.PosnicPro = window.PosnicPro || {};
+    /*
+     * A note chip in the sale action bar. Empty it reads as an invitation
+     * ("Payment note"); filled it turns green with a tick and a preview, and
+     * the full text is the tooltip. The label comes from data-label so the
+     * three chips are told apart at a glance - they used to be three pencils
+     * on three separate rows, each with its own heading taking a whole cell.
+     */
     PosnicPro.updateSaleNoteFlag = function (clickId, iconClass, text) {
         var $a = $('#' + clickId);
         if (!$a.length) { return; }
+        var label = $a.data('label') || '';
+        var esc = function (v) { return $('<div>').text(v == null ? '' : v).html(); };
         var t = (text == null) ? '' : String(text).trim();
         if (t.length > 0) {
-            var preview = t.length > 24 ? t.slice(0, 24) + '…' : t;
-            $a.attr('title', t).css({ color: '#2ca77b' }).html(
-                '[<i class="' + iconClass + '"></i>] ' +
-                '<span class="note-set-flag" style="color:#2ca77b;font-weight:600;white-space:nowrap;">' +
-                '<i class="feather icon-check"></i> ' + $('<div>').text(preview).html() + '</span>'
-            );
+            var preview = t.length > 22 ? t.slice(0, 22) + '…' : t;
+            $a.attr('title', label ? label + ': ' + t : t)
+                .addClass('is-set')
+                .html('<i class="feather icon-check"></i> '
+                    + (label ? esc(label) + ' ' : '')
+                    + '<span class="note-set-flag">' + esc(preview) + '</span>');
         } else {
-            $a.removeAttr('title').css({ color: '#506fe4' }).html('[<i class="' + iconClass + '"></i>]');
+            $a.attr('title', label ? 'Add a ' + label.toLowerCase() : '')
+                .removeClass('is-set')
+                .html('<i class="' + iconClass + '"></i> ' + esc(label));
         }
     };
 
     $('#extraDisc').editable({
         mode: 'inline',
+        /*
+         * No tick / cross (owner: "seems uncessory. user can dont want he can
+         * keep 0 or dont enter anyting"). The field commits when it loses
+         * focus or on Enter, so entering a discount is type-and-move-on and
+         * abandoning one is just walking away.
+         */
+        showbuttons: false,
+        onblur: 'submit',
         type: 'number', // Input type
         tpl: '<input type="text" value="0.00" id="extraDisc" class="form-control form-control-sm small-input" min="0" step="any" style="width: 60px;"/>', // Template for input
         pk: 1, // Primary key (if needed for backend updates)

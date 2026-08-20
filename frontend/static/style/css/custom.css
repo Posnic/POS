@@ -2989,9 +2989,55 @@ input:checked + .slider:before {
     font-size: 14px !important;
 }
 
-/* Quotation editor */
+/* Quotation editor
+ *
+ * Owner (2026-08-20): "all lloks gray color... too dull. it makes full page
+ * very white... why everything Block letters. any reason?"
+ *
+ * The uppercase was a CSS text-transform, not the markup - .q-label is an
+ * "eyebrow" label, a real convention for tiny section markers because
+ * lowercase is hard to scan at 11px. But it earns its keep only when it is
+ * rare. Here EVERY section wore it, so nothing stood out and the page read
+ * as flat and shouty at once. In the editor the labels are now sentence
+ * case at a readable size, with weight and colour doing the work instead.
+ *
+ * The printed A4 paper (.qe-paper, .q-sortable) deliberately KEEPS the
+ * uppercase eyebrows: that is a document, where the convention still holds.
+ *
+ * The white-on-white came from white cards on a white page. A faintly
+ * tinted ground makes the cards read as cards - the standard fix, and
+ * easier on the eyes than a full sheet of #fff.
+ */
 #quotes_edit_card { max-width: none; }
-.qe-sec { border: 1px solid #e3e7ee; border-radius: 6px; padding: 12px 14px; margin-bottom: 14px; background: #fff; }
+#qe_edit_col { background: #f4f6fa; border-radius: 10px; padding-top: 14px; padding-bottom: 2px; }
+.qe-sec {
+    border: 1px solid #e6eaf1;
+    border-radius: 9px;
+    padding: 12px 14px;
+    margin-bottom: 14px;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(35, 45, 70, 0.04);
+    overflow: hidden;
+}
+/* the header bleeds to the card edges via negative margins, so nothing
+   below it needs its own spacing rules */
+.qe-sec > .q-label {
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #2d3748;
+    background: #f7f9fc;
+    border-bottom: 1px solid #eef1f6;
+    border-left: 3px solid var(--theme-primary-color, #506fe4);
+    margin: -12px -14px 12px;
+    padding: 9px 14px 9px 12px;
+}
+/* fields findable without shouting: a real border, calmer placeholder */
+.qe-sec .form-control { border-color: #dde3ec; }
+.qe-sec .form-control:focus { border-color: var(--theme-primary-color, #506fe4); }
+.qe-sec .form-control::placeholder { color: #9aa4b5; }
+.qe-sec thead th { background: #f7f9fc; color: #4a5568; font-weight: 600; }
 .qe-totals { font-size: 14px; }
 .qe-totals > div, .qe-totals #qe_charges_out > div { display: flex; justify-content: space-between; padding: 3px 0; }
 .qe-grand { border-top: 2px solid #2d3748; margin-top: 6px; padding-top: 8px !important; font-size: 16px; }
@@ -3147,3 +3193,105 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 #v-pills-featureconf .fd-list { font-size: 14px; color: #3c4452; line-height: 1.8; padding-left: 20px; margin-bottom: 0; }
 #v-pills-featureconf .q-label { margin-top: 16px; font-size: 12px; }
 #v-pills-featureconf .badge-success { background: #2bb76f; }
+
+/* ============================================================
+   Add / Edit Item — form layout (owner, 2026-08-20)
+   "why so much space wasted... keep maximum width... make proper"
+
+   A form is read down a column, not across a 1900px monitor. Full-bleed
+   inputs make short values (a brand, a barcode, a pack size) look like
+   they want a paragraph, and they push the label miles from its field.
+   Everything here caps line length instead of filling the screen.
+   ============================================================ */
+
+/* The three tabs and their cards stop spanning the whole page. */
+#items_new #item_tab_main,
+#items_new #item_tab_details,
+#items_new #item_tab_more { max-width: 1140px; margin-left: auto; margin-right: auto; }
+
+/* Short values get a sane field width; long-form keeps the room it needs. */
+#items_new #items_brand,
+#items_new #items_tags,
+#items_new #items_barcodes_alt,
+#items_new #items_purchase_unit,
+#items_new #items_conversion_factor,
+#items_new #items_discount_amount,
+#items_new #items_discount_percentage { max-width: 460px; }
+#items_new #items_conversion_factor { max-width: 200px; }
+
+/* Details tab: description and the uploader sit side by side as equals,
+   and the uploader stops being a big empty box with a big blue button. */
+#item_tab_details .Neon-input-dragDrop {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 0 10px;
+    padding: 12px;
+    border: 1px dashed #d4dbe6;
+    border-radius: 9px;
+    background: #fafbfd;
+}
+#item_tab_details .Neon-input-choose-btn {
+    padding: 5px 12px;
+    font-size: 12px;
+    border-radius: 6px;
+}
+#item_tab_details #items_description { min-height: 132px; }
+
+/* Uploaded images as a tidy grid instead of a ragged run of tiles. */
+#item-display-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: flex-start;
+}
+#item-display-preview > * { margin: 0 !important; }
+
+/* Discount: the amount / percent pair reads as one compact control rather
+   than two stacked full-width rows. */
+#items_new .item-discount-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+#items_new .item-discount-row > * { flex: 0 1 auto; }
+
+/* ============================================================
+   Sale action bar — the three notes and the two add-actions
+   (owner: "lot of free space. we can hve Add discount, Additional
+   charge everything as simple buttons or text")
+
+   These are five low-frequency, equal-weight actions. They used to be
+   spread down three table rows, each note with its own heading and cell,
+   which spent a lot of the sale screen on things a cashier touches rarely.
+   One wrapping line of chips says the same in a fraction of the space, and
+   the sale page has no room to waste.
+   ============================================================ */
+.sale-actionbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 2px 0; }
+.sale-actionbar-sep { width: 1px; height: 18px; background: #dfe4ec; margin: 0 2px; }
+
+.sale-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 13px; line-height: 1;
+    padding: 5px 10px; border-radius: 999px;
+    border: 1px solid #dde3ec; background: #fff; color: #5a6478;
+    white-space: nowrap; transition: background .15s ease, border-color .15s ease, color .15s ease;
+    position: relative;
+}
+.sale-chip:hover { background: #eef3ff; border-color: #c3d0f0; color: #2f5fe0; text-decoration: none; }
+.sale-chip i { font-size: 13px; }
+/* a note that HAS text: green, with a preview of what it says */
+.sale-chip.is-set { border-color: #b6e2cd; background: #f0faf5; color: #23985c; }
+.sale-chip.is-set:hover { background: #e4f6ed; border-color: #92d5b4; color: #1c7f4c; }
+.sale-chip .note-set-flag { font-weight: 600; max-width: 190px; overflow: hidden; text-overflow: ellipsis; }
+/* the two doing-actions read a shade stronger than the note chips */
+.sale-chip-do { color: #2f5fe0; border-color: #cfdbf6; }
+
+/* Manager-approval lock: the action still works, it just asks for a PIN.
+   The badge sits in the corner so it reads as a property of the button
+   rather than another thing to press. */
+.sale-chip.needs-approval { padding-right: 20px; }
+.sale-chip.needs-approval::after {
+    content: "\e887"; /* feather icon-lock, verified in icons.css */
+    font-family: 'feather';
+    position: absolute; top: -5px; right: -3px;
+    font-size: 10px; line-height: 1;
+    background: #fff5e6; color: #b5761a;
+    border: 1px solid #f0d9b5; border-radius: 999px;
+    padding: 2px 3px;
+}
