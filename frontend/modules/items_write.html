@@ -61,10 +61,14 @@
                                 <label class="mb-1" style="font-weight:600; font-size:.85rem;"><lang class="lang_modifier_groups">Modifiers</lang></label>
                                 <div id="item_modifier_groups" class="d-flex flex-wrap" style="gap:4px 18px;"></div>
                             </div>
-                            <!-- The three things every item genuinely needs, in ONE row
-                                 (owner ask). Everything below is optional with defaults. -->
+                            <!-- The three things every item genuinely needs.
+                                 They were one row (owner ask), but this card is
+                                 now half the page, so three across left each
+                                 field ~135px - labels wrapped at different
+                                 heights and the inputs stopped lining up. Name
+                                 takes its own line; price and stock pair up. -->
                             <div class="form-row">
-                                <div class="form-group col-md-6">
+                                <div class="form-group col-md-12">
                                     <label class="form-control-placeholder" for="items_name">
                                         <lang class="lang_itemname_title">Item Name </lang>
                                         <span class="text-danger">*</span>
@@ -74,7 +78,7 @@
                                         autocomplete="off" required>
                                     <input type="hidden" name="id" id="itemid">
                                 </div>
-                                <div class="form-group col-md-3">
+                                <div class="form-group col-md-6">
                                     <label class="form-control-placeholder" for="items_selling_price">
                                         <lang class="lang_sales_title"> Selling </lang><span class="text-danger">*</span>
                                     </label>
@@ -97,7 +101,7 @@
                                         </small>
                                     </div>
                                 </div>
-                                <div class="form-group col-md-3" id="item_opening_wrap">
+                                <div class="form-group col-md-6" id="item_opening_wrap">
                                     <label class="form-control-placeholder" for="items_available_quantity">
                                         <lang class="lang_openquantity_title"> In stock (opening) </lang>
                                     </label>
@@ -183,7 +187,7 @@
                             </div>
                             <div class="card-body">
                                 <div class="row">
-                                    <div class="col-md-4">
+                                    <div class="col-md-6">
                                         <label class="form-control-placeholder" for="items_company_price">
                                             <lang class="lang_company_title"> Cost </lang>
                                         </label>
@@ -192,7 +196,7 @@
                                             id="items_company_price" name="items_company_price" minlength="1"
                                             maxlength="7" value="0.00" placeholder="Cost" autocomplete="off">
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-6">
                                         <label class="form-control-placeholder" for="items_mrp_price">
                                             <lang class="lang_mrp_title"> M.R.P </lang>
                                         </label>
@@ -203,7 +207,7 @@
                                     </div>
                                 </div>
                                 <div class="row">
-                                    <div class="col-md-4">
+                                    <div class="col-md-6">
                                         <label class="form-control-placeholder" for="items_reorder_point">
                                             <lang class="lang_reorder_point">Reorder point</lang>
                                         </label>
@@ -213,7 +217,7 @@
                                             id="items_reorder_point" name="items_reorder_point"
                                             placeholder="Reorder point (optional)" autocomplete="off">
                                     </div>
-                                    <div class="col-md-4 m-t-9">
+                                    <div class="col-md-6">
                                         <label class="form-control-placeholder" for="items_unit">
                                             Item Units
                                         </label>
