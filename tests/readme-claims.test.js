@@ -184,7 +184,7 @@ test('the docs describe the commands that exist', () => {
   }
 });
 
-test('every package points at this repository', () => {
+test('every package points support and source at this repository', () => {
   /* frontend/package.json pointed at Posnic/posnicpro, a repository this is
      not, so "report a bug" on npm metadata sent people somewhere else. The
      other two had no repository, bugs or homepage at all. */
@@ -195,12 +195,33 @@ test('every package points at this repository', () => {
       fs.readFileSync(path.join(ROOT, dir, 'package.json'), 'utf8'));
     const where = dir === '.' ? 'root' : dir;
 
-    for (const field of ['repository', 'bugs', 'homepage']) {
+    for (const field of ['repository', 'bugs']) {
       assert.ok(pkg[field], `${where}/package.json has no ${field}`);
       const value = typeof pkg[field] === 'string' ? pkg[field] : pkg[field].url;
       assert.ok(value.includes(REPO),
         `${where}/package.json ${field} points at ${value}, not this repository`);
     }
+
+    assert.ok(pkg.homepage, `${where}/package.json has no homepage`);
+  }
+});
+
+test('the product package uses the canonical product homepage', () => {
+  const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
+  assert.equal(pkg.homepage, 'https://posnic.com/');
+});
+
+test('every locked sharp copy includes the symlink-validation fix', () => {
+  const lock = JSON.parse(
+    fs.readFileSync(path.join(ROOT, 'package-lock.json'), 'utf8'));
+  const sharpCopies = Object.entries(lock.packages)
+    .filter(([where]) => /(?:^|\/)node_modules\/sharp$/.test(where));
+
+  assert.ok(sharpCopies.length > 0, 'package-lock.json has no sharp package');
+  for (const [where, pkg] of sharpCopies) {
+    const [major, minor] = pkg.version.split('.').map(Number);
+    assert.ok(major > 0 || minor >= 35,
+      `${where} locks vulnerable sharp ${pkg.version}; require 0.35.0 or later`);
   }
 });
 

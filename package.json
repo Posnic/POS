@@ -1,7 +1,7 @@
 {
   "name": "posnic",
   "version": "1.4.0",
-  "description": "Offline-first point of sale for shops, restaurants and pharmacies. Runs its own database and API on the till, so a dropped connection is not an outage.",
+  "description": "Free open-source, offline-first point-of-sale software for retail shops and restaurants. Windows, macOS and Linux.",
   "main": "main.js",
   "scripts": {
     "postinstall": "node scripts/enable-installer-extraction-details.js",
@@ -442,7 +442,7 @@
     },
     "afterPack": "scripts/adhoc-sign-mac.js"
   },
-  "author": "Posnic Team",
+  "author": "Posnic Innovations Private Limited",
   "license": "AGPL-3.0-only",
   "devDependencies": {
     "7zip-bin": "^5.2.0",
@@ -462,6 +462,9 @@
     "pdf-to-printer": "^5.8.0",
     "serialport": "^13.0.0"
   },
+  "overrides": {
+    "sharp": "$sharp"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Posnic/POS.git"
@@ -469,17 +472,22 @@
   "bugs": {
     "url": "https://github.com/Posnic/POS/issues"
   },
-  "homepage": "https://github.com/Posnic/POS#readme",
+  "homepage": "https://posnic.com/",
   "keywords": [
     "pos",
     "point-of-sale",
+    "point-of-sale-system",
+    "pos-software",
     "electron",
     "offline-first",
+    "open-source",
     "retail",
     "restaurant",
-    "pharmacy",
-    "gst",
-    "invoicing",
+    "inventory-management",
+    "billing-software",
+    "windows",
+    "macos",
+    "linux",
     "mongodb"
   ],
   "engines": {
