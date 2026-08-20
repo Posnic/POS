@@ -3021,6 +3021,22 @@ input:checked + .slider:before {
 }
 /* the header bleeds to the card edges via negative margins, so nothing
    below it needs its own spacing rules */
+/* Labels INSIDE a section (Quote discount, Valid until) are field labels,
+   not section headers - they were left behind as small grey uppercase while
+   the headers around them changed, which is what made that one block look
+   like a different design. Scoped through .form-row so this can never take
+   the header treatment away from a direct child. */
+.qe-sec .form-row .q-label {
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #5a6478;
+    background: none;
+    border: 0;
+    margin: 0 0 4px;
+    padding: 0;
+}
 .qe-sec > .q-label {
     text-transform: none;
     letter-spacing: 0;
