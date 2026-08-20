@@ -3,6 +3,7 @@
   "version": "1.4.0",
   "description": "Free open-source, offline-first point-of-sale software for retail shops and restaurants. Windows, macOS and Linux.",
   "main": "main.js",
+  "desktopName": "com.posnic.app.desktop",
   "scripts": {
     "postinstall": "node scripts/enable-installer-extraction-details.js",
     "start": "electron .",
@@ -396,6 +397,7 @@
     },
     "linux": {
       "icon": "512-posnic.png",
+      "syncDesktopName": true,
       "category": "Office",
       "maintainer": "info@posnic.com",
       "target": [
@@ -438,9 +440,12 @@
       "artifactName": "${productName}-${version}-linux-${arch}.${ext}"
     },
     "deb": {
-      "artifactName": "${name}_${version}_${arch}.${ext}"
+      "artifactName": "${name}_${version}_${arch}.${ext}",
+      "fpm": [
+        "builds/linux/com.posnic.app.metainfo.xml=/usr/share/metainfo/com.posnic.app.metainfo.xml"
+      ]
     },
-    "afterPack": "scripts/adhoc-sign-mac.js"
+    "afterPack": "scripts/after-pack.js"
   },
   "author": "Posnic Innovations Private Limited",
   "license": "AGPL-3.0-only",
