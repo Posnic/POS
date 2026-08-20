@@ -674,6 +674,15 @@ PosnicPro.settings = {
                 $('#quote_default_payment_method').val(data.quote_default_payment_method || '');
                 $('#quote_default_bank_details').val(data.quote_default_bank_details || '');
                 $('#quote_default_terms').val(data.quote_default_terms || '');
+                $('#quote_default_signature').val(data.quote_default_signature || '');
+                PosnicPro.local.set('quotesignature', data.quote_default_signature || '');
+                if (data.quote_default_signature) {
+                    $('#quote_signature_thumb').attr('src', data.quote_default_signature).show();
+                    $('#quote_signature_clear').show();
+                } else {
+                    $('#quote_signature_thumb').hide();
+                    $('#quote_signature_clear').hide();
+                }
                 $('#receiving_prefix').val(data.receiving_prefix || 'P');
                 $('#allow_sale_date_edit').prop('checked', data.allow_sale_date_edit !== 'false' && data.allow_sale_date_edit !== false);
                 PosnicPro.local.set('allow_sale_date_edit', (data.allow_sale_date_edit === 'false' || data.allow_sale_date_edit === false) ? 'false' : 'true');
@@ -1589,6 +1598,7 @@ if ($wrapper.length) {
                 quote_default_payment_method: $('#quote_default_payment_method').val() || '',
                 quote_default_bank_details: $('#quote_default_bank_details').val() || '',
                 quote_default_terms: $('#quote_default_terms').val() || '',
+                quote_default_signature: $('#quote_default_signature').val() || '',
                 receiving_prefix: $('#receiving_prefix').val(),
                 allow_sale_date_edit: ($('#allow_sale_date_edit').is(":checked")) ? 'true' : 'false',
                 indian_gst: $('#indian_gst').val(),
@@ -5442,4 +5452,29 @@ PosnicPro.settings.filterModuleCards = function (query) {
 $(document).on('shown.bs.tab', '#v-pills-tab a[data-toggle="pill"]', function () {
     var t = $.trim($(this).text());
     if (t) { $('#settings_page_title').text(t); }
+});
+
+/* Authorised signature for quotations: a small image stored with the shop
+   settings as a data URL. No image = no signatory line on the quote. */
+$(document).on('change', '#quote_signature_file', function () {
+    var f = this.files && this.files[0];
+    if (!f) { return; }
+    if (f.size > 300 * 1024) {
+        PosnicPro.alert('warning', 'Keep the signature under 300 KB - a small PNG works best.');
+        $(this).val('');
+        return;
+    }
+    var reader = new FileReader();
+    reader.onload = function (e) {
+        $('#quote_default_signature').val(e.target.result);
+        $('#quote_signature_thumb').attr('src', e.target.result).show();
+        $('#quote_signature_clear').show();
+    };
+    reader.readAsDataURL(f);
+});
+$(document).on('click', '#quote_signature_clear', function () {
+    $('#quote_default_signature').val('');
+    $('#quote_signature_file').val('');
+    $('#quote_signature_thumb').hide().attr('src', '');
+    $(this).hide();
 });

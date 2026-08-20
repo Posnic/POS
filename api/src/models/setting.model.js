@@ -1157,6 +1157,12 @@ class SettingModel extends BaseModel {
                 .slice(0, 1500),
             }
           : {}),
+        ...(data.quote_default_signature !== undefined
+          ? {
+              // a small data-URL image; empty string removes it
+              quote_default_signature: String(data.quote_default_signature || '').slice(0, 400000),
+            }
+          : {}),
         indian_gst: data.indian_gst,
         receiving_prefix: data.receiving_prefix,
         branch_gstin_number: data.branch_gstin_number || '',
