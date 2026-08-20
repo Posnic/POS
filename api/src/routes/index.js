@@ -34,6 +34,7 @@ const authorizationsRoutes = require('./authorizations.routes');
 const shiftsRoutes = require('./shifts.routes');
 const salesRoutes = require('./sales.routes');
 const settingsRoutes = require('./settings.routes'); // Note: File not renamed, but route will be /settings
+const settingsGroupsRoutes = require('./settings-groups.routes');
 const stockLogsRoutes = require('./stock-logs.routes');
 const suppliersRoutes = require('./suppliers.routes');
 const usersRoutes = require('./users.routes'); // Updated from userRoutes
@@ -93,6 +94,7 @@ router.use('/roles', rolesRoutes);
 router.use('/authorizations', authorizationsRoutes);
 router.use('/shifts', shiftsRoutes);
 router.use('/sales', salesRoutes);
+router.use('/settings/group', settingsGroupsRoutes);
 router.use('/settings', settingsRoutes); // Primary path
 router.use('/setting', settingsRoutes); // Legacy PHP path support
 router.use('/stock-logs', stockLogsRoutes); // Changed from stocklogs to stock-logs
