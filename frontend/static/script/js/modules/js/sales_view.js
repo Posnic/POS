@@ -972,6 +972,10 @@ PosnicPro.sales.view = {
                     : 'Could not load this sale to print. Check that you are still signed in, then try again.';
                 if (PosnicPro.alert) PosnicPro.alert('error', reason);
                 console.error('[print] sales/' + id + ' failed:', response);
+                // a print that never happened must not leave its paper choice
+                // behind - otherwise every later receipt inherits it
+                PosnicPro._printTypeOverride = null;
+                PosnicPro.sales.view._layoutOverride = null;
                 return;
             }
             if (response.type === 'success') {
@@ -1892,7 +1896,19 @@ PosnicPro.sales.view = {
                 $('.invoice-table-content div').empty();
             } else {
                 PosnicPro.alert(response.type, response.message);
+                PosnicPro._printTypeOverride = null;
+                PosnicPro.sales.view._layoutOverride = null;
             }
+        }, function (xhr) {
+            /* There was no error handler here at all, so a dropped request
+               left the paper choice set and the NEXT receipt printed on the
+               wrong stock with nothing to explain it. */
+            PosnicPro._printTypeOverride = null;
+            PosnicPro.sales.view._layoutOverride = null;
+            if (PosnicPro.alert) {
+                PosnicPro.alert('error', 'Could not reach the server to print this receipt - try again.');
+            }
+            console.error('[print] sales/' + id + ' request failed:', xhr && xhr.status);
         });
     },
     /*Perticular Returned printing the sales data held by this function*/
