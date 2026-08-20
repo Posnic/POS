@@ -1105,6 +1105,8 @@ class SettingModel extends BaseModel {
       const supplierCheckbox = this.toBoolean(data.supplier_checkbox);
       const taxCheckbox = this.toBoolean(data.tax_checkbox);
       const saleInlineEditor = this.toBoolean(data.sale_inline_editor);
+      // the double-click editor's own switch (replaces the old inline pencils)
+      const saleQuickEdit = data.sale_quick_edit_enable;
       const enableMultiPayment = this.toBoolean(data.enable_multi_payment);
       const tableOptions = this.toBoolean(data.table_options);
       const roundOff = this.toBoolean(data.roundOff);
@@ -1202,6 +1204,9 @@ class SettingModel extends BaseModel {
         header_print: data.header_print,
         footer_print: data.footer_print,
         sale_inline_editor: saleInlineEditor,
+        ...(saleQuickEdit !== undefined
+          ? { sale_quick_edit_enable: String(saleQuickEdit) === 'true' }
+          : {}),
         enable_multi_payment: enableMultiPayment,
         table_options: tableOptions,
         hardware_weight_machine_enable: hardwareWeightMachineEnable,

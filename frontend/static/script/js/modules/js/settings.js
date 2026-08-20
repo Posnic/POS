@@ -918,14 +918,14 @@ if ($wrapper.length) {
                 let print_url = (typeof (data.print_url) !== "undefined" && data.print_url !== null) ? data.print_url : false;
                 (print_url === true) ? $('#print_url').prop("checked", true).attr('checked', 'checked') : $('#print_url').prop("checked", false).attr('unchecked', 'unchecked');
                 PosnicPro.local.set('print_url', print_url);
-                if (data.sale_inline_editor === true) {
-                    $('.sales-inline-hide').show();
-                    $('#sale_inline_editor').prop("checked", true).attr('checked', 'checked');
-                    PosnicPro.local.set('inline_sale', 'enable');
+                // the old pencil editor is gone; its stale local key with it
+                PosnicPro.local.set('inline_sale', 'disable');
+                if (data.sale_quick_edit_enable !== false) {
+                    $('#sale_quick_edit').prop("checked", true).attr('checked', 'checked');
+                    PosnicPro.local.set('sale_quick_edit', 'enable');
                 } else {
-                    $('.sales-inline-hide').hide();
-                    $('#sale_inline_editor').prop("checked", false).attr('unchecked', 'unchecked');
-                    PosnicPro.local.set('inline_sale', 'disable');
+                    $('#sale_quick_edit').prop("checked", false).attr('unchecked', 'unchecked');
+                    PosnicPro.local.set('sale_quick_edit', 'disable');
                 }
                 if (data.enable_multi_payment === true) {
                     $('#enable_multi_payment').prop("checked", true).attr('checked', 'checked');
@@ -1630,7 +1630,7 @@ if ($wrapper.length) {
                 customer_checkbox: ($('#default_customer_enable_disable').is(":checked")) ? 'true' : 'false',
                 supplier_checkbox: ($('#default_supplier_enable_disable').is(":checked")) ? 'true' : 'false',
                 tax_checkbox: ($('#default_tax_enable_disable').is(":checked")) ? 'true' : 'false',
-                sale_inline_editor: ($('#sale_inline_editor').is(":checked")) ? 'true' : 'false',
+                sale_quick_edit_enable: ($('#sale_quick_edit').is(":checked")) ? 'true' : 'false',
                 enable_multi_payment: ($('#enable_multi_payment').is(":checked")) ? 'true' : 'false',
                 table_options: ($('#table_options').is(":checked")) ? 'true' : 'false',
                 enable_notification_reminders: ($('#enable_notification_reminders').is(":checked")) ? 'true' : 'false',
@@ -1694,12 +1694,10 @@ if ($wrapper.length) {
                     PosnicPro.local.set('gst_action', 'disable');
                 }
 
-                if ($("#sale_inline_editor").is(":checked")) {
-                    $('.sales-inline-hide').show();
-                    PosnicPro.local.set('inline_sale', 'enable');
+if ($("#sale_quick_edit").is(":checked")) {
+                    PosnicPro.local.set('sale_quick_edit', 'enable');
                 } else {
-                    $('.sales-inline-hide').hide();
-                    PosnicPro.local.set('inline_sale', 'disable');
+                    PosnicPro.local.set('sale_quick_edit', 'disable');
                 }
                 if ($("#enable_multi_payment").is(":checked")) {
                     PosnicPro.local.set('enable_multi_payment', 'enable');
