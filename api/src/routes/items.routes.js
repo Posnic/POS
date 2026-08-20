@@ -128,6 +128,9 @@ router.get('/itemSearchTable', bindController(itemsController.itemSearchTable));
 // PHP: updateItemQuantity() - Update item quantity
 router.post('/updateItemQuantity', bindController(itemsController.updateItemQuantity));
 
+// Sale-screen inline edit: targeted money-field patch (write ACL)
+router.post('/quickPatch', bindController(itemsController.quickPatch));
+
 // PHP: categoryProductDetails() - Category product details
 router.get('/categoryProductDetails', bindController(itemsController.categoryProductDetails));
 
