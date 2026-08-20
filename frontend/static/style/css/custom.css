@@ -3258,7 +3258,11 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
    One wrapping line of chips says the same in a fraction of the space, and
    the sale page has no room to waste.
    ============================================================ */
-.sale-actionbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 2px 0; }
+.sale-actionbar { display: flex; flex-wrap: wrap; align-items: flex-start; align-content: flex-start; gap: 6px; padding: 2px 0; }
+/* The cell spans all three totals rows, so the chips wrap DOWN into space
+   that was empty rather than pushing the Sub Total row taller (owner:
+   "it keep increase the tr (row) of Sub Total... All 3 rows can share"). */
+.sale-notes-cell { vertical-align: top !important; }
 .sale-actionbar-sep { width: 1px; height: 18px; background: #dfe4ec; margin: 0 2px; }
 
 .sale-chip {

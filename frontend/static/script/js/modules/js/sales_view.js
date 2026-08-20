@@ -633,7 +633,7 @@ PosnicPro.sales.view = {
         $("#sales_new_items_table tbody tr").remove();
         $('.salesBalanceAmount,#payment_id').show();
         $("#save_submit,#check_button").attr("disabled", true);
-        $("#sales_new_items_table,#paymentdisplay,#return_tax,#return_disc,#return_discount,#sale_dcrption").addClass("customer-display-hide");
+        $("#sales_new_items_table,#paymentdisplay,#return_tax,#return_disc,#return_discount").addClass("customer-display-hide");
         $("#sales_new_items_table,#paymentdisplay,#return_tax").removeClass("display-block");
         $("#refund_pay_hide,#refund_pay_total,#refund_sub_hide,#refund_sub_total").show();
         $(".save_return_submit,#sub_hide,#sub_total_hide,#pay_hide,#pay_total_hide,#show_last_created_sale").hide();

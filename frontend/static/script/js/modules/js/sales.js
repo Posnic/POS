@@ -49,6 +49,7 @@
         }
         PosnicPro.kotorder.kotHideShow();
         $('.addDisc-hide-show').hide();
+        if (PosnicPro.sales.syncNotesCellSpan) { PosnicPro.sales.syncNotesCellSpan(); }
         $('#extraDisc').prop('disabled', false);
         $('#extraDisc').removeClass('extraDisc');
         $('#percentIcon, #rupeeIcon').css('pointer-events', 'auto').css('opacity', '1');
@@ -106,7 +107,7 @@
         $("#refund_pay_total,#refund_sub_total,#refund_pay_hide,#refund_sub_hide").hide();
         $("#sales_new_items_table,#paymentdisplay,#return_tax,#return_disc,#return_discount").removeClass("customer-display-hide");
         /***Clear addlineitem table**/
-        $(".save_return_submit,#sub_hide,#sub_total_hide,#pay_hide,#pay_total_hide,#items_view_hide,#payment_note,#sale_dcrption").show();
+        $(".save_return_submit,#sub_hide,#sub_total_hide,#pay_hide,#pay_total_hide,#items_view_hide,#payment_note").show();
         $(".payment_note").addClass("customer-display-hide");
         $("#return_view_hide,#button_return,#check_button,#return_button").css("display", "none");
         PosnicPro.sales.setSaleDefaults();
@@ -194,7 +195,7 @@
 
         $("#refund_pay_total,#refund_sub_total,#refund_pay_hide,#refund_sub_hide").hide();
         $(".save_return_submit,#sub_hide,#sub_total_hide,#pay_hide,#pay_total_hide").show();
-        $("#payment_note,#sale_dcrption").show();
+        $("#payment_note").show();
         $("#items_view_hide").css("display", "block");
         $("#return_view_hide,#check_button,#return_button,#button_return").css("display", "none");
         PosnicPro.sales.recentMenu.recentSalesTabDetails();
@@ -371,7 +372,7 @@
         $('#v-pills-dashboard').addClass('show active');
         $("#refund_pay_total,#refund_sub_total,#refund_pay_hide,#refund_sub_hide").hide();
         $(".save_return_submit,#sub_hide,#sub_total_hide,#pay_hide,#pay_total_hide").show();
-        $("#payment_note,#sale_dcrption").show();
+        $("#payment_note").show();
         $("#items_view_hide").css("display", "block");
         $("#return_view_hide,#check_button,#return_button,#button_return").css("display", "none");
         PosnicPro.sales.recentMenu.recentSalesTabDetails();
@@ -7283,8 +7284,11 @@ PosnicPro.sales.recentMenu = {
             PosnicPro.sales.view.changeExtraDiscType(extra_discount_type);
             if (extra_discount !== 0) {
                 $('.addDisc-hide-show').show();
+                if (PosnicPro.sales.syncNotesCellSpan) { PosnicPro.sales.syncNotesCellSpan(); }
             } else {
                 $('.addDisc-hide-show').hide();
+                if (PosnicPro.sales.syncNotesCellSpan) { PosnicPro.sales.syncNotesCellSpan(); }
+        if (PosnicPro.sales.syncNotesCellSpan) { PosnicPro.sales.syncNotesCellSpan(); }
             }
             $('#extraDisc').prop('disabled', false);
             $('#extraDisc').removeClass('extraDisc');
@@ -10229,6 +10233,21 @@ $('.tableFixHead').on('scroll', function () {
  * surprised. Hovering says so in words. Actions the user can simply perform
  * carry no lock, so the badge means exactly one thing.
  */
+/*
+ * The notes cell spans the Sub Total / Discount / Additional Discount rows so
+ * the chips can use that whole block. The Additional Discount row is shown and
+ * hidden on demand, though, and a cell spanning a row that is not there makes
+ * the table render short - so the span follows the row.
+ */
+PosnicPro.sales.syncNotesCellSpan = function () {
+    var $cell = $('#payment_note');
+    if (!$cell.length) { return; }
+    var extraVisible = $('.add-disc-row').is(':visible');
+    $cell.attr('rowspan', extraVisible ? 3 : 2);
+};
+$(document).on('click', '#sale_add_discount', function () {
+    setTimeout(function () { PosnicPro.sales.syncNotesCellSpan(); }, 80);
+});
 PosnicPro.sales.markLockedActions = function () {
     var mark = function (sel, perm, what) {
         var $el = $(sel);
