@@ -11569,6 +11569,30 @@
         }
       }
     },
+    "/settings/group/copy": {
+      "post": {
+        "summary": "copy",
+        "operationId": "post_settings_group_copy",
+        "tags": [
+          "Settings groups"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
     "/settings/group/{group}": {
       "get": {
         "summary": "read",

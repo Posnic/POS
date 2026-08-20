@@ -51,6 +51,20 @@ const OWNER_TYPES = ['owner', 'admin', 'super_admin', 'manager', 'store_manager'
 const isOwnerClass = (req) =>
   OWNER_TYPES.includes(String(req.user?.usertype || req.user?.role || '').toLowerCase());
 
+/* Which branches this user may act on. A copy touches TWO of them, and the
+   destination is the dangerous one - it is the branch being overwritten. An
+   account with no branch_access list is an unrestricted one (owner/admin), so
+   an empty list means "all", not "none". */
+const branchesAllowed = (req) => {
+  const list = req.user?.branch_access;
+  if (!Array.isArray(list) || !list.length) return null; // null = unrestricted
+  return new Set(list.map((b) => String(b?.branch_id || b)));
+};
+const mayTouchBranch = (req, branchId) => {
+  const allowed = branchesAllowed(req);
+  return allowed === null || allowed.has(String(branchId));
+};
+
 const fail = (res, message, code = 400, data = null) =>
   res.status(code).json({ type: 'error', message, data });
 const ok = (res, data, message) => res.json({ type: 'success', message, data });
@@ -93,6 +107,44 @@ module.exports = {
       return ok(res, r.data, 'success');
     } catch (error) {
       console.error('Error in settings-groups read:', error);
+      return fail(res, error.message, 500);
+    }
+  },
+
+  /*
+   * S6 (D4). Copy settings from one branch to another.
+   *
+   * Owner-class only, and both branches must be ones this account may act on -
+   * the destination especially, since that is the branch being overwritten.
+   * Secrets are refused by name rather than quietly dropped: a caller that
+   * asked to copy credentials should be told it did not happen.
+   */
+  async copy(req, res) {
+    try {
+      if (!canWrite(req)) return fail(res, 'Unauthorized access', 403);
+      if (!isOwnerClass(req)) return fail(res, 'Unauthorized access', 403);
+
+      const body = req.body && typeof req.body === 'object' ? req.body : {};
+      const from = body.from || contextOf(req).branchId;
+      const to = body.to;
+      if (!to) return fail(res, 'Pick a branch to copy to');
+      for (const [label, id] of [
+        ['source', from],
+        ['destination', to],
+      ]) {
+        if (!mayTouchBranch(req, id)) {
+          return fail(res, `You do not have access to the ${label} branch`, 403);
+        }
+      }
+
+      const groups = Array.isArray(body.groups) ? body.groups : [];
+      const r = await repository.copyGroups(groups, from, to, {
+        licenseId: contextOf(req).licenseId,
+      });
+      if (!r.status) return fail(res, r.message, 400, r.data);
+      return ok(res, r.data, 'Settings copied');
+    } catch (error) {
+      console.error('Error in settings-groups copy:', error);
       return fail(res, error.message, 500);
     }
   },

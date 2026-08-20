@@ -16,6 +16,10 @@ router.use(protect);
  * GET /settings/group/secrets reports WHICH credentials are set, never their
  * values, and only to an owner-class account.
  */
+/* Registered BEFORE the /:group routes so "copy" can never be read as the
+   name of a settings group. */
+router.post('/copy', controller.copy);
+
 router.get('/:group', controller.read);
 router.put('/:group', controller.write);
 
