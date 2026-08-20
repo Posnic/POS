@@ -3025,6 +3025,34 @@ input:checked + .slider:before {
 #sale_charges_list .sale-charge-row b { font-variant-numeric: tabular-nums; }
 #sale_charges_list .sale-charge-del { font-weight: 700; }
 #sale_charges_list .sale-charge-tax { font-size: 11.5px; cursor: pointer; }
+/* Tax column visibility is decided in ONE place: this table class.
+   !important beats any inline .show() another flow sets on the header,
+   so the Tax th can never come back without its cells - the column
+   shift that kept coming back. */
+#sales_new #return_table.tax-col-off thead th.th-tax-col { display: none !important; }
+#sales_new #return_table.tax-col-off td[id^="addSalesLineItemTax_"] { display: none !important; }
+
+/* Soft action links (+ Add charge / + Add discount): visible hover */
+.sale-soft-links a { padding: 2px 8px; border-radius: 4px; transition: background .15s ease; display: inline-block; }
+.sale-soft-links a:hover { background: #eef3ff; text-decoration: none; }
+#sale_charges_list .sale-charge-row { border-radius: 4px; transition: background .15s ease; }
+#sale_charges_list .sale-charge-row:hover { background: #f6f8fc; }
+
+/* Whole-line edit pencil on each cart row */
+.sale-line-edit { color: #4680ff; padding: 4px 7px; border-radius: 4px; display: inline-block; margin-right: 2px; }
+.sale-line-edit:hover { background: #eef3ff; }
+#sale_line_edit .le-label { font-size: 12px; color: #67707f; text-transform: uppercase; letter-spacing: .3px; margin-bottom: 2px; }
+#sale_line_edit input.form-control { font-size: 15px; height: 38px; }
+
+/* Totals column: tighter rows, labels on one line */
+td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padding-top: 7px !important; padding-bottom: 7px !important; }
+.add-disc-row .discount-label .label-text { white-space: nowrap; font-size: 14px; }
+
+/* The additional-discount currency/percent switch looks like the button
+   it is - bordered, hoverable, with its tooltip explaining the flip */
+.inline-container .toggle-icon { display: inline-flex; align-items: center; justify-content: center; min-width: 26px; height: 26px; border: 1px solid #d8dee8; border-radius: 5px; background: #fff; font-size: 13px; transition: all .15s ease; }
+.inline-container .toggle-icon:hover { background: #eef3ff; border-color: #4680ff; }
+
 /* Inline add-charge entry: one line, readable, numbers right-aligned */
 #sale_charge_entry { display: flex; gap: 6px; align-items: center; padding: 2px 0; }
 #sale_charge_entry input { font-size: 14px; height: 28px; padding: 2px 6px; }
