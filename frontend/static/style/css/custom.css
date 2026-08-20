@@ -3313,15 +3313,20 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 }
 
 /* ============================================================
-   Sale item grid — density (owner: "one line itself we can have 6 or
-   five boxes. too big aso not required... show many products in
-   visible area")
+   Sale item grid — GitHub-style cards
+   (owner: "this is github theme. so make it according to that")
 
-   Four big squares per row meant a cashier scrolled to reach the eighth
-   item. The tile keeps everything it had - name, image, price, stock -
-   at a size that still reads across a counter, but five fit on a laptop
-   and six on a wide till, so most of a category is reachable without
-   scrolling at all.
+   The original tiles were built with NEGATIVE offsets - .wsk-cp pulls
+   itself up 20px, the price block another 15px, and a media query lifts
+   the image 40px - with `margin: 20px auto` on the card quietly cancelling
+   the first one. Making the grid denser removed that compensation but not
+   the pull, so the second row rode up over the first row's stock line and
+   the top row's border vanished under the tabs.
+
+   Negative positioning is the wrong tool for a card grid: every change
+   somewhere else has to remember to cancel it. These rules zero it out
+   inside the sale grid and let normal flow plus a gap do the spacing.
+   Colours follow GitHub's: #f6f8fa canvas, #d0d7de borders, #1f2328 text.
    ============================================================ */
 @media (min-width: 992px) {
     #sales_new .wsk-cp.col-lg-3 { flex: 0 0 20%; max-width: 20%; }
@@ -3329,41 +3334,48 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 @media (min-width: 1400px) {
     #sales_new .wsk-cp.col-lg-3 { flex: 0 0 16.6667%; max-width: 16.6667%; }
 }
-/* the image block was a full square and set the tile's height on its own */
-#sales_new .wsk-cp-img { aspect-ratio: 4 / 3; }
-#sales_new .wsk-cp { margin-bottom: 10px !important; }
 
-/* Making the tiles denser cost them their separation: white cards on a
-   white page have no edges, so the grid read as continuous columns rather
-   than as products. The standard fix - and the answer to "what is standard
-   ux way to eye better feeling" - is a faintly tinted ground with white
-   cards on it, a hairline border, and a shadow that deepens on hover so the
-   card lifts slightly under the cursor. Pure white on pure white gives the
-   eye nothing to land on; a near-white ground does, without adding colour
-   noise to a screen the cashier stares at all day. */
-#sales_new #item-lists, #sales_new #sales_new_productList { background: #f4f6fa; border-radius: 10px; padding: 8px; }
-#sales_new .wsk-cp-product {
-    margin: 0 auto;
-    border: 1px solid #e6eaf1;
-    border-radius: 10px;
+/* the canvas the cards sit on */
+#sales_new #item-lists, #sales_new #sales_new_productList { background: #f6f8fa; }
+#sales_new #item-lists { padding: 6px 2px; }
+
+/* no negative pull anywhere in this grid - gaps come from padding */
+#sales_new .wsk-cp {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding: 6px !important;
+    display: flex;
+}
+#sales_new .wsk-cp .wsk-cp-product {
+    margin: 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #d0d7de;
+    border-radius: 6px;
     background: #fff;
-    box-shadow: 0 1px 2px rgba(35, 45, 70, 0.05);
     overflow: hidden;
-    height: 100%;
-    transition: box-shadow .15s ease, border-color .15s ease, transform .12s ease;
+    transition: border-color .15s ease, box-shadow .15s ease;
 }
 #sales_new .wsk-cp:hover .wsk-cp-product {
-    border-color: #c3d0f0;
-    box-shadow: 0 4px 12px rgba(35, 45, 70, 0.12);
-    transform: translateY(-1px);
-    cursor: pointer;
+    border-color: #8c959f;
+    box-shadow: 0 3px 8px rgba(31, 35, 40, 0.12);
 }
-#sales_new .wsk-cp .price-text-color { padding: 3px; margin-top: -8px; font-size: 14px; }
-#sales_new .wsk-cp .description-prod { padding: 4px 5px; max-height: 40px; }
-/* the name lives in .description-prod > p in this grid */
-#sales_new .wsk-cp .description-prod p { font-size: 13.5px; line-height: 1.25; margin-bottom: 0; }
-#sales_new .wsk-cp .wsk-cp-text { margin-top: 6px !important; }
-#sales_new .wsk-cp .wsk-cp-stock { font-size: 11px; }
+/* the image sat 40px up on small screens; inside a bordered card it must not */
+#sales_new .wsk-cp .wsk-cp-img { top: 0 !important; aspect-ratio: 4 / 3; padding: 6px; }
+#sales_new .wsk-cp .price-text-color { margin-top: 0; padding: 2px 8px 6px; font-size: 14px; color: #0969da; }
+#sales_new .wsk-cp .description-prod {
+    padding: 8px 8px 4px;
+    max-height: none;
+    background: transparent;
+    border-bottom: 1px solid #f0f2f5;
+}
+#sales_new .wsk-cp .description-prod p {
+    font-size: 13px; line-height: 1.3; margin-bottom: 0; color: #1f2328;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+#sales_new .wsk-cp .wsk-cp-text { margin-top: auto !important; }
+#sales_new .wsk-cp .wsk-cp-stock { font-size: 11px; color: #656d76; padding-bottom: 6px; }
 
 /* ============================================================
    After a sale — the done panel

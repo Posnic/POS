@@ -930,6 +930,28 @@ PosnicPro.sales.view = {
         // read the setting directly here - this IS the base case
         return typeof print_type !== 'undefined' && print_type && String(print_type.value) === 'a4';
     },
+    /*
+     * The receipt templates (thermal and A4) are injected into their modal
+     * bodies by the Settings page. A till that never opened Settings has an
+     * EMPTY A4 body, so asking for an A4 invoice printed a blank sheet -
+     * the same shape of bug as the tax flag: a feature depending on a page
+     * the user had no reason to visit. Fetch them on demand instead, once.
+     */
+    _ensurePrintTemplates: function (done) {
+        var wantA4 = PosnicPro.sales.view._isA4();
+        var $body = wantA4 ? $('.print-modal-a4-body') : $('.print-modal-body');
+        if ($.trim($body.html() || '').length > 0) { done(); return; }
+        var branchId = PosnicPro.local.get('branch_id_set');
+        PosnicPro.get({ url: 'branches/getOneStore', data: 'id=' + branchId }, function (r) {
+            var d = (r && r.data) || {};
+            if (wantA4) {
+                $('.import-print').html(d.regular_body_print || d.print_a4html || '');
+            } else {
+                $('.import-standard-print').html(d.thermal_body_print || d.print_standard_html || '');
+            }
+            done();
+        }, function () { done(); /* print what we have rather than nothing */ });
+    },
     printSale: function (id, name, isKotHistoryPrint, layoutOverride) {
         PosnicPro.sales.view._layoutOverride =
             (layoutOverride === 'a4' || layoutOverride === 'standard') ? layoutOverride : null;
