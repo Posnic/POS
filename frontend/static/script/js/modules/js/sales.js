@@ -7779,6 +7779,10 @@ PosnicPro.quotes = {
         $('#v-pills-dashboard-tab,#view_quotes_page').addClass('active');
         $('#v-pills-dashboard').addClass('show active');
         $('#quotes_list_card,#quotes_view_card').hide();
+        /* The editor is a third child of this contentbar. Leaving the split on
+           would lay it out as a flex item inside the joined surface and hand
+           it the rail's border, so the authoring page takes the width back. */
+        $('#quotes_new .contentbar').removeClass('quotes-split rail-collapsed');
         $('#quotes_edit_card').show();
         $('.vertical-layout').addClass('toggle-menu');
         PosnicPro.quotes._edInitSort();
@@ -8301,18 +8305,26 @@ PosnicPro.quotes = {
                 + '</tr>';
         });
         html += '</tbody></table></div>';
+        /* The pager is real, but it used to render only past page one - so on
+           a shop with eight quotes it looked like paging had never been built.
+           The count always shows; the arrows appear when there is somewhere
+           to go. Sitting in the rail's footer it also says which slice of the
+           list you are looking at. */
         var pages = (meta && meta.pages) || 1;
         var cur = (meta && meta.page) || 1;
-        if (pages > 1) {
-            html += '<div class="text-center p-t-10">'
-                + '<button type="button" class="btn btn-sm btn-secondary-rgba mr-2"' + (cur <= 1 ? ' disabled' : '')
-                + ' onclick="PosnicPro.quotes._page = ' + (cur - 1) + '; PosnicPro.quotes.load(true);">&laquo; Prev</button>'
-                + '<span class="text-muted">Page ' + cur + ' of ' + pages
-                + ' <small>(' + meta.total + ' quotes)</small></span>'
-                + '<button type="button" class="btn btn-sm btn-secondary-rgba ml-2"' + (cur >= pages ? ' disabled' : '')
-                + ' onclick="PosnicPro.quotes._page = ' + (cur + 1) + '; PosnicPro.quotes.load(true);">Next &raquo;</button>'
-                + '</div>';
-        }
+        var total = (meta && meta.total) || rows.length;
+        var arrow = function (to, label, off) {
+            return '<button type="button" class="btn btn-sm btn-secondary-rgba q-pg-btn"' + (off ? ' disabled' : '')
+                + ' onclick="PosnicPro.quotes._page = ' + to + '; PosnicPro.quotes.load(true);">' + label + '</button>';
+        };
+        html += '<div class="q-pager">'
+            + (pages > 1 ? arrow(cur - 1, '&laquo;', cur <= 1) : '')
+            + '<span class="q-pg-count">'
+            + (pages > 1 ? 'Page ' + cur + ' of ' + pages + ' &middot; ' : '')
+            + total + (total === 1 ? ' quote' : ' quotes')
+            + '</span>'
+            + (pages > 1 ? arrow(cur + 1, '&raquo;', cur >= pages) : '')
+            + '</div>';
         $('#quotes_list_rows').html(html);
         // a re-render (search, filter, page) must not lose which quote is open
         if (PosnicPro.quotes._current && PosnicPro.quotes._current._id) {
@@ -8320,22 +8332,42 @@ PosnicPro.quotes = {
                 .addClass('is-active');
         }
     },
+    /* Are we already sitting in master-detail with a document open? Arriving
+       at the page and moving between quotes are two different things, and
+       only the first one may touch the page chrome. All four conditions
+       matter: the editor also lives in this contentbar, so "split is on" by
+       itself would let a click leave the editor showing. */
+    _inSplit: function () {
+        return $('#quotes_new').is(':visible')
+            && $('#quotes_view_card').is(':visible')
+            && !$('#quotes_edit_card').is(':visible')
+            && $('#quotes_new .contentbar').hasClass('quotes-split');
+    },
     showDetails: function (id) {
-        PosnicPro.HideSideBarModal();
-        $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
-        $('.vertical-menu li a').removeClass('active');
-        $('.page_loader,#osk-container').hide();
-        $('.page-title-box,#quotes_new').show();
-        $('#v-pills-dashboard-tab,#view_quotes_page').addClass('active');
-        $('#v-pills-dashboard').addClass('show active');
-        /* Master-detail: the list stays, the quote opens beside it. Reading a
-           second quote is then one click rather than back-then-forward. */
-        $('#quotes_edit_card').hide();
-        $('#quotes_list_card').show();
-        $('#quotes_new .contentbar').addClass('quotes-split');
+        /* The flicker: this used to run the page-entry ritual on EVERY row
+           click, and #quotes_new itself carries .page_loader - so
+           $('.page_loader').hide() tore down the very list being clicked in
+           and the next line built it back. Re-entering a page you are already
+           on also resets the rail's scroll position, restarts its transitions
+           and forces a full relayout. Moving between quotes must change the
+           document and nothing else. */
+        if (!PosnicPro.quotes._inSplit()) {
+            PosnicPro.HideSideBarModal();
+            $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
+            $('.vertical-menu li a').removeClass('active');
+            $('.page_loader,#osk-container').hide();
+            $('.page-title-box,#quotes_new').show();
+            $('#v-pills-dashboard-tab,#view_quotes_page').addClass('active');
+            $('#v-pills-dashboard').addClass('show active');
+            /* Master-detail: the list stays, the quote opens beside it. Reading
+               a second quote is then one click rather than back-then-forward. */
+            $('#quotes_edit_card').hide();
+            $('#quotes_list_card').show();
+            $('#quotes_new .contentbar').addClass('quotes-split');
+            $('.vertical-layout').removeClass('toggle-menu');
+        }
         $('#quotes_list_rows tr.quotes-row').removeClass('is-active')
             .filter('[data-id="' + id + '"]').addClass('is-active');
-        $('.vertical-layout').removeClass('toggle-menu');
         PosnicPro.get({ url: 'quotes/' + id, data: {} }, function (r) {
             var q = r && r.data;
             if (!q) { PosnicPro.alert('error', 'Quote not found'); return; }
