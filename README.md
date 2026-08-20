@@ -28,6 +28,15 @@ services, downloads and integrations can still need a network.
 
 ---
 
+## Posnic in use
+
+![A completed cash sale in Posnic v1.3.0](docs/images/offline-sale-v1-3-0.png)
+
+This synthetic cash sale was completed and reopened during the bounded
+[offline workflow verification](https://posnic.com/posnic-facts). The published
+test notes state what was blocked, what passed and what the result does not
+prove.
+
 ## Why Posnic
 
 Posnic runs its primary database and API on the till itself. In a bounded
