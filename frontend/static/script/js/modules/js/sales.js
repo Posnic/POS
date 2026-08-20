@@ -6795,13 +6795,19 @@ PosnicPro.sales.itemsMenu = {
                 PosnicPro.sales.itemsMenu._families = families;
                 var renderedGroups = {};
                 if (getItemdata && getItemdata.length > 0) {
-                    // an explicit class: Parked and Recent Sales render into
-                    // #item-lists too, so the tile grid must not claim every child
-                    var app = "<div class='sale-tile-grid'>";
+                    /*
+                     * One wrapper, carrying the grid class. It used to open a div
+                     * and then - on the first pass, the only time i % length is 0 -
+                     * close it again and open a plain .row, leaving an EMPTY div
+                     * behind and putting every tile in a container the grid rules
+                     * did not match. That is why the tiles kept their old layout
+                     * however often the CSS was corrected.
+                     *
+                     * The class must be here: Parked and Recent Sales render into
+                     * #item-lists too, so the grid must not claim every child.
+                     */
+                    var app = "<div class='row sale-tile-grid'>";
                     for (var i = 0; i < getItemdata.length; i++) {
-                        if (i % getItemdata.length === 0) {
-                            app = app + "</div><div class='row'>";
-                        }
                         var familyGid = getItemdata[i]['variant_group_id'];
                         var familyRows = familyGid && families[familyGid];
                         if (familyRows && familyRows.length > 1) {

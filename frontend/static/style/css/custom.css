@@ -1891,6 +1891,7 @@ main {
     width: 100%;
     /*    padding-right: 10px;*/
     padding-left: 5px;
+    padding-bottom: 5px;
     /* margin-top:-20px REMOVED (owner spotted it): it pulled every tile up
        over the row above, and the card's own `margin: 20px auto` existed
        only to cancel it. Verified first that .wsk-cp appears nowhere but
@@ -3384,7 +3385,8 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     max-width: none !important;
     min-width: 0;
     margin: 0 !important;
-    padding: 0 !important;
+    /* the base rule's padding is deliberately kept - zeroing it here threw
+       away the padding-bottom asked for on .wsk-cp itself */
     display: flex;
 }
 #sales_new .wsk-cp .wsk-cp-product {
@@ -3404,10 +3406,16 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
    finger is over on a busy counter. */
 #sales_new .wsk-cp { cursor: pointer; }
 #sales_new .wsk-cp:hover .wsk-cp-product {
-    border-color: #0969da;
-    box-shadow: 0 4px 12px rgba(9, 105, 218, 0.18);
+    /* a darker, heavier border reads at a glance across a counter; the pale
+       accent wash tells you WHICH card without hiding the product photo */
+    border-color: #0b5ed7;
+    background: #f2f7fd;
+    /* the ring reads as a heavier border WITHOUT changing border-width, which
+       would resize the box and jitter every card's contents by a pixel */
+    box-shadow: 0 0 0 1px #0b5ed7, 0 6px 16px rgba(9, 105, 218, 0.22);
     transform: translateY(-2px);
 }
+#sales_new .wsk-cp:hover .description-prod { border-bottom-color: #cfe2fb; }
 #sales_new .wsk-cp:active .wsk-cp-product { transform: translateY(0); box-shadow: 0 2px 5px rgba(31, 35, 40, 0.14); }
 #sales_new .wsk-cp:hover .description-prod p { color: #0969da; }
 #sales_new .wsk-cp:hover .wsk-cp-img { background: #f6f8fa; }
