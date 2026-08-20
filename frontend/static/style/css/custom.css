@@ -3834,14 +3834,19 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 .quotes-split #quotes_list_rows tr.quotes-row.is-active > td {
     background: #fff !important;
 }
-.quotes-split #quotes_list_rows tr.quotes-row.is-active {
-    box-shadow: inset 3px 0 0 #0969da,
-                0 1px 0 rgba(27, 31, 36, 0.08),
-                0 -1px 0 rgba(27, 31, 36, 0.08);
-}
+/* A real border now, not a shadow hairline - the owner could not see the
+   selection clearly enough. Top, bottom and a thick left edge in the accent;
+   the right stays OPEN so the row still runs into the document beside it,
+   which is the whole point of the join. .table-borderless means the last cell
+   simply has no right border to remove. */
 .quotes-split #quotes_list_rows tr.quotes-row.is-active > td {
+    border-top: 1px solid #0969da !important;
+    border-bottom: 1px solid #0969da !important;
     font-weight: 600;
     color: #1f2328;
+}
+.quotes-split #quotes_list_rows tr.quotes-row.is-active > td:first-child {
+    border-left: 3px solid #0969da !important;
 }
 /* Unselected rows sit ON the grey, so nothing may paint them white. */
 .quotes-split #quotes_list_rows tr.quotes-row > td { background: transparent; }
@@ -3888,6 +3893,11 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 }
 [data-theme] .quotes-split #quotes_list_rows tr.quotes-row.is-active > td {
     color: var(--theme-text-primary);
+    border-top-color: var(--theme-primary-color, #0969da) !important;
+    border-bottom-color: var(--theme-primary-color, #0969da) !important;
+}
+[data-theme] .quotes-split #quotes_list_rows tr.quotes-row.is-active > td:first-child {
+    border-left-color: var(--theme-primary-color, #0969da) !important;
 }
 [data-theme] .quotes-split #quotes_list_rows tr.quotes-row:hover > td {
     background: var(--theme-table-row-hover);

@@ -227,9 +227,30 @@ test('the selection is the near edge of the document, not a tinted row', () => {
     'the active row must share the pane background, and beat the global .card rule',
   );
 
-  // nothing may draw a line down its right - that is what breaks the join
+  // The selection is bordered on three sides so it reads clearly, but nothing
+  // may draw a line down its RIGHT - that is what would cut it off from the
+  // document beside it.
+  /* `is-active > td` heads more than one rule - the grouped one that paints
+     it and the one that borders it - so match by CONTENT: [^}] cannot cross a
+     closing brace, so this finds the bordering rule rather than whichever
+     comes first. */
+  assert.match(
+    css,
+    /is-active > td \{[^}]*border-top:\s*1px solid/,
+    'the row needs a visible edge',
+  );
+  assert.match(
+    css,
+    /is-active > td \{[^}]*border-bottom:\s*1px solid/,
+    'the row needs a visible edge',
+  );
+  assert.match(
+    css,
+    /is-active > td:first-child \{[^}]*border-left:\s*3px solid/,
+    'the accent edge marks which row is open',
+  );
   assert.ok(
-    !/border-right/.test(active),
+    !/is-active[^{]*\{[^}]*border-right:\s*[1-9]/.test(css),
     'a right border on the selected row would cut it off from the document',
   );
   const pane = cssRule(
