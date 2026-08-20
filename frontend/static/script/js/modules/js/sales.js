@@ -6150,13 +6150,43 @@ $(document).on('click', '#sale_add_discount', function () {
     }
     open();
 });
+/*
+ * Inline add-charge row (queue #7): the prompt() pair is gone. The entry
+ * row is a SIBLING of the list - renderCharges rewrites the list's html
+ * and must never eat a half-typed entry. One line, till-readable sizes.
+ */
 $(document).on('click', '#sale_add_charge', function () {
-    var name = window.prompt('Charge name (e.g. Parcel charge, Service charge):', '');
-    if (!name || !name.trim()) { return; }
-    var amt = parseFloat(window.prompt('Amount:', ''));
-    if (!isFinite(amt) || amt <= 0) { return; }
-    PosnicPro.sales.charges.push({ name: name.trim().slice(0, 60), amount: Math.round(amt * 100) / 100, taxed: false, source: 'manual' });
+    var $entry = $('#sale_charge_entry');
+    if (!$entry.length) {
+        $entry = $(
+            '<div id="sale_charge_entry" class="customer-display-hide">' +
+            '<input type="text" class="form-control form-control-sm sc-name" maxlength="60" placeholder="Charge name (e.g. Parcel)">' +
+            '<input type="number" class="form-control form-control-sm sc-amt" min="0" step="any" placeholder="0.00">' +
+            '<a href="javascript:void(0)" class="sc-ok text-success" title="Add"><i class="feather icon-check"></i></a>' +
+            '<a href="javascript:void(0)" class="sc-cancel text-danger" title="Cancel">&times;</a>' +
+            '</div>');
+        $('#sale_charges_list').before($entry);
+    }
+    $entry.show().find('.sc-name').focus();
+});
+PosnicPro.sales.commitChargeEntry = function () {
+    var name = $.trim($('#sale_charge_entry .sc-name').val() || '');
+    var amt = parseFloat($('#sale_charge_entry .sc-amt').val());
+    if (!name) { $('#sale_charge_entry .sc-name').focus(); return; }
+    if (!isFinite(amt) || amt <= 0) { $('#sale_charge_entry .sc-amt').focus(); return; }
+    PosnicPro.sales.charges.push({ name: name.slice(0, 60), amount: Math.round(amt * 100) / 100, taxed: false, source: 'manual' });
+    $('#sale_charge_entry').hide().find('input').val('');
     PosnicPro.sales.renderCharges();
+};
+$(document).on('click', '#sale_charge_entry .sc-ok', function () {
+    PosnicPro.sales.commitChargeEntry();
+});
+$(document).on('click', '#sale_charge_entry .sc-cancel', function () {
+    $('#sale_charge_entry').hide().find('input').val('');
+});
+$(document).on('keydown', '#sale_charge_entry input', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); PosnicPro.sales.commitChargeEntry(); }
+    if (e.key === 'Escape') { $('#sale_charge_entry').hide().find('input').val(''); }
 });
 $(document).on('click', '.sale-charge-del', function () {
     PosnicPro.sales.charges.splice($(this).data('i'), 1);

@@ -3025,6 +3025,12 @@ input:checked + .slider:before {
 #sale_charges_list .sale-charge-row b { font-variant-numeric: tabular-nums; }
 #sale_charges_list .sale-charge-del { font-weight: 700; }
 #sale_charges_list .sale-charge-tax { font-size: 11.5px; cursor: pointer; }
+/* Inline add-charge entry: one line, readable, numbers right-aligned */
+#sale_charge_entry { display: flex; gap: 6px; align-items: center; padding: 2px 0; }
+#sale_charge_entry input { font-size: 14px; height: 28px; padding: 2px 6px; }
+#sale_charge_entry .sc-name { flex: 1 1 auto; min-width: 0; }
+#sale_charge_entry .sc-amt { width: 90px; text-align: right; }
+#sale_charge_entry .sc-cancel { font-weight: 700; font-size: 16px; }
 
 /* Quote editor: compact discount value; the None option means no
    discount row prints at all */
