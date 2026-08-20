@@ -1031,11 +1031,20 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
                 .slice(0, 60);
               const amount = round2(parseFloat(c && c.amount) || 0, 2);
               if (!name || !(amount > 0)) return [];
+              const taxed = !!(c && (c.taxed === true || c.taxed === 'true'));
               return [
                 {
                   name,
                   amount,
-                  taxed: c && (c.taxed === true || c.taxed === 'true'),
+                  taxed,
+                  // Tax on the charge (queue #5): stored only while taxed,
+                  // so a flag flipped off can never leave a stale figure.
+                  tax_name: taxed
+                    ? String((c && c.tax_name) || '')
+                        .trim()
+                        .slice(0, 40)
+                    : '',
+                  tax_amount: taxed ? round2(parseFloat(c && c.tax_amount) || 0, 2) : 0,
                   source: c && c.source === 'quote' ? 'quote' : 'manual',
                 },
               ];
