@@ -1,6 +1,7 @@
 // src/repositories/customer.repository.js
 const BaseModel = require('../models/base.model');
 const { ObjectId } = require('mongodb');
+const { withBranchScope } = require('../services/branch-scope');
 
 /**
  * Customer Repository
@@ -50,12 +51,16 @@ class CustomerRepository extends BaseModel {
    */
   async findById(id) {
     const collection = await this.getCollection(this.collectionName);
-    return await collection.findOne({
-      _id: new ObjectId(id),
-      license: BaseModel.license,
-      ...(BaseModel.currentBranch ? { branch_id: BaseModel.currentBranch } : {}),
-      is_deleted: { $ne: true },
-    });
+    return await collection.findOne(
+      withBranchScope(
+        {
+          _id: new ObjectId(id),
+          license: BaseModel.license,
+          is_deleted: { $ne: true },
+        },
+        BaseModel.currentBranch
+      )
+    );
   }
 
   /**
@@ -102,7 +107,7 @@ class CustomerRepository extends BaseModel {
   async search(searchTerm, options = {}) {
     const { page = 1, limit = 10, branchId = null } = options;
 
-    const query = {
+    let query = {
       license: BaseModel.license,
       is_deleted: { $ne: true },
       $or: [
@@ -112,8 +117,12 @@ class CustomerRepository extends BaseModel {
       ],
     };
 
+    /* withBranchScope, not `query.branch_id = ...`: this query already owns a
+       top-level $or for name/email/phone, and a second one would replace those
+       terms instead of adding to them - a search that quietly returns every
+       customer. The scope goes under $and. */
     if (branchId) {
-      query.branch_id = new ObjectId(branchId);
+      query = withBranchScope(query, branchId);
     }
 
     const collection = await this.getCollection(this.collectionName);
@@ -341,12 +350,16 @@ class CustomerRepository extends BaseModel {
       update.$set = { last_purchase: lastPurchaseDate };
     }
 
+    /* The guard follows visibility: a sale at a branch the customer is shared
+       with should update that customer's totals. */
     return collection.updateOne(
-      {
-        _id: id,
-        ...(BaseModel.license ? { license: BaseModel.license } : {}),
-        ...(BaseModel.currentBranch ? { branch_id: BaseModel.currentBranch } : {}),
-      },
+      withBranchScope(
+        {
+          _id: id,
+          ...(BaseModel.license ? { license: BaseModel.license } : {}),
+        },
+        BaseModel.currentBranch
+      ),
       update
     );
   }

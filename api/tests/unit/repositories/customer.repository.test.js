@@ -389,13 +389,32 @@ describe('CustomerRepository (class, extends BaseModel)', () => {
       );
     });
 
-    test('applies branch_id filter when branchId provided', async () => {
+    test('scopes to the branch WITHOUT losing the search terms', async () => {
+      /* S7: the scope moved from a top-level branch_id to an $and clause that
+         accepts branch_access OR branch_id. It has to go under $and because
+         this query already owns the top-level $or for name/email/phone - a
+         second $or would replace those terms, and a search that loses its
+         terms does not fail loudly, it quietly returns every customer. */
       await repository.search('test', { branchId: FAKE_BRANCH_ID });
-      expect(mockCollection.find).toHaveBeenCalledWith(
-        expect.objectContaining({
-          branch_id: expect.any(Object),
-        })
-      );
+      const filter = mockCollection.find.mock.calls[0][0];
+
+      // the search terms survive
+      expect(filter.$or).toHaveLength(3);
+      expect(filter.$or.map((o) => Object.keys(o)[0])).toEqual(['name', 'email', 'phone']);
+
+      // and the branch scope is applied alongside them
+      expect(filter.$and).toHaveLength(1);
+      expect(filter.$and[0].$or.map((o) => Object.keys(o)[0])).toEqual([
+        'branch_access.branch_id',
+        'branch_id',
+      ]);
+    });
+
+    test('an un-backfilled customer is still found by its legacy branch_id', async () => {
+      // most rows still carry only branch_id; dropping it would empty the list
+      await repository.search('test', { branchId: FAKE_BRANCH_ID });
+      const scope = mockCollection.find.mock.calls[0][0].$and[0].$or;
+      expect(scope.some((c) => 'branch_id' in c)).toBe(true);
     });
 
     test('returns { data, total } object', async () => {
