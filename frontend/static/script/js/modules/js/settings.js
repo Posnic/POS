@@ -5564,10 +5564,10 @@ PosnicPro.settings.featureInfo = {
             'Share it; mark Accepted when the customer says yes',
             'Convert to sale - the receipt total matches the quote'
         ],
-        settingsAnchor: '#fc_quotes'
+        section: '#fc_quotes'
     },
     staff_shifts_enable: {
-        settingsAnchor: '#fc_workforce',
+        section: '#fc_workforce',
         tagline: 'Staff clock in and out from the header clock; labour report and payroll exports.',
         about: 'Workforce turns the till into the timesheet: clock in/out, shift history, labour costing and payroll exports - with tips and rosters as optional pieces below.',
         benefits: [
@@ -5595,7 +5595,7 @@ PosnicPro.settings.featureInfo = {
             'On a sale, pick dine-in and the table number',
             'Fire KOTs; settle the table when the meal ends'
         ],
-        settingsAnchor: '#v-pills-tableorder'
+        section: '#fc_restaurant'
     },
     custom_charges_enable: {
         tagline: 'Parcel, service or delivery charges added on a sale.',
@@ -5654,7 +5654,7 @@ PosnicPro.settings.featureInfo = {
         ]
     },
     till_lock_enable: {
-        settingsAnchor: '#fc_tillpin',
+        section: '#fc_tillpin',
         tagline: 'Staff unlock with a 4-digit PIN instead of a password.',
         about: 'The till locks to a PIN pad - fast for staff, safe for the counter. Choose an idle timeout below.',
         benefits: [
@@ -5668,123 +5668,98 @@ PosnicPro.settings.featureInfo = {
     }
 };
 
-PosnicPro.settings._fdAdopted = [];
-PosnicPro.settings._fdAdopt = function ($nodes, $into) {
-    $nodes.each(function () {
-        var $n = $(this);
-        var $ph = $('<span class="fd-placeholder" style="display:none;"></span>');
-        $n.before($ph);
-        PosnicPro.settings._fdAdopted.push({ node: $n, ph: $ph });
-        $into.append($n);
-    });
-};
-PosnicPro.settings._fdReturnAll = function () {
-    PosnicPro.settings._fdAdopted.forEach(function (a) {
-        a.ph.replaceWith(a.node);
-    });
-    PosnicPro.settings._fdAdopted = [];
-};
-
-PosnicPro.settings.openFeatureDetail = function ($card) {
+PosnicPro.settings._fpCard = null;
+PosnicPro.settings._fpSection = null;
+/*
+ * The feature PAGE (owner's final shape): each feature opens its OWN
+ * dedicated page - hero with the toggle, the help documentation, and only
+ * THAT feature's settings, adopted from the hidden store and returned on
+ * leave. No popup, no aggregate page, no extra menu entry.
+ */
+PosnicPro.settings.openFeaturePage = function ($card) {
     var $main = $card.find('.module-card-head input.custom-control-input').first();
     var key = $main.attr('id') || '';
     var info = PosnicPro.settings.featureInfo[key] || {};
     var title = $.trim($card.find('.module-title').text());
     var desc = $.trim($card.find('.module-desc').text());
-    var iconHtml = $card.find('.module-ico').html() || '';
 
-    if (!$('#feature_detail_modal').length) {
-        $('body').append(
-            '<div class="modal fade" id="feature_detail_modal" tabindex="-1" role="dialog" aria-hidden="true">'
-            + '<div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" role="document">'
-            + '<div class="modal-content">'
-            + '<div class="modal-header fd-hero">'
-            + '<span class="module-ico fd-ico" id="fd_icon"></span>'
-            + '<div class="fd-head-main">'
-            + '<div class="fd-title-row"><h5 class="modal-title mb-0" id="fd_title"></h5>'
-            + '<span class="badge fd-state" id="fd_state"></span></div>'
-            + '<div class="text-muted" id="fd_tagline" style="font-size:.85rem;"></div>'
-            + '</div>'
-            + '<div class="custom-control custom-switch fd-toggle">'
-            + '<input type="checkbox" class="custom-control-input" id="fd_master">'
-            + '<label class="custom-control-label" for="fd_master"></label>'
-            + '</div>'
-            + '<button type="button" class="close ml-2" data-dismiss="modal">&times;</button>'
-            + '</div>'
-            + '<div class="modal-body">'
-            + '<div id="fd_shots" class="fd-shots"></div>'
-            + '<div id="fd_about_wrap"><div class="q-label">About</div><p id="fd_about" class="fd-text"></p></div>'
-            + '<div id="fd_benefits_wrap"><div class="q-label">Why use it</div><ul id="fd_benefits" class="fd-list"></ul></div>'
-            + '<div id="fd_how_wrap"><div class="q-label">How it works</div><ol id="fd_how" class="fd-list"></ol></div>'
-            + '<div id="fd_settings_wrap" class="mt-3"></div>'
-            + '<p class="text-muted mt-3 mb-0" style="font-size:.8rem;">Switching off never deletes anything - switch back on and everything returns.</p>'
-            + '</div>'
-            + '</div></div></div>');
-        $('#feature_detail_modal').on('hidden.bs.modal', function () {
-            PosnicPro.settings._fdReturnAll();
-            PosnicPro.settings._fdCard = null;
-        });
-        $(document).on('change', '#fd_master', function () {
-            var $c = PosnicPro.settings._fdCard;
-            if (!$c) { return; }
-            var $sw = $c.find('.module-card-head input.custom-control-input').first();
-            $sw.prop('checked', $(this).is(':checked')).trigger('change');
-            $('#fd_state').text($(this).is(':checked') ? 'On' : 'Off')
-                .toggleClass('badge-success', $(this).is(':checked'))
-                .toggleClass('badge-light', !$(this).is(':checked'));
-        });
-    }
-
-    PosnicPro.settings._fdCard = $card;
-    $('#fd_icon').html(iconHtml);
-    $('#fd_title').text(title);
-    $('#fd_tagline').text(info.tagline || desc);
+    PosnicPro.settings._fpCard = $card;
+    $('#fp_icon').html($card.find('.module-ico').html() || '');
+    $('#fp_title').text(title);
+    $('#fp_tagline').text(info.tagline || desc);
     var on = $main.is(':checked');
-    $('#fd_master').prop('checked', on);
-    $('#fd_state').text(on ? 'On' : 'Off')
+    $('#fp_master').prop('checked', on);
+    $('#fp_state').text(on ? 'On' : 'Off')
         .toggleClass('badge-success', on)
         .toggleClass('badge-light', !on);
 
+    var esc = function (v) { return $('<i>').text(v == null ? '' : v).html(); };
+    var infoHtml = '';
     var shots = info.shots || [];
-    $('#fd_shots').html(shots.map(function (src) {
-        return '<img src="' + src + '" alt="" loading="lazy">';
-    }).join('')).toggle(shots.length > 0);
-    $('#fd_about').text(info.about || desc);
-    $('#fd_benefits').html((info.benefits || []).map(function (b) {
-        return '<li>' + $('<i>').text(b).html() + '</li>';
-    }).join(''));
-    $('#fd_benefits_wrap').toggle((info.benefits || []).length > 0);
-    $('#fd_how').html((info.how || []).map(function (h) {
-        return '<li>' + $('<i>').text(h).html() + '</li>';
-    }).join(''));
-    $('#fd_how_wrap').toggle((info.how || []).length > 0);
+    if (shots.length) {
+        infoHtml += '<div class="fd-shots">' + shots.map(function (src) {
+            return '<img src="' + src + '" alt="" loading="lazy">';
+        }).join('') + '</div>';
+    }
+    infoHtml += '<div class="q-label">About</div><p class="fd-text">' + esc(info.about || desc) + '</p>';
+    if ((info.benefits || []).length) {
+        infoHtml += '<div class="q-label">Why use it</div><ul class="fd-list">'
+            + info.benefits.map(function (b) { return '<li>' + esc(b) + '</li>'; }).join('') + '</ul>';
+    }
+    if ((info.how || []).length) {
+        infoHtml += '<div class="q-label">How it works</div><ol class="fd-list">'
+            + info.how.map(function (h) { return '<li>' + esc(h) + '</li>'; }).join('') + '</ol>';
+    }
+    infoHtml += '<p class="text-muted mt-3 mb-0" style="font-size:13px;">Switching off never deletes anything - switch back on and everything returns.</p>';
+    $('#fp_info').html(infoHtml);
 
-    // information only (owner rule) - settings live on their own page;
-    // the door to them sits at the bottom when the feature has any
-    var anchor = info.settingsAnchor || '';
-    $('#fd_settings_wrap').html(anchor
-        ? '<button type="button" class="btn btn-outline-primary" id="fd_open_settings" data-anchor="' + anchor + '">Open settings &rarr;</button>'
-        : '').toggle(!!anchor);
+    // adopt ONLY this feature's settings section from the store
+    PosnicPro.settings._fpReturnSection();
+    var $set = $('#fp_settings').empty();
+    if (info.section && $(info.section).length) {
+        PosnicPro.settings._fpSection = info.section;
+        $set.append($(info.section).children());
+    }
+    $('#fp_settings_title').toggle($set.children().length > 0);
 
-    $('#feature_detail_modal').modal('show');
+    // show the page pane, keep the Features nav highlighted
+    $('#v-pills-modules').removeClass('show active');
+    $('#v-pills-featureconf').addClass('show active');
 };
-
-// The whole card is the door (marketplace pattern); the switch and any
-// control on the card still work inline without opening it.
+PosnicPro.settings._fpReturnSection = function () {
+    if (PosnicPro.settings._fpSection) {
+        $(PosnicPro.settings._fpSection).append($('#fp_settings').children());
+        PosnicPro.settings._fpSection = null;
+    }
+};
+PosnicPro.settings.closeFeaturePage = function () {
+    PosnicPro.settings._fpReturnSection();
+    PosnicPro.settings._fpCard = null;
+    $('#v-pills-featureconf').removeClass('show active');
+    $('#v-pills-modules').addClass('show active');
+};
+$(document).on('click', '#fp_back', function () {
+    PosnicPro.settings.closeFeaturePage();
+});
+$(document).on('change', '#fp_master', function () {
+    var $c = PosnicPro.settings._fpCard;
+    if (!$c) { return; }
+    var on = $(this).is(':checked');
+    $c.find('.module-card-head input.custom-control-input').first()
+        .prop('checked', on).trigger('change');
+    $('#fp_state').text(on ? 'On' : 'Off')
+        .toggleClass('badge-success', on)
+        .toggleClass('badge-light', !on);
+});
+// leaving settings altogether returns the section too
+$(window).on('hashchange', function () {
+    if (!/settings/i.test(window.location.hash || '')) {
+        PosnicPro.settings._fpReturnSection();
+    }
+});
+// the whole card is the door to the feature's page
 $(document).on('click', '#v-pills-modules .module-card', function (e) {
     if ($(e.target).closest('input, select, textarea, label, a, button, .custom-control').length) { return; }
-    PosnicPro.settings.openFeatureDetail($(this));
+    PosnicPro.settings.openFeaturePage($(this));
 });
-$(document).on('click', '#fd_open_settings', function () {
-    var anchor = $(this).data('anchor');
-    $('#feature_detail_modal').modal('hide');
-    if (anchor === '#v-pills-tableorder') {
-        $('#v-pills-tableorder-tab').click();
-        return;
-    }
-    $('#v-pills-featureconf-tab').click();
-    setTimeout(function () {
-        var el = document.querySelector(anchor);
-        if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
-    }, 250);
-});
+
