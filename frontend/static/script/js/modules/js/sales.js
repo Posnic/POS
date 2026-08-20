@@ -6795,7 +6795,9 @@ PosnicPro.sales.itemsMenu = {
                 PosnicPro.sales.itemsMenu._families = families;
                 var renderedGroups = {};
                 if (getItemdata && getItemdata.length > 0) {
-                    var app = "<div>";
+                    // an explicit class: Parked and Recent Sales render into
+                    // #item-lists too, so the tile grid must not claim every child
+                    var app = "<div class='sale-tile-grid'>";
                     for (var i = 0; i < getItemdata.length; i++) {
                         if (i % getItemdata.length === 0) {
                             app = app + "</div><div class='row'>";
@@ -7083,7 +7085,7 @@ PosnicPro.sales.categoryMenu = {
                 $('#sales_new_categoryList').append('<div class="col col-xs-12" id="category-lists">');
 
                 if (categorydata.length > 0) {
-                    var app = "<div class='row'>";
+                    var app = "<div class='row sale-tile-grid'>";
                     for (var i = 0; i < categorydata.length; i++) {
 
                         if (i > 0 && i % 4 === 0) {

@@ -3343,19 +3343,15 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
  * query per breakpoint.
  */
 /* the canvas the white cards sit on - without it they have no edges */
-#sales_new #item-lists,
-#sales_new #category-lists,
-#sales_new #sales_new_productList { background: #f6f8fa; }
-#sales_new #item-lists > div,
-#sales_new #category-lists > div.row {
+#sales_new .sale-tile-grid { background: #f6f8fa; border-radius: 8px; }
+#sales_new .sale-tile-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
     gap: 10px;
     padding: 10px;
     margin: 0 !important;
 }
-#sales_new #item-lists .wsk-cp,
-#sales_new #category-lists .wsk-cp {
+#sales_new .sale-tile-grid .wsk-cp {
     flex: none !important;
     width: auto !important;
     max-width: none !important;
@@ -3459,3 +3455,45 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 #sale_line_edit .le-label { margin-bottom: 4px; }
 #sale_line_edit .modal-footer { padding: 12px 16px; background: #f7f9fc; border-top: 1px solid #eef1f6; }
 #sale_line_edit .modal-footer .btn { font-weight: 600; }
+
+/* ============================================================
+   Theme fixes (owner report)
+
+   1. Terminal and Turbo C set a monospace font whose glyphs are wider, so
+      the Action column ran out of room and the edit and delete icons wrapped
+      onto two lines. Give that column enough width and forbid the wrap; take
+      the room from the item name, which has the most to spare.
+   2. The note chips were painted white with a hardcoded border. On the dark
+      themes that is a white pill carrying the theme's yellow text - the
+      contrast is wrong and it does not belong to the design. Chips now take
+      their colours from the theme variables and only fall back to the light
+      values when no theme is set.
+   ============================================================ */
+#sales_new #return_table thead th:last-child,
+#sales_new #return_table tbody td:last-child,
+#sales_new #return_table td[id^="addSalesRemoveLineItem_"] {
+    white-space: nowrap;
+    min-width: 86px;
+    text-align: center;
+}
+#sales_new #return_table td[id^="addSalesLineItemName_"] { word-break: break-word; }
+.sale-line-act { flex: 0 0 auto; }
+
+/* chips follow the theme instead of assuming a light one */
+[data-theme] .sale-chip {
+    background: var(--theme-card-bg, #fff);
+    border-color: var(--theme-border-color, #dde3ec);
+    color: var(--theme-text-secondary, #5a6478);
+}
+[data-theme] .sale-chip:hover {
+    background: var(--theme-table-row-hover, #eef3ff);
+    border-color: var(--theme-primary-color, #c3d0f0);
+    color: var(--theme-text-primary, #2f5fe0);
+}
+[data-theme] .sale-chip-do { color: var(--theme-primary-color, #2f5fe0); }
+[data-theme] .sale-chip.is-set {
+    background: var(--theme-card-bg, #f0faf5);
+    border-color: var(--theme-success-color, #b6e2cd);
+    color: var(--theme-success-color, #23985c);
+}
+[data-theme] .sale-actionbar-sep { background: var(--theme-border-color, #dfe4ec); }
