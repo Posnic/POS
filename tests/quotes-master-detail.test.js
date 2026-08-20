@@ -63,17 +63,52 @@ function blockAt(source, marker) {
    An unanchored marker here would silently test the wrong module. */
 const quotesNamespace = blockAt(salesSource, 'PosnicPro.quotes = {');
 
-/* The declarations of the first CSS rule whose selector text contains `sel`. */
+/*
+ * The declarations of the ONE CSS rule whose selector text contains `sel`.
+ *
+ * Ambiguity is an error here, not a coin toss. This helper used to return the
+ * first match, and four separate assertions in this file ended up reading a
+ * rule nobody meant: a selector like ".. > #quotes_list_card" appears first
+ * inside a GROUPED rule (".. > #list_card, .. > #view_card {"), whose
+ * declarations are entirely different. Every one of those tests passed - for
+ * the wrong reason, which is worse than failing.
+ *
+ * So a selector matching more than once now fails and says so. Disambiguate
+ * with `fromMarker` (a nearby unique string to start searching from) rather
+ * than hoping the first hit is the right one.
+ */
 function cssRule(sel, fromMarker) {
-  /* Several selectors appear first inside a GROUPED rule (".. > #list_card,
-     .. > #view_card {"), so a bare indexOf would return that rule's
-     declarations instead of the one being asked about. fromMarker moves the
-     search past it - the same anchoring hazard as the JS lookups above. */
   const from = fromMarker ? css.indexOf(fromMarker) : 0;
   assert.notStrictEqual(from, -1, `anchor not found in css: ${fromMarker}`);
-  const at = css.indexOf(sel, from);
-  assert.notStrictEqual(at, -1, `no CSS rule mentions: ${sel}`);
-  const open = css.indexOf('{', at);
+
+  /* Only count a selector that STARTS its own line. A rule's selector always
+     does; the same text appearing mid-line is a different rule that merely
+     contains it - "[data-theme] #quotes_new .contentbar.quotes-split {" is a
+     theme override, not the rule being asked about, and matching it was how
+     several of these assertions ended up reading the wrong declarations. */
+  const hits = [];
+  for (let at = css.indexOf(sel, from); at !== -1; at = css.indexOf(sel, at + 1)) {
+    const lineStart = css.lastIndexOf('\n', at) + 1;
+    if (css.slice(lineStart, at).trim() === '') hits.push(at);
+  }
+
+  assert.ok(hits.length > 0, `no CSS rule mentions: ${sel}`);
+  /* Uniqueness is required only when the caller gave no anchor. An anchor IS
+     the disambiguation - it names the rule by what sits immediately above it,
+     which is the one thing that tells two identical selectors apart. Demanding
+     uniqueness as well would make legitimate pairs (a rule and its @media
+     override) untestable. Without an anchor, ambiguity stays an error: that is
+     the case where the wrong rule gets read silently. */
+  if (!fromMarker) {
+    assert.strictEqual(
+      hits.length,
+      1,
+      `"${sel}" matches ${hits.length} places - pass a fromMarker to disambiguate. ` +
+        'A first-occurrence match silently reads the wrong rule and passes anyway.',
+    );
+  }
+
+  const open = css.indexOf('{', hits[0]);
   const close = css.indexOf('}', open);
   assert.ok(close > open, `unbalanced CSS rule for: ${sel}`);
   return css.slice(open + 1, close);
@@ -167,7 +202,12 @@ test('the two panes read as one surface, not two cards', () => {
   assert.match(panes, /margin:\s*0\s*!important/, 'a stray card margin is the gap');
 
   // NO divider: the owner counted the borders, so the change of ground does it
-  const rail = cssRule('#quotes_new .contentbar.quotes-split > #quotes_list_card {');
+  /* two rules share this selector - the main one and the >=1500px override -
+     so anchor on the comment that sits above the main one */
+  const rail = cssRule(
+    '#quotes_new .contentbar.quotes-split > #quotes_list_card {',
+    'drawn with colour instead of yet another',
+  );
   assert.ok(
     !/border-right:\s*1px/.test(rail),
     'the list must not draw a right border - that line is what breaks the join',
@@ -413,11 +453,11 @@ test('and the labels reserve a line so inputs share a baseline', () => {
  * blue edge. The ground has to win first; the row highlight depends on it.
  */
 test('the list ground wins against the global card rule', () => {
-  for (const sel of [
-    '#quotes_new .contentbar.quotes-split > #quotes_list_card {',
-    '#quotes_new .contentbar.quotes-split > #quotes_list_card > .card-body {',
+  for (const [sel, anchor] of [
+    ['#quotes_new .contentbar.quotes-split > #quotes_list_card {', 'drawn with colour instead of yet another'],
+    ['#quotes_new .contentbar.quotes-split > #quotes_list_card > .card-body {', undefined],
   ]) {
-    const rule = cssRule(sel);
+    const rule = cssRule(sel, anchor);
     assert.match(
       rule,
       /background:\s*#f6f8fa\s*!important/i,
