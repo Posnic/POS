@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 
 const APPSTREAM_FILENAME = 'com.posnic.app.metainfo.xml';
+const APPIMAGE_APPDATA_FILENAME = 'com.posnic.app.appdata.xml';
 const APPSTREAM_SOURCE = path.join(__dirname, '..', 'builds', 'linux', APPSTREAM_FILENAME);
 
 function platformName(context) {
@@ -26,7 +27,9 @@ function installLinuxAppStreamMetadata(context) {
   }
 
   const destinationDir = path.join(context.appOutDir, 'usr', 'share', 'metainfo');
-  const destination = path.join(destinationDir, APPSTREAM_FILENAME);
+  // AppImage's current lint tooling still discovers the legacy .appdata.xml
+  // filename. Debian keeps the modern .metainfo.xml name through its fpm map.
+  const destination = path.join(destinationDir, APPIMAGE_APPDATA_FILENAME);
   fs.mkdirSync(destinationDir, { recursive: true });
   fs.copyFileSync(APPSTREAM_SOURCE, destination);
   fs.chmodSync(destination, 0o644);

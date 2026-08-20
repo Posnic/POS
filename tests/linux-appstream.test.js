@@ -11,6 +11,7 @@ const ROOT = path.join(__dirname, '..');
 const METAINFO_RELATIVE = 'builds/linux/com.posnic.app.metainfo.xml';
 const METAINFO_PATH = path.join(ROOT, METAINFO_RELATIVE);
 const METAINFO_DESTINATION = '/usr/share/metainfo/com.posnic.app.metainfo.xml';
+const APPIMAGE_APPDATA_FILENAME = 'com.posnic.app.appdata.xml';
 const pkg = require('../package.json');
 
 function parseMetainfo() {
@@ -50,7 +51,7 @@ test('AppStream copy is useful, factual and backed by a real product screenshot'
   assert.ok(urls.length >= 4 && urls.every((url) => url.startsWith('https://')));
 });
 
-test('AppImage and Debian packages install metainfo where Linux catalogs look', async (t) => {
+test('AppImage and Debian packages use the metadata filename each catalog expects', async (t) => {
   const fpmMapping = `${METAINFO_RELATIVE}=${METAINFO_DESTINATION}`;
   assert.ok(pkg.build.deb.fpm.includes(fpmMapping), 'Debian package has no global metainfo mapping');
 
@@ -64,8 +65,13 @@ test('AppImage and Debian packages install metainfo where Linux catalogs look', 
     targets: [{ name: 'AppImage' }, { name: 'deb' }],
   });
 
-  const embedded = path.join(appOutDir, 'usr', 'share', 'metainfo', path.basename(METAINFO_PATH));
+  const embedded = path.join(appOutDir, 'usr', 'share', 'metainfo', APPIMAGE_APPDATA_FILENAME);
   assert.deepEqual(fs.readFileSync(embedded), fs.readFileSync(METAINFO_PATH));
+  assert.equal(
+    fs.existsSync(path.join(appOutDir, 'usr', 'share', 'metainfo', path.basename(METAINFO_PATH))),
+    false,
+    'AppImage should not carry duplicate component metadata under two names',
+  );
   if (process.platform !== 'win32') {
     assert.equal(fs.statSync(embedded).mode & 0o777, 0o644);
   }
