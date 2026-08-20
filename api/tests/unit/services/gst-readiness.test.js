@@ -1,13 +1,21 @@
 'use strict';
 
 /*
- * GST 2.0 readiness scan.
+ * GST 2.0 readiness scan, now reading the notification itself
+ * (api/src/json/gst_rates_2025.json, built from CBIC Notification
+ * 9/2025-Integrated Tax (Rate)).
  *
- * The thing worth pinning hardest is a NEGATIVE: the bundled HSN reference
- * predates Notification 9/2025 and still lists codes at 12% and 28%. If the
- * scan ever started trusting those rows it would tell shops to move
- * correctly-set items back onto slabs the government withdrew - a
- * compliance feature actively causing the problem it exists to find.
+ * Two things are worth pinning hardest, and both are about NOT saying more
+ * than the document supports:
+ *
+ *   - 28% is NOT a withdrawn slab. It survives as Schedule VII - pan masala
+ *     and tobacco, six entries. An earlier version listed it as retired,
+ *     which would have told a tobacco seller their correct rate was
+ *     withdrawn. 12% is the one that is genuinely gone.
+ *   - a heading the dataset quarantined (goods carved out, or claimed by two
+ *     schedules - a car is 18% under four metres and 40% above) must produce
+ *     NO suggestion at all. Silence costs the shop nothing; a wrong rate
+ *     mis-taxes a real invoice.
  */
 
 const {
@@ -15,155 +23,124 @@ const {
   referenceRateFor,
   RETIRED_SLABS,
   LIVE_SLABS,
+  RESTRICTED_SLABS,
 } = require('../../../src/services/gst-readiness');
 
-const item = (over = {}) => ({
-  _id: 'i1',
-  item_name: 'Thing',
-  tax: 18,
-  hsncode: '',
-  ...over,
-});
+const item = (over = {}) => ({ _id: 'i1', item_name: 'Thing', tax: 18, hsncode: '', ...over });
 
 describe('GST 2.0 readiness scan', () => {
-  test('an item sitting on a withdrawn slab is reported without needing any reference', () => {
-    const r = scanItems([item({ tax: 28, hsncode: '' }), item({ _id: 'i2', tax: 12 })]);
-    expect(r.retired.map((x) => x.rate).sort()).toEqual([12, 28]);
-    expect(r.retired[0].reason).toMatch(/withdrawn/i);
-    // no HSN code on either item, yet both are still found
-    expect(r.retired.every((x) => x.hsncode === '')).toBe(true);
+  test('12% is retired; 28% is not', () => {
+    expect(RETIRED_SLABS).toContain(12);
+    expect(RETIRED_SLABS).not.toContain(28);
+    expect(LIVE_SLABS).toContain(28);
+    expect(RESTRICTED_SLABS[28]).toMatch(/tobacco/i);
   });
 
-  test('a live slab is never called retired', () => {
-    const r = scanItems(LIVE_SLABS.map((rate, i) => item({ _id: 'i' + i, tax: rate })));
-    expect(r.retired).toEqual([]);
-  });
-
-  test('the scan stays silent where the reference itself names a dead slab', () => {
-    // This is the whole point. Find a real code the bundled file rates at
-    // 28% - stale by definition - and confirm an 18% item is NOT flagged.
-    const stale = ['8703', '8711', '2402', '2403'].find((c) => {
-      const ref = referenceRateFor(c);
-      return ref && RETIRED_SLABS.includes(ref.rate);
-    });
-    expect(typeof stale).toBe('string'); // the premise itself must hold
-
-    const r = scanItems([item({ tax: 18, hsncode: stale })]);
-    expect(r.differs).toEqual([]);
-    expect(r.retired).toEqual([]);
-  });
-
-  test('a disagreement with a still-live reference rate is reported', () => {
-    const live = ['0101', '1006', '8517'].find((c) => {
-      const ref = referenceRateFor(c);
-      return ref && LIVE_SLABS.includes(ref.rate);
-    });
-    expect(typeof live).toBe('string');
-    const refRate = referenceRateFor(live).rate;
-    const wrong = refRate === 18 ? 5 : 18;
-
-    const r = scanItems([item({ tax: wrong, hsncode: live })]);
-    expect(r.differs).toHaveLength(1);
-    expect(r.differs[0].reference_rate).toBe(refRate);
-    expect(r.differs[0].rate).toBe(wrong);
-  });
-
-  test('an item that agrees with the reference is not reported at all', () => {
-    const live = ['0101', '1006', '8517'].find((c) => {
-      const ref = referenceRateFor(c);
-      return ref && LIVE_SLABS.includes(ref.rate);
-    });
-    const refRate = referenceRateFor(live).rate;
-    const r = scanItems([item({ tax: refRate, hsncode: live })]);
-    expect(r.differs).toEqual([]);
-  });
-
-  test('a retired-slab item is listed once, not in both halves', () => {
-    const live = ['0101', '1006', '8517'].find((c) => {
-      const ref = referenceRateFor(c);
-      return ref && LIVE_SLABS.includes(ref.rate);
-    });
-    const r = scanItems([item({ tax: 28, hsncode: live })]);
+  test('an item on 12% is reported as withdrawn, needing no reference data', () => {
+    const r = scanItems([item({ tax: 12, hsncode: '' })]);
     expect(r.retired).toHaveLength(1);
+    expect(r.retired[0].reason).toMatch(/withdrawn/i);
+  });
+
+  test('an item on 28% is flagged as restricted, not withdrawn', () => {
+    const r = scanItems([item({ tax: 28 })]);
+    expect(r.retired).toHaveLength(1);
+    expect(r.retired[0].restricted).toBe(true);
+    expect(r.retired[0].reason).toMatch(/applies only to/i);
+    expect(r.retired[0].reason).not.toMatch(/withdrawn/i);
+  });
+
+  test('the live slabs are the ones the notification actually schedules', () => {
+    for (const rate of [0.25, 1.5, 3, 5, 18, 40]) {
+      expect(LIVE_SLABS).toContain(rate);
+    }
+    const r = scanItems([5, 18, 40, 3].map((rate, i) => item({ _id: 'i' + i, tax: rate })));
+    expect(r.retired).toEqual([]);
+  });
+
+  test('rates come from the notification schedules', () => {
+    // spot values verified against the published schedules
+    expect(referenceRateFor('0402').rate).toBe(5); // milk, Schedule I
+    expect(referenceRateFor('8517').rate).toBe(18); // phones, Schedule II
+    expect(referenceRateFor('7108').rate).toBe(3); // gold, Schedule IV
+    expect(referenceRateFor('2402').rate).toBe(28); // cigarettes, Schedule VII
+  });
+
+  test('a heading two schedules both claim yields no suggestion', () => {
+    // 8703 is 18% under four metres and 40% above - no single answer exists
+    expect(referenceRateFor('8703')).toBeNull();
+    const r = scanItems([item({ tax: 5, hsncode: '8703' })]);
     expect(r.differs).toEqual([]);
   });
 
-  test('codes shorter than four digits are too broad to suggest a rate from', () => {
-    expect(referenceRateFor('85')).toBeNull();
-    expect(referenceRateFor('8')).toBeNull();
-    expect(referenceRateFor('')).toBeNull();
+  test('a heading whose goods are carved out yields no suggestion', () => {
+    // 7102: rough diamonds 0.25%, other 7102 goods 1.50%
+    expect(referenceRateFor('7102')).toBeNull();
+    const r = scanItems([item({ tax: 18, hsncode: '7102' })]);
+    expect(r.differs).toEqual([]);
   });
 
-  test('a shop that types only the 4-digit heading still gets its rate when children agree', () => {
-    const json = require('../../../src/json/hsn.json').hsn || [];
-    const byHeading = new Map();
-    for (const row of json) {
-      const code = String((row && row.value) || '').replace(/\D/g, '');
-      const raw = String((row && row.taxrate) || '')
-        .replace('%', '')
-        .trim();
-      if (code.length < 4 || !/^\d+(\.\d+)?$/.test(raw)) continue;
-      const k = code.slice(0, 4);
-      if (!byHeading.has(k)) byHeading.set(k, new Set());
-      byHeading.get(k).add(Number(raw));
-    }
-    const agreed = [...byHeading.entries()].find(([, rates]) => rates.size === 1);
-    expect(agreed).toBeDefined();
+  test('a real disagreement IS reported', () => {
+    const r = scanItems([item({ tax: 18, hsncode: '0402' })]);
+    expect(r.differs).toHaveLength(1);
+    expect(r.differs[0].reference_rate).toBe(5);
+    expect(r.differs[0].rate).toBe(18);
+  });
 
-    const hit = referenceRateFor(agreed[0]);
+  test('an item that agrees with the notification is not reported', () => {
+    const r = scanItems([item({ tax: 5, hsncode: '0402' })]);
+    expect(r.differs).toEqual([]);
+  });
+
+  test('an 8-digit code falls back to its heading', () => {
+    const hit = referenceRateFor('04021010');
     expect(hit).not.toBeNull();
-    expect(hit.rate).toBe(agreed[1].values().next().value);
-    expect(hit.matchedOn).toBe(agreed[0]);
+    expect(hit.rate).toBe(5);
+    expect(hit.matchedOn).toBe('0402');
   });
 
-  test('an exact 8-digit code beats the heading it belongs to', () => {
-    const json = require('../../../src/json/hsn.json').hsn || [];
-    const row = json.find((r) => {
-      const code = String((r && r.value) || '').replace(/\D/g, '');
-      const raw = String((r && r.taxrate) || '')
-        .replace('%', '')
-        .trim();
-      return code.length === 8 && /^\d+(\.\d+)?$/.test(raw);
-    });
-    const code = String(row.value).replace(/\D/g, '');
-    const hit = referenceRateFor(code);
-    expect(hit.matchedOn).toBe(code); // longest match, not the 4-digit parent
+  test('codes shorter than four digits are too broad to rate', () => {
+    expect(referenceRateFor('85')).toBeNull();
+    expect(referenceRateFor('')).toBeNull();
+    expect(referenceRateFor(null)).toBeNull();
   });
 
   test('junk input is skipped rather than throwing', () => {
     const r = scanItems([null, undefined, 'nope', item({ tax: 'abc', hsncode: '!!!' })]);
     expect(r.retired).toEqual([]);
     expect(r.differs).toEqual([]);
-    // only the real item counts - null, undefined and the bare string are
-    // not item documents and are skipped before examination
     expect(r.examined).toBe(1);
   });
 
-  test('a heading whose children disagree yields no suggestion at all', () => {
-    // Derived parents are only kept when every child agrees; a mixed
-    // heading must be absent rather than resolved to one of its rates.
-    const { referenceRateFor: ref } = require('../../../src/services/gst-readiness');
-    const json = require('../../../src/json/hsn.json').hsn || [];
-    const byHeading = new Map();
-    for (const row of json) {
-      const code = String((row && row.value) || '').replace(/\D/g, '');
-      const raw = String((row && row.taxrate) || '')
-        .replace('%', '')
-        .trim();
-      if (code.length < 4 || !/^\d+(\.\d+)?$/.test(raw)) continue;
-      const k = code.slice(0, 4);
-      if (!byHeading.has(k)) byHeading.set(k, new Set());
-      byHeading.get(k).add(Number(raw));
-    }
-    const mixed = [...byHeading.entries()].find(([, rates]) => rates.size > 1);
-    expect(mixed).toBeDefined(); // the premise: such headings exist
-    expect(ref(mixed[0])).toBeNull();
+  test('the notice names the notification and disclaims changing anything', () => {
+    const r = scanItems([]);
+    expect(r.notice).toMatch(/9\/2025/);
+    expect(r.notice).toMatch(/nothing here changes a tax by itself/i);
+  });
+});
+
+describe('the shipped rate dataset', () => {
+  const data = require('../../../src/json/gst_rates_2025.json');
+
+  test('it records where it came from, so a shop can trace any figure', () => {
+    expect(data.source.notification).toMatch(/9\/2025/);
+    expect(data.source.effective_from).toBe('2025-09-22');
+    expect(data.source.retrieved_from).toMatch(/cbic\.gov\.in/);
   });
 
-  test('the result carries a notice that the reference is dated', () => {
-    const r = scanItems([]);
-    expect(r.notice).toMatch(/predates GST 2\.0/);
-    expect(r.notice).toMatch(/9\/2025/);
-    expect(r.notice).toMatch(/Nothing here changes a tax by itself/);
+  test('every rate is one of the notification schedules', () => {
+    const slabs = Object.values(data.source.schedules);
+    const strays = [...new Set(Object.values(data.rates))].filter((r) => !slabs.includes(r));
+    expect(strays).toEqual([]);
+  });
+
+  test('no code is both safe and quarantined', () => {
+    const both = Object.keys(data.rates).filter((c) => data.qualified[c] !== undefined);
+    expect(both).toEqual([]);
+  });
+
+  test('12% appears nowhere - that is why it counts as withdrawn', () => {
+    expect(Object.values(data.rates)).not.toContain(12);
+    expect(Object.values(data.qualified)).not.toContain(12);
   });
 });

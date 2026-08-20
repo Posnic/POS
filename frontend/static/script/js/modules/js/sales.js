@@ -6083,6 +6083,31 @@ $(document).on('click', '.sale-line-edit', function () {
  * this kept coming back. The cached general_settings blob carries
  * module_tax_enable, so ask that first; absent everywhere now means OFF.
  */
+/*
+ * How long a sale has been parked, in the words a cashier would use.
+ *
+ * A bill held two minutes ago is a customer still at the counter; one held
+ * yesterday is probably abandoned and worth clearing. Marking anything over
+ * a day stale is what turns this column from a timestamp into a prompt.
+ */
+PosnicPro.sales.parkedAgo = function (value) {
+    if (!value) { return { text: '-', exact: '', stale: false }; }
+    var then = new Date(value);
+    if (isNaN(then.getTime())) { return { text: '-', exact: '', stale: false }; }
+    var mins = Math.floor((Date.now() - then.getTime()) / 60000);
+    if (mins < 0) { mins = 0; }
+    var text;
+    if (mins < 1) { text = 'just now'; }
+    else if (mins < 60) { text = mins + ' min ago'; }
+    else if (mins < 60 * 24) {
+        var hrs = Math.floor(mins / 60);
+        text = hrs + (hrs === 1 ? ' hour ago' : ' hours ago');
+    } else {
+        var days = Math.floor(mins / (60 * 24));
+        text = days + (days === 1 ? ' day ago' : ' days ago');
+    }
+    return { text: text, exact: then.toLocaleString(), stale: mins >= 60 * 24 };
+};
 PosnicPro.sales.taxFeatureOn = function () {
     if (PosnicPro.local.get('gst_action') === 'enable') { return true; }
     try {
@@ -7671,7 +7696,7 @@ PosnicPro.sales.parkedMenu = {
         $('#sales_new_productList').append(' <div id="item-lists" style="margin-left: 7px;"/>');
         $('#item-lists').append(
             "<div class='m-b-30'><div class='wishlist-box'><div class='table-responsive'><table id='parked_sales_table' class='table table-borderless' cellpadding='1'>" +
-            "<thead><tr><th scope='col'>Customer</th><th scope='col' class='text-center'>Items</th><th scope='col' class='text-center'>Total</th><th scope='col' class='text-center'>Resume</th></tr></thead>" +
+            "<thead><tr><th scope='col'>Customer</th><th scope='col' class='text-center'>Items</th><th scope='col' class='text-center'>Total</th><th scope='col' class='text-center'>Parked</th><th scope='col' class='text-center'>Resume</th></tr></thead>" +
             "<tbody></tbody></table></div></div></div>");
         PosnicPro.get('sales/getLatestSales?type=hold', function (response) {
             loader.find(".loadingSpinner:first").remove();
@@ -7681,15 +7706,24 @@ PosnicPro.sales.parkedMenu = {
             var esc = function (v) { return $('<i>').text(v == null ? '' : v).html(); };
             if (!rows.length) {
                 $('#parked_sales_table tbody').html(
-                    "<tr><td colspan='4' class='text-center text-muted p-t-20'>Nothing parked - press Hold on a sale and it waits here.</td></tr>");
+                    "<tr><td colspan='5' class='text-center text-muted p-t-20'>Nothing parked - press Hold on a sale and it waits here.</td></tr>");
                 return;
             }
+            /* Newest first. The server already sorts that way, but a parked
+               sale that has been waiting since yesterday matters more than
+               where it happens to sit in a list, so the order is made
+               explicit rather than inherited. */
+            rows.sort(function (a, b) {
+                return new Date(b.parked_at || 0) - new Date(a.parked_at || 0);
+            });
             var html = '';
             $(rows).each(function (i, r) {
+                var waited = PosnicPro.sales.parkedAgo(r.parked_at);
                 html += '<tr>' +
                     '<td>' + esc(r.customer_name || 'Walk-in') + '<br><small class="text-muted">' + esc(r.sales_id || '') + '</small></td>' +
                     '<td class="text-center">' + esc(r.number_of_items) + '</td>' +
                     '<td class="text-center">' + currency + '&nbsp;' + Number(r.total_amount || 0).toFixed(2) + '</td>' +
+                    '<td class="text-center"><span class="parked-ago' + (waited.stale ? ' stale' : '') + '" title="' + esc(waited.exact) + '">' + esc(waited.text) + '</span></td>' +
                     '<td class="text-center"><a href="#/sales/' + esc(r.sales_document_id) + '/hold" class="btn btn-success-rgba btn-sm" title="Resume this sale"><i class="feather icon-play"></i></a></td>' +
                     '</tr>';
             });
@@ -7697,7 +7731,7 @@ PosnicPro.sales.parkedMenu = {
         }, function () {
             loader.find(".loadingSpinner:first").remove();
             $('#parked_sales_table tbody').html(
-                "<tr><td colspan='4' class='text-center text-muted p-t-20'>Could not load parked sales - try again.</td></tr>");
+                "<tr><td colspan='5' class='text-center text-muted p-t-20'>Could not load parked sales - try again.</td></tr>");
         });
     }
 };

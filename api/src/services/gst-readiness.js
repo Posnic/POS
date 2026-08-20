@@ -1,108 +1,83 @@
 'use strict';
 
 /*
- * GST 2.0 readiness scan (HSN_GST2_RATE_REFRESH_DESIGN, increment 2).
+ * GST 2.0 readiness scan (HSN_GST2_RATE_REFRESH_DESIGN, increments 2 and 3).
  *
  * Read-only by construction: this module reports, it never writes a rate.
- * The design's first hard rule is "suggest, never apply", and the reason
- * is visible right here in the data.
  *
- * CBIC Notification 9/2025 (eff. 22 Sep 2025) retired the 12% and 28%
- * slabs. The HSN reference bundled with this product (api/src/json/
- * hsn.json) still carries them - 661 codes at 12% and 1,476 at 28% - so
- * it PREDATES the notification. Treating it as authoritative would tell a
- * shop to move a correctly-set 18% item back to 28%, which is worse than
- * saying nothing at all.
+ * The reference is now the notification itself. api/src/json/gst_rates_2025.json
+ * is built from CBIC Notification 9/2025-Integrated Tax (Rate) - the schedules
+ * ARE the rates, so nothing here is inferred from a summary. It replaces the
+ * bundled hsn.json, which predated GST 2.0 and would have advised shops to
+ * move correctly-set items back onto withdrawn slabs.
  *
- * So the scan has two halves with very different confidence:
- *
- *   retired  - the item's OWN rate is a slab that no longer exists. This
- *              needs no reference data and cannot be wrong: 12% and 28%
- *              were withdrawn on a known date. Actionable as-is.
- *   differs  - the item's rate disagrees with the bundled reference, and
- *              ONLY where that reference still names a live slab
- *              (0/5/18). Where the reference itself says 12% or 28% we
- *              stay silent, because we cannot know what the code became.
- *
- * Increment 3 replaces the reference with an operator-supplied,
- * notification-stamped dataset; the shape below already separates
- * "reference says" from "rule says" so that swap changes one lookup.
+ * The extraction is deliberately timid, and the dataset says so about itself:
+ * a heading whose goods are carved out ("other than", "except") or that two
+ * schedules both claim - a car at 18% under 4m and 40% above it - is recorded
+ * as QUALIFIED, and the scan stays silent on it. Saying nothing costs a shop
+ * nothing; saying the wrong rate mis-taxes a real invoice.
  */
 
-// Withdrawn by Notification 9/2025. Rates are compared as numbers.
-const RETIRED_SLABS = [12, 28];
-// Slabs that survived (or arrived with) GST 2.0.
-const LIVE_SLABS = [0, 5, 18, 40];
+/*
+ * Read from the notification itself (api/src/json/gst_rates_2025.json, built
+ * from Notification 9/2025-IT(Rate)), not from memory. Its schedules are the
+ * only slabs that exist: 0.25, 1.5, 3, 5, 18, 28 and 40.
+ *
+ * 12% is genuinely gone - it appears nowhere in the notification.
+ *
+ * 28% is NOT. It survives as Schedule VII, which is exactly six entries:
+ * pan masala and tobacco. An earlier version of this file listed 28 as
+ * retired, which would have told a tobacco or pan-masala seller their
+ * correct rate was withdrawn - wrong advice on a compliance report, and the
+ * reason this now reads the document instead of a remembered summary.
+ */
+const RETIRED_SLABS = [12];
+const LIVE_SLABS = [0, 0.25, 1.5, 3, 5, 18, 28, 40];
+/* 28% is live only for these goods. Anything else sitting at 28% is worth a
+   look, but it is a QUESTION, not the certainty that 12% is. */
+const RESTRICTED_SLABS = { 28: 'pan masala and tobacco (Schedule VII)' };
 
 const SOURCE = {
-  reference: 'Bundled HSN reference (pre-GST 2.0)',
+  reference: 'CBIC Notification 9/2025-IT(Rate) schedules',
   rule: 'CBIC Notification 9/2025, eff. 22 September 2025',
 };
 
-let _byLen = null;
+let _index = null;
 
 /*
- * The reference file lists 8-digit codes only, but shops type 4- and
- * 6-digit ones. HSN is hierarchical, so a shorter code's rate can be
- * derived from its children - but ONLY when every child agrees. A 4-digit
- * heading whose children span 5% and 18% has no single answer, and
- * inventing one is exactly the kind of confident-but-wrong suggestion this
- * feature must not make, so those parents are dropped from the index and
- * the scan simply says nothing about them.
- *
- * Rates in the file look like "18%", "0" or "---".
+ * code -> rate, plus the set the dataset flags as unsafe to assert.
+ * HSN is hierarchical, so an 8-digit code falls back to its 6- and 4-digit
+ * parents; a qualified parent stops the walk rather than answering.
  */
 const rateIndex = () => {
-  if (_byLen) return _byLen;
-  const exact = new Map();
-  const seen = { 6: new Map(), 4: new Map() };
+  if (_index) return _index;
+  let rates = {};
+  let qualified = {};
   try {
-    const rows = require('../json/hsn.json').hsn || [];
-    for (const row of rows) {
-      const code = String((row && row.value) || '')
-        .replace(/\D/g, '')
-        .trim();
-      if (code.length < 4) continue;
-      const raw = String((row && row.taxrate) || '')
-        .replace('%', '')
-        .trim();
-      if (raw === '' || !/^\d+(\.\d+)?$/.test(raw)) continue;
-      const rate = Number(raw);
-      exact.set(code, rate);
-      for (const len of [6, 4]) {
-        if (code.length < len) continue;
-        const key = code.slice(0, len);
-        if (!seen[len].has(key)) seen[len].set(key, new Set());
-        seen[len].get(key).add(rate);
-      }
-    }
+    const data = require('../json/gst_rates_2025.json');
+    rates = data.rates || {};
+    qualified = data.qualified || {};
   } catch (e) {
-    /* no reference available: the retired-slab half still works */
+    /* no dataset: the retired-slab half still works without any reference */
   }
-  const collapse = (m) => {
-    const out = new Map();
-    for (const [key, rates] of m) {
-      if (rates.size === 1) out.set(key, rates.values().next().value);
-    }
-    return out;
-  };
-  _byLen = { 8: exact, 6: collapse(seen[6]), 4: collapse(seen[4]) };
-  return _byLen;
+  _index = { rates, qualified };
+  return _index;
 };
 
 /*
- * Longest match wins: an exact code beats its heading. Anything shorter
- * than 4 digits is a chapter - far too broad to hang a rate on.
+ * Longest match wins: an exact code beats its heading. Anything shorter than
+ * 4 digits is a chapter - far too broad to hang a rate on. A code the dataset
+ * quarantined returns null, which the caller treats as "say nothing".
  */
 const referenceRateFor = (hsncode) => {
   const code = String(hsncode || '').replace(/\D/g, '');
   if (code.length < 4) return null;
-  const index = rateIndex();
+  const { rates, qualified } = rateIndex();
   for (const len of [8, 6, 4]) {
     if (code.length < len) continue;
     const key = code.slice(0, len);
-    const hit = len === 8 ? index[8].get(key) : index[len].get(key);
-    if (hit !== undefined) return { rate: hit, matchedOn: key };
+    if (qualified[key] !== undefined) return null;
+    if (rates[key] !== undefined) return { rate: rates[key], matchedOn: key };
   }
   return null;
 };
@@ -143,6 +118,15 @@ const scanItems = (items = []) => {
       // A retired slab is the louder finding; do not also list it below.
       continue;
     }
+    if (RESTRICTED_SLABS[rate]) {
+      retired.push({
+        ...base,
+        restricted: true,
+        reason: `${rate}% now applies only to ${RESTRICTED_SLABS[rate]} - correct for those goods, worth checking for anything else`,
+        source: SOURCE.rule,
+      });
+      continue;
+    }
 
     if (!hsncode) continue;
     const ref = referenceRateFor(hsncode);
@@ -166,11 +150,19 @@ const scanItems = (items = []) => {
     examined,
     /* The page prints this: a shop should know the reference is dated. */
     notice:
-      'The bundled HSN reference predates GST 2.0, so it is used only where it ' +
-      'still names a live slab. Verify every suggestion against ' +
+      'Rates come from ' +
       SOURCE.rule +
-      ' before changing a rate. Nothing here changes a tax by itself.',
+      '. Headings whose goods are carved out, or that two schedules both claim, are ' +
+      'left out rather than guessed at. Check each suggestion against the notification ' +
+      'before changing a rate - nothing here changes a tax by itself.',
   };
 };
 
-module.exports = { scanItems, referenceRateFor, RETIRED_SLABS, LIVE_SLABS, SOURCE };
+module.exports = {
+  scanItems,
+  referenceRateFor,
+  RETIRED_SLABS,
+  LIVE_SLABS,
+  RESTRICTED_SLABS,
+  SOURCE,
+};

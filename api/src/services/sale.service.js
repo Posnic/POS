@@ -1899,6 +1899,10 @@ const getLatestSales = async ({ branchId, licenseId, holdOnly }, { SaleModel } =
           ? sale.sales_total
           : Number(sale.sales_total || sale.total || 0) || 0,
       payment_status: sale.payment_status || 'Paid',
+      /* When this was parked, so the Parked tab can say how long it has been
+         waiting. updated first: re-holding a sale touches it, and "waiting
+         since the last time anyone looked at it" is the useful figure. */
+      parked_at: sale.updated_date || sale.updatedAt || sale.date || sale.created_date || null,
     };
   });
 
