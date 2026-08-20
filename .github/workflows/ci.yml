@@ -265,6 +265,15 @@ jobs:
         with:
           node-version: 22
 
+      # Linux software centers and AppImage catalogs read this file before a
+      # user installs Posnic. Validate it with the reference implementation so
+      # a typo cannot silently remove the app identity, screenshot or links.
+      - name: AppStream metadata is valid
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y appstream
+          appstreamcli validate --pedantic builds/linux/com.posnic.app.metainfo.xml
+
       # A module that is required but never packaged produces "Cannot find
       # module" on a user's machine and nowhere else. This has happened, so it
       # is checked here rather than after an installer ships.
