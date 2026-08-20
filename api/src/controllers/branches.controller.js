@@ -5,6 +5,9 @@ const branchesService = require('../services/branch.service');
 const User = require('../models/user.model');
 const { ObjectId } = require('mongodb');
 const { redactBranchSecrets, stripBranchSecrets } = require('../services/settings-groups');
+const SettingsRepository = require('../repositories/settings.repository');
+
+const settingsRepository = new SettingsRepository();
 
 class BranchesController extends BaseController {
   constructor() {
@@ -136,6 +139,38 @@ class BranchesController extends BaseController {
 
       if (!result.status) {
         return this.error(res, result.message, 404, result.data);
+      }
+
+      /*
+       * S6 (D4): start a new shop from an existing one.
+       *
+       * The design says this replaces the hardcoded defaults in createBranch.
+       * It OVERLAYS them instead, deliberately: those defaults also seed the
+       * print templates and currency, and a source branch that happens to
+       * lack one would otherwise leave the new shop with nothing there. The
+       * defaults stay the floor, the copy states the preferences on top, and
+       * a create without the option behaves exactly as it always has.
+       *
+       * A failure here never fails the create - the branch exists and can be
+       * configured by hand; losing it because a copy went wrong would be far
+       * worse. The reason is reported alongside the branch instead.
+       */
+      const copyFrom = req.body?.copy_settings_from;
+      if (copyFrom && result.data?._id) {
+        const groups =
+          Array.isArray(req.body.copy_groups) && req.body.copy_groups.length
+            ? req.body.copy_groups
+            : ['features', 'preferences', 'documents'];
+        try {
+          const copied = await settingsRepository.copyGroups(groups, copyFrom, result.data._id, {
+            licenseId: req.user?.license || req.user?.license_id || null,
+          });
+          result.data.settings_copied = copied.status ? copied.data.copied : null;
+          if (!copied.status) result.data.settings_copy_error = copied.message;
+        } catch (e) {
+          console.error('[branch] settings copy skipped:', e && e.message);
+          result.data.settings_copy_error = e.message;
+        }
       }
 
       return this.success(res, stripBranchSecrets(result.data), result.message, 200);

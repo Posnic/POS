@@ -32,6 +32,15 @@ jest.mock('../../../src/models/branch.model', () => {
   };
 });
 
+const mockCopyGroups = jest.fn();
+jest.mock('../../../src/repositories/settings.repository', () => {
+  return class MockSettingsRepo {
+    copyGroups(...a) {
+      return mockCopyGroups(...a);
+    }
+  };
+});
+
 jest.mock('../../../src/services/branch.service', () => ({
   getBranchOptions: jest.fn(),
   getBranchStatistics: jest.fn(),
@@ -1118,5 +1127,69 @@ describe('BranchesController — toggleStatus', () => {
     const res = mockRes();
     await ctrl.toggleStatus(mockReq({ params: { id: 'b1' } }), res);
     expect(res.status).toHaveBeenCalledWith(500);
+  });
+});
+
+/*
+ * S6 (D4) - starting a new shop from an existing one.
+ *
+ * The copy OVERLAYS createBranch's defaults rather than replacing them: those
+ * defaults also seed print templates and currency, and a source branch that
+ * lacks one would otherwise leave the new shop with nothing there. A create
+ * without the option must behave exactly as it always has.
+ */
+describe('BranchesController — copy settings at branch creation', () => {
+  beforeEach(() => {
+    mockCopyGroups.mockReset();
+    mockCopyGroups.mockResolvedValue({
+      status: true,
+      data: { copied: { features: ['quotes_enable'] } },
+    });
+  });
+
+  test('no option means no copy - creation is untouched', async () => {
+    bm.createBranch.mockResolvedValue({ status: true, message: 'ok', data: { _id: 'new1' } });
+    const res = mockRes();
+    await ctrl.add(mockReq({ body: { name: 'Second shop' } }), res);
+    expect(mockCopyGroups).not.toHaveBeenCalled();
+    expect(res.json.mock.calls[0][0].type).toBe('success');
+  });
+
+  test('with a source it copies onto the NEW branch', async () => {
+    bm.createBranch.mockResolvedValue({ status: true, message: 'ok', data: { _id: 'new1' } });
+    const res = mockRes();
+    await ctrl.add(mockReq({ body: { name: 'Second shop', copy_settings_from: 'src1' } }), res);
+    const [groups, from, to] = mockCopyGroups.mock.calls[0];
+    expect(from).toBe('src1');
+    expect(to).toBe('new1');
+    // secrets are not in the default set - credentials never travel
+    expect(groups).toEqual(['features', 'preferences', 'documents']);
+    expect(groups).not.toContain('secrets');
+  });
+
+  test('a failed copy never fails the branch that was created', async () => {
+    bm.createBranch.mockResolvedValue({ status: true, message: 'ok', data: { _id: 'new1' } });
+    mockCopyGroups.mockRejectedValue(new Error('mongo is having a day'));
+    const res = mockRes();
+    await ctrl.add(mockReq({ body: { name: 'Second shop', copy_settings_from: 'src1' } }), res);
+    // the branch exists and is reported as created; the reason rides along
+    expect(res.json.mock.calls[0][0].type).toBe('success');
+    expect(res.json.mock.calls[0][0].data.settings_copy_error).toMatch(/having a day/);
+  });
+
+  test('a refused copy is reported, not swallowed', async () => {
+    bm.createBranch.mockResolvedValue({ status: true, message: 'ok', data: { _id: 'new1' } });
+    mockCopyGroups.mockResolvedValue({
+      status: false,
+      message: 'Credentials are never copied between branches',
+    });
+    const res = mockRes();
+    await ctrl.add(
+      mockReq({
+        body: { name: 'Second shop', copy_settings_from: 'src1', copy_groups: ['secrets'] },
+      }),
+      res
+    );
+    expect(res.json.mock.calls[0][0].data.settings_copy_error).toMatch(/never copied/i);
   });
 });
