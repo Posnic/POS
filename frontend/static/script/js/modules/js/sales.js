@@ -7548,6 +7548,7 @@ PosnicPro.quotes = {
         PosnicPro.quotes._ed = PosnicPro.quotes._edBlank();
         PosnicPro.quotes._edShell();
         PosnicPro.quotes._loadTaxList(function () { PosnicPro.quotes.edRender(); });
+        PosnicPro.quotes._edSigSync();
         $('#qe_title').text('New quotation');
         $('#qe_cust_search,#qe_cust_name,#qe_cust_phone,#qe_cust_email,#qe_cust_gstin,#qe_cust_address').val('');
         $('#qe_item_search,#qe_payment,#qe_bank,#qe_terms,#qe_notes,#qe_disc_value').val('');
@@ -7593,6 +7594,7 @@ PosnicPro.quotes = {
             PosnicPro.quotes._ed = ed;
             PosnicPro.quotes._edShell();
             PosnicPro.quotes._loadTaxList(function () { PosnicPro.quotes.edRender(); });
+            PosnicPro.quotes._edSigSync();
             $('#qe_title').text('Edit ' + (q.quote_id || 'quotation'));
             $('#qe_cust_search,#qe_item_search').val('');
             $('#qe_cust_name').val(q.customer_name || '');
@@ -7849,6 +7851,14 @@ PosnicPro.quotes = {
         PosnicPro.quotes._ed.charges.push({ name: '', type: 'percent', value: 0, sign: 1 });
         PosnicPro.quotes.edRender();
         $('#qe_charges .qe-charge:last .qe-c-name').focus();
+    },
+    /* The signature block mirrors the shop config: prefilled when set,
+       and a replacement here updates the config for every future quote
+       (owner's prefill model) - loudly, because it is an authority mark. */
+    _edSigSync: function () {
+        var sig = PosnicPro.local.get('quotesignature');
+        $('#qe_sig_thumb').attr('src', sig || '').toggle(!!sig);
+        $('#qe_sig_action').text(sig ? 'Replace' : 'Upload');
     },
     edCancel: function () {
         var ed = PosnicPro.quotes._ed || {};
@@ -10859,4 +10869,39 @@ $(function () {
         autoSelectFirst: true,
         triggerSelectOnValidInput: false
     });
+});
+
+/* Quote-page signature upload: saves to the shop settings (presence-
+   gated partial post) and repaints the live paper immediately. */
+$(document).on('change', '#qe_sig_file', function () {
+    var f = this.files && this.files[0];
+    var input = this;
+    if (!f) { return; }
+    if (f.size > 300 * 1024) {
+        PosnicPro.alert('warning', 'Keep the signature under 300 KB - a small PNG works best.');
+        $(input).val('');
+        return;
+    }
+    var reader = new FileReader();
+    reader.onload = function (e) {
+        var dataUrl = e.target.result;
+        PosnicPro.post({
+            url: 'setting/updateCommonSettings',
+            data: JSON.stringify({ quote_default_signature: dataUrl })
+        }, function (r) {
+            $(input).val('');
+            if (r.type !== 'success') { PosnicPro.alert(r.type, r.message); return; }
+            PosnicPro.local.set('quotesignature', dataUrl);
+            $('#quote_default_signature').val(dataUrl);
+            $('#quote_signature_thumb').attr('src', dataUrl).show();
+            $('#quote_signature_clear').show();
+            PosnicPro.quotes._edSigSync();
+            PosnicPro.quotes.edRecalc();
+            PosnicPro.alert('success', 'Signature saved - it now signs this and every future quote.');
+        }, function () {
+            $(input).val('');
+            PosnicPro.alert('error', 'Could not save the signature');
+        });
+    };
+    reader.readAsDataURL(f);
 });
