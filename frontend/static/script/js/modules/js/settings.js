@@ -1659,6 +1659,7 @@ if ($wrapper.length) {
                 module_cashbook_enable: $('#module_cashbook_enable').is(':checked') ? 'true' : 'false',
                 quick_sale_enable: $('#quick_sale_enable').is(':checked') ? 'true' : 'false',
                 quotes_enable: $('#quotes_enable').is(':checked') ? 'true' : 'false',
+                custom_charges_enable: $('#custom_charges_enable').is(':checked') ? 'true' : 'false',
             })
         };
         PosnicPro.put(params, function (response) {
@@ -1767,6 +1768,7 @@ if ($("#sale_quick_edit").is(":checked")) {
                     module_themes_enable: $('#module_themes_enable').is(':checked'),
                     module_cashbook_enable: $('#module_cashbook_enable').is(':checked'),
                     quotes_enable: $('#quotes_enable').is(':checked'),
+                    custom_charges_enable: $('#custom_charges_enable').is(':checked'),
                     quick_sale_enable: $('#quick_sale_enable').is(':checked')
                 };
                 PosnicPro.local.set('general_settings', JSON.stringify(generalSettings));
