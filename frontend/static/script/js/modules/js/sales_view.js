@@ -592,6 +592,7 @@ PosnicPro.sales.view = {
                     $('#receiving_add_item_name,#sales_new_item_name').val('');
                     if (!(PosnicPro.sales.kotPaymentMode === true && PosnicPro.sales.paymentOnlyMode === true)) {
                         $('.page_loader,#osk-container,#clearSaleButton,.return_discount_show').hide();
+                        if (PosnicPro.sales && PosnicPro.sales.syncActionTooltips) { PosnicPro.sales.syncActionTooltips(); }
                         $('.page-title-box,#sales_new_item_name,#sales_new,#closeSaleButton,.return_discount_hide').show();
                         (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('.changeSalesBtnText').text('புதுப்பி') : $('.changeSalesBtnText').text('Update');
                     }
@@ -790,6 +791,7 @@ PosnicPro.sales.view = {
                 if (data.sale_process === 'Add' || data.sale_process === 'PartialReturn' || data.sale_process === 'FullReturn' || data.sale_process === 'Edit') {
                     $('#receiving_add_item_name,#sales_new_item_name').val('');
                     $('.page_loader,#osk-container,#clearSaleButton').hide();
+                        if (PosnicPro.sales && PosnicPro.sales.syncActionTooltips) { PosnicPro.sales.syncActionTooltips(); }
                     $('.page-title-box,#sales_new,#closeSaleButton').show();
                     /*New Sales*/
                     $('.payment_mode').val(data.payment_mode);
