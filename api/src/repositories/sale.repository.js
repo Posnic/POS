@@ -12,6 +12,37 @@ const activeTenantFilter = () => ({
   ...(BaseModel.currentBranch ? { branch_id: BaseModel.currentBranch } : {}),
 });
 
+/*
+ * GST place-of-supply code for a B2B invoice.
+ *
+ * A GSTIN's first two digits ARE the state code (35AAAA...), so the
+ * customer's own number is the authoritative source and needs no table.
+ * The stored state NAME is the fallback for rows whose GSTIN is missing
+ * or malformed. Returns '' when neither resolves - better an empty field
+ * the shop can see and fix than a wrong state silently filed.
+ */
+let _gstStateByName = null;
+const gstStateCode = (gstin, stateName) => {
+  const num = String(gstin || '').trim();
+  if (/^\d{2}/.test(num)) return num.slice(0, 2);
+  const name = String(stateName || '')
+    .trim()
+    .toLowerCase();
+  if (!name) return '';
+  if (!_gstStateByName) {
+    _gstStateByName = new Map();
+    try {
+      const list = require('../json/gst_state_code.json').gststate || [];
+      for (const row of list) {
+        _gstStateByName.set(String(row.value || '').toLowerCase(), String(row.id || ''));
+      }
+    } catch (e) {
+      /* file unreadable: GSTIN-derived codes still work */
+    }
+  }
+  return _gstStateByName.get(name) || '';
+};
+
 const round = (value, decimals = 2) => {
   const num = typeof value === 'number' ? value : Number(value);
   if (!Number.isFinite(num)) return 0;
@@ -5851,6 +5882,9 @@ class SalesRepository {
                 return_sales_id: '$sales_id',
                 return_sales_date: '$date',
                 return_customer_state: '$customer_state',
+                // the credit-note rows printed a placeholder GSTIN; carry
+                // the real one so the 9B table shows the actual customer
+                return_customer_gst_number: '$customer_gst_number',
                 return_id: '$items_return.returnArray.returnValue.return_id',
                 return_date: '$items_return.returnArray.returnValue.return_date',
                 return_tax: '$items_return.returnArray.returnValue.tax',
@@ -5888,6 +5922,7 @@ class SalesRepository {
             ? new Date(item._id.return_sales_date).toLocaleDateString('en-GB')
             : '',
           return_customer_state: item._id.return_customer_state || '',
+          return_customer_gst_number: item._id.return_customer_gst_number || '',
           return_total: Math.round(item._id.return_total * 100) / 100,
           return_tax: Math.round(item._id.return_tax * 100) / 100,
           return_subtotal: Math.round((item._id.return_total - returnMultipleValue) * 100) / 100,
@@ -6342,13 +6377,26 @@ class SalesRepository {
     }
   }
 
+  /*
+   * GSTR-1 B2B section for the government offline tool.
+   *
+   * Rewritten 2026-08-20 - the previous shape could not be filed:
+   *   - CGST and SGST were summed into `csamt`, which is the CESS field.
+   *     The correct fields are `camt` and `samt`; cess stays 0 until the
+   *     product actually records cess.
+   *   - Every aggregation row became its own b2b entry, so one customer
+   *     appeared many times and one invoice split across entries. The
+   *     tool needs ONE entry per GSTIN holding all of its invoices, and
+   *     one `itms` line per TAX RATE inside each invoice.
+   *   - `rt` summed the rate column across items (9 + 9 = 18%), and both
+   *     `pos` (place of supply) and `num` were hardcoded.
+   * Money is summed per (invoice, rate) in Mongo, then assembled here.
+   */
   async gstOneReportPageJson(data, { SaleModel } = {}) {
     try {
-      // Parse dates
       const fromDate = new Date(data.starting_date);
       const toDate = new Date(data.ending_date);
 
-      // Get current branch and license from session/context
       const branchId = data.branch_id ? new ObjectId(data.branch_id) : null;
       const license = data.license ? new ObjectId(data.license) : null;
 
@@ -6360,7 +6408,7 @@ class SalesRepository {
         };
       }
 
-      // Filter for registered customers (regular/composite)
+      // Registered customers only - B2B is what this section reports.
       const filters = {
         $and: [
           {
@@ -6377,70 +6425,84 @@ class SalesRepository {
 
       const salesCollection = currentConnection(mongoose.connection).collection('sales');
 
-      // Sales details aggregation
-      const salesList = await salesCollection
+      // One row per (invoice, tax rate) - the exact grain of an `itms` line.
+      const rows = await salesCollection
         .aggregate([
           { $unwind: '$items' },
           { $match: filters },
           {
             $group: {
               _id: {
-                item_sales_id: '$sales_id',
-                item_date: '$date',
-                item_customer_gst_number: '$customer_gst_number',
-                tax_amount: '$items.tax_amount',
-                total_amount: '$items.total_amount',
-                item_price: '$items.item_price',
+                sales_id: '$sales_id',
+                ctin: '$customer_gst_number',
+                rate: '$items.tax',
               },
-              total_amount: { $sum: '$items.total_amount' },
-              tax_value: { $sum: '$items.tax' },
-              item_igst_tax: { $sum: '$items.igst_tax' },
-              csgst_multiply: {
-                $sum: { $add: ['$items.cgst_tax', '$items.sgst_tax'] },
-              },
+              date: { $first: '$date' },
+              customer_state: { $first: '$customer_state' },
+              invoice_value: { $first: '$sales_total' },
+              items_value: { $sum: '$items.total_amount' },
+              igst: { $sum: '$items.igst_tax' },
+              cgst: { $sum: '$items.cgst_tax' },
+              sgst: { $sum: '$items.sgst_tax' },
             },
           },
-          { $sort: { _id: 1 } },
+          { $sort: { '_id.ctin': 1, '_id.sales_id': 1, '_id.rate': 1 } },
         ])
         .toArray();
 
-      // Format data for GST-1 JSON format
-      const gstOne = salesList.map((item) => {
-        const multipleValue = item.item_igst_tax > 0 ? item.item_igst_tax : item.csgst_multiply;
+      const byCtin = new Map();
+      for (const row of rows) {
+        const ctin = String(row._id.ctin || '').trim();
+        const inum = String(row._id.sales_id || '').trim();
+        if (!inum) continue;
 
-        return {
-          ctin: item._id.item_customer_gst_number || '',
-          inv: [
-            {
-              inum: item._id.item_sales_id || '',
-              idt: item._id.item_date
-                ? new Date(item._id.item_date)
-                    .toLocaleDateString('en-GB', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                    })
-                    .replace(/\//g, '-')
-                : '',
-              val: Math.round(item._id.total_amount * 100) / 100,
-              pos: '27',
-              rchrg: 'N',
-              inv_typ: 'R',
-              itms: [
-                {
-                  num: 151,
-                  itm_det: {
-                    rt: item.tax_value || 0,
-                    txval: Math.round((item._id.total_amount - multipleValue) * 100) / 100,
-                    iamt: Math.round(item.item_igst_tax * 100) / 100,
-                    csamt: Math.round(item.csgst_multiply * 100) / 100,
-                  },
-                },
-              ],
-            },
-          ],
-        };
-      });
+        if (!byCtin.has(ctin)) byCtin.set(ctin, new Map());
+        const invoices = byCtin.get(ctin);
+
+        if (!invoices.has(inum)) {
+          const d = row.date ? new Date(row.date) : null;
+          const idt =
+            d && !Number.isNaN(d.getTime())
+              ? `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(
+                  2,
+                  '0'
+                )}-${d.getFullYear()}`
+              : '';
+          invoices.set(inum, {
+            inum,
+            idt,
+            // Invoice value: the sale's own total, not a sum of lines -
+            // charges, round-off and bill-level discounts belong in it.
+            val: round(Number(row.invoice_value) || 0),
+            pos: gstStateCode(ctin, row.customer_state),
+            rchrg: 'N',
+            inv_typ: 'R',
+            itms: [],
+          });
+        }
+
+        const invoice = invoices.get(inum);
+        const igst = round(Number(row.igst) || 0);
+        const cgst = round(Number(row.cgst) || 0);
+        const sgst = round(Number(row.sgst) || 0);
+        invoice.itms.push({
+          num: invoice.itms.length + 1,
+          itm_det: {
+            rt: round(Number(row._id.rate) || 0),
+            // taxable value = what the lines came to, less their tax
+            txval: round((Number(row.items_value) || 0) - (igst + cgst + sgst)),
+            iamt: igst,
+            camt: cgst,
+            samt: sgst,
+            csamt: 0,
+          },
+        });
+      }
+
+      const gstOne = [];
+      for (const [ctin, invoices] of byCtin) {
+        gstOne.push({ ctin, inv: Array.from(invoices.values()) });
+      }
 
       return {
         status: true,

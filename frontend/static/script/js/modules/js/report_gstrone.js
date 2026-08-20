@@ -1,11 +1,26 @@
 PosnicPro.gstrOne = {
+    /*
+     * GSTR-1 export for the government offline tool.
+     *
+     * Three things the tool rejected before: the filing period was
+     * hardcoded to August 2023 no matter which month you picked, the file
+     * went out as text/csv through escape() (which mangles anything
+     * non-ASCII in a customer name), and it downloaded even with no GSTIN
+     * and no rows - a file the tool refuses, discovered at filing time.
+     */
     gstrJson: function () {
         var loader = $(".loader-gstr-one");
         $("<div class='loadingSpinner'></div>").appendTo(loader);
         var dateOne = $("#gst_form_one_daterange_one").val();
         var date_string_one = moment(dateOne, "MMMM-YYYY").format("MM/" + 1 + "/YYYY");
         var dateTwo = $("#gst_form_one_daterange_two").val();
-        var date_string_two = moment(dateTwo, "MMMM-YYYY").format("MM/" + 31 + "/YYYY");
+        var date_string_two = moment(dateTwo, "MMMM-YYYY").endOf('month').format("MM/DD/YYYY");
+        var gstn_number = $.trim($('#branch_gstin_number').val() || '');
+        if (!gstn_number) {
+            loader.find(".loadingSpinner:first").remove();
+            PosnicPro.alert('error', 'Add your shop GSTIN in Settings before exporting - the filing tool rejects a file without it.');
+            return;
+        }
         var data = {
             starting_date: date_string_one,
             ending_date: date_string_two
@@ -15,28 +30,38 @@ PosnicPro.gstrOne = {
             data: data
         };
         PosnicPro.get(params, function (response) {
-            if (response.type === 'success') {
-
-                var data = response.data;
-                var gstn_number = $('#branch_gstin_number').val();
-
-                var gstArray = {
-                    gstin: gstn_number,
-                    fp: '082023',
-                    b2b: data
-                };
-                //Generate a file name
-                var fileName = 'gstr1';
-                //Initialize file format you want csv or xls
-                var uri = 'data:text/csv;charset=utf-8,' + escape(JSON.stringify(gstArray));
-                var link = document.createElement("a");
-                link.href = uri;
-                link.style = "visibility:hidden";
-                link.download = fileName + ".json";
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+            loader.find(".loadingSpinner:first").remove();
+            if (response.type !== 'success') {
+                PosnicPro.alert('error', response.message || 'Could not build the GSTR-1 file');
+                return;
             }
+            var rows = response.data || [];
+            if (!rows.length) {
+                PosnicPro.alert('warning', 'No B2B invoices in this period - nothing to file.');
+                return;
+            }
+            var gstArray = {
+                gstin: gstn_number,
+                // filing period is MMYYYY of the month actually chosen
+                fp: moment(dateOne, "MMMM-YYYY").format("MMYYYY"),
+                b2b: rows
+            };
+            var blob = new Blob([JSON.stringify(gstArray)], { type: 'application/json' });
+            var url = URL.createObjectURL(blob);
+            var link = document.createElement("a");
+            link.href = url;
+            link.style = "visibility:hidden";
+            link.download = 'gstr1-' + moment(dateOne, "MMMM-YYYY").format("MMYYYY") + '.json';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+            var invoiceCount = 0;
+            rows.forEach(function (r) { invoiceCount += (r.inv || []).length; });
+            PosnicPro.alert('success', invoiceCount + ' invoice(s) for ' + rows.length + ' GSTIN(s) exported');
+        }, function () {
+            loader.find(".loadingSpinner:first").remove();
+            PosnicPro.alert('error', 'Could not build the GSTR-1 file');
         });
     },
 
@@ -78,7 +103,9 @@ PosnicPro.gstrOne = {
         var dateOne = $("#gst_form_one_daterange_one").val();
         var date_string_one = moment(dateOne, "MMMM-YYYY").format("MM/" + 1 + "/YYYY");
         var dateTwo = $("#gst_form_one_daterange_two").val();
-        var date_string_two = moment(dateTwo, "MMMM-YYYY").format("MM/" + 31 + "/YYYY");
+        // endOf('month'), not a hardcoded 31: "02/31/YYYY" is not a date -
+        // JS rolled it into March and the report quietly ran long.
+        var date_string_two = moment(dateTwo, "MMMM-YYYY").endOf('month').format("MM/DD/YYYY");
         var data = {
             starting_date: date_string_one,
             ending_date: date_string_two
@@ -156,11 +183,14 @@ PosnicPro.gstrOne = {
                     return_footer_igsttotal += row.return_igst_tax;
                     return_footer_cgsttotal += row.return_cgst_tax;
                     return_footer_sgsttotal += row.return_sgst_tax;
+                    // the customer's real GSTIN, not the placeholder string
+                    // that shipped in both of these columns
+                    var returnCtin = row.return_customer_gst_number || '';
                     var trow = '<tr>' +
-                            '<td><span>33HYUUYIUY56YI</td></span>' +
+                            '<td><span>' + returnCtin + '</td></span>' +
                             '<td><span>' + row.return_sales_id + '</span></td>' +
                             '<td><span>' + row.return_sales_date + '</span></td>' +
-                            '<td><span>33HYUUYIUY56YI</span></td>' +
+                            '<td><span>' + returnCtin + '</span></td>' +
                             '<td><span>' + row.return_id + '</span></td>' +
                             '<td><span>' + row.return_date + '</span></td>' +
                             '<td></td>' +
