@@ -435,20 +435,35 @@ test('the selection is drawn in ink, not in the accent colour', () => {
   const blocks = [...css.matchAll(/is-active > td[^{]*\{[^}]*\}/g)].map((m) => m[0]);
   const bordered = blocks.filter((b) => /border-top:|border-left:/.test(b));
   assert.ok(bordered.length >= 2, 'expected the border rules for the row and its first cell');
-  for (const b of bordered) {
+  /* Only the BORDER declarations - the row also sets a near-black text colour,
+     which is correct and is not what "too rude" was about. */
+  const borderLines = bordered
+    .flatMap((b) => b.split(/\r?\n/))
+    .filter((l) => /border(-top|-bottom|-left)?\s*:/.test(l));
+  assert.ok(borderLines.length >= 3, 'expected top, bottom and left border declarations');
+
+  for (const line of borderLines) {
     assert.ok(
-      !/#0969da/i.test(b),
-      'the owner asked for black - an accent-coloured border reads as decoration',
+      !/#0969da/i.test(line),
+      'an accent-coloured border reads as decoration, not structure',
     );
-    assert.match(b, /#1f2328/i, 'the selection is drawn in ink');
+    assert.ok(
+      !/#1f2328/i.test(line),
+      'near-black was correct as structure and too hard to look at (owner: "very rude")',
+    );
+    assert.match(line, /#57606a/i, 'the selection is drawn in dark grey');
   }
 });
 
-test('the document wears the same line, which is what bridges them', () => {
+test('the A4 quote keeps its own paper edge', () => {
+  /* An earlier round gave the sheet the selection's colour so the two shared
+     one line. The owner asked for the document design to be left alone, so the
+     sheet takes no border override at all and keeps .q-sheet's lighter edge -
+     only the SELECTION is drawn darker. */
   const sheet = cssRule('.quotes-split #quotes_view_card .q-sheet {');
-  assert.match(
-    sheet,
-    /border-color:\s*#1f2328/i,
-    'a different colour either side of the divider is two boxes, not a bridge',
+  assert.ok(
+    !/border-color/.test(sheet),
+    'the document should not be restyled to match the list highlight',
   );
+  assert.match(sheet, /padding:/, 'it still gets its tighter padding inside the split');
 });
