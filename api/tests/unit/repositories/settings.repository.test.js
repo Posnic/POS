@@ -197,3 +197,140 @@ describe('settings read path', () => {
     expect(filters.every((f) => f.license)).toBe(true);
   });
 });
+
+/*
+ * S5 - clearing an override.
+ *
+ * `null` on the way IN means "stop deciding this here". The trap is the
+ * legacy mirror: this repository dual-writes to the old `branches` document,
+ * so mirroring a cleared key would write null over the legacy value - and
+ * that value is exactly what the branch is being told to fall back ON. Reset
+ * to inherited would delete what it meant to inherit, and the setting would
+ * come back not as the account's answer but as nothing at all.
+ */
+describe('clearing a branch override', () => {
+  let repo;
+  const writable = () => {
+    for (const name of Object.keys(mockCollections)) delete mockCollections[name];
+    const features = mkCol();
+    features.updateOne = jest.fn().mockResolvedValue({ acknowledged: true });
+    mockCollections.branch_features = features;
+    const branches = mkCol();
+    branches.updateOne = jest.fn().mockResolvedValue({ acknowledged: true });
+    mockCollections.branches = branches;
+    return { features, branches };
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    repo = new SettingsRepository();
+  });
+
+  test('null UNSETS the key rather than storing a null', async () => {
+    const { features } = writable();
+    const r = await repo.saveGroup('features', { quotes_enable: null }, ctx);
+    expect(r.status).toBe(true);
+
+    const update = features.updateOne.mock.calls[0][1];
+    expect(update.$unset).toEqual({ quotes_enable: '' });
+    expect(update.$set.quotes_enable).toBeUndefined();
+    expect(r.data.cleared).toEqual(['quotes_enable']);
+    expect(r.data.written).toEqual([]);
+  });
+
+  test('and the legacy document is NOT touched - that is the fallback', async () => {
+    const { branches } = writable();
+    await repo.saveGroup('features', { quotes_enable: null }, ctx);
+    // nothing at all was mirrored: there is no value to mirror, only a removal
+    expect(branches.updateOne).not.toHaveBeenCalled();
+  });
+
+  test('a real value still mirrors, and a mixed payload mirrors only the value', async () => {
+    const { features, branches } = writable();
+    await repo.saveGroup('features', { quotes_enable: null, quick_sale_enable: 'true' }, ctx);
+
+    const update = features.updateOne.mock.calls[0][1];
+    expect(update.$set.quick_sale_enable).toBe('true');
+    expect(update.$unset).toEqual({ quotes_enable: '' });
+
+    // the legacy mirror must carry the SET key and never the cleared one
+    const mirrored = branches.updateOne.mock.calls[0][1].$set;
+    expect(mirrored).toEqual({ quick_sale_enable: 'true' });
+    expect('quotes_enable' in mirrored).toBe(false);
+  });
+
+  test('clearing at account level unsets there too, and mirrors nothing', async () => {
+    const { features, branches } = writable();
+    await repo.saveGroup('features', { quotes_enable: null }, ctx, { level: 'account' });
+    expect(features.updateOne.mock.calls[0][0].branch_id).toBeNull();
+    expect(features.updateOne.mock.calls[0][1].$unset).toEqual({ quotes_enable: '' });
+    expect(branches.updateOne).not.toHaveBeenCalled();
+  });
+});
+
+describe('what a reset would fall back to', () => {
+  let repo;
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    repo = new SettingsRepository();
+  });
+
+  test('inherited reports the account value behind a branch override', async () => {
+    seed({ branchRow: { quotes_enable: false }, accountRow: { quotes_enable: true } });
+    const r = await repo.resolveGroup('features', ctx);
+    expect(r.data.values.quotes_enable).toBe(false);
+    expect(r.data.inherited.quotes_enable).toBe(true);
+  });
+
+  test('it falls through to the legacy document when no account rule exists', async () => {
+    seed({ branchRow: { quotes_enable: false }, legacy: { quotes_enable: true } });
+    const r = await repo.resolveGroup('features', ctx);
+    expect(r.data.inherited.quotes_enable).toBe(true);
+  });
+
+  test('nothing below means nothing to inherit', async () => {
+    seed({ branchRow: { quotes_enable: false } });
+    const r = await repo.resolveGroup('features', ctx);
+    expect(r.data.inherited.quotes_enable).toBeUndefined();
+  });
+});
+
+describe('the account level read on its own', () => {
+  let repo;
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    repo = new SettingsRepository();
+  });
+
+  test('it returns what the account decides, never a branch override', async () => {
+    seed({ branchRow: { quotes_enable: false }, accountRow: { quick_sale_enable: true } });
+    const r = await repo.accountGroup('features', ctx);
+    expect(r.data.level).toBe('account');
+    expect(r.data.values.quick_sale_enable).toBe(true);
+    // the branch's own choice must not appear, or saving this form back would
+    // push one shop's decision onto every other shop
+    expect(r.data.values.quotes_enable).toBeUndefined();
+  });
+
+  test('with NO account rule it returns nothing, never the branch answer', async () => {
+    /* The case that matters: no shop-wide rule exists yet, but this branch has
+       decided something. If the account read fell through to the branch row,
+       the "applies to all shops" form would open pre-filled with one shop's
+       choice and saving it would impose that on every other shop - without
+       anyone having asked for it. */
+    seed({ branchRow: { quotes_enable: false, quick_sale_enable: true } });
+    const r = await repo.accountGroup('features', ctx);
+    expect(r.data.values).toEqual({});
+    expect(r.data.set).toEqual([]);
+  });
+
+  test('`set` distinguishes "all shops say false" from "no shop-wide rule"', async () => {
+    seed({ accountRow: { quotes_enable: false } });
+    const r = await repo.accountGroup('features', ctx);
+    expect(r.data.values.quotes_enable).toBe(false);
+    expect(r.data.set).toEqual(['quotes_enable']);
+  });
+});

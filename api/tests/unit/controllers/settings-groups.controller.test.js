@@ -173,3 +173,88 @@ describe('settings group endpoints', () => {
     expect(res.status).toHaveBeenCalledWith(403);
   });
 });
+
+/*
+ * S5 - inheritance.
+ *
+ * `null` means INHERIT: stop deciding this here and take whatever the level
+ * above says. It is a different instruction from writing a value, and the
+ * dangerous half is the legacy mirror - writing null through to the old
+ * branches document would destroy the very value the branch is being told to
+ * fall back ON, so "reset to inherited" would delete what it meant to inherit.
+ */
+describe('inheritance', () => {
+  test('reading the account level does not start from a branch override', async () => {
+    const accountRead = jest.fn().mockResolvedValue({
+      status: true,
+      data: {
+        group: 'features',
+        level: 'account',
+        values: { quotes_enable: 'true' },
+        set: ['quotes_enable'],
+      },
+    });
+    // the mock repo exposes accountGroup the same way as the others
+    const repoModule = require('../../../src/repositories/settings.repository');
+    const proto = repoModule.prototype;
+    const original = proto.accountGroup;
+    proto.accountGroup = accountRead;
+
+    const res = mkRes();
+    await controller.read(
+      mkReq({ params: { group: 'features' }, query: { level: 'account' } }),
+      res
+    );
+
+    expect(accountRead).toHaveBeenCalled();
+    expect(mockResolve).not.toHaveBeenCalled();
+    expect(res.json.mock.calls[0][0].data.level).toBe('account');
+    proto.accountGroup = original;
+  });
+
+  test('the resolved read says what a reset would fall back to', async () => {
+    mockResolve.mockResolvedValue({
+      status: true,
+      data: {
+        group: 'features',
+        values: { quotes_enable: 'false' },
+        source: { quotes_enable: 'branch' },
+        inherited: { quotes_enable: 'true' },
+      },
+    });
+    const res = mkRes();
+    await controller.read(mkReq({ params: { group: 'features' } }), res);
+    const { data } = res.json.mock.calls[0][0];
+    // the branch overrides to false, but the screen can now say what
+    // "reset to inherited" would restore
+    expect(data.source.quotes_enable).toBe('branch');
+    expect(data.inherited.quotes_enable).toBe('true');
+  });
+
+  test('null reaches the repository intact - it is an instruction, not a blank', async () => {
+    const res = mkRes();
+    await controller.write(
+      mkReq({ params: { group: 'features' }, body: { quotes_enable: null } }),
+      res
+    );
+    expect(mockSave.mock.calls[0][1]).toEqual({ quotes_enable: null });
+    expect(res.status).not.toHaveBeenCalledWith(400);
+  });
+
+  test('secrets never carry an inherited map out either', async () => {
+    mockResolve.mockResolvedValue({
+      status: true,
+      data: {
+        group: 'secrets',
+        values: { email_smtp_password: 'hunter2' },
+        source: { email_smtp_password: 'branch' },
+        inherited: { email_smtp_password: 'account-level-secret' },
+      },
+    });
+    const res = mkRes();
+    await controller.read(mkReq({ params: { group: 'secrets' } }), res);
+    const asText = JSON.stringify(res.json.mock.calls[0][0]);
+    expect(asText).not.toContain('hunter2');
+    expect(asText).not.toContain('account-level-secret');
+  });
+});
