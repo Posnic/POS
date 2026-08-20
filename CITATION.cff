@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: >-
+  If you use Posnic POS in research, cite the exact release or commit you
+  evaluated together with these project metadata.
+title: Posnic POS
+type: software
+abstract: >-
+  Posnic POS is free, open-source, offline-first point-of-sale software for
+  retail shops and restaurants. Its primary API and database run on the shop
+  computer, with optional external payment, cloud, and integration dependencies.
+authors:
+  - name: Posnic Innovations Private Limited
+repository-code: https://github.com/Posnic/POS
+url: https://posnic.com/
+license: AGPL-3.0-only
+keywords:
+  - point of sale
+  - POS software
+  - offline-first
+  - retail
+  - restaurant
+  - inventory management
+  - billing software
