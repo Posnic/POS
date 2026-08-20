@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('fs');
 const path = require('path');
+const { blockAt, cssReader } = require('./helpers/source-lookup');
 
 /*
  * The quotes master-detail: one surface, and only the document changes.
@@ -37,82 +38,13 @@ const css = fs.readFileSync(
   path.join(ROOT, 'frontend', 'static', 'style', 'css', 'custom.css'),
   'utf8',
 );
-
-/* The balanced { ... } that opens at or after `marker`, marker included. */
-function blockAt(source, marker) {
-  const start = source.indexOf(marker);
-  assert.notStrictEqual(start, -1, `not found in source: ${marker}`);
-  const open = source.indexOf('{', start);
-  assert.notStrictEqual(open, -1, `no block opens after: ${marker}`);
-  let depth = 0;
-  for (let i = open; i < source.length; i++) {
-    if (source[i] === '{') depth++;
-    else if (source[i] === '}') {
-      depth--;
-      if (depth === 0) {
-        assert.ok(i > start, 'block ends before it begins');
-        return source.slice(start, i + 1);
-      }
-    }
-  }
-  assert.fail(`unbalanced block after: ${marker}`);
-}
+const cssRule = cssReader(css);
 
 /* sales.js defines showDetails twice - sales history has one too - so every
    lookup starts from the quotes namespace rather than the top of the file.
    An unanchored marker here would silently test the wrong module. */
 const quotesNamespace = blockAt(salesSource, 'PosnicPro.quotes = {');
 
-/*
- * The declarations of the ONE CSS rule whose selector text contains `sel`.
- *
- * Ambiguity is an error here, not a coin toss. This helper used to return the
- * first match, and four separate assertions in this file ended up reading a
- * rule nobody meant: a selector like ".. > #quotes_list_card" appears first
- * inside a GROUPED rule (".. > #list_card, .. > #view_card {"), whose
- * declarations are entirely different. Every one of those tests passed - for
- * the wrong reason, which is worse than failing.
- *
- * So a selector matching more than once now fails and says so. Disambiguate
- * with `fromMarker` (a nearby unique string to start searching from) rather
- * than hoping the first hit is the right one.
- */
-function cssRule(sel, fromMarker) {
-  const from = fromMarker ? css.indexOf(fromMarker) : 0;
-  assert.notStrictEqual(from, -1, `anchor not found in css: ${fromMarker}`);
-
-  /* Only count a selector that STARTS its own line. A rule's selector always
-     does; the same text appearing mid-line is a different rule that merely
-     contains it - "[data-theme] #quotes_new .contentbar.quotes-split {" is a
-     theme override, not the rule being asked about, and matching it was how
-     several of these assertions ended up reading the wrong declarations. */
-  const hits = [];
-  for (let at = css.indexOf(sel, from); at !== -1; at = css.indexOf(sel, at + 1)) {
-    const lineStart = css.lastIndexOf('\n', at) + 1;
-    if (css.slice(lineStart, at).trim() === '') hits.push(at);
-  }
-
-  assert.ok(hits.length > 0, `no CSS rule mentions: ${sel}`);
-  /* Uniqueness is required only when the caller gave no anchor. An anchor IS
-     the disambiguation - it names the rule by what sits immediately above it,
-     which is the one thing that tells two identical selectors apart. Demanding
-     uniqueness as well would make legitimate pairs (a rule and its @media
-     override) untestable. Without an anchor, ambiguity stays an error: that is
-     the case where the wrong rule gets read silently. */
-  if (!fromMarker) {
-    assert.strictEqual(
-      hits.length,
-      1,
-      `"${sel}" matches ${hits.length} places - pass a fromMarker to disambiguate. ` +
-        'A first-occurrence match silently reads the wrong rule and passes anyway.',
-    );
-  }
-
-  const open = css.indexOf('{', hits[0]);
-  const close = css.indexOf('}', open);
-  assert.ok(close > open, `unbalanced CSS rule for: ${sel}`);
-  return css.slice(open + 1, close);
-}
 
 test('moving between quotes does not re-enter the page', () => {
   const body = blockAt(quotesNamespace, 'showDetails: function (id) {');

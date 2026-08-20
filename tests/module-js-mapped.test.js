@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('fs');
 const path = require('path');
+const { stripComments } = require('./helpers/source-lookup');
 
 /*
  * Every module script must be in the build manifest, and no two may define the
@@ -43,19 +44,6 @@ function mappedBasenames() {
   return mapped;
 }
 
-/* comments are not code - a commented-out definition shadows nothing */
-function stripComments(src) {
-  return src
-    .replace(/\/\*[\s\S]*?\*\//g, ' ')
-    .split('\n')
-    .map((line) => {
-      const at = line.indexOf('//');
-      if (at === -1) return line;
-      const before = line.slice(0, at);
-      return (before.match(/['"`]/g) || []).length % 2 === 1 ? line : before;
-    })
-    .join('\n');
-}
 
 test('the manifest is being read, not silently empty', () => {
   assert.ok(moduleFiles.length > 40, `only ${moduleFiles.length} module files found`);

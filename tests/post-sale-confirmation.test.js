@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('fs');
 const path = require('path');
+const { blockAt, cssReader } = require('./helpers/source-lookup');
 
 /*
  * The post-sale confirmation strip.
@@ -34,35 +35,9 @@ const salesController = fs.readFileSync(
   path.join(ROOT, 'api', 'src', 'controllers', 'sales.controller.js'),
   'utf8',
 );
+const cssRule = cssReader(css);
 
-/* The balanced { ... } opening at or after `marker`. Anchored lookups only -
-   a bare first-occurrence match in these files lands in the wrong place. */
-function blockAt(source, marker) {
-  const start = source.indexOf(marker);
-  assert.notStrictEqual(start, -1, `not found: ${marker}`);
-  const open = source.indexOf('{', start);
-  let depth = 0;
-  for (let i = open; i < source.length; i++) {
-    if (source[i] === '{') depth++;
-    else if (source[i] === '}') {
-      depth--;
-      if (depth === 0) {
-        assert.ok(i > start, 'block ends before it begins');
-        return source.slice(start, i + 1);
-      }
-    }
-  }
-  assert.fail(`unbalanced block after: ${marker}`);
-}
 
-function cssRule(sel) {
-  const at = css.indexOf(sel);
-  assert.notStrictEqual(at, -1, `no CSS rule for: ${sel}`);
-  const open = css.indexOf('{', at);
-  const close = css.indexOf('}', open);
-  assert.ok(close > open);
-  return css.slice(open + 1, close);
-}
 
 test('the bare "Last Created Record" link is gone', () => {
   assert.ok(
