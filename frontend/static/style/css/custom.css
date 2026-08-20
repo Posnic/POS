@@ -3413,3 +3413,45 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 /* a send button with no channel configured is hidden by sales.js, so an
    empty row should not leave a gap */
 .sale-done-send:empty { display: none; }
+
+/* ============================================================
+   Modal chrome (owner: "looks very old... top title background blue and
+   text is black... cross move towards top. its not in right position...
+   when mouse hoever background color is not matching")
+
+   The black-on-blue was self-inflicted: an inline colour carrying
+   !important on the title beat the theme rule that would have made it
+   contrast. That inline style is gone. What remains here is the chrome the
+   theme never covered - the close button drifting above the title, and a
+   grey hover that is invisible on a coloured bar.
+   ============================================================ */
+.modal-header { align-items: center; padding: 12px 16px; }
+.modal-header .modal-title { line-height: 1.3; }
+/* the close was aligned to the header's top edge and sat above the title */
+.modal-header .close {
+    margin: 0 0 0 auto;
+    align-self: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    font-size: 22px;
+    line-height: 1;
+    opacity: 1;
+}
+/* Two cases, because the header is not always coloured. With a theme active
+   the bar carries the primary colour, so the hover must be a translucent
+   WHITE to be seen; with no theme the bar is light, where white would vanish
+   and a grey wash is right. */
+.modal-header .close:hover,
+.modal-header .close:focus { background-color: rgba(120, 120, 120, 0.18) !important; }
+[data-theme] .modal-header .close:hover,
+[data-theme] .modal-header .close:focus { background-color: rgba(255, 255, 255, 0.26) !important; }
+
+/* The cart line editor specifically: give the fields room and make the two
+   commit choices read as primary and secondary rather than two equal blocks. */
+#sale_line_edit .modal-content { border: 0; border-radius: 10px; overflow: hidden; }
+#sale_line_edit .modal-body { padding: 16px; }
+#sale_line_edit .le-label { margin-bottom: 4px; }
+#sale_line_edit .modal-footer { padding: 12px 16px; background: #f7f9fc; border-top: 1px solid #eef1f6; }
+#sale_line_edit .modal-footer .btn { font-weight: 600; }
