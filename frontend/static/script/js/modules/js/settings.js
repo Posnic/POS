@@ -5527,7 +5527,7 @@ $(document).on('click', '#quote_settings_save', function () {
         quote_default_signature: $('#quote_default_signature').val() || ''
     };
     $('#quote_settings_save').prop('disabled', true);
-    PosnicPro.post({ url: 'setting/updateCommonSettings', data: JSON.stringify(payload) }, function (r) {
+    PosnicPro.put({ url: 'setting/updateCommonSettings', data: JSON.stringify(payload) }, function (r) {
         $('#quote_settings_save').prop('disabled', false);
         PosnicPro.alert(r.type, r.type === 'success' ? 'Quotation settings saved' : r.message);
         if (r.type === 'success') {

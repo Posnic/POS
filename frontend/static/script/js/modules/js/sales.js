@@ -6059,7 +6059,13 @@ PosnicPro.sales.renderCharges = function () {
     });
     $('#sale_charges_list').html(html);
     $('#sale_add_charge').toggle(PosnicPro.sales.chargesEnabled() || list.length > 0);
-    PosnicPro.sales.calculation.extraDiscoundCalculation();
+    try {
+        PosnicPro.sales.calculation.extraDiscoundCalculation();
+    } catch (e) {
+        /* first page load: totals state not built yet - the regular flow
+           recalculates right after; breaking the clear chain here is what
+           cost the walk-in default */
+    }
 };
 $(document).on('click', '#sale_add_discount', function () {
     // opens the existing additional-discount editor - same ACL rail
@@ -6189,11 +6195,16 @@ PosnicPro.sales.calculation = {
         var taxFeatureOff = PosnicPro.local.get('default_tax_enable_disable') === 'false'
             && PosnicPro.local.get('gst_action') !== 'enable';
         var showTaxCol = !taxFeatureOff || anyLineTax;
-        // header AND cells together. The build strips <lang> wrappers, so
-        // class selectors on header text MISS in production - the template
-        // position (6th column: Item, Qty, Unit, Price, Disc, TAX) cannot.
-        $('#sales_new tr.sales_new_class th').eq(5).toggle(showTaxCol);
-        $('[id^="addSalesLineItemTax_"]').toggle(showTaxCol);
+        // header AND cells as ONE unit. Two trs carry sales_new_class in
+        // the built page, so scope to the cart table and take the 6th
+        // column of ITS header row; if that th cannot be pinned, hide
+        // nothing - a visible extra column is noise, a shifted table is
+        // broken.
+        var $taxTh = $('#sales_new #return_table thead tr').first().find('th').eq(5);
+        if ($taxTh.length === 1) {
+            $taxTh.toggle(showTaxCol);
+            $('[id^="addSalesLineItemTax_"]').toggle(showTaxCol);
+        }
         // totals row: with no Tax cell the Discount slides into its place
         // on the right; when tax returns, Discount goes back left
         $('#return_discount').toggleClass('disc-solo', !showTaxCol);
@@ -10875,7 +10886,7 @@ $(document).on('change', '#qe_sig_file', function () {
     var reader = new FileReader();
     reader.onload = function (e) {
         var dataUrl = e.target.result;
-        PosnicPro.post({
+        PosnicPro.put({
             url: 'setting/updateCommonSettings',
             data: JSON.stringify({ quote_default_signature: dataUrl })
         }, function (r) {
