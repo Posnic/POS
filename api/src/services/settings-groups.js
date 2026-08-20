@@ -111,6 +111,69 @@ const SECRETS = [
   'email_smtp_from',
 ];
 
+/* Now that an empty value means "leave the saved credential alone", clearing
+   one has to be sayable. This sentinel is that word - deliberate, and
+   impossible to send by accident from an empty input. */
+const CLEAR_SECRET = '__posnic_clear__';
+
+/*
+ * S4. Every credential that lives on the legacy `branches` document.
+ *
+ * SECRETS above is the new per-group store; this is the older reality the
+ * shop is running on right now. GET /branches/getOneStore returns the whole
+ * branch document, and the settings screen reads its email and SMS cards
+ * from it - so today an SMTP password, an SMS gateway password and two API
+ * keys are handed to the browser of anyone who can open Settings, and sit in
+ * that response's cache. They are write-only from here on.
+ *
+ * Usernames, hosts, ports and sender IDs deliberately stay visible: they are
+ * not credentials, and blanking them would leave the card unreadable.
+ */
+const BRANCH_CREDENTIALS = [
+  'email_smtp_password',
+  'smtp_password',
+  'way2sms_password',
+  'way2sms_api',
+  'textlocal_api',
+];
+
+/* A branch document with its credentials removed, plus a map saying which
+   ones exist. The UI needs to show "configured" without ever holding the
+   value, and an empty string must read as absent, not as a set password. */
+const redactBranchSecrets = (doc) => {
+  if (!doc || typeof doc !== 'object') return doc;
+  const isPlain = doc.toObject ? doc.toObject() : doc;
+  const out = { ...isPlain };
+  const configured = {};
+  for (const key of BRANCH_CREDENTIALS) {
+    const v = out[key];
+    configured[key] = v !== undefined && v !== null && String(v) !== '';
+    delete out[key];
+  }
+  out.secrets_configured = configured;
+  return out;
+};
+
+/*
+ * The partial $set for one credential the caller sent.
+ *
+ * Absent or empty means LEAVE IT ALONE. That rule is the other half of the
+ * redaction above: once a password stops being sent to the browser, the form
+ * loads with the field empty, and writing that emptiness through would blank
+ * the shop's mail the first time anyone saved an unrelated setting. Clearing
+ * is still possible, but it has to be said out loud with CLEAR_SECRET.
+ *
+ * The value itself is never trimmed - a password may legitimately begin or
+ * end with a space, and silently trimming one produces a login that fails
+ * with no visible reason.
+ */
+const secretUpdate = (key, raw) => {
+  if (raw === undefined || raw === null) return {};
+  const v = String(raw);
+  if (v === '') return {};
+  return { [key]: v === CLEAR_SECRET ? '' : v };
+};
+
 const GROUPS = {
   features: FEATURES,
   preferences: PREFERENCES,
@@ -140,4 +203,16 @@ const splitByGroup = (payload = {}) => {
   return out;
 };
 
-module.exports = { GROUPS, groupOf, splitByGroup, FEATURES, PREFERENCES, DOCUMENTS, SECRETS };
+module.exports = {
+  GROUPS,
+  groupOf,
+  splitByGroup,
+  FEATURES,
+  PREFERENCES,
+  DOCUMENTS,
+  SECRETS,
+  BRANCH_CREDENTIALS,
+  CLEAR_SECRET,
+  secretUpdate,
+  redactBranchSecrets,
+};

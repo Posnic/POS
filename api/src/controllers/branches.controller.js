@@ -4,6 +4,7 @@ const BranchModel = BranchModule.BranchModel;
 const branchesService = require('../services/branch.service');
 const User = require('../models/user.model');
 const { ObjectId } = require('mongodb');
+const { redactBranchSecrets } = require('../services/settings-groups');
 
 class BranchesController extends BaseController {
   constructor() {
@@ -494,10 +495,15 @@ class BranchesController extends BaseController {
         });
       }
 
+      /* S4: this returns the whole branch document, and the settings screen
+         reads its email and SMS cards from it - so the SMTP password, the SMS
+         gateway password and two API keys were being handed to the browser of
+         anyone who could open Settings. They leave as a configured/not map;
+         the values only ever travel inwards now. */
       return res.status(200).json({
         type: 'success',
         message: 'Get store details successfully',
-        data: result.data,
+        data: redactBranchSecrets(result.data),
       });
     } catch (error) {
       console.error('Error in getOneStore:', error);

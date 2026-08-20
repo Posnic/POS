@@ -660,11 +660,13 @@ PosnicPro.settings = {
                 localStorage.setItem("notificationrange", data.notification_range);
                 $('#serverdate').val(data.server_dateformat);
                 $('#dateText').val(data.dateformat_text);
-                $('#way2sms_api').val(data.way2sms_api);
-                $('#way2sms_userid').val(data.way2sms_userid);
-                $('#way2sms_password').val(data.way2sms_password);
+                // Credentials no longer come back from the server (S4), so these
+                // load empty by design; markSavedSecrets below says which are set.
+                $('#way2sms_api').val(data.way2sms_api || '');
+                $('#way2sms_userid').val(data.way2sms_userid || '');
+                $('#way2sms_password').val(data.way2sms_password || '');
                 $('#textlocal_sender').val(data.textlocal_sender);
-                $('#textlocal_api').val(data.textlocal_api);
+                $('#textlocal_api').val(data.textlocal_api || '');
                 $('#sales_prefix').val(data.sales_prefix || 'S');
                 $('#email_smtp_host').val(data.email_smtp_host || '');
                 $('#email_smtp_port').val(data.email_smtp_port || '');
@@ -672,6 +674,7 @@ PosnicPro.settings = {
                 $('#email_smtp_username').val(data.email_smtp_username || '');
                 $('#email_smtp_password').val(data.email_smtp_password || '');
                 $('#email_smtp_from').val(data.email_smtp_from || '');
+                PosnicPro.settings.markSavedSecrets(data.secrets_configured);
                 $('#quote_default_payment_method').val(data.quote_default_payment_method || '');
                 $('#quote_default_bank_details').val(data.quote_default_bank_details || '');
                 $('#quote_default_terms').val(data.quote_default_terms || '');
@@ -5428,6 +5431,37 @@ $(document).ready(function () {
         $('#display_pair_url').val(origin + '/customerview.html');
     } catch (e) { /* leave blank */ }
 });
+/*
+ * S4: a credential the server will not send back.
+ *
+ * The field loads empty because the value never leaves the server any more,
+ * and an empty field on save means "keep the saved one". Without a word of
+ * explanation that reads as "the password was lost", so the placeholder says
+ * which ones are configured. The value itself is never in this page.
+ */
+PosnicPro.settings.markSavedSecrets = function (configured) {
+    var labels = {
+        email_smtp_password: 'SMTP password',
+        smtp_password: 'SMTP password',
+        way2sms_password: 'Password',
+        way2sms_api: 'API key',
+        textlocal_api: 'API key'
+    };
+    var map = configured || {};
+    Object.keys(labels).forEach(function (key) {
+        var $f = $('#' + key);
+        if (!$f.length) { return; }
+        $f.attr('placeholder', map[key]
+            ? 'Saved - leave blank to keep it'
+            : labels[key]);
+        $f.closest('.form-group').find('.secret-saved-flag').remove();
+        if (map[key]) {
+            $f.after('<small class="secret-saved-flag text-success d-block mt-1">'
+                + '<i class="feather icon-check mr-1"></i>Configured</small>');
+        }
+    });
+};
+
 PosnicPro.settings.copyDisplayUrl = function () {
     var url = $('#display_pair_url').val();
     if (!url) { return; }
