@@ -5956,8 +5956,15 @@ PosnicPro.sales.lineEdit = {
             $('body').append(
                 '<div class="modal fade" id="sale_line_edit" tabindex="-1" role="dialog" aria-hidden="true">'
                 + '<div class="modal-dialog modal-dialog-centered" role="document"><div class="modal-content">'
-                + '<div class="modal-header py-2" style="background:#fff;"><h5 class="modal-title" id="sale_line_edit_name" style="color:#1a202c !important;">Edit line</h5>'
-                + '<button type="button" class="close" data-dismiss="modal" style="color:#1a202c;">&times;</button></div>'
+                /*
+                 * No inline colours here. The theme paints .modal-header with
+                 * the primary colour and sets a CONTRASTING title and close to
+                 * match - but an inline style carrying !important beats even
+                 * that, which is exactly how this dialog ended up with black
+                 * text on a blue bar. Let the theme do its job.
+                 */
+                + '<div class="modal-header"><h5 class="modal-title" id="sale_line_edit_name">Edit line</h5>'
+                + '<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>'
                 + '<div class="modal-body pb-2">'
                 + '<div class="form-row">'
                 + '<div class="form-group col-6"><label class="le-label">Price</label><input type="number" min="0" step="any" class="form-control text-right" id="le_price"></div>'
