@@ -48,11 +48,7 @@
             PosnicPro.sales.clear.cartItems(false);
         }
         PosnicPro.kotorder.kotHideShow();
-        if (PosnicPro.local.get('inline_sale') === 'enable') {
-            $('.addDisc-hide-show').show();
-        } else {
-            $('.addDisc-hide-show').hide();
-        }
+        $('.addDisc-hide-show').hide();
         $('#extraDisc').prop('disabled', false);
         $('#extraDisc').removeClass('extraDisc');
         $('#percentIcon, #rupeeIcon').css('pointer-events', 'auto').css('opacity', '1');
@@ -1107,15 +1103,7 @@
         var inlinePrice = '';
         var inlineDiscount = '';
         //var inlineTax = '';
-        if (PosnicPro.local.get('inline_sale') === 'enable') {
-            inlinePrice = '<span class="sales-inline-hide"><i class="feather icon-edit-1 text-primary" onclick="return PosnicPro.sales.editItemPricingSale(this);"  data-id="' + id + '" data-toggle="tooltip" title="Price change" style="cursor:pointer;"></i></span>';
-            inlineDiscount = '<span class="sales-inline-hide">' +
-                '<i class="feather icon-edit-1 text-primary" ' +
-                'onclick="return PosnicPro.sales.editItemDiscountSale(this, ' + addSalesLineDiscount + ', \'' + (isDiscountAmount ? 'amount' : 'percentage') + '\');" ' +
-                'data-id="' + id + '" data-toggle="tooltip" title="Discount change" style="cursor:pointer;"></i>' +
-                '</span>';
-            //inlineTax = '<span class="sales-inline-hide"><i class="feather icon-edit-1 text-primary" onclick="return PosnicPro.sales.editItemTaxSale(this);"  data-id="' + id + '" data-toggle="tooltip" title="Tax change" style="cursor:pointer;"></i></span>';
-        }
+        /* pencils removed - double-click quick edit replaced them */
 
         // KOT setting
         var kotEnabled = (PosnicPro.local.get('table_options') === 'enable');
@@ -5920,6 +5908,7 @@ PosnicPro.sales.cellEdit = {
     _pending: null,
     _perm: { price: 'price_override', tax: 'price_override', disc: 'discount_apply' },
     start: function (field, itemId, $cell) {
+        if (PosnicPro.local.get('sale_quick_edit') === 'disable') { return; }
         var perm = PosnicPro.sales.cellEdit._perm[field];
         var go = function () { PosnicPro.sales.cellEdit._open(field, itemId, $cell); };
         if (PosnicPro.posCan && !PosnicPro.posCan(perm)) {
@@ -7108,7 +7097,7 @@ PosnicPro.sales.recentMenu = {
             $('#extraDisc').text(extra_discount);
             $('#extraDisc').editable('setValue', extra_discount);
             PosnicPro.sales.view.changeExtraDiscType(extra_discount_type);
-            if (PosnicPro.local.get('inline_sale') === 'enable' || extra_discount !== 0) {
+            if (extra_discount !== 0) {
                 $('.addDisc-hide-show').show();
             } else {
                 $('.addDisc-hide-show').hide();
@@ -8563,19 +8552,6 @@ PosnicPro.quotes = {
         var TaxValue = parseFloat($('#addSalesLineItemTax_' + id).text()) || 0;
         var mrpPrice = taxType === 'Exc' ? newValue : newValue / (1 + TaxValue / 100);
         $('#addSalesLineItemSubTotal_' + id).text(mrpPrice.toFixed(2));
-        if (PosnicPro.local.get('inline_sale') === 'enable') {
-            // inline mode keeps an edit icon inside the price cell - rebuild
-            // it the same way the manual price editor does
-            $('#addSalesLineItemPrice_' + id).replaceWith(
-                '<td name="addSalesLineItemPrice" id="addSalesLineItemPrice_' + id + '" class="font_size14">' +
-                mrpPrice.toFixed(2) +
-                '&nbsp;&nbsp;<span class="sales-inline-hide">' +
-                '<i class="feather icon-edit-1 text-primary" ' +
-                'onclick="return PosnicPro.sales.editItemPricingSale(this);" ' +
-                'data-id="' + id + '" data-toggle="tooltip" title="Price change" style="cursor:pointer;"></i>' +
-                '</span></td>'
-            );
-        }
         PosnicPro.sales.commonInlineCalculation(id, taxType, TaxValue);
     },
     /*

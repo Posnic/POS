@@ -255,7 +255,6 @@
                         <div class="tab-pane fade" id="v-pills-integrations" role="tabpanel" aria-labelledby="v-pills-integrations-tab">
                                                         <div class="card m-b-30">
                                 <div class="card-header">
-                                    <h5 class="card-title mb-0"><lang class="lang_integrations">Integrations</lang></h5>
                                     <small class="text-muted"><lang class="lang_integrations_hint">What may touch this shop's data from outside - tokens say who, webhooks say where the change signals go.</lang></small>
                                 </div>
                                 <div class="card-body">
@@ -2250,7 +2249,6 @@
                                                         <div class="card m-b-30">
                                 <div class="card-header d-flex align-items-center justify-content-between flex-wrap" style="gap:8px;">
                                     <div>
-                                        <h5 class="card-title mb-0"><lang class="lang_modules">Features</lang></h5>
                                         <small class="text-muted"><lang class="lang_modules_hint">A feature that is off disappears from the menus. Nothing is deleted - switch it back on and everything returns.</lang></small>
                                     </div>
                                     <div id="modules_branch_wrap" style="display:none; min-width:220px;">
@@ -3366,9 +3364,7 @@
                                                         <form class="form-validate" method="post" name="tax_discount_add" id="tax_discount_add">
                                 <div class="card m-b-30">
                                     <div class="card-header">
-                                        <h5 class="card-title mb-0">
-                                            <lang class="lang_generalset">Core Settings</lang>
-                                        </h5>
+                                        <small class="text-muted"><lang class="lang_generalset_hint">How this shop works day to day - sale screen, receivings, inventory, receipt printing and payments.</lang></small>
                                     </div>
                                     <div class="card-body loader-view-generalsetting">
                                         <!-- Core settings are grouped by the screen they shape.
@@ -3455,15 +3451,16 @@
                                                             New Sale (no backdating).</small>
                                                     </div>
                                                     <div class="form-group col-md-6" data-module="plan" data-access="read">
-                                                        <label for="sale_inline_editor" data-toggle="tooltip"
-                                                            title="Sales page inline ( price / discount / tax ) editor">
-                                                            Inline editor </label>
+                                                        <label for="sale_quick_edit" data-toggle="tooltip"
+                                                            title="Double-click price, discount or tax on a sale line to change it. Guarded by the Price override and Apply discount permissions - anyone else needs manager approval.">
+                                                            Quick line edit (double-click) </label>
                                                         <div class="custom-control custom-switch mt-2">
                                                             <input type="checkbox" class="custom-control-input"
-                                                                id="sale_inline_editor" name="sale_inline_editor" />
+                                                                id="sale_quick_edit" name="sale_quick_edit" />
                                                             <label class="custom-control-label"
-                                                                for="sale_inline_editor"></label>
+                                                                for="sale_quick_edit"></label>
                                                         </div>
+                                                        <small class="form-text text-muted">Changes ask: this sale only, or update the item record too.</small>
                                                     </div>
                                                 </div>
                                                 <div class="row" data-module="plan" data-access="read">
