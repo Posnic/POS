@@ -69,6 +69,10 @@ jest.mock('../../../src/models/base.model', () => {
   MockBaseModel.license = null;
   MockBaseModel.loggedUser = null;
   MockBaseModel.loggedUserName = '';
+  /* Real static on the model (base.model.js:311). The catalogue copy takes a
+     db handle from it, and a mock missing it fails as "not a function" - which
+     is what a real request would do too if the name were wrong. */
+  MockBaseModel.getDb = jest.fn().mockResolvedValue({ collection: jest.fn() });
   return MockBaseModel;
 });
 
@@ -1220,16 +1224,12 @@ describe('BranchesController — sharing defaults at branch creation', () => {
     bm.createBranch.mockResolvedValue({ status: true, message: 'ok', data: { _id: 'new1' } });
   });
 
-  test('customers and suppliers arrive shared, inventory does not', async () => {
+  test('customers and suppliers arrive shared', async () => {
     const res = mockRes();
     await ctrl.add(mockReq({ body: { name: 'Second shop' } }), res);
     const [group, values, , options] = mockSaveGroup.mock.calls[0];
     expect(group).toBe('sharing');
-    expect(values).toEqual({
-      share_customers: true,
-      share_suppliers: true,
-      share_inventory: false,
-    });
+    expect(values).toEqual({ share_customers: true, share_suppliers: true });
     expect(options).toEqual({ level: 'account' });
   });
 
@@ -1267,7 +1267,7 @@ describe('BranchesController — sharing defaults at branch creation', () => {
   test('with every key already decided, nothing is written at all', async () => {
     mockAccountGroup.mockResolvedValue({
       status: true,
-      data: { set: ['share_customers', 'share_suppliers', 'share_inventory'] },
+      data: { set: ['share_customers', 'share_suppliers'] },
     });
     const res = mockRes();
     await ctrl.add(mockReq({ body: { name: 'Fourth shop' } }), res);
@@ -1299,5 +1299,68 @@ describe('BranchesController — sharing defaults at branch creation', () => {
     } finally {
       spy.mockRestore();
     }
+  });
+});
+
+/*
+ * Owner ask #85, the "inventory copy" half.
+ *
+ * Deliberately a copy and not a switch: stock lives on the item document and
+ * each branch owns its own items, so a shared item read would show a cashier N
+ * copies of every product with N different counts, and selling the wrong row
+ * would decrement another shop's stock.
+ */
+describe('BranchesController — copying the catalogue at branch creation', () => {
+  let copySpy;
+  beforeEach(() => {
+    mockAccountGroup.mockResolvedValue({ status: true, data: { set: [] } });
+    mockSaveGroup.mockResolvedValue({ status: true, data: { written: [] } });
+    bm.createBranch.mockResolvedValue({
+      status: true,
+      message: 'ok',
+      data: { _id: 'new1', name: 'Second shop' },
+    });
+    const catalogueCopy = require('../../../src/services/catalogue-copy');
+    copySpy = jest
+      .spyOn(catalogueCopy, 'copyCatalogue')
+      .mockResolvedValue({ status: true, data: { items: 42 } });
+  });
+  afterEach(() => copySpy.mockRestore());
+
+  test('no source means no copy - creation is untouched', async () => {
+    const res = mockRes();
+    await ctrl.add(mockReq({ body: { name: 'Second shop' } }), res);
+    expect(copySpy).not.toHaveBeenCalled();
+  });
+
+  test('with a source it copies onto the NEW branch', async () => {
+    const res = mockRes();
+    await ctrl.add(mockReq({ body: { name: 'Second shop', copy_items_from: 'src1' } }), res);
+    const [, opts] = copySpy.mock.calls[0];
+    expect(opts.sourceBranchId).toBe('src1');
+    expect(opts.targetBranchId).toBe('new1');
+    expect(opts.targetBranchName).toBe('Second shop');
+    expect(res.json.mock.calls[0][0].data.items_copied).toEqual({ items: 42 });
+  });
+
+  test('a failed copy never fails the branch that was created', async () => {
+    copySpy.mockRejectedValue(new Error('mongo is having a day'));
+    const res = mockRes();
+    await ctrl.add(mockReq({ body: { name: 'Second shop', copy_items_from: 'src1' } }), res);
+    expect(res.json.mock.calls[0][0].type).toBe('success');
+    expect(res.json.mock.calls[0][0].data.items_copy_error).toMatch(/having a day/);
+  });
+
+  test('a refused copy is reported, not swallowed', async () => {
+    copySpy.mockResolvedValue({ status: false, message: 'That branch already has items' });
+    const res = mockRes();
+    await ctrl.add(mockReq({ body: { name: 'Second shop', copy_items_from: 'src1' } }), res);
+    expect(res.json.mock.calls[0][0].data.items_copy_error).toMatch(/already has items/);
+  });
+
+  test('the licence travels, so a copy cannot cross accounts', async () => {
+    const res = mockRes();
+    await ctrl.add(mockReq({ body: { name: 'Second shop', copy_items_from: 'src1' } }), res);
+    expect(copySpy.mock.calls[0][1].licenseId).toBe(mockReq().user.license);
   });
 });

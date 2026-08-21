@@ -7,6 +7,7 @@ const { ObjectId } = require('mongodb');
 const { redactBranchSecrets, stripBranchSecrets } = require('../services/settings-groups');
 const SettingsRepository = require('../repositories/settings.repository');
 const dataSharing = require('../services/data-sharing');
+const catalogueCopy = require('../services/catalogue-copy');
 
 const settingsRepository = new SettingsRepository();
 
@@ -171,6 +172,41 @@ class BranchesController extends BaseController {
         } catch (e) {
           console.error('[branch] settings copy skipped:', e && e.message);
           result.data.settings_copy_error = e.message;
+        }
+      }
+
+      /*
+       * Owner ask #85, the "inventory copy" half.
+       *
+       * Not a sharing switch, deliberately - see services/catalogue-copy.js.
+       * Stock lives on the item document and each branch owns its own items,
+       * so a shared item read would show N copies of every product with N
+       * different counts, and selling the wrong row would decrement another
+       * shop's stock. A new shop wants the CATALOGUE, with its own counts
+       * starting at zero, and that is a copy.
+       *
+       * Like the settings copy, a failure never fails the create: the branch
+       * exists and products can be added by hand, and losing a just-created
+       * shop over a catalogue copy would be far worse.
+       */
+      const itemsFrom = req.body?.copy_items_from;
+      if (itemsFrom && result.data?._id) {
+        try {
+          const BaseModel = require('../models/base.model');
+          const db = await BaseModel.getDb();
+          const copied = await catalogueCopy.copyCatalogue(db, {
+            sourceBranchId: itemsFrom,
+            targetBranchId: result.data._id,
+            targetBranchName: result.data.name || req.body?.name || '',
+            licenseId: req.user?.license || req.user?.license_id || null,
+            userId: req.user?._id || null,
+            userName: req.user?.username || '',
+          });
+          result.data.items_copied = copied.status ? copied.data : null;
+          if (!copied.status) result.data.items_copy_error = copied.message;
+        } catch (e) {
+          console.error('[branch] catalogue copy skipped:', e && e.message);
+          result.data.items_copy_error = e.message;
         }
       }
 

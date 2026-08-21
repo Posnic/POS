@@ -28,8 +28,8 @@ const branchesJs = fs.readFileSync(
   'utf8',
 );
 
-test('the create form offers all three choices', () => {
-  for (const id of ['share_customers', 'share_suppliers', 'share_inventory']) {
+test('the create form offers both sharing choices', () => {
+  for (const id of ['share_customers', 'share_suppliers']) {
     assert.ok(
       new RegExp(`id="${id}"`).test(modal),
       `${id} is not on the branch form - the setting exists with no way to reach it`,
@@ -37,9 +37,8 @@ test('the create form offers all three choices', () => {
   }
 });
 
-test('customers and suppliers arrive ticked, stock does not', () => {
-  /* One person across every shop is one person. Stock is on a shelf, in one
-     building, and a shared count can sell what is not there. */
+test('customers and suppliers arrive ticked', () => {
+  /* One person across every shop is one person. */
   const box = (id) => {
     const at = modal.indexOf(`id="${id}"`);
     assert.notStrictEqual(at, -1, `${id} missing`);
@@ -47,19 +46,17 @@ test('customers and suppliers arrive ticked, stock does not', () => {
   };
   assert.match(box('share_customers'), /\schecked\b/, 'customers should arrive shared');
   assert.match(box('share_suppliers'), /\schecked\b/, 'suppliers should arrive shared');
-  assert.ok(!/\schecked\b/.test(box('share_inventory')), 'stock counts must NOT arrive shared');
 });
 
 test('each box says what it means, in the shop owner\'s terms', () => {
   /* A tick called "share_inventory" tells nobody what it does to a till. */
   assert.match(modal, /same balance, same loyalty/i, 'customers has no explanation');
-  assert.match(modal, /can sell what is not there/i, 'the stock warning is the whole reason it is off');
   assert.match(modal, /changed later in Settings/i, 'a one-time-only decision would be a trap');
 });
 
 test('the choice is sent as an EXPLICIT boolean, never left to be inferred', () => {
   const fn = blockAt(branchesJs, 'sharingChoice: function () {');
-  for (const id of ['share_customers', 'share_suppliers', 'share_inventory']) {
+  for (const id of ['share_customers', 'share_suppliers']) {
     assert.match(
       fn,
       new RegExp(`${id}: \\$\\('#${id}'\\)\\.is\\(':checked'\\)`),
@@ -100,7 +97,7 @@ test('the fieldset is not selected by a lang_ class anywhere in JS', () => {
   /* gulp strips <lang> wrappers from built pages, so any selector keyed on one
      matches nothing in production and everything in the source. */
   assert.ok(
-    !/lang_(datasharing|sharecustomers|sharesuppliers|shareinventory)/.test(branchesJs),
+    !/lang_(datasharing|sharecustomers|sharesuppliers|copyitems)/.test(branchesJs),
     'a lang_ class is being used as a selector - it does not exist after the build',
   );
 });
@@ -122,7 +119,7 @@ const settingsJs = fs.readFileSync(
 );
 
 test('Settings carries the switches the branch form promised', () => {
-  for (const id of ['set_share_customers', 'set_share_suppliers', 'set_share_inventory']) {
+  for (const id of ['set_share_customers', 'set_share_suppliers']) {
     assert.ok(new RegExp(`id="${id}"`).test(settingsHtml), `${id} is missing from Settings`);
   }
   assert.match(settingsHtml, /id="sharing_save_btn"/, 'there is no way to save it');
@@ -174,4 +171,51 @@ test('a refused save says WHY', () => {
   const save = blockAt(settingsJs, 'PosnicPro.settings.saveSharing = function () {');
   assert.match(save, /xhr\.status === 403/, '403 is not distinguished');
   assert.match(save, /Only an owner/i, 'the reason is not said out loud');
+});
+
+/*
+ * Stock is a COPY, not a switch (owner ask #85, second half).
+ *
+ * The reasoning is worth pinning because the obvious design is the wrong one:
+ * stock lives on the item document and each branch owns its own items, so a
+ * shared item read would show a cashier N copies of every product with N
+ * different counts - and selling the wrong row would decrement another shop's
+ * stock. The catalogue is copied once instead, with counts starting at zero.
+ */
+test('the stock-sharing switch does not exist anywhere', () => {
+  /* A switch nothing reads is worse than a missing feature: it tells a shop
+     owner they have made a decision that has no effect. */
+  assert.ok(!/share_inventory/.test(modal), 'the branch form still offers it');
+  assert.ok(!/share_inventory/.test(settingsHtml), 'Settings still offers it');
+  assert.ok(!/share_inventory/.test(branchesJs), 'branches.js still sends it');
+  assert.ok(!/share_inventory/.test(settingsJs), 'settings.js still reads it');
+});
+
+test('the create form offers to copy the product list instead', () => {
+  assert.match(modal, /id="copy_items_from"/, 'there is no way to start from an existing shop');
+  assert.match(modal, /Stock counts start at zero/i, 'the one surprising part is not explained');
+});
+
+test('an empty picker means copy nothing, not copy the first shop', () => {
+  const fn = blockAt(branchesJs, 'sharingChoice: function () {');
+  assert.match(
+    fn,
+    /copy_items_from: \$\('#copy_items_from'\)\.val\(\) \|\| ''/,
+    'the source is not read, or has no empty fallback',
+  );
+  assert.match(modal, /<option value="">/, 'there is no "copy nothing" option');
+});
+
+test('the picker offers only branches this user can already see', () => {
+  /* Read from the header's own branch dropdown rather than a fresh request:
+     it holds exactly the branches this user may see, so a shop they have no
+     access to cannot appear here as a source. */
+  const fn = blockAt(branchesJs, 'fillCopyFrom: function () {');
+  assert.match(fn, /#branch_name option/, 'it builds the list from somewhere else');
+  assert.match(fn, /\.not\(\'\[value=""\]\'\)\.remove\(\)/, 'reopening the form would stack duplicates');
+});
+
+test('the picker is refilled when the create form opens', () => {
+  const fn = blockAt(branchesJs, 'sharingRow: function (creating) {');
+  assert.match(fn, /fillCopyFrom\(\)/, 'a shop created since login would be missing from the list');
 });

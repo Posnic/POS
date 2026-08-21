@@ -470,12 +470,35 @@ PosnicPro.branches = {
         return {
             share_customers: $('#share_customers').is(':checked'),
             share_suppliers: $('#share_suppliers').is(':checked'),
-            share_inventory: $('#share_inventory').is(':checked')
+            /* Not a switch. Stock sits on one shelf in one building, so the
+               product LIST is copied once here rather than shared as a rule -
+               empty means start with nothing. */
+            copy_items_from: $('#copy_items_from').val() || ''
         };
     },
     /* Shown while creating, hidden while editing - see sharingChoice. */
     sharingRow: function (creating) {
         $('#branch_sharing_row').toggle(!!creating);
+        if (creating) { PosnicPro.branches.fillCopyFrom(); }
+    },
+    /*
+     * The shops a new one can copy its products from.
+     *
+     * Read from the branch dropdown the header already keeps, rather than
+     * another request: it holds exactly the branches this user may see, so a
+     * shop they have no access to cannot appear here as a source.
+     */
+    fillCopyFrom: function () {
+        var $sel = $('#copy_items_from');
+        if (!$sel.length) { return; }
+        var current = $sel.val();
+        $sel.find('option').not('[value=""]').remove();
+        $('#branch_name option').each(function () {
+            var id = $(this).val();
+            if (!id) { return; }
+            $sel.append($('<option>').attr('value', id).text($(this).text()));
+        });
+        $sel.val(current || '');
     },
     addbranchButton: function () {
         var loader = $(".loader-branch");

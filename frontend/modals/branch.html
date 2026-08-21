@@ -101,14 +101,21 @@
                                 <small class="form-text text-muted mb-0">The people you buy from are usually the same everywhere.</small>
                             </label>
                         </div>
-                        <div class="custom-control custom-checkbox">
-                            <input type="checkbox" class="custom-control-input" id="share_inventory" name="share_inventory">
-                            <label class="custom-control-label" for="share_inventory">
-                                <lang class="lang_shareinventory_title">Stock counts</lang>
-                                <small class="form-text text-muted mb-0">Off by default - stock sits on one shelf, in one building. A shared count can sell what is not there.</small>
-                            </label>
-                        </div>
-                        <small class="form-text text-muted mt-2">Applies to all your shops, and can be changed later in Settings.</small>
+                        <small class="form-text text-muted mt-2 mb-0">Applies to all your shops, and can be changed later in Settings.</small>
+                        <hr class="my-3">
+                        <!-- Stock is NOT a sharing switch, and this is why: a
+                             count sits on one shelf, in one building. What a new
+                             shop wants is the product LIST - names, prices, tax,
+                             barcodes - with its own counts starting at zero. So
+                             it is a copy, made once, not a rule. -->
+                        <label class="mb-1" for="copy_items_from">
+                            <lang class="lang_copyitems_title">Start with the same products as</lang>
+                        </label>
+                        <select class="form-control border-control" name="copy_items_from" id="copy_items_from">
+                            <option value="">Nothing - I will add products myself</option>
+                        </select>
+                        <small class="form-text text-muted">Copies the product list, prices, tax and categories.
+                            Stock counts start at zero - those are counted here, not copied.</small>
                     </fieldset>
                 </div>
                 <div class="form-row">
