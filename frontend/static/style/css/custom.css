@@ -3813,20 +3813,17 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
  * beside it. Everything here is sized to its content with the search taking
  * only the slack that is left.
  */
-.lf-panel {
-    padding: 10px 0 4px;
-    border-bottom: 1px solid #d8dee4;
-    margin-bottom: 8px;
-}
+.lf-panel { padding: 0; }
+/* One strip, on the header's own line. It only wraps when the window genuinely
+   cannot hold it - wrapping by default is what made this look misaligned
+   against the title on one side and the buttons on the other. */
 .lf-row {
     display: flex;
     align-items: center;
     gap: 6px;
     flex-wrap: wrap;
-    margin-bottom: 6px;
 }
-.lf-row:last-child { margin-bottom: 0; }
-.lf-search { position: relative; flex: 0 1 320px; min-width: 160px; }
+.lf-search { position: relative; flex: 0 1 260px; min-width: 150px; }
 .lf-search .lf-q { width: 100%; }
 .lf-field { flex: 0 0 auto; width: auto; min-width: 108px; }
 .lf-preset { flex: 0 0 auto; width: auto; min-width: 132px; }

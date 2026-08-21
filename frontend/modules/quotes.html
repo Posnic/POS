@@ -4,13 +4,19 @@
     <div id="containerbar">
             <div class="breadcrumbbar">
                 <div class="row align-items-center">
-                    <div class="col-md-6 col-6">
+                    <div class="col-auto">
                         <h4 class="page-title break_title mb-0"><lang class="lang_quotes_title">Quotes</lang></h4>
+                    </div>
+                    <!-- The filter bar sits on the header's own line, between the
+                         title and the buttons: one strip of controls rather than a
+                         block that pushes the list down the page. -->
+                    <div class="col">
+                        <div class="lf-panel" id="quotes_filter_panel" style="display:none;"></div>
                     </div>
                     <!-- New belongs in the page header with every other list
                          screen (customers, items), not as a green block inside
                          the list itself. Same markup, same class, same place. -->
-                    <div class="col-md-6 col-6 text-right">
+                    <div class="col-auto text-right">
                         <div class="widgetbar">
                             <!-- Filter lives here, next to New: the panel stays
                                  closed until asked for, and this button carries
@@ -33,7 +39,6 @@
                 <div class="card m-b-30" id="quotes_list_card">
                     <div class="card-body">
                         <div class="m-b-10 d-flex align-items-center flex-wrap" style="gap:8px;" id="quotes_filter_chips">
-                            <div class="lf-panel" id="quotes_filter_panel" style="display:none;"></div>
                             <button type="button" class="btn btn-sm btn-primary-rgba quotes-chip" data-status="">All</button>
                             <button type="button" class="btn btn-sm btn-secondary-rgba quotes-chip" data-status="open">Open</button>
                             <button type="button" class="btn btn-sm btn-secondary-rgba quotes-chip" data-status="accepted">Accepted</button>

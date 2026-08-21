@@ -10297,9 +10297,12 @@ PosnicPro.quotes.mountFilters = function () {
         searchFields: [
             { value: 'all', label: 'All fields' },
             { value: 'quote_id', label: 'Quote #' },
-            // picking Customer offers the ones this till actually uses
-            { value: 'customer_name', label: 'Customer', typeahead: 'customer' }
+            { value: 'customer_name', label: 'Customer' }
         ],
+        /* Suggestions come from the customers this till already uses, whatever
+           field is selected - picking one narrows the field for you. */
+        typeahead: 'customer',
+        typeaheadField: 'customer_name',
         onChange: function () { PosnicPro.quotes.load(); }
     });
     PosnicPro.quotes._filterMounted = true;
