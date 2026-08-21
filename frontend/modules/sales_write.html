@@ -486,13 +486,18 @@
                                                 <!-- RIGHT: Additional Discount input -->
                                                 <td class="discount-input">
                                                     <div class="inline-container pull-right">
+                                                        <!-- Neutral, not red. These switch the discount between percent and
+                                                             rupees - a MODE, not a destructive act - and red is reserved
+                                                             for destructive on this screen (owner: "you can pick standard
+                                                             stuff"). The affordance is the bordered box and its hover,
+                                                             not the tint. -->
                                                         <span id="percentIcon"
-                                                            class="icon text-danger toggle-icon d-none"
+                                                            class="icon text-muted toggle-icon d-none"
                                                             title="Change to percentage discount"
                                                             style="cursor: pointer;" aria-hidden="true">
                                                             %
                                                         </span>
-                                                        <span id="rupeeIcon" class="icon text-danger toggle-icon"
+                                                        <span id="rupeeIcon" class="icon text-muted toggle-icon"
                                                             title="Change to rupee discount" style="cursor: pointer;"
                                                             aria-hidden="true">
                                                             <span class="display-currency">₹</span>
