@@ -25,6 +25,7 @@
   "codeRepository": "https://github.com/Posnic/POS",
   "issueTracker": "https://github.com/Posnic/POS/issues",
   "continuousIntegration": "https://github.com/Posnic/POS/actions",
+  "version": "1.4.0",
   "developmentStatus": "active",
   "license": "https://spdx.org/licenses/AGPL-3.0-only.html",
   "isAccessibleForFree": true,
