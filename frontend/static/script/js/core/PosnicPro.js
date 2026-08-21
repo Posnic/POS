@@ -4350,6 +4350,26 @@ $('.custom_report_search_input').on('keypress keydown.autocomplete', function ()
     });
 });
 $(function () { PosnicPro.injectReportExportButtons(); });
+/*
+ * Where Close should go back to, when the answer is not "the list".
+ *
+ * "Saved an item. Open it" is a detour from a form somebody is still working
+ * in. Following it and closing sent them to the item LIST, because the close
+ * handler below reads the hash and #/items/<id> means "a record, so go to the
+ * records" - it has no way to know you arrived from the form rather than from
+ * the list (reported: "i opened it. i closed it. page went item list").
+ *
+ * One marker fixes it for every screen with that strip - there are ten - rather
+ * than teaching the close handler about each one. It is set on the way out and
+ * cleared on the way back, so it can never leak into an unrelated Close: a
+ * stale marker sending someone to a form they did not come from would be worse
+ * than the list.
+ */
+PosnicPro.returnTo = '';
+$(document).on('click', '[id^="last_created_"]', function () {
+    PosnicPro.returnTo = currentHash || '';
+});
+
 $(".infobar-settings-close").on("click", function (e) {
     var category = 'sales/categories/new';
     if (currentHash === category) {
@@ -4360,6 +4380,15 @@ $(".infobar-settings-close").on("click", function (e) {
     if (currentHash === customer) {
         hasher.changed.active = true;
         hasher.replaceHash('sales/new');
+    }
+    /* Honoured once, then forgotten. */
+    if (PosnicPro.returnTo) {
+        var back = PosnicPro.returnTo;
+        PosnicPro.returnTo = '';
+        if (back && back !== currentHash) {
+            hasher.setHash(back);
+            return;
+        }
     }
     var patt = /^[a-f\d]{24}$/i;
     var parts = currentHash.split('/');
