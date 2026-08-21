@@ -2153,35 +2153,53 @@ main {
 }
 
 
-.seven {
-    background: darkblue;
-    color: white;
-    border-radius: 5px;
-    transition: all 300ms;
-}
+/*
+ * .seven is gone. Nothing wore it.
+ *
+ * A print button styled in the CSS named colour `darkblue`, which belongs to no
+ * palette in this product and follows no theme, with a hover that scaled the
+ * button 10% and pushed its letters apart. Every occurrence of the string
+ * "seven" left in the source is part of "seventeen" or a variable name.
+ *
+ * A dead RULE is quieter than a dead selector - it costs nothing at runtime -
+ * but it is the same lie: it reads as "the print button looks like this", and
+ * no print button has looked like this for as long as anyone can tell. Its
+ * dark-theme counterpart in theme-variables.css goes with it; an override for
+ * a rule that no longer exists is worse than either alone.
+ */
 
-.seven:hover {
-    transform: scale(1.1);
-    letter-spacing: 2px;
-    background: white;
-    color: darkblue;
-    box-shadow: 2px 2px 3px rgba(0,0,0,0.57);
+/*
+ * Outline buttons: quiet under the mouse, findable under the keyboard.
+ *
+ * This was three identical rules naming secondary, danger and primary - and
+ * the sale screen also uses btn-outline-success and btn-outline-info, which
+ * got neither. Three copies of one rule covering some of the family is how a
+ * button ends up looking different from the one beside it for no reason
+ * anybody can name. One attribute selector covers every variant, including
+ * whichever gets added next.
+ *
+ * The bigger problem was what they did. `outline: none` on every state removes
+ * the focus ring outright, and this is a TILL: it is driven from the keyboard,
+ * tab by tab, and a control you cannot see the focus on is a control you
+ * cannot safely press. The rules were aimed at Bootstrap's heavy focus shadow
+ * after a CLICK, which is a fair thing to want gone - but they took the
+ * keyboard's only signal with it.
+ *
+ * :focus-visible separates the two exactly: the browser shows the ring when
+ * the keyboard put the focus there and stays quiet when a click did. So the
+ * mouse gets the clean look these rules were written for, and the keyboard
+ * gets its position back.
+ */
+[class*="btn-outline-"] {
+    box-shadow: none !important;
 }
-/*end*/
-
-/* ----Button border hide---- */
-.btn-outline-secondary {
+[class*="btn-outline-"]:focus:not(:focus-visible) {
     outline: none !important;
     box-shadow: none !important;
 }
-
-.btn-outline-danger {
-    outline: none !important;
-    box-shadow: none !important;
-}
-
-.btn-outline-primary {
-    outline: none !important;
+[class*="btn-outline-"]:focus-visible {
+    outline: 2px solid var(--theme-primary-color, #2d9cdb);
+    outline-offset: 2px;
     box-shadow: none !important;
 }
 
