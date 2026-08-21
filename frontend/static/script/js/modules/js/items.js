@@ -2437,16 +2437,28 @@ PosnicPro.items = {
                         .text(selectedName || selectedId)
                 );
             }
+            /* view.js runs a global $(".select2").select2() when the page
+               renders, so this control is already an initialised, EMPTY select2
+               by the time the list arrives. Calling select2() again on a live
+               instance does not re-read the options - it has to be destroyed
+               first, or the box says "No results found" over a select that is
+               full of them. That is exactly what it did. */
+            if ($pick.hasClass('select2-hidden-accessible')) {
+                $pick.select2('destroy');
+            }
             $pick.select2({
                 placeholder: rows.length
                     ? 'Choose a Supplier'
-                    : 'No suppliers yet - use + Add Supplier',
+                    : 'No suppliers yet - add one from the Suppliers screen',
                 allowClear: true
             });
             $pick.val(selectedId || '').trigger('change.select2');
         }, function () {
             /* A failed lookup must not leave a dead control: the item can still
                be saved without a supplier, which is why the field is optional. */
+            if ($pick.hasClass('select2-hidden-accessible')) {
+                $pick.select2('destroy');
+            }
             $pick.empty().append('<option value=""></option>')
                 .select2({ placeholder: 'Suppliers could not be loaded', allowClear: true });
         });
@@ -2625,7 +2637,6 @@ PosnicPro.items = {
         });
         $(".items_category").val('').trigger('change.select2');
         PosnicPro.items.loadSelectCategory();
-    PosnicPro.items.loadSelectSupplier();
         PosnicPro.items.loadSelectSupplier();
         PosnicPro.items.loadSelectTax();
         PosnicPro.items.loadSelectVariant();
@@ -2989,47 +3000,60 @@ $(function () {
         PosnicPro.items.refreshTileFallback();
     });
 
-    PosnicPro.items.TAB_REQUIRED = {
-        item_tab_main: ['#items_name', '#items_selling_price']
+    /*
+     * A tick means the tab is FINISHED - every field in it answered.
+     *
+     * It used to mean "there is something in here", which ticked a tab after one
+     * field and told nobody anything useful (owner: "enable tick only all fields
+     * filled. not just one in the tab").
+     *
+     * What counts as a field, and why:
+     *
+     *  - Only what is VISIBLE. Service mode hides stock, variant mode hides
+     *    price and SKU, and the mode radios are hidden by design. A tab cannot
+     *    be incomplete because of a box nobody can reach.
+     *  - Not checkboxes or radios. They are never empty - unchecked IS an
+     *    answer - so requiring them would mean ticking every toggle on the form
+     *    to earn a tick, which is the opposite of what it should encourage.
+     *  - Not disabled or readonly fields, for the same reason as hidden.
+     *  - An open-price item has no selling price ON PURPOSE. Demanding one would
+     *    leave that tab permanently unticked for a legitimate item.
+     */
+    PosnicPro.items.tabIsComplete = function (paneId) {
+        var $pane = $('#' + paneId);
+        if (!$pane.length) { return false; }
+        var openPrice = $('#item_open_price').is(':checked');
+        var complete = true;
+        var seen = 0;
+
+        $pane.find('input, select, textarea').each(function () {
+            var $f = $(this);
+            var type = ($f.attr('type') || '').toLowerCase();
+            if (type === 'checkbox' || type === 'radio' || type === 'hidden') { return; }
+            if ($f.is(':disabled') || $f.prop('readonly')) { return; }
+            /* A select2 hides its own <select> and shows a rendered box, so
+               :visible on the select itself is always false - ask the control
+               the user can actually see. */
+            var $shown = $f.hasClass('select2-hidden-accessible')
+                ? $f.next('.select2-container')
+                : $f;
+            if (!$shown.length || !$shown.is(':visible')) { return; }
+            if ($f.is('#items_selling_price') && openPrice) { seen += 1; return; }
+
+            seen += 1;
+            if ($.trim($f.val() || '') === '') { complete = false; }
+        });
+
+        /* A tab with nothing to fill is not "complete", it is empty - ticking it
+           would be a badge for having opened the page. */
+        return seen > 0 && complete;
     };
 
     PosnicPro.items.refreshTabTicks = function () {
         $('#item_form_tabs .nav-link').each(function () {
             var pane = $(this).data('tab-pane');
             if (!pane) { return; }
-            var $pane = $('#' + pane);
-            if (!$pane.length) { return; }
-            var required = PosnicPro.items.TAB_REQUIRED[pane];
-            var done;
-
-            if (required) {
-                /* An open-price item deliberately has no selling price, so
-                   requiring one here would leave that tab permanently unticked
-                   for a legitimate item. */
-                var openPrice = $('#item_open_price').is(':checked');
-                done = required.every(function (sel) {
-                    if (sel === '#items_selling_price' && openPrice) { return true; }
-                    return $.trim($(sel).val() || '') !== '';
-                });
-            } else {
-                /* "Something in here" - anything the person actually typed or
-                   picked, ignoring the defaults the form ships with. */
-                done = false;
-                $pane.find('input, select, textarea').each(function () {
-                    var $f = $(this);
-                    if ($f.is(':hidden') && !$f.is('select')) { return; }
-                    if ($f.attr('type') === 'checkbox' || $f.attr('type') === 'radio') {
-                        if ($f.is(':checked') && !$f.prop('defaultChecked')) { done = true; }
-                        return;
-                    }
-                    var v = $.trim($f.val() || '');
-                    if (v === '' || v === $f.prop('defaultValue')) { return; }
-                    /* 0 and 99 are the form's own defaults, not an answer. */
-                    if (v === '0' || v === '0.00' || v === '99') { return; }
-                    done = true;
-                });
-            }
-            $(this).toggleClass('is-complete', !!done);
+            $(this).toggleClass('is-complete', PosnicPro.items.tabIsComplete(pane));
         });
     };
 
@@ -3809,6 +3833,7 @@ $(document).ready(function () {
     $('#hsn_tax').hide();
     $('#default_tax').show();
     PosnicPro.items.loadSelectCategory();
+    PosnicPro.items.loadSelectSupplier();
     PosnicPro.items.loadSelectVariant();
     PosnicPro.items.loadSelectTax();
     PosnicPro.items.loadSelectUnit();
