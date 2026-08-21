@@ -482,13 +482,13 @@ test('the selection is drawn in ink, not in the accent colour', () => {
       !/#0969da/i.test(line),
       'an accent-coloured border reads as decoration, not structure',
     );
-    for (const tooDark of ['#1f2328', '#57606a', '#8c959f']) {
+    for (const tooDark of ['#1f2328', '#57606a', '#8c959f', '#afb8c1']) {
       assert.ok(
         !new RegExp(tooDark, 'i').test(line),
         `${tooDark} overshot - the selection needs to be more than its neighbours, not dark`,
       );
     }
-    assert.match(line, /#afb8c1/i, 'barely darker than the ordinary border');
+    assert.match(line, /#c9d1d9/i, 'a hair above the ordinary border, nothing more');
   }
 });
 
@@ -725,7 +725,15 @@ test('suggestions are not gated on which field is selected', () => {
     !/cfg\.typeahead !== 'customer'/.test(listFilterSrc),
     'the per-field gate is what stopped typing from working',
   );
-  assert.match(listFilterSrc, /if \(!m\.cfg\.typeahead\)/, 'it is a panel-level capability now');
+  assert.ok(
+    !/state\.field !== '[a-z_]+'/.test(listFilterSrc),
+    'a per-field gate is back - typing with "All fields" would hide the list again',
+  );
+  assert.match(
+    listFilterSrc,
+    /var entity = m\.cfg\.typeahead;\s+var e = entity && LF\.ENTITIES\[entity\];/,
+    'the gate must be the panel-level entity, not the selected field',
+  );
   assert.match(listFilterSrc, /typeaheadField/, 'and picking a name narrows the field for you');
 });
 
@@ -753,8 +761,12 @@ test('presets carry a time, not a bare date', () => {
 });
 
 test('the typeahead uses the cached recents, not a query per keystroke', () => {
-  assert.match(listFilterSrc, /_recentGet\('recent_customers'\)/, 'recents come from local storage');
+  assert.match(listFilterSrc, /_recentGet\(key\)/, 'recents come from local storage');
+  assert.match(listFilterSrc, /recents\('recent_customers'\)/, 'customers read the recents the sale screen keeps');
   assert.match(listFilterSrc, /_customerSeed/, 'and the session seed already fetched for the sale screen');
+  /* The whole point: no network call anywhere in the suggestion path. */
+  const suggest = blockAt(listFilterSrc, 'LF.suggest = function (entity, term) {');
+  assert.ok(!/ajax|\$\.get|\$\.post/.test(suggest), 'a query per keystroke is exactly what this replaced');
 });
 
 test('the Filter button shows how many filters are on', () => {
@@ -811,4 +823,101 @@ test('the module still drops out-of-order responses', () => {
   const load = blockAt(quotesNamespace, 'load: function (keepPage) {');
   assert.match(load, /var mine = \+\+PosnicPro\.quotes\._seq/, 'each request takes a sequence number');
   assert.match(load, /if \(mine !== PosnicPro\.quotes\._seq\) \{ return; \}/, 'and a stale one returns early');
+});
+
+/*
+ * "Not provided can not preset as address."
+ *
+ * A branch record held the literal string "Not provided" where its address
+ * should be, and the quotation printed it - to the customer. That is worse
+ * than a blank line: a blank line reads as "not applicable", a placeholder
+ * reads as "we did not finish filling this in".
+ *
+ * The fix lives at the document boundary, not in settings. Settings must keep
+ * showing the real stored value or nobody can ever correct it.
+ */
+test('a placeholder never reaches a customer-facing document', () => {
+  const real = blockAt(quotesNamespace, '_real: function (v) {');
+  for (const p of ['not provided', 'n/a', 'nil', 'none', 'null', 'undefined']) {
+    assert.ok(
+      real.includes(`'${p}'`),
+      `"${p}" is not treated as a placeholder - it would print on the quote`,
+    );
+  }
+  assert.match(real, /\.trim\(\)/, 'a padded placeholder is still a placeholder');
+  assert.match(real, /toLowerCase\(\)/, '"Not Provided" must be caught too');
+});
+
+test('the on-screen quote omits the line rather than printing a placeholder', () => {
+  /* q-shop appears twice - the authoring preview and the finished document -
+     and BOTH printed the placeholder. Check each. */
+  const blocks = quotesNamespace
+    .split("'<div class=\"q-shop\">")
+    .slice(1)
+    .map((b) => b.slice(0, b.indexOf('})()') + 4));
+  assert.strictEqual(blocks.length, 2, 'a third seller block appeared - it needs the same filter');
+  const block = blocks.join('\n');
+  assert.ok(
+    !/branchaddress'\) \|\| ''/.test(block),
+    'the address still falls back to the raw stored value - a placeholder prints',
+  );
+  assert.match(block, /var real = PosnicPro\.quotes\._real/, 'the header filters through _real');
+  assert.match(block, /if \(addr\) \{/, 'no address means no address line at all');
+  assert.match(block, /if \(ph \|\| em\)/, 'no phone and no email means no contact line');
+});
+
+test('the PDF filters the same way, and leaves no gap behind', () => {
+  const s = blockAt(quotesNamespace, '_seller: function () {');
+  for (const f of ['address', 'phone', 'email', 'gstin']) {
+    assert.ok(
+      s.includes(`${f}: real(PosnicPro.local.get`),
+      `_seller.${f} is unfiltered - the PDF would print a placeholder`,
+    );
+  }
+  /* splitTextToSize('') is [''], which prints nothing and still costs 4.3mm. */
+  assert.match(
+    salesSource,
+    /splitTextToSize\(txt\(seller\.address\), 104\)\.filter\(Boolean\)/,
+    'an empty address still reserves a line of header space',
+  );
+});
+
+/*
+ * "Filter button acts as toggle so, when filter is showing have little design
+ *  different expressing its kind of toggle button."
+ *
+ * The panel opens somewhere else in the header, so the button is the only
+ * thing under the cursor that can report the state it just changed.
+ */
+test('the Filter button looks pressed while its panel is open', () => {
+  const toggle = blockAt(listFilterSrc, 'LF.toggle = function (key) {');
+  assert.match(toggle, /var opening = !\$panel\.is\(':visible'\)/, 'the state is read before the animation, not after');
+  assert.match(toggle, /toggleClass\('lf-btn-open', opening\)/, 'the pressed class is never wired');
+  assert.match(toggle, /attr\('aria-expanded'/, 'a screen reader is told nothing');
+
+  const open = cssRule('.lf-btn-open');
+  assert.ok(open, '.lf-btn-open has no styling, so the class changes nothing');
+  assert.match(open, /!important/, 'the theme sets button backgrounds with !important - this loses silently');
+});
+
+test('paint does not fight the toggle over the button class', () => {
+  const paint = blockAt(listFilterSrc, 'LF.paintButton = function (key) {');
+  assert.ok(
+    !/lf-btn-open/.test(paint),
+    'paintButton touches lf-btn-open - a filter change would close-look the open panel',
+  );
+});
+
+/*
+ * "filter stuff see conjuste when quote list page."
+ *
+ * .contentbar is globally padding-top:0. That read fine when the page header
+ * was only a title; with the filter strip up there, the list card butts
+ * straight into it.
+ */
+test('the quotes list gets air between the header and the card', () => {
+  /* .quotes-split selectors all begin with this, so anchor past them. */
+  const bar = cssRule('#quotes_new .contentbar', 'ends up butted right against it');
+  assert.ok(bar, '#quotes_new .contentbar has no rule, so the global 0 still wins');
+  assert.match(bar, /padding-top:\s*5px\s*!important/, 'the global .contentbar padding-top:0 is !important');
 });

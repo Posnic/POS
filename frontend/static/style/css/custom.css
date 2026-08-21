@@ -2947,14 +2947,18 @@ input:checked + .slider:before {
 /* Quotation preview: an A4 sheet on screen, edits in place. */
 #quotes_view_card { max-width: 900px; margin: 0 auto; }
 .q-sheet { background: #fff; padding: 34px 38px; border: 1px solid #e3e7ee; border-radius: 4px; color: #1a202c; }
-.q-head { display: flex; justify-content: space-between; gap: 20px; border-bottom: 2px solid #2d3748; padding-bottom: 14px; }
+/* The rule under the header needs room for the STATUS badge, which is the
+   tallest thing in the right-hand block and was sitting on the line. Aligning
+   to flex-start keeps the two columns starting together while the taller one
+   grows downward into that room. */
+.q-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; border-bottom: 2px solid #2d3748; padding-bottom: 22px; }
 .q-logo { max-height: 54px; max-width: 140px; display: block; margin-bottom: 6px; }
 .q-shop { font-weight: 700; font-size: 18px; }
 .q-muted { color: #67707f; font-size: 12.5px; line-height: 1.55; }
 .q-doc-title { font-weight: 700; font-size: 21px; letter-spacing: 3px; color: #2d3748; }
 .q-num { font-weight: 700; font-size: 14px; margin: 2px 0; }
 .q-title-block { text-align: right; white-space: nowrap; }
-.q-status { display: inline-block; margin-top: 6px; padding: 2px 10px; border: 1.5px solid #c53030; color: #c53030; font-weight: 700; font-size: 12px; letter-spacing: 1px; border-radius: 3px; }
+.q-status { display: inline-block; margin-top: 8px; margin-bottom: 2px; padding: 2px 10px; border: 1.5px solid #c53030; color: #c53030; font-weight: 700; font-size: 12px; letter-spacing: 1px; border-radius: 3px; }
 .q-billto { margin: 16px 0 6px; }
 .q-cust { font-weight: 700; font-size: 15px; }
 .q-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #8a94a6; margin-bottom: 3px; }
@@ -3680,6 +3684,14 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
  * The contentbar's 30px padding goes too, and becomes a margin, or that
  * padding is a white moat between the outer border and the panes.
  */
+/* .contentbar is globally padding-top:0, which was fine when a page header
+   was just a title. With the filter strip living in that header, the list card
+   ends up butted right against it. Five pixels of air, quotes only - the split
+   view sets its own margin and has a higher specificity, so it is unaffected. */
+#quotes_new .contentbar {
+    padding-top: 5px !important;
+}
+
 #quotes_new .contentbar.quotes-split {
     display: flex;
     gap: 0;
@@ -3859,30 +3871,72 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     text-align: center;
 }
 
-/* Suggestions sit over the list rather than pushing it down - a dropdown that
-   reflows the page under the cursor makes people lose their place. */
+/*
+ * The picker.
+ *
+ * Same card as the sale screen's Choose-customer popover, because that one is
+ * already familiar: titled, floating over the page rather than pushing it
+ * down, and every row carrying an icon that says why it is there. A dropdown
+ * that reflows the page under the cursor makes people lose their place.
+ */
 .lf-typeahead {
     position: absolute;
-    z-index: 30;
+    z-index: 1050;
     top: 100%;
     left: 0;
-    right: 0;
-    margin-top: 2px;
+    min-width: 300px;
+    max-width: 380px;
+    margin-top: 4px;
+    padding: 10px;
     background: #fff;
-    border: 1px solid #d0d7de;
-    border-radius: 6px;
-    box-shadow: 0 8px 24px rgba(31, 35, 40, 0.12);
-    max-height: 260px;
-    overflow-y: auto;
+    border: 1px solid rgba(128, 128, 128, 0.22);
+    border-radius: 10px;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.16);
 }
-.lf-ta-row {
-    display: block;
-    padding: 6px 10px;
+.lf-pick-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+.lf-pick-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #8a94a6;
+}
+.lf-pick-x { font-size: 18px; line-height: 1; color: #8a94a6; text-decoration: none; }
+.lf-pick-x:hover { color: #f9616d; text-decoration: none; }
+.lf-pick-list { max-height: 260px; overflow-y: auto; }
+.lf-pick-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 8px;
     font-size: 13px;
+    font-weight: 500;
     color: #1f2328;
     text-decoration: none;
 }
-.lf-ta-row:hover { background: #f6f8fa; text-decoration: none; color: #1f2328; }
+.lf-pick-row:hover {
+    background: rgba(128, 128, 128, 0.10);
+    color: #1f2328;
+    text-decoration: none;
+}
+.lf-pick-row i { color: #8a94a6; flex: 0 0 auto; }
+.lf-pick-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lf-pick-note { flex: 0 0 auto; font-size: 11.5px; color: #8a94a6; }
+.lf-pick-empty { padding: 10px; font-size: 12.5px; color: #8a94a6; }
+
+/* Filter is a toggle, so it has to look pressed while the panel is open -
+   otherwise the only way to know is to look for the panel, which is exactly
+   what you are trying to find. */
+.lf-btn-open {
+    background: rgba(9, 105, 218, 0.14) !important;
+    box-shadow: inset 0 1px 2px rgba(31, 35, 40, 0.14);
+}
 
 [data-theme] .lf-panel { border-bottom-color: var(--theme-border-color); }
 [data-theme] .lf-sep,
@@ -3892,10 +3946,17 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     background: var(--theme-card-bg);
     border-color: var(--theme-border-color);
 }
-[data-theme] .lf-ta-row { color: var(--theme-text-primary); }
-[data-theme] .lf-ta-row:hover {
+[data-theme] .lf-pick-row { color: var(--theme-text-primary); }
+[data-theme] .lf-pick-row:hover {
     background: var(--theme-table-row-hover);
     color: var(--theme-text-primary);
+}
+[data-theme] .lf-pick-title,
+[data-theme] .lf-pick-note,
+[data-theme] .lf-pick-empty,
+[data-theme] .lf-pick-row i { color: var(--theme-text-muted, #8a94a6); }
+[data-theme] .lf-btn-open {
+    background: var(--theme-table-row-hover) !important;
 }
 
 /* Rows answer the cursor, and the one being read joins the document. */
@@ -3922,13 +3983,13 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
    which is the whole point of the join. .table-borderless means the last cell
    simply has no right border to remove. */
 .quotes-split #quotes_list_rows tr.quotes-row.is-active > td {
-    border-top: 1px solid #afb8c1 !important;
-    border-bottom: 1px solid #afb8c1 !important;
+    border-top: 1px solid #c9d1d9 !important;
+    border-bottom: 1px solid #c9d1d9 !important;
     font-weight: 600;
     color: #1f2328;
 }
 .quotes-split #quotes_list_rows tr.quotes-row.is-active > td:first-child {
-    border-left: 3px solid #afb8c1 !important;
+    border-left: 3px solid #c9d1d9 !important;
 }
 /* Unselected rows sit ON the grey, so nothing may paint them white. */
 .quotes-split #quotes_list_rows tr.quotes-row > td { background: transparent; }
@@ -3955,7 +4016,10 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 .quotes-split #quotes_view_card > .card-body { padding: 12px 14px; }
 /* The A4 quote keeps its own, lighter paper edge (owner ask: leave the
    document design alone). Only the SELECTION is drawn darker - in #57606a
-   #afb8c1: barely darker than the ordinary #d0d7de border, and no further.
+   #c9d1d9: a hair above the ordinary #d0d7de border and nothing more. This
+   is a screen someone looks at all day, so the selection should be findable
+   rather than loud - the white row against the grey list is doing most of the
+   work already, and the border only has to close the shape.
    Two attempts overshot: near-black read as a bar rather than a rule, and
    #57606a was still heavier than the list around it. The selection only has
    to be MORE than its neighbours, not dark in absolute terms - the eye finds

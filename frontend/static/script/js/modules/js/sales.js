@@ -8067,9 +8067,18 @@ PosnicPro.quotes = {
             + '<div class="q-seller">'
             + (logo && logo !== 'store.png' ? '<img class="q-logo" src="' + esc(logo) + '" alt="">' : '')
             + '<div class="q-shop">' + esc(PosnicPro.local.get('branchname') || '') + '</div>'
-            + '<div class="q-muted">' + esc(PosnicPro.local.get('branchaddress') || '') + '</div>'
-            + '<div class="q-muted">' + esc(PosnicPro.local.get('branchphone') || '') + '</div>'
-            + (PosnicPro.local.get('branchgstin') ? '<div class="q-muted">' + taxLabel + ': ' + esc(PosnicPro.local.get('branchgstin')) + '</div>' : '')
+            /* Same _real filter as the finished document: this preview is a
+               promise about what the customer will get, so it must not show a
+               placeholder the printed quote would drop. */
+            + (function () {
+                var real = PosnicPro.quotes._real;
+                var addr = real(PosnicPro.local.get('branchaddress'));
+                var ph = real(PosnicPro.local.get('branchphone'));
+                var gst = real(PosnicPro.local.get('branchgstin'));
+                return (addr ? '<div class="q-muted">' + esc(addr) + '</div>' : '')
+                    + (ph ? '<div class="q-muted">' + esc(ph) + '</div>' : '')
+                    + (gst ? '<div class="q-muted">' + taxLabel + ': ' + esc(gst) + '</div>' : '');
+            })()
             + '</div>'
             + '<div class="q-title-block"><div class="q-doc-title">QUOTATION</div>'
             + '<div class="q-num">' + esc(ed.quote_id || 'New') + '</div>'
@@ -8433,10 +8442,22 @@ PosnicPro.quotes = {
                 + '<div class="q-seller">'
                 + (logo && logo !== 'store.png' ? '<img class="q-logo" src="' + esc(logo) + '" alt="">' : '')
                 + '<div class="q-shop">' + esc(PosnicPro.local.get('branchname') || '') + '</div>'
-                + '<div class="q-muted">' + esc(PosnicPro.local.get('branchaddress') || '') + '</div>'
-                + '<div class="q-muted">' + esc(PosnicPro.local.get('branchphone') || '')
-                + (PosnicPro.local.get('branchemail') ? ' &middot; ' + esc(PosnicPro.local.get('branchemail')) : '') + '</div>'
-                + (PosnicPro.local.get('branchgstin') ? '<div class="q-muted">' + taxLabel + ': ' + esc(PosnicPro.local.get('branchgstin')) + '</div>' : '')
+                + (function () {
+                    /* Each line appears only if it has something real to say. */
+                    var real = PosnicPro.quotes._real;
+                    var addr = real(PosnicPro.local.get('branchaddress'));
+                    var ph = real(PosnicPro.local.get('branchphone'));
+                    var em = real(PosnicPro.local.get('branchemail'));
+                    var gst = real(PosnicPro.local.get('branchgstin'));
+                    var out = '';
+                    if (addr) { out += '<div class="q-muted">' + esc(addr) + '</div>'; }
+                    if (ph || em) {
+                        out += '<div class="q-muted">' + esc(ph)
+                            + (ph && em ? ' &middot; ' : '') + (em ? esc(em) : '') + '</div>';
+                    }
+                    if (gst) { out += '<div class="q-muted">' + taxLabel + ': ' + esc(gst) + '</div>'; }
+                    return out;
+                })()
                 + '</div>'
                 + '<div class="q-title-block">'
                 + '<div class="q-doc-title">QUOTATION</div>'
@@ -8669,13 +8690,38 @@ PosnicPro.quotes = {
             PosnicPro.alert('error', resp.message || 'Could not save the quote');
         });
     },
+    /*
+     * A value fit to print, or nothing.
+     *
+     * A shop record can carry a placeholder where a real value should be -
+     * "Not provided" arrived as a branch address and went straight onto a
+     * customer-facing quotation. Blank is always better than a placeholder on
+     * a document: an empty line reads as "not applicable", while "Not
+     * provided" reads as "we did not finish filling this in".
+     *
+     * This only guards the DOCUMENT. The settings screen still shows the real
+     * stored value, because hiding it there would stop anyone fixing it.
+     */
+    _real: function (v) {
+        var t = String(v == null ? '' : v).trim();
+        if (!t) { return ''; }
+        var placeholder = [
+            'not provided', 'not available', 'not set', 'n/a', 'na', 'nil',
+            'none', 'null', 'undefined', '-', '--', '.', 'xxx', 'test'
+        ];
+        return placeholder.indexOf(t.toLowerCase()) === -1 ? t : '';
+    },
+
     _seller: function () {
+        /* _real, not `|| ''`: this feeds the PDF, and a placeholder printed on
+           a customer-facing document is worse than a blank line. */
+        var real = PosnicPro.quotes._real;
         return {
             name: PosnicPro.local.get('branchname') || '',
-            address: PosnicPro.local.get('branchaddress') || '',
-            phone: PosnicPro.local.get('branchphone') || '',
-            email: PosnicPro.local.get('branchemail') || '',
-            gstin: PosnicPro.local.get('branchgstin') || '',
+            address: real(PosnicPro.local.get('branchaddress')),
+            phone: real(PosnicPro.local.get('branchphone')),
+            email: real(PosnicPro.local.get('branchemail')),
+            gstin: real(PosnicPro.local.get('branchgstin')),
             taxLabel: PosnicPro.local.get('gst_action') === 'enable' ? 'GSTIN' : 'Tax ID',
             signature: PosnicPro.local.get('quotesignature') || ''
         };
@@ -8757,7 +8803,9 @@ PosnicPro.quotes = {
         var nameLines = doc.splitTextToSize(txt(seller.name), 104).slice(0, 2);
         nameLines.forEach(function (ln) { doc.text(ln, M, leftY + 4); leftY += 5.8; });
         doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(103, 112, 127);
-        doc.splitTextToSize(txt(seller.address), 104).slice(0, 2).forEach(function (ln) {
+        /* filter(Boolean): splitTextToSize('') yields [''], and an empty line
+           still costs 4.3mm of header. No address means no gap either. */
+        doc.splitTextToSize(txt(seller.address), 104).filter(Boolean).slice(0, 2).forEach(function (ln) {
           doc.text(ln, M, leftY + 3.5); leftY += 4.3;
         });
         var contact = [seller.phone, seller.email].filter(Boolean).map(txt).join('  -  ');
