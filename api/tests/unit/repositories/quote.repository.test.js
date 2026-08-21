@@ -66,8 +66,10 @@ describe('QuoteRepository', () => {
     mockCollection.find.mockReturnValue(mkFindChain([]));
     mockCollection.countDocuments = jest.fn().mockResolvedValue(0);
     mockCollection.createIndex = jest.fn().mockResolvedValue('quote_list_by_branch');
-    // the index is ensured once per PROCESS, so reset the latch between tests
-    Object.getPrototypeOf(repo).constructor._listIndexEnsured = false;
+    // the index is ensured once per DATABASE (see db/ensure-index) - a static
+    // per-process latch gave the index to whichever shop asked first and to no
+    // other, which is the bug that made it shared. Reset it between tests.
+    require('../../../src/db/ensure-index')._reset();
   });
 
   test('create writes only the quotes collection and numbers QUO-000001', async () => {
@@ -575,7 +577,7 @@ describe('QuoteRepository', () => {
       expect(r.status).toBe(true);
     });
 
-    test('it is built once per process, not on every request', async () => {
+    test('it is built once per database, not on every request', async () => {
       await repo.listQuotes({}, ctx);
       await repo.listQuotes({}, ctx);
       await repo.listQuotes({}, ctx);

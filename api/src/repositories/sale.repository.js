@@ -3,6 +3,7 @@ const { currentConnection } = require('../db/tenant-context');
 const { ObjectId } = require('mongodb');
 const crypto = require('crypto');
 const BaseModel = require('../models/base.model');
+const { ensureIndexOnce } = require('../db/ensure-index');
 const { formatDate } = require('../utils/helpers');
 const StockLogsRepository = require('./stock-log.repository');
 const { PAYMENT_STATUS } = require('../constants');
@@ -9211,20 +9212,20 @@ class SalesRepository {
    * documents without one are ignored.
    */
   async _ensureSalesIdIndex(db) {
-    if (this.constructor._salesIdIndexEnsured) return;
-    try {
-      await db.collection('sales').createIndex(
-        { license: 1, sales_id: 1 },
-        {
-          unique: true,
-          partialFilterExpression: { sales_id: { $type: 'string' } },
-          name: 'unique_sales_id_per_license',
-        }
-      );
-      this.constructor._salesIdIndexEnsured = true;
-    } catch (e) {
-      /* legacy duplicates still present - try again on a later sale */
-    }
+    /* Once per DATABASE. The old latch was a static boolean, which on a
+       process serving many shops meant the FIRST shop to make a sale got this
+       index and no other shop ever did. For a unique index that guards bill
+       numbers, that is not a missing optimisation - it is the guarantee
+       quietly not applying to almost everyone. */
+    await ensureIndexOnce(
+      db.collection('sales'),
+      { license: 1, sales_id: 1 },
+      {
+        unique: true,
+        partialFilterExpression: { sales_id: { $type: 'string' } },
+        name: 'unique_sales_id_per_license',
+      }
+    );
   }
 
   isDuplicateSalesIdError(err) {

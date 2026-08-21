@@ -11,6 +11,7 @@
 
 const BaseModel = require('../models/base.model');
 const { ObjectId } = require('mongodb');
+const { ensureIndexOnce } = require('../db/ensure-index');
 
 const STATUSES = Object.freeze([
   'open',
@@ -401,16 +402,14 @@ class QuoteRepository extends BaseModel {
    * build that fails must never fail a page load.
    */
   async _ensureListIndex(collection) {
-    if (this.constructor._listIndexEnsured) return;
-    try {
-      await collection.createIndex(
-        { branch_id: 1, license: 1, created_date: -1 },
-        { name: 'quote_list_by_branch' }
-      );
-      this.constructor._listIndexEnsured = true;
-    } catch (e) {
-      /* try again on a later request rather than break this one */
-    }
+    /* Once per DATABASE, not once per process. Each shop has its own database
+       and one process serves many, so a static boolean would give the index to
+       whichever shop happened to ask first and to nobody else. */
+    await ensureIndexOnce(
+      collection,
+      { branch_id: 1, license: 1, created_date: -1 },
+      { name: 'quote_list_by_branch' }
+    );
   }
 
   async listQuotes(params = {}, context = {}) {
