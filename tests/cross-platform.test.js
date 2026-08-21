@@ -28,6 +28,7 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 const read = (f) => fs.readFileSync(path.join(ROOT, f), 'utf8').replace(/\r\n/g, '\n');
 const pkg = require('../package.json');
+const { stripComments } = require('./helpers/source-lookup');
 
 // ── The tools each platform is given ────────────────────────────────────────
 
@@ -182,5 +183,47 @@ test('mongod is selected per platform, and shipped for each', () => {
     const entries = (pkg.build[platform]?.extraResources || [])
       .filter((e) => /mongodb/.test(e.from || ''));
     assert.ok(entries.length, `the ${platform} build ships no database at all`);
+  }
+});
+
+test('nothing but print-pdf.js may reach for the Windows-only printer', () => {
+  /*
+   * The gap this closes, found by asking what SumatraPDF was doing in a signed
+   * build: hardware-manager had the platform branch and kot-manager did not.
+   * kot-manager called pdf-to-printer straight, so on a Mac or Linux till every
+   * kitchen ticket that fell back to PDF printing failed - caught and reported,
+   * so nothing crashed and nothing printed either. build:mac and build:linux
+   * exist, so that was a real hole rather than a theoretical one.
+   *
+   * The test that was here checked hardware-manager alone, which is precisely
+   * how the second caller went unnoticed. It asks about the whole app now.
+   */
+  const OWNER = 'print-pdf.js';
+  const callers = fs
+    .readdirSync(ROOT)
+    .filter((f) => f.endsWith('.js') && f !== OWNER)
+    /* COMMENTS STRIPPED: the explanation in kot-manager names the package it
+       no longer calls, and matching prose reported it as a caller. */
+    .filter((f) => stripComments(read(f)).includes('pdf-to-printer'));
+  assert.deepStrictEqual(
+    callers,
+    [],
+    'these require the Windows-only printer directly instead of print-pdf.js, so they fail off Windows: ' + callers.join(', '),
+  );
+
+  /* And the one that may must actually branch. */
+  const PP = read(OWNER);
+  assert.match(PP, /process\.platform === 'win32'/, 'print-pdf has no platform branch');
+  assert.match(PP, /execFile\('lp'/, 'there is no CUPS path off Windows');
+  assert.match(PP, /CUPS printing is not available/, 'ENOENT is reported as ENOENT, which helps nobody at a counter');
+
+  /* A module the build does not package dies with Cannot find module on a
+     customer machine while working perfectly from source. */
+  assert.ok(pkg.build.files.includes(OWNER), OWNER + ' is not in build.files - it will not ship');
+});
+
+test('both printers go through the shared path', () => {
+  for (const f of ['hardware-manager.js', 'kot-manager.js']) {
+    assert.match(read(f), /printPdfFile/, f + ' does not use the shared PDF print path');
   }
 });
