@@ -919,6 +919,14 @@ PosnicPro.items = {
                             placeholder: "Choose a Variant"
                         });
                         $('#item_variant_list,#load_price_fields').html('');
+                        /* The variant SELECT keeps its selection across a save, so
+                           emptying its value list leaves the form showing a chosen
+                           variant with nothing to choose from - the same state the
+                           preselect used to produce, arriving by a different door
+                           (reported: "first variant values not loaded but second
+                           variant values loading" - the second one works because
+                           picking it fires select2:select, which refills). */
+                        PosnicPro.items.loadVariantValues('#items_variant', '#item_variant_list');
                         PosnicPro.items.resetSecondAxis();
                         if ($('#show_variant_fields').css('display') === 'none') {
                             $('#product_without_variant').prop('checked', true);

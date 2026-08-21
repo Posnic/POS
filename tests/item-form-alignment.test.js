@@ -1162,3 +1162,38 @@ test('both axes fill their values the same way', () => {
     'the first axis is bound behind a one-shot change again',
   );
 });
+test('clearing the value list never leaves the variant select stranded', () => {
+  /*
+   * The bug this pins, twice over: the variant SELECT keeps its selection while
+   * its value list is emptied, so the form shows a chosen variant with nothing
+   * to choose from. First it happened on the preselect; then again after a
+   * SAVE, by a different door - reported as "first variant values not loaded
+   * but second variant values loading". The second axis looked fine only
+   * because picking it fires select2:select, which refills.
+   *
+   * So: every place that empties #item_variant_list while a variant may still
+   * be selected has to refill it.
+   */
+  const clears = [];
+  const lines = itemsJs.split(String.fromCharCode(10));
+  lines.forEach((l, i) => {
+    /* The FIRST list only. #item_variant_list_2 legitimately starts empty -
+       no second variant is preselected, so there is nothing to refill, and a
+       looser pattern reported it as a bug. */
+    if (/#item_variant_list['"][^)]*\)\s*\.html\(''\)/.test(l)
+        || /#item_variant_list,[^)]*\)\s*\.html\(''\)/.test(l)) clears.push(i);
+  });
+  assert.ok(clears.length > 0, 'nothing clears the value list any more - this test is stale');
+
+  for (const i of clears) {
+    /* The refill must follow within a few lines - close enough that it is
+       plainly part of the same step. */
+    const after = lines.slice(i, i + 12).join(String.fromCharCode(10));
+    assert.match(
+      after,
+      /loadVariantValues\('#items_variant', '#item_variant_list'\)/,
+      'line ' + (i + 1) + ' empties the value list and never refills it - the form '
+        + 'will show a selected variant with no values behind it',
+    );
+  }
+});
