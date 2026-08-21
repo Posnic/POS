@@ -244,6 +244,53 @@ PosnicPro.items = {
     showBarcode: function (id) {
         PosnicPro.items.printLableView(id);
     },
+    /*
+     * The shared filter bar, on the item list.
+     *
+     * The five controls this replaces (date range, field selector, search box,
+     * Apply, Clear) worked, but could not say a filter was ON: the panel closes
+     * and takes them with it, so a list narrowed to one category looks exactly
+     * like a shop with one category. The count on the button is visible whether
+     * the panel is open or not, which is the case that matters.
+     *
+     * It writes into data('filters') and calls the SAME itemsTable as before,
+     * rather than changing how the list loads. The endpoint keeps taking the
+     * blob it always took - see listFilter.legacyFilters, which builds the same
+     * regex PosnicPro.search built, so adopting the bar does not silently
+     * change which rows a shop's existing habits return.
+     *
+     * No Apply button on purpose. A filter you have to confirm is one you can
+     * forget to, and the debounce in the bar already stops a request per
+     * keystroke.
+     */
+    mountFilters: function () {
+        if (!$('#items_filter_panel').length) { return; }
+        PosnicPro.listFilter.mount({
+            key: 'items',
+            container: '#items_filter_panel',
+            button: '#items_filter_btn',
+            searchPlaceholder: 'Search name, SKU or barcode',
+            dateField: 'Updated',
+            searchFields: [
+                { value: 'all', label: 'All fields' },
+                { value: 'name', label: 'Name' },
+                { value: 'category_name', label: 'Category' },
+                { value: 'itemid', label: 'SKU' },
+                { value: 'barcode_id', label: 'Barcode' }
+            ],
+            onChange: function () {
+                var table = $('#view_items');
+                /* updated_date is the column PosnicPro.search filtered on for
+                   this list; using anything else would filter a different
+                   column while looking like it worked. */
+                var filters = PosnicPro.listFilter.legacyFilters('items', { dateKey: 'updated_date' });
+                table.data('filters', JSON.stringify(filters));
+                table.data('current_page', 1);
+                PosnicPro.items.itemsTable('items');
+            }
+        });
+    },
+
     itemsTable: function () {
         // A fresh page/search/refresh ends any "select all N" - the set behind
         // the list has changed, so the old whole-set selection no longer holds.
@@ -397,6 +444,7 @@ PosnicPro.items = {
         $('#items_new,#items_view').modal('hide');
         $('#v-pills-inventory-tab,#view_items_page').addClass('active');
         $('#v-pills-inventory').addClass('show active');
+        PosnicPro.items.mountFilters();
         PosnicPro.items.itemsTable('items');
         $('.dashboard_img_menu').hide();
         $('#image_sidebar_itemdetail').show();
@@ -3781,6 +3829,13 @@ $(document).ready(function () {
        field, so a second axis revealed by accident and impossible to collapse
        would hold the Item tab permanently unticked with nothing explaining
        why. Same toggle shape as the variants link above it. */
+    /* Open and close the filter panel. Delegated, because the button lives in
+       markup that is re-rendered on page entry. */
+    $(document).on('click', '#items_filter_btn', function () {
+        PosnicPro.items.mountFilters();
+        PosnicPro.listFilter.toggle('items');
+    });
+
     $(document).on('click', '#variant_axis2_link', function () {
         if ($('#variant_axis2_wrap').is(':visible')) {
             PosnicPro.items.resetSecondAxis();

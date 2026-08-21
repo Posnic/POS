@@ -80,8 +80,20 @@ PosnicPro.kioskreport = {
                         var rowTotal = response.data.total;
                         if (rowTotal === 0) {
                             $('.reportkiosk_header').hide();
-                            let dateRange = $('#view_kiosks_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
-                            $('.reportkiosk_norecord').empty().append('<div class="text-center text-dark"> <p>No Records on ' + dateRange + '</p></div>');
+                            /*
+                             * #view_kiosks_daterange has never existed - the
+                             * element on this page is #view_kiosk_report_daterange.
+                             * The read returned undefined, so an empty kiosk
+                             * report said "No Records on undefined" to the shop.
+                             *
+                             * The fallback is not belt-and-braces: this page can
+                             * render before the picker has been given a tooltip
+                             * title, and printing the word "undefined" at a
+                             * customer is worse than saying nothing about dates.
+                             */
+                            let dateRange = $('#view_kiosk_report_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
+                            let when = dateRange ? ' on ' + dateRange : '';
+                            $('.reportkiosk_norecord').empty().append('<div class="text-center text-dark"> <p>No Records' + when + '</p></div>');
                             $('#reportkiosk_img_hide,.reportkiosk_norecord').show();
 
                         } else {

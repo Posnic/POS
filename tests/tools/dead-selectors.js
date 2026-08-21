@@ -74,7 +74,27 @@ function walk(dir, out = []) {
 }
 
 const TOKEN = /[A-Za-z_][\w-]*/g;
-const SELECTOR = /\$\(\s*['"]#([A-Za-z_][\w-]*)['"]\s*\)/g;
+/*
+ * `$('#id')` AND `$('#id .child')`.
+ *
+ * The first version required the quote to close immediately after the id, so a
+ * compound selector was invisible to it. That is not a rare shape: twenty
+ * modules read the sales page's date range as
+ * `$('#view_sales_daterange span span[data-toggle="tooltip"]')`, and when that
+ * element was removed during the filter-bar migration the sweep reported
+ * nothing at all - the reads that were about to start returning undefined were
+ * exactly the ones it could not see.
+ *
+ * The trailing part is not captured; only the id matters, because the id is
+ * what does or does not exist.
+ *
+ * The quote is captured and back-referenced rather than written as [^'"], for
+ * the same reason: attribute selectors carry the OTHER quote inside them, as in
+ * `$('#id span[data-toggle="tooltip"]')`. A class excluding both stops at that
+ * inner quote and the match fails - which is precisely how the example above
+ * stayed invisible on the first attempt at widening this.
+ */
+const SELECTOR = /\$\(\s*(['"])#([A-Za-z_][\w-]*)(?:[\s>+~.[][^\n]*?)?\1\s*\)/g;
 
 /* The analysis, without the printing - so the reads guard can use exactly the
    same definition of "dead" that this tool reports. */
@@ -97,7 +117,8 @@ function analyse({ all = false } = {}) {
       : file.endsWith('.js') && file.includes(`${path.sep}modules${path.sep}`);
 
     for (const m of src.matchAll(SELECTOR)) {
-      const id = m[1];
+      /* [1] is the quote, back-referenced to close the string; [2] is the id. */
+      const id = m[2];
       asSelector.set(id, (asSelector.get(id) || 0) + 1);
       if (!inScope) continue;
       const line = src.slice(0, m.index).split('\n').length;
