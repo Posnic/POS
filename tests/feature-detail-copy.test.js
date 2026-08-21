@@ -86,3 +86,62 @@ test('the renderer still guards a missing section', () => {
     'a missing section would throw instead of being skipped',
   );
 });
+
+/*
+ * Screenshots by convention.
+ *
+ * The owner has to take these - they are pictures of his running shop. Every
+ * other part is built so that dropping a file in
+ * static/images/features/<key>-1.png is his only remaining action.
+ */
+test('a feature with no screenshot costs ONE failed request, not three', () => {
+  /* The first version rendered -1, -2 and -3 speculatively. That is three 404s
+     every time a dialog opens for a feature with no images - which is every
+     feature today - on the same day spent removing wasted requests. Asking for
+     the next only after the current one LOADS makes the chain self-extending
+     and the empty case cheap. */
+  const render = settingsJs.slice(settingsJs.indexOf('var shots = info.shots || [];'));
+  const block = render.slice(0, render.indexOf("infoHtml += '<div class=\"q-label\">About"));
+  const probes = (block.match(/static\/images\/features\//g) || []).length;
+  assert.strictEqual(probes, 1, 'more than one screenshot path is requested up front');
+  assert.match(block, /onload="PosnicPro\.settings\._shotNext\(this\);"/, 'the chain never extends');
+  assert.match(block, /data-shot-key=/, 'the next probe has no key to build a path from');
+});
+
+test('a missing screenshot leaves no trace', () => {
+  /* Otherwise a feature with no images keeps a broken-image icon, or an empty
+     14px strip with a scroll container holding nothing. */
+  const fn = settingsJs.slice(settingsJs.indexOf('PosnicPro.settings._shotMissing = function'));
+  const body = fn.slice(0, fn.indexOf('\n};'));
+  assert.match(body, /\$\(img\)\.remove\(\)/, 'the broken frame stays');
+  assert.match(body, /if \(!\$strip\.find\('img'\)\.length\) \{ \$strip\.remove\(\); \}/, 'the empty strip stays');
+});
+
+test('the probe chain cannot run away', () => {
+  /* It is driven by the server answering 200. A directory that somehow served
+     every name would ask forever. */
+  const fn = settingsJs.slice(settingsJs.indexOf('PosnicPro.settings._shotNext = function'));
+  const body = fn.slice(0, fn.indexOf('\n};'));
+  assert.match(body, /n >= PosnicPro\.settings\.MAX_SHOTS/, 'nothing caps the chain');
+  assert.match(body, /data-shot-n="' \+ \(n \+ 1\) \+ '"\]'\)\.length\) \{ return; \}/, 'a re-fired onload would duplicate frames');
+});
+
+test('an explicit shots list still wins', () => {
+  /* Anything that does not fit the naming must remain expressible. */
+  const render = settingsJs.slice(settingsJs.indexOf('var shots = info.shots || [];'));
+  const block = render.slice(0, render.indexOf("infoHtml += '<div class=\"q-label\">About"));
+  assert.match(block, /if \(shots\.length\) \{[\s\S]*\} else if \(key\) \{/, 'the convention must be the FALLBACK, not the rule');
+});
+
+test('the drop folder documents itself', () => {
+  /* A convention nobody can find is not a convention. */
+  const readme = fs.readFileSync(
+    path.join(ROOT, 'frontend', 'static', 'images', 'features', 'README.md'),
+    'utf8',
+  );
+  assert.match(readme, /8:5/, 'the required aspect is not stated');
+  assert.match(readme, /cropped to fit/i, 'it must warn that another ratio is cropped, not letterboxed');
+  for (const key of ['quotes_enable', 'module_themes_enable']) {
+    assert.ok(readme.includes(`${key}-1.png`), `${key} is not listed as a filename to add`);
+  }
+});
