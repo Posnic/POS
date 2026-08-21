@@ -12,8 +12,12 @@
  *     reading, and a bar that is always open spends height on controls nobody
  *     is using yet.
  *   - a compact search box with a "which field" selector and an Exact toggle.
- *     Exact is not cosmetic - an anchored match can be served by an index
- *     where a fragment cannot.
+ *     Exact narrows the ANSWER, not the cost. It is worth being precise about
+ *     this: the server builds /^term$/i, and MongoDB can only use a prefix
+ *     index for a case-SENSITIVE regex, so an exact search scans the branch's
+ *     rows exactly as a fragment search does. What it buys is one right answer
+ *     instead of every row containing the text - which is the whole point when
+ *     a name has been picked from a list.
  *   - a date range with the presets people actually pick, carrying real times
  *     rather than bare dates.
  *   - an optional typeahead per field, so choosing "Customer" offers the
@@ -114,11 +118,20 @@ PosnicPro.listFilter = {
     _applied: function (st) {
         var t = String((st && st.search) || '').trim();
         if (!t) return '';
-        /* EXACT bypasses the minimum. The minimum exists because a one-letter
-           FRAGMENT scans nearly every row; an anchored exact match is served by
-           the index whatever its length. Picking a name from the suggestion
-           list sets exact, so choosing a customer called "K" still filters -
-           without this, a deliberate pick would silently do nothing. */
+        /*
+         * EXACT bypasses the minimum, and the reason is CORRECTNESS rather
+         * than cost.
+         *
+         * Picking a name from the suggestion list sets exact. If the minimum
+         * still applied, choosing a customer called "K" would silently do
+         * nothing - a deliberate act with no effect, which is the worst kind
+         * of nothing.
+         *
+         * It is NOT because exact is cheaper. The server builds /^term$/i, and
+         * MongoDB cannot use a prefix index for a case-insensitive regex, so
+         * the scan costs what a fragment scan costs. The saving is in the
+         * answer: one row rather than every row containing the letter.
+         */
         if (st.exact) return t;
         var min = PosnicPro.listFilter.MIN_SEARCH || 2;
         return t.length >= min ? t : '';

@@ -1271,10 +1271,11 @@ test('another trigger cannot smuggle a sub-minimum term into the request', () =>
 });
 
 test('an exact match is applied whatever its length', () => {
-  /* The minimum exists because a one-letter FRAGMENT scans every row; an
-     anchored exact match is index-served at any length. Picking a name from the
-     list sets exact, so a customer called "K" must still filter - otherwise a
-     deliberate pick silently does nothing. */
+  /* The reason is CORRECTNESS, not cost. Picking a name from the list sets
+     exact, so a customer called "K" must still filter - otherwise a deliberate
+     act does nothing at all. It is NOT that exact is cheaper: the server builds
+     /^term$/i and MongoDB cannot use a prefix index for a case-insensitive
+     regex, so the scan costs the same. What differs is the answer. */
   const applied = blockAt(listFilterSrc, '_applied: function (st) {');
   assert.match(applied, /if \(st\.exact\) return t;/, 'a picked short name would be dropped');
   assert.ok(
