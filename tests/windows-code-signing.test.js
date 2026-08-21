@@ -176,3 +176,26 @@ test('the failure says which of the two things went wrong', () => {
   assert.match(hints, /npm run sign:cert/, 'a certificate failure does not point anywhere useful');
   assert.match(hints, /do NOT ship an untimestamped build/, 'a timestamp failure invites the wrong workaround');
 });
+test('an empty store is diagnosed, not just reported', () => {
+  /* "Insert the card and try again" is useless to somebody whose card IS
+     inserted and whose CardManager is showing them the certificate - which is
+     exactly what happened. The cause was two layers down: Windows publishes a
+     smart card's certificates only once a MINIDRIVER claims the card model, and
+     none claimed this one, so it showed as "Unknown Smart Card" while the card
+     worked perfectly inside CardManager. */
+  const finder = fs.readFileSync(path.join(ROOT, 'scripts', 'find-signing-cert.js'), 'utf8');
+  assert.match(finder, /function diagnose\(/, 'the empty case gives no diagnosis');
+  assert.match(finder, /Unknown Smart Card/, 'the no-driver case is not distinguished');
+  assert.match(finder, /Get-PnpDevice -Class SmartCard/, 'it never checks whether a card is present');
+  assert.match(finder, /Calais/, 'it never checks which minidrivers are registered');
+
+  /* The registry path must not carry single backslashes: in a JS string
+     '\SOFTWARE' collapses to 'SOFTWARE' and the query silently returns
+     nothing, which read as "no Certum drivers installed" when four were. */
+  const line = finder.split(String.fromCharCode(10)).find((l) => l.includes('Calais'));
+  assert.ok(line, 'the minidriver query is gone');
+  assert.ok(
+    !line.includes(String.fromCharCode(92)),
+    'the registry path uses unescaped backslashes - the query returns nothing and lies',
+  );
+});

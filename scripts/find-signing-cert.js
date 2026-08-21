@@ -47,6 +47,72 @@ function read() {
   return Array.isArray(parsed) ? parsed : [parsed];
 }
 
+/*
+ * WHY the store is empty, which is a different question from whether it is.
+ *
+ * "Insert the card and try again" is useless advice to somebody whose card is
+ * already inserted and whose CardManager is showing them the certificate. That
+ * happened here, and the cause was two layers down: CardManager reaches the
+ * card through Certum's own CSP, but WINDOWS only publishes a smart card's
+ * certificates once a MINIDRIVER claims that card model. With no match Windows
+ * calls it "Unknown Smart Card", publishes nothing, and signtool sees an empty
+ * store while the card sits there working perfectly in another application.
+ *
+ * So this says which of the three it actually is: no card, a card no driver
+ * claims, or a card that is claimed but whose certificate is not registered.
+ */
+function diagnose() {
+  const ps = [
+    '$ErrorActionPreference = "SilentlyContinue";',
+    '$dev = @(Get-PnpDevice -Class SmartCard | ForEach-Object { $_.FriendlyName });',
+    '$md  = @(Get-ChildItem "HKLM:/SOFTWARE/Microsoft/Cryptography/Calais/SmartCards" |',
+    '        Select-Object -ExpandProperty PSChildName);',
+    '[PSCustomObject]@{ Devices = $dev; Minidrivers = $md } | ConvertTo-Json -Compress',
+  ].join(' ');
+
+  let info;
+  try {
+    info = JSON.parse(
+      execFileSync('powershell', ['-NoProfile', '-Command', ps], {
+        encoding: 'utf8',
+        windowsHide: true,
+      }).trim()
+    );
+  } catch (err) {
+    return;
+  }
+
+  const devices = [].concat(info.Devices || []);
+  const drivers = [].concat(info.Minidrivers || []);
+
+  if (!devices.length) {
+    console.log('');
+    console.log('  No smart card is present. Insert it and check the reader light.');
+    return;
+  }
+
+  if (devices.some((d) => /unknown/i.test(String(d)))) {
+    const certum = drivers.filter((d) => /certum/i.test(String(d))).join(', ');
+    console.log('');
+    console.log('  Windows sees the card but NO DRIVER CLAIMS IT ("Unknown Smart Card").');
+    console.log('  Certum minidrivers registered: ' + (certum || 'none'));
+    console.log('');
+    console.log('  That is why the store is empty even though proCertum CardManager');
+    console.log('  shows the certificate: CardManager reaches the card through the');
+    console.log('  Certum CSP, while Windows only publishes card certificates once a');
+    console.log('  minidriver recognises the card model.');
+    console.log('');
+    console.log('  Fix: update the Certum card drivers / proCertum CardManager to a');
+    console.log('  build that supports this card model, then reinsert the card.');
+    return;
+  }
+
+  console.log('');
+  console.log('  The card is recognised, but its certificate is not published to the');
+  console.log('  Windows store. In proCertum CardManager, Common profile, use the menu');
+  console.log('  beside "Certificates" to register it, then run this again.');
+}
+
 function main() {
   let certs;
   try {
@@ -57,10 +123,9 @@ function main() {
   }
 
   if (!certs.length) {
-    console.log('No code signing certificate is visible to Windows.\n');
-    console.log('  1. Insert the Certum card and check the reader light.');
-    console.log('  2. Open proCertum CardManager and let it register the certificate.');
-    console.log('  3. Run this again.\n');
+    console.log('No code signing certificate is visible to Windows.');
+    diagnose();
+    console.log('');
     console.log('Until then the build produces an UNSIGNED installer, which is');
     console.log('what it already does today - nothing is broken by waiting.');
     process.exit(1);
