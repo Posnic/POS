@@ -40,6 +40,8 @@
     "test": "node --test \"tests/*.test.js\"",
     "clear:brand-seed": "node scripts/clear-brand-seed.js",
     "check:declared-deps": "node scripts/check-declared-deps.js",
+    "sign:cert": "node scripts/find-signing-cert.js",
+    "sign:verify": "node scripts/verify-signature.js",
     "scan:secrets": "node scripts/scan-git-history.js",
     "badges": "node scripts/check-badges.js",
     "badges:fix": "node scripts/check-badges.js --fix",
@@ -305,7 +307,11 @@
       "verifyUpdateCodeSignature": false,
       "signAndEditExecutable": true,
       "signtoolOptions": {
-        "publisherName": "Posnic Team"
+        "publisherName": "BillMax",
+        "signingHashAlgorithms": [
+          "sha256"
+        ],
+        "sign": "scripts/sign-windows.js"
       },
       "extraResources": [
         {
