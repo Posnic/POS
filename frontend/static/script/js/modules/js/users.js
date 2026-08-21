@@ -1711,47 +1711,47 @@ PosnicPro.users = {
             },
             messages: {
                 firstname: {
-                    required: "Please Enter a Firstname",
+                    required: "Enter the first name",
                     minlength: "Firstname must be at least 3 Characters",
                     maxlength: "Firstname should not be more than 20 characters"
                 },
                 lastname: {
-                    required: "Please Enter a Lastname",
+                    required: "Enter the last name",
                     minlength: "Last Name must be at least 3 Characters",
                     maxlength: "Lastname should not be more than 20 characters"
                 },
                 name: {
-                    required: "Please Enter the UserName",
+                    required: "Enter the username",
                     minlength: "UserName must be at least 6 Characters",
                     maxlength: "UserName should not be more than 30 characters"
                 },
                 password: {
-                    required: "Please Enter a Password",
+                    required: "Enter a password",
                     minlength: "Password must be at least 5 characters",
                     maxlength: "Password should not be more than 20 characters"
                 },
                 retype_password: {
-                    required: "Please Enter the Retype Password",
+                    required: "Type the password again",
                     minlength: "Password must be at least 5 characters",
                     maxlength: "Password should not be more than 20 characters",
                     equalTo: "Not match retype Password"
                 },
                 email: {
-                    required: "Please Enter the Email",
+                    required: "Enter the email address",
                     minlength: "Password must be at least 5 characters",
                     maxlength: "Password should not be more than 20 characters"
                 },
                 branch_id: {
-                    required: "Please Select a Branch"
+                    required: "Choose a shop"
                 },
                 usertype: {
-                    required: "Please Choose a User Type"
+                    required: "Choose a user type"
                 }
             }
         });
         jQuery.validator.addMethod("lettersonly", function (value, element) {
             return this.optional(element) || /^[a-z\s]+$/i.test(value);
-        }, "Please Enter a Valid Name");
+        }, "Use letters, numbers and spaces only");
         if ($('.user_add').valid()) {            // checks form for validity
             var checked = $(".onoffswitch-checkbox:checked").length;
             if (checked > 0) {
@@ -2206,7 +2206,7 @@ $(document).ready(function () {
         },
         messages: {
             name_users: {
-                required: "Please Enter a Name",
+                required: "Enter a name",
                 minlength: "Name must be at least 3 characters",
                 maxlength: "Name should not be more than 20 characters"
             }

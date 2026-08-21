@@ -464,11 +464,11 @@ PosnicPro.customers = {
             },
             messages: {
                 date: {
-                    required: "Please select the Date",
-                    commonDate: "Please enter a valid date"
+                    required: "Choose a date",
+                    commonDate: "Enter a valid date"
                 },
                 amount: {
-                    required: "Please enter transaction amount",
+                    required: "Enter the amount",
                     minlength: "Transaction amount must be at least 1 characters",
                     maxlength: "Transaction amount should not be more than 10 characters"
                 },
@@ -479,7 +479,7 @@ PosnicPro.customers = {
         });
         jQuery.validator.addMethod("transactionDate", function (value, element) {
             return this.optional(element) || moment(value, 'YYYY/MM/DD LT').isValid();
-        }, "Please enter a valid date in the format");
+        }, "Use the date format");
         $("#transaction_add_list_form").submit(function (event) {
             event.preventDefault();
             if ($('#transaction_add_list_form').valid()) {            // checks form for validity
@@ -613,7 +613,7 @@ PosnicPro.customers = {
             },
             messages: {
                 name: {
-                    required: "Please Enter a Customer Name",
+                    required: "Enter the customer name",
                     minlength: "Customer name must be at least 3 characters",
                     maxlength: "Customer name should not be more than 250 characters"
                 },
@@ -625,15 +625,15 @@ PosnicPro.customers = {
                     maxlength: "Email should not be more than 250 Characters"
                 },
                 phone: {
-                    customer_phone_number: "Please enter a valid phone number.",
-                    minlength: "Please enter at least 3 characters.",
-                    maxlength: "Please enter no more than 20 characters."
+                    customer_phone_number: "Enter a valid phone number",
+                    minlength: "Use at least 3 characters",
+                    maxlength: "Use no more than 20 characters"
                 },
                 city: {
                     maxlength: "Customer city should not be more than 20 digits"
                 },
                 gstin_number: {
-                    required: "Please Enter a Valid GSTR Number",
+                    required: "Enter a valid GSTIN",
                     minlength: "Gstr must be Atleast 15 Characters long",
                     maxlength: "Gstr should not be more than 15 digits"
                 }
@@ -656,7 +656,7 @@ PosnicPro.customers = {
         }, "Enter a valid phone number");
         jQuery.validator.addMethod("gst", function (value, element) {
             return /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(value);
-        }, "Please Enter a Valid GSTR Number");
+        }, "Enter a valid GSTIN");
 
         $("#customer_add_form").submit(function (event) {
             event.preventDefault();

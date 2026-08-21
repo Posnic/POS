@@ -499,7 +499,7 @@ PosnicPro.categories = {
             },
             messages: {
                 name: {
-                    required: "Please Enter a Category Name",
+                    required: "Enter the category name",
                     minlength: "Category Name must consist of at least 3 Characters",
                     maxlength: "Category name should not be more than 250 characters"
                 },

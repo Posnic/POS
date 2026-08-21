@@ -971,16 +971,16 @@ PosnicPro.quickreport = {
 
     // basic guards
     if (!branchId) {
-      PosnicPro.alert("error", "Please select a branch");
+      PosnicPro.alert("error", "Choose a shop");
       return;
     }
     if (!daterange) {
-      PosnicPro.alert("error", "Please select a date range");
+      PosnicPro.alert("error", "Choose a date range");
       return;
     }
     // quick email check (client-side only; server still validates)
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      PosnicPro.alert("error", "Please enter a valid email");
+      PosnicPro.alert("error", "Enter a valid email address");
       return;
     }
 
@@ -1104,7 +1104,7 @@ $(".to_email_form").validate({
   },
   messages: {
     to_email_value: {
-      required: "Please Enter a email address",
+      required: "Enter a valid email address",
       maxlength: "Email should not be more than 250 Characters",
     },
   },
