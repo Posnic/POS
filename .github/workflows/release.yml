@@ -45,8 +45,8 @@ jobs:
     name: Safe to publish
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22
 
@@ -76,12 +76,12 @@ jobs:
           - { os: ubuntu-latest,  name: Linux,   flag: '--linux --x64' }
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: '${{ inputs.tag || github.ref }}'
           submodules: recursive
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with: { node-version: 22 }
 
       - name: Install
@@ -197,7 +197,7 @@ jobs:
         run: node scripts/check-native-runtime.js
 
       - name: Upload installers
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ matrix.name }}
           path: |
@@ -224,10 +224,10 @@ jobs:
     env:
       ASSET_SIGNING_KEY: ${{ secrets.POSNIC_ASSET_SIGNING_KEY }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { ref: '${{ inputs.tag || github.ref }}' }
 
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with: { path: artifacts }
 
       # The silent asset-update channel (asset-updater.js on the till):
@@ -268,7 +268,7 @@ jobs:
           sha256sum $(ls | grep -vE 'latest.*\.yml$|\.blockmap$|release-manifest\.json$|asset-manifest\.json$') > SHA256SUMS.txt
           echo "Publishing:"; ls -lh
 
-      - uses: softprops/action-gh-release@v3
+      - uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
         with:
           tag_name: ${{ inputs.tag || github.ref_name }}
           files: release/*
