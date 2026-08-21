@@ -428,8 +428,18 @@ PosnicPro.listFilter = {
     var LF = PosnicPro.listFilter;
     var esc = function (v) { return $('<span>').text(v == null ? '' : String(v)).html(); };
 
+    /*
+     * Object.create(null), not {}.
+     *
+     * A plain object inherits from Object.prototype, so seen['constructor'] is
+     * truthy before anything has been stored - as are toString, valueOf and
+     * hasOwnProperty. A customer or item whose name is one of those would be
+     * treated as already seen and silently dropped from the suggestions. Rare,
+     * but the failure is invisible: the row simply is not offered, and nobody
+     * can tell why. A null-prototype object has no such names.
+     */
     var uniq = function (rows) {
-        var seen = {}, out = [];
+        var seen = Object.create(null), out = [];
         rows.forEach(function (r) {
             if (!r || !r.label) return;
             var k = String(r.id || r.label).toLowerCase();

@@ -1308,3 +1308,13 @@ test('the skip is decided AFTER the state is updated', () => {
     'checking before the update reads the previous value of exact',
   );
 });
+
+test('a suggestion named "constructor" is not silently dropped', () => {
+  /* uniq used a plain object as a set. seen['constructor'] is truthy before
+     anything is written - as are toString, valueOf and hasOwnProperty - so a
+     customer or item with one of those names was treated as already seen and
+     never offered. The failure is invisible: the row simply is not there. */
+  const uniq = blockAt(listFilterSrc, 'var uniq = function (rows) {');
+  assert.match(uniq, /Object\.create\(null\)/, 'a plain object inherits names that collide');
+  assert.ok(!/var seen = \{\}/.test(uniq), 'the bare-object set is back');
+});
