@@ -616,3 +616,58 @@ test('the SKU wrapper keeps the id items.js toggles', () => {
   assert.ok(html.includes('id="sku_card_col"'), 'the id must survive the move');
   assert.ok(js.includes('#sku_card_col'), 'items.js shows/hides it with the variant toggle');
 });
+
+/*
+ * Quote filters (owner: "indexed search is fine, but I want filters too -
+ * exact field and time duration").
+ */
+test('the rail offers a field selector, an exact toggle and a date window', () => {
+  const html = fs.readFileSync(path.join(ROOT, 'frontend', 'modules', 'quotes.html'), 'utf8');
+  for (const id of ['quotes_search_field', 'quotes_search_exact', 'quotes_from', 'quotes_to', 'quotes_filters_clear']) {
+    assert.ok(html.includes(`id="${id}"`), `${id} missing from the filter bar`);
+  }
+  // the field list must name the columns the server accepts
+  const sel = html.slice(html.indexOf('id="quotes_search_field"'), html.indexOf('quotes_search_exact'));
+  for (const v of ['all', 'quote_id', 'customer_name']) {
+    assert.ok(sel.includes(`value="${v}"`), `${v} should be selectable`);
+  }
+});
+
+test('the filters are actually sent with the request', () => {
+  const load = blockAt(quotesNamespace, 'load: function (keepPage) {');
+  for (const p of ['params.field', 'params.exact', 'params.from', 'params.to']) {
+    assert.ok(load.includes(p), `${p} is never sent`);
+  }
+});
+
+test('defaults are omitted rather than spelled out', () => {
+  /* field=all&exact=false says exactly what sending neither says, and a URL
+     that states its defaults is harder to read in a log. */
+  const load = blockAt(quotesNamespace, 'load: function (keepPage) {');
+  assert.match(load, /field !== 'all'/, 'the default field should not be sent');
+  assert.match(load, /is\(':checked'\)/, 'exact should only be sent when ticked');
+});
+
+test('changing a filter reloads the list, and Clear resets every control', () => {
+  const onChange = blockAt(
+    salesSource,
+    "$(document).on('change', '#quotes_search_field,#quotes_search_exact,#quotes_from,#quotes_to', function () {",
+  );
+  assert.ok(onChange.includes('PosnicPro.quotes.load()'), 'a changed filter must reload');
+
+  const clear = blockAt(salesSource, "$(document).on('click', '#quotes_filters_clear', function () {");
+  for (const id of ['#quotes_search', '#quotes_search_field', '#quotes_search_exact']) {
+    assert.ok(clear.includes(id), `Clear leaves ${id} set`);
+  }
+  assert.ok(clear.includes('PosnicPro.quotes.load()'), 'Clear must reload too');
+});
+
+test('the filter controls flex with the rail rather than using fixed widths', () => {
+  /* The rail is 330px on a laptop and 560px past 1500px, so a fixed-width
+     control either overflows the narrow case or strands space in the wide one. */
+  const row = cssRule('.q-filter-row {');
+  assert.match(row, /display:\s*flex/);
+  assert.match(row, /gap:/, 'gap, not margins - a wrapped row must still space itself');
+  const search = cssRule('.q-filter-row #quotes_search {');
+  assert.match(search, /flex:\s*1 1 auto/, 'the search box should take the slack');
+});

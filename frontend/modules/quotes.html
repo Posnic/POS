@@ -25,9 +25,34 @@
                 <div class="card m-b-30" id="quotes_list_card">
                     <div class="card-body">
                         <div class="m-b-10 d-flex align-items-center flex-wrap" style="gap:8px;" id="quotes_filter_chips">
-                            <input type="text" class="form-control form-control-sm" id="quotes_search"
-                                placeholder="Search customer or quote #" autocomplete="off"
-                                style="max-width:240px;">
+                            <!-- Search row: the box, the field it searches, and
+                                 whether to match the whole value. Anchoring is not
+                                 cosmetic - an exact match can be served by an index
+                                 where a fragment cannot. -->
+                            <div class="q-filter-row">
+                                <input type="text" class="form-control form-control-sm" id="quotes_search"
+                                    placeholder="Search customer or quote #" autocomplete="off">
+                                <select class="form-control form-control-sm" id="quotes_search_field"
+                                    title="Which field to search">
+                                    <option value="all">All fields</option>
+                                    <option value="quote_id">Quote #</option>
+                                    <option value="customer_name">Customer</option>
+                                </select>
+                                <label class="q-filter-exact mb-0" title="Match the whole value, not part of it">
+                                    <input type="checkbox" id="quotes_search_exact"> Exact
+                                </label>
+                            </div>
+                            <!-- Date window. Empty means no bound on that side, so
+                                 one field alone is a valid filter. -->
+                            <div class="q-filter-row">
+                                <input type="date" class="form-control form-control-sm" id="quotes_from"
+                                    title="Created from">
+                                <span class="q-filter-sep">to</span>
+                                <input type="date" class="form-control form-control-sm" id="quotes_to"
+                                    title="Created up to and including">
+                                <button type="button" class="btn btn-sm btn-light border" id="quotes_filters_clear"
+                                    title="Clear search and dates">Clear</button>
+                            </div>
                             <button type="button" class="btn btn-sm btn-primary-rgba quotes-chip" data-status="">All</button>
                             <button type="button" class="btn btn-sm btn-secondary-rgba quotes-chip" data-status="open">Open</button>
                             <button type="button" class="btn btn-sm btn-secondary-rgba quotes-chip" data-status="accepted">Accepted</button>
