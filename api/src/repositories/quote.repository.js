@@ -454,11 +454,19 @@ class QuoteRepository extends BaseModel {
        * quotes and read as data loss.
        */
       const range = {};
-      const from = params.from ? new Date(String(params.from)) : null;
-      const to = params.to ? new Date(String(params.to)) : null;
+      const rawFrom = params.from ? String(params.from) : '';
+      const rawTo = params.to ? String(params.to) : '';
+      const from = rawFrom ? new Date(rawFrom) : null;
+      const to = rawTo ? new Date(rawTo) : null;
       if (from && !Number.isNaN(from.getTime())) range.$gte = from;
       if (to && !Number.isNaN(to.getTime())) {
-        to.setHours(23, 59, 59, 999);
+        /* Only a DATE-ONLY value gets pushed to the end of its day.
+           "2026-08-21" means "including the 21st", and comparing it against
+           midnight would silently drop a day. But the filter bar now sends a
+           precise instant, and forcing 23:59 onto that would widen a range the
+           user deliberately narrowed - "up to 2pm" would quietly mean "up to
+           midnight". The presence of a time is what tells the two apart. */
+        if (/^\d{4}-\d{2}-\d{2}$/.test(rawTo.trim())) to.setHours(23, 59, 59, 999);
         range.$lte = to;
       }
       if (Object.keys(range).length) filter.created_date = range;

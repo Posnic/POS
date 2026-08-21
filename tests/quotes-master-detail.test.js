@@ -482,13 +482,13 @@ test('the selection is drawn in ink, not in the accent colour', () => {
       !/#0969da/i.test(line),
       'an accent-coloured border reads as decoration, not structure',
     );
-    for (const tooDark of ['#1f2328', '#57606a']) {
+    for (const tooDark of ['#1f2328', '#57606a', '#8c959f']) {
       assert.ok(
         !new RegExp(tooDark, 'i').test(line),
         `${tooDark} overshot - the selection needs to be more than its neighbours, not dark`,
       );
     }
-    assert.match(line, /#8c959f/i, 'one clear step darker than the ordinary border');
+    assert.match(line, /#afb8c1/i, 'barely darker than the ordinary border');
   }
 });
 
@@ -652,57 +652,83 @@ test('the SKU wrapper keeps the id items.js toggles', () => {
   assert.ok(js.includes('#sku_card_col'), 'items.js shows/hides it with the variant toggle');
 });
 
+
 /*
- * Quote filters (owner: "indexed search is fine, but I want filters too -
- * exact field and time duration").
+ * The filter bar is shared (core/list-filter.js).
+ *
+ * It is going on every list - quotes, items, sales, purchases - so it is built
+ * once and configured per screen. Quotes supplies its fields and what to do on
+ * change; it owns none of the mechanics. These tests check that boundary
+ * holds, because the moment a screen reaches past it the next screen copies
+ * the reach.
  */
-test('the rail offers a field selector, an exact toggle and a date window', () => {
-  const html = fs.readFileSync(path.join(ROOT, 'frontend', 'modules', 'quotes.html'), 'utf8');
-  for (const id of ['quotes_search_field', 'quotes_search_exact', 'quotes_from', 'quotes_to', 'quotes_filters_clear']) {
-    assert.ok(html.includes(`id="${id}"`), `${id} missing from the filter bar`);
-  }
-  // the field list must name the columns the server accepts
-  const sel = html.slice(html.indexOf('id="quotes_search_field"'), html.indexOf('quotes_search_exact'));
-  for (const v of ['all', 'quote_id', 'customer_name']) {
-    assert.ok(sel.includes(`value="${v}"`), `${v} should be selectable`);
-  }
-});
+const listFilterSrc = fs.readFileSync(
+  path.join(ROOT, 'frontend', 'static', 'script', 'js', 'core', 'list-filter.js'),
+  'utf8',
+);
 
-test('the filters are actually sent with the request', () => {
-  const load = blockAt(quotesNamespace, 'load: function (keepPage) {');
-  for (const p of ['params.field', 'params.exact', 'params.from', 'params.to']) {
-    assert.ok(load.includes(p), `${p} is never sent`);
+test('the shared bar knows nothing about quotes', () => {
+  for (const leak of ['quote', 'sales_new', 'item_tab']) {
+    assert.ok(
+      !new RegExp(leak, 'i').test(listFilterSrc.replace(/\/\*[\s\S]*?\*\//g, '')),
+      `the shared component mentions "${leak}" outside a comment - that is a screen leaking in`,
+    );
   }
 });
 
-test('defaults are omitted rather than spelled out', () => {
-  /* field=all&exact=false says exactly what sending neither says, and a URL
-     that states its defaults is harder to read in a log. */
-  const load = blockAt(quotesNamespace, 'load: function (keepPage) {');
-  assert.match(load, /field !== 'all'/, 'the default field should not be sent');
-  assert.match(load, /is\(':checked'\)/, 'exact should only be sent when ticked');
-});
-
-test('changing a filter reloads the list, and Clear resets every control', () => {
-  const onChange = blockAt(
-    salesSource,
-    "$(document).on('change', '#quotes_search_field,#quotes_search_exact,#quotes_from,#quotes_to', function () {",
+test('it is loaded by the build, after PosnicPro and before the modules', () => {
+  const manifest = JSON.parse(
+    fs.readFileSync(path.join(ROOT, 'frontend', 'pages_css_js_map.json'), 'utf8'),
   );
-  assert.ok(onChange.includes('PosnicPro.quotes.load()'), 'a changed filter must reload');
-
-  const clear = blockAt(salesSource, "$(document).on('click', '#quotes_filters_clear', function () {");
-  for (const id of ['#quotes_search', '#quotes_search_field', '#quotes_search_exact']) {
-    assert.ok(clear.includes(id), `Clear leaves ${id} set`);
-  }
-  assert.ok(clear.includes('PosnicPro.quotes.load()'), 'Clear must reload too');
+  const js = manifest.dashboard.js;
+  const core = js.findIndex((p) => p.endsWith('core/PosnicPro.js'));
+  const lf = js.findIndex((p) => p.endsWith('core/list-filter.js'));
+  const sales = js.findIndex((p) => p.endsWith('modules/js/sales.js'));
+  assert.ok(lf > core, 'it extends PosnicPro, so it must load after it');
+  assert.ok(lf < sales, 'and before the module that mounts it');
 });
 
-test('the filter controls flex with the rail rather than using fixed widths', () => {
-  /* The rail is 330px on a laptop and 560px past 1500px, so a fixed-width
-     control either overflows the narrow case or strands space in the wide one. */
-  const row = cssRule('.q-filter-row {');
-  assert.match(row, /display:\s*flex/);
-  assert.match(row, /gap:/, 'gap, not margins - a wrapped row must still space itself');
-  const search = cssRule('.q-filter-row #quotes_search {');
-  assert.match(search, /flex:\s*1 1 auto/, 'the search box should take the slack');
+test('Filter sits in the page header next to New, and the panel starts closed', () => {
+  const html = fs.readFileSync(path.join(ROOT, 'frontend', 'modules', 'quotes.html'), 'utf8');
+  const header = html.slice(html.indexOf('<div class="breadcrumbbar">'), html.indexOf('<div class="contentbar">'));
+  assert.ok(header.includes('quotes_filter_btn'), 'the Filter button belongs in the header');
+  assert.ok(header.indexOf('quotes_filter_btn') < header.indexOf('quotes/new'), 'before New');
+
+  const panel = html.slice(html.indexOf('id="quotes_filter_panel"'));
+  assert.match(panel.slice(0, 120), /display:\s*none/, 'a list is for reading - the panel opens on request');
+});
+
+test('quotes takes its filter params from the shared bar, not its own inputs', () => {
+  const load = blockAt(quotesNamespace, 'load: function (keepPage) {');
+  assert.match(load, /PosnicPro\.listFilter\.params\('quotes'\)/, 'it must ask the shared bar');
+  for (const gone of ['#quotes_search_field', '#quotes_from', '#quotes_to']) {
+    assert.ok(!load.includes(gone), `${gone} is a control quotes no longer owns`);
+  }
+});
+
+test('the date presets are the ones people actually pick', () => {
+  for (const p of ['today', 'yesterday', 'week', 'month', 'year', 'last7', 'last30', 'custom']) {
+    assert.ok(new RegExp(`key: '${p}'`).test(listFilterSrc), `${p} preset missing`);
+  }
+});
+
+test('presets carry a time, not a bare date', () => {
+  /* "Today" on a till means since midnight in the shop's own timezone. Sending
+     a bare date makes the server guess, and the guess is wrong for any shop
+     that trades past midnight. */
+  assert.match(listFilterSrc, /setHours\(0, 0, 0, 0\)/, 'the range must start at midnight');
+  assert.match(listFilterSrc, /setHours\(23, 59, 59, 999\)/, 'and end at the end of the day');
+  assert.match(listFilterSrc, /toISOString\(\)/, 'and travel as an instant');
+});
+
+test('the typeahead uses the cached recents, not a query per keystroke', () => {
+  assert.match(listFilterSrc, /_recentGet\('recent_customers'\)/, 'recents come from local storage');
+  assert.match(listFilterSrc, /_customerSeed/, 'and the session seed already fetched for the sale screen');
+});
+
+test('the Filter button shows how many filters are on', () => {
+  /* A closed panel is otherwise where filters hide: someone narrows to one
+     customer, forgets, and reports the list as broken. */
+  assert.match(listFilterSrc, /lf-count/, 'the button needs a count badge');
+  assert.match(listFilterSrc, /activeCount/, 'and something to count');
 });
