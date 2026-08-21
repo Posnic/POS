@@ -774,3 +774,65 @@ test('the automatic colour is derived, never random', () => {
   assert.ok(!/Math\.random/.test(body), 'the tile colour is random - it cannot be recognised twice');
   assert.match(body, /h \* 31 \+ str\.charCodeAt/, 'it no longer derives from the name');
 });
+
+/*
+ * Variant mode: the order you fill the form in must not matter.
+ *
+ * loadVariant needs the item name - every row is titled "<item> / <value>" - so
+ * choosing variants first produced "Fill in the required fields" and NO pricing
+ * rows. The message did not say which field was missing, the field was on
+ * another card, and nothing rebuilt the rows once the name was typed. Reported
+ * as an error on picking a variant, and "no place to enter pricing details".
+ */
+test('the variant error names the field that is missing', () => {
+  const at = itemsJs.indexOf('loadVariant: function ()');
+  const body = itemsJs.slice(at, itemsJs.indexOf('\n        } else {', at));
+  assert.ok(
+    !/Fill in the required fields\./.test(body),
+    'the generic message is back - it does not say which field, or where it is',
+  );
+  assert.match(body, /Enter the item name first/, 'the name case says nothing useful');
+  assert.match(body, /goToTab\('item_tab_main', '#items_name'\)/, 'it does not take you to the field');
+});
+
+test('naming the item after choosing variants builds the rows', () => {
+  /* Otherwise the form silently demands one order of filling. */
+  const at = itemsJs.indexOf("$(document).on('input', '#items_name', function () {\n        if (!$('#product_with_variant')");
+  assert.notStrictEqual(at, -1, 'nothing rebuilds the rows when the name arrives');
+  const body = itemsJs.slice(at, itemsJs.indexOf('\n    });', at));
+  assert.match(body, /product_with_variant/, 'it runs outside variant mode too');
+  assert.match(body, /item_variant_list'\)\.val\(\) \|\| \[\]\)\.length === 0/, 'it runs with no variants chosen');
+  assert.match(body, /clearTimeout\(PosnicPro\.items\._variantNameTimer\)/, 'it rebuilds on every keystroke');
+});
+
+test('rebuilding never discards prices already typed', () => {
+  /* The rows carry the per-variant price and stock. Rebuilding them because a
+     letter changed in the name would wipe that work. */
+  const at = itemsJs.indexOf("$(document).on('input', '#items_name', function () {\n        if (!$('#product_with_variant')");
+  const body = itemsJs.slice(at, itemsJs.indexOf('\n    });', at));
+  assert.match(
+    body,
+    /if \(\$\.trim\(\$\('#load_price_fields'\)\.html\(\) \|\| ''\) === ''\) \{/,
+    'it rebuilds rows that already have values in them',
+  );
+});
+
+/*
+ * Close returns where you came from.
+ */
+test('following "Open it" and closing goes back, not to the list', () => {
+  const core = fs.readFileSync(
+    path.join(ROOT, 'frontend', 'static', 'script', 'js', 'core', 'PosnicPro.js'),
+    'utf8',
+  );
+  assert.match(core, /on\('click', '\[id\^="last_created_"\]'/, 'nothing records where you came from');
+  assert.match(core, /PosnicPro\.returnTo = currentHash/, 'the origin is not captured');
+  const at = core.indexOf('if (PosnicPro.returnTo) {');
+  assert.notStrictEqual(at, -1, 'the close handler ignores the marker');
+  const body = core.slice(at, core.indexOf('var patt =', at));
+  assert.match(body, /PosnicPro\.returnTo = '';/, 'a stale marker would hijack an unrelated Close');
+  assert.ok(
+    body.indexOf("PosnicPro.returnTo = '';") < body.indexOf('hasher.setHash(back)'),
+    'it must be cleared BEFORE navigating, or a failed nav leaves it armed',
+  );
+});

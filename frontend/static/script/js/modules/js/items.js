@@ -2074,11 +2074,16 @@ PosnicPro.items = {
         var html = "";
         var item_name = $("#items_name").val();
         if (item_name === '' || item_name.length <= 2) {
-            PosnicPro.alert('error', 'Fill in the required fields.');
-            $("#items_name").focus();
+            /* Each variant row is titled "<item> / <value>", so the name really
+               is needed first - but "Fill in the required fields" did not say
+               which field, on a screen where the missing one is on ANOTHER card.
+               It also left the pricing rows unbuilt, so there was nowhere to
+               enter a price and no way to tell that was why. */
+            PosnicPro.alert('error', 'Enter the item name first - each variant is named after it');
+            PosnicPro.items.goToTab('item_tab_main', '#items_name');
             return false;
         } else if (variant_value.length === 0) {
-            PosnicPro.alert('error', 'Fill in the required fields.');
+            PosnicPro.alert('error', 'Choose at least one variant value - a size, a colour, a pack');
             $("#item_variant_list").focus();
             return false;
         } else {
@@ -3505,6 +3510,31 @@ $(document).ready(function () {
         if ($('#product_with_variant').is(':checked') && ($(this).val() || []).length > 0) {
             PosnicPro.items.loadVariant();
         }
+    });
+
+    /*
+     * Naming the item AFTER choosing its variants has to work too.
+     *
+     * loadVariant needs the name - every row is titled "<item> / <value>" - so
+     * choosing variants first produced an error and no pricing rows, and
+     * nothing rebuilt them once the name was typed. The form was quietly
+     * demanding one order of filling and not saying so.
+     *
+     * Debounced, because this fires on every keystroke and rebuilding the rows
+     * per letter would throw away anything already typed into them.
+     */
+    $(document).on('input', '#items_name', function () {
+        if (!$('#product_with_variant').is(':checked')) { return; }
+        if (($('#item_variant_list').val() || []).length === 0) { return; }
+        if ($.trim(this.value).length <= 2) { return; }
+        clearTimeout(PosnicPro.items._variantNameTimer);
+        PosnicPro.items._variantNameTimer = setTimeout(function () {
+            /* Only if they are still missing. Rebuilding rows somebody has
+               already priced would wipe that work. */
+            if ($.trim($('#load_price_fields').html() || '') === '') {
+                PosnicPro.items.loadVariant();
+            }
+        }, 600);
     });
     $("#item_image_upload_form").submit(function (event) {
         event.preventDefault();
