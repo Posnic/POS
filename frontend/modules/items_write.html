@@ -9,6 +9,16 @@
                     <h4 class="page-title break_title mb-0"><span id="item_title_data">Add</span>
                         <lang class="lang_item_title">Item</lang></h4>
                 </div>
+                <!-- Import is not a field. It is the alternative to filling this
+                     form at all, so it belongs in the page header beside the
+                     title - not buried inside the Item card under the fields it
+                     would let you skip (owner ask). -->
+                <div class="col text-right" id="item_header_actions">
+                    <a href="#/items" data-module="item" data-access="write" class="btn btn-sm btn-primary-rgba"
+                        onclick="setTimeout(function(){PosnicPro.importTableFile('items');},300);">
+                        <i class="feather icon-upload mr-1"></i><lang class="lang_item_import_link">Import from a file</lang>
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -27,9 +37,15 @@
                          nav-justified gave each tab a third of the width, so
                          three short words spanned 1300px. -->
                     <ul class="nav nav-tabs m-b-15" id="item_form_tabs" role="tablist">
-                        <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#item_tab_main" role="tab"><i class="feather icon-box mr-1"></i><lang class="lang_item_title">Item</lang></a></li>
-                        <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#item_tab_details" role="tab"><i class="feather icon-image mr-1"></i><lang class="lang_item_details_title">Details</lang></a></li>
-                        <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#item_tab_more" role="tab"><i class="feather icon-sliders mr-1"></i><lang class="lang_tab_more">More</lang></a></li>
+                        <!-- The tick says "there is something in here", not "this is
+                             correct" - only Item has required fields, and claiming
+                             completeness for optional tabs would be a lie the shop
+                             would learn to ignore. Item ticks when its required fields
+                             are filled; Details and More tick when anything in them is
+                             filled. -->
+                        <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#item_tab_main" role="tab" data-tab-pane="item_tab_main"><i class="feather icon-box mr-1"></i><lang class="lang_item_title">Item</lang><i class="feather icon-check item-tab-tick"></i></a></li>
+                        <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#item_tab_details" role="tab" data-tab-pane="item_tab_details"><i class="feather icon-image mr-1"></i><lang class="lang_item_details_title">Details</lang><i class="feather icon-check item-tab-tick"></i></a></li>
+                        <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#item_tab_more" role="tab" data-tab-pane="item_tab_more"><i class="feather icon-sliders mr-1"></i><lang class="lang_tab_more">More</lang><i class="feather icon-check item-tab-tick"></i></a></li>
                     </ul>
                     <div class="tab-content" id="item_form_tabs_content">
                     <div class="tab-pane fade show active" id="item_tab_main" role="tabpanel">
@@ -40,14 +56,35 @@
                     <div class="col-lg-6 d-flex flex-column">
                     <!-- 1 · Item -->
                     <div class="card m-b-30 flex-grow-1">
-                        <div class="card-header d-flex align-items-center justify-content-between">
+                        <!-- WHAT KIND OF ITEM is decided here, above the fields it
+                             governs. Service and variants both hide parts of the form
+                             below; asking them from INSIDE that form meant the control
+                             could hide the row it was standing in (owner ask: "supposed
+                             to be in top may be in title, so that we can hide
+                             properly"). -->
+                        <div class="card-header items-kind-header">
                             <h5 class="card-title mb-0"><lang class="lang_item_title">Item</lang></h5>
-                            <!-- The radios stay in the DOM (hidden) - every mode check
-                                 and fill in items.js keeps working; the link drives them. -->
-                            <a href="javascript:void(0)" id="variant_mode_link" style="font-size:.85rem;">+ This item has variants</a>
-                            <div style="display:none;">
-                                <input type="radio" id="product_without_variant" name="product_radio_variant" checked>
-                                <input type="radio" id="product_with_variant" name="product_radio_variant">
+                            <div class="items-kind-controls">
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" class="custom-control-input" id="item_is_service"
+                                        name="item_is_service">
+                                    <label class="custom-control-label" for="item_is_service">
+                                        <lang class="lang_is_service">Service (no stock)</lang>
+                                    </label>
+                                </div>
+                                <select class="form-control form-control-sm" id="item_service_unit"
+                                    style="display:none !important;">
+                                    <option value="fixed">Fixed price</option>
+                                    <option value="hour">Per hour</option>
+                                    <option value="day">Per day</option>
+                                </select>
+                                <!-- The radios stay in the DOM (hidden) - every mode check
+                                     and fill in items.js keeps working; the link drives them. -->
+                                <a href="javascript:void(0)" id="variant_mode_link" style="font-size:.85rem;">+ This item has variants</a>
+                                <div style="display:none;">
+                                    <input type="radio" id="product_without_variant" name="product_radio_variant" checked>
+                                    <input type="radio" id="product_with_variant" name="product_radio_variant">
+                                </div>
                             </div>
                         </div>
                         <div class="card-body">
@@ -116,32 +153,42 @@
                                  line each (owner ask). -->
                             <div class="form-row">
                                 <div class="form-group col-md-6">
-                                    <label class="form-control-placeholder" for="items_category">
-                                        <lang class="lang_choosecategory_title"> Select Category </lang>
-                                        <small class="text-muted">(<lang class="lang_optional">optional</lang>)</small>
-                                    </label>
+                                    <!-- "+ Add" sits ON the label line, not under the control.
+                                         Underneath, its position depended on the height of the
+                                         thing above it - a select2 and a plain input are not the
+                                         same height, so the two links landed at different heights
+                                         on one row. On the label line they align with each other
+                                         and with every other label on the card. -->
+                                    <div class="d-flex align-items-baseline justify-content-between">
+                                        <label class="form-control-placeholder mb-0" for="items_category">
+                                            <lang class="lang_choosecategory_title"> Select Category </lang>
+                                            <small class="text-muted">(<lang class="lang_optional">optional</lang>)</small>
+                                        </label>
+                                        <a data-module="category" data-access="write" href="#/items/categories/new"
+                                            class="items-inline-add" style="font-size:.85rem;">
+                                            + <lang class="lang_add_category">Add Category</lang>
+                                        </a>
+                                    </div>
                                     <select id='items_category' name="items_category" style='width: 100%;'
                                         class="select2 items_category items_choose_error">
                                     </select>
-                                    <a data-module="category" data-access="write" href="#/items/categories/new"
-                                        class="d-inline-block mt-1" style="font-size:.85rem;">
-                                        + <lang class="lang_add_category">Add Category</lang>
-                                    </a>
                                 </div>
                                 <div class="form-group col-md-6">
-                                    <label class="form-control-placeholder" for="items_supplier">
-                                        <lang class="lang_choosesupplier_title"> Select Supplier </lang>
-                                        <small class="text-muted">(<lang class="lang_optional">optional</lang>)</small>
-                                    </label>
+                                    <div class="d-flex align-items-baseline justify-content-between">
+                                        <label class="form-control-placeholder mb-0" for="items_supplier">
+                                            <lang class="lang_choosesupplier_title"> Select Supplier </lang>
+                                            <small class="text-muted">(<lang class="lang_optional">optional</lang>)</small>
+                                        </label>
+                                        <a data-module="supplier" data-access="write" href="#/items/suppliers/new"
+                                            class="items-inline-add" style="font-size:.85rem;">
+                                            + <lang class="lang_add_supply">Add Supplier</lang>
+                                        </a>
+                                    </div>
                                     <!-- Optional (IC1): items routinely arrive without a known
                                          supplier; receiving is the supplier system of record. -->
                                     <input type="text" class="form-control" id="items_supplier" name="items_supplier"
                                         maxlength="50" placeholder="Choose a Supplier (optional)" autocomplete="off">
                                     <input type="hidden" name="items_supplier_id" id="items_supplier_id">
-                                    <a data-module="supplier" data-access="write" href="#/items/suppliers/new"
-                                        class="d-inline-block mt-1" style="font-size:.85rem;">
-                                        + <lang class="lang_add_supply">Add Supplier</lang>
-                                    </a>
                                 </div>
                             </div>
                             <!-- IC4: the import path exists (items list > Import icon) but
@@ -149,28 +196,7 @@
                                  feel the pain. -->
                             <!-- Services (Q3): a second sellable kind - no stock, priced
                                  fixed / per hour / per day. -->
-                            <div class="d-flex align-items-center justify-content-between flex-wrap" style="gap:8px;">
-                                <div class="custom-control custom-checkbox">
-                                    <input type="checkbox" class="custom-control-input" id="item_is_service"
-                                        name="item_is_service">
-                                    <label class="custom-control-label" for="item_is_service">
-                                        <lang class="lang_is_service">This is a service (no stock)</lang>
-                                    </label>
-                                    <select class="form-control form-control-sm d-inline-block ml-2" id="item_service_unit"
-                                        style="width:auto; display:none !important;">
-                                        <option value="fixed">Fixed price</option>
-                                        <option value="hour">Per hour</option>
-                                        <option value="day">Per day</option>
-                                    </select>
-                                </div>
-                                <small class="text-muted mb-0">
-                                    <lang class="lang_item_import_hint">Adding many items?</lang>
-                                    <a href="#/items" data-module="item" data-access="write"
-                                        onclick="setTimeout(function(){PosnicPro.importTableFile('items');},300);">
-                                        <lang class="lang_item_import_link">Import them from a file</lang>
-                                    </a>
-                                </small>
-                            </div>
+
                         </div>
                     </div>
 
@@ -404,7 +430,14 @@
                         </div>
                     </div>
 
+                    
+                    <!-- A tabbed form with no way forward makes people hunt for the
+                         next tab. The step buttons are the path through it; Save is
+                         still on the sticky bar and works from any tab. -->
+                    <div class="item-tab-nav" data-nav-for="item_tab_main">
+                        <span></span><button type="button" class="btn btn-sm btn-primary item-tab-next" data-goto="item_tab_details">Next: Details<i class="feather icon-arrow-right ml-1"></i></button>
                     </div>
+</div>
                     <div class="tab-pane fade" id="item_tab_details" role="tabpanel">
 
                     <div class="card m-b-30">
@@ -454,58 +487,15 @@
                                         </div>
                                         <input type="hidden" name="item_logo" id="item_logo" value="item.svg">
                                         <div id="item-display-preview"></div>
-                                    </div>
-                                </div>
-                                <!-- LS1: brand + tags - filtering today, the community
-                                     catalog tomorrow. -->
-                                <div class="form-row mt-2">
-                                    <div class="col-md-6">
-                                        <label class="form-control-placeholder" for="items_brand">
-                                            <lang class="lang_brand_title">Brand</lang>
-                                        </label>
-                                        <input type="text" class="form-control clear_text_item" id="items_brand"
-                                            name="items_brand" maxlength="100" placeholder="Brand (optional)"
-                                            autocomplete="off">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-control-placeholder" for="items_tags">
-                                            <lang class="lang_tags_title">Tags</lang>
-                                        </label>
-                                        <input type="text" class="form-control clear_text_item" id="items_tags"
-                                            name="items_tags" maxlength="300"
-                                            placeholder="Tags, comma separated (optional)" autocomplete="off">
-                                    </div>
-                                </div>
-                                <div class="form-row mt-2">
-                                    <div class="col-md-4">
-                                        <label class="form-control-placeholder" for="items_mfg_date">
-                                            <lang class="lang_mfg_title">Items MFG Date </lang>
-                                        </label>
-                                        <input type="text" class="form-control text-right" id="items_mfg_date"
-                                            name="items_mfg_date" placeholder="Enter MFG 2001-01-01" autocomplete="off">
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-control-placeholder" for="items_expiry_date">
-                                            <lang class="lang_expiry_title">Items Expiry Date </lang>
-                                        </label>
-                                        <input type="text" class="form-control text-right" id="items_expiry_date"
-                                            name="items_expiry_date" placeholder="Enter Expiry 2011-01-01"
-                                            autocomplete="off">
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-control-placeholder" for="items_sort">
-                                            <lang class="lang_showitemposition_title"> Item Position </lang>
-                                        </label>
-                                        <input type="number"
-                                            class="form-control allow_decimal text-right clear_text_item"
-                                            id="items_sort" name="items_sort" minlength="1" maxlength="10" value="99"
-                                            placeholder="Item list position" autocomplete="off">
-                                    </div>
-                                </div>
-                                <!-- Tile colour (Loyverse study L2): how a no-image item
-                                     looks on the sale grid. An image always wins. -->
-                                <div class="form-row mt-2">
-                                    <div class="col-md-12">
+                                        <!-- Colour and shape describe how the item looks on
+                                             the sale grid WHEN THERE IS NO IMAGE, so they belong
+                                             beside the image, not in a separate row below the
+                                             dates (owner ask). They hide themselves once an
+                                             image is uploaded - the label already promised that,
+                                             and a control that cannot affect anything should not
+                                             ask for a decision. -->
+                                        <div id="item_tile_fallback" class="mt-3">
+
                                         <label class="form-control-placeholder d-block">
                                             <lang class="lang_tile_color_title">Colour on the sale screen (when there is no image)</lang>
                                         </label>
@@ -532,6 +522,53 @@
                                             <span class="tile-swatch" data-color="#9b59b6" style="width:28px;height:28px;border:2px solid transparent;border-radius:4px;cursor:pointer;background:#9b59b6;"></span>
                                             <span class="tile-swatch" data-color="#95a5a6" style="width:28px;height:28px;border:2px solid transparent;border-radius:4px;cursor:pointer;background:#95a5a6;"></span>
                                         </div>
+                                                                            </div>
+                                    </div>
+                                </div>
+                                <!-- LS1: brand + tags - filtering today, the community
+                                     catalog tomorrow. -->
+                                <div class="form-row mt-2">
+                                    <div class="col-md-4">
+                                        <label class="form-control-placeholder" for="items_brand">
+                                            <lang class="lang_brand_title">Brand</lang>
+                                        </label>
+                                        <input type="text" class="form-control clear_text_item" id="items_brand"
+                                            name="items_brand" maxlength="100" placeholder="Brand (optional)"
+                                            autocomplete="off">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-control-placeholder" for="items_tags">
+                                            <lang class="lang_tags_title">Tags</lang>
+                                        </label>
+                                        <input type="text" class="form-control clear_text_item" id="items_tags"
+                                            name="items_tags" maxlength="300"
+                                            placeholder="Tags, comma separated (optional)" autocomplete="off">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-control-placeholder" for="items_sort">
+                                            <lang class="lang_showitemposition_title"> Item Position </lang>
+                                        </label>
+                                        <input type="number"
+                                            class="form-control allow_decimal text-right clear_text_item"
+                                            id="items_sort" name="items_sort" minlength="1" maxlength="10" value="99"
+                                            placeholder="Item list position" autocomplete="off">
+                                    </div>
+                                </div>
+                                <div class="form-row mt-2">
+                                    <div class="col-md-4">
+                                        <label class="form-control-placeholder" for="items_mfg_date">
+                                            <lang class="lang_mfg_title">Items MFG Date </lang>
+                                        </label>
+                                        <input type="text" class="form-control text-right" id="items_mfg_date"
+                                            name="items_mfg_date" placeholder="Enter MFG 2001-01-01" autocomplete="off">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-control-placeholder" for="items_expiry_date">
+                                            <lang class="lang_expiry_title">Items Expiry Date </lang>
+                                        </label>
+                                        <input type="text" class="form-control text-right" id="items_expiry_date"
+                                            name="items_expiry_date" placeholder="Enter Expiry 2011-01-01"
+                                            autocomplete="off">
                                     </div>
                                 </div>
                             </div>
@@ -539,7 +576,14 @@
                     </div>
 
                     <!-- 8 · Channels & extras (collapsed: flags, supplier) -->
+                    
+                    <!-- A tabbed form with no way forward makes people hunt for the
+                         next tab. The step buttons are the path through it; Save is
+                         still on the sticky bar and works from any tab. -->
+                    <div class="item-tab-nav" data-nav-for="item_tab_details">
+                        <button type="button" class="btn btn-sm btn-light item-tab-back" data-goto="item_tab_main"><i class="feather icon-arrow-left mr-1"></i>Back</button><button type="button" class="btn btn-sm btn-primary item-tab-next" data-goto="item_tab_more">Next: More<i class="feather icon-arrow-right ml-1"></i></button>
                     </div>
+</div>
                     <div class="tab-pane fade" id="item_tab_more" role="tabpanel">
 
                     <!-- The power codes moved here from the SKU card (owner: too
@@ -691,7 +735,14 @@
                         </div>
                     </div>
 
+                    
+                    <!-- A tabbed form with no way forward makes people hunt for the
+                         next tab. The step buttons are the path through it; Save is
+                         still on the sticky bar and works from any tab. -->
+                    <div class="item-tab-nav" data-nav-for="item_tab_more">
+                        <button type="button" class="btn btn-sm btn-light item-tab-back" data-goto="item_tab_details"><i class="feather icon-arrow-left mr-1"></i>Back</button><span></span>
                     </div>
+</div>
                     </div>
 
                     <!-- Sticky save bar: always in reach on a long form. -->

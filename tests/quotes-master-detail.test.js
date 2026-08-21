@@ -525,6 +525,20 @@ test('the description keeps more room than the short fields, but not the page', 
   assert.ok(m, 'the description needs a cap too');
   assert.ok(Number(m[1]) > 420, 'it holds sentences, so it gets more than a brand name');
   assert.ok(Number(m[1]) <= 800, 'but a text column past ~800px is hard to read back');
+
+  /* AND it must equal the dropzone's, which sits in the matching column. They
+     carried 640 and 420, so one filled its column and the other stopped short -
+     reported as "why each field have different width". Removing both caps makes
+     them equal and breaks the line-length rule above; matching them keeps both.
+     This assertion is why that mistake did not ship. */
+  const drop = cssRule('#items_new .Neon-theme-dragdropbox');
+  const d = drop.match(/max-width:\s*(\d+)px/);
+  assert.ok(d, 'the dropzone lost its cap - it will not match the description');
+  assert.strictEqual(
+    d[1],
+    m[1],
+    'the description and the dropzone share a row, so they share a width',
+  );
 });
 
 test('the dropzone is one control on a tab, not a landing page', () => {

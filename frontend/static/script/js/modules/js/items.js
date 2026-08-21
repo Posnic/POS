@@ -109,7 +109,12 @@ PosnicPro.items = {
        track_inventory off regardless, so this is presentation only. */
     applyServiceMode: function () {
         var isService = $('#item_is_service').is(':checked');
-        $('#item_service_unit').attr('style', isService ? 'width:auto;' : 'width:auto; display:none !important;');
+        /* The whole style attribute is replaced, so it must not carry sizing any
+           more: the select sits in a flex row now and CSS owns its width. It
+           used to set width:auto here, which fought the row and left the unit
+           hanging off the checkbox label instead of lining up with the fields.
+           The !important is still needed to beat the markup's own inline hide. */
+        $('#item_service_unit').attr('style', isService ? '' : 'display:none !important;');
         // a service holds no stock: opening qty and reorder vanish wherever
         // their column lives (the old .col-md-6 anchor rotted silently)
         $('#items_available_quantity, #items_reorder_point').closest('[class*="col-"]').toggle(!isService);
@@ -2843,6 +2848,112 @@ $(function () {
         $('#variant_mode_link').text($('#product_with_variant').is(':checked')
             ? 'Remove variants' : '+ This item has variants');
     };
+    /* ------------------------------------------------------------------
+     * Getting through a tabbed form (owner ask: "next button to move next
+     * tab... if one tab full completed green tick or something").
+     *
+     * A tabbed form with no way forward makes people hunt for the next tab, and
+     * gives no sense of how much is left. Two small things fix both: a step
+     * button at the end of each pane, and a tick on each tab that has something
+     * in it.
+     *
+     * WHAT THE TICK MEANS is the part worth being careful about. Only the Item
+     * tab has required fields. Ticking Details and More for "correct" would be
+     * a claim the form cannot make - they are entirely optional - so the tick
+     * means "there is something in here". Item ticks when its REQUIRED fields
+     * are filled, which is the only tab where that is a real statement. A badge
+     * that lies is one people stop reading.
+     * ------------------------------------------------------------------ */
+    /*
+     * Colour and shape describe the sale-grid tile WHEN THERE IS NO IMAGE. The
+     * label always said so; the controls stayed on screen anyway, asking for a
+     * decision that an uploaded image immediately overrides.
+     *
+     * Driven off what is actually on screen (the preview strip) plus the stored
+     * cover name, because an image can arrive three ways - a fresh upload, an
+     * edit loading an existing item, and a clone - and hooking each one is how
+     * the third gets missed.
+     */
+    PosnicPro.items.refreshTileFallback = function () {
+        var cover = $.trim($('#item_logo').val() || '');
+        var hasImage = $('#item-display-preview').find('img').length > 0
+            || (cover !== '' && cover !== 'item.svg');
+        $('#item_tile_fallback').toggle(!hasImage);
+    };
+
+    /* The preview strip is written by several paths, so watch the node rather
+       than every writer. */
+    $(function () {
+        var node = document.getElementById('item-display-preview');
+        if (!node || typeof MutationObserver === 'undefined') { return; }
+        new MutationObserver(function () {
+            PosnicPro.items.refreshTileFallback();
+        }).observe(node, { childList: true, subtree: true });
+        PosnicPro.items.refreshTileFallback();
+    });
+
+    PosnicPro.items.TAB_REQUIRED = {
+        item_tab_main: ['#items_name', '#items_selling_price']
+    };
+
+    PosnicPro.items.refreshTabTicks = function () {
+        $('#item_form_tabs .nav-link').each(function () {
+            var pane = $(this).data('tab-pane');
+            if (!pane) { return; }
+            var $pane = $('#' + pane);
+            if (!$pane.length) { return; }
+            var required = PosnicPro.items.TAB_REQUIRED[pane];
+            var done;
+
+            if (required) {
+                /* An open-price item deliberately has no selling price, so
+                   requiring one here would leave that tab permanently unticked
+                   for a legitimate item. */
+                var openPrice = $('#item_open_price').is(':checked');
+                done = required.every(function (sel) {
+                    if (sel === '#items_selling_price' && openPrice) { return true; }
+                    return $.trim($(sel).val() || '') !== '';
+                });
+            } else {
+                /* "Something in here" - anything the person actually typed or
+                   picked, ignoring the defaults the form ships with. */
+                done = false;
+                $pane.find('input, select, textarea').each(function () {
+                    var $f = $(this);
+                    if ($f.is(':hidden') && !$f.is('select')) { return; }
+                    if ($f.attr('type') === 'checkbox' || $f.attr('type') === 'radio') {
+                        if ($f.is(':checked') && !$f.prop('defaultChecked')) { done = true; }
+                        return;
+                    }
+                    var v = $.trim($f.val() || '');
+                    if (v === '' || v === $f.prop('defaultValue')) { return; }
+                    /* 0 and 99 are the form's own defaults, not an answer. */
+                    if (v === '0' || v === '0.00' || v === '99') { return; }
+                    done = true;
+                });
+            }
+            $(this).toggleClass('is-complete', !!done);
+        });
+    };
+
+    /* Every edit can change a tick, so this listens broadly rather than
+       enumerating fields - a list would go stale the first time one is added. */
+    $(document).on('input change', '#item_image_upload_form input, #item_image_upload_form select, #item_image_upload_form textarea',
+        function () { PosnicPro.items.refreshTabTicks(); });
+
+    $(document).on('click', '.item-tab-next, .item-tab-back', function () {
+        var target = $(this).data('goto');
+        if (!target) { return; }
+        $('#item_form_tabs .nav-link[data-tab-pane="' + target + '"]').tab('show');
+        /* The form is taller than the viewport on a small screen, and switching
+           tabs leaves you wherever the last one had scrolled to. */
+        $('html, body').animate({ scrollTop: $('#item_form_tabs').offset().top - 70 }, 150);
+    });
+
+    $(document).on('shown.bs.tab', '#item_form_tabs .nav-link', function () {
+        PosnicPro.items.refreshTabTicks();
+    });
+
     $(document).on('click', '#variant_mode_link', function () {
         var withVariant = $('#product_with_variant').is(':checked');
         $(withVariant ? '#product_without_variant' : '#product_with_variant')
@@ -2855,7 +2966,8 @@ $(function () {
     });
     $("#product_without_variant, #product_with_variant").change(function () {
         syncVariantLink();
-        if ($("#product_without_variant").is(":checked")) {
+        var plain = $("#product_without_variant").is(":checked");
+        if (plain) {
             $('#show_variant_fields').hide();
             $('#show_price_fields,#sku_card_col').show();
             $("#load_price_fields").html('');
@@ -2865,6 +2977,22 @@ $(function () {
             $('#show_variant_fields').show();
             $("#show-hide-item-discount").hide();
         }
+        /*
+         * The PARENT's price and opening stock go too (owner: variant mode "is
+         * hiding so many stuff but those required. please check").
+         *
+         * It was hiding cost, MRP, units, SKU and barcode while KEEPING selling
+         * price and opening stock - and demanding a selling price, which is
+         * required. But every variant row carries its own: saveVariantFamily
+         * reads items_selling_price_<n> and items_available_quantity_<n> and
+         * never reads these. So the form asked for two numbers it then threw
+         * away, on the one screen where it also hid the fields you did need.
+         *
+         * Either the parent owns price and stock or the variants do. The save
+         * path already decided: the variants do.
+         */
+        $('#items_selling_price').closest('.form-group').toggle(plain);
+        $('#item_opening_wrap').toggle(plain && !$('#item_is_service').is(':checked'));
     });
 });
 
@@ -2885,6 +3013,13 @@ $(document).ready(function () {
        silently, which is how shops end up with unpriced catalogues. */
     jQuery.validator.addMethod("sellingPriceOrOpen", function (value) {
         if ($('#item_open_price').is(':checked')) {
+            return true;
+        }
+        /* In variant mode the parent has no price of its own - saveVariantFamily
+           reads items_selling_price_<n> from each variant row and never looks at
+           this field. Demanding it here asked for a number that is discarded,
+           and did it on a field the same mode hides. */
+        if ($('#product_with_variant').is(':checked')) {
             return true;
         }
         return (parseFloat(value) || 0) > 0;
