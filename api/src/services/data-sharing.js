@@ -105,7 +105,9 @@ const truthy = (v) => {
   if (v === true) return true;
   if (v === false || v === null || v === undefined) return false;
   const s = String(v).trim().toLowerCase();
-  return s === 'true' || s === '1' || s === 'yes' || s === 'on' || s === 'enable' || s === 'enabled';
+  return (
+    s === 'true' || s === '1' || s === 'yes' || s === 'on' || s === 'enable' || s === 'enabled'
+  );
 };
 
 /*

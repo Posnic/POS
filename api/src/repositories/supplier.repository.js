@@ -128,7 +128,10 @@ class SupplierRepository extends BaseModel {
     if (branchId) {
       query = withBranchScope(
         query,
-        await dataSharing.scopeBranch('suppliers', branchId, { licenseId: BaseModel.license, branchId })
+        await dataSharing.scopeBranch('suppliers', branchId, {
+          licenseId: BaseModel.license,
+          branchId,
+        })
       );
     }
 
