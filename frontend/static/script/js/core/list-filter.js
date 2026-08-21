@@ -222,6 +222,30 @@ PosnicPro.listFilter = {
      * appearance as the only clue - and the panel sits in a different part of
      * the header. Pressing it should look pressed, the way a real toggle does.
      * aria-expanded says the same thing to a screen reader. */
+    /*
+     * A filter a screen owns, put where the bar can see it.
+     *
+     * Quotes has status chips outside the panel. They filter the list, so if
+     * the bar does not know about them the Filter button says "0 filters" while
+     * a filter is on - which is the precise thing the count exists to prevent -
+     * and Clear leaves the list filtered by something it just told you was
+     * gone.
+     *
+     * Putting the value in `extra` makes the bar the single source of truth:
+     * it is counted, it is sent, and Clear removes it. The screen learns the
+     * new value back through onChange, so the chips repaint from the same
+     * state rather than keeping their own.
+     */
+    LF.setExtra = function (key, name, value) {
+        var m = LF._mounted[key];
+        if (!m) return false;
+        if (!m.state.extra) m.state.extra = {};
+        if (value === '' || value === null || value === undefined) delete m.state.extra[name];
+        else m.state.extra[name] = value;
+        LF._changed(key);
+        return true;
+    };
+
     LF.toggle = function (key) {
         var m = LF._mounted[key];
         if (!m) return;

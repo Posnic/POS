@@ -8264,10 +8264,12 @@ PosnicPro.quotes = {
             page: PosnicPro.quotes._page,
             limit: PosnicPro.quotes.PAGE_SIZE
         };
-        if (PosnicPro.quotes._status) { params.status = PosnicPro.quotes._status; }
-        /* Search, field, exact and the date window all come from the shared
-           filter bar - quotes owns none of that any more, which is what lets
-           items and sales get the same bar without a second copy. */
+        /* Search, field, exact, the date window AND the status chips all come
+           from the shared filter bar - quotes owns none of that any more, which
+           is what lets items and sales get the same bar without a second copy.
+           Status rides as an extra so the Filter button counts it and Clear
+           clears it; a chip filtering under a button reading "0" is exactly the
+           forgotten filter the count exists to catch. */
         $.extend(params, PosnicPro.listFilter.params('quotes'));
         PosnicPro.get({ url: 'quotes', data: params }, function (r) {
             if (mine !== PosnicPro.quotes._seq) { return; }
@@ -8284,7 +8286,10 @@ PosnicPro.quotes = {
         var rows = PosnicPro.quotes._rows || [];
         var meta = PosnicPro.quotes._meta;
         if (!rows.length) {
-            var searching = $.trim($('#quotes_search').val() || '') !== '' || PosnicPro.quotes._status;
+            /* #quotes_search stopped existing when the shared bar took over -
+               this read `''` from nothing and told anyone whose search found
+               nothing that they had never written a quote. */
+            var searching = PosnicPro.listFilter.activeCount('quotes') > 0;
             $('#quotes_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">'
                 + (searching
                     ? 'No quotes match this search.'
@@ -10351,7 +10356,10 @@ PosnicPro.quotes.mountFilters = function () {
            field is selected - picking one narrows the field for you. */
         typeahead: 'customer',
         typeaheadField: 'customer_name',
-        onChange: function () { PosnicPro.quotes.load(); }
+        onChange: function (params, state) {
+            PosnicPro.quotes._paintChips((state.extra && state.extra.status) || '');
+            PosnicPro.quotes.load();
+        }
     });
     PosnicPro.quotes._filterMounted = true;
 };
@@ -10380,18 +10388,20 @@ $(document).on('click', '#quotes_rail_toggle', function () {
     $('#quotes_new .contentbar').toggleClass('rail-collapsed');
 });
 $(document).on('click', '.quotes-chip', function () {
+    /* The bar may not be built yet - it mounts lazily - and a status set
+       outside it would be invisible to the count and to Clear. */
+    PosnicPro.quotes.mountFilters();
+    PosnicPro.listFilter.setExtra('quotes', 'status', $(this).data('status') || '');
+});
+/* The chips paint from the bar's state, never from the click, so Clear moves
+   them back to All instead of leaving a lit chip over an unfiltered list. */
+PosnicPro.quotes._paintChips = function (status) {
+    PosnicPro.quotes._status = status || '';
     $('.quotes-chip').removeClass('btn-primary-rgba').addClass('btn-secondary-rgba');
-    $(this).removeClass('btn-secondary-rgba').addClass('btn-primary-rgba');
-    PosnicPro.quotes._status = $(this).data('status') || '';
-    PosnicPro.quotes.load();
-});
-// search asks the SERVER now, so debounce it rather than querying per keypress
-$(document).on('input', '#quotes_search', function () {
-    clearTimeout(PosnicPro.quotes._searchTimer);
-    PosnicPro.quotes._searchTimer = setTimeout(function () {
-        PosnicPro.quotes.load();
-    }, 300);
-});
+    $('.quotes-chip').filter(function () {
+        return String($(this).data('status') || '') === String(status || '');
+    }).removeClass('btn-secondary-rgba').addClass('btn-primary-rgba');
+};
 $(document).on('click', '.recent-customer-row', function () {
     var list = PosnicPro.sales._recentRendered || [];
     var c = list[$(this).data('i')];
