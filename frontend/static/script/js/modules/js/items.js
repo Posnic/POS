@@ -198,6 +198,27 @@ PosnicPro.items = {
         // their column lives (the old .col-md-6 anchor rotted silently)
         $('#items_available_quantity, #items_reorder_point').closest('[class*="col-"]').toggle(!isService);
         $('#items_barcodes_alt, #items_purchase_unit, #items_conversion_factor').closest('.form-row').toggle(!isService);
+        /*
+         * A service cannot be a variant family, so the offer goes away.
+         *
+         * Not because priced tiers of a service are meaningless - "Haircut /
+         * Men", "Massage / 60 min" are perfectly real - but because the rows
+         * this form builds for a family are stock rows: SKU, barcode, opening
+         * quantity, units, shelf position. _sharedItemFields stamps
+         * item_kind:'service' onto every one of them, so the combination saves
+         * services carrying stock counts, which nothing downstream can mean.
+         *
+         * Offering a choice that produces contradictory data is worse than not
+         * offering it. Service tiers are worth building properly later, as
+         * priced options on ONE service rather than a family of stock records.
+         */
+        $('#variant_mode_link').toggle(!isService);
+        if (isService && $('#product_with_variant').is(':checked')) {
+            /* Said out loud rather than silently reverted - anything already
+               typed into the variant rows is about to be cleared. */
+            $('#product_without_variant').prop('checked', true).trigger('change');
+            PosnicPro.alert('info', 'Variants are for stocked products - this is now a single service');
+        }
     },
     /* A shop with tax switched off never sees the Tax card (owner ask). */
     applyTaxGate: function () {
@@ -2068,21 +2089,54 @@ PosnicPro.items = {
         return false;
     },
 
+    /* "2 ) Shirt / Large" once the item has a name, plain "2 ) Large" before
+       then. The row is usable either way - the heading is a label, not data. */
+    variantRowTitle: function (index, itemName, value) {
+        var name = $.trim(itemName || '');
+        return index + ' ) ' + (name ? name + ' / ' : '') + value;
+    },
+
+    /* Fill the headings in as the name is typed.
+       A retitle rather than a rebuild: rebuilding would discard every price
+       already typed into the rows, and on a per-keystroke handler that is the
+       difference between a form that helps and one that fights back. */
+    retitleVariantRows: function () {
+        var itemName = $('#items_name').val();
+        $('#load_price_fields .variant-row-title').each(function () {
+            var $t = $(this);
+            $t.text(PosnicPro.items.variantRowTitle(
+                $t.attr('data-variant-index'), itemName, $t.attr('data-variant-value')
+            ));
+        });
+    },
+
     loadVariant: function () {
         var variant_value = $('#item_variant_list').val();
         $("#load_price_fields").html('');
         var html = "";
         var item_name = $("#items_name").val();
-        if (item_name === '' || item_name.length <= 2) {
-            /* Each variant row is titled "<item> / <value>", so the name really
-               is needed first - but "Fill in the required fields" did not say
-               which field, on a screen where the missing one is on ANOTHER card.
-               It also left the pricing rows unbuilt, so there was nowhere to
-               enter a price and no way to tell that was why. */
-            PosnicPro.alert('error', 'Enter the item name first - each variant is named after it');
-            PosnicPro.items.goToTab('item_tab_main', '#items_name');
-            return false;
-        } else if (variant_value.length === 0) {
+        /*
+         * The item name is deliberately NOT required here.
+         *
+         * This used to refuse to build anything until the name was typed,
+         * because each row is headed "<item> / <value>". That reason does not
+         * survive contact with the save: saveVariantFamily recomputes the name
+         * from the live field at submit time, so the heading is display only
+         * and never was an input to what gets stored.
+         *
+         * What the guard actually did was error the moment a variant value was
+         * picked and leave #load_price_fields empty - so there was nowhere to
+         * type a price, and nothing on screen said why (reported: "as soon as i
+         * select variant value i am seeing error and no price entering form not
+         * exist"). Clicking Save then re-entered here with the name filled and
+         * finally rendered the rows, which is why Save appeared to show the
+         * price box instead of saving.
+         *
+         * Now the rows appear on the first pick and the heading fills itself in
+         * as the name is typed. The name stays required to SAVE - the validator
+         * on #items_name already enforces that, and it says so in place.
+         */
+        if (variant_value.length === 0) {
             PosnicPro.alert('error', 'Choose at least one variant value - a size, a colour, a pack');
             $("#item_variant_list").focus();
             return false;
@@ -2093,7 +2147,7 @@ PosnicPro.items = {
                 html = html + '<div class="card-body">';
                 html = html + '<div class="card-body">';
                 html = html + '<div class="card-header">';
-                html = html + '<h5 class="card-title text-primary">' + (key + 1) + ' ) ' + item_name + ' / ' + name + '</h5>';
+                html = html + '<h5 class="card-title text-primary variant-row-title" data-variant-value="' + name + '" data-variant-index="' + (key + 1) + '">' + PosnicPro.items.variantRowTitle(key + 1, item_name, name) + '</h5>';
                 html = html + '</div>';
                 html = html + '<div class="row">';
                 html = html + '<div class="col-md-6">';
@@ -3183,6 +3237,11 @@ $(function () {
     $("#product_without_variant, #product_with_variant").change(function () {
         syncVariantLink();
         var plain = $("#product_without_variant").is(":checked");
+        /* The other half of the same rule (see applyServiceMode): a family of
+           variants is a family of stocked products, so the service tick has no
+           meaning while one is being built. Hidden rather than disabled - a
+           greyed control asks a question the form then refuses to answer. */
+        $('#item_is_service').closest('.custom-control').toggle(plain);
         if (plain) {
             $('#show_variant_fields').hide();
             $('#show_price_fields,#sku_card_col').show();
@@ -3512,29 +3571,12 @@ $(document).ready(function () {
         }
     });
 
-    /*
-     * Naming the item AFTER choosing its variants has to work too.
-     *
-     * loadVariant needs the name - every row is titled "<item> / <value>" - so
-     * choosing variants first produced an error and no pricing rows, and
-     * nothing rebuilt them once the name was typed. The form was quietly
-     * demanding one order of filling and not saying so.
-     *
-     * Debounced, because this fires on every keystroke and rebuilding the rows
-     * per letter would throw away anything already typed into them.
-     */
+    /* Naming the item after choosing its variants fills the row headings in
+       as you type. No debounce needed - this only rewrites text nodes that
+       already exist, so nothing typed into the rows can be lost. */
     $(document).on('input', '#items_name', function () {
         if (!$('#product_with_variant').is(':checked')) { return; }
-        if (($('#item_variant_list').val() || []).length === 0) { return; }
-        if ($.trim(this.value).length <= 2) { return; }
-        clearTimeout(PosnicPro.items._variantNameTimer);
-        PosnicPro.items._variantNameTimer = setTimeout(function () {
-            /* Only if they are still missing. Rebuilding rows somebody has
-               already priced would wipe that work. */
-            if ($.trim($('#load_price_fields').html() || '') === '') {
-                PosnicPro.items.loadVariant();
-            }
-        }, 600);
+        PosnicPro.items.retitleVariantRows();
     });
     $("#item_image_upload_form").submit(function (event) {
         event.preventDefault();

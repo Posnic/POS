@@ -784,36 +784,30 @@ test('the automatic colour is derived, never random', () => {
  * another card, and nothing rebuilt the rows once the name was typed. Reported
  * as an error on picking a variant, and "no place to enter pricing details".
  */
-test('the variant error names the field that is missing', () => {
+test('the variant error that remains names its field', () => {
+  /* The missing-NAME error is gone entirely - the rows build without it now.
+     The one remaining refusal (no values chosen) still has to say so. */
   const at = itemsJs.indexOf('loadVariant: function ()');
   const body = itemsJs.slice(at, itemsJs.indexOf('\n        } else {', at));
   assert.ok(
     !/Fill in the required fields\./.test(body),
     'the generic message is back - it does not say which field, or where it is',
   );
-  assert.match(body, /Enter the item name first/, 'the name case says nothing useful');
-  assert.match(body, /goToTab\('item_tab_main', '#items_name'\)/, 'it does not take you to the field');
+  assert.match(body, /Choose at least one variant value/, 'the empty-values case says nothing useful');
 });
 
-test('naming the item after choosing variants builds the rows', () => {
-  /* Otherwise the form silently demands one order of filling. */
+test('the item name arriving fills headings without touching the rows', () => {
+  /* Filling the name last has to work, and must not cost anything already
+     typed into the pricing rows. */
   const at = itemsJs.indexOf("$(document).on('input', '#items_name', function () {\n        if (!$('#product_with_variant')");
-  assert.notStrictEqual(at, -1, 'nothing rebuilds the rows when the name arrives');
+  assert.notStrictEqual(at, -1, 'nothing updates the rows when the name arrives');
   const body = itemsJs.slice(at, itemsJs.indexOf('\n    });', at));
   assert.match(body, /product_with_variant/, 'it runs outside variant mode too');
-  assert.match(body, /item_variant_list'\)\.val\(\) \|\| \[\]\)\.length === 0/, 'it runs with no variants chosen');
-  assert.match(body, /clearTimeout\(PosnicPro\.items\._variantNameTimer\)/, 'it rebuilds on every keystroke');
-});
-
-test('rebuilding never discards prices already typed', () => {
-  /* The rows carry the per-variant price and stock. Rebuilding them because a
-     letter changed in the name would wipe that work. */
-  const at = itemsJs.indexOf("$(document).on('input', '#items_name', function () {\n        if (!$('#product_with_variant')");
-  const body = itemsJs.slice(at, itemsJs.indexOf('\n    });', at));
-  assert.match(
+  assert.match(body, /retitleVariantRows\(\)/, 'the headings never fill in');
+  assert.doesNotMatch(
     body,
-    /if \(\$\.trim\(\$\('#load_price_fields'\)\.html\(\) \|\| ''\) === ''\) \{/,
-    'it rebuilds rows that already have values in them',
+    /loadVariant\(\)/,
+    'a keystroke in the name rebuilds the rows and wipes prices already typed',
   );
 });
 
@@ -834,5 +828,84 @@ test('following "Open it" and closing goes back, not to the list', () => {
   assert.ok(
     body.indexOf("PosnicPro.returnTo = '';") < body.indexOf('hasher.setHash(back)'),
     'it must be cleared BEFORE navigating, or a failed nav leaves it armed',
+  );
+});
+
+test('the variant pricing rows do not wait for the item name', () => {
+  const js = fs.readFileSync(
+    path.join(__dirname, '..', 'frontend/static/script/js/modules/js/items.js'),
+    'utf8',
+  );
+  const at = js.indexOf('loadVariant: function ()');
+  assert.notStrictEqual(at, -1, 'loadVariant is gone');
+  const fn = js.slice(at, js.indexOf('\n    },', at));
+
+  // The bug: picking a variant value errored and rendered nothing, so there
+  // was nowhere to type a price. Clicking Save then re-entered and finally
+  // drew the rows - which is why Save looked like it opened the price box.
+  const guard = fn.slice(0, fn.indexOf('$(variant_value).each'));
+  assert.doesNotMatch(
+    guard,
+    /items_name.*length <= 2/s,
+    'the rows are gated on the item name again - picking a value will error with no price fields',
+  );
+  assert.doesNotMatch(
+    guard,
+    /Enter the item name first/,
+    'the name is still being demanded before the rows can be built',
+  );
+  // The values guard is the one that legitimately remains.
+  assert.match(guard, /variant_value\.length === 0/, 'nothing checks that a value was chosen');
+});
+
+test('a variant row heading survives having no item name yet', () => {
+  const js = fs.readFileSync(
+    path.join(__dirname, '..', 'frontend/static/script/js/modules/js/items.js'),
+    'utf8',
+  );
+  const at = js.indexOf('variantRowTitle: function (index, itemName, value)');
+  assert.notStrictEqual(at, -1, 'variantRowTitle is gone');
+  const fn = js.slice(at, js.indexOf('\n    },', at));
+  // Without a name it must not render "undefined / Large" or " / Large".
+  assert.match(fn, /name \? name \+ ' \/ ' : ''/, 'the separator is emitted with no name in front of it');
+
+  // Retitling, not rebuilding: a rebuild on every keystroke discards prices.
+  const rt = js.indexOf('retitleVariantRows: function ()');
+  assert.notStrictEqual(rt, -1, 'retitleVariantRows is gone');
+  const body = js.slice(rt, js.indexOf('\n    },', rt));
+  assert.doesNotMatch(body, /loadVariant\(\)/, 'retitling rebuilds the rows and throws away typed prices');
+  assert.match(body, /variant-row-title/, 'nothing selects the headings to retitle');
+
+  // and the heading must carry what the retitle needs to rebuild its text
+  assert.match(js, /data-variant-value="' \+ name \+ '"/, 'the heading does not record its value');
+  assert.match(js, /data-variant-index="' \+ \(key \+ 1\) \+ '"/, 'the heading does not record its number');
+});
+
+test('services and variants are mutually exclusive', () => {
+  const js = fs.readFileSync(
+    path.join(__dirname, '..', 'frontend/static/script/js/modules/js/items.js'),
+    'utf8',
+  );
+  const at = js.indexOf('applyServiceMode: function ()');
+  assert.notStrictEqual(at, -1, 'applyServiceMode is gone');
+  const fn = js.slice(at, js.indexOf('\n    },', at));
+  // A variant family is a family of STOCK rows (sku, barcode, quantity), and
+  // _sharedItemFields stamps item_kind:'service' on every one of them.
+  assert.match(fn, /\$\('#variant_mode_link'\)\.toggle\(!isService\)/, 'a service can still be given variants');
+  assert.match(
+    fn,
+    /product_without_variant'\)\.prop\('checked', true\)\.trigger\('change'\)/,
+    'ticking Service leaves an active variant family in place',
+  );
+  assert.match(fn, /alert\('info'/, 'the variant rows are cleared silently');
+
+  // and the reverse direction
+  const vt = js.indexOf('$("#product_without_variant, #product_with_variant").change');
+  assert.notStrictEqual(vt, -1, 'the variant mode handler is gone');
+  const vbody = js.slice(vt, vt + 900);
+  assert.match(
+    vbody,
+    /#item_is_service'\)\.closest\('\.custom-control'\)\.toggle\(plain\)/,
+    'the Service tick stays offered while building a variant family',
   );
 });
