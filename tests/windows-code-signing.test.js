@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('fs');
 const path = require('path');
+const { stripComments } = require('./helpers/source-lookup');
 
 /*
  * Authenticode signing for the Windows build.
@@ -250,4 +251,32 @@ test('the empty-store message offers the workaround', () => {
      an answer that is technically true and practically useless. */
   const finder = fs.readFileSync(path.join(ROOT, 'scripts', 'find-signing-cert.js'), 'utf8');
   assert.match(finder, /sign:link/, 'the diagnosis names no way forward');
+});
+test('the held-card error is named, not left as "internal error"', () => {
+  /* signtool reports 0xc0000225 as "an unexpected internal error has occurred",
+     which is true and useless. It means the certificate and key were found but
+     the CARD could not be reached - almost always because proCertum CardManager
+     has it open, or SimplySign Desktop is in the tray.
+
+     Naming it matters because every other signal looks perfect while it
+     happens: the store association is correct, the public keys match, the chain
+     validates and revocation passes. It cost most of a session to work out
+     once. */
+  /*
+   * COMMENTS STRIPPED FIRST. The explanation above this branch names the error
+   * code, CardManager and the cause - so every assertion here passed against
+   * the prose while the actual condition was mutated away. Found by mutation
+   * testing; the first version of this test was worthless.
+   */
+  const code = stripComments(hook);
+  assert.match(code, /c0000225/, 'the held-card error code is not recognised');
+  const hintAt = code.indexOf('let hint =');
+  const hints = code.slice(hintAt, code.indexOf('throw new Error', hintAt));
+  assert.match(hints, /CardManager/, 'the fix is not named');
+  assert.match(hints, /held open by another application/, 'the cause is not explained');
+  /* It must be checked BEFORE the generic fallbacks, or the vaguer hint wins. */
+  assert.ok(
+    hints.indexOf('c0000225') < hints.indexOf('No certificates were found'),
+    'a more generic hint is tested first and shadows this one',
+  );
 });
