@@ -2,17 +2,11 @@
 /*
  * Fail on a new production advisory; stay quiet about ones already judged.
  *
- * `npm audit` on this project reports two moderate advisories that cannot be
- * reached from any code path here. Left alone, the output is permanently
- * non-zero - and a check that is always red is a check nobody reads, which is
- * how the advisory that does matter gets missed. Ignoring the command entirely
- * has the same effect, more honestly.
- *
- * So each accepted advisory is written down with the reasoning that made it
- * acceptable, and anything not on that list fails the build. The list is short
- * on purpose: an exception costs a paragraph explaining why, which is the right
- * price. If an entry ever stops being true - a dependency starts calling the
- * vulnerable path - it should be deleted rather than amended.
+ * The current dependency graph has no production advisories. Anything npm
+ * reports therefore fails the build unless a maintainer explicitly documents
+ * why its vulnerable path cannot be reached. An exception costs a paragraph
+ * explaining why and an expiry date, which is the right price for keeping the
+ * gate useful.
  *
  * Development-only advisories are not covered. They belong to build tooling
  * that never reaches a shop, and mixing them in here would bury the ones that
@@ -29,58 +23,7 @@ const path = require('path');
  * `expires` is the date by which it should be looked at again whether or not
  * anything changed - an exception with no expiry becomes permanent by neglect.
  */
-const ACCEPTED = {
-  'GHSA-w5hq-g745-h8pq': {
-    package: 'uuid',
-    via: 'exceljs',
-    reason:
-      'The advisory is a missing bounds check in uuid v3/v5/v6 when a `buf` ' +
-      'argument is supplied. exceljs 4.4.0 requires only { v4 } and calls ' +
-      'uuidv4() with no arguments, in cf-rule-ext-xform.js, to generate a ' +
-      'conditional-formatting id. The vulnerable functions are never called ' +
-      'and no buffer is ever passed. The offered fix downgrades exceljs to ' +
-      '3.4.0, a breaking change to Excel export, to close a path that does ' +
-      'not exist here.',
-    expires: '2027-02-01',
-  },
-  'GHSA-5p4m-2wfm-xmqj': {
-    package: 'js-yaml',
-    via: 'electron-updater',
-    reason:
-      'Quadratic CPU consumption while resolving a `!!omap` tag - a denial of ' +
-      'service that needs the attacker to choose the YAML being parsed. ' +
-      'Nothing in Posnic parses YAML from a shop, a customer, or any input at ' +
-      'all: we import js-yaml nowhere ourselves. The only production reach is ' +
-      'electron-updater reading latest.yml, which our own release workflow ' +
-      'generates and GitHub serves over HTTPS - so feeding it a malicious ' +
-      'document means already controlling our releases, at which point the ' +
-      'YAML parser is not the problem. electron-builder is the other ' +
-      'dependant and is a devDependency, so it is not in a shipped build. ' +
-      'The fix landed in js-yaml 5 and was deliberately not backported to 4; ' +
-      'electron-updater and electron-builder both require ^4, so taking it ' +
-      'means overriding a major version underneath the code that parses the ' +
-      'update manifest. Breaking that breaks auto-update for every till, to ' +
-      'close a path that needs untrusted YAML we never have.',
-    /* Short, because the right resolution is electron-updater moving to
-       js-yaml 5 rather than us carrying this indefinitely. Re-check then. */
-    expires: '2026-11-01',
-  },
-  'GHSA-jmr9-qjv8-65gv': {
-    package: 'extract-zip',
-    via: '@puppeteer/browsers',
-    reason:
-      'Symlink path traversal while extracting a crafted zip. extract-zip is ' +
-      'reached only through whatsapp-web.js -> puppeteer -> @puppeteer/browsers, ' +
-      'which uses it to unpack the Chromium build puppeteer downloads from ' +
-      "Google's servers over HTTPS. The archive is never attacker-supplied: to " +
-      "trigger the traversal you must control that download - Google's CDN and " +
-      'the TLS to it - at which point a symlink in a zip is not the exposure. ' +
-      'The offered fix is a major bump of whatsapp-web.js, a breaking change to ' +
-      'WhatsApp receipts, to close a path that needs a zip we only ever fetch ' +
-      'from Google.',
-    expires: '2027-02-01',
-  },
-};
+const ACCEPTED = {};
 
 const workspaces = [
   { name: 'desktop', dir: path.join(__dirname, '..') },
