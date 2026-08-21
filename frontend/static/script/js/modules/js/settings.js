@@ -352,6 +352,10 @@ PosnicPro.settings = {
         // and "does Module On/Off preserve the selections?" deserves a
         // guaranteed yes, not a usually.
         PosnicPro.settings.viewSettings(PosnicPro.local.get('branch_id_set'));
+        /* Core Settings is the tab that is already active, so a click handler
+           alone never fires on the way in - the switches would sit at their
+           markup default and disagree with what is stored. */
+        PosnicPro.settings.loadSharing();
     },
     settingImageFormSubmit: function () {
         if ($('#setting_image_value').val() !== '') {
@@ -5557,6 +5561,78 @@ PosnicPro.settings.openFeatureModal = function (title, paneSelector) {
 $(document).on('click', '.feature-pane-open', function () {
     PosnicPro.settings.openFeatureModal($(this).data('title') || 'Settings', $(this).data('pane'));
 });
+/*
+ * Sharing between shops (owner ask #85).
+ *
+ * Its own load and its own save, because it writes at ACCOUNT level while
+ * everything around it on this screen writes to the branch. Riding the general
+ * form save would let a screen opened on one shop push that shop's view onto
+ * all of them - which is the exact failure S5 inheritance was built to avoid.
+ *
+ * `?level=account` on the read, for the same reason: resolveGroup would answer
+ * "what is in force at THIS branch", and saving that back would turn one
+ * branch's override into everybody's rule.
+ */
+PosnicPro.settings = PosnicPro.settings || {};
+
+PosnicPro.settings.SHARING_KEYS = ['share_customers', 'share_suppliers', 'share_inventory'];
+
+PosnicPro.settings.loadSharing = function () {
+    if (!$('#sharing_fieldset').length) { return; }
+    PosnicPro.get({ url: 'settings/group/sharing', data: { level: 'account' } }, function (r) {
+        var values = (r && r.data && r.data.values) || {};
+        $.each(PosnicPro.settings.SHARING_KEYS, function (i, key) {
+            /* An absent key means nothing account-wide has been decided, which
+               the server reads as off. The switch must show the same thing, or
+               the screen and the query disagree. */
+            $('#set_' + key).prop('checked', PosnicPro.settings._sharingOn(values[key]));
+        });
+        $('#sharing_status').text('');
+    }, function () {
+        $('#sharing_status').text('Could not read the current setting.');
+    });
+};
+
+/* Settings arrive as a boolean or as the string a form wrote. `!!"false"` is
+   true, and for a switch that decides who sees whose customers that is the
+   wrong direction to be wrong in - the server reads it the same way. */
+PosnicPro.settings._sharingOn = function (v) {
+    if (v === true) { return true; }
+    if (v === false || v === null || v === undefined) { return false; }
+    var t = String(v).trim().toLowerCase();
+    return t === 'true' || t === '1' || t === 'yes' || t === 'on' || t === 'enable' || t === 'enabled';
+};
+
+PosnicPro.settings.saveSharing = function () {
+    var payload = { level: 'account' };
+    $.each(PosnicPro.settings.SHARING_KEYS, function (i, key) {
+        /* Stated, never implied. A switch left alone must still travel, or the
+           server keeps whatever it had and the screen says otherwise. */
+        payload[key] = $('#set_' + key).is(':checked');
+    });
+    $('#sharing_save_btn').prop('disabled', true);
+    $('#sharing_status').text('Saving ...');
+    PosnicPro.put({ url: 'settings/group/sharing', data: JSON.stringify(payload) }, function (r) {
+        $('#sharing_save_btn').prop('disabled', false);
+        $('#sharing_status').text(r.type === 'success' ? 'Saved. Applies to every shop.' : '');
+        PosnicPro.alert(r.type, r.type === 'success' ? 'Sharing saved' : r.message);
+    }, function (xhr) {
+        $('#sharing_save_btn').prop('disabled', false);
+        $('#sharing_status').text('');
+        var resp = {}; try { resp = JSON.parse(xhr.responseText); } catch (e) { /* plain */ }
+        /* 403 has a specific meaning here and a generic "could not save" hides
+           it: this is deliberately owner-class, because it decides what other
+           people can read. */
+        PosnicPro.alert('error', xhr.status === 403
+            ? 'Only an owner can change what is shared between shops'
+            : (resp.message || 'Could not save sharing'));
+    });
+};
+
+$(document).on('click', '#v-pills-general-tab', function () {
+    PosnicPro.settings.loadSharing();
+});
+
 $(document).on('click', '#quote_settings_save', function () {
     var payload = {
         quote_default_payment_method: $('#quote_default_payment_method').val() || '',
