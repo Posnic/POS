@@ -538,10 +538,14 @@ PosnicPro.items = {
      */
     saveVariantFamily: function (loader) {
         var itemName = $('#items_name').val();
-        var values = $('#item_variant_list').val() || [];
+        /* The same ordered list loadVariant built the inputs from. Walking it
+           separately is what would let row N's price be saved against variant
+           M once combinations are in play. */
+        var values = $.map(PosnicPro.items.variantCombinations(), function (c) {
+            return c.value;
+        });
         var shared = PosnicPro.items._sharedItemFields();
-        var variantDetail = $('#items_variant').select2('data');
-        var axis = (variantDetail && variantDetail.length) ? variantDetail[0].text : '';
+        var axis = PosnicPro.items.variantAxisLabel();
         var rows = [];
         $(values).each(function (key, variantName) {
             var unitVariantDetail = $('#items_unit_' + key + '');
@@ -836,6 +840,7 @@ PosnicPro.items = {
                             placeholder: "Choose a Variant"
                         });
                         $('#item_variant_list,#load_price_fields').html('');
+                        PosnicPro.items.resetSecondAxis();
                         if ($('#show_variant_fields').css('display') === 'none') {
                             $('#product_without_variant').prop('checked', true);
                             $('#product_with_variant').prop('checked', false);
@@ -2089,6 +2094,105 @@ PosnicPro.items = {
         return false;
     },
 
+    /*
+     * The rows this family will create, in order - the ONE list.
+     *
+     * loadVariant and saveVariantFamily each used to walk
+     * $('#item_variant_list').val() themselves, and agreed only because they
+     * happened to walk the same thing. The moment a second axis makes the row
+     * list a PRODUCT rather than the values themselves, two independent walks
+     * are two chances to disagree - and disagreeing here means the price typed
+     * into row 3 is saved against variant 5, silently, with nothing on screen
+     * to show it. Indices are the contract (items_selling_price_<key>), so the
+     * list that defines them has to be built once.
+     *
+     * Single axis returns the values unchanged, so a shop that never opens the
+     * second picker gets byte-identical behaviour to before.
+     */
+    variantCombinations: function () {
+        var first = $('#item_variant_list').val() || [];
+        var second = $('#item_variant_list_2').val() || [];
+        if (!second.length) {
+            return $.map(first, function (v) { return { value: v }; });
+        }
+        var out = [];
+        $.each(first, function (_, a) {
+            $.each(second, function (__, b) {
+                /* " / " matches how the family already reads on the item list
+                   ("Shirt / Red / L"), and the server treats variant_value as
+                   an opaque unique string, so a compound value needs nothing
+                   added to the model. */
+                out.push({ value: a + ' / ' + b });
+            });
+        });
+        return out;
+    },
+
+    /*
+     * Put the second axis away.
+     *
+     * A stale second axis is the worst possible leftover on this form: it does
+     * not look like an error, it silently MULTIPLIES the next item into
+     * combinations nobody asked for. Every path that clears the form has to
+     * clear it, so there is one function to call rather than four copies to
+     * keep in step.
+     */
+    resetSecondAxis: function () {
+        $('#item_variant_list_2').val(null).html('');
+        var $sel = $('#items_variant_2');
+        if ($sel.length) {
+            $sel.val('');
+            /* change.select2 repaints the widget without re-firing the app's
+               own change handlers - .trigger('change') here would rebuild the
+               value list from a selection that no longer exists. */
+            if ($sel.hasClass('select2-hidden-accessible')) { $sel.trigger('change.select2'); }
+        }
+        $('#variant_axis2_wrap').hide();
+        $('#variant_axis2_link').show().text('+ Add a second option');
+    },
+
+    /* "Colour / Size" when both are in play, else just the one. */
+    variantAxisLabel: function () {
+        var one = PosnicPro.items.selectText('#items_variant');
+        var two = ($('#item_variant_list_2').val() || []).length
+            ? PosnicPro.items.selectText('#items_variant_2')
+            : '';
+        return two ? one + ' / ' + two : one;
+    },
+
+    /* select2('data') throws if the widget was never initialised, and these
+       two are read on every save. */
+    selectText: function (selector) {
+        try {
+            var d = $(selector).select2('data');
+            return (d && d.length) ? d[0].text : '';
+        } catch (e) {
+            return '';
+        }
+    },
+
+    /*
+     * Say how many items Save is about to create.
+     *
+     * A variant family is the one place on this form where Save creates
+     * SEVERAL records rather than one, and nothing said so - you found out
+     * afterwards, by looking at the item list. Pick eight sizes and you get
+     * eight items, each needing its own price.
+     *
+     * Stated where the choice is made, not in a confirmation dialog: a dialog
+     * arrives after the decision and gets clicked through, while a line under
+     * the picker is read while the picker is still being used.
+     */
+    refreshVariantCount: function () {
+        var $hint = $('#variant_count_hint');
+        if (!$hint.length) { return; }
+        var n = PosnicPro.items.variantCombinations().length;
+        if (!n || !$('#product_with_variant').is(':checked')) { $hint.hide(); return; }
+        $hint.text(n === 1
+            ? 'Saving creates 1 item, priced below'
+            : 'Saving creates ' + n + ' items, each priced below').show();
+    },
+
     /* "2 ) Shirt / Large" once the item has a name, plain "2 ) Large" before
        then. The row is usable either way - the heading is a label, not data. */
     variantRowTitle: function (index, itemName, value) {
@@ -2111,10 +2215,13 @@ PosnicPro.items = {
     },
 
     loadVariant: function () {
-        /* jQuery returns null, not [], from an empty multiple select. The
-           name check used to run first and return early on a fresh form,
-           which hid that; the empty-values check reads .length directly. */
-        var variant_value = $('#item_variant_list').val() || [];
+        /* variantCombinations already normalises jQuery's null-from-an-empty
+           multiple-select into an array, so .length below is always safe. */
+        /* The product of both axes when a second one is in use - see
+           variantCombinations for why this is not derived twice. */
+        var variant_value = $.map(PosnicPro.items.variantCombinations(), function (c) {
+            return c.value;
+        });
         $("#load_price_fields").html('');
         var html = "";
         var item_name = $("#items_name").val();
@@ -2676,6 +2783,31 @@ PosnicPro.items = {
                it and the change fired at a plain select. */
             variantSelect.val(1).trigger('change.select2');
             $('#item_variant_list').html('');
+
+            /* The second axis offers the same list. Cloned from the response
+               rather than from the first select's DOM - moving option elements
+               between two selects would empty the first one. */
+            var second = $('#items_variant_2');
+            if (second.length) {
+                second.empty();
+                second.append($.map(response.suggestions || [], function (dataItem) {
+                    return $('<option>')
+                        .attr('value', dataItem.id)
+                        .attr('data-variant-name', dataItem.name)
+                        .attr('data-variant-id', dataItem.id)
+                        .attr('data-variant-fields', JSON.stringify(dataItem.fields))
+                        .text(dataItem.name)[0];
+                }));
+                /* Destroy first: view.js runs a global $('.select2').select2()
+                   at page render, and re-calling select2() on a live instance
+                   does NOT re-read the options. */
+                if (second.hasClass('select2-hidden-accessible')) { second.select2('destroy'); }
+                second.select2({ placeholder: 'Choose a Variant' });
+                /* No preselection - an unopened second axis must stay empty, or
+                   every plain item silently becomes a combination. */
+                second.val('').trigger('change.select2');
+                $('#item_variant_list_2').html('');
+            }
         }, function (xhr) {
             var response = jQuery.parseJSON(xhr.responseText);
             PosnicPro.alert(response.type, response.message);
@@ -2754,6 +2886,7 @@ PosnicPro.items = {
         $('#items_name').val('');
         $("#items_variant").val('').trigger('change');
         $("#item_variant_list").val('').trigger('change');
+        PosnicPro.items.resetSecondAxis();
         $("#items_hsncode").val('');
         $("#hsn_tax").val('');
         $("#items_discount_amount").val('0.00');
@@ -3245,6 +3378,11 @@ $(function () {
            meaning while one is being built. Hidden rather than disabled - a
            greyed control asks a question the form then refuses to answer. */
         $('#item_is_service').closest('.custom-control').toggle(plain);
+        /* Leaving variant mode must clear the count too, or the hint outlives
+           the rows it is describing - and the second axis with it, or turning
+           variants back on restores combinations from the previous item. */
+        if (plain) { PosnicPro.items.resetSecondAxis(); }
+        PosnicPro.items.refreshVariantCount();
         if (plain) {
             $('#show_variant_fields').hide();
             $('#show_price_fields,#sku_card_col').show();
@@ -3568,7 +3706,37 @@ $(document).ready(function () {
        chosen - Save no longer has a silent first click that only rendered
        rows. The submit-time render below stays as a fallback (with a voice)
        for any path that reaches Save with the rows still missing. */
+    /* Reveal the second axis, and put it away again.
+       It has to close as well as open: the tab tick counts every VISIBLE
+       field, so a second axis revealed by accident and impossible to collapse
+       would hold the Item tab permanently unticked with nothing explaining
+       why. Same toggle shape as the variants link above it. */
+    $(document).on('click', '#variant_axis2_link', function () {
+        if ($('#variant_axis2_wrap').is(':visible')) {
+            PosnicPro.items.resetSecondAxis();
+        } else {
+            $('#variant_axis2_wrap').show();
+            $(this).text('- Remove second option');
+        }
+        PosnicPro.items.refreshVariantCount();
+        if ($('#product_with_variant').is(':checked')
+            && ($('#item_variant_list').val() || []).length > 0) {
+            PosnicPro.items.loadVariant();
+        }
+    });
+
+    /* Choosing second-axis values changes the ROW LIST, so the rows and the
+       count both have to follow it, exactly as they follow the first. */
+    $(document).on('change', '#item_variant_list_2', function () {
+        PosnicPro.items.refreshVariantCount();
+        if ($('#product_with_variant').is(':checked')
+            && ($('#item_variant_list').val() || []).length > 0) {
+            PosnicPro.items.loadVariant();
+        }
+    });
+
     $('#item_variant_list').on('change', function () {
+        PosnicPro.items.refreshVariantCount();
         if ($('#product_with_variant').is(':checked') && ($(this).val() || []).length > 0) {
             PosnicPro.items.loadVariant();
         }
@@ -4170,6 +4338,19 @@ $('.item_image_setting').click(function () {
 });
 $('.itemimageview').click(function () {
     $('#item_coverimg_popup').modal('show');
+});
+
+/* The second axis fills its own value list exactly as the first does.
+   Delegated rather than one-shot bound: this select is rebuilt by
+   loadSelectVariant on every page entry, and a handler bound to the old
+   element would be thrown away with it. */
+$(document).on('select2:select', '#items_variant_2', function (e) {
+    var fields = e.params.data.element.getAttribute('data-variant-fields');
+    var opts = '';
+    $.each(JSON.parse(fields || '[]'), function (_, dataItem) {
+        opts += '<option value="' + dataItem.name + '">' + dataItem.name + '</option>';
+    });
+    $('#item_variant_list_2').html(opts).val(null).trigger('change');
 });
 
 $('#items_variant').one('change', function () {

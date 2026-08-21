@@ -551,11 +551,29 @@ test('select2 is initialised once, not once per option', () => {
       !/\.append\([^)]*\)\.select2\(\)/.test(body),
       `${name} chains select2 onto an append`,
     );
-    assert.strictEqual(
-      (body.match(/\.select2\(/g) || []).length <= 1,
-      true,
-      `${name} initialises select2 more than once`,
-    );
+    /* The rule is that the number of select2 initialisations cannot depend on
+       the number of OPTIONS - not that a loader may only ever initialise one
+       widget. loadSelectVariant legitimately sets up two axis pickers now, and
+       a flat count of 1 could only be kept by leaving the second one raw.
+       So: walk each $.map/$.each callback to its balanced close and assert no
+       select2 call inside it. That is the offsetWidth crash, stated directly
+       instead of proxied by a number. */
+    for (const m of body.matchAll(/\$\.(map|each)\(/g)) {
+      let depth = 0;
+      let i = m.index + m[0].length - 1;
+      const from = i;
+      for (; i < body.length; i += 1) {
+        if (body[i] === '(') depth += 1;
+        else if (body[i] === ')') {
+          depth -= 1;
+          if (depth === 0) break;
+        }
+      }
+      assert.ok(
+        !/\.select2\(/.test(body.slice(from, i)),
+        `${name} initialises select2 inside a per-option loop - this is the offsetWidth crash`,
+      );
+    }
   }
 });
 
@@ -867,12 +885,21 @@ test('an empty variant select cannot crash the row builder', () => {
     path.join(__dirname, '..', 'frontend/static/script/js/modules/js/items.js'),
     'utf8',
   );
-  const at = js.indexOf('loadVariant: function ()');
-  const head = js.slice(at, at + 600);
+  /* The normalisation moved into variantCombinations when a second axis made
+     the row list a product rather than the raw values - it is the one place
+     both the builder and the saver now read. */
+  const at = js.indexOf('variantCombinations: function ()');
+  assert.notStrictEqual(at, -1, 'variantCombinations is gone');
+  const body = js.slice(at, js.indexOf('\n    },', at));
   assert.match(
-    head,
+    body,
     /\$\('#item_variant_list'\)\.val\(\) \|\| \[\]/,
-    'val() is read unguarded - null.length throws before any row is built',
+    'first axis read unguarded - null.length throws before any row is built',
+  );
+  assert.match(
+    body,
+    /\$\('#item_variant_list_2'\)\.val\(\) \|\| \[\]/,
+    'second axis read unguarded - null.length throws',
   );
 });
 
@@ -968,4 +995,97 @@ test('a service hides the pack fields, extra barcodes included', () => {
     /#items_barcodes_alt, #items_purchase_unit, #items_conversion_factor'\)\.closest\('\.form-row'\)/,
     'the service-mode hide no longer covers all three pack fields',
   );
+});
+
+/*
+ * Two variant axes - colour AND size.
+ */
+
+test('the row list is derived in exactly one place', () => {
+  /* loadVariant builds inputs named items_selling_price_<index>, and
+     saveVariantFamily reads them back by the same index. Two independent
+     walks of the values agreed only because they walked the same array; once
+     the list is a PRODUCT of two axes, any drift saves row 3's price against
+     variant 5 - silently, with nothing on screen to show it. */
+  const load = itemsJs.indexOf('loadVariant: function ()');
+  const loadBody = itemsJs.slice(load, itemsJs.indexOf('$(variant_value).each', load));
+  assert.match(loadBody, /variantCombinations\(\)/, 'loadVariant derives the row list itself');
+
+  const save = itemsJs.indexOf('saveVariantFamily: function');
+  const saveBody = itemsJs.slice(save, itemsJs.indexOf('PosnicPro.post(', save));
+  assert.match(saveBody, /variantCombinations\(\)/, 'saveVariantFamily derives the row list itself');
+  assert.doesNotMatch(
+    saveBody,
+    /\$\('#item_variant_list'\)\.val\(\)/,
+    'saveVariantFamily still walks the raw values - it will disagree with the rows on screen',
+  );
+});
+
+test('one axis behaves exactly as before, two give the product', () => {
+  const at = itemsJs.indexOf('variantCombinations: function ()');
+  const body = itemsJs.slice(at, itemsJs.indexOf('\n    },', at));
+  // the single-axis early return is what keeps existing shops unaffected
+  assert.match(
+    body,
+    /if \(!second\.length\)/,
+    'no single-axis short circuit - a shop that never opens the second picker changes behaviour',
+  );
+  // and the product is nested, not zipped
+  const nested = body.indexOf('$.each(second');
+  const outer = body.indexOf('$.each(first');
+  assert.ok(outer !== -1 && nested > outer, 'the two axes are not combined as a product');
+});
+
+test('the second axis is cleared by every path that clears the form', () => {
+  /* A leftover second axis does not look like an error - it silently
+     multiplies the NEXT item into combinations nobody asked for. */
+  assert.match(itemsJs, /resetSecondAxis: function/, 'there is no single reset for the second axis');
+  const calls = (itemsJs.match(/resetSecondAxis\(\)/g) || []).length;
+  assert.ok(calls >= 4, `the second axis is reset in only ${calls} places - a clear path is missing`);
+});
+
+test('the second axis can be closed again, not just opened', () => {
+  /* refreshTabTicks counts every VISIBLE field, so a second axis revealed by
+     accident and impossible to collapse holds the Item tab permanently
+     unticked with nothing explaining why. */
+  /* Anchored on the click handler specifically - the bare id also appears in
+     resetSecondAxis, which is where a looser search lands. */
+  const at = itemsJs.indexOf("$(document).on('click', '#variant_axis2_link'");
+  assert.notStrictEqual(at, -1, 'the second-axis link is not wired');
+  const body = itemsJs.slice(at, at + 700);
+  assert.match(body, /is\(':visible'\)/, 'the link only opens - there is no way back');
+  assert.match(body, /resetSecondAxis\(\)/, 'closing it does not clear what it holds');
+});
+
+test('picking second-axis values rebuilds the rows', () => {
+  /* The row list changed, so the inputs on screen have to change with it -
+     otherwise the prices are typed against the old combinations. */
+  const at = itemsJs.indexOf("$(document).on('change', '#item_variant_list_2'");
+  assert.notStrictEqual(at, -1, 'nothing reacts to the second axis changing');
+  const body = itemsJs.slice(at, itemsJs.indexOf('});', at));
+  assert.match(body, /loadVariant\(\)/, 'the rows are not rebuilt for the new combinations');
+  assert.match(body, /refreshVariantCount\(\)/, 'the count does not follow the second axis');
+});
+
+test('the form says how many items Save will create', () => {
+  /* A variant family is the one place Save creates several records rather
+     than one, and nothing said so - you found out afterwards in the list. */
+  assert.match(html, /id="variant_count_hint"/, 'the count hint is gone from the markup');
+  const at = itemsJs.indexOf('refreshVariantCount: function');
+  assert.notStrictEqual(at, -1, 'refreshVariantCount is gone');
+  const body = itemsJs.slice(at, itemsJs.indexOf('\n    },', at));
+  assert.match(body, /variantCombinations\(\)\.length/, 'the count is not the real row count');
+  assert.match(body, /Saving creates/, 'the hint does not say what Save will do');
+});
+
+test('a second axis is offered but never preselected', () => {
+  /* Preselecting it would turn every plain item into combinations. The first
+     axis IS preselected (val(1)), which is exactly why this needs stating. */
+  const at = itemsJs.indexOf("var second = $('#items_variant_2');");
+  assert.notStrictEqual(at, -1, 'the second axis is never populated');
+  const body = itemsJs.slice(at, at + 1200);
+  assert.match(body, /second\.val\(''\)/, 'the second axis is preselected');
+  assert.doesNotMatch(body, /second\.val\(1\)/, 'the second axis is preselected to the first variant');
+  // select2 will not re-read options on a live instance without a destroy
+  assert.match(body, /select2\('destroy'\)/, 'a live select2 will keep the old options');
 });
