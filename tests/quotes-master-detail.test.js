@@ -1147,3 +1147,40 @@ test('the dead-selector sweep is a tool, and it runs', () => {
   assert.match(src, /public/, 'built bundles must be skipped - they are the same source concatenated');
   assert.match(src, /Verify each before deleting/, 'the output must say the list needs checking');
 });
+
+/*
+ * Escape closes the picker.
+ *
+ * Every other overlay in this app closes on Escape - the modals carry a
+ * close_on_esc class for it - so a popover that ignores it is the odd one out,
+ * and pressing Escape is the reflex before reaching for a mouse.
+ */
+test('Escape dismisses the suggestion list', () => {
+  const src = stripComments(listFilterSrc);
+  assert.match(src, /on\('keydown'/, 'nothing listens for a key at all');
+  assert.match(src, /e\.key !== 'Escape' && e\.keyCode !== 27/, 'older browsers report keyCode, not key');
+  assert.match(src, /\$\('\.lf-typeahead:visible'\)/, 'it must act only when one is actually open');
+});
+
+test('Escape does not close everything behind the picker too', () => {
+  /* Without stopPropagation the same keypress carries on, and dismissing a
+     suggestion list would also close the panel or modal around it. */
+  const src = stripComments(listFilterSrc);
+  const block = src.slice(src.indexOf("on('keydown'"));
+  const body = block.slice(0, block.indexOf('});') + 3);
+  assert.match(body, /if \(!\$open\.length\) return;[\s\S]*stopPropagation/, 'it must bail BEFORE stopping propagation');
+});
+
+test('Escape does not reopen the list it just closed', () => {
+  /* .lf-q has a delegated focus handler that OPENS the picker. Re-focusing the
+     input after closing fires it again, so Escape would toggle rather than
+     dismiss - and the input already has focus, since that is how Escape was
+     pressed. */
+  const src = stripComments(listFilterSrc);
+  const block = src.slice(src.indexOf("on('keydown'"));
+  const body = block.slice(0, block.indexOf('});') + 3);
+  assert.ok(
+    !/trigger\('focus'\)/.test(body),
+    'refocusing the search box re-fires the focus handler that opens the picker',
+  );
+});
