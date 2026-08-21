@@ -161,6 +161,31 @@
                                         autocomplete="off">
                                 </div>
                             </div>
+                            <!-- Reorder point and Item Units moved out of Price & Stock
+                                 (owner ask). Neither is a price: the reorder point is when
+                                 to buy more, and the unit is how the item is counted. They
+                                 describe the ITEM, so they sit with it - one row, matching
+                                 the category/supplier row below. -->
+                            <div class="form-row">
+<div class="col-md-6">
+                                        <label class="form-control-placeholder" for="items_reorder_point">
+                                            <lang class="lang_reorder_point">Reorder point</lang>
+                                        </label>
+                                        <!-- LS1: this item's own low-stock threshold; empty
+                                             falls back to the shop-wide range. -->
+                                        <input type="number" min="0" step="any" class="form-control clear_text_item text-right"
+                                            id="items_reorder_point" name="items_reorder_point"
+                                            placeholder="Reorder point (optional)" autocomplete="off">
+                                    </div>
+<div class="col-md-6">
+                                        <label class="form-control-placeholder" for="items_unit">
+                                            Item Units
+                                        </label>
+                                        <select class="form-control select2 pricing-field items_unit items_choose_error"
+                                            name="items_unit" id="items_unit">
+                                        </select>
+                                    </div>
+                            </div>
                             <!-- Category and supplier are both optional pickers of the
                                  same shape, so they share one row instead of eating a
                                  line each (owner ask). -->
@@ -258,24 +283,8 @@
                                     </div>
                                 </div>
                                 <div class="row">
-                                    <div class="col-md-6">
-                                        <label class="form-control-placeholder" for="items_reorder_point">
-                                            <lang class="lang_reorder_point">Reorder point</lang>
-                                        </label>
-                                        <!-- LS1: this item's own low-stock threshold; empty
-                                             falls back to the shop-wide range. -->
-                                        <input type="number" min="0" step="any" class="form-control clear_text_item text-right"
-                                            id="items_reorder_point" name="items_reorder_point"
-                                            placeholder="Reorder point (optional)" autocomplete="off">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-control-placeholder" for="items_unit">
-                                            Item Units
-                                        </label>
-                                        <select class="form-control select2 pricing-field items_unit items_choose_error"
-                                            name="items_unit" id="items_unit">
-                                        </select>
-                                    </div>
+
+
                                 </div>
                             </div>
                         </div>
@@ -483,12 +492,18 @@
                         </div>
                         <div class="collapse show" id="item_details_collapse">
                             <div class="card-body">
-                                <div class="form-row">
+                                <!-- Equal-height columns. The description is short and the image
+                                     column carries the dropzone plus the colour and shape pickers,
+                                     so the left half ended above the right with a block of white
+                                     under it (owner ask). Stretching the columns and letting the
+                                     textarea fill its own means the two halves end together,
+                                     whatever the tile controls do. -->
+                                <div class="form-row items-details-row">
                                     <div class="col-lg-6">
                                         <label class="form-control-placeholder" for="items_description">
                                             <lang class="lang_description_title"> Description </lang>
                                         </label>
-                                        <textarea class="form-control" id="items_description" name="items_description"
+                                        <textarea class="form-control items-description-fill" id="items_description" name="items_description"
                                             rows="4" maxlength="1000"
                                             placeholder="Enter a description ..."></textarea>
                                     </div>
@@ -776,10 +791,11 @@
                         <button type="button" class="btn btn-sm btn-light item-tab-back" data-goto="item_tab_details"><i class="feather icon-arrow-left mr-1"></i>Back</button><span></span>
                     </div>
 </div>
-                    </div>
-
-                    <!-- Sticky save bar: always in reach on a long form. -->
-                    <div class="card" style="position:sticky; bottom:0; z-index:5; margin-bottom:0;">
+                                        <!-- Inside the tab-content box, and padded to match a pane.
+                         Outside it the bar took the full column width while the panes
+                         are inset by their own padding and a scrollbar, so the bar ran
+                         past the Next button and the cards above it (owner ask). -->
+                    <div class="card item-save-bar" id="item_save_bar">
                         <div class="card-body py-2 text-right">
                             <button type="button" class="btn btn-outline-secondary infobar-settings-reset"
                                 id="items_reset" onclick="PosnicPro.items.itemClearForm();"><i
@@ -812,6 +828,9 @@
                             </div>
                         </div>
                     </div>
+                    </div>
+
+
 
                 </div>
             </div>

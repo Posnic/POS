@@ -436,3 +436,123 @@ test('both save paths are fixed, not just the one that was reported', () => {
     'the second save path still reads category unguarded',
   );
 });
+
+/*
+ * Reorder point and Item Units belong with the item, not with its prices.
+ * Neither is a price: one is when to buy more, the other is how the item is
+ * counted.
+ */
+test('reorder point and units sit in the Item card, above the pickers', () => {
+  const priceCard = html.indexOf('lang_price_stock_title');
+  const category = html.indexOf('for="items_category"');
+  for (const id of ['items_reorder_point', 'items_unit']) {
+    const at = html.indexOf(`id="${id}"`);
+    assert.notStrictEqual(at, -1, `#${id} is gone`);
+    assert.ok(at < priceCard, `#${id} is still inside Price & Stock`);
+    assert.ok(at < category, `#${id} must sit above the category row`);
+  }
+});
+
+test('they share one row, like the pickers below them', () => {
+  const at = html.indexOf('id="items_reorder_point"');
+  const unit = html.indexOf('id="items_unit"');
+  assert.ok(unit > at, 'units should follow the reorder point');
+  /* Only the span BETWEEN the two - running to the category label crosses into
+     that row and counts its form-row instead. */
+  const between = html.slice(at, unit);
+  assert.ok(
+    !between.includes('<div class="form-row">'),
+    'a second form-row opened between them - they are on separate lines',
+  );
+});
+
+test('a service item still loses its reorder point', () => {
+  /* applyServiceMode hides it via closest('[class*="col-"]'), which only works
+     while it is wrapped in a column. Moving it must not have stripped that. */
+  const at = html.indexOf('id="items_reorder_point"');
+  const wrapper = html.slice(html.lastIndexOf('<div class="col-', at), at);
+  assert.match(wrapper, /class="col-/, 'the column wrapper applyServiceMode relies on is gone');
+  assert.match(itemsJs, /#items_available_quantity, #items_reorder_point'\)\.closest\('\[class\*="col-"\]'\)/);
+});
+
+/*
+ * The option loaders.
+ *
+ * Five of them shared three defects. `var option;` starts undefined, so
+ * `option += '<option...'` put the literal string "undefined" in front of every
+ * entry. select2() ran INSIDE the loop, re-initialising the widget once per
+ * option - which is what threw "Cannot read properties of null (reading
+ * 'offsetWidth')", because select2 measures a container the previous init has
+ * already replaced. And one fired change.select2 at a select before it was a
+ * select2 at all.
+ */
+test('no loader builds its options from an undefined string', () => {
+  const code = stripComments(itemsJs);
+  assert.ok(!/var option;/.test(code), 'the "undefined" prefix bug is back');
+  assert.ok(!/let unitOption;/.test(code), 'the same bug in the variant-row unit loader');
+  assert.ok(
+    !/option \+= '<option/.test(code),
+    'options are being concatenated onto an uninitialised variable again',
+  );
+});
+
+test('select2 is initialised once, not once per option', () => {
+  /* Checked by SHAPE, not by variable name: the first version of this assertion
+     matched the literal `append(option)` and a mutation that renamed the
+     variable walked straight past it. What matters is that no append inside a
+     per-row callback is chained to select2 or trigger. */
+  const code = stripComments(itemsJs);
+  for (const name of ['loadSelectCategory', 'loadSelectVariant', 'loadSelectTax', 'loadSelectUnit']) {
+    const at = code.indexOf(name + ': function');
+    assert.notStrictEqual(at, -1, `${name} is gone`);
+    const body = code.slice(at, code.indexOf('\n    },', at));
+    assert.ok(
+      !/\$\.each\([\s\S]*?\.append\([^)]*\)\.(select2|trigger)\(/.test(body),
+      `${name} appends and re-initialises per row - this is the offsetWidth crash`,
+    );
+    assert.ok(
+      !/\.append\([^)]*\)\.select2\(\)/.test(body),
+      `${name} chains select2 onto an append`,
+    );
+    assert.strictEqual(
+      (body.match(/\.select2\(/g) || []).length <= 1,
+      true,
+      `${name} initialises select2 more than once`,
+    );
+  }
+});
+
+test('a select becomes a select2 before anything triggers change.select2', () => {
+  /* Firing it first hands select2 a widget that does not exist yet. */
+  const code = stripComments(itemsJs);
+  for (const m of code.matchAll(/\$\("?\.items_category"?\)\.val\(''\)\.trigger\('change\.select2'\)/g)) {
+    const before = code.slice(Math.max(0, m.index - 320), m.index);
+    assert.match(
+      before,
+      /items_category"?\)\.select2\(\{/,
+      'change.select2 fires before the select is initialised',
+    );
+  }
+});
+
+test('the description fills its column so the two halves end together', () => {
+  const rule = cssRule('#items_new .items-description-fill');
+  assert.match(rule, /flex:\s*1 1 auto/, 'it no longer stretches - the left half strands again');
+  assert.match(rule, /min-height/, 'with no floor it collapses when the other column is short');
+  /* Two rules share this prefix - the row and its columns - so anchor it. */
+  const row = cssRule('.items-details-row', 'Details, top row');
+  assert.match(row, /align-items:\s*stretch/, 'the columns do not stretch to match');
+});
+
+test('the save bar is inside the tab box and matches its width', () => {
+  /* Outside it the bar took the full column width while the panes are inset by
+     their own padding and a scrollbar, so it ran past the Next button. */
+  const bar = html.indexOf('id="item_save_bar"');
+  const tc = html.indexOf('id="item_form_tabs_content"');
+  assert.ok(bar > tc, 'the save bar is not inside the tab-content box');
+  const rule = cssRule('.item-save-bar');
+  assert.match(rule, /position:\s*sticky/, 'it must stay in reach on a long form');
+  assert.match(rule, /margin-right/, 'without the pane inset it overhangs on the right');
+  const pane = cssRule('#item_form_tabs_content > .tab-pane', 'The save bar matches the form above it.');
+  assert.match(pane, /scrollbar-gutter:\s*stable/, 'the inset shifts when a pane starts scrolling');
+});
