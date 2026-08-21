@@ -185,8 +185,34 @@ PosnicPro.listFilter = {
             + 'T' + p(d.getHours()) + ':' + p(d.getMinutes());
     };
 
+    /*
+     * Mounting twice must not throw away what someone has typed.
+     *
+     * The first version replaced _mounted[key] wholesale, so a second mount
+     * reset the search, the date range and the status chips to empty while the
+     * LIST still showed the filtered results - the bar and the list disagreeing,
+     * which is the failure this component was written to stop happening five
+     * times over.
+     *
+     * Quotes avoided it with a `_filterMounted` flag on the SCREEN. That works,
+     * and it is exactly the wrong place for it: every screen that adopts this
+     * bar would have to remember the same flag, and the first one to forget
+     * gets a bug that only shows up when a page is re-entered. The component
+     * owns its own idempotence now.
+     *
+     * A different container IS a different mount - that is a real re-parent,
+     * not a repeat - so it resets.
+     */
     LF.mount = function (cfg) {
         var key = cfg.key;
+        var existing = LF._mounted[key];
+        if (existing && existing.cfg.container === cfg.container) {
+            /* Config can legitimately change between mounts (a screen adding a
+               field), so it is refreshed; the STATE is what must survive. */
+            existing.cfg = cfg;
+            LF.render(key);
+            return existing;
+        }
         LF._mounted[key] = {
             cfg: cfg,
             state: { search: '', field: 'all', exact: false, preset: 'all', from: null, to: null, extra: {} }
