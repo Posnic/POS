@@ -16,9 +16,13 @@ below describe how that transition happens and what earns a say.
 
 ## Open core, stated plainly
 
-The desktop application is free software under **AGPL-3.0-only**. It is complete. It
-is not a demo, a trial, or a crippled edition — a shop can run its entire
-business on it, forever, without paying anyone.
+Posnic's own desktop application source is free software under
+**AGPL-3.0-only**. Release packages also contain separately licensed components;
+see [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md). The local edition has a
+zero software price and no trial clock. It is not a timed demo or an
+intentionally feature-limited trial. Whether it fits a particular business
+still depends on its workflows, hardware, payments, tax rules, recovery and
+support requirements.
 
 **Posnic Cloud** is a paid service: device sync, backups, remote dashboards,
 white-label builds. It is a separate product and lives in separate,
@@ -26,7 +30,7 @@ closed repositories.
 
 The line between them:
 
-| | Open source (AGPL-3.0-only) | Paid service |
+| | Posnic source and local edition | Paid service |
 |---|---|---|
 | Desktop app, API, UI | ✅ this repository | |
 | Local database, offline operation | ✅ | |
@@ -45,10 +49,10 @@ The question everyone sensibly asks of an open-core project, answered directly.
 
 **Yes, and here is what that means concretely.**
 
-The desktop application is licensed under AGPL-3.0-only. That licence cannot be
-revoked for code already released: every version published stays free software
-for ever, and anyone may fork it. Even if this company disappeared tomorrow, the
-software you are running does not.
+Posnic-owned source is licensed under AGPL-3.0-only. Rights already granted for
+a published source version cannot be withdrawn from its recipients, and anyone
+may exercise the rights that version's licence grants. Packaged third-party
+components retain their own licences and must be reviewed separately.
 
 What we additionally promise, which the licence alone does not:
 
@@ -56,7 +60,7 @@ What we additionally promise, which the licence alone does not:
   works tomorrow without paying.
 - **No user, item, sale or branch limits** are added to the free edition.
 - **No account required** to install or run it.
-- **No advertising, and no telemetry** about your business.
+- **No advertising, and no Posnic analytics or telemetry** about your business.
 
 **What is genuinely paid**, and always has been: Posnic Cloud — syncing several
 tills, off-site backups, remote dashboards, and installers under your own brand.
@@ -73,9 +77,10 @@ with reasons, not in a release note.
 
 ## Trademark and reserved rights
 
-The code is AGPL-3.0-only. The **name and the logo are not** — they are trademarks of
-Posnic Innovations Private Limited, and trademarks are how people know whether
-what they installed came from us.
+Posnic's own source is AGPL-3.0-only. The **name and the logo are not** — they
+are trademarks of Posnic Innovations Private Limited, and trademarks are how
+people know whether what they installed came from us. Third-party components
+retain their own licences and marks.
 
 **You may**, without asking:
 
@@ -103,8 +108,9 @@ exactly that.
 ### What Posnic Innovations reserves
 
 - The **trademarks**: the Posnic name, logo and product names
-- The right to offer the software under a **commercial licence** to companies
-  that cannot comply with the AGPL, since we hold the copyright
+- The right to offer Posnic-owned code under a **commercial licence** to
+  companies that need different terms, subject to contributor rights described
+  below
 - The **release signing keys** and the official distribution channels
 - Final say on the **licence** and on what stays free — recorded here, in public
 
@@ -163,7 +169,7 @@ without a stated reason is not a decision, it is an assertion.
 
 ### Things that are not up for debate
 
-- The licence stays AGPL-3.0-only.
+- Posnic-owned source stays AGPL-3.0-only.
 - Features that are free stay free.
 - The project will not add telemetry that reports on a shop's business.
 
@@ -206,11 +212,22 @@ develops a shadow history that newcomers cannot read.
 
 Versioned with [semantic versioning](https://semver.org). Releases are cut from
 a git tag and built for Windows, macOS and Linux by CI, published as a draft
-with checksums, and released by a maintainer.
+with checksums, and released by a maintainer. Release packages include
+third-party components under their own licences; each artifact should carry
+matching notices and a machine-readable component inventory.
 
 Breaking changes are called out in release notes with a migration note. A
 release that breaks a running shop without warning is a failure regardless of
 what the version number says.
+
+## Package licence boundary
+
+The root [LICENSE](LICENSE) governs Posnic's own source. It does not replace the
+licences and notices for every binary or asset in a release package. Review
+[THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md), the files shipped with the
+artifact and the current
+[reproduced package evidence](https://posnic.com/assets/posnic-package-license-evidence.json).
+This governance document records project policy; it is not legal advice.
 
 ## Code of conduct
 
