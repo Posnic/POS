@@ -14,10 +14,18 @@
                      title - not buried inside the Item card under the fields it
                      would let you skip (owner ask). -->
                 <div class="col text-right" id="item_header_actions">
-                    <a href="#/items" data-module="item" data-access="write" class="btn btn-sm btn-primary-rgba"
-                        onclick="setTimeout(function(){PosnicPro.importTableFile('items');},300);">
+                    <!-- Opens HERE. It used to carry href="#/items" and fire the
+                         dialog on a 300ms timer - so asking to import from the Add
+                         Item page navigated to the item LIST first, discarding
+                         anything already typed, and the delay existed only to wait
+                         for that page to render. #import_modal is a global modal and
+                         everything after the import writes into its own table, so
+                         the trip was never needed. -->
+                    <button type="button" data-module="item" data-access="write" id="item_import_btn"
+                        class="btn btn-sm btn-primary-rgba"
+                        onclick="PosnicPro.importTableFile('items');">
                         <i class="feather icon-upload mr-1"></i><lang class="lang_item_import_link">Import from a file</lang>
-                    </a>
+                    </button>
                 </div>
             </div>
         </div>

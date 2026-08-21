@@ -150,6 +150,21 @@ test('Import is out of the form entirely', () => {
   assert.strictEqual((html.match(/importTableFile/g) || []).length, 1, 'it was copied, not moved');
 });
 
+test('Import opens where you are, and does not navigate away', () => {
+  /* It carried href="#/items" and fired the dialog on a 300ms timer, so asking
+     to import FROM the Add Item page went to the item list first - discarding
+     anything already typed - and the delay existed only to wait for that page.
+     #import_modal is global and the results render into its own table, so the
+     trip was never needed. */
+  const at = html.indexOf('id="item_import_btn"');
+  assert.notStrictEqual(at, -1, 'the import control is gone');
+  const el = html.slice(html.lastIndexOf('<', at), html.indexOf('>', html.indexOf('onclick', at)) + 1);
+  assert.ok(!/href=/.test(el), 'it still navigates - typed values are lost on the way');
+  assert.ok(!/setTimeout/.test(el), 'the timer only existed to wait for a page change');
+  assert.match(el, /onclick="PosnicPro\.importTableFile\('items'\);"/, 'it must open the dialog directly');
+  assert.match(el, /^<button/, 'a link that goes nowhere should not be an anchor');
+});
+
 test('showing the service unit does not fight its own row', () => {
   /* applyServiceMode replaces the whole style attribute. It used to write
      width:auto, which overrode the row's sizing and put the select back where
