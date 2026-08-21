@@ -219,7 +219,14 @@ const groupOf = (key) => GROUP_OF.get(String(key)) || null;
    are returned under `unknown` rather than dropped, so a caller can decide -
    silently discarding a setting is how a save appears to work and does not. */
 const splitByGroup = (payload = {}) => {
-  const out = { features: {}, preferences: {}, documents: {}, secrets: {}, sharing: {}, unknown: {} };
+  const out = {
+    features: {},
+    preferences: {},
+    documents: {},
+    secrets: {},
+    sharing: {},
+    unknown: {},
+  };
   for (const [key, value] of Object.entries(payload || {})) {
     const group = groupOf(key);
     out[group || 'unknown'][key] = value;

@@ -128,7 +128,10 @@ class CustomerRepository extends BaseModel {
     if (branchId) {
       query = withBranchScope(
         query,
-        await dataSharing.scopeBranch('customers', branchId, { licenseId: BaseModel.license, branchId })
+        await dataSharing.scopeBranch('customers', branchId, {
+          licenseId: BaseModel.license,
+          branchId,
+        })
       );
     }
 
