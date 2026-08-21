@@ -593,3 +593,70 @@ test('no per-field width caps remain on More', () => {
   assert.ok(!/#items_new #items_conversion_factor\s*\{[^}]*max-width/.test(css));
   assert.ok(!/#items_new #items_discount_percentage\s*\{[^}]*max-width/.test(css));
 });
+
+/*
+ * One width for the whole form.
+ *
+ * The 1140px cap used to sit on the More tab alone, so that pane stopped there
+ * while the others - and the save bar below them - ran to the full column
+ * width. That is why the bar overhung the Next button and the cards.
+ */
+test('the tab box caps every pane and the save bar together', () => {
+  const box = cssRule('#items_new #item_form_tabs_content');
+  assert.match(box, /max-width:\s*1140px/, 'the shared cap is gone - panes can drift apart again');
+  assert.match(box, /margin-left:\s*0/, 'the form must stay left-aligned, not centred');
+  assert.ok(
+    !/#items_new #item_tab_more\s*\{[^}]*max-width/.test(css),
+    'the cap is back on one pane only - that is the bug',
+  );
+});
+
+test('the save bar carries the pane inset, not the box edge', () => {
+  /* Its edges have to land where the cards inside a pane land, and those are
+     inset by the pane's own padding. */
+  const rule = cssRule('.item-save-bar');
+  assert.match(rule, /margin-left:\s*2px/);
+  assert.match(rule, /margin-right:\s*6px/);
+  /* Two rules share this selector - the original one carries the padding, the
+     one I added carries scrollbar-gutter - so assert against the file. */
+  assert.match(
+    css,
+    /#item_form_tabs_content > \.tab-pane \{[^}]*padding:\s*2px 6px 2px 2px/,
+    'the bar mirrors this inset - they must agree',
+  );
+});
+
+test('the pickers are set apart from the numbers above them', () => {
+  /* form-row children get no bottom margin from the card rule, which only
+     covers .row - so the two groups ran together. */
+  const at = html.indexOf('class="form-row items-picker-row"');
+  assert.notStrictEqual(at, -1, 'the picker row lost its class');
+  assert.ok(at < html.indexOf('for="items_category"'), 'the class is on the wrong row');
+  const rule = cssRule('.items-picker-row');
+  assert.match(rule, /margin-top/, 'no gap above the pickers');
+});
+
+test('Quick code is the same width as SKU and Barcode', () => {
+  const q = columnOf('items_plu_code');
+  const sku = columnOf('items_itemid');
+  const bar = columnOf('items_barcodeid');
+  assert.strictEqual(q, sku, 'the shortest field in the card is the odd one out again');
+  assert.strictEqual(sku, bar, 'SKU and Barcode must match each other too');
+});
+
+test('the discount value is not flush against the card edge', () => {
+  /* It is right-aligned text in the last column of its row, so it reads as
+     clipped without a little air before the border. */
+  const rule = cssRule('#items_new .floating-label > #items_discount_amount,');
+  assert.match(rule, /margin-right:\s*10px/, 'no gap before the border');
+  assert.match(rule, /width:\s*calc\(100% - 10px\)/, 'the margin would push it out of its column');
+});
+
+test('the Photos dropzone is labelled like the field beside it', () => {
+  /* An unlabelled dropzone reads as decoration until you notice the Browse
+     button; Description next to it says what it is. */
+  const at = html.indexOf('Neon Neon-theme-dragdropbox');
+  const before = html.slice(Math.max(0, at - 700), at);
+  assert.match(before, /lang_item_photos_title/, 'the dropzone has no label');
+  assert.match(before, /for="item_upload_image"/, 'the label is not tied to the input');
+});
