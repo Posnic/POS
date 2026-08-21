@@ -1,4 +1,5 @@
-# Tagged public releases for Windows, macOS and Linux.
+# Tagged public releases for macOS and Linux.
+# Windows is signed on a card and published separately - see the matrix below.
 #
 #   git tag v1.4.0 && git push origin v1.4.0
 #
@@ -70,8 +71,22 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # WINDOWS IS NOT BUILT HERE, on purpose.
+        #
+        # Its code signing key lives on a Certum card - CA/Browser Forum rules
+        # have required code signing keys to sit on certified hardware since
+        # June 2023, so there is no .pfx and no secret to configure - and a
+        # GitHub-hosted runner has no card reader. A Windows build produced here
+        # could only ever be UNSIGNED, and shipping that is worse than shipping
+        # nothing: every customer sees "Unknown publisher".
+        #
+        # It is built and published from a desk instead:
+        #     npm run build                      (with POSNIC_SIGN_SHA1 set)
+        #     npm run release:windows -- <tag>
+        #
+        # That command refuses to publish anything unsigned, untimestamped, or
+        # whose latest.yml does not match the installer beside it.
         include:
-          - { os: windows-latest, name: Windows, flag: '--win --x64' }
           - { os: macos-latest,   name: macOS,   flag: '--mac' }
           - { os: ubuntu-latest,  name: Linux,   flag: '--linux --x64' }
     runs-on: ${{ matrix.os }}
@@ -187,14 +202,10 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Windows does not include the Visual C++ runtime. A binary that needs it
-      # and cannot find one runs on every machine we test and dies with
-      # 0xC0000135 on a customer's clean install, before it can log anything.
-      # Checked here because that is the last point where the answer is still
-      # cheap.
-      - name: Native binaries can load on a clean Windows
-        if: matrix.name == 'Windows'
-        run: node scripts/check-native-runtime.js
+      # The clean-Windows runtime check moved to scripts/release-windows.js
+      # along with the Windows build itself. Left here it would have been a step
+      # that never runs - `if: matrix.name == 'Windows'` against a matrix with
+      # no Windows in it - which reads as coverage and is not.
 
       - name: Upload installers
         uses: actions/upload-artifact@v7
@@ -289,14 +300,16 @@ jobs:
             This is an early public build. It works, it is tested, and it is **not
             finished**. Expect rough edges, and please report them.
 
-            ### The installers are not signed yet
+            ### About the installers
 
-            A code signing certificate is on the way. Until it arrives:
-
-            - **Windows** will say *"Windows protected your PC"* and name an unknown
-              publisher. Choose **More info -> Run anyway**.
-            - **macOS** will refuse to open it. Right-click the app -> **Open**, or use
-              *System Settings -> Privacy & Security -> Open Anyway*.
+            - **Windows** is signed and timestamped. The installer names its
+              publisher, and no warning should appear.
+            - **macOS is not signed yet.** On Apple Silicon it will refuse to open
+              rather than warn, and the usual right-click -> **Open** advice does not
+              help for an app signed by nobody. Signing macOS needs an Apple
+              Developer membership, which is separate from the Windows certificate.
+            - **Linux** packages are unsigned, which is normal for AppImage and .deb
+              outside a distribution repository.
 
             That warning is accurate. You are trusting the download rather than a
             certificate, so **check `SHA256SUMS.txt` against your file before installing**,
