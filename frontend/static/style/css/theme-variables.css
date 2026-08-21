@@ -3224,9 +3224,21 @@ html:not([data-theme]) .infobar-settings-sidebar-head {
     /* Keep the self-hosted DM Sans (works offline) as the default font. */
     --theme-font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
 }
-/* GitHub uses bordered boxes (1px #d0d7de), small 6px radius, no shadow. */
+/*
+ * Small 6px radius, no shadow - and NO border (owner ask).
+ *
+ * github.com does draw 1px #d0d7de boxes, and that is where this came from.
+ * On a till it read as noise: a card border, inside a page, inside a panel,
+ * every one of them a line the eye has to account for.
+ *
+ * Nothing is lost by removing it, because the separation was never doing the
+ * work alone - the card is #ffffff on a #f6f8fa body, so surfaces still part
+ * by TONE, which is how the default theme has always done it.
+ *
+ * It also stops the master-detail panes fighting a border they only ever
+ * wanted to cancel; see the note in custom.css above .master-detail.
+ */
 [data-theme="github"] .card {
-    border: 1px solid #d0d7de !important;
     border-radius: 6px !important;
     box-shadow: none !important;
 }

@@ -3856,12 +3856,15 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
  * ONE surface, ONE border.
  *
  * Every declaration that removes a pane's own box carries !important, and it
- * has to: custom.css loads BEFORE theme-variables.css, and the theme sets
- * `[data-theme="github"] .card { border: 1px solid !important; border-radius:
- * 6px !important }`. An !important declaration beats a plain one however
- * specific the plain selector is, so without this the panes keep their own
- * bordered, rounded boxes INSIDE the outer border - three borders and a moat
- * between them, which is exactly what the owner was looking at.
+ * has to: custom.css loads BEFORE theme-variables.css, so an !important in the
+ * theme beats a plain declaration here however specific this selector is.
+ *
+ * The github theme's card BORDER has since been removed (owner ask), so that
+ * particular fight is over - but `border-radius: 6px !important` is still
+ * there, and a rounded pane inside a square outer border is the same bug in a
+ * quieter form. The !important on border stays as well: nothing guarantees the
+ * next theme is as restrained, and this arrangement only works while the panes
+ * carry no box of their own.
  *
  * The contentbar's 30px padding goes too, and becomes a margin, or that
  * padding is a white moat between the outer border and the panes.
