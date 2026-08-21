@@ -33,10 +33,18 @@ jest.mock('../../../src/models/branch.model', () => {
 });
 
 const mockCopyGroups = jest.fn();
+const mockAccountGroup = jest.fn();
+const mockSaveGroup = jest.fn();
 jest.mock('../../../src/repositories/settings.repository', () => {
   return class MockSettingsRepo {
     copyGroups(...a) {
       return mockCopyGroups(...a);
+    }
+    accountGroup(...a) {
+      return mockAccountGroup(...a);
+    }
+    saveGroup(...a) {
+      return mockSaveGroup(...a);
     }
   };
 });
@@ -1191,5 +1199,105 @@ describe('BranchesController — copy settings at branch creation', () => {
       res
     );
     expect(res.json.mock.calls[0][0].data.settings_copy_error).toMatch(/never copied/i);
+  });
+});
+
+/*
+ * Owner ask #85 - the other half of "mandatory information needs to be auto
+ * filled": who the new shop can SEE.
+ *
+ * createBranch already seeds the default customer, supplier and tax. This
+ * decides sharing, at the one moment a person is actually thinking about it -
+ * they are creating a second shop.
+ */
+describe('BranchesController — sharing defaults at branch creation', () => {
+  beforeEach(() => {
+    mockCopyGroups.mockReset();
+    mockAccountGroup.mockReset();
+    mockSaveGroup.mockReset();
+    mockAccountGroup.mockResolvedValue({ status: true, data: { set: [] } });
+    mockSaveGroup.mockResolvedValue({ status: true, data: { written: [] } });
+    bm.createBranch.mockResolvedValue({ status: true, message: 'ok', data: { _id: 'new1' } });
+  });
+
+  test('customers and suppliers arrive shared, inventory does not', async () => {
+    const res = mockRes();
+    await ctrl.add(mockReq({ body: { name: 'Second shop' } }), res);
+    const [group, values, , options] = mockSaveGroup.mock.calls[0];
+    expect(group).toBe('sharing');
+    expect(values).toEqual({
+      share_customers: true,
+      share_suppliers: true,
+      share_inventory: false,
+    });
+    expect(options).toEqual({ level: 'account' });
+  });
+
+  test('it is written at ACCOUNT level, not onto the new branch', async () => {
+    /* "Can this shop see that shop's customers" is not a fact about one shop.
+       A branch can still override it afterwards - that is what S5 is for. */
+    const res = mockRes();
+    await ctrl.add(mockReq({ body: { name: 'Second shop' } }), res);
+    expect(mockSaveGroup.mock.calls[0][3]).toEqual({ level: 'account' });
+  });
+
+  test('unticking a box on the form is honoured', async () => {
+    const res = mockRes();
+    await ctrl.add(mockReq({ body: { name: 'Second shop', share_customers: false } }), res);
+    expect(mockSaveGroup.mock.calls[0][1].share_customers).toBe(false);
+  });
+
+  test('a "false" string from a form is FALSE', async () => {
+    const res = mockRes();
+    await ctrl.add(mockReq({ body: { name: 'Second shop', share_customers: 'false' } }), res);
+    expect(mockSaveGroup.mock.calls[0][1].share_customers).toBe(false);
+  });
+
+  test('creating a THIRD shop does not re-impose the default', async () => {
+    /* Somebody deliberately turned customer sharing off when the second shop
+       was created. Creating a third must not quietly turn it back on. */
+    mockAccountGroup.mockResolvedValue({ status: true, data: { set: ['share_customers'] } });
+    const res = mockRes();
+    await ctrl.add(mockReq({ body: { name: 'Third shop' } }), res);
+    const values = mockSaveGroup.mock.calls[0][1];
+    expect(values).not.toHaveProperty('share_customers');
+    expect(values.share_suppliers).toBe(true);
+  });
+
+  test('with every key already decided, nothing is written at all', async () => {
+    mockAccountGroup.mockResolvedValue({
+      status: true,
+      data: { set: ['share_customers', 'share_suppliers', 'share_inventory'] },
+    });
+    const res = mockRes();
+    await ctrl.add(mockReq({ body: { name: 'Fourth shop' } }), res);
+    expect(mockSaveGroup).not.toHaveBeenCalled();
+  });
+
+  test('a failed seed never fails the branch that was created', async () => {
+    mockSaveGroup.mockRejectedValue(new Error('mongo is having a day'));
+    const res = mockRes();
+    await ctrl.add(mockReq({ body: { name: 'Second shop' } }), res);
+    expect(res.json.mock.calls[0][0].type).toBe('success');
+    expect(res.json.mock.calls[0][0].data.sharing_error).toMatch(/having a day/);
+  });
+
+  test('a create that failed seeds nothing', async () => {
+    bm.createBranch.mockResolvedValue({ status: false, message: 'nope', data: null });
+    const res = mockRes();
+    await ctrl.add(mockReq({ body: { name: 'Second shop' } }), res);
+    expect(mockSaveGroup).not.toHaveBeenCalled();
+  });
+
+  test('the read cache is cleared so the new shop sees the rule immediately', async () => {
+    const dataSharing = require('../../../src/services/data-sharing');
+    const spy = jest.spyOn(dataSharing, 'invalidate');
+    try {
+      const res = mockRes();
+      await ctrl.add(mockReq({ body: { name: 'Second shop' } }), res);
+      expect(spy).toHaveBeenCalled();
+    } finally {
+      spy.mockRestore();
+    }
   });
 });
