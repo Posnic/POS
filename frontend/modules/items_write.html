@@ -175,7 +175,7 @@
                                              falls back to the shop-wide range. -->
                                         <input type="number" min="0" step="any" class="form-control clear_text_item text-right"
                                             id="items_reorder_point" name="items_reorder_point"
-                                            placeholder="Reorder point (optional)" autocomplete="off">
+                                            placeholder="Reorder point" autocomplete="off">
                                     </div>
 <div class="col-md-6">
                                         <label class="form-control-placeholder" for="items_unit">
@@ -186,6 +186,11 @@
                                         </select>
                                     </div>
                             </div>
+                            <!-- No "(optional)" anywhere on this form. Required fields carry a
+                                 red asterisk, so marking every other field as optional labels
+                                 the rule instead of the exception - it is noise on eleven
+                                 fields to say what the absence of an asterisk already says
+                                 (owner ask). -->
                             <!-- Category and supplier are both optional pickers of the
                                  same shape, so they share one row instead of eating a
                                  line each (owner ask).
@@ -203,7 +208,6 @@
                                          and categories are managed from their own screen. -->
                                     <label class="form-control-placeholder items-label-inline" for="items_category">
                                         <lang class="lang_choosecategory_title">Select Category</lang>
-                                        <small class="text-muted">(<lang class="lang_optional">optional</lang>)</small>
                                     </label>
                                     <select id='items_category' name="items_category" style='width: 100%;'
                                         class="select2 items_category items_choose_error">
@@ -212,7 +216,6 @@
                                 <div class="form-group col-md-6">
                                     <label class="form-control-placeholder items-label-inline" for="items_supplier">
                                         <lang class="lang_choosesupplier_title">Select Supplier</lang>
-                                        <small class="text-muted">(<lang class="lang_optional">optional</lang>)</small>
                                     </label>
                                     <!-- Optional (IC1): items routinely arrive without a known
                                          supplier; receiving is the supplier system of record.
@@ -506,7 +509,6 @@
                                              what it is, and so should this. -->
                                         <label class="form-control-placeholder d-block" for="item_upload_image">
                                             <lang class="lang_item_photos_title">Photos</lang>
-                                            <small class="text-muted">(<lang class="lang_optional">optional</lang>)</small>
                                         </label>
                                         <div class="mb-3">
                                             <div class="Neon Neon-theme-dragdropbox">
@@ -581,7 +583,7 @@
                                             <lang class="lang_brand_title">Brand</lang>
                                         </label>
                                         <input type="text" class="form-control clear_text_item" id="items_brand"
-                                            name="items_brand" maxlength="100" placeholder="Brand (optional)"
+                                            name="items_brand" maxlength="100" placeholder="Brand"
                                             autocomplete="off">
                                     </div>
                                     <div class="col-md-4">
@@ -590,7 +592,7 @@
                                         </label>
                                         <input type="text" class="form-control clear_text_item" id="items_tags"
                                             name="items_tags" maxlength="300"
-                                            placeholder="Tags, comma separated (optional)" autocomplete="off">
+                                            placeholder="Tags, comma separated" autocomplete="off">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-control-placeholder" for="items_sort">
@@ -648,7 +650,7 @@
                             <!-- V3: manufacturer / extra codes; scanning any of them finds this item. -->
                             <input type="text" class="form-control clear_text_item" id="items_barcodes_alt"
                                 name="items_barcodes_alt" maxlength="400"
-                                placeholder="Alternate barcodes (comma separated, optional)" autocomplete="off">
+                                placeholder="Alternate barcodes, comma separated" autocomplete="off">
                             <!-- V3: purchase-unit assist - "box of 24". Stock stays in base units. -->
                             <div class="form-row mt-2">
                                 <!-- An even pair. 7/5 was arbitrary: two fields of the same kind,
@@ -656,7 +658,7 @@
                                         <div class="col-md-6">
                                     <input type="text" class="form-control clear_text_item" id="items_purchase_unit"
                                         name="items_purchase_unit" maxlength="30"
-                                        placeholder="Purchase unit (e.g. box, optional)" autocomplete="off">
+                                        placeholder="Purchase unit (e.g. box)" autocomplete="off">
                                 </div>
                                 <div class="col-md-6">
                                     <input type="number" min="0" step="any" class="form-control clear_text_item" id="items_conversion_factor"
