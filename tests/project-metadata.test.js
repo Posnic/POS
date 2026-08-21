@@ -25,6 +25,18 @@ test('CodeMeta states a version, and it cannot drift from package.json', () => {
   // and this file already cross-checks issueTracker, url and author the same way.
   assert.equal(metadata.version, packageJson.version);
   assert.match(metadata.version, /^\d+\.\d+\.\d+/);
+
+  // CITATION.cff describes the same release, and codemeta.json points straight
+  // at it. Two identity files disagreeing about the version is worse than one
+  // omitting it: a reader has no way to tell which is stale. Read with a regex
+  // rather than a YAML parser to keep this test dependency-free.
+  const citation = fs.readFileSync(path.join(root, 'CITATION.cff'), 'utf8');
+  const cffVersion = /^version:\s*(.+)$/m.exec(citation);
+  assert.ok(cffVersion, 'CITATION.cff states no version');
+  assert.equal(cffVersion[1].trim().replace(/^['"]|['"]$/g, ''), packageJson.version);
+
+  const cffLicense = /^license:\s*(.+)$/m.exec(citation);
+  assert.equal(cffLicense[1].trim(), packageJson.license);
 });
 
 test('CodeMeta preserves the source licence and package-component boundary', () => {
