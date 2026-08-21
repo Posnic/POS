@@ -3829,17 +3829,43 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 /* One strip, on the header's own line. It only wraps when the window genuinely
    cannot hold it - wrapping by default is what made this look misaligned
    against the title on one side and the buttons on the other. */
+/* ONE line, always (owner: "can we make in same line of filter row itself").
+   nowrap rather than wrap: wrapping puts a second row inside the page header,
+   which pushes the header open and misaligns the strip against both the title
+   and the buttons - the thing that was reported. The search box carries
+   min-width:0 so a narrow header shrinks IT rather than breaking the line,
+   which is the least harmful way to run out of room. */
 .lf-row {
     display: flex;
     align-items: center;
     gap: 6px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    min-width: 0;
 }
-.lf-search { position: relative; flex: 0 1 260px; min-width: 150px; }
+.lf-search { position: relative; flex: 0 1 260px; min-width: 0; }
 .lf-search .lf-q { width: 100%; }
 .lf-field { flex: 0 0 auto; width: auto; min-width: 108px; }
 .lf-preset { flex: 0 0 auto; width: auto; min-width: 132px; }
-.lf-custom { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+/* The custom range is the one control that cannot fit on the line: two
+   datetime-local inputs are ~185px each in Chrome, and with "to" between them
+   that is nearly 400px on a strip that has to share a header row. So it drops
+   out of flow and opens under the preset that asked for it - the strip stays
+   one line whatever is selected, and the range editor gets the room it needs. */
+.lf-custom {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    z-index: 1050;
+    align-items: center;
+    gap: 6px;
+    padding: 8px;
+    background: #fff !important;
+    border: 1px solid #d0d7de !important;
+    border-radius: 6px;
+    box-shadow: 0 8px 24px rgba(31, 35, 40, 0.16);
+    white-space: nowrap;
+}
+.lf-preset-wrap { position: relative; flex: 0 0 auto; }
 .lf-custom input { width: auto; min-width: 168px; }
 .lf-sep { font-size: 12px; color: #57606a; }
 .lf-exact {
@@ -3942,9 +3968,13 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 [data-theme] .lf-sep,
 [data-theme] .lf-exact { color: var(--theme-text-secondary); }
 [data-theme] .lf-count { background: var(--theme-primary-color, #0969da); }
-[data-theme] .lf-typeahead {
-    background: var(--theme-card-bg);
-    border-color: var(--theme-border-color);
+[data-theme] .lf-typeahead,
+/* The range editor is a popover like the picker, so it needs the same
+   treatment: its light rule carries !important to beat the theme's own card
+   background, which means the dark theme has to say so with !important too. */
+[data-theme] .lf-custom {
+    background: var(--theme-card-bg) !important;
+    border-color: var(--theme-border-color) !important;
 }
 [data-theme] .lf-pick-row { color: var(--theme-text-primary); }
 [data-theme] .lf-pick-row:hover {

@@ -1034,3 +1034,58 @@ test('no handler is left bound to the removed search input', () => {
     'a handler bound to an element that no longer exists never fires and reads as working code',
   );
 });
+
+/*
+ * "Filters not aligned well. Can we make in same line of filter row itself."
+ *
+ * The bar sits in the page header between the title and the buttons, so a
+ * second row does not just look untidy - it pushes the header open and
+ * misaligns the strip against both. One line is the requirement, not a
+ * preference, and these pin the two ways it can break.
+ */
+test('the strip is one line, whatever is selected', () => {
+  const row = cssRule('.lf-row');
+  assert.match(row, /flex-wrap:\s*nowrap/, 'wrap puts a second row inside the page header');
+  assert.match(row, /min-width:\s*0/, 'without this a flex child refuses to shrink and overflows');
+});
+
+test('running out of room shrinks the search box rather than breaking the line', () => {
+  /* A fixed min-width on the widest control is what forces the wrap. Shrinking
+     the search is the least harmful way to run out of room - every other
+     control has a fixed label to show. */
+  const search = cssRule('.lf-search', 'flex-wrap: nowrap');
+  assert.match(search, /min-width:\s*0/, 'a floor on the search box forces the wrap it is meant to avoid');
+});
+
+test('the custom range opens under the preset instead of sitting on the line', () => {
+  /* Two datetime-local inputs are ~185px each in Chrome; with "to" between
+     them that is nearly 400px added to a strip sharing a header row. */
+  const custom = cssRule('.lf-custom', 'that is nearly 400px on a strip');
+  assert.match(custom, /position:\s*absolute/, 'inline, this is what breaks the single line');
+  assert.match(custom, /z-index/, 'a panel with no stacking order renders behind the list');
+  assert.match(custom, /background:\s*#fff\s*!important/, 'the theme paints card backgrounds !important');
+
+  const wrap = cssRule('.lf-preset-wrap');
+  assert.match(wrap, /position:\s*relative/, 'without this the panel positions against the page, not the control');
+  assert.match(
+    listFilterSrc,
+    /<div class="lf-preset-wrap">/,
+    'the markup must nest the editor with the control that opens it',
+  );
+});
+
+test('the range popover survives the dark theme', () => {
+  /* Its light rule carries !important to beat the theme's card background, so
+     the dark rule must too - otherwise the popover is a white card on a dark
+     page, which is how the typeahead nearly shipped. */
+  /* cssRule returns the BODY, so the selector is checked against the file and
+     the declaration against the rule it belongs to. */
+  assert.match(
+    css,
+    /\[data-theme\] \.lf-custom \{/,
+    'the range popover is not themed at all - it would be a white card on a dark page',
+  );
+  const dark = cssRule('[data-theme] .lf-typeahead,', 'lf-count');
+  assert.match(dark, /background: var\(--theme-card-bg\) !important/, 'a plain rule loses to its own light rule');
+  assert.match(dark, /border-color: var\(--theme-border-color\) !important/, 'the border needs it for the same reason');
+});

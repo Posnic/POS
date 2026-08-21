@@ -183,16 +183,22 @@ PosnicPro.listFilter = {
 
         if (cfg.dateField) {
             html += ''
-                + '  <select class="form-control form-control-sm lf-preset">'
+                /* The preset and its range editor are wrapped together so the
+                   editor can be positioned against the control that opened it
+                   while staying out of the strip's flow - two datetime-local
+                   inputs are ~185px each and would break the single line. */
+                + '  <div class="lf-preset-wrap">'
+                + '    <select class="form-control form-control-sm lf-preset">'
                 + LF.PRESETS.map(function (p) {
                     return '<option value="' + p.key + '"' + (st.preset === p.key ? ' selected' : '') + '>'
                         + esc(p.label) + '</option>';
                 }).join('')
-                + '  </select>'
-                + '  <div class="lf-custom" style="display:' + (st.preset === 'custom' ? 'flex' : 'none') + ';">'
-                + '    <input type="datetime-local" class="form-control form-control-sm lf-from" value="' + forInput(st.from) + '">'
-                + '    <span class="lf-sep">to</span>'
-                + '    <input type="datetime-local" class="form-control form-control-sm lf-to" value="' + forInput(st.to) + '">'
+                + '    </select>'
+                + '    <div class="lf-custom" style="display:' + (st.preset === 'custom' ? 'flex' : 'none') + ';">'
+                + '      <input type="datetime-local" class="form-control form-control-sm lf-from" value="' + forInput(st.from) + '">'
+                + '      <span class="lf-sep">to</span>'
+                + '      <input type="datetime-local" class="form-control form-control-sm lf-to" value="' + forInput(st.to) + '">'
+                + '    </div>'
                 + '  </div>'
                 + '  <button type="button" class="btn btn-sm btn-light border lf-clear">Clear</button>';
         }
