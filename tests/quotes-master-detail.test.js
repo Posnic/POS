@@ -576,3 +576,43 @@ test('the Add Item tabs are width-capped but stay left-aligned', () => {
     'auto on the left centres the block and abandons the page left edge',
   );
 });
+
+/*
+ * Add Item, Item tab: SKU & Barcodes belongs under Price & Stock, on the right
+ * (owner ask). It used to sit in a full-width row AFTER both columns closed,
+ * so it fell under the Item card on the left and the right column ended short.
+ */
+test('SKU & Barcodes sits inside the right column, under Price & Stock', () => {
+  const html = fs.readFileSync(path.join(ROOT, 'frontend', 'modules', 'items_write.html'), 'utf8');
+  const tab = html.slice(html.indexOf('id="item_tab_main"'), html.indexOf('id="item_tab_details"'));
+
+  const sku = tab.indexOf('id="sku_card_col"');
+  assert.notStrictEqual(sku, -1, 'the SKU card must still be on this tab');
+  assert.ok(tab.indexOf('lang_price_stock_title') < sku, 'it comes after Price & Stock');
+
+  /* Walk the divs before it and check a col-lg-6 wrapper is still open -
+     that is what puts it in a COLUMN rather than a full-width row below
+     both of them. */
+  let depth = 0;
+  const open = [];
+  for (const m of tab.slice(0, sku).matchAll(/<div\b[^>]*>|<\/div>/g)) {
+    if (m[0].startsWith('</')) {
+      if (open.length && open[open.length - 1] === depth) open.pop();
+      depth -= 1;
+    } else {
+      depth += 1;
+      if (m[0].includes('col-lg-6')) open.push(depth);
+    }
+  }
+  assert.ok(open.length > 0, 'the SKU card escaped its column and fell full-width again');
+});
+
+test('the SKU wrapper keeps the id items.js toggles', () => {
+  const html = fs.readFileSync(path.join(ROOT, 'frontend', 'modules', 'items_write.html'), 'utf8');
+  const js = fs.readFileSync(
+    path.join(ROOT, 'frontend', 'static', 'script', 'js', 'modules', 'js', 'items.js'),
+    'utf8',
+  );
+  assert.ok(html.includes('id="sku_card_col"'), 'the id must survive the move');
+  assert.ok(js.includes('#sku_card_col'), 'items.js shows/hides it with the variant toggle');
+});

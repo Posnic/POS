@@ -229,50 +229,10 @@
                             </div>
                         </div>
                     </div>
-                    </div>
-                    </div>
-
-                    <div class="card m-b-30" id="show_variant_fields" style="display:none;">
-                        <div class="card-body">
-                            <div class="form-row">
-                                <div class="form-group col-md-12">
-                                    <label class="form-control-placeholder" for="items_variant">
-                                        <lang class="lang_selectvariant_title">Select Variant </lang>
-                                        <span class="text-danger">*</span>
-                                    </label>
-                                    <select id='items_variant' name="items_variant" style='width: 200px;'
-                                        class="select2 items_choose_error" required>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group col-md-12">
-                                    <label for="item_variant_list">
-                                        <lang class="lang_variantfield_title"> Variant Fields </lang>
-                                        <span class="text-danger">*</span>
-                                    </label>
-                                    <select class="form-control select2 border-control items_choose_error"
-                                        name="item_variant_list[]" id="item_variant_list" multiple="multiple"
-                                        data-placeholder="Select variant fields" style="width: 100%;" required>
-                                        <option></option>
-                                    </select>
-                                </div>
-                            </div>
-                            <!-- IC2: the Apply button is gone - the per-variant price
-                                 rows render the moment the values are chosen. -->
-                        </div>
-                    </div>
-
-
-                    <!-- 4 · Generated per-variant price rows -->
-                    <div class="card m-b-30" id="load_price_fields" style="display:none;">
-
-                    </div>
-
-                    <!-- SKU and Tax side by side (owner ask) - SKU still follows
-                         the variant toggle with the price wrapper. -->
-                    <div class="row">
-                        <div class="col-lg-6" id="sku_card_col">
+                        <!-- SKU sits under Price & Stock, in the RIGHT column
+                             (owner ask). #sku_card_col keeps its id: items.js shows
+                             and hides it alongside the price wrapper. -->
+                        <div id="sku_card_col">
                         <div class="card m-b-30">
                             <div class="card-header">
                                 <h5 class="card-title mb-0"><lang class="lang_identification_title">SKU &amp; Barcodes</lang></h5>
@@ -329,6 +289,49 @@
                             </div>
                         </div>
                         </div>
+                    </div>
+                    </div>
+
+                    <div class="card m-b-30" id="show_variant_fields" style="display:none;">
+                        <div class="card-body">
+                            <div class="form-row">
+                                <div class="form-group col-md-12">
+                                    <label class="form-control-placeholder" for="items_variant">
+                                        <lang class="lang_selectvariant_title">Select Variant </lang>
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <select id='items_variant' name="items_variant" style='width: 200px;'
+                                        class="select2 items_choose_error" required>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group col-md-12">
+                                    <label for="item_variant_list">
+                                        <lang class="lang_variantfield_title"> Variant Fields </lang>
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-control select2 border-control items_choose_error"
+                                        name="item_variant_list[]" id="item_variant_list" multiple="multiple"
+                                        data-placeholder="Select variant fields" style="width: 100%;" required>
+                                        <option></option>
+                                    </select>
+                                </div>
+                            </div>
+                            <!-- IC2: the Apply button is gone - the per-variant price
+                                 rows render the moment the values are chosen. -->
+                        </div>
+                    </div>
+
+
+                    <!-- 4 · Generated per-variant price rows -->
+                    <div class="card m-b-30" id="load_price_fields" style="display:none;">
+
+                    </div>
+
+                    <!-- SKU and Tax side by side (owner ask) - SKU still follows
+                         the variant toggle with the price wrapper. -->
+                    <div class="row">
                         <div class="col-lg-6">
                     <!-- 5 · Tax -->
                     <div class="card m-b-30">

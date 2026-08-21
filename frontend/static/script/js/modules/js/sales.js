@@ -131,7 +131,6 @@
         $('#v-pills-dashboard-tab,.sales_new_shortcut').addClass('active');
         $('#v-pills-dashboard').addClass('show active');
         $('.vertical-menu li a#view_touchsales_page').addClass('active');
-        $('#show_last_created_sale').hide();
         $("#time-format").attr('readOnly', 'true');
         $("#time-format").prop('disabled', false);
         $('.payment_detail').removeClass('active')
@@ -3746,9 +3745,7 @@ PosnicPro.sales.addSale = {
                     if (response.data.mail === true && $('#sales_new_customer_email').val() !== "") {
                         PosnicPro.sales.addSale.sendSalesReceipt(response.data.sales_id);
                     }
-                    PosnicPro.sales.showSaleDone(response.data);
                     var path = '#/sales/' + response.data.sales_id;
-                    $('#last_created_sale').attr('href', path);
                     $('.printSalesReceipt')
                         .attr('href', path + '/print')
                         .data('sale-id', response.data.sales_id);
@@ -10265,121 +10262,6 @@ PosnicPro.sales.renderRecentCustomers = function () {
         fill(PosnicPro.sales._customerSeed);
     }, function () { /* recents alone, or empty - never an error popup */ });
 };
-/*
- * The post-sale confirmation strip.
- *
- * What replaced "Last Created Record  View". The change due is the largest
- * thing on it deliberately: for a cash sale it is the number the cashier acts
- * on next, and handing back the wrong change is the most expensive routine
- * till mistake there is. Everything else is there so the line can be read
- * aloud - which sale, for how much, to whom, and what they earned.
- *
- * It stays until dismissed (owner choice). Nothing is on a timer, because a
- * confirmation that clears itself is one a busy cashier can miss entirely.
- */
-PosnicPro.sales.showSaleDone = function (d) {
-    d = d || {};
-    var money = function (n) {
-        return (Number(n) || 0).toFixed(2);
-    };
-    /* #tendered_balance is the return balance the tender panel already
-       computed (tendered minus bill, floored at zero), so the strip agrees
-       with the screen the cashier just used rather than recomputing it. */
-    var change = parseFloat(String($('#tendered_balance').text() || '0').replace(/,/g, '')) || 0;
-    $('#sds_change').text(money(change));
-    // No change to hand back is not worth shouting about - a card or exact
-    // cash sale shows the sale, not a zero.
-    $('#sds_change_wrap').toggle(change > 0);
-
-    var number = d.sale_number || '';
-    $('#sds_number').text(number ? 'Sale ' + number : 'Sale saved');
-
-    var total = parseFloat(String($('#grand_total').val() || '0').replace(/,/g, '')) || 0;
-    $('#sds_total').text(total > 0 ? ' · ' + PosnicPro.local.get('currencySign') + ' ' + money(total) : '');
-
-    var who = $.trim(d.name || '');
-    $('#sds_customer').text(who && who !== 'Walk-In-Customer' ? who : 'Walk-in');
-
-    /* Loyalty only when this sale actually earned some - the API attaches it
-       and omits it otherwise, so a shop with the module off never sees it. */
-    var loy = d.loyalty_earned;
-    if (loy && Number(loy.points) > 0) {
-        $('#sds_loyalty')
-            .text(' · earned ' + loy.points + ' pts, balance ' + loy.balance)
-            .show();
-    } else {
-        $('#sds_loyalty').text('').hide();
-    }
-
-    clearTimeout(PosnicPro.sales._voidArm);
-    $('#sds_void')
-        .data('sale-id', d.sales_id || '')
-        .data('armed', false)
-        .prop('disabled', false)
-        .text('Void');
-    $('#show_last_created_sale').show();
-};
-
-/* Enter starts the next sale while the strip is up, so the cashier never
-   reaches for the mouse between customers. Guarded on the strip being visible
-   and on not being inside a field, or Enter would hijack every form on the
-   page. */
-$(document).on('keydown', function (e) {
-    if (e.which !== 13) { return; }
-    if (!$('#show_last_created_sale').is(':visible')) { return; }
-    if ($(e.target).is('input, textarea, select, [contenteditable="true"]')) { return; }
-    e.preventDefault();
-    $('#sds_new')[0].click();
-});
-
-/*
- * Void: the sale is minutes old and the customer is still at the counter, so
- * reversing it here beats hunting for it in Sales History. The endpoint puts
- * the stock back and reverses loyalty, coupons and cashback with it.
- *
- * Two clicks, not a modal. This IS destructive so it should not go on one
- * click, but the owner's rule is that a dialog is for things that deserve one;
- * the button asking to be pressed again says the same thing without something
- * to dismiss. It reverts itself after a few seconds so a stray first click
- * cannot sit there armed.
- *
- * The server gates this on sales:delete, so the button carries the matching
- * data-module/data-access and the ACL layer hides it from a cashier who would
- * only get a 403 - rather than offering a manager PIN this endpoint has no
- * way to accept.
- */
-PosnicPro.sales._voidArm = null;
-$(document).on('click', '#sds_void', function () {
-    var $btn = $(this);
-    var id = $btn.data('sale-id');
-    if (!id) { return; }
-
-    if (!$btn.data('armed')) {
-        $btn.data('armed', true).text('Confirm void');
-        clearTimeout(PosnicPro.sales._voidArm);
-        PosnicPro.sales._voidArm = setTimeout(function () {
-            $btn.data('armed', false).text('Void');
-        }, 4000);
-        return;
-    }
-
-    clearTimeout(PosnicPro.sales._voidArm);
-    $btn.data('armed', false).prop('disabled', true).text('Voiding...');
-    PosnicPro.post({ url: 'sales/cancel/' + id, data: '{}' }, function (r) {
-        PosnicPro.alert(r.type, r.message);
-        if (r.type === 'success') {
-            $('#show_last_created_sale').hide();
-        } else {
-            $btn.prop('disabled', false).text('Void');
-        }
-    }, function (xhr) {
-        var resp = {};
-        try { resp = JSON.parse(xhr.responseText); } catch (e) { /* plain */ }
-        PosnicPro.alert('error', resp.message || 'Could not void the sale');
-        $btn.prop('disabled', false).text('Void');
-    });
-});
-
 $(document).on('click', '.quotes-row', function () {
     hasher.setHash('quotes/' + $(this).data('id'));
 });

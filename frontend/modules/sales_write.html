@@ -606,37 +606,6 @@
                                         </tbody>
                                     </table>
                                 </div>
-                                <!-- After a sale this used to read "Last Created
-                                     Record  View" - a bookmark, not a receipt. It
-                                     named no sale, no total and no customer, and
-                                     left out the one number a cash till actually
-                                     needs next: the change to hand back. It stays
-                                     put until the cashier dismisses it (owner
-                                     choice) so nothing vanishes before it is read. -->
-                                <div class="mt-2" id="show_last_created_sale" style="display: none;">
-                                    <div class="sale-done-strip">
-                                        <div class="sds-change" id="sds_change_wrap">
-                                            <span class="sds-change-label">Change due</span>
-                                            <span class="sds-change-value"><span
-                                                    class="display-currency">&#8377;</span>&nbsp;<span
-                                                    id="sds_change">0.00</span></span>
-                                        </div>
-                                        <div class="sds-meta">
-                                            <div class="sds-line"><span id="sds_number"></span><span
-                                                    id="sds_total"></span></div>
-                                            <div class="sds-sub"><span id="sds_customer"></span><span
-                                                    id="sds_loyalty"></span></div>
-                                        </div>
-                                        <div class="sds-actions">
-                                            <a href="#" id="last_created_sale" class="btn btn-sm btn-light border">View</a>
-                                            <button type="button" id="sds_void" data-module="sales"
-                                                data-access="delete"
-                                                class="btn btn-sm btn-outline-danger">Void</button>
-                                            <a href="#/sales/new" id="sds_new" class="btn btn-sm btn-primary">New sale
-                                                <kbd class="sds-kbd">&#9166;</kbd></a>
-                                        </div>
-                                    </div>
-                                </div>
                                 <div class="mt-2 customer-display-hide" id="paymentreturnhistory"
                                     style="display: none;">
                                     <div class="col-md-12 col-lg-12 col-xl-12">
