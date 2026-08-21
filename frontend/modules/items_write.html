@@ -651,12 +651,14 @@
                                 placeholder="Alternate barcodes (comma separated, optional)" autocomplete="off">
                             <!-- V3: purchase-unit assist - "box of 24". Stock stays in base units. -->
                             <div class="form-row mt-2">
-                                <div class="col-7">
+                                <!-- An even pair. 7/5 was arbitrary: two fields of the same kind,
+                                             so two halves. -->
+                                        <div class="col-md-6">
                                     <input type="text" class="form-control clear_text_item" id="items_purchase_unit"
                                         name="items_purchase_unit" maxlength="30"
                                         placeholder="Purchase unit (e.g. box, optional)" autocomplete="off">
                                 </div>
-                                <div class="col-5">
+                                <div class="col-md-6">
                                     <input type="number" min="0" step="any" class="form-control clear_text_item" id="items_conversion_factor"
                                         name="items_conversion_factor" placeholder="Units per pack" autocomplete="off">
                                 </div>
@@ -680,7 +682,7 @@
                             <div class="form-row">
                                 <div class="form-group col-md-12">
                                     <div class="row">
-                                        <div class="col-md-9">
+                                        <div class="col-md-8">
                                             <div class="custom-control custom-radio custom-control-inline">
                                                 <input type="radio" id="item_radio_discount_amount"
                                                     name="radio_discount" class="custom-control-input"
@@ -699,7 +701,9 @@
                                                 </label>
                                             </div>
                                         </div>
-                                        <div class="col-md-3" style="padding: 0 !important;">
+                                        <!-- No padding override. It removed the grid gutter, so the value
+                                                 box sat flush against the radios. -->
+                                            <div class="col-md-4">
                                             <div class="floating-label">
                                                 <input name="items_discount_amount" id="items_discount_amount"
                                                     type="text" aria-describedby="basic-addon1"
