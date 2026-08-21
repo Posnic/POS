@@ -547,10 +547,37 @@ PosnicPro.items = {
         var shared = PosnicPro.items._sharedItemFields();
         var axis = PosnicPro.items.variantAxisLabel();
         var rows = [];
+        /* Did somebody actually PICK a tile, or is it the automatic one?
+           _sharedItemFields already resolved the fallback against the parent
+           name, so by the time it is spread onto a row there is no way left to
+           tell the two apart - the question has to be asked here. */
+        var tilePicked = !!($('#item_tile_color').val() || $('#item_tile_shape').val());
+
         $(values).each(function (key, variantName) {
             var unitVariantDetail = $('#items_unit_' + key + '');
-            rows.push(Object.assign({}, shared, {
-                name: itemName + ' / ' + variantName,
+            var rowName = itemName + ' / ' + variantName;
+            /*
+             * Each variant gets its OWN automatic tile, from its own full name.
+             *
+             * The shared fields carry a tile derived from the parent name, so
+             * spreading them gave every member of a family the same colour and
+             * the same shape - "Shirt / Red" and "Shirt / Blue" indistinguishable
+             * on the sale grid. That defeats the only thing the dressing is for:
+             * a till is navigated by recognition, and a family is exactly where
+             * several near-identical names sit side by side needing to be told
+             * apart at a glance.
+             *
+             * An explicit choice still wins and still applies to the whole
+             * family - picking a colour for "Shirt" means the shop wants that
+             * colour for the shirts, and quietly overriding it per row would be
+             * the opposite of what was asked.
+             */
+            var autoRow = tilePicked ? null : PosnicPro.autoTile(rowName);
+            rows.push(Object.assign({}, shared, autoRow ? {
+                tile_color: autoRow.color,
+                tile_shape: autoRow.shape,
+            } : {}, {
+                name: rowName,
                 variant_value: variantName,
                 sku_id: $('#items_itemid_' + key + '').val(),
                 barcode_id: $('#items_barcodeid_' + key + '').val(),

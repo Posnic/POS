@@ -1089,3 +1089,26 @@ test('a second axis is offered but never preselected', () => {
   // select2 will not re-read options on a live instance without a destroy
   assert.match(body, /select2\('destroy'\)/, 'a live select2 will keep the old options');
 });
+test('each variant gets its own tile, unless one was chosen', () => {
+  /* _sharedItemFields resolves the automatic tile against the PARENT name, so
+     spreading it gave every member of a family the same colour and shape -
+     "Shirt / Red" and "Shirt / Blue" indistinguishable on a grid navigated by
+     recognition, which is the one job the dressing has. */
+  const at = itemsJs.indexOf('saveVariantFamily: function');
+  const body = itemsJs.slice(at, itemsJs.indexOf('PosnicPro.post(', at));
+  assert.match(body, /var tilePicked = /, 'nothing distinguishes a chosen tile from the automatic one');
+  assert.match(
+    body,
+    /PosnicPro\.autoTile\(rowName\)/,
+    'the automatic tile is not derived from the row name - the family will render identically',
+  );
+  assert.match(
+    body,
+    /tilePicked \? null :/,
+    'an explicitly chosen tile is overridden per row - that is the opposite of what was asked',
+  );
+  // and the override has to land BEFORE the row's own fields, not after
+  const spread = body.indexOf('Object.assign({}, shared,');
+  assert.ok(spread !== -1 && body.indexOf('tile_color: autoRow.color', spread) > spread,
+    'the per-row tile is not spread over the shared one');
+});
