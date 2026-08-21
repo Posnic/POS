@@ -1399,3 +1399,15 @@ test('the bound exists on the first edit, not only after a change', () => {
   assert.match(render, /st\.to \? ' max="' \+ forInput\(st\.to\)/, 'the start input renders unbounded');
   assert.match(render, /st\.from \? ' min="' \+ forInput\(st\.from\)/, 'the end input renders unbounded');
 });
+
+test('no CSS rule styles the search input that was removed', () => {
+  /* #quotes_search stopped existing when the shared filter bar took over. The
+     JS reading it was removed earlier today; the CSS sizing it survived. A dead
+     rule is quieter than a dead selector - it costs nothing at runtime - but it
+     is the same lie: it reads as "the rail sizes its search box" and there has
+     been no search box in the rail for some time. */
+  assert.ok(
+    !/#quotes_search/.test(css),
+    'a stylesheet rule still targets the removed search input',
+  );
+});
