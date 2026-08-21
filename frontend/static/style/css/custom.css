@@ -3797,7 +3797,6 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     z-index: 2;
 }
 .quotes-split #quotes_list_card #quotes_filter_chips .btn { font-size: 11.5px; padding: 3px 7px; }
-.quotes-split #quotes_list_card #quotes_search { max-width: 100% !important; }
 
 /* Under about 1500px the rail cannot carry six columns, so the three that
    identify a quote survive - number, who it is for, what it comes to - plus
