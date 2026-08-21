@@ -7805,7 +7805,7 @@ PosnicPro.quotes = {
         $('#quotes_view_card,#quotes_edit_card').hide();
         $('#quotes_list_card').show();
         // back to the plain full-width list
-        $('#quotes_new .contentbar').removeClass('quotes-split rail-collapsed');
+        $('#quotes_new .contentbar').removeClass('master-detail quotes-split rail-collapsed');
         $('#quotes_list_rows tr.quotes-row').removeClass('is-active');
         $('.vertical-layout').removeClass('toggle-menu');
         $('#v-pills-dashboard-tab,#view_quotes_page').addClass('active');
@@ -7830,7 +7830,7 @@ PosnicPro.quotes = {
         /* The editor is a third child of this contentbar. Leaving the split on
            would lay it out as a flex item inside the joined surface and hand
            it the rail's border, so the authoring page takes the width back. */
-        $('#quotes_new .contentbar').removeClass('quotes-split rail-collapsed');
+        $('#quotes_new .contentbar').removeClass('master-detail quotes-split rail-collapsed');
         $('#quotes_edit_card').show();
         $('.vertical-layout').addClass('toggle-menu');
         PosnicPro.quotes._edInitSort();
@@ -8358,7 +8358,7 @@ PosnicPro.quotes = {
                     ? '<span class="rs-pill unpaid">' + label + '</span>'
                     : '<span class="rs-pill hold">' + label + '</span>';
             var expired = q.status === 'open' && q.valid_until && new Date(q.valid_until) < new Date();
-            html += '<tr class="quotes-row highlight-select" data-id="' + esc(q._id) + '" style="cursor:pointer;">'
+            html += '<tr class="md-row quotes-row highlight-select" data-id="' + esc(q._id) + '" style="cursor:pointer;">'
                 + '<td>' + esc(q.quote_id) + '</td>'
                 + '<td>' + esc(q.customer_name || 'Walk-in') + '</td>'
                 + '<td class="q-col-date">' + d(q.created_date) + '</td>'
@@ -8446,7 +8446,7 @@ PosnicPro.quotes = {
                a second quote is then one click rather than back-then-forward. */
             $('#quotes_edit_card').hide();
             $('#quotes_list_card').show();
-            $('#quotes_new .contentbar').addClass('quotes-split');
+            $('#quotes_new .contentbar').addClass('master-detail quotes-split');
             $('.vertical-layout').removeClass('toggle-menu');
             /* Arriving straight at a quote - a refresh, a bookmark, a shared
                link - means the rail has never been filled. Only

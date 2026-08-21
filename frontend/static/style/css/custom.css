@@ -3851,7 +3851,13 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 /* .contentbar is globally padding-top:0, which was fine when a page header
    was just a title. With the filter strip living in that header, the list card
    ends up butted right against it. Five pixels of air, quotes only - the split
-   view sets its own margin and has a higher specificity, so it is unaffected. */
+   view sets its own margin instead.
+
+   :not(.master-detail) rather than a specificity race. This used to rely on
+   the split rule carrying two ids and therefore winning; the generic rule that
+   replaced it carries none, so the exemption is stated instead of implied. An
+   invisible dependency on selector weight is exactly what breaks when a pattern
+   is extracted. */
 /*
  * MD:* markers below.
  *
@@ -3864,12 +3870,12 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
  * A marker names what a rule is FOR, and that survives the rename. See
  * tests/helpers/source-lookup.js markerReader.
  */
-#quotes_new .contentbar {
+#quotes_new .contentbar:not(.master-detail) {
     padding-top: 5px !important;
 }
 
 /* MD:surface */
-#quotes_new .contentbar.quotes-split {
+.master-detail {
     display: flex;
     gap: 0;
     align-items: stretch;
@@ -3885,9 +3891,8 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     overflow: hidden;
 }
 /* MD:panes-plain */
-#quotes_new .contentbar.quotes-split > #quotes_list_card,
-/* MD:detail */
-#quotes_new .contentbar.quotes-split > #quotes_view_card {
+.master-detail > .md-rail,
+.master-detail > .md-detail {
     border: 0 !important;
     border-radius: 0 !important;
     box-shadow: none !important;
@@ -3902,7 +3907,7 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
    shape: that is the connection, drawn with colour instead of yet another
    line. */
 /* MD:rail */
-#quotes_new .contentbar.quotes-split > #quotes_list_card {
+.master-detail > .md-rail {
     flex: 0 0 330px;
     max-width: 330px;
     min-width: 0;
@@ -3918,7 +3923,7 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     background: #f6f8fa !important;
 }
 /* MD:rail-body */
-#quotes_new .contentbar.quotes-split > #quotes_list_card > .card-body {
+.master-detail > .md-rail > .card-body {
     display: flex;
     flex-direction: column;
     min-height: 0;
@@ -3935,7 +3940,7 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     border-bottom: 1px solid #d8dee4;
 }
 /* MD:rail-scroller */
-.quotes-split #quotes_list_card #quotes_list_rows {
+.master-detail .md-rail-rows {
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
@@ -3944,7 +3949,8 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 /* The toolbar is pinned and only the document scrolls - the mail-app
    arrangement, and the reason the Share and More menus are not clipped: a
    dropdown inside an overflow:auto ancestor would be cut off at its edge. */
-#quotes_new .contentbar.quotes-split > #quotes_view_card {
+/* MD:detail */
+.master-detail > .md-detail {
     flex: 1 1 auto;
     min-width: 0;
     display: flex;
@@ -3953,27 +3959,27 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     background: #fff;
 }
 /* MD:detail-body */
-#quotes_new .contentbar.quotes-split > #quotes_view_card > .card-body {
+.master-detail > .md-detail > .card-body {
     display: flex;
     flex-direction: column;
     min-height: 0;
     padding: 12px 14px !important;
 }
-.quotes-split #quotes_view_head { flex: 0 0 auto; }
+.master-detail .md-detail-head { flex: 0 0 auto; }
 /* MD:detail-scroller */
-.quotes-split #quotes_view_body {
+.master-detail .md-detail-body {
     flex: 1 1 auto;
     min-height: 0;
     overflow: auto;
 }
 
 /* Collapsed rail: the quote takes the full width, the toggle brings it back. */
-#quotes_new .contentbar.quotes-split.rail-collapsed > #quotes_list_card { display: none; }
+.master-detail.rail-collapsed > .md-rail { display: none; }
 
-.quotes-split #quotes_list_card table { font-size: 12.5px; margin-bottom: 0; }
-.quotes-split #quotes_list_card td,
-.quotes-split #quotes_list_card th { padding: 8px 10px; }
-.quotes-split #quotes_list_card thead th {
+.master-detail .md-rail table { font-size: 12.5px; margin-bottom: 0; }
+.master-detail .md-rail td,
+.master-detail .md-rail th { padding: 8px 10px; }
+.master-detail .md-rail thead th {
     background: #f6f8fa;
     border-bottom: 1px solid #d8dee4;
     position: sticky;
@@ -3993,7 +3999,7 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 }
 @media (min-width: 1500px) {
     /* MD:rail-wide */
-    #quotes_new .contentbar.quotes-split > #quotes_list_card {
+    .master-detail > .md-rail {
         flex: 0 0 560px;
         max-width: 560px;
     }
@@ -4193,8 +4199,8 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
    the way a raised card would, and nothing is drawn on its right, so it runs
    straight into the quote beside it. */
 /* MD:selected-row */
-.quotes-split #quotes_list_rows tr.quotes-row.is-active,
-.quotes-split #quotes_list_rows tr.quotes-row.is-active > td {
+.master-detail .md-row.is-active,
+.master-detail .md-row.is-active > td {
     background: #fff !important;
 }
 /* A real border now, not a shadow hairline - the owner could not see the
@@ -4202,19 +4208,19 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
    the right stays OPEN so the row still runs into the document beside it,
    which is the whole point of the join. .table-borderless means the last cell
    simply has no right border to remove. */
-.quotes-split #quotes_list_rows tr.quotes-row.is-active > td {
+.master-detail .md-row.is-active > td {
     border-top: 1px solid #c9d1d9 !important;
     border-bottom: 1px solid #c9d1d9 !important;
     font-weight: 600;
     color: #1f2328;
 }
-.quotes-split #quotes_list_rows tr.quotes-row.is-active > td:first-child {
+.master-detail .md-row.is-active > td:first-child {
     border-left: 3px solid #c9d1d9 !important;
 }
 /* Unselected rows sit ON the grey, so nothing may paint them white. */
 /* MD:unselected-row */
-.quotes-split #quotes_list_rows tr.quotes-row > td { background: transparent; }
-.quotes-split #quotes_list_rows tr.quotes-row:hover > td { background: #eaeef2; }
+.master-detail .md-row > td { background: transparent; }
+.master-detail .md-row:hover > td { background: #eaeef2; }
 
 /* The pager sits at the foot of the rail and always states the count, so the
    list says how much of itself you are seeing even on a single page. */
@@ -4250,37 +4256,38 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 
 /* Dark themes: the joined surface and its divider are the whole effect, so
    they have to follow the theme rather than stay light-mode grey. */
-[data-theme] #quotes_new .contentbar.quotes-split {
+[data-theme] .master-detail {
     background: var(--theme-card-bg);
     border-color: var(--theme-border-color);
 }
-[data-theme] #quotes_new .contentbar.quotes-split > #quotes_list_card,
-[data-theme] #quotes_new .contentbar.quotes-split > #quotes_list_card > .card-body,
+[data-theme] .master-detail > .md-rail,
+[data-theme] .master-detail > .md-rail > .card-body,
+/* the chips are quotes' own control, so that half of the group stays named */
 [data-theme] .quotes-split #quotes_list_card #quotes_filter_chips {
     background: var(--theme-body-bg, var(--theme-card-bg)) !important;
 }
 /* The connected selection is the whole effect, so its ground and the pane's
    must be the SAME variable - two near-identical colours would show a seam. */
-[data-theme] #quotes_new .contentbar.quotes-split > #quotes_view_card,
-[data-theme] .quotes-split #quotes_list_rows tr.quotes-row.is-active,
-[data-theme] .quotes-split #quotes_list_rows tr.quotes-row.is-active > td {
+[data-theme] .master-detail > .md-detail,
+[data-theme] .master-detail .md-row.is-active,
+[data-theme] .master-detail .md-row.is-active > td {
     background: var(--theme-card-bg) !important;
 }
-[data-theme] .quotes-split #quotes_list_rows tr.quotes-row.is-active > td {
+[data-theme] .master-detail .md-row.is-active > td {
     color: var(--theme-text-primary);
     border-top-color: var(--theme-text-muted, #8c959f) !important;
     border-bottom-color: var(--theme-text-muted, #8c959f) !important;
 }
-[data-theme] .quotes-split #quotes_list_rows tr.quotes-row.is-active > td:first-child {
+[data-theme] .master-detail .md-row.is-active > td:first-child {
     border-left-color: var(--theme-text-muted, #8c959f) !important;
 }
-[data-theme] .quotes-split #quotes_list_rows tr.quotes-row:hover > td {
+[data-theme] .master-detail .md-row:hover > td {
     background: var(--theme-table-row-hover);
 }
 [data-theme] .quotes-split #quotes_list_card #quotes_filter_chips {
     border-bottom-color: var(--theme-border-color);
 }
-[data-theme] .quotes-split #quotes_list_card thead th {
+[data-theme] .master-detail .md-rail thead th {
     background: var(--theme-body-bg, var(--theme-card-bg));
     border-bottom-color: var(--theme-border-color);
 }
