@@ -763,3 +763,52 @@ test('the Filter button shows how many filters are on', () => {
   assert.match(listFilterSrc, /lf-count/, 'the button needs a count badge');
   assert.match(listFilterSrc, /activeCount/, 'and something to count');
 });
+
+/*
+ * Search-as-you-type, without a query per letter.
+ *
+ * Worth being precise about the cost, because the same bar is going on sales
+ * and items where the row counts are real. On a till the database is local;
+ * pos.sbala.in is a network hop AND one process serving many shops, so an
+ * expensive scan there competes with somebody else's request.
+ */
+test('typing is debounced, so a word is one request and not four', () => {
+  assert.match(listFilterSrc, /LF\.DEBOUNCE_MS\s*=\s*\d+/, 'the delay must be named, not buried');
+  assert.match(listFilterSrc, /setTimeout\(function \(\) \{ LF\._changed\(key\); \}, LF\.DEBOUNCE_MS\)/);
+  assert.match(listFilterSrc, /clearTimeout/, 'each keystroke must cancel the pending one');
+});
+
+test('one character never reaches the server', () => {
+  /* It matches almost every row: the most expensive query anyone can run and
+     the least useful answer. Below the minimum the list keeps what it has. */
+  assert.match(listFilterSrc, /LF\.MIN_SEARCH\s*=\s*[2-9]/, 'a minimum length must exist');
+  assert.match(listFilterSrc, /if \(!LF\.shouldQuery\(term\)\)/, 'and be enforced before the timer');
+});
+
+test('but CLEARING the box always reloads', () => {
+  /* Emptying the search is how you get the whole list back - blocking it on
+     the same minimum would strand you in a filtered list with no way out. */
+  assert.match(
+    listFilterSrc,
+    /t\.length === 0 \|\| t\.length >= LF\.MIN_SEARCH/,
+    'an empty term must be allowed through',
+  );
+});
+
+test('the typeahead is exempt - it reads cache, not the database', () => {
+  const handler = listFilterSrc.slice(listFilterSrc.indexOf("on('input', '.lf-q'"));
+  const body = handler.slice(0, handler.indexOf('});'));
+  assert.ok(
+    body.indexOf('LF.typeahead(key, this.value)') < body.indexOf('shouldQuery'),
+    'suggestions must update on every keystroke, before the minimum-length gate',
+  );
+});
+
+test('the module still drops out-of-order responses', () => {
+  /* Debouncing reduces requests; it does not order them. Without this a slow
+     response for "ac" can land after the one for "acme" and repaint the list
+     with the wrong rows. */
+  const load = blockAt(quotesNamespace, 'load: function (keepPage) {');
+  assert.match(load, /var mine = \+\+PosnicPro\.quotes\._seq/, 'each request takes a sequence number');
+  assert.match(load, /if \(mine !== PosnicPro\.quotes\._seq\) \{ return; \}/, 'and a stale one returns early');
+});

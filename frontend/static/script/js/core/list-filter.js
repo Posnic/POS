@@ -231,14 +231,49 @@ PosnicPro.listFilter = {
 
     var owner = function (el) { return $(el).closest('[data-lf]').attr('data-lf'); };
 
+    /* Search-as-you-type, without a query per letter.
+     *
+     * Three things keep this honest, and they matter more in the cloud than on
+     * a till: there the database is local, but pos.sbala.in is a network hop
+     * AND one process serving many shops, so an expensive scan competes with
+     * somebody else's request.
+     *
+     *   1. DEBOUNCE. Typing is not a decision. "acme" is one request after the
+     *      pause, not four.
+     *   2. MINIMUM LENGTH. One character matches almost every row - the most
+     *      expensive query anyone can run and the least useful answer. Below
+     *      the minimum the list simply keeps what it has.
+     *   3. SEQUENCE GUARD (in the calling module): a slow response that lands
+     *      after a newer one is dropped, so results cannot arrive out of order.
+     *
+     * The typeahead is exempt from all of it - it reads cached recents, so it
+     * updates on every keystroke and costs nothing.
+     */
+    LF.MIN_SEARCH = 2;
+    LF.DEBOUNCE_MS = 350;
+
+    LF.shouldQuery = function (term) {
+        var t = String(term || '').trim();
+        // clearing is always worth a request - it is how you get the list back
+        return t.length === 0 || t.length >= LF.MIN_SEARCH;
+    };
+
     $(document).on('input', '.lf-q', function () {
         var key = owner(this);
         if (!key) return;
-        LF._mounted[key].state.search = $.trim(this.value);
-        clearTimeout(LF._mounted[key]._t);
-        // typing is not a decision yet - wait for the pause
-        LF._mounted[key]._t = setTimeout(function () { LF._changed(key); }, 300);
+        var term = $.trim(this.value);
+        LF._mounted[key].state.search = term;
+
+        // cached, so it can keep up with every keystroke
         LF.typeahead(key, this.value);
+
+        clearTimeout(LF._mounted[key]._t);
+        if (!LF.shouldQuery(term)) {
+            // one character: keep the list as it is rather than scanning for it
+            LF.paintButton(key);
+            return;
+        }
+        LF._mounted[key]._t = setTimeout(function () { LF._changed(key); }, LF.DEBOUNCE_MS);
     });
 
     $(document).on('change', '.lf-field,.lf-exact-cb', function () {
