@@ -1319,3 +1319,47 @@ test('a suggestion named "constructor" is not silently dropped', () => {
   assert.match(uniq, /Object\.create\(null\)/, 'a plain object inherits names that collide');
   assert.ok(!/var seen = \{\}/.test(uniq), 'the bare-object set is back');
 });
+
+/*
+ * Mounting the bar twice must not discard what someone typed.
+ *
+ * The first version replaced the mount record wholesale, so a second mount
+ * cleared the search, the dates and the status chips while the LIST still
+ * showed filtered results - the bar and the list disagreeing, which is the
+ * failure this shared component exists to stop happening on five screens.
+ */
+test('re-mounting keeps the state', () => {
+  const fn = blockAt(listFilterSrc, 'LF.mount = function (cfg) {');
+  assert.match(
+    fn,
+    /if \(existing && existing\.cfg\.container === cfg\.container\)/,
+    'a second mount wipes the state',
+  );
+  assert.match(fn, /existing\.cfg = cfg;/, 'a screen that adds a field on re-mount must see it');
+  assert.ok(
+    fn.indexOf('return existing;') < fn.indexOf('LF._mounted[key] = {'),
+    'the re-mount path must return before the reset',
+  );
+});
+
+test('a different container is a real re-mount, and resets', () => {
+  /* Re-parenting the bar is not a repeat - carrying old state into a different
+     panel would show filters belonging to another screen. */
+  const fn = blockAt(listFilterSrc, 'LF.mount = function (cfg) {');
+  assert.match(fn, /LF\._mounted\[key\] = \{/, 'nothing ever resets');
+  assert.match(fn, /search: '', field: 'all'/, 'the fresh state is gone');
+});
+
+test('idempotence belongs to the component, not the screen', () => {
+  /* Quotes guards with its own _filterMounted flag. That is fine, but every
+     screen adopting the bar would need the same flag and the first to forget
+     gets a bug that only appears on page re-entry. */
+  const fn = blockAt(listFilterSrc, 'LF.mount = function (cfg) {');
+  /* stripComments: the comment in LF.mount NAMES the screen-side flag to
+     explain why the component now guards itself. The assertion is about code. */
+  assert.ok(
+    !/_filterMounted/.test(stripComments(listFilterSrc)),
+    'the component must not depend on a flag the screen owns',
+  );
+  assert.ok(fn.includes('var existing = LF._mounted[key];'), 'the component does not check itself');
+});
