@@ -187,8 +187,23 @@ exports.default = async function sign(configuration) {
   }
 
   const output = (last && last.output) || '';
-  let hint = 'Check the card is inserted and proCertum CardManager has registered the certificate.';
-  if (isTimestampFailure(output)) {
+  let hint = 'Check the card is inserted and its certificate is registered.';
+  /*
+   * 0xc0000225 is STATUS_NOT_FOUND, and signtool reports it as "an unexpected
+   * internal error" - which is true and tells nobody anything. In practice it
+   * means the certificate and key were found but the CARD could not be reached,
+   * and the usual reason is that something else is holding it open: proCertum
+   * CardManager with the card open, or SimplySign Desktop in the tray.
+   *
+   * Worth naming, because it cost most of a session to work out once. Every
+   * other signal - store association, public key match, chain, revocation -
+   * looks perfect while this is happening.
+   */
+  if (/c0000225|SignerSign\(\) failed/i.test(output)) {
+    hint = 'The certificate and key are fine, but the card could not be reached. '
+      + 'Close the card in proCertum CardManager (and exit SimplySign Desktop) - '
+      + 'a card held open by another application gives exactly this error.';
+  } else if (isTimestampFailure(output)) {
     hint = `The timestamp server (${TIMESTAMP_URL}) did not answer after ${TIMESTAMP_ATTEMPTS} tries. `
       + 'Rebuilding usually clears it - do NOT ship an untimestamped build instead.';
   } else if (/No certificates were found/i.test(output)) {
