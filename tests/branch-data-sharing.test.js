@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('fs');
 const path = require('path');
-const { blockAt } = require('./helpers/source-lookup');
+const { blockAt, stripComments } = require('./helpers/source-lookup');
 
 /*
  * Sharing, on the screen (owner ask #85).
@@ -218,4 +218,66 @@ test('the picker offers only branches this user can already see', () => {
 test('the picker is refilled when the create form opens', () => {
   const fn = blockAt(branchesJs, 'sharingRow: function (creating) {');
   assert.match(fn, /fillCopyFrom\(\)/, 'a shop created since login would be missing from the list');
+});
+
+/*
+ * Dashboard code that could not run, and one call that ran for nothing.
+ *
+ * Found by tests/tools/dead-selectors.js after #quotes_search raised the
+ * question. Three separate things, all writing into ids the markup dropped when
+ * the dashboard was redesigned:
+ *
+ *   getDashboardTotalAmounts  - defined, never called. Its only helper,
+ *                               smallChartsData, was called from nowhere else.
+ *   getDashboardCurrentWish   - CALLED on every document.ready. Fetched, wrote
+ *                               the response into two ids that do not exist,
+ *                               and on failure put an error toast on screen
+ *                               about a feature nobody can see.
+ *
+ * The server endpoints are deliberately still there: they are routed, modelled
+ * and tested, and this repo is not the only thing that can call them.
+ */
+const dashboardJs = fs.readFileSync(
+  path.join(ROOT, 'frontend', 'static', 'script', 'js', 'modules', 'js', 'dashboard.js'),
+  'utf8',
+);
+const dashboardHtml = fs.readFileSync(
+  path.join(ROOT, 'frontend', 'modules', 'dashboard.html'),
+  'utf8',
+);
+
+test('nothing writes into the dashboard ids that were removed', () => {
+  const code = stripComments(dashboardJs);
+  for (const id of [
+    'dashboard_sales_count',
+    'dashboard_purchase_count',
+    'dashboard_sales_amount',
+    'current_wish',
+    'current_quote',
+  ]) {
+    const used = code.includes(`$('#${id}')`) || code.includes(`$("#${id}")`);
+    const exists = dashboardHtml.includes(`id="${id}"`);
+    assert.ok(!used || exists, `dashboard.js writes to #${id}, which no markup defines`);
+  }
+});
+
+test('no request is fired for a feature that is not on screen', () => {
+  /* One round trip per page load, discarded - and an error toast if it failed. */
+  const code = stripComments(dashboardJs);
+  assert.ok(
+    !/PosnicPro\.dashboard\.getDashboardCurrentWish\(\)/.test(code),
+    'the greeting fetch is back, and the markup it writes to still does not exist',
+  );
+  assert.ok(
+    !/getDashboardCurrentWish: function/.test(code),
+    'the function is back - if the greeting is wanted, the MARKUP is what must return',
+  );
+});
+
+test('the removals left an explanation, not a hole', () => {
+  /* Silent deletion invites re-adding. The comment names what was removed, why
+     it could not work, and that the server side was deliberately left. */
+  assert.match(dashboardJs, /REMOVED 2026-08-21: getDashboardTotalAmounts/, 'no note for the first removal');
+  assert.match(dashboardJs, /REMOVED 2026-08-21: getDashboardCurrentWish/, 'no note for the second');
+  assert.match(dashboardJs, /server endpoint/i, 'it must say the API side was left alone');
 });
