@@ -3165,18 +3165,112 @@ input:checked + .slider:before {
  * Capping the SHORT fields and letting the long ones stay long is what makes
  * a form scan as a column rather than a spreadsheet.
  */
+/* ---- Add Item: item kind, tab ticks, step navigation ------------------- */
+
+/* "What kind of item" lives in the card header, above the fields it governs. */
+.items-kind-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+}
+.items-kind-controls {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+}
+.items-kind-controls #item_service_unit { width: auto; min-width: 128px; }
+.items-kind-controls .custom-control { margin-bottom: 0; }
+
+/* The tick is hidden until earned, so an empty form is not a row of grey
+   ticks nobody can distinguish from earned ones. */
+#item_form_tabs .item-tab-tick {
+    display: none;
+    margin-left: 6px;
+    font-size: 12px;
+    vertical-align: middle;
+}
+#item_form_tabs .nav-link.is-complete .item-tab-tick {
+    display: inline-block;
+    color: #1f883d;
+}
+
+/* The step buttons close each pane. space-between keeps Back left and Next
+   right even when one of them is an empty span on the first and last tabs. */
+.item-tab-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin: 4px 0 18px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(128, 128, 128, 0.18);
+}
+
+/*
+ * The Item card's own alignment (owner: "add categoory add supplier and etc
+ * not aligned properly").
+ *
+ * "+ Add Category" and "+ Add Supplier" now sit on their label lines. Under
+ * the controls their position depended on the height of the thing above them,
+ * and a select2 is not the same height as a plain input - so two links on one
+ * row sat at two different heights. On the label line they align with each
+ * other and with every label on the card, whatever the control below does.
+ */
+.items-inline-add {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    line-height: 1.2;
+}
+
+/* The service switch and its unit are one control, so they share a line and
+   the unit lines up with the fields above rather than hanging off a label. */
+.items-service-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+.items-service-row .custom-control { flex: 0 0 auto; }
+.items-service-row #item_service_unit { flex: 0 0 auto; width: auto; min-width: 132px; }
+
+/*
+ * THE CAP ONLY WORKS IF THE COLUMNS MATCH.
+ *
+ * This cap fixed a real problem - a 700px box for a brand name - but it made a
+ * field's width depend on which column it happened to sit in. A field in a
+ * col-md-6 (~510px) capped to 420; one in a col-md-4 (~355px) never reached the
+ * cap. Same tab, same kind of field, two different widths, and the rows stopped
+ * lining up: exactly what the owner reported ("why each field have different
+ * width").
+ *
+ * The Details tab is one col-md-4 grid now, so every short field is the same
+ * width at every screen size - under the cap they match because the columns
+ * match, and above it they match because the cap does. Keep them uniform when
+ * adding a field here.
+ */
 #items_new #item_tab_details input.form-control,
 #items_new #item_tab_details select.form-control,
 #items_new #item_tab_more input.form-control,
 #items_new #item_tab_more select.form-control {
     max-width: 420px;
 }
-/* the description holds sentences, so it gets more room - but not the page */
+/* The description and the dropzone sit in equal columns and now carry the SAME
+   cap, so they are the same width at every screen size. They used to differ -
+   640 and 420 - which is why one stopped short of its column and the other did
+   not; two panels of different widths side by side, correctly reported.
+   NOT uncapped. The first attempt at this set both to 100% and an existing test
+   caught it: a text column past ~800px is hard to read back, and a col-lg-6 on
+   a wide monitor is exactly that. Equal AND readable is available; equal alone
+   was trading one real property for another. */
 #items_new #items_description { max-width: 640px; }
 
 /* The dropzone was sized like a landing page: an <h3> caption and a button to
    match. It is one control among many on a tab, so it reads as one. */
-#items_new .Neon-theme-dragdropbox { max-width: 420px; }
+#items_new .Neon-theme-dragdropbox { max-width: 640px; }
 #items_new .Neon-input-dragDrop { padding: 14px 12px; }
 #items_new .Neon-input-text h3 {
     font-size: 13px;
