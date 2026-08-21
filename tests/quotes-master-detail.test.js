@@ -97,6 +97,8 @@ test('but the highlight still moves on every click', () => {
 
 test('the fast path requires a document open and the editor closed', () => {
   const fn = blockAt(quotesNamespace, '_inSplit: function () {');
+  /* quotes-split stays the name asked for here on purpose: this is quotes
+     deciding whether ITS split is on, not a question about the pattern. */
   for (const required of ['#quotes_new', '#quotes_view_card', '#quotes_edit_card', 'quotes-split']) {
     assert.ok(fn.includes(required), `_inSplit must consider ${required}`);
   }
@@ -110,11 +112,18 @@ test('the fast path requires a document open and the editor closed', () => {
 
 test('the editor leaves the joined surface', () => {
   const shell = blockAt(quotesNamespace, '_edShell: function () {');
-  assert.match(
-    shell,
-    /removeClass\('quotes-split rail-collapsed'\)/,
-    'the editor must switch the split off or it is laid out as a rail sibling',
-  );
+  /* Which CLASSES come off, not the exact string they are written in. The
+     pattern class was added beside the quotes one during the extraction, and
+     an assertion pinned to the literal argument failed for a change that made
+     it more correct. */
+  const removed = shell.match(/removeClass\('([^']*rail-collapsed[^']*)'\)/);
+  assert.ok(removed, 'the editor no longer switches the split off at all');
+  for (const cls of ['master-detail', 'rail-collapsed']) {
+    assert.ok(
+      removed[1].split(/\s+/).includes(cls),
+      `the editor leaves ${cls} on, so it is laid out as a rail sibling`,
+    );
+  }
 });
 
 test('the pager always says something, even on a single page', () => {
@@ -270,10 +279,7 @@ test('the selection is the near edge of the document, not a tinted row', () => {
     !/is-active[^{]*\{[^}]*border-right:\s*[1-9]/.test(css),
     'a right border on the selected row would cut it off from the document',
   );
-  const pane = cssRule(
-    '#quotes_new .contentbar.quotes-split > #quotes_view_card {',
-    'The toolbar is pinned',
-  );
+  const pane = ruleFor('MD:detail').body;
   assert.match(pane, /background:\s*#fff/i, 'the document is the white side of the pair');
 });
 
@@ -370,10 +376,7 @@ test('New sits in the page header like every other list screen', () => {
 
 test('the toolbar is pinned so its menus are not clipped', () => {
   // a dropdown inside an overflow:auto ancestor gets cut off at its edge
-  const pane = cssRule(
-    '#quotes_new .contentbar.quotes-split > #quotes_view_card {',
-    'The toolbar is pinned',
-  );
+  const pane = ruleFor('MD:detail').body;
   assert.ok(!/overflow-y:\s*auto/.test(pane), 'the card itself must not be the scroller');
   assert.match(pane, /flex-direction:\s*column/);
   const docBody = ruleFor('MD:detail-scroller').body;
@@ -430,15 +433,11 @@ test('and the labels reserve a line so inputs share a baseline', () => {
  * blue edge. The ground has to win first; the row highlight depends on it.
  */
 test('the list ground wins against the global card rule', () => {
-  for (const [sel, anchor] of [
-    ['#quotes_new .contentbar.quotes-split > #quotes_list_card {', 'drawn with colour instead of yet another'],
-    ['#quotes_new .contentbar.quotes-split > #quotes_list_card > .card-body {', undefined],
-  ]) {
-    const rule = cssRule(sel, anchor);
+  for (const marker of ['MD:rail', 'MD:rail-body']) {
     assert.match(
-      rule,
+      ruleFor(marker).body,
       /background:\s*#f6f8fa\s*!important/i,
-      `${sel} must beat the global .card background rule, or the list stays white`,
+      `${marker} must beat the global .card background rule, or the list stays white`,
     );
   }
 });
@@ -1433,5 +1432,68 @@ test('no CSS rule styles the search input that was removed', () => {
   assert.ok(
     !/#quotes_search/.test(css),
     'a stylesheet rule still targets the removed search input',
+  );
+});
+/*
+ * The extraction itself.
+ *
+ * Everything above checks the pattern still LOOKS right. This checks it is
+ * actually reusable: a rule that behaves correctly while still naming
+ * #quotes_list_card is a pattern in name only, and the next screen to adopt it
+ * would quietly get nothing.
+ */
+test('the pattern rules name the pattern, not quotes', () => {
+  const GENERIC = [
+    'MD:surface', 'MD:panes-plain', 'MD:rail', 'MD:rail-body', 'MD:rail-scroller',
+    'MD:detail', 'MD:detail-body', 'MD:detail-scroller', 'MD:selected-row',
+    'MD:unselected-row',
+  ];
+  for (const marker of GENERIC) {
+    const { selector } = ruleFor(marker);
+    assert.ok(
+      !/quotes/i.test(selector),
+      `${marker} still names quotes (${selector.trim()}) - another list cannot use it`,
+    );
+    assert.match(
+      selector,
+      /master-detail|md-/,
+      `${marker} is on neither the pattern container nor a pattern part: ${selector.trim()}`,
+    );
+  }
+});
+
+test('quotes still carries the classes the pattern styles', () => {
+  /* The other half: generic CSS with nothing wearing the classes styles
+     nothing at all, and every assertion above would still pass. */
+  const markup = fs.readFileSync(
+    path.join(ROOT, 'frontend', 'modules', 'quotes.html'),
+    'utf8',
+  );
+  for (const cls of ['md-rail', 'md-rail-rows', 'md-detail', 'md-detail-head', 'md-detail-body']) {
+    /*
+     * A whole space-delimited token, not a word-boundary match.
+     *
+     * \b is no use here because '-' is a non-word character: /\bmd-rail\b/
+     * happily matches inside "md-rail-rows", so deleting md-rail from the rail
+     * card left this passing on the strength of a DIFFERENT class.
+     *
+     * (\\b, not \b, would have been needed either way - inside a template
+     * literal the single escape is a backspace character.)
+     */
+    assert.match(
+      markup,
+      new RegExp(`class="(?:[^"]*\\s)?${cls}(?:\\s[^"]*)?"`),
+      `nothing wears ${cls}`,
+    );
+  }
+  assert.match(
+    salesSource,
+    /addClass\('master-detail quotes-split'\)/,
+    'the container never gets the pattern class, so none of the pattern applies',
+  );
+  assert.match(
+    salesSource,
+    /class="md-row quotes-row/,
+    'rail rows never get md-row, so the selection styling applies to nothing',
   );
 });

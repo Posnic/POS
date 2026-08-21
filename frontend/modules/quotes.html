@@ -36,7 +36,7 @@
                 </div>
             </div>
             <div class="contentbar">
-                <div class="card m-b-30" id="quotes_list_card">
+                <div class="card m-b-30 md-rail" id="quotes_list_card">
                     <div class="card-body">
                         <div class="m-b-10 d-flex align-items-center flex-wrap" style="gap:8px;" id="quotes_filter_chips">
                             <button type="button" class="btn btn-sm btn-primary-rgba quotes-chip" data-status="">All</button>
@@ -46,7 +46,7 @@
                             <button type="button" class="btn btn-sm btn-secondary-rgba quotes-chip" data-status="converted">Converted</button>
                             <button type="button" class="btn btn-sm btn-secondary-rgba quotes-chip" data-status="cancelled">Cancelled</button>
                         </div>
-                        <div id="quotes_list_rows" class="text-muted">Loading quotes ...</div>
+                        <div id="quotes_list_rows" class="md-rail-rows text-muted">Loading quotes ...</div>
                     </div>
                 </div>
                 <!-- Quotation editor (QUOTATION_MODULE_DESIGN Q2): the authoring
@@ -146,13 +146,13 @@
                         </div>
                     </div>
                 </div>
-                <div class="card m-b-30" id="quotes_view_card" style="display:none;">
+                <div class="card m-b-30 md-detail" id="quotes_view_card" style="display:none;">
                     <div class="card-body">
                         <!-- Master-detail: the list stays on the left while a quote
                              is read on the right, so moving between quotes does not
                              mean going back each time. The rail collapses when the
                              document needs the whole width. -->
-                        <div class="d-flex align-items-center m-b-10" style="gap:8px;" id="quotes_view_head">
+                        <div class="d-flex align-items-center m-b-10 md-detail-head" style="gap:8px;" id="quotes_view_head">
                             <button type="button" class="btn btn-sm btn-light" id="quotes_rail_toggle"
                                 title="Show or hide the quote list">
                                 <i class="feather icon-sidebar"></i>
@@ -166,7 +166,7 @@
                                 <i class="feather icon-x"></i>
                             </button>
                         </div>
-                        <div id="quotes_view_body"></div>
+                        <div id="quotes_view_body" class="md-detail-body"></div>
                     </div>
                 </div>
             </div>
