@@ -688,14 +688,45 @@ test('it is loaded by the build, after PosnicPro and before the modules', () => 
   assert.ok(lf < sales, 'and before the module that mounts it');
 });
 
-test('Filter sits in the page header next to New, and the panel starts closed', () => {
+test('the whole bar lives on the header line, between title and buttons', () => {
   const html = fs.readFileSync(path.join(ROOT, 'frontend', 'modules', 'quotes.html'), 'utf8');
   const header = html.slice(html.indexOf('<div class="breadcrumbbar">'), html.indexOf('<div class="contentbar">'));
+
   assert.ok(header.includes('quotes_filter_btn'), 'the Filter button belongs in the header');
-  assert.ok(header.indexOf('quotes_filter_btn') < header.indexOf('quotes/new'), 'before New');
+  assert.ok(header.includes('quotes_filter_panel'), 'and so does the panel it opens');
+  assert.ok(header.indexOf('quotes_filter_btn') < header.indexOf('quotes/new'), 'Filter before New');
+
+  // title, then the panel, then the buttons - in that order on one line
+  assert.ok(
+    header.indexOf('lang_quotes_title') < header.indexOf('quotes_filter_panel'),
+    'the panel goes after the title',
+  );
+  assert.ok(
+    header.indexOf('quotes_filter_panel') < header.indexOf('quotes_filter_btn'),
+    'and before the buttons',
+  );
 
   const panel = html.slice(html.indexOf('id="quotes_filter_panel"'));
-  assert.match(panel.slice(0, 120), /display:\s*none/, 'a list is for reading - the panel opens on request');
+  assert.match(panel.slice(0, 120), /display:\s*none/, 'a list is for reading - it opens on request');
+});
+
+test('the bar renders as ONE row, not stacked rows', () => {
+  /* Stacked rows in a page header push it open and misalign against the title
+     on one side and the buttons on the other - which is exactly how it looked. */
+  const rows = (listFilterSrc.match(/<div class="lf-row">/g) || []).length;
+  assert.strictEqual(rows, 1, `the bar emits ${rows} rows; it must be a single strip`);
+});
+
+test('suggestions are not gated on which field is selected', () => {
+  /* Gating on field === customer was wrong twice: searching "All fields" for a
+     customer is exactly when the suggestion helps, and with All selected - the
+     default - typing hid the list that had just appeared on focus. */
+  assert.ok(
+    !/cfg\.typeahead !== 'customer'/.test(listFilterSrc),
+    'the per-field gate is what stopped typing from working',
+  );
+  assert.match(listFilterSrc, /if \(!m\.cfg\.typeahead\)/, 'it is a panel-level capability now');
+  assert.match(listFilterSrc, /typeaheadField/, 'and picking a name narrows the field for you');
 });
 
 test('quotes takes its filter params from the shared bar, not its own inputs', () => {

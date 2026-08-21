@@ -161,6 +161,9 @@ PosnicPro.listFilter = {
         if (!$panel.length) return;
 
         var fields = cfg.searchFields || [{ value: 'all', label: 'All fields' }];
+        /* A single row. The bar sits in the page header between the title and
+           the buttons, so it has to read as one strip of controls - stacked
+           rows there would push the header open and misalign against both. */
         var html = ''
             + '<div class="lf-row">'
             + '  <div class="lf-search">'
@@ -176,11 +179,10 @@ PosnicPro.listFilter = {
             + '  </select>'
             + '  <label class="lf-exact mb-0" title="Match the whole value, not part of it">'
             + '    <input type="checkbox" class="lf-exact-cb"' + (st.exact ? ' checked' : '') + '> Exact'
-            + '  </label>'
-            + '</div>';
+            + '  </label>';
 
         if (cfg.dateField) {
-            html += '<div class="lf-row">'
+            html += ''
                 + '  <select class="form-control form-control-sm lf-preset">'
                 + LF.PRESETS.map(function (p) {
                     return '<option value="' + p.key + '"' + (st.preset === p.key ? ' selected' : '') + '>'
@@ -192,9 +194,9 @@ PosnicPro.listFilter = {
                 + '    <span class="lf-sep">to</span>'
                 + '    <input type="datetime-local" class="form-control form-control-sm lf-to" value="' + forInput(st.to) + '">'
                 + '  </div>'
-                + '  <button type="button" class="btn btn-sm btn-light border lf-clear">Clear</button>'
-                + '</div>';
+                + '  <button type="button" class="btn btn-sm btn-light border lf-clear">Clear</button>';
         }
+        html += '</div>';
 
         $panel.html(html).attr('data-lf', key);
         LF.paintButton(key);
@@ -339,11 +341,15 @@ PosnicPro.listFilter = {
     LF.typeahead = function (key, term) {
         var m = LF._mounted[key];
         if (!m) return;
-        var field = m.state.field;
-        var cfg = (m.cfg.searchFields || []).filter(function (f) { return f.value === field; })[0];
         var $box = $(m.cfg.container).find('.lf-typeahead');
 
-        if (!cfg || cfg.typeahead !== 'customer') { $box.hide().empty(); return; }
+        /* Suggest regardless of which field is selected.
+           Gating this on field === customer was wrong twice over: searching
+           "All fields" for a customer is exactly when the suggestion helps,
+           and with All selected - the default - typing hid the list that had
+           just appeared on focus. Picking a name narrows the field itself, so
+           the selector follows the choice instead of gating it. */
+        if (!m.cfg.typeahead) { $box.hide().empty(); return; }
 
         var rows = LF.customerSuggest(term);
         if (!rows.length) { $box.hide().empty(); return; }
@@ -366,6 +372,10 @@ PosnicPro.listFilter = {
         var name = $(this).data('name');
         m.state.search = String(name);
         m.state.exact = true;
+        if (m.cfg.typeaheadField) {
+            m.state.field = m.cfg.typeaheadField;
+            $panel.find('.lf-field').val(m.cfg.typeaheadField);
+        }
         $panel.find('.lf-q').val(name);
         $panel.find('.lf-exact-cb').prop('checked', true);
         $panel.find('.lf-typeahead').hide().empty();
