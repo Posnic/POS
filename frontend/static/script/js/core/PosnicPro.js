@@ -139,6 +139,58 @@ PosnicPro = {
         }
     },
 
+    /*
+     * Is this list showing a filtered view, or all of it?
+     *
+     * An empty list means two completely different things and the difference
+     * is invisible from the row count alone. "No items yet - add your first
+     * item" told a shop with five thousand items, whose search happened to
+     * match none of them, that their catalogue was empty. That is the same
+     * failure quotes had: an answer that is confidently wrong is worse than no
+     * answer, because it sends somebody looking for missing DATA instead of
+     * fixing their SEARCH.
+     *
+     * search() is the one place a list's filters are set, so this reads what
+     * that wrote rather than inspecting the inputs - a date range left in the
+     * box but never applied is not a filter, and asking the inputs would count
+     * it as one.
+     */
+    hasActiveFilters: function (module) {
+        var raw = $('#view_' + module).data('filters');
+        if (!raw) { return false; }
+        if (typeof raw === 'object') { return Object.keys(raw).length > 0; }
+        try {
+            var parsed = JSON.parse(raw);
+            return !!parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0;
+        } catch (e) {
+            /* Unparseable is not "filtered" - it is broken, and claiming a
+               filter is active would hide every row behind a message about a
+               search nobody can see or clear. */
+            return false;
+        }
+    },
+
+    /*
+     * Put a list back to showing everything.
+     *
+     * dateRangefilterClear empties the INPUTS but leaves data('filters') and
+     * never reloads, so on its own it makes the controls disagree with the
+     * rows on screen until Apply is pressed again. An empty-state offering to
+     * clear the search has to actually clear it.
+     */
+    clearListFilters: function (module) {
+        var table = $('#view_' + module);
+        $('#view_' + module + '_input').val('');
+        $('.hide_value_filetr').hide();
+        $('.view_' + module + '_filter_value').hide();
+        table.data('filters', '');
+        table.data('current_page', 1);
+        var mod = PosnicPro[module];
+        if (mod && typeof mod[module + 'Table'] === 'function') {
+            mod[module + 'Table']('#view_' + module);
+        }
+    },
+
     filterClear: function (index) {
         var module = $(index).data('id');
         $('#view_' + module + '_input').val('');

@@ -67,11 +67,14 @@ PosnicPro.customers = {
                 $('#view_customers_total').text(response.data.total);
                 var rowTotal = response.data.total;
                 if (rowTotal === 0) {
+                    /* Which kind of empty - see customers.html and
+                       PosnicPro.hasActiveFilters. */
+                    var filtered = PosnicPro.hasActiveFilters('customers');
                     $('.customer_header').hide();
-                    $('#customer_img_hide').show();
-
+                    $('#customer_img_hide').toggle(!filtered);
+                    $('#customer_no_match').toggle(filtered);
                 } else {
-                    $('#customer_img_hide').hide();
+                    $('#customer_img_hide,#customer_no_match').hide();
                     $('.customer_header').show();
                 }
 
