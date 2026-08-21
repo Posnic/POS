@@ -17,6 +17,16 @@ test('CodeMeta preserves the canonical Posnic product identity', () => {
   assert.equal(metadata.url, packageJson.homepage);
 });
 
+test('CodeMeta states a version, and it cannot drift from package.json', () => {
+  // Machine-readable identity without a version is far less useful: indexers
+  // and citation tools key on it, and "which release is this describing?" has
+  // no answer without it. Asserting equality rather than a literal is the point
+  // - a hardcoded version in a second file is a stale version waiting to happen,
+  // and this file already cross-checks issueTracker, url and author the same way.
+  assert.equal(metadata.version, packageJson.version);
+  assert.match(metadata.version, /^\d+\.\d+\.\d+/);
+});
+
 test('CodeMeta preserves the source licence and package-component boundary', () => {
   assert.equal(packageJson.license, 'AGPL-3.0-only');
   assert.equal(metadata.license, 'https://spdx.org/licenses/AGPL-3.0-only.html');
