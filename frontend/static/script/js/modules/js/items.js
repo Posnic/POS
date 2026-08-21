@@ -272,11 +272,15 @@ PosnicPro.items = {
 
                 var rowTotal = response.data.total;
                 if (rowTotal === 0) {
+                    /* Which kind of empty. "No items yet" over a filtered view
+                       tells a shop with a full catalogue that it has none -
+                       see items.html and PosnicPro.hasActiveFilters. */
+                    var filtered = PosnicPro.hasActiveFilters('items');
                     $('.item_header').hide();
-                    $('#item_img_hide').show();
-
+                    $('#item_img_hide').toggle(!filtered);
+                    $('#item_no_match').toggle(filtered);
                 } else {
-                    $('#item_img_hide').hide();
+                    $('#item_img_hide,#item_no_match').hide();
                     $('.item_header').show();
                 }
 

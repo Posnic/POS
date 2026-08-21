@@ -148,7 +148,31 @@
                                         or import items from a CSV file
                                     </a>
                                 </div>
-                                <div class="item_norecord col-sm-6 col-md-12 col-lg-12" style="display:none;">
+                                <!--
+                                    An empty list means two different things.
+
+                                    "No items yet" was shown for BOTH of them, so a shop
+                                    with five thousand items whose search matched none of
+                                    them was told its catalogue was empty and invited to
+                                    add its first item. An answer that is confidently
+                                    wrong is worse than no answer: it sends somebody
+                                    looking for missing DATA instead of fixing their
+                                    SEARCH. This is the same failure quotes had.
+
+                                    The offer here is the one that helps - put the list
+                                    back - rather than the New button, which is the right
+                                    thing to offer only in the other case.
+                                -->
+                                <div class="col-sm-6 col-md-12 col-lg-12 text-center" id="item_no_match" style="display:none; padding:56px 20px;">
+                                    <i class="feather icon-search" style="font-size:56px; opacity:.25;"></i>
+                                    <p style="margin:14px 0 4px; font-size:16px; font-weight:600;">No items match this search</p>
+                                    <p class="text-muted" style="margin:0 0 18px; font-size:13px;">
+                                        Your other items are still here - this view is filtered.
+                                    </p>
+                                    <a href="javascript:void(0)" class="sale_color" style="font-size:13px;"
+                                       onclick="PosnicPro.clearListFilters('items');">
+                                        Clear the filter and show everything
+                                    </a>
                                 </div>
 
                                 <thead class="datatable-thead-tbody table-header item_header"></thead>

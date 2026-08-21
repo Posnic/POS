@@ -154,7 +154,24 @@
                                         or import customers from a CSV file
                                     </a>
                                 </div>
-                                <div class="customer_norecord col-sm-6 col-md-12 col-lg-12" style="display:none;">
+                                <!--
+                                    The other kind of empty. "No customers yet" was shown
+                                    for a filtered view too, so a search that matched
+                                    nobody reported that the shop had no customers at all
+                                    - an answer that is confidently wrong, sending
+                                    somebody to look for missing DATA instead of fixing
+                                    their SEARCH. Same fix as the item list.
+                                -->
+                                <div class="col-sm-6 col-md-12 col-lg-12 text-center" id="customer_no_match" style="display:none; padding:56px 20px;">
+                                    <i class="feather icon-search" style="font-size:56px; opacity:.25;"></i>
+                                    <p style="margin:14px 0 4px; font-size:16px; font-weight:600;">No customers match this search</p>
+                                    <p class="text-muted" style="margin:0 0 18px; font-size:13px;">
+                                        Your other customers are still here - this view is filtered.
+                                    </p>
+                                    <a href="javascript:void(0)" class="sale_color" style="font-size:13px;"
+                                       onclick="PosnicPro.clearListFilters('customers');">
+                                        Clear the filter and show everything
+                                    </a>
                                 </div>
                                 <thead class="datatable-thead-tbody table-header customer_header"></thead>
                                 <tbody class="datatable-thead-tbody table-body customer_header"></tbody>
