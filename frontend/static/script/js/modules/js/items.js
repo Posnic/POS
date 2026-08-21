@@ -92,17 +92,96 @@ PosnicPro.items = {
             .map(function (t) { return t.trim(); })
             .filter(function (t) { return t.length > 0; });
     },
+    /*
+     * Take the form to a tab, and put the cursor where it is wanted.
+     *
+     * A tabbed form can fail somewhere you cannot see: jQuery Validate focuses
+     * the first invalid field, and if that field is on a hidden pane the focus
+     * goes nowhere, the message renders off-screen, and Save looks like it did
+     * nothing at all. Switching to the pane first is what makes the error
+     * visible (owner ask).
+     */
+    goToTab: function (paneId, focusSelector) {
+        var $link = $('#item_form_tabs .nav-link[data-tab-pane="' + paneId + '"]');
+        if (!$link.length) { return; }
+        if (!$link.hasClass('active')) { $link.tab('show'); }
+        if (!focusSelector) { return; }
+        /* After the pane is shown, or the field is still display:none and the
+           browser refuses to focus it. */
+        setTimeout(function () {
+            var $f = $(focusSelector).first();
+            if (!$f.length) { return; }
+            var $target = $f.hasClass('select2-hidden-accessible') ? $f.next('.select2-container') : $f;
+            if ($target.is(':visible')) { $f.trigger('focus'); }
+        }, 160);
+    },
+
+    /* Which pane a field lives on, or nothing if it is not on one. */
+    tabOf: function (el) {
+        var pane = $(el).closest('#item_form_tabs_content > .tab-pane');
+        return pane.length ? pane.attr('id') : '';
+    },
+
+    /*
+     * The tile this item will actually get, shown while it is being typed.
+     *
+     * The swatches sat unselected, so "no image" read as "no appearance". It was
+     * never true: an item saved without a chosen colour still gets one, because
+     * the save falls back to PosnicPro.autoTile(name) and persists it.
+     *
+     * NOT random, and that is the point. The colour is a hash of the item NAME,
+     * so the same item is the same colour on every till and after every restart.
+     * A sale grid is navigated by recognition - "the red one is Coke" - and a
+     * colour that changes between sessions is worse than no colour, because it
+     * teaches a habit and then breaks it.
+     */
+    refreshTilePreview: function () {
+        var $box = $('#item_tile_preview');
+        if (!$box.length) { return; }
+
+        var chosenColor = $('#item_tile_color').val() || '';
+        var chosenShape = $('#item_tile_shape').val() || '';
+        var name = $.trim($('#items_name').val() || '');
+        var auto = (typeof PosnicPro.autoTile === 'function')
+            ? PosnicPro.autoTile(name)
+            : { color: '', shape: 'rounded' };
+
+        var color = chosenColor || auto.color;
+        var shape = chosenShape || auto.shape;
+        var automatic = !chosenColor && !chosenShape;
+
+        /* Nothing to preview before the item is named - the hash of an empty
+           string is a colour, but showing it invites picking it as if it meant
+           something. */
+        if (!name) { $box.hide(); return; }
+
+        var radius = shape === 'circle' ? '50%' : (shape === 'rounded' ? '10px' : '3px');
+        var clip = shape === 'diamond' ? 'polygon(50% 0,100% 50%,50% 100%,0 50%)' : 'none';
+
+        $box.find('.tile-preview-swatch').css({
+            background: color,
+            'border-radius': radius,
+            'clip-path': clip
+        });
+        $box.find('.tile-preview-note').text(
+            automatic ? 'Chosen from the name - pick a colour below to change it' : 'Your choice'
+        );
+        $box.show();
+    },
+
     setTileShape: function (shape) {
         $('#item_tile_shape').val(shape || '');
         $('#item_tile_shapes .tile-shape').removeClass('is-picked').filter(function () {
             return ($(this).data('shape') || '') === (shape || '');
         }).addClass('is-picked');
+        PosnicPro.items.refreshTilePreview();
     },
     setTileColor: function (color) {
         $('#item_tile_color').val(color || '');
         $('#item_tile_swatches .tile-swatch').removeClass('is-picked').filter(function () {
             return ($(this).data('color') || '') === (color || '');
         }).addClass('is-picked');
+        PosnicPro.items.refreshTilePreview();
     },
     /* Services (Q3): a service holds no stock - the stock-ish inputs step
        aside and the pricing unit select appears. The server forces
@@ -636,8 +715,13 @@ PosnicPro.items = {
                         PosnicPro.sales.itemsMenu.onlineProductList();
                         if (PosnicPro.action === 'add') {
                             $('#show_last_created_item').show();
-                            // The rapid-entry loop: cursor back on the name.
-                            $('#items_name').focus();
+                            /* The rapid-entry loop: back to the first tab, cursor
+                               on the name, ready for the next item. Focusing the
+                               name WITHOUT switching tabs put the cursor on a
+                               hidden pane whenever the item was saved from
+                               Details or More - which is most of the time once
+                               someone starts using the other tabs (owner ask). */
+                            PosnicPro.items.goToTab('item_tab_main', '#items_name');
                         }
                         var path = '#/items/' + data.id;
                         $('#last_created_item').attr('href', path);
@@ -3174,6 +3258,22 @@ $(document).ready(function () {
 
     $("#item_image_upload_form").validate({
         errorClass: 'error error_item',
+        /*
+         * An error on a hidden tab is an error nobody sees. Save appeared to do
+         * nothing, because the message was rendered on a pane that was not on
+         * screen and the focus landed on an element the browser will not focus
+         * (owner ask). The form now opens the pane holding the FIRST invalid
+         * field and focuses it there.
+         */
+        invalidHandler: function (event, validator) {
+            var bad = validator.invalidElements();
+            if (!bad || !bad.length) { return; }
+            var first = bad[0];
+            var pane = PosnicPro.items.tabOf(first);
+            if (pane) {
+                PosnicPro.items.goToTab(pane, '#' + $(first).attr('id'));
+            }
+        },
         highlight: function (element, errorClass) {
             $(element).css("border-color", "#f9616d");
         },
@@ -3881,6 +3981,9 @@ $(document).ready(function () {
     // category pick then leaves them alone (applyCategoryDiscount).
     $(document).on('change', '#item_is_service', function () {
         PosnicPro.items.applyServiceMode();
+    });
+    $(document).on('input', '#items_name', function () {
+        PosnicPro.items.refreshTilePreview();
     });
     $(document).on('click', '#item_tile_swatches .tile-swatch', function () {
         PosnicPro.items.setTileColor($(this).data('color') || '');

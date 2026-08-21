@@ -545,6 +545,16 @@
                                              and a control that cannot affect anything should not
                                              ask for a decision. -->
                                         <div id="item_tile_fallback" class="mt-3">
+                                            <!-- The tile this item will actually get. Without it
+                                                 the swatches sit unselected and "no image" reads
+                                                 as "no appearance" - which was never true: a
+                                                 colour is derived from the name and saved either
+                                                 way. Showing it makes the automatic choice
+                                                 visible and obviously overridable. -->
+                                            <div id="item_tile_preview" class="tile-preview" style="display:none;">
+                                                <span class="tile-preview-swatch"></span>
+                                                <small class="tile-preview-note text-muted"></small>
+                                            </div>
 
                                         <label class="form-control-placeholder d-block">
                                             <lang class="lang_tile_color_title">Colour on the sale screen (when there is no image)</lang>

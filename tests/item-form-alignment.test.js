@@ -697,3 +697,80 @@ test('the Photos dropzone is labelled like the field beside it', () => {
   assert.match(before, /lang_item_photos_title/, 'the dropzone has no label');
   assert.match(before, /for="item_upload_image"/, 'the label is not tied to the input');
 });
+
+/*
+ * Saving on a tabbed form.
+ *
+ * An error on a hidden tab is an error nobody sees: jQuery Validate focuses the
+ * first invalid field, and if that pane is not on screen the focus goes
+ * nowhere and the message renders where nobody is looking. Save appeared to do
+ * nothing at all.
+ */
+test('a validation error opens the tab it is on', () => {
+  const at = itemsJs.indexOf('invalidHandler: function (event, validator)');
+  assert.notStrictEqual(at, -1, 'nothing reacts to an invalid form');
+  const body = itemsJs.slice(at, itemsJs.indexOf('\n        },', at));
+  assert.match(body, /validator\.invalidElements\(\)/, 'it does not ask which fields failed');
+  assert.match(body, /PosnicPro\.items\.tabOf\(first\)/, 'it does not work out which tab to open');
+  assert.match(body, /goToTab\(pane/, 'it never switches to that tab');
+});
+
+test('a successful save returns to the first tab, on the name', () => {
+  /* Focusing the name without switching tabs put the cursor on a hidden pane
+     whenever the item was saved from Details or More. */
+  const at = itemsJs.indexOf("if (PosnicPro.action === 'add') {");
+  const body = itemsJs.slice(at, itemsJs.indexOf('\n                        }', at));
+  assert.match(
+    body,
+    /goToTab\('item_tab_main', '#items_name'\)/,
+    'it must switch tabs AND focus, not just focus',
+  );
+  assert.ok(!/\$\('#items_name'\)\.focus\(\);/.test(body), 'the bare focus call is back');
+});
+
+test('focus waits for the pane to be shown', () => {
+  /* A field on a pane that is still display:none cannot take focus - the
+     browser silently refuses. */
+  const at = itemsJs.indexOf('goToTab: function (paneId, focusSelector)');
+  const body = itemsJs.slice(at, itemsJs.indexOf('\n    },', at));
+  assert.match(body, /setTimeout\(/, 'focus happens before the tab has rendered');
+  assert.match(body, /is\(':visible'\)/, 'it focuses regardless of whether the field is showing');
+  /* select2 hides its own select, so focusing that would do nothing visible. */
+  assert.match(body, /select2-hidden-accessible/, 'a select2 field cannot be focused this way');
+});
+
+test('an already-active tab is not re-shown', () => {
+  /* .tab('show') on the active tab re-fires shown.bs.tab, which re-runs the
+     tick refresh and any other listener for no reason. */
+  const at = itemsJs.indexOf('goToTab: function (paneId, focusSelector)');
+  const body = itemsJs.slice(at, itemsJs.indexOf('\n    },', at));
+  assert.match(body, /if \(!\$link\.hasClass\('active'\)\) \{ \$link\.tab\('show'\); \}/);
+});
+
+test('the tile preview shows what the item will actually look like', () => {
+  /* The swatches sat unselected, so "no image" read as "no appearance" - which
+     was never true, since the save derives a colour from the name and stores
+     it. */
+  assert.match(html, /id="item_tile_preview"/, 'the preview is gone from the form');
+  const at = itemsJs.indexOf('refreshTilePreview: function ()');
+  assert.notStrictEqual(at, -1, 'nothing renders the preview');
+  const body = itemsJs.slice(at, itemsJs.indexOf('\n    },', at));
+  assert.match(body, /PosnicPro\.autoTile\(name\)/, 'it does not use the same rule the save uses');
+  assert.match(body, /if \(!name\) \{ \$box\.hide\(\); return; \}/, 'an unnamed item previews a meaningless colour');
+});
+
+test('the automatic colour is derived, never random', () => {
+  /* A sale grid is navigated by recognition - "the red one is Coke". A colour
+     that differs between tills, or changes on re-render, teaches a habit and
+     then breaks it. The hash of the name gives the same variety and none of
+     that. */
+  const salesJs = fs.readFileSync(
+    path.join(ROOT, 'frontend', 'static', 'script', 'js', 'modules', 'js', 'sales.js'),
+    'utf8',
+  );
+  const at = salesJs.indexOf('PosnicPro.autoTile = function (name)');
+  assert.notStrictEqual(at, -1, 'autoTile is gone');
+  const body = salesJs.slice(at, salesJs.indexOf('\n};', at));
+  assert.ok(!/Math\.random/.test(body), 'the tile colour is random - it cannot be recognised twice');
+  assert.match(body, /h \* 31 \+ str\.charCodeAt/, 'it no longer derives from the name');
+});
