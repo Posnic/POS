@@ -5650,7 +5650,6 @@ $(document).on('click', '#quote_settings_save', function () {
         PosnicPro.alert(r.type, r.type === 'success' ? 'Quotation settings saved' : r.message);
         if (r.type === 'success') {
             PosnicPro.local.set('quotesignature', payload.quote_default_signature);
-            $('#quote_settings_modal').modal('hide');
         }
     }, function (xhr) {
         $('#quote_settings_save').prop('disabled', false);

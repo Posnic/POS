@@ -419,7 +419,6 @@ PosnicPro.branches = {
 
                 $('.update-button').attr('disabled', 'disabled').removeClass('btn-outline-success');
                 PosnicPro.branches.sharingRow(false);
-                $('#branch_view').modal('show');
                 $('.register-wrapper .register-fields .register-input:nth-child(n+2)').remove();
                 let $test = $('.register-input:parent');
                 $('.add-field', $test).hide();

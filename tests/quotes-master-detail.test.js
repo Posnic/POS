@@ -1089,3 +1089,61 @@ test('the range popover survives the dark theme', () => {
   assert.match(dark, /background: var\(--theme-card-bg\) !important/, 'a plain rule loses to its own light rule');
   assert.match(dark, /border-color: var\(--theme-border-color\) !important/, 'the border needs it for the same reason');
 });
+
+/*
+ * Selectors pointing at elements that do not exist.
+ *
+ * #quotes_search (fixed above) was one. A sweep with tests/tools/dead-selectors.js
+ * found two more that could be verified by hand, both leftovers from a UI that
+ * changed underneath them:
+ *
+ *   #branch_view       - the branch details view became an infobar sidebar, so
+ *                        `.modal('show')` on the old id did nothing at all.
+ *   #quote_settings_modal - quotation settings moved into the feature-config
+ *                        popup, so `.modal('hide')` after saving closed nothing.
+ *
+ * Neither threw, neither logged. That is what makes this class worth a test:
+ * the code reads as working.
+ */
+test('no selector targets an element that was removed', () => {
+  const branchesJs = fs.readFileSync(
+    path.join(ROOT, 'frontend', 'static', 'script', 'js', 'modules', 'js', 'branches.js'),
+    'utf8',
+  );
+  const settingsJs = fs.readFileSync(
+    path.join(ROOT, 'frontend', 'static', 'script', 'js', 'modules', 'js', 'settings.js'),
+    'utf8',
+  );
+  const html = ['modals/branch.html', 'modules/settings_write.html', 'modules/quotes.html']
+    .map((f) => fs.readFileSync(path.join(ROOT, 'frontend', ...f.split('/')), 'utf8'))
+    .join('\n');
+
+  for (const [id, src, where] of [
+    ['branch_view', branchesJs, 'branches.js'],
+    ['quote_settings_modal', settingsJs, 'settings.js'],
+    ['quotes_search', salesSource, 'sales.js'],
+  ]) {
+    /* includes, not RegExp: the escaping needed to express `$('#id')` as a
+       pattern is exactly the kind that survives being written wrong. The first
+       version of this line lost a backslash level, so the pattern compiled to
+       an end-anchor followed by a group, matched nothing, and passed over both
+       live bugs. A plain substring cannot be wrong in that direction. */
+    const used = stripComments(src).includes(`$('#${id}')`);
+    const exists = html.includes(`id="${id}"`);
+    assert.ok(
+      !used || exists,
+      `${where} selects #${id}, and no markup defines it - the call does nothing and looks like it works`,
+    );
+  }
+});
+
+test('the dead-selector sweep is a tool, and it runs', () => {
+  /* It cannot be a pass/fail gate: ids built by concatenation never appear as a
+     literal, so it reports them as missing. A guard with a hundred standing
+     exceptions is one people learn to scroll past. */
+  const tool = path.join(ROOT, 'tests', 'tools', 'dead-selectors.js');
+  assert.ok(fs.existsSync(tool), 'the sweep tool is referenced but missing');
+  const src = fs.readFileSync(tool, 'utf8');
+  assert.match(src, /public/, 'built bundles must be skipped - they are the same source concatenated');
+  assert.match(src, /Verify each before deleting/, 'the output must say the list needs checking');
+});
