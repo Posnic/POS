@@ -909,3 +909,45 @@ test('services and variants are mutually exclusive', () => {
     'the Service tick stays offered while building a variant family',
   );
 });
+
+test('every field in Extra barcodes & packs is labelled', () => {
+  /* A placeholder disappears the moment you type, so a filled-in field stops
+     saying what it is - which is exactly when someone goes back to check.
+     These three were the only unlabelled inputs left on the screen. */
+  for (const id of ['items_barcodes_alt', 'items_purchase_unit', 'items_conversion_factor']) {
+    const label = new RegExp('<label[^>]*for="' + id + '"');
+    assert.match(html, label, id + ' has a placeholder and no label');
+  }
+  // and they use the same label class as the rest of the form, not a new one
+  const at = html.indexOf('for="items_purchase_unit"');
+  assert.match(
+    html.slice(at - 120, at),
+    /items-label-inline/,
+    'the new labels do not match the label style used everywhere else',
+  );
+});
+
+test('a service hides the pack fields, extra barcodes included', () => {
+  /* applyServiceMode hides these with .closest('.form-row'). items_barcodes_alt
+     sat directly in the card body with no .form-row above it, so closest()
+     matched nothing and a service kept showing an extra-barcodes box. */
+  const at = html.indexOf('id="items_barcodes_alt"');
+  assert.notStrictEqual(at, -1, 'items_barcodes_alt is gone');
+  const before = html.slice(0, at);
+  const rowAt = before.lastIndexOf('form-row');
+  const cardBodyAt = before.lastIndexOf('card-body');
+  assert.ok(
+    rowAt > cardBodyAt,
+    'items_barcodes_alt has no .form-row wrapper - applyServiceMode cannot hide it',
+  );
+
+  const js = fs.readFileSync(
+    path.join(__dirname, '..', 'frontend/static/script/js/modules/js/items.js'),
+    'utf8',
+  );
+  assert.match(
+    js,
+    /#items_barcodes_alt, #items_purchase_unit, #items_conversion_factor'\)\.closest\('\.form-row'\)/,
+    'the service-mode hide no longer covers all three pack fields',
+  );
+});
