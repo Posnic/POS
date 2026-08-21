@@ -1707,11 +1707,11 @@ $(document).ready(function () {
         messages: {
             receiving_add_date: {
                 required: "This field is required",
-                date: "Please enter a valid date",
+                date: "Enter a valid date",
                 maxlength: "Enter a valid date",
             },
             receiving_add_supplier_name: {
-                required: "Please Enter a Supplier Name",
+                required: "Enter the supplier name",
                 minlength: "Supplier Name Must be Atleast 3 Characters"
 
             },
@@ -1719,7 +1719,7 @@ $(document).ready(function () {
     });
     jQuery.validator.addMethod("commonDate", function (value, element) {
         return this.optional(element) || moment(value, 'YYYY/MM/DD LT').isValid();
-    }, "Please enter a valid date in the format");
+    }, "Use the date format");
 });
 $("#receiving_add").submit(function (event) {
     event.preventDefault();

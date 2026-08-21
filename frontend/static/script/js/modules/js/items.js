@@ -2449,8 +2449,7 @@ PosnicPro.items = {
             $pick.select2({
                 placeholder: rows.length
                     ? 'Choose a Supplier'
-                    : 'No suppliers yet - add one from the Suppliers screen',
-                allowClear: true
+                    : 'No suppliers yet - add one from the Suppliers screen'
             });
             $pick.val(selectedId || '').trigger('change.select2');
         }, function () {
@@ -2460,7 +2459,7 @@ PosnicPro.items = {
                 $pick.select2('destroy');
             }
             $pick.empty().append('<option value=""></option>')
-                .select2({ placeholder: 'Suppliers could not be loaded', allowClear: true });
+                .select2({ placeholder: 'Suppliers could not be loaded' });
         });
     },
 
@@ -3134,11 +3133,31 @@ $(document).ready(function () {
             return false;
         }
         return true;
-    }, "Please Enter a Valid Name");
+    }, "Use letters, numbers and spaces only");
 
     /* IC1: a selling price is required unless the item is deliberately
        open-price (ask at the till). The old form accepted the 0.00 default
        silently, which is how shops end up with unpriced catalogues. */
+    /*
+     * Tax follows its feature toggle.
+     *
+     * The rule was `required: true` regardless, so a shop with the tax module
+     * turned off could not save an item at all: the select has no options and
+     * no selection, and the validator refused a field the shop had deliberately
+     * switched away.
+     *
+     * taxFeatureOn() is the same check the sale screen uses - the general
+     * settings blob first, the legacy flag only as a fallback - so the two
+     * screens cannot disagree about whether this shop charges tax.
+     */
+    jQuery.validator.addMethod("taxRequiredWhenEnabled", function (value) {
+        var on = (PosnicPro.sales && typeof PosnicPro.sales.taxFeatureOn === 'function')
+            ? PosnicPro.sales.taxFeatureOn()
+            : PosnicPro.local.get('default_tax_enable_disable') === 'true';
+        if (!on) { return true; }
+        return $.trim(value || '') !== '';
+    }, "Choose a tax rate");
+
     jQuery.validator.addMethod("sellingPriceOrOpen", function (value) {
         if ($('#item_open_price').is(':checked')) {
             return true;
@@ -3176,8 +3195,12 @@ $(document).ready(function () {
                 minlength: 3,
                 maxlength: 500
             },
+            /* NOT required. The form never marked it - no red asterisk - so a
+               rule demanding it refused a save while pointing at nothing (owner:
+               "item category is not mandatory i think"). It is also genuinely
+               optional: items arrive uncategorised and get filed later. */
             items_category: {
-                required: true
+                maxlength: 250
             },
             items_supplier: {
                 maxlength: 250
@@ -3219,8 +3242,11 @@ $(document).ready(function () {
                 minlength: 1,
                 maxlength: 10
             },
+            /* Required only while the tax module is ON. With it off there is no
+               tax select to fill, so an unconditional rule refused every save on
+               a shop that does not charge tax (owner ask). */
             items_tax: {
-                required: true
+                taxRequiredWhenEnabled: true
             },
             items_description: {
                 minlength: 5,
@@ -3252,18 +3278,18 @@ $(document).ready(function () {
         },
         messages: {
             items_name: {
-                required: "Please Enter Item Name",
+                required: "Enter the item name",
                 minlength: "Item Name must consist of at least 3 characters",
                 maxlength: "Item Name should not be more than 500 characters"
             },
             items_category: {
-                required: "Please Choose Category"
+                required: "Choose a category"
             },
             items_variant: {
-                required: "Please Choose Variant"
+                required: "Choose a variant"
             },
             item_variant_list: {
-                required: "Please Choose Variant field"
+                required: "Choose at least one variant field"
             },
             items_supplier: {
                 minlength: "Item supplier must consist of at least 3 characters",
@@ -3315,10 +3341,10 @@ $(document).ready(function () {
                 maxlength: "HSN code is 4 to 8 digits"
             },
             items_mfg_date: {
-                dateISO: "Please enter a valid date in the format YYYY-MM-DD",
+                dateISO: "Use the date format YYYY-MM-DD",
             },
             items_expiry_date: {
-                dateISO: "Please enter a valid date in the format YYYY-MM-DD",
+                dateISO: "Use the date format YYYY-MM-DD",
                 greaterThanMfgDate: "Expiry date must be greater than manufacturing date"
             }
         }
@@ -3337,7 +3363,7 @@ $(document).ready(function () {
     jQuery.validator.addMethod("greaterThan", function (value, element, param) {
         var $otherElement = $(param);
         return parseFloat(value, 10) >= parseFloat($otherElement.val(), 10);
-    }, "Please enter a valid date in the format");
+    }, "Use the date format");
 
     $('#items_category,#items_tax,#item_variant_list,#items_variant').on('change', function () {
         $(this).trigger('blur');

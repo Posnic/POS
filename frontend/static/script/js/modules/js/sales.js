@@ -3838,7 +3838,7 @@ PosnicPro.sales.addSale = {
                 
         // Validate phone number
         if (!phoneNumber) {
-            PosnicPro.alert('error', 'Please enter a valid phone number');
+            PosnicPro.alert('error', 'Enter a valid phone number');
             return;
         }
         

@@ -3629,15 +3629,15 @@ $("#sms_setting").validate({
     messages: {
 
         way2sms_userid: {
-            required: "Please Enter a user id",
+            required: "Enter the user ID",
             maxlength: "User id should not be more than 20 digits"
         },
         way2sms_password: {
-            required: "Please Enter a password",
+            required: "Enter a password",
             maxlength: "Password should not be more than 50 digits"
         },
         way2sms_api: {
-            required: "Please Enter a api key",
+            required: "Enter the API key",
             maxlength: "API should not be more than 100 characters"
         }
     }
@@ -3671,11 +3671,11 @@ $("#textlocal_setting").validate({
     messages: {
 
         textlocal_sender: {
-            required: "Please Enter a sender name",
+            required: "Enter the sender name",
             maxlength: "Sender name should not be more than 20 characters"
         },
         textlocal_api: {
-            required: "Please Enter a api key",
+            required: "Enter the API key",
             maxlength: "API should not be more than 100 characters"
         }
     }
@@ -3740,31 +3740,31 @@ $("#setting_add").validate({
     },
     messages: {
         store_name: {
-            required: "Please enter the store name",
+            required: "Enter the shop name",
             maxlength: "Store name should not be more than 250 characters"
         },
         store_telephone: {
-            required: "Please enter the phone number",
-            setting_phone_number: "Please enter a valid phone number.",
-            minlength: "Please enter at least 3 characters.",
-            maxlength: "Please enter no more than 20 characters."
+            required: "Enter the phone number",
+            setting_phone_number: "Enter a valid phone number",
+            minlength: "Use at least 3 characters",
+            maxlength: "Use no more than 20 characters"
         },
         store_email: {
-            required: "Please enter the valid email address",
+            required: "Enter a valid email address",
             maxlength: "Email should not be more than 250 digits"
         },
         store_address: {
-            required: "Please enter the store address",
+            required: "Enter the shop address",
             minlength: "Store Address must be Atleast 3 Characters long",
             maxlength: "Address is too Long !"
         },
         printing_address: {
-            required: "Please enter the printing address",
+            required: "Enter the address to print on receipts",
             minlength: "Printing Address must be Atleast 3 Characters long",
             maxlength: "Address is too Long !"
         },
         website: {
-            required: "Please enter the valid url address",
+            required: "Enter a valid web address",
             minlength: "Website must be Atleast 3 Characters long",
             maxlength: "Website should not be more than 50 digits"
         },
@@ -3796,7 +3796,7 @@ jQuery.validator.addMethod("gst", function (value, element) {
         return /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(value);
     }
     return true;
-}, "Please Enter a Valid GSTR Number");
+}, "Enter a valid GSTIN");
 $("#setting_add").submit(function (event) {
     event.preventDefault();
     if ($('#setting_add').valid()) {          // checks form for validity
@@ -3829,12 +3829,12 @@ $("#tax_add_form").validate({
     },
     messages: {
         tax_name: {
-            required: "Please enter a tax name",
+            required: "Enter the tax name",
             minlength: "Tax name must be at least 3 characters",
             maxlength: "Tax name should not be more than 100 characters"
         },
         tax_value: {
-            required: "Please enter a tax value",
+            required: "Enter the tax rate",
             minlength: "Tax value must be at least 1 characters",
             maxlength: "Tax value should not be more than 5 characters"
         }
@@ -3864,12 +3864,12 @@ $("#unit_add_form").validate({
     },
     messages: {
         unit_name: {
-            required: "Please enter a unit name",
+            required: "Enter the unit name",
             minlength: "Unit name must be at least 1 characters",
             maxlength: "Unit name should not be more than 10 characters"
         },
         unit_value: {
-            required: "Please enter a unit value",
+            required: "Enter the unit short form",
             minlength: "Unit value must be at least 1 characters",
             maxlength: "Unit value should not be more than 10 characters"
         }
@@ -3877,7 +3877,7 @@ $("#unit_add_form").validate({
 });
 jQuery.validator.addMethod("lettersonly", function (value, element) {
     return this.optional(element) || /^[a-z\s]+$/i.test(value);
-}, "Please Enter a Only Letters");
+}, "Use letters only");
 $("#denom_add_form").validate({
     highlight: function (element, errorClass) {
         $(element).css("border-color", "#f9616d");
@@ -3893,7 +3893,7 @@ $("#denom_add_form").validate({
     },
     messages: {
         denom_value: {
-            required: "Please enter a cash value",
+            required: "Enter a cash amount",
             minlength: "value must be at least 1 characters"
         }
     }
@@ -3914,7 +3914,7 @@ $("#payment_add_form").validate({
     },
     messages: {
         payment_value: {
-            required: "Please enter a payment value",
+            required: "Enter a payment amount",
             minlength: "value must be at least 1 characters",
             maxlength: "value should not be more than 12 characters"
         }
@@ -3981,7 +3981,7 @@ $("#tableorder_add_form").validate({
     errorClass: 'error error_tableorder',
     messages: {
         tableorder_value: {
-            required: "Please enter a table order value",
+            required: "Enter a table number",
             minlength: "value must be at least 1 characters",
             maxlength: "value should not be more than 6 characters"
         }
@@ -4017,7 +4017,7 @@ $("#taxgroup_add_form").validate({
     },
     messages: {
         taxgroup_name: {
-            required: "Please enter a tax name",
+            required: "Enter the tax name",
             minlength: "Tax name must be at least 3 characters",
             maxlength: "Tax name should not be more than 100 characters"
         },
@@ -4092,11 +4092,11 @@ $("#email_add").validate({
     },
     messages: {
         report_type: {
-            required: "Please choose a report type"
+            required: "Choose a report type"
         },
         "emailaddress[0]": {
-            required: "Please Enter a email address",
-            email: "Please Enter a valid email address",
+            required: "Enter a valid email address",
+            email: "Enter a valid email address",
             maxlength: "Email should not be more than 250 Characters"
         }
     }
@@ -4131,14 +4131,14 @@ $("#kioskaccount_form").validate({
     },
     messages: {
         kioskstore_id: {
-            required: "Please enter store ID",
+            required: "Enter the store ID",
             minlength: "Minimum 3 characters",
             maxlength: "Maximum 6 characters",
             pattern: "Only letters and numbers allowed"
         }
 
         // kiosksecret_key: {
-        //     required: "Please enter secret key",
+        //     required: "Enter the secret key",
         //     minlength: "Minimum 3 characters",
         //     maxlength: "Maximum 6 characters",
         //     pattern: "Only letters and numbers allowed"
@@ -4175,7 +4175,7 @@ $("#kioskprint_form").validate({
     },
     messages: {
         kioskprinter_name: {
-            required: "Please enter printer name"
+            required: "Enter the printer name"
         }
     }
 });
@@ -4374,27 +4374,27 @@ $("#tax_discount_add").validate({
     },
     messages: {
         default_customer: {
-            required: "Please choose Customer Name",
+            required: "Choose a customer",
             minlength: "Customer name must be at least 3 characters",
             maxlength: "Customer name should not be more than 100 characters"
         },
         default_supplier: {
-            required: "Please choose Supplier Name",
+            required: "Choose a supplier",
             minlength: "Supplier name must be at least 3 characters",
             maxlength: "Supplier name should not be more than 100 characters"
         },
         sales_prefix: {
-            required: "Please Enter a sales prefix value",
+            required: "Enter a prefix for sale numbers",
             minlength: "Must be at least 3 characters",
             maxlength: "Should not be more than 3 characters"
         },
         receiving_prefix: {
-            required: "Please Enter a receiving prefix value",
+            required: "Enter a prefix for stock entries",
             minlength: "Must be at least 3 characters",
             maxlength: "Should not be more than 3 characters"
         },
         notification_value: {
-            required: "Please Enter a notification value"
+            required: "Enter a notification value"
         },
         header_print: {
             minlength: "Header content must be at least 3 characters",
@@ -4408,7 +4408,7 @@ $("#tax_discount_add").validate({
 });
 jQuery.validator.addMethod("lettersonly", function (value, element) {
     return this.optional(element) || /^[a-z\s]+$/i.test(value);
-}, "Please Enter a Only Letters");
+}, "Use letters only");
 $("#tax_discount_add").submit(function (event) {
     event.preventDefault();
     if ($('#tax_discount_add').valid()) {            // checks form for validity

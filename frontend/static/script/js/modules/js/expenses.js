@@ -341,11 +341,11 @@ PosnicPro.expenses = {
             },
             messages: {
                 date: {
-                    required: "Please select the Date",
-                    commonDate: "Please enter a valid date"
+                    required: "Choose a date",
+                    commonDate: "Enter a valid date"
                 },
                 amount: {
-                    required: "Please enter expenses amount",
+                    required: "Enter the expense amount",
                     minlength: "Expenses amount must be at least 1 characters",
                     maxlength: "Expenses amount should not be more than 10 characters"
                 },
@@ -353,22 +353,22 @@ PosnicPro.expenses = {
                     required: "Choose expenses type"
                 },
                 category: {
-                    required: "Please enter category name",
+                    required: "Enter the category name",
                     minlength: "Category name must be at least 3 characters",
                     maxlength: "Category name should not be more than 20 characters"
                 },
                 recipientname: {
-                    required: "Please enter recipient name",
+                    required: "Enter the recipient name",
                     minlength: "Recipient name must be at least 3 characters",
                     maxlength: "Recipient name should not be more than 20 characters"
                 },
                 approvedby: {
-                    required: "Please Enter the field",
+                    required: "Fill this in",
                     minlength: "This field must be at least 3 characters",
                     maxlength: "This field should not be more than 20 characters"
                 },
                 description: {
-                    required: "Please Enter Expenses note",
+                    required: "Enter a note for this expense",
                     minlength: "Expenses note must be at least 3 characters",
                     maxlength: "Expense note is too Long !"
                 }
@@ -379,7 +379,7 @@ PosnicPro.expenses = {
         });
         jQuery.validator.addMethod("expenseDate", function (value, element) {
             return this.optional(element) || moment(value, 'YYYY/MM/DD LT').isValid();
-        }, "Please enter a valid date in the format");
+        }, "Use the date format");
         $("#expenses_add_list_form").submit(function (event) {
             event.preventDefault();
             if ($('#expenses_add_list_form').valid()) {            // checks form for validity

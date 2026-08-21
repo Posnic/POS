@@ -451,7 +451,7 @@ PosnicPro.suppliers = {
             },
             messages: {
                 name: {
-                    required: "Please Enter a Supplier Name",
+                    required: "Enter the supplier name",
                     minlength: "Supplier Name Must be Atleast 3 Characters",
                     maxlength: "Supplier name should not be more than 250 characters"
                 },
@@ -463,15 +463,15 @@ PosnicPro.suppliers = {
                     maxlength: "Email should not be more than 250 Characters"
                 },
                 phone: {
-                    supplier_phone_number: "Please enter a valid phone number.",
-                    minlength: "Please enter at least 3 characters.",
-                    maxlength: "Please enter no more than 20 characters."
+                    supplier_phone_number: "Enter a valid phone number",
+                    minlength: "Use at least 3 characters",
+                    maxlength: "Use no more than 20 characters"
                 },
                 city: {
                     maxlength: "Supplier city should not be more than 20 Characters"
                 },
                 gstin_number: {
-                    required: "Please Enter a Valid GSTR Number",
+                    required: "Enter a valid GSTIN",
                     minlength: "Gstr must be Atleast 15 Characters long",
                     maxlength: "Gstr should not be more than 15 digits"
                 }
@@ -494,7 +494,7 @@ PosnicPro.suppliers = {
         }, "Enter a valid phone number");
         jQuery.validator.addMethod("gst", function (value, element) {
             return /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(value);
-        }, "Please Enter a Valid GSTR Number");
+        }, "Enter a valid GSTIN");
         $("#supplier_add").submit(function (event) {
             event.preventDefault();
             if ($('#supplier_add').valid()) {            // checks form for validity

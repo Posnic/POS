@@ -600,29 +600,29 @@ PosnicPro.branches = {
             },
             messages: {
                 name: {
-                    required: "Please enter a branch name",
+                    required: "Enter the shop name",
                     minlength: "Branch name must be at least 3 characters",
                     maxlength: "Branch name is too long !"
                 },
                 phone: {
-                    branch_phone_number: "Please enter a valid phone number.",
-                    minlength: "Please enter at least 3 characters.",
-                    maxlength: "Please enter no more than 20 characters."
+                    branch_phone_number: "Enter a valid phone number",
+                    minlength: "Use at least 3 characters",
+                    maxlength: "Use no more than 20 characters"
                 },
                 address: {
-                    required: "Please enter an address",
+                    required: "Enter an address",
                     minlength: "Address must be at least 3 characters long",
                     maxlength: "Address is too long !"
                 },
                 email: {
-                    required: "Please enter a email address",
+                    required: "Enter a valid email address",
                     maxlength: "Email should not be more than 250 Characters"
                 },
                 country: {
-                    required: "Please choose your country"
+                    required: "Choose your country"
                 },
                 state: {
-                    required: "Please choose your state"
+                    required: "Choose your state"
                 },
                 "branchregister[0]": {
                     minlength: "Name Must be in 3 charcters",
