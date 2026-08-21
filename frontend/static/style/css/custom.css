@@ -3257,20 +3257,19 @@ input:checked + .slider:before {
 }
 
 /*
- * The Item card's own alignment (owner: "add categoory add supplier and etc
- * not aligned properly").
+ * The Item card's own alignment.
  *
- * "+ Add Category" and "+ Add Supplier" now sit on their label lines. Under
- * the controls their position depended on the height of the thing above them,
- * and a select2 is not the same height as a plain input - so two links on one
- * row sat at two different heights. On the label line they align with each
- * other and with every label on the card, whatever the control below does.
+ * The "+ Add Category" / "+ Add Supplier" links are gone (owner ask). They had
+ * been moved onto the label line to stop them landing at different heights
+ * under controls of different heights - but sharing that line is what pushed
+ * "(optional)" onto a second one. Removing them settles both: the label and its
+ * qualifier read as one line, which is what they are.
  */
-.items-inline-add {
-    flex: 0 0 auto;
+.items-label-inline {
+    display: block;
     white-space: nowrap;
-    line-height: 1.2;
 }
+.items-label-inline small { margin-left: 4px; }
 
 /* The service switch and its unit are one control, so they share a line and
    the unit lines up with the fields above rather than hanging off a label. */
