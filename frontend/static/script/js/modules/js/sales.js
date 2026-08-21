@@ -8256,20 +8256,10 @@ PosnicPro.quotes = {
             limit: PosnicPro.quotes.PAGE_SIZE
         };
         if (PosnicPro.quotes._status) { params.status = PosnicPro.quotes._status; }
-        var term = $.trim($('#quotes_search').val() || '');
-        if (term) {
-            params.search = term;
-            /* Only sent when they change anything - a request carrying
-               field=all&exact=false says the same as one carrying neither, and
-               a URL that states its defaults is harder to read in a log. */
-            var field = $('#quotes_search_field').val() || 'all';
-            if (field !== 'all') { params.field = field; }
-            if ($('#quotes_search_exact').is(':checked')) { params.exact = 'true'; }
-        }
-        var from = $('#quotes_from').val();
-        var to = $('#quotes_to').val();
-        if (from) { params.from = from; }
-        if (to) { params.to = to; }
+        /* Search, field, exact and the date window all come from the shared
+           filter bar - quotes owns none of that any more, which is what lets
+           items and sales get the same bar without a second copy. */
+        $.extend(params, PosnicPro.listFilter.params('quotes'));
         PosnicPro.get({ url: 'quotes', data: params }, function (r) {
             if (mine !== PosnicPro.quotes._seq) { return; }
             PosnicPro.quotes._rows = (r && r.data) || [];
@@ -10293,18 +10283,30 @@ PosnicPro.sales.renderRecentCustomers = function () {
         fill(PosnicPro.sales._customerSeed);
     }, function () { /* recents alone, or empty - never an error popup */ });
 };
-/* The filters reload the list the same way the search box does. Dates and the
-   field selector fire on change rather than on every keystroke - there is no
-   half-typed date worth a request. */
-$(document).on('change', '#quotes_search_field,#quotes_search_exact,#quotes_from,#quotes_to', function () {
-    PosnicPro.quotes.load();
-});
-$(document).on('click', '#quotes_filters_clear', function () {
-    $('#quotes_search').val('');
-    $('#quotes_search_field').val('all');
-    $('#quotes_search_exact').prop('checked', false);
-    $('#quotes_from,#quotes_to').val('');
-    PosnicPro.quotes.load();
+/* One mount, once. The bar reports a change; quotes just reloads. */
+PosnicPro.quotes._filterMounted = false;
+PosnicPro.quotes.mountFilters = function () {
+    if (PosnicPro.quotes._filterMounted) { return; }
+    if (!$('#quotes_filter_panel').length) { return; }
+    PosnicPro.listFilter.mount({
+        key: 'quotes',
+        container: '#quotes_filter_panel',
+        button: '#quotes_filter_btn',
+        searchPlaceholder: 'Search customer or quote #',
+        dateField: 'Created',
+        searchFields: [
+            { value: 'all', label: 'All fields' },
+            { value: 'quote_id', label: 'Quote #' },
+            // picking Customer offers the ones this till actually uses
+            { value: 'customer_name', label: 'Customer', typeahead: 'customer' }
+        ],
+        onChange: function () { PosnicPro.quotes.load(); }
+    });
+    PosnicPro.quotes._filterMounted = true;
+};
+$(document).on('click', '#quotes_filter_btn', function () {
+    PosnicPro.quotes.mountFilters();
+    PosnicPro.listFilter.toggle('quotes');
 });
 
 $(document).on('click', '.quotes-row', function () {

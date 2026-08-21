@@ -439,6 +439,14 @@ describe('QuoteRepository', () => {
       expect(range.$lte).toBeInstanceOf(Date);
     });
 
+    test('a precise instant is used as given, not widened to end of day', async () => {
+      /* The filter bar sends real times now. Forcing 23:59 onto "up to 2pm"
+         would quietly widen a range the user deliberately narrowed. */
+      await repo.listQuotes({ to: '2026-08-21T14:00:00.000Z' }, ctx);
+      const end = mockCollection.find.mock.calls[0][0].created_date.$lte;
+      expect(end.toISOString()).toBe('2026-08-21T14:00:00.000Z');
+    });
+
     test('the end date includes its whole day', async () => {
       /* Picking 21 Aug means "including the 21st". Comparing against midnight
          would silently drop a day of quotes, which reads as data loss. */

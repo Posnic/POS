@@ -3803,28 +3803,37 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     }
 }
 
+
 /*
- * Quote filters: two rows that each fill the rail's width.
+ * Shared list filter bar (core/list-filter.js).
  *
- * The rail is 330px on a laptop and 560px on a wide screen, so the controls
- * cannot have fixed widths - the search box takes the slack and the rest keep
- * only what they need. Laid out with flex + gap rather than margins so a
- * wrapped row spaces itself instead of collapsing.
+ * Deliberately not full-bleed. The search box takes what it needs and stops:
+ * an input stretched across a 1900px screen makes a six-character quote number
+ * look like it wants a paragraph, and it drags the eye away from the fields
+ * beside it. Everything here is sized to its content with the search taking
+ * only the slack that is left.
  */
-.q-filter-row {
+.lf-panel {
+    padding: 10px 0 4px;
+    border-bottom: 1px solid #d8dee4;
+    margin-bottom: 8px;
+}
+.lf-row {
     display: flex;
     align-items: center;
     gap: 6px;
-    width: 100%;
+    flex-wrap: wrap;
     margin-bottom: 6px;
 }
-.q-filter-row #quotes_search { flex: 1 1 auto; min-width: 0; }
-.q-filter-row #quotes_search_field { flex: 0 0 auto; width: auto; min-width: 96px; }
-.q-filter-row #quotes_from,
-.q-filter-row #quotes_to { flex: 1 1 0; min-width: 0; }
-.q-filter-sep { flex: 0 0 auto; font-size: 12px; color: #57606a; }
-.q-filter-exact {
-    flex: 0 0 auto;
+.lf-row:last-child { margin-bottom: 0; }
+.lf-search { position: relative; flex: 0 1 320px; min-width: 160px; }
+.lf-search .lf-q { width: 100%; }
+.lf-field { flex: 0 0 auto; width: auto; min-width: 108px; }
+.lf-preset { flex: 0 0 auto; width: auto; min-width: 132px; }
+.lf-custom { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.lf-custom input { width: auto; min-width: 168px; }
+.lf-sep { font-size: 12px; color: #57606a; }
+.lf-exact {
     display: flex;
     align-items: center;
     gap: 4px;
@@ -3833,9 +3842,64 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     white-space: nowrap;
     cursor: pointer;
 }
-.q-filter-exact input { margin: 0; }
-[data-theme] .q-filter-sep,
-[data-theme] .q-filter-exact { color: var(--theme-text-secondary); }
+.lf-exact input { margin: 0; }
+
+/* The count on the Filter button. A closed panel is otherwise somewhere
+   filters go to hide - someone narrows to one customer, forgets, and reports
+   the list as broken. */
+.lf-btn { position: relative; }
+.lf-btn-active { font-weight: 600; }
+.lf-count {
+    display: inline-block;
+    margin-left: 6px;
+    min-width: 18px;
+    padding: 0 5px;
+    border-radius: 9px;
+    background: #0969da;
+    color: #fff;
+    font-size: 11px;
+    line-height: 18px;
+    text-align: center;
+}
+
+/* Suggestions sit over the list rather than pushing it down - a dropdown that
+   reflows the page under the cursor makes people lose their place. */
+.lf-typeahead {
+    position: absolute;
+    z-index: 30;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 2px;
+    background: #fff;
+    border: 1px solid #d0d7de;
+    border-radius: 6px;
+    box-shadow: 0 8px 24px rgba(31, 35, 40, 0.12);
+    max-height: 260px;
+    overflow-y: auto;
+}
+.lf-ta-row {
+    display: block;
+    padding: 6px 10px;
+    font-size: 13px;
+    color: #1f2328;
+    text-decoration: none;
+}
+.lf-ta-row:hover { background: #f6f8fa; text-decoration: none; color: #1f2328; }
+
+[data-theme] .lf-panel { border-bottom-color: var(--theme-border-color); }
+[data-theme] .lf-sep,
+[data-theme] .lf-exact { color: var(--theme-text-secondary); }
+[data-theme] .lf-count { background: var(--theme-primary-color, #0969da); }
+[data-theme] .lf-typeahead {
+    background: var(--theme-card-bg);
+    border-color: var(--theme-border-color);
+}
+[data-theme] .lf-ta-row { color: var(--theme-text-primary); }
+[data-theme] .lf-ta-row:hover {
+    background: var(--theme-table-row-hover);
+    color: var(--theme-text-primary);
+}
 
 /* Rows answer the cursor, and the one being read joins the document. */
 #quotes_list_rows tr.quotes-row { transition: background .12s ease; }
@@ -3861,13 +3925,13 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
    which is the whole point of the join. .table-borderless means the last cell
    simply has no right border to remove. */
 .quotes-split #quotes_list_rows tr.quotes-row.is-active > td {
-    border-top: 1px solid #8c959f !important;
-    border-bottom: 1px solid #8c959f !important;
+    border-top: 1px solid #afb8c1 !important;
+    border-bottom: 1px solid #afb8c1 !important;
     font-weight: 600;
     color: #1f2328;
 }
 .quotes-split #quotes_list_rows tr.quotes-row.is-active > td:first-child {
-    border-left: 3px solid #8c959f !important;
+    border-left: 3px solid #afb8c1 !important;
 }
 /* Unselected rows sit ON the grey, so nothing may paint them white. */
 .quotes-split #quotes_list_rows tr.quotes-row > td { background: transparent; }
@@ -3894,7 +3958,7 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 .quotes-split #quotes_view_card > .card-body { padding: 12px 14px; }
 /* The A4 quote keeps its own, lighter paper edge (owner ask: leave the
    document design alone). Only the SELECTION is drawn darker - in #57606a
-   one clear step darker than the ordinary #d0d7de border, and no further.
+   #afb8c1: barely darker than the ordinary #d0d7de border, and no further.
    Two attempts overshot: near-black read as a bar rather than a rule, and
    #57606a was still heavier than the list around it. The selection only has
    to be MORE than its neighbours, not dark in absolute terms - the eye finds
