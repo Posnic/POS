@@ -44,7 +44,6 @@ describe('what an absent setting means', () => {
     resolves({});
     expect(await dataSharing.isShared('customers', CTX)).toBe(false);
     expect(await dataSharing.isShared('suppliers', CTX)).toBe(false);
-    expect(await dataSharing.isShared('inventory', CTX)).toBe(false);
   });
 
   test('a settings read that fails resolves narrow, not open', async () => {
@@ -186,11 +185,14 @@ describe('the defaults offered when a branch is created', () => {
     expect(dataSharing.CREATE_DEFAULTS.share_suppliers).toBe(true);
   });
 
-  test('inventory does NOT, because stock is physical', async () => {
-    /* A shared count tells a cashier there are four left when all four are
-       forty miles away, and the sale goes through. A new branch wants the
-       CATALOGUE copied, with its own counts. */
-    expect(dataSharing.CREATE_DEFAULTS.share_inventory).toBe(false);
+  test('inventory is NOT a sharing switch at all', async () => {
+    /* Stock lives on the item document and each branch owns its own items, so
+       widening the item read would show N copies of every product with N
+       different counts - and selling the wrong row would decrement another
+       shop's stock. The catalogue is COPIED instead (catalogue-copy.js). */
+    expect(dataSharing.CREATE_DEFAULTS).not.toHaveProperty('share_inventory');
+    expect(dataSharing.READ_DEFAULTS).not.toHaveProperty('share_inventory');
+    expect(Object.values(dataSharing.SHARING_KEYS)).not.toContain('share_inventory');
   });
 
   test('the form default and the stored default are deliberately different', async () => {

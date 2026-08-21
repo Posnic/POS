@@ -195,7 +195,7 @@ const secretUpdate = (key, raw) => {
  * wrong value changes what data a person can READ. Separating it means an ACL
  * can be put on the switch itself without also gating printer settings.
  */
-const SHARING = ['share_customers', 'share_suppliers', 'share_inventory'];
+const SHARING = ['share_customers', 'share_suppliers'];
 
 const GROUPS = {
   features: FEATURES,

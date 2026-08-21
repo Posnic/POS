@@ -5575,7 +5575,10 @@ $(document).on('click', '.feature-pane-open', function () {
  */
 PosnicPro.settings = PosnicPro.settings || {};
 
-PosnicPro.settings.SHARING_KEYS = ['share_customers', 'share_suppliers', 'share_inventory'];
+/* Stock is deliberately absent: a count sits on one shelf, in one building, so
+   it is copied once when a shop is created rather than shared as a rule. See
+   api/src/services/catalogue-copy.js. */
+PosnicPro.settings.SHARING_KEYS = ['share_customers', 'share_suppliers'];
 
 PosnicPro.settings.loadSharing = function () {
     if (!$('#sharing_fieldset').length) { return; }

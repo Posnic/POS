@@ -64,7 +64,6 @@ const _repo = () => {
 const SHARING_KEYS = Object.freeze({
   customers: 'share_customers',
   suppliers: 'share_suppliers',
-  inventory: 'share_inventory',
 });
 
 /*
@@ -74,17 +73,21 @@ const SHARING_KEYS = Object.freeze({
  * of a chain and then another is the same person, with the same balance and
  * the same loyalty, and two records for them is the bug.
  *
- * Inventory does not, and this is the one asymmetry worth stating. Stock is
- * physical - it is on a shelf, in one building. A shared stock count would
- * tell a cashier there are four left when all four are forty miles away, and
- * the sale would go through. What a new branch wants from an existing one is
- * the CATALOGUE (names, prices, tax, barcodes) with its own counts, which is
- * the copy-on-create path, not a shared read.
+ * INVENTORY IS DELIBERATELY NOT HERE. The owner asked for "inventory copy, or
+ * common inventory", and for this schema those are not two settings - one is
+ * workable and one would corrupt a till. Stock lives on the item document and
+ * each branch owns its own items, so widening the item read the way these
+ * widen the customer read would show a cashier N copies of every product, one
+ * per branch, each with a different count; selling the wrong row decrements
+ * another shop's stock. A real common inventory needs per-branch stock records,
+ * which is a schema change, not a switch.
+ *
+ * What a new branch actually wants is the CATALOGUE with its own counts, and
+ * that is services/catalogue-copy.js - offered on the same form, as a copy.
  */
 const CREATE_DEFAULTS = Object.freeze({
   share_customers: true,
   share_suppliers: true,
-  share_inventory: false,
 });
 
 /* Absent means off. See the header - an upgrade must not change who can see
@@ -92,7 +95,6 @@ const CREATE_DEFAULTS = Object.freeze({
 const READ_DEFAULTS = Object.freeze({
   share_customers: false,
   share_suppliers: false,
-  share_inventory: false,
 });
 
 /*
