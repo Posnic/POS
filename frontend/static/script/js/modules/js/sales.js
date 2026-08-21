@@ -428,6 +428,7 @@
         $('.page-title-box,#sales,#view_sales_table,#showsalesbody').show();
         $('#view_sales_per_page').closest('.form-group').show();
         $('.card.m-b-30.sales_header .ecommerce-pagination').closest('.card.m-b-30').show();
+        PosnicPro.sales.mountHistoryFilters();
         PosnicPro.sales.salesTable('sales');
         $('#image_sidebar_dashboard,#image_sidebar_newsale').hide();
         $('.dashboard_img_menu').hide();
@@ -435,6 +436,49 @@
         var loader = $(".loader-sales-balance");
         loader.find(".loadingSpinner:first").remove();
     },
+    /*
+     * The shared filter bar on Sales History - the same one the item list and
+     * quotes use.
+     *
+     * It writes into data('filters') and calls the same salesTable, so the
+     * endpoint keeps taking the blob it always took. salesTable then re-applies
+     * its own sale_process $ne rule on top, which is why this must NOT set that
+     * key: the KOT exclusion belongs to the list, not to what anybody filtered,
+     * and a bar that wrote it would have the two arguing over one field.
+     *
+     * Named mountHistoryFilters rather than mountFilters because
+     * PosnicPro.sales also owns the quote list, which mounts its own bar under
+     * a different key - two things called mountFilters on one namespace is a
+     * coin toss for whoever reads it next.
+     */
+    mountHistoryFilters: function () {
+        if (!$('#sales_filter_panel').length) { return; }
+        PosnicPro.listFilter.mount({
+            key: 'sales',
+            container: '#sales_filter_panel',
+            button: '#sales_filter_btn',
+            searchPlaceholder: 'Search bill no, customer or phone',
+            dateField: 'Date',
+            searchFields: [
+                { value: 'all', label: 'All fields' },
+                { value: 'sales_id', label: 'Bill no' },
+                { value: 'customer_name', label: 'Customer' },
+                { value: 'customer_phone', label: 'Phone' }
+            ],
+            /* Suggestions come from the customers this till already uses. */
+            typeahead: 'customer',
+            typeaheadField: 'customer_name',
+            onChange: function () {
+                var table = $('#view_sales');
+                /* The column PosnicPro.search filtered this list on. */
+                var filters = PosnicPro.listFilter.legacyFilters('sales', { dateKey: 'updated_date' });
+                table.data('filters', JSON.stringify(filters));
+                table.data('current_page', 1);
+                PosnicPro.sales.salesTable('sales');
+            }
+        });
+    },
+
     salesTable: function () {
         var loader = $(".loader-table-sale");
         $("<div class='loadingSpinner'></div>").appendTo(loader);
@@ -10363,6 +10407,11 @@ PosnicPro.quotes.mountFilters = function () {
     });
     PosnicPro.quotes._filterMounted = true;
 };
+$(document).on('click', '#sales_filter_btn', function () {
+    PosnicPro.sales.mountHistoryFilters();
+    PosnicPro.listFilter.toggle('sales');
+});
+
 $(document).on('click', '#quotes_filter_btn', function () {
     PosnicPro.quotes.mountFilters();
     PosnicPro.listFilter.toggle('quotes');

@@ -148,6 +148,89 @@ PosnicPro.listFilter = {
         return n;
     },
 
+    /*
+     * The same state, shaped for the OLDER list endpoints.
+     *
+     * quotes was written alongside this bar, so it takes the flat parameters
+     * params() emits. The lists that came before it - items, sales, receivings
+     * and nine others - take a `filters` blob that goes almost straight into a
+     * Mongo query, built until now by PosnicPro.search from the input boxes.
+     *
+     * Translating here rather than in each screen is the whole point: three
+     * copies of this mapping would drift, and drift in a filter is invisible -
+     * a list quietly answering a slightly different question than the one on
+     * screen. It is also why the regex is built to match what search() built:
+     * adopting the bar must not silently change which rows a shop's existing
+     * habits return.
+     *
+     * The date key is the CALLER's, because these lists do not agree on it -
+     * items filters on updated_date, a sales history on its own sale date - and
+     * guessing would filter the wrong column while looking like it worked.
+     */
+    _escapeRegex: function (v) {
+        return String(v).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    },
+
+    legacyFilters: function (key, opts) {
+        var LF = PosnicPro.listFilter;
+        var m = LF._mounted[key];
+        var st = LF.state(key);
+        var cfg = (m && m.cfg) || {};
+        var out = {};
+
+        var term = LF._applied(st);
+        if (term) {
+            var value;
+            if (st.exact) {
+                /* Anchored, matching what Exact promises: the whole value, not
+                   a value containing it. */
+                value = { $regex: '^' + LF._escapeRegex(term) + '$', $options: 'i' };
+            } else {
+                /* All tokens present, in any order - the behaviour search()
+                   already gave, so "blue shirt" keeps finding "Shirt, blue". */
+                var pattern = term.trim().split(/\s+/).filter(function (t) {
+                    return t.length > 0;
+                }).map(function (t) {
+                    return '(?=.*' + LF._escapeRegex(t) + ')';
+                }).join('');
+                if (!pattern) { pattern = LF._escapeRegex(term); }
+                value = { $regex: pattern, $options: 'i' };
+            }
+
+            var field = (st.field && st.field !== 'all') ? st.field : '';
+            if (field) {
+                out[field] = value;
+            } else {
+                var all = (cfg.searchFields || []).map(function (f) { return f.value; })
+                    .filter(function (v) { return v && v !== 'all'; });
+                if (all.length === 1) {
+                    out[all[0]] = value;
+                } else if (all.length > 1) {
+                    /* $or is a query operator, not a code operator, so it
+                       passes the app's filter guard - see api mongo-guard.js. */
+                    out.$or = all.map(function (f) {
+                        var o = {};
+                        o[f] = value;
+                        return o;
+                    });
+                }
+            }
+        }
+
+        var dateKey = opts && opts.dateKey;
+        if (dateKey && (st.from || st.to)) {
+            var range = {};
+            if (st.from) range.$gte = st.from.toISOString();
+            if (st.to) range.$lte = st.to.toISOString();
+            out[dateKey] = range;
+        }
+
+        Object.keys(st.extra || {}).forEach(function (k) {
+            if (st.extra[k] !== '' && st.extra[k] != null) out[k] = st.extra[k];
+        });
+        return out;
+    },
+
     /* What the server is sent. Defaults are omitted: field=all&exact=false
        says exactly what sending neither says, and a request that spells out
        its defaults is harder to read in a log. */

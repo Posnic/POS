@@ -124,12 +124,47 @@ PosnicPro.receivings = {
         $('#v-pills-purchase').addClass('show active');
         $('.page_loader,#osk-container,#receiving_view_receiving_edit').hide();
         $('.page-title-box,#showreceivingbody,#receiving_view_view_receiving_table,#receivings').show();
+        PosnicPro.receivings.mountFilters();
         PosnicPro.receivings.receivingsTable('receivings');
         $('.dashboard_img_menu').hide();
         $('#image_sidebar_purchasehistory').show();
         var loader = $(".loader-receiving");
         loader.find(".loadingSpinner:first").remove();
     },
+    /*
+     * The shared filter bar on Purchase History - the same one the item list,
+     * Sales History and quotes use.
+     *
+     * Writes into data('filters') and calls the same receivingsTable, so the
+     * endpoint keeps taking the blob it always took; legacyFilters builds the
+     * regex PosnicPro.search built, so a shop's existing search habits return
+     * the same rows.
+     */
+    mountFilters: function () {
+        if (!$('#receivings_filter_panel').length) { return; }
+        PosnicPro.listFilter.mount({
+            key: 'receivings',
+            container: '#receivings_filter_panel',
+            button: '#receivings_filter_btn',
+            searchPlaceholder: 'Search purchase no, supplier or phone',
+            dateField: 'Date',
+            searchFields: [
+                { value: 'all', label: 'All fields' },
+                { value: 'receiving_id', label: 'Purchase no' },
+                { value: 'supplier_name', label: 'Supplier' },
+                { value: 'supplier_phone', label: 'Phone' }
+            ],
+            onChange: function () {
+                var table = $('#view_receivings');
+                /* The column PosnicPro.search filtered this list on. */
+                var filters = PosnicPro.listFilter.legacyFilters('receivings', { dateKey: 'updated_date' });
+                table.data('filters', JSON.stringify(filters));
+                table.data('current_page', 1);
+                PosnicPro.receivings.receivingsTable('receivings');
+            }
+        });
+    },
+
     receivingsTable: function () {
         var loader = $(".loader-table-receiving");
         $("<div class='loadingSpinner'></div>").appendTo(loader);
@@ -2177,4 +2212,11 @@ $(document).ready(function () {
         PosnicPro.alert('info', 'Receiving pre-filled from ' + (prefill.supplier.po_id || 'the purchase order'));
     }, 600);
     void poPrefillTimer;
+});
+
+/* Open and close the purchase filter panel. Delegated, because the button
+   lives in markup that is re-rendered on page entry. */
+$(document).on('click', '#receivings_filter_btn', function () {
+    PosnicPro.receivings.mountFilters();
+    PosnicPro.listFilter.toggle('receivings');
 });
