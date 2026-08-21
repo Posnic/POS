@@ -350,6 +350,22 @@ PosnicPro.listFilter = {
         var st = LF._mounted[key].state;
         st.field = $(this).closest('[data-lf]').find('.lf-field').val();
         st.exact = $(this).closest('[data-lf]').find('.lf-exact-cb').is(':checked');
+
+        /*
+         * Both of these MODIFY a search rather than being one. With no term in
+         * force, params() omits them entirely, so reloading would send a
+         * request byte-identical to the one already on screen - a round trip
+         * per dropdown change for a list that cannot move.
+         *
+         * The check runs AFTER the state is updated, and that ordering matters:
+         * ticking Exact can bring a below-minimum term INTO force (see
+         * _applied), so the very keystroke that makes a reload necessary is one
+         * of the two this guard would otherwise skip.
+         */
+        if (!LF._applied(st)) {
+            LF.paintButton(key);
+            return;
+        }
         LF._changed(key);
     });
 

@@ -1282,3 +1282,29 @@ test('an exact match is applied whatever its length', () => {
     'the exact bypass must come before the length test, or it never runs',
   );
 });
+
+test('changing the search field with no term does not reload the list', () => {
+  /* Field and Exact MODIFY a search rather than being one. With no term in
+     force params() omits them, so the request would be byte-identical to the
+     one already on screen - a round trip per dropdown change for a list that
+     cannot move. */
+  const src = stripComments(listFilterSrc);
+  const at = src.indexOf("on('change', '.lf-field,.lf-exact-cb'");
+  assert.notStrictEqual(at, -1, 'the field handler is gone');
+  const body = src.slice(at, src.indexOf('\n    });', at));
+  assert.match(body, /if \(!LF\._applied\(st\)\) \{/, 'it reloads even when nothing is in force');
+  assert.match(body, /LF\.paintButton\(key\);/, 'the button must still repaint');
+});
+
+test('the skip is decided AFTER the state is updated', () => {
+  /* Ticking Exact can bring a below-minimum term INTO force, so the very
+     action that makes a reload necessary is one of the two this guard would
+     otherwise skip. */
+  const src = stripComments(listFilterSrc);
+  const at = src.indexOf("on('change', '.lf-field,.lf-exact-cb'");
+  const body = src.slice(at, src.indexOf('\n    });', at));
+  assert.ok(
+    body.indexOf('st.exact =') < body.indexOf('_applied(st)'),
+    'checking before the update reads the previous value of exact',
+  );
+});
