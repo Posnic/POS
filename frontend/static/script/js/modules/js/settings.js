@@ -5666,6 +5666,156 @@ $(document).on('click', '#quote_settings_save', function () {
  * has never broken in this codebase.
  */
 PosnicPro.settings.featureInfo = {
+    /*
+     * Copy written 2026-08-21 for the nine features whose dialog opened with
+     * nothing but the one-line card description.
+     *
+     * Every claim below was checked against the code that implements it rather
+     * than written from the feature's name. A listing that promises something
+     * the software does not do is worse than a listing with no detail at all -
+     * it is the shop owner who finds out, in front of a customer.
+     *
+     * NO `section` KEY on most of these, deliberately. It names the markup
+     * block whose controls the dialog ADOPTS, and only four exist: fc_quotes,
+     * fc_restaurant, fc_tillpin and fc_workforce. The first draft invented
+     * seven more from the feature names. The renderer guards with
+     * $(info.section).length so nothing would have broken - which is exactly
+     * what makes it worth catching: it would have sat there reading as wired.
+     */
+    staff_tips_enable: {
+        section: '#fc_workforce',
+        tagline: 'Record tips at clock-out and pay them out with wages.',
+        about: 'Cash tips are declared by the person who earned them when they clock out, stored against that shift, and carried into the labour and payroll figures - so they are paid rather than remembered.',
+        benefits: [
+            'Declared at clock-out, by the person who took them',
+            'Held against the shift, so who earned what is never in doubt',
+            'Flows into payroll rather than living on a piece of paper'
+        ],
+        how: [
+            'Turn it on - a tips box appears at clock-out',
+            'Staff enter what they took in cash; blank is fine',
+            'Review it per shift, and pay it with that period of wages'
+        ]
+    },
+    staff_roster_enable: {
+        section: '#fc_workforce',
+        tagline: 'Plan the week ahead; staff see the shifts they are on.',
+        about: 'A roster is next week decided this week. Plan a stretch for a person on a day, and the people you rostered can see their own shifts without asking.',
+        benefits: [
+            'Plan a week in one screen instead of a group message',
+            'Staff see their own shifts; managers see everyone',
+            'Viewing and planning are separate permissions'
+        ],
+        how: [
+            'Turn it on - Roster appears beside Shifts',
+            'Pick a person and a day, and set their stretch',
+            'They see it on their own account from then on'
+        ]
+    },
+    module_credit_enable: {
+        tagline: 'Sell on account now, settle later - with a limit that holds.',
+        about: 'Regulars who pay at month end can take goods today. Each customer carries a balance and an optional credit limit, and the limit is checked when the sale is made rather than discovered at the end of the month.',
+        benefits: [
+            'A per-customer limit, enforced at the moment of sale',
+            'Outstanding balances in one list',
+            'Reminders can go out by SMS or WhatsApp',
+            'Zero means unlimited, for the customers you trust completely'
+        ],
+        how: [
+            'Turn it on and set a default limit under Credit',
+            'Give a customer their own limit if it differs',
+            'Sell on account; the balance follows the customer',
+            'Settle it whenever they pay, in part or in full'
+        ]
+    },
+    module_marketing_enable: {
+        tagline: 'Loyalty points, coupons, cashback and campaigns in one place.',
+        about: 'Everything that brings a customer back a second time: points earned per sale, coupons with real rules, cashback into a wallet, and campaigns that decide who hears about what.',
+        benefits: [
+            'Points earn and redeem on the till, not on a card someone lost',
+            'Coupons with limits that are checked before they apply',
+            'Cashback waits in the wallet for the next visit',
+            'Category pricing for the customers who buy in volume'
+        ],
+        how: [
+            'Turn it on - Marketing appears in the menu',
+            'Set how points are earned and what they are worth',
+            'Create coupons or a campaign when you want one',
+            'It applies itself at the till from then on'
+        ]
+    },
+    module_messaging_enable: {
+        tagline: 'Send the receipt where the customer already reads - WhatsApp or SMS.',
+        about: 'A paper receipt is thrown away at the door. Messaging sends it to a phone instead, over WhatsApp when it is connected and SMS through your own gateway when it is not.',
+        benefits: [
+            'The receipt arrives somewhere they will still have it next month',
+            'Templates you write once, with the sale filled in',
+            'Your own SMS gateway - no per-message markup from us',
+            'Can be turned off per till, so a busy counter is not slowed'
+        ],
+        how: [
+            'Turn it on, then connect WhatsApp or fill in your SMS gateway',
+            'Write the template you want customers to receive',
+            'Send a test to your own phone before the first sale',
+            'It offers to send at the end of each sale'
+        ]
+    },
+    module_channels_enable: {
+        tagline: 'Let customers order themselves - kiosk, QR menu, or a public list.',
+        about: 'Selling without a cashier standing at the screen. A kiosk authenticates with its own key rather than a login, so a tablet on the counter can take orders without holding a staff account.',
+        benefits: [
+            'A kiosk signs in with its own key, never a staff password',
+            'QR ordering from the table, into the same sale flow',
+            'Orders land in the list your staff already work from'
+        ],
+        how: [
+            'Turn it on - Channels appears under settings',
+            'Register the device and give it its key',
+            'Point a tablet or a QR code at it and take orders'
+        ]
+    },
+    module_cashbook_enable: {
+        tagline: 'Expenses and cash movements, beside the sales they sit next to.',
+        about: 'Money leaves the till as well as entering it. The cash book records what went out and why, so the cash position for the day is the truth rather than sales minus a guess.',
+        benefits: [
+            'Expenses recorded where the cash actually moved',
+            'The day accounts for money out, not only money in',
+            'Closing a register has something real to reconcile against'
+        ],
+        how: [
+            'Turn it on - Cash book appears in the menu',
+            'Record an expense when money leaves the drawer',
+            'It shows against the day, beside the sales'
+        ]
+    },
+    module_recyclebin_enable: {
+        tagline: 'A deletion you can undo - records are kept, not destroyed.',
+        about: 'Deleting marks a record as deleted and hides it; it does not remove it. Anything deleted can be found and restored, which is what makes a delete button safe to hand to a cashier.',
+        benefits: [
+            'A wrong delete is a mistake, not a loss',
+            'Restore puts the record back where it was',
+            'Turning the feature off does not destroy what is already kept'
+        ],
+        how: [
+            'Turn it on - Recycle bin appears under settings',
+            'Delete as normal; the record moves there instead',
+            'Find it and restore it if it should not have gone'
+        ]
+    },
+    module_themes_enable: {
+        tagline: 'Change how the till looks, without changing how it works.',
+        about: 'A theme sets the colours and surfaces of the whole app from one place. Colour still carries meaning - red destroys, green succeeded, the accent is the main action - so a theme changes the palette, never what a colour means.',
+        benefits: [
+            'One place for the look of every screen',
+            'Light and dark, chosen per person',
+            'Meaning is preserved: a theme cannot make red mean "saved"'
+        ],
+        how: [
+            'Turn it on - Themes appears under settings',
+            'Pick one; it applies immediately, everywhere',
+            'Anyone can change it back without help'
+        ]
+    },
     quotes_enable: {
         tagline: 'Price an offer today, convert it to a sale when the customer says yes.',
         about: 'A quotation is a price promise with a validity date. Build it from your catalog or free lines, discount per line or per quote, add charges in any name, and share it as a professional A4 PDF.',
