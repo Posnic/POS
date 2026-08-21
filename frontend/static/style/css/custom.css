@@ -3852,10 +3852,23 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
    was just a title. With the filter strip living in that header, the list card
    ends up butted right against it. Five pixels of air, quotes only - the split
    view sets its own margin and has a higher specificity, so it is unaffected. */
+/*
+ * MD:* markers below.
+ *
+ * The tests for this pattern used to find each rule by its SELECTOR, which
+ * couples them to the class name - fine until the class is the thing changing.
+ * Extracting this into a reusable master-detail renames every selector here, so
+ * a name-based suite would have to be rewritten in the same commit as the
+ * refactor it exists to police: the safety net rebuilt by the fall.
+ *
+ * A marker names what a rule is FOR, and that survives the rename. See
+ * tests/helpers/source-lookup.js markerReader.
+ */
 #quotes_new .contentbar {
     padding-top: 5px !important;
 }
 
+/* MD:surface */
 #quotes_new .contentbar.quotes-split {
     display: flex;
     gap: 0;
@@ -3871,7 +3884,9 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     border-radius: 8px;
     overflow: hidden;
 }
+/* MD:panes-plain */
 #quotes_new .contentbar.quotes-split > #quotes_list_card,
+/* MD:detail */
 #quotes_new .contentbar.quotes-split > #quotes_view_card {
     border: 0 !important;
     border-radius: 0 !important;
@@ -3886,6 +3901,7 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
    runs full width, so the selection and the document are one continuous
    shape: that is the connection, drawn with colour instead of yet another
    line. */
+/* MD:rail */
 #quotes_new .contentbar.quotes-split > #quotes_list_card {
     flex: 0 0 330px;
     max-width: 330px;
@@ -3901,6 +3917,7 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
        in the tests slices a rule at its first closing brace.) */
     background: #f6f8fa !important;
 }
+/* MD:rail-body */
 #quotes_new .contentbar.quotes-split > #quotes_list_card > .card-body {
     display: flex;
     flex-direction: column;
@@ -3917,6 +3934,7 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     background: #f6f8fa !important;
     border-bottom: 1px solid #d8dee4;
 }
+/* MD:rail-scroller */
 .quotes-split #quotes_list_card #quotes_list_rows {
     flex: 1 1 auto;
     min-height: 0;
@@ -3934,6 +3952,7 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     max-height: calc(100vh - 150px);
     background: #fff;
 }
+/* MD:detail-body */
 #quotes_new .contentbar.quotes-split > #quotes_view_card > .card-body {
     display: flex;
     flex-direction: column;
@@ -3941,6 +3960,7 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     padding: 12px 14px !important;
 }
 .quotes-split #quotes_view_head { flex: 0 0 auto; }
+/* MD:detail-scroller */
 .quotes-split #quotes_view_body {
     flex: 1 1 auto;
     min-height: 0;
@@ -3972,6 +3992,7 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     .quotes-split #quotes_list_card .q-col-qty { display: none; }
 }
 @media (min-width: 1500px) {
+    /* MD:rail-wide */
     #quotes_new .contentbar.quotes-split > #quotes_list_card {
         flex: 0 0 560px;
         max-width: 560px;
@@ -4171,6 +4192,7 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
    on its edge. The hairlines above and below separate it from its neighbours
    the way a raised card would, and nothing is drawn on its right, so it runs
    straight into the quote beside it. */
+/* MD:selected-row */
 .quotes-split #quotes_list_rows tr.quotes-row.is-active,
 .quotes-split #quotes_list_rows tr.quotes-row.is-active > td {
     background: #fff !important;
@@ -4190,6 +4212,7 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     border-left: 3px solid #c9d1d9 !important;
 }
 /* Unselected rows sit ON the grey, so nothing may paint them white. */
+/* MD:unselected-row */
 .quotes-split #quotes_list_rows tr.quotes-row > td { background: transparent; }
 .quotes-split #quotes_list_rows tr.quotes-row:hover > td { background: #eaeef2; }
 

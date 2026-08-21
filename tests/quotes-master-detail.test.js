@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('fs');
 const path = require('path');
-const { blockAt, cssReader, stripComments } = require('./helpers/source-lookup');
+const { blockAt, cssReader, markerReader, stripComments } = require('./helpers/source-lookup');
 
 /*
  * The quotes master-detail: one surface, and only the document changes.
@@ -39,6 +39,19 @@ const css = fs.readFileSync(
   'utf8',
 );
 const cssRule = cssReader(css);
+/*
+ * Rules of the PATTERN are read by marker, not by selector.
+ *
+ * These same declarations are about to move from .quotes-split onto a generic
+ * .master-detail, and a suite that finds them by class name would have to be
+ * rewritten in that same commit - the safety net rebuilt by the fall it exists
+ * to catch. A marker names what a rule is FOR, which the rename does not touch.
+ *
+ * Rules that are genuinely QUOTES-specific (the A4 sheet, the status chips)
+ * keep using cssRule: their selector is not going anywhere, and naming it is
+ * the honest way to say so.
+ */
+const ruleFor = markerReader(css);
 
 /* sales.js defines showDetails twice - sales history has one too - so every
    lookup starts from the quotes namespace rather than the top of the file.
@@ -155,12 +168,12 @@ test('Next is driven by hasMore, so it works without a page count', () => {
 });
 
 test('the two panes read as one surface, not two cards', () => {
-  const split = cssRule('#quotes_new .contentbar.quotes-split {');
+  const split = ruleFor('MD:surface').body;
   assert.match(split, /gap:\s*0/, 'a gap between the panes is the thing being removed');
   assert.match(split, /border:\s*1px/, 'the outer border belongs to the split itself');
   assert.match(split, /align-items:\s*stretch/, 'the divider must run the full height');
 
-  const panes = cssRule('#quotes_new .contentbar.quotes-split > #quotes_list_card,');
+  const panes = ruleFor('MD:panes-plain').body;
   assert.match(panes, /border:\s*0/, 'the panes must give up their own borders');
   assert.match(panes, /box-shadow:\s*none/, 'two shadows would redraw the seam');
 
@@ -171,10 +184,7 @@ test('the two panes read as one surface, not two cards', () => {
   // NO divider: the owner counted the borders, so the change of ground does it
   /* two rules share this selector - the main one and the >=1500px override -
      so anchor on the comment that sits above the main one */
-  const rail = cssRule(
-    '#quotes_new .contentbar.quotes-split > #quotes_list_card {',
-    'drawn with colour instead of yet another',
-  );
+  const rail = ruleFor('MD:rail').body;
   assert.ok(
     !/border-right:\s*1px/.test(rail),
     'the list must not draw a right border - that line is what breaks the join',
@@ -186,7 +196,7 @@ test('the two panes read as one surface, not two cards', () => {
 });
 
 test('each pane scrolls itself, so neither drags the other out of reach', () => {
-  const rows = cssRule('.quotes-split #quotes_list_card #quotes_list_rows {');
+  const rows = ruleFor('MD:rail-scroller').body;
   assert.match(rows, /overflow-y:\s*auto/);
   // without min-height:0 a flex child refuses to shrink and the scrollbar
   // lands on the page instead of inside the rail
@@ -226,7 +236,7 @@ const quotesHtml = fs.readFileSync(path.join(ROOT, 'frontend', 'modules', 'quote
 
 test('the selection is the near edge of the document, not a tinted row', () => {
   // the row and its cells are painted together, so the rule is a group
-  const active = cssRule('.quotes-split #quotes_list_rows tr.quotes-row.is-active,');
+  const active = ruleFor('MD:selected-row').body;
   // the pane's ground, so the two read as one surface
   assert.match(
     active,
@@ -268,7 +278,7 @@ test('the selection is the near edge of the document, not a tinted row', () => {
 });
 
 test('the rail has no side padding, or the selection cannot reach the divider', () => {
-  const body = cssRule('#quotes_new .contentbar.quotes-split > #quotes_list_card > .card-body {');
+  const body = ruleFor('MD:rail-body').body;
   assert.match(body, /padding:\s*0\s*!important/, 'full-bleed rows are what make the join possible');
 });
 
@@ -366,7 +376,7 @@ test('the toolbar is pinned so its menus are not clipped', () => {
   );
   assert.ok(!/overflow-y:\s*auto/.test(pane), 'the card itself must not be the scroller');
   assert.match(pane, /flex-direction:\s*column/);
-  const docBody = cssRule('.quotes-split #quotes_view_body {');
+  const docBody = ruleFor('MD:detail-scroller').body;
   assert.match(docBody, /overflow:\s*auto/, 'the document scrolls instead');
 });
 
@@ -434,7 +444,7 @@ test('the list ground wins against the global card rule', () => {
 });
 
 test('the whole row is the highlight, not a mark on its edge', () => {
-  const cells = cssRule('.quotes-split #quotes_list_rows tr.quotes-row.is-active,');
+  const cells = ruleFor('MD:selected-row').body;
   // every CELL is painted, so the highlight spans the full width
   assert.ok(
     cells.includes('background'),
@@ -450,7 +460,7 @@ test('the whole row is the highlight, not a mark on its edge', () => {
   );
 
   // unselected rows must NOT be painted white, or nothing stands out
-  const others = cssRule('.quotes-split #quotes_list_rows tr.quotes-row > td {');
+  const others = ruleFor('MD:unselected-row').body;
   assert.match(others, /background:\s*transparent/, 'unselected rows sit on the grey');
 });
 
