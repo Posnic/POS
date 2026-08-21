@@ -377,8 +377,49 @@
                                     </select>
                                 </div>
                             </div>
+                            <!-- A SECOND option, e.g. colour AND size, giving one item
+                                 per combination. Behind a link, and hidden by default,
+                                 so a shop that only sells by size sees exactly the form
+                                 it saw before - the common case pays nothing for the
+                                 rarer one. -->
+                            <a href="javascript:void(0)" id="variant_axis2_link"
+                               style="font-size:.85rem;">+ Add a second option</a>
+                            <div id="variant_axis2_wrap" style="display:none;">
+                                <div class="form-row mt-2">
+                                    <div class="form-group col-md-12">
+                                        <label class="form-control-placeholder items-label-inline" for="items_variant_2">
+                                            <lang class="lang_selectvariant2_title">Second variant</lang>
+                                        </label>
+                                        <select id="items_variant_2" name="items_variant_2" style="width: 200px;"
+                                            class="select2">
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group col-md-12">
+                                        <label class="items-label-inline" for="item_variant_list_2">
+                                            <lang class="lang_variantfield2_title">Second variant values</lang>
+                                        </label>
+                                        <select class="form-control select2 border-control"
+                                            name="item_variant_list_2[]" id="item_variant_list_2" multiple="multiple"
+                                            data-placeholder="Select variant fields" style="width: 100%;">
+                                            <option></option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
                             <!-- IC2: the Apply button is gone - the per-variant price
                                  rows render the moment the values are chosen. -->
+                            <!-- Saving here creates SEVERAL items, not one, and nothing
+                                 on screen said so - you found that out afterwards, in
+                                 the item list. The count is the one fact worth stating,
+                                 so it goes where the choice is made rather than in a
+                                 confirmation nobody reads. It also fills the space this
+                                 card leaves under itself in variant mode with something
+                                 true, instead of padding the card to match its taller
+                                 neighbour - which is the thing already rejected here. -->
+                            <p id="variant_count_hint" class="text-muted mb-0 mt-1"
+                               style="font-size:.85rem; display:none;"></p>
                         </div>
                     </div>
 
