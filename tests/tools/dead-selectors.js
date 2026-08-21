@@ -30,6 +30,20 @@
  *   node tests/tools/dead-selectors.js            # module files
  *   node tests/tools/dead-selectors.js --all      # every script we own
  *
+ * THE PART THAT *IS* A GATE
+ *
+ * All 110 were verified once (queue #110). The split that matters is not how
+ * many there are but what the code DOES with them:
+ *
+ *   WRITE  $('#gone').html(x)  - jQuery no-ops on an empty set. Invisible,
+ *          harmless, deletable at leisure. 101 of them.
+ *   READ   $('#gone').val() / .is(':checked') feeding a condition - always
+ *          undefined or false, so a branch never runs or a value goes to the
+ *          server missing. 9 of them, every one checked by hand.
+ *
+ * A hundred standing exceptions get scrolled past; nine do not. So the reads
+ * are pinned by dead-selector-reads.test.js, and analyse() is exported for it.
+ *
  * HOW TO READ A HIT
  *
  * Search the whole repo for the bare id first. If it appears only inside
@@ -62,8 +76,9 @@ function walk(dir, out = []) {
 const TOKEN = /[A-Za-z_][\w-]*/g;
 const SELECTOR = /\$\(\s*['"]#([A-Za-z_][\w-]*)['"]\s*\)/g;
 
-function main() {
-  const all = process.argv.includes('--all');
+/* The analysis, without the printing - so the reads guard can use exactly the
+   same definition of "dead" that this tool reports. */
+function analyse({ all = false } = {}) {
   const files = walk(FRONTEND);
 
   /* One pass. Counting every identifier token in every file, then comparing
@@ -95,7 +110,13 @@ function main() {
     .filter(([id]) => total.get(id) === asSelector.get(id))
     .sort((a, b) => b[1].length - a[1].length);
 
-  console.log(`selectors examined: ${hits.size}`);
+  return { dead, examined: hits.size };
+}
+
+function main() {
+  const { dead, examined } = analyse({ all: process.argv.includes('--all') });
+
+  console.log(`selectors examined: ${examined}`);
   console.log(`ids that appear ONLY as a selector: ${dead.length}\n`);
   for (const [id, where] of dead) {
     console.log(`#${id}  (${where.length})`);
@@ -104,4 +125,7 @@ function main() {
   console.log('\nVerify each before deleting - a dynamically built id is a false positive.');
 }
 
-main();
+module.exports = { analyse };
+
+/* Only print when run directly - requiring it from the guard must stay silent. */
+if (require.main === module) main();
