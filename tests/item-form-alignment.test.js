@@ -84,30 +84,28 @@ test('the cap still exists, and says why uniform columns matter', () => {
   assert.match(css, /THE CAP ONLY WORKS IF THE COLUMNS MATCH/, 'the reasoning is not recorded');
 });
 
-test('"+ Add Category" and "+ Add Supplier" sit on their label lines', () => {
-  /* Under the controls, each link's position depended on the height of the
-     thing above it — and a select2 is not the same height as a plain input, so
-     two links on one row sat at two different heights. */
-  /* The VISIBLE controls - items_supplier is a hidden field now, behind the
-     picker that replaced the old autocomplete. */
-  for (const id of ['items_category', 'items_supplier_pick']) {
-    const at = html.indexOf(`id="${id}"`);
-    /* The supplier column grew a long explanatory comment, so the window has
-       to reach past it to the label row above. */
-    const before = html.slice(Math.max(0, at - 2200), at);
-    assert.match(
-      before,
-      /d-flex align-items-baseline justify-content-between/,
-      `the "+ Add" link above #${id} is not on the label line`,
-    );
+test('the label and its "(optional)" read as one line', () => {
+  /* They wrapped because the "+ Add" links shared that row. The links are gone
+     (owner ask) - categories and suppliers are managed from their own screens -
+     and the qualifier belongs beside the label, not under it. */
+  for (const id of ['items_category', 'items_supplier']) {
+    const at = html.indexOf(`for="${id}"`);
+    assert.notStrictEqual(at, -1, `the label for #${id} is gone`);
+    const label = html.slice(at, html.indexOf('</label>', at));
+    assert.match(label, /lang_optional/, `#${id} lost its "(optional)"`);
+    assert.match(html.slice(Math.max(0, at - 120), at), /items-label-inline/, 'the label is not the one-line kind');
   }
-  assert.strictEqual(
-    (html.match(/class="items-inline-add"/g) || []).length,
-    2,
-    'both add links must use the same treatment',
-  );
-  const add = cssRule('.items-inline-add');
-  assert.match(add, /white-space:\s*nowrap/, 'the link wraps and drags the label with it');
+  /* Two rules share this prefix - the label and its small - so anchor it. */
+  const rule = cssRule('.items-label-inline', "The Item card's own alignment");
+  assert.match(rule, /white-space:\s*nowrap/, 'without this the qualifier can still wrap');
+});
+
+test('the "+ Add" links are gone from the form', () => {
+  /* Removed on request. They were also the thing pushing "(optional)" down. */
+  assert.ok(!/lang_add_category/.test(html), '"+ Add Category" is back');
+  assert.ok(!/lang_add_supply/.test(html), '"+ Add Supplier" is back');
+  assert.ok(!/items-inline-add/.test(html), 'the link treatment is still applied to something');
+  assert.ok(!/items-inline-add/.test(css), 'dead CSS left behind for a link that no longer exists');
 });
 
 test('the item KIND is decided above the fields it governs', () => {

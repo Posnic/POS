@@ -197,37 +197,23 @@
                                  card rule, which only covers .row. -->
                             <div class="form-row items-picker-row">
                                 <div class="form-group col-md-6">
-                                    <!-- "+ Add" sits ON the label line, not under the control.
-                                         Underneath, its position depended on the height of the
-                                         thing above it - a select2 and a plain input are not the
-                                         same height, so the two links landed at different heights
-                                         on one row. On the label line they align with each other
-                                         and with every other label on the card. -->
-                                    <div class="d-flex align-items-baseline justify-content-between">
-                                        <label class="form-control-placeholder mb-0" for="items_category">
-                                            <lang class="lang_choosecategory_title"> Select Category </lang>
-                                            <small class="text-muted">(<lang class="lang_optional">optional</lang>)</small>
-                                        </label>
-                                        <a data-module="category" data-access="write" href="#/items/categories/new"
-                                            class="items-inline-add" style="font-size:.85rem;">
-                                            + <lang class="lang_add_category">Add Category</lang>
-                                        </a>
-                                    </div>
+                                    <!-- One line: label and "(optional)" together (owner ask).
+                                         The "+ Add Category" link that used to share this row is
+                                         gone - it was pushing "(optional)" onto a second line,
+                                         and categories are managed from their own screen. -->
+                                    <label class="form-control-placeholder items-label-inline" for="items_category">
+                                        <lang class="lang_choosecategory_title">Select Category</lang>
+                                        <small class="text-muted">(<lang class="lang_optional">optional</lang>)</small>
+                                    </label>
                                     <select id='items_category' name="items_category" style='width: 100%;'
                                         class="select2 items_category items_choose_error">
                                     </select>
                                 </div>
                                 <div class="form-group col-md-6">
-                                    <div class="d-flex align-items-baseline justify-content-between">
-                                        <label class="form-control-placeholder mb-0" for="items_supplier">
-                                            <lang class="lang_choosesupplier_title"> Select Supplier </lang>
-                                            <small class="text-muted">(<lang class="lang_optional">optional</lang>)</small>
-                                        </label>
-                                        <a data-module="supplier" data-access="write" href="#/items/suppliers/new"
-                                            class="items-inline-add" style="font-size:.85rem;">
-                                            + <lang class="lang_add_supply">Add Supplier</lang>
-                                        </a>
-                                    </div>
+                                    <label class="form-control-placeholder items-label-inline" for="items_supplier">
+                                        <lang class="lang_choosesupplier_title">Select Supplier</lang>
+                                        <small class="text-muted">(<lang class="lang_optional">optional</lang>)</small>
+                                    </label>
                                     <!-- Optional (IC1): items routinely arrive without a known
                                          supplier; receiving is the supplier system of record.
 
