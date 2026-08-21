@@ -3480,8 +3480,9 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 #items_new #items_purchase_unit,
 #items_new #items_conversion_factor,
 #items_new #items_discount_amount,
-#items_new #items_discount_percentage { max-width: 460px; }
-#items_new #items_conversion_factor { max-width: 200px; }
+/* No per-field caps on the More tab either: they made two fields in one row
+   different widths, which is the same complaint as Details. The shared 420px
+   cap above still applies, and now applies EVENLY because the columns match. */
 
 /* Details tab: description and the uploader sit side by side as equals,
    and the uploader stops being a big empty box with a big blue button. */

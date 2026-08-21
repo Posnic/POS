@@ -556,3 +556,40 @@ test('the save bar is inside the tab box and matches its width', () => {
   const pane = cssRule('#item_form_tabs_content > .tab-pane', 'The save bar matches the form above it.');
   assert.match(pane, /scrollbar-gutter:\s*stable/, 'the inset shifts when a pane starts scrolling');
 });
+
+/*
+ * The More tab gets the same discipline as Details.
+ */
+test('More uses grid columns, not arbitrary spans', () => {
+  const at = html.indexOf('id="item_tab_more"');
+  const seg = html.slice(at, html.indexOf('id="item_save_bar"'));
+  const spans = [...seg.matchAll(/class="(col-[\w- ]*)"/g)].map((m) => m[1].trim());
+  for (const bad of ['col-7', 'col-5', 'col-md-9', 'col-md-3']) {
+    assert.ok(!spans.includes(bad), `${bad} is an arbitrary span - use the grid`);
+  }
+});
+
+test('the two pack fields are an even pair', () => {
+  const a = html.indexOf('id="items_purchase_unit"');
+  const b = html.indexOf('id="items_conversion_factor"');
+  const colOf = (at) => {
+    const m = [...html.slice(0, at).matchAll(/class="(col-[\w- ]*)"/g)].pop();
+    return m[1].trim();
+  };
+  assert.strictEqual(colOf(a), colOf(b), 'two fields of the same kind, two different widths');
+});
+
+test('nothing overrides the grid gutter with inline padding', () => {
+  /* padding:0 !important on the discount value made it sit flush against the
+     radios beside it. */
+  const at = html.indexOf('id="item_tab_more"');
+  const seg = html.slice(at, html.indexOf('id="item_save_bar"'));
+  assert.ok(!/style="padding: 0 !important;"/.test(seg), 'an inline padding override is back');
+});
+
+test('no per-field width caps remain on More', () => {
+  /* They made two fields in one row different widths - the same complaint as
+     Details. The shared cap applies evenly now that the columns match. */
+  assert.ok(!/#items_new #items_conversion_factor\s*\{[^}]*max-width/.test(css));
+  assert.ok(!/#items_new #items_discount_percentage\s*\{[^}]*max-width/.test(css));
+});
