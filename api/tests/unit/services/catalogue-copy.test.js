@@ -30,7 +30,14 @@ const mkDb = ({ items = [], categories = [], unit = [], grouptax = [] } = {}) =>
   const existingItem = { value: null };
 
   const collection = (name) => ({
+    /* A real driver cursor is async-iterable AND has toArray. The service
+       streams items with `for await` and still uses toArray for the small
+       lookup collections, so the mock has to offer both - a mock with only
+       toArray would pass while the real code path could not run. */
     find: (filter) => ({
+      [Symbol.asyncIterator]: async function* () {
+        for (const row of await this.toArray()) yield row;
+      },
       toArray: async () => {
         const wanted = filter.$or
           ? String(filter.$or[0]['branch_access.branch_id'] || filter.$or[1].branch_id)
@@ -245,5 +252,73 @@ describe('refusing rather than duplicating', () => {
     const r = await copyCatalogue(db, opts());
     expect(r.status).toBe(false);
     expect(r.message).toMatch(/having a day/);
+  });
+});
+
+/*
+ * Memory: a catalogue copy must not hold the catalogue.
+ *
+ * The writes were batched from the start for the obvious reason. Reading with
+ * .toArray() and then building a second full array of copies undid that on the
+ * way in - two copies of a shop's entire item list resident at once, on a
+ * process shared with every other shop.
+ */
+describe('the copy streams rather than loading', () => {
+  test('it never materialises the whole item list', async () => {
+    /* A cursor that refuses toArray proves the items path does not use it.
+       The small lookup collections legitimately still do. */
+    const rows = [item(), item({ name: 'Lays' }), item({ name: 'Kurkure' })];
+    const inserted = [];
+    const db = {
+      collection: (name) => ({
+        findOne: async () => null,
+        find: () => ({
+          [Symbol.asyncIterator]: async function* () {
+            for (const r of name === 'items' ? rows : []) yield r;
+          },
+          toArray: async () => {
+            if (name === 'items') throw new Error('items must be streamed, not loaded');
+            return [];
+          },
+        }),
+        insertMany: async (docs) => {
+          inserted.push(...docs);
+          return { insertedCount: docs.length };
+        },
+      }),
+    };
+
+    const r = await copyCatalogue(db, opts());
+    expect(r.status).toBe(true);
+    expect(r.data.items).toBe(3);
+    expect(inserted).toHaveLength(3);
+  });
+
+  test('it writes in batches, not one insert per row', async () => {
+    const { db, inserted } = mkDb({ items: Array.from({ length: 5 }, () => item()) });
+    const calls = [];
+    const real = db.collection;
+    db.collection = (name) => {
+      const c = real(name);
+      if (name !== 'items') return c;
+      return {
+        ...c,
+        insertMany: async (docs) => {
+          calls.push(docs.length);
+          return c.insertMany(docs);
+        },
+      };
+    };
+    await copyCatalogue(db, opts());
+    expect(inserted.items).toHaveLength(5);
+    expect(calls).toEqual([5]); // one flush, not five inserts
+  });
+
+  test('a partial final batch is still written', async () => {
+    /* The classic off-by-one: everything below BATCH never flushes. */
+    const { db, inserted } = mkDb({ items: [item(), item({ name: 'B' })] });
+    const r = await copyCatalogue(db, opts());
+    expect(r.data.items).toBe(2);
+    expect(inserted.items).toHaveLength(2);
   });
 });
