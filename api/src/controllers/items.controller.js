@@ -7,6 +7,7 @@ const { ERROR_MESSAGES, SUCCESS_MESSAGES } = require('../constants/items.constan
 const sessionFilterUtil = require('../utils/session-filter.util');
 const { toObjectId } = require('../utils/tenant-context');
 const { isKioskConfigured } = require('../utils/kiosk');
+const { parseFilterParam } = require('../utils/mongo-guard');
 const { scanItems } = require('../services/gst-readiness');
 
 class ItemsController extends BaseController {
@@ -127,7 +128,12 @@ class ItemsController extends BaseController {
     return requestContext;
   }
 
+  /* Kept for any caller that still wants the lenient shape, but it goes
+     through the same guard - a helper that parses client filters must not be
+     the one place a code operator can still get through. */
   parseFilters(rawFilters) {
+    const guarded = parseFilterParam(rawFilters);
+    if (guarded.rejected) return {};
     if (!rawFilters) {
       return {};
     }
@@ -221,17 +227,21 @@ class ItemsController extends BaseController {
       const limit = Number.isFinite(limitParam) && limitParam > 0 ? Math.min(limitParam, 100) : 5;
       const page = Number.isFinite(pageParam) && pageParam > 0 ? pageParam : 1;
 
-      // Preserve existing flexible filter parsing semantics
-      let filters = {};
-      if (req.query.filters) {
-        if (typeof req.query.filters === 'string') {
-          const parsedFilters = safeJsonParse(req.query.filters, null);
-          if (parsedFilters && typeof parsedFilters === 'object' && !Array.isArray(parsedFilters)) {
-            filters = parsedFilters;
-          }
-        } else if (typeof req.query.filters === 'object' && !Array.isArray(req.query.filters)) {
-          filters = req.query.filters;
-        }
+      /*
+       * Preserve existing flexible filter parsing semantics, minus the
+       * operators that execute code.
+       *
+       * app.js strips '$' keys from req.query, but this filter arrives as a
+       * JSON STRING - one ordinary-looking value the sanitiser copies across
+       * untouched, then parsed back here with its operators intact and spread
+       * into a live query. See utils/mongo-guard.js for why the line is drawn
+       * at code execution rather than at '$': the real query operators are in
+       * use ($ne keeps KOT out of Sales History, $gte/$lte drive date windows)
+       * and removing those would un-filter lists rather than harden them.
+       */
+      const { filters, rejected } = parseFilterParam(req.query.filters);
+      if (rejected) {
+        return this.sendError(res, `Filter operator "${rejected}" is not allowed`, 400);
       }
 
       const options = { limit, page, sort: { _id: -1 } };
@@ -295,7 +305,12 @@ class ItemsController extends BaseController {
           ? parseInt(notificationRaw, 10)
           : null;
 
-      const filters = this.parseFilters(req.query.filters);
+      /* Same string-shaped filter, same guard - the low-stock list spreads it
+         into a query exactly as the main list does. */
+      const { filters, rejected } = parseFilterParam(req.query.filters);
+      if (rejected) {
+        return this.sendError(res, `Filter operator "${rejected}" is not allowed`, 400);
+      }
 
       const branchId = this.model?.branchId || null;
       const licenseId = this.model?.licenseId || null;
