@@ -96,10 +96,38 @@ PosnicPro.listFilter = {
     /* How many filters a person would say are on. The search FIELD and Exact
        are modifiers of the search, not filters in their own right - counting
        them would show "3 active" for one typed word. */
+    /*
+     * The search term that is actually IN FORCE, which is not the same as the
+     * text in the box.
+     *
+     * A term below MIN_SEARCH is deliberately never sent - one character
+     * matches nearly every row, which is the most expensive query anyone can
+     * run for the least useful answer. But the character is still in the input,
+     * and state.search follows the input so the box renders what was typed.
+     *
+     * Without this split the two drift apart in both directions: the Filter
+     * button counts a filter that was never applied, and any OTHER trigger -
+     * picking a status chip, changing the date - reloads with that one
+     * character attached, applying the search the debounce had just refused to
+     * run. Both were live until this was added.
+     */
+    _applied: function (st) {
+        var t = String((st && st.search) || '').trim();
+        if (!t) return '';
+        /* EXACT bypasses the minimum. The minimum exists because a one-letter
+           FRAGMENT scans nearly every row; an anchored exact match is served by
+           the index whatever its length. Picking a name from the suggestion
+           list sets exact, so choosing a customer called "K" still filters -
+           without this, a deliberate pick would silently do nothing. */
+        if (st.exact) return t;
+        var min = PosnicPro.listFilter.MIN_SEARCH || 2;
+        return t.length >= min ? t : '';
+    },
+
     activeCount: function (key) {
         var st = PosnicPro.listFilter.state(key);
         var n = 0;
-        if (st.search) n++;
+        if (PosnicPro.listFilter._applied(st)) n++;
         if (st.preset && st.preset !== 'all') n++;
         (st.extra ? Object.keys(st.extra) : []).forEach(function (k) {
             if (st.extra[k] !== '' && st.extra[k] != null) n++;
@@ -113,8 +141,9 @@ PosnicPro.listFilter = {
     params: function (key) {
         var st = PosnicPro.listFilter.state(key);
         var out = {};
-        if (st.search) {
-            out.search = st.search;
+        var term = PosnicPro.listFilter._applied(st);
+        if (term) {
+            out.search = term;
             if (st.field && st.field !== 'all') out.field = st.field;
             if (st.exact) out.exact = 'true';
         }
