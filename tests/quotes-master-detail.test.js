@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('fs');
 const path = require('path');
-const { blockAt, cssReader } = require('./helpers/source-lookup');
+const { blockAt, cssReader, stripComments } = require('./helpers/source-lookup');
 
 /*
  * The quotes master-detail: one surface, and only the document changes.
@@ -960,4 +960,77 @@ test('a recent row only shows fields the writer actually stores', () => {
   const entities = blockAt(listFilterSrc, 'LF.ENTITIES = {');
   assert.ok(!/i\.sku/.test(entities), 'recent items have no sku - that note is always blank');
   assert.match(entities, /note: i\.price/, 'price is what a recent item actually carries');
+});
+
+/*
+ * The status chips are a filter, so the bar has to know about them.
+ *
+ * They sit outside the panel and used to be a variable of their own. That gave
+ * a Filter button reading "0 filters" while the list was filtered to Accepted -
+ * exactly the forgotten filter the count exists to catch - and a Clear that
+ * emptied the panel while the chip kept filtering.
+ */
+test('a status chip counts as a filter', () => {
+  const setExtra = blockAt(listFilterSrc, 'LF.setExtra = function (key, name, value) {');
+  assert.match(setExtra, /m\.state\.extra\[name\] = value/, 'the value must land in the counted state');
+  assert.match(setExtra, /delete m\.state\.extra\[name\]/, 'clearing a chip must remove it, not store ""');
+  assert.match(setExtra, /LF\._changed\(key\)/, 'the button must repaint and the list reload');
+  assert.match(setExtra, /if \(!m\) return false/, 'the bar mounts lazily - setting before that must not throw');
+
+  /* The iteration itself, not just a mention of st.extra: replacing the source
+     list with [] leaves `st.extra[k]` in the loop body, so a looser assertion
+     passes over a count that has stopped counting. */
+  const count = blockAt(listFilterSrc, 'activeCount: function (key) {');
+  assert.match(
+    count,
+    /\(st\.extra \? Object\.keys\(st\.extra\) : \[\]\)\.forEach/,
+    'extras must be iterated or the chip is invisible to the button',
+  );
+});
+
+test('quotes stops carrying status itself', () => {
+  const load = blockAt(quotesNamespace, 'load: function (keepPage) {');
+  assert.ok(
+    !/params\.status = PosnicPro\.quotes\._status/.test(load),
+    'two sources for one filter - Clear would empty the bar and leave the list filtered',
+  );
+  assert.match(load, /PosnicPro\.listFilter\.params\('quotes'\)/, 'the bar must be the only source');
+});
+
+test('the chips paint from the bar, not from the click', () => {
+  /* Painting on click means Clear leaves a lit chip over an unfiltered list. */
+  const handler = salesSource.slice(salesSource.indexOf("$(document).on('click', '.quotes-chip'"));
+  const body = handler.slice(0, handler.indexOf('});') + 3);
+  assert.match(body, /setExtra\('quotes', 'status'/, 'the chip must go through the bar');
+  assert.ok(!/addClass\('btn-primary-rgba'\)/.test(body), 'the handler must not paint directly');
+  assert.match(salesSource, /_paintChips = function \(status\)/, 'there must be one painter');
+
+  const mount = salesSource.slice(salesSource.indexOf('PosnicPro.quotes.mountFilters = function'));
+  assert.match(
+    mount.slice(0, mount.indexOf('};')),
+    /_paintChips\(\(state\.extra && state\.extra\.status\) \|\| ''\)/,
+    'onChange must repaint the chips from the bar state',
+  );
+});
+
+test('"no results" no longer reads a control that was deleted', () => {
+  /* #quotes_search stopped existing when the shared bar took over. Reading it
+     returned '' forever, so anyone whose SEARCH found nothing was told they had
+     never written a quote. */
+  /* stripComments: the comment above the fix NAMES the removed control, which
+     is the point of the comment - the assertion is about code. */
+  const render = stripComments(blockAt(quotesNamespace, 'renderList: function () {'));
+  assert.ok(!/#quotes_search/.test(render), 'it still reads the removed input');
+  assert.match(
+    render,
+    /PosnicPro\.listFilter\.activeCount\('quotes'\) > 0/,
+    'whether a filter is on is a question only the bar can answer now',
+  );
+});
+
+test('no handler is left bound to the removed search input', () => {
+  assert.ok(
+    !/on\('input', '#quotes_search'/.test(salesSource),
+    'a handler bound to an element that no longer exists never fires and reads as working code',
+  );
 });
