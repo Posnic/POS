@@ -161,6 +161,7 @@ the free edition worse. This is written down in [GOVERNANCE.md](GOVERNANCE.md).
 | [Privacy](PRIVACY.md) | What the app collects, and what it does not |
 | [Security](SECURITY.md) | What Posnic protects, what it cannot, and reporting a vulnerability |
 | [Third-party notices](THIRD-PARTY-NOTICES.md) | Separately licensed software included in release packages |
+| [CodeMeta](codemeta.json) | Machine-readable product, publisher, source, licence and platform identity |
 | [Code of conduct](CODE_OF_CONDUCT.md) | How we treat each other |
 
 ## Contributing

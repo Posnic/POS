@@ -1,0 +1,68 @@
+{
+  "@context": "https://w3id.org/codemeta/3.0",
+  "@type": "SoftwareSourceCode",
+  "@id": "https://github.com/Posnic/POS",
+  "name": "Posnic POS",
+  "alternateName": "Posnic Point of Sale",
+  "description": "Free, offline-first point-of-sale software for retail shops and restaurants. Posnic's own source is AGPL-3.0-only; release packages contain separately licensed components, including MongoDB Community Server under SSPL-1.0.",
+  "applicationCategory": "BusinessApplication",
+  "applicationSubCategory": "Point of sale software",
+  "author": {
+    "@type": "Organization",
+    "name": "Posnic Innovations Private Limited",
+    "url": "https://posnic.com/about"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Posnic Innovations Private Limited",
+    "url": "https://posnic.com/about"
+  },
+  "maintainer": {
+    "@type": "Person",
+    "name": "Sridhar Bala",
+    "url": "https://github.com/sridharkalaibala"
+  },
+  "codeRepository": "https://github.com/Posnic/POS",
+  "issueTracker": "https://github.com/Posnic/POS/issues",
+  "continuousIntegration": "https://github.com/Posnic/POS/actions",
+  "developmentStatus": "active",
+  "license": "https://spdx.org/licenses/AGPL-3.0-only.html",
+  "isAccessibleForFree": true,
+  "programmingLanguage": [
+    "JavaScript",
+    "HTML",
+    "CSS"
+  ],
+  "runtimePlatform": [
+    "Electron",
+    "Node.js",
+    "MongoDB"
+  ],
+  "operatingSystem": [
+    "Windows",
+    "macOS",
+    "Linux"
+  ],
+  "keywords": [
+    "POS",
+    "point of sale",
+    "point of sale software",
+    "offline-first",
+    "open source",
+    "retail",
+    "restaurant",
+    "inventory management",
+    "billing software"
+  ],
+  "url": "https://posnic.com/",
+  "downloadUrl": "https://github.com/Posnic/POS/releases/latest",
+  "softwareHelp": "https://github.com/Posnic/POS/blob/main/docs/USER_GUIDE.md",
+  "citation": "https://github.com/Posnic/POS/blob/main/CITATION.cff",
+  "relatedLink": [
+    "https://posnic.com/posnic-facts",
+    "https://posnic.com/trust",
+    "https://github.com/Posnic/POS/blob/main/PRIVACY.md",
+    "https://github.com/Posnic/POS/blob/main/GOVERNANCE.md",
+    "https://github.com/Posnic/POS/blob/main/THIRD-PARTY-NOTICES.md"
+  ]
+}
