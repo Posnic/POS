@@ -8326,20 +8326,39 @@ PosnicPro.quotes = {
            The count always shows; the arrows appear when there is somewhere
            to go. Sitting in the rail's footer it also says which slice of the
            list you are looking at. */
-        var pages = (meta && meta.pages) || 1;
+        /* The pager says only what was actually measured.
+           A text search skips the count on purpose - running an unanchored
+           regex across every row twice per keystroke is the thing that makes a
+           list feel slow - so on that path there is no total and no page
+           count, and inventing one would be a pager that lies. What it shows
+           instead is the range on screen and a Next that works, because
+           "is there more" is the only question a total was answering. */
         var cur = (meta && meta.page) || 1;
-        var total = (meta && meta.total) || rows.length;
+        var lim = (meta && meta.limit) || rows.length || 1;
+        var total = meta && typeof meta.total === 'number' ? meta.total : null;
+        var pages = meta && meta.pages ? meta.pages : null;
+        var hasMore = meta ? !!meta.hasMore : false;
+
         var arrow = function (to, label, off) {
             return '<button type="button" class="btn btn-sm btn-secondary-rgba q-pg-btn"' + (off ? ' disabled' : '')
                 + ' onclick="PosnicPro.quotes._page = ' + to + '; PosnicPro.quotes.load(true);">' + label + '</button>';
         };
+
+        var label;
+        if (total !== null) {
+            label = total + (total === 1 ? ' quote' : ' quotes');
+            if (pages > 1) { label = 'Page ' + cur + ' of ' + pages + ' · ' + label; }
+        } else {
+            var first = (cur - 1) * lim + 1;
+            var last = (cur - 1) * lim + rows.length;
+            label = rows.length ? 'Showing ' + first + '–' + last : 'No matches';
+        }
+
+        var showArrows = (pages && pages > 1) || cur > 1 || hasMore;
         html += '<div class="q-pager">'
-            + (pages > 1 ? arrow(cur - 1, '&laquo;', cur <= 1) : '')
-            + '<span class="q-pg-count">'
-            + (pages > 1 ? 'Page ' + cur + ' of ' + pages + ' &middot; ' : '')
-            + total + (total === 1 ? ' quote' : ' quotes')
-            + '</span>'
-            + (pages > 1 ? arrow(cur + 1, '&raquo;', cur >= pages) : '')
+            + (showArrows ? arrow(cur - 1, '&laquo;', cur <= 1) : '')
+            + '<span class="q-pg-count">' + label + '</span>'
+            + (showArrows ? arrow(cur + 1, '&raquo;', !hasMore) : '')
             + '</div>';
         $('#quotes_list_rows').html(html);
         // a re-render (search, filter, page) must not lose which quote is open

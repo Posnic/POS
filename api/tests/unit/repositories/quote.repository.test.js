@@ -353,12 +353,23 @@ describe('QuoteRepository', () => {
     const r = await repo.listQuotes({ page: 3, limit: 20 }, ctx);
     expect(calls.skip).toBe(40);
     expect(calls.limit).toBe(20);
-    // the pager needs the count of ALL matches, not of this page's rows
-    expect(r.meta).toEqual({ total: 137, page: 3, limit: 20, pages: 7 });
+    // the pager needs the count of ALL matches, not of this page's rows.
+    // hasMore rides along so the client never has to derive it.
+    expect(r.meta).toEqual({
+      total: 137,
+      page: 3,
+      limit: 20,
+      pages: 7,
+      hasMore: true,
+    });
   });
 
-  test('the count is taken over the same filter the rows are read with', async () => {
-    await repo.listQuotes({ search: 'acme', status: 'open' }, ctx);
+  test('when a count IS taken, it uses the same filter the rows are read with', async () => {
+    /* No search term here on purpose: a text search deliberately skips the
+       count (see the paging-cost tests). What this pins is that whenever a
+       count does run, it measures exactly what the page shows - a count over
+       a looser filter is a pager that lies. */
+    await repo.listQuotes({ status: 'open', from: '2026-08-01' }, ctx);
     expect(mockCollection.countDocuments).toHaveBeenCalledWith(
       mockCollection.find.mock.calls[0][0]
     );
@@ -457,6 +468,73 @@ describe('QuoteRepository', () => {
       expect(filter.customer_name).toBeInstanceOf(RegExp);
       expect(filter.created_date.$gte).toBeInstanceOf(Date);
       expect(filter.branch_id).toBeDefined();
+    });
+  });
+
+  /*
+   * Paging cost: the exact total is only paid for when it is cheap.
+   *
+   * countDocuments runs the filter a SECOND time. Branch, status and a date
+   * range are served by the list index, so counting them is a seek. An
+   * unanchored regex cannot use any index, so counting a text search runs that
+   * regex over every candidate row - twice per request, on every keystroke.
+   *
+   * So a text search asks for limit + 1 instead: if the extra row comes back
+   * there is a next page. One query instead of two, and it answers the only
+   * question anyone actually has.
+   */
+  describe('QuoteRepository — paging cost', () => {
+    const rowsOf = (n) => Array.from({ length: n }, (_, i) => ({ _id: 'q' + i }));
+
+    test('no search: the total is counted and page numbers are real', async () => {
+      mockCollection.countDocuments.mockResolvedValue(57);
+      mockCollection.find.mockReturnValue(mkFindChain(rowsOf(20)));
+      const r = await repo.listQuotes({ limit: 20, page: 1 }, ctx);
+
+      expect(mockCollection.countDocuments).toHaveBeenCalled();
+      expect(r.meta.total).toBe(57);
+      expect(r.meta.pages).toBe(3);
+      expect(r.meta.hasMore).toBe(true);
+    });
+
+    test('text search: no count is run at all', async () => {
+      mockCollection.find.mockReturnValue(mkFindChain(rowsOf(20)));
+      await repo.listQuotes({ search: 'acme', limit: 20 }, ctx);
+      expect(mockCollection.countDocuments).not.toHaveBeenCalled();
+    });
+
+    test('text search reports hasMore from the probe row, not a total', async () => {
+      // 21 rows come back for a page of 20 - the 21st is proof, not data
+      mockCollection.find.mockReturnValue(mkFindChain(rowsOf(21)));
+      const r = await repo.listQuotes({ search: 'acme', limit: 20 }, ctx);
+
+      expect(r.data).toHaveLength(20);
+      expect(r.meta.hasMore).toBe(true);
+      expect(r.meta.total).toBeNull();
+      expect(r.meta.pages).toBeNull();
+    });
+
+    test('a short last page reports no more', async () => {
+      mockCollection.find.mockReturnValue(mkFindChain(rowsOf(7)));
+      const r = await repo.listQuotes({ search: 'acme', limit: 20 }, ctx);
+      expect(r.data).toHaveLength(7);
+      expect(r.meta.hasMore).toBe(false);
+    });
+
+    test('an exactly-full page with nothing after it is not a next page', async () => {
+      /* 20 rows for a page of 20 means the probe did NOT come back - the
+         boundary that an off-by-one would get wrong, showing an empty page. */
+      mockCollection.find.mockReturnValue(mkFindChain(rowsOf(20)));
+      const r = await repo.listQuotes({ search: 'acme', limit: 20 }, ctx);
+      expect(r.meta.hasMore).toBe(false);
+    });
+
+    test('a date range is still counted - the index serves it', async () => {
+      mockCollection.countDocuments.mockResolvedValue(9);
+      mockCollection.find.mockReturnValue(mkFindChain(rowsOf(9)));
+      const r = await repo.listQuotes({ from: '2026-08-01', limit: 20 }, ctx);
+      expect(mockCollection.countDocuments).toHaveBeenCalled();
+      expect(r.meta.total).toBe(9);
     });
   });
 

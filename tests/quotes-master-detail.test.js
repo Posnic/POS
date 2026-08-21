@@ -104,18 +104,53 @@ test('the editor leaves the joined surface', () => {
   );
 });
 
-test('the pager states the count even on a single page', () => {
+test('the pager always says something, even on a single page', () => {
   const render = blockAt(quotesNamespace, 'renderList: function () {');
-  const pager = render.slice(render.indexOf('q-pager'));
+  const pager = render.slice(render.indexOf('var label;'));
   assert.ok(pager, 'no pager is rendered at all');
-  // the count is unconditional; only the arrows are gated on pages > 1
   assert.ok(
     /total \+ \(total === 1 \? ' quote' : ' quotes'\)/.test(pager),
-    'the quote count must render regardless of page count',
+    'a measured total must be shown as a count',
   );
+  /* The property is "it always renders something", not "no if statement
+     appears nearby". The previous version matched any `if (pages > 1)`
+     anywhere before the markup, so decorating the LABEL with a page number
+     tripped it - a test failing on correct code, which is how tests get
+     deleted rather than fixed. */
+  assert.match(render, /html \+= '<div class="q-pager">'/, 'the pager must always be emitted');
+  assert.match(render, /label = /, 'and it must always have something to say');
   assert.ok(
-    !/if \(pages > 1\) \{[\s\S]*q-pager/.test(render),
-    'the whole pager is still gated behind pages > 1',
+    render.includes('} else {'),
+    'both the measured and unmeasured paths must set a label',
+  );
+});
+
+/*
+ * The pager may only state what was measured.
+ *
+ * A text search deliberately skips countDocuments - running an unanchored
+ * regex across every row twice per keystroke is what makes a list feel slow.
+ * So on that path there is no total and no page count, and inventing one would
+ * be a pager that lies. It shows the range on screen and a working Next
+ * instead, because "is there more" is the only question the total answered.
+ */
+test('with no measured total the pager shows a range, not a made-up count', () => {
+  const render = blockAt(quotesNamespace, 'renderList: function () {');
+  assert.match(render, /typeof meta\.total === 'number'/, 'a missing total must be detected');
+  assert.match(render, /'Showing '/, 'it should fall back to the range on screen');
+  assert.ok(
+    !/total \|\| rows\.length/.test(render),
+    'defaulting the total to the page size invents a number that is simply wrong',
+  );
+});
+
+test('Next is driven by hasMore, so it works without a page count', () => {
+  const render = blockAt(quotesNamespace, 'renderList: function () {');
+  assert.match(render, /meta\.hasMore/, 'the server says whether another page exists');
+  assert.match(
+    render,
+    /arrow\(cur \+ 1, '&raquo;', !hasMore\)/,
+    'Next must be enabled by hasMore rather than by comparing against pages',
   );
 });
 

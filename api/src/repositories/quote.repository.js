@@ -467,17 +467,58 @@ class QuoteRepository extends BaseModel {
       const page = Math.max(Number(params.page) || 1, 1);
       const collection = await this.getCollection(this.collectionName);
       await this._ensureListIndex(collection);
-      const total = await collection.countDocuments(filter);
-      const rows = await collection
-        .find(filter)
-        .sort({ created_date: -1 })
-        .skip((page - 1) * limit)
-        .limit(limit)
-        .toArray();
+
+      /*
+       * The exact total is the most expensive thing on this screen and the
+       * least useful, so it is only paid for when it is cheap.
+       *
+       * countDocuments runs the whole filter a SECOND time. Branch, status and
+       * a date range are all served by the list index, so counting them is a
+       * seek and worth having - real totals, real page numbers. An unanchored
+       * regex cannot use any index, so counting a text search means running
+       * that regex across every candidate row, twice per request.
+       *
+       * Nobody acts on "1,247 quotes". They act on "is mine here" and "is
+       * there more". The second needs ONE extra row, not a count: ask for
+       * limit + 1, and if it comes back there is a next page. One query
+       * instead of two, on exactly the case that would hurt.
+       */
+      const countable = !term;
+      let total = null;
+      let rows;
+
+      if (countable) {
+        total = await collection.countDocuments(filter);
+        rows = await collection
+          .find(filter)
+          .sort({ created_date: -1 })
+          .skip((page - 1) * limit)
+          .limit(limit)
+          .toArray();
+      } else {
+        rows = await collection
+          .find(filter)
+          .sort({ created_date: -1 })
+          .skip((page - 1) * limit)
+          .limit(limit + 1)
+          .toArray();
+      }
+
+      // the probe row is proof of a next page, never something to display
+      const hasMore = countable ? page * limit < total : rows.length > limit;
+      if (!countable && rows.length > limit) rows = rows.slice(0, limit);
+
       return {
         status: true,
         data: rows,
-        meta: { total, page, limit, pages: Math.max(1, Math.ceil(total / limit)) },
+        meta: {
+          total,
+          page,
+          limit,
+          hasMore,
+          // pages is only honest when a total was actually measured
+          pages: total === null ? null : Math.max(1, Math.ceil(total / limit)),
+        },
         message: 'success',
       };
     } catch (error) {
