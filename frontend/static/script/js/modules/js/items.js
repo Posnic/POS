@@ -380,19 +380,21 @@ PosnicPro.items = {
             tax_name = '';
             tax_method = 'hsn';
         } else {
-            var taxDetail = $("#items_tax").select2("data");
-            tax_value = taxDetail[0].element.attributes['data-tax-value'].value;
-            tax_id = taxDetail[0].element.attributes['data-tax-id'].value;
-            tax_name = taxDetail[0].element.attributes['data-tax-name'].value;
+            /* No selection is the normal state when the tax module is off. */
+            tax_value = PosnicPro.items.selectAttr('#items_tax', 'data-tax-value', 0);
+            tax_id = PosnicPro.items.selectAttr('#items_tax', 'data-tax-id');
+            tax_name = PosnicPro.items.selectAttr('#items_tax', 'data-tax-name');
             hsn_code = 0;
             tax_method = 'default';
         }
-        var categoryDetail = $("#items_category").select2("data");
         return {
             supplier_id: $('#items_supplier_id').val(),
             supplier_name: $('#items_supplier').val(),
-            category_id: (categoryDetail.length && categoryDetail[0].element.attributes['data-category-id']) ? categoryDetail[0].element.attributes['data-category-id'].value : '',
-            category_name: categoryDetail[0].element.attributes['data-category-name'].value,
+            category_id: PosnicPro.items.selectAttr('#items_category', 'data-category-id'),
+            /* category_name was the one unguarded read left on this line - the id
+               beside it already had a length check. Category is optional, so an
+               item saved without one threw here. */
+            category_name: PosnicPro.items.selectAttr('#items_category', 'data-category-name'),
             cover_image: $('#item_logo').val(),
             inventory: $('#item_track_inventory').is(':checked'),
             sales_channel: $('#item_sales_channel').is(':checked'),
@@ -569,21 +571,19 @@ PosnicPro.items = {
                     var tax_name = '';
                     var tax_method = 'hsn';
                 } else {
-                    var taxDetail = $("#items_tax").select2("data");
-                    var tax_value = taxDetail[0].element.attributes['data-tax-value'].value;
-                    var tax_id = taxDetail[0].element.attributes['data-tax-id'].value;
-                    var tax_name = taxDetail[0].element.attributes['data-tax-name'].value;
+                    var tax_value = PosnicPro.items.selectAttr('#items_tax', 'data-tax-value', 0);
+                    var tax_id = PosnicPro.items.selectAttr('#items_tax', 'data-tax-id');
+                    var tax_name = PosnicPro.items.selectAttr('#items_tax', 'data-tax-name');
                     var hsn_code = 0;
                     var tax_method = 'default';
                 }
-                var categoryDetail = $("#items_category").select2("data");
                 var formData = {
                     id: $('#itemid').val(),
                     name: name,
                     supplier_id: $('#items_supplier_id').val(),
                     supplier_name: $('#items_supplier').val(),
-                    category_id: (categoryDetail.length && categoryDetail[0].element.attributes['data-category-id']) ? categoryDetail[0].element.attributes['data-category-id'].value : '',
-                    category_name: categoryDetail[0].element.attributes['data-category-name'].value,
+                    category_id: PosnicPro.items.selectAttr('#items_category', 'data-category-id'),
+                    category_name: PosnicPro.items.selectAttr('#items_category', 'data-category-name'),
                     cover_image: $('#item_logo').val(),
                     inventory: $('#item_track_inventory').is(':checked'),
                     sales_channel: $('#item_sales_channel').is(':checked'),
@@ -1074,6 +1074,10 @@ PosnicPro.items = {
                 $('#items_hsndescription').val(data.hsndescription);
                 $('#items_supplier').val(data.supplier_name);
                 $('#items_supplier_id').val(data.supplier_id);
+                /* Re-load with the item's own supplier selected. The list may not
+                   carry an inactive or deleted one, and loadSelectSupplier adds it
+                   back rather than letting an edit silently clear the field. */
+                PosnicPro.items.loadSelectSupplier(data.supplier_id, data.supplier_name);
                 $("#items_category").val(data.category_id).trigger("change");
                 $('#items_discount_amount').val(data.discount_amount);
                 $('#items_discount_percentage').val(data.discount_percentage);
@@ -1698,6 +1702,10 @@ PosnicPro.items = {
                 $('#items_barcodeid').val(data.barcode_id);
                 $('#items_supplier').val(data.supplier_name);
                 $('#items_supplier_id').val(data.supplier_id);
+                /* Re-load with the item's own supplier selected. The list may not
+                   carry an inactive or deleted one, and loadSelectSupplier adds it
+                   back rather than letting an edit silently clear the field. */
+                PosnicPro.items.loadSelectSupplier(data.supplier_id, data.supplier_name);
                 $("#items_category").val(data.category_id).trigger("change");
                 $('#items_discount_amount').val(data.discount_amount);
                 $('#items_discount_percentage').val(data.discount_percentage);
@@ -2345,6 +2353,97 @@ PosnicPro.items = {
             $('#items_discount_percentage').val(discountPercentage);
         }
     },
+    /*
+     * Supplier picker, the same shape as Category (owner ask).
+     *
+     * It was a bare autocomplete: an empty box that showed nothing until you
+     * guessed part of a name, which only helps someone who already knows what
+     * they are looking for. Now the list is fetched when the form opens, so it
+     * opens showing real suppliers and typing filters what is already there.
+     *
+     * NEVER AN EMPTY LIST (owner: "if there is no recent item fire db query get
+     * latest or most used. i dont want empty list. make it very smart app").
+     * An empty query to getSuppliersAjaxList is exactly that DB read - it
+     * returns the branch's suppliers rather than nothing - so the picker is
+     * populated before anyone types. When a shop genuinely has none, the
+     * placeholder says so and points at the link that fixes it, because a
+     * dropdown that opens on nothing with no explanation reads as broken.
+     *
+     * The two hidden fields are kept in step, so every payload builder and
+     * edit-fill in this file keeps reading exactly what it read before.
+     */
+    /*
+     * Read one attribute off a select2's selection, or nothing.
+     *
+     * The save path did this instead:
+     *
+     *     taxDetail[0].element.attributes['data-tax-value'].value
+     *
+     * which throws "Cannot read properties of undefined (reading 'element')"
+     * the moment there IS no selection - and with the tax module turned off
+     * there is none, so saving any item threw before it reached the server.
+     * The same line existed twice, and the category read below it had the same
+     * shape: category_id was guarded, category_name was not, so an item saved
+     * without a category threw as well. Category is optional.
+     *
+     * A feature being off is not an error, and neither is an optional field
+     * being empty. Both mean "no value", which is what this returns.
+     */
+    selectAttr: function (selector, attribute, fallback) {
+        var data;
+        try {
+            data = $(selector).select2('data');
+        } catch (e) {
+            return fallback === undefined ? '' : fallback;
+        }
+        var el = data && data.length ? data[0].element : null;
+        var attr = el && el.attributes ? el.attributes[attribute] : null;
+        if (attr && attr.value !== undefined && attr.value !== null && attr.value !== '') {
+            return attr.value;
+        }
+        return fallback === undefined ? '' : fallback;
+    },
+
+    loadSelectSupplier: function (selectedId, selectedName) {
+        var $pick = $('#items_supplier_pick');
+        if (!$pick.length) { return; }
+        var params = {
+            url: 'suppliers/getSuppliersAjaxList',
+            data: 'query=&branch=' + (PosnicPro.local.get('branch_id_set') || '')
+        };
+        PosnicPro.get(params, function (response) {
+            var rows = (response && response.suggestions) || [];
+            $pick.empty().append('<option value=""></option>');
+            $.each(rows, function (i, row) {
+                $pick.append(
+                    $('<option>').attr('value', row.id).attr('data-supplier-name', row.name).text(row.name)
+                );
+            });
+            /* An id we were given but the list does not carry - an inactive or
+               deleted supplier on an existing item. Keeping it selectable means
+               editing an item does not silently clear its supplier. */
+            if (selectedId && !$pick.find('option[value="' + selectedId + '"]').length) {
+                $pick.append(
+                    $('<option>').attr('value', selectedId)
+                        .attr('data-supplier-name', selectedName || '')
+                        .text(selectedName || selectedId)
+                );
+            }
+            $pick.select2({
+                placeholder: rows.length
+                    ? 'Choose a Supplier (optional)'
+                    : 'No suppliers yet - use + Add Supplier',
+                allowClear: true
+            });
+            $pick.val(selectedId || '').trigger('change.select2');
+        }, function () {
+            /* A failed lookup must not leave a dead control: the item can still
+               be saved without a supplier, which is why the field is optional. */
+            $pick.empty().append('<option value=""></option>')
+                .select2({ placeholder: 'Suppliers could not be loaded', allowClear: true });
+        });
+    },
+
     loadSelectCategory: function () {
         var categorySelect = $('.items_category');
         var params = {
@@ -2489,6 +2588,8 @@ PosnicPro.items = {
             placeholder: "Choose a Category"
         });
         PosnicPro.items.loadSelectCategory();
+    PosnicPro.items.loadSelectSupplier();
+        PosnicPro.items.loadSelectSupplier();
         PosnicPro.items.loadSelectTax();
         PosnicPro.items.loadSelectVariant();
     }
@@ -2782,52 +2883,11 @@ PosnicPro.itemdetails = {
 $(function () {
     $('#items_discount_percentage').attr('disabled', 'disabled').addClass('bg-white').val('0.00').hide();
     // One-time init like the sale search: never rebuild per keystroke.
-    $('#items_supplier').autocomplete({
-        deferRequestBy: 120,
-            lookup: function (query, done) {
-                var branch = PosnicPro.local.get("branch_id_set");
-                var result = {};
-                var suggestions = [];
-                var params = {
-                    url: 'suppliers/getSuppliersAjaxList',
-                    data: 'query=' + query + '&branch=' + branch
-                };
-                PosnicPro.get(params, function (response) {
-                    if (response.suggestions.length > 0) {
-                        suggestions: $.map(response.suggestions, function (dataItem) {
-                            suggestions.push({"value": dataItem.name, "data": dataItem});
-                        });
-                    } else {
-                        suggestions.push({value: $('#items_supplier').val() + ' ', data: -1});
-                    }
-                    result["suggestions"] = suggestions;
-                    done(result);
-                }, function (xhr) {
-                    var response = jQuery.parseJSON(xhr.responseText);
-                    PosnicPro.alert(response.type, response.message);
-                });
-            },
-            onSelect: function (suggestion) {
-                if (suggestion.data !== -1) {
-                    $('#items_supplier_id').val(suggestion.data.id);
-                } else {
-                    hasher.setHash('items/suppliers/new');
-                }
-            },
-            autoSelectFirst: true,
-            triggerSelectOnValidInput: false,
-            formatResult: function (suggestion) {
-                var addnew = '';
-                var phone = suggestion.data.phone;
-                if (suggestion.data === -1 || typeof suggestion.phone === undefined) {
-                    addnew = "( Add new )";
-                    phone = '';
-                }
-                return '<div>' +
-                        $.Autocomplete.formatResult(suggestion) +
-                        '</div><span class="pull-right">' + phone + '</span><span class="pull-right" style="margin-top:-20px;">' + addnew + '</span>';
-            }
-    });
+    /* The supplier autocomplete lived here. It bound to #items_supplier, which
+       is a hidden input now - the picker above replaced it, and an autocomplete
+       on a hidden field can never fire. Removed rather than left: a plugin
+       initialised against something invisible is the kind of code that reads as
+       working for years. See loadSelectSupplier. */
 });
 
 $(function () {
@@ -2952,6 +3012,13 @@ $(function () {
 
     $(document).on('shown.bs.tab', '#item_form_tabs .nav-link', function () {
         PosnicPro.items.refreshTabTicks();
+    });
+
+    /* The picker drives the two hidden fields the rest of this file reads. */
+    $(document).on('change', '#items_supplier_pick', function () {
+        var $opt = $(this).find('option:selected');
+        $('#items_supplier_id').val($(this).val() || '');
+        $('#items_supplier').val($opt.attr('data-supplier-name') || '');
     });
 
     $(document).on('click', '#variant_mode_link', function () {

@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('fs');
 const path = require('path');
-const { cssReader } = require('./helpers/source-lookup');
+const { cssReader, stripComments } = require('./helpers/source-lookup');
 
 /*
  * The Add Item form lines up.
@@ -88,9 +88,13 @@ test('"+ Add Category" and "+ Add Supplier" sit on their label lines', () => {
   /* Under the controls, each link's position depended on the height of the
      thing above it — and a select2 is not the same height as a plain input, so
      two links on one row sat at two different heights. */
-  for (const id of ['items_category', 'items_supplier']) {
+  /* The VISIBLE controls - items_supplier is a hidden field now, behind the
+     picker that replaced the old autocomplete. */
+  for (const id of ['items_category', 'items_supplier_pick']) {
     const at = html.indexOf(`id="${id}"`);
-    const before = html.slice(Math.max(0, at - 1400), at);
+    /* The supplier column grew a long explanatory comment, so the window has
+       to reach past it to the label row above. */
+    const before = html.slice(Math.max(0, at - 2200), at);
     assert.match(
       before,
       /d-flex align-items-baseline justify-content-between/,
@@ -302,5 +306,133 @@ test('variant mode does not demand a price it throws away', () => {
   assert.ok(
     body.indexOf('product_with_variant') < body.indexOf('parseFloat'),
     'the exemption must come before the numeric check, or it never runs',
+  );
+});
+
+/*
+ * Supplier is a picker like Category (owner ask), and never opens empty.
+ */
+test('supplier is a select2, not a bare autocomplete', () => {
+  assert.match(html, /<select id="items_supplier_pick"[^>]*class="select2/, 'the picker is gone');
+  assert.ok(
+    !/<input type="text"[^>]*id="items_supplier"/.test(html),
+    'the old free-text supplier box is back',
+  );
+});
+
+test('the fields every payload builder reads are untouched', () => {
+  /* items.js reads #items_supplier and #items_supplier_id in six places. The
+     picker drives them; it does not replace them. */
+  assert.match(html, /<input type="hidden" id="items_supplier" name="items_supplier">/);
+  assert.match(html, /<input type="hidden" name="items_supplier_id" id="items_supplier_id">/);
+  assert.match(
+    itemsJs,
+    /on\('change', '#items_supplier_pick'[\s\S]{0,300}items_supplier_id'\)\.val/,
+    'nothing keeps the hidden fields in step with the picker',
+  );
+});
+
+test('the picker is loaded from the database, not left empty', () => {
+  /* "If there is no recent item fire db query get latest or most used. i dont
+     want empty list." An empty query IS that read - it returns the branch's
+     suppliers rather than nothing. */
+  const fn = itemsJs.slice(itemsJs.indexOf('loadSelectSupplier: function'));
+  const body = fn.slice(0, fn.indexOf('\n    },'));
+  assert.match(body, /suppliers\/getSuppliersAjaxList/, 'it never asks the server');
+  assert.match(body, /query=&branch=/, 'an empty query is what returns the list');
+  assert.match(body, /No suppliers yet/, 'a genuinely empty shop gets no explanation');
+});
+
+test('editing an item cannot silently clear its supplier', () => {
+  /* An inactive or deleted supplier is not in the list, so selecting by id
+     would fall back to blank and the next save would drop it. */
+  const fn = itemsJs.slice(itemsJs.indexOf('loadSelectSupplier: function'));
+  const body = fn.slice(0, fn.indexOf('\n    },'));
+  assert.match(body, /if \(selectedId && !\$pick\.find\('option\[value="' \+ selectedId/, 'a missing id is not restored');
+  assert.match(itemsJs, /loadSelectSupplier\(data\.supplier_id, data\.supplier_name\)/, 'the edit path does not pass it');
+});
+
+test('the autocomplete bound to the now-hidden input is gone', () => {
+  /* A plugin initialised against an invisible field can never fire, and reads
+     as working code for years. */
+  assert.ok(
+    !/\$\('#items_supplier'\)\.autocomplete\(/.test(itemsJs),
+    'an autocomplete is still bound to the hidden supplier input',
+  );
+});
+
+test('the variant builder uses the column the hidden cards vacate', () => {
+  /* Outside it, the right half of the screen went blank in variant mode and two
+     inputs stretched across the page. The generated variant ROWS stay full
+     width - that is a table and it wants the room. */
+  const rightCol = html.indexOf('class="col-lg-6 d-flex flex-column"', 5000);
+  let depth = 1;
+  let j = html.indexOf('>', rightCol) + 1;
+  while (depth > 0) {
+    const o = html.indexOf('<div', j);
+    const c = html.indexOf('</div>', j);
+    if (o !== -1 && o < c) { depth += 1; j = o + 4; } else { depth -= 1; j = c + 6; }
+  }
+  assert.ok(html.indexOf('id="show_variant_fields"') < j, 'the builder is outside the right column');
+  assert.ok(html.indexOf('id="load_price_fields"') > j, 'the variant rows should stay full width');
+});
+
+test('the Item card is sized to its content', () => {
+  /* flex-grow-1 stretched it to match the taller column, leaving empty white
+     under the category and supplier pickers. */
+  const at = html.indexOf('<h5 class="card-title mb-0"><lang class="lang_item_title">Item</lang>');
+  const card = html.slice(Math.max(0, at - 1200), at);
+  assert.ok(!/card m-b-30 flex-grow-1/.test(card), 'the Item card still stretches to fill');
+});
+
+/*
+ * Saving must not throw when a feature is off or an optional field is empty.
+ *
+ * Reported from the live till with the tax module DISABLED:
+ *   Uncaught TypeError: Cannot read properties of undefined (reading 'element')
+ *       p = f[0].element.attributes["data-tax-value"].value
+ *
+ * The save read the tax select2's selection as data[0].element.attributes[...],
+ * which throws the moment there IS no selection - and with tax off there never
+ * is one. The same line existed at BOTH save sites, and the category read a
+ * line below had the same shape: category_id was guarded, category_name was
+ * not. Category is optional, so saving without one threw as well.
+ */
+test('no save path reads a select2 selection unguarded', () => {
+  const code = stripComments(itemsJs);
+  const bad = [...code.matchAll(/attributes\['data-(tax|category)-[a-z]+'\]/g)];
+  assert.deepStrictEqual(
+    bad.map((m) => m[0]),
+    [],
+    'a direct attribute read is back - it throws whenever there is no selection',
+  );
+  assert.ok(
+    !/select2\("data"\)\[0\]\.element/.test(code),
+    'indexing [0].element assumes a selection that an off feature never makes',
+  );
+});
+
+test('the safe reader returns a value, not an exception', () => {
+  const fn = itemsJs.slice(itemsJs.indexOf('selectAttr: function'));
+  const body = fn.slice(0, fn.indexOf('\n    },'));
+  assert.match(body, /try \{/, 'select2("data") on an uninitialised select throws too');
+  assert.match(body, /data && data\.length \? data\[0\]\.element : null/, 'an empty selection is not handled');
+  assert.match(body, /fallback === undefined \? '' : fallback/, 'callers cannot supply a default');
+});
+
+test('tax falls back to 0, not to empty string', () => {
+  /* tax_value reaches the server as a number. An empty string is not "no tax";
+     it is a value the server has to guess about. */
+  const code = stripComments(itemsJs);
+  const hits = [...code.matchAll(/selectAttr\('#items_tax', 'data-tax-value', 0\)/g)];
+  assert.strictEqual(hits.length, 2, 'both save paths must default tax to 0');
+});
+
+test('both save paths are fixed, not just the one that was reported', () => {
+  const code = stripComments(itemsJs);
+  assert.strictEqual(
+    (code.match(/selectAttr\('#items_category', 'data-category-name'\)/g) || []).length,
+    2,
+    'the second save path still reads category unguarded',
   );
 });

@@ -63,7 +63,12 @@
                     <div class="row">
                     <div class="col-lg-6 d-flex flex-column">
                     <!-- 1 · Item -->
-                    <div class="card m-b-30 flex-grow-1">
+                    <!-- Sized to its content. flex-grow-1 stretched this card to match the
+                         taller column beside it, which left a block of empty white
+                         under the category and supplier pickers (owner ask). Two cards
+                         of honest height read better than two of equal height with one
+                         of them padded. -->
+                    <div class="card m-b-30">
                         <!-- WHAT KIND OF ITEM is decided here, above the fields it
                              governs. Service and variants both hide parts of the form
                              below; asking them from INSIDE that form meant the control
@@ -193,9 +198,21 @@
                                         </a>
                                     </div>
                                     <!-- Optional (IC1): items routinely arrive without a known
-                                         supplier; receiving is the supplier system of record. -->
-                                    <input type="text" class="form-control" id="items_supplier" name="items_supplier"
-                                        maxlength="50" placeholder="Choose a Supplier (optional)" autocomplete="off">
+                                         supplier; receiving is the supplier system of record.
+
+                                         A select2 like Category (owner ask), not a bare
+                                         autocomplete: the list is loaded up front so it opens
+                                         showing real suppliers, and typing filters what is
+                                         already there. An autocomplete that shows nothing until
+                                         you guess a name is only useful to someone who already
+                                         knows what they are looking for.
+
+                                         The two hidden fields stay exactly as they were, so
+                                         every payload builder and edit-fill in items.js keeps
+                                         reading the same ids. -->
+                                    <select id="items_supplier_pick" class="select2 items_supplier_pick"
+                                        style="width:100%;"></select>
+                                    <input type="hidden" id="items_supplier" name="items_supplier">
                                     <input type="hidden" name="items_supplier_id" id="items_supplier_id">
                                 </div>
                             </div>
@@ -323,10 +340,14 @@
                             </div>
                         </div>
                         </div>
-                    </div>
-                    </div>
-
-                    <div class="card m-b-30" id="show_variant_fields" style="display:none;">
+                        <!-- Variant mode empties this column - Price & Stock and SKU
+                             both hide, because each variant row carries its own. The
+                             builder belongs HERE, in the space they vacate, rather than
+                             full width below: outside the column it left the right half
+                             of the screen blank and stretched two inputs across the page
+                             (owner ask). The generated variant ROWS stay full width
+                             below - that is a table, and it wants the room. -->
+                        <div class="card m-b-30" id="show_variant_fields" style="display:none;">
                         <div class="card-body">
                             <div class="form-row">
                                 <div class="form-group col-md-12">
@@ -356,6 +377,10 @@
                                  rows render the moment the values are chosen. -->
                         </div>
                     </div>
+
+                    </div>
+                    </div>
+
 
 
                     <!-- 4 · Generated per-variant price rows -->
