@@ -4,7 +4,7 @@ const { BrowserWindow, app } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
-const { print: printPdf } = require('pdf-to-printer');
+const { printPdfFile } = require('./print-pdf');
 const { hardenPrintWindow } = require('./print-window-guard');
 
 class HardwareManager {
@@ -931,31 +931,13 @@ try {
   /*
    * Send a PDF to a printer, whatever the machine is.
    *
-   * pdf-to-printer bundles SumatraPDF-3.4.6-32.exe and has no platform branch
-   * of its own - it is a Windows library. Calling it on macOS or Linux was the
-   * second way printing failed there, after the raw path above.
+   * The platform branch moved into print-pdf.js when kot-manager turned out to
+   * need the same thing and had been calling the Windows-only library directly.
+   * Kept as a method so every caller here reads the same, and so this stays the
+   * one place printing behaviour is described for receipts.
    */
-  async _printPdfFile(file, { printer, copies = 1 } = {}) {
-    if (process.platform === 'win32') {
-      const opts = { silent: true, copies: Math.max(1, copies), scale: 'fit' };
-      if (printer) opts.printer = printer;
-      await printPdf(file, opts);
-      return;
-    }
-
-    const { execFile } = require('child_process');
-    const args = [];
-    if (printer) args.push('-d', String(printer));
-    args.push('-n', String(Math.max(1, copies)), file);
-
-    await new Promise((resolve, reject) => {
-      execFile('lp', args, { timeout: 30000 }, (err) => {
-        if (!err) return resolve();
-        reject(err.code === 'ENOENT'
-          ? new Error('CUPS printing is not available on this computer (the "lp" command is missing)')
-          : err);
-      });
-    });
+  async _printPdfFile(file, opts = {}) {
+    return printPdfFile(file, opts);
   }
 
   async openCashDrawerViaPrinter(printerName, pin = 0) {

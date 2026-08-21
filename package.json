@@ -106,6 +106,7 @@
       "hardware-ipc.js",
       "kot-manager.js",
       "print-window-guard.js",
+      "print-pdf.js",
       "escpos-receipt.js",
       "escpos-report.js",
       "preload.js",

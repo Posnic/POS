@@ -3,7 +3,11 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const os = require('os');
-const { print: printPdf } = require('pdf-to-printer');
+/* Windows uses SumatraPDF via pdf-to-printer; everything else uses CUPS.
+   This used to call pdf-to-printer directly, which is Windows-only, so a
+   kitchen ticket falling back to PDF printing on a Mac or Linux till failed
+   silently - caught, reported, and nothing printed. */
+const { printPdfFile } = require('./print-pdf');
 const { hardenPrintWindow } = require('./print-window-guard');
 
 /*
@@ -141,13 +145,10 @@ class KOTManager {
       });
       fs.writeFileSync(tmpPdf, pdfBuffer);
 
-      const pdfOptions = {
-        silent: true,
-        scale: 'fit'
-      };
+      const pdfOptions = {};
       if (deviceName) pdfOptions.printer = deviceName;
 
-      await printPdf(tmpPdf, pdfOptions);
+      await printPdfFile(tmpPdf, pdfOptions);
       console.log(`[KOT] Printed via PDF fallback -> ${deviceName || 'default printer'}`);
       return { success: true, reason: '' };
     } catch (error) {
