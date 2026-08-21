@@ -525,4 +525,27 @@ PosnicPro.listFilter = {
             $('.lf-typeahead').hide().empty();
         }
     });
+
+    /*
+     * Escape closes the picker, and only the picker.
+     *
+     * Every other overlay in this app closes on Escape - the modals carry a
+     * close_on_esc class for exactly that - so a popover that ignores it is the
+     * odd one out, and the reflex is to press Escape before reaching for a
+     * mouse. stopPropagation matters: without it the same keypress carries on
+     * to whatever is behind, and dismissing a suggestion list would also close
+     * the panel or the modal around it. The guard is "is one actually open", so
+     * Escape behaves normally everywhere else.
+     */
+    $(document).on('keydown', function (e) {
+        if (e.key !== 'Escape' && e.keyCode !== 27) return;
+        var $open = $('.lf-typeahead:visible');
+        if (!$open.length) return;
+        e.stopPropagation();
+        /* No re-focus. The input still HAS focus - that is how Escape got
+           pressed - and .trigger('focus') would fire the delegated focus
+           handler above, which opens the picker. Escape would reopen the thing
+           it just closed. */
+        $open.hide().empty();
+    });
 })();
