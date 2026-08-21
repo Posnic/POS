@@ -421,14 +421,48 @@ class QuoteRepository extends BaseModel {
       if (params.status && STATUSES.includes(String(params.status))) {
         filter.status = String(params.status);
       }
+      /*
+       * Free text, plus the two filters that actually get used on a long
+       * list: WHICH field, and WHEN.
+       *
+       * `field` narrows the search to one column instead of both. `exact`
+       * anchors it, and anchoring is not cosmetic: /^QUO-000012$/ can be
+       * served by an index where /QUO/ cannot. A shop that searches by quote
+       * number gets a seek instead of a scan of its whole history, which is
+       * the difference that matters once the list is long.
+       */
       const term = String(params.search || '')
         .trim()
         .slice(0, 80);
       if (term) {
         // user text becomes a regex: escape it, or a stray '(' is a 500
-        const rx = new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
-        filter.$or = [{ customer_name: rx }, { quote_id: rx }];
+        const safe = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const rx =
+          String(params.exact) === 'true' ? new RegExp(`^${safe}$`, 'i') : new RegExp(safe, 'i');
+        const field = String(params.field || 'all');
+        if (field === 'quote_id') filter.quote_id = rx;
+        else if (field === 'customer_name') filter.customer_name = rx;
+        else filter.$or = [{ customer_name: rx }, { quote_id: rx }];
       }
+
+      /*
+       * Date range on created_date. The list index is
+       * { branch_id, license, created_date }, so a range is a seek down that
+       * index and the sort it already needs comes free from the same walk.
+       *
+       * `to` is pushed to the END of its day. Picking 21 Aug means "including
+       * the 21st"; comparing against midnight would silently drop a day of
+       * quotes and read as data loss.
+       */
+      const range = {};
+      const from = params.from ? new Date(String(params.from)) : null;
+      const to = params.to ? new Date(String(params.to)) : null;
+      if (from && !Number.isNaN(from.getTime())) range.$gte = from;
+      if (to && !Number.isNaN(to.getTime())) {
+        to.setHours(23, 59, 59, 999);
+        range.$lte = to;
+      }
+      if (Object.keys(range).length) filter.created_date = range;
       const limit = Math.min(Math.max(Number(params.limit) || 100, 1), 200);
       const page = Math.max(Number(params.page) || 1, 1);
       const collection = await this.getCollection(this.collectionName);

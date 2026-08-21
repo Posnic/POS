@@ -3803,6 +3803,40 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     }
 }
 
+/*
+ * Quote filters: two rows that each fill the rail's width.
+ *
+ * The rail is 330px on a laptop and 560px on a wide screen, so the controls
+ * cannot have fixed widths - the search box takes the slack and the rest keep
+ * only what they need. Laid out with flex + gap rather than margins so a
+ * wrapped row spaces itself instead of collapsing.
+ */
+.q-filter-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    margin-bottom: 6px;
+}
+.q-filter-row #quotes_search { flex: 1 1 auto; min-width: 0; }
+.q-filter-row #quotes_search_field { flex: 0 0 auto; width: auto; min-width: 96px; }
+.q-filter-row #quotes_from,
+.q-filter-row #quotes_to { flex: 1 1 0; min-width: 0; }
+.q-filter-sep { flex: 0 0 auto; font-size: 12px; color: #57606a; }
+.q-filter-exact {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: #57606a;
+    white-space: nowrap;
+    cursor: pointer;
+}
+.q-filter-exact input { margin: 0; }
+[data-theme] .q-filter-sep,
+[data-theme] .q-filter-exact { color: var(--theme-text-secondary); }
+
 /* Rows answer the cursor, and the one being read joins the document. */
 #quotes_list_rows tr.quotes-row { transition: background .12s ease; }
 #quotes_list_rows tr.quotes-row:hover { background: #eef3ff; }

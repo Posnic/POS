@@ -8257,7 +8257,19 @@ PosnicPro.quotes = {
         };
         if (PosnicPro.quotes._status) { params.status = PosnicPro.quotes._status; }
         var term = $.trim($('#quotes_search').val() || '');
-        if (term) { params.search = term; }
+        if (term) {
+            params.search = term;
+            /* Only sent when they change anything - a request carrying
+               field=all&exact=false says the same as one carrying neither, and
+               a URL that states its defaults is harder to read in a log. */
+            var field = $('#quotes_search_field').val() || 'all';
+            if (field !== 'all') { params.field = field; }
+            if ($('#quotes_search_exact').is(':checked')) { params.exact = 'true'; }
+        }
+        var from = $('#quotes_from').val();
+        var to = $('#quotes_to').val();
+        if (from) { params.from = from; }
+        if (to) { params.to = to; }
         PosnicPro.get({ url: 'quotes', data: params }, function (r) {
             if (mine !== PosnicPro.quotes._seq) { return; }
             PosnicPro.quotes._rows = (r && r.data) || [];
@@ -10262,6 +10274,20 @@ PosnicPro.sales.renderRecentCustomers = function () {
         fill(PosnicPro.sales._customerSeed);
     }, function () { /* recents alone, or empty - never an error popup */ });
 };
+/* The filters reload the list the same way the search box does. Dates and the
+   field selector fire on change rather than on every keystroke - there is no
+   half-typed date worth a request. */
+$(document).on('change', '#quotes_search_field,#quotes_search_exact,#quotes_from,#quotes_to', function () {
+    PosnicPro.quotes.load();
+});
+$(document).on('click', '#quotes_filters_clear', function () {
+    $('#quotes_search').val('');
+    $('#quotes_search_field').val('all');
+    $('#quotes_search_exact').prop('checked', false);
+    $('#quotes_from,#quotes_to').val('');
+    PosnicPro.quotes.load();
+});
+
 $(document).on('click', '.quotes-row', function () {
     hasher.setHash('quotes/' + $(this).data('id'));
 });

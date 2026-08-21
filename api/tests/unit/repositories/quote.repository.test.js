@@ -387,6 +387,80 @@ describe('QuoteRepository', () => {
   });
 
   /*
+   * Filters (owner ask): "indexed search is fine, but I want filters too -
+   * exact field and time duration".
+   *
+   * Both earn their place on a long list. `field` stops a customer search
+   * matching a quote number that happens to contain the digits. `exact`
+   * anchors the regex, and that is the one with teeth: /^QUO-000012$/ can be
+   * served by an index, /QUO/ cannot.
+   */
+  describe('QuoteRepository — filters', () => {
+    test('field narrows the search to one column instead of both', async () => {
+      await repo.listQuotes({ search: 'acme', field: 'customer_name' }, ctx);
+      const filter = mockCollection.find.mock.calls[0][0];
+      expect(filter.$or).toBeUndefined();
+      expect(filter.customer_name).toBeInstanceOf(RegExp);
+      expect(filter.quote_id).toBeUndefined();
+    });
+
+    test('exact anchors the pattern, which is what an index can serve', async () => {
+      await repo.listQuotes({ search: 'QUO-000012', field: 'quote_id', exact: 'true' }, ctx);
+      const rx = mockCollection.find.mock.calls[0][0].quote_id;
+      expect(rx.source.startsWith('^')).toBe(true);
+      expect(rx.source.endsWith('$')).toBe(true);
+      expect(rx.test('QUO-000012')).toBe(true);
+      expect(rx.test('XQUO-000012X')).toBe(false);
+    });
+
+    test('without exact it still matches a fragment', async () => {
+      await repo.listQuotes({ search: '0012', field: 'quote_id' }, ctx);
+      const rx = mockCollection.find.mock.calls[0][0].quote_id;
+      expect(rx.test('QUO-000012')).toBe(true);
+    });
+
+    test('a date range becomes a created_date window', async () => {
+      await repo.listQuotes({ from: '2026-08-01', to: '2026-08-21' }, ctx);
+      const range = mockCollection.find.mock.calls[0][0].created_date;
+      expect(range.$gte).toBeInstanceOf(Date);
+      expect(range.$lte).toBeInstanceOf(Date);
+    });
+
+    test('the end date includes its whole day', async () => {
+      /* Picking 21 Aug means "including the 21st". Comparing against midnight
+         would silently drop a day of quotes, which reads as data loss. */
+      await repo.listQuotes({ to: '2026-08-21' }, ctx);
+      const end = mockCollection.find.mock.calls[0][0].created_date.$lte;
+      expect(end.getHours()).toBe(23);
+      expect(end.getMinutes()).toBe(59);
+    });
+
+    test('either end of the range may be omitted', async () => {
+      await repo.listQuotes({ from: '2026-08-01' }, ctx);
+      const range = mockCollection.find.mock.calls[0][0].created_date;
+      expect(range.$gte).toBeInstanceOf(Date);
+      expect(range.$lte).toBeUndefined();
+    });
+
+    test('an unparseable date is ignored rather than returning nothing', async () => {
+      await repo.listQuotes({ from: 'not-a-date' }, ctx);
+      expect(mockCollection.find.mock.calls[0][0].created_date).toBeUndefined();
+    });
+
+    test('filters combine with the branch wall and the status chip', async () => {
+      await repo.listQuotes(
+        { status: 'open', search: 'acme', field: 'customer_name', from: '2026-08-01' },
+        ctx
+      );
+      const filter = mockCollection.find.mock.calls[0][0];
+      expect(filter.status).toBe('open');
+      expect(filter.customer_name).toBeInstanceOf(RegExp);
+      expect(filter.created_date.$gte).toBeInstanceOf(Date);
+      expect(filter.branch_id).toBeDefined();
+    });
+  });
+
+  /*
    * The index the list needs.
    *
    * Without it every list request is a full collection scan, paid three times:
