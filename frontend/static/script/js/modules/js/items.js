@@ -720,11 +720,13 @@ PosnicPro.items = {
                             $('#items_supplier_id').val(defaultsupplier.supplier_id);
                             $('#items_supplier').val(defaultsupplier.supplier_name);
                         }
-                        $(".items_category").val('').trigger('change.select2');
+                        /* select2 FIRST, then the value. Firing change.select2 at a
+                           select that is not a select2 yet is what throws
+                           "Cannot read properties of null (reading 'offsetWidth')". */
                         $(".items_category").select2({
                             placeholder: "Choose a Category"
                         });
-                        $("#items_variant").val(1).trigger('change.select2');
+                        $(".items_category").val('').trigger('change.select2');
                         $("#items_variant").select2({
                             placeholder: "Choose a Variant"
                         });
@@ -2109,13 +2111,19 @@ PosnicPro.items = {
                     url: 'setting/getUnitAjaxList',
                     data: 'query='
                 };
-                let unitOption;
                 PosnicPro.get(params, function (response) {
-                    $("#items_unit_" + key + '').empty();
-                    $(response.suggestions).each(function (key, dataItem) {
-                        unitOption += '<option value="' + dataItem.unit_id + '" data-unit-id="' + dataItem.unit_id + '" data-unit-name="' + dataItem.unit_name + '" data-unit-value="' + dataItem.unit_value + '">' + dataItem.unit_name + ' - ' + dataItem.unit_value + '</option>';
-                    });
-                    $("#items_unit_" + key + '').append(unitOption);
+                    var $sel = $("#items_unit_" + key).empty();
+                    /* `let unitOption;` started undefined, so the first += put the
+                       literal "undefined" in front of the first option - and the
+                       string accumulated across every variant row built after it. */
+                    $sel.append($.map(response.suggestions || [], function (dataItem) {
+                        return $('<option>')
+                            .attr('value', dataItem.unit_id)
+                            .attr('data-unit-id', dataItem.unit_id)
+                            .attr('data-unit-name', dataItem.unit_name)
+                            .attr('data-unit-value', dataItem.unit_value)
+                            .text(dataItem.unit_name + ' - ' + dataItem.unit_value)[0];
+                    }));
                 });
 
                 html = html + '</select>';
@@ -2457,15 +2465,31 @@ PosnicPro.items = {
                under an arbitrary category - misfiled catalogues by default.
                Category is required; choosing it is one deliberate tap. */
             categorySelect.append('<option value=""></option>');
-            suggestions: $.map(response.suggestions, function (dataItem) {
-                var option;
-                option += '<option value="' + dataItem.id + '" data-category-name="' + dataItem.name + '" data-category-id="' + dataItem.id + '" data-item-discountamount="' + dataItem.discount_amount + '" data-item-discountpercentage="' + dataItem.discount_percentage + '">' + dataItem.name + ' </option>';
-                categorySelect.append(option).select2();
+            /*
+             * Built once, appended once, initialised once.
+             *
+             * This loop used to do all three per option: `var option;` starts
+             * undefined, so `option += '<option...'` produced the literal string
+             * "undefined" in front of every entry, and .select2() ran again on
+             * every pass - re-initialising the widget once per category. That
+             * re-entry is what threw "Cannot read properties of null (reading
+             * 'offsetWidth')": select2 measures a container that the previous
+             * init has already replaced.
+             */
+            var options = $.map(response.suggestions || [], function (dataItem) {
+                return $('<option>')
+                    .attr('value', dataItem.id)
+                    .attr('data-category-name', dataItem.name)
+                    .attr('data-category-id', dataItem.id)
+                    .attr('data-item-discountamount', dataItem.discount_amount)
+                    .attr('data-item-discountpercentage', dataItem.discount_percentage)
+                    .text(dataItem.name)[0];
             });
-            $(".items_category").select2({
-                placeholder: "Choose a Category"
-            });
-            $(".items_category").val('').trigger('change.select2');
+            categorySelect.append(options);
+            categorySelect.select2({ placeholder: "Choose a Category" });
+            /* AFTER init - firing change.select2 at a select that is not a
+               select2 yet is the other half of the same crash. */
+            categorySelect.val('').trigger('change.select2');
         }, function (xhr) {
             var response = jQuery.parseJSON(xhr.responseText);
             PosnicPro.alert(response.type, response.message);
@@ -2480,16 +2504,20 @@ PosnicPro.items = {
         };
         PosnicPro.get(params, function (response) {
             variantSelect.empty();
-            suggestions: $.map(response.suggestions, function (dataItem) {
-                var option;
-                option += '<option id="' + dataItem.id + '" value="' + dataItem.id + '" data-variant-name="' + dataItem.name + '" data-variant-id="' + dataItem.id + '">' + dataItem.name + ' </option>';
-                variantSelect.append(option).select2();
-                $('#' + dataItem.id).attr('data-variant-fields', JSON.stringify(dataItem.fields));
+            var vOptions = $.map(response.suggestions || [], function (dataItem) {
+                return $('<option>')
+                    .attr('id', dataItem.id)
+                    .attr('value', dataItem.id)
+                    .attr('data-variant-name', dataItem.name)
+                    .attr('data-variant-id', dataItem.id)
+                    .attr('data-variant-fields', JSON.stringify(dataItem.fields))
+                    .text(dataItem.name)[0];
             });
-            $("#items_variant").val(1).trigger('change.select2');
-            $("#items_variant").select2({
-                placeholder: "Choose a Variant"
-            });
+            variantSelect.append(vOptions);
+            variantSelect.select2({ placeholder: "Choose a Variant" });
+            /* The value was set BEFORE select2 existed, so the widget never saw
+               it and the change fired at a plain select. */
+            variantSelect.val(1).trigger('change.select2');
             $('#item_variant_list').html('');
         }, function (xhr) {
             var response = jQuery.parseJSON(xhr.responseText);
@@ -2504,11 +2532,16 @@ PosnicPro.items = {
         };
         PosnicPro.get(params, function (response) {
             taxSelect.empty();
-            suggestions: $.map(response.suggestions, function (dataItem) {
-                var option;
-                option += '<option value="' + dataItem.tax_id + '" data-tax-id="' + dataItem.tax_id + '" data-tax-name="' + dataItem.tax_name + '" data-tax-value="' + dataItem.tax_value + '">' + dataItem.tax_name + '</option>';
-                taxSelect.append(option).trigger('change');
+            /* One append and one change, not one of each per tax rate. */
+            var tOptions = $.map(response.suggestions || [], function (dataItem) {
+                return $('<option>')
+                    .attr('value', dataItem.tax_id)
+                    .attr('data-tax-id', dataItem.tax_id)
+                    .attr('data-tax-name', dataItem.tax_name)
+                    .attr('data-tax-value', dataItem.tax_value)
+                    .text(dataItem.tax_name)[0];
             });
+            taxSelect.append(tOptions).trigger('change');
             if (PosnicPro.local.get('default_tax_enable_disable') === 'false') {
                 taxSelect.val(1).trigger('change.select2');
             } else {
@@ -2529,11 +2562,15 @@ PosnicPro.items = {
         };
         PosnicPro.get(params, function (response) {
             unitSelect.empty();
-            suggestions: $.map(response.suggestions, function (dataItem) {
-                var option;
-                option += '<option value="' + dataItem.unit_id + '" data-unit-id="' + dataItem.unit_id + '" data-unit-name="' + dataItem.unit_name + '" data-unit-value="' + dataItem.unit_value + '">' + dataItem.unit_name + ' - ' + dataItem.unit_value + '</option>';
-                unitSelect.append(option).trigger('change');
+            var uOptions = $.map(response.suggestions || [], function (dataItem) {
+                return $('<option>')
+                    .attr('value', dataItem.unit_id)
+                    .attr('data-unit-id', dataItem.unit_id)
+                    .attr('data-unit-name', dataItem.unit_name)
+                    .attr('data-unit-value', dataItem.unit_value)
+                    .text(dataItem.unit_name + ' - ' + dataItem.unit_value)[0];
             });
+            unitSelect.append(uOptions).trigger('change');
             $('.items_unit option:eq(0)').prop('selected', true);
         }, function (xhr) {
             var response = jQuery.parseJSON(xhr.responseText);
@@ -2583,10 +2620,10 @@ PosnicPro.items = {
         $('#default_tax').show();
         $('#item_logo').val('item.svg');
         PosnicPro.items.imageParams = [];
-        $(".items_category").val('').trigger('change.select2');
         $(".items_category").select2({
             placeholder: "Choose a Category"
         });
+        $(".items_category").val('').trigger('change.select2');
         PosnicPro.items.loadSelectCategory();
     PosnicPro.items.loadSelectSupplier();
         PosnicPro.items.loadSelectSupplier();
@@ -3785,10 +3822,10 @@ $(document).ready(function () {
         $('#items_supplier_id').val(defaultsupplier.supplier_id);
         $('#items_supplier').val(defaultsupplier.supplier_name);
     }
-    $(".items_category").val('').trigger('change.select2');
     $(".items_category").select2({
         placeholder: "Choose a Category"
     });
+    $(".items_category").val('').trigger('change.select2');
     // Typing in either discount field marks the pair as the user's - a
     // category pick then leaves them alone (applyCategoryDiscount).
     $(document).on('change', '#item_is_service', function () {

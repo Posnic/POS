@@ -3165,6 +3165,36 @@ input:checked + .slider:before {
  * Capping the SHORT fields and letting the long ones stay long is what makes
  * a form scan as a column rather than a spreadsheet.
  */
+/* Details, top row: the description and the image column end together.
+   The image side carries the dropzone AND the colour/shape pickers, so it is
+   always the taller of the two - which left a block of white under the
+   description. The column stretches and the textarea fills it, so the tile
+   controls can grow without stranding the other half. */
+.items-details-row { align-items: stretch; }
+.items-details-row > [class*="col-"] { display: flex; flex-direction: column; }
+#items_new .items-description-fill {
+    flex: 1 1 auto;
+    min-height: 132px;
+    resize: vertical;
+}
+
+/* The save bar matches the form above it.
+   The panes are inset by their own padding and, when they scroll, a scrollbar.
+   The bar sat outside that box and took the full column width, so it ran past
+   the Next button and the cards (owner ask). It lives in the same box now and
+   carries the pane's own horizontal padding; scrollbar-gutter keeps the inset
+   constant whether a pane happens to be scrolling or not, so the two edges do
+   not shift as you move between tabs. */
+#item_form_tabs_content > .tab-pane { scrollbar-gutter: stable; }
+.item-save-bar {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    margin-bottom: 0;
+    margin-left: 2px;
+    margin-right: 6px;
+}
+
 /* ---- Add Item: item kind, tab ticks, step navigation ------------------- */
 
 /* "What kind of item" lives in the card header, above the fields it governs. */
