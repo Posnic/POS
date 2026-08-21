@@ -3191,8 +3191,25 @@ input:checked + .slider:before {
     bottom: 0;
     z-index: 5;
     margin-bottom: 0;
+    /* The pane's own horizontal inset, so the bar's edges land on the same
+       lines as the cards inside a pane rather than on the box edge. */
     margin-left: 2px;
     margin-right: 6px;
+}
+
+/* The pickers are set apart from the numbers above them. The card's own
+   spacing rule only reaches `.row > [class*=col-md]`, and these rows are
+   form-rows, so they had none and the two groups ran together. */
+.items-picker-row { margin-top: 14px; }
+
+/* The discount value sat hard against the card's right edge. Its column lost
+   the inline `padding: 0 !important` that used to kill the gutter, but the
+   field is right-aligned text in the last column of the row, so it still needs
+   a little air before the border to stop reading as clipped (owner ask). */
+#items_new .floating-label > #items_discount_amount,
+#items_new .floating-label > #items_discount_percentage {
+    margin-right: 10px;
+    width: calc(100% - 10px);
 }
 
 /* ---- Add Item: item kind, tab ticks, step navigation ------------------- */
@@ -3471,7 +3488,15 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
  */
 #items_new #item_tab_main,
 #items_new #item_tab_details,
-#items_new #item_tab_more { max-width: 1140px; margin-left: 0; margin-right: auto; }
+/* ONE edge for the whole form.
+   This cap used to sit on the More tab alone, so that pane stopped at 1140px
+   while the others - and the save bar below them - ran to the full column
+   width. That is why the bar overhung the Next button and the cards (owner:
+   "save bar dont go beyond Next details button. this width also limit").
+   On the tab-content box it governs every pane and the bar together, so they
+   cannot drift apart again. */
+#items_new #item_form_tabs_content { max-width: 1140px; margin-left: 0; margin-right: auto; }
+#items_new #item_form_tabs { max-width: 1140px; }
 
 /* Short values get a sane field width; long-form keeps the room it needs. */
 #items_new #items_brand,

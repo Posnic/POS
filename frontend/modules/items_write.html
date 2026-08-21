@@ -188,8 +188,14 @@
                             </div>
                             <!-- Category and supplier are both optional pickers of the
                                  same shape, so they share one row instead of eating a
-                                 line each (owner ask). -->
-                            <div class="form-row">
+                                 line each (owner ask).
+
+                                 Set apart from the row above it: the numbers stop here and
+                                 the pickers begin, and without a gap the two ran together
+                                 (owner: "above select category give some gap... now i see
+                                 clumpsy"). form-row children get no bottom margin from the
+                                 card rule, which only covers .row. -->
+                            <div class="form-row items-picker-row">
                                 <div class="form-group col-md-6">
                                     <!-- "+ Add" sits ON the label line, not under the control.
                                          Underneath, its position depended on the height of the
@@ -299,7 +305,7 @@
                             </div>
                             <div class="card-body">
                                 <div class="form-row m-b-10">
-                                    <div class="col-md-4">
+                                    <div class="col-md-6">
                                         <label class="form-control-placeholder" for="items_plu_code">
                                             <lang class="lang_plu_title">Quick code</lang>
                                         </label>
@@ -508,6 +514,14 @@
                                             placeholder="Enter a description ..."></textarea>
                                     </div>
                                     <div class="col-lg-6">
+                                        <!-- Labelled like Description beside it (owner ask). An
+                                             unlabelled dropzone reads as decoration until you
+                                             notice the Browse button; the field next to it says
+                                             what it is, and so should this. -->
+                                        <label class="form-control-placeholder d-block" for="item_upload_image">
+                                            <lang class="lang_item_photos_title">Photos</lang>
+                                            <small class="text-muted">(<lang class="lang_optional">optional</lang>)</small>
+                                        </label>
                                         <div class="mb-3">
                                             <div class="Neon Neon-theme-dragdropbox">
                                                 <input type="hidden" id="item_upload_image_status" value="no">
