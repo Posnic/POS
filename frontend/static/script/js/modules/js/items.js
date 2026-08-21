@@ -2111,7 +2111,10 @@ PosnicPro.items = {
     },
 
     loadVariant: function () {
-        var variant_value = $('#item_variant_list').val();
+        /* jQuery returns null, not [], from an empty multiple select. The
+           name check used to run first and return early on a fresh form,
+           which hid that; the empty-values check reads .length directly. */
+        var variant_value = $('#item_variant_list').val() || [];
         $("#load_price_fields").html('');
         var html = "";
         var item_name = $("#items_name").val();

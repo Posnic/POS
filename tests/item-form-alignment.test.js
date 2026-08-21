@@ -858,6 +858,24 @@ test('the variant pricing rows do not wait for the item name', () => {
   assert.match(guard, /variant_value\.length === 0/, 'nothing checks that a value was chosen');
 });
 
+test('an empty variant select cannot crash the row builder', () => {
+  /* jQuery hands back null, not [], from a multiple select with nothing
+     chosen - and the empty-values guard reads .length off it directly. The
+     old name check ran first and returned early on a fresh form, which is
+     what kept this from being reachable before the guards were reordered. */
+  const js = fs.readFileSync(
+    path.join(__dirname, '..', 'frontend/static/script/js/modules/js/items.js'),
+    'utf8',
+  );
+  const at = js.indexOf('loadVariant: function ()');
+  const head = js.slice(at, at + 600);
+  assert.match(
+    head,
+    /\$\('#item_variant_list'\)\.val\(\) \|\| \[\]/,
+    'val() is read unguarded - null.length throws before any row is built',
+  );
+});
+
 test('a variant row heading survives having no item name yet', () => {
   const js = fs.readFileSync(
     path.join(__dirname, '..', 'frontend/static/script/js/modules/js/items.js'),
