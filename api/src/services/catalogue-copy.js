@@ -153,22 +153,18 @@ async function copyCatalogue(db, options = {}) {
       });
     }
 
-    const sourceItems = await items
-      .find({
-        $or: [{ 'branch_access.branch_id': source }, { branch_id: source }],
-        license,
-        is_deleted: { $ne: true },
-      })
-      .toArray();
-
-    if (!sourceItems.length) {
-      return {
-        status: true,
-        data: { items: 0, categories: maps.categories.size, message: 'That shop has no items yet' },
-      };
-    }
-
-    const docs = sourceItems.map((row) => {
+    /*
+     * STREAMED, not loaded.
+     *
+     * The writes were already batched at 500 for the obvious reason; reading
+     * the whole catalogue with .toArray() and then building a second full array
+     * of copies undid that on the way in - two copies of a shop's entire item
+     * list resident at once, on a process shared with every other shop.
+     *
+     * A cursor holds one batch. The transform is the same work, done per row as
+     * it arrives instead of per array afterwards.
+     */
+    const shape = (row) => {
       const { _id, ...rest } = row;
       const doc = {
         ...rest,
@@ -199,13 +195,34 @@ async function copyCatalogue(db, options = {}) {
         if (!mapped && lookup.itemNameField) doc[lookup.itemNameField] = '';
       }
       return doc;
+    };
+
+    const cursor = items.find({
+      $or: [{ 'branch_access.branch_id': source }, { branch_id: source }],
+      license,
+      is_deleted: { $ne: true },
     });
 
     let written = 0;
-    for (let i = 0; i < docs.length; i += BATCH) {
-      const slice = docs.slice(i, i + BATCH);
-      await items.insertMany(slice, { ordered: false });
-      written += slice.length;
+    let batch = [];
+    const flush = async () => {
+      if (!batch.length) return;
+      await items.insertMany(batch, { ordered: false });
+      written += batch.length;
+      batch = [];
+    };
+
+    for await (const row of cursor) {
+      batch.push(shape(row));
+      if (batch.length >= BATCH) await flush();
+    }
+    await flush();
+
+    if (!written) {
+      return {
+        status: true,
+        data: { items: 0, categories: maps.categories.size, message: 'That shop has no items yet' },
+      };
     }
 
     return {
