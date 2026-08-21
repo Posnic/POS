@@ -1363,3 +1363,39 @@ test('idempotence belongs to the component, not the screen', () => {
   );
   assert.ok(fn.includes('var existing = LF._mounted[key];'), 'the component does not check itself');
 });
+
+/*
+ * An inverted custom range cannot be entered.
+ *
+ * "To" before "from" matches nothing, and the list then says "no quotes match
+ * this search" - true and useless, because the search is not what is wrong.
+ * min/max on datetime-local is native: no validation UI, and the picker does
+ * not offer the bad dates at all.
+ */
+test('the range inputs bound each other', () => {
+  const src = stripComments(listFilterSrc);
+  const at = src.indexOf("on('change', '.lf-from,.lf-to'");
+  assert.notStrictEqual(at, -1, 'the date handler is gone');
+  const body = src.slice(at, src.indexOf('\n    });', at));
+  assert.match(body, /\$to\.attr\('min', from \|\| null\)/, 'the end can still precede the start');
+  assert.match(body, /\$from\.attr\('max', to \|\| null\)/, 'the start can still follow the end');
+});
+
+test('clearing one end releases the other', () => {
+  /* `|| null` removes the attribute rather than setting it to "". A stale bound
+     traps someone who picked the wrong end first, and the only way out would be
+     Clear. */
+  const src = stripComments(listFilterSrc);
+  const at = src.indexOf("on('change', '.lf-from,.lf-to'");
+  const body = src.slice(at, src.indexOf('\n    });', at));
+  assert.ok(!/attr\('min', from\)/.test(body), 'an empty value would be set as a bound, not removed');
+  assert.ok(!/attr\('max', to\)/.test(body), 'same for the other end');
+});
+
+test('the bound exists on the first edit, not only after a change', () => {
+  /* Selecting "Custom range" carries the previous preset's dates into the
+     inputs. Without bounds at render time, the very first edit could invert. */
+  const render = blockAt(listFilterSrc, 'LF.render = function (key) {');
+  assert.match(render, /st\.to \? ' max="' \+ forInput\(st\.to\)/, 'the start input renders unbounded');
+  assert.match(render, /st\.from \? ' min="' \+ forInput\(st\.from\)/, 'the end input renders unbounded');
+});

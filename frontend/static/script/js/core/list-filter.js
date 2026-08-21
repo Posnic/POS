@@ -263,9 +263,14 @@ PosnicPro.listFilter = {
                 }).join('')
                 + '    </select>'
                 + '    <div class="lf-custom" style="display:' + (st.preset === 'custom' ? 'flex' : 'none') + ';">'
-                + '      <input type="datetime-local" class="form-control form-control-sm lf-from" value="' + forInput(st.from) + '">'
+                /* min/max from the current pair, so the range cannot be
+                   inverted on the FIRST edit either - the change handler keeps
+                   them in step after that. */
+                + '      <input type="datetime-local" class="form-control form-control-sm lf-from" value="' + forInput(st.from) + '"'
+                + (st.to ? ' max="' + forInput(st.to) + '"' : '') + '>'
                 + '      <span class="lf-sep">to</span>'
-                + '      <input type="datetime-local" class="form-control form-control-sm lf-to" value="' + forInput(st.to) + '">'
+                + '      <input type="datetime-local" class="form-control form-control-sm lf-to" value="' + forInput(st.to) + '"'
+                + (st.from ? ' min="' + forInput(st.from) + '"' : '') + '>'
                 + '    </div>'
                 + '  </div>'
                 + '  <button type="button" class="btn btn-sm btn-light border lf-clear">Clear</button>';
@@ -429,8 +434,27 @@ PosnicPro.listFilter = {
         if (!key) return;
         var st = LF._mounted[key].state;
         var $panel = $(this).closest('[data-lf]');
-        var from = $panel.find('.lf-from').val();
-        var to = $panel.find('.lf-to').val();
+        var $from = $panel.find('.lf-from');
+        var $to = $panel.find('.lf-to');
+        var from = $from.val();
+        var to = $to.val();
+
+        /*
+         * An inverted range cannot be entered, rather than being caught after.
+         *
+         * "To" before "from" matches nothing, and the list then says "no quotes
+         * match this search" - true and useless, because the search is not what
+         * is wrong. Letting the browser refuse it beats any message we could
+         * write: min/max on datetime-local is native, needs no validation UI,
+         * and the picker will not offer the bad dates in the first place.
+         *
+         * Set from the CURRENT values on every change, so widening one end
+         * releases the other rather than trapping someone who picked the wrong
+         * one first.
+         */
+        $to.attr('min', from || null);
+        $from.attr('max', to || null);
+
         st.from = from ? new Date(from) : null;
         st.to = to ? new Date(to) : null;
         st.preset = 'custom';
