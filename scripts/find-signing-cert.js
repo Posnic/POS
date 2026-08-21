@@ -155,12 +155,36 @@ function main() {
     process.exit(1);
   }
 
-  console.log('\nTo sign the next build, in this shell:\n');
-  console.log(`  set POSNIC_SIGN_SHA1=${usable[0].Thumbprint}`);
-  console.log('  npm run build\n');
-  console.log('Or PowerShell:\n');
+  /*
+   * ALL THREE SHELLS, and Git Bash first.
+   *
+   * This used to print only the cmd and PowerShell forms. `set VAR=value` is
+   * cmd syntax; in Git Bash it sets a positional parameter and leaves the
+   * environment untouched - so the variable is empty, the build runs, and the
+   * sign hook skips signing exactly as designed. The result is a finished
+   * installer that says Unknown publisher, produced by somebody who followed
+   * the instructions this script gave them.
+   *
+   * Git Bash is the shell this project is actually developed in, so it goes
+   * first, and each line says which shell it belongs to.
+   */
+  console.log('');
+  console.log('To sign the next build:');
+  console.log('');
+  console.log('  # Git Bash / WSL');
+  console.log(`  export POSNIC_SIGN_SHA1=${usable[0].Thumbprint}`);
+  console.log('  npm run build');
+  console.log('');
+  console.log('  # PowerShell');
   console.log(`  $env:POSNIC_SIGN_SHA1 = "${usable[0].Thumbprint}"`);
-  console.log('  npm run build\n');
+  console.log('  npm run build');
+  console.log('');
+  console.log('  # cmd.exe');
+  console.log(`  set POSNIC_SIGN_SHA1=${usable[0].Thumbprint}`);
+  console.log('  npm run build');
+  console.log('');
+  console.log('Then ALWAYS: npm run sign:verify');
+  console.log('');
 }
 
 main();

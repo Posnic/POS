@@ -280,3 +280,28 @@ test('the held-card error is named, not left as "internal error"', () => {
     'a more generic hint is tested first and shadows this one',
   );
 });
+test('the thumbprint instructions work in the shell we actually use', () => {
+  /*
+   * `set VAR=value` is cmd syntax. In Git Bash it sets a positional parameter
+   * and leaves the environment untouched - so POSNIC_SIGN_SHA1 stays empty, the
+   * build runs, and the hook skips signing exactly as designed. The result is a
+   * finished installer saying "Unknown publisher", produced by somebody who
+   * followed the instructions this script printed.
+   *
+   * That happened. Git Bash is the shell this project is developed in, so its
+   * form is printed first and every line names its shell.
+   */
+  const finder = fs.readFileSync(path.join(ROOT, 'scripts', 'find-signing-cert.js'), 'utf8');
+  assert.match(finder, /export POSNIC_SIGN_SHA1=/, 'no Git Bash form - `set` silently does nothing there');
+  assert.match(finder, /Git Bash/, 'the shells are not labelled, so the wrong line gets copied');
+  const bash = finder.indexOf('export POSNIC_SIGN_SHA1=');
+  const cmd = finder.indexOf('set POSNIC_SIGN_SHA1=', finder.indexOf('To sign the next build'));
+  assert.ok(bash < cmd, 'the cmd form is printed first and will be the one copied');
+
+  /* The thumbprint must interpolate. A template placeholder inside a single-
+     quoted string prints literally, which is how the first version of this
+     told somebody to export the string "${usable[0].Thumbprint}". */
+  const bt = String.fromCharCode(96);
+  const line = finder.split(String.fromCharCode(10)).find((l) => l.includes('export POSNIC_SIGN_SHA1='));
+  assert.ok(line.includes(bt), 'the thumbprint line is not a template literal - it prints the placeholder');
+});
