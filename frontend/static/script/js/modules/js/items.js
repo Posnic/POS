@@ -2439,7 +2439,7 @@ PosnicPro.items = {
             }
             $pick.select2({
                 placeholder: rows.length
-                    ? 'Choose a Supplier (optional)'
+                    ? 'Choose a Supplier'
                     : 'No suppliers yet - use + Add Supplier',
                 allowClear: true
             });

@@ -84,20 +84,31 @@ test('the cap still exists, and says why uniform columns matter', () => {
   assert.match(css, /THE CAP ONLY WORKS IF THE COLUMNS MATCH/, 'the reasoning is not recorded');
 });
 
-test('the label and its "(optional)" read as one line', () => {
-  /* They wrapped because the "+ Add" links shared that row. The links are gone
-     (owner ask) - categories and suppliers are managed from their own screens -
-     and the qualifier belongs beside the label, not under it. */
-  for (const id of ['items_category', 'items_supplier']) {
-    const at = html.indexOf(`for="${id}"`);
+test('no field is labelled "optional"', () => {
+  /* Required fields carry a red asterisk, so marking everything else optional
+     labels the rule instead of the exception - noise on eleven fields to say
+     what the absence of an asterisk already says (owner ask). */
+  const markup = stripComments(html);
+  assert.ok(!/lang_optional/.test(markup), 'an "(optional)" label suffix is back');
+  assert.ok(
+    !/placeholder="[^"]*optional[^"]*"/i.test(markup),
+    'a placeholder still says optional',
+  );
+  assert.ok(
+    !/Choose a Supplier \(optional\)/.test(itemsJs),
+    'the picker placeholder still says optional',
+  );
+});
+
+test('the asterisk that replaces it is still there', () => {
+  /* Removing "(optional)" only works while the required fields are marked. */
+  const markup = stripComments(html);
+  for (const id of ['items_name', 'items_selling_price']) {
+    const at = markup.indexOf(`for="${id}"`);
     assert.notStrictEqual(at, -1, `the label for #${id} is gone`);
-    const label = html.slice(at, html.indexOf('</label>', at));
-    assert.match(label, /lang_optional/, `#${id} lost its "(optional)"`);
-    assert.match(html.slice(Math.max(0, at - 120), at), /items-label-inline/, 'the label is not the one-line kind');
+    const label = markup.slice(at, markup.indexOf('</label>', at));
+    assert.match(label, /text-danger/, `#${id} is required but carries no asterisk`);
   }
-  /* Two rules share this prefix - the label and its small - so anchor it. */
-  const rule = cssRule('.items-label-inline', "The Item card's own alignment");
-  assert.match(rule, /white-space:\s*nowrap/, 'without this the qualifier can still wrap');
 });
 
 test('the "+ Add" links are gone from the form', () => {
