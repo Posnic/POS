@@ -5943,6 +5943,42 @@ PosnicPro.settings._fpSection = null;
  * THAT feature's settings, adopted from the hidden store and returned on
  * leave. No popup, no aggregate page, no extra menu entry.
  */
+/*
+ * A screenshot that is not there yet removes itself, and takes the empty strip
+ * with it. Without the second half, a feature with no images keeps a 14px gap
+ * and a scroll container holding nothing.
+ */
+PosnicPro.settings._shotMissing = function (img) {
+    var $strip = $(img).closest('.fd-shots');
+    $(img).remove();
+    if (!$strip.find('img').length) { $strip.remove(); }
+};
+
+/*
+ * One loaded screenshot asks for the next. This is what keeps the cost at one
+ * failed request for a feature with no images instead of one per slot guessed.
+ *
+ * Capped, because the chain is driven by the server answering 200: a directory
+ * that somehow served every name would ask forever. Ten is far more than any
+ * feature page should show.
+ */
+PosnicPro.settings.MAX_SHOTS = 10;
+PosnicPro.settings._shotNext = function (img) {
+    var $img = $(img);
+    var $strip = $img.closest('.fd-shots');
+    var key = $strip.attr('data-shot-key');
+    var n = Number($img.attr('data-shot-n') || 0);
+    if (!key || !n || n >= PosnicPro.settings.MAX_SHOTS) { return; }
+    if ($strip.find('[data-shot-n="' + (n + 1) + '"]').length) { return; }
+    $('<img>')
+        .attr('src', 'static/images/features/' + key + '-' + (n + 1) + '.png')
+        .attr('alt', '')
+        .attr('data-shot-n', n + 1)
+        .attr('onload', 'PosnicPro.settings._shotNext(this);')
+        .attr('onerror', 'PosnicPro.settings._shotMissing(this);')
+        .appendTo($strip);
+};
+
 PosnicPro.settings.openFeaturePage = function ($card) {
     var $main = $card.find('.module-card-head input.custom-control-input').first();
     var key = $main.attr('id') || '';
@@ -5962,11 +5998,43 @@ PosnicPro.settings.openFeaturePage = function ($card) {
 
     var esc = function (v) { return $('<i>').text(v == null ? '' : v).html(); };
     var infoHtml = '';
+    /*
+     * Screenshots by CONVENTION, so adding one is dropping a file.
+     *
+     * The owner has to take these - they are pictures of his running shop and
+     * nobody else can. Everything AROUND that is built here so his one action
+     * is the only thing left: drop
+     *
+     *     static/images/features/<feature_key>-1.png   (-2, -3 ... for more)
+     *
+     * and it appears. No JS edit, no list to maintain, no deploy for a picture.
+     * An explicit `shots` array still wins, for anything that does not fit.
+     *
+     * PROBED ONE AT A TIME, not three at once. Rendering -1, -2 and -3
+     * speculatively costs three 404s every time a dialog opens for a feature
+     * with no images - which is every feature today, seventeen of them. Asking
+     * for the next only after the current one LOADS means a feature with no
+     * screenshot costs exactly one failed request, and a feature with five
+     * costs five successes and one failure. The chain extends itself.
+     *
+     * A missing file removes its own tag, and the strip removes itself once
+     * empty, so nothing shows a row of broken-image icons.
+     *
+     * The CSS fixes the frame at aspect-ratio 8/5, which is why the ask is for
+     * 8:5 images - anything else is cropped to fit, not letterboxed.
+     */
     var shots = info.shots || [];
     if (shots.length) {
         infoHtml += '<div class="fd-shots">' + shots.map(function (src) {
-            return '<img src="' + src + '" alt="" loading="lazy">';
+            return '<img src="' + src + '" alt="" loading="lazy"'
+                + ' onerror="PosnicPro.settings._shotMissing(this);">';
         }).join('') + '</div>';
+    } else if (key) {
+        infoHtml += '<div class="fd-shots" data-shot-key="' + esc(key) + '">'
+            + '<img src="static/images/features/' + esc(key) + '-1.png" alt="" data-shot-n="1"'
+            + ' onload="PosnicPro.settings._shotNext(this);"'
+            + ' onerror="PosnicPro.settings._shotMissing(this);">'
+            + '</div>';
     }
     infoHtml += '<div class="q-label">About</div><p class="fd-text">' + esc(info.about || desc) + '</p>';
     if ((info.benefits || []).length) {
