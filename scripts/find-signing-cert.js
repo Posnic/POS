@@ -21,7 +21,7 @@ const { execFileSync } = require('child_process');
 
 const PS = [
   '$ErrorActionPreference = "SilentlyContinue";',
-  '$c = Get-ChildItem Cert:\CurrentUser\My, Cert:\LocalMachine\My |',
+  '$c = Get-ChildItem Cert:/CurrentUser/My, Cert:/LocalMachine/My |',
   '  Where-Object { $_.EnhancedKeyUsageList.FriendlyName -contains "Code Signing" };',
   '$c | ForEach-Object {',
   '  [PSCustomObject]@{',

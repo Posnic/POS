@@ -192,12 +192,30 @@ test('an empty store is diagnosed, not just reported', () => {
   /* The registry path must not carry single backslashes: in a JS string
      '\SOFTWARE' collapses to 'SOFTWARE' and the query silently returns
      nothing, which read as "no Certum drivers installed" when four were. */
-  const line = finder.split(String.fromCharCode(10)).find((l) => l.includes('Calais'));
-  assert.ok(line, 'the minidriver query is gone');
-  assert.ok(
-    !line.includes(String.fromCharCode(92)),
-    'the registry path uses unescaped backslashes - the query returns nothing and lies',
-  );
+  /*
+   * NO backslash on ANY PowerShell line in these scripts.
+   *
+   * Inside a JS single-quoted string 'Cert:\CurrentUser\My' collapses to
+   * 'Cert:CurrentUserMy' - every escape swallowed - and PowerShell returns
+   * nothing for it. That is worse than an error: the registry query reported
+   * "Certum minidrivers registered: none" while four were installed, and the
+   * store query reported no certificate while a linked one sat right there.
+   *
+   * Guarding one line was not enough; both had the bug, and the second was
+   * found only because a certificate that WAS in the store kept reading as
+   * absent. Windows accepts forward slashes in both provider paths, so the
+   * rule is simply that no backslash belongs in these strings at all.
+   */
+  const psLines = finder
+    .split(String.fromCharCode(10))
+    .filter((l) => /Get-ChildItem|Get-PnpDevice|Get-Item /.test(l));
+  assert.ok(psLines.length >= 2, 'the PowerShell queries are gone');
+  for (const l of psLines) {
+    assert.ok(
+      !l.includes(String.fromCharCode(92)),
+      'a PowerShell path uses backslashes - JS eats them and the query silently returns nothing: ' + l.trim(),
+    );
+  }
 });
 test('there is a way to sign before the card driver catches up', () => {
   /* The minidriver for this card model does not exist yet, so Windows publishes
