@@ -266,7 +266,9 @@ PosnicPro.branches = {
             var params = {
                 method: method,
                 url: url,
-                data: JSON.stringify(Object.assign(formData, registerType, countryId))
+                data: JSON.stringify(
+                    Object.assign(formData, registerType, countryId, PosnicPro.branches.sharingChoice())
+                )
             };
 
             PosnicPro.request(params, function (response) {
@@ -416,6 +418,7 @@ PosnicPro.branches = {
                 (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('#branch_button_title').text('புதுப்பி') : $('#branch_button_title').text('Update');
 
                 $('.update-button').attr('disabled', 'disabled').removeClass('btn-outline-success');
+                PosnicPro.branches.sharingRow(false);
                 $('#branch_view').modal('show');
                 $('.register-wrapper .register-fields .register-input:nth-child(n+2)').remove();
                 let $test = $('.register-input:parent');
@@ -449,6 +452,31 @@ PosnicPro.branches = {
         let $firstChild = $('.register-input:first-child');
         $('.add-field', $firstChild).show();
     },
+    /*
+     * The three sharing boxes, as EXPLICIT booleans (owner ask #85).
+     *
+     * serializeArray() omits an unchecked checkbox entirely, and the server
+     * treats an absent key as "use the default" - which for these is ticked.
+     * So unticking Customers and pressing Save would have shared them anyway,
+     * with the form showing the opposite. The one failure mode worth more than
+     * the others here is silence, so the value is stated rather than implied.
+     *
+     * Only on CREATE. Editing a branch is not where an account-wide rule is
+     * changed, and sending these on every branch save would let a stale form
+     * re-impose a default over a rule set in Settings.
+     */
+    sharingChoice: function () {
+        if ($('#branch_id').val() !== '') { return {}; }
+        return {
+            share_customers: $('#share_customers').is(':checked'),
+            share_suppliers: $('#share_suppliers').is(':checked'),
+            share_inventory: $('#share_inventory').is(':checked')
+        };
+    },
+    /* Shown while creating, hidden while editing - see sharingChoice. */
+    sharingRow: function (creating) {
+        $('#branch_sharing_row').toggle(!!creating);
+    },
     addbranchButton: function () {
         var loader = $(".loader-branch");
         loader.find(".loadingSpinner:first").remove();
@@ -460,6 +488,7 @@ PosnicPro.branches = {
         $('#branch_id').val('');
         $('#branches_new .alert').remove();
         $('#show_last_created_branch').hide();
+        PosnicPro.branches.sharingRow(true);
     },
     exportBranches: function () {
         PosnicPro.exportTableData(PosnicPro.branches_checkbox, 'branches');

@@ -74,6 +74,43 @@
                     </div>
                 </div>
 
+                <!-- Owner ask #85. Shown only while CREATING, because this is a
+                     decision about a new shop and there is exactly one good
+                     moment to make it. Editing a branch later goes through
+                     Settings, where the rule lives permanently.
+                     Ticked by default: a person who walks into two shops of one
+                     chain is one person, with one balance and one set of
+                     loyalty points. Stock is not - it is on a shelf, in one
+                     building - so that box starts clear. -->
+                <div class="form-row" id="branch_sharing_row">
+                    <fieldset class="col-12 form-group border p-3 field-general-setting">
+                        <legend class="w-auto px-2 mb-0" style="font-size:14px;">
+                            <lang class="lang_datasharing_title">Shared with your other shops</lang>
+                        </legend>
+                        <div class="custom-control custom-checkbox mb-1">
+                            <input type="checkbox" class="custom-control-input" id="share_customers" name="share_customers" checked>
+                            <label class="custom-control-label" for="share_customers">
+                                <lang class="lang_sharecustomers_title">Customers</lang>
+                                <small class="form-text text-muted mb-0">One record per person across every shop - same balance, same loyalty.</small>
+                            </label>
+                        </div>
+                        <div class="custom-control custom-checkbox mb-1">
+                            <input type="checkbox" class="custom-control-input" id="share_suppliers" name="share_suppliers" checked>
+                            <label class="custom-control-label" for="share_suppliers">
+                                <lang class="lang_sharesuppliers_title">Suppliers</lang>
+                                <small class="form-text text-muted mb-0">The people you buy from are usually the same everywhere.</small>
+                            </label>
+                        </div>
+                        <div class="custom-control custom-checkbox">
+                            <input type="checkbox" class="custom-control-input" id="share_inventory" name="share_inventory">
+                            <label class="custom-control-label" for="share_inventory">
+                                <lang class="lang_shareinventory_title">Stock counts</lang>
+                                <small class="form-text text-muted mb-0">Off by default - stock sits on one shelf, in one building. A shared count can sell what is not there.</small>
+                            </label>
+                        </div>
+                        <small class="form-text text-muted mt-2">Applies to all your shops, and can be changed later in Settings.</small>
+                    </fieldset>
+                </div>
                 <div class="form-row">
                     <div class="form-group col-md-12">
                         <div class="pull-right">

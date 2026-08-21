@@ -3606,6 +3606,58 @@
                                                     </fieldset>
                                                 </div>
 
+                                                <!-- Owner ask #85. Its own fieldset and its own Save, because it
+                                                     writes to a different place from everything around it: the
+                                                     ACCOUNT, not this branch. Riding the general form save would
+                                                     let a screen showing one shop push its view onto all of them.
+                                                     Owner-class on the server; the note says so rather than
+                                                     letting a cashier press Save and get a 403. -->
+                                                <div class="row">
+                                                    <fieldset class="col-12 form-group border p-3 field-general-setting" id="sharing_fieldset">
+                                                        <legend class="w-auto px-2"><lang class="lang_datasharing_title">Shared between your shops</lang></legend>
+                                                        <small class="form-text text-muted mb-2">Applies to every shop on
+                                                            this account. Changing it takes effect on the next search -
+                                                            nothing is copied or moved.</small>
+                                                        <div class="row">
+                                                            <div class="form-group col-md-4">
+                                                                <label>Customers</label>
+                                                                <div class="custom-control custom-switch mt-2">
+                                                                    <input type="checkbox" class="custom-control-input" id="set_share_customers">
+                                                                    <label class="custom-control-label" for="set_share_customers"></label>
+                                                                </div>
+                                                                <small class="form-text text-muted">One record per person
+                                                                    across every shop - same balance, same loyalty.</small>
+                                                            </div>
+                                                            <div class="form-group col-md-4">
+                                                                <label>Suppliers</label>
+                                                                <div class="custom-control custom-switch mt-2">
+                                                                    <input type="checkbox" class="custom-control-input" id="set_share_suppliers">
+                                                                    <label class="custom-control-label" for="set_share_suppliers"></label>
+                                                                </div>
+                                                                <small class="form-text text-muted">The people you buy from
+                                                                    are usually the same everywhere.</small>
+                                                            </div>
+                                                            <div class="form-group col-md-4">
+                                                                <label>Stock counts</label>
+                                                                <div class="custom-control custom-switch mt-2">
+                                                                    <input type="checkbox" class="custom-control-input" id="set_share_inventory">
+                                                                    <label class="custom-control-label" for="set_share_inventory"></label>
+                                                                </div>
+                                                                <small class="form-text text-muted">Stock sits on one shelf,
+                                                                    in one building. A shared count can sell what is not
+                                                                    there.</small>
+                                                            </div>
+                                                        </div>
+                                                        <div class="d-flex align-items-center" style="gap:10px;">
+                                                            <button type="button" class="btn btn-sm btn-primary" id="sharing_save_btn"
+                                                                onclick="PosnicPro.settings.saveSharing();">
+                                                                <i class="feather icon-save mr-2"></i>Save sharing
+                                                            </button>
+                                                            <small class="text-muted" id="sharing_status"></small>
+                                                        </div>
+                                                    </fieldset>
+                                                </div>
+
                                                 <!-- Legacy hidden blocks ride along unchanged: their ids are
                                                      read by updateCommonSetting and old data still round-trips. -->
                                                 <div class="form-row" style="display: none;">
