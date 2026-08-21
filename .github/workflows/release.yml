@@ -14,11 +14,14 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Existing tag to build (for re-running a failed release)"
+        description: "Existing v* tag to rebuild; dispatch with the same tag as the workflow ref"
         required: true
 
 permissions:
   contents: write   # needed to create the release and upload assets
+  id-token: write   # short-lived identity for the Sigstore signing certificate
+  attestations: write
+  artifact-metadata: write
 
 jobs:
   # A tag that fails its own tests should never reach a download page.
@@ -31,11 +34,10 @@ jobs:
   #
   # Calling ci.yml rather than copying its jobs means the two cannot drift.
   #
-  # One limit worth knowing: a reusable workflow always runs against the ref
-  # that triggered it. On the normal path - pushing a v* tag - that is the tag,
-  # which is what we want. On a workflow_dispatch re-run it is the default
-  # branch, so the tag's own build is still gated, but by main's tests. Re-run
-  # the tag push itself if that distinction matters.
+  # A reusable workflow always runs against the ref that triggered it. A normal
+  # v* tag push is already correct. For a manual rebuild, the gate below requires
+  # the dispatch ref and requested tag to match, so CI, the build and provenance
+  # all identify the same source commit.
   verify:
     name: Full CI
     uses: ./.github/workflows/ci.yml
@@ -49,6 +51,19 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22
+
+      - name: Manual rebuild ref matches the requested tag
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        env:
+          REQUESTED_TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          expected="refs/tags/${REQUESTED_TAG}"
+          if [[ "$GITHUB_REF" != "$expected" ]]; then
+            echo "::error::Dispatch this workflow with --ref ${REQUESTED_TAG}; current ref is ${GITHUB_REF}."
+            exit 1
+          fi
 
       # verifyUpdateCodeSignature has to stay false while builds are unsigned -
       # turning it on with no signature to check makes every update fail. The
@@ -268,6 +283,15 @@ jobs:
           sha256sum $(ls | grep -vE 'latest.*\.yml$|\.blockmap$|release-manifest\.json$|asset-manifest\.json$') > SHA256SUMS.txt
           echo "Publishing:"; ls -lh
 
+      # The checksum list is also the exact subject list for provenance. This
+      # binds every primary download to this public repository, workflow, ref and
+      # commit through GitHub's Sigstore-backed attestation service. It does not
+      # code-sign an installer or say that the software is safe.
+      - name: Attest primary release downloads
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-checksums: release/SHA256SUMS.txt
+
       - uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
         with:
           tag_name: ${{ inputs.tag || github.ref_name }}
@@ -301,6 +325,16 @@ jobs:
             That warning is accurate. You are trusting the download rather than a
             certificate, so **check `SHA256SUMS.txt` against your file before installing**,
             and download only from this releases page.
+
+            ### Verify GitHub build provenance
+
+            Every primary download listed in `SHA256SUMS.txt` has a signed GitHub
+            provenance attestation. With GitHub CLI installed, verify a downloaded file:
+
+            `gh attestation verify <downloaded-file> --repo Posnic/POS`
+
+            This verifies the repository, workflow, ref and commit recorded for the file.
+            It is not code signing, an independent audit or proof that the software is safe.
 
             Automatic updates are not signature-verified in this build either. Posnic
             checks the download against the hash it was told to expect, but nothing yet
