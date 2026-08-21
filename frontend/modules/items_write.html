@@ -657,20 +657,37 @@
                             <h5 class="card-title mb-0"><lang class="lang_codes_packs_title">Extra barcodes &amp; packs</lang></h5>
                         </div>
                         <div class="card-body">
-                            <!-- V3: manufacturer / extra codes; scanning any of them finds this item. -->
-                            <input type="text" class="form-control clear_text_item" id="items_barcodes_alt"
-                                name="items_barcodes_alt" maxlength="400"
-                                placeholder="Alternate barcodes, comma separated" autocomplete="off">
+                            <!-- V3: manufacturer / extra codes; scanning any of them finds this item.
+                                 These three carried a placeholder and no label, so the moment
+                                 anything was typed the field stopped saying what it was - and a
+                                 filled-in form is exactly when you go back to check. Every other
+                                 field on this screen is labelled; these were the exception. -->
+                            <div class="form-row" id="items_barcodes_alt_row">
+                                <div class="col-12">
+                                    <label class="form-control-placeholder items-label-inline" for="items_barcodes_alt">
+                                        <lang class="lang_barcodes_alt_title">Extra barcodes</lang>
+                                    </label>
+                                    <input type="text" class="form-control clear_text_item" id="items_barcodes_alt"
+                                        name="items_barcodes_alt" maxlength="400"
+                                        placeholder="Alternate barcodes, comma separated" autocomplete="off">
+                                </div>
+                            </div>
                             <!-- V3: purchase-unit assist - "box of 24". Stock stays in base units. -->
                             <div class="form-row mt-2">
                                 <!-- An even pair. 7/5 was arbitrary: two fields of the same kind,
                                              so two halves. -->
                                         <div class="col-md-6">
+                                    <label class="form-control-placeholder items-label-inline" for="items_purchase_unit">
+                                        <lang class="lang_purchase_unit_title">Purchase unit</lang>
+                                    </label>
                                     <input type="text" class="form-control clear_text_item" id="items_purchase_unit"
                                         name="items_purchase_unit" maxlength="30"
                                         placeholder="Purchase unit (e.g. box)" autocomplete="off">
                                 </div>
                                 <div class="col-md-6">
+                                    <label class="form-control-placeholder items-label-inline" for="items_conversion_factor">
+                                        <lang class="lang_conversion_factor_title">Units per pack</lang>
+                                    </label>
                                     <input type="number" min="0" step="any" class="form-control clear_text_item" id="items_conversion_factor"
                                         name="items_conversion_factor" placeholder="Units per pack" autocomplete="off">
                                 </div>
