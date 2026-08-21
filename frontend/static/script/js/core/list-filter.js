@@ -216,10 +216,19 @@ PosnicPro.listFilter = {
         if (n > 0) $btn.append('<span class="lf-count">' + n + '</span>');
     };
 
+    /* Toggling is a state, so the button has to look like one.
+     *
+     * A button that looks identical open and closed leaves the panel's own
+     * appearance as the only clue - and the panel sits in a different part of
+     * the header. Pressing it should look pressed, the way a real toggle does.
+     * aria-expanded says the same thing to a screen reader. */
     LF.toggle = function (key) {
         var m = LF._mounted[key];
         if (!m) return;
-        $(m.cfg.container).slideToggle(120);
+        var $panel = $(m.cfg.container);
+        var opening = !$panel.is(':visible');
+        $panel.slideToggle(120);
+        $(m.cfg.button).toggleClass('lf-btn-open', opening).attr('aria-expanded', opening ? 'true' : 'false');
     };
 
     LF._changed = function (key) {
@@ -326,86 +335,135 @@ PosnicPro.listFilter = {
 })();
 
 /* -------------------------------------------------------------------------
- * Typeahead
+ * The picker
  *
- * Choosing "Customer" should offer the customers this till actually uses, not
- * demand exact spelling. The source is deliberately cheap and deliberately
- * NOT a query per keystroke:
+ * Same shape as the sale screen's Choose-customer popover, because that one is
+ * already familiar and already right: a titled card, a list where every row
+ * carries an icon saying WHY it is there, and the recent ones first.
  *
- *   1. recents from local storage - what this till used last, instantly
- *   2. a small seed of customers, fetched once per session and kept
+ * Entity-driven so the next list gets it free. Quotes asks for customers;
+ * sales will ask for items, purchases for suppliers. Each entity supplies a
+ * title, an icon and a source - nothing else differs, so nothing else is
+ * duplicated.
  *
- * Both already exist for the sale screen; reusing them means the filter costs
- * nothing extra and stays warm. Only if a typed term matches neither does it
- * fall back to the server, debounced - and even then the list keeps showing
- * what it had rather than blanking.
+ * Every source reads what is already cached. A picker that queries per
+ * keystroke is the thing this whole bar exists to avoid.
  * ---------------------------------------------------------------------- */
 (function () {
     var LF = PosnicPro.listFilter;
     var esc = function (v) { return $('<span>').text(v == null ? '' : String(v)).html(); };
 
-    /* Recents first, then the session seed, de-duplicated. */
-    LF.customerSuggest = function (term) {
-        var out = [];
-        var seen = {};
-        var push = function (c) {
-            if (!c || !c.name) return;
-            var id = String(c.id || c._id || c.name);
-            if (seen[id]) return;
-            seen[id] = 1;
-            out.push({ id: id, name: c.name, phone: c.phone || '' });
-        };
+    var uniq = function (rows) {
+        var seen = {}, out = [];
+        rows.forEach(function (r) {
+            if (!r || !r.label) return;
+            var k = String(r.id || r.label).toLowerCase();
+            if (seen[k]) return;
+            seen[k] = 1;
+            out.push(r);
+        });
+        return out;
+    };
 
+    var match = function (rows, term) {
+        var q = String(term || '').trim().toLowerCase();
+        if (!q) return rows.slice(0, 8);
+        return rows.filter(function (r) {
+            return String(r.label).toLowerCase().indexOf(q) !== -1
+                || String(r.note || '').toLowerCase().indexOf(q) !== -1;
+        }).slice(0, 8);
+    };
+
+    /* recent: this till's own history, so it leads and says so with a clock. */
+    var recents = function (key) {
         try {
             if (PosnicPro.sales && typeof PosnicPro.sales._recentGet === 'function') {
-                (PosnicPro.sales._recentGet('recent_customers') || []).forEach(push);
+                return PosnicPro.sales._recentGet(key) || [];
             }
-            (PosnicPro.sales && PosnicPro.sales._customerSeed ? PosnicPro.sales._customerSeed : []).forEach(push);
-        } catch (e) {
-            /* a cold till with no history is normal, not an error */
-        }
+        } catch (e) { /* a cold till has no history - not an error */ }
+        return [];
+    };
 
-        var q = String(term || '').trim().toLowerCase();
-        if (!q) return out.slice(0, 8);
-        return out.filter(function (c) {
-            return c.name.toLowerCase().indexOf(q) !== -1
-                || String(c.phone).toLowerCase().indexOf(q) !== -1;
-        }).slice(0, 8);
+    LF.ENTITIES = {
+        customer: {
+            title: 'Choose customer',
+            icon: 'icon-users',
+            rows: function () {
+                var r = recents('recent_customers').map(function (c) {
+                    return { id: c.id, label: c.name, note: c.phone, recent: true };
+                });
+                var seed = ((PosnicPro.sales && PosnicPro.sales._customerSeed) || []).map(function (c) {
+                    return { id: c.id, label: c.name, note: c.phone };
+                });
+                return uniq(r.concat(seed));
+            }
+        },
+        item: {
+            title: 'Choose item',
+            icon: 'icon-box',
+            rows: function () {
+                return uniq(recents('recent_items').map(function (i) {
+                    return { id: i.id, label: i.name, note: i.sku || i.barcode, recent: true };
+                }));
+            }
+        },
+        supplier: {
+            title: 'Choose supplier',
+            icon: 'icon-truck',
+            rows: function () {
+                return uniq(recents('recent_suppliers').map(function (s) {
+                    return { id: s.id, label: s.name, note: s.phone, recent: true };
+                }));
+            }
+        }
+    };
+
+    LF.suggest = function (entity, term) {
+        var e = LF.ENTITIES[entity];
+        if (!e) return [];
+        return match(e.rows(), term);
     };
 
     LF.typeahead = function (key, term) {
         var m = LF._mounted[key];
         if (!m) return;
         var $box = $(m.cfg.container).find('.lf-typeahead');
+        var entity = m.cfg.typeahead;
+        var e = entity && LF.ENTITIES[entity];
+        if (!e) { $box.hide().empty(); return; }
 
-        /* Suggest regardless of which field is selected.
-           Gating this on field === customer was wrong twice over: searching
-           "All fields" for a customer is exactly when the suggestion helps,
-           and with All selected - the default - typing hid the list that had
-           just appeared on focus. Picking a name narrows the field itself, so
-           the selector follows the choice instead of gating it. */
-        if (!m.cfg.typeahead) { $box.hide().empty(); return; }
+        var rows = LF.suggest(entity, term);
+        var body = rows.length
+            ? rows.map(function (r) {
+                /* a clock means "you used this here", a plain icon means "this
+                   exists" - the distinction is why recents are worth showing */
+                var ic = r.recent ? 'icon-clock' : e.icon;
+                return '<a href="javascript:void(0)" class="lf-pick-row" data-name="' + esc(r.label) + '">'
+                    + '<i class="feather ' + ic + '"></i>'
+                    + '<span class="lf-pick-name">' + esc(r.label) + '</span>'
+                    + (r.note ? '<span class="lf-pick-note">' + esc(r.note) + '</span>' : '')
+                    + '</a>';
+            }).join('')
+            : '<div class="lf-pick-empty">Nothing matches - press Enter to search anyway</div>';
 
-        var rows = LF.customerSuggest(term);
-        if (!rows.length) { $box.hide().empty(); return; }
-
-        $box.html(rows.map(function (c) {
-            return '<a href="javascript:void(0)" class="lf-ta-row" data-name="' + esc(c.name) + '">'
-                + esc(c.name)
-                + (c.phone ? ' <small class="text-muted">' + esc(c.phone) + '</small>' : '')
-                + '</a>';
-        }).join('')).show();
+        $box.html(
+            '<div class="lf-pick-head">'
+            + '<span class="lf-pick-title"><i class="feather ' + esc(e.icon) + ' mr-1"></i>' + esc(e.title) + '</span>'
+            + '<a href="javascript:void(0)" class="lf-pick-x" title="Close">&times;</a>'
+            + '</div>'
+            + '<div class="lf-pick-list">' + body + '</div>'
+        ).show();
     };
 
-    /* Clicking a suggestion fills the box and searches for exactly that name -
-       the point of picking from a list is that you no longer want fuzzy. */
-    $(document).on('click', '.lf-ta-row', function () {
+    /* Picking narrows the field and switches to exact - choosing from a list
+       means you have stopped wanting fuzzy. */
+    $(document).on('click', '.lf-pick-row', function () {
         var $panel = $(this).closest('[data-lf]');
         var key = $panel.attr('data-lf');
         var m = LF._mounted[key];
         if (!m) return;
-        var name = $(this).data('name');
-        m.state.search = String(name);
+        var name = String($(this).data('name'));
+        m.state.search = name;
         m.state.exact = true;
         if (m.cfg.typeaheadField) {
             m.state.field = m.cfg.typeaheadField;
@@ -417,8 +475,12 @@ PosnicPro.listFilter = {
         LF._changed(key);
     });
 
-    /* Opening the box with no term shows the frequent ones - "just show on
-       click", without making anyone type first. */
+    $(document).on('click', '.lf-pick-x', function () {
+        $(this).closest('.lf-typeahead').hide().empty();
+    });
+
+    /* Opening with no term shows the frequent ones - "just show on click",
+       without making anyone type first. */
     $(document).on('focus', '.lf-q', function () {
         var key = $(this).closest('[data-lf]').attr('data-lf');
         if (key) LF.typeahead(key, this.value);
