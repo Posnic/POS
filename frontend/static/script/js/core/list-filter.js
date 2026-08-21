@@ -402,8 +402,12 @@ PosnicPro.listFilter = {
             title: 'Choose item',
             icon: 'icon-box',
             rows: function () {
+                /* price, not sku: that is what the sale screen actually
+                   stores on a recent item (sales.js _recentPush at the add-line
+                   path). Reading a field nothing writes renders a blank note
+                   on every row and looks like a bug in the picker. */
                 return uniq(recents('recent_items').map(function (i) {
-                    return { id: i.id, label: i.name, note: i.sku || i.barcode, recent: true };
+                    return { id: i.id, label: i.name, note: i.price, recent: true };
                 }));
             }
         },

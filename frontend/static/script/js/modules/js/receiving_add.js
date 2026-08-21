@@ -1484,6 +1484,19 @@ $(function () {
                     $('#receiving_add_supplier_state').val(suggestion.data.state);
                     $('#receiving_add_supplier_gst_type').val(suggestion.data.gst_type);
                     $('#receiving_add_supplier_gst_number').val(suggestion.data.gst_number);
+                    /* Recency, the same way the sale screen records customers
+                       and items. The shared filter bar offers a supplier picker
+                       (core/list-filter.js, LF.ENTITIES.supplier) that reads
+                       this list - without it that picker opens empty on every
+                       till and looks broken. Written where the choice is made,
+                       so every path that picks a supplier feeds it. */
+                    if (PosnicPro.sales && PosnicPro.sales._recentPush) {
+                        PosnicPro.sales._recentPush('recent_suppliers', {
+                            id: suggestion.data.id,
+                            name: suggestion.value || suggestion.data.name,
+                            phone: suggestion.data.phone
+                        }, 'id');
+                    }
 //                    let hash = window.location.hash.slice(1);
 //                    if (hash === '/receivings/new') {
 //                        PosnicPro.receivings.clearReceivingForm();

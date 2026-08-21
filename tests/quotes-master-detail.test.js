@@ -921,3 +921,43 @@ test('the quotes list gets air between the header and the card', () => {
   assert.ok(bar, '#quotes_new .contentbar has no rule, so the global 0 still wins');
   assert.match(bar, /padding-top:\s*5px\s*!important/, 'the global .contentbar padding-top:0 is !important');
 });
+
+/*
+ * Every entity the picker offers must have something behind it.
+ *
+ * LF.ENTITIES declares customer, item and supplier. A declared entity whose
+ * source is never written opens an empty popover on every till and reads as a
+ * broken feature - the same failure as a settings switch nothing consults, and
+ * one of those shipped and had to be removed this week. So the check is
+ * mechanical: every recents key the picker READS must be a key something
+ * WRITES.
+ */
+test('every recents list the picker reads is one something writes', () => {
+  const salesJs = salesSource;
+  const receivingJs = fs.readFileSync(
+    path.join(ROOT, 'frontend', 'static', 'script', 'js', 'modules', 'js', 'receiving_add.js'),
+    'utf8',
+  );
+  const written = new Set(
+    [...salesJs.matchAll(/_recentPush\('([a-z_]+)'/g), ...receivingJs.matchAll(/_recentPush\('([a-z_]+)'/g)].map(
+      (m) => m[1],
+    ),
+  );
+  const read = [...listFilterSrc.matchAll(/recents\('([a-z_]+)'\)/g)].map((m) => m[1]);
+
+  assert.ok(read.length >= 3, 'the picker should read a list per entity');
+  for (const key of read) {
+    assert.ok(
+      written.has(key),
+      `the picker reads ${key} but nothing writes it - that entity opens empty`,
+    );
+  }
+});
+
+test('a recent row only shows fields the writer actually stores', () => {
+  /* recent_items carries {id, name, price, image}. Reading sku or barcode off
+     it renders a blank note on every row. */
+  const entities = blockAt(listFilterSrc, 'LF.ENTITIES = {');
+  assert.ok(!/i\.sku/.test(entities), 'recent items have no sku - that note is always blank');
+  assert.match(entities, /note: i\.price/, 'price is what a recent item actually carries');
+});
