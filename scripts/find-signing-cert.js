@@ -104,6 +104,10 @@ function diagnose() {
     console.log('');
     console.log('  Fix: update the Certum card drivers / proCertum CardManager to a');
     console.log('  build that supports this card model, then reinsert the card.');
+    console.log('');
+    console.log('  Or skip the wait: the Certum CSP can already reach the key, so the');
+    console.log('  certificate can be imported and linked by hand. Download it from the');
+    console.log('  Certum page, then: npm run sign:link -- <file>');
     return;
   }
 

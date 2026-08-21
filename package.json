@@ -41,6 +41,7 @@
     "clear:brand-seed": "node scripts/clear-brand-seed.js",
     "check:declared-deps": "node scripts/check-declared-deps.js",
     "sign:cert": "node scripts/find-signing-cert.js",
+    "sign:link": "node scripts/link-signing-cert.js",
     "sign:verify": "node scripts/verify-signature.js",
     "scan:secrets": "node scripts/scan-git-history.js",
     "badges": "node scripts/check-badges.js",
