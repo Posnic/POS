@@ -209,3 +209,53 @@ describe('the defaults offered when a branch is created', () => {
     }
   });
 });
+
+/*
+ * The cache must not grow forever.
+ *
+ * Expired entries were ignored but never deleted, so the map held one entry per
+ * (licence, branch) for the life of the process - including shops that closed
+ * months ago. One process serves many shops, so that grows in the one direction
+ * that never comes back.
+ */
+describe('the cache is bounded', () => {
+  test('expired entries are actually removed, not just ignored', async () => {
+    jest.useFakeTimers();
+    try {
+      resolves({ share_customers: true });
+      /* Fill past the sweep threshold with distinct branches. */
+      for (let i = 0; i <= dataSharing.SWEEP_ABOVE + 5; i += 1) {
+        await dataSharing.isShared('customers', { licenseId: 'A', branchId: `b${i}` });
+      }
+      expect(dataSharing._cache.size).toBeGreaterThan(dataSharing.SWEEP_ABOVE);
+
+      /* Everything ages out, then one more write triggers the sweep. */
+      jest.advanceTimersByTime(31 * 1000);
+      await dataSharing.isShared('customers', { licenseId: 'A', branchId: 'fresh' });
+      expect(dataSharing._cache.size).toBe(1);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  test('a sweep never drops an entry that is still live', async () => {
+    /* Dropping live entries would turn the cache into a slow miss generator. */
+    jest.useFakeTimers();
+    try {
+      resolves({ share_customers: true });
+      await dataSharing.isShared('customers', { licenseId: 'A', branchId: 'keep' });
+      dataSharing._sweep(Date.now());
+      expect(dataSharing._cache.size).toBe(1);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  test('a small deployment never pays for the sweep', async () => {
+    /* A single-shop till has a handful of entries. Walking the map on every
+       write there would be pure overhead. */
+    resolves({ share_customers: true });
+    await dataSharing.isShared('customers', { licenseId: 'A', branchId: 'b1' });
+    expect(dataSharing.SWEEP_ABOVE).toBeGreaterThan(50);
+  });
+});

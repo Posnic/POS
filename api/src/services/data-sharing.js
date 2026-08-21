@@ -125,6 +125,26 @@ const truthy = (v) => {
 const TTL_MS = 30 * 1000;
 const cache = new Map();
 
+/*
+ * Expired entries are logically ignored but were never DELETED, so the map held
+ * one entry per (licence, branch) for the life of the process - including for
+ * shops that closed months ago. One process serves many shops, so that grows in
+ * the one direction that never comes back.
+ *
+ * Swept rather than timed: a setInterval would keep a handle alive for the
+ * process lifetime to tidy a few hundred small objects, and would run on an
+ * idle server that has nothing to tidy. Sweeping on WRITE, only once the map is
+ * big enough to be worth walking, costs nothing until it matters and nothing at
+ * all on a single-shop till.
+ */
+const SWEEP_ABOVE = 200;
+
+function sweep(now) {
+  for (const [k, v] of cache) {
+    if (v.until <= now) cache.delete(k);
+  }
+}
+
 const cacheKey = (license, branch) => `${String(license || '-')}::${String(branch || '-')}`;
 
 async function resolveAll(context = {}) {
@@ -152,7 +172,9 @@ async function resolveAll(context = {}) {
     values = { ...READ_DEFAULTS };
   }
 
-  cache.set(key, { values, until: Date.now() + TTL_MS });
+  const now = Date.now();
+  if (cache.size > SWEEP_ABOVE) sweep(now);
+  cache.set(key, { values, until: now + TTL_MS });
   return values;
 }
 
@@ -205,5 +227,7 @@ module.exports = {
   scopeBranch,
   invalidate,
   _repo,
+  _sweep: sweep,
+  SWEEP_ABOVE,
   _cache: cache,
 };
