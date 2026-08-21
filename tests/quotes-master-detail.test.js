@@ -1241,3 +1241,44 @@ test('mouse and keyboard share one highlight', () => {
   assert.match(css, /\.lf-pick-row\.is-active/, 'the keyboard highlight has no styling at all');
   assert.match(css, /\[data-theme\] \.lf-pick-row\.is-active/, 'and none on a dark theme');
 });
+
+/*
+ * What is TYPED and what is APPLIED are different things.
+ *
+ * A term below MIN_SEARCH is deliberately never sent - one character matches
+ * nearly every row, the most expensive query for the least useful answer. But
+ * the character is in the input, and state.search follows the input so the box
+ * renders what was typed. Two live bugs came from not separating them.
+ */
+test('one typed character does not count as an active filter', () => {
+  /* The Filter button would say "1 filter" over a list nothing had filtered. */
+  const applied = blockAt(listFilterSrc, '_applied: function (st) {');
+  assert.match(applied, /MIN_SEARCH \|\| 2/, 'an unset minimum would silently disable search entirely');
+  const count = blockAt(listFilterSrc, 'activeCount: function (key) {');
+  assert.match(
+    count,
+    /if \(PosnicPro\.listFilter\._applied\(st\)\) n\+\+/,
+    'counting st.search directly counts a filter that was never applied',
+  );
+});
+
+test('another trigger cannot smuggle a sub-minimum term into the request', () => {
+  /* Type one letter, then click a status chip: the reload carried "A" along and
+     applied the search the debounce had just refused to run. */
+  const params = blockAt(listFilterSrc, 'params: function (key) {');
+  assert.match(params, /var term = PosnicPro\.listFilter\._applied\(st\)/, 'params must ask what is applied');
+  assert.ok(!/out\.search = st\.search/.test(params), 'sending the raw typed value is the bug');
+});
+
+test('an exact match is applied whatever its length', () => {
+  /* The minimum exists because a one-letter FRAGMENT scans every row; an
+     anchored exact match is index-served at any length. Picking a name from the
+     list sets exact, so a customer called "K" must still filter - otherwise a
+     deliberate pick silently does nothing. */
+  const applied = blockAt(listFilterSrc, '_applied: function (st) {');
+  assert.match(applied, /if \(st\.exact\) return t;/, 'a picked short name would be dropped');
+  assert.ok(
+    applied.indexOf('if (st.exact) return t;') < applied.indexOf('MIN_SEARCH'),
+    'the exact bypass must come before the length test, or it never runs',
+  );
+});
