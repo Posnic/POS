@@ -509,6 +509,63 @@ PosnicPro.listFilter = {
         LF._changed(key);
     });
 
+    /*
+     * Arrow keys and Enter, because the sale screen has them.
+     *
+     * The owner asked for this picker to work "similar as in sales new", and
+     * that one runs on the autocomplete plugin, which moves through its list on
+     * the arrow keys. A till is operated from the keyboard - reaching for a
+     * mouse to pick the customer you have already half-typed is the slow path -
+     * so a hand-rolled popover that only takes clicks is a downgrade wearing
+     * the same design.
+     *
+     * Enter with nothing highlighted deliberately does NOT pick the first row.
+     * It lets the typed text through as a plain search, which is what the empty
+     * state promises ("press Enter to search anyway") and what someone typing a
+     * partial name usually means. Highlighting is a deliberate act; Enter after
+     * one is a deliberate choice.
+     */
+    $(document).on('keydown', '.lf-q', function (e) {
+        var $box = $(this).closest('.lf-search').find('.lf-typeahead');
+        if (!$box.is(':visible')) return;
+        var $rows = $box.find('.lf-pick-row');
+        if (!$rows.length) return;
+
+        var down = e.key === 'ArrowDown' || e.keyCode === 40;
+        var up = e.key === 'ArrowUp' || e.keyCode === 38;
+        var enter = e.key === 'Enter' || e.keyCode === 13;
+        if (!down && !up && !enter) return;
+
+        var i = $rows.index($rows.filter('.is-active'));
+        if (enter) {
+            if (i < 0) return;   // nothing chosen - let the search run
+            e.preventDefault();
+            $rows.eq(i).trigger('click');
+            return;
+        }
+
+        /* preventDefault or the caret jumps to either end of the box while the
+           highlight moves, which reads as the text being eaten. */
+        e.preventDefault();
+        var next = down ? i + 1 : i - 1;
+        if (next >= $rows.length) next = 0;
+        if (next < 0) next = $rows.length - 1;
+        $rows.removeClass('is-active').eq(next).addClass('is-active');
+
+        /* Keep the highlight in view - the list scrolls, and a selection you
+           cannot see is worse than none. */
+        var row = $rows.get(next);
+        if (row && row.scrollIntoView) row.scrollIntoView({ block: 'nearest' });
+    });
+
+    /* Hovering moves the keyboard highlight rather than adding a second one.
+       Otherwise a hand landing on the mouse mid-arrow-key leaves two rows lit
+       and Enter takes the one the cursor is NOT on. */
+    $(document).on('mouseenter', '.lf-pick-row', function () {
+        $(this).closest('.lf-pick-list').find('.lf-pick-row').removeClass('is-active');
+        $(this).addClass('is-active');
+    });
+
     $(document).on('click', '.lf-pick-x', function () {
         $(this).closest('.lf-typeahead').hide().empty();
     });
