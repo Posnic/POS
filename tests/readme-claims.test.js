@@ -59,7 +59,14 @@ test('the build badge points at the workflow that gates main', () => {
 test('every badge that states a number is checked by this file', () => {
   /* So a new hardcoded claim cannot arrive unnoticed. If this fails, either
      derive the number above or make the badge live. */
-  const KNOWN = ['REST%20API', 'tests', 'coverage', 'licence', 'platforms'];
+  const KNOWN = [
+    'REST%20API',
+    'tests',
+    'coverage',
+    'source%20licence',
+    'package%20notices',
+    'platforms',
+  ];
   const numeric = [...README.matchAll(/img\.shields\.io\/badge\/([^-]+)-/g)]
     .map((m) => m[1]);
 
@@ -70,9 +77,9 @@ test('every badge that states a number is checked by this file', () => {
   }
 });
 
-test('the licence badge matches what package.json declares', () => {
+test('the source licence badge matches what package.json declares', () => {
   const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
-  const claimed = (badge('licence') || '').replace(/--/g, '-');
+  const claimed = (badge('source%20licence') || '').replace(/--/g, '-');
 
   /* The badge shows the licence's name, package.json carries its SPDX
      identifier, and SPDX appends -only or -or-later to say whether later
@@ -84,7 +91,7 @@ test('the licence badge matches what package.json declares', () => {
     `README says ${claimed}; package.json says ${pkg.license}`);
 });
 
-test('the licence the badge names is the licence in the file', () => {
+test('the source licence the badge names is the licence in the file', () => {
   const licence = fs.readFileSync(path.join(ROOT, 'LICENSE'), 'utf8');
   assert.match(licence, /GNU AFFERO GENERAL PUBLIC LICENSE/,
     'LICENSE is not the AGPL the badge and package.json claim');
