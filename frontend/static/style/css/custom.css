@@ -3946,7 +3946,11 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     color: #1f2328;
     text-decoration: none;
 }
-.lf-pick-row:hover {
+/* Keyboard and mouse share ONE highlight. Two different treatments would put
+   two highlights on screen at once the moment a hand touches the mouse
+   mid-arrow-key, and neither would look like the one Enter is about to take. */
+.lf-pick-row:hover,
+.lf-pick-row.is-active {
     background: rgba(128, 128, 128, 0.10);
     color: #1f2328;
     text-decoration: none;
@@ -3977,7 +3981,8 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     border-color: var(--theme-border-color) !important;
 }
 [data-theme] .lf-pick-row { color: var(--theme-text-primary); }
-[data-theme] .lf-pick-row:hover {
+[data-theme] .lf-pick-row:hover,
+[data-theme] .lf-pick-row.is-active {
     background: var(--theme-table-row-hover);
     color: var(--theme-text-primary);
 }

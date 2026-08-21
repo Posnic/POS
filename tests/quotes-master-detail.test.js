@@ -1157,7 +1157,7 @@ test('the dead-selector sweep is a tool, and it runs', () => {
  */
 test('Escape dismisses the suggestion list', () => {
   const src = stripComments(listFilterSrc);
-  assert.match(src, /on\('keydown'/, 'nothing listens for a key at all');
+  assert.match(src, /on\('keydown', function \(e\)/, 'nothing listens for Escape at the document level');
   assert.match(src, /e\.key !== 'Escape' && e\.keyCode !== 27/, 'older browsers report keyCode, not key');
   assert.match(src, /\$\('\.lf-typeahead:visible'\)/, 'it must act only when one is actually open');
 });
@@ -1166,7 +1166,7 @@ test('Escape does not close everything behind the picker too', () => {
   /* Without stopPropagation the same keypress carries on, and dismissing a
      suggestion list would also close the panel or modal around it. */
   const src = stripComments(listFilterSrc);
-  const block = src.slice(src.indexOf("on('keydown'"));
+  const block = src.slice(src.indexOf("on('keydown', function (e)"));
   const body = block.slice(0, block.indexOf('});') + 3);
   assert.match(body, /if \(!\$open\.length\) return;[\s\S]*stopPropagation/, 'it must bail BEFORE stopping propagation');
 });
@@ -1177,10 +1177,67 @@ test('Escape does not reopen the list it just closed', () => {
      dismiss - and the input already has focus, since that is how Escape was
      pressed. */
   const src = stripComments(listFilterSrc);
-  const block = src.slice(src.indexOf("on('keydown'"));
+  const block = src.slice(src.indexOf("on('keydown', function (e)"));
   const body = block.slice(0, block.indexOf('});') + 3);
   assert.ok(
     !/trigger\('focus'\)/.test(body),
     'refocusing the search box re-fires the focus handler that opens the picker',
   );
+});
+
+/*
+ * Arrow keys in the picker.
+ *
+ * "I want similar as in sales new" - and the sale screen runs on the
+ * autocomplete plugin, which moves through its list on the arrow keys. A till
+ * is operated from the keyboard; a hand-rolled popover that only takes clicks
+ * is a downgrade wearing the same design.
+ */
+test('the picker moves on the arrow keys', () => {
+  const src = stripComments(listFilterSrc);
+  assert.match(src, /on\('keydown', '\.lf-q'/, 'the search box takes no keys');
+  assert.match(src, /e\.key === 'ArrowDown' \|\| e\.keyCode === 40/, 'keyCode is needed for older tills');
+  assert.match(src, /e\.key === 'ArrowUp' \|\| e\.keyCode === 38/, 'up must work as well as down');
+  assert.match(src, /scrollIntoView/, 'a highlight that scrolls out of view is worse than none');
+});
+
+test('the arrows do not move the caret as well', () => {
+  /* Without preventDefault the caret jumps to either end of the input while the
+     highlight moves, which reads as the typed text being eaten. */
+  const src = stripComments(listFilterSrc);
+  const block = src.slice(src.indexOf("on('keydown', '.lf-q'"));
+  const body = block.slice(0, block.indexOf('\n    });') + 8);
+  /* The ARROW branch specifically. There is a second preventDefault in the
+     Enter branch, so a bare /preventDefault/ passes with the arrow one removed -
+     which is the mutation this test exists to catch. */
+  assert.match(
+    body,
+    /e\.preventDefault\(\);\s*var next = down/,
+    'the caret would jump to either end while the highlight moves',
+  );
+});
+
+test('Enter with nothing highlighted runs the search instead of guessing', () => {
+  /* The empty state promises "press Enter to search anyway", and someone typing
+     a partial name usually means it. Auto-picking the first row would put a
+     customer on the filter that nobody chose. */
+  const src = stripComments(listFilterSrc);
+  const block = src.slice(src.indexOf("on('keydown', '.lf-q'"));
+  const body = block.slice(0, block.indexOf('\n    });') + 8);
+  assert.match(body, /if \(i < 0\) return;/, 'Enter must fall through when no row is chosen');
+});
+
+test('mouse and keyboard share one highlight', () => {
+  /* Two treatments would light two rows at once the moment a hand touches the
+     mouse mid-arrow-key, and Enter takes the one the cursor is NOT on. */
+  assert.match(
+    listFilterSrc,
+    /on\('mouseenter', '\.lf-pick-row'/,
+    'hovering must move the keyboard highlight, not add a second one',
+  );
+  const hover = cssRule('.lf-pick-row:hover,', 'lf-pick-row {');
+  assert.ok(hover, 'the hover rule is not grouped with the active one');
+  assert.match(listFilterSrc, /addClass\('is-active'\)/, 'nothing ever marks a row active');
+  assert.match(css, /\.lf-pick-row\.is-active/, 'the keyboard highlight has no styling at all');
+  assert.match(css, /\[data-theme\] \.lf-pick-row\.is-active/, 'and none on a dark theme');
 });
