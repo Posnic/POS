@@ -829,4 +829,66 @@ describe('SalesRepository', () => {
       expect(r.status).toBe(false);
     });
   });
+
+  /*
+   * getNewSaleModel: the multi-till poller's "has anything been sold?" probe.
+   *
+   * It used to call Model.getNewSaleModel(), which no model has ever defined.
+   * The route in front of it 403'd everyone - it sat in the no-auth block
+   * while demanding a permission - so the call never ran and the TypeError
+   * behind it stayed hidden until the route was fixed.
+   */
+  describe('getNewSaleModel', () => {
+    const mkModel = (doc) => ({
+      findOne: jest.fn().mockReturnValue({
+        sort: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        lean: jest.fn().mockResolvedValue(doc),
+      }),
+    });
+
+    test('it returns the newest sale id for the poller to compare', async () => {
+      const Model = mkModel({ _id: 'abc123' });
+      const r = await salesRepository.getNewSaleModel({ SaleModel: Model });
+      expect(r.status).toBe(true);
+      expect(r.data.sales_document_id).toBe('abc123');
+    });
+
+    test('it asks for the NEWEST, and for one field only', async () => {
+      /* This runs on a timer while the sales list is open, so the query has to
+         stay the cheapest thing that answers the question. */
+      const Model = mkModel({ _id: 'abc123' });
+      await salesRepository.getNewSaleModel({ SaleModel: Model });
+
+      const chain = Model.findOne.mock.results[0].value;
+      expect(chain.sort).toHaveBeenCalledWith({ created_date: -1 });
+      expect(chain.select).toHaveBeenCalledWith({ _id: 1 });
+    });
+
+    test('it is scoped to the branch, not the whole collection', async () => {
+      const Model = mkModel({ _id: 'abc123' });
+      await salesRepository.getNewSaleModel({ SaleModel: Model });
+      const query = Model.findOne.mock.calls[0][0];
+      expect(query.branch_id).toBeDefined();
+    });
+
+    test('a branch with no sales yet answers null, not an error', async () => {
+      /* A till that has not sold anything today is normal. The poller stores
+         null and waits, which is exactly right. */
+      const Model = mkModel(null);
+      const r = await salesRepository.getNewSaleModel({ SaleModel: Model });
+      expect(r.status).toBe(true);
+      expect(r.data.sales_document_id).toBeNull();
+    });
+
+    test('a database error is reported rather than thrown at the poller', async () => {
+      const Model = {
+        findOne: jest.fn(() => {
+          throw new Error('connection lost');
+        }),
+      };
+      const r = await salesRepository.getNewSaleModel({ SaleModel: Model });
+      expect(r.status).toBe(false);
+    });
+  });
 });
