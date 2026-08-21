@@ -208,25 +208,53 @@ test('every tab has a way forward', () => {
   assert.ok(!/item-tab-back" data-goto="item_tab_more"/.test(html), 'Back must not point forwards');
 });
 
-test('the tick means "there is something here", not "this is correct"', () => {
-  /* Only the Item tab has required fields. Ticking the optional tabs for
-     correctness would be a claim the form cannot make, and a badge that lies is
-     one people stop reading. */
-  const req = itemsJs.slice(itemsJs.indexOf('PosnicPro.items.TAB_REQUIRED = {'));
-  const block = req.slice(0, req.indexOf('};') + 2);
-  assert.match(block, /item_tab_main:/, 'the Item tab must state its required fields');
-  assert.ok(!/item_tab_details:/.test(block), 'Details is optional - it cannot have required fields');
-  assert.ok(!/item_tab_more:/.test(block), 'More is optional too');
+test('a tick means the tab is FINISHED, not merely touched', () => {
+  /* It used to tick after one field, which told nobody anything. Every visible
+     field in the tab has to be answered (owner ask). */
+  const fn = itemsJs.slice(itemsJs.indexOf('PosnicPro.items.tabIsComplete'));
+  const body = fn.slice(0, fn.indexOf('\n};'));
+  assert.match(body, /if \(\$\.trim\(\$f\.val\(\) \|\| ''\) === ''\) \{ complete = false; \}/,
+    'an empty field no longer blocks the tick');
+  assert.ok(!/done = true/.test(body), 'the old "any field wins" rule is back');
+  assert.ok(!/TAB_REQUIRED/.test(itemsJs), 'the per-tab required list should be gone');
+});
+
+test('checkboxes and radios cannot block a tick', () => {
+  /* Unchecked IS an answer. Requiring them would mean ticking every toggle on
+     the form to earn a tick - the opposite of what it should encourage. */
+  const fn = itemsJs.slice(itemsJs.indexOf('PosnicPro.items.tabIsComplete'));
+  const body = fn.slice(0, fn.indexOf('\n};'));
+  assert.match(body, /type === 'checkbox' \|\| type === 'radio' \|\| type === 'hidden'/);
+  assert.match(body, /is\(':disabled'\) \|\| \$f\.prop\('readonly'\)/, 'disabled fields would block it');
+});
+
+test('a field the mode has hidden cannot block a tick', () => {
+  /* Service mode hides stock, variant mode hides price and SKU. A tab cannot be
+     incomplete because of a box nobody can reach. */
+  const fn = itemsJs.slice(itemsJs.indexOf('PosnicPro.items.tabIsComplete'));
+  const body = fn.slice(0, fn.indexOf('\n};'));
+  assert.match(body, /is\(':visible'\)/, 'hidden fields are still counted');
+  /* select2 hides its own <select>, so :visible on it is always false - the
+     rendered container is what the user can see. */
+  assert.match(body, /select2-hidden-accessible/, 'every select2 field would read as hidden');
+  assert.match(body, /next\('\.select2-container'\)/, 'nothing looks at the rendered control');
+});
+
+test('an empty tab is not a complete one', () => {
+  /* Otherwise a pane with nothing in it ticks for having been opened. */
+  const fn = itemsJs.slice(itemsJs.indexOf('PosnicPro.items.tabIsComplete'));
+  const body = fn.slice(0, fn.indexOf('\n};'));
+  assert.match(body, /return seen > 0 && complete;/, 'a tab with no fields would tick');
 });
 
 test('an open-price item can still complete the Item tab', () => {
   /* Its selling price is deliberately empty - the cashier types it at the till.
      Requiring one would leave that tab permanently unticked for a legitimate
-     item, which is exactly the badge-that-lies problem in reverse. */
-  const fn = itemsJs.slice(itemsJs.indexOf('PosnicPro.items.refreshTabTicks'));
-  const body = fn.slice(0, fn.indexOf('\n    };'));
-  assert.match(body, /item_open_price/, 'open price is not considered');
-  assert.match(body, /openPrice.*return true|if \(sel === '#items_selling_price' && openPrice\)/s);
+     item. */
+  const fn = itemsJs.slice(itemsJs.indexOf('PosnicPro.items.tabIsComplete'));
+  const body = fn.slice(0, fn.indexOf('\n};'));
+  assert.match(body, /#items_selling_price'\) && openPrice/, 'open price is not exempted');
+  assert.match(body, /seen \+= 1; return;/, 'the exemption must still COUNT the field, or an all-open tab looks empty');
 });
 
 test('the ticks are not driven by a list of field ids', () => {
