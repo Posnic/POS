@@ -32,6 +32,7 @@ const COLLECTION_OF = Object.freeze({
   preferences: 'branch_preferences',
   documents: 'branch_documents',
   secrets: 'branch_secrets',
+  sharing: 'branch_sharing',
 });
 
 class SettingsRepository extends BaseModel {

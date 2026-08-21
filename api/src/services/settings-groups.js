@@ -188,11 +188,21 @@ const secretUpdate = (key, raw) => {
   return { [key]: v === CLEAR_SECRET ? '' : v };
 };
 
+/*
+ * Who sees whose records (owner ask #85).
+ *
+ * Its own group rather than a preference, because it is the only group where a
+ * wrong value changes what data a person can READ. Separating it means an ACL
+ * can be put on the switch itself without also gating printer settings.
+ */
+const SHARING = ['share_customers', 'share_suppliers', 'share_inventory'];
+
 const GROUPS = {
   features: FEATURES,
   preferences: PREFERENCES,
   documents: DOCUMENTS,
   secrets: SECRETS,
+  sharing: SHARING,
 };
 
 /* key -> group, built once so lookups are not a scan per key */
@@ -209,7 +219,7 @@ const groupOf = (key) => GROUP_OF.get(String(key)) || null;
    are returned under `unknown` rather than dropped, so a caller can decide -
    silently discarding a setting is how a save appears to work and does not. */
 const splitByGroup = (payload = {}) => {
-  const out = { features: {}, preferences: {}, documents: {}, secrets: {}, unknown: {} };
+  const out = { features: {}, preferences: {}, documents: {}, secrets: {}, sharing: {}, unknown: {} };
   for (const [key, value] of Object.entries(payload || {})) {
     const group = groupOf(key);
     out[group || 'unknown'][key] = value;
@@ -225,6 +235,7 @@ module.exports = {
   PREFERENCES,
   DOCUMENTS,
   SECRETS,
+  SHARING,
   BRANCH_CREDENTIALS,
   CLEAR_SECRET,
   secretUpdate,
