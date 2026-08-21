@@ -199,3 +199,37 @@ test('an empty store is diagnosed, not just reported', () => {
     'the registry path uses unescaped backslashes - the query returns nothing and lies',
   );
 });
+test('there is a way to sign before the card driver catches up', () => {
+  /* The minidriver for this card model does not exist yet, so Windows publishes
+     nothing from the card. But the Certum CSP reaches the same key today -
+     certutil enumerates its containers - so the certificate can be imported by
+     hand and repaired onto that key. Without this, signing waits on a vendor
+     driver release. */
+  const link = fs.readFileSync(path.join(ROOT, 'scripts', 'link-signing-cert.js'), 'utf8');
+  assert.strictEqual(pkg.scripts['sign:link'], 'node scripts/link-signing-cert.js');
+  assert.match(link, /-addstore/, 'the certificate is never imported');
+  assert.match(link, /-repairstore/, 'nothing links the certificate to the key on the card');
+
+  /* Importing without repairing leaves a certificate with no usable private
+     key - signtool refuses it, and the build looks broken for a reason that is
+     nowhere on screen. So the link step must be verified, not assumed. */
+  assert.match(link, /HasPrivateKey/, 'the private key link is never verified');
+  const tail = link.slice(link.indexOf('HasPrivateKey'));
+  assert.match(tail, /process\.exit\(1\)/, 'a certificate with no key is reported as success');
+  assert.match(tail, /Do not ship a build believing it signed/, 'the consequence is not stated');
+});
+
+test('re-running the link is safe', () => {
+  /* The interesting step is the repair, and somebody will run this twice while
+     working out why the card is not answering. An "already exists" on the
+     import must not stop it before it gets there. */
+  const link = fs.readFileSync(path.join(ROOT, 'scripts', 'link-signing-cert.js'), 'utf8');
+  assert.match(link, /already exists/i, 'a second run fails on the import and never repairs');
+});
+
+test('the empty-store message offers the workaround', () => {
+  /* Telling somebody to wait for a driver, when a working path exists today, is
+     an answer that is technically true and practically useless. */
+  const finder = fs.readFileSync(path.join(ROOT, 'scripts', 'find-signing-cert.js'), 'utf8');
+  assert.match(finder, /sign:link/, 'the diagnosis names no way forward');
+});
