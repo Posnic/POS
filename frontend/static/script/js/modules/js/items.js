@@ -2224,6 +2224,42 @@ PosnicPro.items = {
             : 'Saving creates ' + n + ' items, each priced below').show();
     },
 
+    /*
+     * Fill an axis's value list from whichever variant is selected on it.
+     *
+     * This used to happen ONLY inside a select2:select handler - that is, only
+     * when somebody actively picked a variant from the dropdown. But
+     * loadSelectVariant PRESELECTS the first variant with
+     * .val(1).trigger('change.select2'), and a namespaced trigger does not run
+     * a plain 'change' handler, let alone select2's own select event.
+     *
+     * So the form opened showing "size" chosen with an EMPTY value list behind
+     * it (reported: "variant values not loaded"). The only way out was to open
+     * the dropdown and re-pick the option that already looked picked, which is
+     * not a thing anyone would think to try.
+     *
+     * Reading the selected OPTION rather than an event payload is what lets the
+     * same function serve both cases - a preselect has no event to read.
+     */
+    loadVariantValues: function (axisSelector, listSelector) {
+        var $list = $(listSelector);
+        if (!$list.length) { return; }
+        var raw = $(axisSelector).find('option:selected').attr('data-variant-fields');
+        var fields = [];
+        try {
+            fields = JSON.parse(raw || '[]') || [];
+        } catch (e) {
+            fields = []; /* a malformed field list must not take the page down */
+        }
+        var opts = $.map(fields, function (f) {
+            /* Built as elements, not concatenated markup: a variant value is
+               shop-entered text, and a name containing a quote would otherwise
+               end the attribute and swallow the rest of the list. */
+            return $('<option>').attr('value', f.name).text(f.name)[0];
+        });
+        $list.empty().append(opts).val(null).trigger('change');
+    },
+
     /* "2 ) Shirt / Large" once the item has a name, plain "2 ) Large" before
        then. The row is usable either way - the heading is a label, not data. */
     variantRowTitle: function (index, itemName, value) {
@@ -2813,7 +2849,10 @@ PosnicPro.items = {
             /* The value was set BEFORE select2 existed, so the widget never saw
                it and the change fired at a plain select. */
             variantSelect.val(1).trigger('change.select2');
-            $('#item_variant_list').html('');
+            /* The preselect above is a real selection, so its values belong on
+               screen. Clearing the list here was what left the form showing a
+               chosen variant with nothing to choose from. */
+            PosnicPro.items.loadVariantValues('#items_variant', '#item_variant_list');
 
             /* The second axis offers the same list. Cloned from the response
                rather than from the first select's DOM - moving option elements
@@ -4375,26 +4414,21 @@ $('.itemimageview').click(function () {
    Delegated rather than one-shot bound: this select is rebuilt by
    loadSelectVariant on every page entry, and a handler bound to the old
    element would be thrown away with it. */
-$(document).on('select2:select', '#items_variant_2', function (e) {
-    var fields = e.params.data.element.getAttribute('data-variant-fields');
-    var opts = '';
-    $.each(JSON.parse(fields || '[]'), function (_, dataItem) {
-        opts += '<option value="' + dataItem.name + '">' + dataItem.name + '</option>';
-    });
-    $('#item_variant_list_2').html(opts).val(null).trigger('change');
+$(document).on('select2:select', '#items_variant_2', function () {
+    PosnicPro.items.loadVariantValues('#items_variant_2', '#item_variant_list_2');
 });
 
-$('#items_variant').one('change', function () {
-    var variantSelect = $('#items_variant');
-    variantSelect.on('select2:select', function (e) {
-        var data = e.params.data;
-        var variant = data.element.attributes['data-variant-fields'].value;
-        var variantOption = [];
-        variant: $.map(JSON.parse(variant), function (dataItem) {
-            variantOption += '<option value="' + dataItem.name + '">' + dataItem.name + '</option>';
-        });
-        $('#item_variant_list').html(variantOption);
-    });
+/*
+ * Picking a variant fills its value list - for either axis.
+ *
+ * Delegated, and no longer wrapped in .one('change'). That wrapper bound the
+ * real handler only after some OTHER plain change had fired first, so whether
+ * picking a variant worked depended on whether something unrelated had already
+ * touched the select. It also rebound nothing when loadSelectVariant replaced
+ * the element on the next page entry.
+ */
+$(document).on('select2:select', '#items_variant', function () {
+    PosnicPro.items.loadVariantValues('#items_variant', '#item_variant_list');
 });
 $('.items_category').one('change', function () {
     var categorySelect = $('.items_category');

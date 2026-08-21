@@ -1112,3 +1112,53 @@ test('each variant gets its own tile, unless one was chosen', () => {
   assert.ok(spread !== -1 && body.indexOf('tile_color: autoRow.color', spread) > spread,
     'the per-row tile is not spread over the shared one');
 });
+test('a preselected variant arrives with its values', () => {
+  /* loadSelectVariant preselects variant 1 with .val(1).trigger("change.select2").
+     A namespaced trigger does not run a plain change handler, let alone
+     select2's own select event - so the values used to be filled ONLY by an
+     active pick, and the form opened showing a chosen variant with an empty
+     list behind it. The only way out was to re-pick the option that already
+     looked picked. */
+  const at = itemsJs.indexOf('loadSelectVariant: function');
+  assert.notStrictEqual(at, -1, 'loadSelectVariant is gone');
+  const body = itemsJs.slice(at, itemsJs.indexOf('\n    },', at));
+  assert.match(
+    body,
+    /loadVariantValues\('#items_variant', '#item_variant_list'\)/,
+    'the preselected variant leaves its value list empty',
+  );
+  assert.doesNotMatch(
+    body,
+    /\$\('#item_variant_list'\)\.html\(''\)/,
+    'the preselect still clears the list it just gave a selection to',
+  );
+});
+
+test('both axes fill their values the same way', () => {
+  /* One function, read from the selected OPTION rather than an event payload -
+     which is what lets a preselect (no event) and a pick share it. */
+  const at = itemsJs.indexOf('loadVariantValues: function');
+  assert.notStrictEqual(at, -1, 'loadVariantValues is gone');
+  const body = itemsJs.slice(at, itemsJs.indexOf('\n    },', at));
+  assert.match(body, /option:selected/, 'it reads an event, so a preselect cannot use it');
+  assert.match(body, /catch/, 'a malformed field list would take the page down');
+  // shop-entered text must not be concatenated into markup
+  assert.doesNotMatch(body, /'<option value="'/, 'option markup is concatenated - a quoted name breaks the list');
+
+  for (const sel of ['#items_variant', '#items_variant_2']) {
+    const h = itemsJs.indexOf(`$(document).on('select2:select', '${sel}'`);
+    assert.notStrictEqual(h, -1, `${sel} has no pick handler`);
+    assert.match(
+      itemsJs.slice(h, h + 240),
+      /loadVariantValues\(/,
+      `${sel} does not share the filler`,
+    );
+  }
+  /* The .one('change') wrapper made the first axis depend on some unrelated
+     change firing first, and rebound nothing when the element was replaced. */
+  assert.doesNotMatch(
+    itemsJs,
+    /\$\('#items_variant'\)\.one\('change'/,
+    'the first axis is bound behind a one-shot change again',
+  );
+});
