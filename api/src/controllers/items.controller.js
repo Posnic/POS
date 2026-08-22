@@ -1231,7 +1231,9 @@ class ItemsController extends BaseController {
        * priceCurrency is invalid, and "$" would not even identify a currency -
        * it is used by a dozen of them.
        */
-      const currency = String(req.query.currency || '').trim().toUpperCase();
+      const currency = String(req.query.currency || '')
+        .trim()
+        .toUpperCase();
       const result = await this.service.exportCatalogueJsonLd({
         branchId,
         licenseId,

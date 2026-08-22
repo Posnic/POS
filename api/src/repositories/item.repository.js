@@ -4806,9 +4806,7 @@ class ItemRepository extends BaseModel {
       license: this.toObjectId(licenseId),
     };
 
-    const cursor = collection
-      .find(filter)
-      .sort({ variant_group_id: 1, _id: 1 });
+    const cursor = collection.find(filter).sort({ variant_group_id: 1, _id: 1 });
 
     let current = null;
     let pending = [];

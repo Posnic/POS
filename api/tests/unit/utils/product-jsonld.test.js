@@ -72,10 +72,12 @@ describe('product-jsonld', () => {
     });
 
     test('a tracked item reports in or out of stock', () => {
-      expect(jsonld.availability({ track_inventory: true, available_quantity: 3 }))
-        .toBe('https://schema.org/InStock');
-      expect(jsonld.availability({ track_inventory: true, available_quantity: 0 }))
-        .toBe('https://schema.org/OutOfStock');
+      expect(jsonld.availability({ track_inventory: true, available_quantity: 3 })).toBe(
+        'https://schema.org/InStock'
+      );
+      expect(jsonld.availability({ track_inventory: true, available_quantity: 0 })).toBe(
+        'https://schema.org/OutOfStock'
+      );
     });
 
     test('an unreadable quantity states nothing', () => {
