@@ -297,11 +297,10 @@ jobs:
       - name: Every required package is declared
         run: node scripts/check-declared-deps.js
 
-      # npm audit reports two moderate advisories that cannot be reached from
-      # any code path here, so the command is permanently non-zero - and a check
-      # that is always red is one nobody reads. This fails only on an advisory
-      # nobody has judged yet, and on an accepted one whose review date has
-      # passed, so an exception cannot become permanent by neglect.
+      # Both shipped dependency graphs are currently clean. This fails on any
+      # new production advisory, and on any explicitly accepted advisory whose
+      # review date has passed, so an exception cannot become permanent through
+      # neglect.
       - name: No unreviewed production advisories
         run: node scripts/check-advisories.js
 
