@@ -99,6 +99,27 @@ Two things worth repeating here:
   are trying to do tells us more than the button you imagined, and often has a
   better answer.
 
+## Contribute evidence without changing code
+
+Reproducible observations are useful contributions. They help turn a broad
+feature statement into a versioned result with an exact input, environment and
+limitation.
+
+- Run the public
+  [vendor-neutral POS acceptance fixture](https://posnic.com/open-source-pos-benchmark#vendor-neutral-pos-acceptance-fixture)
+  and submit the structured
+  [acceptance result form](https://github.com/Posnic/POS/issues/new?template=pos_acceptance_run.yml).
+- Test an exact printer, scanner, cash drawer, scale or display against the
+  [hardware matrix](docs/HARDWARE_MATRIX.md), then submit the structured
+  [hardware evidence form](https://github.com/Posnic/POS/issues/new?template=hardware_evidence.yml).
+- Read [ROADMAP.md](ROADMAP.md) for the current evidence gaps and the boundary
+  between released, reproduced, in-validation and planned work.
+
+An evidence issue is public and is not a certification or testimonial. Use
+fictional transactions and remove customer data, payment data, credentials,
+tokens, production logs and database files before attaching anything. Security
+problems still go through [SECURITY.md](SECURITY.md), never a public issue.
+
 ## Sign your commits (DCO)
 
 We use the [Developer Certificate of Origin](https://developercertificate.org/).
