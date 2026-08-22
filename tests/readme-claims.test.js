@@ -22,6 +22,7 @@ const path = require('node:path');
 
 const ROOT = path.join(__dirname, '..');
 const README = fs.readFileSync(path.join(ROOT, 'README.md'), 'utf8');
+const LICENCE_BADGE = 'source%20licence';
 
 function badge(label) {
   const m = README.match(
@@ -59,7 +60,14 @@ test('the build badge points at the workflow that gates main', () => {
 test('every badge that states a number is checked by this file', () => {
   /* So a new hardcoded claim cannot arrive unnoticed. If this fails, either
      derive the number above or make the badge live. */
-  const KNOWN = ['REST%20API', 'tests', 'coverage', 'licence', 'platforms'];
+  const KNOWN = [
+    'REST%20API',
+    'tests',
+    'coverage',
+    LICENCE_BADGE,
+    'package%20notices',
+    'platforms',
+  ];
   const numeric = [...README.matchAll(/img\.shields\.io\/badge\/([^-]+)-/g)]
     .map((m) => m[1]);
 
@@ -72,7 +80,7 @@ test('every badge that states a number is checked by this file', () => {
 
 test('the licence badge matches what package.json declares', () => {
   const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
-  const claimed = (badge('licence') || '').replace(/--/g, '-');
+  const claimed = (badge(LICENCE_BADGE) || '').replace(/--/g, '-');
 
   /* The badge shows the licence's name, package.json carries its SPDX
      identifier, and SPDX appends -only or -or-later to say whether later

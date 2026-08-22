@@ -83,3 +83,14 @@ test('repository entry points link to the deployment evidence contract', () => {
   assert.match(ROADMAP, /structured deployment evidence/i);
   assert.match(ROADMAP, /not\s+customer proof/i);
 });
+
+test('repository entry points expose an independent review path without buying coverage', () => {
+  for (const entryPoint of [README, CONTRIBUTING]) {
+    assert.match(entryPoint, /posnic-independent-review-brief\.txt/);
+    assert.match(entryPoint, /posnic-independent-review-protocol\.csv/);
+    assert.match(entryPoint, /does not require payment, positive coverage, a backlink or\s+advance approval/i);
+    assert.match(entryPoint, /failures, conflicts and untested areas/i);
+  }
+
+  assert.match(README, /without granting marketing reuse/i);
+});

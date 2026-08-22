@@ -105,6 +105,12 @@ Reproducible observations are useful contributions. They help turn a broad
 feature statement into a versioned result with an exact input, environment and
 limitation.
 
+- If you are reviewing Posnic independently, start with the public
+  [review brief](https://posnic.com/assets/posnic-independent-review-brief.txt)
+  and [24-control protocol](https://posnic.com/assets/posnic-independent-review-protocol.csv).
+  Review access does not require payment, positive coverage, a backlink or
+  advance approval. Publish failures, conflicts and untested areas as well as
+  successful results.
 - Run the public
   [vendor-neutral POS acceptance fixture](https://posnic.com/open-source-pos-benchmark#vendor-neutral-pos-acceptance-fixture)
   and submit the structured
