@@ -191,7 +191,10 @@ function serialize(items, opts = {}) {
   groups.forEach((members) => {
     /* A "family" of one is not a family - a group with a single variant tells
        a consumer there are choices when there are none. */
-    if (members.length === 1) { singles.push(members[0]); return; }
+    if (members.length === 1) {
+      singles.push(members[0]);
+      return;
+    }
     graph.push(productGroup(members, opts));
   });
   singles.forEach((i) => graph.push(product(i, opts)));

@@ -39,9 +39,7 @@ describe('exportCatalogueJsonLd', () => {
   };
 
   test('produces a valid schema.org graph', async () => {
-    const svc = withRows([
-      { _id: 'a', name: 'Rice', itemid: 'R1', selling_price: 80 },
-    ]);
+    const svc = withRows([{ _id: 'a', name: 'Rice', itemid: 'R1', selling_price: 80 }]);
     const r = await svc.exportCatalogueJsonLd({ branchId: 'b', licenseId: 'l', currency: 'INR' });
     expect(r.status).toBe(true);
     expect(r.data['@context']).toBe('https://schema.org');
@@ -51,10 +49,24 @@ describe('exportCatalogueJsonLd', () => {
 
   test('a family becomes one ProductGroup', async () => {
     const svc = withRows([
-      { _id: 'a', name: 'Shirt / L', variant_group_id: 'g1', variant_parent_name: 'Shirt',
-        variant_axis: 'size', variant_value: 'L', selling_price: 499 },
-      { _id: 'b', name: 'Shirt / M', variant_group_id: 'g1', variant_parent_name: 'Shirt',
-        variant_axis: 'size', variant_value: 'M', selling_price: 499 },
+      {
+        _id: 'a',
+        name: 'Shirt / L',
+        variant_group_id: 'g1',
+        variant_parent_name: 'Shirt',
+        variant_axis: 'size',
+        variant_value: 'L',
+        selling_price: 499,
+      },
+      {
+        _id: 'b',
+        name: 'Shirt / M',
+        variant_group_id: 'g1',
+        variant_parent_name: 'Shirt',
+        variant_axis: 'size',
+        variant_value: 'M',
+        selling_price: 499,
+      },
     ]);
     const r = await svc.exportCatalogueJsonLd({ branchId: 'b', licenseId: 'l' });
     expect(r.data['@graph']).toHaveLength(1);
@@ -83,8 +95,12 @@ describe('exportCatalogueJsonLd', () => {
         await onGroup([{ _id: 'a', name: 'Rice' }]);
         return 1;
       },
-      findPage: () => { throw new Error('findPage must not be used - it pages the whole catalogue'); },
-      exportItems: () => { throw new Error('exportItems must not be used - it calls toArray'); },
+      findPage: () => {
+        throw new Error('findPage must not be used - it pages the whole catalogue');
+      },
+      exportItems: () => {
+        throw new Error('exportItems must not be used - it calls toArray');
+      },
     };
     const r = await service.exportCatalogueJsonLd({ branchId: 'b', licenseId: 'l' });
     expect(usedStream).toBe(true);
@@ -100,7 +116,10 @@ describe('exportCatalogueJsonLd', () => {
      * mutation testing.
      */
     service.repository = {
-      streamCatalogue: async (_ctx, onGroup) => { await onGroup([{ _id: 'a', name: 'Rice' }]); return 1; },
+      streamCatalogue: async (_ctx, onGroup) => {
+        await onGroup([{ _id: 'a', name: 'Rice' }]);
+        return 1;
+      },
     };
     const r = await service.exportCatalogueJsonLd({});
     expect(r.status).toBe(false);
@@ -109,7 +128,9 @@ describe('exportCatalogueJsonLd', () => {
 
   test('a repository failure is reported, not thrown', async () => {
     service.repository = {
-      streamCatalogue: async () => { throw new Error('cursor died'); },
+      streamCatalogue: async () => {
+        throw new Error('cursor died');
+      },
     };
     const r = await service.exportCatalogueJsonLd({ branchId: 'b', licenseId: 'l' });
     expect(r.status).toBe(false);
