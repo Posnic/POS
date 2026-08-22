@@ -473,6 +473,7 @@ PosnicPro.settings = {
                         module_channels_enable: response.data['module_channels_enable'] !== false,
                         module_channels_kiosk_enable: response.data['module_channels_kiosk_enable'] !== false,
                         module_recyclebin_enable: response.data['module_recyclebin_enable'] !== false,
+                        module_demo_data_enable: response.data['module_demo_data_enable'] !== false,
                         module_themes_enable: response.data['module_themes_enable'] !== false,
                         module_cashbook_enable: response.data['module_cashbook_enable'] !== false,
                         quick_sale_enable: response.data['quick_sale_enable'] !== false,
@@ -734,6 +735,7 @@ PosnicPro.settings = {
                 $('#module_channels_enable').prop('checked', data.module_channels_enable !== false);
                 $('#module_channels_kiosk_enable').prop('checked', data.module_channels_kiosk_enable !== false);
                 $('#module_recyclebin_enable').prop('checked', data.module_recyclebin_enable !== false);
+                $('#module_demo_data_enable').prop('checked', data.module_demo_data_enable !== false);
                 $('#module_themes_enable').prop('checked', data.module_themes_enable !== false);
                 $('#pl_include_cashbook').prop('checked', data.pl_include_cashbook !== false);
                 $('#module_cashbook_enable').prop('checked', data.module_cashbook_enable !== false);
@@ -757,6 +759,7 @@ PosnicPro.settings = {
                     module_channels_enable: data.module_channels_enable !== false,
                     module_channels_kiosk_enable: data.module_channels_kiosk_enable !== false,
                     module_recyclebin_enable: data.module_recyclebin_enable !== false,
+                    module_demo_data_enable: data.module_demo_data_enable !== false,
                     module_themes_enable: data.module_themes_enable !== false,
                     module_cashbook_enable: data.module_cashbook_enable !== false,
                     quick_sale_enable: data.quick_sale_enable !== false,
@@ -1489,6 +1492,7 @@ if ($wrapper.length) {
         'module_tax_enable', 'module_credit_enable', 'module_marketing_enable',
         'module_messaging_enable', 'module_channels_enable', 'module_channels_kiosk_enable',
         'module_recyclebin_enable', 'module_themes_enable', 'module_cashbook_enable',
+        'module_demo_data_enable',
         'quick_sale_enable',
         'quotes_enable',
         'custom_charges_enable',
@@ -1661,6 +1665,7 @@ if ($wrapper.length) {
                 module_channels_enable: $('#module_channels_enable').is(':checked') ? 'true' : 'false',
                 module_channels_kiosk_enable: $('#module_channels_kiosk_enable').is(':checked') ? 'true' : 'false',
                 module_recyclebin_enable: $('#module_recyclebin_enable').is(':checked') ? 'true' : 'false',
+                module_demo_data_enable: $('#module_demo_data_enable').is(':checked') ? 'true' : 'false',
                 module_themes_enable: $('#module_themes_enable').is(':checked') ? 'true' : 'false',
                 pl_include_cashbook: $('#pl_include_cashbook').is(':checked') ? 'true' : 'false',
                 module_cashbook_enable: $('#module_cashbook_enable').is(':checked') ? 'true' : 'false',
@@ -1772,6 +1777,7 @@ if ($("#sale_quick_edit").is(":checked")) {
                     module_channels_enable: $('#module_channels_enable').is(':checked'),
                     module_channels_kiosk_enable: $('#module_channels_kiosk_enable').is(':checked'),
                     module_recyclebin_enable: $('#module_recyclebin_enable').is(':checked'),
+                    module_demo_data_enable: $('#module_demo_data_enable').is(':checked'),
                     module_themes_enable: $('#module_themes_enable').is(':checked'),
                     module_cashbook_enable: $('#module_cashbook_enable').is(':checked'),
                     quotes_enable: $('#quotes_enable').is(':checked'),
@@ -5347,6 +5353,7 @@ PosnicPro.features = {
         ['module_cashbook_enable', 'Cash book', 'Expenses and cash movements beside sales.'],
         ['quick_sale_enable', 'Quick sale', 'Type an amount, take payment - the busy-counter pad on the sale screen.'],
         ['module_recyclebin_enable', 'Recycle bin', 'Deleted records are kept and restorable.'],
+        ['module_demo_data_enable', 'Demo data', 'The sample products your shop started with.'],
         ['module_themes_enable', 'Themes', 'Change how the till looks.']
     ],
     _blob: function () {
@@ -5786,6 +5793,21 @@ PosnicPro.settings.featureInfo = {
             'Turn it on - Cash book appears in the menu',
             'Record an expense when money leaves the drawer',
             'It shows against the day, beside the sales'
+        ]
+    },
+    module_demo_data_enable: {
+        tagline: 'The sample products you started with, out of the way in one click.',
+        about: 'Every new shop arrives with a few sample products so the till can be tried before there is any real stock in it. Once your own catalogue is in, they are only clutter. Switching this off hides them everywhere at once - the item list, the sale screen, search. Nothing is deleted, so switching it back on brings them straight back, and anything you have edited or already sold stays put either way.',
+        benefits: [
+            'One switch clears the samples out of the whole till',
+            'Nothing is destroyed, so it is safe to try',
+            'A sample you have edited into a real product is never touched',
+            'Anything already sold keeps its place in your sales history'
+        ],
+        how: [
+            'Try the till with the samples that came with your shop',
+            'Add your own products when you are ready',
+            'Turn this off - the samples disappear and yours remain'
         ]
     },
     module_recyclebin_enable: {

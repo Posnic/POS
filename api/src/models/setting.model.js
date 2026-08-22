@@ -784,6 +784,7 @@ class SettingModel extends BaseModel {
       const module_recyclebin_enable = offOnly(data.module_recyclebin_enable);
       const module_themes_enable = offOnly(data.module_themes_enable);
       const module_cashbook_enable = offOnly(data.module_cashbook_enable);
+      const module_demo_data_enable = offOnly(data.module_demo_data_enable);
       const quick_sale_enable = offOnly(data.quick_sale_enable);
       const quotes_enable = offOnly(data.quotes_enable);
 
@@ -933,6 +934,7 @@ class SettingModel extends BaseModel {
         module_recyclebin_enable: module_recyclebin_enable,
         module_themes_enable: module_themes_enable,
         module_cashbook_enable: module_cashbook_enable,
+        module_demo_data_enable: module_demo_data_enable,
         quick_sale_enable: quick_sale_enable,
         quotes_enable: quotes_enable,
         ...(data.custom_charges_enable !== undefined
@@ -1254,6 +1256,7 @@ class SettingModel extends BaseModel {
         module_recyclebin_enable: offOnly,
         module_themes_enable: offOnly,
         module_cashbook_enable: offOnly,
+        module_demo_data_enable: offOnly,
         quick_sale_enable: offOnly,
         quotes_enable: offOnly,
         pl_include_cashbook: offOnly,
@@ -1385,6 +1388,7 @@ class SettingModel extends BaseModel {
       module_recyclebin_enable: { parse: offOnly, dflt: true },
       module_themes_enable: { parse: offOnly, dflt: true },
       module_cashbook_enable: { parse: offOnly, dflt: true },
+      module_demo_data_enable: { parse: offOnly, dflt: true },
       quick_sale_enable: { parse: offOnly, dflt: true },
       quotes_enable: { parse: offOnly, dflt: true },
       custom_charges_enable: { parse: (v) => v === true || v === 'true', dflt: false },

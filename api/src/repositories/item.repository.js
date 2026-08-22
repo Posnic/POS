@@ -1,6 +1,7 @@
 const { searchPattern } = require('../utils/safe-search');
 // src/repositories/item.repository.js
 const BaseModel = require('../models/base.model');
+const demoData = require('../services/demo-data');
 const Item = require('../models/item.model');
 const Branch = require('../models/branch.model');
 const {
@@ -156,11 +157,26 @@ class ItemRepository extends BaseModel {
       delete clientFilters[key];
     }
 
+    /*
+     * Demo products are hidden when the shop has switched Demo Data off.
+     *
+     * Resolved here, in the ONE place the item list builds its filter, so it
+     * cannot be applied to some reads and forgotten on others - a catalogue
+     * that hides sample items on the manage screen and shows them on the sale
+     * grid is worse than not hiding them at all.
+     *
+     * Nothing is written and nothing is deleted, so switching it back on
+     * restores everything instantly. See services/demo-data.js for why a
+     * demo item that has been sold must never simply be removed.
+     */
+    const demoClause = await demoData.filter({ licenseId, branchId });
+
     const filter = {
       // branch_access is the canonical item-to-branch relation. branch_id and
       // branch_name are denormalized legacy fields and can be absent or stale
       // in production data after a branch rename.
       ...clientFilters,
+      ...demoClause,
       'branch_access.branch_id': branchObjectId,
       license: licenseObjectId,
     };

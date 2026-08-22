@@ -34,6 +34,7 @@ const FEATURES = [
   'module_recyclebin_enable',
   'module_themes_enable',
   'module_cashbook_enable',
+  'module_demo_data_enable',
   'quick_sale_enable',
   'quotes_enable',
   'pl_include_cashbook',
