@@ -2563,6 +2563,73 @@ PosnicPro.items = {
         });
     },
 
+    /*
+     * What is typed into the variant rows, kept across a rebuild.
+     *
+     * loadVariant empties #load_price_fields and builds it again on every
+     * change to the value lists. Adding a ninth size after pricing eight threw
+     * away all eight prices, the SKUs, the barcodes and the quantities - the
+     * form silently reset the moment you extended it, which is the one moment
+     * you are most likely to.
+     *
+     * Keyed by variant VALUE, never by row position. Removing '40' from the
+     * middle shifts every row after it up one, so restoring by index would
+     * hand '42' the price that was typed for '44' - worse than losing it,
+     * because a wrong price looks like a real one.
+     */
+    snapshotVariantRows: function () {
+        var snap = {};
+        $('#load_price_fields .variant-row-title').each(function () {
+            var value = $(this).attr('data-variant-value');
+            var i = Number($(this).attr('data-variant-index')) - 1;
+            if (!value || isNaN(i)) { return; }
+            snap[value] = {
+                itemid: $('#items_itemid_' + i).val(),
+                barcodeid: $('#items_barcodeid_' + i).val(),
+                company_price: $('#items_company_price_' + i).val(),
+                mrp_price: $('#items_mrp_price_' + i).val(),
+                selling_price: $('#items_selling_price_' + i).val(),
+                available_quantity: $('#items_available_quantity_' + i).val(),
+                sort: $('#items_sort_' + i).val(),
+                unit: $('#items_unit_' + i).val(),
+                discount_amount: $('#items_discount_amount_' + i).val(),
+                discount_percentage: $('#items_discount_percentage_' + i).val(),
+                photo: $('#items_photo_' + i).val(),
+            };
+        });
+        return snap;
+    },
+
+    /* The other half. A value that was not on screen before simply has no
+       entry, and keeps the fresh row's defaults. */
+    restoreVariantRows: function (snap) {
+        if (!snap) { return; }
+        $('#load_price_fields .variant-row-title').each(function () {
+            var value = $(this).attr('data-variant-value');
+            var i = Number($(this).attr('data-variant-index')) - 1;
+            var was = value ? snap[value] : null;
+            if (!was || isNaN(i)) { return; }
+            var put = function (prefix, v) {
+                /* An empty value means the field was never filled, and the
+                   fresh row's default (0.00, 0, 99) is the better answer. */
+                if (v !== undefined && v !== null && v !== '') { $(prefix + i).val(v); }
+            };
+            put('#items_itemid_', was.itemid);
+            put('#items_barcodeid_', was.barcodeid);
+            put('#items_company_price_', was.company_price);
+            put('#items_mrp_price_', was.mrp_price);
+            put('#items_selling_price_', was.selling_price);
+            put('#items_available_quantity_', was.available_quantity);
+            put('#items_sort_', was.sort);
+            put('#items_discount_amount_', was.discount_amount);
+            put('#items_discount_percentage_', was.discount_percentage);
+            put('#items_photo_', was.photo);
+            /* The unit list is fetched per row and is still empty here, so
+               setting it now would select nothing. Applied in that request's
+               own callback instead. */
+        });
+    },
+
     loadVariant: function () {
         /* variantCombinations already normalises jQuery's null-from-an-empty
            multiple-select into an array, so .length below is always safe. */
@@ -2571,6 +2638,9 @@ PosnicPro.items = {
         var variant_value = $.map(PosnicPro.items.variantCombinations(), function (c) {
             return c.value;
         });
+        /* Everything typed into the rows, before they are thrown away. Kept
+           on the module so the per-row unit request can reach it too. */
+        PosnicPro.items._rowSnapshot = PosnicPro.items.snapshotVariantRows();
         $("#load_price_fields").html('');
         var html = "";
         var item_name = $("#items_name").val();
@@ -2740,6 +2810,9 @@ PosnicPro.items = {
                 };
                 PosnicPro.get(params, function (response) {
                     var $sel = $("#items_unit_" + key).empty();
+                    /* This select was empty when restoreVariantRows ran, so
+                       setting the unit then would have selected nothing. */
+                    var wasRow = PosnicPro.items._rowSnapshot && PosnicPro.items._rowSnapshot[name];
                     /* `let unitOption;` started undefined, so the first += put the
                        literal "undefined" in front of the first option - and the
                        string accumulated across every variant row built after it. */
@@ -2751,6 +2824,10 @@ PosnicPro.items = {
                             .attr('data-unit-value', dataItem.unit_value)
                             .text(dataItem.unit_name + ' - ' + dataItem.unit_value)[0];
                     }));
+                    if (wasRow && wasRow.unit) {
+                        $sel.val(wasRow.unit);
+                        if ($sel.hasClass('select2-hidden-accessible')) { $sel.trigger('change.select2'); }
+                    }
                 });
 
                 html = html + '</select>';
@@ -2760,6 +2837,7 @@ PosnicPro.items = {
                 html = html + '</div>';
             });
             $("#load_price_fields").append(html);
+            PosnicPro.items.restoreVariantRows(PosnicPro.items._rowSnapshot);
             /* The rows only exist now, so this is the first moment their
                strips can be filled from whatever is already uploaded. */
             PosnicPro.items.renderVariantPhotoPickers();

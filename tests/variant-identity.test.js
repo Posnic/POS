@@ -197,3 +197,76 @@ test('the picker reads as clickable and keeps keyboard focus visible', () => {
   assert.match(cssRule('.items-variant-photo {'), /cursor:\s*pointer/);
   assert.match(cssRule('.items-variant-photo:focus-visible'), /outline/);
 });
+
+/* ------------------------------------------------------------------ *
+ * Rebuilding the rows does not throw away what was typed
+ * ------------------------------------------------------------------ */
+
+test('what was typed into the rows survives adding another value', () => {
+  /*
+   * loadVariant empties #load_price_fields and rebuilds it on every change to
+   * the value lists. Adding a ninth size after pricing eight discarded all
+   * eight prices, the SKUs, the barcodes and the quantities - the form reset
+   * itself at the exact moment you were extending it.
+   */
+  const load = blockAt(itemsJs, 'loadVariant: function');
+  const snapAt = load.indexOf('snapshotVariantRows()');
+  const wipeAt = load.indexOf(".html('')");
+  assert.notStrictEqual(snapAt, -1, 'nothing is snapshotted before the rebuild');
+  assert.ok(snapAt < wipeAt, 'the snapshot is taken after the rows are already gone');
+  assert.match(load, /restoreVariantRows\(/, 'nothing is restored after the rebuild');
+});
+
+test('rows are preserved by variant value, never by position', () => {
+  /*
+   * Removing '40' from the middle shifts every later row up one. Restoring by
+   * index would hand '42' the price typed for '44' - worse than losing it,
+   * because a wrong price looks exactly like a right one.
+   */
+  for (const marker of ['snapshotVariantRows: function', 'restoreVariantRows: function']) {
+    const fn = blockAt(itemsJs, marker);
+    assert.match(fn, /data-variant-value/, `${marker} does not key on the variant value`);
+  }
+});
+
+test('the restore covers every field a row holds, including the photo', () => {
+  const fn = blockAt(itemsJs, 'restoreVariantRows: function');
+  for (const field of [
+    'items_itemid_',
+    'items_barcodeid_',
+    'items_company_price_',
+    'items_mrp_price_',
+    'items_selling_price_',
+    'items_available_quantity_',
+    'items_sort_',
+    'items_discount_amount_',
+    'items_discount_percentage_',
+    'items_photo_',
+  ]) {
+    assert.ok(fn.includes(field), `${field} is snapshotted but never restored`);
+  }
+});
+
+test('the unit is restored once its own list has arrived', () => {
+  /* The unit select is filled by a per-row request that lands after the rows
+     are built, so setting it during the restore would select nothing. */
+  const load = blockAt(itemsJs, 'loadVariant: function');
+  assert.match(load, /wasRow && wasRow\.unit/, 'the unit is never restored');
+  const restore = blockAt(itemsJs, 'restoreVariantRows: function');
+  assert.doesNotMatch(
+    restore,
+    /put\('#items_unit_/,
+    'the unit is set during the restore, when its list is still empty',
+  );
+});
+
+test('the photo choice is restored before the strips are painted', () => {
+  /* Painted first, the strip reads an empty hidden input and shows nothing as
+     chosen - the choice is kept but looks lost, which is its own bug report. */
+  const load = blockAt(itemsJs, 'loadVariant: function');
+  const restoreAt = load.indexOf('restoreVariantRows(');
+  const paintAt = load.indexOf('renderVariantPhotoPickers()');
+  assert.notStrictEqual(restoreAt, -1, 'no restore in loadVariant');
+  assert.notStrictEqual(paintAt, -1, 'no strip paint in loadVariant');
+  assert.ok(restoreAt < paintAt, 'the strips paint before the choice is restored');
+});

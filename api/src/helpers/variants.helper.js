@@ -35,11 +35,9 @@ const normalizeVariantFields = (rawTypes) => {
 
   rawTypes.forEach((entry) => {
     let name = '';
-    if (entry == null) {
-      name = '';
-    } else if (typeof entry === 'object') {
+    if (entry != null && typeof entry === 'object') {
       name = entry.name != null ? String(entry.name).trim() : '';
-    } else {
+    } else if (entry != null) {
       name = String(entry).trim();
     }
     if (!name) return;
