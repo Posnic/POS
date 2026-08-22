@@ -3,6 +3,7 @@ const Variant = require('../models/variant.model');
 const mongoose = require('mongoose');
 const { validationResult } = require('express-validator');
 const { createActivityLog } = require('../utils/activityLogger');
+const { normalizeVariantFields } = require('../helpers/variants.helper');
 
 const escapeRegExp = (str = '') => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -34,19 +35,10 @@ const formatVariant = (variant = {}) => {
         ? variant.product_type
         : [];
 
-  const fields = rawFields
-    .map((entry) => {
-      if (!entry) return null;
-      if (typeof entry === 'string') {
-        const name = entry.trim();
-        return name ? { name } : null;
-      }
-      if (typeof entry === 'object' && entry.name) {
-        return { name: String(entry.name).trim() };
-      }
-      return null;
-    })
-    .filter(Boolean);
+  /* De-duplicated on READ as well as write. Variants saved before the
+     write-side guard existed still hold repeated values, and those are
+     exactly the ones showing the same size twice in the item form. */
+  const fields = normalizeVariantFields(rawFields);
 
   const product_type = fields.map((f) => f.name);
 
@@ -234,11 +226,9 @@ class VariantControllerV2 {
         return sendError(res, 'Variant name is required', 400);
       }
 
-      const rawTypes = Array.isArray(product_type) ? product_type : [];
-      const fields = rawTypes
-        .map((val) => (val != null ? String(val).trim() : ''))
-        .filter(Boolean)
-        .map((val) => ({ name: val }));
+      /* Trims, drops blanks, and collapses duplicates - see the helper for
+         why a repeated value is silently dropped rather than refused. */
+      const fields = normalizeVariantFields(product_type);
 
       if (!fields.length) {
         return sendError(res, 'At least one variant value is required', 400);
@@ -304,11 +294,9 @@ class VariantControllerV2 {
         return sendError(res, 'Variant name is required', 400);
       }
 
-      const rawTypes = Array.isArray(product_type) ? product_type : [];
-      const fields = rawTypes
-        .map((val) => (val != null ? String(val).trim() : ''))
-        .filter(Boolean)
-        .map((val) => ({ name: val }));
+      /* Trims, drops blanks, and collapses duplicates - see the helper for
+         why a repeated value is silently dropped rather than refused. */
+      const fields = normalizeVariantFields(product_type);
 
       if (!fields.length) {
         return sendError(res, 'At least one variant value is required', 400);
