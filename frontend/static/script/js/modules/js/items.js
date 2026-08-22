@@ -644,7 +644,38 @@ PosnicPro.items = {
              * the opposite of what was asked.
              */
             var autoRow = tilePicked ? null : PosnicPro.autoTile(rowName);
-            rows.push(Object.assign({}, shared, autoRow ? {
+
+            /*
+             * This row's own photo, if one was chosen.
+             *
+             * Sent as a one-image list marked cover, so the variant's tile and
+             * its item page both show the picture of THAT variant. The shared
+             * fields carry the family's whole set, so a row with no choice is
+             * left exactly as it was before any of this existed.
+             *
+             * Looked up by name against what is currently uploaded rather than
+             * trusted from the hidden input: the photo may have been removed
+             * after it was picked, and saving a name with no image behind it
+             * would give the variant a broken picture instead of no picture.
+             */
+            var chosenPhoto = $('#items_photo_' + key).val();
+            var rowPhoto = null;
+            if (chosenPhoto) {
+                var found = $.grep(PosnicPro.items.imageParams || [], function (x) {
+                    return x && x.name === chosenPhoto;
+                });
+                if (found.length) {
+                    rowPhoto = {
+                        image: [$.extend({}, found[0], { cover: 'yes' })],
+                        /* cover_image names the picture the item leads with, and
+                           it comes from the shared fields too - left alone, the
+                           row would carry its own photo while still pointing at
+                           the family's as its cover. */
+                        cover_image: found[0].name,
+                    };
+                }
+            }
+            rows.push(Object.assign({}, shared, rowPhoto || {}, autoRow ? {
                 tile_color: autoRow.color,
                 tile_shape: autoRow.shape,
             } : {}, {
@@ -2265,6 +2296,106 @@ PosnicPro.items = {
         $('#variant_axis2_link').show().text('+ Add a second option');
     },
 
+    /*
+     * Stop the same option being used for both axes.
+     *
+     * Size crossed with Size is not a grid, it is the same list twice: it
+     * produced "40 / 40", "40 / 42", "42 / 40" - items whose names say two
+     * different sizes for one garment, and a 40 that exists twice over.
+     *
+     * Disabled rather than removed. A greyed-out Size in the second list
+     * shows WHY it cannot be picked - it is already the first option -
+     * whereas quietly dropping it looks like the variant went missing.
+     */
+    syncAxisExclusion: function () {
+        var $one = $('#items_variant');
+        var $two = $('#items_variant_2');
+        if (!$two.length) { return; }
+        var a = String($one.val() || '');
+        var b = String($two.val() || '');
+
+        /* Already clashing - only reachable by changing the FIRST axis to
+           whatever the second was. The second gives way, because the first is
+           the one just chosen, and its values go with it: they belong to the
+           option that is no longer selected there. */
+        if (a && b && a === b) {
+            PosnicPro.items.resetSecondAxis();
+            /* resetSecondAxis puts the panel away. It was open and being used,
+               so it stays open - collapsing it here would read as the whole
+               second option being taken away rather than just its value. */
+            $('#variant_axis2_wrap').show();
+            $('#variant_axis2_link').hide();
+            b = '';
+        }
+
+        $two.find('option').each(function () {
+            $(this).prop('disabled', !!a && this.value === a);
+        });
+        $one.find('option').each(function () {
+            $(this).prop('disabled', !!b && this.value === b);
+        });
+
+        /* change.select2 repaints without re-firing the app handlers - a plain
+           .trigger('change') here would rebuild both value lists on every
+           keystroke-driven repaint. */
+        $.each([$one, $two], function (_, $el) {
+            if ($el.hasClass('select2-hidden-accessible')) { $el.trigger('change.select2'); }
+        });
+    },
+
+    /* A base64 photo needs a real mime type to render - browsers will not
+       sniff a data: URL. Taken from the file name, which is the only thing
+       we have; anything unrecognised falls back to png rather than to a
+       broken thumbnail. */
+    photoSrc: function (photo) {
+        if (!photo) { return ''; }
+        if (!photo.data) { return photo.name || ''; }
+        var ext = String(photo.name || '').split('.').pop().toLowerCase();
+        var mime = { jpg: 'jpeg', jpeg: 'jpeg', png: 'png', gif: 'gif', bmp: 'bmp' }[ext] || 'png';
+        return 'data:image/' + mime + ';base64,' + photo.data;
+    },
+
+    /*
+     * Paint each variant row's photo strip from the photos uploaded above.
+     *
+     * Repainted wholesale rather than patched: photos are added and removed
+     * while the rows are on screen, and a strip that only ever grows would go
+     * on offering a picture that is no longer part of the item.
+     *
+     * A choice pointing at a removed photo is dropped here too - keeping it
+     * would save a name the family no longer carries, and the variant would
+     * come back with no picture at all.
+     */
+    renderVariantPhotoPickers: function () {
+        var photos = $.grep(PosnicPro.items.imageParams || [], function (x) {
+            return !!(x && x.name);
+        });
+        $('[id^="items_photo_strip_"]').each(function () {
+            var key = this.id.replace('items_photo_strip_', '');
+            var $hidden = $('#items_photo_' + key);
+            var chosen = String($hidden.val() || '');
+            var stillThere = $.grep(photos, function (x) { return x.name === chosen; }).length;
+            if (chosen && !stillThere) { $hidden.val(''); chosen = ''; }
+
+            var $strip = $(this).empty();
+            if (!photos.length) {
+                $strip.append($('<small class="text-muted">')
+                    .text('Add photos above to give this variant its own'));
+                return;
+            }
+            $.each(photos, function (_, photo) {
+                /* Built as elements, not markup: a file name is user-supplied
+                   text and goes into a title attribute. */
+                $strip.append($('<img>')
+                    .attr('src', PosnicPro.items.photoSrc(photo))
+                    .attr('title', photo.name)
+                    .attr('alt', photo.name)
+                    .attr('data-photo', photo.name)
+                    .addClass('items-variant-photo' + (photo.name === chosen ? ' is-chosen' : '')));
+            });
+        });
+    },
+
     /* "Colour / Size" when both are in play, else just the one. */
     variantAxisLabel: function () {
         var one = PosnicPro.items.selectText('#items_variant');
@@ -2334,11 +2465,23 @@ PosnicPro.items = {
         } catch (e) {
             fields = []; /* a malformed field list must not take the page down */
         }
-        var opts = $.map(fields, function (f) {
+        /* One option per DISTINCT value.
+           A variant saved with 38, 40, 40 offered 40 twice, and select2 keys a
+           multi-select on the option ELEMENT, not its value - so both copies
+           could be picked, producing two items called "Shirt / 40". The server
+           de-duplicates too; this covers a list already cached in the page. */
+        var seen = {};
+        var opts = [];
+        $.each(fields, function (_, f) {
+            var name = $.trim(String(f && f.name != null ? f.name : ''));
+            if (!name) { return; }
+            var key = name.toLowerCase();
+            if (seen[key]) { return; }
+            seen[key] = true;
             /* Built as elements, not concatenated markup: a variant value is
                shop-entered text, and a name containing a quote would otherwise
                end the attribute and swallow the rest of the list. */
-            return $('<option>').attr('value', f.name).text(f.name)[0];
+            opts.push($('<option>').attr('value', name).text(name)[0]);
         });
         $list.empty().append(opts).val(null).trigger('change');
     },
@@ -2550,6 +2693,31 @@ PosnicPro.items = {
                 html += '  </div>';
                 html += '</div>';
 
+                /*
+                 * This variant's own photo.
+                 *
+                 * Every variant is its own item record with its own image
+                 * field, but the form only ever offered one uploader - so a
+                 * family of shirts saved the SAME picture against red, blue
+                 * and green, and the sale grid showed three identical tiles.
+                 *
+                 * Chosen from the photos already added above rather than a
+                 * second uploader per row: the pictures of a red shirt and a
+                 * blue shirt are pictures of the same family, they belong in
+                 * one place, and uploading each one twice is work nobody
+                 * should have to do.
+                 *
+                 * Optional. A row with nothing chosen keeps the family's whole
+                 * set, which is what every existing item already does.
+                 */
+                html += '<div class="row">';
+                html += '  <div class="col-md-12">';
+                html += '    <label class="form-control-placeholder">Photo for this variant</label>';
+                html += '    <input type="hidden" id="items_photo_' + key + '" value="">';
+                html += '    <div class="items-variant-photos" id="items_photo_strip_' + key + '"></div>';
+                html += '  </div>';
+                html += '</div>';
+
 // Add toggle behavior using jQuery
                 html += '<script>';
                 html += '$(document).ready(function () {';
@@ -2592,6 +2760,9 @@ PosnicPro.items = {
                 html = html + '</div>';
             });
             $("#load_price_fields").append(html);
+            /* The rows only exist now, so this is the first moment their
+               strips can be filled from whatever is already uploaded. */
+            PosnicPro.items.renderVariantPhotoPickers();
             $("#items_itemid_0").focus();
         }
     },
@@ -2656,6 +2827,9 @@ PosnicPro.items = {
                     data: fileImage,
                     cover: coverFlag
                 };
+
+                /* Newly added - offer it to every variant row on screen. */
+                PosnicPro.items.renderVariantPhotoPickers();
 
                 // If it's the first image, update the logo and styles
                 if (count === 0) {
@@ -2723,6 +2897,8 @@ PosnicPro.items = {
             return item.name;
         }).indexOf(name);
         PosnicPro.items.imageParams.splice(removeIndex, 1);
+        /* A variant may have been pointing at the photo just deleted. */
+        PosnicPro.items.renderVariantPhotoPickers();
         $('#selector_' + id).remove();
         if (PosnicPro.items.imageParams.length === 0) {
             $('#item_logo').val('item.svg');
@@ -2775,6 +2951,8 @@ PosnicPro.items = {
             return item.name;
         }).indexOf(name);
         PosnicPro.items.imageParams.splice(removeIndex, 1);
+        /* A variant may have been pointing at the photo just deleted. */
+        PosnicPro.items.renderVariantPhotoPickers();
         $('#selector_' + id).remove();
         if (PosnicPro.items.imageParams.length === 0) {
             $('#item_upload_image_status').val('no');
@@ -3016,6 +3194,9 @@ PosnicPro.items = {
                    every plain item silently becomes a combination. */
                 second.val('').trigger('change.select2');
                 $('#item_variant_list_2').html('');
+                /* The first axis is preselected above, so its option in this
+                   list has to be greyed out before the list is ever opened. */
+                PosnicPro.items.syncAxisExclusion();
             }
         }, function (xhr) {
             var response = jQuery.parseJSON(xhr.responseText);
@@ -4563,8 +4744,25 @@ $('.itemimageview').click(function () {
    Delegated rather than one-shot bound: this select is rebuilt by
    loadSelectVariant on every page entry, and a handler bound to the old
    element would be thrown away with it. */
+/*
+ * Choosing a photo for one variant. Clicking the chosen one again clears it.
+ *
+ * Delegated: these strips are rebuilt every time a photo is added or removed,
+ * and a handler bound to the old <img> would go with it.
+ */
+$(document).on('click', '.items-variant-photo', function () {
+    var stripId = $(this).closest('.items-variant-photos').attr('id') || '';
+    var key = stripId.replace('items_photo_strip_', '');
+    var $hidden = $('#items_photo_' + key);
+    if (!$hidden.length) { return; }
+    var name = $(this).attr('data-photo');
+    $hidden.val($hidden.val() === name ? '' : name);
+    PosnicPro.items.renderVariantPhotoPickers();
+});
+
 $(document).on('select2:select', '#items_variant_2', function () {
     PosnicPro.items.loadVariantValues('#items_variant_2', '#item_variant_list_2');
+    PosnicPro.items.syncAxisExclusion();
 });
 
 /*
@@ -4578,6 +4776,7 @@ $(document).on('select2:select', '#items_variant_2', function () {
  */
 $(document).on('select2:select', '#items_variant', function () {
     PosnicPro.items.loadVariantValues('#items_variant', '#item_variant_list');
+    PosnicPro.items.syncAxisExclusion();
 });
 $('.items_category').one('change', function () {
     var categorySelect = $('.items_category');
