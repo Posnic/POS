@@ -340,6 +340,35 @@
                                             name="items_barcodeid" minlength="1" maxlength="100"
                                             placeholder="Scan From Bar Code Reader" autocomplete="off">
                                     </div>
+                                    <!--
+                                        The GLOBAL identifier, deliberately its own
+                                        field rather than reusing the barcode above.
+
+                                        That one is whatever this shop prints or
+                                        scans - it may be a real GTIN, an in-store
+                                        code for loose produce, or a supplier's
+                                        reference. This one is only ever stored when
+                                        it validates, because a wrong GTIN is worse
+                                        than a missing one: it claims to be a product
+                                        it is not, and anyone matching against it
+                                        inherits the error.
+
+                                        Most shop items will never have one, and that
+                                        is the normal case - hence no asterisk and a
+                                        hint that says so.
+                                    -->
+                                    <div class="col-md-6">
+                                        <label class="form-control-placeholder items-label-inline" for="items_gtin">
+                                            <lang class="lang_gtin_title">GTIN / EAN</lang>
+                                            <span class="tool" data-tip="The manufacturer's global barcode number - EAN-13, UPC or GTIN-14. Leave empty for own-brand or loose items." tabindex="6">
+                                                <i class="mdi mdi mdi-help-circle"></i>
+                                            </span>
+                                        </label>
+                                        <input type="text" class="form-control clear_text_item" id="items_gtin"
+                                            name="items_gtin" maxlength="14" inputmode="numeric"
+                                            placeholder="e.g. 5000159484695" autocomplete="off">
+                                        <small id="items_gtin_hint" class="form-text text-muted" style="min-height:18px;"></small>
+                                    </div>
                                 </div>
                             </div>
                         </div>

@@ -1197,3 +1197,66 @@ test('clearing the value list never leaves the variant select stranded', () => {
     );
   }
 });
+test('a GTIN is never shared across a variant family', () => {
+  /*
+   * The trap this pins. A GTIN identifies ONE trade item: Red-L and Red-M have
+   * different numbers on their packs, so there is no value a family could
+   * share. Putting the parent's on every row would have five products each
+   * claiming to be the same one - the duplicate-identity failure the whole
+   * validation exists to prevent, and worse than carrying no number at all.
+   *
+   * Caught when a first pass added it to _sharedItemFields, which is spread
+   * onto every variant row.
+   */
+  const at = itemsJs.indexOf('_sharedItemFields: function');
+  const shared = itemsJs.slice(at, itemsJs.indexOf('\n    },', at));
+  assert.ok(
+    !/gtin:\s*\$\('#items_gtin'\)/.test(shared),
+    'the GTIN is in the shared fields - every variant would claim the same identity',
+  );
+
+  /* It must still reach the plain-item save. */
+  const item = itemsJs.slice(itemsJs.indexOf('\n    item: function'), itemsJs.indexOf('itemImageFormSubmit'));
+  assert.match(item, /gtin: \$\('#items_gtin'\)/, 'a plain item cannot save its GTIN at all');
+});
+
+test('the form has a GTIN field, kept apart from the barcode', () => {
+  /* barcode_id is whatever the shop scans - possibly an in-store code. Reusing
+     it as a global identifier is how a public database gets poisoned. */
+  assert.match(html, /id="items_gtin"/, 'there is no GTIN field on the form');
+  assert.match(html, /id="items_barcodeid"/, 'the shop barcode field is gone');
+  assert.ok(
+    html.indexOf('id="items_gtin"') !== html.indexOf('id="items_barcodeid"'),
+    'the GTIN and the shop barcode are the same input',
+  );
+  /* Most items will never have one - no asterisk, and a hint that says so. */
+  const at = html.indexOf('for="items_gtin"');
+  const label = html.slice(at, html.indexOf('</label>', at));
+  assert.ok(!/text-danger/.test(label), 'GTIN is marked required - most shop items have none');
+});
+
+test('a mistyped GTIN is called out before saving', () => {
+  /*
+   * The server refuses an invalid GTIN by storing an empty field - correctly,
+   * but silently. Without a word here somebody mistypes a digit, saves, and the
+   * item has no GTIN with nothing to explain why.
+   */
+  const at = itemsJs.indexOf('checkGtin: function');
+  assert.notStrictEqual(at, -1, 'nothing checks the typed GTIN');
+  const fn = itemsJs.slice(at, itemsJs.indexOf('\n    },', at));
+  assert.match(fn, /8, 12, 13, 14/, 'the valid lengths are not checked');
+  assert.match(fn, /fromRight % 2 === 0 \? 3 : 1/, 'the GS1 check digit is not computed, or not from the right');
+  assert.match(fn, /in-store code/, 'an in-store barcode is reported as a manufacturer number');
+
+  /* Empty must stay quiet: most items legitimately have no GTIN, and nagging
+     would teach people to ignore the hint. */
+  const empty = fn.slice(fn.indexOf('if (!raw)'), fn.indexOf('return;', fn.indexOf('if (!raw)')));
+  assert.match(empty, /removeClass/, 'an empty GTIN leaves a stale message on screen');
+
+  assert.match(itemsJs, /on\('input', '#items_gtin'/, 'the check never runs while typing');
+});
+
+test('an edit shows the GTIN it saved', () => {
+  const fills = (itemsJs.match(/\$\('#items_gtin'\)\.val\(data\.gtin/g) || []).length;
+  assert.strictEqual(fills, 2, 'the GTIN is not restored on both edit paths');
+});
