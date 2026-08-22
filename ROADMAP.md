@@ -31,6 +31,12 @@ Status: **in validation**
 
 - Run the public transaction fixture on each supported platform and record all
   sale, decline, void, return, replay, stock, tender, and close results.
+- Preserve the 22 August 2026 development-snapshot baseline: exact commit
+  `53f89a159806080d69a8c7e9ec6efb88eeb3674d` reproduced eight of ten scenarios
+  through the real HTTP API and isolated MongoDB with 45 assertions and an XTS
+  66.50 close. Payment decline and pre-completion void were not exercised, and
+  receipt output, packaged UI, physical hardware, provider payment, security,
+  compliance, performance, and customer operation remain outside that result.
 - Extend the bounded local Windows sale observation to an operating-system
   disconnect, a complete shift, a restart during work, and power-loss recovery.
 - Repeat backup and restore checks across supported platforms, larger synthetic
@@ -39,7 +45,9 @@ Status: **in validation**
 
 Start with the
 [vendor-neutral POS acceptance fixture](https://posnic.com/open-source-pos-benchmark#vendor-neutral-pos-acceptance-fixture)
-and submit a
+and review the
+[machine-readable partial Posnic result](https://posnic.com/assets/posnic-development-pos-acceptance-fixture-2026-08-22.json).
+Then reproduce it on a named package and submit a
 [POS acceptance run](https://github.com/Posnic/POS/issues/new?template=pos_acceptance_run.yml).
 
 ### P0: named hardware evidence
@@ -111,6 +119,7 @@ Status: **planned**
 |---|---|---|
 | Source and licence | AGPL-3.0-only source, versioned releases, governance, contribution and security policies | Bundled dependencies retain their own licences; trademarks are separate |
 | Local sale | One synthetic Windows v1.3.0 cash sale was completed and reopened under bounded external-host isolation | Not an OS-wide outage, full shift, physical-device, payment-terminal, or power-loss test |
+| Development fixture | Eight of ten ordered synthetic scenarios reproduced through the HTTP API and isolated MongoDB on exact commit `53f89a15`; 45 assertions and the XTS 66.50 close reconciled | Development snapshot, not a tagged release or complete fixture pass; decline, pre-completion void, receipts, packaged UI, physical hardware, provider payment, customer operation, security, compliance, and performance were not established |
 | Source tests | Versioned test results and focused workflow tests are linked from the product evidence page | Not a customer acceptance run, independent audit, or hardware certification |
 | Backup and restore | One synthetic restore record with stated counts and limits | Not every dataset, failed disk, platform, or production recovery condition |
 | Hardware | Protocol and source-test evidence plus a versioned matrix | No named device is automatically certified |
