@@ -4320,3 +4320,42 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     background: var(--theme-table-row-hover);
     box-shadow: inset 3px 0 0 var(--theme-primary-color);
 }
+
+/* ------------------------------------------------------------------
+ * Per-variant photo picker (item form)
+ *
+ * A strip of the family's photos under each variant row. The chosen one
+ * is marked with a ring and a tick rather than only a border colour -
+ * a border alone is the kind of state that disappears on a bright
+ * screen, and picking the wrong photo is not visible again until the
+ * item is saved and sitting on the sale grid.
+ * ------------------------------------------------------------------ */
+.items-variant-photos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    min-height: 34px;
+}
+.items-variant-photo {
+    width: 48px;
+    height: 48px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 2px solid var(--theme-border-color, #d0d7de);
+    padding: 1px;
+    cursor: pointer;
+    opacity: .72;
+    transition: opacity .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+.items-variant-photo:hover { opacity: 1; }
+.items-variant-photo.is-chosen {
+    opacity: 1;
+    border-color: #2f855a;
+    box-shadow: 0 0 0 2px rgba(47, 133, 90, .35);
+}
+/* Keyboard and screen-reader users get the same affordance the mouse has. */
+.items-variant-photo:focus-visible {
+    outline: 2px solid var(--theme-primary-color, #506fe4);
+    outline-offset: 2px;
+}
