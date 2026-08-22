@@ -3224,28 +3224,47 @@ html:not([data-theme]) .infobar-settings-sidebar-head {
     /* Keep the self-hosted DM Sans (works offline) as the default font. */
     --theme-font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
 }
-/*
- * Small 6px radius, no shadow - and NO border (owner ask).
- *
- * github.com does draw 1px #d0d7de boxes, and that is where this came from.
- * On a till it read as noise: a card border, inside a page, inside a panel,
- * every one of them a line the eye has to account for.
- *
- * Nothing is lost by removing it, because the separation was never doing the
- * work alone - the card is #ffffff on a #f6f8fa body, so surfaces still part
- * by TONE, which is how the default theme has always done it.
- *
- * It also stops the master-detail panes fighting a border they only ever
- * wanted to cancel; see the note in custom.css above .master-detail.
- */
+/* GitHub uses bordered boxes (1px #d0d7de), small 6px radius, no shadow. */
 [data-theme="github"] .card {
+    border: 1px solid #d0d7de !important;
     border-radius: 6px !important;
     box-shadow: none !important;
 }
+
 [data-theme="github"] .card > .card-header:first-child,
 [data-theme="github"] .card > .card-body:first-child { border-top-left-radius: 6px !important; border-top-right-radius: 6px !important; }
 [data-theme="github"] .card > .card-body:last-child,
 [data-theme="github"] .card > .card-footer:last-child { border-bottom-left-radius: 6px !important; border-bottom-right-radius: 6px !important; }
+/*
+ * ...except the master-detail panes, which have no box of their own.
+ *
+ * The rule above and `.master-detail > .md-rail { border: 0 !important }` in
+ * custom.css have the SAME specificity, and custom.css loads first - so the
+ * theme won, and the joined surface came back as two bordered cards inside a
+ * third border. Removing the theme border entirely fixed that screen and took
+ * every other card's border with it (owner: "other pages also removed").
+ *
+ * Naming the panes here is the narrow fix: one more class beats the rule above
+ * on specificity, and it sits in the file that loads last, so it wins twice
+ * over. Scoped to the PATTERN rather than to quotes - any screen adopting
+ * master-detail wants the same thing, and quotes is simply the only one today.
+ *
+ * Placed AFTER the radius rules above on purpose. Those name
+ * `.card > .card-body:first-child` and carry the same specificity as this, so
+ * source order decides - and a pane whose inner body keeps 6px corners inside
+ * a square outer border is the same seam, drawn smaller.
+ */
+[data-theme="github"] .master-detail > .md-rail,
+[data-theme="github"] .master-detail > .md-detail,
+[data-theme="github"] .master-detail > .md-rail > .card-body,
+[data-theme="github"] .master-detail > .md-detail > .card-body,
+[data-theme="github"] .master-detail > .md-rail > .card-body:first-child,
+[data-theme="github"] .master-detail > .md-detail > .card-body:first-child,
+[data-theme="github"] .master-detail > .md-rail > .card-body:last-child,
+[data-theme="github"] .master-detail > .md-detail > .card-body:last-child {
+    border: 0 !important;
+    border-radius: 0 !important;
+}
 /* github.com puts its primary buttons in green while its links stay blue.
    Copied literally that gives a screen running two accent colours at once,
    and green ends up meaning BOTH "this is the main action" and "this

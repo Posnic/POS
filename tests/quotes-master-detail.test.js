@@ -1497,3 +1497,42 @@ test('quotes still carries the classes the pattern styles', () => {
     'rail rows never get md-row, so the selection styling applies to nothing',
   );
 });
+test('the github theme does not put the panes back in boxes', () => {
+  /*
+   * !important is not enough here, and that is the whole point.
+   * `[data-theme="github"] .card { border: 1px solid !important }` has the SAME
+   * specificity as the pane rules in custom.css and loads LATER, so it wins the
+   * tie - and the joined surface comes back as two bordered cards inside a
+   * third border.
+   *
+   * Removing the theme border instead fixes this screen and strips every card
+   * in the product. That was tried and reverted ("other pages also removed"),
+   * so the exemption names the panes rather than deleting the rule.
+   */
+  const theme = fs.readFileSync(
+    path.join(ROOT, 'frontend', 'static', 'style', 'css', 'theme-variables.css'),
+    'utf8',
+  );
+
+  /* The border must still exist for every other card. */
+  assert.match(
+    theme,
+    /\[data-theme="github"\] \.card \{[^}]*border: 1px solid/,
+    'the github card border is gone again - that strips every card in the product',
+  );
+
+  /* And the panes must be exempted by name. */
+  const at = theme.indexOf('[data-theme="github"] .master-detail > .md-rail,');
+  assert.notStrictEqual(at, -1, 'the panes are not exempted, so the theme re-boxes them');
+  const rule = theme.slice(at, theme.indexOf('}', at));
+  assert.match(rule, /border: 0 !important/, 'the exemption does not remove the border');
+  assert.match(rule, /border-radius: 0 !important/, 'the panes keep rounded corners inside a square border');
+
+  /* Order matters: the radius rules share this specificity, so an exemption
+     placed before them loses the tie it was written to win. */
+  const radiusAt = theme.indexOf('.card > .card-body:first-child { border-top-left-radius');
+  assert.ok(
+    radiusAt !== -1 && at > radiusAt,
+    'the exemption sits BEFORE the radius rules - equal specificity means the later one wins',
+  );
+});

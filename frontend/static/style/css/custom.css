@@ -3859,12 +3859,13 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
  * has to: custom.css loads BEFORE theme-variables.css, so an !important in the
  * theme beats a plain declaration here however specific this selector is.
  *
- * The github theme's card BORDER has since been removed (owner ask), so that
- * particular fight is over - but `border-radius: 6px !important` is still
- * there, and a rounded pane inside a square outer border is the same bug in a
- * quieter form. The !important on border stays as well: nothing guarantees the
- * next theme is as restrained, and this arrangement only works while the panes
- * carry no box of their own.
+ * !important alone is NOT enough against the github theme, and that is worth
+ * knowing before changing anything here. `[data-theme="github"] .card` has the
+ * same specificity as these rules and loads LATER, so it wins the tie and the
+ * joined surface comes back as two bordered cards inside a third border.
+ * theme-variables.css names the panes explicitly to settle it - see the note
+ * beside that rule. Removing the theme's border instead fixes this screen and
+ * strips every other card in the product, which was tried and reverted.
  *
  * The contentbar's 30px padding goes too, and becomes a margin, or that
  * padding is a white moat between the outer border and the panes.
