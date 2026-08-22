@@ -34,9 +34,13 @@ Status: **in validation**
 - Preserve the 22 August 2026 development-snapshot baseline: exact commit
   `53f89a159806080d69a8c7e9ec6efb88eeb3674d` reproduced eight of ten scenarios
   through the real HTTP API and isolated MongoDB with 45 assertions and an XTS
-  66.50 close. Payment decline and pre-completion void were not exercised, and
-  receipt output, packaged UI, physical hardware, provider payment, security,
-  compliance, performance, and customer operation remain outside that result.
+  66.50 close. Payment decline and pre-completion void were not exercised at
+  that layer. A separate source harness now passes the fixture-shaped `SALE-001`
+  values through the shipped receipt HTML extractor and ESC/POS renderer for 58
+  mm and 80 mm output, and drives the pre-completion clear handler with network
+  methods instrumented. That supplements the baseline; it does not establish a
+  packaged UI run, physical print, provider payment, security, compliance,
+  performance, or customer operation.
 - Extend the bounded local Windows sale observation to an operating-system
   disconnect, a complete shift, a restart during work, and power-loss recovery.
 - Repeat backup and restore checks across supported platforms, larger synthetic
@@ -119,7 +123,8 @@ Status: **planned**
 |---|---|---|
 | Source and licence | AGPL-3.0-only source, versioned releases, governance, contribution and security policies | Bundled dependencies retain their own licences; trademarks are separate |
 | Local sale | One synthetic Windows v1.3.0 cash sale was completed and reopened under bounded external-host isolation | Not an OS-wide outage, full shift, physical-device, payment-terminal, or power-loss test |
-| Development fixture | Eight of ten ordered synthetic scenarios reproduced through the HTTP API and isolated MongoDB on exact commit `53f89a15`; 45 assertions and the XTS 66.50 close reconciled | Development snapshot, not a tagged release or complete fixture pass; decline, pre-completion void, receipts, packaged UI, physical hardware, provider payment, customer operation, security, compliance, and performance were not established |
+| Development fixture | Eight of ten ordered synthetic scenarios reproduced through the HTTP API and isolated MongoDB on exact commit `53f89a15`; 45 assertions and the XTS 66.50 close reconciled | Development snapshot, not a tagged release or complete fixture pass; provider decline, packaged UI, physical hardware, customer operation, security, compliance, and performance were not established |
+| Fixture client supplement | [`pos-acceptance-client-evidence.test.js`](tests/pos-acceptance-client-evidence.test.js) sends fixture-shaped `SALE-001` markup through the real receipt parser and ESC/POS renderer and executes the real pre-completion clear handler with instrumented network methods | Source/DOM and printer-byte evidence only; it does not upgrade the 8/10 API result or prove packaged Electron behavior, physical output, or provider payment |
 | Source tests | Versioned test results and focused workflow tests are linked from the product evidence page | Not a customer acceptance run, independent audit, or hardware certification |
 | Backup and restore | One synthetic restore record with stated counts and limits | Not every dataset, failed disk, platform, or production recovery condition |
 | Hardware | Protocol and source-test evidence plus a versioned matrix | No named device is automatically certified |
