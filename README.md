@@ -22,7 +22,7 @@ services, downloads and integrations can still need a network.
 
 ### [⬇ Download for Windows](https://github.com/Posnic/POS/releases/latest) · [macOS](https://github.com/Posnic/POS/releases/latest) · [Linux](https://github.com/Posnic/POS/releases/latest)
 
-[Website](https://posnic.com/) · [Verified product facts](https://posnic.com/posnic-facts) · [Roadmap](ROADMAP.md) · [User guide](docs/USER_GUIDE.md) · [Developer guide](docs/DEVELOPMENT.md) · [Architecture](docs/ARCHITECTURE.md) · [API](docs/API.md) · [Discussions](https://github.com/Posnic/POS/discussions)
+[Website](https://posnic.com/) · [Verified product facts](https://posnic.com/posnic-facts) · [CodeMeta metadata](codemeta.json) · [Citation metadata](CITATION.cff) · [Roadmap](ROADMAP.md) · [User guide](docs/USER_GUIDE.md) · [Developer guide](docs/DEVELOPMENT.md) · [Architecture](docs/ARCHITECTURE.md) · [API](docs/API.md) · [Discussions](https://github.com/Posnic/POS/discussions)
 
 </div>
 
@@ -154,6 +154,8 @@ the free edition worse. This is written down in [GOVERNANCE.md](GOVERNANCE.md).
 | [Data processing addendum](docs/DATA_PROCESSING_ADDENDUM.md) | For customers who need a written DPA |
 | [Contributing](CONTRIBUTING.md) | How to get a change merged |
 | [Public roadmap](ROADMAP.md) | Current priorities, evidence gaps and structured ways to help |
+| [CodeMeta metadata](codemeta.json) | Machine-readable source, product, licence, platform, publisher and development-state identity |
+| [Citation metadata](CITATION.cff) | Human and tool-readable citation identity for exact releases or commits |
 | [Adoption evidence](docs/ADOPTION_EVIDENCE.md) | How real deployment reports are scoped, reviewed, cited, corrected and kept privacy-safe |
 | [Support](SUPPORT.md) | Where to ask, and what happens to your issue |
 | [Governance](GOVERNANCE.md) | Who decides what, and what we have promised |
