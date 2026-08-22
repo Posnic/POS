@@ -4359,3 +4359,62 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     outline: 2px solid var(--theme-primary-color, #506fe4);
     outline-offset: 2px;
 }
+
+/* ------------------------------------------------------------------
+ * The sale-done card closes itself, and the ring says when.
+ *
+ * Drawn as an SVG outline rather than an animated border so the line
+ * genuinely travels the edge and arrives at the corner - a border-width
+ * or background trick cannot express "how much time is left" without
+ * lying about it somewhere along the path.
+ *
+ * The ring is decoration for a behaviour, so it is aria-hidden and the
+ * card is never made to depend on it: with the SVG missing, the panel
+ * still closes and every button still works.
+ * ------------------------------------------------------------------ */
+.sale-done-card { position: relative; }
+
+.sale-done-ring {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;   /* never swallow a click meant for a button */
+    overflow: visible;
+    z-index: 2;
+}
+.sale-done-ring rect {
+    x: 1px; y: 1px;
+    width: calc(100% - 2px);
+    height: calc(100% - 2px);
+    fill: none;
+    stroke-width: 2;
+}
+.sale-done-ring-track { stroke: transparent; }
+.sale-done-ring-line {
+    stroke: var(--theme-primary-color, #506fe4);
+    stroke-linecap: round;
+    opacity: 0;
+    transition: opacity .2s ease;
+}
+/* Only while the countdown is actually running. A ring sitting at full
+   length on a cancelled timer would promise a close that is not coming. */
+.sale-done-card.is-closing .sale-done-ring-line { opacity: .9; }
+
+/* The cashier engaged with the card, so the countdown stopped. Saying so
+   beats leaving them to wonder whether it is still about to vanish. */
+.sale-done-hint {
+    display: none;
+    text-align: center;
+    font-size: 12px;
+    color: #6c757d;
+    margin: 6px 0 0;
+}
+.sale-done-card.is-held .sale-done-hint { display: block; }
+
+@media (prefers-reduced-motion: reduce) {
+    /* No ring, and the ring is the only warning this card gives - so for
+       these users the card does not close itself at all (see saleDoneTimer).
+       A panel vanishing with no notice is the surprise the ring prevents. */
+    .sale-done-ring { display: none; }
+}
