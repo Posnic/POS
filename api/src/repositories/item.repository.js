@@ -110,24 +110,20 @@ class ItemRepository extends BaseModel {
   }
 
   /**
-   * Find items with pagination and filters (equivalent to itemPage)
+   * The collection and the authoritative filter for one branch's item list.
+   *
+   * Shared by the flat list and the grouped one. Two copies of this would be
+   * two places to forget that client-supplied scope must be stripped - and the
+   * failure mode of forgetting is not an error, it is a query that quietly
+   * returns the wrong shop's items or none at all.
    *
    * @param {Object} params
    * @param {string|ObjectId} params.branchId - Branch context
    * @param {string|ObjectId} params.licenseId - License context
-   * @param {Object} [params.filters] - Additional filters
-   * @param {number} [params.page] - Page number (1-based)
-   * @param {number} [params.limit] - Page size
-   * @param {Object} [params.sort] - Sort object
+   * @param {Object} [params.filters] - Client-supplied business filters
+   * @returns {Promise<{collection: Object, filter: Object}>}
    */
-  async findPage({
-    branchId,
-    licenseId,
-    filters = {},
-    page = 1,
-    limit = 5,
-    sort = { _id: -1 },
-  } = {}) {
+  async listScope({ branchId, licenseId, filters = {} } = {}) {
     const collection = await this.getCollection(this.collectionName);
 
     const branchObjectId = this.toObjectId(branchId);
@@ -142,10 +138,6 @@ class ItemRepository extends BaseModel {
     if (!branch) {
       throw new Error('Active branch does not belong to the current license');
     }
-
-    const effectiveLimit = parseInt(limit, 10) || 5;
-    const effectivePage = parseInt(page, 10) || 1;
-    const skip = (effectivePage - 1) * effectiveLimit;
 
     const clientFilters = this.assignFilterObjects({ ...filters }, LegacyItemModel.fields);
     // Client-supplied scope is never part of the business filter. Leaving a
@@ -172,6 +164,34 @@ class ItemRepository extends BaseModel {
       'branch_access.branch_id': branchObjectId,
       license: licenseObjectId,
     };
+
+    return { collection, filter };
+  }
+
+  /**
+   * Find items with pagination and filters (equivalent to itemPage)
+   *
+   * @param {Object} params
+   * @param {string|ObjectId} params.branchId - Branch context
+   * @param {string|ObjectId} params.licenseId - License context
+   * @param {Object} [params.filters] - Additional filters
+   * @param {number} [params.page] - Page number (1-based)
+   * @param {number} [params.limit] - Page size
+   * @param {Object} [params.sort] - Sort object
+   */
+  async findPage({
+    branchId,
+    licenseId,
+    filters = {},
+    page = 1,
+    limit = 5,
+    sort = { _id: -1 },
+  } = {}) {
+    const { collection, filter } = await this.listScope({ branchId, licenseId, filters });
+
+    const effectiveLimit = parseInt(limit, 10) || 5;
+    const effectivePage = parseInt(page, 10) || 1;
+    const skip = (effectivePage - 1) * effectiveLimit;
 
     const [total, items] = await Promise.all([
       collection.countDocuments(filter),
