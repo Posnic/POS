@@ -557,6 +557,11 @@ PosnicPro.items = {
             tile_color: $('#item_tile_color').val() || PosnicPro.autoTile($('#items_name').val()).color,
             tile_shape: $('#item_tile_shape').val() || PosnicPro.autoTile($('#items_name').val()).shape,
             plu_code: $('#items_plu_code').val() || '',
+            /*
+             * NOT here, deliberately - a GTIN identifies ONE trade item, so it
+             * cannot be shared by a family: five variants carrying one number
+             * would each claim to be the same product.
+             */
             item_kind: $('#item_is_service').is(':checked') ? 'service' : 'product',
             service_unit: $('#item_service_unit').val() || 'fixed',
             brand: $('#items_brand').val(),
@@ -605,6 +610,20 @@ PosnicPro.items = {
            tell the two apart - the question has to be asked here. */
         var tilePicked = !!($('#item_tile_color').val() || $('#item_tile_shape').val());
 
+        /*
+         * A family carries NO gtin, and that is deliberate rather than pending.
+         *
+         * A GTIN identifies one trade item. Red-L and Red-M are different trade
+         * items with different numbers on their packs, so there is no single
+         * value that could be shared - putting the parent's on all of them would
+         * have five products each claiming to be the same one, which is the
+         * duplicate-identity failure the validation exists to prevent.
+         *
+         * A per-variant GTIN input on each generated row is the right answer and
+         * belongs with the per-variant image work (P2 in
+         * PRODUCT_INFORMATION_MODEL). Until then no number is better than a
+         * wrong one.
+         */
         $(values).each(function (key, variantName) {
             var unitVariantDetail = $('#items_unit_' + key + '');
             var rowName = itemName + ' / ' + variantName;
@@ -777,6 +796,10 @@ PosnicPro.items = {
                     tile_color: $('#item_tile_color').val() || PosnicPro.autoTile($('#items_name').val()).color,
             tile_shape: $('#item_tile_shape').val() || PosnicPro.autoTile($('#items_name').val()).shape,
             plu_code: $('#items_plu_code').val() || '',
+            /* The server validates and derives gtin14 - see
+               api/src/helpers/items.helper.js. Sending whatever was typed is
+               correct: a client-side check is a courtesy, not the rule. */
+            gtin: $('#items_gtin').val() || '',
                     item_kind: $('#item_is_service').is(':checked') ? 'service' : 'product',
                     service_unit: $('#item_service_unit').val() || 'fixed',
                     brand: $('#items_brand').val(),
@@ -1324,6 +1347,8 @@ PosnicPro.items = {
                 $('#items_brand').val(data.brand || '');
                 $('#items_tags').val(Array.isArray(data.tags) ? data.tags.join(', ') : '');
                 $('#items_reorder_point').val(data.reorder_point === null || data.reorder_point === undefined ? '' : data.reorder_point);
+                $('#items_gtin').val(data.gtin || '');
+                PosnicPro.items.checkGtin();
                 PosnicPro.items.setTileColor(data.tile_color || '');
                 PosnicPro.items.setTileShape(data.tile_shape || '');
                 $('#items_plu_code').val(data.plu_code || '');
@@ -1975,6 +2000,8 @@ PosnicPro.items = {
                 $('#items_brand').val(data.brand || '');
                 $('#items_tags').val(Array.isArray(data.tags) ? data.tags.join(', ') : '');
                 $('#items_reorder_point').val(data.reorder_point === null || data.reorder_point === undefined ? '' : data.reorder_point);
+                $('#items_gtin').val(data.gtin || '');
+                PosnicPro.items.checkGtin();
                 PosnicPro.items.setTileColor(data.tile_color || '');
                 PosnicPro.items.setTileShape(data.tile_shape || '');
                 $('#items_plu_code').val(data.plu_code || '');
@@ -2314,6 +2341,62 @@ PosnicPro.items = {
             return $('<option>').attr('value', f.name).text(f.name)[0];
         });
         $list.empty().append(opts).val(null).trigger('change');
+    },
+
+    /*
+     * Say whether what was typed is actually a GTIN, while it is being typed.
+     *
+     * The server is the authority and refuses anything invalid - but silently,
+     * by storing an empty field. Without a word here, somebody mistypes a digit,
+     * saves, and the item simply has no GTIN with nothing to explain why.
+     *
+     * The check digit is the whole point: it catches exactly the single-digit
+     * and transposition errors a person makes copying fourteen numbers off a
+     * pack, which is why GS1 put it there.
+     */
+    checkGtin: function () {
+        var $hint = $('#items_gtin_hint');
+        if (!$hint.length) { return; }
+        var raw = String($('#items_gtin').val() || '').replace(/[\s-]/g, '');
+
+        if (!raw) {
+            /* Empty is the NORMAL case. Most shop items - loose produce,
+               own-brand, anything made on site - will never have one, and
+               nagging about it would train people to ignore the field. */
+            $hint.text('').removeClass('text-danger text-success');
+            return;
+        }
+        if (!/^\d+$/.test(raw) || [8, 12, 13, 14].indexOf(raw.length) === -1) {
+            $hint.text('A GTIN is 8, 12, 13 or 14 digits')
+                .addClass('text-danger').removeClass('text-success');
+            return;
+        }
+
+        /* GS1 check digit: from the right, weight 3 and 1 alternately. */
+        var body = raw.slice(0, -1);
+        var sum = 0;
+        for (var i = 0; i < body.length; i++) {
+            var fromRight = body.length - 1 - i;
+            sum += Number(body[i]) * (fromRight % 2 === 0 ? 3 : 1);
+        }
+        if (((10 - (sum % 10)) % 10) !== Number(raw[raw.length - 1])) {
+            $hint.text('That is not a valid barcode - check the digits')
+                .addClass('text-danger').removeClass('text-success');
+            return;
+        }
+
+        /* Valid, but is it a number the world shares? Prefixes 02, 04 and
+           20-29 are printed by shops for loose goods; they scan correctly and
+           mean something different in every shop. Worth saying, because a
+           person scanning their own shelf label would otherwise think they had
+           found the manufacturer's number. */
+        var p = raw.padStart(14, '0').slice(1, 3);
+        if (p === '02' || p === '04' || (Number(p) >= 20 && Number(p) <= 29)) {
+            $hint.text('Valid, but this is an in-store code - not the maker\'s number')
+                .removeClass('text-danger text-success');
+            return;
+        }
+        $hint.text('Valid barcode').addClass('text-success').removeClass('text-danger');
     },
 
     /* "2 ) Shirt / Large" once the item has a name, plain "2 ) Large" before
@@ -4360,6 +4443,9 @@ $(document).ready(function () {
     });
     $(document).on('input', '#items_name', function () {
         PosnicPro.items.refreshTilePreview();
+    });
+    $(document).on('input', '#items_gtin', function () {
+        PosnicPro.items.checkGtin();
     });
     $(document).on('click', '#item_tile_swatches .tile-swatch', function () {
         PosnicPro.items.setTileColor($(this).data('color') || '');
