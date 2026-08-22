@@ -66,6 +66,52 @@ test('the checksum file lists downloads, not plumbing', () => {
   );
 });
 
+test('primary release downloads receive pinned build provenance', () => {
+  const checksum = RELEASE.indexOf('sha256sum');
+  const attest = RELEASE.indexOf('uses: actions/attest@');
+  const publish = RELEASE.indexOf('uses: softprops/action-gh-release@');
+
+  assert.ok(checksum >= 0, 'the release has no checksum subject list');
+  assert.ok(attest > checksum, 'provenance is generated before its checksum subjects exist');
+  assert.ok(publish > attest, 'release files can be published before provenance succeeds');
+  assert.match(
+    RELEASE,
+    /uses: actions\/attest@[0-9a-f]{40} # v4\.2\.2/,
+    'the provenance action is not pinned to the reviewed immutable release',
+  );
+  assert.match(
+    RELEASE,
+    /subject-checksums:\s*release\/SHA256SUMS\.txt/,
+    'provenance does not cover the same primary downloads people verify',
+  );
+  for (const permission of ['id-token: write', 'attestations: write', 'artifact-metadata: write']) {
+    assert.match(RELEASE, new RegExp(permission), `release workflow is missing ${permission}`);
+  }
+  assert.match(
+    RELEASE,
+    /gh attestation verify <downloaded-file> --repo Posnic\/POS/,
+    'release notes do not tell a downloader how to verify provenance',
+  );
+  assert.match(
+    RELEASE,
+    /It is not code signing, an independent audit or proof that the software is safe/,
+    'release notes overstate what provenance proves',
+  );
+});
+
+test('a manual rebuild identifies the requested tag as its workflow ref', () => {
+  const gate = RELEASE.slice(
+    RELEASE.indexOf('Manual rebuild ref matches the requested tag'),
+    RELEASE.indexOf('Update trust and version format'),
+  );
+
+  assert.match(gate, /github\.event_name == 'workflow_dispatch'/);
+  assert.match(gate, /REQUESTED_TAG: \$\{\{ inputs\.tag \}\}/);
+  assert.match(gate, /expected="refs\/tags\/\$\{REQUESTED_TAG\}"/);
+  assert.match(gate, /\$GITHUB_REF[^\n]*\$expected/);
+  assert.match(gate, /exit 1/, 'a mismatched manual source ref does not fail the release');
+});
+
 test('whether a release is offered to installed copies is a decision, not a constant', () => {
   /*
    * prerelease was hardcoded true, which is right while the installers are
