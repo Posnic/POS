@@ -1,0 +1,154 @@
+name: Real deployment evidence report
+description: Report bounded, versioned experience from operating or evaluating Posnic
+title: "[Deployment evidence]: "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for honest experience from a real deployment, pilot, installation, or sustained evaluation. Failures, workarounds, stopped trials, and reasons Posnic was not selected are as useful as successful use.
+
+        GitHub issues are public. Do not include customer records, card or bank data, credentials, tokens, tax identifiers, staff identities, production database files, private logs, an exact shop address, or anything you are not authorised to publish.
+
+        A submitted report is not automatically a testimonial, case study, certification, endorsement, uptime claim, or proof that another business will obtain the same result.
+
+  - type: dropdown
+    id: reporter_relationship
+    attributes:
+      label: Your relationship to this deployment
+      options:
+        - Business owner or operator
+        - Employee using Posnic at work
+        - Installer, consultant, or implementation partner
+        - Independent evaluator or researcher
+        - Posnic employee, contractor, affiliate, or investor
+        - Former user or stopped pilot
+        - Other relationship explained below
+    validations:
+      required: true
+
+  - type: textarea
+    id: relationship_details
+    attributes:
+      label: Relationship and financial disclosure
+      description: State who selected, configured, paid for, supplied, or reviewed the software and disclose any payment, free service, discount, employment, referral, or other material connection to Posnic.
+      placeholder: I operate the shop and used the free local edition; no payment or incentive was received for this report.
+    validations:
+      required: true
+
+  - type: input
+    id: product_identity
+    attributes:
+      label: Exact Posnic version or source commit
+      description: Include the release tag, About-screen version, or full source commit. Add the package filename and SHA-256 when available.
+      placeholder: v1.3.0, Posnic-1.3.0-windows-x64-installer.exe, SHA-256 ...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: deployment_status
+    attributes:
+      label: Deployment status
+      options:
+        - Currently used for live business operations
+        - Time-bounded live pilot
+        - Production-like evaluation with synthetic data
+        - Installation or migration attempt that stopped
+        - Previously used and no longer in use
+    validations:
+      required: true
+
+  - type: input
+    id: observation_window
+    attributes:
+      label: Observation window
+      description: Give calendar dates or a bounded duration. Do not say "for a while".
+      placeholder: 1 June 2026 to 31 July 2026, or 12 operating days
+    validations:
+      required: true
+
+  - type: input
+    id: market_scope
+    attributes:
+      label: Country, business type, and deployment size
+      description: Country and state or region are enough. Do not publish an exact address. Use a range for staff or transaction volume if the exact value is sensitive.
+      placeholder: India, Tamil Nadu; one bakery; one till; 1-5 staff
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Operating system and relevant hardware
+      description: Include OS version, architecture, installation type, and only the exact device models relevant to your observations.
+      placeholder: Windows 11 23H2 x64; local edition; printer model and connection if discussed
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: workflows_observed
+    attributes:
+      label: Workflows actually observed
+      description: Select only paths used during the stated window. Explain depth and exceptions below.
+      options:
+        - label: Installation, setup, or migration
+        - label: Catalog, stock, or purchasing
+        - label: Sale, tender recording, receipt, or return
+        - label: Restaurant, table, kitchen, or kiosk workflow
+        - label: Register, close, report, or export
+        - label: Backup, restore, restart, or outage recovery
+        - label: Printer, scanner, drawer, scale, or display
+        - label: Multi-till, branch, sync, or Posnic Cloud
+        - label: Support, issue reporting, or update process
+    validations:
+      required: true
+
+  - type: textarea
+    id: observed_results
+    attributes:
+      label: What happened
+      description: Describe expected and observed behavior with counts or dates where you can support them. Include failures, retries, workarounds, abandoned paths, and unresolved issues.
+      placeholder: What was attempted; what worked; what failed; what changed; links to related public issues.
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence_and_method
+    attributes:
+      label: Evidence and method
+      description: Explain how the observations were recorded. Link public issues or attach only synthetic, aggregated, or fully redacted material.
+      placeholder: Version screen, synthetic test receipt, issue links, redacted setup notes, or measured aggregate with its calculation.
+    validations:
+      required: true
+
+  - type: textarea
+    id: limitations
+    attributes:
+      label: Limitations and untested paths
+      description: State what this report does not establish, including workflows, platforms, hardware, providers, countries, loads, recovery conditions, or time periods not observed.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: citation_permission
+    attributes:
+      label: Permission to cite this report
+      description: This choice can be changed later by commenting on the issue. Separate written approval is still required before publishing a named business case study, logo, quotation, or private evidence.
+      options:
+        - Do not use this as marketing; keep it as a public issue only
+        - Posnic may link to this public issue with my GitHub username only
+        - Posnic may summarise this public report after I approve the exact wording
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: public_data_confirmation
+    attributes:
+      label: Public report confirmation
+      options:
+        - label: I am authorised to publish this report and removed private customer, payment, staff, credential, tax, address, log, and database data.
+          required: true
+        - label: I disclosed my relationship and any payment, free service, discount, referral, employment, or other material connection.
+          required: true
+        - label: I understand that maintainers may ask for correction, label the result unverified, or close it without turning it into a marketing claim.
+          required: true

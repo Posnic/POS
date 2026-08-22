@@ -94,6 +94,9 @@ Status: **planned**
   reports are not a compliance certificate.
 - Publish approved customer evidence only with written consent, metric source,
   time window, and limitations.
+- Accept structured deployment evidence for live use, pilots, stopped installs,
+  and production-like evaluations. A submitted issue is evidence to review, not
+  customer proof, a testimonial, or permission to reuse a business identity.
 
 ### P1: contributor and maintainer capacity
 

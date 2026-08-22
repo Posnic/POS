@@ -112,6 +112,11 @@ limitation.
 - Test an exact printer, scanner, cash drawer, scale or display against the
   [hardware matrix](docs/HARDWARE_MATRIX.md), then submit the structured
   [hardware evidence form](https://github.com/Posnic/POS/issues/new?template=hardware_evidence.yml).
+- If you operate, piloted, installed, evaluated or stopped using Posnic, read
+  the [adoption evidence policy](docs/ADOPTION_EVIDENCE.md) and submit a
+  structured
+  [deployment evidence report](https://github.com/Posnic/POS/issues/new?template=deployment_evidence.yml).
+  Failures, workarounds and reasons not to adopt are useful evidence.
 - Read [ROADMAP.md](ROADMAP.md) for the current evidence gaps and the boundary
   between released, reproduced, in-validation and planned work.
 
