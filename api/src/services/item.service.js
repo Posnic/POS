@@ -1,6 +1,7 @@
 // src/services/item.service.js
 const ItemRepository = require('../repositories/item.repository');
 const { sanitizeItemData } = require('../helpers/items.helper');
+const productJsonLd = require('../utils/product-jsonld');
 const { ObjectId } = require('mongodb');
 const { ERROR_MESSAGES, SUCCESS_MESSAGES } = require('../constants/items.constants');
 const fs = require('fs');
@@ -1389,6 +1390,41 @@ class ItemService {
 
   async getPriceHistory(itemId, opts = {}) {
     return this.repository.getPriceHistory(itemId, opts);
+  }
+
+  /*
+   * The catalogue as schema.org JSON-LD.
+   *
+   * Streamed rather than assembled: streamCatalogue hands over one family at a
+   * time so the whole catalogue is never resident, and the serialiser turns
+   * each into a ProductGroup or a plain Product.
+   *
+   * The currency is passed IN rather than read from the item, because it is a
+   * shop setting and no item carries one. Absent, the serialiser omits
+   * priceCurrency entirely - a guessed currency on a price is exactly the kind
+   * of confident wrong answer this export exists to avoid.
+   */
+  async exportCatalogueJsonLd({ branchId, licenseId, currency } = {}) {
+    try {
+      if (!branchId || !licenseId) {
+        return { status: false, data: null, message: ERROR_MESSAGES.BRANCH_LICENSE_REQUIRED };
+      }
+
+      const graph = [];
+      await this.repository.streamCatalogue({ branchId, licenseId }, async (family) => {
+        const doc = productJsonLd.serialize(family, { currency });
+        graph.push(...doc['@graph']);
+      });
+
+      return {
+        status: true,
+        data: { '@context': 'https://schema.org', '@graph': graph },
+        message: 'success',
+      };
+    } catch (error) {
+      console.error('Error in ItemService.exportCatalogueJsonLd:', error);
+      return { status: false, data: null, message: error.message };
+    }
   }
 
   async exportItems(selection = [], context = {}) {

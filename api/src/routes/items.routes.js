@@ -75,6 +75,11 @@ router.post('/itemsImport', bindController(itemsController.itemsImport));
 // PHP: exportItems() - Excel export
 router.post('/exportItems', bindController(itemsController.exportItems));
 
+// GET /api/items/export/jsonld - the catalogue as schema.org JSON-LD.
+// A different SHAPE of what /items already returns, gated on the same
+// item:read. See docs PRODUCT_EXPORT_FORMATS.md.
+router.get('/export/jsonld', bindController(itemsController.exportCatalogueJsonLd));
+
 // Raise/lower prices across many items at once; and a per-item price history.
 // V1 variant families: all-or-nothing creation of linked variant items,
 // and the members of one family for the edit page's strip.

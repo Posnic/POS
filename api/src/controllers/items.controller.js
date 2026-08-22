@@ -1205,6 +1205,49 @@ class ItemsController extends BaseController {
     }
   }
 
+  /*
+   * GET /api/items/export/jsonld
+   *
+   * The catalogue in a format somebody else's software can read, rather than
+   * the 18-column CSV that exportItems produces. See PRODUCT_EXPORT_FORMATS.md
+   * for why schema.org and not GDSN or UBL.
+   *
+   * Read-only, and gated on the same item:read the list is gated on - this
+   * exposes nothing a user cannot already see, only in a different shape.
+   */
+  async exportCatalogueJsonLd(req, res) {
+    try {
+      if (req.user?.access?.item?.read === false) {
+        return this.sendError(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
+      }
+      await this.ensureContext(req);
+
+      const branchId = this.model?.branchId || null;
+      const licenseId = this.model?.licenseId || null;
+
+      /*
+       * ISO 4217, not the symbol. schema.org wants "INR"; the shop stores a
+       * sign (Rs) for display and the code separately. A symbol in
+       * priceCurrency is invalid, and "$" would not even identify a currency -
+       * it is used by a dozen of them.
+       */
+      const currency = String(req.query.currency || '').trim().toUpperCase();
+      const result = await this.service.exportCatalogueJsonLd({
+        branchId,
+        licenseId,
+        currency: /^[A-Z]{3}$/.test(currency) ? currency : null,
+      });
+
+      if (!result.status) return this.sendError(res, result.message, 400);
+
+      res.setHeader('Content-Type', 'application/ld+json; charset=utf-8');
+      return res.status(200).send(JSON.stringify(result.data));
+    } catch (error) {
+      console.error('Error in exportCatalogueJsonLd:', error);
+      return this.sendError(res, error.message, 500);
+    }
+  }
+
   async exportItems(req, res) {
     try {
       const userAccess = req.user?.access?.item?.read;

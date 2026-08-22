@@ -4779,6 +4779,64 @@ class ItemRepository extends BaseModel {
    * an optional category and search so "select all N" matches exactly what the
    * filtered list showed, not just the 100 rows on the current page.
    */
+  /*
+   * Every item in the catalogue, grouped into families, without holding the
+   * catalogue in memory.
+   *
+   * The export has to group variants together, and the obvious way to do that
+   * is to read everything and bucket it. This repository has already paid for
+   * that once: the catalogue copy called .toArray() and then built a second
+   * full array of the same rows, so two copies of a shop's entire item list
+   * were resident at once, on a process shared with every other shop.
+   *
+   * Sorting by variant_group_id means a family arrives contiguously, so the
+   * grouping can be done as the cursor advances - one family resident at a
+   * time. The caller gets each family as it completes and decides what to do
+   * with it.
+   *
+   * The sort is the load-bearing part. Without it a family is scattered
+   * through the stream and the "flush when the id changes" rule silently emits
+   * the same family several times, each with some of its variants.
+   */
+  async streamCatalogue({ branchId, licenseId }, onGroup) {
+    const collection = await this.getCollection(this.collectionName);
+
+    const filter = {
+      'branch_access.branch_id': this.toObjectId(branchId),
+      license: this.toObjectId(licenseId),
+    };
+
+    const cursor = collection
+      .find(filter)
+      .sort({ variant_group_id: 1, _id: 1 });
+
+    let current = null;
+    let pending = [];
+    let count = 0;
+
+    const flush = async () => {
+      if (!pending.length) return;
+      await onGroup(pending);
+      count += pending.length;
+      pending = [];
+    };
+
+    for await (const row of cursor) {
+      const gid = row.variant_group_id ? String(row.variant_group_id) : '';
+      /* Items with no family are each their own group, so an empty id must not
+         collapse them all into one enormous "family". */
+      if (!gid || gid !== current) {
+        await flush();
+        current = gid || null;
+      }
+      pending.push(row);
+      if (!gid) await flush();
+    }
+    await flush();
+
+    return count;
+  }
+
   _buildExportFilter(selection, context = {}) {
     const licenseId = context.licenseId || null;
     const licenseClause = licenseId
