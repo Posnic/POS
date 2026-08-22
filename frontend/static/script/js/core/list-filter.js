@@ -627,6 +627,32 @@ PosnicPro.listFilter = {
                     return { id: c.id, label: c.name, note: c.phone };
                 });
                 return uniq(r.concat(seed));
+            },
+            /*
+             * ...and the shop's actual customers, which the rows above do not
+             * contain.
+             *
+             * `rows` is recents plus `_customerSeed`, and that seed is the FIRST
+             * TEN customers, fetched only by renderRecentCustomers on the sale
+             * screen. On the quotes page nothing ever calls it, so the seed is
+             * null and the suggestions are recents alone.
+             *
+             * The result was a picker saying "Nothing matches" for a customer
+             * whose quotes were listed underneath it - because the LIST asks the
+             * server and the picker was filtering a cache of ten. A suggestion
+             * box that disagrees with the results it sits on top of is worse
+             * than no suggestion box.
+             */
+            lookup: function (term, done) {
+                PosnicPro.get(
+                    { url: 'customers/getCustomersAjaxList', data: 'query=' + encodeURIComponent(term) },
+                    function (response) {
+                        done(((response && response.suggestions) || []).map(function (c) {
+                            return { id: c._id || c.id, label: c.name, note: c.phone };
+                        }));
+                    },
+                    function () { done([]); }   /* offline is not an error here */
+                );
             }
         },
         item: {
@@ -668,6 +694,33 @@ PosnicPro.listFilter = {
         if (!e) { $box.hide().empty(); return; }
 
         var rows = LF.suggest(entity, term);
+
+        /*
+         * Ask the server too, when the entity knows how.
+         *
+         * Cached rows render immediately so the box never feels slow, and the
+         * server's answer merges in when it lands. `seq` drops a slow reply that
+         * arrives after a newer keystroke - without it, typing "Cus" then
+         * "Custom" can end with the results for "Cus" on screen.
+         */
+        if (e.lookup && String(term || '').trim().length >= LF.MIN_SEARCH) {
+            m._taSeq = (m._taSeq || 0) + 1;
+            var mine = m._taSeq;
+            e.lookup(String(term).trim(), function (found) {
+                if (mine !== m._taSeq) return;
+                LF.paintTypeahead(key, e, uniq(rows.concat(found || [])));
+            });
+        }
+
+        LF.paintTypeahead(key, e, rows);
+    };
+
+    /* Drawing the box, split out so a late server answer can repaint it
+       without repeating the lookup that produced it. */
+    LF.paintTypeahead = function (key, e, rows) {
+        var m = LF._mounted[key];
+        if (!m) return;
+        var $box = $(m.cfg.container).find('.lf-typeahead');
         var body = rows.length
             ? rows.map(function (r) {
                 /* a clock means "you used this here", a plain icon means "this

@@ -148,3 +148,46 @@ test('sales does not fight its own KOT rule', () => {
     'the sales bar writes sale_process, which salesTable also owns',
   );
 });
+test('the customer typeahead asks the server, not a cache of ten', () => {
+  /*
+   * The reported bug: the picker said "Nothing matches" for a customer whose
+   * quotes were listed directly underneath it.
+   *
+   * LF.suggest filters `rows`, which is recents plus PosnicPro.sales
+   * ._customerSeed - and that seed is the FIRST TEN customers, fetched only by
+   * renderRecentCustomers on the SALE screen. On the quotes page nothing calls
+   * it, so the seed is null and the suggestions are recents alone, while the
+   * list beside it queries the server properly.
+   *
+   * A suggestion box that disagrees with the results it sits on top of is
+   * worse than no suggestion box.
+   */
+  const at = lf.indexOf('customer: {');
+  assert.notStrictEqual(at, -1, 'the customer entity is gone');
+  const entity = lf.slice(at, lf.indexOf('item: {', at));
+  assert.match(entity, /lookup: function/, 'the customer entity still cannot ask the server');
+  assert.match(entity, /getCustomersAjaxList/, 'it does not use the real customer search endpoint');
+  assert.match(entity, /encodeURIComponent/, 'the typed term is not encoded - a name with & breaks the query');
+  /* Offline must not raise an error popup over a filter panel. */
+  assert.match(entity, /function \(\) \{ done\(\[\]\); \}/, 'a failed lookup has no quiet fallback');
+});
+
+test('a slow suggestion reply cannot overwrite a newer one', () => {
+  /* Type "Cus" then "Custom": without a sequence guard the older answer can
+     land last and leave the wrong list on screen. */
+  const at = lf.indexOf('LF.typeahead = function');
+  const body = lf.slice(at, lf.indexOf('LF.paintTypeahead = function'));
+  assert.match(body, /_taSeq/, 'there is no sequence guard on the lookup');
+  assert.match(body, /if \(mine !== m\._taSeq\) return;/, 'a stale reply is not dropped');
+});
+
+test('cached rows still paint immediately', () => {
+  /* The server answer merges in when it lands; the box must not go blank
+     waiting for it, or every keystroke flickers. */
+  const at = lf.indexOf('LF.typeahead = function');
+  const body = lf.slice(at, lf.indexOf('LF.paintTypeahead = function'));
+  const lookupAt = body.indexOf('e.lookup(');
+  const paintAt = body.lastIndexOf('LF.paintTypeahead(key, e, rows)');
+  assert.ok(paintAt > lookupAt, 'the cached rows are not painted after the lookup is dispatched');
+  assert.match(lf, /LF\.paintTypeahead = function/, 'painting was not split out, so a late reply cannot repaint');
+});
