@@ -54,6 +54,16 @@ recovery or every workflow. Review the
   See [PRIVACY.md](PRIVACY.md).
 - **Open source under AGPL-3.0-only.** Read it, change it, self-host it, fork it.
 
+### Using Posnic in a real business or pilot?
+
+Share a bounded
+[deployment evidence report](https://github.com/Posnic/POS/issues/new?template=deployment_evidence.yml),
+including failures, workarounds, or why a trial stopped. The form records the
+exact version, relationship, observation window, workflows and limitations while
+letting you refuse marketing reuse. Read the
+[adoption evidence policy](docs/ADOPTION_EVIDENCE.md) before posting private or
+production information.
+
 ## Features
 
 | | |
@@ -144,6 +154,7 @@ the free edition worse. This is written down in [GOVERNANCE.md](GOVERNANCE.md).
 | [Data processing addendum](docs/DATA_PROCESSING_ADDENDUM.md) | For customers who need a written DPA |
 | [Contributing](CONTRIBUTING.md) | How to get a change merged |
 | [Public roadmap](ROADMAP.md) | Current priorities, evidence gaps and structured ways to help |
+| [Adoption evidence](docs/ADOPTION_EVIDENCE.md) | How real deployment reports are scoped, reviewed, cited, corrected and kept privacy-safe |
 | [Support](SUPPORT.md) | Where to ask, and what happens to your issue |
 | [Governance](GOVERNANCE.md) | Who decides what, and what we have promised |
 | [Privacy](PRIVACY.md) | What the app collects, and what it does not |
