@@ -9,11 +9,13 @@ const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'))
 const readme = fs.readFileSync(path.join(ROOT, 'README.md'), 'utf8');
 
 test('CodeMeta declares a current SoftwareSourceCode identity', () => {
-  assert.equal(metadata['@context'], 'https://w3id.org/codemeta/3.1');
+  assert.equal(metadata['@context'], 'https://w3id.org/codemeta/3.0');
   assert.equal(metadata['@type'], 'SoftwareSourceCode');
-  assert.equal(metadata['@id'], 'https://github.com/Posnic/POS#source');
+  assert.equal(metadata['@id'], 'https://github.com/Posnic/POS');
   assert.equal(metadata.name, 'Posnic POS');
-  assert.equal(metadata.description, pkg.description);
+  assert.match(metadata.description, /point-of-sale software/i);
+  assert.match(metadata.description, /AGPL-3\.0-only/i);
+  assert.match(metadata.description, /separately licensed components/i);
   assert.equal(metadata.version, pkg.version);
   assert.equal(metadata.softwareVersion, pkg.version);
   assert.deepEqual(metadata.keywords, pkg.keywords);
@@ -27,11 +29,11 @@ test('CodeMeta keeps source, support and licence identity canonical', () => {
   assert.equal(metadata.readme, 'https://github.com/Posnic/POS/blob/main/README.md');
   assert.equal(
     metadata.continuousIntegration,
-    'https://github.com/Posnic/POS/actions/workflows/ci.yml',
+    'https://github.com/Posnic/POS/actions',
   );
   assert.equal(metadata.author?.name, 'Posnic Innovations Private Limited');
-  assert.equal(metadata.author?.email, 'info@posnic.com');
-  assert.equal(metadata.publisher?.['@id'], metadata.author?.['@id']);
+  assert.equal(metadata.author?.url, 'https://posnic.com/about');
+  assert.equal(metadata.publisher?.name, metadata.author?.name);
 });
 
 test('CodeMeta identifies point-of-sale scope without promoting development as released', () => {

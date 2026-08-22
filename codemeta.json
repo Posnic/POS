@@ -1,26 +1,34 @@
 {
-  "@context": "https://w3id.org/codemeta/3.1",
+  "@context": "https://w3id.org/codemeta/3.0",
   "@type": "SoftwareSourceCode",
-  "@id": "https://github.com/Posnic/POS#source",
+  "@id": "https://github.com/Posnic/POS",
   "name": "Posnic POS",
-  "description": "Free open-source, offline-first point-of-sale software for retail shops and restaurants. Windows, macOS and Linux.",
-  "version": "1.4.0",
-  "softwareVersion": "1.4.0",
-  "developmentStatus": "active development; package version 1.4.0 is not a tagged release",
-  "dateCreated": "2026-08-07",
-  "dateModified": "2026-08-22",
+  "alternateName": "Posnic Point of Sale",
+  "description": "Free, offline-first point-of-sale software for retail and restaurants. Posnic source is AGPL-3.0-only; packages contain separately licensed components.",
   "applicationCategory": "BusinessApplication",
   "applicationSubCategory": "Point of sale software",
-  "isAccessibleForFree": true,
-  "license": "https://spdx.org/licenses/AGPL-3.0-only.html",
+  "author": {
+    "@type": "Organization",
+    "name": "Posnic Innovations Private Limited",
+    "url": "https://posnic.com/about"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Posnic Innovations Private Limited",
+    "url": "https://posnic.com/about"
+  },
+  "maintainer": {
+    "@type": "Person",
+    "name": "Sridhar Bala",
+    "url": "https://github.com/sridharkalaibala"
+  },
   "codeRepository": "https://github.com/Posnic/POS",
   "issueTracker": "https://github.com/Posnic/POS/issues",
-  "url": "https://posnic.com/",
-  "readme": "https://github.com/Posnic/POS/blob/main/README.md",
-  "buildInstructions": "https://github.com/Posnic/POS/blob/main/docs/DEVELOPMENT.md",
-  "softwareHelp": "https://github.com/Posnic/POS/blob/main/docs/USER_GUIDE.md",
-  "continuousIntegration": "https://github.com/Posnic/POS/actions/workflows/ci.yml",
-  "releaseNotes": "https://github.com/Posnic/POS/blob/main/ROADMAP.md",
+  "continuousIntegration": "https://github.com/Posnic/POS/actions",
+  "version": "1.4.0",
+  "developmentStatus": "active development; package version 1.4.0 is not a tagged release",
+  "license": "https://spdx.org/licenses/AGPL-3.0-only.html",
+  "isAccessibleForFree": true,
   "programmingLanguage": [
     "JavaScript",
     "HTML",
@@ -53,16 +61,26 @@
     "linux",
     "mongodb"
   ],
-  "author": {
-    "@id": "https://posnic.com/#organization",
-    "@type": "Organization",
-    "name": "Posnic Innovations Private Limited",
-    "url": "https://posnic.com/",
-    "email": "info@posnic.com"
-  },
-  "publisher": {
-    "@id": "https://posnic.com/#organization"
-  },
+  "url": "https://posnic.com/",
+  "downloadUrl": "https://github.com/Posnic/POS/releases/latest",
+  "softwareHelp": "https://github.com/Posnic/POS/blob/main/docs/USER_GUIDE.md",
+  "citation": "https://github.com/Posnic/POS/blob/main/CITATION.cff",
+  "relatedLink": [
+    "https://posnic.com/posnic-facts",
+    "https://posnic.com/trust",
+    "https://github.com/Posnic/POS/blob/main/PRIVACY.md",
+    "https://github.com/Posnic/POS/blob/main/GOVERNANCE.md",
+    "https://github.com/Posnic/POS/blob/main/THIRD-PARTY-NOTICES.md",
+    "https://posnic.com/features",
+    "https://posnic.com/download",
+    "https://posnic.com/developers",
+    "https://github.com/Posnic/POS/blob/main/docs/ADOPTION_EVIDENCE.md"
+  ],
+  "softwareVersion": "1.4.0",
+  "dateModified": "2026-08-23",
+  "readme": "https://github.com/Posnic/POS/blob/main/README.md",
+  "buildInstructions": "https://github.com/Posnic/POS/blob/main/docs/DEVELOPMENT.md",
+  "releaseNotes": "https://github.com/Posnic/POS/blob/main/ROADMAP.md",
   "isSourceCodeOf": {
     "@id": "https://posnic.com/#software",
     "@type": "SoftwareApplication",
@@ -76,16 +94,5 @@
     ],
     "isAccessibleForFree": true,
     "url": "https://posnic.com/"
-  },
-  "citation": [
-    "https://github.com/Posnic/POS/blob/main/CITATION.cff",
-    "https://github.com/Posnic/POS/releases/tag/v1.3.0",
-    "https://posnic.com/posnic-facts"
-  ],
-  "relatedLink": [
-    "https://posnic.com/features",
-    "https://posnic.com/download",
-    "https://posnic.com/developers",
-    "https://github.com/Posnic/POS/blob/main/docs/ADOPTION_EVIDENCE.md"
-  ]
+  }
 }

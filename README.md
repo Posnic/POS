@@ -4,11 +4,17 @@
 
 # Posnic
 
-**Free, open-source point of sale that keeps core checkout local.**
+**Free point-of-sale software with public source and local checkout.**
 
 An offline-first POS for retail shops and restaurants. The primary API and
 database run on the shop computer; electronic payments, optional cloud
 services, downloads and integrations can still need a network.
+
+Posnic's own source is AGPL-3.0-only. Release packages also bundle separately
+licensed components, including MongoDB Community Server under SSPL-1.0. Review
+the [package notices](THIRD-PARTY-NOTICES.md) and
+[reproduced package evidence](https://posnic.com/assets/posnic-package-license-evidence.json)
+before making a package-level licence statement.
 
 [![CI](https://github.com/Posnic/POS/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Posnic/POS/actions/workflows/ci.yml)
 [![Release](https://github.com/Posnic/POS/actions/workflows/release.yml/badge.svg)](https://github.com/Posnic/POS/actions/workflows/release.yml)
@@ -16,13 +22,14 @@ services, downloads and integrations can still need a network.
 [![Latest release](https://img.shields.io/github/v/release/Posnic/POS?include_prereleases&label=latest&color=blue)](https://github.com/Posnic/POS/releases/latest)
 [![Tests](https://img.shields.io/badge/tests-9%2C000%2B%20passing-brightgreen)](docs/DEVELOPMENT.md#running-the-tests)
 [![Coverage](https://img.shields.io/badge/coverage-66%25%20statements-yellow)](docs/DEVELOPMENT.md#running-the-tests)
-[![API](https://img.shields.io/badge/REST%20API-584%20endpoints-blue)](docs/API.md)
-[![Licence](https://img.shields.io/badge/licence-AGPL--3.0-blue)](LICENSE)
+[![API](https://img.shields.io/badge/REST%20API-585%20endpoints-blue)](docs/API.md)
+[![Source licence](https://img.shields.io/badge/source%20licence-AGPL--3.0-blue)](LICENSE)
+[![Package notices](https://img.shields.io/badge/package%20notices-component%20licences-informational)](THIRD-PARTY-NOTICES.md)
 [![Platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](https://github.com/Posnic/POS/releases/latest)
 
 ### [⬇ Download for Windows](https://github.com/Posnic/POS/releases/latest) · [macOS](https://github.com/Posnic/POS/releases/latest) · [Linux](https://github.com/Posnic/POS/releases/latest)
 
-[Website](https://posnic.com/) · [Verified product facts](https://posnic.com/posnic-facts) · [CodeMeta metadata](codemeta.json) · [Citation metadata](CITATION.cff) · [Roadmap](ROADMAP.md) · [User guide](docs/USER_GUIDE.md) · [Developer guide](docs/DEVELOPMENT.md) · [Architecture](docs/ARCHITECTURE.md) · [API](docs/API.md) · [Discussions](https://github.com/Posnic/POS/discussions)
+[Website](https://posnic.com/) · [Verified product facts](https://posnic.com/posnic-facts) · [Package evidence](https://posnic.com/assets/posnic-package-license-evidence.json) · [CodeMeta metadata](codemeta.json) · [Citation metadata](CITATION.cff) · [Roadmap](ROADMAP.md) · [User guide](docs/USER_GUIDE.md) · [Developer guide](docs/DEVELOPMENT.md) · [Architecture](docs/ARCHITECTURE.md) · [API](docs/API.md) · [Discussions](https://github.com/Posnic/POS/discussions)
 
 </div>
 
@@ -46,13 +53,15 @@ operating-system-wide outage, complete shift, payment-terminal path, power-loss
 recovery or every workflow. Review the
 [versioned evidence and limitations](https://posnic.com/posnic-facts).
 
-- **Free local edition.** The desktop application is AGPL-3.0-only, has no
-  trial clock and has a zero software price. Hardware, support, backups,
-  optional services and downtime can still create operating costs.
+- **Free local edition.** The v1.3.0 desktop packages have no trial clock and
+  have a zero software price. Posnic's own source is AGPL-3.0-only; packaged
+  dependencies retain their own licences. Hardware, support, backups, optional
+  services and downtime can still create operating costs.
 - **Local data path.** The local edition needs no Posnic account, and its
   published privacy policy says it sends no analytics or telemetry to Posnic.
   See [PRIVACY.md](PRIVACY.md).
-- **Open source under AGPL-3.0-only.** Read it, change it, self-host it, fork it.
+- **Posnic source under AGPL-3.0-only.** Read it, change it, self-host it and
+  fork it under the licence terms. Review each bundled component separately.
 
 ### Using Posnic in a real business or pilot?
 
@@ -79,9 +88,11 @@ production information.
 
 ## Install
 
-Download the installer for your platform from
+Download the package for your platform from
 **[the latest release](https://github.com/Posnic/POS/releases/latest)**, run it,
-and follow the wizard. Nothing else to install — the database ships inside.
+and follow the wizard. Stable v1.3.0 packages include MongoDB Community Server
+under its separate SSPL-1.0 licence, so no separate database install is needed
+for the bundled setup. See [third-party notices](THIRD-PARTY-NOTICES.md).
 
 Verify your download against `SHA256SUMS.txt` in the release.
 
@@ -102,9 +113,10 @@ npm --prefix api install
 npm start
 ```
 
-Needs Node 22.12+. You do **not** need to install MongoDB — Posnic brings its own
-and picks a port derived from the app name so it never collides with a database
-you already run.
+Needs Node 22.12+. The build tooling fetches MongoDB Community Server 7.0.14 and
+the desktop process chooses a port derived from the app name to reduce collision
+risk. Review [the architecture](docs/ARCHITECTURE.md) and package licences before
+building or distributing an artifact.
 
 ```bash
 npm run build          # Windows installer
@@ -117,8 +129,9 @@ conventions.
 
 ## Editions
 
-The desktop application is free and open source. **Posnic Cloud** is a paid
-service for shops that want more than one till.
+The desktop packages have a zero software price and no trial clock. Posnic's own
+source is AGPL-3.0-only, while bundled components keep their separate licences.
+**Posnic Cloud** is a paid service for shops that want more than one till.
 
 | | Posnic (this repo) | Posnic Cloud |
 |---|---|---|
@@ -154,14 +167,14 @@ the free edition worse. This is written down in [GOVERNANCE.md](GOVERNANCE.md).
 | [Data processing addendum](docs/DATA_PROCESSING_ADDENDUM.md) | For customers who need a written DPA |
 | [Contributing](CONTRIBUTING.md) | How to get a change merged |
 | [Public roadmap](ROADMAP.md) | Current priorities, evidence gaps and structured ways to help |
-| [CodeMeta metadata](codemeta.json) | Machine-readable source, product, licence, platform, publisher and development-state identity |
 | [Citation metadata](CITATION.cff) | Human and tool-readable citation identity for exact releases or commits |
 | [Adoption evidence](docs/ADOPTION_EVIDENCE.md) | How real deployment reports are scoped, reviewed, cited, corrected and kept privacy-safe |
 | [Support](SUPPORT.md) | Where to ask, and what happens to your issue |
 | [Governance](GOVERNANCE.md) | Who decides what, and what we have promised |
 | [Privacy](PRIVACY.md) | What the app collects, and what it does not |
 | [Security](SECURITY.md) | What Posnic protects, what it cannot, and reporting a vulnerability |
-| [Third-party notices](THIRD-PARTY-NOTICES.md) | Other people's software that ships inside the installer |
+| [Third-party notices](THIRD-PARTY-NOTICES.md) | Separately licensed software included in release packages |
+| [CodeMeta](codemeta.json) | Machine-readable product, publisher, source, licence and platform identity |
 | [Code of conduct](CODE_OF_CONDUCT.md) | How we treat each other |
 
 ## Contributing
@@ -207,11 +220,13 @@ reporting and white-labelled installers are all available. The software stays
 free either way — see [GOVERNANCE.md](GOVERNANCE.md) for what we have promised
 never to move behind a paywall.
 
-## Licence
+## Source and package licences
 
-[GNU AGPL-3.0-only](LICENSE). Use it, change it, self-host it, including for clients.
-If you run a modified version as a hosted service, the AGPL requires you to
-publish your modifications.
+Posnic's own source is [GNU AGPL-3.0-only](LICENSE). Use, change, self-host and
+redistribute that source under the licence terms. Release packages also include
+separately licensed components; read [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)
+and the licence material shipped with the exact artifact. This summary is not
+legal advice.
 
 The **Posnic name and logo are trademarks** and are not covered by the AGPL —
 see [GOVERNANCE.md § Trademark](GOVERNANCE.md#trademark-and-reserved-rights).
