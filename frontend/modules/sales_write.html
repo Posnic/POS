@@ -907,7 +907,24 @@
                                     </div>
                                 </div>
                                 <div class="email-rightbar" id="newsalespage" style="display:none">
-                                    <div class="card m-b-30">
+                                    <!--
+                                      The card closes itself, and the ring says when.
+
+                                      A cashier at a busy counter already has the next customer in
+                                      front of them, so making them click New sale is a step on every
+                                      single transaction. But a panel that vanishes with no warning
+                                      reads as a fault - hence the ring, which makes the dismissal
+                                      something you can see coming and interrupt.
+
+                                      Any attention at all stops it (see saleDoneTimer in sales.js).
+                                      Losing a receipt because the panel closed as somebody reached
+                                      for Print would cost more than the saved clicks are worth.
+                                    -->
+                                    <div class="card m-b-30 sale-done-card">
+                                        <svg class="sale-done-ring" aria-hidden="true" focusable="false">
+                                            <rect class="sale-done-ring-track" rx="6" ry="6"></rect>
+                                            <rect class="sale-done-ring-line" rx="6" ry="6"></rect>
+                                        </svg>
                                         <div class="card-body">
                                             <div class="row mt-5 mb-3">
                                                 <div class="col-3"></div>
@@ -956,6 +973,7 @@
                                                             </a>
                                                         </div>
                                                     </div>
+                                                    <p class="sale-done-hint">Staying open &mdash; close it when you are ready.</p>
                                                 </div>
                                             </div>
 

@@ -1593,6 +1593,7 @@
             $('.cancel-save-hide-show').show();
         }
         $('#newsalespage').hide();
+        PosnicPro.sales.saleDoneTimer.stop();
         $('#tendered_subtotal').text($('#sales_new_subtotal').text());
         $('#tendered_discount').text($('#discount_sale_amount').text());
         $('#tendered_tax').text($('#tax').text());
@@ -6759,6 +6760,7 @@ PosnicPro.sales.setDefaults = function () {
     if (PosnicPro.local.get('balance_view') === 'true') {
         $('.salesBalanceAmount,#newsalespage').show();
         $('#sales_save_button,#tenderpage,.cancel-save-hide-show').hide();
+        PosnicPro.sales.saleDoneTimer.start();
     } else {
         $('.salesBalanceAmount').hide();
         $('#sales_save_button').show();
@@ -11697,3 +11699,117 @@ $(document).on('click', '#print_receipt_a4, #print_receipt_thermal', function ()
         view.printSale(id, 'sale', false, layout);
     });
 });
+
+/*
+ * The sale-done card closes itself, unless the cashier is using it.
+ *
+ * At a busy counter the next customer is already waiting, so making
+ * somebody click "New sale" after every single sale is a step charged on
+ * every transaction of the day. The card knows what comes next, so it can
+ * do it.
+ *
+ * WHAT MAKES THIS SAFE IS THE CANCELLING, NOT THE DURATION.
+ *
+ * The failure that would make this worse than no timer at all: the card
+ * closes at ten seconds while a hand is on its way to Print. That cashier
+ * now has to go and find the sale again in front of a waiting customer,
+ * and that single event costs more goodwill than the saved clicks earn
+ * back over a hundred sales. So ANY sign of attention stops the clock -
+ * moving onto the card, focusing a button, a keystroke, a touch - and
+ * once stopped it does not restart. Somebody who has engaged with this
+ * card gets to leave it when they choose.
+ *
+ * Printing deliberately does not restart it either. A print is exactly
+ * the case where the next thing is handing paper to a customer, and
+ * having the screen change during that is the wrong moment.
+ */
+PosnicPro.sales.saleDoneTimer = {
+    /* Long enough to read the total and reach for Print; short enough that
+       the till is ready before the next customer has put their basket down. */
+    SECONDS: 10,
+
+    _timer: null,
+    _card: function () { return $('#newsalespage .sale-done-card'); },
+
+    start: function () {
+        var self = PosnicPro.sales.saleDoneTimer;
+        self.stop();
+
+        var $card = self._card();
+        if (!$card.length) { return; }
+
+        /*
+         * Somebody who asked for reduced motion gets no ring, and the ring is
+         * the only warning this card gives. Closing anyway would make it
+         * vanish with no notice at all - the exact surprise the ring exists to
+         * prevent - so for them the card simply waits to be dismissed.
+         */
+        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            return;
+        }
+
+        /* One sale, one countdown. Without this a second sale completing
+           while the first card was open would leave two timers running and
+           the card would close early, which looks exactly like a bug. */
+        $card.removeClass('is-held').addClass('is-closing');
+
+        var $line = $card.find('.sale-done-ring-line');
+        var el = $line.get(0);
+        if (el && el.getTotalLength) {
+            /* Measured, not guessed: the card's height depends on which
+               buttons this shop has switched on, so a hard-coded perimeter
+               would make the ring finish early or late. */
+            var len = el.getTotalLength();
+            if (len > 0) {
+                $line.css({
+                    'stroke-dasharray': len,
+                    'stroke-dashoffset': 0,
+                    'transition': 'none'
+                });
+                /* Next frame, or the browser folds both values into one
+                   style change and there is nothing to animate between. */
+                window.requestAnimationFrame(function () {
+                    $line.css({
+                        'transition': 'stroke-dashoffset ' + self.SECONDS + 's linear, opacity .2s ease',
+                        'stroke-dashoffset': len
+                    });
+                });
+            }
+        }
+
+        self._timer = window.setTimeout(function () {
+            self._timer = null;
+            /* Only if the card is still the thing on screen. Navigating away
+               during the countdown must not drag the shop back here. */
+            if (!$('#newsalespage').is(':visible')) { return; }
+            $card.removeClass('is-closing');
+            /* The same path the button takes, rather than a second way to
+               start a sale that could drift away from the first. */
+            $('#newsalespage .sale-done-primary').get(0).click();
+        }, self.SECONDS * 1000);
+    },
+
+    /* Called by every interaction. Idempotent on purpose - mouseenter and
+       focusin both fire for a keyboard user reaching the same button. */
+    hold: function () {
+        var self = PosnicPro.sales.saleDoneTimer;
+        if (!self._timer) { return; }
+        self.stop();
+        self._card().addClass('is-held');
+    },
+
+    stop: function () {
+        var self = PosnicPro.sales.saleDoneTimer;
+        if (self._timer) { window.clearTimeout(self._timer); self._timer = null; }
+        var $card = self._card();
+        $card.removeClass('is-closing');
+        $card.find('.sale-done-ring-line').css({ 'transition': 'none', 'stroke-dashoffset': 0 });
+    }
+};
+
+/* Delegated: this card is inside markup the sale page rebuilds. */
+$(document).on(
+    'mouseenter focusin keydown touchstart',
+    '#newsalespage',
+    function () { PosnicPro.sales.saleDoneTimer.hold(); }
+);
