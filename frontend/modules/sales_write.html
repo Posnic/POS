@@ -738,6 +738,16 @@
                                                         class="display-currency"></span>&nbsp;<span
                                                         id="tendered_payment"></span></span>
                                             </li>
+                                            <!--
+                                              Short, exact or over - said in words.
+                                              'Return balance 0.00' was shown both when the
+                                              customer had paid exactly and when they were still
+                                              762 rupees short, which are not the same thing and
+                                              must never look the same at a counter.
+                                            -->
+                                            <li class="list-group-item tender-status-row">
+                                                <div id="tender_status" class="tender-status"></div>
+                                            </li>
                                             <li
                                                 class="list-group-item d-flex justify-content-between align-items-center">
                                                 Return balance
