@@ -30,6 +30,35 @@ class InstallService {
    */
   async processInstallation(data) {
     try {
+      /*
+       * Speak the provisioner's language before anything reads this.
+       *
+       * Gateway sends `register_demo: 'yes'` and `business: 'retail'`
+       * (apps/provisioner/provision.js). This service tested for `'on'` and
+       * read `businessType`, so BOTH missed: every cloud shop was created
+       * with no demo data at all and, had it run, always the supermarket pack
+       * regardless of trade.
+       *
+       * It failed silently because each miss has a plausible-looking result.
+       * No demo data reads as a shop that asked for none; a supermarket pack
+       * reads as a default somebody chose. What it actually meant was a new
+       * customer opening their till and finding one product in it.
+       *
+       * Normalised here, at the entry point, so every path below sees one
+       * shape - sanitizeInstallData in the helpers looks like the place for
+       * this but nothing calls it, and adding a second reader would be one
+       * more thing to keep in step. Fixed on the reading side rather than in
+       * Gateway, which is mid-flight for live signups.
+       */
+      data = {
+        ...data,
+        register_demo: ['yes', 'on', 'true', '1', 'y', 'true'].includes(
+          String(data.register_demo == null ? '' : data.register_demo)
+            .trim()
+            .toLowerCase()
+        ),
+        businessType: String(data.businessType || data.business || '').trim(),
+      };
       console.log('📦 Installation data received:', {
         register_demo: data.register_demo,
         businessType: data.businessType,
