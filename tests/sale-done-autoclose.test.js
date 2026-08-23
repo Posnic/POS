@@ -32,24 +32,55 @@ const cssRule = cssReader(css);
 
 const timer = () => blockAt(salesJs, 'PosnicPro.sales.saleDoneTimer = {');
 
-test('attention of any kind stops the countdown', () => {
+test('intent stops the countdown - typing, tabbing, touching, reaching', () => {
   /*
-   * Four different ways a person shows they are using this card, and a
-   * keyboard user reaches a button by focusin where a mouse user arrives by
-   * mouseenter. Binding only one of them protects only one kind of cashier.
+   * A keyboard user reaches a button by focusin where a mouse user arrives by
+   * hovering it. Binding only one protects only one kind of cashier.
    */
-  /* Located by the call it makes, not by the selector: '#newsalespage'
-     appears several times in this file and the first is a .hide(). */
   const at = salesJs.indexOf('saleDoneTimer.hold()');
   assert.notStrictEqual(at, -1, 'nothing calls hold()');
-  const start = salesJs.lastIndexOf('$(document).on(', at);
-  assert.notStrictEqual(start, -1, 'hold() is not reached from a delegated handler');
-  const handler = salesJs.slice(start, at + 30);
 
-  for (const evt of ['mouseenter', 'focusin', 'keydown', 'touchstart']) {
-    assert.ok(handler.includes(evt), `nothing cancels the countdown on ${evt}`);
+  for (const evt of ['focusin', 'keydown', 'touchstart', 'mouseenter', 'mousemove']) {
+    assert.ok(salesJs.includes(evt), `nothing cancels the countdown on ${evt}`);
   }
-  assert.match(handler, /#newsalespage/, 'the handler is not bound to the sale-done card');
+});
+
+test('merely being under the panel does NOT stop the countdown', () => {
+  /*
+   * THE BUG THIS PINS. The first version cancelled on mouseenter over the
+   * whole panel, and it never closed once - "so far many sales it never
+   * closed, maybe mouse moving somehow". Exactly that: the panel opens where
+   * the cursor already is, because the button just pressed is in the same
+   * place, so mouseenter fired on the frame it appeared, every time.
+   *
+   * Presence is not intent. The hover handler must be bound to the BUTTONS,
+   * never to the panel itself.
+   */
+  const hover = salesJs.slice(
+    salesJs.indexOf("$(document).on(\n    'mouseenter'"),
+    salesJs.indexOf("$(document).on(\n    'focusin keydown touchstart'"),
+  );
+  assert.ok(hover.length > 40, 'could not find the hover binding');
+  assert.match(hover, /sale-done-actions a/, 'hover is not bound to the buttons');
+  assert.doesNotMatch(
+    hover,
+    /'#newsalespage'\s*,/,
+    'hover is bound to the whole panel again - it will never close',
+  );
+});
+
+test('a pointer must actually move, and the first move is ignored', () => {
+  /* Showing the panel under a stationary cursor emits one mousemove on its own
+     in some browsers, which would put us straight back to never closing. */
+  const mm = blockAt(salesJs, "$(document).on('mousemove', '#newsalespage', function (e)");
+  assert.match(mm, /if \(!last\)\s*\{\s*return/, 'the first move is not ignored');
+  assert.match(mm, /> 12/, 'any movement at all counts, however small');
+});
+
+test('the movement baseline is reset for each sale', () => {
+  /* Otherwise the pointer position left over from the previous card counts as
+     movement on this one, and the second sale never closes. */
+  assert.match(blockAt(salesJs, 'start: function'), /_lastPoint = null/);
 });
 
 test('once stopped it does not start again', () => {

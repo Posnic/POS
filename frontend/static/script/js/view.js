@@ -185,7 +185,31 @@ $('[data-toggle="tooltip"]').on('click', function () {
 function setLocalValue() {
     $("body").tooltip({'delay': {show: 250, hide: 0}, selector: '[data-toggle="tooltip"]', container: 'body', placement: "top", trigger: 'hover'});
     $(".select2").select2();
-    var users_name = PosnicPro.local.get('userfirstname') + ' ' + PosnicPro.local.get('userlastname');
+    /*
+     * The header showed a literal "null null".
+     *
+     * localStorage.getItem returns null for a key that was never written, and
+     * `null + ' ' + null` is the string "null null". Only loginCheck writes
+     * these two, so every other way into the app - shadow login above all, which
+     * is how support looks at a shop - arrived with neither set and printed it
+     * to the top of every screen.
+     *
+     * Filtered and fallen back, the way PosnicPro.js already builds this name:
+     * a username or an email address is a worse greeting than a real name and a
+     * far better one than "null null".
+     */
+    var users_name = [
+        PosnicPro.local.get('userfirstname'),
+        PosnicPro.local.get('userlastname')
+    ].filter(function (part) {
+        /* The string "null" and the string "undefined" get here too: local.set
+           stringifies whatever it is given, so a missing field in a login
+           response is stored as those words rather than skipped. */
+        var v = $.trim(String(part == null ? '' : part));
+        return v && v !== 'null' && v !== 'undefined';
+    }).join(' ')
+        || PosnicPro.local.get('username')
+        || '';
     $(".user-name").html(users_name).val(users_name);
 
     $("#search_register_id").val(PosnicPro.local.get('registerId'));
