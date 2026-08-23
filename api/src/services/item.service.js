@@ -1404,6 +1404,32 @@ class ItemService {
    * priceCurrency entirely - a guessed currency on a price is exactly the kind
    * of confident wrong answer this export exists to avoid.
    */
+  /*
+   * Remove the demo data for good.
+   *
+   * Deliberately NOT what the Demo Data switch does. The switch hides and is
+   * reversible; this destroys, so it is a separate thing somebody has to ask
+   * for on purpose. The repository decides what may go - see purgeDemoData,
+   * which refuses anything sold, received or edited - and reports what it
+   * kept by name.
+   */
+  async purgeDemoData({ branchId, licenseId, user } = {}) {
+    try {
+      if (!branchId || !licenseId) {
+        return { status: false, data: null, message: ERROR_MESSAGES.BRANCH_LICENSE_REQUIRED };
+      }
+      const r = await this.repository.purgeDemoData({ branchId, licenseId, user });
+      return {
+        status: r.status,
+        data: { removed: r.removed, categoriesRemoved: r.categoriesRemoved, kept: r.kept },
+        message: r.message,
+      };
+    } catch (error) {
+      console.error('Error in ItemService.purgeDemoData:', error);
+      return { status: false, data: null, message: error.message };
+    }
+  }
+
   async exportCatalogueJsonLd({ branchId, licenseId, currency } = {}) {
     try {
       if (!branchId || !licenseId) {
