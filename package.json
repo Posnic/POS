@@ -44,6 +44,7 @@
     "badges": "node scripts/check-badges.js",
     "badges:fix": "node scripts/check-badges.js --fix",
     "check:advisories": "node scripts/check-advisories.js",
+    "release:sbom": "node scripts/generate-release-sboms.js",
     "art": "node scripts/make-installer-art.js"
   },
   "build": {
@@ -129,6 +130,18 @@
       {
         "from": "builds/icon-256.png",
         "to": "app.png"
+      },
+      {
+        "from": "LICENSE",
+        "to": "licenses/POSNIC-AGPL-3.0.txt"
+      },
+      {
+        "from": "THIRD-PARTY-NOTICES.md",
+        "to": "licenses/THIRD-PARTY-NOTICES.md"
+      },
+      {
+        "from": "licenses/MONGODB-SSPL-1.0.txt",
+        "to": "licenses/MONGODB-SSPL-1.0.txt"
       },
       {
         "from": "builds/brand-seed",
