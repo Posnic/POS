@@ -664,11 +664,54 @@ class InstallService {
     return await this.repository.insertUnit(unitData);
   }
 
+  /*
+   * The features a new shop starts with, written down rather than inferred.
+   *
+   * Owner ask, repeated: "for new customer sign up i see so many features
+   * enabled... by default enable only Recycle bin, Themes, Tax only."
+   *
+   * WHY IT LOOKED LIKE EVERYTHING WAS ON. Nothing was ever switched on. The
+   * client reads `settings[key] !== false` (PosnicPro.js), so a key that was
+   * never saved reads as enabled - and a brand-new shop has none of them
+   * saved. Ten features appeared switched on because ten features were
+   * absent, which is not a decision anybody made.
+   *
+   * WHY THE RULE ITSELF IS NOT CHANGED. Every shop already running relies on
+   * absent-meaning-on. Flipping that reading would switch features off in
+   * every existing shop on the next deploy - silently, and with no way for
+   * them to know what they had lost. So the fix is to WRITE the values for
+   * new shops, and leave the reading alone.
+   *
+   * The three that are on are the three that cost nothing to have and are
+   * awkward to discover you needed: a delete you can undo, a look you can
+   * change, and tax - which a shop either needs from its first sale or does
+   * not need at all. Everything else is switched on by the shop when it wants
+   * it, which is also when the menu entry will mean something to them.
+   */
+  static newShopModuleDefaults() {
+    return {
+      module_tax_enable: true,
+      module_themes_enable: true,
+      module_recyclebin_enable: true,
+
+      module_credit_enable: false,
+      module_marketing_enable: false,
+      module_messaging_enable: false,
+      module_channels_enable: false,
+      module_channels_kiosk_enable: false,
+      module_cashbook_enable: false,
+      /* On, because the shop was just seeded with sample products and hiding
+         them the moment they arrive would be its own confusion. */
+      module_demo_data_enable: true,
+    };
+  }
+
   async _updateBranchDefaults(branchId, licenseId, userId, data, customerId, supplierId, taxId) {
     await this.repository.updateBranch(branchId, licenseId, {
       default_customer: customerId,
       default_supplier: supplierId,
       default_tax: taxId || '',
+      ...InstallService.newShopModuleDefaults(),
       created_by: data.register_username,
       created_by_id: userId,
       updated_by: data.register_username,

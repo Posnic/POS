@@ -5443,15 +5443,8 @@ $(document).ready(function () {
     setTimeout(function () { PosnicPro.features.maybeShowIntro(); }, 2500);
 });
 
-/* Customer display pairing (Loyverse study L3): fill the address card with
-   this till's own origin - the display page has always been served there,
-   it was just never told to anyone. */
-$(document).ready(function () {
-    try {
-        var origin = window.location.origin || (window.location.protocol + '//' + window.location.host);
-        $('#display_pair_url').val(origin + '/customerview.html');
-    } catch (e) { /* leave blank */ }
-});
+/* The customer-display address card was removed from Core Settings on owner
+   instruction; customerview.html still serves on the LAN unchanged. */
 /*
  * S4: a credential the server will not send back.
  *
@@ -5483,19 +5476,6 @@ PosnicPro.settings.markSavedSecrets = function (configured) {
     });
 };
 
-PosnicPro.settings.copyDisplayUrl = function () {
-    var url = $('#display_pair_url').val();
-    if (!url) { return; }
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(url).then(function () {
-            PosnicPro.alert('success', 'Address copied - open it on the display device');
-        });
-    } else {
-        $('#display_pair_url').select();
-        document.execCommand('copy');
-        PosnicPro.alert('success', 'Address copied - open it on the display device');
-    }
-};
 
 /* Feature search (owner feedback): filter the cards by anything visible on
    them - title, description, sub-toggle labels. */
