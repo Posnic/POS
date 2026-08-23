@@ -1038,13 +1038,49 @@ class ItemRepository extends BaseModel {
     const branch = this.toObjectId(branchId);
     const license = this.toObjectId(licenseId);
 
+    /*
+     * The sample sales and quotes go FIRST, and the order is the point.
+     *
+     * A demo sale references demo items. Remove the items while those sales
+     * still exist and every one of them is protected as "sold" - so the demo
+     * data would refuse to remove itself, held in place by its own samples.
+     *
+     * These are hard deletes, unlike the items. A sample sale is not a record
+     * of anything that happened, so keeping it in the Recycle Bin would only
+     * put invented money somewhere a shop can restore it from by accident.
+     */
+    let salesRemoved = 0;
+    let quotesRemoved = 0;
+    try {
+      const demoScope = { demo_pack: { $exists: true }, branch_id: branch, license };
+      const salesCol = await this.getCollection('sales');
+      salesRemoved = (await salesCol.deleteMany(demoScope)).deletedCount || 0;
+      const quotesCol = await this.getCollection('quotes');
+      quotesRemoved = (await quotesCol.deleteMany(demoScope)).deletedCount || 0;
+    } catch (e) {
+      /* Leaving the products behind is the safe half. Reported rather than
+         thrown, because a shop asking to clear samples should not be told the
+         whole thing failed when most of it worked. */
+      console.error('purgeDemoData: sample sales/quotes:', e.message);
+    }
+
     const scope = { demo_pack: { $exists: true }, 'branch_access.branch_id': branch, license };
     const candidates = await items
       .find(scope, { projection: { _id: 1, name: 1, demo_seeded_at: 1, updated_date: 1 } })
       .toArray();
 
     if (!candidates.length) {
-      return { status: true, removed: 0, kept: [], message: 'There is no demo data to remove.' };
+      return {
+        status: true,
+        removed: 0,
+        salesRemoved,
+        quotesRemoved,
+        kept: [],
+        message:
+          salesRemoved || quotesRemoved
+            ? `Removed ${salesRemoved} sample sale(s) and ${quotesRemoved} sample quote(s).`
+            : 'There is no demo data to remove.',
+      };
     }
 
     /* Both shapes, because item_id is stored as a string in some collections
@@ -1172,6 +1208,8 @@ class ItemRepository extends BaseModel {
       status: true,
       removed,
       categoriesRemoved,
+      salesRemoved,
+      quotesRemoved,
       kept,
       message: kept.length
         ? `Removed ${removed} sample product${removed === 1 ? '' : 's'}. Kept ${kept.length}: ` +

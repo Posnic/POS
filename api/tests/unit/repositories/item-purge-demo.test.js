@@ -26,6 +26,7 @@ describe('purgeDemoData', () => {
   let collections;
   let updateMany;
   let deletedCategories;
+  let deleted;
 
   const item = (id, name, over = {}) => ({
     _id: id,
@@ -38,13 +39,15 @@ describe('purgeDemoData', () => {
   /* A stand-in for the driver, shaped only where this function touches it. */
   const setup = ({
     items = [],
-    sales = [],
+    sales: salesArg = [],
     receivings = [],
     categories = [],
     itemsLeftInCat = 0,
   } = {}) => {
+    let sales = salesArg.slice();
     updateMany = jest.fn().mockResolvedValue({ modifiedCount: 0 });
     deletedCategories = [];
+    deleted = [];
 
     collections = {
       items: {
@@ -56,8 +59,23 @@ describe('purgeDemoData', () => {
         },
         countDocuments: async () => itemsLeftInCat,
       },
-      sales: { find: () => ({ toArray: async () => sales }) },
+      sales: {
+        find: () => ({ toArray: async () => sales }),
+        deleteMany: async (f) => {
+          deleted.push(['sales', f]);
+          /* The samples are gone from this point on, exactly as they would be
+             in mongo - which is what lets the ordering test below be real. */
+          sales = sales.filter((x) => !x.demo_pack);
+          return { deletedCount: 1 };
+        },
+      },
       receivings: { find: () => ({ toArray: async () => receivings }) },
+      quotes: {
+        deleteMany: async (f) => {
+          deleted.push(['quotes', f]);
+          return { deletedCount: 2 };
+        },
+      },
       categories: {
         find: () => ({ toArray: async () => categories }),
         deleteOne: async (f) => {
@@ -226,6 +244,55 @@ describe('purgeDemoData', () => {
       const r = await run();
       expect(r.kept).toHaveLength(9);
       expect(r.message).toMatch(/and 3 more/);
+    });
+  });
+  describe('the sample sales and quotes', () => {
+    test('are removed too', async () => {
+      setup({ items: [item('a1', 'Croissant')] });
+      const r = await run();
+      const targets = deleted.map(([name]) => name);
+      expect(targets).toContain('sales');
+      expect(targets).toContain('quotes');
+      expect(r.salesRemoved).toBeGreaterThan(0);
+      expect(r.quotesRemoved).toBeGreaterThan(0);
+    });
+
+    test('only the tagged ones, scoped to the branch and licence', async () => {
+      /* A shop's real sales are not ours to delete under any circumstances. */
+      setup({ items: [item('a1', 'Croissant')] });
+      await run();
+      for (const [, filter] of deleted) {
+        expect(filter.demo_pack).toEqual({ $exists: true });
+        expect(filter.license).toBeTruthy();
+        expect(filter.branch_id).toBeTruthy();
+      }
+    });
+
+    test('go FIRST, or the demo data holds itself in place', async () => {
+      /*
+       * THE ORDERING BUG THIS PINS. A demo sale references demo items. Remove
+       * the items while those sales still exist and every item is protected as
+       * "sold" - so asking to clear the samples would remove nothing at all and
+       * report that everything had been sold.
+       */
+      setup({
+        items: [item('a1', 'Croissant'), item('a2', 'Muffin')],
+        sales: [{ demo_pack: 'cafe', items: [{ item_id: 'a1' }, { item_id: 'a2' }] }],
+      });
+      const r = await run();
+      expect(r.removed).toBe(2);
+      expect(r.kept).toEqual([]);
+    });
+
+    test('a REAL sale still protects its item, even a tagged one', async () => {
+      /* Somebody rang up a sample product on the till. That sale is real. */
+      setup({
+        items: [item('a1', 'Croissant')],
+        sales: [{ items: [{ item_id: 'a1' }] }],
+      });
+      const r = await run();
+      expect(r.removed).toBe(0);
+      expect(r.kept[0].why).toBe('sold or received');
     });
   });
 });

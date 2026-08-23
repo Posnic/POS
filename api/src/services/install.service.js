@@ -775,7 +775,6 @@ class InstallService {
              * finished state: autoTile gives the item a coloured tile from its
              * own name, which reads better than a picture of the wrong thing.
              */
-            ...(product.image ? { image: product.image, cover_image: product.image } : {}),
             name: product.name,
             category_id: category.id,
             category_name: category.name,
@@ -816,8 +815,19 @@ class InstallService {
             items_mfg_date: null,
             items_expiry_date: null,
             available_quantity: parseInt(product.stock),
-            image: 'item.svg',
-            multi_image: [],
+            /*
+             * The photograph, or the placeholder that makes the till draw a
+             * coloured tile instead.
+             *
+             * Set HERE rather than spread in above, because this key used to
+             * sit below that spread and simply overwrote it - every demo item
+             * went in with 'item.svg' whatever picture it had, and the sale
+             * grid drew tiles for all of them. A later key in the same object
+             * literal always wins, and nothing says so at the point it does.
+             */
+            image: product.image || 'item.svg',
+            cover_image: product.image || '',
+            multi_image: product.image ? [{ name: product.image, cover: 'yes' }] : [],
             sort_order: 1,
             description: `${product.name} - ${product.unit}`,
             track_inventory: true,
@@ -834,10 +844,80 @@ class InstallService {
 
       console.log(`🔄 Attempting to insert ${itemMultiData.length} products...`);
       await this.repository.insertItems(itemMultiData);
+
+      /*
+       * A catalogue on its own demonstrates nothing.
+       *
+       * Every report opens empty, the dashboard shows zero and the quote list
+       * says there is nothing here - so the parts of the product somebody is
+       * deciding about are exactly the parts they cannot see. A handful of
+       * past sales and a few quotations fix that.
+       *
+       * Its own try/catch: a shop with products and no sample sales is a
+       * working shop, and failing the install over demonstration data would
+       * be the wrong trade.
+       */
+      try {
+        await this._insertDemoActivity({
+          branchId,
+          branchName,
+          licenseId,
+          now,
+          pack: businessType,
+          items: itemMultiData,
+        });
+      } catch (e) {
+        console.error('Demo sales and quotes skipped:', e.message);
+      }
     } catch (error) {
       console.error('Error in _insertBusinessTypeDemoData:', error);
       // Don't throw error, just log it - installation can continue without demo data
     }
+  }
+
+  /*
+   * Sample sales and quotations, dated into the past.
+   *
+   * The shapes come from services/demo-seed.js, which explains why they are
+   * dated before today: the shop's own takings must be the shop's own from the
+   * first sale they ring up, or every figure they read in week one is wrong
+   * with no way to tell which part is theirs.
+   *
+   * Written straight to the collections rather than through the sale service:
+   * that path decrements stock, prints, syncs and posts to registers, none of
+   * which should happen for a demonstration - a demo sale that moved stock
+   * would leave a shop whose counts are wrong before they have sold anything.
+   */
+  async _insertDemoActivity({ branchId, branchName, licenseId, now, pack, items }) {
+    const demoSeed = require('./demo-seed');
+    const BaseModel = require('../models/base.model');
+
+    /* insertItems does not hand back ids, so the rows are read again - the
+       sale lines need a real item_id or every report that joins back to the
+       catalogue drops them. */
+    const db = await BaseModel.getDb();
+    const stored = await db
+      .collection('items')
+      .find(
+        { demo_pack: pack, 'branch_access.branch_id': branchId, license: licenseId },
+        { projection: { _id: 1, name: 1, selling_price: 1, unit: 1 } }
+      )
+      .limit(60)
+      .toArray();
+
+    if (!stored.length) return;
+
+    const branch = { branch_id: branchId, branch_name: branchName, license: licenseId };
+    const customer = await db
+      .collection('customers')
+      .findOne({ branch_id: branchId, license: licenseId }, { projection: { _id: 1, name: 1 } });
+
+    const sales = demoSeed.buildSales({ items: stored, customer, branch, pack, now });
+    const quotes = demoSeed.buildQuotes({ items: stored, branch, pack, now });
+
+    if (sales.length) await db.collection('sales').insertMany(sales);
+    if (quotes.length) await db.collection('quotes').insertMany(quotes);
+    console.log(`📈 Demo activity: ${sales.length} sales, ${quotes.length} quotes`);
   }
 
   async _insertDemoData(params) {
