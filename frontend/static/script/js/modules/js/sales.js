@@ -11752,6 +11752,9 @@ PosnicPro.sales.saleDoneTimer = {
            while the first card was open would leave two timers running and
            the card would close early, which looks exactly like a bug. */
         $card.removeClass('is-held').addClass('is-closing');
+        /* Fresh baseline per sale, or the pointer position left over from the
+           previous card counts as movement on this one. */
+        self._lastPoint = null;
 
         var $line = $card.find('.sale-done-ring-line');
         var el = $line.get(0);
@@ -11807,9 +11810,42 @@ PosnicPro.sales.saleDoneTimer = {
     }
 };
 
-/* Delegated: this card is inside markup the sale page rebuilds. */
+/*
+ * What counts as the cashier using this card.
+ *
+ * THE FIRST VERSION CANCELLED ON HOVER ANYWHERE ON THE PANEL, and so it never
+ * closed once - reported as "so far many sales it never closed, maybe mouse
+ * moving somehow". Exactly that: the panel opens where the cursor already is,
+ * because the button they just pressed is in the same place. mouseenter fired
+ * on the frame it appeared, every time, and the countdown was cancelled before
+ * it could be seen.
+ *
+ * Presence is not intent. Reaching for a BUTTON is, so the buttons hold it.
+ * Typing, tabbing and touching are too. Sitting still under a panel that
+ * arrived unasked is not.
+ *
+ * Delegated, because the sale page rebuilds this markup.
+ */
 $(document).on(
-    'mouseenter focusin keydown touchstart',
+    'mouseenter',
+    '#newsalespage .sale-done-actions a, #newsalespage .infobar-tender-close',
+    function () { PosnicPro.sales.saleDoneTimer.hold(); }
+);
+$(document).on(
+    'focusin keydown touchstart',
     '#newsalespage',
     function () { PosnicPro.sales.saleDoneTimer.hold(); }
 );
+/*
+ * A pointer that actually MOVES over the card is somebody looking at it. The
+ * first move is ignored: showing the panel under a stationary cursor produces
+ * one mousemove on its own in some browsers, which would put us straight back
+ * to never closing.
+ */
+$(document).on('mousemove', '#newsalespage', function (e) {
+    var t = PosnicPro.sales.saleDoneTimer;
+    var last = t._lastPoint;
+    t._lastPoint = { x: e.pageX, y: e.pageY };
+    if (!last) { return; }
+    if (Math.abs(e.pageX - last.x) + Math.abs(e.pageY - last.y) > 12) { t.hold(); }
+});
