@@ -295,11 +295,45 @@ PosnicPro.themeManager = {
                 var state = self.toThemeState(settings);
                 self.applyTheme(state);
                 self.saveToLocal(state);
+                return;
             }
+            /*
+             * A shop that has never opened the theme picker has nothing saved
+             * here, and this used to do nothing at all - so the CSS variables
+             * were never written and the page fell back to whatever the raw
+             * stylesheet happened to use. Reported as the font on a new
+             * account being wrong until "default" was clicked, which is
+             * precisely what clicking it did: set the variables for the first
+             * time.
+             *
+             * "Use defaults" has to mean applying them, not leaving them
+             * unapplied and hoping the stylesheet agrees.
+             */
+            self.applyDefaults();
         }, function(xhr) {
-            // Silently fail, use defaults
-            console.log('Could not load theme from server, using defaults');
+            /* Unreachable server is the same situation: better the default
+               look than an unstyled one. Not saved to localStorage, because
+               nothing was learned about what this shop actually wants - the
+               next load should ask again. */
+            console.log('Could not load theme from server, applying defaults');
+            self.applyDefaults();
         });
+    },
+
+    /*
+     * The shipped look, written to the page.
+     *
+     * Deliberately does not save: these are defaults, not a choice, and
+     * storing them would make a shop that has never picked a theme
+     * indistinguishable from one that picked this one - so a later change to
+     * the shipped defaults would never reach them.
+     */
+    applyDefaults: function() {
+        try {
+            this.applyTheme(this.toThemeState({}));
+        } catch (e) {
+            console.error('Error applying default theme:', e);
+        }
     },
 
     getFromLocal: function() {
