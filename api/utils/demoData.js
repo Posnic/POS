@@ -217,32 +217,138 @@ const hardwareDemoData = {
   ]
 };
 
+/*
+ * Which pack a shop gets, from whatever word describes it.
+ *
+ * THE VOCABULARY IS NOT OURS ALONE. The word arrives from the cloud signup,
+ * where the list is: retail, supermarket, restaurant, cafe, bakery, pharmacy,
+ * hardware, electronics, textile, other. This file was written against a
+ * different list, and the two disagreed in a way nothing reported:
+ *
+ *   - "electronics" matched no case, so the ELECTRICAL pack was unreachable
+ *     and an electronics shop was handed groceries
+ *   - "icecream" could not be sent at all, so that pack was unreachable too
+ *   - "restaurant" fell to the default, so a restaurant was handed groceries
+ *     when the cafe pack - prepared food and drink - is what it wanted
+ *
+ * Two of the seven packs could not be reached by any real signup. The failure
+ * was silent because the default returns something plausible: every shop got a
+ * supermarket, which looks like a decision rather than a miss.
+ *
+ * So both vocabularies are accepted, and the input is normalised, because
+ * "Cafe" and "ice cream" are the same answers as "cafe" and "icecream" and a
+ * switch on a raw string does not think so.
+ */
+const DEMO_PACK_BY_TYPE = {
+  icecream: 'iceCream',
+  'ice cream': 'iceCream',
+
+  cafe: 'cafe',
+  coffee: 'cafe',
+  /* A restaurant sells prepared food and drink, which is what this pack is.
+     Closer than groceries, which is where it landed before. */
+  restaurant: 'cafe',
+
+  bakery: 'bakery',
+
+  supermarket: 'supermarket',
+  kirana: 'supermarket',
+  grocery: 'supermarket',
+  groceries: 'supermarket',
+  retail: 'supermarket',
+
+  textile: 'textile',
+  textiles: 'textile',
+  apparel: 'textile',
+  clothing: 'textile',
+
+  electrical: 'electrical',
+  electronics: 'electronics',
+
+  hardware: 'hardware',
+};
+
+const DEMO_PACKS = {
+  iceCream: iceCreamDemoData,
+  cafe: cafeDemoData,
+  bakery: bakeryDemoData,
+  supermarket: supermarketDemoData,
+  textile: textileDemoData,
+  electrical: electricalDemoData,
+  electronics: electricalDemoData,
+  hardware: hardwareDemoData,
+};
+
 function getDemoDataByType(businessType) {
-  switch (businessType) {
-    case 'icecream':
-      return iceCreamDemoData;
-    case 'cafe':
-      return cafeDemoData;
-    case 'bakery':
-      return bakeryDemoData;
-    case 'supermarket':
-    case 'kirana':
-    case 'grocery':
-      return supermarketDemoData;
-    case 'textile':
-      return textileDemoData;
-    case 'electrical':
-      return electricalDemoData;
-    case 'hardware':
-      return hardwareDemoData;
-    default:
-      // Generic retail default: a kirana/supermarket set fits most shops
-      return supermarketDemoData;
+  const key = String(businessType == null ? '' : businessType)
+    .trim()
+    .toLowerCase();
+  const pack = DEMO_PACK_BY_TYPE[key];
+  /* Generic retail default: a kirana/supermarket set fits most shops, and is
+     the right answer for "retail", "pharmacy" and "other", which have no pack
+     of their own yet. */
+  return DEMO_PACKS[pack] || supermarketDemoData;
+}
+
+/*
+ * Attach the photographs, where there is one.
+ *
+ * DERIVED, NOT WRITTEN IN. The images live in the frontend as static files and
+ * their manifest is written by scripts/fetch-demo-images.js. Pasting paths into
+ * the product literals would mean a product could name a file that is not
+ * there, or a file could sit unused, and neither would say so. Reading the
+ * manifest means the two cannot disagree: an image exists and is used, or it
+ * does not and the product simply has none.
+ *
+ * A product without one is a normal, finished state - PosnicPro.autoTile gives
+ * it a coloured tile from its own name, which is a real answer on a sale grid.
+ * Fifty-five of these products have no photograph because the automated search
+ * returned somebody's brand, a photograph of people, or the wrong object
+ * entirely, and those were turned down on sight. A wrong picture is read as
+ * fact; an absent one is read as an absent one.
+ *
+ * Best-effort on purpose: a missing or unreadable manifest must never stop a
+ * shop being created. It costs the pictures, nothing else.
+ */
+function attachImages() {
+  let credits = {};
+  try {
+    // eslint-disable-next-line global-require
+    credits = require('../../frontend/static/images/demo/credits.json');
+  } catch (e) {
+    return;
+  }
+
+  const byPack = {};
+  for (const entry of Object.values(credits)) {
+    if (!entry || !entry.pack || !entry.product || !entry.file) continue;
+    (byPack[entry.pack] = byPack[entry.pack] || {})[entry.product] = entry.file;
+  }
+
+  const packs = {
+    iceCream: iceCreamDemoData,
+    cafe: cafeDemoData,
+    bakery: bakeryDemoData,
+    supermarket: supermarketDemoData,
+    textile: textileDemoData,
+    electrical: electricalDemoData,
+    hardware: hardwareDemoData,
+  };
+
+  for (const [name, pack] of Object.entries(packs)) {
+    const map = byPack[name];
+    if (!map || !pack || !Array.isArray(pack.products)) continue;
+    for (const product of pack.products) {
+      if (map[product.name]) product.image = map[product.name];
+    }
   }
 }
 
+attachImages();
+
 module.exports = {
   getDemoDataByType,
+  attachImages,
   iceCreamDemoData,
   cafeDemoData,
   bakeryDemoData,
