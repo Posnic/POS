@@ -30,11 +30,16 @@ const toObjectId = (id) => {
   return null;
 };
 
+/* Every way a caller has said yes to demo data. Compared lower-cased and
+   trimmed, so 'Yes' and ' on ' are the same answer as 'yes'. */
+const TRUTHY_DEMO = new Set(['yes', 'on', 'true', '1', 'y']);
+
 /**
  * Sanitize installation data
  * @param {Object} data - Raw installation data
  * @returns {Object}
  */
+
 const sanitizeInstallData = (data) => {
   return {
     register_companyname: (data.register_companyname || '').trim(),
@@ -51,8 +56,30 @@ const sanitizeInstallData = (data) => {
     register_countryid: (data.register_countryid || '').trim(),
     register_state: (data.register_state || '').trim(),
     register_timezone: (data.register_timezone || '').trim(),
-    register_demo: data.register_demo || false,
-    businessType: (data.businessType || '').trim(),
+    /*
+     * The provisioner's words, not ours.
+     *
+     * Gateway sends `register_demo: 'yes'` and `business: 'retail'`
+     * (apps/provisioner/provision.js). This side checked for `'on'` and read
+     * `businessType`, so BOTH missed - every cloud shop was created with no
+     * demo data at all and, had it run, always the supermarket pack.
+     *
+     * Silent, because each miss has a plausible fallback: no demo data looks
+     * like a shop that asked for none, and a supermarket pack looks like a
+     * default somebody chose. A new customer opened their till and found one
+     * product in it.
+     *
+     * Normalised here rather than changed in Gateway: this is the side that
+     * consumes the value, it already normalises businessType for the pack
+     * lookup, and a provisioner mid-flight for live signups is the wrong
+     * thing to edit to fix a reader.
+     */
+    register_demo: TRUTHY_DEMO.has(
+      String(data.register_demo == null ? '' : data.register_demo)
+        .trim()
+        .toLowerCase()
+    ),
+    businessType: (data.businessType || data.business || '').trim(),
   };
 };
 
