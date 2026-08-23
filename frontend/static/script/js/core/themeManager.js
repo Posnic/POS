@@ -30,9 +30,25 @@ PosnicPro.themeManager = {
         topbarBg: '#ffffff',
         textPrimary: '#000000',
         textSecondary: '#333333',
-        fontFamily: "'Mukta Vaani', sans-serif",
+        /*
+         * THESE THREE ARE READ FROM THE STYLESHEET, NOT DECIDED HERE.
+         *
+         * They used to be written out again: 'Mukta Vaani' at weight 300,
+         * while theme-variables.css shipped a DM Sans / system stack at
+         * weight 400. Two defaults for one thing, and they disagreed - so a
+         * fresh login got the stylesheet's font and opening the theme picker
+         * and pressing Default replaced it with this one. Reported as "default
+         * theme font getting applied after i go to theme page and apply
+         * default theme, otherwise by default its not getting applied": the
+         * font was not missing, it was being CHANGED.
+         *
+         * Read at first use via readShippedFont(), so whoever edits the
+         * stylesheet does not have to know this file exists. The values below
+         * are only a last resort for a stylesheet that failed to load.
+         */
+        fontFamily: "'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif",
         fontSize: '16',
-        fontWeight: '300',
+        fontWeight: '400',
         borderColor: '#e6e6e6',
         menuBg: '#ffffff',
         menuText: '#333333',
@@ -232,8 +248,41 @@ PosnicPro.themeManager = {
         } catch (e) { return true; }
     },
 
+    /*
+     * The font the stylesheet actually ships, taken from the stylesheet.
+     *
+     * One source of truth. Duplicating these in JS is what produced a font
+     * that changed the first time somebody pressed Default - the copy here
+     * had drifted a whole typeface away from the CSS and nobody could see
+     * both at once.
+     *
+     * Read once, and only from the root element, which is where
+     * theme-variables.css declares them. A stylesheet that has not loaded
+     * yields empty strings and the hard-coded fallbacks stand.
+     */
+    _shippedFontRead: false,
+    readShippedFont: function () {
+        if (this._shippedFontRead) { return; }
+        this._shippedFontRead = true;
+        try {
+            var cs = window.getComputedStyle(document.documentElement);
+            var family = (cs.getPropertyValue('--theme-font-family') || '').trim();
+            var weight = (cs.getPropertyValue('--theme-font-weight') || '').trim();
+            var size = (cs.getPropertyValue('--theme-font-size-base') || '').trim();
+            if (family) { this.defaults.fontFamily = family; }
+            if (weight) { this.defaults.fontWeight = weight; }
+            /* Declared with a unit in CSS and stored without one here. */
+            if (size) { this.defaults.fontSize = String(parseInt(size, 10) || this.defaults.fontSize); }
+        } catch (e) {
+            /* Keep the fallbacks. A theme that cannot read the stylesheet is
+               still better than no theme at all. */
+        }
+    },
+
     init: function() {
         var self = this;
+        /* Before any default is read, so the picker and the page agree. */
+        this.readShippedFont();
         if (!this.moduleEnabled()) { return; }
         var savedTheme = this.getFromLocal();
         if (savedTheme) {
