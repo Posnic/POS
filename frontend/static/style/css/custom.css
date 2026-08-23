@@ -4435,3 +4435,26 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     padding-top: 4px;      /* was 14px */
     padding-right: 20px;   /* was 30px */
 }
+
+/* ------------------------------------------------------------------
+ * Short, exact, or change to give back.
+ *
+ * "Return balance 0.00" was shown both when the customer had paid to
+ * the penny and when they were still hundreds short. A cashier reads
+ * this for about a second while talking to somebody, so it is words
+ * and a colour, not a figure in a row they have to interpret.
+ * ------------------------------------------------------------------ */
+.tender-status-row { padding: 0 !important; border: 0 !important; background: transparent !important; }
+.tender-status {
+    display: none;
+    text-align: center;
+    font-weight: 700;
+    font-size: 15px;
+    padding: 9px 12px;
+    border-radius: 6px;
+    margin: 6px 0;
+}
+/* Red is the one that costs the shop money, so it is the loudest. */
+.tender-status.is-short { background: #fdecea; color: #b3261e; }
+.tender-status.is-exact { background: #e7f5ec; color: #1e7a44; }
+.tender-status.is-over  { background: #e8f1fd; color: #14508f; }

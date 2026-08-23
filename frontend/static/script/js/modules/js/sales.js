@@ -2138,11 +2138,58 @@
         // Calculate return balance
         let billAmount = parseFloat($('#tendered_payment').text().replace(/,/g, '')) || 0;
         let balance = total - billAmount;
-        
+
         if (total < billAmount) {
             $('#tendered_balance').text('0.00');
         } else {
             $('#tendered_balance').text(balance.toFixed(2));
+        }
+        PosnicPro.sales.showTenderStatus(total, billAmount);
+    },
+
+    /*
+     * Say whether the cash on the counter is short, exact, or more than the bill.
+     *
+     * "Return balance 0.00" was shown for TWO different situations: the
+     * customer has paid to the penny, and the customer is still 762 rupees
+     * short. Those must never look alike at a counter, because the second one
+     * ends with the shop out of pocket and nobody knowing when it happened.
+     *
+     * Words and a colour, not just a number. A cashier is looking at this for
+     * about a second while talking to somebody, and "still to pay" reads in
+     * that second where a figure in a row labelled "return balance" does not.
+     *
+     * Nothing is blocked here. Taking part payment is a real thing a shop
+     * does, and the existing save rules already decide what is allowed - this
+     * only makes sure nobody does it by accident.
+     */
+    showTenderStatus: function (tendered, billAmount) {
+        var $el = $('#tender_status');
+        if (!$el.length) { return; }
+
+        var currency = (PosnicPro.local.get('currencySign') || '').trim();
+        var money = function (n) {
+            var v = Math.abs(n).toFixed(2);
+            return currency ? currency + ' ' + v : v;
+        };
+
+        /* Nothing counted yet is not a state worth commenting on - the row
+           would sit there saying "short" before anybody has touched a note. */
+        if (!tendered) {
+            $el.text('').removeClass('is-short is-exact is-over').hide();
+            return;
+        }
+
+        var diff = tendered - billAmount;
+        /* A penny either way is rounding, not a shortfall. */
+        if (Math.abs(diff) < 0.01) {
+            $el.text('Exact amount').removeClass('is-short is-over').addClass('is-exact').show();
+        } else if (diff < 0) {
+            $el.text(money(diff) + ' still to pay')
+                .removeClass('is-exact is-over').addClass('is-short').show();
+        } else {
+            $el.text(money(diff) + ' change to give back')
+                .removeClass('is-exact is-short').addClass('is-over').show();
         }
     },
 
@@ -9696,19 +9743,123 @@ $(document).ready(function () {
 /* LS2 (Lightspeed study): cash counting offers the till's real notes and
    coins by currency. Shop-defined denominations in Settings always win;
    this only replaces the one-size-fits-all fallback. */
-PosnicPro.sales.defaultDenominations = function () {
-    var sign = (PosnicPro.local.get('currencySign') || '').trim();
-    var SETS = {
+
+    /*
+     * The notes and coins actually in circulation, by currency.
+     *
+     * A shop's own list in Settings > Cash Denominations always wins; this is
+     * only the starting point, so that a till in Lagos or Jakarta does not
+     * open showing Indian rupee buttons.
+     *
+     * KEYED BY SYMBOL, BECAUSE THAT IS ALL WE HAVE. The shop stores
+     * currency_type, which is the symbol - the ISO code sits in
+     * api/src/json/currency.json and never reaches the browser. Symbols
+     * collide, so where one serves several countries the entry is the most
+     * widely used of them and is marked below. Getting that wrong costs a
+     * shopkeeper one visit to Settings; leaving every till on rupees costs
+     * every one of them that visit.
+     *
+     * Coins that no longer buy anything are left out on purpose. India has a
+     * 1 rupee coin and Nigeria has a 50 kobo, but a button nobody presses is
+     * a button in the way of the ones they do.
+     */
+var POSNIC_DENOMINATION_SETS = {
+        /* South Asia */
         '₹': [1, 2, 5, 10, 20, 50, 100, 200, 500],
+        '৳': [2, 5, 10, 20, 50, 100, 200, 500, 1000],
+        'රු': [10, 20, 50, 100, 500, 1000, 5000],
+        'Nu.': [1, 5, 10, 20, 50, 100, 500, 1000],
+        /* Ambiguous: Pakistan, Sri Lanka, Nepal and Mauritius all use these.
+           Pakistan is the largest, so its ladder is the default. */
+        'Rs': [10, 20, 50, 100, 500, 1000, 5000],
+        '₨': [10, 20, 50, 100, 500, 1000, 5000],
+
+        /* Ambiguous: a dozen countries use a bare dollar sign. The US set is
+           the default because it is the most common and the most familiar. */
         '$': [0.01, 0.05, 0.1, 0.25, 1, 5, 10, 20, 50, 100],
+        'US$': [0.01, 0.05, 0.1, 0.25, 1, 5, 10, 20, 50, 100],
+        'CA$': [0.05, 0.1, 0.25, 1, 2, 5, 10, 20, 50, 100],
+        'A$': [0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100],
+        'NZ$': [0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100],
+        'S$': [0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 50, 100],
+        'HK$': [0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 500, 1000],
+        'R$': [0.05, 0.1, 0.25, 0.5, 1, 2, 5, 10, 20, 50, 100, 200],
+
+        /* Europe */
         '€': [0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200],
         '£': [0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50],
-        'RM': [0.05, 0.1, 0.2, 0.5, 1, 5, 10, 20, 50, 100],
-        '฿': [0.25, 0.5, 1, 2, 5, 10, 20, 50, 100, 500, 1000],
+        'CHF': [0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200],
+        'zł': [0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200],
+        'Kč': [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000],
+        'Ft': [5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000],
+        'lei': [0.1, 0.5, 1, 5, 10, 50, 100, 200, 500],
+        'лв': [0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100],
+        /* Ambiguous: Norway, Sweden, Denmark and Iceland. Sweden is the
+           largest of them. */
+        'kr': [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000],
+        '₽': [1, 2, 5, 10, 50, 100, 200, 500, 1000, 2000, 5000],
+        '₴': [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000],
+        '₺': [0.25, 0.5, 1, 5, 10, 20, 50, 100, 200],
+
+        /* Middle East */
         'د.إ': [0.25, 0.5, 1, 5, 10, 20, 50, 100, 200, 500, 1000],
-        'Rs': [1, 2, 5, 10, 20, 50, 100, 500, 1000, 5000]
+        'ر.س': [0.25, 0.5, 1, 5, 10, 50, 100, 500],
+        'د.ك': [0.05, 0.1, 0.25, 0.5, 1, 5, 10, 20],
+        'ر.ق': [1, 5, 10, 50, 100, 500],
+        'ر.ع.': [0.1, 0.25, 0.5, 1, 5, 10, 20, 50],
+        'د.ب': [0.1, 0.25, 0.5, 1, 5, 10, 20],
+        'ج.م': [0.25, 0.5, 1, 5, 10, 20, 50, 100, 200],
+        '₪': [0.1, 0.5, 1, 2, 5, 10, 20, 50, 100, 200],
+        'د.ا': [0.25, 0.5, 1, 5, 10, 20, 50],
+
+        /* Africa */
+        '₦': [5, 10, 20, 50, 100, 200, 500, 1000],
+        'KSh': [1, 5, 10, 20, 50, 100, 200, 500, 1000],
+        'GH₵': [0.5, 1, 2, 5, 10, 20, 50, 100, 200],
+        'R': [0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200],
+        'TSh': [50, 100, 200, 500, 1000, 2000, 5000, 10000],
+        'USh': [100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000],
+        'MAD': [0.5, 1, 2, 5, 10, 20, 50, 100, 200],
+
+        /* East and South-East Asia */
+        '¥': [1, 5, 10, 50, 100, 500, 1000, 5000, 10000],
+        '₩': [10, 50, 100, 500, 1000, 5000, 10000, 50000],
+        '฿': [1, 2, 5, 10, 20, 50, 100, 500, 1000],
+        'RM': [0.05, 0.1, 0.2, 0.5, 1, 5, 10, 20, 50, 100],
+        'Rp': [500, 1000, 2000, 5000, 10000, 20000, 50000, 100000],
+        '₱': [1, 5, 10, 20, 50, 100, 200, 500, 1000],
+        '₫': [1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 500000],
+        '₭': [500, 1000, 2000, 5000, 10000, 20000, 50000, 100000],
+        '៛': [100, 500, 1000, 2000, 5000, 10000, 20000, 50000],
+        'K': [50, 100, 200, 500, 1000, 5000, 10000],
+
+        /* Americas */
+        'MX$': [0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000],
+        'S/': [0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200],
+        'COL$': [50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000],
+        '₡': [5, 10, 25, 50, 100, 500, 1000, 2000, 5000, 10000, 20000],
+        '₲': [50, 100, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000],
+
+        /* Oceania */
+        '₣': [0.5, 1, 2, 5, 10, 20, 50, 100],
+
+        'Kz': [5, 10, 50, 100, 200, 500, 1000, 2000, 5000]
     };
-    return (SETS[sign] || [1, 2, 5, 10, 20, 50, 100, 200, 500]).slice();
+
+    /*
+     * The fallback is a 1-2-5 ladder, not the rupee set.
+     *
+     * Almost every currency in the world is built on 1, 2 and 5 repeated by
+     * powers of ten, so this is recognisable nearly anywhere - and unlike a
+     * copy of one country's notes it does not look like a bug to everybody
+     * else.
+     */
+PosnicPro.sales.defaultDenominations = function () {
+    var sign = (PosnicPro.local.get('currencySign') || '').trim();
+    /* A COPY, always. The table is built once at module scope now, and one of
+       the two callers sorts the result in place - handing out the real array
+       would reorder every till's buttons for the rest of the session. */
+    return (POSNIC_DENOMINATION_SETS[sign] || [1, 2, 5, 10, 20, 50, 100, 200, 500]).slice();
 };
 /* A sale carries a register session only while the Cash Register feature
    is ON - with it off, a register id left in localStorage from before the
