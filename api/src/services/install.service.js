@@ -688,30 +688,38 @@ class InstallService {
    * not need at all. Everything else is switched on by the shop when it wants
    * it, which is also when the menu entry will mean something to them.
    */
-  static newShopModuleDefaults() {
+  static newShopModuleDefaults({ demoData = false } = {}) {
     return {
-      module_tax_enable: true,
+      /* The four a shop needs before it has decided anything.
+         Owner's list: Themes, Demo Data, Tax, Quick Sale. */
       module_themes_enable: true,
-      module_recyclebin_enable: true,
+      module_tax_enable: true,
+      quick_sale_enable: true,
+      /*
+       * Only if they actually asked for sample data during setup. Switching it
+       * on for a shop that chose an empty catalogue would be a switch that
+       * hides nothing, sitting in the menu inviting a question.
+       */
+      module_demo_data_enable: demoData === true,
 
+      module_recyclebin_enable: false,
       module_credit_enable: false,
       module_marketing_enable: false,
       module_messaging_enable: false,
       module_channels_enable: false,
       module_channels_kiosk_enable: false,
       module_cashbook_enable: false,
-      /* On, because the shop was just seeded with sample products and hiding
-         them the moment they arrive would be its own confusion. */
-      module_demo_data_enable: true,
     };
   }
 
   async _updateBranchDefaults(branchId, licenseId, userId, data, customerId, supplierId, taxId) {
+    /* register_demo was normalised to a boolean at the entry point. */
+    const demoData = data.register_demo === true;
     await this.repository.updateBranch(branchId, licenseId, {
       default_customer: customerId,
       default_supplier: supplierId,
       default_tax: taxId || '',
-      ...InstallService.newShopModuleDefaults(),
+      ...InstallService.newShopModuleDefaults({ demoData }),
       created_by: data.register_username,
       created_by_id: userId,
       updated_by: data.register_username,

@@ -19,27 +19,36 @@ const InstallService = require('../../../src/services/install.service');
  * them on the next deploy, silently. So the values are written instead.
  */
 describe('a new shop’s feature switches', () => {
-  const defaults = InstallService.newShopModuleDefaults();
+  const defaults = InstallService.newShopModuleDefaults({ demoData: true });
 
-  test('exactly the three asked for are on', () => {
+  test('exactly the four asked for are on', () => {
     const on = Object.entries(defaults)
       .filter(([, v]) => v === true)
       .map(([k]) => k)
       .sort();
     expect(on).toEqual(
       [
-        'module_demo_data_enable',
-        'module_recyclebin_enable',
-        'module_tax_enable',
         'module_themes_enable',
+        'module_tax_enable',
+        'quick_sale_enable',
+        'module_demo_data_enable',
       ].sort()
     );
   });
 
-  test('demo data is the only addition, and it has a reason', () => {
-    /* The shop was just seeded with sample products; hiding them the moment
-       they arrive would be its own confusion. */
-    expect(defaults.module_demo_data_enable).toBe(true);
+  test('demo data follows what was asked for at setup', () => {
+    /*
+     * A switch that hides nothing, sitting in the menu inviting a question, is
+     * worse than no switch - so a shop that chose an empty catalogue does not
+     * get one.
+     */
+    expect(InstallService.newShopModuleDefaults({ demoData: true }).module_demo_data_enable).toBe(
+      true
+    );
+    expect(InstallService.newShopModuleDefaults({ demoData: false }).module_demo_data_enable).toBe(
+      false
+    );
+    expect(InstallService.newShopModuleDefaults().module_demo_data_enable).toBe(false);
   });
 
   test('everything else is explicitly off, not merely absent', () => {
@@ -54,6 +63,7 @@ describe('a new shop’s feature switches', () => {
       'module_channels_enable',
       'module_channels_kiosk_enable',
       'module_cashbook_enable',
+      'module_recyclebin_enable',
     ]) {
       expect(defaults).toHaveProperty(key);
       expect(defaults[key]).toBe(false);
@@ -63,7 +73,10 @@ describe('a new shop’s feature switches', () => {
   test('every switch has a value - none is left to be inferred', () => {
     for (const [key, value] of Object.entries(defaults)) {
       expect(typeof value).toBe('boolean');
-      expect(key).toMatch(/^module_/);
+      /* quick_sale_enable predates the module_ prefix and is gated the same
+         way, so the shape is not uniform. Said out loud rather than pretended
+         away. */
+      expect(key).toMatch(/^(module_[a-z_]+|quick_sale)_enable$/);
     }
   });
 
@@ -74,7 +87,9 @@ describe('a new shop’s feature switches', () => {
       require('path').join(__dirname, '../../../src/services/install.service.js'),
       'utf8'
     );
-    expect(src).toMatch(/\.\.\.InstallService\.newShopModuleDefaults\(\)/);
+    /* With the argument: spreading the no-arg form would silently switch demo
+       data off for every shop that asked for it. */
+    expect(src).toMatch(/\.\.\.InstallService\.newShopModuleDefaults\(\{ demoData \}\)/);
   });
 
   test('it covers every switch the client reads', () => {
