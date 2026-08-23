@@ -85,6 +85,10 @@ router.get('/export/jsonld', bindController(itemsController.exportCatalogueJsonL
 // destroys, and refuses anything sold, received or edited.
 router.delete('/demo', bindController(itemsController.purgeDemoData));
 
+// POST /api/items/demo - put the sample data back, for a shop that removed
+// it and later wants it. Refuses if it is already there.
+router.post('/demo', bindController(itemsController.reseedDemoData));
+
 // Raise/lower prices across many items at once; and a per-item price history.
 // V1 variant families: all-or-nothing creation of linked variant items,
 // and the members of one family for the edit page's strip.
