@@ -91,6 +91,40 @@ describe('the seeded records are still tagged and pictured', () => {
   });
 
   test('demo items carry their photograph when there is one', () => {
-    expect(SRC).toMatch(/product\.image \? \{ image: product\.image/);
+    /* Asserted on the assignment itself, not on a spread. The spread version
+       of this was overwritten two lines later by `image: 'item.svg'` and did
+       nothing at all - a test that matched the spread passed the whole time. */
+    expect(SRC).toMatch(/image: product\.image \|\| 'item\.svg'/);
+  });
+});
+
+describe('the photograph actually reaches the item', () => {
+  test('image is taken from the product, not hard-coded', () => {
+    /*
+     * THE BUG THIS PINS. `image: 'item.svg'` sat BELOW the spread that set the
+     * real photograph, in the same object literal - so it overwrote it every
+     * time and every demo item went in with the placeholder. The sale grid
+     * then drew a coloured tile for all of them, and the 56 photographs
+     * shipped with the packs were never seen by anybody.
+     *
+     * A later key in an object literal always wins, and nothing says so at the
+     * point where it does.
+     */
+    expect(SRC).toMatch(/image: product\.image \|\| 'item\.svg'/);
+  });
+
+  test("nothing sets a bare 'item.svg' afterwards", () => {
+    /* Re-introducing that line below this one would silently undo it again. */
+    const at = SRC.indexOf("image: product.image || 'item.svg'");
+    expect(at).toBeGreaterThan(-1);
+    const after = SRC.slice(at + 10, at + 1200);
+    expect(after).not.toMatch(/^\s*image: 'item\.svg',/m);
+  });
+
+  test('an item without a photograph still gets the placeholder', () => {
+    /* 55 of the 111 products have none, and they must fall back to the
+       coloured tile rather than to a broken image. */
+    expect(SRC).toMatch(/image: product\.image \|\| 'item\.svg'/);
+    expect(SRC).toMatch(/multi_image: product\.image \?/);
   });
 });
