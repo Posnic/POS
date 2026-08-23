@@ -2331,6 +2331,19 @@ PosnicPro = {
         }
     },
     /*Restore BackUP data*/
+   /*
+    * Has the permission list actually arrived?
+    *
+    * userACL starts as an empty STRING and is replaced by an object when
+    * users/getUserAccessDetails answers. Until then every lookup misses, so
+    * checkAccess said no to everything and the page was stripped of controls
+    * that the shop was perfectly entitled to.
+    */
+   aclLoaded: function () {
+       var acl = PosnicPro.userACL;
+       return !!acl && typeof acl === 'object' && Object.keys(acl).length > 0;
+   },
+
    checkAccess: function (module, access_type) {
          if (PosnicPro.userACL[module] && PosnicPro.userACL[module][access_type]) {
             return true;
@@ -2345,6 +2358,21 @@ PosnicPro = {
         });
     },
     ACLApply: function (element) {
+        /*
+         * Unknown is not denied.
+         *
+         * With no permission list loaded this stripped the page bare - every
+         * Add, Edit and Delete removed from the DOM, which is indistinguishable
+         * from a shop whose plan does not include them. Reported as "cashbook
+         * page no option to add or edit expenses": the button was not hidden by
+         * a rule, it was deleted because the rules had not arrived.
+         *
+         * Leaving the controls alone is the safer wrong answer. The server
+         * checks every one of these operations regardless, so the worst case is
+         * a button that answers "unauthorised" - visible and explicable, rather
+         * than a feature that appears not to exist.
+         */
+        if (!PosnicPro.aclLoaded()) { return; }
         var access = $(element).data('access');
         var module = $(element).data('module');
         if (!access.match(/(read|write|delete|super|financials)/)) {
@@ -2395,6 +2423,10 @@ PosnicPro = {
         });
     },
     redirectPage: function () {
+        /* Same reason, and worse: this throws outright on an empty ACL, and
+           it runs during boot - so one failed permissions call took the whole
+           dashboard down rather than one button. */
+        if (!PosnicPro.aclLoaded() || !PosnicPro['userACL'].dashboard) { return; }
         if (PosnicPro['userACL'].dashboard.read === false) {
             $("#v-pills-dashboard-tab").removeClass("active");
             $("#v-pills-dashboard").removeClass("show active");
