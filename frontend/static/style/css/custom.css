@@ -2618,7 +2618,36 @@ input:checked + .slider:before {
    activates panes by clicking its anchors - but never renders; the
    content takes the whole row. */
 .settings-nav-col { display: none !important; }
-.settings-nav-col + div { flex: 0 0 100%; max-width: 100%; }
+.settings-nav-col + div {
+    flex: 0 0 100%;
+    max-width: 100%;
+    /*
+     * A FLEX ITEM WILL NOT SHRINK BELOW ITS CONTENT unless told it may.
+     *
+     * min-width defaults to auto on a flex item, which resolves to the
+     * content's minimum width. The Features grid inside is
+     * `repeat(auto-fill, minmax(290px, 1fr))`, so its minimum is 290px plus
+     * gaps - and on a narrow window that is wider than the row. The column
+     * then refused to shrink and the cards ran off the right-hand edge with
+     * no scrollbar to reach them (owner report: cards and the Cash Book card
+     * cut off mid-page).
+     *
+     * min-width: 0 lets it shrink to its share, and the grid wraps as it was
+     * always meant to.
+     */
+    min-width: 0;
+}
+
+/* Same reason one level down: a tab pane is a block, but its children are
+   grids and tables whose min-content width can exceed the pane. */
+.settings-nav-col + div .tab-content,
+.settings-nav-col + div .tab-pane { min-width: 0; }
+
+/* The grid may go narrower than one nominal card rather than overflow: two
+   cramped columns are readable, one column off-screen is not. */
+@media (max-width: 1400px) {
+    .module-grid { grid-template-columns: repeat(auto-fill, minmax(min(290px, 100%), 1fr)); }
+}
 
 /*
  * Drawer body padding, take two. Killing the 30px .custom-mode-setting rule
@@ -4486,3 +4515,33 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
        sliding, which is the part that is motion for its own sake. */
     .demo-progress-bar { transition: none; }
 }
+
+/* ------------------------------------------------------------------
+ * Cash Book and Cash Register are whole PAGES embedded in a settings
+ * pane (.config-embedded-page in settings_write.html). They arrive with
+ * their own #containerbar and breadcrumb markup, written for a
+ * full-width page and never adjusted for sitting inside a column - so
+ * the card ran past the right-hand edge (owner report: an empty Cash
+ * Book box cut off mid-page).
+ *
+ * Three duplicate id="containerbar" elements exist on that page for the
+ * same reason. Not renamed here: the embedded pages' own scripts look
+ * them up, and a rename is a bigger change than a clipped card
+ * justifies. Contained rather than restructured.
+ * ------------------------------------------------------------------ */
+.config-embedded-page {
+    min-width: 0;
+    max-width: 100%;
+}
+.config-embedded-page #containerbar,
+.config-embedded-page .contentbar,
+.config-embedded-page .breadcrumbbar {
+    min-width: 0;
+    max-width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+}
+/* A page's own outer margins are wrong inside a pane that already has
+   padding: they push the card past the edge it is meant to sit inside. */
+.config-embedded-page > #containerbar { margin: 0; }
+.config-embedded-page .table-responsive { max-width: 100%; }
