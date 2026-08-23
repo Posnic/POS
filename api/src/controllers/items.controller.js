@@ -1215,6 +1215,32 @@ class ItemsController extends BaseController {
    * Read-only, and gated on the same item:read the list is gated on - this
    * exposes nothing a user cannot already see, only in a different shape.
    */
+  /*
+   * DELETE the demo data, as opposed to hiding it.
+   *
+   * Guarded by the item DELETE permission, not read or write: this destroys
+   * records, and the person who may edit a price is not automatically the
+   * person who may clear a catalogue.
+   */
+  async purgeDemoData(req, res) {
+    try {
+      if (req.user?.access?.item?.delete === false) {
+        return this.sendError(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
+      }
+      await this.ensureContext(req);
+      const result = await this.service.purgeDemoData({
+        branchId: this.model?.branchId || null,
+        licenseId: this.model?.licenseId || null,
+        user: req.user,
+      });
+      if (!result.status) return this.sendError(res, result.message, 400);
+      return this.sendSuccess(res, result.data, result.message);
+    } catch (error) {
+      console.error('Error in purgeDemoData:', error);
+      return this.sendError(res, error.message, 500);
+    }
+  }
+
   async exportCatalogueJsonLd(req, res) {
     try {
       if (req.user?.access?.item?.read === false) {

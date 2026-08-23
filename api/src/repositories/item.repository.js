@@ -1007,6 +1007,184 @@ class ItemRepository extends BaseModel {
    * (a tombstone would SYNC the non-event fleet-wide) - and their freshly
    * written 'Add Item' stock logs go with them.
    */
+  /*
+   * Remove the demo data for good, and refuse to remove anything real.
+   *
+   * The switch hides; this destroys. So the whole value of it is in what it
+   * declines to touch:
+   *
+   *   SOLD. A demo item exists to be rung up - that is how somebody finds out
+   *   whether the till suits them - and a sale line stores item_id. Delete the
+   *   item and the sale becomes a purchase of a product that does not exist.
+   *   The sale is real even though the product was not, so nothing can put
+   *   that right afterwards.
+   *
+   *   RECEIVED. Same argument for a purchase or a stock receipt.
+   *
+   *   EDITED. Changing the price on a sample and putting it on the shelf is
+   *   how a small shop starts its real catalogue. By the time they press this
+   *   button that row is THEIRS, whatever tag it still carries.
+   *
+   * What survives is reported by name, not counted. "Removed 128, kept 6"
+   * invites the question this function already knows the answer to, and a
+   * silent partial delete is worse than no delete at all.
+   *
+   * Soft, not hard: del_status is what the Recycle Bin reads, so this is still
+   * undoable by the shop that asked for it. A hard delete here would make
+   * "permanent" mean permanent in a way nobody asked for.
+   */
+  async purgeDemoData({ branchId, licenseId, user } = {}) {
+    const items = await this.getCollection(this.collectionName);
+    const branch = this.toObjectId(branchId);
+    const license = this.toObjectId(licenseId);
+
+    const scope = { demo_pack: { $exists: true }, 'branch_access.branch_id': branch, license };
+    const candidates = await items
+      .find(scope, { projection: { _id: 1, name: 1, demo_seeded_at: 1, updated_date: 1 } })
+      .toArray();
+
+    if (!candidates.length) {
+      return { status: true, removed: 0, kept: [], message: 'There is no demo data to remove.' };
+    }
+
+    /* Both shapes, because item_id is stored as a string in some collections
+       and an ObjectId in others. Matching only one silently finds nothing,
+       which here means deleting something that was sold. */
+    const ids = candidates.map((c) => c._id);
+    const idPairs = ids.flatMap((id) => [id, String(id)]);
+
+    const used = new Set();
+    const noteUsed = (rows, pick) => {
+      for (const r of rows) {
+        for (const v of pick(r)) if (v) used.add(String(v));
+      }
+    };
+
+    try {
+      const sales = await this.getCollection('sales');
+      noteUsed(
+        await sales
+          .find({ 'items.item_id': { $in: idPairs } }, { projection: { 'items.item_id': 1 } })
+          .toArray(),
+        (r) => (r.items || []).map((i) => i.item_id)
+      );
+    } catch (e) {
+      /* Unreadable history is not permission to delete. Treat every candidate
+         as used rather than guess - the cost is that nothing is removed and
+         somebody asks why, which is recoverable. */
+      console.error('purgeDemoData: could not read sales:', e.message);
+      return {
+        status: false,
+        removed: 0,
+        kept: [],
+        message: 'Could not check the sales history, so nothing was removed.',
+      };
+    }
+
+    try {
+      const receivings = await this.getCollection('receivings');
+      noteUsed(
+        await receivings
+          .find({ 'items.item_id': { $in: idPairs } }, { projection: { 'items.item_id': 1 } })
+          .toArray(),
+        (r) => (r.items || []).map((i) => i.item_id)
+      );
+    } catch (e) {
+      console.error('purgeDemoData: could not read receivings:', e.message);
+      return {
+        status: false,
+        removed: 0,
+        kept: [],
+        message: 'Could not check the purchase history, so nothing was removed.',
+      };
+    }
+
+    const kept = [];
+    const removable = [];
+    for (const c of candidates) {
+      if (used.has(String(c._id))) {
+        kept.push({ name: c.name, why: 'sold or received' });
+        continue;
+      }
+      const seeded = c.demo_seeded_at ? new Date(c.demo_seeded_at).getTime() : 0;
+      const touched = c.updated_date ? new Date(c.updated_date).getTime() : 0;
+      /* A second of slack: the seed writes created_date and updated_date in
+         the same pass, and clock resolution should not make every row look
+         edited. */
+      if (seeded && touched && touched > seeded + 1000) {
+        kept.push({ name: c.name, why: 'you have edited it' });
+        continue;
+      }
+      removable.push(c._id);
+    }
+
+    let removed = 0;
+    if (removable.length) {
+      const now = new Date();
+      const r = await items.updateMany(
+        { _id: { $in: removable }, license },
+        {
+          $set: {
+            del_status: 1,
+            deleted_date: now,
+            updated_date: now,
+            deleted_by: (user && (user.name || user.username)) || 'System',
+          },
+        }
+      );
+      removed = r.modifiedCount || 0;
+    }
+
+    /*
+     * Categories go only when nothing is left in them. A demo category still
+     * holding a product the shop kept is now their category, and emptying the
+     * shelf label out from under a product is its own small disaster.
+     */
+    let categoriesRemoved = 0;
+    try {
+      const cats = await this.getCollection('categories');
+      const demoCats = await cats
+        .find(
+          { demo_pack: { $exists: true }, branch_id: branch, license },
+          { projection: { _id: 1 } }
+        )
+        .toArray();
+      for (const cat of demoCats) {
+        // eslint-disable-next-line no-await-in-loop
+        const remaining = await items.countDocuments({
+          category_id: cat._id,
+          'branch_access.branch_id': branch,
+          license,
+        });
+        if (remaining === 0) {
+          // eslint-disable-next-line no-await-in-loop
+          await cats.deleteOne({ _id: cat._id, license });
+          categoriesRemoved++;
+        }
+      }
+    } catch (e) {
+      /* The products are gone either way; a leftover empty category is untidy,
+         not harmful, and must not turn a successful removal into a failure. */
+      console.error('purgeDemoData: category cleanup:', e.message);
+    }
+
+    return {
+      status: true,
+      removed,
+      categoriesRemoved,
+      kept,
+      message: kept.length
+        ? `Removed ${removed} sample product${removed === 1 ? '' : 's'}. Kept ${kept.length}: ` +
+          kept
+            .slice(0, 6)
+            .map((k) => `${k.name} (${k.why})`)
+            .join(', ') +
+          (kept.length > 6 ? ` and ${kept.length - 6} more` : '') +
+          '.'
+        : `Removed ${removed} sample product${removed === 1 ? '' : 's'}.`,
+    };
+  }
+
   async hardDeleteItems(ids, { licenseId } = {}) {
     const objectIds = (ids || [])
       .map((v) => (ObjectId.isValid(String(v)) ? new ObjectId(String(v)) : null))

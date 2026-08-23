@@ -80,6 +80,11 @@ router.post('/exportItems', bindController(itemsController.exportItems));
 // item:read. See docs PRODUCT_EXPORT_FORMATS.md.
 router.get('/export/jsonld', bindController(itemsController.exportCatalogueJsonLd));
 
+// DELETE /api/items/demo - remove the sample products for good.
+// Separate from the Demo Data switch, which only hides them: this one
+// destroys, and refuses anything sold, received or edited.
+router.delete('/demo', bindController(itemsController.purgeDemoData));
+
 // Raise/lower prices across many items at once; and a per-item price history.
 // V1 variant families: all-or-nothing creation of linked variant items,
 // and the members of one family for the edit page's strip.
