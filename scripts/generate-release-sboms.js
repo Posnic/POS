@@ -91,7 +91,6 @@ function generateApiBom() {
 }
 
 function sourceCommit() {
-  if (process.env.GITHUB_SHA) return process.env.GITHUB_SHA;
   return execFileSync('git', ['rev-parse', 'HEAD'], { cwd: ROOT, encoding: 'utf8' }).trim();
 }
 
