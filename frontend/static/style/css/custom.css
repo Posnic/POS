@@ -4545,3 +4545,69 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
    padding: they push the card past the edge it is meant to sit inside. */
 .config-embedded-page > #containerbar { margin: 0; }
 .config-embedded-page .table-responsive { max-width: 100%; }
+
+/* ==================================================================
+ * The sale grid in a dark theme.
+ *
+ * The block above styles #sales_new .wsk-cp with fixed light colours -
+ * white cards, #f0f2f5 dividers, #1f2328 text. Those were written when
+ * the till was light-only, and an ID selector outranks the
+ * `[data-theme] .wsk-cp-product` rules in theme-variables.css, so a
+ * dark theme could never override them. The result was white cards and
+ * white hairlines on a black page: exactly the "white borders make very
+ * bad" report.
+ *
+ * Repeated here with the SAME specificity plus [data-theme] so these
+ * win, and pointed at the theme tokens so every preset - VS Code, DOS,
+ * Terminal, and any added later - is handled by one block rather than
+ * one block each.
+ * ================================================================== */
+[data-theme] #sales_new .wsk-cp .wsk-cp-product {
+    background: var(--theme-card-bg);
+    border-color: var(--theme-border-color);
+}
+[data-theme] #sales_new .wsk-cp .description-prod {
+    background: transparent;
+    border-bottom-color: var(--theme-border-color);
+}
+[data-theme] #sales_new .wsk-cp .description-prod p { color: var(--theme-text-primary); }
+[data-theme] #sales_new .wsk-cp .price-text-color { color: var(--theme-primary-color); }
+[data-theme] #sales_new .wsk-cp .wsk-cp-stock { color: var(--theme-text-secondary); }
+
+[data-theme] #sales_new .wsk-cp:hover .wsk-cp-product {
+    border-color: var(--theme-primary-color);
+    background: var(--theme-card-bg);
+}
+[data-theme] #sales_new .wsk-cp:hover .description-prod { border-bottom-color: var(--theme-primary-color); }
+[data-theme] #sales_new .wsk-cp:hover .description-prod p { color: var(--theme-primary-color); }
+
+/*
+ * THE PHOTO PLATE. This is the part that actually looked broken.
+ *
+ * Product photographs are shot on white. Dropped straight onto a black
+ * card they read as glaring white rectangles with hard edges - the eye
+ * sees the paper, not the product.
+ *
+ * So the image sits on a deliberate light plate with rounded corners
+ * and padding, in every theme. A photo frame is a thing people
+ * recognise; a white rectangle bleeding into a black card is not. It
+ * also means a transparent PNG and a white JPEG look the same, which
+ * they never did before.
+ */
+#sales_new .wsk-cp .wsk-cp-img:has(img) {
+    background: #ffffff;
+    border-radius: 8px;
+    margin: 8px 8px 0;
+    padding: 6px;
+}
+[data-theme] #sales_new .wsk-cp:hover .wsk-cp-img:has(img) { background: #ffffff; }
+/* Dark themes get a slightly softened plate: pure white at this size is
+   a lamp on an otherwise dark screen, and this till is open all day. */
+[data-theme="dark"] #sales_new .wsk-cp .wsk-cp-img:has(img),
+[data-theme="terminal"] #sales_new .wsk-cp .wsk-cp-img:has(img),
+[data-theme="dosblue"] #sales_new .wsk-cp .wsk-cp-img:has(img),
+[data-theme="dark"] #sales_new .wsk-cp:hover .wsk-cp-img:has(img),
+[data-theme="terminal"] #sales_new .wsk-cp:hover .wsk-cp-img:has(img),
+[data-theme="dosblue"] #sales_new .wsk-cp:hover .wsk-cp-img:has(img) {
+    background: #e8eaed;
+}
