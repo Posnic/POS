@@ -214,7 +214,24 @@ function setLocalValue() {
 
     $("#search_register_id").val(PosnicPro.local.get('registerId'));
     $("#search_register_name").val(PosnicPro.local.get('registerName'));
-    $(".branch-name").html(PosnicPro.local.get('branchname'));
+    /*
+     * The shop name, or nothing - never the word null.
+     *
+     * This runs at page render; viewSettings fetches the real name a moment
+     * later and paints it again. Whichever lands first, a missing value must
+     * not overwrite a good one with an empty string, and localStorage.getItem
+     * returns the STRING "null" for a key written as null - which is how the
+     * header came to read "null null".
+     *
+     * The dashboard's markup carries a placeholder shop name, so blanking it
+     * on a miss is better than leaving somebody else's name on screen - but
+     * only a miss, never a value we simply have not fetched yet.
+     */
+    var branchName = PosnicPro.local.get('branchname');
+    branchName = (branchName == null || branchName === 'null' || branchName === 'undefined')
+        ? '' : $.trim(branchName);
+    if (branchName) { $(".branch-name").html(branchName); }
+    else if (!$.trim($(".branch-name").first().text())) { $(".branch-name").html(''); }
 
     var storedUserImage = PosnicPro.local.get('userimage');
     var storedBranchImage = PosnicPro.local.get('branchimage');

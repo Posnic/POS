@@ -478,7 +478,8 @@ PosnicPro.settings = {
                         module_cashbook_enable: response.data['module_cashbook_enable'] !== false,
                         quick_sale_enable: response.data['quick_sale_enable'] !== false,
                         quotes_enable: response.data['quotes_enable'] !== false,
-                        custom_charges_enable: response.data['custom_charges_enable'] === true
+                        custom_charges_enable: response.data['custom_charges_enable'] === true,
+                        first_run_done: PosnicPro.features.keepFirstRunFlag(response.data)
                     };
                     PosnicPro.local.set('general_settings', JSON.stringify(generalSettings));
                     PosnicPro.shiftWidget.applyEnabled();
@@ -768,7 +769,8 @@ PosnicPro.settings = {
                     module_cashbook_enable: data.module_cashbook_enable !== false,
                     quick_sale_enable: data.quick_sale_enable !== false,
                     quotes_enable: data.quotes_enable !== false,
-                    custom_charges_enable: data.custom_charges_enable === true
+                    custom_charges_enable: data.custom_charges_enable === true,
+                    first_run_done: PosnicPro.features.keepFirstRunFlag(data)
                 };
                 PosnicPro.local.set('general_settings', JSON.stringify(generalSettings));
                 PosnicPro.shiftWidget.applyEnabled();
@@ -1788,7 +1790,9 @@ if ($("#sale_quick_edit").is(":checked")) {
                     module_cashbook_enable: $('#module_cashbook_enable').is(':checked'),
                     quotes_enable: $('#quotes_enable').is(':checked'),
                     custom_charges_enable: $('#custom_charges_enable').is(':checked'),
-                    quick_sale_enable: $('#quick_sale_enable').is(':checked')
+                    quick_sale_enable: $('#quick_sale_enable').is(':checked'),
+                    /* No field on this form - carried over, never re-decided. */
+                    first_run_done: PosnicPro.features.keepFirstRunFlag()
                 };
                 PosnicPro.local.set('general_settings', JSON.stringify(generalSettings));
                 // Show or hide the header clock button to match, right away.
@@ -5365,8 +5369,49 @@ PosnicPro.features = {
     _blob: function () {
         try { return JSON.parse(PosnicPro.local.get('general_settings') || '{}'); } catch (e) { return {}; }
     },
+    /*
+     * The general_settings blob is rebuilt from scratch in three places, and a
+     * key missing from those literals is not merged - it is LOST. That is fine
+     * for a switch, which the next settings read restores; it is not fine for
+     * "this shop has been welcomed", because losing it shows the welcome again
+     * to somebody who already dismissed it.
+     *
+     * An explicit value from the server always wins. `undefined` means the API
+     * did not send the field - an older build, or a response that predates it -
+     * and the honest answer there is what we already knew, not false.
+     */
+    keepFirstRunFlag: function (data) {
+        var d = data || {};
+        if (d.first_run_done === true || d.first_run_done === 'true') { return true; }
+        if (d.first_run_done === false || d.first_run_done === 'false') { return false; }
+        return PosnicPro.features._blob().first_run_done === true;
+    },
     maybeShowIntro: function () {
+        /*
+         * Two gates, and they answer different questions.
+         *
+         * `features_intro_seen` is localStorage, so it is per BROWSER: it stops
+         * the same person being asked twice on the machine they are sitting at,
+         * and it is what shops running today already carry.
+         *
+         * `first_run_done` is saved on the shop, so it survives a new browser,
+         * a second till and a reinstall. Without it the welcome returns every
+         * time somebody signs in from a device that has not seen it, which for
+         * a shop with four tills is four welcomes.
+         *
+         * It defaults to FALSE rather than absent-means-seen. Getting that
+         * backwards would mean nobody ever sees this and nothing would look
+         * wrong - the failure of a thing that only ever shows once is silence.
+         */
         if (PosnicPro.local.get('features_intro_seen')) { return; }
+        var blob = PosnicPro.features._blob();
+        if (blob.first_run_done === true || blob.first_run_done === 'true') { return; }
+        /* An empty blob is "settings have not loaded", not "never been asked",
+           and guessing wrong there puts this in front of a shop that has been
+           trading for a year. */
+        if (!Object.keys(blob).length) { return; }
+        /* Feature switches are a manager's decision. A cashier shown these
+           would be offered choices the save would refuse. */
         var acl = PosnicPro.userACL;
         if (!(acl && acl.setting && acl.setting.write === true)) { return; }
         if (!$('#feature_intro_modal').length) { return; }
@@ -5375,10 +5420,54 @@ PosnicPro.features = {
         // Seen is seen, however it closes - this must never nag.
         $('#feature_intro_modal').one('hidden.bs.modal', function () {
             PosnicPro.local.set('features_intro_seen', 'true');
+            /* Closing without choosing still counts as having been asked, so
+               the flag is written on the shop too - otherwise the next till
+               asks again. Best effort: if it fails the welcome simply returns,
+               which is the right outcome for a shop that was never recorded as
+               having seen it. */
+            if (!PosnicPro.features._savedIntro) {
+                PosnicPro.put({
+                    url: 'settings/group/features',
+                    data: JSON.stringify({ first_run_done: 'true' })
+                }, function () {
+                    var b = PosnicPro.features._blob();
+                    b.first_run_done = true;
+                    PosnicPro.local.set('general_settings', JSON.stringify(b));
+                }, function () { /* asked again next time, deliberately */ });
+            }
         });
     },
     renderIntro: function () {
         var blob = PosnicPro.features._blob();
+
+        /*
+         * The welcome, in the shop's own name. `local.get` hands back the
+         * STRING "null" for a key written as null, which is how a header once
+         * read "null null" - so anything that is not a real name falls back to
+         * the generic sentence rather than greeting a shop called null.
+         */
+        var shop = PosnicPro.local.get('branchname');
+        shop = (shop == null || shop === 'null' || shop === 'undefined') ? '' : $.trim(shop);
+        $('#feature_intro_sub').text(shop
+            ? shop + ' is set up and ready to take its first sale.'
+            : 'Your till is set up and ready to take its first sale.');
+
+        /*
+         * Two different true sentences, because this screen reaches two
+         * different shops. A NEW shop starts with a few features on and the
+         * rest off, and needs to be told that the short menus are deliberate.
+         * A shop created before those defaults existed has everything on, and
+         * telling it "everything else is off" would be plainly false while it
+         * looks at a full menu. Decided from the switches themselves rather
+         * than from a signup date, which this page does not have.
+         */
+        var anyOff = PosnicPro.features.INTRO.some(function (f) {
+            return blob[f[0]] === false || blob[f[0]] === 'false';
+        });
+        $('#feature_intro_lead').text(anyOff
+            ? 'We have switched on the few things almost every shop needs, and left the rest off so your menus stay short. Turn on whatever you want - now, or any time later.'
+            : 'Here is everything this till can do. Switch off what you do not need and those menus disappear; switch them back on whenever you want.');
+
         var rows = PosnicPro.features.INTRO.map(function (f) {
             var key = f[0];
             // The blob carries every key post-login (guard-tested); absent
@@ -5386,13 +5475,18 @@ PosnicPro.features = {
             // everything else opt-out ON.
             var onByDefault = !(key === 'staff_tips_enable' || key === 'till_lock_enable');
             var on = blob[key] === undefined ? onByDefault : blob[key] === true;
-            return '<div class="d-flex align-items-center justify-content-between py-2" style="border-bottom:1px solid rgba(128,128,128,.15);">' +
-                '<div class="pr-3"><div style="font-weight:600;">' + f[1] + '</div>' +
-                '<small class="text-muted">' + f[2] + '</small></div>' +
-                '<div class="custom-control custom-switch">' +
+            /* The whole row is the label, so a thumb anywhere on it flips the
+               switch - the switch itself is a 40px target on a touch screen. */
+            return '<label class="first-run-row" for="fi_' + key + '">' +
+                '<span class="first-run-row-text">' +
+                '<b>' + f[1] + '</b>' +
+                '<span>' + f[2] + '</span>' +
+                '</span>' +
+                '<span class="custom-control custom-switch first-run-switch">' +
                 '<input type="checkbox" class="custom-control-input feature-intro-toggle" id="fi_' + key + '" data-key="' + key + '"' + (on ? ' checked' : '') + '>' +
-                '<label class="custom-control-label" for="fi_' + key + '"></label>' +
-                '</div></div>';
+                '<span class="custom-control-label"></span>' +
+                '</span>' +
+                '</label>';
         }).join('');
         $('#feature_intro_list').html(rows);
     },
@@ -5409,6 +5503,10 @@ PosnicPro.features = {
         $('.feature-intro-toggle').each(function () {
             payload[$(this).data('key')] = $(this).is(':checked') ? 'true' : 'false';
         });
+        /* Recorded in the same write as the choice it belongs to. A separate
+           call could succeed while the toggles failed, and the shop would then
+           never be offered the switches it did not manage to save. */
+        payload.first_run_done = 'true';
         $('#feature_intro_save').prop('disabled', true);
         PosnicPro.put({
             url: 'settings/group/features',
@@ -5422,6 +5520,8 @@ PosnicPro.features = {
                 $('.feature-intro-toggle').each(function () {
                     blob[$(this).data('key')] = $(this).is(':checked');
                 });
+                blob.first_run_done = true;
+                PosnicPro.features._savedIntro = true;
                 PosnicPro.local.set('general_settings', JSON.stringify(blob));
                 if (PosnicPro.settings && PosnicPro.settings.applyModuleNav) { PosnicPro.settings.applyModuleNav(); }
                 else if (PosnicPro.applyModuleSidebar) { PosnicPro.applyModuleSidebar(); }

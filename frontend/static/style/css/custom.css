@@ -4611,3 +4611,171 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 [data-theme="dosblue"] #sales_new .wsk-cp:hover .wsk-cp-img:has(img) {
     background: #e8eaed;
 }
+
+/* ============================================================
+ * THE WELCOME (#feature_intro_modal)
+ *
+ * Shown once, to a shop that has never been asked which features it
+ * wants. It is the first considered screen anybody sees, so it is
+ * styled rather than left as a bare Bootstrap modal - but every colour
+ * comes from a theme token, because the shop that sees this may already
+ * have picked a dark preset and a hard-coded white panel would arrive
+ * as a flashbang on their first sign-in.
+ *
+ * Bootstrap paints .modal-content white from its own stylesheet, so the
+ * background here is not optional decoration; without it the panel is
+ * white in every dark theme and the text on it is unreadable.
+ * ============================================================ */
+.modal-content.first-run {
+    background: var(--theme-card-bg, #ffffff);
+    color: var(--theme-text-primary, #16203a);
+    border: 1px solid var(--theme-border-color, #e5e8ef);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.first-run-head {
+    padding: 26px 28px 18px;
+    text-align: center;
+    border-bottom: 1px solid var(--theme-border-color, #e5e8ef);
+}
+
+/* The one flourish, and it is small on purpose: a shop opening its till
+   for the first time wants to be greeted, not congratulated. */
+.first-run-mark {
+    width: 46px;
+    height: 46px;
+    margin: 0 auto 12px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--theme-primary-color, #506fe4);
+    color: var(--theme-btn-primary-text, #ffffff);
+    font-size: 22px;
+    line-height: 1;
+}
+
+.first-run-title {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--theme-text-primary, #16203a);
+}
+
+.first-run-sub {
+    margin: 6px 0 0;
+    font-size: 14px;
+    color: var(--theme-text-muted, #5b6577);
+}
+
+.first-run-body {
+    padding: 18px 28px 4px;
+}
+
+.first-run-lead {
+    margin: 0 0 14px;
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--theme-text-secondary, #3a4459);
+}
+
+/* The list scrolls, the dialog does not. Eleven features on a 768px-tall
+   till would otherwise push the buttons off the bottom of the screen -
+   and a Save nobody can reach is the same as no Save. */
+.first-run-list {
+    max-height: 46vh;
+    overflow-y: auto;
+    margin: 0 -6px;
+    padding: 0 6px;
+}
+
+.first-run-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    width: 100%;
+    margin: 0;
+    padding: 10px 2px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--theme-border-color, #e5e8ef);
+}
+
+.first-run-row:last-child {
+    border-bottom: 0;
+}
+
+.first-run-row:hover {
+    background: var(--theme-table-row-hover, #eef2fd);
+}
+
+/* min-width:0 because a flex item defaults to min-width:auto and will
+   refuse to shrink below its longest word, pushing the switch off the
+   right-hand edge with no scrollbar to reach it. */
+.first-run-row-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.first-run-row-text b {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--theme-text-primary, #16203a);
+}
+
+.first-run-row-text > span {
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--theme-text-muted, #5b6577);
+}
+
+/* flex-shrink:0 or the switch is the thing that collapses when the
+   description is long, which is the one element that must not. */
+.first-run-switch {
+    flex: 0 0 auto;
+    padding-left: 2.25rem;
+}
+
+.first-run-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding: 16px 28px 20px;
+    border-top: 1px solid var(--theme-border-color, #e5e8ef);
+}
+
+.first-run-foot-note {
+    font-size: 13px;
+    color: var(--theme-text-muted, #5b6577);
+}
+
+.first-run-foot-actions {
+    display: flex;
+    gap: 10px;
+    margin-left: auto;
+}
+
+/* A phone or a small till: the note moves under the buttons rather than
+   squeezing them, and the buttons stay full width for a thumb. */
+@media (max-width: 575.98px) {
+    .first-run-head,
+    .first-run-body,
+    .first-run-foot {
+        padding-left: 18px;
+        padding-right: 18px;
+    }
+
+    .first-run-foot-actions {
+        width: 100%;
+        margin-left: 0;
+    }
+
+    .first-run-foot-actions .btn {
+        flex: 1 1 0;
+    }
+}

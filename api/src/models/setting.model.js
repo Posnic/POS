@@ -1258,6 +1258,12 @@ class SettingModel extends BaseModel {
         module_cashbook_enable: offOnly,
         module_demo_data_enable: offOnly,
         quick_sale_enable: offOnly,
+        /* Not a module: a record that the welcome has been shown. onOnly,
+           because absent must mean "not yet welcomed" - the opposite
+           default would mean nobody is ever welcomed and nothing looks
+           wrong. Presence-gated by the loop below, so a settings save
+           that does not mention it cannot set it either way. */
+        first_run_done: onOnly,
         quotes_enable: offOnly,
         pl_include_cashbook: offOnly,
       };

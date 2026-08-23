@@ -36,6 +36,9 @@ const FEATURES = [
   'module_cashbook_enable',
   'module_demo_data_enable',
   'quick_sale_enable',
+  /* Not a feature: a record that the welcome screen has been shown. Lives
+     with the switches because it is written at the same moment. */
+  'first_run_done',
   'quotes_enable',
   'pl_include_cashbook',
   // sale-screen capabilities that behave the same way
