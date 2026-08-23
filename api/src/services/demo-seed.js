@@ -63,7 +63,7 @@ const round2 = (n) => Math.round(n * 100) / 100;
  *
  * Exported separately so the shape can be tested without a database.
  */
-function buildSales({ items, customer, branch, pack, now, count = SALE_COUNT }) {
+function buildSales({ items, customers, customer, branch, pack, now, count = SALE_COUNT }) {
   if (!Array.isArray(items) || !items.length) return [];
   const rand = rng(String(branch.branch_id || 'demo'));
   const sales = [];
@@ -104,14 +104,20 @@ function buildSales({ items, customer, branch, pack, now, count = SALE_COUNT }) 
     if (!lines.length) continue;
 
     subtotal = round2(subtotal);
+    /* Spread across the sample customers when there are any, so the customer
+       list and its purchase history mean something. Falls back to whatever
+       single customer was passed, and then to the walk-in. */
+    const pool =
+      Array.isArray(customers) && customers.length ? customers : customer ? [customer] : [];
+    const buyer = pool.length ? pool[i % pool.length] : null;
     sales.push({
       demo_pack: pack,
       demo_seeded_at: now,
       branch_id: branch.branch_id,
       branch_name: branch.branch_name,
       license: branch.license,
-      customer_id: customer ? customer._id : null,
-      customer_name: customer ? customer.name : 'Walk-in Customer',
+      customer_id: buyer ? buyer._id : null,
+      customer_name: buyer ? buyer.name : 'Walk-in Customer',
       items: lines,
       number_of_items: lines.length,
       sales_total: subtotal,
@@ -196,10 +202,86 @@ function buildQuotes({ items, branch, pack, now, count = QUOTE_COUNT }) {
   return quotes;
 }
 
+/*
+ * Sample customers and suppliers.
+ *
+ * Owner report: "supplier list or customer list not filled."
+ *
+ * A new shop was given exactly one of each - Walk-in Customer and General
+ * Supplier - because the demo packs carry products and nothing else. So two of
+ * the six things in the main menu opened looking broken, and the sample sales
+ * all belonged to the same walk-in, which is not what a customer list is for.
+ *
+ * Kept small. Eight customers and five suppliers are enough to show what the
+ * screens do - search, balances, a purchase history - without burying the
+ * shop's own first real entry among strangers.
+ *
+ * No balances owed. A demo customer carrying an outstanding amount would put
+ * money into the credit report that nobody owes, and that number is read as
+ * fact. They exist to be sold to, not to be chased.
+ */
+const DEMO_CUSTOMERS = [
+  { name: 'Anand Kumar', phone: '9840012345', city: 'Chennai' },
+  { name: 'Meera Raghavan', phone: '9840023456', city: 'Chennai' },
+  { name: 'Suresh Babu', phone: '9840034567', city: 'Madurai' },
+  { name: 'Lakshmi Narayanan', phone: '9840045678', city: 'Coimbatore' },
+  { name: 'Fatima Sheikh', phone: '9840056789', city: 'Hyderabad' },
+  { name: 'Joseph Mathew', phone: '9840067890', city: 'Kochi' },
+  { name: 'Priya Desai', phone: '9840078901', city: 'Pune' },
+  { name: 'Ravi Shankar', phone: '9840089012', city: 'Bengaluru' },
+];
+
+const DEMO_SUPPLIERS = [
+  { name: 'Sunrise Wholesale', phone: '9445011223', city: 'Chennai' },
+  { name: 'Balaji Distributors', phone: '9445022334', city: 'Madurai' },
+  { name: 'Green Valley Foods', phone: '9445033445', city: 'Coimbatore' },
+  { name: 'Metro Supply Co', phone: '9445044556', city: 'Bengaluru' },
+  { name: 'Anitha Traders', phone: '9445055667', city: 'Salem' },
+];
+
+function buildPeople({ branch, pack, now, base }) {
+  const common = (row) => ({
+    demo_pack: pack,
+    demo_seeded_at: now,
+    branch_id: branch.branch_id,
+    branch_name: branch.branch_name,
+    license: branch.license,
+    name: row.name,
+    email: '',
+    phone: row.phone,
+    address: '',
+    city: row.city,
+    sortname: base.sortname || '',
+    country: base.country || '',
+    country_id: base.country_id || '',
+    state: base.state || '',
+    gst: 'disable',
+    gst_number: '',
+    gst_type: 'consumer',
+    date: now,
+    partial_balance: false,
+    /* Nobody owes anything. An invented balance lands in the credit report as
+       money the shop is waiting for. */
+    balance: 0.0,
+    created_date: now,
+    updated_date: now,
+    created_by: 'Demo data',
+    updated_by: 'Demo data',
+  });
+
+  return {
+    customers: DEMO_CUSTOMERS.map(common),
+    suppliers: DEMO_SUPPLIERS.map(common),
+  };
+}
+
 module.exports = {
   SALE_COUNT,
   QUOTE_COUNT,
   buildSales,
   buildQuotes,
+  buildPeople,
+  DEMO_CUSTOMERS,
+  DEMO_SUPPLIERS,
   _rng: rng,
 };

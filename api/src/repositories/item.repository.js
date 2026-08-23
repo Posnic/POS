@@ -1051,12 +1051,20 @@ class ItemRepository extends BaseModel {
      */
     let salesRemoved = 0;
     let quotesRemoved = 0;
+    let peopleRemoved = 0;
     try {
       const demoScope = { demo_pack: { $exists: true }, branch_id: branch, license };
       const salesCol = await this.getCollection('sales');
       salesRemoved = (await salesCol.deleteMany(demoScope)).deletedCount || 0;
       const quotesCol = await this.getCollection('quotes');
       quotesRemoved = (await quotesCol.deleteMany(demoScope)).deletedCount || 0;
+      /* The sample people go with them. A demo customer left behind after the
+         samples are cleared is a stranger in the shop's own list, and nothing
+         on the row says where they came from. */
+      const customersCol = await this.getCollection('customers');
+      peopleRemoved += (await customersCol.deleteMany(demoScope)).deletedCount || 0;
+      const suppliersCol = await this.getCollection('suppliers');
+      peopleRemoved += (await suppliersCol.deleteMany(demoScope)).deletedCount || 0;
     } catch (e) {
       /* Leaving the products behind is the safe half. Reported rather than
          thrown, because a shop asking to clear samples should not be told the
@@ -1210,6 +1218,7 @@ class ItemRepository extends BaseModel {
       categoriesRemoved,
       salesRemoved,
       quotesRemoved,
+      peopleRemoved,
       kept,
       message: kept.length
         ? `Removed ${removed} sample product${removed === 1 ? '' : 's'}. Kept ${kept.length}: ` +
