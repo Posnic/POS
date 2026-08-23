@@ -693,6 +693,10 @@ class InstallService {
 
       // Insert categories
       const categoryMultiData = demoData.categories.map((cat) => ({
+        /* Tagged like the items, or switching Demo Data off would leave a
+           shop with empty categories it never made and cannot explain. */
+        demo_pack: businessType,
+        demo_seeded_at: now,
         name: cat.name,
         discount_percentage: 0.0,
         discount_amount: 0,
@@ -728,6 +732,21 @@ class InstallService {
         if (category) {
           const price = parseFloat(product.price);
           itemMultiData.push({
+            /*
+             * Tagged as demo, so the Demo Data switch can hide it later. The
+             * tag travels with the record because a list of what was seeded
+             * drifts the moment a shop edits or deletes one row.
+             */
+            demo_pack: businessType,
+            demo_seeded_at: now,
+            /*
+             * The photograph, where there is one. Fifty-five of these products
+             * have none - the search returned somebody's brand or the wrong
+             * object entirely and those were turned down - and that is a
+             * finished state: autoTile gives the item a coloured tile from its
+             * own name, which reads better than a picture of the wrong thing.
+             */
+            ...(product.image ? { image: product.image, cover_image: product.image } : {}),
             name: product.name,
             category_id: category.id,
             category_name: category.name,

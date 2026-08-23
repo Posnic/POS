@@ -1,0 +1,450 @@
+{
+  "iceCream-vanilla-ice-cream": {
+    "product": "Vanilla Ice Cream",
+    "pack": "iceCream",
+    "file": "static/images/demo/iceCream-vanilla-ice-cream.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Apple_cake_with_vanilla_ice_cream_2.jpg",
+    "licence": "CC0",
+    "author": "W.carter"
+  },
+  "iceCream-chocolate-ice-cream": {
+    "product": "Chocolate Ice Cream",
+    "pack": "iceCream",
+    "file": "static/images/demo/iceCream-chocolate-ice-cream.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Ice_cream_cone_(cropped).jpg",
+    "licence": "CC BY 1.0",
+    "author": "User:Managementboy"
+  },
+  "iceCream-strawberry-ice-cream": {
+    "product": "Strawberry Ice Cream",
+    "pack": "iceCream",
+    "file": "static/images/demo/iceCream-strawberry-ice-cream.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Strawberry_ice_cream_cone_(5076899310).jpg",
+    "licence": "CC BY 2.0",
+    "author": "TheCulinaryGeek from Chicago, USA"
+  },
+  "iceCream-mint-chocolate-chip": {
+    "product": "Mint Chocolate Chip",
+    "pack": "iceCream",
+    "file": "static/images/demo/iceCream-mint-chocolate-chip.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Mint_chocolate_chip_ice_cream_from_flower_year_bar.jpg",
+    "licence": "CC BY-SA 4.0",
+    "author": "Peachyeung316"
+  },
+  "iceCream-cookie-dough-ice-cream": {
+    "product": "Cookie Dough Ice Cream",
+    "pack": "iceCream",
+    "file": "static/images/demo/iceCream-cookie-dough-ice-cream.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Chocolate_chip_cookie_dough_ice_cream_with_orange_spoon.jpg",
+    "licence": "CC BY-SA 2.0",
+    "author": "pamramsey"
+  },
+  "iceCream-chocolate-syrup": {
+    "product": "Chocolate Syrup",
+    "pack": "iceCream",
+    "file": "static/images/demo/iceCream-chocolate-syrup.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Chocolate_syrup_topping_on_ice_cream.JPG",
+    "licence": "CC BY-SA 3.0",
+    "author": "Glane23"
+  },
+  "iceCream-caramel-sauce": {
+    "product": "Caramel Sauce",
+    "pack": "iceCream",
+    "file": "static/images/demo/iceCream-caramel-sauce.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Bavarian_cream,_strawberries,_caramel_sauce,_spoon.jpg",
+    "licence": "CC BY-SA 3.0",
+    "author": "SKopp"
+  },
+  "iceCream-whipped-cream": {
+    "product": "Whipped Cream",
+    "pack": "iceCream",
+    "file": "static/images/demo/iceCream-whipped-cream.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:And_some_whipped_cream_(4315201282).jpg",
+    "licence": "CC BY 2.0",
+    "author": "jeffreyw"
+  },
+  "iceCream-cup-small": {
+    "product": "Cup (Small)",
+    "pack": "iceCream",
+    "file": "static/images/demo/iceCream-cup-small.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:A_small_cup_of_coffee.JPG",
+    "licence": "CC BY-SA 2.0",
+    "author": "Julius Schorzman"
+  },
+  "iceCream-banana-split": {
+    "product": "Banana Split",
+    "pack": "iceCream",
+    "file": "static/images/demo/iceCream-banana-split.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Traditional_Banana_Boat.jpg",
+    "licence": "CC BY-SA 3.0",
+    "author": "Unknown"
+  },
+  "iceCream-hot-fudge-sundae": {
+    "product": "Hot Fudge Sundae",
+    "pack": "iceCream",
+    "file": "static/images/demo/iceCream-hot-fudge-sundae.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Ben_and_Jerry%27s_Hot_Fudge_Sundae_(19384608984).jpg",
+    "licence": "CC BY-SA 2.0",
+    "author": "Willis Lam"
+  },
+  "cafe-espresso": {
+    "product": "Espresso",
+    "pack": "cafe",
+    "file": "static/images/demo/cafe-espresso.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Espresso_BW_1.jpg",
+    "licence": "Public domain",
+    "author": "Berthold Werner"
+  },
+  "cafe-latte": {
+    "product": "Latte",
+    "pack": "cafe",
+    "file": "static/images/demo/cafe-latte.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Matcha_tea_latte_with_rosetta_latte_art.jpg",
+    "licence": "CC BY-SA 4.0",
+    "author": "Irvan Ary Maulana"
+  },
+  "cafe-green-tea": {
+    "product": "Green Tea",
+    "pack": "cafe",
+    "file": "static/images/demo/cafe-green-tea.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Pu%27er_tea,_Green_tea,_Chinese_tea,_Rostov-on-Don,_Russia.jpg",
+    "licence": "CC BY 4.0",
+    "author": "Vyacheslav Argenberg"
+  },
+  "cafe-mango-smoothie": {
+    "product": "Mango Smoothie",
+    "pack": "cafe",
+    "file": "static/images/demo/cafe-mango-smoothie.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Mango_Pineapple_Smoothie_Bowl.jpg",
+    "licence": "CC BY-SA 4.0",
+    "author": "Eloquent Insan"
+  },
+  "cafe-fresh-orange-juice": {
+    "product": "Fresh Orange Juice",
+    "pack": "cafe",
+    "file": "static/images/demo/cafe-fresh-orange-juice.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Woman_making_fresh_orange_juice_in_the_kitchen.jpg",
+    "licence": "CC BY 2.0",
+    "author": "Shixart1985"
+  },
+  "cafe-croissant": {
+    "product": "Croissant",
+    "pack": "cafe",
+    "file": "static/images/demo/cafe-croissant.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Croissants_au_beurre_(18953292873).jpg",
+    "licence": "CC0",
+    "author": "Herry Wibisono (herryway)"
+  },
+  "cafe-muffin": {
+    "product": "Muffin",
+    "pack": "cafe",
+    "file": "static/images/demo/cafe-muffin.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Plain_vanilla_muffin_in_Tuntorp.jpg",
+    "licence": "CC BY-SA 4.0",
+    "author": "W.carter"
+  },
+  "cafe-sandwich": {
+    "product": "Sandwich",
+    "pack": "cafe",
+    "file": "static/images/demo/cafe-sandwich.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Sandwich_on_a_cutting_board.jpg",
+    "licence": "CC BY-SA 4.0",
+    "author": "Revital Salomon"
+  },
+  "bakery-white-bread": {
+    "product": "White Bread",
+    "pack": "bakery",
+    "file": "static/images/demo/bakery-white-bread.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Fresh_made_bread_06.jpg",
+    "licence": "CC BY-SA 4.0",
+    "author": "FranHogan"
+  },
+  "bakery-whole-wheat-bread": {
+    "product": "Whole Wheat Bread",
+    "pack": "bakery",
+    "file": "static/images/demo/bakery-whole-wheat-bread.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Vegan_no-knead_whole_wheat_bread_loaf,_September_2010.jpg",
+    "licence": "CC BY-SA 2.0",
+    "author": "Veganbaking.net"
+  },
+  "bakery-sourdough": {
+    "product": "Sourdough",
+    "pack": "bakery",
+    "file": "static/images/demo/bakery-sourdough.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:6312_sourdough_bread.jpg",
+    "licence": "CC BY-SA 4.0",
+    "author": "Virtual-Pano"
+  },
+  "bakery-croissant": {
+    "product": "Croissant",
+    "pack": "bakery",
+    "file": "static/images/demo/bakery-croissant.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Croissants_au_beurre_(18953292873).jpg",
+    "licence": "CC0",
+    "author": "Herry Wibisono (herryway)"
+  },
+  "bakery-danish-pastry": {
+    "product": "Danish Pastry",
+    "pack": "bakery",
+    "file": "static/images/demo/bakery-danish-pastry.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Glazed_apple_Danish.jpg",
+    "licence": "CC BY-SA 3.0",
+    "author": "Peter Isotalo"
+  },
+  "bakery-cinnamon-roll": {
+    "product": "Cinnamon Roll",
+    "pack": "bakery",
+    "file": "static/images/demo/bakery-cinnamon-roll.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Rollo_de_canela_(Cinnamon_roll).jpg",
+    "licence": "CC BY-SA 3.0",
+    "author": "Horacio Cambeiro"
+  },
+  "bakery-apple-turnover": {
+    "product": "Apple Turnover",
+    "pack": "bakery",
+    "file": "static/images/demo/bakery-apple-turnover.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Turnover_001.jpg",
+    "licence": "CC BY-SA 3.0",
+    "author": "user:pschemp"
+  },
+  "bakery-chocolate-cake-slice": {
+    "product": "Chocolate Cake Slice",
+    "pack": "bakery",
+    "file": "static/images/demo/bakery-chocolate-cake-slice.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Piece_of_chocolate_cake_on_a_white_plate_decorated_with_chocolate_sauce.jpg",
+    "licence": "CC0",
+    "author": "Daria YakovlevaMinor edits made by Subsidiary account"
+  },
+  "bakery-cheesecake-slice": {
+    "product": "Cheesecake Slice",
+    "pack": "bakery",
+    "file": "static/images/demo/bakery-cheesecake-slice.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Cheesecake_with_slice_cut_out.jpg",
+    "licence": "CC BY 2.0",
+    "author": "Martin van Dam"
+  },
+  "bakery-chocolate-chip-cookies": {
+    "product": "Chocolate Chip Cookies",
+    "pack": "bakery",
+    "file": "static/images/demo/bakery-chocolate-chip-cookies.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Choc-Chip-Cookie.jpg",
+    "licence": "Public domain",
+    "author": "Evan-Amos"
+  },
+  "bakery-oatmeal-cookies": {
+    "product": "Oatmeal Cookies",
+    "pack": "bakery",
+    "file": "static/images/demo/bakery-oatmeal-cookies.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Oatmeal-Cookie.jpg",
+    "licence": "CC BY-SA 3.0",
+    "author": "Evan-Amos"
+  },
+  "bakery-sugar-cookies": {
+    "product": "Sugar Cookies",
+    "pack": "bakery",
+    "file": "static/images/demo/bakery-sugar-cookies.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Sugar_Cookies_December_2023_-_First_batch.jpg",
+    "licence": "CC BY-SA 4.0",
+    "author": "Infrogmation"
+  },
+  "supermarket-rice-sona-masoori-5kg": {
+    "product": "Rice (Sona Masoori) 5kg",
+    "pack": "supermarket",
+    "file": "static/images/demo/supermarket-rice-sona-masoori-5kg.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Masoori_Rice_(5193854729).jpg",
+    "licence": "CC BY 2.0",
+    "author": "Leslie Seaton from Seattle, WA, USA"
+  },
+  "supermarket-wheat-atta-5kg": {
+    "product": "Wheat Atta 5kg",
+    "pack": "supermarket",
+    "file": "static/images/demo/supermarket-wheat-atta-5kg.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Atta_flour.jpg",
+    "licence": "CC BY-SA 4.0",
+    "author": "Nga Ahorangi"
+  },
+  "supermarket-sunflower-oil-1l": {
+    "product": "Sunflower Oil 1L",
+    "pack": "supermarket",
+    "file": "static/images/demo/supermarket-sunflower-oil-1l.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Sunflower_oil_and_sunflower.jpg",
+    "licence": "CC BY 4.0",
+    "author": "torange.biz"
+  },
+  "supermarket-potato-chips-52g": {
+    "product": "Potato Chips 52g",
+    "pack": "supermarket",
+    "file": "static/images/demo/supermarket-potato-chips-52g.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Potato-Chips.jpg",
+    "licence": "Public domain",
+    "author": "Evan-Amos"
+  },
+  "supermarket-mixture-namkeen-200g": {
+    "product": "Mixture Namkeen 200g",
+    "pack": "supermarket",
+    "file": "static/images/demo/supermarket-mixture-namkeen-200g.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Spicy_and_namkeen_garlic_mixture_snack_with_peanuts,_photographed_in_West_Bengal,_India,_August_13,_2024.jpg",
+    "licence": "CC0",
+    "author": "Billjones94"
+  },
+  "supermarket-cola-750ml": {
+    "product": "Cola 750ml",
+    "pack": "supermarket",
+    "file": "static/images/demo/supermarket-cola-750ml.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Cola_(soft_drink)_cropped.png",
+    "licence": "CC BY-SA 2.5",
+    "author": "National Institute of Korean Language"
+  },
+  "supermarket-mango-drink-600ml": {
+    "product": "Mango Drink 600ml",
+    "pack": "supermarket",
+    "file": "static/images/demo/supermarket-mango-drink-600ml.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Rubicon_mango_drink.jpg",
+    "licence": "CC0",
+    "author": "Mx. Granger"
+  },
+  "supermarket-bread-sandwich": {
+    "product": "Bread (Sandwich)",
+    "pack": "supermarket",
+    "file": "static/images/demo/supermarket-bread-sandwich.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Peanut-Butter-Jelly-Sandwich.jpg",
+    "licence": "Public domain",
+    "author": "Evan-Amos"
+  },
+  "supermarket-butter-100g": {
+    "product": "Butter 100g",
+    "pack": "supermarket",
+    "file": "static/images/demo/supermarket-butter-100g.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Antoine_Vollon_-_Mound_of_Butter_-_National_Gallery_of_Art.jpg",
+    "licence": "Public domain",
+    "author": "Antoine Vollon"
+  },
+  "supermarket-bath-soap-100g": {
+    "product": "Bath Soap 100g",
+    "pack": "supermarket",
+    "file": "static/images/demo/supermarket-bath-soap-100g.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Soap_from_Bath_and_Body_Works.png",
+    "licence": "CC BY-SA 4.0",
+    "author": "Curlyrnd"
+  },
+  "supermarket-toothpaste-100g": {
+    "product": "Toothpaste 100g",
+    "pack": "supermarket",
+    "file": "static/images/demo/supermarket-toothpaste-100g.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Toothpasteonbrush.jpg",
+    "licence": "CC BY-SA 3.0",
+    "author": "Thegreenj"
+  },
+  "textile-casual-t-shirt": {
+    "product": "Casual T-Shirt",
+    "pack": "textile",
+    "file": "static/images/demo/textile-casual-t-shirt.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Bunny_t_shirt_with_green_shirt.jpg",
+    "licence": "CC BY-SA 4.0",
+    "author": "Peachyeung316"
+  },
+  "textile-lungi": {
+    "product": "Lungi",
+    "pack": "textile",
+    "file": "static/images/demo/textile-lungi.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Lungi_of_Bangladesh_2.jpg",
+    "licence": "CC BY-SA 3.0",
+    "author": "Salim_Khandoker"
+  },
+  "textile-cotton-saree": {
+    "product": "Cotton Saree",
+    "pack": "textile",
+    "file": "static/images/demo/textile-cotton-saree.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Cotton-mulmul-saree-with-blouse-5-1.jpg",
+    "licence": "CC BY-SA 4.0",
+    "author": "Kiransboutique"
+  },
+  "textile-silk-saree": {
+    "product": "Silk Saree",
+    "pack": "textile",
+    "file": "static/images/demo/textile-silk-saree.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:A_silk_saree_loom_in_Kumbakonam,_Tamil_Nadu.jpg",
+    "licence": "CC BY-SA 4.0",
+    "author": "Matthew T Rader"
+  },
+  "electrical-extension-cord-5m": {
+    "product": "Extension Cord 5m",
+    "pack": "electrical",
+    "file": "static/images/demo/electrical-extension-cord-5m.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Europlug_extension_cord.jpg",
+    "licence": "CC BY-SA 4.0",
+    "author": "Peter Lebbing"
+  },
+  "electrical-3-pin-socket-16a": {
+    "product": "3-Pin Socket 16A",
+    "pack": "electrical",
+    "file": "static/images/demo/electrical-3-pin-socket-16a.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Dual_3_Pin_Socket_Outlet_Wiring.jpg",
+    "licence": "CC BY-SA 4.0",
+    "author": "Fredquint"
+  },
+  "electrical-ceiling-fan-1200mm": {
+    "product": "Ceiling Fan 1200mm",
+    "pack": "electrical",
+    "file": "static/images/demo/electrical-ceiling-fan-1200mm.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Ceiling_Fan_Mid-Spin.jpg",
+    "licence": "CC BY-SA 4.0",
+    "author": "Noah Wulf"
+  },
+  "electrical-electric-kettle-1-5l": {
+    "product": "Electric Kettle 1.5L",
+    "pack": "electrical",
+    "file": "static/images/demo/electrical-electric-kettle-1-5l.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Electric_kettle_-_%D0%AD%D0%BB%D0%B5%D0%BA%D1%82%D1%80%D0%B8%D1%87%D0%B5%D1%81%D0%BA%D0%B8%D0%B9_%D1%87%D0%B0%D0%B9%D0%BD%D0%B8%D0%BA.JPG",
+    "licence": "CC BY-SA 3.0",
+    "author": "Schekinov Alexey Victorovich"
+  },
+  "hardware-claw-hammer-500g": {
+    "product": "Claw Hammer 500g",
+    "pack": "hardware",
+    "file": "static/images/demo/hardware-claw-hammer-500g.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Claw_hammer_2.jpg",
+    "licence": "CC BY-SA 4.0",
+    "author": "HutheMeow"
+  },
+  "hardware-pliers-8-inch": {
+    "product": "Pliers 8 inch",
+    "pack": "hardware",
+    "file": "static/images/demo/hardware-pliers-8-inch.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Tool-pliers.jpg",
+    "licence": "Public domain",
+    "author": "Evan-Amos"
+  },
+  "hardware-hacksaw-with-blade": {
+    "product": "Hacksaw with Blade",
+    "pack": "hardware",
+    "file": "static/images/demo/hardware-hacksaw-with-blade.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Unknown_artist_-_Hacksaw_with_Blade_-_1920.85_-_Cleveland_Museum_of_Art.jpg",
+    "licence": "CC0",
+    "author": "Cleveland Museum of Art"
+  },
+  "hardware-anchor-fastener-6mm-50pc": {
+    "product": "Anchor Fastener 6mm (50pc)",
+    "pack": "hardware",
+    "file": "static/images/demo/hardware-anchor-fastener-6mm-50pc.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:AnchorChannelChannelBolt.png",
+    "licence": "CC BY-SA 4.0",
+    "author": "EmilMoersch"
+  },
+  "hardware-teflon-tape": {
+    "product": "Teflon Tape",
+    "pack": "hardware",
+    "file": "static/images/demo/hardware-teflon-tape.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Teflon_tape_used_for_sealing_plumbing_connections.jpg",
+    "licence": "CC0",
+    "author": "Tomwsulcer"
+  },
+  "hardware-paint-brush-4-inch": {
+    "product": "Paint Brush 4 inch",
+    "pack": "hardware",
+    "file": "static/images/demo/hardware-paint-brush-4-inch.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Paint_brushes_(30804).jpg",
+    "licence": "CC BY-SA 4.0",
+    "author": "Rhododendrites"
+  }
+}
