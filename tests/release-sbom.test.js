@@ -14,6 +14,9 @@ const {
 } = require('../scripts/generate-release-sboms');
 
 const ROOT = path.join(__dirname, '..');
+const RELEASE_WORKFLOW = fs
+  .readFileSync(path.join(ROOT, '.github', 'workflows', 'release.yml'), 'utf8')
+  .replace(/\r\n/g, '\n');
 const COMMIT = '0123456789abcdef0123456789abcdef01234567';
 const API_REF = 'pkg:npm/posnic-api@2.0.0';
 const EXPRESS_REF = 'pkg:npm/express@5.2.1';
@@ -166,4 +169,24 @@ test('license material is readable outside app.asar on every platform', () => {
   assert.match(mongoLicense, /Server Side Public License/);
   assert.match(mongoLicense, /VERSION 1, OCTOBER 16, 2018/);
   assert.ok(mongoLicense.length > 30000, 'the exact MongoDB licence text is incomplete');
+});
+
+test('the release creates and preserves one SBOM beside each artifact', () => {
+  const generatedAt = RELEASE_WORKFLOW.indexOf('Generate artifact SBOMs');
+  const uploadedAt = RELEASE_WORKFLOW.indexOf('Upload installers');
+  assert.ok(generatedAt > -1, 'the release never runs the SBOM generator');
+  assert.ok(generatedAt < uploadedAt, 'the release uploads artifacts before it creates their SBOMs');
+
+  const upload = RELEASE_WORKFLOW.slice(uploadedAt, RELEASE_WORKFLOW.indexOf('retention-days', uploadedAt));
+  assert.match(upload, /dist\/\*\.cdx\.json/, 'matrix artifacts drop the generated SBOMs');
+
+  const collectAt = RELEASE_WORKFLOW.indexOf('Collect and checksum');
+  const collect = RELEASE_WORKFLOW.slice(collectAt, RELEASE_WORKFLOW.indexOf('Publishing:', collectAt));
+  assert.match(collect, /-name '\*\.cdx\.json'/, 'the publish job drops SBOMs before release');
+  assert.match(collect, /sha256sum/, 'release SBOMs are not bound into SHA256SUMS.txt');
+  assert.doesNotMatch(
+    collect,
+    /grep -vE[^\n]*cdx/,
+    'release SBOMs are excluded from SHA256SUMS.txt instead of being integrity protected',
+  );
 });
