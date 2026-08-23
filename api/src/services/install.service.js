@@ -687,6 +687,142 @@ class InstallService {
     await this.repository.addBranchEmailFields(branchId, licenseId, emailData);
   }
 
+  /*
+   * Put the demo data back.
+   *
+   * Owner ask: "when demo data enabled again. we can do insert data by
+   * progress bar."
+   *
+   * Switching Demo Data off only hides, so most of the time turning it back on
+   * needs nothing at all - the rows are still there and the filter simply stops
+   * applying. This is for the other case: a shop that removed the samples for
+   * good and later wants them back, which otherwise leaves the switch looking
+   * broken because turning it on brings nothing.
+   *
+   * Everything the installer needs is read back off the branch rather than
+   * passed in. The caller is a shopkeeper pressing a switch months later; they
+   * have no idea what tax id or unit their shop was built with, and asking the
+   * browser to supply them would be inviting it to make them up.
+   *
+   * Refuses when demo data is already present. Seeding twice would give a shop
+   * two of every sample with no way to tell which pair to delete.
+   */
+  async reseedDemoData({ branchId, licenseId, user } = {}) {
+    try {
+      if (!branchId || !licenseId) {
+        return { status: false, data: null, message: 'Branch and licence are required.' };
+      }
+
+      const BaseModel = require('../models/base.model');
+      const db = await BaseModel.getDb();
+      const branchOid = new ObjectId(String(branchId));
+      const licenseOid = new ObjectId(String(licenseId));
+
+      const branch = await db
+        .collection('branches')
+        .findOne({ _id: branchOid, license: licenseOid });
+      if (!branch) {
+        return { status: false, data: null, message: 'Branch not found.' };
+      }
+
+      const already = await db.collection('items').countDocuments(
+        {
+          demo_pack: { $exists: true },
+          'branch_access.branch_id': branchOid,
+          license: licenseOid,
+          del_status: { $nin: [1, '1', true] },
+        },
+        { limit: 1 }
+      );
+      if (already) {
+        return {
+          status: false,
+          data: null,
+          message: 'The sample data is already here - switch Demo Data on to see it.',
+        };
+      }
+
+      /*
+       * The trade this shop was set up as, or what it was seeded with before.
+       * A shop that removed one pack should get that pack back, not whatever
+       * the default happens to be today.
+       */
+      const previous = await db
+        .collection('items')
+        .findOne(
+          { demo_pack: { $exists: true }, license: licenseOid },
+          { projection: { demo_pack: 1 } }
+        );
+      const businessType =
+        (previous && previous.demo_pack) ||
+        branch.business_type ||
+        branch.businessType ||
+        'supermarket';
+
+      /* Whatever the shop already uses, so the samples join the shop rather
+         than arriving with a second set of everything. */
+      const supplier = await db
+        .collection('suppliers')
+        .findOne({ branch_id: branchOid, license: licenseOid });
+      const unit = await db
+        .collection('unit')
+        .findOne({ branch_id: branchOid, license: licenseOid });
+      const tax = await db
+        .collection('grouptax')
+        .findOne({ branch_id: branchOid, license: licenseOid });
+
+      const now = new Date();
+      await this._insertBusinessTypeDemoData({
+        branchId: branchOid,
+        branchName: String(branch.branch_name || '').trim(),
+        userId: (user && (user._id || user.userId)) || null,
+        username: (user && (user.name || user.username)) || 'System',
+        licenseId: licenseOid,
+        now,
+        userBranch: [
+          {
+            branch_id: branchOid,
+            branch_name: branch.branch_name,
+            branch_image: DEFAULTS.LOGO,
+          },
+        ],
+        supplierId: supplier ? supplier._id : null,
+        supplierName: supplier ? supplier.name : 'General Supplier',
+        taxId: tax ? tax._id : null,
+        taxData: tax ? { name: tax.name, rate: tax.rate } : null,
+        unitId: unit ? unit._id : null,
+        businessType,
+      });
+
+      const counts = await Promise.all([
+        db.collection('items').countDocuments({
+          demo_pack: { $exists: true },
+          'branch_access.branch_id': branchOid,
+          license: licenseOid,
+        }),
+        db.collection('sales').countDocuments({
+          demo_pack: { $exists: true },
+          branch_id: branchOid,
+          license: licenseOid,
+        }),
+        db.collection('quotes').countDocuments({
+          demo_pack: { $exists: true },
+          branch_id: branchOid,
+          license: licenseOid,
+        }),
+      ]);
+
+      return {
+        status: true,
+        data: { pack: businessType, items: counts[0], sales: counts[1], quotes: counts[2] },
+        message: `Sample data restored: ${counts[0]} products, ${counts[1]} sales, ${counts[2]} quotes.`,
+      };
+    } catch (error) {
+      console.error('Error in InstallService.reseedDemoData:', error);
+      return { status: false, data: null, message: error.message };
+    }
+  }
+
   async _insertBusinessTypeDemoData(params) {
     try {
       const {

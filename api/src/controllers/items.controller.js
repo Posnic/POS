@@ -1222,6 +1222,34 @@ class ItemsController extends BaseController {
    * records, and the person who may edit a price is not automatically the
    * person who may clear a catalogue.
    */
+  /*
+   * Put the sample data back.
+   *
+   * Guarded by item WRITE rather than delete: this creates records. The
+   * service refuses when demo data is already present, so a double click
+   * cannot give a shop two of everything.
+   */
+  async reseedDemoData(req, res) {
+    try {
+      if (req.user?.access?.item?.write === false) {
+        return this.sendError(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
+      }
+      await this.ensureContext(req);
+      const InstallService = require('../services/install.service');
+      const installer = new InstallService();
+      const result = await installer.reseedDemoData({
+        branchId: this.model?.branchId || null,
+        licenseId: this.model?.licenseId || null,
+        user: req.user,
+      });
+      if (!result.status) return this.sendError(res, result.message, 400);
+      return this.sendSuccess(res, result.data, result.message);
+    } catch (error) {
+      console.error('Error in reseedDemoData:', error);
+      return this.sendError(res, error.message, 500);
+    }
+  }
+
   async purgeDemoData(req, res) {
     try {
       if (req.user?.access?.item?.delete === false) {

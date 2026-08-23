@@ -736,6 +736,10 @@ PosnicPro.settings = {
                 $('#module_channels_kiosk_enable').prop('checked', data.module_channels_kiosk_enable !== false);
                 $('#module_recyclebin_enable').prop('checked', data.module_recyclebin_enable !== false);
                 $('#module_demo_data_enable').prop('checked', data.module_demo_data_enable !== false);
+                /* What it was BEFORE anybody touched it. Turning demo data
+                   back on is the only case that needs the server, and off->on
+                   cannot be told from on->on without this. */
+                PosnicPro.settings._demoWasOn = data.module_demo_data_enable !== false;
                 $('#module_themes_enable').prop('checked', data.module_themes_enable !== false);
                 $('#pl_include_cashbook').prop('checked', data.pl_include_cashbook !== false);
                 $('#module_cashbook_enable').prop('checked', data.module_cashbook_enable !== false);
@@ -1568,6 +1572,7 @@ if ($wrapper.length) {
         }, function (response) {
             if (response.type === 'success') {
                 PosnicPro.settings._featuresDirty = false;
+                PosnicPro.settings.restoreDemoDataIfEmpty();
                 PosnicPro.alert('success', 'Features saved for ' + branchLabel);
             } else {
                 PosnicPro.alert(response.type, response.message);
@@ -1677,6 +1682,7 @@ if ($wrapper.length) {
         PosnicPro.put(params, function (response) {
             if (response.type === 'success') {
                 PosnicPro.settings._featuresDirty = false;
+                PosnicPro.settings.restoreDemoDataIfEmpty();
                 let htmlView = $('#footer_print').text();
                 $('.footer-content').html(htmlView);
                 let htmlHeaderView = $('#header_print').text();
@@ -6120,3 +6126,121 @@ $(document).on('click', '#v-pills-modules .module-card', function (e) {
     PosnicPro.settings.openFeaturePage($(this));
 });
 
+/*
+ * Putting the sample data back, with something to watch while it happens.
+ *
+ * Owner ask: "when demo data enabled again. we can do insert data by progress
+ * bar."
+ *
+ * Switching Demo Data off only hides, so turning it back on is usually
+ * instant - the rows never went anywhere. This is for the shop that removed
+ * the samples for good: without it, the switch appears to do nothing, because
+ * there is nothing left to unhide.
+ *
+ * THE BAR IS HONEST ABOUT WHAT IT KNOWS. The server does the work in one
+ * request and cannot report a percentage, so this does not invent one: it
+ * eases towards nine tenths while waiting and only completes when the answer
+ * arrives. A bar that marches confidently to 100% and then sits there is worse
+ * than no bar, because it says the work is done when it is not.
+ */
+PosnicPro.settings.demoProgress = {
+    _timer: null,
+    _pct: 0,
+
+    open: function () {
+        var self = PosnicPro.settings.demoProgress;
+        if (!$('#demo_progress_modal').length) {
+            $('body').append(
+                '<div class="modal fade" id="demo_progress_modal" tabindex="-1" role="dialog"' +
+                ' data-backdrop="static" data-keyboard="false">' +
+                '  <div class="modal-dialog modal-dialog-centered modal-sm" role="document">' +
+                '    <div class="modal-content">' +
+                '      <div class="modal-body text-center" style="padding:26px 22px;">' +
+                '        <h5 style="margin:0 0 6px;font-size:16px;">Adding the sample data</h5>' +
+                '        <p id="demo_progress_step" class="text-muted"' +
+                '           style="font-size:13px;margin:0 0 14px;">Getting ready…</p>' +
+                '        <div class="demo-progress-track"><div id="demo_progress_bar"' +
+                '             class="demo-progress-bar"></div></div>' +
+                '      </div>' +
+                '    </div>' +
+                '  </div>');
+        }
+        self._pct = 0;
+        self._set(4, 'Getting ready…');
+        $('#demo_progress_modal').modal('show');
+
+        /*
+         * Named steps rather than a silent crawl. The shop is watching a bar
+         * for a few seconds and "Adding products" tells them what they are
+         * getting; a bar on its own tells them only to wait.
+         */
+        var steps = [
+            [12, 'Adding categories…'],
+            [30, 'Adding products…'],
+            [55, 'Adding photographs…'],
+            [72, 'Adding sample sales…'],
+            [85, 'Adding sample quotes…'],
+        ];
+        var i = 0;
+        self._timer = window.setInterval(function () {
+            if (i < steps.length) {
+                self._set(steps[i][0], steps[i][1]);
+                i++;
+                return;
+            }
+            /* Past the named steps it creeps, and never reaches the end on its
+               own - the end belongs to the server's answer. */
+            self._set(Math.min(90, self._pct + 1), null);
+        }, 600);
+    },
+
+    _set: function (pct, label) {
+        PosnicPro.settings.demoProgress._pct = pct;
+        $('#demo_progress_bar').css('width', pct + '%');
+        if (label) { $('#demo_progress_step').text(label); }
+    },
+
+    close: function (message, ok) {
+        var self = PosnicPro.settings.demoProgress;
+        if (self._timer) { window.clearInterval(self._timer); self._timer = null; }
+        self._set(100, ok ? 'Done' : 'Stopped');
+        /* A beat at 100% so the bar is seen to finish rather than vanishing
+           mid-way, which reads as a crash. */
+        window.setTimeout(function () {
+            $('#demo_progress_modal').modal('hide');
+            if (message) { PosnicPro.alert(ok ? 'success' : 'error', message); }
+        }, 450);
+    }
+};
+
+/*
+ * Only when the switch has just been turned ON, and only if there is nothing
+ * there.
+ *
+ * The server refuses a second seed, so a stray call is harmless - but calling
+ * it on every features save would put a progress bar in front of somebody who
+ * changed the tax switch, which is its own small insult.
+ */
+PosnicPro.settings.restoreDemoDataIfEmpty = function () {
+    var on = $('#module_demo_data_enable').is(':checked');
+    var was = PosnicPro.settings._demoWasOn;
+    PosnicPro.settings._demoWasOn = on;
+    if (!on || was !== false) { return; }
+
+    PosnicPro.settings.demoProgress.open();
+    PosnicPro.post({ url: 'items/demo', data: JSON.stringify({}) }, function (response) {
+        PosnicPro.settings.demoProgress.close(response.message, response.type === 'success');
+    }, function (xhr) {
+        var resp = {};
+        try { resp = JSON.parse(xhr.responseText); } catch (e) { /* plain */ }
+        /*
+         * "Already here" is the ordinary case - the switch only hides, so the
+         * rows are usually still there. Closing quietly is right: the shop
+         * asked to see the samples and they are about to, which is the answer
+         * they wanted.
+         */
+        var msg = resp.message || '';
+        var harmless = /already/i.test(msg);
+        PosnicPro.settings.demoProgress.close(harmless ? null : (msg || 'Could not add the sample data'), harmless);
+    });
+};

@@ -4458,3 +4458,31 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 .tender-status.is-short { background: #fdecea; color: #b3261e; }
 .tender-status.is-exact { background: #e7f5ec; color: #1e7a44; }
 .tender-status.is-over  { background: #e8f1fd; color: #14508f; }
+
+/* ------------------------------------------------------------------
+ * Restoring the sample data.
+ *
+ * The bar eases to nine tenths while the request is in flight and only
+ * completes on the answer - the server does the work in one call and
+ * cannot report a percentage, so this does not invent one. A bar that
+ * marches to 100% and then waits is worse than none: it says the work
+ * is finished when it is not.
+ * ------------------------------------------------------------------ */
+.demo-progress-track {
+    height: 8px;
+    border-radius: 999px;
+    background: #e9edf3;
+    overflow: hidden;
+}
+.demo-progress-bar {
+    height: 100%;
+    width: 0;
+    border-radius: 999px;
+    background: var(--theme-primary-color, #506fe4);
+    transition: width .55s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+    /* The width still changes - it is the information - but it stops
+       sliding, which is the part that is motion for its own sake. */
+    .demo-progress-bar { transition: none; }
+}
