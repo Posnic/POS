@@ -1091,7 +1091,47 @@ class InstallService {
       .collection('customers')
       .findOne({ branch_id: branchId, license: licenseId }, { projection: { _id: 1, name: 1 } });
 
-    const sales = demoSeed.buildSales({ items: stored, customer, branch, pack, now });
+    /*
+     * The people, before the sales - so the sales can belong to them.
+     *
+     * A new shop had one customer and one supplier, so two of the six things
+     * in the main menu opened looking broken, and every sample sale belonged
+     * to the same walk-in.
+     */
+    const people = demoSeed.buildPeople({
+      branch,
+      pack,
+      now,
+      base: {
+        country: branch.country || '',
+        country_id: branch.country_id || '',
+        state: branch.state || '',
+        sortname: branch.sortname || '',
+      },
+    });
+    let seededCustomers = [];
+    if (people.customers.length) {
+      const r = await db.collection('customers').insertMany(people.customers);
+      seededCustomers = people.customers.map((c, i) => ({
+        _id: Object.values(r.insertedIds)[i],
+        name: c.name,
+      }));
+    }
+    if (people.suppliers.length) {
+      await db.collection('suppliers').insertMany(people.suppliers);
+    }
+
+    /* Spread across the sample customers, with the walk-in kept in the mix -
+       a shop that never takes a counter sale is not a shop. */
+    const buyers = customer ? [customer].concat(seededCustomers) : seededCustomers;
+    const sales = demoSeed.buildSales({
+      items: stored,
+      customers: buyers,
+      customer,
+      branch,
+      pack,
+      now,
+    });
     const quotes = demoSeed.buildQuotes({ items: stored, branch, pack, now });
 
     if (sales.length) await db.collection('sales').insertMany(sales);
