@@ -105,7 +105,8 @@ and follow the wizard. Stable v1.3.0 packages include MongoDB Community Server
 under its separate SSPL-1.0 licence, so no separate database install is needed
 for the bundled setup. See [third-party notices](THIRD-PARTY-NOTICES.md).
 
-Verify your download against `SHA256SUMS.txt` in the release.
+Verify your download against `SHA256SUMS.txt`. For releases that provide an
+artifact-bound SBOM and provenance, follow the [release verification guide](docs/VERIFY_RELEASE.md).
 
 > **Windows** may warn that the publisher is unrecognised: *More info* → *Run
 > anyway*. **macOS**: *System Settings → Privacy & Security → Open Anyway*.
@@ -170,6 +171,7 @@ the free edition worse. This is written down in [GOVERNANCE.md](GOVERNANCE.md).
 | [Backups](docs/BACKUP_POLICY.md) | What is backed up, when, and what it does not protect you from |
 | [Disaster recovery](docs/DISASTER_RECOVERY.md) | Getting back to working, with RPO and RTO as numbers |
 | [Release runbook](docs/RELEASE_RUNBOOK.md) | How a release goes out, and four ways to take one back |
+| [Release verification](docs/VERIFY_RELEASE.md) | Match a package to its checksum, CycloneDX inventory, provenance and component licences |
 | [Support lifecycle](docs/SUPPORT_LIFECYCLE.md) | Which versions get fixes, and for how long |
 | [Incident response](docs/INCIDENT_RESPONSE.md) | Who decides, who is told, and when |
 | [Terms of use](TERMS_OF_USE.md) | Customer terms for Posnic Cloud |
