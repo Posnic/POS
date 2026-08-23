@@ -4418,3 +4418,20 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
        A panel vanishing with no notice is the surprise the ring prevents. */
     .sale-done-ring { display: none; }
 }
+
+/* ------------------------------------------------------------------
+ * The tender panel's close button, 10px up and 10px right (owner ask).
+ *
+ * Moved by trimming the head's padding rather than by offsetting the
+ * button: the head is position:fixed, so a transform or a negative
+ * margin on the anchor would move the hit area away from the icon on
+ * one of the two, and a close button whose target is not where it is
+ * drawn is worse than one that is slightly low.
+ *
+ * Scoped to the tender panel by id. The same head markup is used by
+ * every settings sidebar, and only this one was asked about.
+ * ------------------------------------------------------------------ */
+#infobar-settings-sidebar-tender-details .infobar-settings-sidebar-head {
+    padding-top: 4px;      /* was 14px */
+    padding-right: 20px;   /* was 30px */
+}
