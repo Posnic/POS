@@ -107,31 +107,19 @@ test('the check polls until settings load, instead of firing once and giving up'
     assert.match(boot, /setTimeout\(poll, \d+\)/);
 });
 
-test('the super admin is always asked - the ACL shape cannot refuse them', () => {
+test('there is NO identity gate - the DB field decides, nothing else', () => {
     /*
-     * THE BUG THAT KEPT THE WELCOME FROM THE OWNER THREE TIMES. An
-     * owner-class ACL does not reliably carry setting.write === true - full
-     * access is often an EMPTY map middleware treats as allow-all - so the
-     * old test refused exactly the person the screen is for. "mainly super
-     * admin" was him reporting that.
+     * Owner, fourth round: "keep on db field and make sure user know about
+     * it." Every identity check this gate carried refused HIM: the ACL shape
+     * test refused owner-class users whose full access is an empty map, and
+     * the usertype bypass then read localStorage that shadow sessions - his
+     * My Account door - never wrote. The server refusing an unauthorised
+     * SAVE was always the real guard; the gate pretending to pre-judge it
+     * only ever produced silent refusals of the wrong people.
      */
     const gate = block(settingsCode, 'maybeShowIntro:', 'renderIntro:');
-    assert.match(gate, /usertype === 'super_admin' \|\| usertype === 'admin'/);
-    assert.match(gate, /if \(!isAdmin\)/);
-});
-
-test('an unloaded ACL retries; only a real cashier is refused', () => {
-    /*
-     * The old gate returned undefined on a not-yet-loaded ACL, which ENDED
-     * the poll - any login where the ACL arrived after the settings blob
-     * silently lost the welcome for that session. Not-loaded must retry
-     * (return false); only an explicit non-writer stops.
-     */
-    const gate = block(settingsCode, 'maybeShowIntro:', 'renderIntro:');
-    assert.match(gate, /if \(!acl \|\| !acl\.setting\) \{ return false; \}/);
-    assert.match(gate, /if \(acl\.setting\.write !== true\) \{/);
-    /* the refusal names itself - a silent branch is how three builds hid */
-    assert.match(gate, /say\('this user cannot edit features/);
+    assert.ok(!/userACL|usertype|isAdmin/.test(gate),
+        'an identity check crept back into the welcome gate');
 });
 
 test('only a DECISION ends the welcome - a casual dismissal brings it back', () => {

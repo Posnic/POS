@@ -5482,33 +5482,22 @@ PosnicPro.features = {
            screen exists for. */
         if (!Object.keys(blob).length) { return false; }
         /*
-         * WHO gets asked. Three cases, and the middle one is the bug that
-         * kept this from the owner three times:
+         * NO identity gate at all. Owner, fourth round: "keep on db field and
+         * make sure user know about it."
          *
-         *   super_admin / admin  always asked. An owner-class ACL does not
-         *        reliably carry setting.write === true - full access is often
-         *        an EMPTY map that middleware treats as "everything allowed" -
-         *        so the old test refused exactly the person this screen is
-         *        for. "mainly super admin" was the owner reporting that.
+         * Every identity check this gate has carried refused HIM: the ACL
+         * shape test refused owner-class users whose full access is an empty
+         * map; the usertype bypass then read localStorage that shadow
+         * sessions - the My Account "open in browser" door, HIS door - never
+         * wrote. Two different silent refusals of the one person the screen
+         * exists for.
          *
-         *   ACL not loaded yet   RETRY (return false), never stop. The old
-         *        gate returned undefined here, which ended the poll: on any
-         *        login where the ACL arrived after the settings blob, the
-         *        welcome was silently lost for that session.
-         *
-         *   a real cashier       (explicit setting.write === false) is never
-         *        shown switches their save would refuse.
+         * So the rule is now exactly his sentence: the DB field decides,
+         * nothing else. Anyone signed in sees the welcome until somebody
+         * saves or deliberately skips. A user without feature rights who
+         * presses Save is refused by the SERVER - which was always the real
+         * guard - and told they can set these later.
          */
-        var usertype = PosnicPro.local.get('usertype');
-        var isAdmin = usertype === 'super_admin' || usertype === 'admin';
-        if (!isAdmin) {
-            var acl = PosnicPro.userACL;
-            if (!acl || !acl.setting) { return false; }
-            if (acl.setting.write !== true) {
-                say('this user cannot edit features (usertype=' + usertype + ')');
-                return;
-            }
-        }
         if (!$('#feature_intro_modal').length) { return; }
         /*
          * The Features page first, the welcome on top of it.
