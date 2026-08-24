@@ -56,6 +56,18 @@ test('release publishers attest the exact checksum subjects before upload', () =
   }
 });
 
+test('beta publication keeps builder diagnostics out of release assets', () => {
+  const publisher = publisherJob(BETA_WORKFLOW);
+  assert.match(BETA_WORKFLOW, /builder-debug\.yml is build diagnostics, not updater input/);
+  assert.match(BETA_WORKFLOW, /shopt -s nullglob/);
+  assert.match(BETA_WORKFLOW, /latest_manifests=\(dist\/latest\*\.yml\)/);
+  assert.match(BETA_WORKFLOW, /if \(\( \$\{#latest_manifests\[@\]\} == 0 \)\)/);
+  assert.match(BETA_WORKFLOW, /dist\/latest\*\.yml/);
+  assert.doesNotMatch(BETA_WORKFLOW, /dist\/\*\.yml/);
+  assert.match(publisher, /-name 'latest\*\.yml'/);
+  assert.doesNotMatch(publisher, /-name '\*\.yml'/);
+});
+
 test('the guide does not promote inventory or provenance into a security claim', () => {
   assert.match(GUIDE, /Older releases may predate the SBOM and provenance workflow/);
   assert.match(GUIDE, /cannot be counted as checks\s+that passed/);
