@@ -172,9 +172,15 @@ describe('the trades a shop can choose from', () => {
     /* Named here rather than borrowed from the block above: that ALL is scoped
        to its own describe, and reaching into it would make this test's meaning
        depend on where somebody happens to move a bracket. */
-    const CATALOGUES = ['iceCreamDemoData', 'cafeDemoData', 'bakeryDemoData',
-      'supermarketDemoData', 'textileDemoData', 'electricalDemoData',
-      'hardwareDemoData'];
+    const CATALOGUES = [
+      'iceCreamDemoData',
+      'cafeDemoData',
+      'bakeryDemoData',
+      'supermarketDemoData',
+      'textileDemoData',
+      'electricalDemoData',
+      'hardwareDemoData',
+    ];
     const offered = demo.listDemoPacks().map((p) => demo.getDemoDataByType(p.key));
     for (const name of CATALOGUES) {
       expect(offered).toContain(demo[name]);
@@ -204,7 +210,17 @@ describe('the trades a shop can choose from', () => {
      * treatment: installing a supermarket into a bakery because a key was
      * misspelt is a wrong answer delivered confidently.
      */
-    for (const bad of ['', ' ', 'pharmacy', 'kirana', 'grocery', 'retail', 'ELECTRICAL', null, undefined]) {
+    for (const bad of [
+      '',
+      ' ',
+      'pharmacy',
+      'kirana',
+      'grocery',
+      'retail',
+      'ELECTRICAL',
+      null,
+      undefined,
+    ]) {
       expect(demo.isDemoPack(bad)).toBe(false);
     }
     /* Aliases included: they are real inputs, and they are still not rows on
