@@ -76,9 +76,19 @@ test('the welcome is gated on the shop, not only on the browser', () => {
     assert.match(gate, /if \(PosnicPro\.local\.get\(PosnicPro\.features\._introSeenKey\(\)\)\) \{ return; \}/);
     const keyFn = block(settingsCode, '_introSeenKey:', 'maybeShowIntro:');
     assert.match(keyFn, /branch_id_set/);
-    assert.match(keyFn, /'features_intro_seen:' \+ branch/);
-    // Per shop: survives a second till, a new browser and a reinstall.
-    assert.match(gate, /first_run_done === true \|\| \w+\.first_run_done === 'true'/);
+    /* v2: the burned build wrote the unversioned key on any close. */
+    assert.match(keyFn, /'features_intro_seen2:' \+ branch/);
+    /*
+     * Per shop, and on the DECIDED key only. first_run_done was written by
+     * the 24 Aug build that counted ANY close as an answer, so for every
+     * shop touched in that window it says "asked" about a person who never
+     * was - the owner's own test shops among them, which is how "you are not
+     * at all doing this" was true while every test here was green. The gate
+     * must never read the burned key again.
+     */
+    assert.match(gate, /first_run_decided === true \|\| \w+\.first_run_decided === 'true'/);
+    assert.ok(!/blob\.first_run_done === true \|\| blob\.first_run_done === 'true'\) \{ return; \}/.test(gate),
+        'the gate is reading the burned first_run_done flag again');
     assert.match(gate, /return;/);
 });
 
@@ -131,7 +141,7 @@ test('only a DECISION ends the welcome - a casual dismissal brings it back', () 
     const skip = block(settingsCode, "'#feature_intro_skip', function", "'#fi_module_demo_data_enable'");
     assert.match(skip, /_decided = true/);
     assert.match(skip, /settings\/group\/features/);
-    assert.match(skip, /first_run_done: 'true'/);
+    assert.match(skip, /first_run_decided: 'true'/);
     // And a failed write un-decides, so the shop is asked again - correct
     // for a shop that was never recorded as asked.
     assert.match(skip, /_decided = false/);
@@ -152,6 +162,7 @@ test('saving writes the flag in the same request as the switches', () => {
      * would then never again be offered switches it did not manage to save.
      */
     assert.match(save, /payload\.first_run_done = 'true';/);
+    assert.match(save, /payload\.first_run_decided = 'true';/);
     assert.match(save, /url: 'settings\/group\/features'/);
 });
 
@@ -181,9 +192,15 @@ test('the flag survives every rebuild of the settings blob', () => {
 test('an API that does not send the flag cannot erase a known one', () => {
     const keep = block(settingsCode, 'keepFirstRunFlag:', 'maybeShowIntro:');
     // Explicit values win; undefined falls back to what we already knew.
-    assert.match(keep, /=== true \|\| \w+\.first_run_done === 'true'\) \{ return true; \}/);
-    assert.match(keep, /=== false \|\| \w+\.first_run_done === 'false'\) \{ return false; \}/);
-    assert.match(keep, /return PosnicPro\.features\._blob\(\)\.first_run_done === true;/);
+    // Generalised to a key argument so first_run_decided rides the same rule.
+    assert.match(keep, /d\[k\] === true \|\| d\[k\] === 'true'\) \{ return true; \}/);
+    assert.match(keep, /d\[k\] === false \|\| d\[k\] === 'false'\) \{ return false; \}/);
+    assert.match(keep, /return PosnicPro\.features\._blob\(\)\[k\] === true;/);
+
+    // And every blob rebuild carries BOTH flags - losing decided re-shows the
+    // welcome to somebody who genuinely decided.
+    const carried = settingsCode.match(/first_run_decided: PosnicPro\.features\.keepFirstRunFlag\(/g) || [];
+    assert.ok(carried.length >= 3, 'expected the decided flag in every blob rebuild, found ' + carried.length);
 });
 
 test('the shop is greeted by name, and never by the string null', () => {

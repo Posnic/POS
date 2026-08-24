@@ -479,7 +479,8 @@ PosnicPro.settings = {
                         quick_sale_enable: response.data['quick_sale_enable'] !== false,
                         quotes_enable: response.data['quotes_enable'] !== false,
                         custom_charges_enable: response.data['custom_charges_enable'] === true,
-                        first_run_done: PosnicPro.features.keepFirstRunFlag(response.data)
+                        first_run_done: PosnicPro.features.keepFirstRunFlag(response.data),
+                        first_run_decided: PosnicPro.features.keepFirstRunFlag(response.data, 'first_run_decided')
                     };
                     PosnicPro.local.set('general_settings', JSON.stringify(generalSettings));
                     PosnicPro.shiftWidget.applyEnabled();
@@ -770,7 +771,8 @@ PosnicPro.settings = {
                     quick_sale_enable: data.quick_sale_enable !== false,
                     quotes_enable: data.quotes_enable !== false,
                     custom_charges_enable: data.custom_charges_enable === true,
-                    first_run_done: PosnicPro.features.keepFirstRunFlag(data)
+                    first_run_done: PosnicPro.features.keepFirstRunFlag(data),
+                    first_run_decided: PosnicPro.features.keepFirstRunFlag(data, 'first_run_decided')
                 };
                 PosnicPro.local.set('general_settings', JSON.stringify(generalSettings));
                 PosnicPro.shiftWidget.applyEnabled();
@@ -1792,7 +1794,8 @@ if ($("#sale_quick_edit").is(":checked")) {
                     custom_charges_enable: $('#custom_charges_enable').is(':checked'),
                     quick_sale_enable: $('#quick_sale_enable').is(':checked'),
                     /* No field on this form - carried over, never re-decided. */
-                    first_run_done: PosnicPro.features.keepFirstRunFlag()
+                    first_run_done: PosnicPro.features.keepFirstRunFlag(),
+                    first_run_decided: PosnicPro.features.keepFirstRunFlag(null, 'first_run_decided')
                 };
                 PosnicPro.local.set('general_settings', JSON.stringify(generalSettings));
                 // Show or hide the header clock button to match, right away.
@@ -5387,11 +5390,12 @@ PosnicPro.features = {
      * did not send the field - an older build, or a response that predates it -
      * and the honest answer there is what we already knew, not false.
      */
-    keepFirstRunFlag: function (data) {
+    keepFirstRunFlag: function (data, key) {
+        var k = key || 'first_run_done';
         var d = data || {};
-        if (d.first_run_done === true || d.first_run_done === 'true') { return true; }
-        if (d.first_run_done === false || d.first_run_done === 'false') { return false; }
-        return PosnicPro.features._blob().first_run_done === true;
+        if (d[k] === true || d[k] === 'true') { return true; }
+        if (d[k] === false || d[k] === 'false') { return false; }
+        return PosnicPro.features._blob()[k] === true;
     },
     /*
      * "Already seen" is PER SHOP, never per browser.
@@ -5412,7 +5416,9 @@ PosnicPro.features = {
     _introSeenKey: function () {
         var branch = PosnicPro.local.get('branch_id_set');
         branch = (branch == null || branch === 'null' || branch === 'undefined') ? '' : String(branch);
-        return 'features_intro_seen:' + branch;
+        /* v2: the burned build wrote the unversioned key on ANY close, so it
+           is as untrustworthy as the server flag it mirrored. Never read. */
+        return 'features_intro_seen2:' + branch;
     },
 
     maybeShowIntro: function () {
@@ -5434,7 +5440,21 @@ PosnicPro.features = {
          */
         if (PosnicPro.local.get(PosnicPro.features._introSeenKey())) { return; }
         var blob = PosnicPro.features._blob();
-        if (blob.first_run_done === true || blob.first_run_done === 'true') { return; }
+        /*
+         * first_run_DECIDED, never first_run_done.
+         *
+         * A build shipped on the morning of 24 Aug counted ANY close as an
+         * answer and wrote first_run_done to the server - so for every shop
+         * touched in that window, including the owner's own test shops, the
+         * flag says "asked" about a person who never was, and the welcome he
+         * had demanded a thousand times silently never returned. The value
+         * cannot be trusted and cannot be un-written shop by shop, so the
+         * gate reads a key that only the two DECISION paths have ever
+         * written. The cost is one extra welcome for anybody who genuinely
+         * decided during those few hours; the alternative was every burned
+         * shop never being asked at all.
+         */
+        if (blob.first_run_decided === true || blob.first_run_decided === 'true') { return; }
         /* An empty blob is "settings have not loaded", not "never been asked",
            and guessing wrong there puts this in front of a shop that has been
            trading for a year. The caller keeps retrying while this is the
@@ -5612,6 +5632,7 @@ PosnicPro.features = {
            call could succeed while the toggles failed, and the shop would then
            never be offered the switches it did not manage to save. */
         payload.first_run_done = 'true';
+        payload.first_run_decided = 'true';
         $('#feature_intro_save').prop('disabled', true);
         PosnicPro.put({
             url: 'settings/group/features',
@@ -5626,6 +5647,7 @@ PosnicPro.features = {
                     blob[$(this).data('key')] = $(this).is(':checked');
                 });
                 blob.first_run_done = true;
+                blob.first_run_decided = true;
                 PosnicPro.features._savedIntro = true;
                 PosnicPro.features._decided = true;
                 PosnicPro.local.set('general_settings', JSON.stringify(blob));
@@ -5666,10 +5688,11 @@ $(document).on('click', '#feature_intro_skip', function () {
     PosnicPro.features._decided = true;
     PosnicPro.put({
         url: 'settings/group/features',
-        data: JSON.stringify({ first_run_done: 'true' })
+        data: JSON.stringify({ first_run_done: 'true', first_run_decided: 'true' })
     }, function () {
         var b = PosnicPro.features._blob();
         b.first_run_done = true;
+        b.first_run_decided = true;
         PosnicPro.local.set('general_settings', JSON.stringify(b));
     }, function () {
         /* The write failing means the shop was never recorded as asked, and

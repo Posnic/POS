@@ -1264,6 +1264,7 @@ class SettingModel extends BaseModel {
            wrong. Presence-gated by the loop below, so a settings save
            that does not mention it cannot set it either way. */
         first_run_done: onOnly,
+        first_run_decided: onOnly,
         quotes_enable: offOnly,
         pl_include_cashbook: offOnly,
       };
