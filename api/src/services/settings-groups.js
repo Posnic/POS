@@ -39,6 +39,15 @@ const FEATURES = [
   /* Not a feature: a record that the welcome screen has been shown. Lives
      with the switches because it is written at the same moment. */
   'first_run_done',
+  /* The DECISION flag, and the only one the welcome's gate reads now.
+     first_run_done was written by a build that counted ANY close as an
+     answer - Esc, a stray click - so for every shop touched in that window
+     the flag says "asked" about a person who never was. The value cannot be
+     trusted and cannot be un-written per shop, so the gate moved to a key
+     that only the two decision paths (Save, and the explicit "Not now")
+     have ever written. first_run_done is still written for compatibility;
+     nothing reads it to decide. */
+  'first_run_decided',
   'quotes_enable',
   'pl_include_cashbook',
   // sale-screen capabilities that behave the same way
