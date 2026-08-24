@@ -116,8 +116,13 @@ test('the panel survives the trip from tile to panel', () => {
    */
   assert.match(pop, /CLOSE_DELAY: \d+/);
   assert.match(pop, /_closeTimer = setTimeout\(/);
-  // Entering the panel has to cancel that pending close.
-  assert.match(pop, /if \(inPop\(e\.target\)\) \{ \w+\.cancelTimers\(\); return; \}/);
+  /* Entering the panel has to cancel that pending close - matched across the
+     whole branch rather than as one line, because that branch grew a second
+     job (previewing a colour on hover) and a single-line pattern would have
+     failed for a reason that has nothing to do with what this test is about. */
+  const enter = between(pop, 'if (inPop(e.target))', 'var tile = tileOf');
+  assert.match(enter, /\w+\.cancelTimers\(\);/);
+  assert.match(enter, /return;/);
 });
 
 test('sweeping across a shelf of tiles does not strobe panels open', () => {
@@ -225,4 +230,263 @@ test('an item with none left is shown, not hidden', () => {
   assert.match(pop, /qty <= 0 \? 'none left'/);
   assert.match(pop, /vp-stock-out/);
   assert.match(cssBlock, /\.vp-stock-out/);
+});
+
+/*
+ * ============================================================
+ * MATRIX FAMILIES: colour AND size
+ *
+ * Owner: "i see products with variant on hover list the variant list. hope you
+ * take care of if product had matrix variant. so we might think like sub menu."
+ *
+ * A one-axis family is six sizes. A two-axis family is six sizes TIMES five
+ * colours, and a flat list of thirty rows in a panel is not a chooser, it is a
+ * wall. Worse, the list is sorted by a compound string, so "Red / L" sits
+ * between "Red / M" and "Red / S" - the sizes of one colour are not even
+ * together.
+ *
+ * THE PART THAT COULD BE SILENTLY WRONG is the parsing. Both axes are packed
+ * into one string by the item form - variant_axis is "Colour / Size",
+ * variant_value is "Red / L" - and that separator is legal INSIDE a value. A
+ * colour genuinely called "Black / White" splits into three parts, and a
+ * confident misreading files sizes under colours that do not exist. Nothing
+ * would error; the shop would just see a chooser that is quietly nonsense.
+ * ============================================================
+ */
+const matrix = between(js, 'analyse: function (rows)', 'open: function (groupId');
+
+test('two axes are recovered from the one string that carries them', () => {
+  assert.match(matrix, /variant_axis/);
+  assert.match(matrix, /split\(' \/ '\)/);
+  assert.match(matrix, /axes\.length !== 2/);
+});
+
+test('a value containing the separator refuses rather than guesses', () => {
+  /*
+   * The whole reason this is written as a refusal. "Black / White" in a
+   * two-axis family splits into three parts, and there is no way to tell which
+   * separator was the axis boundary. Falling back to the flat list is never
+   * wrong, only long - and "correct but less clever" is the only safe direction
+   * when the alternative is a chooser that lies.
+   */
+  assert.match(matrix, /if \(parts\.length !== 2\) \{ return flat; \}/);
+  assert.match(matrix, /if \(!first \|\| !second\) \{ return flat; \}/);
+});
+
+test('every value must parse, not just the first', () => {
+  /* Sampling one row and trusting the rest is how a family with one awkward
+     colour renders half a matrix. */
+  assert.match(matrix, /for \(var i = 0; i < rows\.length; i\+\+\)/);
+});
+
+test('a matrix of one column falls back to the flat list', () => {
+  /* Two columns with one entry each is more taps than a plain list, not fewer,
+     and it is what a one-axis family looks like if it happens to carry a
+     two-part label. */
+  assert.match(matrix, /if \(groups\.length < 2\) \{ return flat; \}/);
+});
+
+test('the columns are derived from the rows, so a sparse matrix just works', () => {
+  /*
+   * If Red was only ever stocked in S and M, Red shows S and M. Listing every
+   * theoretical combination would offer sizes that exist as no item at all, and
+   * choosing one could only fail.
+   */
+  assert.match(matrix, /index\[first\]\.members\.push/);
+  assert.ok(!/for[\s\S]{0,200}axes\[1\]\.forEach/.test(matrix),
+    'the second column must not be enumerated independently of the rows');
+});
+
+test('the sub-menu is docked, and both levels are on screen at once', () => {
+  const html = between(js, 'matrixHtml: function', 'selectAxis: function');
+  assert.match(html, /vp-col-axis/);
+  assert.match(html, /vp-col-leaf/);
+  // Each column says which axis it is, or they are just two unlabelled lists.
+  assert.match(html, /shape\.axes\[0\]/);
+  assert.match(html, /shape\.axes\[1\]/);
+  // The first value is selected on open, so the second column is never empty.
+  assert.match(html, /shape\.groups\[0\]\.members/);
+  assert.match(html, /i === 0 \? ' is-active' : ''/);
+});
+
+test('the leaf rows are rendered in one place for both shapes', () => {
+  /*
+   * One axis or two, the bottom of the tree is a real item with a price, a
+   * stock figure and an id. Two renderers would drift, and the way they drift
+   * is that one of them stops showing stock.
+   */
+  const leaf = between(js, 'leafRows: function', 'matrixHtml: function');
+  assert.match(leaf, /vp-stock/);
+  assert.match(leaf, /data-item-id/);
+  const calls = (js.match(/\.leafRows\(/g) || []).length;
+  assert.ok(calls >= 3, `leafRows should serve both shapes and the repaint, found ${calls} calls`);
+});
+
+test('choosing a colour is not blocked by the touch guard', () => {
+  /*
+   * The guard exists because a tap on the tile synthesises a click a moment
+   * later, and honouring that on a LEAF would add a random size to a real sale.
+   * A colour adds nothing and can be undone by choosing another, so guarding it
+   * would only mean the first tap after opening does nothing - which reads as a
+   * dead panel. Guard the destructive action, not the navigation.
+   */
+  const sel = between(js, 'selectAxis: function', 'open: function (groupId');
+  assert.ok(!/TOUCH_GUARD/.test(sel), 'selecting an axis must not be behind the touch guard');
+});
+
+test('a colour can be chosen by hover and by tap', () => {
+  /*
+   * Two separate paths, and they are asserted separately on purpose.
+   *
+   * Hover is the fast path for a mouse. Tap is the ONLY path on a touch screen,
+   * which has no hover to read intent from at all - so a till with a touch
+   * screen and no click handler has a first column that cannot be used, and
+   * every matrix product becomes unsellable from the grid.
+   *
+   * Checking that the selector appears SOMEWHERE passed with the click handler
+   * deleted, because the hover handler mentions it too. Found by mutation.
+   */
+  const hover = between(pop, "if (e.pointerType !== 'mouse')", 'var tile = tileOf');
+  assert.match(hover, /selectAxis/);
+
+  const tap = between(pop, 'var axis = e.target && e.target.closest', 'var row = e.target');
+  assert.match(tap, /closest\('#variant_pop \.vp-axis'\)/);
+  assert.match(tap, /\w+\.selectAxis\(axis\.getAttribute\('data-axis-value'\)\)/);
+});
+
+test('the panel stays attached when the second column changes height', () => {
+  /* One colour having more sizes than another changes the panel's height, and
+     it is positioned against a tile it must stay joined to. */
+  const sel = between(js, 'selectAxis: function', 'open: function (groupId');
+  assert.match(sel, /\w+\.place\(\);/);
+});
+
+test('the matrix columns cannot squeeze each other off the edge', () => {
+  const col = between(cssBlock, '.variant-pop .vp-col {', '.variant-pop .vp-col-axis');
+  assert.match(col, /min-width: 0/);
+  // And they stack rather than shrink on a narrow screen.
+  assert.match(cssBlock, /@media \(max-width: 420px\)[\s\S]*?flex-direction: column/);
+});
+
+test('the first level is a thumb target too', () => {
+  const axis = between(cssBlock, '.variant-pop .vp-axis {', '.variant-pop .vp-axis:last-child');
+  assert.match(axis, /min-height: 44px/);
+});
+
+/*
+ * The parser, actually run.
+ *
+ * Everything above checks that the guards are WRITTEN. This runs the function
+ * against the data shapes a real shop produces, because a regex confirming that
+ * `parts.length !== 2` appears in the file says nothing about whether the split
+ * is done on the right string.
+ *
+ * `analyse` is lifted out of sales.js and evaluated on its own. It touches
+ * nothing outside itself - no jQuery, no PosnicPro, no DOM - which is what
+ * makes that possible, and is worth keeping true.
+ */
+const analyse = (() => {
+  const start = rawJs.indexOf('analyse: function (rows) {');
+  assert.notStrictEqual(start, -1, 'analyse is gone');
+  const end = rawJs.indexOf('\n        },', start);
+  assert.ok(end > start, 'analyse has no end');
+  const body = rawJs.slice(start + 'analyse: function (rows) {'.length, end);
+  // eslint-disable-next-line no-new-func
+  return new Function('rows', body);
+})();
+
+const item = (axis, value, extra) => Object.assign(
+  { variant_axis: axis, variant_value: value, id: value, selling_price: 1 }, extra || {});
+
+test('a one-axis family is not a matrix', () => {
+  const out = analyse([item('Size', 'S'), item('Size', 'M'), item('Size', 'L')]);
+  assert.strictEqual(out.matrix, false);
+});
+
+test('a two-axis family groups by the first axis', () => {
+  const out = analyse([
+    item('Colour / Size', 'Red / S'),
+    item('Colour / Size', 'Red / M'),
+    item('Colour / Size', 'Blue / S'),
+    item('Colour / Size', 'Blue / L'),
+  ]);
+  assert.strictEqual(out.matrix, true);
+  assert.deepStrictEqual(out.axes, ['Colour', 'Size']);
+  assert.deepStrictEqual(out.groups.map((g) => g.value), ['Red', 'Blue']);
+  assert.deepStrictEqual(out.groups[0].members.map((m) => m.label), ['S', 'M']);
+  /* Sparse on purpose: Blue was never stocked in M. It must show what exists,
+     not every combination the axes could theoretically make. */
+  assert.deepStrictEqual(out.groups[1].members.map((m) => m.label), ['S', 'L']);
+});
+
+test('a colour whose own name contains the separator falls back, not lies', () => {
+  /*
+   * THE ONE THAT MATTERS. "Black / White / S" splits into three, and there is
+   * no way to know which separator was the axis boundary. Guessing the first
+   * would file every size under a colour called "Black"; guessing the last
+   * would invent a colour called "Black / White" only for the rows that have
+   * it. Both are wrong, neither errors, and the shop just sees nonsense.
+   */
+  const out = analyse([
+    item('Colour / Size', 'Black / White / S'),
+    item('Colour / Size', 'Red / S'),
+  ]);
+  assert.strictEqual(out.matrix, false,
+    'a value with an extra separator must fall back to the flat list');
+});
+
+test('one bad row is enough to fall back, wherever it sits', () => {
+  /* Checking only the first row renders half a matrix and half nothing. */
+  const rows = [
+    item('Colour / Size', 'Red / S'),
+    item('Colour / Size', 'Blue / M'),
+    item('Colour / Size', 'Green / Navy / L'),
+  ];
+  assert.strictEqual(analyse(rows).matrix, false);
+  assert.strictEqual(analyse(rows.slice().reverse()).matrix, false);
+});
+
+test('an empty half is not a valid axis value', () => {
+  /* "Red / " is a value somebody half-typed. Rendering a blank row in the size
+     column offers something with no name to choose. */
+  assert.strictEqual(analyse([
+    item('Colour / Size', 'Red / '),
+    item('Colour / Size', 'Blue / M'),
+  ]).matrix, false);
+});
+
+test('a two-part label with only one colour is not worth two columns', () => {
+  const out = analyse([
+    item('Colour / Size', 'Red / S'),
+    item('Colour / Size', 'Red / M'),
+  ]);
+  assert.strictEqual(out.matrix, false);
+});
+
+test('a missing or one-part axis label is a plain list', () => {
+  assert.strictEqual(analyse([item('', 'Red / S'), item('', 'Blue / M')]).matrix, false);
+  assert.strictEqual(analyse([item('Size', 'S'), item('Size', 'M')]).matrix, false);
+  /* Three axes: the form cannot produce them, so a three-part label is a value
+     that ate its separator rather than a third dimension. */
+  assert.strictEqual(analyse([
+    item('Colour / Size / Fit', 'Red / S / Slim'),
+    item('Colour / Size / Fit', 'Blue / M / Slim'),
+  ]).matrix, false);
+});
+
+test('values are trimmed, so " Red / S" and "Red / S " group together', () => {
+  const out = analyse([
+    item('Colour / Size', 'Red / S'),
+    item('Colour / Size', ' Red / M '),
+    item('Colour / Size', 'Blue / S'),
+  ]);
+  assert.strictEqual(out.matrix, true);
+  assert.deepStrictEqual(out.groups.map((g) => g.value), ['Red', 'Blue']);
+  assert.strictEqual(out.groups[0].members.length, 2);
+});
+
+test('a family of one is never a matrix', () => {
+  assert.strictEqual(analyse([item('Colour / Size', 'Red / S')]).matrix, false);
+  assert.strictEqual(analyse([]).matrix, false);
+  assert.strictEqual(analyse(null).matrix, false);
 });

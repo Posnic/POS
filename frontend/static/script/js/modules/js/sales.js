@@ -7182,6 +7182,66 @@ PosnicPro.sales.itemsMenu = {
 
         isOpen: function () { return !!document.getElementById('variant_pop'); },
 
+        /*
+         * Is this family a MATRIX, and if so, what are its two axes?
+         *
+         * Owner: "hope you take care of if product had matrix variant. so we
+         * might think like sub menu."
+         *
+         * A one-axis family is six sizes. A two-axis family is six sizes TIMES
+         * five colours, and a flat list of thirty rows in a panel is not a
+         * chooser - it is a wall. Worse, it is sorted by a compound string, so
+         * "Red / L" sits between "Red / M" and "Red / S" and the sizes of one
+         * colour are not even together.
+         *
+         * HOW A MATRIX IS RECOGNISED. The item form writes both axes into one
+         * string - variant_axis is "Colour / Size" and variant_value is
+         * "Red / L" - because the server treats variant_value as an opaque
+         * unique key and a compound value needed nothing added to the model.
+         * So the axes are recovered by splitting on the same separator.
+         *
+         * AND THE SEPARATOR IS LEGAL INSIDE A VALUE. A colour genuinely called
+         * "Black / White" splits into three parts and the whole reading is
+         * wrong - a shop would see sizes filed under colours that do not exist.
+         * So this refuses unless EVERY value splits into exactly as many parts
+         * as there are axes. When it refuses, the flat list is used, which is
+         * what shipped before and is never wrong, only long. Degrading to
+         * "correct but less clever" is the only safe direction here.
+         */
+        analyse: function (rows) {
+            var flat = { matrix: false };
+            if (!rows || rows.length < 2) { return flat; }
+
+            var axisLabel = String(rows[0].variant_axis || '');
+            var axes = axisLabel.split(' / ').map(function (a) { return a.trim(); });
+            /* Two, exactly. One axis is already a plain list, and the form
+               cannot produce three - so a three-part label is a value that ate
+               its separator, not a third axis. */
+            if (axes.length !== 2 || !axes[0] || !axes[1]) { return flat; }
+
+            var groups = [];
+            var index = {};
+            for (var i = 0; i < rows.length; i++) {
+                var value = String(rows[i].variant_value || '');
+                var parts = value.split(' / ');
+                if (parts.length !== 2) { return flat; }
+                var first = parts[0].trim();
+                var second = parts[1].trim();
+                if (!first || !second) { return flat; }
+                if (!index[first]) {
+                    index[first] = { value: first, members: [] };
+                    groups.push(index[first]);
+                }
+                index[first].members.push({ label: second, row: rows[i] });
+            }
+            /* A "matrix" with one column is a one-axis family that happens to
+               carry a two-part label. Two columns of one thing each is more
+               clicks than the flat list, not fewer. */
+            if (groups.length < 2) { return flat; }
+            return { matrix: true, axes: axes, groups: groups };
+        },
+
+
         esc: function (s) {
             return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
                 return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
@@ -7247,6 +7307,119 @@ PosnicPro.sales.itemsMenu = {
             pop.style.left = Math.round(left) + 'px';
         },
 
+        /*
+         * The leaf rows: the things that actually go on the sale.
+         *
+         * One axis or two, the bottom of the tree is always a real item with a
+         * price, a stock figure and an id - so it is rendered in one place and
+         * both paths use it. Two renderers would drift, and the way they would
+         * drift is that one of them stops showing stock.
+         */
+        leafRows: function (leaves, currency) {
+            var esc = PosnicPro.sales.itemsMenu.variantPop.esc;
+            return leaves.map(function (leaf) {
+                var r = leaf.row;
+                var tracked = r.track_inventory === true || r.track_inventory === 'true';
+                var qty = Number(r.available_quantity) || 0;
+                /* Out of stock is shown, not hidden: a shop that sells the last
+                   one still wants the row there, and a missing row reads as a
+                   product that was never set up. */
+                var stock = tracked
+                    ? '<span class="vp-stock' + (qty <= 0 ? ' vp-stock-out' : '') + '">'
+                      + (qty <= 0 ? 'none left' : qty + ' left') + '</span>'
+                    : '';
+                return '<button type="button" class="vp-row" data-item-id="' + esc(r.id) + '">'
+                    + '<span class="vp-label">' + esc(leaf.label) + stock + '</span>'
+                    + '<span class="vp-price">' + esc(currency) + '&nbsp;'
+                    + (Number(r.selling_price) || 0).toFixed(2) + '</span>'
+                    + '</button>';
+            }).join('');
+        },
+
+        /*
+         * The two-level chooser, DOCKED rather than flown out.
+         *
+         * The ask was for a sub-menu, and this is one - it is just attached to
+         * its parent instead of hovering beside it, for three reasons that all
+         * bite at a counter.
+         *
+         *   A flown-out submenu has to be positioned, flipped at the screen
+         *   edge, and kept open while the pointer crosses the gap to it. That
+         *   is the diagonal-travel problem every desktop menu has, and it is
+         *   worse here because the panel is already anchored to a tile that may
+         *   itself be in the last column.
+         *
+         *   On a touch screen there is no hover to fly out ON, so the whole
+         *   mechanism would need a second, different interaction anyway - and
+         *   this till is sold for touch screens.
+         *
+         *   Docked, both levels are visible at once. A mouse can go straight to
+         *   the size it wants in one movement, because the sizes are already on
+         *   screen; nothing has to be summoned first.
+         *
+         * The columns are DERIVED FROM THE ROWS, so a sparse matrix is handled
+         * without knowing it is sparse: if Red was only ever stocked in S and M,
+         * Red shows S and M. Listing every theoretical combination would offer
+         * sizes that do not exist as items, and choosing one could only fail.
+         */
+        matrixHtml: function (shape, currency) {
+            var self = PosnicPro.sales.itemsMenu.variantPop;
+            var esc = self.esc;
+            var first = shape.groups.map(function (g, i) {
+                return '<button type="button" class="vp-axis' + (i === 0 ? ' is-active' : '') + '"'
+                    + ' data-axis-value="' + esc(g.value) + '">'
+                    + '<span>' + esc(g.value) + '</span>'
+                    + '<span class="vp-axis-count">' + g.members.length + '</span>'
+                    + '</button>';
+            }).join('');
+
+            return '<div class="vp-matrix">'
+                + '<div class="vp-col vp-col-axis">'
+                + '<div class="vp-col-head">' + esc(shape.axes[0]) + '</div>'
+                + '<div class="vp-col-body">' + first + '</div>'
+                + '</div>'
+                + '<div class="vp-col vp-col-leaf">'
+                + '<div class="vp-col-head">' + esc(shape.axes[1]) + '</div>'
+                + '<div class="vp-col-body vp-list" id="vp_leaves">'
+                + self.leafRows(shape.groups[0].members, currency)
+                + '</div>'
+                + '</div>'
+                + '</div>';
+        },
+
+        /*
+         * Move to another first-axis value.
+         *
+         * Deliberately NOT behind the touch guard that protects the leaf rows.
+         * That guard exists because a tap on the tile synthesises a click a
+         * moment later, and honouring it on a LEAF would add a random size to a
+         * real sale. Choosing a colour adds nothing and can be undone by
+         * choosing another, so guarding it would only mean the first tap after
+         * opening does nothing - which reads as a dead panel.
+         */
+        selectAxis: function (value) {
+            var self = PosnicPro.sales.itemsMenu.variantPop;
+            var shape = self._shape;
+            if (!shape || !shape.matrix) { return; }
+            var group = null;
+            shape.groups.forEach(function (g) { if (g.value === value) { group = g; } });
+            if (!group) { return; }
+
+            var body = document.getElementById('vp_leaves');
+            if (body) {
+                body.innerHTML = self.leafRows(group.members, PosnicPro.local.get('currencySign'));
+            }
+            var buttons = document.querySelectorAll('#variant_pop .vp-axis');
+            for (var i = 0; i < buttons.length; i++) {
+                buttons[i].classList.toggle('is-active',
+                    buttons[i].getAttribute('data-axis-value') === value);
+            }
+            /* The panel changes height when one colour has more sizes than
+               another, and it is positioned against a tile it must stay
+               attached to. */
+            self.place();
+        },
+
         open: function (groupId, tile, byTouch) {
             var self = PosnicPro.sales.itemsMenu.variantPop;
             var rows = (PosnicPro.sales.itemsMenu._families || {})[groupId] || [];
@@ -7268,35 +7441,30 @@ PosnicPro.sales.itemsMenu = {
             var parent = rows[0]['variant_parent_name']
                 || String(rows[0]['name'] || '').split(' / ')[0];
 
-            var list = '';
-            rows.forEach(function (r) {
-                var label = r.variant_value
-                    || String(r.name || '').split(' / ').slice(1).join(' / ') || r.name;
-                var tracked = r.track_inventory === true || r.track_inventory === 'true';
-                var qty = Number(r.available_quantity) || 0;
-                /* Out of stock is shown, not hidden: a shop that sells the last
-                   one still wants the row there, and a missing row reads as a
-                   product that was never set up. */
-                var stock = tracked
-                    ? '<span class="vp-stock' + (qty <= 0 ? ' vp-stock-out' : '') + '">' +
-                      (qty <= 0 ? 'none left' : qty + ' left') + '</span>'
-                    : '';
-                list += '<button type="button" class="vp-row" data-item-id="' + esc(r.id) + '">' +
-                    '<span class="vp-label">' + esc(label) + stock + '</span>' +
-                    '<span class="vp-price">' + esc(currency) + '&nbsp;' +
-                    (Number(r.selling_price) || 0).toFixed(2) + '</span>' +
-                    '</button>';
-            });
+            var shape = PosnicPro.sales.itemsMenu.variantPop.analyse(rows);
+            self._shape = shape;
 
             var el = document.createElement('div');
             el.id = 'variant_pop';
-            el.className = 'variant-pop';
+            el.className = 'variant-pop' + (shape.matrix ? ' variant-pop-matrix' : '');
             el.setAttribute('role', 'menu');
             el.setAttribute('aria-label', parent);
             el.innerHTML =
                 '<div class="vp-head">' + esc(parent) +
                 '<button type="button" class="vp-close" aria-label="Close">&times;</button></div>' +
-                '<div class="vp-list">' + list + '</div>';
+                (shape.matrix
+                    ? PosnicPro.sales.itemsMenu.variantPop.matrixHtml(shape, currency)
+                    : '<div class="vp-list">'
+                        + PosnicPro.sales.itemsMenu.variantPop.leafRows(
+                            rows.map(function (r) {
+                                return {
+                                    label: r.variant_value
+                                        || String(r.name || '').split(' / ').slice(1).join(' / ')
+                                        || r.name,
+                                    row: r
+                                };
+                            }), currency)
+                        + '</div>');
             document.body.appendChild(el);
 
             self._gid = groupId;
@@ -7334,7 +7502,15 @@ PosnicPro.sales.itemsMenu = {
              */
             document.addEventListener('pointerover', function (e) {
                 if (e.pointerType !== 'mouse') { return; }
-                if (inPop(e.target)) { self.cancelTimers(); return; }
+                if (inPop(e.target)) {
+                    self.cancelTimers();
+                    /* Pointing at a colour shows its sizes, the way a menu
+                       works - no click needed to look. Nothing is added by
+                       pointing, here or anywhere else in this panel. */
+                    var axis = e.target.closest ? e.target.closest('#variant_pop .vp-axis') : null;
+                    if (axis) { self.selectAxis(axis.getAttribute('data-axis-value')); }
+                    return;
+                }
 
                 var tile = tileOf(e.target);
                 if (tile) {
@@ -7397,6 +7573,14 @@ PosnicPro.sales.itemsMenu = {
 
             /* Row selection, delegated for the same reason as the rest. */
             document.addEventListener('click', function (e) {
+                var axis = e.target && e.target.closest
+                    ? e.target.closest('#variant_pop .vp-axis') : null;
+                if (axis) {
+                    /* The only route on a touch screen, which has no hover to
+                       read intent from. */
+                    self.selectAxis(axis.getAttribute('data-axis-value'));
+                    return;
+                }
                 var row = e.target && e.target.closest ? e.target.closest('#variant_pop .vp-row') : null;
                 if (row) {
                     /* A tap on the tile synthesises a click here a moment
