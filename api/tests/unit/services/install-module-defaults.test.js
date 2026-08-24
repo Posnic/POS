@@ -132,15 +132,16 @@ describe('a new shop’s feature switches', () => {
  */
 describe('the backfill agrees with what a new shop is created with', () => {
   const path = require('path');
-  const backfill = require(path.join(__dirname, '..', '..', '..', '..',
-    'scripts', 'module-defaults-backfill.js'));
+  const backfill = require(
+    path.join(__dirname, '..', '..', '..', '..', 'scripts', 'module-defaults-backfill.js')
+  );
 
   test('a shop with no history is backfilled to the new-shop defaults', () => {
     const fresh = InstallService.newShopModuleDefaults({ demoData: false });
     const plan = backfill.planBranch({}, {}, backfill.FEATURES);
 
     for (const row of plan) {
-      if (!(row.key in fresh)) continue;   // not something a new shop is given
+      if (!(row.key in fresh)) continue; // not something a new shop is given
       expect([row.key, row.value]).toEqual([row.key, fresh[row.key]]);
     }
   });
@@ -152,9 +153,7 @@ describe('the backfill agrees with what a new shop is created with', () => {
      * nobody - so the two populations diverge from the day it is added.
      */
     const fresh = InstallService.newShopModuleDefaults({ demoData: true });
-    const unknown = backfill.FEATURES
-      .map((f) => f.key)
-      .filter((k) => !(k in fresh));
+    const unknown = backfill.FEATURES.map((f) => f.key).filter((k) => !(k in fresh));
     expect(unknown).toEqual([]);
   });
 });
