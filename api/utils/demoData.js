@@ -279,6 +279,65 @@ const DEMO_PACKS = {
   hardware: hardwareDemoData,
 };
 
+/*
+ * The packs a shop can be offered, in the order a chooser should list them.
+ *
+ * SEPARATE FROM DEMO_PACK_BY_TYPE on purpose. That map is an INPUT vocabulary -
+ * every word a signup form, an onboarding answer or a Gateway payload might use
+ * for a trade, and several of them point at the same pack ("kirana", "grocery"
+ * and "retail" are all the supermarket set). Showing that map to somebody
+ * choosing an industry would offer them the same catalogue five times under
+ * five names.
+ *
+ * This is the OUTPUT list: one entry per distinct catalogue, with the words a
+ * shopkeeper would use for their own trade. A pack added to DEMO_PACKS without
+ * a line here fails the test rather than quietly never being offered.
+ */
+const DEMO_PACK_LABELS = {
+  supermarket: 'Supermarket, kirana & grocery',
+  cafe: 'Cafe & restaurant',
+  bakery: 'Bakery',
+  iceCream: 'Ice cream parlour',
+  textile: 'Clothing & textiles',
+  electrical: 'Electronics & electrical',
+  hardware: 'Hardware & tools',
+};
+
+/*
+ * What a chooser needs to draw itself: the key to send back, the words to show,
+ * and how much arrives if it is picked.
+ *
+ * The counts are COUNTED, never written down. A hand-maintained "24 products"
+ * is right on the day it is typed and wrong from the next edit onwards, and
+ * nothing about a stale number looks wrong.
+ */
+function listDemoPacks() {
+  return Object.keys(DEMO_PACK_LABELS).map((key) => {
+    const pack = DEMO_PACKS[key] || { categories: [], products: [] };
+    return {
+      key,
+      label: DEMO_PACK_LABELS[key],
+      categories: (pack.categories || []).length,
+      products: (pack.products || []).length,
+      /* Photographs are attached from the manifest at load, so this says what
+         the shop will actually see rather than what the catalogue hoped for. */
+      photos: (pack.products || []).filter((p) => p && p.image).length,
+    };
+  });
+}
+
+/*
+ * Is this a pack a caller may ask for by name?
+ *
+ * getDemoDataByType falls back to supermarket for anything it does not know,
+ * which is right when the input is a trade somebody typed - but wrong when it
+ * is a deliberate choice from a list. Silently installing groceries into a
+ * bakery because a key was misspelt is a bad answer delivered confidently.
+ */
+function isDemoPack(key) {
+  return Object.prototype.hasOwnProperty.call(DEMO_PACK_LABELS, String(key || ''));
+}
+
 function getDemoDataByType(businessType) {
   const key = String(businessType == null ? '' : businessType)
     .trim()
@@ -311,7 +370,10 @@ function getDemoDataByType(businessType) {
  * shop being created. It costs the pictures, nothing else.
  */
 function attachImages() {
-  let credits = {};
+  /* Declared without a value: the catch below returns, so the only way past
+     this point is with the manifest assigned. Seeding it with {} first is an
+     assignment nothing ever reads, which eslint reports as an error. */
+  let credits;
   try {
     // eslint-disable-next-line global-require
     credits = require('../../frontend/static/images/demo/credits.json');
@@ -348,6 +410,9 @@ attachImages();
 
 module.exports = {
   getDemoDataByType,
+  listDemoPacks,
+  isDemoPack,
+  DEMO_PACK_LABELS,
   attachImages,
   iceCreamDemoData,
   cafeDemoData,
