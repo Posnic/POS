@@ -45,13 +45,62 @@ const reseed = (() => {
  * When it runs
  * ------------------------------------------------------------------ */
 
-test('it runs only when the switch has just been turned ON', () => {
+test('it acts only when the switch actually MOVED', () => {
   /*
    * Calling this on every features save would put a progress bar in front of
-   * somebody who changed the tax switch, which is its own small insult.
+   * somebody who changed the tax switch, which is its own small insult. Both
+   * directions live behind the same guard now: seed on off->on with nothing
+   * there, and - since the owner made off a deletion - purge on on->off, but
+   * only when the person consented at the moment of unchecking.
    */
-  const fn = blockAt(settingsJs, 'PosnicPro.settings.restoreDemoDataIfEmpty = function ()');
-  assert.match(fn, /if \(!on \|\| was !== false\) \{ return; \}/, 'it fires for states other than off-to-on');
+  const fn = blockAt(settingsJs, 'PosnicPro.settings.syncDemoDataAfterSave = function (nowOnArg)');
+  assert.match(fn, /if \(!on \|\| was !== false\) \{ return; \}/, 'the seed fires for states other than off-to-on');
+  assert.match(fn, /if \(!on && was !== false && PosnicPro\.settings\._demoPurgeArmed\)/,
+    'the purge must need BOTH the on->off transition AND the consent');
+});
+
+test('switching off deletes only with consent, and a failed save deletes nothing', () => {
+  /*
+   * Owner: "when demo data switched off, existing data needs to deleted with
+   * confirmation. just ask user concent." The consent ARMS the deletion; the
+   * deletion runs only after the save SUCCEEDS - both call sites sit inside
+   * success handlers - so a save that failed cannot delete data whose switch
+   * is, as far as the server knows, still on. Cancel re-checks the box and
+   * leaves no trace.
+   */
+  const confirm = blockAt(settingsJs, 'PosnicPro.settings.confirmDemoOff = function (checkbox, alsoRevert)');
+  assert.match(confirm, /_demoPurgeArmed = true/);
+  assert.match(confirm, /prop\('checked', true\)/);
+  assert.match(confirm, /\}, function \(\) \{/, 'SweetAlert v6 rejects on cancel - both handlers required');
+  // the words the owner asked for: what is removed, and what is kept
+  assert.match(confirm, /products, sales, quotes, customers and suppliers/);
+  assert.match(confirm, /kept/);
+
+  const sync = blockAt(settingsJs, 'PosnicPro.settings.syncDemoDataAfterSave = function (nowOnArg)');
+  assert.match(sync, /PosnicPro\.delete\(\{ url: 'items\/demo'/);
+});
+
+test('the demo switch asks at the moment of unchecking, in every doorway', () => {
+  /* The Features card (which #fp_master mirrors) and the welcome's own
+     toggle. A doorway without the question is a doorway that deletes
+     silently. */
+  assert.match(settingsJs, /this\.id === 'module_demo_data_enable' && !this\.checked/);
+  assert.match(settingsJs, /confirmDemoOff\(this, \['#fp_master'\]\)/);
+  assert.match(settingsJs, /'#fi_module_demo_data_enable', function/);
+});
+
+test('the Demo Data page has a reset button that reuses the guarded swap', () => {
+  /* "inside have reset button to have fresh data again withing same
+     industry" - the existing delete-then-seed run pointed at the installed
+     trade, so it inherits every protection that flow has. */
+  const reset = blockAt(settingsJs, 'reset: function ()');
+  assert.match(reset, /self\._current \|\| \$\('#demo_pack_choice'\)\.val\(\)/);
+  assert.match(reset, /self\._run\(key\)/);
+  assert.match(settingsJs, /'#demo_pack_reset', function/);
+  /* Enabled only when samples are installed: a shop with none has nothing to
+     refresh, and a Reset that "works" there is the install button wearing a
+     misleading name. Found surviving mutation. */
+  assert.match(settingsJs, /\$\('#demo_pack_reset'\)\.prop\('disabled', !self\._current\)/);
 });
 
 test('the previous state is captured when settings load', () => {
@@ -65,7 +114,7 @@ test('"already here" is not reported as a failure', () => {
    * there. The shop asked to see the samples and is about to - telling them
    * something went wrong would be false.
    */
-  const fn = blockAt(settingsJs, 'PosnicPro.settings.restoreDemoDataIfEmpty = function ()');
+  const fn = blockAt(settingsJs, 'PosnicPro.settings.syncDemoDataAfterSave = function (nowOnArg)');
   assert.match(fn, /\/already\/i\.test/, 'an already-seeded shop is shown an error');
 });
 

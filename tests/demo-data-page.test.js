@@ -184,7 +184,7 @@ test('the progress bar says which work is running', () => {
    * stages of that job. Showing "Adding products…" while rows are being
    * REMOVED is a bar describing work other than the work being done.
    */
-  const prog = between(settingsJs, 'PosnicPro.settings.demoProgress = {', 'PosnicPro.settings.restoreDemoDataIfEmpty');
+  const prog = between(settingsJs, 'PosnicPro.settings.demoProgress = {', 'PosnicPro.settings.syncDemoDataAfterSave');
   assert.match(prog, /open: function \(title\)/);
   assert.match(prog, /step: function \(label\)/);
   assert.match(prog, /_scripted = false/);
