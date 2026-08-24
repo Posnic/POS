@@ -1574,7 +1574,7 @@ if ($wrapper.length) {
         }, function (response) {
             if (response.type === 'success') {
                 PosnicPro.settings._featuresDirty = false;
-                PosnicPro.settings.restoreDemoDataIfEmpty();
+                PosnicPro.settings.syncDemoDataAfterSave();
                 PosnicPro.alert('success', 'Features saved for ' + branchLabel);
             } else {
                 PosnicPro.alert(response.type, response.message);
@@ -1684,7 +1684,7 @@ if ($wrapper.length) {
         PosnicPro.put(params, function (response) {
             if (response.type === 'success') {
                 PosnicPro.settings._featuresDirty = false;
-                PosnicPro.settings.restoreDemoDataIfEmpty();
+                PosnicPro.settings.syncDemoDataAfterSave();
                 let htmlView = $('#footer_print').text();
                 $('.footer-content').html(htmlView);
                 let htmlHeaderView = $('#header_print').text();
@@ -4746,6 +4746,13 @@ $('#kiosk_payment_form').on('submit', function (e) {
 $(document).on('change', '#v-pills-modules .module-card-head input.custom-control-input', function () {
     PosnicPro.settings._featuresDirty = true;
     PosnicPro.settings.refreshModuleCards();
+    /* Demo Data is the one switch whose OFF is a deletion, so it is the one
+       switch that asks. Only when it was genuinely on - re-unchecking a
+       switch that was already off deletes nothing and asks nothing. */
+    if (this.id === 'module_demo_data_enable' && !this.checked
+        && PosnicPro.settings._demoWasOn !== false) {
+        PosnicPro.settings.confirmDemoOff(this, ['#fp_master']);
+    }
 });
 // Unsaved feature changes get a real decision (owner upgrade from the
 // toast): Stay pulls you back with every selection intact; Leave
@@ -5363,7 +5370,7 @@ PosnicPro.features = {
         ['module_cashbook_enable', 'Cash book', 'Expenses and cash movements beside sales.'],
         ['quick_sale_enable', 'Quick sale', 'Type an amount, take payment - the busy-counter pad on the sale screen.'],
         ['module_recyclebin_enable', 'Recycle bin', 'Deleted records are kept and restorable.'],
-        ['module_demo_data_enable', 'Demo data', 'The sample products your shop started with.'],
+        ['module_demo_data_enable', 'Demo data', 'Sample products, sales and people to try the till with. Off removes them (it asks first).'],
         ['module_themes_enable', 'Themes', 'Change how the till looks.']
     ],
     _blob: function () {
@@ -5441,26 +5448,34 @@ PosnicPro.features = {
         var acl = PosnicPro.userACL;
         if (!(acl && acl.setting && acl.setting.write === true)) { return; }
         if (!$('#feature_intro_modal').length) { return; }
+        /*
+         * The Features page first, the welcome on top of it.
+         *
+         * Owner, more than once: "until skip you keep showing the features as
+         * first page." The dialog opens OVER the features grid, so whichever
+         * way it closes, the person is standing in front of the switches it
+         * was talking about - not on a dashboard with no idea where those
+         * switches went.
+         */
+        if (window.location.hash.slice(2) !== 'settings/modules') {
+            hasher.setHash('settings/modules');
+        }
         PosnicPro.features.renderIntro();
         $('#feature_intro_modal').modal('show');
-        // Seen is seen, however it closes - this must never nag.
+        /*
+         * Only a DECISION ends the welcome - Save, or the explicit "Not now".
+         *
+         * The first design treated any close as "asked" so it would never
+         * nag. The owner overruled it, and he is right about who this is for:
+         * a brand-new user who Escapes a dialog they did not read has not
+         * learned that features are switchable, which is the entire point. So
+         * a casual dismissal - Esc, a stray click - writes NOTHING, and the
+         * welcome returns on the next login, over the Features page, until
+         * the person either saves or says "Not now" on purpose.
+         */
         $('#feature_intro_modal').one('hidden.bs.modal', function () {
+            if (!PosnicPro.features._decided) { return; }
             PosnicPro.local.set(PosnicPro.features._introSeenKey(), 'true');
-            /* Closing without choosing still counts as having been asked, so
-               the flag is written on the shop too - otherwise the next till
-               asks again. Best effort: if it fails the welcome simply returns,
-               which is the right outcome for a shop that was never recorded as
-               having seen it. */
-            if (!PosnicPro.features._savedIntro) {
-                PosnicPro.put({
-                    url: 'settings/group/features',
-                    data: JSON.stringify({ first_run_done: 'true' })
-                }, function () {
-                    var b = PosnicPro.features._blob();
-                    b.first_run_done = true;
-                    PosnicPro.local.set('general_settings', JSON.stringify(b));
-                }, function () { /* asked again next time, deliberately */ });
-            }
         });
     },
     /*
@@ -5612,6 +5627,7 @@ PosnicPro.features = {
                 });
                 blob.first_run_done = true;
                 PosnicPro.features._savedIntro = true;
+                PosnicPro.features._decided = true;
                 PosnicPro.local.set('general_settings', JSON.stringify(blob));
                 if (PosnicPro.settings && PosnicPro.settings.applyModuleNav) { PosnicPro.settings.applyModuleNav(); }
                 else if (PosnicPro.applyModuleSidebar) { PosnicPro.applyModuleSidebar(); }
@@ -5624,6 +5640,14 @@ PosnicPro.features = {
                     PosnicPro.features._tourAfterSave = false;
                     setTimeout(function () { PosnicPro.tour.firstRun(); }, 400);
                 }
+                /* The welcome saves the demo switch too, so its off->on and
+                   consented off both act here - state passed explicitly,
+                   because the settings form's checkbox is not this dialog. */
+                PosnicPro.settings.syncDemoDataAfterSave(
+                    $('#fi_module_demo_data_enable').length
+                        ? $('#fi_module_demo_data_enable').is(':checked')
+                        : undefined
+                );
             } else {
                 PosnicPro.alert(response.type, response.message);
             }
@@ -5634,6 +5658,31 @@ PosnicPro.features = {
         });
     }
 };
+/*
+ * "Not now" is a decision; it writes the same flag a save writes, minus the
+ * switches. Anything else that closes the dialog decides nothing.
+ */
+$(document).on('click', '#feature_intro_skip', function () {
+    PosnicPro.features._decided = true;
+    PosnicPro.put({
+        url: 'settings/group/features',
+        data: JSON.stringify({ first_run_done: 'true' })
+    }, function () {
+        var b = PosnicPro.features._blob();
+        b.first_run_done = true;
+        PosnicPro.local.set('general_settings', JSON.stringify(b));
+    }, function () {
+        /* The write failing means the shop was never recorded as asked, and
+           the welcome returning is the correct outcome for that. */
+        PosnicPro.features._decided = false;
+    });
+});
+$(document).on('change', '#fi_module_demo_data_enable', function () {
+    /* The welcome's own demo switch: same consent, same rule. The blob is
+       the truth here - the settings form may not be primed yet. */
+    var blobOn = PosnicPro.features._blob().module_demo_data_enable !== false;
+    if (!this.checked && blobOn) { PosnicPro.settings.confirmDemoOff(this); }
+});
 $(document).on('click', '#feature_intro_save', function () { PosnicPro.features.saveIntro(); });
 $(document).on('click', '#feature_intro_tour', function () {
     PosnicPro.features._tourAfterSave = true;
@@ -6006,8 +6055,10 @@ PosnicPro.settings.featureInfo = {
            should able to change the industry and install the different data.
            so keep dedicated page for that." */
         section: '#fc_demodata',
-        tagline: 'The sample products you started with, out of the way in one click.',
-        about: 'Every new shop arrives with a few sample products so the till can be tried before there is any real stock in it. Once your own catalogue is in, they are only clutter. Switching this off hides them everywhere at once - the item list, the sale screen, search. Nothing is deleted, so switching it back on brings them straight back, and anything you have edited or already sold stays put either way.',
+        offNote: 'Switching off asks for confirmation, then removes the sample records. Your own work - anything edited, sold or received - is always kept.',
+        tagline: 'Sample data you can remove, reset, or swap for another trade.',
+        about: 'Every new shop arrives with sample products so the till can be tried before there is any real stock in it. Once your own catalogue is in, switch this off: it asks first, then removes the samples - products, sales, quotes, customers and suppliers. Anything you edited into a real product or already sold is kept. The Reset button below installs a fresh set for the same trade, and the chooser swaps trades.',
+
         benefits: [
             'One switch clears the samples out of the whole till',
             'Nothing is destroyed, so it is safe to try',
@@ -6277,7 +6328,12 @@ PosnicPro.settings.openFeaturePage = function ($card) {
         infoHtml += '<div class="q-label">How it works</div><ol class="fd-list">'
             + info.how.map(function (h) { return '<li>' + esc(h) + '</li>'; }).join('') + '</ol>';
     }
-    infoHtml += '<p class="text-muted mt-3 mb-0" style="font-size:13px;">Switching off never deletes anything - switch back on and everything returns.</p>';
+    /* The generic line is TRUE for every feature except Demo Data, whose off
+       is now a consented deletion - a footer promising "never deletes" under
+       a switch that deletes is exactly the kind of lie a new user remembers. */
+    infoHtml += '<p class="text-muted mt-3 mb-0" style="font-size:13px;">'
+        + esc(info.offNote || 'Switching off never deletes anything - switch back on and everything returns.')
+        + '</p>';
     $('#fp_info').html(infoHtml);
 
     // adopt ONLY this feature's settings section from the store
@@ -6520,6 +6576,34 @@ PosnicPro.settings.demoPacks = {
         if (!self._current && self._packs.length) { $sel.val(self._packs[0].key); }
         self.describe();
         $('#demo_pack_install').prop('disabled', !self._packs.length);
+        /* Reset needs something to reset: a shop with no samples installed
+           has nothing to refresh, and the install button is its answer. */
+        $('#demo_pack_reset').prop('disabled', !self._current);
+    },
+
+    /*
+     * Fresh samples, same trade.
+     *
+     * Owner: "inside have reset button to have fresh data again withing same
+     * industry." A shop that has sold and edited its way through the demo
+     * wants the showroom state back without hunting the chooser: this is the
+     * existing delete-then-seed run pointed at the trade already installed -
+     * so it inherits every protection that flow has (sold, received and
+     * edited records refused and named; seed only after the purge).
+     */
+    reset: function () {
+        var self = PosnicPro.settings.demoPacks;
+        var key = self._current || $('#demo_pack_choice').val();
+        if (!key) { return; }
+        swal({
+            title: 'Reset the sample data?',
+            text: 'The current samples are removed and a fresh set for the same trade is installed. Anything you have edited, sold or received yourself is kept.',
+            showCancelButton: true,
+            confirmButtonClass: 'btn btn-primary',
+            cancelButtonClass: 'btn btn-danger m-l-10',
+            confirmButtonText: 'Reset the samples',
+            cancelButtonText: 'Cancel'
+        }).then(function () { self._run(key); }, function () { });
     },
 
     describe: function () {
@@ -6627,19 +6711,83 @@ $(document).on('change', '#demo_pack_choice', function () {
 $(document).on('click', '#demo_pack_install', function () {
     PosnicPro.settings.demoPacks.install();
 });
+$(document).on('click', '#demo_pack_reset', function () {
+    PosnicPro.settings.demoPacks.reset();
+});
 
 /*
- * Only when the switch has just been turned ON, and only if there is nothing
- * there.
+ * The consent that makes switching Demo Data OFF a deletion.
  *
- * The server refuses a second seed, so a stray call is harmless - but calling
- * it on every features save would put a progress bar in front of somebody who
- * changed the tax switch, which is its own small insult.
+ * Owner: "when demo data switched off, existing data needs to deleted with
+ * confirmation. just ask user concent... existing sales, items, purchase and
+ * etc created for demo purpose will be removed. make sure that."
+ *
+ * Asked at the MOMENT of unchecking, not at save: by save time the switch is
+ * one of a dozen and the question would read as noise about all of them.
+ * Cancel puts the switch back exactly as it was - a question dismissed must
+ * leave no trace. Confirm arms the deletion, and the deletion itself only
+ * runs AFTER the save succeeds: a failed save must never delete data whose
+ * switch is, as far as the server knows, still on.
+ *
+ * The removal is the server's careful purge, unchanged: anything sold,
+ * received or edited by the shop is refused and reported by name - a sample
+ * somebody turned into a real product is their work, and a sold sample is
+ * referenced by a real transaction. Whatever survives stays hidden by the
+ * read filter while the switch is off, so refusal never means reappearing.
  */
-PosnicPro.settings.restoreDemoDataIfEmpty = function () {
-    var on = $('#module_demo_data_enable').is(':checked');
+PosnicPro.settings.confirmDemoOff = function (checkbox, alsoRevert) {
+    swal({
+        title: 'Switch off Demo Data and remove the samples?',
+        text: 'The sample records created for the demo - products, sales, quotes, customers and suppliers - will be removed. Anything you have edited, sold or received yourself is kept.',
+        showCancelButton: true,
+        confirmButtonClass: 'btn btn-danger',
+        cancelButtonClass: 'btn btn-light m-l-10',
+        confirmButtonText: 'Switch off and remove',
+        cancelButtonText: 'Keep the samples'
+        /* SweetAlert v6: Cancel REJECTS - without the second handler it is an
+           unhandled rejection on a screen where nothing happened. */
+    }).then(function () {
+        PosnicPro.settings._demoPurgeArmed = true;
+    }, function () {
+        $(checkbox).prop('checked', true);
+        (alsoRevert || []).forEach(function (sel) { $(sel).prop('checked', true); });
+        PosnicPro.settings.refreshModuleCards();
+    });
+};
+
+/*
+ * After a successful features save: seed on off->on with nothing there, and
+ * DELETE on on->off when the person consented. Both directions live in one
+ * place because they share the same guard - only when the switch actually
+ * moved, never on every save, or a tax change puts a progress bar in front
+ * of somebody who asked for nothing.
+ */
+PosnicPro.settings.syncDemoDataAfterSave = function (nowOnArg) {
+    var on = nowOnArg !== undefined ? !!nowOnArg : $('#module_demo_data_enable').is(':checked');
     var was = PosnicPro.settings._demoWasOn;
     PosnicPro.settings._demoWasOn = on;
+
+    if (!on && was !== false && PosnicPro.settings._demoPurgeArmed) {
+        PosnicPro.settings._demoPurgeArmed = false;
+        PosnicPro.settings.demoProgress.open('Removing the sample data');
+        PosnicPro.settings.demoProgress.step('Removing sample sales, quotes and people…');
+        PosnicPro.delete({ url: 'items/demo', data: JSON.stringify({}) }, function (response) {
+            /* The message names what was removed and what was kept - the kept
+               list is the whole answer to "why is this product still here". */
+            PosnicPro.settings.demoProgress.close(response.message, response.type === 'success');
+            if (PosnicPro.sales && PosnicPro.sales.itemCache) { PosnicPro.sales.itemCache.clear(); }
+        }, function (xhr) {
+            var resp = {};
+            try { resp = JSON.parse(xhr.responseText); } catch (e) { /* plain */ }
+            var msg = resp.message || '';
+            /* Nothing there to remove is the outcome asked for, not a fault. */
+            var harmless = /nothing|no sample|not found/i.test(msg);
+            PosnicPro.settings.demoProgress.close(harmless ? null : (msg || 'Could not remove the sample data'), harmless);
+        });
+        return;
+    }
+
+    PosnicPro.settings._demoPurgeArmed = false;
     if (!on || was !== false) { return; }
 
     PosnicPro.settings.demoProgress.open();

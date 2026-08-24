@@ -2472,7 +2472,7 @@
                                                     <label class="custom-control-label" for="module_demo_data_enable"></label>
                                                 </div>
                                             </div>
-                                            <p class="module-desc">The sample products your shop started with. Off hides them everywhere. Nothing is deleted, so switching it back on brings them straight back - and anything you have edited or already sold stays either way.</p>
+                                            <p class="module-desc">The sample products your shop started with. Switching off asks first, then removes the samples - products, sales, quotes, customers, suppliers. Anything you have edited or already sold is kept. Switch back on for a fresh set.</p>
                                         </div>
 
                                         <div class="module-card">
@@ -2693,6 +2693,12 @@
                                             </div>
                                             <button type="button" class="btn btn-sm btn-primary" id="demo_pack_install" disabled>
                                                 <lang class="lang_demopack_install">Install this trade's samples</lang>
+                                            </button>
+                                            <!-- Owner: "inside have reset button to have fresh data again
+                                                 withing same industry." Same delete-then-seed machinery as
+                                                 changing trade, pointed at the trade already installed. -->
+                                            <button type="button" class="btn btn-sm btn-outline-secondary ml-2" id="demo_pack_reset" disabled>
+                                                <lang class="lang_demopack_reset">Reset to fresh samples</lang>
                                             </button>
                                             <p class="text-muted mt-2 mb-0" style="font-size:12.5px;">
                                                 <lang class="lang_demopack_note">Only sample products are replaced.

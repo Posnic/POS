@@ -111,13 +111,38 @@ test('a cashier is never shown switches they cannot save', () => {
     assert.match(gate, /acl\.setting\.write === true/);
 });
 
-test('dismissing counts as being asked, on the shop as well as the browser', () => {
-    const gate = block(settingsCode, 'maybeShowIntro:', 'renderIntro:');
-    // Otherwise the next till in the same shop asks again.
-    assert.match(gate, /hidden\.bs\.modal/);
-    assert.match(gate, /local\.set\(PosnicPro\.features\._introSeenKey\(\), 'true'\)/);
-    assert.match(gate, /settings\/group\/features/);
-    assert.match(gate, /first_run_done: 'true'/);
+test('only a DECISION ends the welcome - a casual dismissal brings it back', () => {
+    /*
+     * Owner, escalating: "until skip you keep showing the features as first
+     * page." The first design marked any close as asked; he overruled it,
+     * and he is right about who this screen is for - a brand-new user who
+     * Escapes a dialog they did not read has not learned that features are
+     * switchable, which is the entire point. Save and the explicit "Not now"
+     * write the flags; Esc and a stray click write NOTHING, and the welcome
+     * returns next login.
+     */
+    const gate = block(settingsCode, 'maybeShowIntro:', 'runningContext:');
+    assert.match(gate, /if \(!PosnicPro\.features\._decided\) \{ return; \}/,
+        'the dismiss handler must write nothing without a decision');
+    assert.ok(!/hidden\.bs\.modal'[\s\S]{0,400}settings\/group\/features/.test(gate),
+        'the dismiss handler must not write the server flag any more');
+
+    // The explicit Skip is the decision that writes both flags.
+    const skip = block(settingsCode, "'#feature_intro_skip', function", "'#fi_module_demo_data_enable'");
+    assert.match(skip, /_decided = true/);
+    assert.match(skip, /settings\/group\/features/);
+    assert.match(skip, /first_run_done: 'true'/);
+    // And a failed write un-decides, so the shop is asked again - correct
+    // for a shop that was never recorded as asked.
+    assert.match(skip, /_decided = false/);
+});
+
+test('the welcome opens OVER the features page', () => {
+    /* "first the first time login or until skip you keep showing the
+       features as first page" - whichever way the dialog closes, the person
+       is standing in front of the switches it was talking about. */
+    const gate = block(settingsCode, 'maybeShowIntro:', 'runningContext:');
+    assert.match(gate, /hasher\.setHash\('settings\/modules'\)/);
 });
 
 test('saving writes the flag in the same request as the switches', () => {
