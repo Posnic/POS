@@ -7,7 +7,7 @@ PosnicPro.gstrTwob = {
         $('.page-title-box,#gstr_twob').show();
         $('#v-pills-report-tab,#gstrtwob_report_page').addClass('active');
         $('#v-pills-report').addClass('show active');
-        var timeZone = PosnicPro.local.get('timezone');
+        var timeZone = PosnicPro.timeZone();
         var dateTime = new Date();
         var currentDateTimeCentralTimeZone = new Date(dateTime.toLocaleString('en-US', {timeZone: timeZone}));
 

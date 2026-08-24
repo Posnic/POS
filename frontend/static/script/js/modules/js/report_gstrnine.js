@@ -309,7 +309,7 @@ PosnicPro.gstrNine = {
         $('.page-title-box,#gstrNine').show();
         $('#v-pills-report-tab,#gstrnine_report_page').addClass('active');
         $('#v-pills-report').addClass('show active');
-        var timeZone = PosnicPro.local.get('timezone');
+        var timeZone = PosnicPro.timeZone();
         var dateTime = new Date();
         var currentDateTimeCentralTimeZone = new Date(dateTime.toLocaleString('en-US', {timeZone: timeZone}));
         $('#gst_form_nine_daterange_one').datepicker({

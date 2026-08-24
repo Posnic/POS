@@ -173,7 +173,7 @@ PosnicPro.receivings.view = {
 
             var date = data.items_return[j].returnArray['returnDate'];
             var timeStamp_value = parseInt(date.$date.$numberLong);
-            var timeZone = PosnicPro.local.get('timezone');
+            var timeZone = PosnicPro.timeZone();
             var DateFormat = moment(timeStamp_value).tz(timeZone).format('YYYY/MM/DD LT');
             var updateDate = PosnicPro.convertDate(DateFormat);
 

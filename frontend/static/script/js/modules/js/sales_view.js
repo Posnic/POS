@@ -356,7 +356,7 @@ PosnicPro.sales.view = {
         for (var j = 0; j < length_return; j++) {
             var date = data.items_return[j].returnArray['returnDate'];
             var timeStamp_value = parseInt(date.$date.$numberLong);
-            var timeZone = PosnicPro.local.get('timezone');
+            var timeZone = PosnicPro.timeZone();
             var DateFormat = moment(timeStamp_value).tz(timeZone).format('YYYY/MM/DD LT');
             var updateDate = PosnicPro.convertDate(DateFormat);
 
@@ -817,7 +817,7 @@ PosnicPro.sales.view = {
                     for (var i = 0; i < response.data.items_return.length; i++) {
                         var date = response.data.items_return[i].returnArray['returnDate'];
                         var timeStamp_value = parseInt(date.$date.$numberLong);
-                        var timeZone = PosnicPro.local.get('timezone');
+                        var timeZone = PosnicPro.timeZone();
                         var DateFormat = moment(timeStamp_value).tz(timeZone).format('YYYY/MM/DD LT');
                         var updateDate = PosnicPro.convertDate(DateFormat);
                         var head = '<thead><tr><td colspan="7"></td></tr><tr style="background:#e1e6f5;">' +

@@ -2210,7 +2210,7 @@ if ($("#sale_quick_edit").is(":checked")) {
                 options += '<option value="' + dataItem.text + '" data-timezone-name="' + dataItem.text + '">' + dataItem.value + ' </option>';
                 timezoneSelect.append(options).trigger('change');
             });
-            let timezone = PosnicPro.local.get('timezone');
+            let timezone = PosnicPro.timeZone();
             timezoneSelect.val(timezone).trigger('change.select2');
         }, function (xhr) {
             var response = jQuery.parseJSON(xhr.responseText);
