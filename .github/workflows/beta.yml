@@ -205,6 +205,11 @@ jobs:
     name: Publish test build
     needs: [version, build]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+      artifact-metadata: write
     steps:
       - uses: actions/checkout@v7
       - uses: actions/download-artifact@v8
@@ -219,6 +224,13 @@ jobs:
           cd release
           sha256sum $(ls | grep -vE 'latest.*\.yml$|\.blockmap$') > SHA256SUMS.txt
           echo "Publishing:"; ls -lh
+
+      # Test builds are downloadable executables too. Attest only the exact
+      # package subjects already named by the published checksum file.
+      - name: Attest test-build artifact provenance
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-checksums: release/SHA256SUMS.txt
 
       - uses: softprops/action-gh-release@v3
         with:

@@ -7,6 +7,14 @@ const ROOT = path.join(__dirname, '..');
 const README = fs.readFileSync(path.join(ROOT, 'README.md'), 'utf8');
 const GUIDE = fs.readFileSync(path.join(ROOT, 'docs', 'VERIFY_RELEASE.md'), 'utf8');
 const RUNBOOK = fs.readFileSync(path.join(ROOT, 'docs', 'RELEASE_RUNBOOK.md'), 'utf8');
+const RELEASE_WORKFLOW = fs.readFileSync(path.join(ROOT, '.github', 'workflows', 'release.yml'), 'utf8');
+const BETA_WORKFLOW = fs.readFileSync(path.join(ROOT, '.github', 'workflows', 'beta.yml'), 'utf8');
+
+function publisherJob(workflow) {
+  const start = workflow.indexOf('\n  publish:');
+  assert.notStrictEqual(start, -1, 'workflow has no publish job');
+  return workflow.slice(start);
+}
 
 test('the install path links to the public verification procedure', () => {
   assert.match(README, /\[release verification guide\]\(docs\/VERIFY_RELEASE\.md\)/i);
@@ -29,6 +37,23 @@ test('the guide binds the SBOM to both artifact hash and filename', () => {
 test('provenance is verified for the artifact and SBOM separately', () => {
   assert.match(GUIDE, /gh attestation verify "\$artifact" -R Posnic\/POS/);
   assert.match(GUIDE, /gh attestation verify "\$artifact\.cdx\.json" -R Posnic\/POS/);
+});
+
+test('release publishers attest the exact checksum subjects before upload', () => {
+  for (const workflow of [RELEASE_WORKFLOW, BETA_WORKFLOW]) {
+    const publisher = publisherJob(workflow);
+    assert.match(publisher, /id-token:\s*write/);
+    assert.match(publisher, /attestations:\s*write/);
+    assert.match(publisher, /artifact-metadata:\s*write/);
+    assert.match(publisher, /uses:\s*actions\/attest@[0-9a-f]{40}\s+# v4\.2\.2/);
+    assert.match(publisher, /subject-checksums:\s*release\/SHA256SUMS\.txt/);
+
+    const checksum = publisher.indexOf('sha256sum');
+    const attestation = publisher.indexOf('uses: actions/attest@');
+    const publication = publisher.indexOf('uses: softprops/action-gh-release@');
+    assert.ok(checksum < attestation, 'attestation runs before the checksum subjects exist');
+    assert.ok(attestation < publication, 'release assets are published before provenance exists');
+  }
 });
 
 test('the guide does not promote inventory or provenance into a security claim', () => {
