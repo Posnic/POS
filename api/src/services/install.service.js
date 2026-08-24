@@ -30,6 +30,35 @@ class InstallService {
    */
   async processInstallation(data) {
     try {
+      /*
+       * Speak the provisioner's language before anything reads this.
+       *
+       * Gateway sends `register_demo: 'yes'` and `business: 'retail'`
+       * (apps/provisioner/provision.js). This service tested for `'on'` and
+       * read `businessType`, so BOTH missed: every cloud shop was created
+       * with no demo data at all and, had it run, always the supermarket pack
+       * regardless of trade.
+       *
+       * It failed silently because each miss has a plausible-looking result.
+       * No demo data reads as a shop that asked for none; a supermarket pack
+       * reads as a default somebody chose. What it actually meant was a new
+       * customer opening their till and finding one product in it.
+       *
+       * Normalised here, at the entry point, so every path below sees one
+       * shape - sanitizeInstallData in the helpers looks like the place for
+       * this but nothing calls it, and adding a second reader would be one
+       * more thing to keep in step. Fixed on the reading side rather than in
+       * Gateway, which is mid-flight for live signups.
+       */
+      data = {
+        ...data,
+        register_demo: ['yes', 'on', 'true', '1', 'y', 'true'].includes(
+          String(data.register_demo == null ? '' : data.register_demo)
+            .trim()
+            .toLowerCase()
+        ),
+        businessType: String(data.businessType || data.business || '').trim(),
+      };
       console.log('📦 Installation data received:', {
         register_demo: data.register_demo,
         businessType: data.businessType,
@@ -635,11 +664,62 @@ class InstallService {
     return await this.repository.insertUnit(unitData);
   }
 
+  /*
+   * The features a new shop starts with, written down rather than inferred.
+   *
+   * Owner ask, repeated: "for new customer sign up i see so many features
+   * enabled... by default enable only Recycle bin, Themes, Tax only."
+   *
+   * WHY IT LOOKED LIKE EVERYTHING WAS ON. Nothing was ever switched on. The
+   * client reads `settings[key] !== false` (PosnicPro.js), so a key that was
+   * never saved reads as enabled - and a brand-new shop has none of them
+   * saved. Ten features appeared switched on because ten features were
+   * absent, which is not a decision anybody made.
+   *
+   * WHY THE RULE ITSELF IS NOT CHANGED. Every shop already running relies on
+   * absent-meaning-on. Flipping that reading would switch features off in
+   * every existing shop on the next deploy - silently, and with no way for
+   * them to know what they had lost. So the fix is to WRITE the values for
+   * new shops, and leave the reading alone.
+   *
+   * The three that are on are the three that cost nothing to have and are
+   * awkward to discover you needed: a delete you can undo, a look you can
+   * change, and tax - which a shop either needs from its first sale or does
+   * not need at all. Everything else is switched on by the shop when it wants
+   * it, which is also when the menu entry will mean something to them.
+   */
+  static newShopModuleDefaults({ demoData = false } = {}) {
+    return {
+      /* The four a shop needs before it has decided anything.
+         Owner's list: Themes, Demo Data, Tax, Quick Sale. */
+      module_themes_enable: true,
+      module_tax_enable: true,
+      quick_sale_enable: true,
+      /*
+       * Only if they actually asked for sample data during setup. Switching it
+       * on for a shop that chose an empty catalogue would be a switch that
+       * hides nothing, sitting in the menu inviting a question.
+       */
+      module_demo_data_enable: demoData === true,
+
+      module_recyclebin_enable: false,
+      module_credit_enable: false,
+      module_marketing_enable: false,
+      module_messaging_enable: false,
+      module_channels_enable: false,
+      module_channels_kiosk_enable: false,
+      module_cashbook_enable: false,
+    };
+  }
+
   async _updateBranchDefaults(branchId, licenseId, userId, data, customerId, supplierId, taxId) {
+    /* register_demo was normalised to a boolean at the entry point. */
+    const demoData = data.register_demo === true;
     await this.repository.updateBranch(branchId, licenseId, {
       default_customer: customerId,
       default_supplier: supplierId,
       default_tax: taxId || '',
+      ...InstallService.newShopModuleDefaults({ demoData }),
       created_by: data.register_username,
       created_by_id: userId,
       updated_by: data.register_username,
@@ -656,6 +736,142 @@ class InstallService {
     };
 
     await this.repository.addBranchEmailFields(branchId, licenseId, emailData);
+  }
+
+  /*
+   * Put the demo data back.
+   *
+   * Owner ask: "when demo data enabled again. we can do insert data by
+   * progress bar."
+   *
+   * Switching Demo Data off only hides, so most of the time turning it back on
+   * needs nothing at all - the rows are still there and the filter simply stops
+   * applying. This is for the other case: a shop that removed the samples for
+   * good and later wants them back, which otherwise leaves the switch looking
+   * broken because turning it on brings nothing.
+   *
+   * Everything the installer needs is read back off the branch rather than
+   * passed in. The caller is a shopkeeper pressing a switch months later; they
+   * have no idea what tax id or unit their shop was built with, and asking the
+   * browser to supply them would be inviting it to make them up.
+   *
+   * Refuses when demo data is already present. Seeding twice would give a shop
+   * two of every sample with no way to tell which pair to delete.
+   */
+  async reseedDemoData({ branchId, licenseId, user } = {}) {
+    try {
+      if (!branchId || !licenseId) {
+        return { status: false, data: null, message: 'Branch and licence are required.' };
+      }
+
+      const BaseModel = require('../models/base.model');
+      const db = await BaseModel.getDb();
+      const branchOid = new ObjectId(String(branchId));
+      const licenseOid = new ObjectId(String(licenseId));
+
+      const branch = await db
+        .collection('branches')
+        .findOne({ _id: branchOid, license: licenseOid });
+      if (!branch) {
+        return { status: false, data: null, message: 'Branch not found.' };
+      }
+
+      const already = await db.collection('items').countDocuments(
+        {
+          demo_pack: { $exists: true },
+          'branch_access.branch_id': branchOid,
+          license: licenseOid,
+          del_status: { $nin: [1, '1', true] },
+        },
+        { limit: 1 }
+      );
+      if (already) {
+        return {
+          status: false,
+          data: null,
+          message: 'The sample data is already here - switch Demo Data on to see it.',
+        };
+      }
+
+      /*
+       * The trade this shop was set up as, or what it was seeded with before.
+       * A shop that removed one pack should get that pack back, not whatever
+       * the default happens to be today.
+       */
+      const previous = await db
+        .collection('items')
+        .findOne(
+          { demo_pack: { $exists: true }, license: licenseOid },
+          { projection: { demo_pack: 1 } }
+        );
+      const businessType =
+        (previous && previous.demo_pack) ||
+        branch.business_type ||
+        branch.businessType ||
+        'supermarket';
+
+      /* Whatever the shop already uses, so the samples join the shop rather
+         than arriving with a second set of everything. */
+      const supplier = await db
+        .collection('suppliers')
+        .findOne({ branch_id: branchOid, license: licenseOid });
+      const unit = await db
+        .collection('unit')
+        .findOne({ branch_id: branchOid, license: licenseOid });
+      const tax = await db
+        .collection('grouptax')
+        .findOne({ branch_id: branchOid, license: licenseOid });
+
+      const now = new Date();
+      await this._insertBusinessTypeDemoData({
+        branchId: branchOid,
+        branchName: String(branch.branch_name || '').trim(),
+        userId: (user && (user._id || user.userId)) || null,
+        username: (user && (user.name || user.username)) || 'System',
+        licenseId: licenseOid,
+        now,
+        userBranch: [
+          {
+            branch_id: branchOid,
+            branch_name: branch.branch_name,
+            branch_image: DEFAULTS.LOGO,
+          },
+        ],
+        supplierId: supplier ? supplier._id : null,
+        supplierName: supplier ? supplier.name : 'General Supplier',
+        taxId: tax ? tax._id : null,
+        taxData: tax ? { name: tax.name, rate: tax.rate } : null,
+        unitId: unit ? unit._id : null,
+        businessType,
+      });
+
+      const counts = await Promise.all([
+        db.collection('items').countDocuments({
+          demo_pack: { $exists: true },
+          'branch_access.branch_id': branchOid,
+          license: licenseOid,
+        }),
+        db.collection('sales').countDocuments({
+          demo_pack: { $exists: true },
+          branch_id: branchOid,
+          license: licenseOid,
+        }),
+        db.collection('quotes').countDocuments({
+          demo_pack: { $exists: true },
+          branch_id: branchOid,
+          license: licenseOid,
+        }),
+      ]);
+
+      return {
+        status: true,
+        data: { pack: businessType, items: counts[0], sales: counts[1], quotes: counts[2] },
+        message: `Sample data restored: ${counts[0]} products, ${counts[1]} sales, ${counts[2]} quotes.`,
+      };
+    } catch (error) {
+      console.error('Error in InstallService.reseedDemoData:', error);
+      return { status: false, data: null, message: error.message };
+    }
   }
 
   async _insertBusinessTypeDemoData(params) {
@@ -693,6 +909,10 @@ class InstallService {
 
       // Insert categories
       const categoryMultiData = demoData.categories.map((cat) => ({
+        /* Tagged like the items, or switching Demo Data off would leave a
+           shop with empty categories it never made and cannot explain. */
+        demo_pack: businessType,
+        demo_seeded_at: now,
         name: cat.name,
         discount_percentage: 0.0,
         discount_amount: 0,
@@ -728,6 +948,20 @@ class InstallService {
         if (category) {
           const price = parseFloat(product.price);
           itemMultiData.push({
+            /*
+             * Tagged as demo, so the Demo Data switch can hide it later. The
+             * tag travels with the record because a list of what was seeded
+             * drifts the moment a shop edits or deletes one row.
+             */
+            demo_pack: businessType,
+            demo_seeded_at: now,
+            /*
+             * The photograph, where there is one. Fifty-five of these products
+             * have none - the search returned somebody's brand or the wrong
+             * object entirely and those were turned down - and that is a
+             * finished state: autoTile gives the item a coloured tile from its
+             * own name, which reads better than a picture of the wrong thing.
+             */
             name: product.name,
             category_id: category.id,
             category_name: category.name,
@@ -768,8 +1002,19 @@ class InstallService {
             items_mfg_date: null,
             items_expiry_date: null,
             available_quantity: parseInt(product.stock),
-            image: 'item.svg',
-            multi_image: [],
+            /*
+             * The photograph, or the placeholder that makes the till draw a
+             * coloured tile instead.
+             *
+             * Set HERE rather than spread in above, because this key used to
+             * sit below that spread and simply overwrote it - every demo item
+             * went in with 'item.svg' whatever picture it had, and the sale
+             * grid drew tiles for all of them. A later key in the same object
+             * literal always wins, and nothing says so at the point it does.
+             */
+            image: product.image || 'item.svg',
+            cover_image: product.image || '',
+            multi_image: product.image ? [{ name: product.image, cover: 'yes' }] : [],
             sort_order: 1,
             description: `${product.name} - ${product.unit}`,
             track_inventory: true,
@@ -786,10 +1031,120 @@ class InstallService {
 
       console.log(`🔄 Attempting to insert ${itemMultiData.length} products...`);
       await this.repository.insertItems(itemMultiData);
+
+      /*
+       * A catalogue on its own demonstrates nothing.
+       *
+       * Every report opens empty, the dashboard shows zero and the quote list
+       * says there is nothing here - so the parts of the product somebody is
+       * deciding about are exactly the parts they cannot see. A handful of
+       * past sales and a few quotations fix that.
+       *
+       * Its own try/catch: a shop with products and no sample sales is a
+       * working shop, and failing the install over demonstration data would
+       * be the wrong trade.
+       */
+      try {
+        await this._insertDemoActivity({
+          branchId,
+          branchName,
+          licenseId,
+          now,
+          pack: businessType,
+          items: itemMultiData,
+        });
+      } catch (e) {
+        console.error('Demo sales and quotes skipped:', e.message);
+      }
     } catch (error) {
       console.error('Error in _insertBusinessTypeDemoData:', error);
       // Don't throw error, just log it - installation can continue without demo data
     }
+  }
+
+  /*
+   * Sample sales and quotations, dated into the past.
+   *
+   * The shapes come from services/demo-seed.js, which explains why they are
+   * dated before today: the shop's own takings must be the shop's own from the
+   * first sale they ring up, or every figure they read in week one is wrong
+   * with no way to tell which part is theirs.
+   *
+   * Written straight to the collections rather than through the sale service:
+   * that path decrements stock, prints, syncs and posts to registers, none of
+   * which should happen for a demonstration - a demo sale that moved stock
+   * would leave a shop whose counts are wrong before they have sold anything.
+   */
+  async _insertDemoActivity({ branchId, branchName, licenseId, now, pack, items }) {
+    const demoSeed = require('./demo-seed');
+    const BaseModel = require('../models/base.model');
+
+    /* insertItems does not hand back ids, so the rows are read again - the
+       sale lines need a real item_id or every report that joins back to the
+       catalogue drops them. */
+    const db = await BaseModel.getDb();
+    const stored = await db
+      .collection('items')
+      .find(
+        { demo_pack: pack, 'branch_access.branch_id': branchId, license: licenseId },
+        { projection: { _id: 1, name: 1, selling_price: 1, unit: 1 } }
+      )
+      .limit(60)
+      .toArray();
+
+    if (!stored.length) return;
+
+    const branch = { branch_id: branchId, branch_name: branchName, license: licenseId };
+    const customer = await db
+      .collection('customers')
+      .findOne({ branch_id: branchId, license: licenseId }, { projection: { _id: 1, name: 1 } });
+
+    /*
+     * The people, before the sales - so the sales can belong to them.
+     *
+     * A new shop had one customer and one supplier, so two of the six things
+     * in the main menu opened looking broken, and every sample sale belonged
+     * to the same walk-in.
+     */
+    const people = demoSeed.buildPeople({
+      branch,
+      pack,
+      now,
+      base: {
+        country: branch.country || '',
+        country_id: branch.country_id || '',
+        state: branch.state || '',
+        sortname: branch.sortname || '',
+      },
+    });
+    let seededCustomers = [];
+    if (people.customers.length) {
+      const r = await db.collection('customers').insertMany(people.customers);
+      seededCustomers = people.customers.map((c, i) => ({
+        _id: Object.values(r.insertedIds)[i],
+        name: c.name,
+      }));
+    }
+    if (people.suppliers.length) {
+      await db.collection('suppliers').insertMany(people.suppliers);
+    }
+
+    /* Spread across the sample customers, with the walk-in kept in the mix -
+       a shop that never takes a counter sale is not a shop. */
+    const buyers = customer ? [customer].concat(seededCustomers) : seededCustomers;
+    const sales = demoSeed.buildSales({
+      items: stored,
+      customers: buyers,
+      customer,
+      branch,
+      pack,
+      now,
+    });
+    const quotes = demoSeed.buildQuotes({ items: stored, branch, pack, now });
+
+    if (sales.length) await db.collection('sales').insertMany(sales);
+    if (quotes.length) await db.collection('quotes').insertMany(quotes);
+    console.log(`📈 Demo activity: ${sales.length} sales, ${quotes.length} quotes`);
   }
 
   async _insertDemoData(params) {

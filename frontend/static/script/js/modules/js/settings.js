@@ -352,6 +352,10 @@ PosnicPro.settings = {
         // and "does Module On/Off preserve the selections?" deserves a
         // guaranteed yes, not a usually.
         PosnicPro.settings.viewSettings(PosnicPro.local.get('branch_id_set'));
+        /* Core Settings is the tab that is already active, so a click handler
+           alone never fires on the way in - the switches would sit at their
+           markup default and disagree with what is stored. */
+        PosnicPro.settings.loadSharing();
     },
     settingImageFormSubmit: function () {
         if ($('#setting_image_value').val() !== '') {
@@ -469,11 +473,13 @@ PosnicPro.settings = {
                         module_channels_enable: response.data['module_channels_enable'] !== false,
                         module_channels_kiosk_enable: response.data['module_channels_kiosk_enable'] !== false,
                         module_recyclebin_enable: response.data['module_recyclebin_enable'] !== false,
+                        module_demo_data_enable: response.data['module_demo_data_enable'] !== false,
                         module_themes_enable: response.data['module_themes_enable'] !== false,
                         module_cashbook_enable: response.data['module_cashbook_enable'] !== false,
                         quick_sale_enable: response.data['quick_sale_enable'] !== false,
                         quotes_enable: response.data['quotes_enable'] !== false,
-                        custom_charges_enable: response.data['custom_charges_enable'] === true
+                        custom_charges_enable: response.data['custom_charges_enable'] === true,
+                        first_run_done: PosnicPro.features.keepFirstRunFlag(response.data)
                     };
                     PosnicPro.local.set('general_settings', JSON.stringify(generalSettings));
                     PosnicPro.shiftWidget.applyEnabled();
@@ -730,6 +736,11 @@ PosnicPro.settings = {
                 $('#module_channels_enable').prop('checked', data.module_channels_enable !== false);
                 $('#module_channels_kiosk_enable').prop('checked', data.module_channels_kiosk_enable !== false);
                 $('#module_recyclebin_enable').prop('checked', data.module_recyclebin_enable !== false);
+                $('#module_demo_data_enable').prop('checked', data.module_demo_data_enable !== false);
+                /* What it was BEFORE anybody touched it. Turning demo data
+                   back on is the only case that needs the server, and off->on
+                   cannot be told from on->on without this. */
+                PosnicPro.settings._demoWasOn = data.module_demo_data_enable !== false;
                 $('#module_themes_enable').prop('checked', data.module_themes_enable !== false);
                 $('#pl_include_cashbook').prop('checked', data.pl_include_cashbook !== false);
                 $('#module_cashbook_enable').prop('checked', data.module_cashbook_enable !== false);
@@ -753,11 +764,13 @@ PosnicPro.settings = {
                     module_channels_enable: data.module_channels_enable !== false,
                     module_channels_kiosk_enable: data.module_channels_kiosk_enable !== false,
                     module_recyclebin_enable: data.module_recyclebin_enable !== false,
+                    module_demo_data_enable: data.module_demo_data_enable !== false,
                     module_themes_enable: data.module_themes_enable !== false,
                     module_cashbook_enable: data.module_cashbook_enable !== false,
                     quick_sale_enable: data.quick_sale_enable !== false,
                     quotes_enable: data.quotes_enable !== false,
-                    custom_charges_enable: data.custom_charges_enable === true
+                    custom_charges_enable: data.custom_charges_enable === true,
+                    first_run_done: PosnicPro.features.keepFirstRunFlag(data)
                 };
                 PosnicPro.local.set('general_settings', JSON.stringify(generalSettings));
                 PosnicPro.shiftWidget.applyEnabled();
@@ -1485,6 +1498,7 @@ if ($wrapper.length) {
         'module_tax_enable', 'module_credit_enable', 'module_marketing_enable',
         'module_messaging_enable', 'module_channels_enable', 'module_channels_kiosk_enable',
         'module_recyclebin_enable', 'module_themes_enable', 'module_cashbook_enable',
+        'module_demo_data_enable',
         'quick_sale_enable',
         'quotes_enable',
         'custom_charges_enable',
@@ -1560,6 +1574,7 @@ if ($wrapper.length) {
         }, function (response) {
             if (response.type === 'success') {
                 PosnicPro.settings._featuresDirty = false;
+                PosnicPro.settings.restoreDemoDataIfEmpty();
                 PosnicPro.alert('success', 'Features saved for ' + branchLabel);
             } else {
                 PosnicPro.alert(response.type, response.message);
@@ -1657,6 +1672,7 @@ if ($wrapper.length) {
                 module_channels_enable: $('#module_channels_enable').is(':checked') ? 'true' : 'false',
                 module_channels_kiosk_enable: $('#module_channels_kiosk_enable').is(':checked') ? 'true' : 'false',
                 module_recyclebin_enable: $('#module_recyclebin_enable').is(':checked') ? 'true' : 'false',
+                module_demo_data_enable: $('#module_demo_data_enable').is(':checked') ? 'true' : 'false',
                 module_themes_enable: $('#module_themes_enable').is(':checked') ? 'true' : 'false',
                 pl_include_cashbook: $('#pl_include_cashbook').is(':checked') ? 'true' : 'false',
                 module_cashbook_enable: $('#module_cashbook_enable').is(':checked') ? 'true' : 'false',
@@ -1668,6 +1684,7 @@ if ($wrapper.length) {
         PosnicPro.put(params, function (response) {
             if (response.type === 'success') {
                 PosnicPro.settings._featuresDirty = false;
+                PosnicPro.settings.restoreDemoDataIfEmpty();
                 let htmlView = $('#footer_print').text();
                 $('.footer-content').html(htmlView);
                 let htmlHeaderView = $('#header_print').text();
@@ -1768,11 +1785,14 @@ if ($("#sale_quick_edit").is(":checked")) {
                     module_channels_enable: $('#module_channels_enable').is(':checked'),
                     module_channels_kiosk_enable: $('#module_channels_kiosk_enable').is(':checked'),
                     module_recyclebin_enable: $('#module_recyclebin_enable').is(':checked'),
+                    module_demo_data_enable: $('#module_demo_data_enable').is(':checked'),
                     module_themes_enable: $('#module_themes_enable').is(':checked'),
                     module_cashbook_enable: $('#module_cashbook_enable').is(':checked'),
                     quotes_enable: $('#quotes_enable').is(':checked'),
                     custom_charges_enable: $('#custom_charges_enable').is(':checked'),
-                    quick_sale_enable: $('#quick_sale_enable').is(':checked')
+                    quick_sale_enable: $('#quick_sale_enable').is(':checked'),
+                    /* No field on this form - carried over, never re-decided. */
+                    first_run_done: PosnicPro.features.keepFirstRunFlag()
                 };
                 PosnicPro.local.set('general_settings', JSON.stringify(generalSettings));
                 // Show or hide the header clock button to match, right away.
@@ -3625,15 +3645,15 @@ $("#sms_setting").validate({
     messages: {
 
         way2sms_userid: {
-            required: "Please Enter a user id",
+            required: "Enter the user ID",
             maxlength: "User id should not be more than 20 digits"
         },
         way2sms_password: {
-            required: "Please Enter a password",
+            required: "Enter a password",
             maxlength: "Password should not be more than 50 digits"
         },
         way2sms_api: {
-            required: "Please Enter a api key",
+            required: "Enter the API key",
             maxlength: "API should not be more than 100 characters"
         }
     }
@@ -3667,11 +3687,11 @@ $("#textlocal_setting").validate({
     messages: {
 
         textlocal_sender: {
-            required: "Please Enter a sender name",
+            required: "Enter the sender name",
             maxlength: "Sender name should not be more than 20 characters"
         },
         textlocal_api: {
-            required: "Please Enter a api key",
+            required: "Enter the API key",
             maxlength: "API should not be more than 100 characters"
         }
     }
@@ -3736,31 +3756,31 @@ $("#setting_add").validate({
     },
     messages: {
         store_name: {
-            required: "Please enter the store name",
+            required: "Enter the shop name",
             maxlength: "Store name should not be more than 250 characters"
         },
         store_telephone: {
-            required: "Please enter the phone number",
-            setting_phone_number: "Please enter a valid phone number.",
-            minlength: "Please enter at least 3 characters.",
-            maxlength: "Please enter no more than 20 characters."
+            required: "Enter the phone number",
+            setting_phone_number: "Enter a valid phone number",
+            minlength: "Use at least 3 characters",
+            maxlength: "Use no more than 20 characters"
         },
         store_email: {
-            required: "Please enter the valid email address",
+            required: "Enter a valid email address",
             maxlength: "Email should not be more than 250 digits"
         },
         store_address: {
-            required: "Please enter the store address",
+            required: "Enter the shop address",
             minlength: "Store Address must be Atleast 3 Characters long",
             maxlength: "Address is too Long !"
         },
         printing_address: {
-            required: "Please enter the printing address",
+            required: "Enter the address to print on receipts",
             minlength: "Printing Address must be Atleast 3 Characters long",
             maxlength: "Address is too Long !"
         },
         website: {
-            required: "Please enter the valid url address",
+            required: "Enter a valid web address",
             minlength: "Website must be Atleast 3 Characters long",
             maxlength: "Website should not be more than 50 digits"
         },
@@ -3792,7 +3812,7 @@ jQuery.validator.addMethod("gst", function (value, element) {
         return /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(value);
     }
     return true;
-}, "Please Enter a Valid GSTR Number");
+}, "Enter a valid GSTIN");
 $("#setting_add").submit(function (event) {
     event.preventDefault();
     if ($('#setting_add').valid()) {          // checks form for validity
@@ -3825,12 +3845,12 @@ $("#tax_add_form").validate({
     },
     messages: {
         tax_name: {
-            required: "Please enter a tax name",
+            required: "Enter the tax name",
             minlength: "Tax name must be at least 3 characters",
             maxlength: "Tax name should not be more than 100 characters"
         },
         tax_value: {
-            required: "Please enter a tax value",
+            required: "Enter the tax rate",
             minlength: "Tax value must be at least 1 characters",
             maxlength: "Tax value should not be more than 5 characters"
         }
@@ -3860,12 +3880,12 @@ $("#unit_add_form").validate({
     },
     messages: {
         unit_name: {
-            required: "Please enter a unit name",
+            required: "Enter the unit name",
             minlength: "Unit name must be at least 1 characters",
             maxlength: "Unit name should not be more than 10 characters"
         },
         unit_value: {
-            required: "Please enter a unit value",
+            required: "Enter the unit short form",
             minlength: "Unit value must be at least 1 characters",
             maxlength: "Unit value should not be more than 10 characters"
         }
@@ -3873,7 +3893,7 @@ $("#unit_add_form").validate({
 });
 jQuery.validator.addMethod("lettersonly", function (value, element) {
     return this.optional(element) || /^[a-z\s]+$/i.test(value);
-}, "Please Enter a Only Letters");
+}, "Use letters only");
 $("#denom_add_form").validate({
     highlight: function (element, errorClass) {
         $(element).css("border-color", "#f9616d");
@@ -3889,7 +3909,7 @@ $("#denom_add_form").validate({
     },
     messages: {
         denom_value: {
-            required: "Please enter a cash value",
+            required: "Enter a cash amount",
             minlength: "value must be at least 1 characters"
         }
     }
@@ -3910,7 +3930,7 @@ $("#payment_add_form").validate({
     },
     messages: {
         payment_value: {
-            required: "Please enter a payment value",
+            required: "Enter a payment amount",
             minlength: "value must be at least 1 characters",
             maxlength: "value should not be more than 12 characters"
         }
@@ -3977,7 +3997,7 @@ $("#tableorder_add_form").validate({
     errorClass: 'error error_tableorder',
     messages: {
         tableorder_value: {
-            required: "Please enter a table order value",
+            required: "Enter a table number",
             minlength: "value must be at least 1 characters",
             maxlength: "value should not be more than 6 characters"
         }
@@ -4013,7 +4033,7 @@ $("#taxgroup_add_form").validate({
     },
     messages: {
         taxgroup_name: {
-            required: "Please enter a tax name",
+            required: "Enter the tax name",
             minlength: "Tax name must be at least 3 characters",
             maxlength: "Tax name should not be more than 100 characters"
         },
@@ -4088,11 +4108,11 @@ $("#email_add").validate({
     },
     messages: {
         report_type: {
-            required: "Please choose a report type"
+            required: "Choose a report type"
         },
         "emailaddress[0]": {
-            required: "Please Enter a email address",
-            email: "Please Enter a valid email address",
+            required: "Enter a valid email address",
+            email: "Enter a valid email address",
             maxlength: "Email should not be more than 250 Characters"
         }
     }
@@ -4127,14 +4147,14 @@ $("#kioskaccount_form").validate({
     },
     messages: {
         kioskstore_id: {
-            required: "Please enter store ID",
+            required: "Enter the store ID",
             minlength: "Minimum 3 characters",
             maxlength: "Maximum 6 characters",
             pattern: "Only letters and numbers allowed"
         }
 
         // kiosksecret_key: {
-        //     required: "Please enter secret key",
+        //     required: "Enter the secret key",
         //     minlength: "Minimum 3 characters",
         //     maxlength: "Maximum 6 characters",
         //     pattern: "Only letters and numbers allowed"
@@ -4171,7 +4191,7 @@ $("#kioskprint_form").validate({
     },
     messages: {
         kioskprinter_name: {
-            required: "Please enter printer name"
+            required: "Enter the printer name"
         }
     }
 });
@@ -4370,27 +4390,27 @@ $("#tax_discount_add").validate({
     },
     messages: {
         default_customer: {
-            required: "Please choose Customer Name",
+            required: "Choose a customer",
             minlength: "Customer name must be at least 3 characters",
             maxlength: "Customer name should not be more than 100 characters"
         },
         default_supplier: {
-            required: "Please choose Supplier Name",
+            required: "Choose a supplier",
             minlength: "Supplier name must be at least 3 characters",
             maxlength: "Supplier name should not be more than 100 characters"
         },
         sales_prefix: {
-            required: "Please Enter a sales prefix value",
+            required: "Enter a prefix for sale numbers",
             minlength: "Must be at least 3 characters",
             maxlength: "Should not be more than 3 characters"
         },
         receiving_prefix: {
-            required: "Please Enter a receiving prefix value",
+            required: "Enter a prefix for stock entries",
             minlength: "Must be at least 3 characters",
             maxlength: "Should not be more than 3 characters"
         },
         notification_value: {
-            required: "Please Enter a notification value"
+            required: "Enter a notification value"
         },
         header_print: {
             minlength: "Header content must be at least 3 characters",
@@ -4404,7 +4424,7 @@ $("#tax_discount_add").validate({
 });
 jQuery.validator.addMethod("lettersonly", function (value, element) {
     return this.optional(element) || /^[a-z\s]+$/i.test(value);
-}, "Please Enter a Only Letters");
+}, "Use letters only");
 $("#tax_discount_add").submit(function (event) {
     event.preventDefault();
     if ($('#tax_discount_add').valid()) {            // checks form for validity
@@ -5343,13 +5363,55 @@ PosnicPro.features = {
         ['module_cashbook_enable', 'Cash book', 'Expenses and cash movements beside sales.'],
         ['quick_sale_enable', 'Quick sale', 'Type an amount, take payment - the busy-counter pad on the sale screen.'],
         ['module_recyclebin_enable', 'Recycle bin', 'Deleted records are kept and restorable.'],
+        ['module_demo_data_enable', 'Demo data', 'The sample products your shop started with.'],
         ['module_themes_enable', 'Themes', 'Change how the till looks.']
     ],
     _blob: function () {
         try { return JSON.parse(PosnicPro.local.get('general_settings') || '{}'); } catch (e) { return {}; }
     },
+    /*
+     * The general_settings blob is rebuilt from scratch in three places, and a
+     * key missing from those literals is not merged - it is LOST. That is fine
+     * for a switch, which the next settings read restores; it is not fine for
+     * "this shop has been welcomed", because losing it shows the welcome again
+     * to somebody who already dismissed it.
+     *
+     * An explicit value from the server always wins. `undefined` means the API
+     * did not send the field - an older build, or a response that predates it -
+     * and the honest answer there is what we already knew, not false.
+     */
+    keepFirstRunFlag: function (data) {
+        var d = data || {};
+        if (d.first_run_done === true || d.first_run_done === 'true') { return true; }
+        if (d.first_run_done === false || d.first_run_done === 'false') { return false; }
+        return PosnicPro.features._blob().first_run_done === true;
+    },
     maybeShowIntro: function () {
+        /*
+         * Two gates, and they answer different questions.
+         *
+         * `features_intro_seen` is localStorage, so it is per BROWSER: it stops
+         * the same person being asked twice on the machine they are sitting at,
+         * and it is what shops running today already carry.
+         *
+         * `first_run_done` is saved on the shop, so it survives a new browser,
+         * a second till and a reinstall. Without it the welcome returns every
+         * time somebody signs in from a device that has not seen it, which for
+         * a shop with four tills is four welcomes.
+         *
+         * It defaults to FALSE rather than absent-means-seen. Getting that
+         * backwards would mean nobody ever sees this and nothing would look
+         * wrong - the failure of a thing that only ever shows once is silence.
+         */
         if (PosnicPro.local.get('features_intro_seen')) { return; }
+        var blob = PosnicPro.features._blob();
+        if (blob.first_run_done === true || blob.first_run_done === 'true') { return; }
+        /* An empty blob is "settings have not loaded", not "never been asked",
+           and guessing wrong there puts this in front of a shop that has been
+           trading for a year. */
+        if (!Object.keys(blob).length) { return; }
+        /* Feature switches are a manager's decision. A cashier shown these
+           would be offered choices the save would refuse. */
         var acl = PosnicPro.userACL;
         if (!(acl && acl.setting && acl.setting.write === true)) { return; }
         if (!$('#feature_intro_modal').length) { return; }
@@ -5358,10 +5420,54 @@ PosnicPro.features = {
         // Seen is seen, however it closes - this must never nag.
         $('#feature_intro_modal').one('hidden.bs.modal', function () {
             PosnicPro.local.set('features_intro_seen', 'true');
+            /* Closing without choosing still counts as having been asked, so
+               the flag is written on the shop too - otherwise the next till
+               asks again. Best effort: if it fails the welcome simply returns,
+               which is the right outcome for a shop that was never recorded as
+               having seen it. */
+            if (!PosnicPro.features._savedIntro) {
+                PosnicPro.put({
+                    url: 'settings/group/features',
+                    data: JSON.stringify({ first_run_done: 'true' })
+                }, function () {
+                    var b = PosnicPro.features._blob();
+                    b.first_run_done = true;
+                    PosnicPro.local.set('general_settings', JSON.stringify(b));
+                }, function () { /* asked again next time, deliberately */ });
+            }
         });
     },
     renderIntro: function () {
         var blob = PosnicPro.features._blob();
+
+        /*
+         * The welcome, in the shop's own name. `local.get` hands back the
+         * STRING "null" for a key written as null, which is how a header once
+         * read "null null" - so anything that is not a real name falls back to
+         * the generic sentence rather than greeting a shop called null.
+         */
+        var shop = PosnicPro.local.get('branchname');
+        shop = (shop == null || shop === 'null' || shop === 'undefined') ? '' : $.trim(shop);
+        $('#feature_intro_sub').text(shop
+            ? shop + ' is set up and ready to take its first sale.'
+            : 'Your till is set up and ready to take its first sale.');
+
+        /*
+         * Two different true sentences, because this screen reaches two
+         * different shops. A NEW shop starts with a few features on and the
+         * rest off, and needs to be told that the short menus are deliberate.
+         * A shop created before those defaults existed has everything on, and
+         * telling it "everything else is off" would be plainly false while it
+         * looks at a full menu. Decided from the switches themselves rather
+         * than from a signup date, which this page does not have.
+         */
+        var anyOff = PosnicPro.features.INTRO.some(function (f) {
+            return blob[f[0]] === false || blob[f[0]] === 'false';
+        });
+        $('#feature_intro_lead').text(anyOff
+            ? 'We have switched on the few things almost every shop needs, and left the rest off so your menus stay short. Turn on whatever you want - now, or any time later.'
+            : 'Here is everything this till can do. Switch off what you do not need and those menus disappear; switch them back on whenever you want.');
+
         var rows = PosnicPro.features.INTRO.map(function (f) {
             var key = f[0];
             // The blob carries every key post-login (guard-tested); absent
@@ -5369,13 +5475,18 @@ PosnicPro.features = {
             // everything else opt-out ON.
             var onByDefault = !(key === 'staff_tips_enable' || key === 'till_lock_enable');
             var on = blob[key] === undefined ? onByDefault : blob[key] === true;
-            return '<div class="d-flex align-items-center justify-content-between py-2" style="border-bottom:1px solid rgba(128,128,128,.15);">' +
-                '<div class="pr-3"><div style="font-weight:600;">' + f[1] + '</div>' +
-                '<small class="text-muted">' + f[2] + '</small></div>' +
-                '<div class="custom-control custom-switch">' +
+            /* The whole row is the label, so a thumb anywhere on it flips the
+               switch - the switch itself is a 40px target on a touch screen. */
+            return '<label class="first-run-row" for="fi_' + key + '">' +
+                '<span class="first-run-row-text">' +
+                '<b>' + f[1] + '</b>' +
+                '<span>' + f[2] + '</span>' +
+                '</span>' +
+                '<span class="custom-control custom-switch first-run-switch">' +
                 '<input type="checkbox" class="custom-control-input feature-intro-toggle" id="fi_' + key + '" data-key="' + key + '"' + (on ? ' checked' : '') + '>' +
-                '<label class="custom-control-label" for="fi_' + key + '"></label>' +
-                '</div></div>';
+                '<span class="custom-control-label"></span>' +
+                '</span>' +
+                '</label>';
         }).join('');
         $('#feature_intro_list').html(rows);
     },
@@ -5392,6 +5503,10 @@ PosnicPro.features = {
         $('.feature-intro-toggle').each(function () {
             payload[$(this).data('key')] = $(this).is(':checked') ? 'true' : 'false';
         });
+        /* Recorded in the same write as the choice it belongs to. A separate
+           call could succeed while the toggles failed, and the shop would then
+           never be offered the switches it did not manage to save. */
+        payload.first_run_done = 'true';
         $('#feature_intro_save').prop('disabled', true);
         PosnicPro.put({
             url: 'settings/group/features',
@@ -5405,6 +5520,8 @@ PosnicPro.features = {
                 $('.feature-intro-toggle').each(function () {
                     blob[$(this).data('key')] = $(this).is(':checked');
                 });
+                blob.first_run_done = true;
+                PosnicPro.features._savedIntro = true;
                 PosnicPro.local.set('general_settings', JSON.stringify(blob));
                 if (PosnicPro.settings && PosnicPro.settings.applyModuleNav) { PosnicPro.settings.applyModuleNav(); }
                 else if (PosnicPro.applyModuleSidebar) { PosnicPro.applyModuleSidebar(); }
@@ -5426,15 +5543,8 @@ $(document).ready(function () {
     setTimeout(function () { PosnicPro.features.maybeShowIntro(); }, 2500);
 });
 
-/* Customer display pairing (Loyverse study L3): fill the address card with
-   this till's own origin - the display page has always been served there,
-   it was just never told to anyone. */
-$(document).ready(function () {
-    try {
-        var origin = window.location.origin || (window.location.protocol + '//' + window.location.host);
-        $('#display_pair_url').val(origin + '/customerview.html');
-    } catch (e) { /* leave blank */ }
-});
+/* The customer-display address card was removed from Core Settings on owner
+   instruction; customerview.html still serves on the LAN unchanged. */
 /*
  * S4: a credential the server will not send back.
  *
@@ -5466,19 +5576,6 @@ PosnicPro.settings.markSavedSecrets = function (configured) {
     });
 };
 
-PosnicPro.settings.copyDisplayUrl = function () {
-    var url = $('#display_pair_url').val();
-    if (!url) { return; }
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(url).then(function () {
-            PosnicPro.alert('success', 'Address copied - open it on the display device');
-        });
-    } else {
-        $('#display_pair_url').select();
-        document.execCommand('copy');
-        PosnicPro.alert('success', 'Address copied - open it on the display device');
-    }
-};
 
 /* Feature search (owner feedback): filter the cards by anything visible on
    them - title, description, sub-toggle labels. */
@@ -5557,6 +5654,81 @@ PosnicPro.settings.openFeatureModal = function (title, paneSelector) {
 $(document).on('click', '.feature-pane-open', function () {
     PosnicPro.settings.openFeatureModal($(this).data('title') || 'Settings', $(this).data('pane'));
 });
+/*
+ * Sharing between shops (owner ask #85).
+ *
+ * Its own load and its own save, because it writes at ACCOUNT level while
+ * everything around it on this screen writes to the branch. Riding the general
+ * form save would let a screen opened on one shop push that shop's view onto
+ * all of them - which is the exact failure S5 inheritance was built to avoid.
+ *
+ * `?level=account` on the read, for the same reason: resolveGroup would answer
+ * "what is in force at THIS branch", and saving that back would turn one
+ * branch's override into everybody's rule.
+ */
+PosnicPro.settings = PosnicPro.settings || {};
+
+/* Stock is deliberately absent: a count sits on one shelf, in one building, so
+   it is copied once when a shop is created rather than shared as a rule. See
+   api/src/services/catalogue-copy.js. */
+PosnicPro.settings.SHARING_KEYS = ['share_customers', 'share_suppliers'];
+
+PosnicPro.settings.loadSharing = function () {
+    if (!$('#sharing_fieldset').length) { return; }
+    PosnicPro.get({ url: 'settings/group/sharing', data: { level: 'account' } }, function (r) {
+        var values = (r && r.data && r.data.values) || {};
+        $.each(PosnicPro.settings.SHARING_KEYS, function (i, key) {
+            /* An absent key means nothing account-wide has been decided, which
+               the server reads as off. The switch must show the same thing, or
+               the screen and the query disagree. */
+            $('#set_' + key).prop('checked', PosnicPro.settings._sharingOn(values[key]));
+        });
+        $('#sharing_status').text('');
+    }, function () {
+        $('#sharing_status').text('Could not read the current setting.');
+    });
+};
+
+/* Settings arrive as a boolean or as the string a form wrote. `!!"false"` is
+   true, and for a switch that decides who sees whose customers that is the
+   wrong direction to be wrong in - the server reads it the same way. */
+PosnicPro.settings._sharingOn = function (v) {
+    if (v === true) { return true; }
+    if (v === false || v === null || v === undefined) { return false; }
+    var t = String(v).trim().toLowerCase();
+    return t === 'true' || t === '1' || t === 'yes' || t === 'on' || t === 'enable' || t === 'enabled';
+};
+
+PosnicPro.settings.saveSharing = function () {
+    var payload = { level: 'account' };
+    $.each(PosnicPro.settings.SHARING_KEYS, function (i, key) {
+        /* Stated, never implied. A switch left alone must still travel, or the
+           server keeps whatever it had and the screen says otherwise. */
+        payload[key] = $('#set_' + key).is(':checked');
+    });
+    $('#sharing_save_btn').prop('disabled', true);
+    $('#sharing_status').text('Saving ...');
+    PosnicPro.put({ url: 'settings/group/sharing', data: JSON.stringify(payload) }, function (r) {
+        $('#sharing_save_btn').prop('disabled', false);
+        $('#sharing_status').text(r.type === 'success' ? 'Saved. Applies to every shop.' : '');
+        PosnicPro.alert(r.type, r.type === 'success' ? 'Sharing saved' : r.message);
+    }, function (xhr) {
+        $('#sharing_save_btn').prop('disabled', false);
+        $('#sharing_status').text('');
+        var resp = {}; try { resp = JSON.parse(xhr.responseText); } catch (e) { /* plain */ }
+        /* 403 has a specific meaning here and a generic "could not save" hides
+           it: this is deliberately owner-class, because it decides what other
+           people can read. */
+        PosnicPro.alert('error', xhr.status === 403
+            ? 'Only an owner can change what is shared between shops'
+            : (resp.message || 'Could not save sharing'));
+    });
+};
+
+$(document).on('click', '#v-pills-general-tab', function () {
+    PosnicPro.settings.loadSharing();
+});
+
 $(document).on('click', '#quote_settings_save', function () {
     var payload = {
         quote_default_payment_method: $('#quote_default_payment_method').val() || '',
@@ -5571,7 +5743,6 @@ $(document).on('click', '#quote_settings_save', function () {
         PosnicPro.alert(r.type, r.type === 'success' ? 'Quotation settings saved' : r.message);
         if (r.type === 'success') {
             PosnicPro.local.set('quotesignature', payload.quote_default_signature);
-            $('#quote_settings_modal').modal('hide');
         }
     }, function (xhr) {
         $('#quote_settings_save').prop('disabled', false);
@@ -5588,6 +5759,171 @@ $(document).on('click', '#quote_settings_save', function () {
  * has never broken in this codebase.
  */
 PosnicPro.settings.featureInfo = {
+    /*
+     * Copy written 2026-08-21 for the nine features whose dialog opened with
+     * nothing but the one-line card description.
+     *
+     * Every claim below was checked against the code that implements it rather
+     * than written from the feature's name. A listing that promises something
+     * the software does not do is worse than a listing with no detail at all -
+     * it is the shop owner who finds out, in front of a customer.
+     *
+     * NO `section` KEY on most of these, deliberately. It names the markup
+     * block whose controls the dialog ADOPTS, and only four exist: fc_quotes,
+     * fc_restaurant, fc_tillpin and fc_workforce. The first draft invented
+     * seven more from the feature names. The renderer guards with
+     * $(info.section).length so nothing would have broken - which is exactly
+     * what makes it worth catching: it would have sat there reading as wired.
+     */
+    staff_tips_enable: {
+        section: '#fc_workforce',
+        tagline: 'Record tips at clock-out and pay them out with wages.',
+        about: 'Cash tips are declared by the person who earned them when they clock out, stored against that shift, and carried into the labour and payroll figures - so they are paid rather than remembered.',
+        benefits: [
+            'Declared at clock-out, by the person who took them',
+            'Held against the shift, so who earned what is never in doubt',
+            'Flows into payroll rather than living on a piece of paper'
+        ],
+        how: [
+            'Turn it on - a tips box appears at clock-out',
+            'Staff enter what they took in cash; blank is fine',
+            'Review it per shift, and pay it with that period of wages'
+        ]
+    },
+    staff_roster_enable: {
+        section: '#fc_workforce',
+        tagline: 'Plan the week ahead; staff see the shifts they are on.',
+        about: 'A roster is next week decided this week. Plan a stretch for a person on a day, and the people you rostered can see their own shifts without asking.',
+        benefits: [
+            'Plan a week in one screen instead of a group message',
+            'Staff see their own shifts; managers see everyone',
+            'Viewing and planning are separate permissions'
+        ],
+        how: [
+            'Turn it on - Roster appears beside Shifts',
+            'Pick a person and a day, and set their stretch',
+            'They see it on their own account from then on'
+        ]
+    },
+    module_credit_enable: {
+        tagline: 'Sell on account now, settle later - with a limit that holds.',
+        about: 'Regulars who pay at month end can take goods today. Each customer carries a balance and an optional credit limit, and the limit is checked when the sale is made rather than discovered at the end of the month.',
+        benefits: [
+            'A per-customer limit, enforced at the moment of sale',
+            'Outstanding balances in one list',
+            'Reminders can go out by SMS or WhatsApp',
+            'Zero means unlimited, for the customers you trust completely'
+        ],
+        how: [
+            'Turn it on and set a default limit under Credit',
+            'Give a customer their own limit if it differs',
+            'Sell on account; the balance follows the customer',
+            'Settle it whenever they pay, in part or in full'
+        ]
+    },
+    module_marketing_enable: {
+        tagline: 'Loyalty points, coupons, cashback and campaigns in one place.',
+        about: 'Everything that brings a customer back a second time: points earned per sale, coupons with real rules, cashback into a wallet, and campaigns that decide who hears about what.',
+        benefits: [
+            'Points earn and redeem on the till, not on a card someone lost',
+            'Coupons with limits that are checked before they apply',
+            'Cashback waits in the wallet for the next visit',
+            'Category pricing for the customers who buy in volume'
+        ],
+        how: [
+            'Turn it on - Marketing appears in the menu',
+            'Set how points are earned and what they are worth',
+            'Create coupons or a campaign when you want one',
+            'It applies itself at the till from then on'
+        ]
+    },
+    module_messaging_enable: {
+        tagline: 'Send the receipt where the customer already reads - WhatsApp or SMS.',
+        about: 'A paper receipt is thrown away at the door. Messaging sends it to a phone instead, over WhatsApp when it is connected and SMS through your own gateway when it is not.',
+        benefits: [
+            'The receipt arrives somewhere they will still have it next month',
+            'Templates you write once, with the sale filled in',
+            'Your own SMS gateway - no per-message markup from us',
+            'Can be turned off per till, so a busy counter is not slowed'
+        ],
+        how: [
+            'Turn it on, then connect WhatsApp or fill in your SMS gateway',
+            'Write the template you want customers to receive',
+            'Send a test to your own phone before the first sale',
+            'It offers to send at the end of each sale'
+        ]
+    },
+    module_channels_enable: {
+        tagline: 'Let customers order themselves - kiosk, QR menu, or a public list.',
+        about: 'Selling without a cashier standing at the screen. A kiosk authenticates with its own key rather than a login, so a tablet on the counter can take orders without holding a staff account.',
+        benefits: [
+            'A kiosk signs in with its own key, never a staff password',
+            'QR ordering from the table, into the same sale flow',
+            'Orders land in the list your staff already work from'
+        ],
+        how: [
+            'Turn it on - Channels appears under settings',
+            'Register the device and give it its key',
+            'Point a tablet or a QR code at it and take orders'
+        ]
+    },
+    module_cashbook_enable: {
+        tagline: 'Expenses and cash movements, beside the sales they sit next to.',
+        about: 'Money leaves the till as well as entering it. The cash book records what went out and why, so the cash position for the day is the truth rather than sales minus a guess.',
+        benefits: [
+            'Expenses recorded where the cash actually moved',
+            'The day accounts for money out, not only money in',
+            'Closing a register has something real to reconcile against'
+        ],
+        how: [
+            'Turn it on - Cash book appears in the menu',
+            'Record an expense when money leaves the drawer',
+            'It shows against the day, beside the sales'
+        ]
+    },
+    module_demo_data_enable: {
+        tagline: 'The sample products you started with, out of the way in one click.',
+        about: 'Every new shop arrives with a few sample products so the till can be tried before there is any real stock in it. Once your own catalogue is in, they are only clutter. Switching this off hides them everywhere at once - the item list, the sale screen, search. Nothing is deleted, so switching it back on brings them straight back, and anything you have edited or already sold stays put either way.',
+        benefits: [
+            'One switch clears the samples out of the whole till',
+            'Nothing is destroyed, so it is safe to try',
+            'A sample you have edited into a real product is never touched',
+            'Anything already sold keeps its place in your sales history'
+        ],
+        how: [
+            'Try the till with the samples that came with your shop',
+            'Add your own products when you are ready',
+            'Turn this off - the samples disappear and yours remain'
+        ]
+    },
+    module_recyclebin_enable: {
+        tagline: 'A deletion you can undo - records are kept, not destroyed.',
+        about: 'Deleting marks a record as deleted and hides it; it does not remove it. Anything deleted can be found and restored, which is what makes a delete button safe to hand to a cashier.',
+        benefits: [
+            'A wrong delete is a mistake, not a loss',
+            'Restore puts the record back where it was',
+            'Turning the feature off does not destroy what is already kept'
+        ],
+        how: [
+            'Turn it on - Recycle bin appears under settings',
+            'Delete as normal; the record moves there instead',
+            'Find it and restore it if it should not have gone'
+        ]
+    },
+    module_themes_enable: {
+        tagline: 'Change how the till looks, without changing how it works.',
+        about: 'A theme sets the colours and surfaces of the whole app from one place. Colour still carries meaning - red destroys, green succeeded, the accent is the main action - so a theme changes the palette, never what a colour means.',
+        benefits: [
+            'One place for the look of every screen',
+            'Light and dark, chosen per person',
+            'Meaning is preserved: a theme cannot make red mean "saved"'
+        ],
+        how: [
+            'Turn it on - Themes appears under settings',
+            'Pick one; it applies immediately, everywhere',
+            'Anyone can change it back without help'
+        ]
+    },
     quotes_enable: {
         tagline: 'Price an offer today, convert it to a sale when the customer says yes.',
         about: 'A quotation is a price promise with a validity date. Build it from your catalog or free lines, discount per line or per quote, add charges in any name, and share it as a professional A4 PDF.',
@@ -5715,6 +6051,42 @@ PosnicPro.settings._fpSection = null;
  * THAT feature's settings, adopted from the hidden store and returned on
  * leave. No popup, no aggregate page, no extra menu entry.
  */
+/*
+ * A screenshot that is not there yet removes itself, and takes the empty strip
+ * with it. Without the second half, a feature with no images keeps a 14px gap
+ * and a scroll container holding nothing.
+ */
+PosnicPro.settings._shotMissing = function (img) {
+    var $strip = $(img).closest('.fd-shots');
+    $(img).remove();
+    if (!$strip.find('img').length) { $strip.remove(); }
+};
+
+/*
+ * One loaded screenshot asks for the next. This is what keeps the cost at one
+ * failed request for a feature with no images instead of one per slot guessed.
+ *
+ * Capped, because the chain is driven by the server answering 200: a directory
+ * that somehow served every name would ask forever. Ten is far more than any
+ * feature page should show.
+ */
+PosnicPro.settings.MAX_SHOTS = 10;
+PosnicPro.settings._shotNext = function (img) {
+    var $img = $(img);
+    var $strip = $img.closest('.fd-shots');
+    var key = $strip.attr('data-shot-key');
+    var n = Number($img.attr('data-shot-n') || 0);
+    if (!key || !n || n >= PosnicPro.settings.MAX_SHOTS) { return; }
+    if ($strip.find('[data-shot-n="' + (n + 1) + '"]').length) { return; }
+    $('<img>')
+        .attr('src', 'static/images/features/' + key + '-' + (n + 1) + '.png')
+        .attr('alt', '')
+        .attr('data-shot-n', n + 1)
+        .attr('onload', 'PosnicPro.settings._shotNext(this);')
+        .attr('onerror', 'PosnicPro.settings._shotMissing(this);')
+        .appendTo($strip);
+};
+
 PosnicPro.settings.openFeaturePage = function ($card) {
     var $main = $card.find('.module-card-head input.custom-control-input').first();
     var key = $main.attr('id') || '';
@@ -5734,11 +6106,43 @@ PosnicPro.settings.openFeaturePage = function ($card) {
 
     var esc = function (v) { return $('<i>').text(v == null ? '' : v).html(); };
     var infoHtml = '';
+    /*
+     * Screenshots by CONVENTION, so adding one is dropping a file.
+     *
+     * The owner has to take these - they are pictures of his running shop and
+     * nobody else can. Everything AROUND that is built here so his one action
+     * is the only thing left: drop
+     *
+     *     static/images/features/<feature_key>-1.png   (-2, -3 ... for more)
+     *
+     * and it appears. No JS edit, no list to maintain, no deploy for a picture.
+     * An explicit `shots` array still wins, for anything that does not fit.
+     *
+     * PROBED ONE AT A TIME, not three at once. Rendering -1, -2 and -3
+     * speculatively costs three 404s every time a dialog opens for a feature
+     * with no images - which is every feature today, seventeen of them. Asking
+     * for the next only after the current one LOADS means a feature with no
+     * screenshot costs exactly one failed request, and a feature with five
+     * costs five successes and one failure. The chain extends itself.
+     *
+     * A missing file removes its own tag, and the strip removes itself once
+     * empty, so nothing shows a row of broken-image icons.
+     *
+     * The CSS fixes the frame at aspect-ratio 8/5, which is why the ask is for
+     * 8:5 images - anything else is cropped to fit, not letterboxed.
+     */
     var shots = info.shots || [];
     if (shots.length) {
         infoHtml += '<div class="fd-shots">' + shots.map(function (src) {
-            return '<img src="' + src + '" alt="" loading="lazy">';
+            return '<img src="' + src + '" alt="" loading="lazy"'
+                + ' onerror="PosnicPro.settings._shotMissing(this);">';
         }).join('') + '</div>';
+    } else if (key) {
+        infoHtml += '<div class="fd-shots" data-shot-key="' + esc(key) + '">'
+            + '<img src="static/images/features/' + esc(key) + '-1.png" alt="" data-shot-n="1"'
+            + ' onload="PosnicPro.settings._shotNext(this);"'
+            + ' onerror="PosnicPro.settings._shotMissing(this);">'
+            + '</div>';
     }
     infoHtml += '<div class="q-label">About</div><p class="fd-text">' + esc(info.about || desc) + '</p>';
     if ((info.benefits || []).length) {
@@ -5802,3 +6206,121 @@ $(document).on('click', '#v-pills-modules .module-card', function (e) {
     PosnicPro.settings.openFeaturePage($(this));
 });
 
+/*
+ * Putting the sample data back, with something to watch while it happens.
+ *
+ * Owner ask: "when demo data enabled again. we can do insert data by progress
+ * bar."
+ *
+ * Switching Demo Data off only hides, so turning it back on is usually
+ * instant - the rows never went anywhere. This is for the shop that removed
+ * the samples for good: without it, the switch appears to do nothing, because
+ * there is nothing left to unhide.
+ *
+ * THE BAR IS HONEST ABOUT WHAT IT KNOWS. The server does the work in one
+ * request and cannot report a percentage, so this does not invent one: it
+ * eases towards nine tenths while waiting and only completes when the answer
+ * arrives. A bar that marches confidently to 100% and then sits there is worse
+ * than no bar, because it says the work is done when it is not.
+ */
+PosnicPro.settings.demoProgress = {
+    _timer: null,
+    _pct: 0,
+
+    open: function () {
+        var self = PosnicPro.settings.demoProgress;
+        if (!$('#demo_progress_modal').length) {
+            $('body').append(
+                '<div class="modal fade" id="demo_progress_modal" tabindex="-1" role="dialog"' +
+                ' data-backdrop="static" data-keyboard="false">' +
+                '  <div class="modal-dialog modal-dialog-centered modal-sm" role="document">' +
+                '    <div class="modal-content">' +
+                '      <div class="modal-body text-center" style="padding:26px 22px;">' +
+                '        <h5 style="margin:0 0 6px;font-size:16px;">Adding the sample data</h5>' +
+                '        <p id="demo_progress_step" class="text-muted"' +
+                '           style="font-size:13px;margin:0 0 14px;">Getting ready…</p>' +
+                '        <div class="demo-progress-track"><div id="demo_progress_bar"' +
+                '             class="demo-progress-bar"></div></div>' +
+                '      </div>' +
+                '    </div>' +
+                '  </div>');
+        }
+        self._pct = 0;
+        self._set(4, 'Getting ready…');
+        $('#demo_progress_modal').modal('show');
+
+        /*
+         * Named steps rather than a silent crawl. The shop is watching a bar
+         * for a few seconds and "Adding products" tells them what they are
+         * getting; a bar on its own tells them only to wait.
+         */
+        var steps = [
+            [12, 'Adding categories…'],
+            [30, 'Adding products…'],
+            [55, 'Adding photographs…'],
+            [72, 'Adding sample sales…'],
+            [85, 'Adding sample quotes…'],
+        ];
+        var i = 0;
+        self._timer = window.setInterval(function () {
+            if (i < steps.length) {
+                self._set(steps[i][0], steps[i][1]);
+                i++;
+                return;
+            }
+            /* Past the named steps it creeps, and never reaches the end on its
+               own - the end belongs to the server's answer. */
+            self._set(Math.min(90, self._pct + 1), null);
+        }, 600);
+    },
+
+    _set: function (pct, label) {
+        PosnicPro.settings.demoProgress._pct = pct;
+        $('#demo_progress_bar').css('width', pct + '%');
+        if (label) { $('#demo_progress_step').text(label); }
+    },
+
+    close: function (message, ok) {
+        var self = PosnicPro.settings.demoProgress;
+        if (self._timer) { window.clearInterval(self._timer); self._timer = null; }
+        self._set(100, ok ? 'Done' : 'Stopped');
+        /* A beat at 100% so the bar is seen to finish rather than vanishing
+           mid-way, which reads as a crash. */
+        window.setTimeout(function () {
+            $('#demo_progress_modal').modal('hide');
+            if (message) { PosnicPro.alert(ok ? 'success' : 'error', message); }
+        }, 450);
+    }
+};
+
+/*
+ * Only when the switch has just been turned ON, and only if there is nothing
+ * there.
+ *
+ * The server refuses a second seed, so a stray call is harmless - but calling
+ * it on every features save would put a progress bar in front of somebody who
+ * changed the tax switch, which is its own small insult.
+ */
+PosnicPro.settings.restoreDemoDataIfEmpty = function () {
+    var on = $('#module_demo_data_enable').is(':checked');
+    var was = PosnicPro.settings._demoWasOn;
+    PosnicPro.settings._demoWasOn = on;
+    if (!on || was !== false) { return; }
+
+    PosnicPro.settings.demoProgress.open();
+    PosnicPro.post({ url: 'items/demo', data: JSON.stringify({}) }, function (response) {
+        PosnicPro.settings.demoProgress.close(response.message, response.type === 'success');
+    }, function (xhr) {
+        var resp = {};
+        try { resp = JSON.parse(xhr.responseText); } catch (e) { /* plain */ }
+        /*
+         * "Already here" is the ordinary case - the switch only hides, so the
+         * rows are usually still there. Closing quietly is right: the shop
+         * asked to see the samples and they are about to, which is the answer
+         * they wanted.
+         */
+        var msg = resp.message || '';
+        var harmless = /already/i.test(msg);
+        PosnicPro.settings.demoProgress.close(harmless ? null : (msg || 'Could not add the sample data'), harmless);
+    });
+};

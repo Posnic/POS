@@ -131,7 +131,6 @@
         $('#v-pills-dashboard-tab,.sales_new_shortcut').addClass('active');
         $('#v-pills-dashboard').addClass('show active');
         $('.vertical-menu li a#view_touchsales_page').addClass('active');
-        $('#show_last_created_sale').hide();
         $("#time-format").attr('readOnly', 'true');
         $("#time-format").prop('disabled', false);
         $('.payment_detail').removeClass('active')
@@ -429,6 +428,7 @@
         $('.page-title-box,#sales,#view_sales_table,#showsalesbody').show();
         $('#view_sales_per_page').closest('.form-group').show();
         $('.card.m-b-30.sales_header .ecommerce-pagination').closest('.card.m-b-30').show();
+        PosnicPro.sales.mountHistoryFilters();
         PosnicPro.sales.salesTable('sales');
         $('#image_sidebar_dashboard,#image_sidebar_newsale').hide();
         $('.dashboard_img_menu').hide();
@@ -436,6 +436,49 @@
         var loader = $(".loader-sales-balance");
         loader.find(".loadingSpinner:first").remove();
     },
+    /*
+     * The shared filter bar on Sales History - the same one the item list and
+     * quotes use.
+     *
+     * It writes into data('filters') and calls the same salesTable, so the
+     * endpoint keeps taking the blob it always took. salesTable then re-applies
+     * its own sale_process $ne rule on top, which is why this must NOT set that
+     * key: the KOT exclusion belongs to the list, not to what anybody filtered,
+     * and a bar that wrote it would have the two arguing over one field.
+     *
+     * Named mountHistoryFilters rather than mountFilters because
+     * PosnicPro.sales also owns the quote list, which mounts its own bar under
+     * a different key - two things called mountFilters on one namespace is a
+     * coin toss for whoever reads it next.
+     */
+    mountHistoryFilters: function () {
+        if (!$('#sales_filter_panel').length) { return; }
+        PosnicPro.listFilter.mount({
+            key: 'sales',
+            container: '#sales_filter_panel',
+            button: '#sales_filter_btn',
+            searchPlaceholder: 'Search bill no, customer or phone',
+            dateField: 'Date',
+            searchFields: [
+                { value: 'all', label: 'All fields' },
+                { value: 'sales_id', label: 'Bill no' },
+                { value: 'customer_name', label: 'Customer' },
+                { value: 'customer_phone', label: 'Phone' }
+            ],
+            /* Suggestions come from the customers this till already uses. */
+            typeahead: 'customer',
+            typeaheadField: 'customer_name',
+            onChange: function () {
+                var table = $('#view_sales');
+                /* The column PosnicPro.search filtered this list on. */
+                var filters = PosnicPro.listFilter.legacyFilters('sales', { dateKey: 'updated_date' });
+                table.data('filters', JSON.stringify(filters));
+                table.data('current_page', 1);
+                PosnicPro.sales.salesTable('sales');
+            }
+        });
+    },
+
     salesTable: function () {
         var loader = $(".loader-table-sale");
         $("<div class='loadingSpinner'></div>").appendTo(loader);
@@ -1550,6 +1593,7 @@
             $('.cancel-save-hide-show').show();
         }
         $('#newsalespage').hide();
+        PosnicPro.sales.saleDoneTimer.stop();
         $('#tendered_subtotal').text($('#sales_new_subtotal').text());
         $('#tendered_discount').text($('#discount_sale_amount').text());
         $('#tendered_tax').text($('#tax').text());
@@ -2094,11 +2138,58 @@
         // Calculate return balance
         let billAmount = parseFloat($('#tendered_payment').text().replace(/,/g, '')) || 0;
         let balance = total - billAmount;
-        
+
         if (total < billAmount) {
             $('#tendered_balance').text('0.00');
         } else {
             $('#tendered_balance').text(balance.toFixed(2));
+        }
+        PosnicPro.sales.showTenderStatus(total, billAmount);
+    },
+
+    /*
+     * Say whether the cash on the counter is short, exact, or more than the bill.
+     *
+     * "Return balance 0.00" was shown for TWO different situations: the
+     * customer has paid to the penny, and the customer is still 762 rupees
+     * short. Those must never look alike at a counter, because the second one
+     * ends with the shop out of pocket and nobody knowing when it happened.
+     *
+     * Words and a colour, not just a number. A cashier is looking at this for
+     * about a second while talking to somebody, and "still to pay" reads in
+     * that second where a figure in a row labelled "return balance" does not.
+     *
+     * Nothing is blocked here. Taking part payment is a real thing a shop
+     * does, and the existing save rules already decide what is allowed - this
+     * only makes sure nobody does it by accident.
+     */
+    showTenderStatus: function (tendered, billAmount) {
+        var $el = $('#tender_status');
+        if (!$el.length) { return; }
+
+        var currency = (PosnicPro.local.get('currencySign') || '').trim();
+        var money = function (n) {
+            var v = Math.abs(n).toFixed(2);
+            return currency ? currency + ' ' + v : v;
+        };
+
+        /* Nothing counted yet is not a state worth commenting on - the row
+           would sit there saying "short" before anybody has touched a note. */
+        if (!tendered) {
+            $el.text('').removeClass('is-short is-exact is-over').hide();
+            return;
+        }
+
+        var diff = tendered - billAmount;
+        /* A penny either way is rounding, not a shortfall. */
+        if (Math.abs(diff) < 0.01) {
+            $el.text('Exact amount').removeClass('is-short is-over').addClass('is-exact').show();
+        } else if (diff < 0) {
+            $el.text(money(diff) + ' still to pay')
+                .removeClass('is-exact is-over').addClass('is-short').show();
+        } else {
+            $el.text(money(diff) + ' change to give back')
+                .removeClass('is-exact is-short').addClass('is-over').show();
         }
     },
 
@@ -3746,9 +3837,7 @@ PosnicPro.sales.addSale = {
                     if (response.data.mail === true && $('#sales_new_customer_email').val() !== "") {
                         PosnicPro.sales.addSale.sendSalesReceipt(response.data.sales_id);
                     }
-                    PosnicPro.sales.showSaleDone(response.data);
                     var path = '#/sales/' + response.data.sales_id;
-                    $('#last_created_sale').attr('href', path);
                     $('.printSalesReceipt')
                         .attr('href', path + '/print')
                         .data('sale-id', response.data.sales_id);
@@ -3841,7 +3930,7 @@ PosnicPro.sales.addSale = {
                 
         // Validate phone number
         if (!phoneNumber) {
-            PosnicPro.alert('error', 'Please enter a valid phone number');
+            PosnicPro.alert('error', 'Enter a valid phone number');
             return;
         }
         
@@ -6718,6 +6807,7 @@ PosnicPro.sales.setDefaults = function () {
     if (PosnicPro.local.get('balance_view') === 'true') {
         $('.salesBalanceAmount,#newsalespage').show();
         $('#sales_save_button,#tenderpage,.cancel-save-hide-show').hide();
+        PosnicPro.sales.saleDoneTimer.start();
     } else {
         $('.salesBalanceAmount').hide();
         $('#sales_save_button').show();
@@ -7764,7 +7854,7 @@ PosnicPro.quotes = {
         $('#quotes_view_card,#quotes_edit_card').hide();
         $('#quotes_list_card').show();
         // back to the plain full-width list
-        $('#quotes_new .contentbar').removeClass('quotes-split rail-collapsed');
+        $('#quotes_new .contentbar').removeClass('master-detail quotes-split rail-collapsed');
         $('#quotes_list_rows tr.quotes-row').removeClass('is-active');
         $('.vertical-layout').removeClass('toggle-menu');
         $('#v-pills-dashboard-tab,#view_quotes_page').addClass('active');
@@ -7789,7 +7879,7 @@ PosnicPro.quotes = {
         /* The editor is a third child of this contentbar. Leaving the split on
            would lay it out as a flex item inside the joined surface and hand
            it the rail's border, so the authoring page takes the width back. */
-        $('#quotes_new .contentbar').removeClass('quotes-split rail-collapsed');
+        $('#quotes_new .contentbar').removeClass('master-detail quotes-split rail-collapsed');
         $('#quotes_edit_card').show();
         $('.vertical-layout').addClass('toggle-menu');
         PosnicPro.quotes._edInitSort();
@@ -8070,9 +8160,18 @@ PosnicPro.quotes = {
             + '<div class="q-seller">'
             + (logo && logo !== 'store.png' ? '<img class="q-logo" src="' + esc(logo) + '" alt="">' : '')
             + '<div class="q-shop">' + esc(PosnicPro.local.get('branchname') || '') + '</div>'
-            + '<div class="q-muted">' + esc(PosnicPro.local.get('branchaddress') || '') + '</div>'
-            + '<div class="q-muted">' + esc(PosnicPro.local.get('branchphone') || '') + '</div>'
-            + (PosnicPro.local.get('branchgstin') ? '<div class="q-muted">' + taxLabel + ': ' + esc(PosnicPro.local.get('branchgstin')) + '</div>' : '')
+            /* Same _real filter as the finished document: this preview is a
+               promise about what the customer will get, so it must not show a
+               placeholder the printed quote would drop. */
+            + (function () {
+                var real = PosnicPro.quotes._real;
+                var addr = real(PosnicPro.local.get('branchaddress'));
+                var ph = real(PosnicPro.local.get('branchphone'));
+                var gst = real(PosnicPro.local.get('branchgstin'));
+                return (addr ? '<div class="q-muted">' + esc(addr) + '</div>' : '')
+                    + (ph ? '<div class="q-muted">' + esc(ph) + '</div>' : '')
+                    + (gst ? '<div class="q-muted">' + taxLabel + ': ' + esc(gst) + '</div>' : '');
+            })()
             + '</div>'
             + '<div class="q-title-block"><div class="q-doc-title">QUOTATION</div>'
             + '<div class="q-num">' + esc(ed.quote_id || 'New') + '</div>'
@@ -8258,9 +8357,13 @@ PosnicPro.quotes = {
             page: PosnicPro.quotes._page,
             limit: PosnicPro.quotes.PAGE_SIZE
         };
-        if (PosnicPro.quotes._status) { params.status = PosnicPro.quotes._status; }
-        var term = $.trim($('#quotes_search').val() || '');
-        if (term) { params.search = term; }
+        /* Search, field, exact, the date window AND the status chips all come
+           from the shared filter bar - quotes owns none of that any more, which
+           is what lets items and sales get the same bar without a second copy.
+           Status rides as an extra so the Filter button counts it and Clear
+           clears it; a chip filtering under a button reading "0" is exactly the
+           forgotten filter the count exists to catch. */
+        $.extend(params, PosnicPro.listFilter.params('quotes'));
         PosnicPro.get({ url: 'quotes', data: params }, function (r) {
             if (mine !== PosnicPro.quotes._seq) { return; }
             PosnicPro.quotes._rows = (r && r.data) || [];
@@ -8276,7 +8379,10 @@ PosnicPro.quotes = {
         var rows = PosnicPro.quotes._rows || [];
         var meta = PosnicPro.quotes._meta;
         if (!rows.length) {
-            var searching = $.trim($('#quotes_search').val() || '') !== '' || PosnicPro.quotes._status;
+            /* #quotes_search stopped existing when the shared bar took over -
+               this read `''` from nothing and told anyone whose search found
+               nothing that they had never written a quote. */
+            var searching = PosnicPro.listFilter.activeCount('quotes') > 0;
             $('#quotes_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">'
                 + (searching
                     ? 'No quotes match this search.'
@@ -8301,7 +8407,7 @@ PosnicPro.quotes = {
                     ? '<span class="rs-pill unpaid">' + label + '</span>'
                     : '<span class="rs-pill hold">' + label + '</span>';
             var expired = q.status === 'open' && q.valid_until && new Date(q.valid_until) < new Date();
-            html += '<tr class="quotes-row highlight-select" data-id="' + esc(q._id) + '" style="cursor:pointer;">'
+            html += '<tr class="md-row quotes-row highlight-select" data-id="' + esc(q._id) + '" style="cursor:pointer;">'
                 + '<td>' + esc(q.quote_id) + '</td>'
                 + '<td>' + esc(q.customer_name || 'Walk-in') + '</td>'
                 + '<td class="q-col-date">' + d(q.created_date) + '</td>'
@@ -8317,20 +8423,39 @@ PosnicPro.quotes = {
            The count always shows; the arrows appear when there is somewhere
            to go. Sitting in the rail's footer it also says which slice of the
            list you are looking at. */
-        var pages = (meta && meta.pages) || 1;
+        /* The pager says only what was actually measured.
+           A text search skips the count on purpose - running an unanchored
+           regex across every row twice per keystroke is the thing that makes a
+           list feel slow - so on that path there is no total and no page
+           count, and inventing one would be a pager that lies. What it shows
+           instead is the range on screen and a Next that works, because
+           "is there more" is the only question a total was answering. */
         var cur = (meta && meta.page) || 1;
-        var total = (meta && meta.total) || rows.length;
+        var lim = (meta && meta.limit) || rows.length || 1;
+        var total = meta && typeof meta.total === 'number' ? meta.total : null;
+        var pages = meta && meta.pages ? meta.pages : null;
+        var hasMore = meta ? !!meta.hasMore : false;
+
         var arrow = function (to, label, off) {
             return '<button type="button" class="btn btn-sm btn-secondary-rgba q-pg-btn"' + (off ? ' disabled' : '')
                 + ' onclick="PosnicPro.quotes._page = ' + to + '; PosnicPro.quotes.load(true);">' + label + '</button>';
         };
+
+        var label;
+        if (total !== null) {
+            label = total + (total === 1 ? ' quote' : ' quotes');
+            if (pages > 1) { label = 'Page ' + cur + ' of ' + pages + ' · ' + label; }
+        } else {
+            var first = (cur - 1) * lim + 1;
+            var last = (cur - 1) * lim + rows.length;
+            label = rows.length ? 'Showing ' + first + '–' + last : 'No matches';
+        }
+
+        var showArrows = (pages && pages > 1) || cur > 1 || hasMore;
         html += '<div class="q-pager">'
-            + (pages > 1 ? arrow(cur - 1, '&laquo;', cur <= 1) : '')
-            + '<span class="q-pg-count">'
-            + (pages > 1 ? 'Page ' + cur + ' of ' + pages + ' &middot; ' : '')
-            + total + (total === 1 ? ' quote' : ' quotes')
-            + '</span>'
-            + (pages > 1 ? arrow(cur + 1, '&raquo;', cur >= pages) : '')
+            + (showArrows ? arrow(cur - 1, '&laquo;', cur <= 1) : '')
+            + '<span class="q-pg-count">' + label + '</span>'
+            + (showArrows ? arrow(cur + 1, '&raquo;', !hasMore) : '')
             + '</div>';
         $('#quotes_list_rows').html(html);
         // a re-render (search, filter, page) must not lose which quote is open
@@ -8370,7 +8495,7 @@ PosnicPro.quotes = {
                a second quote is then one click rather than back-then-forward. */
             $('#quotes_edit_card').hide();
             $('#quotes_list_card').show();
-            $('#quotes_new .contentbar').addClass('quotes-split');
+            $('#quotes_new .contentbar').addClass('master-detail quotes-split');
             $('.vertical-layout').removeClass('toggle-menu');
             /* Arriving straight at a quote - a refresh, a bookmark, a shared
                link - means the rail has never been filled. Only
@@ -8415,10 +8540,22 @@ PosnicPro.quotes = {
                 + '<div class="q-seller">'
                 + (logo && logo !== 'store.png' ? '<img class="q-logo" src="' + esc(logo) + '" alt="">' : '')
                 + '<div class="q-shop">' + esc(PosnicPro.local.get('branchname') || '') + '</div>'
-                + '<div class="q-muted">' + esc(PosnicPro.local.get('branchaddress') || '') + '</div>'
-                + '<div class="q-muted">' + esc(PosnicPro.local.get('branchphone') || '')
-                + (PosnicPro.local.get('branchemail') ? ' &middot; ' + esc(PosnicPro.local.get('branchemail')) : '') + '</div>'
-                + (PosnicPro.local.get('branchgstin') ? '<div class="q-muted">' + taxLabel + ': ' + esc(PosnicPro.local.get('branchgstin')) + '</div>' : '')
+                + (function () {
+                    /* Each line appears only if it has something real to say. */
+                    var real = PosnicPro.quotes._real;
+                    var addr = real(PosnicPro.local.get('branchaddress'));
+                    var ph = real(PosnicPro.local.get('branchphone'));
+                    var em = real(PosnicPro.local.get('branchemail'));
+                    var gst = real(PosnicPro.local.get('branchgstin'));
+                    var out = '';
+                    if (addr) { out += '<div class="q-muted">' + esc(addr) + '</div>'; }
+                    if (ph || em) {
+                        out += '<div class="q-muted">' + esc(ph)
+                            + (ph && em ? ' &middot; ' : '') + (em ? esc(em) : '') + '</div>';
+                    }
+                    if (gst) { out += '<div class="q-muted">' + taxLabel + ': ' + esc(gst) + '</div>'; }
+                    return out;
+                })()
                 + '</div>'
                 + '<div class="q-title-block">'
                 + '<div class="q-doc-title">QUOTATION</div>'
@@ -8651,13 +8788,38 @@ PosnicPro.quotes = {
             PosnicPro.alert('error', resp.message || 'Could not save the quote');
         });
     },
+    /*
+     * A value fit to print, or nothing.
+     *
+     * A shop record can carry a placeholder where a real value should be -
+     * "Not provided" arrived as a branch address and went straight onto a
+     * customer-facing quotation. Blank is always better than a placeholder on
+     * a document: an empty line reads as "not applicable", while "Not
+     * provided" reads as "we did not finish filling this in".
+     *
+     * This only guards the DOCUMENT. The settings screen still shows the real
+     * stored value, because hiding it there would stop anyone fixing it.
+     */
+    _real: function (v) {
+        var t = String(v == null ? '' : v).trim();
+        if (!t) { return ''; }
+        var placeholder = [
+            'not provided', 'not available', 'not set', 'n/a', 'na', 'nil',
+            'none', 'null', 'undefined', '-', '--', '.', 'xxx', 'test'
+        ];
+        return placeholder.indexOf(t.toLowerCase()) === -1 ? t : '';
+    },
+
     _seller: function () {
+        /* _real, not `|| ''`: this feeds the PDF, and a placeholder printed on
+           a customer-facing document is worse than a blank line. */
+        var real = PosnicPro.quotes._real;
         return {
             name: PosnicPro.local.get('branchname') || '',
-            address: PosnicPro.local.get('branchaddress') || '',
-            phone: PosnicPro.local.get('branchphone') || '',
-            email: PosnicPro.local.get('branchemail') || '',
-            gstin: PosnicPro.local.get('branchgstin') || '',
+            address: real(PosnicPro.local.get('branchaddress')),
+            phone: real(PosnicPro.local.get('branchphone')),
+            email: real(PosnicPro.local.get('branchemail')),
+            gstin: real(PosnicPro.local.get('branchgstin')),
             taxLabel: PosnicPro.local.get('gst_action') === 'enable' ? 'GSTIN' : 'Tax ID',
             signature: PosnicPro.local.get('quotesignature') || ''
         };
@@ -8739,7 +8901,9 @@ PosnicPro.quotes = {
         var nameLines = doc.splitTextToSize(txt(seller.name), 104).slice(0, 2);
         nameLines.forEach(function (ln) { doc.text(ln, M, leftY + 4); leftY += 5.8; });
         doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(103, 112, 127);
-        doc.splitTextToSize(txt(seller.address), 104).slice(0, 2).forEach(function (ln) {
+        /* filter(Boolean): splitTextToSize('') yields [''], and an empty line
+           still costs 4.3mm of header. No address means no gap either. */
+        doc.splitTextToSize(txt(seller.address), 104).filter(Boolean).slice(0, 2).forEach(function (ln) {
           doc.text(ln, M, leftY + 3.5); leftY += 4.3;
         });
         var contact = [seller.phone, seller.email].filter(Boolean).map(txt).join('  -  ');
@@ -9579,19 +9743,123 @@ $(document).ready(function () {
 /* LS2 (Lightspeed study): cash counting offers the till's real notes and
    coins by currency. Shop-defined denominations in Settings always win;
    this only replaces the one-size-fits-all fallback. */
-PosnicPro.sales.defaultDenominations = function () {
-    var sign = (PosnicPro.local.get('currencySign') || '').trim();
-    var SETS = {
+
+    /*
+     * The notes and coins actually in circulation, by currency.
+     *
+     * A shop's own list in Settings > Cash Denominations always wins; this is
+     * only the starting point, so that a till in Lagos or Jakarta does not
+     * open showing Indian rupee buttons.
+     *
+     * KEYED BY SYMBOL, BECAUSE THAT IS ALL WE HAVE. The shop stores
+     * currency_type, which is the symbol - the ISO code sits in
+     * api/src/json/currency.json and never reaches the browser. Symbols
+     * collide, so where one serves several countries the entry is the most
+     * widely used of them and is marked below. Getting that wrong costs a
+     * shopkeeper one visit to Settings; leaving every till on rupees costs
+     * every one of them that visit.
+     *
+     * Coins that no longer buy anything are left out on purpose. India has a
+     * 1 rupee coin and Nigeria has a 50 kobo, but a button nobody presses is
+     * a button in the way of the ones they do.
+     */
+var POSNIC_DENOMINATION_SETS = {
+        /* South Asia */
         '₹': [1, 2, 5, 10, 20, 50, 100, 200, 500],
+        '৳': [2, 5, 10, 20, 50, 100, 200, 500, 1000],
+        'රු': [10, 20, 50, 100, 500, 1000, 5000],
+        'Nu.': [1, 5, 10, 20, 50, 100, 500, 1000],
+        /* Ambiguous: Pakistan, Sri Lanka, Nepal and Mauritius all use these.
+           Pakistan is the largest, so its ladder is the default. */
+        'Rs': [10, 20, 50, 100, 500, 1000, 5000],
+        '₨': [10, 20, 50, 100, 500, 1000, 5000],
+
+        /* Ambiguous: a dozen countries use a bare dollar sign. The US set is
+           the default because it is the most common and the most familiar. */
         '$': [0.01, 0.05, 0.1, 0.25, 1, 5, 10, 20, 50, 100],
+        'US$': [0.01, 0.05, 0.1, 0.25, 1, 5, 10, 20, 50, 100],
+        'CA$': [0.05, 0.1, 0.25, 1, 2, 5, 10, 20, 50, 100],
+        'A$': [0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100],
+        'NZ$': [0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100],
+        'S$': [0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 50, 100],
+        'HK$': [0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 500, 1000],
+        'R$': [0.05, 0.1, 0.25, 0.5, 1, 2, 5, 10, 20, 50, 100, 200],
+
+        /* Europe */
         '€': [0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200],
         '£': [0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50],
-        'RM': [0.05, 0.1, 0.2, 0.5, 1, 5, 10, 20, 50, 100],
-        '฿': [0.25, 0.5, 1, 2, 5, 10, 20, 50, 100, 500, 1000],
+        'CHF': [0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200],
+        'zł': [0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200],
+        'Kč': [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000],
+        'Ft': [5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000],
+        'lei': [0.1, 0.5, 1, 5, 10, 50, 100, 200, 500],
+        'лв': [0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100],
+        /* Ambiguous: Norway, Sweden, Denmark and Iceland. Sweden is the
+           largest of them. */
+        'kr': [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000],
+        '₽': [1, 2, 5, 10, 50, 100, 200, 500, 1000, 2000, 5000],
+        '₴': [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000],
+        '₺': [0.25, 0.5, 1, 5, 10, 20, 50, 100, 200],
+
+        /* Middle East */
         'د.إ': [0.25, 0.5, 1, 5, 10, 20, 50, 100, 200, 500, 1000],
-        'Rs': [1, 2, 5, 10, 20, 50, 100, 500, 1000, 5000]
+        'ر.س': [0.25, 0.5, 1, 5, 10, 50, 100, 500],
+        'د.ك': [0.05, 0.1, 0.25, 0.5, 1, 5, 10, 20],
+        'ر.ق': [1, 5, 10, 50, 100, 500],
+        'ر.ع.': [0.1, 0.25, 0.5, 1, 5, 10, 20, 50],
+        'د.ب': [0.1, 0.25, 0.5, 1, 5, 10, 20],
+        'ج.م': [0.25, 0.5, 1, 5, 10, 20, 50, 100, 200],
+        '₪': [0.1, 0.5, 1, 2, 5, 10, 20, 50, 100, 200],
+        'د.ا': [0.25, 0.5, 1, 5, 10, 20, 50],
+
+        /* Africa */
+        '₦': [5, 10, 20, 50, 100, 200, 500, 1000],
+        'KSh': [1, 5, 10, 20, 50, 100, 200, 500, 1000],
+        'GH₵': [0.5, 1, 2, 5, 10, 20, 50, 100, 200],
+        'R': [0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200],
+        'TSh': [50, 100, 200, 500, 1000, 2000, 5000, 10000],
+        'USh': [100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000],
+        'MAD': [0.5, 1, 2, 5, 10, 20, 50, 100, 200],
+
+        /* East and South-East Asia */
+        '¥': [1, 5, 10, 50, 100, 500, 1000, 5000, 10000],
+        '₩': [10, 50, 100, 500, 1000, 5000, 10000, 50000],
+        '฿': [1, 2, 5, 10, 20, 50, 100, 500, 1000],
+        'RM': [0.05, 0.1, 0.2, 0.5, 1, 5, 10, 20, 50, 100],
+        'Rp': [500, 1000, 2000, 5000, 10000, 20000, 50000, 100000],
+        '₱': [1, 5, 10, 20, 50, 100, 200, 500, 1000],
+        '₫': [1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 500000],
+        '₭': [500, 1000, 2000, 5000, 10000, 20000, 50000, 100000],
+        '៛': [100, 500, 1000, 2000, 5000, 10000, 20000, 50000],
+        'K': [50, 100, 200, 500, 1000, 5000, 10000],
+
+        /* Americas */
+        'MX$': [0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000],
+        'S/': [0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200],
+        'COL$': [50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000],
+        '₡': [5, 10, 25, 50, 100, 500, 1000, 2000, 5000, 10000, 20000],
+        '₲': [50, 100, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000],
+
+        /* Oceania */
+        '₣': [0.5, 1, 2, 5, 10, 20, 50, 100],
+
+        'Kz': [5, 10, 50, 100, 200, 500, 1000, 2000, 5000]
     };
-    return (SETS[sign] || [1, 2, 5, 10, 20, 50, 100, 200, 500]).slice();
+
+    /*
+     * The fallback is a 1-2-5 ladder, not the rupee set.
+     *
+     * Almost every currency in the world is built on 1, 2 and 5 repeated by
+     * powers of ten, so this is recognisable nearly anywhere - and unlike a
+     * copy of one country's notes it does not look like a bug to everybody
+     * else.
+     */
+PosnicPro.sales.defaultDenominations = function () {
+    var sign = (PosnicPro.local.get('currencySign') || '').trim();
+    /* A COPY, always. The table is built once at module scope now, and one of
+       the two callers sorts the result in place - handing out the real array
+       would reorder every till's buttons for the rest of the session. */
+    return (POSNIC_DENOMINATION_SETS[sign] || [1, 2, 5, 10, 20, 50, 100, 200, 500]).slice();
 };
 /* A sale carries a register session only while the Cash Register feature
    is ON - with it off, a register id left in localStorage from before the
@@ -10265,119 +10533,41 @@ PosnicPro.sales.renderRecentCustomers = function () {
         fill(PosnicPro.sales._customerSeed);
     }, function () { /* recents alone, or empty - never an error popup */ });
 };
-/*
- * The post-sale confirmation strip.
- *
- * What replaced "Last Created Record  View". The change due is the largest
- * thing on it deliberately: for a cash sale it is the number the cashier acts
- * on next, and handing back the wrong change is the most expensive routine
- * till mistake there is. Everything else is there so the line can be read
- * aloud - which sale, for how much, to whom, and what they earned.
- *
- * It stays until dismissed (owner choice). Nothing is on a timer, because a
- * confirmation that clears itself is one a busy cashier can miss entirely.
- */
-PosnicPro.sales.showSaleDone = function (d) {
-    d = d || {};
-    var money = function (n) {
-        return (Number(n) || 0).toFixed(2);
-    };
-    /* #tendered_balance is the return balance the tender panel already
-       computed (tendered minus bill, floored at zero), so the strip agrees
-       with the screen the cashier just used rather than recomputing it. */
-    var change = parseFloat(String($('#tendered_balance').text() || '0').replace(/,/g, '')) || 0;
-    $('#sds_change').text(money(change));
-    // No change to hand back is not worth shouting about - a card or exact
-    // cash sale shows the sale, not a zero.
-    $('#sds_change_wrap').toggle(change > 0);
-
-    var number = d.sale_number || '';
-    $('#sds_number').text(number ? 'Sale ' + number : 'Sale saved');
-
-    var total = parseFloat(String($('#grand_total').val() || '0').replace(/,/g, '')) || 0;
-    $('#sds_total').text(total > 0 ? ' · ' + PosnicPro.local.get('currencySign') + ' ' + money(total) : '');
-
-    var who = $.trim(d.name || '');
-    $('#sds_customer').text(who && who !== 'Walk-In-Customer' ? who : 'Walk-in');
-
-    /* Loyalty only when this sale actually earned some - the API attaches it
-       and omits it otherwise, so a shop with the module off never sees it. */
-    var loy = d.loyalty_earned;
-    if (loy && Number(loy.points) > 0) {
-        $('#sds_loyalty')
-            .text(' · earned ' + loy.points + ' pts, balance ' + loy.balance)
-            .show();
-    } else {
-        $('#sds_loyalty').text('').hide();
-    }
-
-    clearTimeout(PosnicPro.sales._voidArm);
-    $('#sds_void')
-        .data('sale-id', d.sales_id || '')
-        .data('armed', false)
-        .prop('disabled', false)
-        .text('Void');
-    $('#show_last_created_sale').show();
+/* One mount, once. The bar reports a change; quotes just reloads. */
+PosnicPro.quotes._filterMounted = false;
+PosnicPro.quotes.mountFilters = function () {
+    if (PosnicPro.quotes._filterMounted) { return; }
+    if (!$('#quotes_filter_panel').length) { return; }
+    PosnicPro.listFilter.mount({
+        key: 'quotes',
+        container: '#quotes_filter_panel',
+        button: '#quotes_filter_btn',
+        searchPlaceholder: 'Search customer or quote #',
+        dateField: 'Created',
+        searchFields: [
+            { value: 'all', label: 'All fields' },
+            { value: 'quote_id', label: 'Quote #' },
+            { value: 'customer_name', label: 'Customer' }
+        ],
+        /* Suggestions come from the customers this till already uses, whatever
+           field is selected - picking one narrows the field for you. */
+        typeahead: 'customer',
+        typeaheadField: 'customer_name',
+        onChange: function (params, state) {
+            PosnicPro.quotes._paintChips((state.extra && state.extra.status) || '');
+            PosnicPro.quotes.load();
+        }
+    });
+    PosnicPro.quotes._filterMounted = true;
 };
-
-/* Enter starts the next sale while the strip is up, so the cashier never
-   reaches for the mouse between customers. Guarded on the strip being visible
-   and on not being inside a field, or Enter would hijack every form on the
-   page. */
-$(document).on('keydown', function (e) {
-    if (e.which !== 13) { return; }
-    if (!$('#show_last_created_sale').is(':visible')) { return; }
-    if ($(e.target).is('input, textarea, select, [contenteditable="true"]')) { return; }
-    e.preventDefault();
-    $('#sds_new')[0].click();
+$(document).on('click', '#sales_filter_btn', function () {
+    PosnicPro.sales.mountHistoryFilters();
+    PosnicPro.listFilter.toggle('sales');
 });
 
-/*
- * Void: the sale is minutes old and the customer is still at the counter, so
- * reversing it here beats hunting for it in Sales History. The endpoint puts
- * the stock back and reverses loyalty, coupons and cashback with it.
- *
- * Two clicks, not a modal. This IS destructive so it should not go on one
- * click, but the owner's rule is that a dialog is for things that deserve one;
- * the button asking to be pressed again says the same thing without something
- * to dismiss. It reverts itself after a few seconds so a stray first click
- * cannot sit there armed.
- *
- * The server gates this on sales:delete, so the button carries the matching
- * data-module/data-access and the ACL layer hides it from a cashier who would
- * only get a 403 - rather than offering a manager PIN this endpoint has no
- * way to accept.
- */
-PosnicPro.sales._voidArm = null;
-$(document).on('click', '#sds_void', function () {
-    var $btn = $(this);
-    var id = $btn.data('sale-id');
-    if (!id) { return; }
-
-    if (!$btn.data('armed')) {
-        $btn.data('armed', true).text('Confirm void');
-        clearTimeout(PosnicPro.sales._voidArm);
-        PosnicPro.sales._voidArm = setTimeout(function () {
-            $btn.data('armed', false).text('Void');
-        }, 4000);
-        return;
-    }
-
-    clearTimeout(PosnicPro.sales._voidArm);
-    $btn.data('armed', false).prop('disabled', true).text('Voiding...');
-    PosnicPro.post({ url: 'sales/cancel/' + id, data: '{}' }, function (r) {
-        PosnicPro.alert(r.type, r.message);
-        if (r.type === 'success') {
-            $('#show_last_created_sale').hide();
-        } else {
-            $btn.prop('disabled', false).text('Void');
-        }
-    }, function (xhr) {
-        var resp = {};
-        try { resp = JSON.parse(xhr.responseText); } catch (e) { /* plain */ }
-        PosnicPro.alert('error', resp.message || 'Could not void the sale');
-        $btn.prop('disabled', false).text('Void');
-    });
+$(document).on('click', '#quotes_filter_btn', function () {
+    PosnicPro.quotes.mountFilters();
+    PosnicPro.listFilter.toggle('quotes');
 });
 
 $(document).on('click', '.quotes-row', function () {
@@ -10400,18 +10590,20 @@ $(document).on('click', '#quotes_rail_toggle', function () {
     $('#quotes_new .contentbar').toggleClass('rail-collapsed');
 });
 $(document).on('click', '.quotes-chip', function () {
+    /* The bar may not be built yet - it mounts lazily - and a status set
+       outside it would be invisible to the count and to Clear. */
+    PosnicPro.quotes.mountFilters();
+    PosnicPro.listFilter.setExtra('quotes', 'status', $(this).data('status') || '');
+});
+/* The chips paint from the bar's state, never from the click, so Clear moves
+   them back to All instead of leaving a lit chip over an unfiltered list. */
+PosnicPro.quotes._paintChips = function (status) {
+    PosnicPro.quotes._status = status || '';
     $('.quotes-chip').removeClass('btn-primary-rgba').addClass('btn-secondary-rgba');
-    $(this).removeClass('btn-secondary-rgba').addClass('btn-primary-rgba');
-    PosnicPro.quotes._status = $(this).data('status') || '';
-    PosnicPro.quotes.load();
-});
-// search asks the SERVER now, so debounce it rather than querying per keypress
-$(document).on('input', '#quotes_search', function () {
-    clearTimeout(PosnicPro.quotes._searchTimer);
-    PosnicPro.quotes._searchTimer = setTimeout(function () {
-        PosnicPro.quotes.load();
-    }, 300);
-});
+    $('.quotes-chip').filter(function () {
+        return String($(this).data('status') || '') === String(status || '');
+    }).removeClass('btn-secondary-rgba').addClass('btn-primary-rgba');
+};
 $(document).on('click', '.recent-customer-row', function () {
     var list = PosnicPro.sales._recentRendered || [];
     var c = list[$(this).data('i')];
@@ -11657,4 +11849,154 @@ $(document).on('click', '#print_receipt_a4, #print_receipt_thermal', function ()
     view._ensurePrintTemplates(function () {
         view.printSale(id, 'sale', false, layout);
     });
+});
+
+/*
+ * The sale-done card closes itself, unless the cashier is using it.
+ *
+ * At a busy counter the next customer is already waiting, so making
+ * somebody click "New sale" after every single sale is a step charged on
+ * every transaction of the day. The card knows what comes next, so it can
+ * do it.
+ *
+ * WHAT MAKES THIS SAFE IS THE CANCELLING, NOT THE DURATION.
+ *
+ * The failure that would make this worse than no timer at all: the card
+ * closes at ten seconds while a hand is on its way to Print. That cashier
+ * now has to go and find the sale again in front of a waiting customer,
+ * and that single event costs more goodwill than the saved clicks earn
+ * back over a hundred sales. So ANY sign of attention stops the clock -
+ * moving onto the card, focusing a button, a keystroke, a touch - and
+ * once stopped it does not restart. Somebody who has engaged with this
+ * card gets to leave it when they choose.
+ *
+ * Printing deliberately does not restart it either. A print is exactly
+ * the case where the next thing is handing paper to a customer, and
+ * having the screen change during that is the wrong moment.
+ */
+PosnicPro.sales.saleDoneTimer = {
+    /* Long enough to read the total and reach for Print; short enough that
+       the till is ready before the next customer has put their basket down. */
+    SECONDS: 10,
+
+    _timer: null,
+    _card: function () { return $('#newsalespage .sale-done-card'); },
+
+    start: function () {
+        var self = PosnicPro.sales.saleDoneTimer;
+        self.stop();
+
+        var $card = self._card();
+        if (!$card.length) { return; }
+
+        /*
+         * Somebody who asked for reduced motion gets no ring, and the ring is
+         * the only warning this card gives. Closing anyway would make it
+         * vanish with no notice at all - the exact surprise the ring exists to
+         * prevent - so for them the card simply waits to be dismissed.
+         */
+        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            return;
+        }
+
+        /* One sale, one countdown. Without this a second sale completing
+           while the first card was open would leave two timers running and
+           the card would close early, which looks exactly like a bug. */
+        $card.removeClass('is-held').addClass('is-closing');
+        /* Fresh baseline per sale, or the pointer position left over from the
+           previous card counts as movement on this one. */
+        self._lastPoint = null;
+
+        var $line = $card.find('.sale-done-ring-line');
+        var el = $line.get(0);
+        if (el && el.getTotalLength) {
+            /* Measured, not guessed: the card's height depends on which
+               buttons this shop has switched on, so a hard-coded perimeter
+               would make the ring finish early or late. */
+            var len = el.getTotalLength();
+            if (len > 0) {
+                $line.css({
+                    'stroke-dasharray': len,
+                    'stroke-dashoffset': 0,
+                    'transition': 'none'
+                });
+                /* Next frame, or the browser folds both values into one
+                   style change and there is nothing to animate between. */
+                window.requestAnimationFrame(function () {
+                    $line.css({
+                        'transition': 'stroke-dashoffset ' + self.SECONDS + 's linear, opacity .2s ease',
+                        'stroke-dashoffset': len
+                    });
+                });
+            }
+        }
+
+        self._timer = window.setTimeout(function () {
+            self._timer = null;
+            /* Only if the card is still the thing on screen. Navigating away
+               during the countdown must not drag the shop back here. */
+            if (!$('#newsalespage').is(':visible')) { return; }
+            $card.removeClass('is-closing');
+            /* The same path the button takes, rather than a second way to
+               start a sale that could drift away from the first. */
+            $('#newsalespage .sale-done-primary').get(0).click();
+        }, self.SECONDS * 1000);
+    },
+
+    /* Called by every interaction. Idempotent on purpose - mouseenter and
+       focusin both fire for a keyboard user reaching the same button. */
+    hold: function () {
+        var self = PosnicPro.sales.saleDoneTimer;
+        if (!self._timer) { return; }
+        self.stop();
+        self._card().addClass('is-held');
+    },
+
+    stop: function () {
+        var self = PosnicPro.sales.saleDoneTimer;
+        if (self._timer) { window.clearTimeout(self._timer); self._timer = null; }
+        var $card = self._card();
+        $card.removeClass('is-closing');
+        $card.find('.sale-done-ring-line').css({ 'transition': 'none', 'stroke-dashoffset': 0 });
+    }
+};
+
+/*
+ * What counts as the cashier using this card.
+ *
+ * THE FIRST VERSION CANCELLED ON HOVER ANYWHERE ON THE PANEL, and so it never
+ * closed once - reported as "so far many sales it never closed, maybe mouse
+ * moving somehow". Exactly that: the panel opens where the cursor already is,
+ * because the button they just pressed is in the same place. mouseenter fired
+ * on the frame it appeared, every time, and the countdown was cancelled before
+ * it could be seen.
+ *
+ * Presence is not intent. Reaching for a BUTTON is, so the buttons hold it.
+ * Typing, tabbing and touching are too. Sitting still under a panel that
+ * arrived unasked is not.
+ *
+ * Delegated, because the sale page rebuilds this markup.
+ */
+$(document).on(
+    'mouseenter',
+    '#newsalespage .sale-done-actions a, #newsalespage .infobar-tender-close',
+    function () { PosnicPro.sales.saleDoneTimer.hold(); }
+);
+$(document).on(
+    'focusin keydown touchstart',
+    '#newsalespage',
+    function () { PosnicPro.sales.saleDoneTimer.hold(); }
+);
+/*
+ * A pointer that actually MOVES over the card is somebody looking at it. The
+ * first move is ignored: showing the panel under a stationary cursor produces
+ * one mousemove on its own in some browsers, which would put us straight back
+ * to never closing.
+ */
+$(document).on('mousemove', '#newsalespage', function (e) {
+    var t = PosnicPro.sales.saleDoneTimer;
+    var last = t._lastPoint;
+    t._lastPoint = { x: e.pageX, y: e.pageY };
+    if (!last) { return; }
+    if (Math.abs(e.pageX - last.x) + Math.abs(e.pageY - last.y) > 12) { t.hold(); }
 });

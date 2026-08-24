@@ -185,12 +185,53 @@ $('[data-toggle="tooltip"]').on('click', function () {
 function setLocalValue() {
     $("body").tooltip({'delay': {show: 250, hide: 0}, selector: '[data-toggle="tooltip"]', container: 'body', placement: "top", trigger: 'hover'});
     $(".select2").select2();
-    var users_name = PosnicPro.local.get('userfirstname') + ' ' + PosnicPro.local.get('userlastname');
+    /*
+     * The header showed a literal "null null".
+     *
+     * localStorage.getItem returns null for a key that was never written, and
+     * `null + ' ' + null` is the string "null null". Only loginCheck writes
+     * these two, so every other way into the app - shadow login above all, which
+     * is how support looks at a shop - arrived with neither set and printed it
+     * to the top of every screen.
+     *
+     * Filtered and fallen back, the way PosnicPro.js already builds this name:
+     * a username or an email address is a worse greeting than a real name and a
+     * far better one than "null null".
+     */
+    var users_name = [
+        PosnicPro.local.get('userfirstname'),
+        PosnicPro.local.get('userlastname')
+    ].filter(function (part) {
+        /* The string "null" and the string "undefined" get here too: local.set
+           stringifies whatever it is given, so a missing field in a login
+           response is stored as those words rather than skipped. */
+        var v = $.trim(String(part == null ? '' : part));
+        return v && v !== 'null' && v !== 'undefined';
+    }).join(' ')
+        || PosnicPro.local.get('username')
+        || '';
     $(".user-name").html(users_name).val(users_name);
 
     $("#search_register_id").val(PosnicPro.local.get('registerId'));
     $("#search_register_name").val(PosnicPro.local.get('registerName'));
-    $(".branch-name").html(PosnicPro.local.get('branchname'));
+    /*
+     * The shop name, or nothing - never the word null.
+     *
+     * This runs at page render; viewSettings fetches the real name a moment
+     * later and paints it again. Whichever lands first, a missing value must
+     * not overwrite a good one with an empty string, and localStorage.getItem
+     * returns the STRING "null" for a key written as null - which is how the
+     * header came to read "null null".
+     *
+     * The dashboard's markup carries a placeholder shop name, so blanking it
+     * on a miss is better than leaving somebody else's name on screen - but
+     * only a miss, never a value we simply have not fetched yet.
+     */
+    var branchName = PosnicPro.local.get('branchname');
+    branchName = (branchName == null || branchName === 'null' || branchName === 'undefined')
+        ? '' : $.trim(branchName);
+    if (branchName) { $(".branch-name").html(branchName); }
+    else if (!$.trim($(".branch-name").first().text())) { $(".branch-name").html(''); }
 
     var storedUserImage = PosnicPro.local.get('userimage');
     var storedBranchImage = PosnicPro.local.get('branchimage');

@@ -139,6 +139,58 @@ PosnicPro = {
         }
     },
 
+    /*
+     * Is this list showing a filtered view, or all of it?
+     *
+     * An empty list means two completely different things and the difference
+     * is invisible from the row count alone. "No items yet - add your first
+     * item" told a shop with five thousand items, whose search happened to
+     * match none of them, that their catalogue was empty. That is the same
+     * failure quotes had: an answer that is confidently wrong is worse than no
+     * answer, because it sends somebody looking for missing DATA instead of
+     * fixing their SEARCH.
+     *
+     * search() is the one place a list's filters are set, so this reads what
+     * that wrote rather than inspecting the inputs - a date range left in the
+     * box but never applied is not a filter, and asking the inputs would count
+     * it as one.
+     */
+    hasActiveFilters: function (module) {
+        var raw = $('#view_' + module).data('filters');
+        if (!raw) { return false; }
+        if (typeof raw === 'object') { return Object.keys(raw).length > 0; }
+        try {
+            var parsed = JSON.parse(raw);
+            return !!parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0;
+        } catch (e) {
+            /* Unparseable is not "filtered" - it is broken, and claiming a
+               filter is active would hide every row behind a message about a
+               search nobody can see or clear. */
+            return false;
+        }
+    },
+
+    /*
+     * Put a list back to showing everything.
+     *
+     * dateRangefilterClear empties the INPUTS but leaves data('filters') and
+     * never reloads, so on its own it makes the controls disagree with the
+     * rows on screen until Apply is pressed again. An empty-state offering to
+     * clear the search has to actually clear it.
+     */
+    clearListFilters: function (module) {
+        var table = $('#view_' + module);
+        $('#view_' + module + '_input').val('');
+        $('.hide_value_filetr').hide();
+        $('.view_' + module + '_filter_value').hide();
+        table.data('filters', '');
+        table.data('current_page', 1);
+        var mod = PosnicPro[module];
+        if (mod && typeof mod[module + 'Table'] === 'function') {
+            mod[module + 'Table']('#view_' + module);
+        }
+    },
+
     filterClear: function (index) {
         var module = $(index).data('id');
         $('#view_' + module + '_input').val('');
@@ -2279,6 +2331,19 @@ PosnicPro = {
         }
     },
     /*Restore BackUP data*/
+   /*
+    * Has the permission list actually arrived?
+    *
+    * userACL starts as an empty STRING and is replaced by an object when
+    * users/getUserAccessDetails answers. Until then every lookup misses, so
+    * checkAccess said no to everything and the page was stripped of controls
+    * that the shop was perfectly entitled to.
+    */
+   aclLoaded: function () {
+       var acl = PosnicPro.userACL;
+       return !!acl && typeof acl === 'object' && Object.keys(acl).length > 0;
+   },
+
    checkAccess: function (module, access_type) {
          if (PosnicPro.userACL[module] && PosnicPro.userACL[module][access_type]) {
             return true;
@@ -2293,6 +2358,21 @@ PosnicPro = {
         });
     },
     ACLApply: function (element) {
+        /*
+         * Unknown is not denied.
+         *
+         * With no permission list loaded this stripped the page bare - every
+         * Add, Edit and Delete removed from the DOM, which is indistinguishable
+         * from a shop whose plan does not include them. Reported as "cashbook
+         * page no option to add or edit expenses": the button was not hidden by
+         * a rule, it was deleted because the rules had not arrived.
+         *
+         * Leaving the controls alone is the safer wrong answer. The server
+         * checks every one of these operations regardless, so the worst case is
+         * a button that answers "unauthorised" - visible and explicable, rather
+         * than a feature that appears not to exist.
+         */
+        if (!PosnicPro.aclLoaded()) { return; }
         var access = $(element).data('access');
         var module = $(element).data('module');
         if (!access.match(/(read|write|delete|super|financials)/)) {
@@ -2343,6 +2423,10 @@ PosnicPro = {
         });
     },
     redirectPage: function () {
+        /* Same reason, and worse: this throws outright on an empty ACL, and
+           it runs during boot - so one failed permissions call took the whole
+           dashboard down rather than one button. */
+        if (!PosnicPro.aclLoaded() || !PosnicPro['userACL'].dashboard) { return; }
         if (PosnicPro['userACL'].dashboard.read === false) {
             $("#v-pills-dashboard-tab").removeClass("active");
             $("#v-pills-dashboard").removeClass("show active");
@@ -4350,6 +4434,26 @@ $('.custom_report_search_input').on('keypress keydown.autocomplete', function ()
     });
 });
 $(function () { PosnicPro.injectReportExportButtons(); });
+/*
+ * Where Close should go back to, when the answer is not "the list".
+ *
+ * "Saved an item. Open it" is a detour from a form somebody is still working
+ * in. Following it and closing sent them to the item LIST, because the close
+ * handler below reads the hash and #/items/<id> means "a record, so go to the
+ * records" - it has no way to know you arrived from the form rather than from
+ * the list (reported: "i opened it. i closed it. page went item list").
+ *
+ * One marker fixes it for every screen with that strip - there are ten - rather
+ * than teaching the close handler about each one. It is set on the way out and
+ * cleared on the way back, so it can never leak into an unrelated Close: a
+ * stale marker sending someone to a form they did not come from would be worse
+ * than the list.
+ */
+PosnicPro.returnTo = '';
+$(document).on('click', '[id^="last_created_"]', function () {
+    PosnicPro.returnTo = currentHash || '';
+});
+
 $(".infobar-settings-close").on("click", function (e) {
     var category = 'sales/categories/new';
     if (currentHash === category) {
@@ -4360,6 +4464,15 @@ $(".infobar-settings-close").on("click", function (e) {
     if (currentHash === customer) {
         hasher.changed.active = true;
         hasher.replaceHash('sales/new');
+    }
+    /* Honoured once, then forgotten. */
+    if (PosnicPro.returnTo) {
+        var back = PosnicPro.returnTo;
+        PosnicPro.returnTo = '';
+        if (back && back !== currentHash) {
+            hasher.setHash(back);
+            return;
+        }
     }
     var patt = /^[a-f\d]{24}$/i;
     var parts = currentHash.split('/');

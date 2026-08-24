@@ -1,6 +1,7 @@
 const { searchPattern } = require('../utils/safe-search');
 // src/repositories/item.repository.js
 const BaseModel = require('../models/base.model');
+const demoData = require('../services/demo-data');
 const Item = require('../models/item.model');
 const Branch = require('../models/branch.model');
 const {
@@ -110,24 +111,20 @@ class ItemRepository extends BaseModel {
   }
 
   /**
-   * Find items with pagination and filters (equivalent to itemPage)
+   * The collection and the authoritative filter for one branch's item list.
+   *
+   * Shared by the flat list and the grouped one. Two copies of this would be
+   * two places to forget that client-supplied scope must be stripped - and the
+   * failure mode of forgetting is not an error, it is a query that quietly
+   * returns the wrong shop's items or none at all.
    *
    * @param {Object} params
    * @param {string|ObjectId} params.branchId - Branch context
    * @param {string|ObjectId} params.licenseId - License context
-   * @param {Object} [params.filters] - Additional filters
-   * @param {number} [params.page] - Page number (1-based)
-   * @param {number} [params.limit] - Page size
-   * @param {Object} [params.sort] - Sort object
+   * @param {Object} [params.filters] - Client-supplied business filters
+   * @returns {Promise<{collection: Object, filter: Object}>}
    */
-  async findPage({
-    branchId,
-    licenseId,
-    filters = {},
-    page = 1,
-    limit = 5,
-    sort = { _id: -1 },
-  } = {}) {
+  async listScope({ branchId, licenseId, filters = {} } = {}) {
     const collection = await this.getCollection(this.collectionName);
 
     const branchObjectId = this.toObjectId(branchId);
@@ -142,10 +139,6 @@ class ItemRepository extends BaseModel {
     if (!branch) {
       throw new Error('Active branch does not belong to the current license');
     }
-
-    const effectiveLimit = parseInt(limit, 10) || 5;
-    const effectivePage = parseInt(page, 10) || 1;
-    const skip = (effectivePage - 1) * effectiveLimit;
 
     const clientFilters = this.assignFilterObjects({ ...filters }, LegacyItemModel.fields);
     // Client-supplied scope is never part of the business filter. Leaving a
@@ -164,14 +157,57 @@ class ItemRepository extends BaseModel {
       delete clientFilters[key];
     }
 
+    /*
+     * Demo products are hidden when the shop has switched Demo Data off.
+     *
+     * Resolved here, in the ONE place the item list builds its filter, so it
+     * cannot be applied to some reads and forgotten on others - a catalogue
+     * that hides sample items on the manage screen and shows them on the sale
+     * grid is worse than not hiding them at all.
+     *
+     * Nothing is written and nothing is deleted, so switching it back on
+     * restores everything instantly. See services/demo-data.js for why a
+     * demo item that has been sold must never simply be removed.
+     */
+    const demoClause = await demoData.filter({ licenseId, branchId });
+
     const filter = {
       // branch_access is the canonical item-to-branch relation. branch_id and
       // branch_name are denormalized legacy fields and can be absent or stale
       // in production data after a branch rename.
       ...clientFilters,
+      ...demoClause,
       'branch_access.branch_id': branchObjectId,
       license: licenseObjectId,
     };
+
+    return { collection, filter };
+  }
+
+  /**
+   * Find items with pagination and filters (equivalent to itemPage)
+   *
+   * @param {Object} params
+   * @param {string|ObjectId} params.branchId - Branch context
+   * @param {string|ObjectId} params.licenseId - License context
+   * @param {Object} [params.filters] - Additional filters
+   * @param {number} [params.page] - Page number (1-based)
+   * @param {number} [params.limit] - Page size
+   * @param {Object} [params.sort] - Sort object
+   */
+  async findPage({
+    branchId,
+    licenseId,
+    filters = {},
+    page = 1,
+    limit = 5,
+    sort = { _id: -1 },
+  } = {}) {
+    const { collection, filter } = await this.listScope({ branchId, licenseId, filters });
+
+    const effectiveLimit = parseInt(limit, 10) || 5;
+    const effectivePage = parseInt(page, 10) || 1;
+    const skip = (effectivePage - 1) * effectiveLimit;
 
     const [total, items] = await Promise.all([
       collection.countDocuments(filter),
@@ -971,6 +1007,231 @@ class ItemRepository extends BaseModel {
    * (a tombstone would SYNC the non-event fleet-wide) - and their freshly
    * written 'Add Item' stock logs go with them.
    */
+  /*
+   * Remove the demo data for good, and refuse to remove anything real.
+   *
+   * The switch hides; this destroys. So the whole value of it is in what it
+   * declines to touch:
+   *
+   *   SOLD. A demo item exists to be rung up - that is how somebody finds out
+   *   whether the till suits them - and a sale line stores item_id. Delete the
+   *   item and the sale becomes a purchase of a product that does not exist.
+   *   The sale is real even though the product was not, so nothing can put
+   *   that right afterwards.
+   *
+   *   RECEIVED. Same argument for a purchase or a stock receipt.
+   *
+   *   EDITED. Changing the price on a sample and putting it on the shelf is
+   *   how a small shop starts its real catalogue. By the time they press this
+   *   button that row is THEIRS, whatever tag it still carries.
+   *
+   * What survives is reported by name, not counted. "Removed 128, kept 6"
+   * invites the question this function already knows the answer to, and a
+   * silent partial delete is worse than no delete at all.
+   *
+   * Soft, not hard: del_status is what the Recycle Bin reads, so this is still
+   * undoable by the shop that asked for it. A hard delete here would make
+   * "permanent" mean permanent in a way nobody asked for.
+   */
+  async purgeDemoData({ branchId, licenseId, user } = {}) {
+    const items = await this.getCollection(this.collectionName);
+    const branch = this.toObjectId(branchId);
+    const license = this.toObjectId(licenseId);
+
+    /*
+     * The sample sales and quotes go FIRST, and the order is the point.
+     *
+     * A demo sale references demo items. Remove the items while those sales
+     * still exist and every one of them is protected as "sold" - so the demo
+     * data would refuse to remove itself, held in place by its own samples.
+     *
+     * These are hard deletes, unlike the items. A sample sale is not a record
+     * of anything that happened, so keeping it in the Recycle Bin would only
+     * put invented money somewhere a shop can restore it from by accident.
+     */
+    let salesRemoved = 0;
+    let quotesRemoved = 0;
+    let peopleRemoved = 0;
+    try {
+      const demoScope = { demo_pack: { $exists: true }, branch_id: branch, license };
+      const salesCol = await this.getCollection('sales');
+      salesRemoved = (await salesCol.deleteMany(demoScope)).deletedCount || 0;
+      const quotesCol = await this.getCollection('quotes');
+      quotesRemoved = (await quotesCol.deleteMany(demoScope)).deletedCount || 0;
+      /* The sample people go with them. A demo customer left behind after the
+         samples are cleared is a stranger in the shop's own list, and nothing
+         on the row says where they came from. */
+      const customersCol = await this.getCollection('customers');
+      peopleRemoved += (await customersCol.deleteMany(demoScope)).deletedCount || 0;
+      const suppliersCol = await this.getCollection('suppliers');
+      peopleRemoved += (await suppliersCol.deleteMany(demoScope)).deletedCount || 0;
+    } catch (e) {
+      /* Leaving the products behind is the safe half. Reported rather than
+         thrown, because a shop asking to clear samples should not be told the
+         whole thing failed when most of it worked. */
+      console.error('purgeDemoData: sample sales/quotes:', e.message);
+    }
+
+    const scope = { demo_pack: { $exists: true }, 'branch_access.branch_id': branch, license };
+    const candidates = await items
+      .find(scope, { projection: { _id: 1, name: 1, demo_seeded_at: 1, updated_date: 1 } })
+      .toArray();
+
+    if (!candidates.length) {
+      return {
+        status: true,
+        removed: 0,
+        salesRemoved,
+        quotesRemoved,
+        kept: [],
+        message:
+          salesRemoved || quotesRemoved
+            ? `Removed ${salesRemoved} sample sale(s) and ${quotesRemoved} sample quote(s).`
+            : 'There is no demo data to remove.',
+      };
+    }
+
+    /* Both shapes, because item_id is stored as a string in some collections
+       and an ObjectId in others. Matching only one silently finds nothing,
+       which here means deleting something that was sold. */
+    const ids = candidates.map((c) => c._id);
+    const idPairs = ids.flatMap((id) => [id, String(id)]);
+
+    const used = new Set();
+    const noteUsed = (rows, pick) => {
+      for (const r of rows) {
+        for (const v of pick(r)) if (v) used.add(String(v));
+      }
+    };
+
+    try {
+      const sales = await this.getCollection('sales');
+      noteUsed(
+        await sales
+          .find({ 'items.item_id': { $in: idPairs } }, { projection: { 'items.item_id': 1 } })
+          .toArray(),
+        (r) => (r.items || []).map((i) => i.item_id)
+      );
+    } catch (e) {
+      /* Unreadable history is not permission to delete. Treat every candidate
+         as used rather than guess - the cost is that nothing is removed and
+         somebody asks why, which is recoverable. */
+      console.error('purgeDemoData: could not read sales:', e.message);
+      return {
+        status: false,
+        removed: 0,
+        kept: [],
+        message: 'Could not check the sales history, so nothing was removed.',
+      };
+    }
+
+    try {
+      const receivings = await this.getCollection('receivings');
+      noteUsed(
+        await receivings
+          .find({ 'items.item_id': { $in: idPairs } }, { projection: { 'items.item_id': 1 } })
+          .toArray(),
+        (r) => (r.items || []).map((i) => i.item_id)
+      );
+    } catch (e) {
+      console.error('purgeDemoData: could not read receivings:', e.message);
+      return {
+        status: false,
+        removed: 0,
+        kept: [],
+        message: 'Could not check the purchase history, so nothing was removed.',
+      };
+    }
+
+    const kept = [];
+    const removable = [];
+    for (const c of candidates) {
+      if (used.has(String(c._id))) {
+        kept.push({ name: c.name, why: 'sold or received' });
+        continue;
+      }
+      const seeded = c.demo_seeded_at ? new Date(c.demo_seeded_at).getTime() : 0;
+      const touched = c.updated_date ? new Date(c.updated_date).getTime() : 0;
+      /* A second of slack: the seed writes created_date and updated_date in
+         the same pass, and clock resolution should not make every row look
+         edited. */
+      if (seeded && touched && touched > seeded + 1000) {
+        kept.push({ name: c.name, why: 'you have edited it' });
+        continue;
+      }
+      removable.push(c._id);
+    }
+
+    let removed = 0;
+    if (removable.length) {
+      const now = new Date();
+      const r = await items.updateMany(
+        { _id: { $in: removable }, license },
+        {
+          $set: {
+            del_status: 1,
+            deleted_date: now,
+            updated_date: now,
+            deleted_by: (user && (user.name || user.username)) || 'System',
+          },
+        }
+      );
+      removed = r.modifiedCount || 0;
+    }
+
+    /*
+     * Categories go only when nothing is left in them. A demo category still
+     * holding a product the shop kept is now their category, and emptying the
+     * shelf label out from under a product is its own small disaster.
+     */
+    let categoriesRemoved = 0;
+    try {
+      const cats = await this.getCollection('categories');
+      const demoCats = await cats
+        .find(
+          { demo_pack: { $exists: true }, branch_id: branch, license },
+          { projection: { _id: 1 } }
+        )
+        .toArray();
+      for (const cat of demoCats) {
+        // eslint-disable-next-line no-await-in-loop
+        const remaining = await items.countDocuments({
+          category_id: cat._id,
+          'branch_access.branch_id': branch,
+          license,
+        });
+        if (remaining === 0) {
+          // eslint-disable-next-line no-await-in-loop
+          await cats.deleteOne({ _id: cat._id, license });
+          categoriesRemoved++;
+        }
+      }
+    } catch (e) {
+      /* The products are gone either way; a leftover empty category is untidy,
+         not harmful, and must not turn a successful removal into a failure. */
+      console.error('purgeDemoData: category cleanup:', e.message);
+    }
+
+    return {
+      status: true,
+      removed,
+      categoriesRemoved,
+      salesRemoved,
+      quotesRemoved,
+      peopleRemoved,
+      kept,
+      message: kept.length
+        ? `Removed ${removed} sample product${removed === 1 ? '' : 's'}. Kept ${kept.length}: ` +
+          kept
+            .slice(0, 6)
+            .map((k) => `${k.name} (${k.why})`)
+            .join(', ') +
+          (kept.length > 6 ? ` and ${kept.length - 6} more` : '') +
+          '.'
+        : `Removed ${removed} sample product${removed === 1 ? '' : 's'}.`,
+    };
+  }
+
   async hardDeleteItems(ids, { licenseId } = {}) {
     const objectIds = (ids || [])
       .map((v) => (ObjectId.isValid(String(v)) ? new ObjectId(String(v)) : null))
@@ -4779,6 +5040,62 @@ class ItemRepository extends BaseModel {
    * an optional category and search so "select all N" matches exactly what the
    * filtered list showed, not just the 100 rows on the current page.
    */
+  /*
+   * Every item in the catalogue, grouped into families, without holding the
+   * catalogue in memory.
+   *
+   * The export has to group variants together, and the obvious way to do that
+   * is to read everything and bucket it. This repository has already paid for
+   * that once: the catalogue copy called .toArray() and then built a second
+   * full array of the same rows, so two copies of a shop's entire item list
+   * were resident at once, on a process shared with every other shop.
+   *
+   * Sorting by variant_group_id means a family arrives contiguously, so the
+   * grouping can be done as the cursor advances - one family resident at a
+   * time. The caller gets each family as it completes and decides what to do
+   * with it.
+   *
+   * The sort is the load-bearing part. Without it a family is scattered
+   * through the stream and the "flush when the id changes" rule silently emits
+   * the same family several times, each with some of its variants.
+   */
+  async streamCatalogue({ branchId, licenseId }, onGroup) {
+    const collection = await this.getCollection(this.collectionName);
+
+    const filter = {
+      'branch_access.branch_id': this.toObjectId(branchId),
+      license: this.toObjectId(licenseId),
+    };
+
+    const cursor = collection.find(filter).sort({ variant_group_id: 1, _id: 1 });
+
+    let current = null;
+    let pending = [];
+    let count = 0;
+
+    const flush = async () => {
+      if (!pending.length) return;
+      await onGroup(pending);
+      count += pending.length;
+      pending = [];
+    };
+
+    for await (const row of cursor) {
+      const gid = row.variant_group_id ? String(row.variant_group_id) : '';
+      /* Items with no family are each their own group, so an empty id must not
+         collapse them all into one enormous "family". */
+      if (!gid || gid !== current) {
+        await flush();
+        current = gid || null;
+      }
+      pending.push(row);
+      if (!gid) await flush();
+    }
+    await flush();
+
+    return count;
+  }
+
   _buildExportFilter(selection, context = {}) {
     const licenseId = context.licenseId || null;
     const licenseClause = licenseId

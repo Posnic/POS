@@ -1,10 +1,10 @@
 # Third-party notices
 
-Posnic is distributed under the GNU Affero General Public License v3.0
-(see [LICENSE](LICENSE)). The Windows installer also carries software written by
-other people, under their own licences. Those licences are listed here, and the
-obligation to name them is why this file exists — several of them require that
-their notice travel with any copy.
+Posnic's own source is distributed under GNU AGPL-3.0-only (see
+[LICENSE](LICENSE)). Windows, macOS and Linux release packages also carry
+software written by other people under their own licences. Those components
+and known package notices are listed here. The root Posnic licence does not
+replace a bundled component's licence.
 
 This covers what ships **inside the installer**. Node packages pulled in at build
 time carry their own licences in `node_modules`; `npm ls --omit=dev` will list
@@ -14,21 +14,23 @@ them for a given build.
 
 ## MongoDB Community Server
 
-**Shipped as:** `resources/mongodb/bin/mongod.exe`
-**Version:** 7.0.x
+**Shipped as:** `resources/mongodb/bin/mongod.exe` on Windows and
+`resources/mongodb/bin/mongod` on macOS and Linux
+**Version:** 7.0.14
 **Copyright:** © MongoDB, Inc.
 **Licence:** Server Side Public License, Version 1 (SSPL-1.0)
-**Source and licence text:** <https://github.com/mongodb/mongo>
+**Source:** <https://github.com/mongodb/mongo>
+**Official licensing information:**
+<https://www.mongodb.com/legal/licensing/community-edition>
 
 Posnic keeps a shop's data in a MongoDB instance running on the shop's own
 computer. The server binary is redistributed unmodified.
 
-The SSPL is not an OSI-approved open source licence, and it is not the same
-licence as Posnic's own. It applies to `mongod.exe` alone: it does not extend to
-Posnic's source code, which is separate work that talks to MongoDB over its wire
-protocol. Its principal condition concerns offering MongoDB itself to third
-parties as a service, which Posnic does not do — it runs a local database for the
-shop that installed it.
+MongoDB states that SSPL is not an OSI-approved open-source licence. Posnic's
+own source and the MongoDB binary are recorded as separately licensed
+components. Review the exact licences, package contents and intended use or
+distribution rather than assigning one licence to the complete bundle. This
+notice records technical provenance and is not legal advice.
 
 If you would rather not receive it, the installer can be built without a bundled
 MongoDB and pointed at one you already run; see `download-mongodb.bat` and

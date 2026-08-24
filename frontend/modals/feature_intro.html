@@ -1,29 +1,53 @@
-<!-- First-run Feature picker: the Loyverse moment - show what the till can do
-     on day one, with honest one-line consequences. Saves through the M4
-     modules-only path (toggle map, nothing else); dismissing never nags again. -->
+<!-- The first thing a new shop sees.
+
+     Owner ask: "First time when user logs in to system, show very nicely
+     welcome message, tell him we enabled default feature, if he wants enable
+     features, later also enable. right away enable show features."
+
+     WHY IT EXISTS. A new shop is created with four features on and the rest
+     off. That is the right starting point, but on its own it is
+     indistinguishable from a product that simply does not HAVE the rest, and
+     a shop that never learns they exist never asks for them. The switches
+     have always been in Settings; almost nobody goes looking in Settings on
+     their first day.
+
+     WHAT IT IS NOT. Not a wizard. Nothing here blocks selling: it can be
+     closed at any point, it never appears again, and every switch on it is
+     the same switch that lives under Manage > Features. It exists to say the
+     shop is theirs to shape, once, at the only moment somebody is certain to
+     be looking. -->
 <div class="modal fade close_on_esc" id="feature_intro_modal" tabindex="-1" role="dialog" aria-hidden="true"
-    data-backdrop="static">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-            <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title w-100 text-center">
-                    <lang class="lang_feature_intro_title">Feature settings</lang>
+    aria-labelledby="feature_intro_title" data-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content first-run">
+            <div class="first-run-head">
+                <!-- mdi-store, not mdi-storefront: this build's icon font does
+                     not carry the second one, and a missing glyph renders as an
+                     empty box rather than as nothing. -->
+                <div class="first-run-mark"><i class="mdi mdi-store"></i></div>
+                <h5 class="first-run-title" id="feature_intro_title">
+                    <lang class="lang_feature_intro_title">Your shop is ready</lang>
                 </h5>
+                <p class="first-run-sub" id="feature_intro_sub"></p>
             </div>
-            <div class="modal-body pt-2">
-                <p class="text-muted text-center mb-3" style="font-size:.9rem;">
-                    <lang class="lang_feature_intro_sub">Choose the features you want to use. You can change these
-                        anytime under Manage &gt; Features.</lang>
-                </p>
-                <div id="feature_intro_list"></div>
+            <div class="modal-body first-run-body">
+                <p class="first-run-lead" id="feature_intro_lead"></p>
+                <div id="feature_intro_list" class="first-run-list"></div>
             </div>
-            <div class="modal-footer border-0 pt-0">
-                <button type="button" class="btn btn-outline-secondary" id="feature_intro_skip" data-dismiss="modal">
-                    <lang class="lang_feature_intro_skip">Skip for now</lang>
-                </button>
-                <button type="button" class="btn btn-primary" id="feature_intro_save">
-                    <lang class="lang_save_title">Save</lang>
-                </button>
+            <div class="first-run-foot">
+                <span class="first-run-foot-note">
+                    <lang class="lang_feature_intro_note">You can change these any time under Manage &gt;
+                        Features.</lang>
+                </span>
+                <span class="first-run-foot-actions">
+                    <button type="button" class="btn btn-outline-secondary" id="feature_intro_skip"
+                        data-dismiss="modal">
+                        <lang class="lang_feature_intro_skip">Not now</lang>
+                    </button>
+                    <button type="button" class="btn btn-primary" id="feature_intro_save">
+                        <lang class="lang_feature_intro_save">Save and start selling</lang>
+                    </button>
+                </span>
             </div>
         </div>
     </div>

@@ -2,6 +2,7 @@
 const BaseModel = require('../models/base.model');
 const { ObjectId } = require('mongodb');
 const { withBranchScope } = require('../services/branch-scope');
+const dataSharing = require('../services/data-sharing');
 
 /**
  * Customer Repository
@@ -58,7 +59,10 @@ class CustomerRepository extends BaseModel {
           license: BaseModel.license,
           is_deleted: { $ne: true },
         },
-        BaseModel.currentBranch
+        await dataSharing.scopeBranch('customers', BaseModel.currentBranch, {
+          licenseId: BaseModel.license,
+          branchId: BaseModel.currentBranch,
+        })
       )
     );
   }
@@ -122,7 +126,13 @@ class CustomerRepository extends BaseModel {
        terms instead of adding to them - a search that quietly returns every
        customer. The scope goes under $and. */
     if (branchId) {
-      query = withBranchScope(query, branchId);
+      query = withBranchScope(
+        query,
+        await dataSharing.scopeBranch('customers', branchId, {
+          licenseId: BaseModel.license,
+          branchId,
+        })
+      );
     }
 
     const collection = await this.getCollection(this.collectionName);
@@ -358,7 +368,10 @@ class CustomerRepository extends BaseModel {
           _id: id,
           ...(BaseModel.license ? { license: BaseModel.license } : {}),
         },
-        BaseModel.currentBranch
+        await dataSharing.scopeBranch('customers', BaseModel.currentBranch, {
+          licenseId: BaseModel.license,
+          branchId: BaseModel.currentBranch,
+        })
       ),
       update
     );

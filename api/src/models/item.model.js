@@ -67,6 +67,21 @@ class ItemModel {
     name: { type: 'String', select: true },
     itemid: { type: 'String', select: true },
     barcode_id: { type: 'String', select: true },
+    /*
+     * The GLOBAL identifier, kept apart from barcode_id on purpose.
+     *
+     * barcode_id is whatever this shop prints or scans - it may be a GTIN, an
+     * in-store code, or a supplier reference somebody typed. gtin is only ever
+     * set when it validates (see utils/gtin.js), because a wrong GTIN is worse
+     * than a missing one: it claims to be a product it is not, and anyone
+     * matching against it inherits the error.
+     *
+     * gtin14 is the zero-padded comparison form. A UPC-A and the EAN-13 of the
+     * same product differ only by a leading zero, so matching on the raw string
+     * is how one product becomes two rows.
+     */
+    gtin: { type: 'String', select: true },
+    gtin14: { type: 'String', select: true },
     image: { type: 'String', select: true },
     multi_image: { type: 'Array', select: true },
     category_id: { type: 'ObjectId', select: true },

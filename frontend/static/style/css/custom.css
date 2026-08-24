@@ -2153,35 +2153,53 @@ main {
 }
 
 
-.seven {
-    background: darkblue;
-    color: white;
-    border-radius: 5px;
-    transition: all 300ms;
-}
+/*
+ * .seven is gone. Nothing wore it.
+ *
+ * A print button styled in the CSS named colour `darkblue`, which belongs to no
+ * palette in this product and follows no theme, with a hover that scaled the
+ * button 10% and pushed its letters apart. Every occurrence of the string
+ * "seven" left in the source is part of "seventeen" or a variable name.
+ *
+ * A dead RULE is quieter than a dead selector - it costs nothing at runtime -
+ * but it is the same lie: it reads as "the print button looks like this", and
+ * no print button has looked like this for as long as anyone can tell. Its
+ * dark-theme counterpart in theme-variables.css goes with it; an override for
+ * a rule that no longer exists is worse than either alone.
+ */
 
-.seven:hover {
-    transform: scale(1.1);
-    letter-spacing: 2px;
-    background: white;
-    color: darkblue;
-    box-shadow: 2px 2px 3px rgba(0,0,0,0.57);
+/*
+ * Outline buttons: quiet under the mouse, findable under the keyboard.
+ *
+ * This was three identical rules naming secondary, danger and primary - and
+ * the sale screen also uses btn-outline-success and btn-outline-info, which
+ * got neither. Three copies of one rule covering some of the family is how a
+ * button ends up looking different from the one beside it for no reason
+ * anybody can name. One attribute selector covers every variant, including
+ * whichever gets added next.
+ *
+ * The bigger problem was what they did. `outline: none` on every state removes
+ * the focus ring outright, and this is a TILL: it is driven from the keyboard,
+ * tab by tab, and a control you cannot see the focus on is a control you
+ * cannot safely press. The rules were aimed at Bootstrap's heavy focus shadow
+ * after a CLICK, which is a fair thing to want gone - but they took the
+ * keyboard's only signal with it.
+ *
+ * :focus-visible separates the two exactly: the browser shows the ring when
+ * the keyboard put the focus there and stays quiet when a click did. So the
+ * mouse gets the clean look these rules were written for, and the keyboard
+ * gets its position back.
+ */
+[class*="btn-outline-"] {
+    box-shadow: none !important;
 }
-/*end*/
-
-/* ----Button border hide---- */
-.btn-outline-secondary {
+[class*="btn-outline-"]:focus:not(:focus-visible) {
     outline: none !important;
     box-shadow: none !important;
 }
-
-.btn-outline-danger {
-    outline: none !important;
-    box-shadow: none !important;
-}
-
-.btn-outline-primary {
-    outline: none !important;
+[class*="btn-outline-"]:focus-visible {
+    outline: 2px solid var(--theme-primary-color, #2d9cdb);
+    outline-offset: 2px;
     box-shadow: none !important;
 }
 
@@ -2600,7 +2618,36 @@ input:checked + .slider:before {
    activates panes by clicking its anchors - but never renders; the
    content takes the whole row. */
 .settings-nav-col { display: none !important; }
-.settings-nav-col + div { flex: 0 0 100%; max-width: 100%; }
+.settings-nav-col + div {
+    flex: 0 0 100%;
+    max-width: 100%;
+    /*
+     * A FLEX ITEM WILL NOT SHRINK BELOW ITS CONTENT unless told it may.
+     *
+     * min-width defaults to auto on a flex item, which resolves to the
+     * content's minimum width. The Features grid inside is
+     * `repeat(auto-fill, minmax(290px, 1fr))`, so its minimum is 290px plus
+     * gaps - and on a narrow window that is wider than the row. The column
+     * then refused to shrink and the cards ran off the right-hand edge with
+     * no scrollbar to reach them (owner report: cards and the Cash Book card
+     * cut off mid-page).
+     *
+     * min-width: 0 lets it shrink to its share, and the grid wraps as it was
+     * always meant to.
+     */
+    min-width: 0;
+}
+
+/* Same reason one level down: a tab pane is a block, but its children are
+   grids and tables whose min-content width can exceed the pane. */
+.settings-nav-col + div .tab-content,
+.settings-nav-col + div .tab-pane { min-width: 0; }
+
+/* The grid may go narrower than one nominal card rather than overflow: two
+   cramped columns are readable, one column off-screen is not. */
+@media (max-width: 1400px) {
+    .module-grid { grid-template-columns: repeat(auto-fill, minmax(min(290px, 100%), 1fr)); }
+}
 
 /*
  * Drawer body padding, take two. Killing the 30px .custom-mode-setting rule
@@ -2947,14 +2994,18 @@ input:checked + .slider:before {
 /* Quotation preview: an A4 sheet on screen, edits in place. */
 #quotes_view_card { max-width: 900px; margin: 0 auto; }
 .q-sheet { background: #fff; padding: 34px 38px; border: 1px solid #e3e7ee; border-radius: 4px; color: #1a202c; }
-.q-head { display: flex; justify-content: space-between; gap: 20px; border-bottom: 2px solid #2d3748; padding-bottom: 14px; }
+/* The rule under the header needs room for the STATUS badge, which is the
+   tallest thing in the right-hand block and was sitting on the line. Aligning
+   to flex-start keeps the two columns starting together while the taller one
+   grows downward into that room. */
+.q-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; border-bottom: 2px solid #2d3748; padding-bottom: 22px; }
 .q-logo { max-height: 54px; max-width: 140px; display: block; margin-bottom: 6px; }
 .q-shop { font-weight: 700; font-size: 18px; }
 .q-muted { color: #67707f; font-size: 12.5px; line-height: 1.55; }
 .q-doc-title { font-weight: 700; font-size: 21px; letter-spacing: 3px; color: #2d3748; }
 .q-num { font-weight: 700; font-size: 14px; margin: 2px 0; }
 .q-title-block { text-align: right; white-space: nowrap; }
-.q-status { display: inline-block; margin-top: 6px; padding: 2px 10px; border: 1.5px solid #c53030; color: #c53030; font-weight: 700; font-size: 12px; letter-spacing: 1px; border-radius: 3px; }
+.q-status { display: inline-block; margin-top: 8px; margin-bottom: 2px; padding: 2px 10px; border: 1.5px solid #c53030; color: #c53030; font-weight: 700; font-size: 12px; letter-spacing: 1px; border-radius: 3px; }
 .q-billto { margin: 16px 0 6px; }
 .q-cust { font-weight: 700; font-size: 15px; }
 .q-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #8a94a6; margin-bottom: 3px; }
@@ -3151,76 +3202,6 @@ input:checked + .slider:before {
 #items_new .card-body .row > [class*="col-md"] { margin-bottom: 12px; }
 
 /*
- * Post-sale confirmation strip.
- *
- * The change due is deliberately the biggest thing here - for a cash sale it
- * is what the cashier does next, and it is the routine mistake that costs
- * real money. Everything else is one readable line so the sale can be spoken
- * aloud to the customer while they are still at the counter.
- */
-.sale-done-strip {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    flex-wrap: wrap;
-    padding: 10px 14px;
-    border: 1px solid #b7e0c4;
-    border-left: 4px solid #1a7f37;
-    border-radius: 6px;
-    background: #f2fbf5;
-}
-.sds-change {
-    display: flex;
-    flex-direction: column;
-    line-height: 1.15;
-    padding-right: 14px;
-    border-right: 1px solid #cfe8d8;
-}
-.sds-change-label {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: .6px;
-    color: #4a6b56;
-}
-.sds-change-value {
-    font-size: 26px;
-    font-weight: 700;
-    color: #14532d;
-    font-variant-numeric: tabular-nums;
-}
-.sds-meta { flex: 1 1 auto; min-width: 0; line-height: 1.45; }
-.sds-line { font-size: 14px; font-weight: 600; color: #1f2328; }
-.sds-sub { font-size: 12.5px; color: #57606a; }
-#sds_loyalty { color: #1a7f37; font-weight: 600; }
-.sds-actions { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
-.sds-kbd {
-    background: rgba(255, 255, 255, .25);
-    border: 1px solid rgba(255, 255, 255, .45);
-    border-radius: 3px;
-    padding: 0 4px;
-    margin-left: 4px;
-    font-size: 11px;
-}
-@media (max-width: 575px) {
-    .sds-change { border-right: 0; padding-right: 0; }
-    .sds-actions { width: 100%; }
-}
-
-/* Dark themes: the strip keeps its meaning (a success) but takes the theme's
-   own success colour rather than a light-mode wash. */
-[data-theme] .sale-done-strip {
-    background: var(--theme-card-bg);
-    border-color: var(--theme-border-color);
-    border-left-color: var(--theme-success-color, #1a7f37);
-}
-[data-theme] .sds-change { border-right-color: var(--theme-border-color); }
-[data-theme] .sds-change-value { color: var(--theme-success-color, #1a7f37); }
-[data-theme] .sds-change-label { color: var(--theme-text-secondary); }
-[data-theme] .sds-line { color: var(--theme-text-primary); }
-[data-theme] .sds-sub { color: var(--theme-text-secondary); }
-[data-theme] #sds_loyalty { color: var(--theme-success-color, #1a7f37); }
-
-/*
  * Add Item, Details and More tabs (owner queue #32).
  *
  * Three complaints, one cause: the fields run the full width of whatever
@@ -3231,18 +3212,173 @@ input:checked + .slider:before {
  * Capping the SHORT fields and letting the long ones stay long is what makes
  * a form scan as a column rather than a spreadsheet.
  */
+/* Details, top row: the description and the image column end together.
+   The image side carries the dropzone AND the colour/shape pickers, so it is
+   always the taller of the two - which left a block of white under the
+   description. The column stretches and the textarea fills it, so the tile
+   controls can grow without stranding the other half. */
+.items-details-row { align-items: stretch; }
+.items-details-row > [class*="col-"] { display: flex; flex-direction: column; }
+#items_new .items-description-fill {
+    flex: 1 1 auto;
+    min-height: 132px;
+    resize: vertical;
+}
+
+/* The save bar matches the form above it.
+   The panes are inset by their own padding and, when they scroll, a scrollbar.
+   The bar sat outside that box and took the full column width, so it ran past
+   the Next button and the cards (owner ask). It lives in the same box now and
+   carries the pane's own horizontal padding; scrollbar-gutter keeps the inset
+   constant whether a pane happens to be scrolling or not, so the two edges do
+   not shift as you move between tabs. */
+#item_form_tabs_content > .tab-pane { scrollbar-gutter: stable; }
+.item-save-bar {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    margin-bottom: 0;
+    /* The pane's own horizontal inset, so the bar's edges land on the same
+       lines as the cards inside a pane rather than on the box edge. */
+    margin-left: 2px;
+    margin-right: 6px;
+}
+
+/* The pickers are set apart from the numbers above them. The card's own
+   spacing rule only reaches `.row > [class*=col-md]`, and these rows are
+   form-rows, so they had none and the two groups ran together. */
+.items-picker-row { margin-top: 14px; }
+
+/* The discount value sat hard against the card's right edge. Its column lost
+   the inline `padding: 0 !important` that used to kill the gutter, but the
+   field is right-aligned text in the last column of the row, so it still needs
+   a little air before the border to stop reading as clipped (owner ask). */
+#items_new .floating-label > #items_discount_amount,
+#items_new .floating-label > #items_discount_percentage {
+    margin-right: 10px;
+    width: calc(100% - 10px);
+}
+
+/* The automatic tile, shown as it will appear on the sale grid. */
+.tile-preview {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+.tile-preview-swatch {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 auto;
+    border: 1px solid rgba(31, 35, 40, 0.12);
+}
+.tile-preview-note { line-height: 1.3; }
+
+/* ---- Add Item: item kind, tab ticks, step navigation ------------------- */
+
+/* "What kind of item" lives in the card header, above the fields it governs. */
+.items-kind-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+}
+.items-kind-controls {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+}
+.items-kind-controls #item_service_unit { width: auto; min-width: 128px; }
+.items-kind-controls .custom-control { margin-bottom: 0; }
+
+/* The tick is hidden until earned, so an empty form is not a row of grey
+   ticks nobody can distinguish from earned ones. */
+#item_form_tabs .item-tab-tick {
+    display: none;
+    margin-left: 6px;
+    font-size: 12px;
+    vertical-align: middle;
+}
+#item_form_tabs .nav-link.is-complete .item-tab-tick {
+    display: inline-block;
+    color: #1f883d;
+}
+
+/* The step buttons close each pane. space-between keeps Back left and Next
+   right even when one of them is an empty span on the first and last tabs. */
+.item-tab-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin: 4px 0 18px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(128, 128, 128, 0.18);
+}
+
+/*
+ * The Item card's own alignment.
+ *
+ * The "+ Add Category" / "+ Add Supplier" links are gone (owner ask). They had
+ * been moved onto the label line to stop them landing at different heights
+ * under controls of different heights - but sharing that line is what pushed
+ * "(optional)" onto a second one. Removing them settles both: the label and its
+ * qualifier read as one line, which is what they are.
+ */
+.items-label-inline {
+    display: block;
+    white-space: nowrap;
+}
+.items-label-inline small { margin-left: 4px; }
+
+/* The service switch and its unit are one control, so they share a line and
+   the unit lines up with the fields above rather than hanging off a label. */
+.items-service-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+.items-service-row .custom-control { flex: 0 0 auto; }
+.items-service-row #item_service_unit { flex: 0 0 auto; width: auto; min-width: 132px; }
+
+/*
+ * THE CAP ONLY WORKS IF THE COLUMNS MATCH.
+ *
+ * This cap fixed a real problem - a 700px box for a brand name - but it made a
+ * field's width depend on which column it happened to sit in. A field in a
+ * col-md-6 (~510px) capped to 420; one in a col-md-4 (~355px) never reached the
+ * cap. Same tab, same kind of field, two different widths, and the rows stopped
+ * lining up: exactly what the owner reported ("why each field have different
+ * width").
+ *
+ * The Details tab is one col-md-4 grid now, so every short field is the same
+ * width at every screen size - under the cap they match because the columns
+ * match, and above it they match because the cap does. Keep them uniform when
+ * adding a field here.
+ */
 #items_new #item_tab_details input.form-control,
 #items_new #item_tab_details select.form-control,
 #items_new #item_tab_more input.form-control,
 #items_new #item_tab_more select.form-control {
     max-width: 420px;
 }
-/* the description holds sentences, so it gets more room - but not the page */
+/* The description and the dropzone sit in equal columns and now carry the SAME
+   cap, so they are the same width at every screen size. They used to differ -
+   640 and 420 - which is why one stopped short of its column and the other did
+   not; two panels of different widths side by side, correctly reported.
+   NOT uncapped. The first attempt at this set both to 100% and an existing test
+   caught it: a text column past ~800px is hard to read back, and a col-lg-6 on
+   a wide monitor is exactly that. Equal AND readable is available; equal alone
+   was trading one real property for another. */
 #items_new #items_description { max-width: 640px; }
 
 /* The dropzone was sized like a landing page: an <h3> caption and a button to
    match. It is one control among many on a tab, so it reads as one. */
-#items_new .Neon-theme-dragdropbox { max-width: 420px; }
+#items_new .Neon-theme-dragdropbox { max-width: 640px; }
 #items_new .Neon-input-dragDrop { padding: 14px 12px; }
 #items_new .Neon-input-text h3 {
     font-size: 13px;
@@ -3413,7 +3549,15 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
  */
 #items_new #item_tab_main,
 #items_new #item_tab_details,
-#items_new #item_tab_more { max-width: 1140px; margin-left: 0; margin-right: auto; }
+/* ONE edge for the whole form.
+   This cap used to sit on the More tab alone, so that pane stopped at 1140px
+   while the others - and the save bar below them - ran to the full column
+   width. That is why the bar overhung the Next button and the cards (owner:
+   "save bar dont go beyond Next details button. this width also limit").
+   On the tab-content box it governs every pane and the bar together, so they
+   cannot drift apart again. */
+#items_new #item_form_tabs_content { max-width: 1140px; margin-left: 0; margin-right: auto; }
+#items_new #item_form_tabs { max-width: 1140px; }
 
 /* Short values get a sane field width; long-form keeps the room it needs. */
 #items_new #items_brand,
@@ -3422,8 +3566,9 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 #items_new #items_purchase_unit,
 #items_new #items_conversion_factor,
 #items_new #items_discount_amount,
-#items_new #items_discount_percentage { max-width: 460px; }
-#items_new #items_conversion_factor { max-width: 200px; }
+/* No per-field caps on the More tab either: they made two fields in one row
+   different widths, which is the same complaint as Details. The shared 420px
+   cap above still applies, and now applies EVENLY because the columns match. */
 
 /* Details tab: description and the uploader sit side by side as equals,
    and the uploader stops being a big empty box with a big blue button. */
@@ -3740,17 +3885,48 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
  * ONE surface, ONE border.
  *
  * Every declaration that removes a pane's own box carries !important, and it
- * has to: custom.css loads BEFORE theme-variables.css, and the theme sets
- * `[data-theme="github"] .card { border: 1px solid !important; border-radius:
- * 6px !important }`. An !important declaration beats a plain one however
- * specific the plain selector is, so without this the panes keep their own
- * bordered, rounded boxes INSIDE the outer border - three borders and a moat
- * between them, which is exactly what the owner was looking at.
+ * has to: custom.css loads BEFORE theme-variables.css, so an !important in the
+ * theme beats a plain declaration here however specific this selector is.
+ *
+ * !important alone is NOT enough against the github theme, and that is worth
+ * knowing before changing anything here. `[data-theme="github"] .card` has the
+ * same specificity as these rules and loads LATER, so it wins the tie and the
+ * joined surface comes back as two bordered cards inside a third border.
+ * theme-variables.css names the panes explicitly to settle it - see the note
+ * beside that rule. Removing the theme's border instead fixes this screen and
+ * strips every other card in the product, which was tried and reverted.
  *
  * The contentbar's 30px padding goes too, and becomes a margin, or that
  * padding is a white moat between the outer border and the panes.
  */
-#quotes_new .contentbar.quotes-split {
+/* .contentbar is globally padding-top:0, which was fine when a page header
+   was just a title. With the filter strip living in that header, the list card
+   ends up butted right against it. Five pixels of air, quotes only - the split
+   view sets its own margin instead.
+
+   :not(.master-detail) rather than a specificity race. This used to rely on
+   the split rule carrying two ids and therefore winning; the generic rule that
+   replaced it carries none, so the exemption is stated instead of implied. An
+   invisible dependency on selector weight is exactly what breaks when a pattern
+   is extracted. */
+/*
+ * MD:* markers below.
+ *
+ * The tests for this pattern used to find each rule by its SELECTOR, which
+ * couples them to the class name - fine until the class is the thing changing.
+ * Extracting this into a reusable master-detail renames every selector here, so
+ * a name-based suite would have to be rewritten in the same commit as the
+ * refactor it exists to police: the safety net rebuilt by the fall.
+ *
+ * A marker names what a rule is FOR, and that survives the rename. See
+ * tests/helpers/source-lookup.js markerReader.
+ */
+#quotes_new .contentbar:not(.master-detail) {
+    padding-top: 5px !important;
+}
+
+/* MD:surface */
+.master-detail {
     display: flex;
     gap: 0;
     align-items: stretch;
@@ -3765,8 +3941,9 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     border-radius: 8px;
     overflow: hidden;
 }
-#quotes_new .contentbar.quotes-split > #quotes_list_card,
-#quotes_new .contentbar.quotes-split > #quotes_view_card {
+/* MD:panes-plain */
+.master-detail > .md-rail,
+.master-detail > .md-detail {
     border: 0 !important;
     border-radius: 0 !important;
     box-shadow: none !important;
@@ -3780,7 +3957,8 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
    runs full width, so the selection and the document are one continuous
    shape: that is the connection, drawn with colour instead of yet another
    line. */
-#quotes_new .contentbar.quotes-split > #quotes_list_card {
+/* MD:rail */
+.master-detail > .md-rail {
     flex: 0 0 330px;
     max-width: 330px;
     min-width: 0;
@@ -3795,7 +3973,8 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
        in the tests slices a rule at its first closing brace.) */
     background: #f6f8fa !important;
 }
-#quotes_new .contentbar.quotes-split > #quotes_list_card > .card-body {
+/* MD:rail-body */
+.master-detail > .md-rail > .card-body {
     display: flex;
     flex-direction: column;
     min-height: 0;
@@ -3811,7 +3990,8 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     background: #f6f8fa !important;
     border-bottom: 1px solid #d8dee4;
 }
-.quotes-split #quotes_list_card #quotes_list_rows {
+/* MD:rail-scroller */
+.master-detail .md-rail-rows {
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
@@ -3820,7 +4000,8 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 /* The toolbar is pinned and only the document scrolls - the mail-app
    arrangement, and the reason the Share and More menus are not clipped: a
    dropdown inside an overflow:auto ancestor would be cut off at its edge. */
-#quotes_new .contentbar.quotes-split > #quotes_view_card {
+/* MD:detail */
+.master-detail > .md-detail {
     flex: 1 1 auto;
     min-width: 0;
     display: flex;
@@ -3828,26 +4009,28 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     max-height: calc(100vh - 150px);
     background: #fff;
 }
-#quotes_new .contentbar.quotes-split > #quotes_view_card > .card-body {
+/* MD:detail-body */
+.master-detail > .md-detail > .card-body {
     display: flex;
     flex-direction: column;
     min-height: 0;
     padding: 12px 14px !important;
 }
-.quotes-split #quotes_view_head { flex: 0 0 auto; }
-.quotes-split #quotes_view_body {
+.master-detail .md-detail-head { flex: 0 0 auto; }
+/* MD:detail-scroller */
+.master-detail .md-detail-body {
     flex: 1 1 auto;
     min-height: 0;
     overflow: auto;
 }
 
 /* Collapsed rail: the quote takes the full width, the toggle brings it back. */
-#quotes_new .contentbar.quotes-split.rail-collapsed > #quotes_list_card { display: none; }
+.master-detail.rail-collapsed > .md-rail { display: none; }
 
-.quotes-split #quotes_list_card table { font-size: 12.5px; margin-bottom: 0; }
-.quotes-split #quotes_list_card td,
-.quotes-split #quotes_list_card th { padding: 8px 10px; }
-.quotes-split #quotes_list_card thead th {
+.master-detail .md-rail table { font-size: 12.5px; margin-bottom: 0; }
+.master-detail .md-rail td,
+.master-detail .md-rail th { padding: 8px 10px; }
+.master-detail .md-rail thead th {
     background: #f6f8fa;
     border-bottom: 1px solid #d8dee4;
     position: sticky;
@@ -3855,7 +4038,6 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     z-index: 2;
 }
 .quotes-split #quotes_list_card #quotes_filter_chips .btn { font-size: 11.5px; padding: 3px 7px; }
-.quotes-split #quotes_list_card #quotes_search { max-width: 100% !important; }
 
 /* Under about 1500px the rail cannot carry six columns, so the three that
    identify a quote survive - number, who it is for, what it comes to - plus
@@ -3867,10 +4049,190 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     .quotes-split #quotes_list_card .q-col-qty { display: none; }
 }
 @media (min-width: 1500px) {
-    #quotes_new .contentbar.quotes-split > #quotes_list_card {
+    /* MD:rail-wide */
+    .master-detail > .md-rail {
         flex: 0 0 560px;
         max-width: 560px;
     }
+}
+
+
+/*
+ * Shared list filter bar (core/list-filter.js).
+ *
+ * Deliberately not full-bleed. The search box takes what it needs and stops:
+ * an input stretched across a 1900px screen makes a six-character quote number
+ * look like it wants a paragraph, and it drags the eye away from the fields
+ * beside it. Everything here is sized to its content with the search taking
+ * only the slack that is left.
+ */
+.lf-panel { padding: 0; }
+/* One strip, on the header's own line. It only wraps when the window genuinely
+   cannot hold it - wrapping by default is what made this look misaligned
+   against the title on one side and the buttons on the other. */
+/* ONE line, always (owner: "can we make in same line of filter row itself").
+   nowrap rather than wrap: wrapping puts a second row inside the page header,
+   which pushes the header open and misaligns the strip against both the title
+   and the buttons - the thing that was reported. The search box carries
+   min-width:0 so a narrow header shrinks IT rather than breaking the line,
+   which is the least harmful way to run out of room. */
+.lf-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: nowrap;
+    min-width: 0;
+}
+.lf-search { position: relative; flex: 0 1 260px; min-width: 0; }
+.lf-search .lf-q { width: 100%; }
+.lf-field { flex: 0 0 auto; width: auto; min-width: 108px; }
+.lf-preset { flex: 0 0 auto; width: auto; min-width: 132px; }
+/* The custom range is the one control that cannot fit on the line: two
+   datetime-local inputs are ~185px each in Chrome, and with "to" between them
+   that is nearly 400px on a strip that has to share a header row. So it drops
+   out of flow and opens under the preset that asked for it - the strip stays
+   one line whatever is selected, and the range editor gets the room it needs. */
+.lf-custom {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    z-index: 1050;
+    align-items: center;
+    gap: 6px;
+    padding: 8px;
+    background: #fff !important;
+    border: 1px solid #d0d7de !important;
+    border-radius: 6px;
+    box-shadow: 0 8px 24px rgba(31, 35, 40, 0.16);
+    white-space: nowrap;
+}
+.lf-preset-wrap { position: relative; flex: 0 0 auto; }
+.lf-custom input { width: auto; min-width: 168px; }
+.lf-sep { font-size: 12px; color: #57606a; }
+.lf-exact {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: #57606a;
+    white-space: nowrap;
+    cursor: pointer;
+}
+.lf-exact input { margin: 0; }
+
+/* The count on the Filter button. A closed panel is otherwise somewhere
+   filters go to hide - someone narrows to one customer, forgets, and reports
+   the list as broken. */
+.lf-btn { position: relative; }
+.lf-btn-active { font-weight: 600; }
+.lf-count {
+    display: inline-block;
+    margin-left: 6px;
+    min-width: 18px;
+    padding: 0 5px;
+    border-radius: 9px;
+    background: #0969da;
+    color: #fff;
+    font-size: 11px;
+    line-height: 18px;
+    text-align: center;
+}
+
+/*
+ * The picker.
+ *
+ * Same card as the sale screen's Choose-customer popover, because that one is
+ * already familiar: titled, floating over the page rather than pushing it
+ * down, and every row carrying an icon that says why it is there. A dropdown
+ * that reflows the page under the cursor makes people lose their place.
+ */
+.lf-typeahead {
+    position: absolute;
+    z-index: 1050;
+    top: 100%;
+    left: 0;
+    min-width: 300px;
+    max-width: 380px;
+    margin-top: 4px;
+    padding: 10px;
+    background: #fff;
+    border: 1px solid rgba(128, 128, 128, 0.22);
+    border-radius: 10px;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.16);
+}
+.lf-pick-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+.lf-pick-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #8a94a6;
+}
+.lf-pick-x { font-size: 18px; line-height: 1; color: #8a94a6; text-decoration: none; }
+.lf-pick-x:hover { color: #f9616d; text-decoration: none; }
+.lf-pick-list { max-height: 260px; overflow-y: auto; }
+.lf-pick-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #1f2328;
+    text-decoration: none;
+}
+/* Keyboard and mouse share ONE highlight. Two different treatments would put
+   two highlights on screen at once the moment a hand touches the mouse
+   mid-arrow-key, and neither would look like the one Enter is about to take. */
+.lf-pick-row:hover,
+.lf-pick-row.is-active {
+    background: rgba(128, 128, 128, 0.10);
+    color: #1f2328;
+    text-decoration: none;
+}
+.lf-pick-row i { color: #8a94a6; flex: 0 0 auto; }
+.lf-pick-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lf-pick-note { flex: 0 0 auto; font-size: 11.5px; color: #8a94a6; }
+.lf-pick-empty { padding: 10px; font-size: 12.5px; color: #8a94a6; }
+
+/* Filter is a toggle, so it has to look pressed while the panel is open -
+   otherwise the only way to know is to look for the panel, which is exactly
+   what you are trying to find. */
+.lf-btn-open {
+    background: rgba(9, 105, 218, 0.14) !important;
+    box-shadow: inset 0 1px 2px rgba(31, 35, 40, 0.14);
+}
+
+[data-theme] .lf-panel { border-bottom-color: var(--theme-border-color); }
+[data-theme] .lf-sep,
+[data-theme] .lf-exact { color: var(--theme-text-secondary); }
+[data-theme] .lf-count { background: var(--theme-primary-color, #0969da); }
+[data-theme] .lf-typeahead,
+/* The range editor is a popover like the picker, so it needs the same
+   treatment: its light rule carries !important to beat the theme's own card
+   background, which means the dark theme has to say so with !important too. */
+[data-theme] .lf-custom {
+    background: var(--theme-card-bg) !important;
+    border-color: var(--theme-border-color) !important;
+}
+[data-theme] .lf-pick-row { color: var(--theme-text-primary); }
+[data-theme] .lf-pick-row:hover,
+[data-theme] .lf-pick-row.is-active {
+    background: var(--theme-table-row-hover);
+    color: var(--theme-text-primary);
+}
+[data-theme] .lf-pick-title,
+[data-theme] .lf-pick-note,
+[data-theme] .lf-pick-empty,
+[data-theme] .lf-pick-row i { color: var(--theme-text-muted, #8a94a6); }
+[data-theme] .lf-btn-open {
+    background: var(--theme-table-row-hover) !important;
 }
 
 /* Rows answer the cursor, and the one being read joins the document. */
@@ -3887,8 +4249,9 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
    on its edge. The hairlines above and below separate it from its neighbours
    the way a raised card would, and nothing is drawn on its right, so it runs
    straight into the quote beside it. */
-.quotes-split #quotes_list_rows tr.quotes-row.is-active,
-.quotes-split #quotes_list_rows tr.quotes-row.is-active > td {
+/* MD:selected-row */
+.master-detail .md-row.is-active,
+.master-detail .md-row.is-active > td {
     background: #fff !important;
 }
 /* A real border now, not a shadow hairline - the owner could not see the
@@ -3896,18 +4259,19 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
    the right stays OPEN so the row still runs into the document beside it,
    which is the whole point of the join. .table-borderless means the last cell
    simply has no right border to remove. */
-.quotes-split #quotes_list_rows tr.quotes-row.is-active > td {
-    border-top: 1px solid #8c959f !important;
-    border-bottom: 1px solid #8c959f !important;
+.master-detail .md-row.is-active > td {
+    border-top: 1px solid #c9d1d9 !important;
+    border-bottom: 1px solid #c9d1d9 !important;
     font-weight: 600;
     color: #1f2328;
 }
-.quotes-split #quotes_list_rows tr.quotes-row.is-active > td:first-child {
-    border-left: 3px solid #8c959f !important;
+.master-detail .md-row.is-active > td:first-child {
+    border-left: 3px solid #c9d1d9 !important;
 }
 /* Unselected rows sit ON the grey, so nothing may paint them white. */
-.quotes-split #quotes_list_rows tr.quotes-row > td { background: transparent; }
-.quotes-split #quotes_list_rows tr.quotes-row:hover > td { background: #eaeef2; }
+/* MD:unselected-row */
+.master-detail .md-row > td { background: transparent; }
+.master-detail .md-row:hover > td { background: #eaeef2; }
 
 /* The pager sits at the foot of the rail and always states the count, so the
    list says how much of itself you are seeing even on a single page. */
@@ -3930,7 +4294,10 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 .quotes-split #quotes_view_card > .card-body { padding: 12px 14px; }
 /* The A4 quote keeps its own, lighter paper edge (owner ask: leave the
    document design alone). Only the SELECTION is drawn darker - in #57606a
-   one clear step darker than the ordinary #d0d7de border, and no further.
+   #c9d1d9: a hair above the ordinary #d0d7de border and nothing more. This
+   is a screen someone looks at all day, so the selection should be findable
+   rather than loud - the white row against the grey list is doing most of the
+   work already, and the border only has to close the shape.
    Two attempts overshot: near-black read as a bar rather than a rule, and
    #57606a was still heavier than the list around it. The selection only has
    to be MORE than its neighbours, not dark in absolute terms - the eye finds
@@ -3940,37 +4307,38 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 
 /* Dark themes: the joined surface and its divider are the whole effect, so
    they have to follow the theme rather than stay light-mode grey. */
-[data-theme] #quotes_new .contentbar.quotes-split {
+[data-theme] .master-detail {
     background: var(--theme-card-bg);
     border-color: var(--theme-border-color);
 }
-[data-theme] #quotes_new .contentbar.quotes-split > #quotes_list_card,
-[data-theme] #quotes_new .contentbar.quotes-split > #quotes_list_card > .card-body,
+[data-theme] .master-detail > .md-rail,
+[data-theme] .master-detail > .md-rail > .card-body,
+/* the chips are quotes' own control, so that half of the group stays named */
 [data-theme] .quotes-split #quotes_list_card #quotes_filter_chips {
     background: var(--theme-body-bg, var(--theme-card-bg)) !important;
 }
 /* The connected selection is the whole effect, so its ground and the pane's
    must be the SAME variable - two near-identical colours would show a seam. */
-[data-theme] #quotes_new .contentbar.quotes-split > #quotes_view_card,
-[data-theme] .quotes-split #quotes_list_rows tr.quotes-row.is-active,
-[data-theme] .quotes-split #quotes_list_rows tr.quotes-row.is-active > td {
+[data-theme] .master-detail > .md-detail,
+[data-theme] .master-detail .md-row.is-active,
+[data-theme] .master-detail .md-row.is-active > td {
     background: var(--theme-card-bg) !important;
 }
-[data-theme] .quotes-split #quotes_list_rows tr.quotes-row.is-active > td {
+[data-theme] .master-detail .md-row.is-active > td {
     color: var(--theme-text-primary);
     border-top-color: var(--theme-text-muted, #8c959f) !important;
     border-bottom-color: var(--theme-text-muted, #8c959f) !important;
 }
-[data-theme] .quotes-split #quotes_list_rows tr.quotes-row.is-active > td:first-child {
+[data-theme] .master-detail .md-row.is-active > td:first-child {
     border-left-color: var(--theme-text-muted, #8c959f) !important;
 }
-[data-theme] .quotes-split #quotes_list_rows tr.quotes-row:hover > td {
+[data-theme] .master-detail .md-row:hover > td {
     background: var(--theme-table-row-hover);
 }
 [data-theme] .quotes-split #quotes_list_card #quotes_filter_chips {
     border-bottom-color: var(--theme-border-color);
 }
-[data-theme] .quotes-split #quotes_list_card thead th {
+[data-theme] .master-detail .md-rail thead th {
     background: var(--theme-body-bg, var(--theme-card-bg));
     border-bottom-color: var(--theme-border-color);
 }
@@ -3980,4 +4348,434 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 [data-theme] #quotes_list_rows tr.quotes-row.is-active {
     background: var(--theme-table-row-hover);
     box-shadow: inset 3px 0 0 var(--theme-primary-color);
+}
+
+/* ------------------------------------------------------------------
+ * Per-variant photo picker (item form)
+ *
+ * A strip of the family's photos under each variant row. The chosen one
+ * is marked with a ring and a tick rather than only a border colour -
+ * a border alone is the kind of state that disappears on a bright
+ * screen, and picking the wrong photo is not visible again until the
+ * item is saved and sitting on the sale grid.
+ * ------------------------------------------------------------------ */
+.items-variant-photos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    min-height: 34px;
+}
+.items-variant-photo {
+    width: 48px;
+    height: 48px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 2px solid var(--theme-border-color, #d0d7de);
+    padding: 1px;
+    cursor: pointer;
+    opacity: .72;
+    transition: opacity .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+.items-variant-photo:hover { opacity: 1; }
+.items-variant-photo.is-chosen {
+    opacity: 1;
+    border-color: #2f855a;
+    box-shadow: 0 0 0 2px rgba(47, 133, 90, .35);
+}
+/* Keyboard and screen-reader users get the same affordance the mouse has. */
+.items-variant-photo:focus-visible {
+    outline: 2px solid var(--theme-primary-color, #506fe4);
+    outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------------
+ * The sale-done card closes itself, and the ring says when.
+ *
+ * Drawn as an SVG outline rather than an animated border so the line
+ * genuinely travels the edge and arrives at the corner - a border-width
+ * or background trick cannot express "how much time is left" without
+ * lying about it somewhere along the path.
+ *
+ * The ring is decoration for a behaviour, so it is aria-hidden and the
+ * card is never made to depend on it: with the SVG missing, the panel
+ * still closes and every button still works.
+ * ------------------------------------------------------------------ */
+.sale-done-card { position: relative; }
+
+.sale-done-ring {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;   /* never swallow a click meant for a button */
+    overflow: visible;
+    z-index: 2;
+}
+.sale-done-ring rect {
+    x: 1px; y: 1px;
+    width: calc(100% - 2px);
+    height: calc(100% - 2px);
+    fill: none;
+    stroke-width: 2;
+}
+.sale-done-ring-track { stroke: transparent; }
+.sale-done-ring-line {
+    stroke: var(--theme-primary-color, #506fe4);
+    stroke-linecap: round;
+    opacity: 0;
+    transition: opacity .2s ease;
+}
+/* Only while the countdown is actually running. A ring sitting at full
+   length on a cancelled timer would promise a close that is not coming. */
+.sale-done-card.is-closing .sale-done-ring-line { opacity: .9; }
+
+/* The cashier engaged with the card, so the countdown stopped. Saying so
+   beats leaving them to wonder whether it is still about to vanish. */
+.sale-done-hint {
+    display: none;
+    text-align: center;
+    font-size: 12px;
+    color: #6c757d;
+    margin: 6px 0 0;
+}
+.sale-done-card.is-held .sale-done-hint { display: block; }
+
+@media (prefers-reduced-motion: reduce) {
+    /* No ring, and the ring is the only warning this card gives - so for
+       these users the card does not close itself at all (see saleDoneTimer).
+       A panel vanishing with no notice is the surprise the ring prevents. */
+    .sale-done-ring { display: none; }
+}
+
+/* ------------------------------------------------------------------
+ * The tender panel's close button, 10px up and 10px right (owner ask).
+ *
+ * Moved by trimming the head's padding rather than by offsetting the
+ * button: the head is position:fixed, so a transform or a negative
+ * margin on the anchor would move the hit area away from the icon on
+ * one of the two, and a close button whose target is not where it is
+ * drawn is worse than one that is slightly low.
+ *
+ * Scoped to the tender panel by id. The same head markup is used by
+ * every settings sidebar, and only this one was asked about.
+ * ------------------------------------------------------------------ */
+#infobar-settings-sidebar-tender-details .infobar-settings-sidebar-head {
+    padding-top: 4px;      /* was 14px */
+    padding-right: 20px;   /* was 30px */
+}
+
+/* ------------------------------------------------------------------
+ * Short, exact, or change to give back.
+ *
+ * "Return balance 0.00" was shown both when the customer had paid to
+ * the penny and when they were still hundreds short. A cashier reads
+ * this for about a second while talking to somebody, so it is words
+ * and a colour, not a figure in a row they have to interpret.
+ * ------------------------------------------------------------------ */
+.tender-status-row { padding: 0 !important; border: 0 !important; background: transparent !important; }
+.tender-status {
+    display: none;
+    text-align: center;
+    font-weight: 700;
+    font-size: 15px;
+    padding: 9px 12px;
+    border-radius: 6px;
+    margin: 6px 0;
+}
+/* Red is the one that costs the shop money, so it is the loudest. */
+.tender-status.is-short { background: #fdecea; color: #b3261e; }
+.tender-status.is-exact { background: #e7f5ec; color: #1e7a44; }
+.tender-status.is-over  { background: #e8f1fd; color: #14508f; }
+
+/* ------------------------------------------------------------------
+ * Restoring the sample data.
+ *
+ * The bar eases to nine tenths while the request is in flight and only
+ * completes on the answer - the server does the work in one call and
+ * cannot report a percentage, so this does not invent one. A bar that
+ * marches to 100% and then waits is worse than none: it says the work
+ * is finished when it is not.
+ * ------------------------------------------------------------------ */
+.demo-progress-track {
+    height: 8px;
+    border-radius: 999px;
+    background: #e9edf3;
+    overflow: hidden;
+}
+.demo-progress-bar {
+    height: 100%;
+    width: 0;
+    border-radius: 999px;
+    background: var(--theme-primary-color, #506fe4);
+    transition: width .55s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+    /* The width still changes - it is the information - but it stops
+       sliding, which is the part that is motion for its own sake. */
+    .demo-progress-bar { transition: none; }
+}
+
+/* ------------------------------------------------------------------
+ * Cash Book and Cash Register are whole PAGES embedded in a settings
+ * pane (.config-embedded-page in settings_write.html). They arrive with
+ * their own #containerbar and breadcrumb markup, written for a
+ * full-width page and never adjusted for sitting inside a column - so
+ * the card ran past the right-hand edge (owner report: an empty Cash
+ * Book box cut off mid-page).
+ *
+ * Three duplicate id="containerbar" elements exist on that page for the
+ * same reason. Not renamed here: the embedded pages' own scripts look
+ * them up, and a rename is a bigger change than a clipped card
+ * justifies. Contained rather than restructured.
+ * ------------------------------------------------------------------ */
+.config-embedded-page {
+    min-width: 0;
+    max-width: 100%;
+}
+.config-embedded-page #containerbar,
+.config-embedded-page .contentbar,
+.config-embedded-page .breadcrumbbar {
+    min-width: 0;
+    max-width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+}
+/* A page's own outer margins are wrong inside a pane that already has
+   padding: they push the card past the edge it is meant to sit inside. */
+.config-embedded-page > #containerbar { margin: 0; }
+.config-embedded-page .table-responsive { max-width: 100%; }
+
+/* ==================================================================
+ * The sale grid in a dark theme.
+ *
+ * The block above styles #sales_new .wsk-cp with fixed light colours -
+ * white cards, #f0f2f5 dividers, #1f2328 text. Those were written when
+ * the till was light-only, and an ID selector outranks the
+ * `[data-theme] .wsk-cp-product` rules in theme-variables.css, so a
+ * dark theme could never override them. The result was white cards and
+ * white hairlines on a black page: exactly the "white borders make very
+ * bad" report.
+ *
+ * Repeated here with the SAME specificity plus [data-theme] so these
+ * win, and pointed at the theme tokens so every preset - VS Code, DOS,
+ * Terminal, and any added later - is handled by one block rather than
+ * one block each.
+ * ================================================================== */
+[data-theme] #sales_new .wsk-cp .wsk-cp-product {
+    background: var(--theme-card-bg);
+    border-color: var(--theme-border-color);
+}
+[data-theme] #sales_new .wsk-cp .description-prod {
+    background: transparent;
+    border-bottom-color: var(--theme-border-color);
+}
+[data-theme] #sales_new .wsk-cp .description-prod p { color: var(--theme-text-primary); }
+[data-theme] #sales_new .wsk-cp .price-text-color { color: var(--theme-primary-color); }
+[data-theme] #sales_new .wsk-cp .wsk-cp-stock { color: var(--theme-text-secondary); }
+
+[data-theme] #sales_new .wsk-cp:hover .wsk-cp-product {
+    border-color: var(--theme-primary-color);
+    background: var(--theme-card-bg);
+}
+[data-theme] #sales_new .wsk-cp:hover .description-prod { border-bottom-color: var(--theme-primary-color); }
+[data-theme] #sales_new .wsk-cp:hover .description-prod p { color: var(--theme-primary-color); }
+
+/*
+ * THE PHOTO PLATE. This is the part that actually looked broken.
+ *
+ * Product photographs are shot on white. Dropped straight onto a black
+ * card they read as glaring white rectangles with hard edges - the eye
+ * sees the paper, not the product.
+ *
+ * So the image sits on a deliberate light plate with rounded corners
+ * and padding, in every theme. A photo frame is a thing people
+ * recognise; a white rectangle bleeding into a black card is not. It
+ * also means a transparent PNG and a white JPEG look the same, which
+ * they never did before.
+ */
+#sales_new .wsk-cp .wsk-cp-img:has(img) {
+    background: #ffffff;
+    border-radius: 8px;
+    margin: 8px 8px 0;
+    padding: 6px;
+}
+[data-theme] #sales_new .wsk-cp:hover .wsk-cp-img:has(img) { background: #ffffff; }
+/* Dark themes get a slightly softened plate: pure white at this size is
+   a lamp on an otherwise dark screen, and this till is open all day. */
+[data-theme="dark"] #sales_new .wsk-cp .wsk-cp-img:has(img),
+[data-theme="terminal"] #sales_new .wsk-cp .wsk-cp-img:has(img),
+[data-theme="dosblue"] #sales_new .wsk-cp .wsk-cp-img:has(img),
+[data-theme="dark"] #sales_new .wsk-cp:hover .wsk-cp-img:has(img),
+[data-theme="terminal"] #sales_new .wsk-cp:hover .wsk-cp-img:has(img),
+[data-theme="dosblue"] #sales_new .wsk-cp:hover .wsk-cp-img:has(img) {
+    background: #e8eaed;
+}
+
+/* ============================================================
+ * THE WELCOME (#feature_intro_modal)
+ *
+ * Shown once, to a shop that has never been asked which features it
+ * wants. It is the first considered screen anybody sees, so it is
+ * styled rather than left as a bare Bootstrap modal - but every colour
+ * comes from a theme token, because the shop that sees this may already
+ * have picked a dark preset and a hard-coded white panel would arrive
+ * as a flashbang on their first sign-in.
+ *
+ * Bootstrap paints .modal-content white from its own stylesheet, so the
+ * background here is not optional decoration; without it the panel is
+ * white in every dark theme and the text on it is unreadable.
+ * ============================================================ */
+.modal-content.first-run {
+    background: var(--theme-card-bg, #ffffff);
+    color: var(--theme-text-primary, #16203a);
+    border: 1px solid var(--theme-border-color, #e5e8ef);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.first-run-head {
+    padding: 26px 28px 18px;
+    text-align: center;
+    border-bottom: 1px solid var(--theme-border-color, #e5e8ef);
+}
+
+/* The one flourish, and it is small on purpose: a shop opening its till
+   for the first time wants to be greeted, not congratulated. */
+.first-run-mark {
+    width: 46px;
+    height: 46px;
+    margin: 0 auto 12px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--theme-primary-color, #506fe4);
+    color: var(--theme-btn-primary-text, #ffffff);
+    font-size: 22px;
+    line-height: 1;
+}
+
+.first-run-title {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--theme-text-primary, #16203a);
+}
+
+.first-run-sub {
+    margin: 6px 0 0;
+    font-size: 14px;
+    color: var(--theme-text-muted, #5b6577);
+}
+
+.first-run-body {
+    padding: 18px 28px 4px;
+}
+
+.first-run-lead {
+    margin: 0 0 14px;
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--theme-text-secondary, #3a4459);
+}
+
+/* The list scrolls, the dialog does not. Eleven features on a 768px-tall
+   till would otherwise push the buttons off the bottom of the screen -
+   and a Save nobody can reach is the same as no Save. */
+.first-run-list {
+    max-height: 46vh;
+    overflow-y: auto;
+    margin: 0 -6px;
+    padding: 0 6px;
+}
+
+.first-run-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    width: 100%;
+    margin: 0;
+    padding: 10px 2px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--theme-border-color, #e5e8ef);
+}
+
+.first-run-row:last-child {
+    border-bottom: 0;
+}
+
+.first-run-row:hover {
+    background: var(--theme-table-row-hover, #eef2fd);
+}
+
+/* min-width:0 because a flex item defaults to min-width:auto and will
+   refuse to shrink below its longest word, pushing the switch off the
+   right-hand edge with no scrollbar to reach it. */
+.first-run-row-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.first-run-row-text b {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--theme-text-primary, #16203a);
+}
+
+.first-run-row-text > span {
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--theme-text-muted, #5b6577);
+}
+
+/* flex-shrink:0 or the switch is the thing that collapses when the
+   description is long, which is the one element that must not. */
+.first-run-switch {
+    flex: 0 0 auto;
+    padding-left: 2.25rem;
+}
+
+.first-run-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding: 16px 28px 20px;
+    border-top: 1px solid var(--theme-border-color, #e5e8ef);
+}
+
+.first-run-foot-note {
+    font-size: 13px;
+    color: var(--theme-text-muted, #5b6577);
+}
+
+.first-run-foot-actions {
+    display: flex;
+    gap: 10px;
+    margin-left: auto;
+}
+
+/* A phone or a small till: the note moves under the buttons rather than
+   squeezing them, and the buttons stay full width for a thumb. */
+@media (max-width: 575.98px) {
+    .first-run-head,
+    .first-run-body,
+    .first-run-foot {
+        padding-left: 18px;
+        padding-right: 18px;
+    }
+
+    .first-run-foot-actions {
+        width: 100%;
+        margin-left: 0;
+    }
+
+    .first-run-foot-actions .btn {
+        flex: 1 1 0;
+    }
 }

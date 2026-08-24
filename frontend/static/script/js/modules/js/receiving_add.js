@@ -124,12 +124,47 @@ PosnicPro.receivings = {
         $('#v-pills-purchase').addClass('show active');
         $('.page_loader,#osk-container,#receiving_view_receiving_edit').hide();
         $('.page-title-box,#showreceivingbody,#receiving_view_view_receiving_table,#receivings').show();
+        PosnicPro.receivings.mountFilters();
         PosnicPro.receivings.receivingsTable('receivings');
         $('.dashboard_img_menu').hide();
         $('#image_sidebar_purchasehistory').show();
         var loader = $(".loader-receiving");
         loader.find(".loadingSpinner:first").remove();
     },
+    /*
+     * The shared filter bar on Purchase History - the same one the item list,
+     * Sales History and quotes use.
+     *
+     * Writes into data('filters') and calls the same receivingsTable, so the
+     * endpoint keeps taking the blob it always took; legacyFilters builds the
+     * regex PosnicPro.search built, so a shop's existing search habits return
+     * the same rows.
+     */
+    mountFilters: function () {
+        if (!$('#receivings_filter_panel').length) { return; }
+        PosnicPro.listFilter.mount({
+            key: 'receivings',
+            container: '#receivings_filter_panel',
+            button: '#receivings_filter_btn',
+            searchPlaceholder: 'Search purchase no, supplier or phone',
+            dateField: 'Date',
+            searchFields: [
+                { value: 'all', label: 'All fields' },
+                { value: 'receiving_id', label: 'Purchase no' },
+                { value: 'supplier_name', label: 'Supplier' },
+                { value: 'supplier_phone', label: 'Phone' }
+            ],
+            onChange: function () {
+                var table = $('#view_receivings');
+                /* The column PosnicPro.search filtered this list on. */
+                var filters = PosnicPro.listFilter.legacyFilters('receivings', { dateKey: 'updated_date' });
+                table.data('filters', JSON.stringify(filters));
+                table.data('current_page', 1);
+                PosnicPro.receivings.receivingsTable('receivings');
+            }
+        });
+    },
+
     receivingsTable: function () {
         var loader = $(".loader-table-receiving");
         $("<div class='loadingSpinner'></div>").appendTo(loader);
@@ -1484,6 +1519,19 @@ $(function () {
                     $('#receiving_add_supplier_state').val(suggestion.data.state);
                     $('#receiving_add_supplier_gst_type').val(suggestion.data.gst_type);
                     $('#receiving_add_supplier_gst_number').val(suggestion.data.gst_number);
+                    /* Recency, the same way the sale screen records customers
+                       and items. The shared filter bar offers a supplier picker
+                       (core/list-filter.js, LF.ENTITIES.supplier) that reads
+                       this list - without it that picker opens empty on every
+                       till and looks broken. Written where the choice is made,
+                       so every path that picks a supplier feeds it. */
+                    if (PosnicPro.sales && PosnicPro.sales._recentPush) {
+                        PosnicPro.sales._recentPush('recent_suppliers', {
+                            id: suggestion.data.id,
+                            name: suggestion.value || suggestion.data.name,
+                            phone: suggestion.data.phone
+                        }, 'id');
+                    }
 //                    let hash = window.location.hash.slice(1);
 //                    if (hash === '/receivings/new') {
 //                        PosnicPro.receivings.clearReceivingForm();
@@ -1694,11 +1742,11 @@ $(document).ready(function () {
         messages: {
             receiving_add_date: {
                 required: "This field is required",
-                date: "Please enter a valid date",
+                date: "Enter a valid date",
                 maxlength: "Enter a valid date",
             },
             receiving_add_supplier_name: {
-                required: "Please Enter a Supplier Name",
+                required: "Enter the supplier name",
                 minlength: "Supplier Name Must be Atleast 3 Characters"
 
             },
@@ -1706,7 +1754,7 @@ $(document).ready(function () {
     });
     jQuery.validator.addMethod("commonDate", function (value, element) {
         return this.optional(element) || moment(value, 'YYYY/MM/DD LT').isValid();
-    }, "Please enter a valid date in the format");
+    }, "Use the date format");
 });
 $("#receiving_add").submit(function (event) {
     event.preventDefault();
@@ -2164,4 +2212,11 @@ $(document).ready(function () {
         PosnicPro.alert('info', 'Receiving pre-filled from ' + (prefill.supplier.po_id || 'the purchase order'));
     }, 600);
     void poPrefillTimer;
+});
+
+/* Open and close the purchase filter panel. Delegated, because the button
+   lives in markup that is re-rendered on page entry. */
+$(document).on('click', '#receivings_filter_btn', function () {
+    PosnicPro.receivings.mountFilters();
+    PosnicPro.listFilter.toggle('receivings');
 });

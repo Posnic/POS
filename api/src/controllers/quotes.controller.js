@@ -112,6 +112,11 @@ module.exports = {
           limit: req.query.limit,
           page: req.query.page,
           search: req.query.search,
+          // which column to search, whether to anchor it, and the date window
+          field: req.query.field,
+          exact: req.query.exact,
+          from: req.query.from,
+          to: req.query.to,
         },
         contextOf(req)
       );

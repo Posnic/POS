@@ -2458,6 +2458,18 @@
 
                                         <div class="module-card">
                                             <div class="module-card-head">
+                                                <span class="module-ico"><i class="feather icon-package"></i></span>
+                                                <div class="module-title"><lang class="lang_module_demo_data">Demo Data</lang></div>
+                                                <div class="custom-control custom-switch module-switch">
+                                                    <input type="checkbox" class="custom-control-input" id="module_demo_data_enable" name="module_demo_data_enable">
+                                                    <label class="custom-control-label" for="module_demo_data_enable"></label>
+                                                </div>
+                                            </div>
+                                            <p class="module-desc">The sample products your shop started with. Off hides them everywhere. Nothing is deleted, so switching it back on brings them straight back - and anything you have edited or already sold stays either way.</p>
+                                        </div>
+
+                                        <div class="module-card">
+                                            <div class="module-card-head">
                                                 <span class="module-ico"><img src="static/images/svg-icon/supermarket.svg" alt="weighing scale"></span>
                                                 <div class="module-title"><lang class="lang_weightmachine_title">Weighing Scale</lang></div>
                                                 <div class="custom-control custom-switch module-switch">
@@ -3431,19 +3443,19 @@
 
                                             <!-- ============ SALE ============ -->
                                             <div class="tab-pane fade show active" id="core-tab-sale" role="tabpanel">
-                                                <!-- Customer display pairing (Loyverse study L3): the page
-                                                     already serves on the LAN - this card just tells the
-                                                     shop where it lives. -->
-                                                <div class="border rounded p-2 mb-3">
-                                                    <label class="d-block mb-1" style="font-weight:600;"><lang class="lang_display_pair_title">Customer display</lang></label>
-                                                    <small class="text-muted d-block mb-1"><lang class="lang_display_pair_hint">Open this address in a browser on the customer-facing screen (same network as this till). It follows the sale live.</lang></small>
-                                                    <div class="input-group input-group-sm" style="max-width:480px;">
-                                                        <input type="text" class="form-control" id="display_pair_url" readonly>
-                                                        <div class="input-group-append">
-                                                            <button type="button" class="btn btn-primary-rgba" onclick="PosnicPro.settings.copyDisplayUrl();"><i class="feather icon-copy"></i></button>
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                                <!--
+                                                  The customer-display card was here.
+
+                                                  Removed on owner instruction: "core settings sale why
+                                                  this customer diplay section. its not required." It was
+                                                  a read-only address with a copy button, sitting at the
+                                                  top of the settings a shop opens most - paying for that
+                                                  place every visit to be useful roughly once.
+
+                                                  THE FEATURE IS UNTOUCHED. customerview.html still serves
+                                                  on the LAN and still follows the sale live; only the
+                                                  card that recited its address is gone.
+                                                -->
                                                 <div class="row">
                                                     <div class="form-group col-md-6">
                                                         <input type="checkbox" id="default_customer_enable_disable"
@@ -3602,6 +3614,50 @@
                                                                     <label class="custom-control-label" for="toggleSwitchHoldSale"></label>
                                                                 </div>
                                                             </div>
+                                                        </div>
+                                                    </fieldset>
+                                                </div>
+
+                                                <!-- Owner ask #85. Its own fieldset and its own Save, because it
+                                                     writes to a different place from everything around it: the
+                                                     ACCOUNT, not this branch. Riding the general form save would
+                                                     let a screen showing one shop push its view onto all of them.
+                                                     Owner-class on the server; the note says so rather than
+                                                     letting a cashier press Save and get a 403. -->
+                                                <div class="row">
+                                                    <fieldset class="col-12 form-group border p-3 field-general-setting" id="sharing_fieldset">
+                                                        <legend class="w-auto px-2"><lang class="lang_datasharing_title">Shared between your shops</lang></legend>
+                                                        <small class="form-text text-muted mb-2">Applies to every shop on
+                                                            this account. Changing it takes effect on the next search -
+                                                            nothing is copied or moved. Stock is not here on purpose: a
+                                                            count sits on one shelf, in one building. A new shop copies
+                                                            the product list instead, when it is created.</small>
+                                                        <div class="row">
+                                                            <div class="form-group col-md-6">
+                                                                <label>Customers</label>
+                                                                <div class="custom-control custom-switch mt-2">
+                                                                    <input type="checkbox" class="custom-control-input" id="set_share_customers">
+                                                                    <label class="custom-control-label" for="set_share_customers"></label>
+                                                                </div>
+                                                                <small class="form-text text-muted">One record per person
+                                                                    across every shop - same balance, same loyalty.</small>
+                                                            </div>
+                                                            <div class="form-group col-md-6">
+                                                                <label>Suppliers</label>
+                                                                <div class="custom-control custom-switch mt-2">
+                                                                    <input type="checkbox" class="custom-control-input" id="set_share_suppliers">
+                                                                    <label class="custom-control-label" for="set_share_suppliers"></label>
+                                                                </div>
+                                                                <small class="form-text text-muted">The people you buy from
+                                                                    are usually the same everywhere.</small>
+                                                            </div>
+                                                        </div>
+                                                        <div class="d-flex align-items-center" style="gap:10px;">
+                                                            <button type="button" class="btn btn-sm btn-primary" id="sharing_save_btn"
+                                                                onclick="PosnicPro.settings.saveSharing();">
+                                                                <i class="feather icon-save mr-2"></i>Save sharing
+                                                            </button>
+                                                            <small class="text-muted" id="sharing_status"></small>
                                                         </div>
                                                     </fieldset>
                                                 </div>

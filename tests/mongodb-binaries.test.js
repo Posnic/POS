@@ -139,3 +139,42 @@ test('the app looks for the right binary name', () => {
       'executable on macOS and Linux',
   );
 });
+test('the prebuild check fails only on what a person must fetch', () => {
+  /*
+   * check:mongodb runs FIRST in the prebuild chain - before prepare:bundle,
+   * which is what runs prepare:vc-runtime and copies the three VC runtime DLLs
+   * off the machine. Demanding all four here listed three files the build
+   * supplies moments later, and told the developer to fix them with
+   * download-mongodb.bat.
+   *
+   * That advice is wrong twice over: those DLLs are not the developer's to
+   * fetch, and MongoDB's archive does not contain them anyway - it ships
+   * vc_redist.x64.exe, an installer. Somebody following it downloads 600MB,
+   * sees the same four names, and cannot tell that three were never the issue.
+   */
+  const { FETCHED_BY_HAND, SUPPLIED_BY_BUILD, REQUIRED } =
+    require('../scripts/check-mongodb-binaries');
+
+  assert.deepStrictEqual(
+    FETCHED_BY_HAND,
+    ['mongod.exe'],
+    'the prebuild gate covers files the build itself produces',
+  );
+  assert.ok(
+    SUPPLIED_BY_BUILD.every((f) => f.endsWith('.dll')),
+    'something other than the VC runtime is being deferred to the build',
+  );
+  assert.deepStrictEqual(
+    [...FETCHED_BY_HAND, ...SUPPLIED_BY_BUILD].sort(),
+    [...REQUIRED].sort(),
+    'the split lost or invented a file - the package would ship incomplete',
+  );
+
+  /* The deferred DLLs are still guaranteed - by the step that produces them. */
+  const vc = fs.readFileSync(path.join(ROOT, 'scripts', 'bundle-vc-runtime.js'), 'utf8');
+  assert.match(
+    vc,
+    /process\.exit\(1\)/,
+    'nothing fails the build when the VC runtime cannot be found - the DLLs are now unguarded',
+  );
+});

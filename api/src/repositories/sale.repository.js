@@ -3,6 +3,7 @@ const { currentConnection } = require('../db/tenant-context');
 const { ObjectId } = require('mongodb');
 const crypto = require('crypto');
 const BaseModel = require('../models/base.model');
+const { ensureIndexOnce } = require('../db/ensure-index');
 const { formatDate } = require('../utils/helpers');
 const StockLogsRepository = require('./stock-log.repository');
 const { PAYMENT_STATUS } = require('../constants');
@@ -7159,9 +7160,50 @@ class SalesRepository {
     }
   }
 
+  /*
+   * The id of the newest sale on this branch.
+   *
+   * The multi-till poller asks for this while the sales list is open and
+   * refreshes the table when the id changes, so a sale rung up on another till
+   * appears without anyone pressing refresh.
+   *
+   * It used to call Model.getNewSaleModel(), which no model has ever defined.
+   * The route in front of it answered 403 to everyone - it sat in the no-auth
+   * block while demanding a permission - so the call never ran and the
+   * TypeError behind it stayed hidden. Fixing the route uncovered this one.
+   *
+   * Deliberately the cheapest query that answers the question: one document,
+   * one field, newest first. It runs on a timer, so anything more would be
+   * paid over and over for a value that is usually unchanged.
+   */
   async getNewSaleModel({ SaleModel } = {}) {
-    const Model = this.getModel(SaleModel);
-    return Model.getNewSaleModel();
+    try {
+      const { ObjectId } = require('mongodb');
+      const Model = this.getModel(SaleModel);
+
+      const branchId = BaseModel.currentBranch;
+      const query = {};
+      if (branchId) {
+        query.branch_id = ObjectId.isValid(branchId) ? new ObjectId(branchId) : branchId;
+      }
+      if (BaseModel.license) query.license = BaseModel.license;
+
+      const latest = await Model.findOne(query)
+        .sort({ created_date: -1 })
+        .select({ _id: 1 })
+        .lean();
+
+      return {
+        status: true,
+        // null on a branch with no sales yet: the poller stores it and waits,
+        // which is exactly right for a till that has not sold anything today
+        data: { sales_document_id: latest ? String(latest._id) : null },
+        message: 'success',
+      };
+    } catch (error) {
+      console.error('Error in getNewSaleModel:', error);
+      return { status: false, data: null, message: error.message };
+    }
   }
 
   async getOrderHistoryModel(branchId, limit, page, status, userId, { SaleModel } = {}) {
@@ -9170,20 +9212,20 @@ class SalesRepository {
    * documents without one are ignored.
    */
   async _ensureSalesIdIndex(db) {
-    if (this.constructor._salesIdIndexEnsured) return;
-    try {
-      await db.collection('sales').createIndex(
-        { license: 1, sales_id: 1 },
-        {
-          unique: true,
-          partialFilterExpression: { sales_id: { $type: 'string' } },
-          name: 'unique_sales_id_per_license',
-        }
-      );
-      this.constructor._salesIdIndexEnsured = true;
-    } catch (e) {
-      /* legacy duplicates still present - try again on a later sale */
-    }
+    /* Once per DATABASE. The old latch was a static boolean, which on a
+       process serving many shops meant the FIRST shop to make a sale got this
+       index and no other shop ever did. For a unique index that guards bill
+       numbers, that is not a missing optimisation - it is the guarantee
+       quietly not applying to almost everyone. */
+    await ensureIndexOnce(
+      db.collection('sales'),
+      { license: 1, sales_id: 1 },
+      {
+        unique: true,
+        partialFilterExpression: { sales_id: { $type: 'string' } },
+        name: 'unique_sales_id_per_license',
+      }
+    );
   }
 
   isDuplicateSalesIdError(err) {

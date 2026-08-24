@@ -7,6 +7,7 @@ const { ERROR_MESSAGES, SUCCESS_MESSAGES } = require('../constants/items.constan
 const sessionFilterUtil = require('../utils/session-filter.util');
 const { toObjectId } = require('../utils/tenant-context');
 const { isKioskConfigured } = require('../utils/kiosk');
+const { parseFilterParam } = require('../utils/mongo-guard');
 const { scanItems } = require('../services/gst-readiness');
 
 class ItemsController extends BaseController {
@@ -127,7 +128,12 @@ class ItemsController extends BaseController {
     return requestContext;
   }
 
+  /* Kept for any caller that still wants the lenient shape, but it goes
+     through the same guard - a helper that parses client filters must not be
+     the one place a code operator can still get through. */
   parseFilters(rawFilters) {
+    const guarded = parseFilterParam(rawFilters);
+    if (guarded.rejected) return {};
     if (!rawFilters) {
       return {};
     }
@@ -221,17 +227,21 @@ class ItemsController extends BaseController {
       const limit = Number.isFinite(limitParam) && limitParam > 0 ? Math.min(limitParam, 100) : 5;
       const page = Number.isFinite(pageParam) && pageParam > 0 ? pageParam : 1;
 
-      // Preserve existing flexible filter parsing semantics
-      let filters = {};
-      if (req.query.filters) {
-        if (typeof req.query.filters === 'string') {
-          const parsedFilters = safeJsonParse(req.query.filters, null);
-          if (parsedFilters && typeof parsedFilters === 'object' && !Array.isArray(parsedFilters)) {
-            filters = parsedFilters;
-          }
-        } else if (typeof req.query.filters === 'object' && !Array.isArray(req.query.filters)) {
-          filters = req.query.filters;
-        }
+      /*
+       * Preserve existing flexible filter parsing semantics, minus the
+       * operators that execute code.
+       *
+       * app.js strips '$' keys from req.query, but this filter arrives as a
+       * JSON STRING - one ordinary-looking value the sanitiser copies across
+       * untouched, then parsed back here with its operators intact and spread
+       * into a live query. See utils/mongo-guard.js for why the line is drawn
+       * at code execution rather than at '$': the real query operators are in
+       * use ($ne keeps KOT out of Sales History, $gte/$lte drive date windows)
+       * and removing those would un-filter lists rather than harden them.
+       */
+      const { filters, rejected } = parseFilterParam(req.query.filters);
+      if (rejected) {
+        return this.sendError(res, `Filter operator "${rejected}" is not allowed`, 400);
       }
 
       const options = { limit, page, sort: { _id: -1 } };
@@ -295,7 +305,12 @@ class ItemsController extends BaseController {
           ? parseInt(notificationRaw, 10)
           : null;
 
-      const filters = this.parseFilters(req.query.filters);
+      /* Same string-shaped filter, same guard - the low-stock list spreads it
+         into a query exactly as the main list does. */
+      const { filters, rejected } = parseFilterParam(req.query.filters);
+      if (rejected) {
+        return this.sendError(res, `Filter operator "${rejected}" is not allowed`, 400);
+      }
 
       const branchId = this.model?.branchId || null;
       const licenseId = this.model?.licenseId || null;
@@ -1187,6 +1202,105 @@ class ItemsController extends BaseController {
     } catch (error) {
       console.error('Error in itemStockReportTable:', error);
       return this.error(res, error.message, 500);
+    }
+  }
+
+  /*
+   * GET /api/items/export/jsonld
+   *
+   * The catalogue in a format somebody else's software can read, rather than
+   * the 18-column CSV that exportItems produces. See PRODUCT_EXPORT_FORMATS.md
+   * for why schema.org and not GDSN or UBL.
+   *
+   * Read-only, and gated on the same item:read the list is gated on - this
+   * exposes nothing a user cannot already see, only in a different shape.
+   */
+  /*
+   * DELETE the demo data, as opposed to hiding it.
+   *
+   * Guarded by the item DELETE permission, not read or write: this destroys
+   * records, and the person who may edit a price is not automatically the
+   * person who may clear a catalogue.
+   */
+  /*
+   * Put the sample data back.
+   *
+   * Guarded by item WRITE rather than delete: this creates records. The
+   * service refuses when demo data is already present, so a double click
+   * cannot give a shop two of everything.
+   */
+  async reseedDemoData(req, res) {
+    try {
+      if (req.user?.access?.item?.write === false) {
+        return this.sendError(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
+      }
+      await this.ensureContext(req);
+      const InstallService = require('../services/install.service');
+      const installer = new InstallService();
+      const result = await installer.reseedDemoData({
+        branchId: this.model?.branchId || null,
+        licenseId: this.model?.licenseId || null,
+        user: req.user,
+      });
+      if (!result.status) return this.sendError(res, result.message, 400);
+      return this.sendSuccess(res, result.data, result.message);
+    } catch (error) {
+      console.error('Error in reseedDemoData:', error);
+      return this.sendError(res, error.message, 500);
+    }
+  }
+
+  async purgeDemoData(req, res) {
+    try {
+      if (req.user?.access?.item?.delete === false) {
+        return this.sendError(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
+      }
+      await this.ensureContext(req);
+      const result = await this.service.purgeDemoData({
+        branchId: this.model?.branchId || null,
+        licenseId: this.model?.licenseId || null,
+        user: req.user,
+      });
+      if (!result.status) return this.sendError(res, result.message, 400);
+      return this.sendSuccess(res, result.data, result.message);
+    } catch (error) {
+      console.error('Error in purgeDemoData:', error);
+      return this.sendError(res, error.message, 500);
+    }
+  }
+
+  async exportCatalogueJsonLd(req, res) {
+    try {
+      if (req.user?.access?.item?.read === false) {
+        return this.sendError(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
+      }
+      await this.ensureContext(req);
+
+      const branchId = this.model?.branchId || null;
+      const licenseId = this.model?.licenseId || null;
+
+      /*
+       * ISO 4217, not the symbol. schema.org wants "INR"; the shop stores a
+       * sign (Rs) for display and the code separately. A symbol in
+       * priceCurrency is invalid, and "$" would not even identify a currency -
+       * it is used by a dozen of them.
+       */
+      const currency = String(req.query.currency || '')
+        .trim()
+        .toUpperCase();
+      const result = await this.service.exportCatalogueJsonLd({
+        branchId,
+        licenseId,
+        currency: /^[A-Z]{3}$/.test(currency) ? currency : null,
+      });
+
+      if (!result.status) return this.sendError(res, result.message, 400);
+
+      res.setHeader('Content-Type', 'application/ld+json; charset=utf-8');
+      return res.status(200).send(JSON.stringify(result.data));
+    } catch (error) {
+      console.error('Error in exportCatalogueJsonLd:', error);
+      return this.sendError(res, error.message, 500);
     }
   }
 

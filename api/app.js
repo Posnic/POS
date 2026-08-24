@@ -331,6 +331,8 @@ app.use((err, req, res, next) => {
   next(err); // Pass other errors through
 });
 
+const { filterGuard } = require('./src/middleware/filter-guard');
+
 // Sanitization function to prevent NoSQL injection
 const sanitize = (obj) => {
   if (!obj || typeof obj !== 'object') return obj;
@@ -369,7 +371,12 @@ app.use((req, res, next) => {
     req.body = sanitize({ ...req.body });
   }
 
-  next();
+  /* The gap the sanitiser above cannot see into: a filter arriving as a JSON
+     STRING is one ordinary-looking value to that walk, so its operators
+     survive to be parsed and spread into a live query. See
+     src/middleware/filter-guard.js - it is its own file so the behaviour can
+     be tested, which an inline closure in this file could not be. */
+  return filterGuard(req, res, next);
 });
 
 // XSS protection middleware

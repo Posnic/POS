@@ -6,6 +6,8 @@ const User = require('../models/user.model');
 const { ObjectId } = require('mongodb');
 const { redactBranchSecrets, stripBranchSecrets } = require('../services/settings-groups');
 const SettingsRepository = require('../repositories/settings.repository');
+const dataSharing = require('../services/data-sharing');
+const catalogueCopy = require('../services/catalogue-copy');
 
 const settingsRepository = new SettingsRepository();
 
@@ -170,6 +172,89 @@ class BranchesController extends BaseController {
         } catch (e) {
           console.error('[branch] settings copy skipped:', e && e.message);
           result.data.settings_copy_error = e.message;
+        }
+      }
+
+      /*
+       * Owner ask #85, the "inventory copy" half.
+       *
+       * Not a sharing switch, deliberately - see services/catalogue-copy.js.
+       * Stock lives on the item document and each branch owns its own items,
+       * so a shared item read would show N copies of every product with N
+       * different counts, and selling the wrong row would decrement another
+       * shop's stock. A new shop wants the CATALOGUE, with its own counts
+       * starting at zero, and that is a copy.
+       *
+       * Like the settings copy, a failure never fails the create: the branch
+       * exists and products can be added by hand, and losing a just-created
+       * shop over a catalogue copy would be far worse.
+       */
+      const itemsFrom = req.body?.copy_items_from;
+      if (itemsFrom && result.data?._id) {
+        try {
+          const BaseModel = require('../models/base.model');
+          const db = await BaseModel.getDb();
+          const copied = await catalogueCopy.copyCatalogue(db, {
+            sourceBranchId: itemsFrom,
+            targetBranchId: result.data._id,
+            targetBranchName: result.data.name || req.body?.name || '',
+            licenseId: req.user?.license || req.user?.license_id || null,
+            userId: req.user?._id || null,
+            userName: req.user?.username || '',
+          });
+          result.data.items_copied = copied.status ? copied.data : null;
+          if (!copied.status) result.data.items_copy_error = copied.message;
+        } catch (e) {
+          console.error('[branch] catalogue copy skipped:', e && e.message);
+          result.data.items_copy_error = e.message;
+        }
+      }
+
+      /*
+       * Owner ask #85: sharing is decided when a second shop appears.
+       *
+       * "Whenever new branch created mandatory information needs to be auto
+       * filled... we should auto selected as true based on standard values."
+       * The default customer, supplier and tax are already seeded by
+       * createBranch; this is the other half - who the new shop can SEE.
+       *
+       * ONLY IF THE ACCOUNT HAS NOT ALREADY DECIDED. Creating a third shop
+       * must not silently re-impose a default over a rule someone deliberately
+       * set when they created the second. `accountGroup` answers exactly that
+       * question - `set` names the keys the account itself decides - so an
+       * existing choice is left alone key by key rather than wholesale.
+       *
+       * Written at ACCOUNT level, because "can this shop see that shop's
+       * customers" is not a fact about one shop. A branch can still override
+       * it afterwards; that is what S5 inheritance is for.
+       *
+       * Like the settings copy above, a failure here never fails the create.
+       */
+      if (result.data?._id) {
+        try {
+          const ctx = {
+            licenseId: req.user?.license || req.user?.license_id || null,
+            branchId: result.data._id,
+          };
+          const current = await settingsRepository.accountGroup('sharing', ctx);
+          const decided = (current.status && current.data?.set) || [];
+          const seed = {};
+          for (const [key, fallback] of Object.entries(dataSharing.CREATE_DEFAULTS)) {
+            if (decided.includes(key)) continue;
+            seed[key] =
+              req.body?.[key] === undefined ? fallback : dataSharing.truthy(req.body[key]);
+          }
+          if (Object.keys(seed).length) {
+            const wrote = await settingsRepository.saveGroup('sharing', seed, ctx, {
+              level: 'account',
+            });
+            result.data.sharing_defaults = wrote.status ? seed : null;
+            if (!wrote.status) result.data.sharing_error = wrote.message;
+          }
+          dataSharing.invalidate(ctx.licenseId);
+        } catch (e) {
+          console.error('[branch] sharing defaults skipped:', e && e.message);
+          result.data.sharing_error = e.message;
         }
       }
 
