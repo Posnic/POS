@@ -5437,6 +5437,66 @@ PosnicPro.features = {
             }
         });
     },
+    /*
+     * Where is this till actually running?
+     *
+     * Owner, twice: "i feel user is not clear about this system software
+     * desktop application plus web based... we know but when first visit he
+     * dont know." The website says it now; the first sign-in did not, and the
+     * first sign-in is the one screen a new shop is certain to read.
+     *
+     * Three answers, decided from evidence the page already has:
+     *
+     *   desktop  the Electron app - the userAgent says so.
+     *   web      a browser on a PUBLIC address, in which case the shop's web
+     *            address IS the address bar. No lookup, no way to be stale.
+     *   lan      a browser on localhost or a private address - somebody on the
+     *            shop's own network looking at the local server. Claiming that
+     *            address "opens on any phone" would be false the moment they
+     *            left the building, so it gets its own sentence.
+     */
+    runningContext: function () {
+        if (navigator.userAgent.indexOf('Electron') !== -1) { return 'desktop'; }
+        var host = String(window.location.hostname || '').toLowerCase();
+        var isPrivate = host === 'localhost' || host === '' ||
+            /^127\./.test(host) || /^10\./.test(host) || /^192\.168\./.test(host) ||
+            /^172\.(1[6-9]|2[0-9]|3[01])\./.test(host) || /\.local$/.test(host);
+        return isPrivate ? 'lan' : 'web';
+    },
+
+    /*
+     * The desktop-and-web sentence, in the version that is true HERE.
+     *
+     * Never the generic "we have both an app and a website": that tells
+     * somebody nothing about the one they are looking at, and the whole
+     * point is orientation. Each variant says what THIS one is, what the
+     * other one offers, and where to find it.
+     *
+     * The desktop line does not print a web address, deliberately. The app
+     * does not reliably know its shop's cloud address, and a guessed URL that
+     * 404s teaches a brand-new user that the product lies. The welcome email
+     * and My Account genuinely carry it, so that is where they are sent.
+     */
+    accessNote: function () {
+        var esc = function (v) { return $('<i>').text(v == null ? '' : v).html(); };
+        var ctx = PosnicPro.features.runningContext();
+        if (ctx === 'desktop') {
+            return '<b>You are in the desktop app.</b> Your data lives on this computer, so ' +
+                'selling works with no internet at all. The same shop also opens in any web ' +
+                'browser - the address is in your welcome email, and under ' +
+                '<b>My Account</b> on posnic.com.';
+        }
+        if (ctx === 'web') {
+            return '<b>You are in the web version.</b> The address of this shop is ' +
+                '<b>' + esc(window.location.hostname) + '</b> - it opens on any computer or ' +
+                'phone, so share it with your staff. For a till that keeps selling when the ' +
+                'internet drops, the free desktop app is at <b>posnic.com/download</b>.';
+        }
+        return '<b>You are on the shop network.</b> This till runs from the shop computer ' +
+            'and works with no internet. If you signed up on posnic.com, the same shop ' +
+            'also opens in any browser - the address is under <b>My Account</b> there.';
+    },
+
     renderIntro: function () {
         var blob = PosnicPro.features._blob();
 
@@ -5467,6 +5527,10 @@ PosnicPro.features = {
         $('#feature_intro_lead').text(anyOff
             ? 'We have switched on the few things almost every shop needs, and left the rest off so your menus stay short. Turn on whatever you want - now, or any time later.'
             : 'Here is everything this till can do. Switch off what you do not need and those menus disappear; switch them back on whenever you want.');
+
+        /* Built by accessNote, which escapes the one dynamic value (the
+           hostname); everything else in it is our own copy. */
+        $('#feature_intro_access').html(PosnicPro.features.accessNote());
 
         var rows = PosnicPro.features.INTRO.map(function (f) {
             var key = f[0];
