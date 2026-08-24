@@ -36,6 +36,7 @@
     "test:receipt": "node --test tests/escpos-receipt.test.js",
     "test:items": "node --test tests/quick-items.test.js",
     "tenant:audit": "node scripts/tenant-audit.js",
+    "modules:backfill": "node scripts/module-defaults-backfill.js",
     "check:mongodb": "node scripts/check-mongodb-binaries.js",
     "test": "node --test \"tests/*.test.js\"",
     "clear:brand-seed": "node scripts/clear-brand-seed.js",

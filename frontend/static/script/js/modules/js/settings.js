@@ -5882,6 +5882,10 @@ PosnicPro.settings.featureInfo = {
         ]
     },
     module_demo_data_enable: {
+        /* Its own settings: the trade chooser. Owner ask - "Demo data user
+           should able to change the industry and install the different data.
+           so keep dedicated page for that." */
+        section: '#fc_demodata',
         tagline: 'The sample products you started with, out of the way in one click.',
         about: 'Every new shop arrives with a few sample products so the till can be tried before there is any real stock in it. Once your own catalogue is in, they are only clutter. Switching this off hides them everywhere at once - the item list, the sale screen, search. Nothing is deleted, so switching it back on brings them straight back, and anything you have edited or already sold stays put either way.',
         benefits: [
@@ -6165,6 +6169,15 @@ PosnicPro.settings.openFeaturePage = function ($card) {
     }
     $('#fp_settings_title').toggle($set.children().length > 0);
 
+    /*
+     * Demo Data's chooser has to be filled from the server, and this is the
+     * moment it becomes visible. Fetching at boot instead would put a request
+     * on the path to a shop's first sale for a screen most shops never open.
+     */
+    if (key === 'module_demo_data_enable') {
+        PosnicPro.settings.demoPacks.load();
+    }
+
     // show the page pane, keep the Features nav highlighted
     $('#v-pills-modules').removeClass('show active');
     $('#v-pills-featureconf').addClass('show active');
@@ -6227,7 +6240,13 @@ PosnicPro.settings.demoProgress = {
     _timer: null,
     _pct: 0,
 
-    open: function () {
+    /*
+     * `title` because this bar now serves two jobs: putting the samples back
+     * (Demo Data switched on) and swapping one trade's samples for another.
+     * "Adding the sample data" while rows are being REMOVED is a bar that
+     * describes work other than the work being done.
+     */
+    open: function (title) {
         var self = PosnicPro.settings.demoProgress;
         if (!$('#demo_progress_modal').length) {
             $('body').append(
@@ -6236,7 +6255,7 @@ PosnicPro.settings.demoProgress = {
                 '  <div class="modal-dialog modal-dialog-centered modal-sm" role="document">' +
                 '    <div class="modal-content">' +
                 '      <div class="modal-body text-center" style="padding:26px 22px;">' +
-                '        <h5 style="margin:0 0 6px;font-size:16px;">Adding the sample data</h5>' +
+                '        <h5 id="demo_progress_title" style="margin:0 0 6px;font-size:16px;">Adding the sample data</h5>' +
                 '        <p id="demo_progress_step" class="text-muted"' +
                 '           style="font-size:13px;margin:0 0 14px;">Getting ready…</p>' +
                 '        <div class="demo-progress-track"><div id="demo_progress_bar"' +
@@ -6246,6 +6265,7 @@ PosnicPro.settings.demoProgress = {
                 '  </div>');
         }
         self._pct = 0;
+        $('#demo_progress_title').text(title || 'Adding the sample data');
         self._set(4, 'Getting ready…');
         $('#demo_progress_modal').modal('show');
 
@@ -6262,8 +6282,12 @@ PosnicPro.settings.demoProgress = {
             [85, 'Adding sample quotes…'],
         ];
         var i = 0;
+        self._scripted = true;
         self._timer = window.setInterval(function () {
-            if (i < steps.length) {
+            /* The caller has started naming stages itself, so this script has
+               stopped being a guess and started being a contradiction - two
+               different sentences about the same moment. */
+            if (self._scripted && i < steps.length) {
                 self._set(steps[i][0], steps[i][1]);
                 i++;
                 return;
@@ -6272,6 +6296,18 @@ PosnicPro.settings.demoProgress = {
                own - the end belongs to the server's answer. */
             self._set(Math.min(90, self._pct + 1), null);
         }, 600);
+    },
+
+    /*
+     * A step the CALLER names, for work whose stages it knows and this object
+     * does not. The timed script below is a guess at how a single server
+     * request is progressing; a swap is two requests, and which one is running
+     * is a fact rather than an estimate.
+     */
+    step: function (label) {
+        var self = PosnicPro.settings.demoProgress;
+        self._scripted = false;
+        self._set(Math.max(self._pct, 6), label);
     },
 
     _set: function (pct, label) {
@@ -6292,6 +6328,185 @@ PosnicPro.settings.demoProgress = {
         }, 450);
     }
 };
+
+/*
+ * ============================================================
+ * THE DEMO DATA PAGE: changing trade
+ *
+ * Owner: "Demo data user should able to change the industry and install the
+ * different data. so keep dedicated page for that."
+ *
+ * A shop signs up in thirty seconds and picks its trade from a short list, or
+ * does not pick one at all - in which case it is given the supermarket set.
+ * A bakery then opens its till and finds twenty-four grocery lines. That is
+ * the first thing they see of the product, and there was no way to change it
+ * short of deleting the samples one at a time.
+ *
+ * SWAPPING IS DELETE-THEN-SEED, IN THAT ORDER, AND THE DELETE IS THE CAREFUL
+ * HALF. The purge already refuses anything sold, received or edited and names
+ * what it kept - a sample somebody turned into a real product is their work,
+ * and a sample that has been sold is referenced by a real transaction. So a
+ * swap can legitimately leave rows behind, and saying which ones is the whole
+ * difference between "we kept your work" and "it did not do what I asked".
+ *
+ * The seed is only attempted if the purge got far enough for it to succeed -
+ * the server refuses to seed on top of existing samples, so running them
+ * blindly in sequence would report a failure that is really the guard doing
+ * its job.
+ * ============================================================
+ */
+PosnicPro.settings.demoPacks = {
+    _packs: [],
+    _current: null,
+    _loaded: false,
+
+    /*
+     * Loaded when the page is opened, not at boot: this list is needed by one
+     * screen that most shops never visit, and a request at boot is a request
+     * on the critical path to a first sale.
+     */
+    load: function () {
+        var self = PosnicPro.settings.demoPacks;
+        if (self._loaded) { self.paint(); return; }
+        PosnicPro.get({ url: 'items/demo/packs', data: {} }, function (response) {
+            var d = (response && response.data) || {};
+            self._packs = d.packs || [];
+            self._current = d.current || null;
+            self._loaded = true;
+            self.paint();
+        }, function () {
+            /* Said out loud rather than left on "Loading…" forever, which
+               reads as a screen that is still working. */
+            $('#demo_pack_choice').html('<option value="">Could not load the list</option>');
+            $('#demo_pack_install').prop('disabled', true);
+        });
+    },
+
+    paint: function () {
+        var self = PosnicPro.settings.demoPacks;
+        var $sel = $('#demo_pack_choice');
+        if (!$sel.length) { return; }
+        var esc = function (v) { return $('<i>').text(v == null ? '' : v).html(); };
+
+        $sel.html(self._packs.map(function (p) {
+            return '<option value="' + esc(p.key) + '"'
+                + (p.key === self._current ? ' selected' : '') + '>'
+                + esc(p.label) + '</option>';
+        }).join(''));
+
+        /* Nothing selected means this shop has no samples at all - either it
+           never had them or it removed them. Then any pack is an install
+           rather than a swap, and the button should not sit disabled. */
+        if (!self._current && self._packs.length) { $sel.val(self._packs[0].key); }
+        self.describe();
+        $('#demo_pack_install').prop('disabled', !self._packs.length);
+    },
+
+    describe: function () {
+        var self = PosnicPro.settings.demoPacks;
+        var key = $('#demo_pack_choice').val();
+        var pack = null;
+        self._packs.forEach(function (p) { if (p.key === key) { pack = p; } });
+        if (!pack) { $('#demo_pack_summary').text(''); return; }
+        /* Counted by the server from the catalogue itself, so this cannot say
+           24 products while 23 arrive. */
+        var line = pack.products + ' products in ' + pack.categories + ' categories'
+            + (pack.photos ? ', ' + pack.photos + ' with photographs' : '');
+        $('#demo_pack_summary').text(
+            key === self._current ? line + ' — this is what you have now' : line
+        );
+        $('#demo_pack_install').text(
+            key === self._current ? 'Reinstall these samples' : 'Install this trade\'s samples'
+        );
+    },
+
+    install: function () {
+        var self = PosnicPro.settings.demoPacks;
+        var key = $('#demo_pack_choice').val();
+        if (!key) { return; }
+        var label = $('#demo_pack_choice option:selected').text();
+
+        /*
+         * Asked first, because this removes rows. Not a scary dialog - the
+         * purge protects everything that matters - but a shop should never
+         * find its samples changed by a button it pressed to read the label.
+         */
+        swal({
+            title: 'Replace the sample data with ' + label + '?',
+            text: 'Your own products are not touched. Samples you have edited, sold or received are kept.',
+            showCancelButton: true,
+            confirmButtonClass: 'btn btn-primary',
+            cancelButtonClass: 'btn btn-danger m-l-10',
+            confirmButtonText: 'Yes, install them',
+            cancelButtonText: 'Cancel'
+            /* The second handler is not optional. This is SweetAlert v6, where
+               Cancel REJECTS the promise - without it, pressing Cancel throws
+               an unhandled rejection into the console on a screen that looks
+               like nothing happened. */
+        }).then(function () { self._run(key); }, function () { });
+    },
+
+    _run: function (key) {
+        var self = PosnicPro.settings.demoPacks;
+        $('#demo_pack_install').prop('disabled', true);
+        PosnicPro.settings.demoProgress.open('Changing the sample data');
+        PosnicPro.settings.demoProgress.step('Removing the old samples…');
+
+        PosnicPro.delete({ url: 'items/demo', data: JSON.stringify({}) }, function () {
+            self._seed(key);
+        }, function (xhr) {
+            var resp = {};
+            try { resp = JSON.parse(xhr.responseText); } catch (e) { /* plain */ }
+            /*
+             * "Nothing to remove" is not a failure - it is the ordinary state
+             * of a shop that already cleared its samples, and the install it
+             * asked for can go ahead.
+             */
+            if (/nothing|no sample|not found/i.test(resp.message || '')) {
+                self._seed(key);
+                return;
+            }
+            PosnicPro.settings.demoProgress.close(
+                resp.message || 'Could not remove the old sample data', false);
+            $('#demo_pack_install').prop('disabled', false);
+        });
+    },
+
+    _seed: function (key) {
+        var self = PosnicPro.settings.demoPacks;
+        PosnicPro.settings.demoProgress.step('Adding the new samples…');
+        PosnicPro.post({
+            url: 'items/demo',
+            data: JSON.stringify({ businessType: key })
+        }, function (response) {
+            self._current = key;
+            /* The switch has to agree with what is now on screen: installing
+               samples while Demo Data is off would hide them the moment the
+               bar closes, which looks exactly like the install failing. */
+            if (!$('#module_demo_data_enable').is(':checked')) {
+                $('#module_demo_data_enable').prop('checked', true).trigger('change');
+                $('#fp_master').prop('checked', true);
+            }
+            PosnicPro.settings.demoProgress.close(response.message, response.type === 'success');
+            self.describe();
+            $('#demo_pack_install').prop('disabled', false);
+            /* The item list and the sale grid are both showing the old trade. */
+            if (PosnicPro.items && PosnicPro.items.itemsTable) { PosnicPro.items.itemsTable(); }
+        }, function (xhr) {
+            var resp = {};
+            try { resp = JSON.parse(xhr.responseText); } catch (e) { /* plain */ }
+            PosnicPro.settings.demoProgress.close(
+                resp.message || 'Could not add the new sample data', false);
+            $('#demo_pack_install').prop('disabled', false);
+        });
+    }
+};
+$(document).on('change', '#demo_pack_choice', function () {
+    PosnicPro.settings.demoPacks.describe();
+});
+$(document).on('click', '#demo_pack_install', function () {
+    PosnicPro.settings.demoPacks.install();
+});
 
 /*
  * Only when the switch has just been turned ON, and only if there is nothing

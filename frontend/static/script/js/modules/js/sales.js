@@ -6902,6 +6902,10 @@ PosnicPro.sales.itemsMenu = {
             if (response.type === 'success') {
                 loader.find(".loadingSpinner:first").remove();
                 var getItemdata = response.data;
+                /* The panel lives on <body>, so removing the grid does not take
+                   it with it - a category change would otherwise leave a list
+                   of sizes floating over a shelf that no longer contains them. */
+                PosnicPro.sales.itemsMenu.variantPop.close();
                 $('#item-lists').remove();
                 $('#sales_new_productList').append(' <div class="col-md-12" id="item-lists">');
                 var currency = PosnicPro.local.get('currencySign');
@@ -7079,8 +7083,15 @@ PosnicPro.sales.itemsMenu = {
             ? rows[0]['image'] : 'static/images/default/' + rows[0]['image'];
         var stockHtml = tracked
             ? '<div class="text-center wsk-cp-stock">' + stock + ' in stock</div>' : '';
-        return '<div class="wsk-cp wsk-variant cbutton--effect-novak" ' +
-            'onclick="PosnicPro.sales.itemsMenu.openVariantPicker(\'' + esc(rows[0]['variant_group_id']) + '\')">' +
+        /*
+         * The group id is on the tile as DATA, not only inside the onclick.
+         * The hover path finds the tile first and has to ask it what family it
+         * is - reading that back out of an onclick string would work until the
+         * first name with an apostrophe in it.
+         */
+        return '<div class="wsk-cp wsk-variant cbutton--effect-novak" tabindex="0" ' +
+            'data-variant-group="' + esc(rows[0]['variant_group_id']) + '" ' +
+            'onclick="PosnicPro.sales.itemsMenu.openVariantPicker(\'' + esc(rows[0]['variant_group_id']) + '\', this)">' +
             '<div class="wsk-cp-product">' +
             '<div class="description-prod">' +
             '<p data-searchval="' + esc(parent) + '" data-toggle="tooltip" title="' + esc(parent) + '">' +
@@ -7097,43 +7108,316 @@ PosnicPro.sales.itemsMenu = {
             '</div>' +
             '</div>';
     },
-    /* The picker: tap a variant, it lands on the sale like any tile tap. */
-    openVariantPicker: function (groupId) {
-        var rows = (PosnicPro.sales.itemsMenu._families || {})[groupId] || [];
-        if (!rows.length) { return; }
-        var esc = function (s) {
+    /*
+     * ============================================================
+     * THE VARIANT CHOOSER
+     *
+     * Owner: "when sales item choose variant choose it opens in center of the
+     * page, move movement is bit taking time, better show near to item or
+     * attached to item on hover might better. we can reduce the click. make
+     * sure we handled for touch screen users too."
+     *
+     * It was a Bootstrap modal: a backdrop, a fade, and a panel in the middle
+     * of the screen. Three costs, and the third is the one that matters.
+     *
+     *   - The eye loses the tile. You tap "Shirt" in the top-left corner and
+     *     the answer appears 400px away, with no line back to what you tapped.
+     *   - The hand travels there and back for every single sale. Over a day at
+     *     a counter that is the difference people describe as "slow".
+     *   - It costs TWO actions where one would do: open, then choose. A mouse
+     *     is already over the tile - it has said which family it wants just by
+     *     being there.
+     *
+     * So the list now opens against the tile, and for a mouse it opens on
+     * hover, which makes the whole interaction a single click on the size you
+     * want. Nothing is added by hovering; hover only ever SHOWS.
+     *
+     * TOUCH IS NOT A MOUSE WITH A SLOW CURSOR
+     *
+     * A touch screen has no hover to read intent from, and browsers fake one:
+     * a tap emits pointerover, mouseover and click at the same spot. Bound
+     * naively, a till with a touch screen would open the list under the
+     * finger and let the follow-up click land on whatever row happened to be
+     * there - adding a random size to the sale. That is a bug a cashier can
+     * only find at the counter, in front of a customer.
+     *
+     * Hence: hover opens ONLY for pointerType 'mouse'; touch opens on tap and
+     * ignores row taps for a moment afterwards, so a synthesised click cannot
+     * choose for somebody. Rows are 44px, which is a thumb, not a cursor.
+     * ============================================================
+     */
+    variantPop: {
+        /* Long enough that sweeping the mouse across a shelf of tiles does not
+           strobe panels open; short enough that stopping on one feels instant. */
+        OPEN_DELAY: 110,
+        /* The grace to cross the gap from tile to panel. Without it the panel
+           closes in the space between them and the list can never be reached. */
+        CLOSE_DELAY: 220,
+        /* A tap synthesises a click ~0-300ms later at the same coordinates.
+           Rows refuse it for this long so the panel cannot choose for anybody. */
+        TOUCH_GUARD: 350,
+
+        _gid: null,
+        _tile: null,
+        _openTimer: null,
+        _closeTimer: null,
+        _openedAt: 0,
+        _byTouch: false,
+        _bound: false,
+
+        isOpen: function () { return !!document.getElementById('variant_pop'); },
+
+        esc: function (s) {
             return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
                 return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
             });
-        };
-        var currency = PosnicPro.local.get('currencySign');
-        var parent = rows[0]['variant_parent_name']
-            || String(rows[0]['name'] || '').split(' / ')[0];
-        var list = '';
-        rows.forEach(function (r) {
-            var label = r.variant_value || String(r.name || '').split(' / ').slice(1).join(' / ') || r.name;
-            var tracked = r.track_inventory === true || r.track_inventory === 'true';
-            var stock = tracked
-                ? '<small class="text-muted ml-2">' + (Number(r.available_quantity) || 0) + ' in stock</small>' : '';
-            list += '<a href="javascript:void(0);" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" ' +
-                'onclick="PosnicPro.sales.itemsMenu.pickVariant(\'' + esc(r.id) + '\');">' +
-                '<span>' + esc(label) + stock + '</span>' +
-                '<span class="price">' + currency + '&nbsp;' + (Number(r.selling_price) || 0).toFixed(2) + '</span>' +
-                '</a>';
-        });
-        $('#variant_picker_modal').remove();
-        $('body').append(
-            '<div class="modal fade close_on_esc" id="variant_picker_modal" tabindex="-1" role="dialog" aria-hidden="true">' +
-            '<div class="modal-dialog modal-sm" role="document"><div class="modal-content">' +
-            '<div class="modal-header"><h5 class="modal-title">' + esc(parent) + '</h5>' +
-            '<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>' +
-            '<div class="modal-body p-0"><div class="list-group list-group-flush">' + list + '</div></div>' +
-            '</div></div></div>'
-        );
-        $('#variant_picker_modal').modal('show');
+        },
+
+        cancelTimers: function () {
+            clearTimeout(PosnicPro.sales.itemsMenu.variantPop._openTimer);
+            clearTimeout(PosnicPro.sales.itemsMenu.variantPop._closeTimer);
+        },
+
+        close: function () {
+            var self = PosnicPro.sales.itemsMenu.variantPop;
+            self.cancelTimers();
+            var el = document.getElementById('variant_pop');
+            if (el && el.parentNode) { el.parentNode.removeChild(el); }
+            if (self._tile) { self._tile.classList.remove('wsk-variant-open'); }
+            self._gid = null;
+            self._tile = null;
+            self._byTouch = false;
+        },
+
+        /*
+         * Positioned against the tile in VIEWPORT coordinates, so it is immune
+         * to whatever the grid's own scrolling and overflow rules are doing.
+         * An absolutely-positioned panel inside the grid would be clipped by
+         * the same overflow that makes the grid scroll.
+         */
+        place: function () {
+            var self = PosnicPro.sales.itemsMenu.variantPop;
+            var pop = document.getElementById('variant_pop');
+            var tile = self._tile;
+            if (!pop || !tile) { return; }
+
+            var r = tile.getBoundingClientRect();
+            var vw = window.innerWidth;
+            var vh = window.innerHeight;
+            var gap = 4;
+            var edge = 8;
+
+            /* Measured with no cap first: the cap depends on which side it
+               ends up on, and that depends on how tall it wants to be. */
+            pop.style.maxHeight = 'none';
+            pop.style.minWidth = Math.max(190, Math.round(r.width)) + 'px';
+            var want = pop.offsetHeight;
+
+            var below = vh - r.bottom - gap - edge;
+            var above = r.top - gap - edge;
+            var useBelow = want <= below || below >= above;
+            var room = Math.max(140, useBelow ? below : above);
+            pop.style.maxHeight = room + 'px';
+
+            var h = Math.min(want, room);
+            pop.style.top = Math.round(useBelow ? r.bottom + gap : r.top - gap - h) + 'px';
+
+            /* Left-aligned to the tile so the panel reads as belonging to it,
+               then pulled back inside the window - a tile in the last column
+               would otherwise hang the list off the right-hand edge. */
+            var w = pop.offsetWidth;
+            var left = r.left;
+            if (left + w > vw - edge) { left = vw - edge - w; }
+            if (left < edge) { left = edge; }
+            pop.style.left = Math.round(left) + 'px';
+        },
+
+        open: function (groupId, tile, byTouch) {
+            var self = PosnicPro.sales.itemsMenu.variantPop;
+            var rows = (PosnicPro.sales.itemsMenu._families || {})[groupId] || [];
+            if (!rows.length || !tile) { return; }
+
+            self.cancelTimers();
+            if (self._gid === groupId && self.isOpen()) {
+                /* Already showing this family. Re-tapping the tile must not
+                   toggle it shut - somebody reaching for a size and clipping
+                   the tile on the way would lose the list they were aiming at. */
+                self.place();
+                return;
+            }
+            self.close();
+            self.bind();
+
+            var esc = self.esc;
+            var currency = PosnicPro.local.get('currencySign');
+            var parent = rows[0]['variant_parent_name']
+                || String(rows[0]['name'] || '').split(' / ')[0];
+
+            var list = '';
+            rows.forEach(function (r) {
+                var label = r.variant_value
+                    || String(r.name || '').split(' / ').slice(1).join(' / ') || r.name;
+                var tracked = r.track_inventory === true || r.track_inventory === 'true';
+                var qty = Number(r.available_quantity) || 0;
+                /* Out of stock is shown, not hidden: a shop that sells the last
+                   one still wants the row there, and a missing row reads as a
+                   product that was never set up. */
+                var stock = tracked
+                    ? '<span class="vp-stock' + (qty <= 0 ? ' vp-stock-out' : '') + '">' +
+                      (qty <= 0 ? 'none left' : qty + ' left') + '</span>'
+                    : '';
+                list += '<button type="button" class="vp-row" data-item-id="' + esc(r.id) + '">' +
+                    '<span class="vp-label">' + esc(label) + stock + '</span>' +
+                    '<span class="vp-price">' + esc(currency) + '&nbsp;' +
+                    (Number(r.selling_price) || 0).toFixed(2) + '</span>' +
+                    '</button>';
+            });
+
+            var el = document.createElement('div');
+            el.id = 'variant_pop';
+            el.className = 'variant-pop';
+            el.setAttribute('role', 'menu');
+            el.setAttribute('aria-label', parent);
+            el.innerHTML =
+                '<div class="vp-head">' + esc(parent) +
+                '<button type="button" class="vp-close" aria-label="Close">&times;</button></div>' +
+                '<div class="vp-list">' + list + '</div>';
+            document.body.appendChild(el);
+
+            self._gid = groupId;
+            self._tile = tile;
+            self._byTouch = byTouch === true;
+            self._openedAt = Date.now();
+            tile.classList.add('wsk-variant-open');
+            self.place();
+        },
+
+        /*
+         * One set of listeners for the life of the page, on document.
+         *
+         * Delegated rather than bound per tile because the grid is rebuilt
+         * wholesale on every category change and search keystroke - per-tile
+         * handlers would be re-attached hundreds of times a shift, and the old
+         * tiles they were attached to are already gone.
+         */
+        bind: function () {
+            var self = PosnicPro.sales.itemsMenu.variantPop;
+            if (self._bound) { return; }
+            self._bound = true;
+
+            var tileOf = function (t) {
+                return t && t.closest ? t.closest('.wsk-variant') : null;
+            };
+            var inPop = function (t) {
+                return !!(t && t.closest && t.closest('#variant_pop'));
+            };
+
+            /*
+             * pointerover, not mouseenter: mouseenter carries no pointerType,
+             * and pointerType is the whole difference between a mouse saying
+             * "show me this" and a touch screen faking one.
+             */
+            document.addEventListener('pointerover', function (e) {
+                if (e.pointerType !== 'mouse') { return; }
+                if (inPop(e.target)) { self.cancelTimers(); return; }
+
+                var tile = tileOf(e.target);
+                if (tile) {
+                    var gid = tile.getAttribute('data-variant-group');
+                    self.cancelTimers();
+                    if (gid && gid === self._gid && self.isOpen()) { return; }
+                    self._openTimer = setTimeout(function () {
+                        self.open(gid, tile, false);
+                    }, self.OPEN_DELAY);
+                    return;
+                }
+
+                /* Off both. Scheduled rather than immediate, so the pointer can
+                   cross the few pixels between tile and panel. */
+                if (self.isOpen() || self._openTimer) {
+                    clearTimeout(self._openTimer);
+                    clearTimeout(self._closeTimer);
+                    self._closeTimer = setTimeout(function () { self.close(); }, self.CLOSE_DELAY);
+                }
+            });
+
+            document.addEventListener('click', function (e) {
+                if (inPop(e.target)) { return; }
+                if (tileOf(e.target)) { return; }   // the tile's own onclick opens it
+                self.close();
+            });
+
+            /* The panel is placed in viewport coordinates, so anything that
+               moves the tile relative to the viewport has to move it too.
+               Capture, because scroll does not bubble. */
+            var replace = function () { if (self.isOpen()) { self.place(); } };
+            document.addEventListener('scroll', replace, true);
+            window.addEventListener('resize', replace);
+
+            document.addEventListener('keydown', function (e) {
+                /* A focused tile is a div, and a div does not turn Enter into
+                   a click the way a button does - without this the tiles are
+                   reachable by Tab and do nothing when you get there. */
+                if (e.key === 'Enter' || e.keyCode === 13) {
+                    var tile = tileOf(e.target);
+                    if (tile) {
+                        e.preventDefault();
+                        self.open(tile.getAttribute('data-variant-group'), tile, false);
+                        var first = document.querySelector('#variant_pop .vp-row');
+                        if (first) { first.focus(); }
+                        return;
+                    }
+                }
+                if (!self.isOpen()) { return; }
+                if (e.key === 'Escape' || e.keyCode === 27) {
+                    /* Held BEFORE closing: close() clears _tile, and reading it
+                       afterwards focuses nothing at all. */
+                    var from = self._tile;
+                    self.close();
+                    /* Focus goes back where it came from, or it lands on body
+                       and the next Tab restarts from the top of the page. */
+                    if (from && from.focus) { from.focus(); }
+                }
+            });
+
+            /* Row selection, delegated for the same reason as the rest. */
+            document.addEventListener('click', function (e) {
+                var row = e.target && e.target.closest ? e.target.closest('#variant_pop .vp-row') : null;
+                if (row) {
+                    /* A tap on the tile synthesises a click here a moment
+                       later. Honouring it would add whichever size the panel
+                       happened to open under the finger. */
+                    if (self._byTouch && Date.now() - self._openedAt < self.TOUCH_GUARD) { return; }
+                    PosnicPro.sales.itemsMenu.pickVariant(row.getAttribute('data-item-id'));
+                    return;
+                }
+                if (e.target && e.target.closest && e.target.closest('#variant_pop .vp-close')) {
+                    self.close();
+                }
+            });
+        }
     },
+
+    /*
+     * The tile's own handler. Reached by a tap, by a click, and by Enter on a
+     * focused tile - every route that is not hover.
+     */
+    openVariantPicker: function (groupId, tile) {
+        var self = PosnicPro.sales.itemsMenu.variantPop;
+        self.bind();
+        /* Only a real pointer event tells us which kind it was; window.event
+           is gone by the time a keyboard Enter arrives, and treating that as
+           touch would only make the guard slightly more cautious. */
+        var ev = window.event;
+        var byTouch = !!(ev && ev.pointerType && ev.pointerType !== 'mouse');
+        if (!tile && ev && ev.target && ev.target.closest) {
+            tile = ev.target.closest('.wsk-variant');
+        }
+        self.open(groupId, tile, byTouch);
+    },
+
     pickVariant: function (item_id) {
-        $('#variant_picker_modal').modal('hide');
+        PosnicPro.sales.itemsMenu.variantPop.close();
         PosnicPro.sales.itemsMenu.addToLineItemsList(item_id);
     },
     addToLineItemsList: function (item_id) {
