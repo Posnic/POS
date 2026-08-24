@@ -5413,13 +5413,6 @@ PosnicPro.features = {
      * one extra welcome on an old shop, and dismissing now writes the
      * per-shop server flag, so it is once, ever.
      */
-    _introSeenKey: function () {
-        var branch = PosnicPro.local.get('branch_id_set');
-        branch = (branch == null || branch === 'null' || branch === 'undefined') ? '' : String(branch);
-        /* v2: the burned build wrote the unversioned key on ANY close, so it
-           is as untrustworthy as the server flag it mirrored. Never read. */
-        return 'features_intro_seen2:' + branch;
-    },
 
     maybeShowIntro: function () {
         /*
@@ -5438,7 +5431,19 @@ PosnicPro.features = {
          * backwards would mean nobody ever sees this and nothing would look
          * wrong - the failure of a thing that only ever shows once is silence.
          */
-        if (PosnicPro.local.get(PosnicPro.features._introSeenKey())) { return; }
+        /*
+         * THE DATABASE FIELD IS THE ONLY GATE. Owner, after three rounds of
+         * this screen not appearing for him: "keep on db field and make sure
+         * user know about it. mainly super admin."
+         *
+         * Every browser-side memory this gate ever had has burned it: the
+         * bare localStorage key suppressed every new shop on his browser,
+         * and its per-shop successor still meant a decision on one till was
+         * invisible on the next. first_run_decided lives on the SHOP, is
+         * written only by Save and the explicit "Not now", and can be read,
+         * checked and reset with a one-line database query when someone asks
+         * why a welcome did or did not show. One truth, inspectable.
+         */
         var blob = PosnicPro.features._blob();
         /*
          * first_run_DECIDED, never first_run_done.
@@ -5463,10 +5468,31 @@ PosnicPro.features = {
            and a one-shot check loses that race on exactly the login this
            screen exists for. */
         if (!Object.keys(blob).length) { return false; }
-        /* Feature switches are a manager's decision. A cashier shown these
-           would be offered choices the save would refuse. */
-        var acl = PosnicPro.userACL;
-        if (!(acl && acl.setting && acl.setting.write === true)) { return; }
+        /*
+         * WHO gets asked. Three cases, and the middle one is the bug that
+         * kept this from the owner three times:
+         *
+         *   super_admin / admin  always asked. An owner-class ACL does not
+         *        reliably carry setting.write === true - full access is often
+         *        an EMPTY map that middleware treats as "everything allowed" -
+         *        so the old test refused exactly the person this screen is
+         *        for. "mainly super admin" was the owner reporting that.
+         *
+         *   ACL not loaded yet   RETRY (return false), never stop. The old
+         *        gate returned undefined here, which ended the poll: on any
+         *        login where the ACL arrived after the settings blob, the
+         *        welcome was silently lost for that session.
+         *
+         *   a real cashier       (explicit setting.write === false) is never
+         *        shown switches their save would refuse.
+         */
+        var usertype = PosnicPro.local.get('usertype');
+        var isAdmin = usertype === 'super_admin' || usertype === 'admin';
+        if (!isAdmin) {
+            var acl = PosnicPro.userACL;
+            if (!acl || !acl.setting) { return false; }
+            if (acl.setting.write !== true) { return; }
+        }
         if (!$('#feature_intro_modal').length) { return; }
         /*
          * The Features page first, the welcome on top of it.
@@ -5493,10 +5519,9 @@ PosnicPro.features = {
          * welcome returns on the next login, over the Features page, until
          * the person either saves or says "Not now" on purpose.
          */
-        $('#feature_intro_modal').one('hidden.bs.modal', function () {
-            if (!PosnicPro.features._decided) { return; }
-            PosnicPro.local.set(PosnicPro.features._introSeenKey(), 'true');
-        });
+        /* No browser-side memory on close. The DB flag the decision paths
+           write is the whole record; an undecided close leaves nothing, and
+           the welcome returns next login - on this till and every other. */
     },
     /*
      * Where is this till actually running?

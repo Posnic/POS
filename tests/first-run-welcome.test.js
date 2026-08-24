@@ -62,34 +62,22 @@ function block(source, name, until) {
     return source.slice(start, end);
 }
 
-test('the welcome is gated on the shop, not only on the browser', () => {
+test('the database field is the ONLY gate - no browser-side memory', () => {
     const gate = block(settingsCode, 'maybeShowIntro:', 'renderIntro:');
 
-    /* Per browser AND per shop: the seen-key carries the branch id. One bare
-       key is how the owner never saw the welcome on any shop he created -
-       dismiss it once anywhere and every later shop on that browser is
-       silently skipped, and the person that fails hardest for is exactly the
-       person who opens many shops. */
-    /* The READ specifically - the write in the dismiss handler also mentions
-       the key, so a loose match passes with the actual gate deleted. Found by
-       mutation. */
-    assert.match(gate, /if \(PosnicPro\.local\.get\(PosnicPro\.features\._introSeenKey\(\)\)\) \{ return; \}/);
-    const keyFn = block(settingsCode, '_introSeenKey:', 'maybeShowIntro:');
-    assert.match(keyFn, /branch_id_set/);
-    /* v2: the burned build wrote the unversioned key on any close. */
-    assert.match(keyFn, /'features_intro_seen2:' \+ branch/);
     /*
-     * Per shop, and on the DECIDED key only. first_run_done was written by
-     * the 24 Aug build that counted ANY close as an answer, so for every
-     * shop touched in that window it says "asked" about a person who never
-     * was - the owner's own test shops among them, which is how "you are not
-     * at all doing this" was true while every test here was green. The gate
-     * must never read the burned key again.
+     * Owner, after three rounds of this screen not appearing for him: "keep
+     * on db field and make sure user know about it." Every browser-side
+     * memory this gate ever had has burned it - the bare key, then the
+     * per-shop key. first_run_decided lives on the SHOP, is written only by
+     * the two decision paths, and can be read and reset with a one-line
+     * database query when somebody asks why a welcome did or did not show.
      */
+    assert.ok(!/local\.get\([^)]*intro[^)]*\)/i.test(gate),
+        'the gate is reading browser storage again');
+    assert.ok(!settingsCode.includes('_introSeenKey'),
+        'the retired browser-key helper is back');
     assert.match(gate, /first_run_decided === true \|\| \w+\.first_run_decided === 'true'/);
-    assert.ok(!/blob\.first_run_done === true \|\| blob\.first_run_done === 'true'\) \{ return; \}/.test(gate),
-        'the gate is reading the burned first_run_done flag again');
-    assert.match(gate, /return;/);
 });
 
 test('an unloaded settings blob is not treated as a shop that has never been asked', () => {
@@ -116,9 +104,29 @@ test('the check polls until settings load, instead of firing once and giving up'
     assert.match(boot, /setTimeout\(poll, \d+\)/);
 });
 
-test('a cashier is never shown switches they cannot save', () => {
+test('the super admin is always asked - the ACL shape cannot refuse them', () => {
+    /*
+     * THE BUG THAT KEPT THE WELCOME FROM THE OWNER THREE TIMES. An
+     * owner-class ACL does not reliably carry setting.write === true - full
+     * access is often an EMPTY map middleware treats as allow-all - so the
+     * old test refused exactly the person the screen is for. "mainly super
+     * admin" was him reporting that.
+     */
     const gate = block(settingsCode, 'maybeShowIntro:', 'renderIntro:');
-    assert.match(gate, /acl\.setting\.write === true/);
+    assert.match(gate, /usertype === 'super_admin' \|\| usertype === 'admin'/);
+    assert.match(gate, /if \(!isAdmin\)/);
+});
+
+test('an unloaded ACL retries; only a real cashier is refused', () => {
+    /*
+     * The old gate returned undefined on a not-yet-loaded ACL, which ENDED
+     * the poll - any login where the ACL arrived after the settings blob
+     * silently lost the welcome for that session. Not-loaded must retry
+     * (return false); only an explicit non-writer stops.
+     */
+    const gate = block(settingsCode, 'maybeShowIntro:', 'renderIntro:');
+    assert.match(gate, /if \(!acl \|\| !acl\.setting\) \{ return false; \}/);
+    assert.match(gate, /if \(acl\.setting\.write !== true\) \{ return; \}/);
 });
 
 test('only a DECISION ends the welcome - a casual dismissal brings it back', () => {
@@ -132,10 +140,10 @@ test('only a DECISION ends the welcome - a casual dismissal brings it back', () 
      * returns next login.
      */
     const gate = block(settingsCode, 'maybeShowIntro:', 'runningContext:');
-    assert.match(gate, /if \(!PosnicPro\.features\._decided\) \{ return; \}/,
-        'the dismiss handler must write nothing without a decision');
-    assert.ok(!/hidden\.bs\.modal'[\s\S]{0,400}settings\/group\/features/.test(gate),
-        'the dismiss handler must not write the server flag any more');
+    /* No dismiss handler at all now: an undecided close leaves NOTHING, and
+       the DB flag written by Save / "Not now" is the entire record. */
+    assert.ok(!/hidden\.bs\.modal/.test(gate),
+        'a dismiss handler is writing browser state again');
 
     // The explicit Skip is the decision that writes both flags.
     const skip = block(settingsCode, "'#feature_intro_skip', function", "'#fi_module_demo_data_enable'");
