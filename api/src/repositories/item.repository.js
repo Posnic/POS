@@ -1051,6 +1051,7 @@ class ItemRepository extends BaseModel {
      */
     let salesRemoved = 0;
     let quotesRemoved = 0;
+    let purchasesRemoved = 0;
     let peopleRemoved = 0;
     try {
       const demoScope = { demo_pack: { $exists: true }, branch_id: branch, license };
@@ -1058,6 +1059,11 @@ class ItemRepository extends BaseModel {
       salesRemoved = (await salesCol.deleteMany(demoScope)).deletedCount || 0;
       const quotesCol = await this.getCollection('quotes');
       quotesRemoved = (await quotesCol.deleteMany(demoScope)).deletedCount || 0;
+      /* The sample purchases leave with the sample sales, or a Purchase
+         History full of DEMO rows survives the switch that promised to
+         remove them. */
+      const receivingsCol = await this.getCollection('receivings');
+      purchasesRemoved = (await receivingsCol.deleteMany(demoScope)).deletedCount || 0;
       /* The sample people go with them. A demo customer left behind after the
          samples are cleared is a stranger in the shop's own list, and nothing
          on the row says where they came from. */
@@ -1083,10 +1089,11 @@ class ItemRepository extends BaseModel {
         removed: 0,
         salesRemoved,
         quotesRemoved,
+        purchasesRemoved,
         kept: [],
         message:
-          salesRemoved || quotesRemoved
-            ? `Removed ${salesRemoved} sample sale(s) and ${quotesRemoved} sample quote(s).`
+          salesRemoved || quotesRemoved || purchasesRemoved
+            ? `Removed ${salesRemoved} sample sale(s), ${quotesRemoved} sample quote(s) and ${purchasesRemoved} sample purchase(s).`
             : 'There is no demo data to remove.',
       };
     }
@@ -1217,6 +1224,7 @@ class ItemRepository extends BaseModel {
       removed,
       categoriesRemoved,
       salesRemoved,
+      purchasesRemoved,
       quotesRemoved,
       peopleRemoved,
       kept,
