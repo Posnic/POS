@@ -68,6 +68,7 @@
             "static/script/js/view.js",
             "static/script/js/custom-shortcutkey.js",
             "static/script/js/core/command-palette.js",
+            "static/script/js/core/tour.js",
             "static/script/js/file_uploader.js",
             "static/script/js/multi-image-upload.js",
             "static/script/js/jquery.validate.min.js",
