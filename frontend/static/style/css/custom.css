@@ -4779,3 +4779,157 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
         flex: 1 1 0;
     }
 }
+
+/* ============================================================
+ * THE VARIANT CHOOSER (#variant_pop)
+ *
+ * Owner: "when sales item choose variant choose it opens in center of
+ * the page, move movement is bit taking time, better show near to
+ * item... we can reduce the click. make sure we handled for touch
+ * screen users too."
+ *
+ * A panel anchored to the tile that was hovered or tapped, placed in
+ * VIEWPORT coordinates by sales.js. position:fixed is not a detail: an
+ * absolutely-positioned panel inside the grid gets clipped by the very
+ * overflow rule that makes the grid scroll, and the bottom row of tiles
+ * would open a list nobody can see.
+ *
+ * Every colour is a theme token. This sits ON TOP of the sale screen,
+ * which is the screen somebody stares at all day, and a white card over
+ * a dark till is the complaint that started the theme work.
+ * ============================================================ */
+.variant-pop {
+    position: fixed;
+    z-index: 1080;
+    display: flex;
+    flex-direction: column;
+    min-width: 190px;
+    max-width: 320px;
+    overflow: hidden;
+    border: 1px solid var(--theme-border-color, #e5e8ef);
+    border-radius: 10px;
+    background: var(--theme-card-bg, #ffffff);
+    color: var(--theme-text-primary, #16203a);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .18);
+}
+
+.variant-pop .vp-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 9px 12px;
+    font-size: 13.5px;
+    font-weight: 600;
+    line-height: 1.2;
+    border-bottom: 1px solid var(--theme-border-color, #e5e8ef);
+    background: var(--theme-table-header-bg, #f6f7fb);
+    color: var(--theme-text-primary, #16203a);
+}
+
+/* Present for touch and for a mouse that has clicked rather than
+   hovered. A hover-only panel with no way to dismiss it is a trap on a
+   till with no keyboard. */
+.variant-pop .vp-close {
+    flex: 0 0 auto;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--theme-text-muted, #5b6577);
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.variant-pop .vp-close:hover {
+    background: var(--theme-table-row-hover, #eef2fd);
+    color: var(--theme-text-primary, #16203a);
+}
+
+.variant-pop .vp-list {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* 44px, because that is a thumb. The old list-group rows were sized for
+   a cursor, and a shirt in six sizes on a touch till meant six targets
+   a finger could not tell apart. */
+.variant-pop .vp-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    min-height: 44px;
+    padding: 8px 12px;
+    border: 0;
+    border-bottom: 1px solid var(--theme-border-color, #e5e8ef);
+    background: transparent;
+    color: inherit;
+    font-size: 14px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.variant-pop .vp-row:last-child {
+    border-bottom: 0;
+}
+
+.variant-pop .vp-row:hover,
+.variant-pop .vp-row:focus {
+    background: var(--theme-table-row-hover, #eef2fd);
+    outline: none;
+}
+
+/* Keyboard focus must stay VISIBLE. Removing the outline above without
+   putting something back is how a till becomes unusable without a
+   mouse, and it looks fine to whoever removed it. */
+.variant-pop .vp-row:focus-visible {
+    box-shadow: inset 0 0 0 2px var(--theme-primary-color, #506fe4);
+}
+
+.variant-pop .vp-label {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    min-width: 0;
+    font-weight: 500;
+}
+
+.variant-pop .vp-stock {
+    font-size: 12px;
+    font-weight: 400;
+    white-space: nowrap;
+    color: var(--theme-text-muted, #5b6577);
+}
+
+.variant-pop .vp-stock-out {
+    color: var(--theme-danger-color, #f04438);
+}
+
+.variant-pop .vp-price {
+    flex: 0 0 auto;
+    font-weight: 600;
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+}
+
+/* The tile keeps a mark while its list is open, so the panel and the
+   thing it belongs to read as one object rather than as a card that
+   appeared from nowhere. */
+#sales_new .wsk-cp.wsk-variant-open,
+.wsk-cp.wsk-variant-open {
+    box-shadow: 0 0 0 2px var(--theme-primary-color, #506fe4);
+}
+
+.wsk-cp.wsk-variant {
+    cursor: pointer;
+}
+
+.wsk-cp.wsk-variant:focus-visible {
+    outline: 2px solid var(--theme-primary-color, #506fe4);
+    outline-offset: 2px;
+}
