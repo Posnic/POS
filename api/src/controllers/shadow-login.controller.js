@@ -160,7 +160,32 @@ async function shadowLogin(req, res) {
    * and dated. One day, because that is what a normal sign-in uses and a
    * support session has no business outliving it.
    */
-  const payload = JSON.stringify({ token: authToken, user: user.email });
+  /*
+   * The identity fields a NORMAL sign-in stores, not just the token.
+   *
+   * The page stored token + email and nothing else, and the frontend reads
+   * localStorage for the rest: usertype gates admin-only screens (the
+   * first-run welcome refused its bypass because usertype was null),
+   * username's ABSENCE makes the ajax layer bounce any failed call to
+   * login.html, and branchname/branch_id feed the header and the per-shop
+   * keys. Every shadow session - which is also how the owner opens shops
+   * from My Account - ran half-signed-in, and each missing field failed as
+   * its own separate mystery.
+   */
+  const firstBranch =
+    Array.isArray(user.branch_access) && user.branch_access[0] ? user.branch_access[0] : {};
+  const payload = JSON.stringify({
+    token: authToken,
+    user: user.email,
+    username: user.username || user.name || user.email,
+    usertype: user.usertype || '',
+    branch_id: user.branch_id
+      ? String(user.branch_id)
+      : firstBranch.branch_id
+        ? String(firstBranch.branch_id)
+        : '',
+    branch_name: firstBranch.branch_name || '',
+  });
   res.set('content-type', 'text/html; charset=utf-8');
   /* Never cached, never indexed. For the next two hours this page body is a
      working credential for someone else's shop. */
@@ -176,6 +201,12 @@ async function shadowLogin(req, res) {
 (function () {
   var d = ${payload};
   try { localStorage.setItem('posnic_jwt_token', d.token); } catch (e) {}
+  try {
+    if (d.username) localStorage.setItem('username', d.username);
+    if (d.usertype) localStorage.setItem('usertype', d.usertype);
+    if (d.branch_id) localStorage.setItem('branch_id_set', d.branch_id);
+    if (d.branch_name) localStorage.setItem('branchname', d.branch_name);
+  } catch (e) {}
   /* The other half a real sign-in sets. Without it the app has the token and
      still redirects to login.html - see the comment above this template. */
   try {

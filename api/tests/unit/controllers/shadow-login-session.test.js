@@ -74,7 +74,7 @@ describe('the page returned by shadow login', () => {
     /* A signed token cannot break out of a JSON literal, and this stays true
        if the token format ever changes. */
     expect(SOURCE).toMatch(/var d = \$\{payload\}/);
-    expect(SOURCE).toMatch(/JSON\.stringify\(\{ token: authToken/);
+    expect(SOURCE).toMatch(/JSON\.stringify\(\{[\s\S]{0,40}token: authToken/);
   });
 
   test('the page refuses to be cached or indexed', () => {
