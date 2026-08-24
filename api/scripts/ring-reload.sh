@@ -157,7 +157,12 @@ smoke() {
     if [ -f "$API_DIR/scripts/smoke-restock.js" ]; then
       node "$API_DIR/scripts/smoke-restock.js" || true
     fi
-    SMOKE_QUIET=true SMOKE_WRITE_TENANT="${SMOKE_WRITE_TENANT:-tech}" \
+    # test123, not tech: tech's trial expired and it is SUSPENDED, so the
+    # billing write test answered "cannot test" on every deploy - the one
+    # check that proves a shop can actually SELL was silently not running.
+    # test123 is the owner's own idle test shop; unsuspending tech instead
+    # would only hold until the next billing sweep re-suspends it.
+    SMOKE_QUIET=true SMOKE_WRITE_TENANT="${SMOKE_WRITE_TENANT:-test123}" \
       node provisioning/smoke.js --quiet
   )
 }

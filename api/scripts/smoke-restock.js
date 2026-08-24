@@ -40,6 +40,49 @@ async function main() {
   const client = new MongoClient(uri);
   await client.connect();
   try {
+    /*
+     * THE WRITE SHOP'S OWN FIXTURE, FIRST.
+     *
+     * The billing smoke sells whatever item db.items.find().limit(1) returns
+     * in SMOKE_WRITE_TENANT's database - not the legacy fixture below. When
+     * the write shop moved off the old sbala shop, this helper kept topping
+     * up an item nobody was selling any more while the item actually being
+     * drained crept toward zero, one unit per deploy, with the freeze
+     * arriving weeks later on a commit that had nothing to do with it.
+     *
+     * The tenant db is derived exactly the way the provisioner names them:
+     * posnic_t_<subdomain without dashes>.
+     */
+    const writeTenant = String(process.env.SMOKE_WRITE_TENANT || '').trim();
+    if (writeTenant) {
+      const dbName = 'posnic_t_' + writeTenant.replace(/-/g, '');
+      const items = client.db(dbName).collection('items');
+      const first = await items
+        .find({})
+        .project({ name: 1, available_quantity: 1 })
+        .limit(1)
+        .toArray()
+        .catch(() => []);
+      if (first.length) {
+        const qty = Number(first[0].available_quantity) || 0;
+        if (qty < RESTOCK_BELOW) {
+          await items.updateOne(
+            { _id: first[0]._id },
+            { $set: { available_quantity: RESTOCK_TO } }
+          );
+          console.log(
+            `[smoke-restock] "${first[0].name}" in ${dbName} topped up ${qty} -> ${RESTOCK_TO}`
+          );
+        } else {
+          console.log(
+            `[smoke-restock] "${first[0].name}" in ${dbName} has ${qty} - no top-up needed`
+          );
+        }
+      }
+    }
+
+    /* The legacy fixture, kept for as long as the old shop exists: pointing
+       SMOKE_WRITE_TENANT back at it must not reopen the drain. */
     const { databases } = await client.db().admin().listDatabases({ nameOnly: true });
     for (const { name } of databases) {
       if (['admin', 'local', 'config'].includes(name)) continue;

@@ -5152,3 +5152,91 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     outline: 2px solid var(--theme-primary-color, #506fe4);
     outline-offset: 2px;
 }
+
+/* ============================================================
+ * THE GUIDED TOUR (#posnic_tour)
+ *
+ * A spotlight on the real element and a card beside it. The hole is
+ * cut with a giant box-shadow rather than four overlay panels: one
+ * element, and the browser does the geometry.
+ * ============================================================ */
+#posnic_tour .tour-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1090;
+}
+
+#posnic_tour .tour-spot {
+    position: fixed;
+    z-index: 1091;
+    border-radius: 10px;
+    box-shadow: 0 0 0 9999px rgba(10, 14, 22, 0.62);
+    border: 2px solid var(--theme-primary-color, #506fe4);
+    pointer-events: none;
+    transition: top .18s ease, left .18s ease, width .18s ease, height .18s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #posnic_tour .tour-spot { transition: none; }
+}
+
+#posnic_tour .tour-card {
+    position: fixed;
+    z-index: 1092;
+    max-width: 340px;
+    min-width: 240px;
+    padding: 14px 16px;
+    border-radius: 10px;
+    background: var(--theme-card-bg, #ffffff);
+    color: var(--theme-text-primary, #16203a);
+    border: 1px solid var(--theme-border-color, #e5e8ef);
+    box-shadow: 0 12px 34px rgba(0, 0, 0, .28);
+}
+
+#posnic_tour .tour-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+#posnic_tour .tour-text {
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--theme-text-secondary, #3a4459);
+}
+
+#posnic_tour .tour-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+#posnic_tour .tour-actions {
+    display: flex;
+    gap: 6px;
+}
+
+/* 44px targets: the tour runs on the same touch tills the rest of the
+   product answers to. */
+#posnic_tour .tour-actions .btn {
+    min-height: 36px;
+    min-width: 56px;
+}
+
+#posnic_tour .tour-dots {
+    display: flex;
+    gap: 5px;
+}
+
+#posnic_tour .tour-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--theme-border-color, #e5e8ef);
+}
+
+#posnic_tour .tour-dot.is-here {
+    background: var(--theme-primary-color, #506fe4);
+}

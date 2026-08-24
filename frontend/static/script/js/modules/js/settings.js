@@ -5617,16 +5617,28 @@ PosnicPro.features = {
                 else if (PosnicPro.applyModuleSidebar) { PosnicPro.applyModuleSidebar(); }
                 $('#feature_intro_modal').modal('hide');
                 PosnicPro.alert('success', 'Feature switches saved');
+                /* Only on a SAVED shop, and only when asked: a failed save
+                   must never start a tour, and Save-alone must never grow
+                   an uninvited one. */
+                if (PosnicPro.features._tourAfterSave) {
+                    PosnicPro.features._tourAfterSave = false;
+                    setTimeout(function () { PosnicPro.tour.firstRun(); }, 400);
+                }
             } else {
                 PosnicPro.alert(response.type, response.message);
             }
         }, function () {
             $('#feature_intro_save').prop('disabled', false);
+            PosnicPro.features._tourAfterSave = false;
             PosnicPro.alert('error', 'Could not save - you can set these later under Manage > Features');
         });
     }
 };
 $(document).on('click', '#feature_intro_save', function () { PosnicPro.features.saveIntro(); });
+$(document).on('click', '#feature_intro_tour', function () {
+    PosnicPro.features._tourAfterSave = true;
+    PosnicPro.features.saveIntro();
+});
 $(document).ready(function () {
     /*
      * A POLL, not a one-shot.

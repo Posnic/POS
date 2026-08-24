@@ -2251,6 +2251,13 @@
                                 <div class="card-header d-flex align-items-center justify-content-between flex-wrap" style="gap:8px;">
                                     <div>
                                         <small class="text-muted"><lang class="lang_modules_hint">A feature that is off disappears from the menus. Nothing is deleted - switch it back on and everything returns.</lang></small>
+                                        <!-- The tour, re-runnable. First-run offers it once; anyone
+                                             showing a new cashier around should not need a new shop. -->
+                                        <button type="button" class="btn btn-sm btn-outline-primary ml-2"
+                                            id="features_take_tour"
+                                            onclick="PosnicPro.tour.firstRun();">
+                                            <lang class="lang_take_tour">Take the tour</lang>
+                                        </button>
                                     </div>
                                     <div id="modules_branch_wrap" style="display:none; min-width:220px;">
                                         <label for="modules_branch_select" class="mb-0" style="font-size:.78rem; font-weight:600;"><lang class="lang_modules_branch">Branch</lang></label>
