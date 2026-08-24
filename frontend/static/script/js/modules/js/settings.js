@@ -5459,7 +5459,20 @@ PosnicPro.features = {
          * decided during those few hours; the alternative was every burned
          * shop never being asked at all.
          */
-        if (blob.first_run_decided === true || blob.first_run_decided === 'true') { return; }
+        /* Every exit says why, once. Three builds of this gate failed
+           SILENTLY - the only witness each time was the owner, testing again.
+           A branch that cannot say its own name in the console is a branch
+           that gets debugged by shouting. */
+        var say = function (why) {
+            if (!PosnicPro.features._saidWhy) {
+                PosnicPro.features._saidWhy = true;
+                console.log('[welcome] not shown: ' + why);
+            }
+        };
+        if (blob.first_run_decided === true || blob.first_run_decided === 'true') {
+            say('already decided on this shop (first_run_decided is set)');
+            return;
+        }
         /* An empty blob is "settings have not loaded", not "never been asked",
            and guessing wrong there puts this in front of a shop that has been
            trading for a year. The caller keeps retrying while this is the
@@ -5491,7 +5504,10 @@ PosnicPro.features = {
         if (!isAdmin) {
             var acl = PosnicPro.userACL;
             if (!acl || !acl.setting) { return false; }
-            if (acl.setting.write !== true) { return; }
+            if (acl.setting.write !== true) {
+                say('this user cannot edit features (usertype=' + usertype + ')');
+                return;
+            }
         }
         if (!$('#feature_intro_modal').length) { return; }
         /*
@@ -5757,8 +5773,9 @@ $(document).ready(function () {
     var tries = 0;
     var poll = function () {
         tries += 1;
-        if (PosnicPro.features.maybeShowIntro() === false && tries < 30) {
-            setTimeout(poll, 2000);
+        if (PosnicPro.features.maybeShowIntro() === false) {
+            if (tries < 30) { setTimeout(poll, 2000); return; }
+            console.log('[welcome] not shown: settings or permissions never loaded in 60s');
         }
     };
     setTimeout(poll, 2500);
