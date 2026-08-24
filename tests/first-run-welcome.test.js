@@ -100,7 +100,10 @@ test('the check polls until settings load, instead of firing once and giving up'
      * shop simply appears to have no welcome.
      */
     const boot = settingsCode.slice(settingsCode.indexOf('var poll = function'));
-    assert.match(boot, /maybeShowIntro\(\) === false && tries < \d+/);
+    assert.match(boot, /maybeShowIntro\(\) === false/);
+    assert.match(boot, /tries < \d+/);
+    /* and giving up says so - the third silent build earned this line */
+    assert.match(boot, /\[welcome\] not shown: settings or permissions never loaded/);
     assert.match(boot, /setTimeout\(poll, \d+\)/);
 });
 
@@ -126,7 +129,9 @@ test('an unloaded ACL retries; only a real cashier is refused', () => {
      */
     const gate = block(settingsCode, 'maybeShowIntro:', 'renderIntro:');
     assert.match(gate, /if \(!acl \|\| !acl\.setting\) \{ return false; \}/);
-    assert.match(gate, /if \(acl\.setting\.write !== true\) \{ return; \}/);
+    assert.match(gate, /if \(acl\.setting\.write !== true\) \{/);
+    /* the refusal names itself - a silent branch is how three builds hid */
+    assert.match(gate, /say\('this user cannot edit features/);
 });
 
 test('only a DECISION ends the welcome - a casual dismissal brings it back', () => {
