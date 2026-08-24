@@ -1275,6 +1275,36 @@ class ItemsController extends BaseController {
       const { listDemoPacks } = require('../../utils/demoData');
       const packs = listDemoPacks();
 
+      /*
+       * Plus the website's per-currency trades, when this shop's currency has
+       * the zip. The probe is cached ten minutes and can only ADD rows - a
+       * posnic.com hiccup costs the extra trades, never the page.
+       */
+      try {
+        const demoDatasetSvc = require('../services/demo-dataset');
+        const BaseModelC = require('../models/base.model');
+        const dbc = await BaseModelC.getDb();
+        const { ObjectId: OIDC } = require('mongodb');
+        const br = await dbc
+          .collection('branches')
+          .findOne(
+            { _id: new OIDC(String(this.model.branchId)) },
+            { projection: { currency_value: 1, country: 1 } }
+          );
+        const cur =
+          br && Array.isArray(br.currency_value) && br.currency_value[0]
+            ? br.currency_value[0].currency_text
+            : null;
+        if (cur) {
+          const extra = await demoDatasetSvc.listDatasetPacks(cur);
+          for (const row of extra) {
+            if (!packs.some((x) => x.key === row.key)) packs.push(row);
+          }
+        }
+      } catch (e) {
+        /* the built-in list stands on its own */
+      }
+
       /* Which one this shop is on now, so the chooser opens on the right
          answer instead of on the first row of the list. */
       let current = null;

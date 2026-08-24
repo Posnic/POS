@@ -185,6 +185,8 @@ class InstallService {
           taxData,
           unitId,
           businessType: data.businessType || 'supermarket', // Generic retail default
+          currencyCode: (this._currencyForCountry(data.register_country).currency_value[0] || {})
+            .currency_text,
         });
       } else {
         console.log('⚠️ Loading default single product...');
@@ -861,6 +863,12 @@ class InstallService {
         .findOne({ branch_id: branchOid, license: licenseOid });
 
       const now = new Date();
+      /* The branch already knows its money; the dataset URL needs the code. */
+      const currencyCode =
+        (Array.isArray(branch.currency_value) && branch.currency_value[0]
+          ? branch.currency_value[0].currency_text
+          : null) ||
+        (this._currencyForCountry(branch.country).currency_value[0] || {}).currency_text;
       await this._insertBusinessTypeDemoData({
         branchId: branchOid,
         branchName: String(branch.branch_name || '').trim(),
@@ -881,6 +889,7 @@ class InstallService {
         taxData: tax ? { name: tax.name, rate: tax.rate } : null,
         unitId: unit ? unit._id : null,
         businessType,
+        currencyCode,
       });
 
       const counts = await Promise.all([
@@ -941,9 +950,37 @@ class InstallService {
         businessType,
       } = params;
 
-      // Load demo data based on business type
-      const { getDemoDataByType } = require('../../utils/demoData');
-      const demoData = getDemoDataByType(businessType);
+      /*
+       * The website's dataset first, the built-in packs as the floor.
+       *
+       * The zips carry what the built-ins never had - real cost prices, MRP,
+       * opening stock, a photograph per product, per-currency pricing - and
+       * the owner's instruction is that this one source feeds every door:
+       * provisioning, the Demo Data page, and the features toggle. The floor
+       * is load-bearing: provisioning a shop must never wait on posnic.com,
+       * so every dataset failure quietly resolves to the packs that have
+       * always shipped.
+       */
+      const demoDatasetSvc = require('./demo-dataset');
+      let demoData = null;
+      let packTag = businessType;
+      const datasetPack = await demoDatasetSvc.loadDatasetPack({
+        currency: params.currencyCode,
+        businessType,
+        uploadsRoot: path.join(__dirname, '../../uploads'),
+      });
+      if (datasetPack) {
+        demoData = datasetPack;
+        /* Tag rows with the CANONICAL trade key, not the typed-in vocabulary:
+           the purge and the chooser's "current pack" both read this tag back. */
+        packTag = demoDatasetSvc.datasetKeyFor(businessType) || businessType;
+        console.log(
+          `📦 Demo data from dataset ${datasetPack.datasetId} (${demoData.products.length} products)`
+        );
+      } else {
+        const { getDemoDataByType } = require('../../utils/demoData');
+        demoData = getDemoDataByType(businessType);
+      }
 
       if (!demoData) {
         console.error('❌ Invalid business type:', businessType);
@@ -960,7 +997,7 @@ class InstallService {
       const categoryMultiData = demoData.categories.map((cat) => ({
         /* Tagged like the items, or switching Demo Data off would leave a
            shop with empty categories it never made and cannot explain. */
-        demo_pack: businessType,
+        demo_pack: packTag,
         demo_seeded_at: now,
         name: cat.name,
         discount_percentage: 0.0,
@@ -1002,7 +1039,7 @@ class InstallService {
              * tag travels with the record because a list of what was seeded
              * drifts the moment a shop edits or deletes one row.
              */
-            demo_pack: businessType,
+            demo_pack: packTag,
             demo_seeded_at: now,
             /*
              * The photograph, where there is one. Fifty-five of these products
@@ -1045,8 +1082,11 @@ class InstallService {
                   },
                 ]
               : [],
-            mrp_price: price,
-            company_price: price * 0.7, // 30% margin
+            mrp_price: Number(product.mrp) > 0 ? Number(product.mrp) : price,
+            /* The dataset's real cost when it has one; the old invented 30%
+               margin only for packs that carry no cost at all. */
+            company_price:
+              Number(product.cost_price) > 0 ? Number(product.cost_price) : price * 0.7,
             selling_price: price,
             items_mfg_date: null,
             items_expiry_date: null,
@@ -1065,8 +1105,8 @@ class InstallService {
             cover_image: product.image || '',
             multi_image: product.image ? [{ name: product.image, cover: 'yes' }] : [],
             sort_order: 1,
-            description: `${product.name} - ${product.unit}`,
-            track_inventory: true,
+            description: product.description || `${product.name} - ${product.unit}`,
+            track_inventory: product.track_inventory !== false,
             sales_channel: true,
             ecommerce: false,
             updated_date: now,
