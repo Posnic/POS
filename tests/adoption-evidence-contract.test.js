@@ -75,9 +75,8 @@ test('adoption policy preserves evidence states, corrections, and material discl
 
 test('repository entry points link to the deployment evidence contract', () => {
   const formUrl = 'issues/new?template=deployment_evidence.yml';
-  const escapedFormUrl = formUrl.replace(/[.?]/g, '\\$&');
-  assert.match(README, new RegExp(escapedFormUrl));
-  assert.match(CONTRIBUTING, new RegExp(escapedFormUrl));
+  assert.ok(README.includes(formUrl));
+  assert.ok(CONTRIBUTING.includes(formUrl));
   assert.match(README, /docs\/ADOPTION_EVIDENCE\.md/);
   assert.match(CONTRIBUTING, /docs\/ADOPTION_EVIDENCE\.md/);
   assert.match(ROADMAP, /structured deployment evidence/i);
