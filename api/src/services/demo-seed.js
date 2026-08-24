@@ -18,9 +18,10 @@
  * part is theirs. That is why:
  *
  *   - every row is tagged `demo_pack`, so it can be found and removed exactly,
- *   - the sales are DATED IN THE PAST, over the fortnight before the shop was
- *     created, so today's takings - the number anybody actually watches - are
- *     the shop's own from the first sale they ring up,
+ *   - the sales are DATED IN THE PAST, over the WEEK before the shop was
+ *     created (owner: "demo history date should be last one week"), so
+ *     today's takings - the number anybody actually watches - are the shop's
+ *     own from the first sale they ring up,
  *   - the amounts are small and ordinary, not round showroom numbers,
  *   - and removing demo data removes these too.
  *
@@ -35,7 +36,18 @@
 const { ObjectId } = require('mongodb');
 
 /* Enough to fill a report, few enough to scan and recognise as samples. */
-const SALE_COUNT = 12;
+const SALE_COUNT = 14;
+
+/*
+ * How the fourteen sales fall across the seven days.
+ *
+ * Owner: "demo history date should be last one week. same day should be
+ * atleast 3 records." A flat one-or-two-a-day spread reads as a dying shop;
+ * real days cluster. Busiest-recent-first, summing to SALE_COUNT, and the
+ * shape is DATA so the tests can hold it to his words rather than to an
+ * implementation detail.
+ */
+const SALES_PER_DAY = [3, 3, 2, 2, 2, 1, 1]; // index 0 = yesterday
 const QUOTE_COUNT = 3;
 
 /* Deterministic, so a re-seed produces the same shop rather than a different
@@ -68,10 +80,15 @@ function buildSales({ items, customers, customer, branch, pack, now, count = SAL
   const rand = rng(String(branch.branch_id || 'demo'));
   const sales = [];
 
+  /* i -> how many days ago, from the per-day plan. Never today: today's
+     takings must be the shop's own. */
+  const dayOf = [];
+  SALES_PER_DAY.forEach((n, day) => {
+    for (let k = 0; k < n; k++) dayOf.push(day + 1);
+  });
+
   for (let i = 0; i < count; i++) {
-    /* Spread across the previous fortnight, oldest first, and never today.
-       Today's takings must be the shop's own. */
-    const daysAgo = 14 - Math.floor((i / count) * 13);
+    const daysAgo = dayOf[i] !== undefined ? dayOf[i] : 1 + (i % 7);
     const when = new Date(now.getTime() - daysAgo * 864e5);
     /* Shop hours, so the hourly report is not a flat line at midnight. */
     when.setHours(9 + Math.floor(rand() * 10), Math.floor(rand() * 60), 0, 0);
@@ -111,6 +128,14 @@ function buildSales({ items, customers, customer, branch, pack, now, count = SAL
       Array.isArray(customers) && customers.length ? customers : customer ? [customer] : [];
     const buyer = pool.length ? pool[i % pool.length] : null;
     sales.push({
+      /*
+       * A real-looking id, because the history column showed BLANK where
+       * every genuine sale shows S-<token>-000001 - "id also not generated
+       * properly" was the owner reading his own demo. DEMO as the token says
+       * exactly what the row is, and a real sale can never collide: live ids
+       * carry the shop's own token, never the word DEMO.
+       */
+      sales_id: 'S-DEMO-' + String(i + 1).padStart(6, '0'),
       demo_pack: pack,
       demo_seeded_at: now,
       branch_id: branch.branch_id,
@@ -200,6 +225,95 @@ function buildQuotes({ items, branch, pack, now, count = QUOTE_COUNT }) {
     });
   }
   return quotes;
+}
+
+/**
+ * Build (but do not insert) the demo purchases for a branch.
+ *
+ * Owner: "similar tor purchase entries. proper entries." A shop being
+ * evaluated looks at both sides of the counter: sales show money in,
+ * receivings show stock arriving and money out, and a Purchase History that
+ * opens empty says the product does not do purchasing. Five entries over the
+ * same week as the sales, from the sample suppliers, restocking the sample
+ * products.
+ *
+ * The same two hard rules as sales: dated in the PAST week and never today,
+ * and NO stock movement - available_quantity is untouched, because stock is
+ * the one number a shopkeeper checks against the shelf, and an invented
+ * movement makes it wrong before they have traded at all.
+ */
+const PURCHASE_COUNT = 5;
+
+function buildPurchases({ items, suppliers, branch, pack, now, count = PURCHASE_COUNT }) {
+  if (!Array.isArray(items) || !items.length) return [];
+  if (!Array.isArray(suppliers) || !suppliers.length) return [];
+  const rand = rng(String(branch.branch_id || 'demo') + 'p');
+  const purchases = [];
+
+  for (let i = 0; i < count; i++) {
+    const lineCount = 2 + Math.floor(rand() * 3);
+    const lines = [];
+    let subtotal = 0;
+
+    for (let j = 0; j < lineCount; j++) {
+      const item = items[Math.floor(rand() * items.length)];
+      const price = Number(item.selling_price) || 0;
+      if (price <= 0) continue;
+      /* Bought below what it sells for - a shop whose demo buys at retail
+         shows a margin of zero on every report, which reads as broken. */
+      const cost = round2(price * 0.6);
+      const qty = 5 + Math.floor(rand() * 20);
+      const total = round2(cost * qty);
+      subtotal += total;
+      lines.push({
+        item_id: String(item._id),
+        item_name: item.name,
+        name: item.name,
+        quantity: qty,
+        unit_price: cost,
+        price: cost,
+        cost_price: cost,
+        subtotal: total,
+        total,
+        unit: item.unit || 'qty',
+        tax_rate: 0,
+        tax_amount: 0,
+      });
+    }
+    if (!lines.length) continue;
+
+    subtotal = round2(subtotal);
+    const supplier = suppliers[i % suppliers.length];
+    /* One purchase roughly every weekday of the demo week, oldest first. */
+    const when = new Date(now.getTime() - (7 - i) * 864e5);
+    when.setHours(8 + Math.floor(rand() * 8), Math.floor(rand() * 60), 0, 0);
+    purchases.push({
+      /* Same shape as the sale ids and for the same reason: the history
+         column must never be blank, and DEMO can never collide with a live
+         token. */
+      receiving_id: 'R-DEMO-' + String(i + 1).padStart(6, '0'),
+      demo_pack: pack,
+      demo_seeded_at: now,
+      branch_id: branch.branch_id,
+      branch_name: branch.branch_name,
+      license: branch.license,
+      supplier_id: supplier._id || null,
+      supplier_name: supplier.name,
+      items: lines,
+      number_of_items: lines.length,
+      receiving_total: subtotal,
+      total_amount: subtotal,
+      paid_amount: subtotal,
+      payment_mode: rand() > 0.5 ? 'cash' : 'card',
+      payment_status: 'paid',
+      receiving_status: 'completed',
+      created_date: when,
+      date: when,
+      updated_date: when,
+      created_by: 'Demo data',
+    });
+  }
+  return purchases;
 }
 
 /*
@@ -295,6 +409,9 @@ function buildPeople({ branch, pack, now, base }) {
 
 module.exports = {
   SALE_COUNT,
+  SALES_PER_DAY,
+  PURCHASE_COUNT,
+  buildPurchases,
   QUOTE_COUNT,
   buildSales,
   buildQuotes,

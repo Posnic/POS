@@ -6477,7 +6477,8 @@ PosnicPro.settings.demoProgress = {
             [12, 'Adding categories…'],
             [30, 'Adding products…'],
             [55, 'Adding photographs…'],
-            [72, 'Adding sample sales…'],
+            [66, 'Adding sample sales…'],
+            [76, 'Adding sample purchases…'],
             [85, 'Adding sample quotes…'],
         ];
         var i = 0;

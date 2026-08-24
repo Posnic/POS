@@ -899,12 +899,23 @@ class InstallService {
           branch_id: branchOid,
           license: licenseOid,
         }),
+        db.collection('receivings').countDocuments({
+          demo_pack: { $exists: true },
+          branch_id: branchOid,
+          license: licenseOid,
+        }),
       ]);
 
       return {
         status: true,
-        data: { pack: businessType, items: counts[0], sales: counts[1], quotes: counts[2] },
-        message: `Sample data restored: ${counts[0]} products, ${counts[1]} sales, ${counts[2]} quotes.`,
+        data: {
+          pack: businessType,
+          items: counts[0],
+          sales: counts[1],
+          quotes: counts[2],
+          purchases: counts[3],
+        },
+        message: `Sample data restored: ${counts[0]} products, ${counts[1]} sales, ${counts[2]} quotes, ${counts[3]} purchases.`,
       };
     } catch (error) {
       console.error('Error in InstallService.reseedDemoData:', error);
@@ -1163,8 +1174,13 @@ class InstallService {
         name: c.name,
       }));
     }
+    let seededSuppliers = [];
     if (people.suppliers.length) {
-      await db.collection('suppliers').insertMany(people.suppliers);
+      const rs = await db.collection('suppliers').insertMany(people.suppliers);
+      seededSuppliers = people.suppliers.map((sup, i) => ({
+        _id: Object.values(rs.insertedIds)[i],
+        name: sup.name,
+      }));
     }
 
     /* Spread across the sample customers, with the walk-in kept in the mix -
@@ -1179,10 +1195,23 @@ class InstallService {
       now,
     });
     const quotes = demoSeed.buildQuotes({ items: stored, branch, pack, now });
+    /* Both sides of the counter: a Purchase History that opens empty says
+       the product does not do purchasing. From the sample suppliers, over
+       the same week, no stock movement - same rules as the sales. */
+    const purchases = demoSeed.buildPurchases({
+      items: stored,
+      suppliers: seededSuppliers,
+      branch,
+      pack,
+      now,
+    });
 
     if (sales.length) await db.collection('sales').insertMany(sales);
     if (quotes.length) await db.collection('quotes').insertMany(quotes);
-    console.log(`📈 Demo activity: ${sales.length} sales, ${quotes.length} quotes`);
+    if (purchases.length) await db.collection('receivings').insertMany(purchases);
+    console.log(
+      `📈 Demo activity: ${sales.length} sales, ${quotes.length} quotes, ${purchases.length} purchases`
+    );
   }
 
   async _insertDemoData(params) {
