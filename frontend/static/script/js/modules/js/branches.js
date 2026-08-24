@@ -266,7 +266,9 @@ PosnicPro.branches = {
             var params = {
                 method: method,
                 url: url,
-                data: JSON.stringify(Object.assign(formData, registerType, countryId))
+                data: JSON.stringify(
+                    Object.assign(formData, registerType, countryId, PosnicPro.branches.sharingChoice())
+                )
             };
 
             PosnicPro.request(params, function (response) {
@@ -416,7 +418,7 @@ PosnicPro.branches = {
                 (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('#branch_button_title').text('புதுப்பி') : $('#branch_button_title').text('Update');
 
                 $('.update-button').attr('disabled', 'disabled').removeClass('btn-outline-success');
-                $('#branch_view').modal('show');
+                PosnicPro.branches.sharingRow(false);
                 $('.register-wrapper .register-fields .register-input:nth-child(n+2)').remove();
                 let $test = $('.register-input:parent');
                 $('.add-field', $test).hide();
@@ -449,6 +451,54 @@ PosnicPro.branches = {
         let $firstChild = $('.register-input:first-child');
         $('.add-field', $firstChild).show();
     },
+    /*
+     * The three sharing boxes, as EXPLICIT booleans (owner ask #85).
+     *
+     * serializeArray() omits an unchecked checkbox entirely, and the server
+     * treats an absent key as "use the default" - which for these is ticked.
+     * So unticking Customers and pressing Save would have shared them anyway,
+     * with the form showing the opposite. The one failure mode worth more than
+     * the others here is silence, so the value is stated rather than implied.
+     *
+     * Only on CREATE. Editing a branch is not where an account-wide rule is
+     * changed, and sending these on every branch save would let a stale form
+     * re-impose a default over a rule set in Settings.
+     */
+    sharingChoice: function () {
+        if ($('#branch_id').val() !== '') { return {}; }
+        return {
+            share_customers: $('#share_customers').is(':checked'),
+            share_suppliers: $('#share_suppliers').is(':checked'),
+            /* Not a switch. Stock sits on one shelf in one building, so the
+               product LIST is copied once here rather than shared as a rule -
+               empty means start with nothing. */
+            copy_items_from: $('#copy_items_from').val() || ''
+        };
+    },
+    /* Shown while creating, hidden while editing - see sharingChoice. */
+    sharingRow: function (creating) {
+        $('#branch_sharing_row').toggle(!!creating);
+        if (creating) { PosnicPro.branches.fillCopyFrom(); }
+    },
+    /*
+     * The shops a new one can copy its products from.
+     *
+     * Read from the branch dropdown the header already keeps, rather than
+     * another request: it holds exactly the branches this user may see, so a
+     * shop they have no access to cannot appear here as a source.
+     */
+    fillCopyFrom: function () {
+        var $sel = $('#copy_items_from');
+        if (!$sel.length) { return; }
+        var current = $sel.val();
+        $sel.find('option').not('[value=""]').remove();
+        $('#branch_name option').each(function () {
+            var id = $(this).val();
+            if (!id) { return; }
+            $sel.append($('<option>').attr('value', id).text($(this).text()));
+        });
+        $sel.val(current || '');
+    },
     addbranchButton: function () {
         var loader = $(".loader-branch");
         loader.find(".loadingSpinner:first").remove();
@@ -460,6 +510,7 @@ PosnicPro.branches = {
         $('#branch_id').val('');
         $('#branches_new .alert').remove();
         $('#show_last_created_branch').hide();
+        PosnicPro.branches.sharingRow(true);
     },
     exportBranches: function () {
         PosnicPro.exportTableData(PosnicPro.branches_checkbox, 'branches');
@@ -549,29 +600,29 @@ PosnicPro.branches = {
             },
             messages: {
                 name: {
-                    required: "Please enter a branch name",
+                    required: "Enter the shop name",
                     minlength: "Branch name must be at least 3 characters",
                     maxlength: "Branch name is too long !"
                 },
                 phone: {
-                    branch_phone_number: "Please enter a valid phone number.",
-                    minlength: "Please enter at least 3 characters.",
-                    maxlength: "Please enter no more than 20 characters."
+                    branch_phone_number: "Enter a valid phone number",
+                    minlength: "Use at least 3 characters",
+                    maxlength: "Use no more than 20 characters"
                 },
                 address: {
-                    required: "Please enter an address",
+                    required: "Enter an address",
                     minlength: "Address must be at least 3 characters long",
                     maxlength: "Address is too long !"
                 },
                 email: {
-                    required: "Please enter a email address",
+                    required: "Enter a valid email address",
                     maxlength: "Email should not be more than 250 Characters"
                 },
                 country: {
-                    required: "Please choose your country"
+                    required: "Choose your country"
                 },
                 state: {
-                    required: "Please choose your state"
+                    required: "Choose your state"
                 },
                 "branchregister[0]": {
                     minlength: "Name Must be in 3 charcters",

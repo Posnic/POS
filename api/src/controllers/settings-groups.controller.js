@@ -23,6 +23,7 @@
 
 const SettingsRepository = require('../repositories/settings.repository');
 const { GROUPS } = require('../services/settings-groups');
+const dataSharing = require('../services/data-sharing');
 
 const repository = new SettingsRepository();
 
@@ -154,7 +155,15 @@ module.exports = {
       if (!canWrite(req)) return fail(res, 'Unauthorized access', 403);
       const group = String(req.params.group || '');
       if (!GROUP_NAMES.includes(group)) return fail(res, 'Unknown settings group', 404);
-      if (group === 'secrets' && !isOwnerClass(req)) {
+      /*
+       * `sharing` is owner-class to WRITE, like secrets - and for the same
+       * reason, though it is not a credential. It is the only group where a
+       * value decides what data a person can READ: switching it on makes every
+       * shop's customers visible from every till at once. Reading it is left
+       * open, because a screen has to be able to say why a list looks the way
+       * it does.
+       */
+      if ((group === 'secrets' || group === 'sharing') && !isOwnerClass(req)) {
         return fail(res, 'Unauthorized access', 403);
       }
 
@@ -169,6 +178,10 @@ module.exports = {
 
       const r = await repository.saveGroup(group, values, contextOf(req), { level });
       if (!r.status) return fail(res, r.message, 400, r.data);
+      /* The read path caches this for thirty seconds. Whoever just flipped the
+         switch must not be told to wait for it - the delay exists for OTHER
+         processes serving the same account, not for the person at the screen. */
+      if (group === 'sharing') dataSharing.invalidate(contextOf(req).licenseId);
       return ok(res, r.data, 'Settings saved');
     } catch (error) {
       console.error('Error in settings-groups write:', error);

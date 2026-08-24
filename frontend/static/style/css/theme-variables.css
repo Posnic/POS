@@ -781,12 +781,6 @@
     color: #7eb8e8;
 }
 
-/* Print button .seven */
-[data-theme="dark"] .seven {
-    background: #569cd6 !important;
-    color: #1e1e1e !important;
-}
-
 /* Touch sales hover/flash effect */
 [data-theme="dark"] .touch-sales-hover-effect {
     background-color: #252526 !important;
@@ -3236,10 +3230,41 @@ html:not([data-theme]) .infobar-settings-sidebar-head {
     border-radius: 6px !important;
     box-shadow: none !important;
 }
+
 [data-theme="github"] .card > .card-header:first-child,
 [data-theme="github"] .card > .card-body:first-child { border-top-left-radius: 6px !important; border-top-right-radius: 6px !important; }
 [data-theme="github"] .card > .card-body:last-child,
 [data-theme="github"] .card > .card-footer:last-child { border-bottom-left-radius: 6px !important; border-bottom-right-radius: 6px !important; }
+/*
+ * ...except the master-detail panes, which have no box of their own.
+ *
+ * The rule above and `.master-detail > .md-rail { border: 0 !important }` in
+ * custom.css have the SAME specificity, and custom.css loads first - so the
+ * theme won, and the joined surface came back as two bordered cards inside a
+ * third border. Removing the theme border entirely fixed that screen and took
+ * every other card's border with it (owner: "other pages also removed").
+ *
+ * Naming the panes here is the narrow fix: one more class beats the rule above
+ * on specificity, and it sits in the file that loads last, so it wins twice
+ * over. Scoped to the PATTERN rather than to quotes - any screen adopting
+ * master-detail wants the same thing, and quotes is simply the only one today.
+ *
+ * Placed AFTER the radius rules above on purpose. Those name
+ * `.card > .card-body:first-child` and carry the same specificity as this, so
+ * source order decides - and a pane whose inner body keeps 6px corners inside
+ * a square outer border is the same seam, drawn smaller.
+ */
+[data-theme="github"] .master-detail > .md-rail,
+[data-theme="github"] .master-detail > .md-detail,
+[data-theme="github"] .master-detail > .md-rail > .card-body,
+[data-theme="github"] .master-detail > .md-detail > .card-body,
+[data-theme="github"] .master-detail > .md-rail > .card-body:first-child,
+[data-theme="github"] .master-detail > .md-detail > .card-body:first-child,
+[data-theme="github"] .master-detail > .md-rail > .card-body:last-child,
+[data-theme="github"] .master-detail > .md-detail > .card-body:last-child {
+    border: 0 !important;
+    border-radius: 0 !important;
+}
 /* github.com puts its primary buttons in green while its links stay blue.
    Copied literally that gives a screen running two accent colours at once,
    and green ends up meaning BOTH "this is the main action" and "this

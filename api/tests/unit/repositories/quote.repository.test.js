@@ -66,8 +66,10 @@ describe('QuoteRepository', () => {
     mockCollection.find.mockReturnValue(mkFindChain([]));
     mockCollection.countDocuments = jest.fn().mockResolvedValue(0);
     mockCollection.createIndex = jest.fn().mockResolvedValue('quote_list_by_branch');
-    // the index is ensured once per PROCESS, so reset the latch between tests
-    Object.getPrototypeOf(repo).constructor._listIndexEnsured = false;
+    // the index is ensured once per DATABASE (see db/ensure-index) - a static
+    // per-process latch gave the index to whichever shop asked first and to no
+    // other, which is the bug that made it shared. Reset it between tests.
+    require('../../../src/db/ensure-index')._reset();
   });
 
   test('create writes only the quotes collection and numbers QUO-000001', async () => {
@@ -353,12 +355,23 @@ describe('QuoteRepository', () => {
     const r = await repo.listQuotes({ page: 3, limit: 20 }, ctx);
     expect(calls.skip).toBe(40);
     expect(calls.limit).toBe(20);
-    // the pager needs the count of ALL matches, not of this page's rows
-    expect(r.meta).toEqual({ total: 137, page: 3, limit: 20, pages: 7 });
+    // the pager needs the count of ALL matches, not of this page's rows.
+    // hasMore rides along so the client never has to derive it.
+    expect(r.meta).toEqual({
+      total: 137,
+      page: 3,
+      limit: 20,
+      pages: 7,
+      hasMore: true,
+    });
   });
 
-  test('the count is taken over the same filter the rows are read with', async () => {
-    await repo.listQuotes({ search: 'acme', status: 'open' }, ctx);
+  test('when a count IS taken, it uses the same filter the rows are read with', async () => {
+    /* No search term here on purpose: a text search deliberately skips the
+       count (see the paging-cost tests). What this pins is that whenever a
+       count does run, it measures exactly what the page shows - a count over
+       a looser filter is a pager that lies. */
+    await repo.listQuotes({ status: 'open', from: '2026-08-01' }, ctx);
     expect(mockCollection.countDocuments).toHaveBeenCalledWith(
       mockCollection.find.mock.calls[0][0]
     );
@@ -384,6 +397,155 @@ describe('QuoteRepository', () => {
     expect((await repo.transition(QUOTE_ID, 'cancel', {}, {})).status).toBe(false);
     expect((await repo.deleteQuote(QUOTE_ID, {})).status).toBe(false);
     expect(mockRequestedCollections).toEqual([]);
+  });
+
+  /*
+   * Filters (owner ask): "indexed search is fine, but I want filters too -
+   * exact field and time duration".
+   *
+   * Both earn their place on a long list. `field` stops a customer search
+   * matching a quote number that happens to contain the digits. `exact`
+   * anchors the regex, and that is the one with teeth: /^QUO-000012$/ can be
+   * served by an index, /QUO/ cannot.
+   */
+  describe('QuoteRepository — filters', () => {
+    test('field narrows the search to one column instead of both', async () => {
+      await repo.listQuotes({ search: 'acme', field: 'customer_name' }, ctx);
+      const filter = mockCollection.find.mock.calls[0][0];
+      expect(filter.$or).toBeUndefined();
+      expect(filter.customer_name).toBeInstanceOf(RegExp);
+      expect(filter.quote_id).toBeUndefined();
+    });
+
+    test('exact anchors the pattern, which is what an index can serve', async () => {
+      await repo.listQuotes({ search: 'QUO-000012', field: 'quote_id', exact: 'true' }, ctx);
+      const rx = mockCollection.find.mock.calls[0][0].quote_id;
+      expect(rx.source.startsWith('^')).toBe(true);
+      expect(rx.source.endsWith('$')).toBe(true);
+      expect(rx.test('QUO-000012')).toBe(true);
+      expect(rx.test('XQUO-000012X')).toBe(false);
+    });
+
+    test('without exact it still matches a fragment', async () => {
+      await repo.listQuotes({ search: '0012', field: 'quote_id' }, ctx);
+      const rx = mockCollection.find.mock.calls[0][0].quote_id;
+      expect(rx.test('QUO-000012')).toBe(true);
+    });
+
+    test('a date range becomes a created_date window', async () => {
+      await repo.listQuotes({ from: '2026-08-01', to: '2026-08-21' }, ctx);
+      const range = mockCollection.find.mock.calls[0][0].created_date;
+      expect(range.$gte).toBeInstanceOf(Date);
+      expect(range.$lte).toBeInstanceOf(Date);
+    });
+
+    test('a precise instant is used as given, not widened to end of day', async () => {
+      /* The filter bar sends real times now. Forcing 23:59 onto "up to 2pm"
+         would quietly widen a range the user deliberately narrowed. */
+      await repo.listQuotes({ to: '2026-08-21T14:00:00.000Z' }, ctx);
+      const end = mockCollection.find.mock.calls[0][0].created_date.$lte;
+      expect(end.toISOString()).toBe('2026-08-21T14:00:00.000Z');
+    });
+
+    test('the end date includes its whole day', async () => {
+      /* Picking 21 Aug means "including the 21st". Comparing against midnight
+         would silently drop a day of quotes, which reads as data loss. */
+      await repo.listQuotes({ to: '2026-08-21' }, ctx);
+      const end = mockCollection.find.mock.calls[0][0].created_date.$lte;
+      expect(end.getHours()).toBe(23);
+      expect(end.getMinutes()).toBe(59);
+    });
+
+    test('either end of the range may be omitted', async () => {
+      await repo.listQuotes({ from: '2026-08-01' }, ctx);
+      const range = mockCollection.find.mock.calls[0][0].created_date;
+      expect(range.$gte).toBeInstanceOf(Date);
+      expect(range.$lte).toBeUndefined();
+    });
+
+    test('an unparseable date is ignored rather than returning nothing', async () => {
+      await repo.listQuotes({ from: 'not-a-date' }, ctx);
+      expect(mockCollection.find.mock.calls[0][0].created_date).toBeUndefined();
+    });
+
+    test('filters combine with the branch wall and the status chip', async () => {
+      await repo.listQuotes(
+        { status: 'open', search: 'acme', field: 'customer_name', from: '2026-08-01' },
+        ctx
+      );
+      const filter = mockCollection.find.mock.calls[0][0];
+      expect(filter.status).toBe('open');
+      expect(filter.customer_name).toBeInstanceOf(RegExp);
+      expect(filter.created_date.$gte).toBeInstanceOf(Date);
+      expect(filter.branch_id).toBeDefined();
+    });
+  });
+
+  /*
+   * Paging cost: the exact total is only paid for when it is cheap.
+   *
+   * countDocuments runs the filter a SECOND time. Branch, status and a date
+   * range are served by the list index, so counting them is a seek. An
+   * unanchored regex cannot use any index, so counting a text search runs that
+   * regex over every candidate row - twice per request, on every keystroke.
+   *
+   * So a text search asks for limit + 1 instead: if the extra row comes back
+   * there is a next page. One query instead of two, and it answers the only
+   * question anyone actually has.
+   */
+  describe('QuoteRepository — paging cost', () => {
+    const rowsOf = (n) => Array.from({ length: n }, (_, i) => ({ _id: 'q' + i }));
+
+    test('no search: the total is counted and page numbers are real', async () => {
+      mockCollection.countDocuments.mockResolvedValue(57);
+      mockCollection.find.mockReturnValue(mkFindChain(rowsOf(20)));
+      const r = await repo.listQuotes({ limit: 20, page: 1 }, ctx);
+
+      expect(mockCollection.countDocuments).toHaveBeenCalled();
+      expect(r.meta.total).toBe(57);
+      expect(r.meta.pages).toBe(3);
+      expect(r.meta.hasMore).toBe(true);
+    });
+
+    test('text search: no count is run at all', async () => {
+      mockCollection.find.mockReturnValue(mkFindChain(rowsOf(20)));
+      await repo.listQuotes({ search: 'acme', limit: 20 }, ctx);
+      expect(mockCollection.countDocuments).not.toHaveBeenCalled();
+    });
+
+    test('text search reports hasMore from the probe row, not a total', async () => {
+      // 21 rows come back for a page of 20 - the 21st is proof, not data
+      mockCollection.find.mockReturnValue(mkFindChain(rowsOf(21)));
+      const r = await repo.listQuotes({ search: 'acme', limit: 20 }, ctx);
+
+      expect(r.data).toHaveLength(20);
+      expect(r.meta.hasMore).toBe(true);
+      expect(r.meta.total).toBeNull();
+      expect(r.meta.pages).toBeNull();
+    });
+
+    test('a short last page reports no more', async () => {
+      mockCollection.find.mockReturnValue(mkFindChain(rowsOf(7)));
+      const r = await repo.listQuotes({ search: 'acme', limit: 20 }, ctx);
+      expect(r.data).toHaveLength(7);
+      expect(r.meta.hasMore).toBe(false);
+    });
+
+    test('an exactly-full page with nothing after it is not a next page', async () => {
+      /* 20 rows for a page of 20 means the probe did NOT come back - the
+         boundary that an off-by-one would get wrong, showing an empty page. */
+      mockCollection.find.mockReturnValue(mkFindChain(rowsOf(20)));
+      const r = await repo.listQuotes({ search: 'acme', limit: 20 }, ctx);
+      expect(r.meta.hasMore).toBe(false);
+    });
+
+    test('a date range is still counted - the index serves it', async () => {
+      mockCollection.countDocuments.mockResolvedValue(9);
+      mockCollection.find.mockReturnValue(mkFindChain(rowsOf(9)));
+      const r = await repo.listQuotes({ from: '2026-08-01', limit: 20 }, ctx);
+      expect(mockCollection.countDocuments).toHaveBeenCalled();
+      expect(r.meta.total).toBe(9);
+    });
   });
 
   /*
@@ -423,7 +585,7 @@ describe('QuoteRepository', () => {
       expect(r.status).toBe(true);
     });
 
-    test('it is built once per process, not on every request', async () => {
+    test('it is built once per database, not on every request', async () => {
       await repo.listQuotes({}, ctx);
       await repo.listQuotes({}, ctx);
       await repo.listQuotes({}, ctx);

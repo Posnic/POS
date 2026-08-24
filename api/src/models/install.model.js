@@ -516,6 +516,21 @@ class InstallModel extends BaseModel {
         unitId,
       } = params;
 
+      /*
+       * Everything below is DEMO data, and is tagged as such.
+       *
+       * Tagged rather than remembered in a list: a list drifts the moment a
+       * shop edits or deletes one row, and then switching demo data off either
+       * misses records or removes the wrong ones. The tag travels with the
+       * record, so the answer is always on the record itself.
+       *
+       * DEMO_PACK names the pack. Today every shop receives the same mixed set
+       * - a restaurant gets a power amplifier - so it is recorded as what it
+       * is. Per-industry packs will change this value, not the mechanism.
+       */
+      const DEMO_PACK = 'starter-mixed';
+      const demoTag = { demo_pack: DEMO_PACK, demo_seeded_at: now };
+
       // Load demo data
       const installDocuments = JSON.parse(
         fs.readFileSync(path.join(__dirname, '../json/install_documents.json'), 'utf8')
@@ -524,6 +539,7 @@ class InstallModel extends BaseModel {
       // Insert categories
       const categoryCollection = await this.getCollection('categories');
       const categoryMultiData = installDocuments.documents[0].categories.map((cat) => ({
+        ...demoTag,
         name: cat.name,
         discount_percentage: 0.0,
         discount_amount: 0,
@@ -564,6 +580,7 @@ class InstallModel extends BaseModel {
         const category = categoryMap[itemValue.category_name];
         if (category) {
           itemMultiData.push({
+            ...demoTag,
             name: itemValue.name,
             category_id: category.id,
             category_name: category.name,

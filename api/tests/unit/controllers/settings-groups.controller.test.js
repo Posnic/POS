@@ -370,3 +370,98 @@ describe('copying settings between branches', () => {
     expect(res.json.mock.calls[0][0].data.refused).toEqual(['secrets']);
   });
 });
+
+/*
+ * `sharing` (owner ask #85) rides on this same endpoint, and it is the only
+ * group where a value decides what data a person can READ. Turning it on makes
+ * every shop's customers visible from every till at once, so writing it is
+ * owner-class - the same gate secrets have, for a different reason.
+ */
+describe('the sharing group', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    mockResolve.mockResolvedValue({ status: true, data: { group: 'sharing', values: {} } });
+    mockSave.mockResolvedValue({ status: true, data: { written: ['share_customers'] } });
+  });
+
+  const cashier = (over = {}) =>
+    mkReq({
+      user: {
+        usertype: 'cashier',
+        license: '64b000000000000000000002',
+        branch_id: '64b000000000000000000001',
+        access: { setting: { read: true, write: true } },
+      },
+      ...over,
+    });
+
+  test('it is a real group, not a 404', async () => {
+    const res = mkRes();
+    await controller.read(mkReq({ params: { group: 'sharing' } }), res);
+    expect(res.status).not.toHaveBeenCalledWith(404);
+    expect(mockResolve).toHaveBeenCalledWith('sharing', expect.any(Object));
+  });
+
+  test('a cashier CANNOT turn sharing on', async () => {
+    const res = mkRes();
+    await controller.write(
+      cashier({ params: { group: 'sharing' }, body: { share_customers: true } }),
+      res
+    );
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(mockSave).not.toHaveBeenCalled();
+  });
+
+  test('an owner can', async () => {
+    const res = mkRes();
+    await controller.write(
+      mkReq({ params: { group: 'sharing' }, body: { share_customers: true, level: 'account' } }),
+      res
+    );
+    expect(mockSave).toHaveBeenCalledWith(
+      'sharing',
+      { share_customers: true },
+      expect.any(Object),
+      { level: 'account' }
+    );
+  });
+
+  test('a cashier may still READ it', async () => {
+    /* A screen has to be able to explain why a list looks the way it does.
+       Hiding the reason does not hide the effect. */
+    const res = mkRes();
+    await controller.read(cashier({ params: { group: 'sharing' } }), res);
+    expect(res.status).not.toHaveBeenCalledWith(403);
+  });
+
+  test('saving it clears the read cache, so the switch takes hold at once', async () => {
+    const dataSharing = require('../../../src/services/data-sharing');
+    const spy = jest.spyOn(dataSharing, 'invalidate');
+    try {
+      const res = mkRes();
+      await controller.write(
+        mkReq({ params: { group: 'sharing' }, body: { share_customers: true } }),
+        res
+      );
+      expect(spy).toHaveBeenCalledWith('64b000000000000000000002');
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  test('saving another group does not clear it', async () => {
+    const dataSharing = require('../../../src/services/data-sharing');
+    const spy = jest.spyOn(dataSharing, 'invalidate');
+    try {
+      const res = mkRes();
+      await controller.write(
+        mkReq({ params: { group: 'features', body: {} }, body: { some_feature: true } }),
+        res
+      );
+      expect(spy).not.toHaveBeenCalled();
+    } finally {
+      spy.mockRestore();
+    }
+  });
+});

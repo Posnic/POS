@@ -9,6 +9,24 @@
                     <h4 class="page-title break_title mb-0"><span id="item_title_data">Add</span>
                         <lang class="lang_item_title">Item</lang></h4>
                 </div>
+                <!-- Import is not a field. It is the alternative to filling this
+                     form at all, so it belongs in the page header beside the
+                     title - not buried inside the Item card under the fields it
+                     would let you skip (owner ask). -->
+                <div class="col text-right" id="item_header_actions">
+                    <!-- Opens HERE. It used to carry href="#/items" and fire the
+                         dialog on a 300ms timer - so asking to import from the Add
+                         Item page navigated to the item LIST first, discarding
+                         anything already typed, and the delay existed only to wait
+                         for that page to render. #import_modal is a global modal and
+                         everything after the import writes into its own table, so
+                         the trip was never needed. -->
+                    <button type="button" data-module="item" data-access="write" id="item_import_btn"
+                        class="btn btn-sm btn-primary-rgba"
+                        onclick="PosnicPro.importTableFile('items');">
+                        <i class="feather icon-upload mr-1"></i><lang class="lang_item_import_link">Import from a file</lang>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -27,9 +45,15 @@
                          nav-justified gave each tab a third of the width, so
                          three short words spanned 1300px. -->
                     <ul class="nav nav-tabs m-b-15" id="item_form_tabs" role="tablist">
-                        <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#item_tab_main" role="tab"><i class="feather icon-box mr-1"></i><lang class="lang_item_title">Item</lang></a></li>
-                        <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#item_tab_details" role="tab"><i class="feather icon-image mr-1"></i><lang class="lang_item_details_title">Details</lang></a></li>
-                        <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#item_tab_more" role="tab"><i class="feather icon-sliders mr-1"></i><lang class="lang_tab_more">More</lang></a></li>
+                        <!-- The tick says "there is something in here", not "this is
+                             correct" - only Item has required fields, and claiming
+                             completeness for optional tabs would be a lie the shop
+                             would learn to ignore. Item ticks when its required fields
+                             are filled; Details and More tick when anything in them is
+                             filled. -->
+                        <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#item_tab_main" role="tab" data-tab-pane="item_tab_main"><i class="feather icon-box mr-1"></i><lang class="lang_item_title">Item</lang><i class="feather icon-check item-tab-tick"></i></a></li>
+                        <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#item_tab_details" role="tab" data-tab-pane="item_tab_details"><i class="feather icon-image mr-1"></i><lang class="lang_item_details_title">Details</lang><i class="feather icon-check item-tab-tick"></i></a></li>
+                        <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#item_tab_more" role="tab" data-tab-pane="item_tab_more"><i class="feather icon-sliders mr-1"></i><lang class="lang_tab_more">More</lang><i class="feather icon-check item-tab-tick"></i></a></li>
                     </ul>
                     <div class="tab-content" id="item_form_tabs_content">
                     <div class="tab-pane fade show active" id="item_tab_main" role="tabpanel">
@@ -39,15 +63,41 @@
                     <div class="row">
                     <div class="col-lg-6 d-flex flex-column">
                     <!-- 1 · Item -->
-                    <div class="card m-b-30 flex-grow-1">
-                        <div class="card-header d-flex align-items-center justify-content-between">
+                    <!-- Sized to its content. flex-grow-1 stretched this card to match the
+                         taller column beside it, which left a block of empty white
+                         under the category and supplier pickers (owner ask). Two cards
+                         of honest height read better than two of equal height with one
+                         of them padded. -->
+                    <div class="card m-b-30">
+                        <!-- WHAT KIND OF ITEM is decided here, above the fields it
+                             governs. Service and variants both hide parts of the form
+                             below; asking them from INSIDE that form meant the control
+                             could hide the row it was standing in (owner ask: "supposed
+                             to be in top may be in title, so that we can hide
+                             properly"). -->
+                        <div class="card-header items-kind-header">
                             <h5 class="card-title mb-0"><lang class="lang_item_title">Item</lang></h5>
-                            <!-- The radios stay in the DOM (hidden) - every mode check
-                                 and fill in items.js keeps working; the link drives them. -->
-                            <a href="javascript:void(0)" id="variant_mode_link" style="font-size:.85rem;">+ This item has variants</a>
-                            <div style="display:none;">
-                                <input type="radio" id="product_without_variant" name="product_radio_variant" checked>
-                                <input type="radio" id="product_with_variant" name="product_radio_variant">
+                            <div class="items-kind-controls">
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" class="custom-control-input" id="item_is_service"
+                                        name="item_is_service">
+                                    <label class="custom-control-label" for="item_is_service">
+                                        <lang class="lang_is_service">Service (no stock)</lang>
+                                    </label>
+                                </div>
+                                <select class="form-control form-control-sm" id="item_service_unit"
+                                    style="display:none !important;">
+                                    <option value="fixed">Fixed price</option>
+                                    <option value="hour">Per hour</option>
+                                    <option value="day">Per day</option>
+                                </select>
+                                <!-- The radios stay in the DOM (hidden) - every mode check
+                                     and fill in items.js keeps working; the link drives them. -->
+                                <a href="javascript:void(0)" id="variant_mode_link" style="font-size:.85rem;">+ This item has variants</a>
+                                <div style="display:none;">
+                                    <input type="radio" id="product_without_variant" name="product_radio_variant" checked>
+                                    <input type="radio" id="product_with_variant" name="product_radio_variant">
+                                </div>
                             </div>
                         </div>
                         <div class="card-body">
@@ -111,37 +161,79 @@
                                         autocomplete="off">
                                 </div>
                             </div>
+                            <!-- Reorder point and Item Units moved out of Price & Stock
+                                 (owner ask). Neither is a price: the reorder point is when
+                                 to buy more, and the unit is how the item is counted. They
+                                 describe the ITEM, so they sit with it - one row, matching
+                                 the category/supplier row below. -->
+                            <div class="form-row">
+<div class="col-md-6">
+                                        <label class="form-control-placeholder" for="items_reorder_point">
+                                            <lang class="lang_reorder_point">Reorder point</lang>
+                                        </label>
+                                        <!-- LS1: this item's own low-stock threshold; empty
+                                             falls back to the shop-wide range. -->
+                                        <input type="number" min="0" step="any" class="form-control clear_text_item text-right"
+                                            id="items_reorder_point" name="items_reorder_point"
+                                            placeholder="Reorder point" autocomplete="off">
+                                    </div>
+<div class="col-md-6">
+                                        <label class="form-control-placeholder" for="items_unit">
+                                            Item Units
+                                        </label>
+                                        <select class="form-control select2 pricing-field items_unit items_choose_error"
+                                            name="items_unit" id="items_unit">
+                                        </select>
+                                    </div>
+                            </div>
+                            <!-- No "(optional)" anywhere on this form. Required fields carry a
+                                 red asterisk, so marking every other field as optional labels
+                                 the rule instead of the exception - it is noise on eleven
+                                 fields to say what the absence of an asterisk already says
+                                 (owner ask). -->
                             <!-- Category and supplier are both optional pickers of the
                                  same shape, so they share one row instead of eating a
-                                 line each (owner ask). -->
-                            <div class="form-row">
+                                 line each (owner ask).
+
+                                 Set apart from the row above it: the numbers stop here and
+                                 the pickers begin, and without a gap the two ran together
+                                 (owner: "above select category give some gap... now i see
+                                 clumpsy"). form-row children get no bottom margin from the
+                                 card rule, which only covers .row. -->
+                            <div class="form-row items-picker-row">
                                 <div class="form-group col-md-6">
-                                    <label class="form-control-placeholder" for="items_category">
-                                        <lang class="lang_choosecategory_title"> Select Category </lang>
-                                        <small class="text-muted">(<lang class="lang_optional">optional</lang>)</small>
+                                    <!-- One line: label and "(optional)" together (owner ask).
+                                         The "+ Add Category" link that used to share this row is
+                                         gone - it was pushing "(optional)" onto a second line,
+                                         and categories are managed from their own screen. -->
+                                    <label class="form-control-placeholder items-label-inline" for="items_category">
+                                        <lang class="lang_choosecategory_title">Select Category</lang>
                                     </label>
                                     <select id='items_category' name="items_category" style='width: 100%;'
                                         class="select2 items_category items_choose_error">
                                     </select>
-                                    <a data-module="category" data-access="write" href="#/items/categories/new"
-                                        class="d-inline-block mt-1" style="font-size:.85rem;">
-                                        + <lang class="lang_add_category">Add Category</lang>
-                                    </a>
                                 </div>
                                 <div class="form-group col-md-6">
-                                    <label class="form-control-placeholder" for="items_supplier">
-                                        <lang class="lang_choosesupplier_title"> Select Supplier </lang>
-                                        <small class="text-muted">(<lang class="lang_optional">optional</lang>)</small>
+                                    <label class="form-control-placeholder items-label-inline" for="items_supplier">
+                                        <lang class="lang_choosesupplier_title">Select Supplier</lang>
                                     </label>
                                     <!-- Optional (IC1): items routinely arrive without a known
-                                         supplier; receiving is the supplier system of record. -->
-                                    <input type="text" class="form-control" id="items_supplier" name="items_supplier"
-                                        maxlength="50" placeholder="Choose a Supplier (optional)" autocomplete="off">
+                                         supplier; receiving is the supplier system of record.
+
+                                         A select2 like Category (owner ask), not a bare
+                                         autocomplete: the list is loaded up front so it opens
+                                         showing real suppliers, and typing filters what is
+                                         already there. An autocomplete that shows nothing until
+                                         you guess a name is only useful to someone who already
+                                         knows what they are looking for.
+
+                                         The two hidden fields stay exactly as they were, so
+                                         every payload builder and edit-fill in items.js keeps
+                                         reading the same ids. -->
+                                    <select id="items_supplier_pick" class="select2 items_supplier_pick"
+                                        style="width:100%;"></select>
+                                    <input type="hidden" id="items_supplier" name="items_supplier">
                                     <input type="hidden" name="items_supplier_id" id="items_supplier_id">
-                                    <a data-module="supplier" data-access="write" href="#/items/suppliers/new"
-                                        class="d-inline-block mt-1" style="font-size:.85rem;">
-                                        + <lang class="lang_add_supply">Add Supplier</lang>
-                                    </a>
                                 </div>
                             </div>
                             <!-- IC4: the import path exists (items list > Import icon) but
@@ -149,28 +241,7 @@
                                  feel the pain. -->
                             <!-- Services (Q3): a second sellable kind - no stock, priced
                                  fixed / per hour / per day. -->
-                            <div class="d-flex align-items-center justify-content-between flex-wrap" style="gap:8px;">
-                                <div class="custom-control custom-checkbox">
-                                    <input type="checkbox" class="custom-control-input" id="item_is_service"
-                                        name="item_is_service">
-                                    <label class="custom-control-label" for="item_is_service">
-                                        <lang class="lang_is_service">This is a service (no stock)</lang>
-                                    </label>
-                                    <select class="form-control form-control-sm d-inline-block ml-2" id="item_service_unit"
-                                        style="width:auto; display:none !important;">
-                                        <option value="fixed">Fixed price</option>
-                                        <option value="hour">Per hour</option>
-                                        <option value="day">Per day</option>
-                                    </select>
-                                </div>
-                                <small class="text-muted mb-0">
-                                    <lang class="lang_item_import_hint">Adding many items?</lang>
-                                    <a href="#/items" data-module="item" data-access="write"
-                                        onclick="setTimeout(function(){PosnicPro.importTableFile('items');},300);">
-                                        <lang class="lang_item_import_link">Import them from a file</lang>
-                                    </a>
-                                </small>
-                            </div>
+
                         </div>
                     </div>
 
@@ -207,79 +278,23 @@
                                     </div>
                                 </div>
                                 <div class="row">
-                                    <div class="col-md-6">
-                                        <label class="form-control-placeholder" for="items_reorder_point">
-                                            <lang class="lang_reorder_point">Reorder point</lang>
-                                        </label>
-                                        <!-- LS1: this item's own low-stock threshold; empty
-                                             falls back to the shop-wide range. -->
-                                        <input type="number" min="0" step="any" class="form-control clear_text_item text-right"
-                                            id="items_reorder_point" name="items_reorder_point"
-                                            placeholder="Reorder point (optional)" autocomplete="off">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-control-placeholder" for="items_unit">
-                                            Item Units
-                                        </label>
-                                        <select class="form-control select2 pricing-field items_unit items_choose_error"
-                                            name="items_unit" id="items_unit">
-                                        </select>
-                                    </div>
+
+
                                 </div>
                             </div>
                         </div>
                     </div>
-                    </div>
-                    </div>
-
-                    <div class="card m-b-30" id="show_variant_fields" style="display:none;">
-                        <div class="card-body">
-                            <div class="form-row">
-                                <div class="form-group col-md-12">
-                                    <label class="form-control-placeholder" for="items_variant">
-                                        <lang class="lang_selectvariant_title">Select Variant </lang>
-                                        <span class="text-danger">*</span>
-                                    </label>
-                                    <select id='items_variant' name="items_variant" style='width: 200px;'
-                                        class="select2 items_choose_error" required>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group col-md-12">
-                                    <label for="item_variant_list">
-                                        <lang class="lang_variantfield_title"> Variant Fields </lang>
-                                        <span class="text-danger">*</span>
-                                    </label>
-                                    <select class="form-control select2 border-control items_choose_error"
-                                        name="item_variant_list[]" id="item_variant_list" multiple="multiple"
-                                        data-placeholder="Select variant fields" style="width: 100%;" required>
-                                        <option></option>
-                                    </select>
-                                </div>
-                            </div>
-                            <!-- IC2: the Apply button is gone - the per-variant price
-                                 rows render the moment the values are chosen. -->
-                        </div>
-                    </div>
-
-
-                    <!-- 4 · Generated per-variant price rows -->
-                    <div class="card m-b-30" id="load_price_fields" style="display:none;">
-
-                    </div>
-
-                    <!-- SKU and Tax side by side (owner ask) - SKU still follows
-                         the variant toggle with the price wrapper. -->
-                    <div class="row">
-                        <div class="col-lg-6" id="sku_card_col">
+                        <!-- SKU sits under Price & Stock, in the RIGHT column
+                             (owner ask). #sku_card_col keeps its id: items.js shows
+                             and hides it alongside the price wrapper. -->
+                        <div id="sku_card_col">
                         <div class="card m-b-30">
                             <div class="card-header">
                                 <h5 class="card-title mb-0"><lang class="lang_identification_title">SKU &amp; Barcodes</lang></h5>
                             </div>
                             <div class="card-body">
                                 <div class="form-row m-b-10">
-                                    <div class="col-md-4">
+                                    <div class="col-md-6">
                                         <label class="form-control-placeholder" for="items_plu_code">
                                             <lang class="lang_plu_title">Quick code</lang>
                                         </label>
@@ -325,10 +340,131 @@
                                             name="items_barcodeid" minlength="1" maxlength="100"
                                             placeholder="Scan From Bar Code Reader" autocomplete="off">
                                     </div>
+                                    <!--
+                                        The GLOBAL identifier, deliberately its own
+                                        field rather than reusing the barcode above.
+
+                                        That one is whatever this shop prints or
+                                        scans - it may be a real GTIN, an in-store
+                                        code for loose produce, or a supplier's
+                                        reference. This one is only ever stored when
+                                        it validates, because a wrong GTIN is worse
+                                        than a missing one: it claims to be a product
+                                        it is not, and anyone matching against it
+                                        inherits the error.
+
+                                        Most shop items will never have one, and that
+                                        is the normal case - hence no asterisk and a
+                                        hint that says so.
+                                    -->
+                                    <div class="col-md-6">
+                                        <label class="form-control-placeholder items-label-inline" for="items_gtin">
+                                            <lang class="lang_gtin_title">GTIN / EAN</lang>
+                                            <span class="tool" data-tip="The manufacturer's global barcode number - EAN-13, UPC or GTIN-14. Leave empty for own-brand or loose items." tabindex="6">
+                                                <i class="mdi mdi mdi-help-circle"></i>
+                                            </span>
+                                        </label>
+                                        <input type="text" class="form-control clear_text_item" id="items_gtin"
+                                            name="items_gtin" maxlength="14" inputmode="numeric"
+                                            placeholder="e.g. 5000159484695" autocomplete="off">
+                                        <small id="items_gtin_hint" class="form-text text-muted" style="min-height:18px;"></small>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                         </div>
+                        <!-- Variant mode empties this column - Price & Stock and SKU
+                             both hide, because each variant row carries its own. The
+                             builder belongs HERE, in the space they vacate, rather than
+                             full width below: outside the column it left the right half
+                             of the screen blank and stretched two inputs across the page
+                             (owner ask). The generated variant ROWS stay full width
+                             below - that is a table, and it wants the room. -->
+                        <div class="card m-b-30" id="show_variant_fields" style="display:none;">
+                        <div class="card-body">
+                            <div class="form-row">
+                                <div class="form-group col-md-12">
+                                    <label class="form-control-placeholder" for="items_variant">
+                                        <lang class="lang_selectvariant_title">Select Variant </lang>
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <select id='items_variant' name="items_variant" style='width: 200px;'
+                                        class="select2 items_choose_error" required>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group col-md-12">
+                                    <label for="item_variant_list">
+                                        <lang class="lang_variantfield_title"> Variant Fields </lang>
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-control select2 border-control items_choose_error"
+                                        name="item_variant_list[]" id="item_variant_list" multiple="multiple"
+                                        data-placeholder="Select variant fields" style="width: 100%;" required>
+                                        <option></option>
+                                    </select>
+                                </div>
+                            </div>
+                            <!-- A SECOND option, e.g. colour AND size, giving one item
+                                 per combination. Behind a link, and hidden by default,
+                                 so a shop that only sells by size sees exactly the form
+                                 it saw before - the common case pays nothing for the
+                                 rarer one. -->
+                            <a href="javascript:void(0)" id="variant_axis2_link"
+                               style="font-size:.85rem;">+ Add a second option</a>
+                            <div id="variant_axis2_wrap" style="display:none;">
+                                <div class="form-row mt-2">
+                                    <div class="form-group col-md-12">
+                                        <label class="form-control-placeholder items-label-inline" for="items_variant_2">
+                                            <lang class="lang_selectvariant2_title">Second variant</lang>
+                                        </label>
+                                        <select id="items_variant_2" name="items_variant_2" style="width: 200px;"
+                                            class="select2">
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group col-md-12">
+                                        <label class="items-label-inline" for="item_variant_list_2">
+                                            <lang class="lang_variantfield2_title">Second variant values</lang>
+                                        </label>
+                                        <select class="form-control select2 border-control"
+                                            name="item_variant_list_2[]" id="item_variant_list_2" multiple="multiple"
+                                            data-placeholder="Select variant fields" style="width: 100%;">
+                                            <option></option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- IC2: the Apply button is gone - the per-variant price
+                                 rows render the moment the values are chosen. -->
+                            <!-- Saving here creates SEVERAL items, not one, and nothing
+                                 on screen said so - you found that out afterwards, in
+                                 the item list. The count is the one fact worth stating,
+                                 so it goes where the choice is made rather than in a
+                                 confirmation nobody reads. It also fills the space this
+                                 card leaves under itself in variant mode with something
+                                 true, instead of padding the card to match its taller
+                                 neighbour - which is the thing already rejected here. -->
+                            <p id="variant_count_hint" class="text-muted mb-0 mt-1"
+                               style="font-size:.85rem; display:none;"></p>
+                        </div>
+                    </div>
+
+                    </div>
+                    </div>
+
+
+
+                    <!-- 4 · Generated per-variant price rows -->
+                    <div class="card m-b-30" id="load_price_fields" style="display:none;">
+
+                    </div>
+
+                    <!-- SKU and Tax side by side (owner ask) - SKU still follows
+                         the variant toggle with the price wrapper. -->
+                    <div class="row">
                         <div class="col-lg-6">
                     <!-- 5 · Tax -->
                     <div class="card m-b-30">
@@ -401,7 +537,14 @@
                         </div>
                     </div>
 
+                    
+                    <!-- A tabbed form with no way forward makes people hunt for the
+                         next tab. The step buttons are the path through it; Save is
+                         still on the sticky bar and works from any tab. -->
+                    <div class="item-tab-nav" data-nav-for="item_tab_main">
+                        <span></span><button type="button" class="btn btn-sm btn-primary item-tab-next" data-goto="item_tab_details">Next: Details<i class="feather icon-arrow-right ml-1"></i></button>
                     </div>
+</div>
                     <div class="tab-pane fade" id="item_tab_details" role="tabpanel">
 
                     <div class="card m-b-30">
@@ -414,16 +557,29 @@
                         </div>
                         <div class="collapse show" id="item_details_collapse">
                             <div class="card-body">
-                                <div class="form-row">
+                                <!-- Equal-height columns. The description is short and the image
+                                     column carries the dropzone plus the colour and shape pickers,
+                                     so the left half ended above the right with a block of white
+                                     under it (owner ask). Stretching the columns and letting the
+                                     textarea fill its own means the two halves end together,
+                                     whatever the tile controls do. -->
+                                <div class="form-row items-details-row">
                                     <div class="col-lg-6">
                                         <label class="form-control-placeholder" for="items_description">
                                             <lang class="lang_description_title"> Description </lang>
                                         </label>
-                                        <textarea class="form-control" id="items_description" name="items_description"
+                                        <textarea class="form-control items-description-fill" id="items_description" name="items_description"
                                             rows="4" maxlength="1000"
                                             placeholder="Enter a description ..."></textarea>
                                     </div>
                                     <div class="col-lg-6">
+                                        <!-- Labelled like Description beside it (owner ask). An
+                                             unlabelled dropzone reads as decoration until you
+                                             notice the Browse button; the field next to it says
+                                             what it is, and so should this. -->
+                                        <label class="form-control-placeholder d-block" for="item_upload_image">
+                                            <lang class="lang_item_photos_title">Photos</lang>
+                                        </label>
                                         <div class="mb-3">
                                             <div class="Neon Neon-theme-dragdropbox">
                                                 <input type="hidden" id="item_upload_image_status" value="no">
@@ -451,58 +607,25 @@
                                         </div>
                                         <input type="hidden" name="item_logo" id="item_logo" value="item.svg">
                                         <div id="item-display-preview"></div>
-                                    </div>
-                                </div>
-                                <!-- LS1: brand + tags - filtering today, the community
-                                     catalog tomorrow. -->
-                                <div class="form-row mt-2">
-                                    <div class="col-md-6">
-                                        <label class="form-control-placeholder" for="items_brand">
-                                            <lang class="lang_brand_title">Brand</lang>
-                                        </label>
-                                        <input type="text" class="form-control clear_text_item" id="items_brand"
-                                            name="items_brand" maxlength="100" placeholder="Brand (optional)"
-                                            autocomplete="off">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-control-placeholder" for="items_tags">
-                                            <lang class="lang_tags_title">Tags</lang>
-                                        </label>
-                                        <input type="text" class="form-control clear_text_item" id="items_tags"
-                                            name="items_tags" maxlength="300"
-                                            placeholder="Tags, comma separated (optional)" autocomplete="off">
-                                    </div>
-                                </div>
-                                <div class="form-row mt-2">
-                                    <div class="col-md-4">
-                                        <label class="form-control-placeholder" for="items_mfg_date">
-                                            <lang class="lang_mfg_title">Items MFG Date </lang>
-                                        </label>
-                                        <input type="text" class="form-control text-right" id="items_mfg_date"
-                                            name="items_mfg_date" placeholder="Enter MFG 2001-01-01" autocomplete="off">
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-control-placeholder" for="items_expiry_date">
-                                            <lang class="lang_expiry_title">Items Expiry Date </lang>
-                                        </label>
-                                        <input type="text" class="form-control text-right" id="items_expiry_date"
-                                            name="items_expiry_date" placeholder="Enter Expiry 2011-01-01"
-                                            autocomplete="off">
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-control-placeholder" for="items_sort">
-                                            <lang class="lang_showitemposition_title"> Item Position </lang>
-                                        </label>
-                                        <input type="number"
-                                            class="form-control allow_decimal text-right clear_text_item"
-                                            id="items_sort" name="items_sort" minlength="1" maxlength="10" value="99"
-                                            placeholder="Item list position" autocomplete="off">
-                                    </div>
-                                </div>
-                                <!-- Tile colour (Loyverse study L2): how a no-image item
-                                     looks on the sale grid. An image always wins. -->
-                                <div class="form-row mt-2">
-                                    <div class="col-md-12">
+                                        <!-- Colour and shape describe how the item looks on
+                                             the sale grid WHEN THERE IS NO IMAGE, so they belong
+                                             beside the image, not in a separate row below the
+                                             dates (owner ask). They hide themselves once an
+                                             image is uploaded - the label already promised that,
+                                             and a control that cannot affect anything should not
+                                             ask for a decision. -->
+                                        <div id="item_tile_fallback" class="mt-3">
+                                            <!-- The tile this item will actually get. Without it
+                                                 the swatches sit unselected and "no image" reads
+                                                 as "no appearance" - which was never true: a
+                                                 colour is derived from the name and saved either
+                                                 way. Showing it makes the automatic choice
+                                                 visible and obviously overridable. -->
+                                            <div id="item_tile_preview" class="tile-preview" style="display:none;">
+                                                <span class="tile-preview-swatch"></span>
+                                                <small class="tile-preview-note text-muted"></small>
+                                            </div>
+
                                         <label class="form-control-placeholder d-block">
                                             <lang class="lang_tile_color_title">Colour on the sale screen (when there is no image)</lang>
                                         </label>
@@ -529,6 +652,53 @@
                                             <span class="tile-swatch" data-color="#9b59b6" style="width:28px;height:28px;border:2px solid transparent;border-radius:4px;cursor:pointer;background:#9b59b6;"></span>
                                             <span class="tile-swatch" data-color="#95a5a6" style="width:28px;height:28px;border:2px solid transparent;border-radius:4px;cursor:pointer;background:#95a5a6;"></span>
                                         </div>
+                                                                            </div>
+                                    </div>
+                                </div>
+                                <!-- LS1: brand + tags - filtering today, the community
+                                     catalog tomorrow. -->
+                                <div class="form-row mt-2">
+                                    <div class="col-md-4">
+                                        <label class="form-control-placeholder" for="items_brand">
+                                            <lang class="lang_brand_title">Brand</lang>
+                                        </label>
+                                        <input type="text" class="form-control clear_text_item" id="items_brand"
+                                            name="items_brand" maxlength="100" placeholder="Brand"
+                                            autocomplete="off">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-control-placeholder" for="items_tags">
+                                            <lang class="lang_tags_title">Tags</lang>
+                                        </label>
+                                        <input type="text" class="form-control clear_text_item" id="items_tags"
+                                            name="items_tags" maxlength="300"
+                                            placeholder="Tags, comma separated" autocomplete="off">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-control-placeholder" for="items_sort">
+                                            <lang class="lang_showitemposition_title"> Item Position </lang>
+                                        </label>
+                                        <input type="number"
+                                            class="form-control allow_decimal text-right clear_text_item"
+                                            id="items_sort" name="items_sort" minlength="1" maxlength="10" value="99"
+                                            placeholder="Item list position" autocomplete="off">
+                                    </div>
+                                </div>
+                                <div class="form-row mt-2">
+                                    <div class="col-md-4">
+                                        <label class="form-control-placeholder" for="items_mfg_date">
+                                            <lang class="lang_mfg_title">Items MFG Date </lang>
+                                        </label>
+                                        <input type="text" class="form-control text-right" id="items_mfg_date"
+                                            name="items_mfg_date" placeholder="Enter MFG 2001-01-01" autocomplete="off">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-control-placeholder" for="items_expiry_date">
+                                            <lang class="lang_expiry_title">Items Expiry Date </lang>
+                                        </label>
+                                        <input type="text" class="form-control text-right" id="items_expiry_date"
+                                            name="items_expiry_date" placeholder="Enter Expiry 2011-01-01"
+                                            autocomplete="off">
                                     </div>
                                 </div>
                             </div>
@@ -536,7 +706,14 @@
                     </div>
 
                     <!-- 8 · Channels & extras (collapsed: flags, supplier) -->
+                    
+                    <!-- A tabbed form with no way forward makes people hunt for the
+                         next tab. The step buttons are the path through it; Save is
+                         still on the sticky bar and works from any tab. -->
+                    <div class="item-tab-nav" data-nav-for="item_tab_details">
+                        <button type="button" class="btn btn-sm btn-light item-tab-back" data-goto="item_tab_main"><i class="feather icon-arrow-left mr-1"></i>Back</button><button type="button" class="btn btn-sm btn-primary item-tab-next" data-goto="item_tab_more">Next: More<i class="feather icon-arrow-right ml-1"></i></button>
                     </div>
+</div>
                     <div class="tab-pane fade" id="item_tab_more" role="tabpanel">
 
                     <!-- The power codes moved here from the SKU card (owner: too
@@ -550,18 +727,37 @@
                             <h5 class="card-title mb-0"><lang class="lang_codes_packs_title">Extra barcodes &amp; packs</lang></h5>
                         </div>
                         <div class="card-body">
-                            <!-- V3: manufacturer / extra codes; scanning any of them finds this item. -->
-                            <input type="text" class="form-control clear_text_item" id="items_barcodes_alt"
-                                name="items_barcodes_alt" maxlength="400"
-                                placeholder="Alternate barcodes (comma separated, optional)" autocomplete="off">
+                            <!-- V3: manufacturer / extra codes; scanning any of them finds this item.
+                                 These three carried a placeholder and no label, so the moment
+                                 anything was typed the field stopped saying what it was - and a
+                                 filled-in form is exactly when you go back to check. Every other
+                                 field on this screen is labelled; these were the exception. -->
+                            <div class="form-row" id="items_barcodes_alt_row">
+                                <div class="col-12">
+                                    <label class="form-control-placeholder items-label-inline" for="items_barcodes_alt">
+                                        <lang class="lang_barcodes_alt_title">Extra barcodes</lang>
+                                    </label>
+                                    <input type="text" class="form-control clear_text_item" id="items_barcodes_alt"
+                                        name="items_barcodes_alt" maxlength="400"
+                                        placeholder="Alternate barcodes, comma separated" autocomplete="off">
+                                </div>
+                            </div>
                             <!-- V3: purchase-unit assist - "box of 24". Stock stays in base units. -->
                             <div class="form-row mt-2">
-                                <div class="col-7">
+                                <!-- An even pair. 7/5 was arbitrary: two fields of the same kind,
+                                             so two halves. -->
+                                        <div class="col-md-6">
+                                    <label class="form-control-placeholder items-label-inline" for="items_purchase_unit">
+                                        <lang class="lang_purchase_unit_title">Purchase unit</lang>
+                                    </label>
                                     <input type="text" class="form-control clear_text_item" id="items_purchase_unit"
                                         name="items_purchase_unit" maxlength="30"
-                                        placeholder="Purchase unit (e.g. box, optional)" autocomplete="off">
+                                        placeholder="Purchase unit (e.g. box)" autocomplete="off">
                                 </div>
-                                <div class="col-5">
+                                <div class="col-md-6">
+                                    <label class="form-control-placeholder items-label-inline" for="items_conversion_factor">
+                                        <lang class="lang_conversion_factor_title">Units per pack</lang>
+                                    </label>
                                     <input type="number" min="0" step="any" class="form-control clear_text_item" id="items_conversion_factor"
                                         name="items_conversion_factor" placeholder="Units per pack" autocomplete="off">
                                 </div>
@@ -585,7 +781,7 @@
                             <div class="form-row">
                                 <div class="form-group col-md-12">
                                     <div class="row">
-                                        <div class="col-md-9">
+                                        <div class="col-md-8">
                                             <div class="custom-control custom-radio custom-control-inline">
                                                 <input type="radio" id="item_radio_discount_amount"
                                                     name="radio_discount" class="custom-control-input"
@@ -604,7 +800,9 @@
                                                 </label>
                                             </div>
                                         </div>
-                                        <div class="col-md-3" style="padding: 0 !important;">
+                                        <!-- No padding override. It removed the grid gutter, so the value
+                                                 box sat flush against the radios. -->
+                                            <div class="col-md-4">
                                             <div class="floating-label">
                                                 <input name="items_discount_amount" id="items_discount_amount"
                                                     type="text" aria-describedby="basic-addon1"
@@ -688,11 +886,19 @@
                         </div>
                     </div>
 
+                    
+                    <!-- A tabbed form with no way forward makes people hunt for the
+                         next tab. The step buttons are the path through it; Save is
+                         still on the sticky bar and works from any tab. -->
+                    <div class="item-tab-nav" data-nav-for="item_tab_more">
+                        <button type="button" class="btn btn-sm btn-light item-tab-back" data-goto="item_tab_details"><i class="feather icon-arrow-left mr-1"></i>Back</button><span></span>
                     </div>
-                    </div>
-
-                    <!-- Sticky save bar: always in reach on a long form. -->
-                    <div class="card" style="position:sticky; bottom:0; z-index:5; margin-bottom:0;">
+</div>
+                                        <!-- Inside the tab-content box, and padded to match a pane.
+                         Outside it the bar took the full column width while the panes
+                         are inset by their own padding and a scrollbar, so the bar ran
+                         past the Next button and the cards above it (owner ask). -->
+                    <div class="card item-save-bar" id="item_save_bar">
                         <div class="card-body py-2 text-right">
                             <button type="button" class="btn btn-outline-secondary infobar-settings-reset"
                                 id="items_reset" onclick="PosnicPro.items.itemClearForm();"><i
@@ -719,12 +925,15 @@
                             <div class="form-row" id="show_last_created_item" style="display: none;">
                                 <div class="form-group col-md-12 mb-0">
                                     <div class="text-center">
-                                        <h6 class="mb-0 mt-1">Last Created Record <a href="#" id="last_created_item">View</a></h6>
+                                        <h6 class="mb-0 mt-1">Saved an item. <a href="#" id="last_created_item">Open it</a></h6>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
+                    </div>
+
+
 
                 </div>
             </div>

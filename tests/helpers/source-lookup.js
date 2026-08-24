@@ -107,6 +107,55 @@ function cssReader(css) {
 }
 
 /*
+ * A CSS rule read by its PURPOSE rather than its selector.
+ *
+ * cssRule above names a rule by the class it is written on, which is fine
+ * until the class is the thing changing. Extracting a pattern renames every
+ * selector it touches - so a test suite that finds rules by name has to be
+ * rewritten in the same commit as the refactor it exists to police, and the
+ * safety net is rebuilt by the fall it is meant to catch.
+ *
+ * A marker comment names what the rule is FOR, which survives the rename. The
+ * test then asserts on declarations, and the extraction becomes a pure edit
+ * with the net already in place and untouched.
+ *
+ * Returns the selector too, so a test that genuinely cares about the name -
+ * "this rule must be generic now" - can still say so, deliberately, rather
+ * than by accident of how it looked the rule up.
+ */
+function markerReader(css) {
+  return function ruleFor(marker) {
+    /*
+     * The WHOLE comment, not the name inside it.
+     *
+     * A bare substring search makes any marker that is a prefix of another
+     * ambiguous - "MD:rail" also finds MD:rail-wide, MD:rail-body and
+     * MD:rail-scroller, which is four hits for a name that reads as specific.
+     * Matching the delimiters removes the hazard instead of relying on nobody
+     * ever choosing a name that extends another.
+     */
+    const comment = `/* ${marker} */`;
+    const hits = occurrences(css, comment, 0);
+    assert.ok(hits.length > 0, `marker not found in css: ${comment}`);
+    assert.strictEqual(
+      hits.length,
+      1,
+      `marker "${marker}" appears ${hits.length} times - a marker that names two ` +
+        'rules identifies neither',
+    );
+    const endComment = css.indexOf('*/', hits[0]);
+    assert.notStrictEqual(endComment, -1, `marker is not inside a comment: ${marker}`);
+    const open = css.indexOf('{', endComment);
+    const close = css.indexOf('}', open);
+    assert.ok(open !== -1 && close > open, `no rule follows marker: ${marker}`);
+    return {
+      selector: css.slice(endComment + 2, open).trim(),
+      body: css.slice(open + 1, close),
+    };
+  };
+}
+
+/*
  * Comments are not code.
  *
  * A check for "is this function called anywhere" reported four hits once; three
@@ -129,4 +178,4 @@ function stripComments(src) {
     .join('\n');
 }
 
-module.exports = { blockAt, cssReader, stripComments, occurrences };
+module.exports = { blockAt, cssReader, markerReader, stripComments, occurrences };

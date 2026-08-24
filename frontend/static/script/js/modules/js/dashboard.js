@@ -470,84 +470,28 @@ PosnicPro.dashboard = {
         });
     },
 
-    getDashboardTotalAmounts: function (filter) {
-        var params = {
-            url: 'dashboard/getDashboardTotalAmounts',
-            data: {
-                filter: filter
-            }
-        };
-
-        PosnicPro.get(params, function (response) {
-            if (response.type === 'success') {
-                var data = response.data;
-                // sales count
-                $('#dashboard_sales_count').html(data.total_data.Total_Sales_Amount);
-                $('#dashboard_purchase_count').html(data.total_data.Total_Purchase_Amount);
-                $('#dashboard_return_count').html(data.total_data.Total_Return_Amount);
-                $('#dashboard_return_purchase_count').html(data.total_data.Total_returnpurchase_Amount);
-
-
-                // Getting sum of array
-                var sales_total = data.list_data.sales_y_axis.reduce(function (a, b) {
-                    return a + b;
-                }, 0);
-                var purchase_total = data.list_data.purchase_y_axis.reduce(function (a, b) {
-                    return a + b;
-                }, 0);
-                var return_total = data.list_data.return_y_axis.reduce(function (a, b) {
-                    return a + b;
-                }, 0);
-                var return_purchase_total = data.list_data.purchasereturn_y_axis.reduce(function (a, b) {
-                    return a + b;
-                }, 0);
-
-                $('#dashboard_sales_amount').number(sales_total, 2);
-                $('#dashboard_purchase_amount').number(purchase_total, 2);
-                $('#dashboard_return_amount').number(return_total, 2);
-                $('#dashboard_return_purchases_amount').number(return_purchase_total, 2);
-
-                var chart_data = new Array();
-                //For Sales
-                chart_data['color_code'] = "#506fe4";
-                chart_data['chart_name'] = "Sales";
-                chart_data['chart_id'] = "apex-line-chart-sales";
-                chart_data['arrX'] = data.list_data.sales_x_axis;
-                chart_data['arrY'] = data.list_data.sales_y_axis;
-                PosnicPro.dashboard.smallChartsData(chart_data);
-
-                //For Purchase
-                chart_data['color_code'] = "#43d187";
-                chart_data['chart_name'] = "Purchase";
-                chart_data['chart_id'] = "apex-line-chart-purchase";
-                chart_data['arrX'] = data.list_data.purchase_x_axis;
-                chart_data['arrY'] = data.list_data.purchase_y_axis;
-                PosnicPro.dashboard.smallChartsData(chart_data);
-
-                //For Return
-                chart_data['color_code'] = "#506fe4";
-                chart_data['chart_name'] = "Return";
-                chart_data['chart_id'] = "apex-line-chart-return";
-                chart_data['arrX'] = data.list_data.return_x_axis;
-                chart_data['arrY'] = data.list_data.return_y_axis;
-                PosnicPro.dashboard.smallChartsData(chart_data);
-
-                //For Purchase Return
-                chart_data['color_code'] = "#506fe4";
-                chart_data['chart_name'] = "Return Purchase";
-                chart_data['chart_id'] = "apex-line-chart-purchasereturn";
-                chart_data['arrX'] = data.list_data.purchasereturn_x_axis;
-                chart_data['arrY'] = data.list_data.purchasereturn_y_axis;
-                PosnicPro.dashboard.smallChartsData(chart_data);
-
-            } else {
-                PosnicPro.alert(response.type, response.message);
-            }
-        }, function (xhr) {
-            var response = jQuery.parseJSON(xhr.responseText);
-            PosnicPro.alert(response.type, response.message);
-        });
-    },
+    /*
+     * REMOVED 2026-08-21: getDashboardTotalAmounts and smallChartsData.
+     *
+     * 147 lines that could not run. getDashboardTotalAmounts was defined and
+     * never called - the only other mention of the name in the whole frontend
+     * was its own url - and smallChartsData was called from nowhere else, so
+     * both went together.
+     *
+     * Every id they wrote to had already been removed from the markup:
+     * #dashboard_sales_count and its three siblings, #dashboard_sales_amount
+     * and its three, and the four apex-line-chart-* containers. The dashboard
+     * shows its numbers through the profit card now (#profit_revenue and
+     * friends), which is live and tested.
+     *
+     * Worth deleting rather than leaving: smallChartsData opens with
+     * `document.getElementById(id).remove()`, which throws on a missing
+     * element. Anyone wiring this back up would get a TypeError, not a chart.
+     *
+     * The SERVER endpoint dashboard/getDashboardTotalAmounts is deliberately
+     * left in place - it is routed, modelled and tested, and this repo is not
+     * the only thing that can call it.
+     */
 
     getDashboardSalesPurchase: function (filter) {
         var params = {
@@ -838,105 +782,24 @@ PosnicPro.dashboard = {
         });
     },
 
-    smallChartsData: function (data) {
-        var myobj = document.getElementById(data['chart_id']);
-        myobj.remove();
 
-        var newDiv = document.createElement("div");
-        newDiv.id = data['chart_id'];
-        var element = document.getElementById(data['chart_id'] + "-parent");
-        element.appendChild(newDiv);
-
-        var options = {
-            chart: {
-                height: 50,
-                type: 'line',
-                sparkline: {
-                    enabled: true
-                },
-                toolbar: {
-                    show: false
-                },
-                zoom: {
-                    enabled: false
-                }
-            },
-            colors: [data['color_code']],
-            series: [{
-                    name: data['chart_name'],
-                    data: data['arrY']
-                }],
-            dataLabels: {
-                enabled: false
-            },
-            stroke: {
-                curve: 'smooth',
-                width: 2
-            },
-            grid: {
-                row: {
-                    colors: ['transparent', 'transparent'], opacity: .2
-                },
-                borderColor: 'transparent'
-            },
-            yaxis: {
-                min: 0
-            },
-            xaxis: {
-                categories: data['arrX'],
-                axisBorder: {
-                    show: true,
-                    color: 'rgba(0,0,0,0.05)'
-                },
-                axisTicks: {
-                    show: true,
-                    color: 'rgba(0,0,0,0.05)'
-                }
-            }
-        }
-        // Same guard as the payment-mode chart: this can be called after the
-        // operator has left the dashboard, and rendering into a missing
-        // container throws on offsetWidth.
-        var salesChartEl = document.querySelector("#" + data['chart_id']);
-        if (!salesChartEl) {
-            return;
-        }
-        PosnicPro.lazy.load('apexcharts').then(function () {
-            if (!salesChartEl.isConnected) return;
-            var sales_chart = new ApexCharts(salesChartEl, options);
-            sales_chart.render();
-        });
-    },
-
-    getDashboardCurrentWish: function () {
-        var params = {
-            url: 'dashboard/getDashboardCurrentWish'
-        };
-
-        PosnicPro.get(params, function (response) {
-            if (response.type === 'success') {
-                //Set Good morning, noon etc
-                var nav_href = PosnicPro.local.get('language_herf');
-                $.each(response.data.quotes, function (index, val) {
-                    if (val.id == response.data.current_date)
-                    {
-                        if (nav_href !== 'dashboard.html') {
-                            $("#current_wish").html('வணக்கம்...');
-                            $("#current_quote").html(val.tamilquote);
-                        } else {
-                            $("#current_wish").html(response.data.current_wish);
-                            $("#current_quote").html(val.quote);
-                        }
-                    }
-                });
-            } else {
-                PosnicPro.alert(response.type, response.message);
-            }
-        }, function (xhr) {
-            var response = jQuery.parseJSON(xhr.responseText);
-            PosnicPro.alert(response.type, response.message);
-        });
-    },
+    /*
+     * REMOVED 2026-08-21: getDashboardCurrentWish.
+     *
+     * This one was not merely dead - it ran. It fired on every document.ready,
+     * fetched dashboard/getDashboardCurrentWish, and wrote the greeting into
+     * #current_wish and the daily quote into #current_quote. Neither element
+     * has existed since the dashboard was redesigned, so the whole response was
+     * discarded: one round trip per page load for nothing.
+     *
+     * And its failure path was worse than its success path. A non-success
+     * response called PosnicPro.alert, so an endpoint having a bad day put an
+     * error toast on screen about a feature the user cannot see.
+     *
+     * The server endpoint is left in place, as with getDashboardTotalAmounts.
+     * If the greeting is wanted back, the markup is what has to return - the
+     * fetch was never the missing part.
+     */
 
     //Day, Week, Month, Year
     /*
@@ -1154,7 +1017,6 @@ PosnicPro.dashboard = {
     }
 };
 $(document).ready(function (e) {
-    PosnicPro.dashboard.getDashboardCurrentWish();
     var nav_lang = PosnicPro.local.get('language');
     $('.select_language').html(nav_lang);
     if ((nav_lang == null) || (nav_lang == '')) {

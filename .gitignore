@@ -98,3 +98,4 @@ builds/brand-seed/
 *-debug.jpg
 screenshot-*.png
 asset-signing-key.private.pem
+.demo-review/

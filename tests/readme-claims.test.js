@@ -78,7 +78,7 @@ test('every badge that states a number is checked by this file', () => {
   }
 });
 
-test('the licence badge matches what package.json declares', () => {
+test('the source licence badge matches what package.json declares', () => {
   const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
   const claimed = (badge(LICENCE_BADGE) || '').replace(/--/g, '-');
 
@@ -92,7 +92,7 @@ test('the licence badge matches what package.json declares', () => {
     `README says ${claimed}; package.json says ${pkg.license}`);
 });
 
-test('the licence the badge names is the licence in the file', () => {
+test('the source licence the badge names is the licence in the file', () => {
   const licence = fs.readFileSync(path.join(ROOT, 'LICENSE'), 'utf8');
   assert.match(licence, /GNU AFFERO GENERAL PUBLIC LICENSE/,
     'LICENSE is not the AGPL the badge and package.json claim');

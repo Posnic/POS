@@ -486,13 +486,18 @@
                                                 <!-- RIGHT: Additional Discount input -->
                                                 <td class="discount-input">
                                                     <div class="inline-container pull-right">
+                                                        <!-- Neutral, not red. These switch the discount between percent and
+                                                             rupees - a MODE, not a destructive act - and red is reserved
+                                                             for destructive on this screen (owner: "you can pick standard
+                                                             stuff"). The affordance is the bordered box and its hover,
+                                                             not the tint. -->
                                                         <span id="percentIcon"
-                                                            class="icon text-danger toggle-icon d-none"
+                                                            class="icon text-muted toggle-icon d-none"
                                                             title="Change to percentage discount"
                                                             style="cursor: pointer;" aria-hidden="true">
                                                             %
                                                         </span>
-                                                        <span id="rupeeIcon" class="icon text-danger toggle-icon"
+                                                        <span id="rupeeIcon" class="icon text-muted toggle-icon"
                                                             title="Change to rupee discount" style="cursor: pointer;"
                                                             aria-hidden="true">
                                                             <span class="display-currency">₹</span>
@@ -605,37 +610,6 @@
                                             </tr>
                                         </tbody>
                                     </table>
-                                </div>
-                                <!-- After a sale this used to read "Last Created
-                                     Record  View" - a bookmark, not a receipt. It
-                                     named no sale, no total and no customer, and
-                                     left out the one number a cash till actually
-                                     needs next: the change to hand back. It stays
-                                     put until the cashier dismisses it (owner
-                                     choice) so nothing vanishes before it is read. -->
-                                <div class="mt-2" id="show_last_created_sale" style="display: none;">
-                                    <div class="sale-done-strip">
-                                        <div class="sds-change" id="sds_change_wrap">
-                                            <span class="sds-change-label">Change due</span>
-                                            <span class="sds-change-value"><span
-                                                    class="display-currency">&#8377;</span>&nbsp;<span
-                                                    id="sds_change">0.00</span></span>
-                                        </div>
-                                        <div class="sds-meta">
-                                            <div class="sds-line"><span id="sds_number"></span><span
-                                                    id="sds_total"></span></div>
-                                            <div class="sds-sub"><span id="sds_customer"></span><span
-                                                    id="sds_loyalty"></span></div>
-                                        </div>
-                                        <div class="sds-actions">
-                                            <a href="#" id="last_created_sale" class="btn btn-sm btn-light border">View</a>
-                                            <button type="button" id="sds_void" data-module="sales"
-                                                data-access="delete"
-                                                class="btn btn-sm btn-outline-danger">Void</button>
-                                            <a href="#/sales/new" id="sds_new" class="btn btn-sm btn-primary">New sale
-                                                <kbd class="sds-kbd">&#9166;</kbd></a>
-                                        </div>
-                                    </div>
                                 </div>
                                 <div class="mt-2 customer-display-hide" id="paymentreturnhistory"
                                     style="display: none;">
@@ -763,6 +737,16 @@
                                                 <span class="pull-right"><span
                                                         class="display-currency"></span>&nbsp;<span
                                                         id="tendered_payment"></span></span>
+                                            </li>
+                                            <!--
+                                              Short, exact or over - said in words.
+                                              'Return balance 0.00' was shown both when the
+                                              customer had paid exactly and when they were still
+                                              762 rupees short, which are not the same thing and
+                                              must never look the same at a counter.
+                                            -->
+                                            <li class="list-group-item tender-status-row">
+                                                <div id="tender_status" class="tender-status"></div>
                                             </li>
                                             <li
                                                 class="list-group-item d-flex justify-content-between align-items-center">
@@ -933,7 +917,24 @@
                                     </div>
                                 </div>
                                 <div class="email-rightbar" id="newsalespage" style="display:none">
-                                    <div class="card m-b-30">
+                                    <!--
+                                      The card closes itself, and the ring says when.
+
+                                      A cashier at a busy counter already has the next customer in
+                                      front of them, so making them click New sale is a step on every
+                                      single transaction. But a panel that vanishes with no warning
+                                      reads as a fault - hence the ring, which makes the dismissal
+                                      something you can see coming and interrupt.
+
+                                      Any attention at all stops it (see saleDoneTimer in sales.js).
+                                      Losing a receipt because the panel closed as somebody reached
+                                      for Print would cost more than the saved clicks are worth.
+                                    -->
+                                    <div class="card m-b-30 sale-done-card">
+                                        <svg class="sale-done-ring" aria-hidden="true" focusable="false">
+                                            <rect class="sale-done-ring-track" rx="6" ry="6"></rect>
+                                            <rect class="sale-done-ring-line" rx="6" ry="6"></rect>
+                                        </svg>
                                         <div class="card-body">
                                             <div class="row mt-5 mb-3">
                                                 <div class="col-3"></div>
@@ -982,6 +983,7 @@
                                                             </a>
                                                         </div>
                                                     </div>
+                                                    <p class="sale-done-hint">Staying open &mdash; close it when you are ready.</p>
                                                 </div>
                                             </div>
 

@@ -92,28 +92,133 @@ PosnicPro.items = {
             .map(function (t) { return t.trim(); })
             .filter(function (t) { return t.length > 0; });
     },
+    /*
+     * Take the form to a tab, and put the cursor where it is wanted.
+     *
+     * A tabbed form can fail somewhere you cannot see: jQuery Validate focuses
+     * the first invalid field, and if that field is on a hidden pane the focus
+     * goes nowhere, the message renders off-screen, and Save looks like it did
+     * nothing at all. Switching to the pane first is what makes the error
+     * visible (owner ask).
+     */
+    goToTab: function (paneId, focusSelector) {
+        var $link = $('#item_form_tabs .nav-link[data-tab-pane="' + paneId + '"]');
+        if (!$link.length) { return; }
+        if (!$link.hasClass('active')) { $link.tab('show'); }
+        if (!focusSelector) { return; }
+        /* After the pane is shown, or the field is still display:none and the
+           browser refuses to focus it. */
+        setTimeout(function () {
+            var $f = $(focusSelector).first();
+            if (!$f.length) { return; }
+            var $target = $f.hasClass('select2-hidden-accessible') ? $f.next('.select2-container') : $f;
+            if ($target.is(':visible')) { $f.trigger('focus'); }
+        }, 160);
+    },
+
+    /* Which pane a field lives on, or nothing if it is not on one. */
+    tabOf: function (el) {
+        var pane = $(el).closest('#item_form_tabs_content > .tab-pane');
+        return pane.length ? pane.attr('id') : '';
+    },
+
+    /*
+     * The tile this item will actually get, shown while it is being typed.
+     *
+     * The swatches sat unselected, so "no image" read as "no appearance". It was
+     * never true: an item saved without a chosen colour still gets one, because
+     * the save falls back to PosnicPro.autoTile(name) and persists it.
+     *
+     * NOT random, and that is the point. The colour is a hash of the item NAME,
+     * so the same item is the same colour on every till and after every restart.
+     * A sale grid is navigated by recognition - "the red one is Coke" - and a
+     * colour that changes between sessions is worse than no colour, because it
+     * teaches a habit and then breaks it.
+     */
+    refreshTilePreview: function () {
+        var $box = $('#item_tile_preview');
+        if (!$box.length) { return; }
+
+        var chosenColor = $('#item_tile_color').val() || '';
+        var chosenShape = $('#item_tile_shape').val() || '';
+        var name = $.trim($('#items_name').val() || '');
+        var auto = (typeof PosnicPro.autoTile === 'function')
+            ? PosnicPro.autoTile(name)
+            : { color: '', shape: 'rounded' };
+
+        var color = chosenColor || auto.color;
+        var shape = chosenShape || auto.shape;
+        var automatic = !chosenColor && !chosenShape;
+
+        /* Nothing to preview before the item is named - the hash of an empty
+           string is a colour, but showing it invites picking it as if it meant
+           something. */
+        if (!name) { $box.hide(); return; }
+
+        var radius = shape === 'circle' ? '50%' : (shape === 'rounded' ? '10px' : '3px');
+        var clip = shape === 'diamond' ? 'polygon(50% 0,100% 50%,50% 100%,0 50%)' : 'none';
+
+        $box.find('.tile-preview-swatch').css({
+            background: color,
+            'border-radius': radius,
+            'clip-path': clip
+        });
+        $box.find('.tile-preview-note').text(
+            automatic ? 'Chosen from the name - pick a colour below to change it' : 'Your choice'
+        );
+        $box.show();
+    },
+
     setTileShape: function (shape) {
         $('#item_tile_shape').val(shape || '');
         $('#item_tile_shapes .tile-shape').removeClass('is-picked').filter(function () {
             return ($(this).data('shape') || '') === (shape || '');
         }).addClass('is-picked');
+        PosnicPro.items.refreshTilePreview();
     },
     setTileColor: function (color) {
         $('#item_tile_color').val(color || '');
         $('#item_tile_swatches .tile-swatch').removeClass('is-picked').filter(function () {
             return ($(this).data('color') || '') === (color || '');
         }).addClass('is-picked');
+        PosnicPro.items.refreshTilePreview();
     },
     /* Services (Q3): a service holds no stock - the stock-ish inputs step
        aside and the pricing unit select appears. The server forces
        track_inventory off regardless, so this is presentation only. */
     applyServiceMode: function () {
         var isService = $('#item_is_service').is(':checked');
-        $('#item_service_unit').attr('style', isService ? 'width:auto;' : 'width:auto; display:none !important;');
+        /* The whole style attribute is replaced, so it must not carry sizing any
+           more: the select sits in a flex row now and CSS owns its width. It
+           used to set width:auto here, which fought the row and left the unit
+           hanging off the checkbox label instead of lining up with the fields.
+           The !important is still needed to beat the markup's own inline hide. */
+        $('#item_service_unit').attr('style', isService ? '' : 'display:none !important;');
         // a service holds no stock: opening qty and reorder vanish wherever
         // their column lives (the old .col-md-6 anchor rotted silently)
         $('#items_available_quantity, #items_reorder_point').closest('[class*="col-"]').toggle(!isService);
         $('#items_barcodes_alt, #items_purchase_unit, #items_conversion_factor').closest('.form-row').toggle(!isService);
+        /*
+         * A service cannot be a variant family, so the offer goes away.
+         *
+         * Not because priced tiers of a service are meaningless - "Haircut /
+         * Men", "Massage / 60 min" are perfectly real - but because the rows
+         * this form builds for a family are stock rows: SKU, barcode, opening
+         * quantity, units, shelf position. _sharedItemFields stamps
+         * item_kind:'service' onto every one of them, so the combination saves
+         * services carrying stock counts, which nothing downstream can mean.
+         *
+         * Offering a choice that produces contradictory data is worse than not
+         * offering it. Service tiers are worth building properly later, as
+         * priced options on ONE service rather than a family of stock records.
+         */
+        $('#variant_mode_link').toggle(!isService);
+        if (isService && $('#product_with_variant').is(':checked')) {
+            /* Said out loud rather than silently reverted - anything already
+               typed into the variant rows is about to be cleared. */
+            $('#product_without_variant').prop('checked', true).trigger('change');
+            PosnicPro.alert('info', 'Variants are for stocked products - this is now a single service');
+        }
     },
     /* A shop with tax switched off never sees the Tax card (owner ask). */
     applyTaxGate: function () {
@@ -139,6 +244,53 @@ PosnicPro.items = {
     showBarcode: function (id) {
         PosnicPro.items.printLableView(id);
     },
+    /*
+     * The shared filter bar, on the item list.
+     *
+     * The five controls this replaces (date range, field selector, search box,
+     * Apply, Clear) worked, but could not say a filter was ON: the panel closes
+     * and takes them with it, so a list narrowed to one category looks exactly
+     * like a shop with one category. The count on the button is visible whether
+     * the panel is open or not, which is the case that matters.
+     *
+     * It writes into data('filters') and calls the SAME itemsTable as before,
+     * rather than changing how the list loads. The endpoint keeps taking the
+     * blob it always took - see listFilter.legacyFilters, which builds the same
+     * regex PosnicPro.search built, so adopting the bar does not silently
+     * change which rows a shop's existing habits return.
+     *
+     * No Apply button on purpose. A filter you have to confirm is one you can
+     * forget to, and the debounce in the bar already stops a request per
+     * keystroke.
+     */
+    mountFilters: function () {
+        if (!$('#items_filter_panel').length) { return; }
+        PosnicPro.listFilter.mount({
+            key: 'items',
+            container: '#items_filter_panel',
+            button: '#items_filter_btn',
+            searchPlaceholder: 'Search name, SKU or barcode',
+            dateField: 'Updated',
+            searchFields: [
+                { value: 'all', label: 'All fields' },
+                { value: 'name', label: 'Name' },
+                { value: 'category_name', label: 'Category' },
+                { value: 'itemid', label: 'SKU' },
+                { value: 'barcode_id', label: 'Barcode' }
+            ],
+            onChange: function () {
+                var table = $('#view_items');
+                /* updated_date is the column PosnicPro.search filtered on for
+                   this list; using anything else would filter a different
+                   column while looking like it worked. */
+                var filters = PosnicPro.listFilter.legacyFilters('items', { dateKey: 'updated_date' });
+                table.data('filters', JSON.stringify(filters));
+                table.data('current_page', 1);
+                PosnicPro.items.itemsTable('items');
+            }
+        });
+    },
+
     itemsTable: function () {
         // A fresh page/search/refresh ends any "select all N" - the set behind
         // the list has changed, so the old whole-set selection no longer holds.
@@ -167,11 +319,15 @@ PosnicPro.items = {
 
                 var rowTotal = response.data.total;
                 if (rowTotal === 0) {
+                    /* Which kind of empty. "No items yet" over a filtered view
+                       tells a shop with a full catalogue that it has none -
+                       see items.html and PosnicPro.hasActiveFilters. */
+                    var filtered = PosnicPro.hasActiveFilters('items');
                     $('.item_header').hide();
-                    $('#item_img_hide').show();
-
+                    $('#item_img_hide').toggle(!filtered);
+                    $('#item_no_match').toggle(filtered);
                 } else {
-                    $('#item_img_hide').hide();
+                    $('#item_img_hide,#item_no_match').hide();
                     $('.item_header').show();
                 }
 
@@ -288,6 +444,7 @@ PosnicPro.items = {
         $('#items_new,#items_view').modal('hide');
         $('#v-pills-inventory-tab,#view_items_page').addClass('active');
         $('#v-pills-inventory').addClass('show active');
+        PosnicPro.items.mountFilters();
         PosnicPro.items.itemsTable('items');
         $('.dashboard_img_menu').hide();
         $('#image_sidebar_itemdetail').show();
@@ -375,19 +532,21 @@ PosnicPro.items = {
             tax_name = '';
             tax_method = 'hsn';
         } else {
-            var taxDetail = $("#items_tax").select2("data");
-            tax_value = taxDetail[0].element.attributes['data-tax-value'].value;
-            tax_id = taxDetail[0].element.attributes['data-tax-id'].value;
-            tax_name = taxDetail[0].element.attributes['data-tax-name'].value;
+            /* No selection is the normal state when the tax module is off. */
+            tax_value = PosnicPro.items.selectAttr('#items_tax', 'data-tax-value', 0);
+            tax_id = PosnicPro.items.selectAttr('#items_tax', 'data-tax-id');
+            tax_name = PosnicPro.items.selectAttr('#items_tax', 'data-tax-name');
             hsn_code = 0;
             tax_method = 'default';
         }
-        var categoryDetail = $("#items_category").select2("data");
         return {
             supplier_id: $('#items_supplier_id').val(),
             supplier_name: $('#items_supplier').val(),
-            category_id: (categoryDetail.length && categoryDetail[0].element.attributes['data-category-id']) ? categoryDetail[0].element.attributes['data-category-id'].value : '',
-            category_name: categoryDetail[0].element.attributes['data-category-name'].value,
+            category_id: PosnicPro.items.selectAttr('#items_category', 'data-category-id'),
+            /* category_name was the one unguarded read left on this line - the id
+               beside it already had a length check. Category is optional, so an
+               item saved without one threw here. */
+            category_name: PosnicPro.items.selectAttr('#items_category', 'data-category-name'),
             cover_image: $('#item_logo').val(),
             inventory: $('#item_track_inventory').is(':checked'),
             sales_channel: $('#item_sales_channel').is(':checked'),
@@ -398,6 +557,11 @@ PosnicPro.items = {
             tile_color: $('#item_tile_color').val() || PosnicPro.autoTile($('#items_name').val()).color,
             tile_shape: $('#item_tile_shape').val() || PosnicPro.autoTile($('#items_name').val()).shape,
             plu_code: $('#items_plu_code').val() || '',
+            /*
+             * NOT here, deliberately - a GTIN identifies ONE trade item, so it
+             * cannot be shared by a family: five variants carrying one number
+             * would each claim to be the same product.
+             */
             item_kind: $('#item_is_service').is(':checked') ? 'service' : 'product',
             service_unit: $('#item_service_unit').val() || 'fixed',
             brand: $('#items_brand').val(),
@@ -431,15 +595,91 @@ PosnicPro.items = {
      */
     saveVariantFamily: function (loader) {
         var itemName = $('#items_name').val();
-        var values = $('#item_variant_list').val() || [];
+        /* The same ordered list loadVariant built the inputs from. Walking it
+           separately is what would let row N's price be saved against variant
+           M once combinations are in play. */
+        var values = $.map(PosnicPro.items.variantCombinations(), function (c) {
+            return c.value;
+        });
         var shared = PosnicPro.items._sharedItemFields();
-        var variantDetail = $('#items_variant').select2('data');
-        var axis = (variantDetail && variantDetail.length) ? variantDetail[0].text : '';
+        var axis = PosnicPro.items.variantAxisLabel();
         var rows = [];
+        /* Did somebody actually PICK a tile, or is it the automatic one?
+           _sharedItemFields already resolved the fallback against the parent
+           name, so by the time it is spread onto a row there is no way left to
+           tell the two apart - the question has to be asked here. */
+        var tilePicked = !!($('#item_tile_color').val() || $('#item_tile_shape').val());
+
+        /*
+         * A family carries NO gtin, and that is deliberate rather than pending.
+         *
+         * A GTIN identifies one trade item. Red-L and Red-M are different trade
+         * items with different numbers on their packs, so there is no single
+         * value that could be shared - putting the parent's on all of them would
+         * have five products each claiming to be the same one, which is the
+         * duplicate-identity failure the validation exists to prevent.
+         *
+         * A per-variant GTIN input on each generated row is the right answer and
+         * belongs with the per-variant image work (P2 in
+         * PRODUCT_INFORMATION_MODEL). Until then no number is better than a
+         * wrong one.
+         */
         $(values).each(function (key, variantName) {
             var unitVariantDetail = $('#items_unit_' + key + '');
-            rows.push(Object.assign({}, shared, {
-                name: itemName + ' / ' + variantName,
+            var rowName = itemName + ' / ' + variantName;
+            /*
+             * Each variant gets its OWN automatic tile, from its own full name.
+             *
+             * The shared fields carry a tile derived from the parent name, so
+             * spreading them gave every member of a family the same colour and
+             * the same shape - "Shirt / Red" and "Shirt / Blue" indistinguishable
+             * on the sale grid. That defeats the only thing the dressing is for:
+             * a till is navigated by recognition, and a family is exactly where
+             * several near-identical names sit side by side needing to be told
+             * apart at a glance.
+             *
+             * An explicit choice still wins and still applies to the whole
+             * family - picking a colour for "Shirt" means the shop wants that
+             * colour for the shirts, and quietly overriding it per row would be
+             * the opposite of what was asked.
+             */
+            var autoRow = tilePicked ? null : PosnicPro.autoTile(rowName);
+
+            /*
+             * This row's own photo, if one was chosen.
+             *
+             * Sent as a one-image list marked cover, so the variant's tile and
+             * its item page both show the picture of THAT variant. The shared
+             * fields carry the family's whole set, so a row with no choice is
+             * left exactly as it was before any of this existed.
+             *
+             * Looked up by name against what is currently uploaded rather than
+             * trusted from the hidden input: the photo may have been removed
+             * after it was picked, and saving a name with no image behind it
+             * would give the variant a broken picture instead of no picture.
+             */
+            var chosenPhoto = $('#items_photo_' + key).val();
+            var rowPhoto = null;
+            if (chosenPhoto) {
+                var found = $.grep(PosnicPro.items.imageParams || [], function (x) {
+                    return x && x.name === chosenPhoto;
+                });
+                if (found.length) {
+                    rowPhoto = {
+                        image: [$.extend({}, found[0], { cover: 'yes' })],
+                        /* cover_image names the picture the item leads with, and
+                           it comes from the shared fields too - left alone, the
+                           row would carry its own photo while still pointing at
+                           the family's as its cover. */
+                        cover_image: found[0].name,
+                    };
+                }
+            }
+            rows.push(Object.assign({}, shared, rowPhoto || {}, autoRow ? {
+                tile_color: autoRow.color,
+                tile_shape: autoRow.shape,
+            } : {}, {
+                name: rowName,
                 variant_value: variantName,
                 sku_id: $('#items_itemid_' + key + '').val(),
                 barcode_id: $('#items_barcodeid_' + key + '').val(),
@@ -564,21 +804,19 @@ PosnicPro.items = {
                     var tax_name = '';
                     var tax_method = 'hsn';
                 } else {
-                    var taxDetail = $("#items_tax").select2("data");
-                    var tax_value = taxDetail[0].element.attributes['data-tax-value'].value;
-                    var tax_id = taxDetail[0].element.attributes['data-tax-id'].value;
-                    var tax_name = taxDetail[0].element.attributes['data-tax-name'].value;
+                    var tax_value = PosnicPro.items.selectAttr('#items_tax', 'data-tax-value', 0);
+                    var tax_id = PosnicPro.items.selectAttr('#items_tax', 'data-tax-id');
+                    var tax_name = PosnicPro.items.selectAttr('#items_tax', 'data-tax-name');
                     var hsn_code = 0;
                     var tax_method = 'default';
                 }
-                var categoryDetail = $("#items_category").select2("data");
                 var formData = {
                     id: $('#itemid').val(),
                     name: name,
                     supplier_id: $('#items_supplier_id').val(),
                     supplier_name: $('#items_supplier').val(),
-                    category_id: (categoryDetail.length && categoryDetail[0].element.attributes['data-category-id']) ? categoryDetail[0].element.attributes['data-category-id'].value : '',
-                    category_name: categoryDetail[0].element.attributes['data-category-name'].value,
+                    category_id: PosnicPro.items.selectAttr('#items_category', 'data-category-id'),
+                    category_name: PosnicPro.items.selectAttr('#items_category', 'data-category-name'),
                     cover_image: $('#item_logo').val(),
                     inventory: $('#item_track_inventory').is(':checked'),
                     sales_channel: $('#item_sales_channel').is(':checked'),
@@ -589,6 +827,10 @@ PosnicPro.items = {
                     tile_color: $('#item_tile_color').val() || PosnicPro.autoTile($('#items_name').val()).color,
             tile_shape: $('#item_tile_shape').val() || PosnicPro.autoTile($('#items_name').val()).shape,
             plu_code: $('#items_plu_code').val() || '',
+            /* The server validates and derives gtin14 - see
+               api/src/helpers/items.helper.js. Sending whatever was typed is
+               correct: a client-side check is a courtesy, not the rule. */
+            gtin: $('#items_gtin').val() || '',
                     item_kind: $('#item_is_service').is(':checked') ? 'service' : 'product',
                     service_unit: $('#item_service_unit').val() || 'fixed',
                     brand: $('#items_brand').val(),
@@ -631,8 +873,13 @@ PosnicPro.items = {
                         PosnicPro.sales.itemsMenu.onlineProductList();
                         if (PosnicPro.action === 'add') {
                             $('#show_last_created_item').show();
-                            // The rapid-entry loop: cursor back on the name.
-                            $('#items_name').focus();
+                            /* The rapid-entry loop: back to the first tab, cursor
+                               on the name, ready for the next item. Focusing the
+                               name WITHOUT switching tabs put the cursor on a
+                               hidden pane whenever the item was saved from
+                               Details or More - which is most of the time once
+                               someone starts using the other tabs (owner ask). */
+                            PosnicPro.items.goToTab('item_tab_main', '#items_name');
                         }
                         var path = '#/items/' + data.id;
                         $('#last_created_item').attr('href', path);
@@ -715,15 +962,26 @@ PosnicPro.items = {
                             $('#items_supplier_id').val(defaultsupplier.supplier_id);
                             $('#items_supplier').val(defaultsupplier.supplier_name);
                         }
-                        $(".items_category").val('').trigger('change.select2');
+                        /* select2 FIRST, then the value. Firing change.select2 at a
+                           select that is not a select2 yet is what throws
+                           "Cannot read properties of null (reading 'offsetWidth')". */
                         $(".items_category").select2({
                             placeholder: "Choose a Category"
                         });
-                        $("#items_variant").val(1).trigger('change.select2');
+                        $(".items_category").val('').trigger('change.select2');
                         $("#items_variant").select2({
                             placeholder: "Choose a Variant"
                         });
                         $('#item_variant_list,#load_price_fields').html('');
+                        /* The variant SELECT keeps its selection across a save, so
+                           emptying its value list leaves the form showing a chosen
+                           variant with nothing to choose from - the same state the
+                           preselect used to produce, arriving by a different door
+                           (reported: "first variant values not loaded but second
+                           variant values loading" - the second one works because
+                           picking it fires select2:select, which refills). */
+                        PosnicPro.items.loadVariantValues('#items_variant', '#item_variant_list');
+                        PosnicPro.items.resetSecondAxis();
                         if ($('#show_variant_fields').css('display') === 'none') {
                             $('#product_without_variant').prop('checked', true);
                             $('#product_with_variant').prop('checked', false);
@@ -1069,6 +1327,10 @@ PosnicPro.items = {
                 $('#items_hsndescription').val(data.hsndescription);
                 $('#items_supplier').val(data.supplier_name);
                 $('#items_supplier_id').val(data.supplier_id);
+                /* Re-load with the item's own supplier selected. The list may not
+                   carry an inactive or deleted one, and loadSelectSupplier adds it
+                   back rather than letting an edit silently clear the field. */
+                PosnicPro.items.loadSelectSupplier(data.supplier_id, data.supplier_name);
                 $("#items_category").val(data.category_id).trigger("change");
                 $('#items_discount_amount').val(data.discount_amount);
                 $('#items_discount_percentage').val(data.discount_percentage);
@@ -1116,6 +1378,8 @@ PosnicPro.items = {
                 $('#items_brand').val(data.brand || '');
                 $('#items_tags').val(Array.isArray(data.tags) ? data.tags.join(', ') : '');
                 $('#items_reorder_point').val(data.reorder_point === null || data.reorder_point === undefined ? '' : data.reorder_point);
+                $('#items_gtin').val(data.gtin || '');
+                PosnicPro.items.checkGtin();
                 PosnicPro.items.setTileColor(data.tile_color || '');
                 PosnicPro.items.setTileShape(data.tile_shape || '');
                 $('#items_plu_code').val(data.plu_code || '');
@@ -1693,6 +1957,10 @@ PosnicPro.items = {
                 $('#items_barcodeid').val(data.barcode_id);
                 $('#items_supplier').val(data.supplier_name);
                 $('#items_supplier_id').val(data.supplier_id);
+                /* Re-load with the item's own supplier selected. The list may not
+                   carry an inactive or deleted one, and loadSelectSupplier adds it
+                   back rather than letting an edit silently clear the field. */
+                PosnicPro.items.loadSelectSupplier(data.supplier_id, data.supplier_name);
                 $("#items_category").val(data.category_id).trigger("change");
                 $('#items_discount_amount').val(data.discount_amount);
                 $('#items_discount_percentage').val(data.discount_percentage);
@@ -1763,6 +2031,8 @@ PosnicPro.items = {
                 $('#items_brand').val(data.brand || '');
                 $('#items_tags').val(Array.isArray(data.tags) ? data.tags.join(', ') : '');
                 $('#items_reorder_point').val(data.reorder_point === null || data.reorder_point === undefined ? '' : data.reorder_point);
+                $('#items_gtin').val(data.gtin || '');
+                PosnicPro.items.checkGtin();
                 PosnicPro.items.setTileColor(data.tile_color || '');
                 PosnicPro.items.setTileShape(data.tile_shape || '');
                 $('#items_plu_code').val(data.plu_code || '');
@@ -1969,17 +2239,434 @@ PosnicPro.items = {
         return false;
     },
 
+    /*
+     * The rows this family will create, in order - the ONE list.
+     *
+     * loadVariant and saveVariantFamily each used to walk
+     * $('#item_variant_list').val() themselves, and agreed only because they
+     * happened to walk the same thing. The moment a second axis makes the row
+     * list a PRODUCT rather than the values themselves, two independent walks
+     * are two chances to disagree - and disagreeing here means the price typed
+     * into row 3 is saved against variant 5, silently, with nothing on screen
+     * to show it. Indices are the contract (items_selling_price_<key>), so the
+     * list that defines them has to be built once.
+     *
+     * Single axis returns the values unchanged, so a shop that never opens the
+     * second picker gets byte-identical behaviour to before.
+     */
+    variantCombinations: function () {
+        var first = $('#item_variant_list').val() || [];
+        var second = $('#item_variant_list_2').val() || [];
+        if (!second.length) {
+            return $.map(first, function (v) { return { value: v }; });
+        }
+        var out = [];
+        $.each(first, function (_, a) {
+            $.each(second, function (__, b) {
+                /* " / " matches how the family already reads on the item list
+                   ("Shirt / Red / L"), and the server treats variant_value as
+                   an opaque unique string, so a compound value needs nothing
+                   added to the model. */
+                out.push({ value: a + ' / ' + b });
+            });
+        });
+        return out;
+    },
+
+    /*
+     * Put the second axis away.
+     *
+     * A stale second axis is the worst possible leftover on this form: it does
+     * not look like an error, it silently MULTIPLIES the next item into
+     * combinations nobody asked for. Every path that clears the form has to
+     * clear it, so there is one function to call rather than four copies to
+     * keep in step.
+     */
+    resetSecondAxis: function () {
+        $('#item_variant_list_2').val(null).html('');
+        var $sel = $('#items_variant_2');
+        if ($sel.length) {
+            $sel.val('');
+            /* change.select2 repaints the widget without re-firing the app's
+               own change handlers - .trigger('change') here would rebuild the
+               value list from a selection that no longer exists. */
+            if ($sel.hasClass('select2-hidden-accessible')) { $sel.trigger('change.select2'); }
+        }
+        $('#variant_axis2_wrap').hide();
+        $('#variant_axis2_link').show().text('+ Add a second option');
+    },
+
+    /*
+     * Stop the same option being used for both axes.
+     *
+     * Size crossed with Size is not a grid, it is the same list twice: it
+     * produced "40 / 40", "40 / 42", "42 / 40" - items whose names say two
+     * different sizes for one garment, and a 40 that exists twice over.
+     *
+     * Disabled rather than removed. A greyed-out Size in the second list
+     * shows WHY it cannot be picked - it is already the first option -
+     * whereas quietly dropping it looks like the variant went missing.
+     */
+    syncAxisExclusion: function () {
+        var $one = $('#items_variant');
+        var $two = $('#items_variant_2');
+        if (!$two.length) { return; }
+        var a = String($one.val() || '');
+        var b = String($two.val() || '');
+
+        /* Already clashing - only reachable by changing the FIRST axis to
+           whatever the second was. The second gives way, because the first is
+           the one just chosen, and its values go with it: they belong to the
+           option that is no longer selected there. */
+        if (a && b && a === b) {
+            PosnicPro.items.resetSecondAxis();
+            /* resetSecondAxis puts the panel away. It was open and being used,
+               so it stays open - collapsing it here would read as the whole
+               second option being taken away rather than just its value. */
+            $('#variant_axis2_wrap').show();
+            $('#variant_axis2_link').hide();
+            b = '';
+        }
+
+        $two.find('option').each(function () {
+            $(this).prop('disabled', !!a && this.value === a);
+        });
+        $one.find('option').each(function () {
+            $(this).prop('disabled', !!b && this.value === b);
+        });
+
+        /* change.select2 repaints without re-firing the app handlers - a plain
+           .trigger('change') here would rebuild both value lists on every
+           keystroke-driven repaint. */
+        $.each([$one, $two], function (_, $el) {
+            if ($el.hasClass('select2-hidden-accessible')) { $el.trigger('change.select2'); }
+        });
+    },
+
+    /* A base64 photo needs a real mime type to render - browsers will not
+       sniff a data: URL. Taken from the file name, which is the only thing
+       we have; anything unrecognised falls back to png rather than to a
+       broken thumbnail. */
+    photoSrc: function (photo) {
+        if (!photo) { return ''; }
+        if (!photo.data) { return photo.name || ''; }
+        var ext = String(photo.name || '').split('.').pop().toLowerCase();
+        var mime = { jpg: 'jpeg', jpeg: 'jpeg', png: 'png', gif: 'gif', bmp: 'bmp' }[ext] || 'png';
+        return 'data:image/' + mime + ';base64,' + photo.data;
+    },
+
+    /*
+     * Paint each variant row's photo strip from the photos uploaded above.
+     *
+     * Repainted wholesale rather than patched: photos are added and removed
+     * while the rows are on screen, and a strip that only ever grows would go
+     * on offering a picture that is no longer part of the item.
+     *
+     * A choice pointing at a removed photo is dropped here too - keeping it
+     * would save a name the family no longer carries, and the variant would
+     * come back with no picture at all.
+     */
+    renderVariantPhotoPickers: function () {
+        var photos = $.grep(PosnicPro.items.imageParams || [], function (x) {
+            return !!(x && x.name);
+        });
+        $('[id^="items_photo_strip_"]').each(function () {
+            var key = this.id.replace('items_photo_strip_', '');
+            var $hidden = $('#items_photo_' + key);
+            var chosen = String($hidden.val() || '');
+            var stillThere = $.grep(photos, function (x) { return x.name === chosen; }).length;
+            if (chosen && !stillThere) { $hidden.val(''); chosen = ''; }
+
+            var $strip = $(this).empty();
+            if (!photos.length) {
+                $strip.append($('<small class="text-muted">')
+                    .text('Add photos above to give this variant its own'));
+                return;
+            }
+            $.each(photos, function (_, photo) {
+                /* Built as elements, not markup: a file name is user-supplied
+                   text and goes into a title attribute. */
+                $strip.append($('<img>')
+                    .attr('src', PosnicPro.items.photoSrc(photo))
+                    .attr('title', photo.name)
+                    .attr('alt', photo.name)
+                    .attr('data-photo', photo.name)
+                    .addClass('items-variant-photo' + (photo.name === chosen ? ' is-chosen' : '')));
+            });
+        });
+    },
+
+    /* "Colour / Size" when both are in play, else just the one. */
+    variantAxisLabel: function () {
+        var one = PosnicPro.items.selectText('#items_variant');
+        var two = ($('#item_variant_list_2').val() || []).length
+            ? PosnicPro.items.selectText('#items_variant_2')
+            : '';
+        return two ? one + ' / ' + two : one;
+    },
+
+    /* select2('data') throws if the widget was never initialised, and these
+       two are read on every save. */
+    selectText: function (selector) {
+        try {
+            var d = $(selector).select2('data');
+            return (d && d.length) ? d[0].text : '';
+        } catch (e) {
+            return '';
+        }
+    },
+
+    /*
+     * Say how many items Save is about to create.
+     *
+     * A variant family is the one place on this form where Save creates
+     * SEVERAL records rather than one, and nothing said so - you found out
+     * afterwards, by looking at the item list. Pick eight sizes and you get
+     * eight items, each needing its own price.
+     *
+     * Stated where the choice is made, not in a confirmation dialog: a dialog
+     * arrives after the decision and gets clicked through, while a line under
+     * the picker is read while the picker is still being used.
+     */
+    refreshVariantCount: function () {
+        var $hint = $('#variant_count_hint');
+        if (!$hint.length) { return; }
+        var n = PosnicPro.items.variantCombinations().length;
+        if (!n || !$('#product_with_variant').is(':checked')) { $hint.hide(); return; }
+        $hint.text(n === 1
+            ? 'Saving creates 1 item, priced below'
+            : 'Saving creates ' + n + ' items, each priced below').show();
+    },
+
+    /*
+     * Fill an axis's value list from whichever variant is selected on it.
+     *
+     * This used to happen ONLY inside a select2:select handler - that is, only
+     * when somebody actively picked a variant from the dropdown. But
+     * loadSelectVariant PRESELECTS the first variant with
+     * .val(1).trigger('change.select2'), and a namespaced trigger does not run
+     * a plain 'change' handler, let alone select2's own select event.
+     *
+     * So the form opened showing "size" chosen with an EMPTY value list behind
+     * it (reported: "variant values not loaded"). The only way out was to open
+     * the dropdown and re-pick the option that already looked picked, which is
+     * not a thing anyone would think to try.
+     *
+     * Reading the selected OPTION rather than an event payload is what lets the
+     * same function serve both cases - a preselect has no event to read.
+     */
+    loadVariantValues: function (axisSelector, listSelector) {
+        var $list = $(listSelector);
+        if (!$list.length) { return; }
+        var raw = $(axisSelector).find('option:selected').attr('data-variant-fields');
+        var fields = [];
+        try {
+            fields = JSON.parse(raw || '[]') || [];
+        } catch (e) {
+            fields = []; /* a malformed field list must not take the page down */
+        }
+        /* One option per DISTINCT value.
+           A variant saved with 38, 40, 40 offered 40 twice, and select2 keys a
+           multi-select on the option ELEMENT, not its value - so both copies
+           could be picked, producing two items called "Shirt / 40". The server
+           de-duplicates too; this covers a list already cached in the page. */
+        var seen = {};
+        var opts = [];
+        $.each(fields, function (_, f) {
+            var name = $.trim(String(f && f.name != null ? f.name : ''));
+            if (!name) { return; }
+            var key = name.toLowerCase();
+            if (seen[key]) { return; }
+            seen[key] = true;
+            /* Built as elements, not concatenated markup: a variant value is
+               shop-entered text, and a name containing a quote would otherwise
+               end the attribute and swallow the rest of the list. */
+            opts.push($('<option>').attr('value', name).text(name)[0]);
+        });
+        $list.empty().append(opts).val(null).trigger('change');
+    },
+
+    /*
+     * Say whether what was typed is actually a GTIN, while it is being typed.
+     *
+     * The server is the authority and refuses anything invalid - but silently,
+     * by storing an empty field. Without a word here, somebody mistypes a digit,
+     * saves, and the item simply has no GTIN with nothing to explain why.
+     *
+     * The check digit is the whole point: it catches exactly the single-digit
+     * and transposition errors a person makes copying fourteen numbers off a
+     * pack, which is why GS1 put it there.
+     */
+    checkGtin: function () {
+        var $hint = $('#items_gtin_hint');
+        if (!$hint.length) { return; }
+        var raw = String($('#items_gtin').val() || '').replace(/[\s-]/g, '');
+
+        if (!raw) {
+            /* Empty is the NORMAL case. Most shop items - loose produce,
+               own-brand, anything made on site - will never have one, and
+               nagging about it would train people to ignore the field. */
+            $hint.text('').removeClass('text-danger text-success');
+            return;
+        }
+        if (!/^\d+$/.test(raw) || [8, 12, 13, 14].indexOf(raw.length) === -1) {
+            $hint.text('A GTIN is 8, 12, 13 or 14 digits')
+                .addClass('text-danger').removeClass('text-success');
+            return;
+        }
+
+        /* GS1 check digit: from the right, weight 3 and 1 alternately. */
+        var body = raw.slice(0, -1);
+        var sum = 0;
+        for (var i = 0; i < body.length; i++) {
+            var fromRight = body.length - 1 - i;
+            sum += Number(body[i]) * (fromRight % 2 === 0 ? 3 : 1);
+        }
+        if (((10 - (sum % 10)) % 10) !== Number(raw[raw.length - 1])) {
+            $hint.text('That is not a valid barcode - check the digits')
+                .addClass('text-danger').removeClass('text-success');
+            return;
+        }
+
+        /* Valid, but is it a number the world shares? Prefixes 02, 04 and
+           20-29 are printed by shops for loose goods; they scan correctly and
+           mean something different in every shop. Worth saying, because a
+           person scanning their own shelf label would otherwise think they had
+           found the manufacturer's number. */
+        var p = raw.padStart(14, '0').slice(1, 3);
+        if (p === '02' || p === '04' || (Number(p) >= 20 && Number(p) <= 29)) {
+            $hint.text('Valid, but this is an in-store code - not the maker\'s number')
+                .removeClass('text-danger text-success');
+            return;
+        }
+        $hint.text('Valid barcode').addClass('text-success').removeClass('text-danger');
+    },
+
+    /* "2 ) Shirt / Large" once the item has a name, plain "2 ) Large" before
+       then. The row is usable either way - the heading is a label, not data. */
+    variantRowTitle: function (index, itemName, value) {
+        var name = $.trim(itemName || '');
+        return index + ' ) ' + (name ? name + ' / ' : '') + value;
+    },
+
+    /* Fill the headings in as the name is typed.
+       A retitle rather than a rebuild: rebuilding would discard every price
+       already typed into the rows, and on a per-keystroke handler that is the
+       difference between a form that helps and one that fights back. */
+    retitleVariantRows: function () {
+        var itemName = $('#items_name').val();
+        $('#load_price_fields .variant-row-title').each(function () {
+            var $t = $(this);
+            $t.text(PosnicPro.items.variantRowTitle(
+                $t.attr('data-variant-index'), itemName, $t.attr('data-variant-value')
+            ));
+        });
+    },
+
+    /*
+     * What is typed into the variant rows, kept across a rebuild.
+     *
+     * loadVariant empties #load_price_fields and builds it again on every
+     * change to the value lists. Adding a ninth size after pricing eight threw
+     * away all eight prices, the SKUs, the barcodes and the quantities - the
+     * form silently reset the moment you extended it, which is the one moment
+     * you are most likely to.
+     *
+     * Keyed by variant VALUE, never by row position. Removing '40' from the
+     * middle shifts every row after it up one, so restoring by index would
+     * hand '42' the price that was typed for '44' - worse than losing it,
+     * because a wrong price looks like a real one.
+     */
+    snapshotVariantRows: function () {
+        var snap = {};
+        $('#load_price_fields .variant-row-title').each(function () {
+            var value = $(this).attr('data-variant-value');
+            var i = Number($(this).attr('data-variant-index')) - 1;
+            if (!value || isNaN(i)) { return; }
+            snap[value] = {
+                itemid: $('#items_itemid_' + i).val(),
+                barcodeid: $('#items_barcodeid_' + i).val(),
+                company_price: $('#items_company_price_' + i).val(),
+                mrp_price: $('#items_mrp_price_' + i).val(),
+                selling_price: $('#items_selling_price_' + i).val(),
+                available_quantity: $('#items_available_quantity_' + i).val(),
+                sort: $('#items_sort_' + i).val(),
+                unit: $('#items_unit_' + i).val(),
+                discount_amount: $('#items_discount_amount_' + i).val(),
+                discount_percentage: $('#items_discount_percentage_' + i).val(),
+                photo: $('#items_photo_' + i).val(),
+            };
+        });
+        return snap;
+    },
+
+    /* The other half. A value that was not on screen before simply has no
+       entry, and keeps the fresh row's defaults. */
+    restoreVariantRows: function (snap) {
+        if (!snap) { return; }
+        $('#load_price_fields .variant-row-title').each(function () {
+            var value = $(this).attr('data-variant-value');
+            var i = Number($(this).attr('data-variant-index')) - 1;
+            var was = value ? snap[value] : null;
+            if (!was || isNaN(i)) { return; }
+            var put = function (prefix, v) {
+                /* An empty value means the field was never filled, and the
+                   fresh row's default (0.00, 0, 99) is the better answer. */
+                if (v !== undefined && v !== null && v !== '') { $(prefix + i).val(v); }
+            };
+            put('#items_itemid_', was.itemid);
+            put('#items_barcodeid_', was.barcodeid);
+            put('#items_company_price_', was.company_price);
+            put('#items_mrp_price_', was.mrp_price);
+            put('#items_selling_price_', was.selling_price);
+            put('#items_available_quantity_', was.available_quantity);
+            put('#items_sort_', was.sort);
+            put('#items_discount_amount_', was.discount_amount);
+            put('#items_discount_percentage_', was.discount_percentage);
+            put('#items_photo_', was.photo);
+            /* The unit list is fetched per row and is still empty here, so
+               setting it now would select nothing. Applied in that request's
+               own callback instead. */
+        });
+    },
+
     loadVariant: function () {
-        var variant_value = $('#item_variant_list').val();
+        /* variantCombinations already normalises jQuery's null-from-an-empty
+           multiple-select into an array, so .length below is always safe. */
+        /* The product of both axes when a second one is in use - see
+           variantCombinations for why this is not derived twice. */
+        var variant_value = $.map(PosnicPro.items.variantCombinations(), function (c) {
+            return c.value;
+        });
+        /* Everything typed into the rows, before they are thrown away. Kept
+           on the module so the per-row unit request can reach it too. */
+        PosnicPro.items._rowSnapshot = PosnicPro.items.snapshotVariantRows();
         $("#load_price_fields").html('');
         var html = "";
         var item_name = $("#items_name").val();
-        if (item_name === '' || item_name.length <= 2) {
-            PosnicPro.alert('error', 'Fill in the required fields.');
-            $("#items_name").focus();
-            return false;
-        } else if (variant_value.length === 0) {
-            PosnicPro.alert('error', 'Fill in the required fields.');
+        /*
+         * The item name is deliberately NOT required here.
+         *
+         * This used to refuse to build anything until the name was typed,
+         * because each row is headed "<item> / <value>". That reason does not
+         * survive contact with the save: saveVariantFamily recomputes the name
+         * from the live field at submit time, so the heading is display only
+         * and never was an input to what gets stored.
+         *
+         * What the guard actually did was error the moment a variant value was
+         * picked and leave #load_price_fields empty - so there was nowhere to
+         * type a price, and nothing on screen said why (reported: "as soon as i
+         * select variant value i am seeing error and no price entering form not
+         * exist"). Clicking Save then re-entered here with the name filled and
+         * finally rendered the rows, which is why Save appeared to show the
+         * price box instead of saving.
+         *
+         * Now the rows appear on the first pick and the heading fills itself in
+         * as the name is typed. The name stays required to SAVE - the validator
+         * on #items_name already enforces that, and it says so in place.
+         */
+        if (variant_value.length === 0) {
+            PosnicPro.alert('error', 'Choose at least one variant value - a size, a colour, a pack');
             $("#item_variant_list").focus();
             return false;
         } else {
@@ -1989,7 +2676,7 @@ PosnicPro.items = {
                 html = html + '<div class="card-body">';
                 html = html + '<div class="card-body">';
                 html = html + '<div class="card-header">';
-                html = html + '<h5 class="card-title text-primary">' + (key + 1) + ' ) ' + item_name + ' / ' + name + '</h5>';
+                html = html + '<h5 class="card-title text-primary variant-row-title" data-variant-value="' + name + '" data-variant-index="' + (key + 1) + '">' + PosnicPro.items.variantRowTitle(key + 1, item_name, name) + '</h5>';
                 html = html + '</div>';
                 html = html + '<div class="row">';
                 html = html + '<div class="col-md-6">';
@@ -2076,6 +2763,31 @@ PosnicPro.items = {
                 html += '  </div>';
                 html += '</div>';
 
+                /*
+                 * This variant's own photo.
+                 *
+                 * Every variant is its own item record with its own image
+                 * field, but the form only ever offered one uploader - so a
+                 * family of shirts saved the SAME picture against red, blue
+                 * and green, and the sale grid showed three identical tiles.
+                 *
+                 * Chosen from the photos already added above rather than a
+                 * second uploader per row: the pictures of a red shirt and a
+                 * blue shirt are pictures of the same family, they belong in
+                 * one place, and uploading each one twice is work nobody
+                 * should have to do.
+                 *
+                 * Optional. A row with nothing chosen keeps the family's whole
+                 * set, which is what every existing item already does.
+                 */
+                html += '<div class="row">';
+                html += '  <div class="col-md-12">';
+                html += '    <label class="form-control-placeholder">Photo for this variant</label>';
+                html += '    <input type="hidden" id="items_photo_' + key + '" value="">';
+                html += '    <div class="items-variant-photos" id="items_photo_strip_' + key + '"></div>';
+                html += '  </div>';
+                html += '</div>';
+
 // Add toggle behavior using jQuery
                 html += '<script>';
                 html += '$(document).ready(function () {';
@@ -2096,13 +2808,26 @@ PosnicPro.items = {
                     url: 'setting/getUnitAjaxList',
                     data: 'query='
                 };
-                let unitOption;
                 PosnicPro.get(params, function (response) {
-                    $("#items_unit_" + key + '').empty();
-                    $(response.suggestions).each(function (key, dataItem) {
-                        unitOption += '<option value="' + dataItem.unit_id + '" data-unit-id="' + dataItem.unit_id + '" data-unit-name="' + dataItem.unit_name + '" data-unit-value="' + dataItem.unit_value + '">' + dataItem.unit_name + ' - ' + dataItem.unit_value + '</option>';
-                    });
-                    $("#items_unit_" + key + '').append(unitOption);
+                    var $sel = $("#items_unit_" + key).empty();
+                    /* This select was empty when restoreVariantRows ran, so
+                       setting the unit then would have selected nothing. */
+                    var wasRow = PosnicPro.items._rowSnapshot && PosnicPro.items._rowSnapshot[name];
+                    /* `let unitOption;` started undefined, so the first += put the
+                       literal "undefined" in front of the first option - and the
+                       string accumulated across every variant row built after it. */
+                    $sel.append($.map(response.suggestions || [], function (dataItem) {
+                        return $('<option>')
+                            .attr('value', dataItem.unit_id)
+                            .attr('data-unit-id', dataItem.unit_id)
+                            .attr('data-unit-name', dataItem.unit_name)
+                            .attr('data-unit-value', dataItem.unit_value)
+                            .text(dataItem.unit_name + ' - ' + dataItem.unit_value)[0];
+                    }));
+                    if (wasRow && wasRow.unit) {
+                        $sel.val(wasRow.unit);
+                        if ($sel.hasClass('select2-hidden-accessible')) { $sel.trigger('change.select2'); }
+                    }
                 });
 
                 html = html + '</select>';
@@ -2112,6 +2837,10 @@ PosnicPro.items = {
                 html = html + '</div>';
             });
             $("#load_price_fields").append(html);
+            PosnicPro.items.restoreVariantRows(PosnicPro.items._rowSnapshot);
+            /* The rows only exist now, so this is the first moment their
+               strips can be filled from whatever is already uploaded. */
+            PosnicPro.items.renderVariantPhotoPickers();
             $("#items_itemid_0").focus();
         }
     },
@@ -2176,6 +2905,9 @@ PosnicPro.items = {
                     data: fileImage,
                     cover: coverFlag
                 };
+
+                /* Newly added - offer it to every variant row on screen. */
+                PosnicPro.items.renderVariantPhotoPickers();
 
                 // If it's the first image, update the logo and styles
                 if (count === 0) {
@@ -2243,6 +2975,8 @@ PosnicPro.items = {
             return item.name;
         }).indexOf(name);
         PosnicPro.items.imageParams.splice(removeIndex, 1);
+        /* A variant may have been pointing at the photo just deleted. */
+        PosnicPro.items.renderVariantPhotoPickers();
         $('#selector_' + id).remove();
         if (PosnicPro.items.imageParams.length === 0) {
             $('#item_logo').val('item.svg');
@@ -2295,6 +3029,8 @@ PosnicPro.items = {
             return item.name;
         }).indexOf(name);
         PosnicPro.items.imageParams.splice(removeIndex, 1);
+        /* A variant may have been pointing at the photo just deleted. */
+        PosnicPro.items.renderVariantPhotoPickers();
         $('#selector_' + id).remove();
         if (PosnicPro.items.imageParams.length === 0) {
             $('#item_upload_image_status').val('no');
@@ -2340,6 +3076,108 @@ PosnicPro.items = {
             $('#items_discount_percentage').val(discountPercentage);
         }
     },
+    /*
+     * Supplier picker, the same shape as Category (owner ask).
+     *
+     * It was a bare autocomplete: an empty box that showed nothing until you
+     * guessed part of a name, which only helps someone who already knows what
+     * they are looking for. Now the list is fetched when the form opens, so it
+     * opens showing real suppliers and typing filters what is already there.
+     *
+     * NEVER AN EMPTY LIST (owner: "if there is no recent item fire db query get
+     * latest or most used. i dont want empty list. make it very smart app").
+     * An empty query to getSuppliersAjaxList is exactly that DB read - it
+     * returns the branch's suppliers rather than nothing - so the picker is
+     * populated before anyone types. When a shop genuinely has none, the
+     * placeholder says so and points at the link that fixes it, because a
+     * dropdown that opens on nothing with no explanation reads as broken.
+     *
+     * The two hidden fields are kept in step, so every payload builder and
+     * edit-fill in this file keeps reading exactly what it read before.
+     */
+    /*
+     * Read one attribute off a select2's selection, or nothing.
+     *
+     * The save path did this instead:
+     *
+     *     taxDetail[0].element.attributes['data-tax-value'].value
+     *
+     * which throws "Cannot read properties of undefined (reading 'element')"
+     * the moment there IS no selection - and with the tax module turned off
+     * there is none, so saving any item threw before it reached the server.
+     * The same line existed twice, and the category read below it had the same
+     * shape: category_id was guarded, category_name was not, so an item saved
+     * without a category threw as well. Category is optional.
+     *
+     * A feature being off is not an error, and neither is an optional field
+     * being empty. Both mean "no value", which is what this returns.
+     */
+    selectAttr: function (selector, attribute, fallback) {
+        var data;
+        try {
+            data = $(selector).select2('data');
+        } catch (e) {
+            return fallback === undefined ? '' : fallback;
+        }
+        var el = data && data.length ? data[0].element : null;
+        var attr = el && el.attributes ? el.attributes[attribute] : null;
+        if (attr && attr.value !== undefined && attr.value !== null && attr.value !== '') {
+            return attr.value;
+        }
+        return fallback === undefined ? '' : fallback;
+    },
+
+    loadSelectSupplier: function (selectedId, selectedName) {
+        var $pick = $('#items_supplier_pick');
+        if (!$pick.length) { return; }
+        var params = {
+            url: 'suppliers/getSuppliersAjaxList',
+            data: 'query=&branch=' + (PosnicPro.local.get('branch_id_set') || '')
+        };
+        PosnicPro.get(params, function (response) {
+            var rows = (response && response.suggestions) || [];
+            $pick.empty().append('<option value=""></option>');
+            $.each(rows, function (i, row) {
+                $pick.append(
+                    $('<option>').attr('value', row.id).attr('data-supplier-name', row.name).text(row.name)
+                );
+            });
+            /* An id we were given but the list does not carry - an inactive or
+               deleted supplier on an existing item. Keeping it selectable means
+               editing an item does not silently clear its supplier. */
+            if (selectedId && !$pick.find('option[value="' + selectedId + '"]').length) {
+                $pick.append(
+                    $('<option>').attr('value', selectedId)
+                        .attr('data-supplier-name', selectedName || '')
+                        .text(selectedName || selectedId)
+                );
+            }
+            /* view.js runs a global $(".select2").select2() when the page
+               renders, so this control is already an initialised, EMPTY select2
+               by the time the list arrives. Calling select2() again on a live
+               instance does not re-read the options - it has to be destroyed
+               first, or the box says "No results found" over a select that is
+               full of them. That is exactly what it did. */
+            if ($pick.hasClass('select2-hidden-accessible')) {
+                $pick.select2('destroy');
+            }
+            $pick.select2({
+                placeholder: rows.length
+                    ? 'Choose a Supplier'
+                    : 'No suppliers yet - add one from the Suppliers screen'
+            });
+            $pick.val(selectedId || '').trigger('change.select2');
+        }, function () {
+            /* A failed lookup must not leave a dead control: the item can still
+               be saved without a supplier, which is why the field is optional. */
+            if ($pick.hasClass('select2-hidden-accessible')) {
+                $pick.select2('destroy');
+            }
+            $pick.empty().append('<option value=""></option>')
+                .select2({ placeholder: 'Suppliers could not be loaded' });
+        });
+    },
+
     loadSelectCategory: function () {
         var categorySelect = $('.items_category');
         var params = {
@@ -2353,15 +3191,31 @@ PosnicPro.items = {
                under an arbitrary category - misfiled catalogues by default.
                Category is required; choosing it is one deliberate tap. */
             categorySelect.append('<option value=""></option>');
-            suggestions: $.map(response.suggestions, function (dataItem) {
-                var option;
-                option += '<option value="' + dataItem.id + '" data-category-name="' + dataItem.name + '" data-category-id="' + dataItem.id + '" data-item-discountamount="' + dataItem.discount_amount + '" data-item-discountpercentage="' + dataItem.discount_percentage + '">' + dataItem.name + ' </option>';
-                categorySelect.append(option).select2();
+            /*
+             * Built once, appended once, initialised once.
+             *
+             * This loop used to do all three per option: `var option;` starts
+             * undefined, so `option += '<option...'` produced the literal string
+             * "undefined" in front of every entry, and .select2() ran again on
+             * every pass - re-initialising the widget once per category. That
+             * re-entry is what threw "Cannot read properties of null (reading
+             * 'offsetWidth')": select2 measures a container that the previous
+             * init has already replaced.
+             */
+            var options = $.map(response.suggestions || [], function (dataItem) {
+                return $('<option>')
+                    .attr('value', dataItem.id)
+                    .attr('data-category-name', dataItem.name)
+                    .attr('data-category-id', dataItem.id)
+                    .attr('data-item-discountamount', dataItem.discount_amount)
+                    .attr('data-item-discountpercentage', dataItem.discount_percentage)
+                    .text(dataItem.name)[0];
             });
-            $(".items_category").select2({
-                placeholder: "Choose a Category"
-            });
-            $(".items_category").val('').trigger('change.select2');
+            categorySelect.append(options);
+            categorySelect.select2({ placeholder: "Choose a Category" });
+            /* AFTER init - firing change.select2 at a select that is not a
+               select2 yet is the other half of the same crash. */
+            categorySelect.val('').trigger('change.select2');
         }, function (xhr) {
             var response = jQuery.parseJSON(xhr.responseText);
             PosnicPro.alert(response.type, response.message);
@@ -2376,17 +3230,52 @@ PosnicPro.items = {
         };
         PosnicPro.get(params, function (response) {
             variantSelect.empty();
-            suggestions: $.map(response.suggestions, function (dataItem) {
-                var option;
-                option += '<option id="' + dataItem.id + '" value="' + dataItem.id + '" data-variant-name="' + dataItem.name + '" data-variant-id="' + dataItem.id + '">' + dataItem.name + ' </option>';
-                variantSelect.append(option).select2();
-                $('#' + dataItem.id).attr('data-variant-fields', JSON.stringify(dataItem.fields));
+            var vOptions = $.map(response.suggestions || [], function (dataItem) {
+                return $('<option>')
+                    .attr('id', dataItem.id)
+                    .attr('value', dataItem.id)
+                    .attr('data-variant-name', dataItem.name)
+                    .attr('data-variant-id', dataItem.id)
+                    .attr('data-variant-fields', JSON.stringify(dataItem.fields))
+                    .text(dataItem.name)[0];
             });
-            $("#items_variant").val(1).trigger('change.select2');
-            $("#items_variant").select2({
-                placeholder: "Choose a Variant"
-            });
-            $('#item_variant_list').html('');
+            variantSelect.append(vOptions);
+            variantSelect.select2({ placeholder: "Choose a Variant" });
+            /* The value was set BEFORE select2 existed, so the widget never saw
+               it and the change fired at a plain select. */
+            variantSelect.val(1).trigger('change.select2');
+            /* The preselect above is a real selection, so its values belong on
+               screen. Clearing the list here was what left the form showing a
+               chosen variant with nothing to choose from. */
+            PosnicPro.items.loadVariantValues('#items_variant', '#item_variant_list');
+
+            /* The second axis offers the same list. Cloned from the response
+               rather than from the first select's DOM - moving option elements
+               between two selects would empty the first one. */
+            var second = $('#items_variant_2');
+            if (second.length) {
+                second.empty();
+                second.append($.map(response.suggestions || [], function (dataItem) {
+                    return $('<option>')
+                        .attr('value', dataItem.id)
+                        .attr('data-variant-name', dataItem.name)
+                        .attr('data-variant-id', dataItem.id)
+                        .attr('data-variant-fields', JSON.stringify(dataItem.fields))
+                        .text(dataItem.name)[0];
+                }));
+                /* Destroy first: view.js runs a global $('.select2').select2()
+                   at page render, and re-calling select2() on a live instance
+                   does NOT re-read the options. */
+                if (second.hasClass('select2-hidden-accessible')) { second.select2('destroy'); }
+                second.select2({ placeholder: 'Choose a Variant' });
+                /* No preselection - an unopened second axis must stay empty, or
+                   every plain item silently becomes a combination. */
+                second.val('').trigger('change.select2');
+                $('#item_variant_list_2').html('');
+                /* The first axis is preselected above, so its option in this
+                   list has to be greyed out before the list is ever opened. */
+                PosnicPro.items.syncAxisExclusion();
+            }
         }, function (xhr) {
             var response = jQuery.parseJSON(xhr.responseText);
             PosnicPro.alert(response.type, response.message);
@@ -2400,11 +3289,16 @@ PosnicPro.items = {
         };
         PosnicPro.get(params, function (response) {
             taxSelect.empty();
-            suggestions: $.map(response.suggestions, function (dataItem) {
-                var option;
-                option += '<option value="' + dataItem.tax_id + '" data-tax-id="' + dataItem.tax_id + '" data-tax-name="' + dataItem.tax_name + '" data-tax-value="' + dataItem.tax_value + '">' + dataItem.tax_name + '</option>';
-                taxSelect.append(option).trigger('change');
+            /* One append and one change, not one of each per tax rate. */
+            var tOptions = $.map(response.suggestions || [], function (dataItem) {
+                return $('<option>')
+                    .attr('value', dataItem.tax_id)
+                    .attr('data-tax-id', dataItem.tax_id)
+                    .attr('data-tax-name', dataItem.tax_name)
+                    .attr('data-tax-value', dataItem.tax_value)
+                    .text(dataItem.tax_name)[0];
             });
+            taxSelect.append(tOptions).trigger('change');
             if (PosnicPro.local.get('default_tax_enable_disable') === 'false') {
                 taxSelect.val(1).trigger('change.select2');
             } else {
@@ -2425,11 +3319,15 @@ PosnicPro.items = {
         };
         PosnicPro.get(params, function (response) {
             unitSelect.empty();
-            suggestions: $.map(response.suggestions, function (dataItem) {
-                var option;
-                option += '<option value="' + dataItem.unit_id + '" data-unit-id="' + dataItem.unit_id + '" data-unit-name="' + dataItem.unit_name + '" data-unit-value="' + dataItem.unit_value + '">' + dataItem.unit_name + ' - ' + dataItem.unit_value + '</option>';
-                unitSelect.append(option).trigger('change');
+            var uOptions = $.map(response.suggestions || [], function (dataItem) {
+                return $('<option>')
+                    .attr('value', dataItem.unit_id)
+                    .attr('data-unit-id', dataItem.unit_id)
+                    .attr('data-unit-name', dataItem.unit_name)
+                    .attr('data-unit-value', dataItem.unit_value)
+                    .text(dataItem.unit_name + ' - ' + dataItem.unit_value)[0];
             });
+            unitSelect.append(uOptions).trigger('change');
             $('.items_unit option:eq(0)').prop('selected', true);
         }, function (xhr) {
             var response = jQuery.parseJSON(xhr.responseText);
@@ -2456,6 +3354,7 @@ PosnicPro.items = {
         $('#items_name').val('');
         $("#items_variant").val('').trigger('change');
         $("#item_variant_list").val('').trigger('change');
+        PosnicPro.items.resetSecondAxis();
         $("#items_hsncode").val('');
         $("#hsn_tax").val('');
         $("#items_discount_amount").val('0.00');
@@ -2479,11 +3378,12 @@ PosnicPro.items = {
         $('#default_tax').show();
         $('#item_logo').val('item.svg');
         PosnicPro.items.imageParams = [];
-        $(".items_category").val('').trigger('change.select2');
         $(".items_category").select2({
             placeholder: "Choose a Category"
         });
+        $(".items_category").val('').trigger('change.select2');
         PosnicPro.items.loadSelectCategory();
+        PosnicPro.items.loadSelectSupplier();
         PosnicPro.items.loadSelectTax();
         PosnicPro.items.loadSelectVariant();
     }
@@ -2777,52 +3677,11 @@ PosnicPro.itemdetails = {
 $(function () {
     $('#items_discount_percentage').attr('disabled', 'disabled').addClass('bg-white').val('0.00').hide();
     // One-time init like the sale search: never rebuild per keystroke.
-    $('#items_supplier').autocomplete({
-        deferRequestBy: 120,
-            lookup: function (query, done) {
-                var branch = PosnicPro.local.get("branch_id_set");
-                var result = {};
-                var suggestions = [];
-                var params = {
-                    url: 'suppliers/getSuppliersAjaxList',
-                    data: 'query=' + query + '&branch=' + branch
-                };
-                PosnicPro.get(params, function (response) {
-                    if (response.suggestions.length > 0) {
-                        suggestions: $.map(response.suggestions, function (dataItem) {
-                            suggestions.push({"value": dataItem.name, "data": dataItem});
-                        });
-                    } else {
-                        suggestions.push({value: $('#items_supplier').val() + ' ', data: -1});
-                    }
-                    result["suggestions"] = suggestions;
-                    done(result);
-                }, function (xhr) {
-                    var response = jQuery.parseJSON(xhr.responseText);
-                    PosnicPro.alert(response.type, response.message);
-                });
-            },
-            onSelect: function (suggestion) {
-                if (suggestion.data !== -1) {
-                    $('#items_supplier_id').val(suggestion.data.id);
-                } else {
-                    hasher.setHash('items/suppliers/new');
-                }
-            },
-            autoSelectFirst: true,
-            triggerSelectOnValidInput: false,
-            formatResult: function (suggestion) {
-                var addnew = '';
-                var phone = suggestion.data.phone;
-                if (suggestion.data === -1 || typeof suggestion.phone === undefined) {
-                    addnew = "( Add new )";
-                    phone = '';
-                }
-                return '<div>' +
-                        $.Autocomplete.formatResult(suggestion) +
-                        '</div><span class="pull-right">' + phone + '</span><span class="pull-right" style="margin-top:-20px;">' + addnew + '</span>';
-            }
-    });
+    /* The supplier autocomplete lived here. It bound to #items_supplier, which
+       is a hidden input now - the picker above replaced it, and an autocomplete
+       on a hidden field can never fire. Removed rather than left: a plugin
+       initialised against something invisible is the kind of code that reads as
+       working for years. See loadSelectSupplier. */
 });
 
 $(function () {
@@ -2843,6 +3702,132 @@ $(function () {
         $('#variant_mode_link').text($('#product_with_variant').is(':checked')
             ? 'Remove variants' : '+ This item has variants');
     };
+    /* ------------------------------------------------------------------
+     * Getting through a tabbed form (owner ask: "next button to move next
+     * tab... if one tab full completed green tick or something").
+     *
+     * A tabbed form with no way forward makes people hunt for the next tab, and
+     * gives no sense of how much is left. Two small things fix both: a step
+     * button at the end of each pane, and a tick on each tab that has something
+     * in it.
+     *
+     * WHAT THE TICK MEANS is the part worth being careful about. Only the Item
+     * tab has required fields. Ticking Details and More for "correct" would be
+     * a claim the form cannot make - they are entirely optional - so the tick
+     * means "there is something in here". Item ticks when its REQUIRED fields
+     * are filled, which is the only tab where that is a real statement. A badge
+     * that lies is one people stop reading.
+     * ------------------------------------------------------------------ */
+    /*
+     * Colour and shape describe the sale-grid tile WHEN THERE IS NO IMAGE. The
+     * label always said so; the controls stayed on screen anyway, asking for a
+     * decision that an uploaded image immediately overrides.
+     *
+     * Driven off what is actually on screen (the preview strip) plus the stored
+     * cover name, because an image can arrive three ways - a fresh upload, an
+     * edit loading an existing item, and a clone - and hooking each one is how
+     * the third gets missed.
+     */
+    PosnicPro.items.refreshTileFallback = function () {
+        var cover = $.trim($('#item_logo').val() || '');
+        var hasImage = $('#item-display-preview').find('img').length > 0
+            || (cover !== '' && cover !== 'item.svg');
+        $('#item_tile_fallback').toggle(!hasImage);
+    };
+
+    /* The preview strip is written by several paths, so watch the node rather
+       than every writer. */
+    $(function () {
+        var node = document.getElementById('item-display-preview');
+        if (!node || typeof MutationObserver === 'undefined') { return; }
+        new MutationObserver(function () {
+            PosnicPro.items.refreshTileFallback();
+        }).observe(node, { childList: true, subtree: true });
+        PosnicPro.items.refreshTileFallback();
+    });
+
+    /*
+     * A tick means the tab is FINISHED - every field in it answered.
+     *
+     * It used to mean "there is something in here", which ticked a tab after one
+     * field and told nobody anything useful (owner: "enable tick only all fields
+     * filled. not just one in the tab").
+     *
+     * What counts as a field, and why:
+     *
+     *  - Only what is VISIBLE. Service mode hides stock, variant mode hides
+     *    price and SKU, and the mode radios are hidden by design. A tab cannot
+     *    be incomplete because of a box nobody can reach.
+     *  - Not checkboxes or radios. They are never empty - unchecked IS an
+     *    answer - so requiring them would mean ticking every toggle on the form
+     *    to earn a tick, which is the opposite of what it should encourage.
+     *  - Not disabled or readonly fields, for the same reason as hidden.
+     *  - An open-price item has no selling price ON PURPOSE. Demanding one would
+     *    leave that tab permanently unticked for a legitimate item.
+     */
+    PosnicPro.items.tabIsComplete = function (paneId) {
+        var $pane = $('#' + paneId);
+        if (!$pane.length) { return false; }
+        var openPrice = $('#item_open_price').is(':checked');
+        var complete = true;
+        var seen = 0;
+
+        $pane.find('input, select, textarea').each(function () {
+            var $f = $(this);
+            var type = ($f.attr('type') || '').toLowerCase();
+            if (type === 'checkbox' || type === 'radio' || type === 'hidden') { return; }
+            if ($f.is(':disabled') || $f.prop('readonly')) { return; }
+            /* A select2 hides its own <select> and shows a rendered box, so
+               :visible on the select itself is always false - ask the control
+               the user can actually see. */
+            var $shown = $f.hasClass('select2-hidden-accessible')
+                ? $f.next('.select2-container')
+                : $f;
+            if (!$shown.length || !$shown.is(':visible')) { return; }
+            if ($f.is('#items_selling_price') && openPrice) { seen += 1; return; }
+
+            seen += 1;
+            if ($.trim($f.val() || '') === '') { complete = false; }
+        });
+
+        /* A tab with nothing to fill is not "complete", it is empty - ticking it
+           would be a badge for having opened the page. */
+        return seen > 0 && complete;
+    };
+
+    PosnicPro.items.refreshTabTicks = function () {
+        $('#item_form_tabs .nav-link').each(function () {
+            var pane = $(this).data('tab-pane');
+            if (!pane) { return; }
+            $(this).toggleClass('is-complete', PosnicPro.items.tabIsComplete(pane));
+        });
+    };
+
+    /* Every edit can change a tick, so this listens broadly rather than
+       enumerating fields - a list would go stale the first time one is added. */
+    $(document).on('input change', '#item_image_upload_form input, #item_image_upload_form select, #item_image_upload_form textarea',
+        function () { PosnicPro.items.refreshTabTicks(); });
+
+    $(document).on('click', '.item-tab-next, .item-tab-back', function () {
+        var target = $(this).data('goto');
+        if (!target) { return; }
+        $('#item_form_tabs .nav-link[data-tab-pane="' + target + '"]').tab('show');
+        /* The form is taller than the viewport on a small screen, and switching
+           tabs leaves you wherever the last one had scrolled to. */
+        $('html, body').animate({ scrollTop: $('#item_form_tabs').offset().top - 70 }, 150);
+    });
+
+    $(document).on('shown.bs.tab', '#item_form_tabs .nav-link', function () {
+        PosnicPro.items.refreshTabTicks();
+    });
+
+    /* The picker drives the two hidden fields the rest of this file reads. */
+    $(document).on('change', '#items_supplier_pick', function () {
+        var $opt = $(this).find('option:selected');
+        $('#items_supplier_id').val($(this).val() || '');
+        $('#items_supplier').val($opt.attr('data-supplier-name') || '');
+    });
+
     $(document).on('click', '#variant_mode_link', function () {
         var withVariant = $('#product_with_variant').is(':checked');
         $(withVariant ? '#product_without_variant' : '#product_with_variant')
@@ -2855,7 +3840,18 @@ $(function () {
     });
     $("#product_without_variant, #product_with_variant").change(function () {
         syncVariantLink();
-        if ($("#product_without_variant").is(":checked")) {
+        var plain = $("#product_without_variant").is(":checked");
+        /* The other half of the same rule (see applyServiceMode): a family of
+           variants is a family of stocked products, so the service tick has no
+           meaning while one is being built. Hidden rather than disabled - a
+           greyed control asks a question the form then refuses to answer. */
+        $('#item_is_service').closest('.custom-control').toggle(plain);
+        /* Leaving variant mode must clear the count too, or the hint outlives
+           the rows it is describing - and the second axis with it, or turning
+           variants back on restores combinations from the previous item. */
+        if (plain) { PosnicPro.items.resetSecondAxis(); }
+        PosnicPro.items.refreshVariantCount();
+        if (plain) {
             $('#show_variant_fields').hide();
             $('#show_price_fields,#sku_card_col').show();
             $("#load_price_fields").html('');
@@ -2865,6 +3861,22 @@ $(function () {
             $('#show_variant_fields').show();
             $("#show-hide-item-discount").hide();
         }
+        /*
+         * The PARENT's price and opening stock go too (owner: variant mode "is
+         * hiding so many stuff but those required. please check").
+         *
+         * It was hiding cost, MRP, units, SKU and barcode while KEEPING selling
+         * price and opening stock - and demanding a selling price, which is
+         * required. But every variant row carries its own: saveVariantFamily
+         * reads items_selling_price_<n> and items_available_quantity_<n> and
+         * never reads these. So the form asked for two numbers it then threw
+         * away, on the one screen where it also hid the fields you did need.
+         *
+         * Either the parent owns price and stock or the variants do. The save
+         * path already decided: the variants do.
+         */
+        $('#items_selling_price').closest('.form-group').toggle(plain);
+        $('#item_opening_wrap').toggle(plain && !$('#item_is_service').is(':checked'));
     });
 });
 
@@ -2878,13 +3890,40 @@ $(document).ready(function () {
             return false;
         }
         return true;
-    }, "Please Enter a Valid Name");
+    }, "Use letters, numbers and spaces only");
 
     /* IC1: a selling price is required unless the item is deliberately
        open-price (ask at the till). The old form accepted the 0.00 default
        silently, which is how shops end up with unpriced catalogues. */
+    /*
+     * Tax follows its feature toggle.
+     *
+     * The rule was `required: true` regardless, so a shop with the tax module
+     * turned off could not save an item at all: the select has no options and
+     * no selection, and the validator refused a field the shop had deliberately
+     * switched away.
+     *
+     * taxFeatureOn() is the same check the sale screen uses - the general
+     * settings blob first, the legacy flag only as a fallback - so the two
+     * screens cannot disagree about whether this shop charges tax.
+     */
+    jQuery.validator.addMethod("taxRequiredWhenEnabled", function (value) {
+        var on = (PosnicPro.sales && typeof PosnicPro.sales.taxFeatureOn === 'function')
+            ? PosnicPro.sales.taxFeatureOn()
+            : PosnicPro.local.get('default_tax_enable_disable') === 'true';
+        if (!on) { return true; }
+        return $.trim(value || '') !== '';
+    }, "Choose a tax rate");
+
     jQuery.validator.addMethod("sellingPriceOrOpen", function (value) {
         if ($('#item_open_price').is(':checked')) {
+            return true;
+        }
+        /* In variant mode the parent has no price of its own - saveVariantFamily
+           reads items_selling_price_<n> from each variant row and never looks at
+           this field. Demanding it here asked for a number that is discarded,
+           and did it on a field the same mode hides. */
+        if ($('#product_with_variant').is(':checked')) {
             return true;
         }
         return (parseFloat(value) || 0) > 0;
@@ -2892,6 +3931,22 @@ $(document).ready(function () {
 
     $("#item_image_upload_form").validate({
         errorClass: 'error error_item',
+        /*
+         * An error on a hidden tab is an error nobody sees. Save appeared to do
+         * nothing, because the message was rendered on a pane that was not on
+         * screen and the focus landed on an element the browser will not focus
+         * (owner ask). The form now opens the pane holding the FIRST invalid
+         * field and focuses it there.
+         */
+        invalidHandler: function (event, validator) {
+            var bad = validator.invalidElements();
+            if (!bad || !bad.length) { return; }
+            var first = bad[0];
+            var pane = PosnicPro.items.tabOf(first);
+            if (pane) {
+                PosnicPro.items.goToTab(pane, '#' + $(first).attr('id'));
+            }
+        },
         highlight: function (element, errorClass) {
             $(element).css("border-color", "#f9616d");
         },
@@ -2913,8 +3968,12 @@ $(document).ready(function () {
                 minlength: 3,
                 maxlength: 500
             },
+            /* NOT required. The form never marked it - no red asterisk - so a
+               rule demanding it refused a save while pointing at nothing (owner:
+               "item category is not mandatory i think"). It is also genuinely
+               optional: items arrive uncategorised and get filed later. */
             items_category: {
-                required: true
+                maxlength: 250
             },
             items_supplier: {
                 maxlength: 250
@@ -2956,8 +4015,11 @@ $(document).ready(function () {
                 minlength: 1,
                 maxlength: 10
             },
+            /* Required only while the tax module is ON. With it off there is no
+               tax select to fill, so an unconditional rule refused every save on
+               a shop that does not charge tax (owner ask). */
             items_tax: {
-                required: true
+                taxRequiredWhenEnabled: true
             },
             items_description: {
                 minlength: 5,
@@ -2989,18 +4051,18 @@ $(document).ready(function () {
         },
         messages: {
             items_name: {
-                required: "Please Enter Item Name",
+                required: "Enter the item name",
                 minlength: "Item Name must consist of at least 3 characters",
                 maxlength: "Item Name should not be more than 500 characters"
             },
             items_category: {
-                required: "Please Choose Category"
+                required: "Choose a category"
             },
             items_variant: {
-                required: "Please Choose Variant"
+                required: "Choose a variant"
             },
             item_variant_list: {
-                required: "Please Choose Variant field"
+                required: "Choose at least one variant field"
             },
             items_supplier: {
                 minlength: "Item supplier must consist of at least 3 characters",
@@ -3052,10 +4114,10 @@ $(document).ready(function () {
                 maxlength: "HSN code is 4 to 8 digits"
             },
             items_mfg_date: {
-                dateISO: "Please enter a valid date in the format YYYY-MM-DD",
+                dateISO: "Use the date format YYYY-MM-DD",
             },
             items_expiry_date: {
-                dateISO: "Please enter a valid date in the format YYYY-MM-DD",
+                dateISO: "Use the date format YYYY-MM-DD",
                 greaterThanMfgDate: "Expiry date must be greater than manufacturing date"
             }
         }
@@ -3074,7 +4136,7 @@ $(document).ready(function () {
     jQuery.validator.addMethod("greaterThan", function (value, element, param) {
         var $otherElement = $(param);
         return parseFloat(value, 10) >= parseFloat($otherElement.val(), 10);
-    }, "Please enter a valid date in the format");
+    }, "Use the date format");
 
     $('#items_category,#items_tax,#item_variant_list,#items_variant').on('change', function () {
         $(this).trigger('blur');
@@ -3112,10 +4174,55 @@ $(document).ready(function () {
        chosen - Save no longer has a silent first click that only rendered
        rows. The submit-time render below stays as a fallback (with a voice)
        for any path that reaches Save with the rows still missing. */
+    /* Reveal the second axis, and put it away again.
+       It has to close as well as open: the tab tick counts every VISIBLE
+       field, so a second axis revealed by accident and impossible to collapse
+       would hold the Item tab permanently unticked with nothing explaining
+       why. Same toggle shape as the variants link above it. */
+    /* Open and close the filter panel. Delegated, because the button lives in
+       markup that is re-rendered on page entry. */
+    $(document).on('click', '#items_filter_btn', function () {
+        PosnicPro.items.mountFilters();
+        PosnicPro.listFilter.toggle('items');
+    });
+
+    $(document).on('click', '#variant_axis2_link', function () {
+        if ($('#variant_axis2_wrap').is(':visible')) {
+            PosnicPro.items.resetSecondAxis();
+        } else {
+            $('#variant_axis2_wrap').show();
+            $(this).text('- Remove second option');
+        }
+        PosnicPro.items.refreshVariantCount();
+        if ($('#product_with_variant').is(':checked')
+            && ($('#item_variant_list').val() || []).length > 0) {
+            PosnicPro.items.loadVariant();
+        }
+    });
+
+    /* Choosing second-axis values changes the ROW LIST, so the rows and the
+       count both have to follow it, exactly as they follow the first. */
+    $(document).on('change', '#item_variant_list_2', function () {
+        PosnicPro.items.refreshVariantCount();
+        if ($('#product_with_variant').is(':checked')
+            && ($('#item_variant_list').val() || []).length > 0) {
+            PosnicPro.items.loadVariant();
+        }
+    });
+
     $('#item_variant_list').on('change', function () {
+        PosnicPro.items.refreshVariantCount();
         if ($('#product_with_variant').is(':checked') && ($(this).val() || []).length > 0) {
             PosnicPro.items.loadVariant();
         }
+    });
+
+    /* Naming the item after choosing its variants fills the row headings in
+       as you type. No debounce needed - this only rewrites text nodes that
+       already exist, so nothing typed into the rows can be lost. */
+    $(document).on('input', '#items_name', function () {
+        if (!$('#product_with_variant').is(':checked')) { return; }
+        PosnicPro.items.retitleVariantRows();
     });
     $("#item_image_upload_form").submit(function (event) {
         event.preventDefault();
@@ -3570,6 +4677,7 @@ $(document).ready(function () {
     $('#hsn_tax').hide();
     $('#default_tax').show();
     PosnicPro.items.loadSelectCategory();
+    PosnicPro.items.loadSelectSupplier();
     PosnicPro.items.loadSelectVariant();
     PosnicPro.items.loadSelectTax();
     PosnicPro.items.loadSelectUnit();
@@ -3583,14 +4691,20 @@ $(document).ready(function () {
         $('#items_supplier_id').val(defaultsupplier.supplier_id);
         $('#items_supplier').val(defaultsupplier.supplier_name);
     }
-    $(".items_category").val('').trigger('change.select2');
     $(".items_category").select2({
         placeholder: "Choose a Category"
     });
+    $(".items_category").val('').trigger('change.select2');
     // Typing in either discount field marks the pair as the user's - a
     // category pick then leaves them alone (applyCategoryDiscount).
     $(document).on('change', '#item_is_service', function () {
         PosnicPro.items.applyServiceMode();
+    });
+    $(document).on('input', '#items_name', function () {
+        PosnicPro.items.refreshTilePreview();
+    });
+    $(document).on('input', '#items_gtin', function () {
+        PosnicPro.items.checkGtin();
     });
     $(document).on('click', '#item_tile_swatches .tile-swatch', function () {
         PosnicPro.items.setTileColor($(this).data('color') || '');
@@ -3704,17 +4818,43 @@ $('.itemimageview').click(function () {
     $('#item_coverimg_popup').modal('show');
 });
 
-$('#items_variant').one('change', function () {
-    var variantSelect = $('#items_variant');
-    variantSelect.on('select2:select', function (e) {
-        var data = e.params.data;
-        var variant = data.element.attributes['data-variant-fields'].value;
-        var variantOption = [];
-        variant: $.map(JSON.parse(variant), function (dataItem) {
-            variantOption += '<option value="' + dataItem.name + '">' + dataItem.name + '</option>';
-        });
-        $('#item_variant_list').html(variantOption);
-    });
+/* The second axis fills its own value list exactly as the first does.
+   Delegated rather than one-shot bound: this select is rebuilt by
+   loadSelectVariant on every page entry, and a handler bound to the old
+   element would be thrown away with it. */
+/*
+ * Choosing a photo for one variant. Clicking the chosen one again clears it.
+ *
+ * Delegated: these strips are rebuilt every time a photo is added or removed,
+ * and a handler bound to the old <img> would go with it.
+ */
+$(document).on('click', '.items-variant-photo', function () {
+    var stripId = $(this).closest('.items-variant-photos').attr('id') || '';
+    var key = stripId.replace('items_photo_strip_', '');
+    var $hidden = $('#items_photo_' + key);
+    if (!$hidden.length) { return; }
+    var name = $(this).attr('data-photo');
+    $hidden.val($hidden.val() === name ? '' : name);
+    PosnicPro.items.renderVariantPhotoPickers();
+});
+
+$(document).on('select2:select', '#items_variant_2', function () {
+    PosnicPro.items.loadVariantValues('#items_variant_2', '#item_variant_list_2');
+    PosnicPro.items.syncAxisExclusion();
+});
+
+/*
+ * Picking a variant fills its value list - for either axis.
+ *
+ * Delegated, and no longer wrapped in .one('change'). That wrapper bound the
+ * real handler only after some OTHER plain change had fired first, so whether
+ * picking a variant worked depended on whether something unrelated had already
+ * touched the select. It also rebound nothing when loadSelectVariant replaced
+ * the element on the next page entry.
+ */
+$(document).on('select2:select', '#items_variant', function () {
+    PosnicPro.items.loadVariantValues('#items_variant', '#item_variant_list');
+    PosnicPro.items.syncAxisExclusion();
 });
 $('.items_category').one('change', function () {
     var categorySelect = $('.items_category');

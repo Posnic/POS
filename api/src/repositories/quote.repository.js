@@ -11,6 +11,7 @@
 
 const BaseModel = require('../models/base.model');
 const { ObjectId } = require('mongodb');
+const { ensureIndexOnce } = require('../db/ensure-index');
 
 const STATUSES = Object.freeze([
   'open',
@@ -401,16 +402,14 @@ class QuoteRepository extends BaseModel {
    * build that fails must never fail a page load.
    */
   async _ensureListIndex(collection) {
-    if (this.constructor._listIndexEnsured) return;
-    try {
-      await collection.createIndex(
-        { branch_id: 1, license: 1, created_date: -1 },
-        { name: 'quote_list_by_branch' }
-      );
-      this.constructor._listIndexEnsured = true;
-    } catch (e) {
-      /* try again on a later request rather than break this one */
-    }
+    /* Once per DATABASE, not once per process. Each shop has its own database
+       and one process serves many, so a static boolean would give the index to
+       whichever shop happened to ask first and to nobody else. */
+    await ensureIndexOnce(
+      collection,
+      { branch_id: 1, license: 1, created_date: -1 },
+      { name: 'quote_list_by_branch' }
+    );
   }
 
   async listQuotes(params = {}, context = {}) {
@@ -421,29 +420,112 @@ class QuoteRepository extends BaseModel {
       if (params.status && STATUSES.includes(String(params.status))) {
         filter.status = String(params.status);
       }
+      /*
+       * Free text, plus the two filters that actually get used on a long
+       * list: WHICH field, and WHEN.
+       *
+       * `field` narrows the search to one column instead of both. `exact`
+       * anchors it, and anchoring is not cosmetic: /^QUO-000012$/ can be
+       * served by an index where /QUO/ cannot. A shop that searches by quote
+       * number gets a seek instead of a scan of its whole history, which is
+       * the difference that matters once the list is long.
+       */
       const term = String(params.search || '')
         .trim()
         .slice(0, 80);
       if (term) {
         // user text becomes a regex: escape it, or a stray '(' is a 500
-        const rx = new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
-        filter.$or = [{ customer_name: rx }, { quote_id: rx }];
+        const safe = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const rx =
+          String(params.exact) === 'true' ? new RegExp(`^${safe}$`, 'i') : new RegExp(safe, 'i');
+        const field = String(params.field || 'all');
+        if (field === 'quote_id') filter.quote_id = rx;
+        else if (field === 'customer_name') filter.customer_name = rx;
+        else filter.$or = [{ customer_name: rx }, { quote_id: rx }];
       }
+
+      /*
+       * Date range on created_date. The list index is
+       * { branch_id, license, created_date }, so a range is a seek down that
+       * index and the sort it already needs comes free from the same walk.
+       *
+       * `to` is pushed to the END of its day. Picking 21 Aug means "including
+       * the 21st"; comparing against midnight would silently drop a day of
+       * quotes and read as data loss.
+       */
+      const range = {};
+      const rawFrom = params.from ? String(params.from) : '';
+      const rawTo = params.to ? String(params.to) : '';
+      const from = rawFrom ? new Date(rawFrom) : null;
+      const to = rawTo ? new Date(rawTo) : null;
+      if (from && !Number.isNaN(from.getTime())) range.$gte = from;
+      if (to && !Number.isNaN(to.getTime())) {
+        /* Only a DATE-ONLY value gets pushed to the end of its day.
+           "2026-08-21" means "including the 21st", and comparing it against
+           midnight would silently drop a day. But the filter bar now sends a
+           precise instant, and forcing 23:59 onto that would widen a range the
+           user deliberately narrowed - "up to 2pm" would quietly mean "up to
+           midnight". The presence of a time is what tells the two apart. */
+        if (/^\d{4}-\d{2}-\d{2}$/.test(rawTo.trim())) to.setHours(23, 59, 59, 999);
+        range.$lte = to;
+      }
+      if (Object.keys(range).length) filter.created_date = range;
       const limit = Math.min(Math.max(Number(params.limit) || 100, 1), 200);
       const page = Math.max(Number(params.page) || 1, 1);
       const collection = await this.getCollection(this.collectionName);
       await this._ensureListIndex(collection);
-      const total = await collection.countDocuments(filter);
-      const rows = await collection
-        .find(filter)
-        .sort({ created_date: -1 })
-        .skip((page - 1) * limit)
-        .limit(limit)
-        .toArray();
+
+      /*
+       * The exact total is the most expensive thing on this screen and the
+       * least useful, so it is only paid for when it is cheap.
+       *
+       * countDocuments runs the whole filter a SECOND time. Branch, status and
+       * a date range are all served by the list index, so counting them is a
+       * seek and worth having - real totals, real page numbers. An unanchored
+       * regex cannot use any index, so counting a text search means running
+       * that regex across every candidate row, twice per request.
+       *
+       * Nobody acts on "1,247 quotes". They act on "is mine here" and "is
+       * there more". The second needs ONE extra row, not a count: ask for
+       * limit + 1, and if it comes back there is a next page. One query
+       * instead of two, on exactly the case that would hurt.
+       */
+      const countable = !term;
+      let total = null;
+      let rows;
+
+      if (countable) {
+        total = await collection.countDocuments(filter);
+        rows = await collection
+          .find(filter)
+          .sort({ created_date: -1 })
+          .skip((page - 1) * limit)
+          .limit(limit)
+          .toArray();
+      } else {
+        rows = await collection
+          .find(filter)
+          .sort({ created_date: -1 })
+          .skip((page - 1) * limit)
+          .limit(limit + 1)
+          .toArray();
+      }
+
+      // the probe row is proof of a next page, never something to display
+      const hasMore = countable ? page * limit < total : rows.length > limit;
+      if (!countable && rows.length > limit) rows = rows.slice(0, limit);
+
       return {
         status: true,
         data: rows,
-        meta: { total, page, limit, pages: Math.max(1, Math.ceil(total / limit)) },
+        meta: {
+          total,
+          page,
+          limit,
+          hasMore,
+          // pages is only honest when a total was actually measured
+          pages: total === null ? null : Math.max(1, Math.ceil(total / limit)),
+        },
         message: 'success',
       };
     } catch (error) {

@@ -1115,10 +1115,28 @@ PosnicPro.receivings.view = {
             showCancelButton: true,
             confirmButtonText: 'Send'
         }).then(function (result) {
-            if (result.dismiss) { return; }
+            /*
+             * The typed address was being thrown away.
+             *
+             * This page bundles SweetAlert2 v6, which resolves with the input
+             * STRING; the {value, dismiss} object arrived in v7. So
+             * `result.value` was always undefined, `to` went up as undefined,
+             * the server fell back to the supplier's saved address and
+             * answered "the supplier has no email address" - to somebody who
+             * had just typed one. The message was true about the supplier and
+             * useless about what had happened.
+             *
+             * Both shapes are read, so upgrading the library later cannot
+             * quietly break it back.
+             */
+            if (result && result.dismiss) { return; }
+            var typed = (result && typeof result === 'object') ? result.value : result;
+            /* v6 resolves a confirm with `true` when there is nothing typed. */
+            typed = String(typed == null || typed === true ? '' : typed).trim();
+
             PosnicPro.post({
                 url: 'receivings/emailToSupplier',
-                data: JSON.stringify({ id: id, to: (result.value || '').trim() || undefined })
+                data: JSON.stringify({ id: id, to: typed || undefined })
             }, function (response) {
                 PosnicPro.alert(response.type, response.message);
             }, function (xhr) {
@@ -1126,7 +1144,9 @@ PosnicPro.receivings.view = {
                 try { resp = JSON.parse(xhr.responseText); } catch (e) { /* plain */ }
                 PosnicPro.alert('error', resp.message || 'Could not send the email');
             });
-        });
+        /* v6 REJECTS with 'cancel' when the dialog is dismissed. Without this
+           every cancelled dialog raised an unhandled rejection. */
+        }).catch(function () { /* dismissed */ });
     },
     exportReceivings: function () {
         PosnicPro.exportTableData(PosnicPro.receivings_checkbox, 'receivings');

@@ -782,10 +782,18 @@ describe('Item.LegacyItemModel › class identity', () => {
     // alternate barcodes and unit conversion (V3) + the four the form always
     // wrote but the map never carried (IC0: mfg/expiry dates, weight flag,
     // modifier group ids) + open_price (IC1 ask-at-the-till) + tile_color
-    // (the no-image sale-grid tile) + brand/tags/reorder_point (LS1).
-    expect(Object.keys(LegacyItemModel.fields)).toHaveLength(64);
+    // (the no-image sale-grid tile) + brand/tags/reorder_point (LS1)
+    // + gtin/gtin14 (PIM1: the GLOBAL identifier, kept apart from barcode_id
+    // because that one may hold an in-store code or free text - see
+    // utils/gtin.js and PRODUCT_INFORMATION_MODEL.md).
+    expect(Object.keys(LegacyItemModel.fields)).toHaveLength(66);
     expect(LegacyItemModel.fields).toEqual(
       expect.objectContaining({
+        /* Named as well as counted: a count alone passes if one field is
+           added while another is dropped, which is the change that silently
+           stops a read projecting a column. */
+        gtin: expect.any(Object),
+        gtin14: expect.any(Object),
         branch_id: expect.any(Object),
         branch_name: expect.any(Object),
       })

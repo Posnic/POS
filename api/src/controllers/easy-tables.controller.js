@@ -65,28 +65,13 @@ const FORBIDDEN_FIELD = /pass(word|wd)?|secret|token|apikey|api_key|hash|salt|ot
  * seconds per request and at worst is a way to read documents the query was
  * never scoped to. $function and $accumulator are the same class.
  *
- * Checked recursively: these are just as dangerous nested inside $and or $or
- * as they are at the top level, and only checking the top would be a guard
- * that looks present.
+ * This rule was written here first and was needed in nine other places: the
+ * list endpoints take their filter as a JSON string, which the app-level '$'
+ * sanitiser cannot see inside. It now lives in utils/mongo-guard.js and is
+ * enforced for every query parameter in app.js, so this file uses the shared
+ * one rather than keeping the second copy that would only be fixed here.
  */
-const CODE_OPERATORS = new Set(['$where', '$function', '$accumulator', '$expr']);
-
-function findCodeOperator(value, depth = 0) {
-  if (depth > 8 || !value || typeof value !== 'object') return null;
-  if (Array.isArray(value)) {
-    for (const v of value) {
-      const hit = findCodeOperator(v, depth + 1);
-      if (hit) return hit;
-    }
-    return null;
-  }
-  for (const [key, v] of Object.entries(value)) {
-    if (CODE_OPERATORS.has(key)) return key;
-    const hit = findCodeOperator(v, depth + 1);
-    if (hit) return hit;
-  }
-  return null;
-}
+const { findCodeOperator } = require('../utils/mongo-guard');
 
 class EasyTableController extends BaseController {
   constructor() {

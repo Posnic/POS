@@ -335,7 +335,7 @@ $(function () {
         },
         messages: {
             name: {
-                required: "Please enter a Variant Name",
+                required: "Enter the variant name",
                 minlength: "Variant Name must consist of at least 3 characters"
             },
             "variantfield[0]": {

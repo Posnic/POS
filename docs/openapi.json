@@ -6094,6 +6094,74 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
+    "/items/export/jsonld": {
+      "get": {
+        "summary": "exportCatalogueJsonLd",
+        "operationId": "get_items_export_jsonld",
+        "tags": [
+          "Items"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/items/demo": {
+      "delete": {
+        "summary": "purgeDemoData",
+        "operationId": "delete_items_demo",
+        "tags": [
+          "Items"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      },
+      "post": {
+        "summary": "reseedDemoData",
+        "operationId": "post_items_demo",
+        "tags": [
+          "Items"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
     "/items/createFamily": {
       "post": {
         "summary": "createFamily",

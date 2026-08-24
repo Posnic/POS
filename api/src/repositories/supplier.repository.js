@@ -2,6 +2,7 @@
 const BaseModel = require('../models/base.model');
 const { ObjectId } = require('mongodb');
 const { withBranchScope } = require('../services/branch-scope');
+const dataSharing = require('../services/data-sharing');
 
 /**
  * Supplier Repository
@@ -58,7 +59,10 @@ class SupplierRepository extends BaseModel {
           license: BaseModel.license,
           is_deleted: { $ne: true },
         },
-        BaseModel.currentBranch
+        await dataSharing.scopeBranch('suppliers', BaseModel.currentBranch, {
+          licenseId: BaseModel.license,
+          branchId: BaseModel.currentBranch,
+        })
       )
     );
   }
@@ -122,7 +126,13 @@ class SupplierRepository extends BaseModel {
        for name/company/email/phone, and replacing it would turn a search into
        a full-table read. */
     if (branchId) {
-      query = withBranchScope(query, branchId);
+      query = withBranchScope(
+        query,
+        await dataSharing.scopeBranch('suppliers', branchId, {
+          licenseId: BaseModel.license,
+          branchId,
+        })
+      );
     }
 
     const collection = await this.getCollection(this.collectionName);

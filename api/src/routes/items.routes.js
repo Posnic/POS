@@ -75,6 +75,20 @@ router.post('/itemsImport', bindController(itemsController.itemsImport));
 // PHP: exportItems() - Excel export
 router.post('/exportItems', bindController(itemsController.exportItems));
 
+// GET /api/items/export/jsonld - the catalogue as schema.org JSON-LD.
+// A different SHAPE of what /items already returns, gated on the same
+// item:read. See docs PRODUCT_EXPORT_FORMATS.md.
+router.get('/export/jsonld', bindController(itemsController.exportCatalogueJsonLd));
+
+// DELETE /api/items/demo - remove the sample products for good.
+// Separate from the Demo Data switch, which only hides them: this one
+// destroys, and refuses anything sold, received or edited.
+router.delete('/demo', bindController(itemsController.purgeDemoData));
+
+// POST /api/items/demo - put the sample data back, for a shop that removed
+// it and later wants it. Refuses if it is already there.
+router.post('/demo', bindController(itemsController.reseedDemoData));
+
 // Raise/lower prices across many items at once; and a per-item price history.
 // V1 variant families: all-or-nothing creation of linked variant items,
 // and the members of one family for the edit page's strip.

@@ -1,7 +1,7 @@
 {
   "name": "posnic",
   "version": "1.4.0",
-  "description": "Free open-source, offline-first point-of-sale software for retail shops and restaurants. Windows, macOS and Linux.",
+  "description": "Free, offline-first point-of-sale software for retail and restaurants. Posnic source is AGPL-3.0-only; packages contain separately licensed components.",
   "main": "main.js",
   "desktopName": "com.posnic.app.desktop",
   "scripts": {
@@ -40,6 +40,10 @@
     "test": "node --test \"tests/*.test.js\"",
     "clear:brand-seed": "node scripts/clear-brand-seed.js",
     "check:declared-deps": "node scripts/check-declared-deps.js",
+    "sign:cert": "node scripts/find-signing-cert.js",
+    "sign:link": "node scripts/link-signing-cert.js",
+    "sign:verify": "node scripts/verify-signature.js",
+    "release:windows": "node scripts/release-windows.js",
     "scan:secrets": "node scripts/scan-git-history.js",
     "badges": "node scripts/check-badges.js",
     "badges:fix": "node scripts/check-badges.js --fix",
@@ -104,6 +108,7 @@
       "hardware-ipc.js",
       "kot-manager.js",
       "print-window-guard.js",
+      "print-pdf.js",
       "escpos-receipt.js",
       "escpos-report.js",
       "preload.js",
@@ -318,7 +323,11 @@
       "verifyUpdateCodeSignature": false,
       "signAndEditExecutable": true,
       "signtoolOptions": {
-        "publisherName": "Posnic Team"
+        "publisherName": "BillMax",
+        "signingHashAlgorithms": [
+          "sha256"
+        ],
+        "sign": "scripts/sign-windows.js"
       },
       "extraResources": [
         {

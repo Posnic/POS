@@ -4,6 +4,7 @@
  */
 
 const { FIELD_LIMITS, ERROR_MESSAGES } = require('../constants/items.constants');
+const gtin = require('../utils/gtin');
 
 /**
  * Sanitize item data before persistence
@@ -47,6 +48,32 @@ const sanitizeItemData = (data = {}) => {
       sanitized[field] = sanitized[field].trim();
     }
   });
+
+  /*
+   * The GTIN is derived here, not trusted.
+   *
+   * This is the one funnel every create and every edit passes through, so it is
+   * the only place the rule can be enforced once: a gtin is stored only when it
+   * validates, and gtin14 - the zero-padded comparison form - is computed from
+   * it rather than accepted from the caller.
+   *
+   * Anything that fails validation clears BOTH fields rather than being left
+   * alone. Leaving the old value would mean a shop that corrected a mistyped
+   * barcode still has the wrong global identifier attached, which is precisely
+   * the error a shared database cannot recover from.
+   *
+   * barcode_id is deliberately NOT used as a source. It may hold an in-store
+   * code, a supplier reference, or free text, and promoting that to a global
+   * identifier is how a public database gets poisoned.
+   */
+  if (Object.prototype.hasOwnProperty.call(sanitized, 'gtin')) {
+    const parsed = gtin.parse(sanitized.gtin);
+    sanitized.gtin = parsed ? parsed.gtin : '';
+    sanitized.gtin14 = parsed ? parsed.gtin14 : '';
+  } else {
+    /* Never let a caller set the comparison form directly - it is derived. */
+    delete sanitized.gtin14;
+  }
 
   return sanitized;
 };
