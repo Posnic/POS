@@ -5386,6 +5386,28 @@ PosnicPro.features = {
         if (d.first_run_done === false || d.first_run_done === 'false') { return false; }
         return PosnicPro.features._blob().first_run_done === true;
     },
+    /*
+     * "Already seen" is PER SHOP, never per browser.
+     *
+     * The first version used one bare localStorage key, and that is why the
+     * owner never saw the welcome on a single new shop he created: dismiss it
+     * once on any shop and every shop opened from that browser afterwards is
+     * silently skipped. The person it failed for hardest is exactly the
+     * person who opens many shops - the owner testing signups, a partner
+     * setting up customers. Keyed by branch id, a NEW shop has a NEW key and
+     * is asked; the same shop still never asks the same browser twice.
+     *
+     * The legacy unscoped key is deliberately NOT read. Honouring it keeps
+     * the bug alive for every browser that has it; ignoring it costs at most
+     * one extra welcome on an old shop, and dismissing now writes the
+     * per-shop server flag, so it is once, ever.
+     */
+    _introSeenKey: function () {
+        var branch = PosnicPro.local.get('branch_id_set');
+        branch = (branch == null || branch === 'null' || branch === 'undefined') ? '' : String(branch);
+        return 'features_intro_seen:' + branch;
+    },
+
     maybeShowIntro: function () {
         /*
          * Two gates, and they answer different questions.
@@ -5403,13 +5425,17 @@ PosnicPro.features = {
          * backwards would mean nobody ever sees this and nothing would look
          * wrong - the failure of a thing that only ever shows once is silence.
          */
-        if (PosnicPro.local.get('features_intro_seen')) { return; }
+        if (PosnicPro.local.get(PosnicPro.features._introSeenKey())) { return; }
         var blob = PosnicPro.features._blob();
         if (blob.first_run_done === true || blob.first_run_done === 'true') { return; }
         /* An empty blob is "settings have not loaded", not "never been asked",
            and guessing wrong there puts this in front of a shop that has been
-           trading for a year. */
-        if (!Object.keys(blob).length) { return; }
+           trading for a year. The caller keeps retrying while this is the
+           case - see the poll below - because on a brand-new shop's FIRST
+           login the blob is still being written when the first check fires,
+           and a one-shot check loses that race on exactly the login this
+           screen exists for. */
+        if (!Object.keys(blob).length) { return false; }
         /* Feature switches are a manager's decision. A cashier shown these
            would be offered choices the save would refuse. */
         var acl = PosnicPro.userACL;
@@ -5419,7 +5445,7 @@ PosnicPro.features = {
         $('#feature_intro_modal').modal('show');
         // Seen is seen, however it closes - this must never nag.
         $('#feature_intro_modal').one('hidden.bs.modal', function () {
-            PosnicPro.local.set('features_intro_seen', 'true');
+            PosnicPro.local.set(PosnicPro.features._introSeenKey(), 'true');
             /* Closing without choosing still counts as having been asked, so
                the flag is written on the shop too - otherwise the next till
                asks again. Best effort: if it fails the welcome simply returns,
@@ -5602,9 +5628,27 @@ PosnicPro.features = {
 };
 $(document).on('click', '#feature_intro_save', function () { PosnicPro.features.saveIntro(); });
 $(document).ready(function () {
-    // After boot settles: login writes the general_settings blob and userACL
-    // before the dashboard is usable, so a short delay is enough.
-    setTimeout(function () { PosnicPro.features.maybeShowIntro(); }, 2500);
+    /*
+     * A POLL, not a one-shot.
+     *
+     * Login writes the general_settings blob and the ACL while the dashboard
+     * is coming up, and on a brand-new shop's first login that write can land
+     * after any fixed delay - a one-shot check fires into an empty blob,
+     * returns, and the welcome never shows on the one login it exists for.
+     * Nothing looks wrong: the shop simply appears to have no welcome, which
+     * is how it went unreported until the owner opened a fresh shop himself.
+     *
+     * maybeShowIntro returns false ONLY for "not loaded yet". Every decided
+     * outcome - shown, already seen, cashier, no modal - ends the poll.
+     */
+    var tries = 0;
+    var poll = function () {
+        tries += 1;
+        if (PosnicPro.features.maybeShowIntro() === false && tries < 30) {
+            setTimeout(poll, 2000);
+        }
+    };
+    setTimeout(poll, 2500);
 });
 
 /* The customer-display address card was removed from Core Settings on owner

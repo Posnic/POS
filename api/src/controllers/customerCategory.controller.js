@@ -33,8 +33,17 @@ class CustomerCategoryController extends BaseController {
       const result = await model.categoryPage(filters, options);
 
       if (result.status === true) {
-        // Apply MongoIDFilter to convert ObjectIds to strings
-        result.data.list = this.MongoIDFilter(result.data.list);
+        /*
+         * this.MongoIDFilter never existed - not here, not on the base - so
+         * this line has thrown into the catch and answered 500 on every call
+         * since it was written. Found by the phantom-helper sweep, which was
+         * itself written because three demo handlers shipped the same way.
+         * The ObjectId-to-string job it named is real, so it is done inline:
+         * one field, no invented helper to go phantom again.
+         */
+        result.data.list = (result.data.list || []).map((row) =>
+          row && row._id ? { ...row, _id: String(row._id) } : row
+        );
         return this.success(res, result.data, result.message);
       } else {
         return this.error(res, 'Details Not Found', 404, result.data);

@@ -92,3 +92,31 @@ describe('sales are spread across the sample customers', () => {
     expect(sales[0].customer_name).toBe('Walk-in Customer');
   });
 });
+
+describe('demo people and the unique email index', () => {
+  const seed = require('../../../src/services/demo-seed');
+  const branch = { branch_id: 'B', branch_name: 'Shop', license: 'L' };
+  const people = seed.buildPeople({ branch, pack: 'cafe', now: new Date(0), base: {} });
+
+  test('every person carries a distinct email', () => {
+    /*
+     * suppliers carry a unique index on email, and the shop's own General
+     * Supplier already holds the empty string. Five demo suppliers arriving
+     * with email:'' meant the first insert collided (E11000), the whole
+     * people write failed, and the sample sales and quotes built on those
+     * people were silently skipped - xyzshop got products and nothing else,
+     * with the only trace one line in a server log.
+     */
+    const all = [...people.customers, ...people.suppliers].map((p) => p.email);
+    expect(all.every((e) => e && e.length > 3)).toBe(true);
+    expect(new Set(all).size).toBe(all.length);
+  });
+
+  test('the placeholder addresses can never deliver or belong to anyone', () => {
+    /* RFC 2606 reserves example.com for exactly this. A plausible real domain
+       would one day send a campaign email to a stranger. */
+    for (const p of [...people.customers, ...people.suppliers]) {
+      expect(p.email).toMatch(/^[a-z0-9.]+@example\.com$/);
+    }
+  });
+});

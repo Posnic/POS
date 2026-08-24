@@ -240,6 +240,24 @@ const DEMO_SUPPLIERS = [
 ];
 
 function buildPeople({ branch, pack, now, base }) {
+  /*
+   * Every person gets a DISTINCT placeholder email, because suppliers carry a
+   * unique index on email and the shop's own General Supplier already holds
+   * the empty string. Five demo suppliers all arriving with email:'' meant the
+   * first insert collided (E11000), the whole people write failed, and the
+   * sales and quotes built on those people were skipped - a shop that asked
+   * for sample data got products and nothing else, with the only trace one
+   * line in a log on the server.
+   *
+   * example.com, because RFC 2606 reserves it: these addresses can never
+   * deliver, never belong to anyone, and read as exactly what they are.
+   */
+  const placeholderEmail = (name) =>
+    String(name)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '.')
+      .replace(/^\.|\.$/g, '') + '@example.com';
+
   const common = (row) => ({
     demo_pack: pack,
     demo_seeded_at: now,
@@ -247,7 +265,7 @@ function buildPeople({ branch, pack, now, base }) {
     branch_name: branch.branch_name,
     license: branch.license,
     name: row.name,
-    email: '',
+    email: placeholderEmail(row.name),
     phone: row.phone,
     address: '',
     city: row.city,

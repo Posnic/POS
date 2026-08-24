@@ -1247,7 +1247,7 @@ class ItemsController extends BaseController {
         businessType: req.body?.businessType,
       });
       if (!result.status) return this.sendError(res, result.message, 400);
-      return this.sendSuccess(res, result.data, result.message);
+      return this.success(res, result.data, result.message);
     } catch (error) {
       console.error('Error in reseedDemoData:', error);
       return this.sendError(res, error.message, 500);
@@ -1296,7 +1296,7 @@ class ItemsController extends BaseController {
         current = null;
       }
 
-      return this.sendSuccess(res, { packs, current }, 'success');
+      return this.success(res, { packs, current }, 'success');
     } catch (error) {
       console.error('Error in listDemoPacks:', error);
       return this.sendError(res, error.message, 500);
@@ -1315,7 +1315,7 @@ class ItemsController extends BaseController {
         user: req.user,
       });
       if (!result.status) return this.sendError(res, result.message, 400);
-      return this.sendSuccess(res, result.data, result.message);
+      return this.success(res, result.data, result.message);
     } catch (error) {
       console.error('Error in purgeDemoData:', error);
       return this.sendError(res, error.message, 500);

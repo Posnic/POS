@@ -65,8 +65,18 @@ function block(source, name, until) {
 test('the welcome is gated on the shop, not only on the browser', () => {
     const gate = block(settingsCode, 'maybeShowIntro:', 'renderIntro:');
 
-    // Per browser: what shops running today already carry.
-    assert.match(gate, /features_intro_seen/);
+    /* Per browser AND per shop: the seen-key carries the branch id. One bare
+       key is how the owner never saw the welcome on any shop he created -
+       dismiss it once anywhere and every later shop on that browser is
+       silently skipped, and the person that fails hardest for is exactly the
+       person who opens many shops. */
+    /* The READ specifically - the write in the dismiss handler also mentions
+       the key, so a loose match passes with the actual gate deleted. Found by
+       mutation. */
+    assert.match(gate, /if \(PosnicPro\.local\.get\(PosnicPro\.features\._introSeenKey\(\)\)\) \{ return; \}/);
+    const keyFn = block(settingsCode, '_introSeenKey:', 'maybeShowIntro:');
+    assert.match(keyFn, /branch_id_set/);
+    assert.match(keyFn, /'features_intro_seen:' \+ branch/);
     // Per shop: survives a second till, a new browser and a reinstall.
     assert.match(gate, /first_run_done === true \|\| \w+\.first_run_done === 'true'/);
     assert.match(gate, /return;/);
@@ -79,7 +89,21 @@ test('an unloaded settings blob is not treated as a shop that has never been ask
      * absent, and a shop trading for a year is greeted with "your shop is
      * ready". Absent must mean "do not know", never "new".
      */
-    assert.match(gate, /if \(!Object\.keys\(\w+\)\.length\) \{ return; \}/);
+    /* return FALSE, not bare return: it is the one outcome that means "not
+       loaded yet", and the poll below retries only on it. */
+    assert.match(gate, /if \(!Object\.keys\(\w+\)\.length\) \{ return false; \}/);
+});
+
+test('the check polls until settings load, instead of firing once and giving up', () => {
+    /*
+     * On a brand-new shop's FIRST login the blob is still being written when
+     * a fixed delay fires. A one-shot check loses that race on exactly the
+     * login this screen exists for, and nothing looks wrong afterwards - the
+     * shop simply appears to have no welcome.
+     */
+    const boot = settingsCode.slice(settingsCode.indexOf('var poll = function'));
+    assert.match(boot, /maybeShowIntro\(\) === false && tries < \d+/);
+    assert.match(boot, /setTimeout\(poll, \d+\)/);
 });
 
 test('a cashier is never shown switches they cannot save', () => {
@@ -91,7 +115,7 @@ test('dismissing counts as being asked, on the shop as well as the browser', () 
     const gate = block(settingsCode, 'maybeShowIntro:', 'renderIntro:');
     // Otherwise the next till in the same shop asks again.
     assert.match(gate, /hidden\.bs\.modal/);
-    assert.match(gate, /local\.set\('features_intro_seen', 'true'\)/);
+    assert.match(gate, /local\.set\(PosnicPro\.features\._introSeenKey\(\), 'true'\)/);
     assert.match(gate, /settings\/group\/features/);
     assert.match(gate, /first_run_done: 'true'/);
 });
