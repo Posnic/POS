@@ -242,6 +242,10 @@ jobs:
       - name: Install
         run: npm ci --omit=optional --ignore-scripts
 
+      - name: Install API dependencies used by desktop contract tests
+        working-directory: api
+        run: npm ci
+
       # The rollback drill releases the REAL artifact - the manifest signed
       # over an actually-built frontend/public - so the suite needs the pages
       # built first. Same steps as deploy-frontend.yml. Without this the drill

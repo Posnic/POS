@@ -1,0 +1,83 @@
+name: POS hardware evidence report
+description: Report a reproducible observation for an exact printer, scanner, drawer, scale, or display
+title: "[Hardware evidence]: "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A source path or protocol test is not the same as a physical-device result. Name the exact device and environment so another person can reproduce the observation.
+
+        GitHub issues are public. Use fictional transactions and remove customer data, payment data, credentials, tokens, production logs, serial numbers that identify an owner, and database files.
+
+  - type: dropdown
+    id: device_type
+    attributes:
+      label: Device type
+      options:
+        - Receipt printer
+        - Barcode scanner
+        - Cash drawer
+        - Weighing scale
+        - Customer or second display
+        - Other POS peripheral
+    validations:
+      required: true
+
+  - type: input
+    id: device_identity
+    attributes:
+      label: Manufacturer and exact model
+      placeholder: Manufacturer, model, hardware revision if visible
+    validations:
+      required: true
+
+  - type: input
+    id: connection
+    attributes:
+      label: Connection, cable, driver, and protocol
+      placeholder: USB, driver version, ESC/POS mode, serial settings, or network path
+    validations:
+      required: true
+
+  - type: input
+    id: software_environment
+    attributes:
+      label: Posnic version, operating system, and architecture
+      placeholder: Posnic v1.3.0, Windows 11 23H2 x64
+    validations:
+      required: true
+
+  - type: textarea
+    id: test_method
+    attributes:
+      label: Test method
+      description: Describe setup and the exact normal, disconnect, retry, restart, malformed-input, or recovery paths tested.
+    validations:
+      required: true
+
+  - type: textarea
+    id: observed_results
+    attributes:
+      label: Expected and observed results
+      description: Record each pass, failure, partial result, and error message. Attach fully redacted evidence where useful.
+    validations:
+      required: true
+
+  - type: textarea
+    id: limitations
+    attributes:
+      label: Limitations and untested paths
+      description: State what this observation does not prove, including other firmware, drivers, cables, platforms, receipt widths, loads, or recovery conditions.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: public_data_confirmation
+    attributes:
+      label: Public evidence confirmation
+      options:
+        - label: I used fictional or fully redacted records and included no secrets, customer data, payment data, or production database content.
+          required: true
+        - label: I understand that one report is not an automatic hardware certification or universal compatibility claim.
+          required: true

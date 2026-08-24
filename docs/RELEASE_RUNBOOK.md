@@ -55,6 +55,14 @@ stops automatic updates for everyone, with no error anywhere.
 6. **Check the draft before publishing.**
    - The installers are all there and the sizes look sane
    - `SHA256SUMS.txt` is present
+   - Every `.exe`, `.dmg`, `.zip`, `.AppImage` and `.deb` has a matching
+     `<complete-artifact-name>.cdx.json`. The SBOM's recorded SHA-256 and file
+     name must match the package, and both files must appear in
+     `SHA256SUMS.txt`. Run [the public verification procedure](VERIFY_RELEASE.md)
+     against at least one artifact from every matrix job.
+   - `gh attestation verify <artifact> -R Posnic/POS` and the same command for
+     `<artifact>.cdx.json` both identify this repository and expected source.
+     A missing provenance record means stop; a checksum is not a substitute.
    - **`latest.yml`, `latest-mac.yml` and `latest-linux.yml` are present.** These
      are what an installed till reads to discover the release exists. Without
      them the release looks perfect and no shop is ever offered it - the Updates

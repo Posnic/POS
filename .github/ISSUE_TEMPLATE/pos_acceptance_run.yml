@@ -1,0 +1,112 @@
+name: POS acceptance fixture result
+description: Submit a reproducible run of the public vendor-neutral transaction fixture
+title: "[Acceptance fixture]: "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use fictional data only. GitHub issues are public. Remove customer data, payment data, credentials, tokens, production logs, and database files before submitting.
+
+        This report is an observation, not a certification, endorsement, performance claim, compliance result, or customer outcome.
+
+  - type: input
+    id: pos_version
+    attributes:
+      label: Posnic version or source commit
+      description: Name the exact release tag or full source commit tested.
+      placeholder: v1.3.0 or a 40-character commit SHA
+    validations:
+      required: true
+
+  - type: dropdown
+    id: artifact_type
+    attributes:
+      label: Artifact tested
+      options:
+        - Official release package
+        - Clean source build
+        - Modified source build or fork
+    validations:
+      required: true
+
+  - type: input
+    id: artifact_identity
+    attributes:
+      label: Package filename and SHA-256, or build command
+      description: Give enough detail for another person to select or build the same artifact.
+      placeholder: Posnic-Setup-1.3.0.exe, SHA-256 ...
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Operating system and environment
+      description: Include OS version, architecture, installation type, and relevant runtime details.
+      placeholder: Windows 11 23H2 x64, clean local install
+    validations:
+      required: true
+
+  - type: input
+    id: fixture_identity
+    attributes:
+      label: Fixture version and file hashes
+      description: Use the version and SHA-256 values published in the fixture manifest.
+      placeholder: 2026-08-22; catalog ..., events ..., expected ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: scenario_results
+    attributes:
+      label: Scenario results
+      description: Record pass, fail, blocked, or not tested for SALE-001 through CLOSE-001. For every failure, include expected and observed values.
+      placeholder: |
+        SALE-001: pass
+        SALE-002: fail - expected ..., observed ...
+        SALE-003: blocked - reason ...
+        DECLINE-001: pass
+        VOID-001: pass
+        RETURN-001: pass
+        RETURN-002: pass
+        REPLAY-001: pass
+        STOCK-001: pass
+        CLOSE-001: pass
+    validations:
+      required: true
+
+  - type: textarea
+    id: close_results
+    attributes:
+      label: Observed close, tender, and stock values
+      description: Record final merchandise, discount, tax, total, tender, and item quantities. Do not enter real money or customer records.
+      placeholder: Merchandise ...; discount ...; tax ...; total ...; cash ...; electronic label ...; stock ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: method
+    attributes:
+      label: Method and evidence
+      description: List setup, execution, restart or recovery steps and attach redacted screenshots or logs where useful.
+    validations:
+      required: true
+
+  - type: textarea
+    id: limitations
+    attributes:
+      label: Limitations and untested paths
+      description: Name anything this run did not exercise, including hardware, payment providers, networks, power loss, concurrency, or a full shift.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: public_data_confirmation
+    attributes:
+      label: Public evidence confirmation
+      options:
+        - label: I used fictional or fully redacted records and included no secrets, customer data, payment data, or production database content.
+          required: true
+        - label: I understand that submitting this report does not certify Posnic or establish a compatibility, performance, compliance, or customer claim.
+          required: true
