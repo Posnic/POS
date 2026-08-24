@@ -5480,7 +5480,37 @@ PosnicPro.features = {
            login the blob is still being written when the first check fires,
            and a one-shot check loses that race on exactly the login this
            screen exists for. */
-        if (!Object.keys(blob).length) { return false; }
+        if (!Object.keys(blob).length) {
+            /*
+             * FETCH THE TRUTH, do not wait for it to be left behind.
+             *
+             * The blob is written by the LOGIN flow - and shadow sessions
+             * (the My Account "open in browser" door, the owner's own door)
+             * never run it: they drop a token and land on the dashboard. So
+             * "retry until the blob appears" retried forever on exactly his
+             * sessions, silently, and the welcome that gates on a DB field
+             * never actually asked the DB. It asks now: one read of the
+             * features group, merged into the blob so the rest of the app
+             * gains the same truth, then the gate decides for real.
+             */
+            if (!PosnicPro.features._fetchingGate) {
+                PosnicPro.features._fetchingGate = true;
+                PosnicPro.get({ url: 'settings/group/features', data: {} }, function (response) {
+                    var values = (response && response.data && response.data.values) || {};
+                    var b = PosnicPro.features._blob();
+                    Object.keys(values).forEach(function (k) {
+                        if (b[k] === undefined) { b[k] = values[k]; }
+                    });
+                    PosnicPro.local.set('general_settings', JSON.stringify(b));
+                    PosnicPro.features._fetchingGate = false;
+                    PosnicPro.features.maybeShowIntro();
+                }, function () {
+                    /* the poll keeps retrying; a failed read must not end it */
+                    PosnicPro.features._fetchingGate = false;
+                });
+            }
+            return false;
+        }
         /*
          * NO identity gate at all. Owner, fourth round: "keep on db field and
          * make sure user know about it."

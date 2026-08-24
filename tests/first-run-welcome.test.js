@@ -89,7 +89,22 @@ test('an unloaded settings blob is not treated as a shop that has never been ask
      */
     /* return FALSE, not bare return: it is the one outcome that means "not
        loaded yet", and the poll below retries only on it. */
-    assert.match(gate, /if \(!Object\.keys\(\w+\)\.length\) \{ return false; \}/);
+    /* An empty blob now FETCHES the truth instead of waiting for a login
+       flow to leave it behind - shadow sessions (the owner's My Account
+       door) never run that flow, so wait-for-blob waited forever on exactly
+       his sessions. The fetch is guarded to one in flight, merges into the
+       blob for the whole app, and the branch still returns false so the
+       poll survives a failed read. */
+    /* The fetch must be REACHABLE (a disabled guard leaves wait-forever in
+       place while the strings still match - mutation found exactly that),
+       and its success must RE-RUN the gate, or the fetched truth decides
+       nothing until the next poll tick. */
+    const empty = gate.slice(gate.indexOf('if (!Object.keys(blob).length)'),
+        gate.indexOf('renderIntro') > -1 ? undefined : undefined);
+    assert.match(empty, /if \(!PosnicPro\.features\._fetchingGate\) \{/);
+    assert.match(empty, /url: 'settings\/group\/features'/);
+    assert.match(empty, /PosnicPro\.features\.maybeShowIntro\(\);/);
+    assert.match(empty, /return false;/);
 });
 
 test('the check polls until settings load, instead of firing once and giving up', () => {
