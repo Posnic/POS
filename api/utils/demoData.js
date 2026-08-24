@@ -5,32 +5,68 @@ const iceCreamDemoData = {
     { name: 'Ice Cream Flavors', description: 'Various ice cream flavors' },
     { name: 'Toppings', description: 'Ice cream toppings and sauces' },
     { name: 'Cones & Cups', description: 'Serving containers' },
-    { name: 'Sundaes', description: 'Special sundae combinations' }
+    { name: 'Sundaes', description: 'Special sundae combinations' },
   ],
   products: [
     // Ice Cream Flavors (6 products)
-    { name: 'Vanilla Ice Cream', category: 'Ice Cream Flavors', price: 3.50, unit: 'scoop', stock: 100 },
-    { name: 'Chocolate Ice Cream', category: 'Ice Cream Flavors', price: 3.50, unit: 'scoop', stock: 100 },
-    { name: 'Strawberry Ice Cream', category: 'Ice Cream Flavors', price: 3.75, unit: 'scoop', stock: 100 },
-    { name: 'Mango Ice Cream', category: 'Ice Cream Flavors', price: 4.00, unit: 'scoop', stock: 100 },
-    { name: 'Mint Chocolate Chip', category: 'Ice Cream Flavors', price: 4.25, unit: 'scoop', stock: 100 },
-    { name: 'Cookie Dough Ice Cream', category: 'Ice Cream Flavors', price: 4.50, unit: 'scoop', stock: 100 },
-    
+    {
+      name: 'Vanilla Ice Cream',
+      category: 'Ice Cream Flavors',
+      price: 3.5,
+      unit: 'scoop',
+      stock: 100,
+    },
+    {
+      name: 'Chocolate Ice Cream',
+      category: 'Ice Cream Flavors',
+      price: 3.5,
+      unit: 'scoop',
+      stock: 100,
+    },
+    {
+      name: 'Strawberry Ice Cream',
+      category: 'Ice Cream Flavors',
+      price: 3.75,
+      unit: 'scoop',
+      stock: 100,
+    },
+    {
+      name: 'Mango Ice Cream',
+      category: 'Ice Cream Flavors',
+      price: 4.0,
+      unit: 'scoop',
+      stock: 100,
+    },
+    {
+      name: 'Mint Chocolate Chip',
+      category: 'Ice Cream Flavors',
+      price: 4.25,
+      unit: 'scoop',
+      stock: 100,
+    },
+    {
+      name: 'Cookie Dough Ice Cream',
+      category: 'Ice Cream Flavors',
+      price: 4.5,
+      unit: 'scoop',
+      stock: 100,
+    },
+
     // Toppings (4 products)
     { name: 'Chocolate Syrup', category: 'Toppings', price: 0.75, unit: 'serving', stock: 200 },
     { name: 'Caramel Sauce', category: 'Toppings', price: 0.75, unit: 'serving', stock: 200 },
-    { name: 'Sprinkles', category: 'Toppings', price: 0.50, unit: 'serving', stock: 200 },
-    { name: 'Whipped Cream', category: 'Toppings', price: 0.50, unit: 'serving', stock: 200 },
-    
+    { name: 'Sprinkles', category: 'Toppings', price: 0.5, unit: 'serving', stock: 200 },
+    { name: 'Whipped Cream', category: 'Toppings', price: 0.5, unit: 'serving', stock: 200 },
+
     // Cones & Cups (3 products)
-    { name: 'Waffle Cone', category: 'Cones & Cups', price: 1.50, unit: 'piece', stock: 150 },
-    { name: 'Sugar Cone', category: 'Cones & Cups', price: 1.00, unit: 'piece', stock: 150 },
-    { name: 'Cup (Small)', category: 'Cones & Cups', price: 0.50, unit: 'piece', stock: 200 },
-    
+    { name: 'Waffle Cone', category: 'Cones & Cups', price: 1.5, unit: 'piece', stock: 150 },
+    { name: 'Sugar Cone', category: 'Cones & Cups', price: 1.0, unit: 'piece', stock: 150 },
+    { name: 'Cup (Small)', category: 'Cones & Cups', price: 0.5, unit: 'piece', stock: 200 },
+
     // Sundaes (2 products)
     { name: 'Banana Split', category: 'Sundaes', price: 8.99, unit: 'serving', stock: 50 },
-    { name: 'Hot Fudge Sundae', category: 'Sundaes', price: 6.99, unit: 'serving', stock: 50 }
-  ]
+    { name: 'Hot Fudge Sundae', category: 'Sundaes', price: 6.99, unit: 'serving', stock: 50 },
+  ],
 };
 
 const cafeDemoData = {
@@ -38,32 +74,38 @@ const cafeDemoData = {
     { name: 'Hot Beverages', description: 'Coffee, tea, and hot drinks' },
     { name: 'Cold Beverages', description: 'Iced drinks and smoothies' },
     { name: 'Snacks', description: 'Quick bites and snacks' },
-    { name: 'Groceries', description: 'Daily essentials' }
+    { name: 'Groceries', description: 'Daily essentials' },
   ],
   products: [
     // Hot Beverages (5 products)
-    { name: 'Espresso', category: 'Hot Beverages', price: 2.50, unit: 'cup', stock: 100 },
-    { name: 'Cappuccino', category: 'Hot Beverages', price: 3.50, unit: 'cup', stock: 100 },
+    { name: 'Espresso', category: 'Hot Beverages', price: 2.5, unit: 'cup', stock: 100 },
+    { name: 'Cappuccino', category: 'Hot Beverages', price: 3.5, unit: 'cup', stock: 100 },
     { name: 'Latte', category: 'Hot Beverages', price: 3.75, unit: 'cup', stock: 100 },
     { name: 'Hot Chocolate', category: 'Hot Beverages', price: 3.25, unit: 'cup', stock: 100 },
-    { name: 'Green Tea', category: 'Hot Beverages', price: 2.00, unit: 'cup', stock: 100 },
-    
+    { name: 'Green Tea', category: 'Hot Beverages', price: 2.0, unit: 'cup', stock: 100 },
+
     // Cold Beverages (4 products)
-    { name: 'Iced Coffee', category: 'Cold Beverages', price: 3.50, unit: 'cup', stock: 100 },
-    { name: 'Iced Latte', category: 'Cold Beverages', price: 4.00, unit: 'cup', stock: 100 },
-    { name: 'Mango Smoothie', category: 'Cold Beverages', price: 4.50, unit: 'cup', stock: 100 },
-    { name: 'Fresh Orange Juice', category: 'Cold Beverages', price: 3.50, unit: 'glass', stock: 100 },
-    
+    { name: 'Iced Coffee', category: 'Cold Beverages', price: 3.5, unit: 'cup', stock: 100 },
+    { name: 'Iced Latte', category: 'Cold Beverages', price: 4.0, unit: 'cup', stock: 100 },
+    { name: 'Mango Smoothie', category: 'Cold Beverages', price: 4.5, unit: 'cup', stock: 100 },
+    {
+      name: 'Fresh Orange Juice',
+      category: 'Cold Beverages',
+      price: 3.5,
+      unit: 'glass',
+      stock: 100,
+    },
+
     // Snacks (3 products)
-    { name: 'Croissant', category: 'Snacks', price: 2.50, unit: 'piece', stock: 50 },
+    { name: 'Croissant', category: 'Snacks', price: 2.5, unit: 'piece', stock: 50 },
     { name: 'Muffin', category: 'Snacks', price: 2.75, unit: 'piece', stock: 50 },
-    { name: 'Sandwich', category: 'Snacks', price: 5.50, unit: 'piece', stock: 50 },
-    
+    { name: 'Sandwich', category: 'Snacks', price: 5.5, unit: 'piece', stock: 50 },
+
     // Groceries (3 products)
-    { name: 'Milk (1L)', category: 'Groceries', price: 2.00, unit: 'bottle', stock: 100 },
-    { name: 'Bread Loaf', category: 'Groceries', price: 2.50, unit: 'loaf', stock: 80 },
-    { name: 'Eggs (12 pack)', category: 'Groceries', price: 3.50, unit: 'pack', stock: 60 }
-  ]
+    { name: 'Milk (1L)', category: 'Groceries', price: 2.0, unit: 'bottle', stock: 100 },
+    { name: 'Bread Loaf', category: 'Groceries', price: 2.5, unit: 'loaf', stock: 80 },
+    { name: 'Eggs (12 pack)', category: 'Groceries', price: 3.5, unit: 'pack', stock: 60 },
+  ],
 };
 
 const bakeryDemoData = {
@@ -71,32 +113,32 @@ const bakeryDemoData = {
     { name: 'Bread', description: 'Fresh baked bread' },
     { name: 'Pastries', description: 'Sweet and savory pastries' },
     { name: 'Cakes', description: 'Cakes and celebration items' },
-    { name: 'Cookies', description: 'Cookies and biscuits' }
+    { name: 'Cookies', description: 'Cookies and biscuits' },
   ],
   products: [
     // Bread (4 products)
-    { name: 'White Bread', category: 'Bread', price: 2.50, unit: 'loaf', stock: 100 },
-    { name: 'Whole Wheat Bread', category: 'Bread', price: 3.00, unit: 'loaf', stock: 100 },
+    { name: 'White Bread', category: 'Bread', price: 2.5, unit: 'loaf', stock: 100 },
+    { name: 'Whole Wheat Bread', category: 'Bread', price: 3.0, unit: 'loaf', stock: 100 },
     { name: 'Baguette', category: 'Bread', price: 2.75, unit: 'piece', stock: 80 },
-    { name: 'Sourdough', category: 'Bread', price: 4.50, unit: 'loaf', stock: 60 },
-    
+    { name: 'Sourdough', category: 'Bread', price: 4.5, unit: 'loaf', stock: 60 },
+
     // Pastries (5 products)
-    { name: 'Croissant', category: 'Pastries', price: 2.50, unit: 'piece', stock: 100 },
-    { name: 'Danish Pastry', category: 'Pastries', price: 3.00, unit: 'piece', stock: 80 },
+    { name: 'Croissant', category: 'Pastries', price: 2.5, unit: 'piece', stock: 100 },
+    { name: 'Danish Pastry', category: 'Pastries', price: 3.0, unit: 'piece', stock: 80 },
     { name: 'Cinnamon Roll', category: 'Pastries', price: 3.25, unit: 'piece', stock: 80 },
     { name: 'Apple Turnover', category: 'Pastries', price: 2.75, unit: 'piece', stock: 80 },
-    { name: 'Donut', category: 'Pastries', price: 1.50, unit: 'piece', stock: 120 },
-    
+    { name: 'Donut', category: 'Pastries', price: 1.5, unit: 'piece', stock: 120 },
+
     // Cakes (3 products)
-    { name: 'Chocolate Cake Slice', category: 'Cakes', price: 4.50, unit: 'slice', stock: 40 },
-    { name: 'Cheesecake Slice', category: 'Cakes', price: 5.00, unit: 'slice', stock: 40 },
-    { name: 'Birthday Cake (8")', category: 'Cakes', price: 25.00, unit: 'cake', stock: 10 },
-    
+    { name: 'Chocolate Cake Slice', category: 'Cakes', price: 4.5, unit: 'slice', stock: 40 },
+    { name: 'Cheesecake Slice', category: 'Cakes', price: 5.0, unit: 'slice', stock: 40 },
+    { name: 'Birthday Cake (8")', category: 'Cakes', price: 25.0, unit: 'cake', stock: 10 },
+
     // Cookies (3 products)
-    { name: 'Chocolate Chip Cookies', category: 'Cookies', price: 1.50, unit: 'piece', stock: 150 },
-    { name: 'Oatmeal Cookies', category: 'Cookies', price: 1.50, unit: 'piece', stock: 150 },
-    { name: 'Sugar Cookies', category: 'Cookies', price: 1.25, unit: 'piece', stock: 150 }
-  ]
+    { name: 'Chocolate Chip Cookies', category: 'Cookies', price: 1.5, unit: 'piece', stock: 150 },
+    { name: 'Oatmeal Cookies', category: 'Cookies', price: 1.5, unit: 'piece', stock: 150 },
+    { name: 'Sugar Cookies', category: 'Cookies', price: 1.25, unit: 'piece', stock: 150 },
+  ],
 };
 
 const supermarketDemoData = {
@@ -106,22 +148,64 @@ const supermarketDemoData = {
     { name: 'Beverages', description: 'Tea, coffee, soft drinks and juices' },
     { name: 'Dairy & Bread', description: 'Milk, curd, butter, paneer and bakery' },
     { name: 'Personal Care', description: 'Soap, shampoo, toothpaste and hygiene' },
-    { name: 'Household & Cleaning', description: 'Detergents, cleaners and home needs' }
+    { name: 'Household & Cleaning', description: 'Detergents, cleaners and home needs' },
   ],
   products: [
     // Groceries & Staples
-    { name: 'Rice (Sona Masoori) 5kg', category: 'Groceries & Staples', price: 380, unit: 'bag', stock: 40 },
+    {
+      name: 'Rice (Sona Masoori) 5kg',
+      category: 'Groceries & Staples',
+      price: 380,
+      unit: 'bag',
+      stock: 40,
+    },
     { name: 'Wheat Atta 5kg', category: 'Groceries & Staples', price: 260, unit: 'bag', stock: 40 },
     { name: 'Toor Dal 1kg', category: 'Groceries & Staples', price: 165, unit: 'kg', stock: 50 },
     { name: 'Sugar 1kg', category: 'Groceries & Staples', price: 46, unit: 'kg', stock: 80 },
-    { name: 'Iodised Salt 1kg', category: 'Groceries & Staples', price: 24, unit: 'kg', stock: 100 },
-    { name: 'Sunflower Oil 1L', category: 'Groceries & Staples', price: 145, unit: 'bottle', stock: 60 },
-    { name: 'Tea Powder 250g', category: 'Groceries & Staples', price: 140, unit: 'pack', stock: 50 },
+    {
+      name: 'Iodised Salt 1kg',
+      category: 'Groceries & Staples',
+      price: 24,
+      unit: 'kg',
+      stock: 100,
+    },
+    {
+      name: 'Sunflower Oil 1L',
+      category: 'Groceries & Staples',
+      price: 145,
+      unit: 'bottle',
+      stock: 60,
+    },
+    {
+      name: 'Tea Powder 250g',
+      category: 'Groceries & Staples',
+      price: 140,
+      unit: 'pack',
+      stock: 50,
+    },
     // Snacks & Biscuits
-    { name: 'Glucose Biscuits', category: 'Snacks & Biscuits', price: 10, unit: 'pack', stock: 200 },
+    {
+      name: 'Glucose Biscuits',
+      category: 'Snacks & Biscuits',
+      price: 10,
+      unit: 'pack',
+      stock: 200,
+    },
     { name: 'Cream Biscuits', category: 'Snacks & Biscuits', price: 30, unit: 'pack', stock: 120 },
-    { name: 'Potato Chips 52g', category: 'Snacks & Biscuits', price: 20, unit: 'pack', stock: 150 },
-    { name: 'Mixture Namkeen 200g', category: 'Snacks & Biscuits', price: 55, unit: 'pack', stock: 80 },
+    {
+      name: 'Potato Chips 52g',
+      category: 'Snacks & Biscuits',
+      price: 20,
+      unit: 'pack',
+      stock: 150,
+    },
+    {
+      name: 'Mixture Namkeen 200g',
+      category: 'Snacks & Biscuits',
+      price: 55,
+      unit: 'pack',
+      stock: 80,
+    },
     // Beverages
     { name: 'Cola 750ml', category: 'Beverages', price: 40, unit: 'bottle', stock: 96 },
     { name: 'Mango Drink 600ml', category: 'Beverages', price: 35, unit: 'bottle', stock: 96 },
@@ -136,10 +220,28 @@ const supermarketDemoData = {
     { name: 'Shampoo Sachet', category: 'Personal Care', price: 2, unit: 'sachet', stock: 400 },
     { name: 'Toothpaste 100g', category: 'Personal Care', price: 55, unit: 'tube', stock: 80 },
     // Household & Cleaning
-    { name: 'Detergent Powder 1kg', category: 'Household & Cleaning', price: 110, unit: 'pack', stock: 50 },
-    { name: 'Dishwash Bar', category: 'Household & Cleaning', price: 20, unit: 'piece', stock: 100 },
-    { name: 'Floor Cleaner 500ml', category: 'Household & Cleaning', price: 95, unit: 'bottle', stock: 40 }
-  ]
+    {
+      name: 'Detergent Powder 1kg',
+      category: 'Household & Cleaning',
+      price: 110,
+      unit: 'pack',
+      stock: 50,
+    },
+    {
+      name: 'Dishwash Bar',
+      category: 'Household & Cleaning',
+      price: 20,
+      unit: 'piece',
+      stock: 100,
+    },
+    {
+      name: 'Floor Cleaner 500ml',
+      category: 'Household & Cleaning',
+      price: 95,
+      unit: 'bottle',
+      stock: 40,
+    },
+  ],
 };
 
 const textileDemoData = {
@@ -147,7 +249,7 @@ const textileDemoData = {
     { name: "Men's Wear", description: 'Shirts, trousers and menswear' },
     { name: "Women's Wear", description: 'Sarees, kurtis and womenswear' },
     { name: 'Kids Wear', description: "Children's clothing" },
-    { name: 'Fabrics', description: 'Cloth sold by the meter' }
+    { name: 'Fabrics', description: 'Cloth sold by the meter' },
   ],
   products: [
     { name: 'Formal Shirt (Cotton)', category: "Men's Wear", price: 799, unit: 'piece', stock: 40 },
@@ -161,10 +263,16 @@ const textileDemoData = {
     { name: 'Kids T-Shirt', category: 'Kids Wear', price: 249, unit: 'piece', stock: 50 },
     { name: 'Kids Frock', category: 'Kids Wear', price: 449, unit: 'piece', stock: 35 },
     { name: 'School Uniform Set', category: 'Kids Wear', price: 699, unit: 'set', stock: 40 },
-    { name: 'Shirting Fabric (Cotton)', category: 'Fabrics', price: 220, unit: 'meter', stock: 200 },
+    {
+      name: 'Shirting Fabric (Cotton)',
+      category: 'Fabrics',
+      price: 220,
+      unit: 'meter',
+      stock: 200,
+    },
     { name: 'Suiting Fabric', category: 'Fabrics', price: 450, unit: 'meter', stock: 150 },
-    { name: 'Blouse Material', category: 'Fabrics', price: 150, unit: 'meter', stock: 100 }
-  ]
+    { name: 'Blouse Material', category: 'Fabrics', price: 150, unit: 'meter', stock: 100 },
+  ],
 };
 
 const electricalDemoData = {
@@ -172,23 +280,77 @@ const electricalDemoData = {
     { name: 'Wires & Cables', description: 'House wiring and cables' },
     { name: 'Switches & Sockets', description: 'Modular switches, sockets and MCBs' },
     { name: 'Lighting', description: 'Bulbs, tubes and decorative lights' },
-    { name: 'Fans & Appliances', description: 'Fans and small appliances' }
+    { name: 'Fans & Appliances', description: 'Fans and small appliances' },
   ],
   products: [
-    { name: 'Copper Wire 1.5sqmm (90m)', category: 'Wires & Cables', price: 1450, unit: 'roll', stock: 25 },
-    { name: 'Copper Wire 2.5sqmm (90m)', category: 'Wires & Cables', price: 2250, unit: 'roll', stock: 20 },
+    {
+      name: 'Copper Wire 1.5sqmm (90m)',
+      category: 'Wires & Cables',
+      price: 1450,
+      unit: 'roll',
+      stock: 25,
+    },
+    {
+      name: 'Copper Wire 2.5sqmm (90m)',
+      category: 'Wires & Cables',
+      price: 2250,
+      unit: 'roll',
+      stock: 20,
+    },
     { name: 'Extension Cord 5m', category: 'Wires & Cables', price: 350, unit: 'piece', stock: 30 },
-    { name: 'Modular Switch 6A', category: 'Switches & Sockets', price: 45, unit: 'piece', stock: 200 },
-    { name: '3-Pin Socket 16A', category: 'Switches & Sockets', price: 95, unit: 'piece', stock: 100 },
-    { name: 'MCB 16A Single Pole', category: 'Switches & Sockets', price: 180, unit: 'piece', stock: 60 },
-    { name: 'Switch Board Plate (8M)', category: 'Switches & Sockets', price: 120, unit: 'piece', stock: 80 },
+    {
+      name: 'Modular Switch 6A',
+      category: 'Switches & Sockets',
+      price: 45,
+      unit: 'piece',
+      stock: 200,
+    },
+    {
+      name: '3-Pin Socket 16A',
+      category: 'Switches & Sockets',
+      price: 95,
+      unit: 'piece',
+      stock: 100,
+    },
+    {
+      name: 'MCB 16A Single Pole',
+      category: 'Switches & Sockets',
+      price: 180,
+      unit: 'piece',
+      stock: 60,
+    },
+    {
+      name: 'Switch Board Plate (8M)',
+      category: 'Switches & Sockets',
+      price: 120,
+      unit: 'piece',
+      stock: 80,
+    },
     { name: 'LED Bulb 9W', category: 'Lighting', price: 99, unit: 'piece', stock: 150 },
     { name: 'LED Tube 20W 4ft', category: 'Lighting', price: 220, unit: 'piece', stock: 80 },
     { name: 'LED Panel 15W (Round)', category: 'Lighting', price: 320, unit: 'piece', stock: 50 },
-    { name: 'Ceiling Fan 1200mm', category: 'Fans & Appliances', price: 1650, unit: 'piece', stock: 20 },
-    { name: 'Table Fan 400mm', category: 'Fans & Appliances', price: 1350, unit: 'piece', stock: 15 },
-    { name: 'Electric Kettle 1.5L', category: 'Fans & Appliances', price: 850, unit: 'piece', stock: 15 }
-  ]
+    {
+      name: 'Ceiling Fan 1200mm',
+      category: 'Fans & Appliances',
+      price: 1650,
+      unit: 'piece',
+      stock: 20,
+    },
+    {
+      name: 'Table Fan 400mm',
+      category: 'Fans & Appliances',
+      price: 1350,
+      unit: 'piece',
+      stock: 15,
+    },
+    {
+      name: 'Electric Kettle 1.5L',
+      category: 'Fans & Appliances',
+      price: 850,
+      unit: 'piece',
+      stock: 15,
+    },
+  ],
 };
 
 const hardwareDemoData = {
@@ -196,7 +358,7 @@ const hardwareDemoData = {
     { name: 'Hand Tools', description: 'Hammers, screwdrivers and tools' },
     { name: 'Fasteners', description: 'Screws, nails, nuts and bolts' },
     { name: 'Plumbing', description: 'Pipes, taps and fittings' },
-    { name: 'Paint & Supplies', description: 'Paints, brushes and finishing' }
+    { name: 'Paint & Supplies', description: 'Paints, brushes and finishing' },
   ],
   products: [
     { name: 'Claw Hammer 500g', category: 'Hand Tools', price: 280, unit: 'piece', stock: 25 },
@@ -206,15 +368,39 @@ const hardwareDemoData = {
     { name: 'Hacksaw with Blade', category: 'Hand Tools', price: 180, unit: 'piece', stock: 20 },
     { name: 'Wood Screws 1" (100pc)', category: 'Fasteners', price: 90, unit: 'box', stock: 60 },
     { name: 'Wire Nails 2" 1kg', category: 'Fasteners', price: 110, unit: 'kg', stock: 50 },
-    { name: 'Anchor Fastener 6mm (50pc)', category: 'Fasteners', price: 150, unit: 'box', stock: 40 },
+    {
+      name: 'Anchor Fastener 6mm (50pc)',
+      category: 'Fasteners',
+      price: 150,
+      unit: 'box',
+      stock: 40,
+    },
     { name: 'PVC Pipe 3/4" (3m)', category: 'Plumbing', price: 210, unit: 'piece', stock: 40 },
     { name: 'Bib Tap (Brass)', category: 'Plumbing', price: 380, unit: 'piece', stock: 25 },
     { name: 'Teflon Tape', category: 'Plumbing', price: 15, unit: 'roll', stock: 150 },
     { name: 'PVC Elbow 3/4"', category: 'Plumbing', price: 18, unit: 'piece', stock: 100 },
-    { name: 'Emulsion Paint 1L (White)', category: 'Paint & Supplies', price: 320, unit: 'tin', stock: 30 },
-    { name: 'Paint Brush 4 inch', category: 'Paint & Supplies', price: 95, unit: 'piece', stock: 40 },
-    { name: 'Sandpaper Sheet (80 grit)', category: 'Paint & Supplies', price: 12, unit: 'sheet', stock: 200 }
-  ]
+    {
+      name: 'Emulsion Paint 1L (White)',
+      category: 'Paint & Supplies',
+      price: 320,
+      unit: 'tin',
+      stock: 30,
+    },
+    {
+      name: 'Paint Brush 4 inch',
+      category: 'Paint & Supplies',
+      price: 95,
+      unit: 'piece',
+      stock: 40,
+    },
+    {
+      name: 'Sandpaper Sheet (80 grit)',
+      category: 'Paint & Supplies',
+      price: 12,
+      unit: 'sheet',
+      stock: 200,
+    },
+  ],
 };
 
 /*
@@ -335,7 +521,13 @@ function listDemoPacks() {
  * bakery because a key was misspelt is a bad answer delivered confidently.
  */
 function isDemoPack(key) {
-  return Object.prototype.hasOwnProperty.call(DEMO_PACK_LABELS, String(key || ''));
+  if (Object.prototype.hasOwnProperty.call(DEMO_PACK_LABELS, String(key || ''))) return true;
+  /* Dataset trades are packs too - the website's per-currency zips. Resolved
+     through the same normaliser the installer uses, so the chooser and the
+     validator can never disagree about what a key means. */
+  // eslint-disable-next-line global-require
+  const { datasetKeyFor } = require('../src/services/demo-dataset');
+  return datasetKeyFor(key) !== null;
 }
 
 function getDemoDataByType(businessType) {
@@ -420,5 +612,5 @@ module.exports = {
   supermarketDemoData,
   textileDemoData,
   electricalDemoData,
-  hardwareDemoData
+  hardwareDemoData,
 };

@@ -87,7 +87,7 @@ describe('the business type', () => {
 
 describe('the seeded records are still tagged and pictured', () => {
   test('demo items carry the pack tag', () => {
-    expect(SRC).toMatch(/demo_pack: businessType/);
+    expect(SRC).toMatch(/demo_pack: packTag/);
   });
 
   test('demo items carry their photograph when there is one', () => {

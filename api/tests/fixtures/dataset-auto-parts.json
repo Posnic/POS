@@ -1,0 +1,532 @@
+{
+ "schemaVersion": "1.0.0",
+ "datasetId": "INR-auto_parts-v1",
+ "currency": "INR",
+ "loadDemoBusinessKey": "auto_parts",
+ "categories": [
+  {
+   "id": "fluids",
+   "departmentId": "fluids",
+   "name": "Fluids",
+   "sortOrder": 10
+  },
+  {
+   "id": "engine",
+   "departmentId": "engine",
+   "name": "Engine",
+   "sortOrder": 10
+  }
+ ],
+ "products": [
+  {
+   "id": "aut-engine-oil-5w-30-001",
+   "sku": "aut-ENGINE-OIL-5W-30-001",
+   "name": "Engine Oil 5W-30",
+   "displayName": "Engine Oil 5W-30 1 L bottle",
+   "shortName": "Engine Oil 5W-30",
+   "brand": "Demo Supplier",
+   "description": "Engine Oil 5W-30 sold as 1 L bottle, configured for a INR Auto Parts Demo Dataset POS demo.",
+   "countryOfSale": "IN",
+   "countryOfOrigin": null,
+   "brandCountry": null,
+   "departmentId": "fluids",
+   "departmentName": "Fluids",
+   "categoryId": "fluids",
+   "categoryName": "Fluids",
+   "tags": [
+    "engine oil",
+    "motor oil"
+   ],
+   "packSize": "1 L bottle",
+   "quantity": 1,
+   "measurementUnit": "L",
+   "unit": "piece",
+   "active": true,
+   "sellable": true,
+   "status": "active",
+   "taxCategory": "standard",
+   "taxRate": 18,
+   "trackInventory": true,
+   "openingStock": 30,
+   "reorderLevel": 8,
+   "tax": {
+    "name": "GST 18%",
+    "type": "percentage",
+    "rate": 18,
+    "hsnCode": null,
+    "note": "Demo tax profile. Confirm local tax and item classification before fiscal or compliance use."
+   },
+   "pricing": {
+    "currency": "INR",
+    "price": 650,
+    "mrp": 650,
+    "costPrice": 403,
+    "includesTax": true,
+    "priceSource": "Curated demo price table converted for currency matrix using ExchangeRate-API open endpoint",
+    "priceUrl": null,
+    "priceCheckedAt": "2026-08-24",
+    "pricePolicy": "Stable INR demo prices are converted from the canonical dataset for POS seed data. They are not live market price claims.",
+    "note": "Demo seed price for sample data."
+   },
+   "inventory": {
+    "trackInventory": true,
+    "stockOnHand": 30,
+    "reorderPoint": 8,
+    "allowNegativeStock": false,
+    "shelf": "FLUIDS"
+   },
+   "variants": [
+    {
+     "id": "aut-engine-oil-5w-30-001-default",
+     "name": "1 L bottle",
+     "sku": "aut-ENGINE-OIL-5W-30-001",
+     "barcode": null,
+     "externalProductCode": null,
+     "unit": "piece",
+     "quantity": 1,
+     "measurementUnit": "L",
+     "price": 650,
+     "mrp": 650,
+     "costPrice": 403,
+     "currency": "INR",
+     "trackInventory": true,
+     "stockOnHand": 30,
+     "reorderPoint": 8,
+     "allowNegativeStock": false,
+     "isDefault": true,
+     "images": [
+      {
+       "type": "front",
+       "path": "images/aut-engine-oil-5w-30-001/front.jpg",
+       "width": 1024,
+       "height": 1024,
+       "sha256": "1c99b5efd709eeec0fec8d1c487c27ef40ed363ade23f58e45d96e981509638a",
+       "alt": "Engine Oil 5W-30 POS-ready real product photo"
+      }
+     ]
+    }
+   ],
+   "images": [
+    {
+     "type": "front",
+     "path": "images/aut-engine-oil-5w-30-001/front.jpg",
+     "width": 1024,
+     "height": 1024,
+     "sha256": "1c99b5efd709eeec0fec8d1c487c27ef40ed363ade23f58e45d96e981509638a",
+     "alt": "Engine Oil 5W-30 POS-ready real product photo"
+    }
+   ],
+   "source": {
+    "priceSource": "Curated demo price table",
+    "priceUrl": null,
+    "priceCheckedAt": "2026-08-24",
+    "productDataProvider": "Curated demo catalog",
+    "productDataUrl": null,
+    "externalProductCode": null,
+    "sourceProductName": "Engine Oil 5W-30",
+    "sourceBrand": "Demo Supplier",
+    "sourceQuantity": "1 L bottle",
+    "productReferenceLicense": null,
+    "imageSourceMode": "downloaded-real-product-photo",
+    "imageRights": {
+     "notice": "Images are downloaded real product/photo thumbnails from public demo, open product, or open image sources. Per-image source metadata is stored in data.json.",
+     "useBasis": "Demo POS catalog identification inside Posnic sample data",
+     "rightsReviewRequired": true,
+     "removalPolicy": "Replace or remove any image if a rights holder or deployment owner requests a different catalog photo."
+    },
+    "imageSources": [
+     {
+      "type": "front",
+      "sourceKind": "products-facts-front-photo",
+      "sourceProvider": "world.openproductsfacts.org",
+      "sourcePageUrl": "https://world.openproductsfacts.org/product/6156966698761",
+      "sourceUrl": "https://images.openproductsfacts.org/images/products/615/696/669/8761/front_en.3.full.jpg",
+      "title": "Lube Afri 5W 40 Engine Oil",
+      "license": null,
+      "licenseUrl": null,
+      "searchQuery": "Engine Oil 5W-30",
+      "width": 1024,
+      "height": 1024,
+      "sha256": "1c99b5efd709eeec0fec8d1c487c27ef40ed363ade23f58e45d96e981509638a"
+     }
+    ],
+    "skippedOptionalImages": []
+   },
+   "posnicItem": {
+    "name": "Engine Oil 5W-30",
+    "itemid": "aut-engine-oil-5w-30-001",
+    "sku": "aut-ENGINE-OIL-5W-30-001",
+    "barcode_id": null,
+    "category_name": "Fluids",
+    "supplier_name": "Demo Auto Parts Supplier",
+    "mrp_price": 650,
+    "company_price": 403,
+    "selling_price": 650,
+    "available_quantity": 30,
+    "tax": 18,
+    "tax_name": "GST 18%",
+    "tax_type": "percentage",
+    "tax_fields": [
+     {
+      "name": "GST 18%",
+      "rate": 18,
+      "type": "percentage"
+     }
+    ],
+    "hsncode": "",
+    "hsndescription": "",
+    "unit": "piece",
+    "track_inventory": true,
+    "negative_stock": false,
+    "image": "images/aut-engine-oil-5w-30-001/front.jpg",
+    "multi_image": [],
+    "brand": "Demo Supplier",
+    "tags": [
+     "engine oil",
+     "motor oil"
+    ],
+    "reorder_point": 8
+   }
+  },
+  {
+   "id": "aut-coolant-bottle-002",
+   "sku": "aut-COOLANT-BOTTLE-002",
+   "name": "Coolant Bottle",
+   "displayName": "Coolant Bottle 1 L bottle",
+   "shortName": "Coolant Bottle",
+   "brand": "Demo Supplier",
+   "description": "Coolant Bottle sold as 1 L bottle, configured for a INR Auto Parts Demo Dataset POS demo.",
+   "countryOfSale": "IN",
+   "countryOfOrigin": null,
+   "brandCountry": null,
+   "departmentId": "fluids",
+   "departmentName": "Fluids",
+   "categoryId": "fluids",
+   "categoryName": "Fluids",
+   "tags": [
+    "engine coolant",
+    "coolant"
+   ],
+   "packSize": "1 L bottle",
+   "quantity": 1,
+   "measurementUnit": "L",
+   "unit": "piece",
+   "active": true,
+   "sellable": true,
+   "status": "active",
+   "taxCategory": "standard",
+   "taxRate": 18,
+   "trackInventory": true,
+   "openingStock": 30,
+   "reorderLevel": 8,
+   "tax": {
+    "name": "GST 18%",
+    "type": "percentage",
+    "rate": 18,
+    "hsnCode": null,
+    "note": "Demo tax profile. Confirm local tax and item classification before fiscal or compliance use."
+   },
+   "pricing": {
+    "currency": "INR",
+    "price": 280,
+    "mrp": 280,
+    "costPrice": 174,
+    "includesTax": true,
+    "priceSource": "Curated demo price table converted for currency matrix using ExchangeRate-API open endpoint",
+    "priceUrl": null,
+    "priceCheckedAt": "2026-08-24",
+    "pricePolicy": "Stable INR demo prices are converted from the canonical dataset for POS seed data. They are not live market price claims.",
+    "note": "Demo seed price for sample data."
+   },
+   "inventory": {
+    "trackInventory": true,
+    "stockOnHand": 30,
+    "reorderPoint": 8,
+    "allowNegativeStock": false,
+    "shelf": "FLUIDS"
+   },
+   "variants": [
+    {
+     "id": "aut-coolant-bottle-002-default",
+     "name": "1 L bottle",
+     "sku": "aut-COOLANT-BOTTLE-002",
+     "barcode": null,
+     "externalProductCode": null,
+     "unit": "piece",
+     "quantity": 1,
+     "measurementUnit": "L",
+     "price": 280,
+     "mrp": 280,
+     "costPrice": 174,
+     "currency": "INR",
+     "trackInventory": true,
+     "stockOnHand": 30,
+     "reorderPoint": 8,
+     "allowNegativeStock": false,
+     "isDefault": true,
+     "images": [
+      {
+       "type": "front",
+       "path": "images/aut-coolant-bottle-002/front.jpg",
+       "width": 1024,
+       "height": 1024,
+       "sha256": "0916720c25f116e4ac717820d45a0e77658f6c9772bf647ceac7b3ef2da99dc1",
+       "alt": "Coolant Bottle POS-ready real product photo"
+      }
+     ]
+    }
+   ],
+   "images": [
+    {
+     "type": "front",
+     "path": "images/aut-coolant-bottle-002/front.jpg",
+     "width": 1024,
+     "height": 1024,
+     "sha256": "0916720c25f116e4ac717820d45a0e77658f6c9772bf647ceac7b3ef2da99dc1",
+     "alt": "Coolant Bottle POS-ready real product photo"
+    }
+   ],
+   "source": {
+    "priceSource": "Curated demo price table",
+    "priceUrl": null,
+    "priceCheckedAt": "2026-08-24",
+    "productDataProvider": "Curated demo catalog",
+    "productDataUrl": null,
+    "externalProductCode": null,
+    "sourceProductName": "Coolant Bottle",
+    "sourceBrand": "Demo Supplier",
+    "sourceQuantity": "1 L bottle",
+    "productReferenceLicense": null,
+    "imageSourceMode": "downloaded-real-product-photo",
+    "imageRights": {
+     "notice": "Images are downloaded real product/photo thumbnails from public demo, open product, or open image sources. Per-image source metadata is stored in data.json.",
+     "useBasis": "Demo POS catalog identification inside Posnic sample data",
+     "rightsReviewRequired": true,
+     "removalPolicy": "Replace or remove any image if a rights holder or deployment owner requests a different catalog photo."
+    },
+    "imageSources": [
+     {
+      "type": "front",
+      "sourceKind": "products-facts-front-photo",
+      "sourceProvider": "world.openproductsfacts.org",
+      "sourcePageUrl": "https://world.openproductsfacts.org/product/3596710084494",
+      "sourceUrl": "https://images.openproductsfacts.org/images/products/359/671/008/4494/front_fr.3.full.jpg",
+      "title": "",
+      "license": null,
+      "licenseUrl": null,
+      "searchQuery": "engine coolant",
+      "width": 1024,
+      "height": 1024,
+      "sha256": "0916720c25f116e4ac717820d45a0e77658f6c9772bf647ceac7b3ef2da99dc1"
+     }
+    ],
+    "skippedOptionalImages": []
+   },
+   "posnicItem": {
+    "name": "Coolant Bottle",
+    "itemid": "aut-coolant-bottle-002",
+    "sku": "aut-COOLANT-BOTTLE-002",
+    "barcode_id": null,
+    "category_name": "Fluids",
+    "supplier_name": "Demo Auto Parts Supplier",
+    "mrp_price": 280,
+    "company_price": 174,
+    "selling_price": 280,
+    "available_quantity": 30,
+    "tax": 18,
+    "tax_name": "GST 18%",
+    "tax_type": "percentage",
+    "tax_fields": [
+     {
+      "name": "GST 18%",
+      "rate": 18,
+      "type": "percentage"
+     }
+    ],
+    "hsncode": "",
+    "hsndescription": "",
+    "unit": "piece",
+    "track_inventory": true,
+    "negative_stock": false,
+    "image": "images/aut-coolant-bottle-002/front.jpg",
+    "multi_image": [],
+    "brand": "Demo Supplier",
+    "tags": [
+     "engine coolant",
+     "coolant"
+    ],
+    "reorder_point": 8
+   }
+  },
+  {
+   "id": "aut-brake-fluid-dot-4-003",
+   "sku": "aut-BRAKE-FLUID-DOT-4-003",
+   "name": "Brake Fluid DOT 4",
+   "displayName": "Brake Fluid DOT 4 500 ml bottle",
+   "shortName": "Brake Fluid DOT 4",
+   "brand": "Demo Supplier",
+   "description": "Brake Fluid DOT 4 sold as 500 ml bottle, configured for a INR Auto Parts Demo Dataset POS demo.",
+   "countryOfSale": "IN",
+   "countryOfOrigin": null,
+   "brandCountry": null,
+   "departmentId": "fluids",
+   "departmentName": "Fluids",
+   "categoryId": "fluids",
+   "categoryName": "Fluids",
+   "tags": [
+    "brake fluid",
+    "automotive fluid"
+   ],
+   "packSize": "500 ml bottle",
+   "quantity": 500,
+   "measurementUnit": "ml",
+   "unit": "piece",
+   "active": true,
+   "sellable": true,
+   "status": "active",
+   "taxCategory": "standard",
+   "taxRate": 18,
+   "trackInventory": true,
+   "openingStock": 30,
+   "reorderLevel": 8,
+   "tax": {
+    "name": "GST 18%",
+    "type": "percentage",
+    "rate": 18,
+    "hsnCode": null,
+    "note": "Demo tax profile. Confirm local tax and item classification before fiscal or compliance use."
+   },
+   "pricing": {
+    "currency": "INR",
+    "price": 220,
+    "mrp": 220,
+    "costPrice": 136,
+    "includesTax": true,
+    "priceSource": "Curated demo price table converted for currency matrix using ExchangeRate-API open endpoint",
+    "priceUrl": null,
+    "priceCheckedAt": "2026-08-24",
+    "pricePolicy": "Stable INR demo prices are converted from the canonical dataset for POS seed data. They are not live market price claims.",
+    "note": "Demo seed price for sample data."
+   },
+   "inventory": {
+    "trackInventory": true,
+    "stockOnHand": 30,
+    "reorderPoint": 8,
+    "allowNegativeStock": false,
+    "shelf": "FLUIDS"
+   },
+   "variants": [
+    {
+     "id": "aut-brake-fluid-dot-4-003-default",
+     "name": "500 ml bottle",
+     "sku": "aut-BRAKE-FLUID-DOT-4-003",
+     "barcode": null,
+     "externalProductCode": null,
+     "unit": "piece",
+     "quantity": 500,
+     "measurementUnit": "ml",
+     "price": 220,
+     "mrp": 220,
+     "costPrice": 136,
+     "currency": "INR",
+     "trackInventory": true,
+     "stockOnHand": 30,
+     "reorderPoint": 8,
+     "allowNegativeStock": false,
+     "isDefault": true,
+     "images": [
+      {
+       "type": "front",
+       "path": "images/aut-brake-fluid-dot-4-003/front.jpg",
+       "width": 1024,
+       "height": 1024,
+       "sha256": "3d9c05847c9b948ddfcea75079c76ba5d3ce0a97dd19dee345f05ea4916db6e8",
+       "alt": "Brake Fluid DOT 4 POS-ready real product photo"
+      }
+     ]
+    }
+   ],
+   "images": [
+    {
+     "type": "front",
+     "path": "images/aut-brake-fluid-dot-4-003/front.jpg",
+     "width": 1024,
+     "height": 1024,
+     "sha256": "3d9c05847c9b948ddfcea75079c76ba5d3ce0a97dd19dee345f05ea4916db6e8",
+     "alt": "Brake Fluid DOT 4 POS-ready real product photo"
+    }
+   ],
+   "source": {
+    "priceSource": "Curated demo price table",
+    "priceUrl": null,
+    "priceCheckedAt": "2026-08-24",
+    "productDataProvider": "Curated demo catalog",
+    "productDataUrl": null,
+    "externalProductCode": null,
+    "sourceProductName": "Brake Fluid DOT 4",
+    "sourceBrand": "Demo Supplier",
+    "sourceQuantity": "500 ml bottle",
+    "productReferenceLicense": null,
+    "imageSourceMode": "downloaded-real-product-photo",
+    "imageRights": {
+     "notice": "Images are downloaded real product/photo thumbnails from public demo, open product, or open image sources. Per-image source metadata is stored in data.json.",
+     "useBasis": "Demo POS catalog identification inside Posnic sample data",
+     "rightsReviewRequired": true,
+     "removalPolicy": "Replace or remove any image if a rights holder or deployment owner requests a different catalog photo."
+    },
+    "imageSources": [
+     {
+      "type": "front",
+      "sourceKind": "products-facts-front-photo",
+      "sourceProvider": "world.openproductsfacts.org",
+      "sourcePageUrl": "https://world.openproductsfacts.org/product/0733704728108",
+      "sourceUrl": "https://images.openproductsfacts.org/images/products/073/370/472/8108/front_en.3.full.jpg",
+      "title": "O'Reilly Power steering fluid",
+      "license": null,
+      "licenseUrl": null,
+      "searchQuery": "automotive fluid",
+      "width": 1024,
+      "height": 1024,
+      "sha256": "3d9c05847c9b948ddfcea75079c76ba5d3ce0a97dd19dee345f05ea4916db6e8"
+     }
+    ],
+    "skippedOptionalImages": []
+   },
+   "posnicItem": {
+    "name": "Brake Fluid DOT 4",
+    "itemid": "aut-brake-fluid-dot-4-003",
+    "sku": "aut-BRAKE-FLUID-DOT-4-003",
+    "barcode_id": null,
+    "category_name": "Fluids",
+    "supplier_name": "Demo Auto Parts Supplier",
+    "mrp_price": 220,
+    "company_price": 136,
+    "selling_price": 220,
+    "available_quantity": 30,
+    "tax": 18,
+    "tax_name": "GST 18%",
+    "tax_type": "percentage",
+    "tax_fields": [
+     {
+      "name": "GST 18%",
+      "rate": 18,
+      "type": "percentage"
+     }
+    ],
+    "hsncode": "",
+    "hsndescription": "",
+    "unit": "piece",
+    "track_inventory": true,
+    "negative_stock": false,
+    "image": "images/aut-brake-fluid-dot-4-003/front.jpg",
+    "multi_image": [],
+    "brand": "Demo Supplier",
+    "tags": [
+     "brake fluid",
+     "automotive fluid"
+    ],
+    "reorder_point": 8
+   }
+  }
+ ]
+}

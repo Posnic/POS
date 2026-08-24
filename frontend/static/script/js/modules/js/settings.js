@@ -6638,8 +6638,12 @@ PosnicPro.settings.demoPacks = {
         if (!pack) { $('#demo_pack_summary').text(''); return; }
         /* Counted by the server from the catalogue itself, so this cannot say
            24 products while 23 arrive. */
-        var line = pack.products + ' products in ' + pack.categories + ' categories'
-            + (pack.photos ? ', ' + pack.photos + ' with photographs' : '');
+        /* Website datasets are probed, not parsed - their counts arrive as
+           null and the sentence must not read "null products". */
+        var line = pack.dataset
+            ? 'Full catalogue with photographs, priced for your currency'
+            : pack.products + ' products in ' + pack.categories + ' categories'
+              + (pack.photos ? ', ' + pack.photos + ' with photographs' : '');
         $('#demo_pack_summary').text(
             key === self._current ? line + ' — this is what you have now' : line
         );

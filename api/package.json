@@ -74,6 +74,7 @@
     "qrcode": "^1.5.4",
     "razorpay": "^2.9.8",
     "sib-api-v3-sdk": "^8.5.0",
+    "unzipper": "^0.10.14",
     "uuid": "^14.0.1",
     "validator": "^13.15.35",
     "web-push": "^3.6.7",
