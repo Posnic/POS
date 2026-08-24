@@ -142,23 +142,19 @@ test('every feature it does write is a real module switch', () => {
   }
 });
 
-test('what it writes for a fresh shop matches what a fresh shop is given', () => {
-  /*
-   * The two lists are written in different files for different reasons, and
-   * nothing but this connects them. If they drift, an existing shop is
-   * backfilled to a state a new shop would never be created in - and the whole
-   * point was to make them agree.
-   */
-  const InstallService = require(path.join(__dirname, '..', 'api', 'src', 'services', 'install.service.js'));
-  const fresh = InstallService.newShopModuleDefaults({ demoData: false });
-  const plan = planBranch({}, noUsage(), FEATURES);
-
-  for (const row of plan) {
-    if (!(row.key in fresh)) continue;   // not something a new shop is given
-    assert.strictEqual(row.value, fresh[row.key],
-      `${row.key}: backfill says ${row.value}, a new shop is created with ${fresh[row.key]}`);
-  }
-});
+/*
+ * The cross-check against newShopModuleDefaults - that the backfill does not
+ * put an existing shop in a state no new shop is ever created in - lives in the
+ * API suite, not here.
+ *
+ * It has to require install.service, which requires bcryptjs, which is an API
+ * dependency. The desktop job installs the ROOT dependencies only, so requiring
+ * it from this file passes on a developer's machine (where api/node_modules
+ * happens to exist) and fails in CI. That is the worst kind of test: green
+ * where it is written, red where it matters.
+ *
+ * See api/tests/unit/services/install-module-defaults.test.js.
+ */
 
 test('every evidence query is scoped to the branch and the licence', async () => {
   /*
