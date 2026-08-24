@@ -26,7 +26,7 @@
   "issueTracker": "https://github.com/Posnic/POS/issues",
   "continuousIntegration": "https://github.com/Posnic/POS/actions",
   "version": "1.4.0",
-  "developmentStatus": "active",
+  "developmentStatus": "active development; package version 1.4.0 is not a tagged release",
   "license": "https://spdx.org/licenses/AGPL-3.0-only.html",
   "isAccessibleForFree": true,
   "programmingLanguage": [
@@ -45,15 +45,21 @@
     "Linux"
   ],
   "keywords": [
-    "POS",
-    "point of sale",
-    "point of sale software",
+    "pos",
+    "point-of-sale",
+    "point-of-sale-system",
+    "pos-software",
+    "electron",
     "offline-first",
-    "open source",
+    "open-source",
     "retail",
     "restaurant",
-    "inventory management",
-    "billing software"
+    "inventory-management",
+    "billing-software",
+    "windows",
+    "macos",
+    "linux",
+    "mongodb"
   ],
   "url": "https://posnic.com/",
   "downloadUrl": "https://github.com/Posnic/POS/releases/latest",
@@ -64,6 +70,29 @@
     "https://posnic.com/trust",
     "https://github.com/Posnic/POS/blob/main/PRIVACY.md",
     "https://github.com/Posnic/POS/blob/main/GOVERNANCE.md",
-    "https://github.com/Posnic/POS/blob/main/THIRD-PARTY-NOTICES.md"
-  ]
+    "https://github.com/Posnic/POS/blob/main/THIRD-PARTY-NOTICES.md",
+    "https://posnic.com/features",
+    "https://posnic.com/download",
+    "https://posnic.com/developers",
+    "https://github.com/Posnic/POS/blob/main/docs/ADOPTION_EVIDENCE.md"
+  ],
+  "softwareVersion": "1.4.0",
+  "dateModified": "2026-08-23",
+  "readme": "https://github.com/Posnic/POS/blob/main/README.md",
+  "buildInstructions": "https://github.com/Posnic/POS/blob/main/docs/DEVELOPMENT.md",
+  "releaseNotes": "https://github.com/Posnic/POS/blob/main/ROADMAP.md",
+  "isSourceCodeOf": {
+    "@id": "https://posnic.com/#software",
+    "@type": "SoftwareApplication",
+    "name": "Posnic POS",
+    "applicationCategory": "BusinessApplication",
+    "applicationSubCategory": "Point of sale software",
+    "operatingSystem": [
+      "Windows",
+      "macOS",
+      "Linux"
+    ],
+    "isAccessibleForFree": true,
+    "url": "https://posnic.com/"
+  }
 }

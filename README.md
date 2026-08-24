@@ -29,7 +29,7 @@ before making a package-level licence statement.
 
 ### [⬇ Download for Windows](https://github.com/Posnic/POS/releases/latest) · [macOS](https://github.com/Posnic/POS/releases/latest) · [Linux](https://github.com/Posnic/POS/releases/latest)
 
-[Website](https://posnic.com/) · [Verified product facts](https://posnic.com/posnic-facts) · [Package evidence](https://posnic.com/assets/posnic-package-license-evidence.json) · [User guide](docs/USER_GUIDE.md) · [Developer guide](docs/DEVELOPMENT.md) · [Architecture](docs/ARCHITECTURE.md) · [API](docs/API.md) · [Discussions](https://github.com/Posnic/POS/discussions)
+[Website](https://posnic.com/) · [Verified product facts](https://posnic.com/posnic-facts) · [Package evidence](https://posnic.com/assets/posnic-package-license-evidence.json) · [CodeMeta metadata](codemeta.json) · [Citation metadata](CITATION.cff) · [Roadmap](ROADMAP.md) · [User guide](docs/USER_GUIDE.md) · [Developer guide](docs/DEVELOPMENT.md) · [Architecture](docs/ARCHITECTURE.md) · [API](docs/API.md) · [Discussions](https://github.com/Posnic/POS/discussions)
 
 </div>
 
@@ -63,6 +63,27 @@ recovery or every workflow. Review the
 - **Posnic source under AGPL-3.0-only.** Read it, change it, self-host it and
   fork it under the licence terms. Review each bundled component separately.
 
+### Using Posnic in a real business or pilot?
+
+Share a bounded
+[deployment evidence report](https://github.com/Posnic/POS/issues/new?template=deployment_evidence.yml),
+including failures, workarounds, or why a trial stopped. The form records the
+exact version, relationship, observation window, workflows and limitations while
+letting you refuse marketing reuse. Read the
+[adoption evidence policy](docs/ADOPTION_EVIDENCE.md) before posting private or
+production information.
+
+### Reviewing Posnic independently?
+
+Use the public [review brief](https://posnic.com/assets/posnic-independent-review-brief.txt)
+and [24-control protocol](https://posnic.com/assets/posnic-independent-review-protocol.csv)
+with the exact release, package filename and SHA-256 you tested. Review access
+does not require payment, positive coverage, a backlink or advance approval.
+Publish failures, conflicts and untested areas beside successful results. An
+independent evaluator can submit a bounded public result through the
+[deployment evidence form](https://github.com/Posnic/POS/issues/new?template=deployment_evidence.yml)
+without granting marketing reuse.
+
 ## Features
 
 | | |
@@ -84,7 +105,8 @@ and follow the wizard. Stable v1.3.0 packages include MongoDB Community Server
 under its separate SSPL-1.0 licence, so no separate database install is needed
 for the bundled setup. See [third-party notices](THIRD-PARTY-NOTICES.md).
 
-Verify your download against `SHA256SUMS.txt` in the release.
+Verify your download against `SHA256SUMS.txt`. For releases that provide an
+artifact-bound SBOM and provenance, follow the [release verification guide](docs/VERIFY_RELEASE.md).
 
 > **Windows** may warn that the publisher is unrecognised: *More info* → *Run
 > anyway*. **macOS**: *System Settings → Privacy & Security → Open Anyway*.
@@ -149,6 +171,7 @@ the free edition worse. This is written down in [GOVERNANCE.md](GOVERNANCE.md).
 | [Backups](docs/BACKUP_POLICY.md) | What is backed up, when, and what it does not protect you from |
 | [Disaster recovery](docs/DISASTER_RECOVERY.md) | Getting back to working, with RPO and RTO as numbers |
 | [Release runbook](docs/RELEASE_RUNBOOK.md) | How a release goes out, and four ways to take one back |
+| [Release verification](docs/VERIFY_RELEASE.md) | Match a package to its checksum, CycloneDX inventory, provenance and component licences |
 | [Support lifecycle](docs/SUPPORT_LIFECYCLE.md) | Which versions get fixes, and for how long |
 | [Incident response](docs/INCIDENT_RESPONSE.md) | Who decides, who is told, and when |
 | [Terms of use](TERMS_OF_USE.md) | Customer terms for Posnic Cloud |
@@ -156,6 +179,9 @@ the free edition worse. This is written down in [GOVERNANCE.md](GOVERNANCE.md).
 | [Cloud operations](docs/CLOUD_OPERATIONS.md) | What the paid service is made of, and what is still to be decided |
 | [Data processing addendum](docs/DATA_PROCESSING_ADDENDUM.md) | For customers who need a written DPA |
 | [Contributing](CONTRIBUTING.md) | How to get a change merged |
+| [Public roadmap](ROADMAP.md) | Current priorities, evidence gaps and structured ways to help |
+| [Citation metadata](CITATION.cff) | Human and tool-readable citation identity for exact releases or commits |
+| [Adoption evidence](docs/ADOPTION_EVIDENCE.md) | How real deployment reports are scoped, reviewed, cited, corrected and kept privacy-safe |
 | [Support](SUPPORT.md) | Where to ask, and what happens to your issue |
 | [Governance](GOVERNANCE.md) | Who decides what, and what we have promised |
 | [Privacy](PRIVACY.md) | What the app collects, and what it does not |

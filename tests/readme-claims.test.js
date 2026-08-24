@@ -22,6 +22,7 @@ const path = require('node:path');
 
 const ROOT = path.join(__dirname, '..');
 const README = fs.readFileSync(path.join(ROOT, 'README.md'), 'utf8');
+const LICENCE_BADGE = 'source%20licence';
 
 function badge(label) {
   const m = README.match(
@@ -63,7 +64,7 @@ test('every badge that states a number is checked by this file', () => {
     'REST%20API',
     'tests',
     'coverage',
-    'source%20licence',
+    LICENCE_BADGE,
     'package%20notices',
     'platforms',
   ];
@@ -79,7 +80,7 @@ test('every badge that states a number is checked by this file', () => {
 
 test('the source licence badge matches what package.json declares', () => {
   const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
-  const claimed = (badge('source%20licence') || '').replace(/--/g, '-');
+  const claimed = (badge(LICENCE_BADGE) || '').replace(/--/g, '-');
 
   /* The badge shows the licence's name, package.json carries its SPDX
      identifier, and SPDX appends -only or -or-later to say whether later

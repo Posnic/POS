@@ -207,6 +207,12 @@ jobs:
       # that never runs - `if: matrix.name == 'Windows'` against a matrix with
       # no Windows in it - which reads as coverage and is not.
 
+      # One CycloneDX document per downloadable package. Each file carries the
+      # package SHA-256, exact source commit, locked API graph, Electron runtime
+      # and the separately licensed MongoDB server bundled with the package.
+      - name: Generate artifact SBOMs
+        run: npm run release:sbom
+
       - name: Upload installers
         uses: actions/upload-artifact@v7
         with:
@@ -217,6 +223,7 @@ jobs:
             dist/*.zip
             dist/*.AppImage
             dist/*.deb
+            dist/*.cdx.json
             # The update manifest, without which auto-update cannot work at all:
             # electron-updater fetches latest.yml - latest-mac.yml, latest-linux.yml
             # on the others - to learn what the newest version is. It was built on
@@ -266,7 +273,7 @@ jobs:
           mkdir -p release
           find artifacts -type f \( -name '*.exe' -o -name '*.dmg' -o -name '*.zip' \
             -o -name '*.AppImage' -o -name '*.deb' -o -name 'latest*.yml' \
-            -o -name '*.blockmap' \) -exec mv {} release/ \;
+            -o -name '*.blockmap' -o -name '*.cdx.json' \) -exec mv {} release/ \;
           # The machine-readable statement of what this release IS (version,
           # channel, schema + sync-protocol, oldest supported client). Fleet
           # tooling and the gateway read this instead of parsing file names.
