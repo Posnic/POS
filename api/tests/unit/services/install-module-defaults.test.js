@@ -73,10 +73,13 @@ describe('a new shop’s feature switches', () => {
   test('every switch has a value - none is left to be inferred', () => {
     for (const [key, value] of Object.entries(defaults)) {
       expect(typeof value).toBe('boolean');
-      /* quick_sale_enable predates the module_ prefix and is gated the same
-         way, so the shape is not uniform. Said out loud rather than pretended
-         away. */
-      expect(key).toMatch(/^(module_[a-z_]+|quick_sale)_enable$/);
+      /* Three naming eras, all gated the same way: module_* is the current
+         one, quick_sale_ and quotes_ predate the prefix, and the staff_ and
+         cash_register_ keys belong to the workforce and till work. The shape is not uniform, which
+         is said out loud here rather than pretended away - a pattern that
+         quietly excluded a real key would let a switch ship unset, and unset
+         reads as ON. */
+      expect(key).toMatch(/^(module_[a-z_]+|quick_sale|quotes|cash_register|staff_[a-z]+)_enable$/);
     }
   });
 
@@ -106,5 +109,52 @@ describe('a new shop’s feature switches', () => {
     const written = new Set(Object.keys(defaults));
     const missing = [...gated].filter((k) => !written.has(k));
     expect(missing).toEqual([]);
+  });
+});
+
+/*
+ * The backfill and the installer must agree.
+ *
+ * Two lists in two files, written for different reasons: install.service
+ * decides what a NEW shop is created with, scripts/module-defaults-backfill
+ * decides what an EXISTING shop with no history is given. Nothing but this
+ * connects them.
+ *
+ * If they drift, the backfill puts a shop into a state no new shop is ever
+ * created in - which is precisely the inconsistency the whole exercise was
+ * meant to end, reintroduced by the fix for it.
+ *
+ * IT LIVES HERE RATHER THAN BESIDE THE BACKFILL because install.service
+ * requires bcryptjs, an API dependency. The desktop test job installs the root
+ * dependencies only, so a copy of this in tests/ passes on a developer's
+ * machine - where api/node_modules happens to exist - and fails in CI. It did
+ * exactly that once.
+ */
+describe('the backfill agrees with what a new shop is created with', () => {
+  const path = require('path');
+  const backfill = require(path.join(__dirname, '..', '..', '..', '..',
+    'scripts', 'module-defaults-backfill.js'));
+
+  test('a shop with no history is backfilled to the new-shop defaults', () => {
+    const fresh = InstallService.newShopModuleDefaults({ demoData: false });
+    const plan = backfill.planBranch({}, {}, backfill.FEATURES);
+
+    for (const row of plan) {
+      if (!(row.key in fresh)) continue;   // not something a new shop is given
+      expect([row.key, row.value]).toEqual([row.key, fresh[row.key]]);
+    }
+  });
+
+  test('every key the backfill writes is one the installer knows about', () => {
+    /*
+     * The other direction. A key in the backfill that the installer has never
+     * heard of is a setting written to the whole estate and created for
+     * nobody - so the two populations diverge from the day it is added.
+     */
+    const fresh = InstallService.newShopModuleDefaults({ demoData: true });
+    const unknown = backfill.FEATURES
+      .map((f) => f.key)
+      .filter((k) => !(k in fresh));
+    expect(unknown).toEqual([]);
   });
 });

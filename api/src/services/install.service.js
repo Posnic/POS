@@ -709,6 +709,25 @@ class InstallService {
       module_channels_enable: false,
       module_channels_kiosk_enable: false,
       module_cashbook_enable: false,
+
+      /*
+       * These four were missed the first time round, and the miss was silent.
+       *
+       * "Remaining keep switched off" means every module, and each of these is
+       * a module with a menu entry. But absent reads as ON, so leaving them out
+       * of this list is not "not deciding" - it is deciding ON, in exactly the
+       * way that produced the complaint this function exists to answer. A new
+       * shop was still opening with Quotes, Cash register, Shifts and Roster
+       * in its menu.
+       *
+       * Found by a test that compares this list against the backfill's, which
+       * is the only thing connecting the two. Neither list looked wrong on its
+       * own.
+       */
+      quotes_enable: false,
+      cash_register_enable: false,
+      staff_shifts_enable: false,
+      staff_roster_enable: false,
     };
   }
 
