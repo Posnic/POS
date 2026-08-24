@@ -55,9 +55,26 @@ if (parts.length < 3 || parts.some(Number.isNaN)) {
 if (isPublic && !verifies) {
   if (allowUnsigned) {
     notes.push('');
-    notes.push('Publishing UNSIGNED because POSNIC_ALLOW_UNSIGNED_RELEASE is set.');
-    notes.push('Shops will see "Unknown publisher", and updates are not signature-checked.');
-    notes.push('This must not be how a general-availability release goes out.');
+    notes.push('Publishing with POSNIC_ALLOW_UNSIGNED_RELEASE set.');
+    /*
+     * Said precisely, because the old wording stopped being true and a release
+     * note that overstates a problem is trusted no more than one that hides it.
+     *
+     * Windows IS signed and timestamped now - it is built from a desk against a
+     * Certum card, and release-windows.js refuses to publish anything that is
+     * not. What is still off is verifyUpdateCodeSignature: the updater does not
+     * CHECK that signature before applying an update. macOS and Linux remain
+     * unsigned outright.
+     *
+     * The order for turning verification on is in RELEASE_RUNBOOK.md, and it is
+     * not just flipping the flag: a Valid signature confirmed on a machine that
+     * did not build it, then the flag, then an update proven to apply end to
+     * end. Enabling it out of order makes every update fail silently on every
+     * till already in the field.
+     */
+    notes.push('Windows installers ARE signed; what is off is update signature');
+    notes.push('verification (verifyUpdateCodeSignature). macOS and Linux are unsigned.');
+    notes.push('See docs/RELEASE_RUNBOOK.md before turning verification on.');
   } else {
     problems.push(
       'This release would publish public installers with update signature ' +
