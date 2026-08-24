@@ -182,7 +182,13 @@ jobs:
             cp -v "$f" "dist/$(basename "$f" | sed 's/^beta/latest/')"
           done
           echo "manifests present:"
-          ls -1 dist/*.yml || echo "  NONE - the update path cannot work"
+          shopt -s nullglob
+          latest_manifests=(dist/latest*.yml)
+          if (( ${#latest_manifests[@]} == 0 )); then
+            echo "  NONE - the update path cannot work"
+            exit 1
+          fi
+          printf '  %s\n' "${latest_manifests[@]}"
 
       - name: Upload installers
         uses: actions/upload-artifact@v7
@@ -196,7 +202,8 @@ jobs:
             dist/*.deb
             # Without these an installed tester is never offered the build, and
             # the Updates screen reports that it cannot reach the update server.
-            dist/*.yml
+            # builder-debug.yml is build diagnostics, not updater input.
+            dist/latest*.yml
             dist/*.blockmap
           if-no-files-found: error
           retention-days: 7
@@ -219,7 +226,7 @@ jobs:
         run: |
           mkdir -p release
           find artifacts -type f \( -name '*.exe' -o -name '*.dmg' -o -name '*.zip' \
-            -o -name '*.AppImage' -o -name '*.deb' -o -name '*.yml' \
+            -o -name '*.AppImage' -o -name '*.deb' -o -name 'latest*.yml' \
             -o -name '*.blockmap' \) -exec mv {} release/ \;
           cd release
           sha256sum $(ls | grep -vE 'latest.*\.yml$|\.blockmap$') > SHA256SUMS.txt
