@@ -7009,7 +7009,19 @@ PosnicPro.sales.itemsMenu = {
                             /* Tile colour (Loyverse study L2): an item without a real
                                image but with a chosen colour renders a coloured tile
                                with its initial - an image always wins. */
-                            var _tileHtml = '<div class="wsk-cp-img"><img src="' + image_path + '" alt="Product" class="img-responsive" /></div>';
+                            /*
+                             * The shipped placeholder is marked as one.
+                             *
+                             * It is a drawing of a gift box on transparency, not a
+                             * photograph, and the photo plate exists to stop a
+                             * white product shot glaring against a dark card. Framing
+                             * the placeholder puts a big pale panel on a tile that has
+                             * nothing to show - which is exactly the "background looks
+                             * light or gray" report, four times over on one screen.
+                             */
+                            var _isPlaceholder = getItemdata[i]['image'] === 'item.svg';
+                            var _tileHtml = '<div class="wsk-cp-img' + (_isPlaceholder ? ' wsk-cp-img-placeholder' : '') + '">'
+                                + '<img src="' + image_path + '" alt="Product" class="img-responsive" /></div>';
                             var _rt = PosnicPro.resolveTile(getItemdata[i]);
                             var _tileColor = _rt.color;
                             if (getItemdata[i]['image'] === 'item.svg' && _tileColor) {
@@ -7081,6 +7093,9 @@ PosnicPro.sales.itemsMenu = {
         });
         var image = (rows[0]['image'] !== 'item.svg')
             ? rows[0]['image'] : 'static/images/default/' + rows[0]['image'];
+        /* Same as a single item: the shipped placeholder is a drawing, not a
+           product shot, and it must not be framed like one. */
+        var placeholderClass = rows[0]['image'] === 'item.svg' ? ' wsk-cp-img-placeholder' : '';
         var stockHtml = tracked
             ? '<div class="text-center wsk-cp-stock">' + stock + ' in stock</div>' : '';
         /*
@@ -7098,7 +7113,7 @@ PosnicPro.sales.itemsMenu = {
             esc(parent) +
             ' <span class="badge badge-light">' + rows.length + '</span></p>' +
             '</div>' +
-            '<div class="wsk-cp-img"><img src="' + esc(image) + '" alt="Product" class="img-responsive" /></div>' +
+            '<div class="wsk-cp-img' + placeholderClass + '"><img src="' + esc(image) + '" alt="Product" class="img-responsive" /></div>' +
             '<div class="wsk-cp-text mt-3">' +
             '<div class="price-text-color">' +
             '<div class="text-center"><span class="price">' + (differ ? 'from ' : '') +
