@@ -58,6 +58,10 @@
       "description": "Mounted at /categories"
     },
     {
+      "name": "Client errors",
+      "description": "Mounted at /client-errors"
+    },
+    {
       "name": "Common pdf",
       "description": "Mounted at /common-pdf"
     },
@@ -2362,6 +2366,30 @@
             },
             "description": "Category ID is required"
           }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/client-errors": {
+      "post": {
+        "summary": "status",
+        "operationId": "post_client_errors",
+        "tags": [
+          "Client errors"
         ],
         "responses": {
           "200": {

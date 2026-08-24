@@ -36,7 +36,12 @@ function openRoutes(file) {
     return m ? m.index : Infinity;
   })();
 
-  return [...src.matchAll(/router\.(get|post|put|patch|delete)\(\s*"([^"]+)"([^;]*)/g)]
+  /* Both quote styles. This matched only double quotes for months, and a
+     route file written with single quotes - which is most of them - escaped
+     the sweep entirely. A security test that inspects a dialect nobody
+     writes is a security test in name. Found when a deliberately public
+     route passed without being allowed. */
+  return [...src.matchAll(/router\.(get|post|put|patch|delete)\(\s*["']([^"']+)["']([^;]*)/g)]
     .filter((m) => m.index < guardAt)
     .map((m) => ({ method: m[1], route: m[2], middleware: m[3] }));
 }
@@ -48,6 +53,24 @@ function openRoutes(file) {
  * what strangers may do to a shop's data, so it should take a code review.
  */
 const ALLOWED_ANONYMOUS = {
+  'users.routes.js': [
+    // Invisible to this sweep for months: the file is single-quoted and the
+    // sweep matched only double quotes. Reviewed on discovery - every one
+    // is an auth ENTRY point or carries its own credential.
+    '/register', '/login', '/verify',
+    // self-authenticating logins for the phone and kiosk apps
+    '/mobileLogin', '/kioskMobileLogin',
+    // key+secret travel IN the path - installation credentials
+    '/ssoAuth', '/ssoToken/:key/:secret', '/planUpdate/:key/:secret',
+    // the forgot-password flow: both require the emailed one-time user_key
+    '/getUserKeyDetails', '/updateNewPassword',
+  ],
+  'client-errors.routes.js': [
+    // The boot watchdog's report: the errors worth hearing about happen
+    // BEFORE auth works. Stores nothing, per-IP budgeted, truncated,
+    // always 204 - see the route file.
+    '/',
+  ],
   'auth.routes.js': [
     '/register', '/login', '/verify', '/forgot-password', '/reset-password/:token',
   ],

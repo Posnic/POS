@@ -24,6 +24,115 @@
                 } catch (e) { /* the app applies it a moment later */ }
             }());
         </script>
+        <!--
+            The boot watchdog: a failed boot must never be a silent white page.
+
+            Owner, after recovering one by clearing his own browser data:
+            "i dont want users to face these kind of errors."
+
+            The white page it answers: an uncaught throw inside a ready
+            handler killed the code that reveals the layout, every request
+            answered 200, and the only witness was a console nobody had open.
+            The user's screen said NOTHING - not broken, not loading, just
+            white - and the working recovery (clear this origin's data) is
+            something no shopkeeper could guess.
+
+            So: dependency-free, inline in the head - it must work when the
+            bundle itself is what died. It captures the first uncaught error,
+            posts it to the shop's own log (api/client-errors), and if the
+            layout has not appeared after fifteen seconds it draws a plain
+            recovery card: keep waiting, reload, or reset cached data - the
+            exact fix the owner performed by hand, as one button. Resetting
+            signs the till out; server data is untouched, and the card says
+            so.
+        -->
+        <script>
+            (function () {
+                var firstError = null;
+                var reported = false;
+
+                function report(err, at) {
+                    if (reported) { return; }
+                    reported = true;
+                    try {
+                        var xhr = new XMLHttpRequest();
+                        xhr.open('POST', 'api/client-errors', true);
+                        xhr.setRequestHeader('Content-Type', 'application/json');
+                        xhr.send(JSON.stringify({
+                            message: String((err && err.message) || err || 'unknown').slice(0, 300),
+                            stack: String((err && err.stack) || '').slice(0, 1200),
+                            at: String(at || location.href).slice(0, 200)
+                        }));
+                    } catch (e) { /* reporting must never add a second failure */ }
+                }
+
+                window.addEventListener('error', function (ev) {
+                    if (!firstError) { firstError = ev.message || 'Script error'; }
+                    report(ev.error || ev.message, ev.filename + ':' + ev.lineno);
+                });
+                window.addEventListener('unhandledrejection', function (ev) {
+                    var r = ev.reason || {};
+                    if (!firstError) { firstError = String(r.message || r); }
+                    report(r, 'unhandledrejection');
+                });
+
+                /* Booted = the sidebar is actually PAINTED. It exists in the
+                   markup from the start, so visibility is the test - during
+                   the white page it measured 0 high. */
+                function booted() {
+                    var m = document.querySelector('.vertical-menu');
+                    return !!(m && m.offsetHeight > 0);
+                }
+
+                function resetData() {
+                    try { localStorage.clear(); } catch (e) { }
+                    try { sessionStorage.clear(); } catch (e) { }
+                    try {
+                        if (indexedDB && indexedDB.databases) {
+                            indexedDB.databases().then(function (dbs) {
+                                (dbs || []).forEach(function (d) {
+                                    try { indexedDB.deleteDatabase(d.name); } catch (e) { }
+                                });
+                                location.reload();
+                            });
+                            setTimeout(function () { location.reload(); }, 1500);
+                            return;
+                        }
+                    } catch (e) { }
+                    location.reload();
+                }
+
+                function show() {
+                    if (document.getElementById('posnic_boot_help')) { return; }
+                    var card = document.createElement('div');
+                    card.id = 'posnic_boot_help';
+                    card.setAttribute('style',
+                        'position:fixed;inset:0;z-index:2147483000;background:#f4f5f7;display:flex;' +
+                        'align-items:center;justify-content:center;font-family:system-ui,Segoe UI,Arial,sans-serif;');
+                    card.innerHTML =
+                        '<div style="max-width:460px;background:#fff;border:1px solid #dfe3e8;border-radius:12px;padding:26px 28px;box-shadow:0 12px 34px rgba(0,0,0,.12);">' +
+                        '<div style="font-size:18px;font-weight:600;color:#16203a;margin-bottom:6px;">The till is taking too long to load</div>' +
+                        '<p style="font-size:14px;color:#3a4459;line-height:1.5;margin:0 0 14px;">This can happen on a slow connection, or after an update. Reloading usually fixes it. If it keeps happening, reset the cached data - that signs this browser out, and nothing on the server is touched.</p>' +
+                        (firstError
+                            ? '<div style="font-size:11.5px;color:#8a94a6;font-family:ui-monospace,Consolas,monospace;background:#f6f7fb;border-radius:6px;padding:8px 10px;margin-bottom:14px;word-break:break-all;">' + String(firstError).slice(0, 160).replace(/[<>&]/g, '') + '</div>'
+                            : '') +
+                        '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
+                        '<button id="pbh_wait" style="min-height:40px;padding:0 14px;border:1px solid #dfe3e8;border-radius:8px;background:#fff;color:#16203a;font-size:14px;cursor:pointer;">Keep waiting</button>' +
+                        '<button id="pbh_reload" style="min-height:40px;padding:0 14px;border:0;border-radius:8px;background:#506fe4;color:#fff;font-size:14px;cursor:pointer;">Reload</button>' +
+                        '<button id="pbh_reset" style="min-height:40px;padding:0 14px;border:1px solid #f04438;border-radius:8px;background:#fff;color:#f04438;font-size:14px;cursor:pointer;">Reset cached data &amp; reload</button>' +
+                        '</div></div>';
+                    document.body.appendChild(card);
+                    document.getElementById('pbh_wait').addEventListener('click', function () {
+                        card.parentNode.removeChild(card);
+                        setTimeout(function () { if (!booted()) { show(); } }, 20000);
+                    });
+                    document.getElementById('pbh_reload').addEventListener('click', function () { location.reload(); });
+                    document.getElementById('pbh_reset').addEventListener('click', resetData);
+                }
+
+                setTimeout(function () { if (!booted()) { show(); } }, 15000);
+            }());
+        </script>
 
         <!--
             Cover the till before it draws anything.
