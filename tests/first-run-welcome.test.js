@@ -253,3 +253,77 @@ test('the welcome is one dialog, not two', () => {
     assert.ok(!fs.existsSync(path.join(root, 'frontend/static/script/js/core/first-run.js')),
         'core/first-run.js is superseded by the feature intro modal');
 });
+
+/*
+ * The welcome now says what KIND of Posnic this is.
+ *
+ * Owner: "when user logins first time we show features and ours is both web
+ * and desktop those info shared or not ? how we can convey ?" - and earlier,
+ * twice: "user is not clear about this system software desktop application
+ * plus web based... when first visit he dont know."
+ *
+ * The website explains it now; the first sign-in did not, and the first
+ * sign-in is the one screen a new shop is certain to read.
+ */
+const accessCode = block(settingsCode, 'runningContext:', 'renderIntro:');
+
+test('the welcome carries the desktop-and-web strip', () => {
+    assert.ok(modalCode.includes('id="feature_intro_access"'),
+        'the welcome has nowhere to say what kind of till this is');
+    assert.match(settingsCode, /\$\('#feature_intro_access'\)\.html\(PosnicPro\.features\.accessNote\(\)\)/);
+});
+
+test('the sentence is picked from where this is actually running', () => {
+    /*
+     * Never the generic "we have both an app and a website" - that tells
+     * somebody nothing about the one they are looking at. Desktop is the
+     * Electron userAgent; web is a public hostname; and localhost or a
+     * private address is the shop's own network, where claiming the address
+     * "opens on any phone" would be false the moment they left the building.
+     */
+    assert.match(accessCode, /Electron/);
+    assert.match(accessCode, /'desktop'/);
+    assert.match(accessCode, /192\\.168\\./);
+    assert.match(accessCode, /'lan' : 'web'/);
+});
+
+test('the web variant states the address it is certain of', () => {
+    /* In a browser the shop's address IS the address bar - no lookup, and no
+       way for it to be stale. It is the one dynamic value, and it is escaped. */
+    assert.match(accessCode, /esc\(window\.location\.hostname\)/);
+});
+
+test('the desktop variant does not invent a web address', () => {
+    /*
+     * The app does not reliably know its shop's cloud address, and a guessed
+     * URL that 404s teaches a brand-new user that the product lies. The
+     * welcome email and My Account genuinely carry it, so that is where the
+     * sentence points.
+     */
+    const desktop = block(accessCode, "ctx === 'desktop'", "ctx === 'web'");
+    assert.match(desktop, /welcome email/);
+    assert.match(desktop, /My Account/);
+    assert.ok(!desktop.includes('window.location'),
+        'the desktop sentence must not present the local address as a web address');
+});
+
+test('every variant names both halves of the product', () => {
+    /* Whichever one somebody is in, the sentence must tell them the other
+       exists - that is the entire question being answered. */
+    for (const marker of ["ctx === 'desktop'", "ctx === 'web'"]) {
+        assert.ok(accessCode.includes(marker), marker + ' variant is missing');
+    }
+    /* accessCode ends before renderIntro, so the web variant runs to its end. */
+    const web = accessCode.slice(accessCode.indexOf("ctx === 'web'"));
+    assert.match(web, /desktop app/);
+    const desktop = block(accessCode, "ctx === 'desktop'", "ctx === 'web'");
+    assert.match(desktop, /browser/);
+});
+
+test('the strip is styled from theme tokens like the rest of the welcome', () => {
+    const strip = block(cssCode, '.first-run-access {', '.first-run-foot {');
+    assert.match(strip, /var\(--theme-border-color/);
+    assert.match(strip, /var\(--theme-text-muted/);
+    const hard = strip.match(/(?:color|background):\s*#[0-9a-fA-F]{3,8}\s*;/g) || [];
+    assert.deepStrictEqual(hard, [], 'the strip hard-codes colours: ' + hard.join(', '));
+});

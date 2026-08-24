@@ -4810,6 +4810,28 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     padding-left: 2.25rem;
 }
 
+/*
+ * The desktop-and-web strip on the welcome.
+ *
+ * Quiet on purpose: it is orientation, not a promotion. It sits under
+ * the feature list at caption size, reads in one breath, and the only
+ * emphasis is the few words somebody needs to keep (which one this is,
+ * the address, where the other lives).
+ */
+.first-run-access {
+    margin-top: 12px;
+    padding: 10px 12px;
+    border-top: 1px solid var(--theme-border-color, #e5e8ef);
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: var(--theme-text-muted, #5b6577);
+}
+
+.first-run-access b {
+    font-weight: 600;
+    color: var(--theme-text-secondary, #3a4459);
+}
+
 .first-run-foot {
     display: flex;
     align-items: center;
