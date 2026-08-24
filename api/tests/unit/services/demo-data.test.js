@@ -197,3 +197,57 @@ describe('demo-data switch', () => {
     });
   });
 });
+
+describe('every doorway to selling honours the demo filter', () => {
+  /*
+   * Owner report, verbatim: "i see nothing in item list but sales page is
+   * showing item... i hard refreshed page. not removed. whats going on?"
+   *
+   * listScope's own comment promised the demo clause lived in "the ONE place
+   * the item list builds its filter" precisely so it could not be applied to
+   * some reads and forgotten on others - and the sale grid, the search box
+   * and the category tabs never went through listScope. The item list hid;
+   * the shelf sold. This sweep reads the three sale-path queries and fails
+   * if any of them drops the demo clause or the deleted clause - the
+   * deleted one matters doubly now that switching Demo Data off DELETES.
+   */
+  const fs = require('fs');
+  const path = require('path');
+  const src = fs
+    .readFileSync(path.join(__dirname, '../../../src/repositories/item.repository.js'), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/^[ \t]*\/\/.*$/gm, '');
+
+  const fnBody = (name, until) => {
+    const at = src.indexOf(name);
+    expect(at).toBeGreaterThan(-1);
+    const end = src.indexOf(until, at);
+    expect(end).toBeGreaterThan(at);
+    return src.slice(at, end);
+  };
+
+  const DOORWAYS = [
+    ['async getOnlineSalesItems(', 'const items = await collection'],
+    ['async getOnlineItemsAjaxList(', 'const data = await collection'],
+    ['async getItemsByCategoryId(', 'const items = await collection'],
+  ];
+
+  test.each(DOORWAYS)('%s applies the demo clause', (name, until) => {
+    const body = fnBody(name, until);
+    expect(body).toMatch(/demoData\.filter\(\{ licenseId, branchId \}\)/);
+    expect(body).toMatch(/demoClause/);
+  });
+
+  test.each(DOORWAYS)('%s excludes deleted items', (name, until) => {
+    const body = fnBody(name, until);
+    expect(body).toMatch(/del_status: \{ \$nin: \[1, '1', true\] \}/);
+  });
+
+  test('the demo clause is never spread into $and as a bare empty object', () => {
+    /* {$and:[{}, ...]} is legal but a spread of {} into a filter OBJECT is
+       where an "empty means everything" bug hides; the $and arrays must gate
+       on Object.keys length or filter(Boolean). */
+    const grid = fnBody('async getOnlineSalesItems(', 'const items = await collection');
+    expect(grid).toMatch(/Object\.keys\(demoClause\)\.length/);
+  });
+});

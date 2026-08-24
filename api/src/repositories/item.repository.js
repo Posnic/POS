@@ -2307,9 +2307,15 @@ class ItemRepository extends BaseModel {
         ],
       };
 
+      /* Same two clauses as the sale grid, same reason: search is a doorway
+         to selling, and a hidden or deleted sample reachable by typing its
+         name is not hidden at all. */
+      const demoClause = await demoData.filter({ licenseId, branchId });
       const match = {
         $and: [
           searchConditions.length ? { $or: searchConditions } : null,
+          Object.keys(demoClause).length ? demoClause : null,
+          { del_status: { $nin: [1, '1', true] } },
           { 'branch_access.branch_id': branchObjectId },
           { item_status: { $ne: 'instant' } },
           stockCondition,
@@ -2421,8 +2427,27 @@ class ItemRepository extends BaseModel {
       const licenseObjectId =
         licenseId && ObjectId.isValid(licenseId) ? new ObjectId(licenseId) : licenseId || null;
 
+      /*
+       * The demo filter and the deleted filter, HERE TOO.
+       *
+       * listScope's comment promised the demo clause lived in "the ONE place
+       * the item list builds its filter... so it cannot be applied to some
+       * reads and forgotten on others - a catalogue that hides sample items
+       * on the manage screen and shows them on the sale grid is worse than
+       * not hiding them at all." This query is the sale grid, it never went
+       * through listScope, and the exact failure that sentence names is the
+       * owner's report, verbatim: "i see nothing in item list but sales page
+       * is showing item... i hard refreshed page. not removed."
+       *
+       * del_status for the same reason: with Demo Data's off now a DELETION,
+       * a sale grid that ignores the deleted flag re-shells every purged
+       * sample the moment the purge lands.
+       */
+      const demoClause = await demoData.filter({ licenseId, branchId });
       const match = {
         $and: [
+          ...(Object.keys(demoClause).length ? [demoClause] : []),
+          { del_status: { $nin: [1, '1', true] } },
           { 'branch_access.branch_id': branchObjectId },
           { item_status: { $ne: 'instant' } },
           { sales_channel: true },
@@ -3327,7 +3352,12 @@ class ItemRepository extends BaseModel {
       const licenseObjectId =
         licenseId && ObjectId.isValid(licenseId) ? new ObjectId(licenseId) : licenseId;
 
+      /* Same two clauses as the sale grid, same reason: a category tab is
+         just the shelf filtered, and it showed what the shelf hid. */
+      const demoClause = await demoData.filter({ licenseId, branchId });
       const conditions = [
+        ...(Object.keys(demoClause).length ? [demoClause] : []),
+        { del_status: { $nin: [1, '1', true] } },
         { item_status: { $ne: ITEM_STATUS.INSTANT } },
         {
           $or: [{ available_quantity: { $gt: 0 } }, { negative_stock: true }],
