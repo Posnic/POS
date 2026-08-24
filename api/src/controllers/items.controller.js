@@ -1241,11 +1241,64 @@ class ItemsController extends BaseController {
         branchId: this.model?.branchId || null,
         licenseId: this.model?.licenseId || null,
         user: req.user,
+        /* Optional. Absent means "put back whatever this shop had", which is
+           what the Demo Data switch asks for; a value means the shop has
+           chosen a different trade from the list on its Demo Data page. */
+        businessType: req.body?.businessType,
       });
       if (!result.status) return this.sendError(res, result.message, 400);
       return this.sendSuccess(res, result.data, result.message);
     } catch (error) {
       console.error('Error in reseedDemoData:', error);
+      return this.sendError(res, error.message, 500);
+    }
+  }
+
+  /*
+   * The packs a shop can choose from.
+   *
+   * Served rather than hard-coded in the page, so the chooser cannot drift
+   * from what the server will actually install. A list typed into the
+   * frontend is correct until somebody adds a pack, and then it is a menu
+   * that silently omits an option nobody knows exists.
+   *
+   * Read permission, not write: this says what is available, not what is
+   * installed, and a cashier looking at the Demo Data page should see the
+   * page rather than an error.
+   */
+  async listDemoPacks(req, res) {
+    try {
+      if (req.user?.access?.item?.read === false) {
+        return this.sendError(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
+      }
+      await this.ensureContext(req);
+      const { listDemoPacks } = require('../../utils/demoData');
+      const packs = listDemoPacks();
+
+      /* Which one this shop is on now, so the chooser opens on the right
+         answer instead of on the first row of the list. */
+      let current = null;
+      try {
+        const BaseModel = require('../models/base.model');
+        const db = await BaseModel.getDb();
+        const { ObjectId } = require('mongodb');
+        const row = await db.collection('items').findOne(
+          {
+            demo_pack: { $exists: true },
+            license: new ObjectId(String(this.model.licenseId)),
+          },
+          { projection: { demo_pack: 1 } }
+        );
+        current = (row && row.demo_pack) || null;
+      } catch (e) {
+        /* A shop with no samples has no current pack, which is a fact about
+           the shop and not a failure to report. */
+        current = null;
+      }
+
+      return this.sendSuccess(res, { packs, current }, 'success');
+    } catch (error) {
+      console.error('Error in listDemoPacks:', error);
       return this.sendError(res, error.message, 500);
     }
   }

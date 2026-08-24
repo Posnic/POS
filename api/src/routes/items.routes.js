@@ -86,8 +86,16 @@ router.get('/export/jsonld', bindController(itemsController.exportCatalogueJsonL
 router.delete('/demo', bindController(itemsController.purgeDemoData));
 
 // POST /api/items/demo - put the sample data back, for a shop that removed
-// it and later wants it. Refuses if it is already there.
+// it and later wants it. Refuses if it is already there. An optional
+// businessType installs a DIFFERENT trade's catalogue, for the shop that
+// signed up as one thing and turned out to be another.
 router.post('/demo', bindController(itemsController.reseedDemoData));
+
+// GET /api/items/demo/packs - the trades a shop can pick from, and which one
+// it is on. Declared BEFORE any '/demo/:something' route would be: Express
+// matches in order, and a parameterised sibling added later would otherwise
+// swallow this path and answer it with the wrong handler.
+router.get('/demo/packs', bindController(itemsController.listDemoPacks));
 
 // Raise/lower prices across many items at once; and a per-item price history.
 // V1 variant families: all-or-nothing creation of linked variant items,

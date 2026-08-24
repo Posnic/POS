@@ -758,10 +758,26 @@ class InstallService {
    * Refuses when demo data is already present. Seeding twice would give a shop
    * two of every sample with no way to tell which pair to delete.
    */
-  async reseedDemoData({ branchId, licenseId, user } = {}) {
+  async reseedDemoData({ branchId, licenseId, user, businessType: wanted } = {}) {
     try {
       if (!branchId || !licenseId) {
         return { status: false, data: null, message: 'Branch and licence are required.' };
+      }
+
+      /*
+       * An explicit choice is CHECKED, not coerced.
+       *
+       * getDemoDataByType falls back to the supermarket set for anything it
+       * does not recognise, which is the right answer for a trade somebody
+       * typed into a signup form. It is the wrong answer here: this argument
+       * comes from a list the shop was shown, so a key that is not on that
+       * list is a bug on our side, and quietly installing groceries into a
+       * bakery would be a wrong answer delivered confidently.
+       */
+      const { isDemoPack } = require('../../utils/demoData');
+      const asked = String(wanted == null ? '' : wanted).trim();
+      if (asked && !isDemoPack(asked)) {
+        return { status: false, data: null, message: 'That is not a sample data pack.' };
       }
 
       const BaseModel = require('../models/base.model');
@@ -794,9 +810,11 @@ class InstallService {
       }
 
       /*
-       * The trade this shop was set up as, or what it was seeded with before.
-       * A shop that removed one pack should get that pack back, not whatever
-       * the default happens to be today.
+       * What was asked for; failing that, the trade this shop was set up as,
+       * or what it was seeded with before. A shop that removed one pack should
+       * get that pack back, not whatever the default happens to be today - but
+       * a shop that has just PICKED a different trade must get the one it
+       * picked, which is the whole point of the chooser.
        */
       const previous = await db
         .collection('items')
@@ -805,6 +823,7 @@ class InstallService {
           { projection: { demo_pack: 1 } }
         );
       const businessType =
+        asked ||
         (previous && previous.demo_pack) ||
         branch.business_type ||
         branch.businessType ||

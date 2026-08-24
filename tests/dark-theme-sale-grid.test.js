@@ -25,27 +25,32 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 /* Comments carry these hex values in their explanations, so they are stripped
    before anything is asserted - the usual trap of matching one's own prose. */
-const css = fs
-  .readFileSync(path.join(ROOT, 'frontend', 'static', 'style', 'css', 'custom.css'), 'utf8')
-  .replace(/\/\*[\s\S]*?\*\//g, '');
+const raw = fs.readFileSync(
+  path.join(ROOT, 'frontend', 'static', 'style', 'css', 'custom.css'), 'utf8');
+const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '');
+const css = strip(raw);
 
 const block = (() => {
-  const at = css.indexOf('[data-theme] #sales_new .wsk-cp .wsk-cp-product');
-  assert.notStrictEqual(at, -1, 'the dark-theme sale grid rules are gone');
   /*
-   * Bounded to the sale-grid rules, not to the end of the file.
+   * Bounded to the sale-grid section, not to the end of the file.
    *
    * This used to slice to EOF, which made the no-hard-coded-colour check below
    * police every rule anybody appended to custom.css afterwards - a guard about
-   * the sale grid failing over a dialog somewhere else. Every rule in this
-   * section names #sales_new, so the section ends with the closing brace of the
-   * last rule that does.
+   * the sale grid failing over a dialog somewhere else. The section ends where
+   * the next banner comment starts.
+   *
+   * Cut from the RAW source, then stripped. Cutting from the stripped copy
+   * cannot work: the boundary IS a comment, so nothing is left to cut at and
+   * the block silently runs to the end of the file again - which is the exact
+   * bug this bounding was added to fix, reintroduced by the fix itself.
+   * Bounding by "the last rule mentioning #sales_new" fails too, because later
+   * sections legitimately mention it.
    */
-  const lastRule = css.lastIndexOf('#sales_new');
-  assert.ok(lastRule >= at, 'the sale grid rules are gone');
-  const close = css.indexOf('}', lastRule);
-  assert.notStrictEqual(close, -1, 'the last sale grid rule is unterminated');
-  return css.slice(at, close + 1);
+  const at = raw.indexOf('[data-theme] #sales_new .wsk-cp .wsk-cp-product');
+  assert.notStrictEqual(at, -1, 'the dark-theme sale grid rules are gone');
+  const next = raw.indexOf('/* ====', at);
+  assert.notStrictEqual(next, -1, 'the sale-grid section has no section after it to end at');
+  return strip(raw.slice(at, next));
 })();
 
 test('the card follows the theme rather than a fixed white', () => {
