@@ -239,6 +239,11 @@ jobs:
     name: Publish release
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+      artifact-metadata: write
     env:
       ASSET_SIGNING_KEY: ${{ secrets.POSNIC_ASSET_SIGNING_KEY }}
     steps:
@@ -285,6 +290,14 @@ jobs:
           # the release notes tell people to check.
           sha256sum $(ls | grep -vE 'latest.*\.yml$|\.blockmap$|release-manifest\.json$|asset-manifest\.json$') > SHA256SUMS.txt
           echo "Publishing:"; ls -lh
+
+      # Bind every package and package SBOM named in SHA256SUMS.txt to this
+      # repository, workflow, ref and commit. The action uses a short-lived
+      # GitHub OIDC identity; no long-lived signing key is stored in secrets.
+      - name: Attest release artifact provenance
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-checksums: release/SHA256SUMS.txt
 
       - uses: softprops/action-gh-release@v3
         with:
