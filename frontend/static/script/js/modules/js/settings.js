@@ -5507,6 +5507,10 @@ PosnicPro.features = {
             hasher.setHash('settings/modules');
         }
         PosnicPro.features.renderIntro();
+        /* One line, on purpose, forever: "did the welcome show for this
+           shop?" is a support question, and a console line a headless session
+           can grep is the difference between an answer and an argument. */
+        console.log('[welcome] shown over the features page');
         $('#feature_intro_modal').modal('show');
         /*
          * Only a DECISION ends the welcome - Save, or the explicit "Not now".
