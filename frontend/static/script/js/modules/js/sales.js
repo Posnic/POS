@@ -6991,7 +6991,7 @@ PosnicPro.sales.itemsMenu = {
                             price = getItemdata[i]['selling_price']
                         }
                         var image_path = (getItemdata[i]['image'] !== "item.svg") ? getItemdata[i]['image'] : 'static/images/default/' + getItemdata[i]['image'];
-                        let timeZone = PosnicPro.local.get('timezone');
+                        let timeZone = PosnicPro.timeZone();
                         let dateTime = new Date().getTime();
                         let currentDateTimeCentralTimeZone = moment(dateTime).tz(timeZone).format('YYYY/MM/DD hh:mm A');
                         let currentDate = new Date().getTime(currentDateTimeCentralTimeZone);
@@ -7765,7 +7765,7 @@ PosnicPro.sales.categoryMenu = {
                     '<button type="button" class="btn btn-dark-rgba font-18" onclick="PosnicPro.sales.categoryMenu.listCategories();">' +
                     '<i class="feather icon-arrow-left profile_left_slide slick-arrow mr-2"></i></button></div><div class="row">';
 
-                var timeZone = PosnicPro.local.get('timezone') || 'Asia/Kolkata';
+                var timeZone = PosnicPro.timeZone() || 'Asia/Kolkata';
                 var currentTimestamp = moment().tz(timeZone).valueOf();
 
                 var shown = 0;
@@ -10738,7 +10738,7 @@ $(function () {
                 if (seq !== itemLookupSeq) { return; }
                 if (response.suggestions.length > 0) {
                     suggestions: $.map(response.suggestions, function (dataItem) {
-                        let timeZone = PosnicPro.local.get('timezone');
+                        let timeZone = PosnicPro.timeZone();
                         let dateTime = new Date().getTime();
                         let currentDateTimeCentralTimeZone = moment(dateTime).tz(timeZone).format('YYYY/MM/DD hh:mm A');
                         let currentDate = new Date().getTime(currentDateTimeCentralTimeZone);
@@ -11373,7 +11373,7 @@ PosnicPro.sales.updateCustomerChip = function () {
 PosnicPro.sales.applySaleDateLock = function () {
     if (PosnicPro.local.get('allow_sale_date_edit') !== 'false') { return; }
     try {
-        var tz = PosnicPro.local.get('timezone');
+        var tz = PosnicPro.timeZone();
         var now = moment(new Date()).tz(tz).format('YYYY/MM/DD hh:mm A');
         var $d = $('#time-format');
         if ($d.data('datepicker') && typeof $d.data('datepicker').destroy === 'function') {

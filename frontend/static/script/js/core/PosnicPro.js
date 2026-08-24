@@ -3206,8 +3206,32 @@ PosnicPro = {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
     },
+    /*
+     * The shop's timezone, never null.
+     *
+     * THE WHITE PAGE THIS ENDS. localStorage carries no 'timezone' until the
+     * first settings read lands, and local.get returns null before that - so
+     * on a FRESH BROWSER ORIGIN (every brand-new shop's first visitor, every
+     * new subdomain), moment().tz(null) hits moment-timezone's GETTER form,
+     * returns undefined, and the .format() that follows throws inside the
+     * ready handlers that reveal the page. The whole dashboard rendered
+     * white with every request returning 200 - and it never reproduced for
+     * anybody whose browser had ever loaded the shop before, which is why it
+     * survived until the owner opened a brand-new shop in a brand-new tab.
+     *
+     * The fallback is the BROWSER'S own zone: for the seconds before the
+     * server answers, where the person is standing is the best truth
+     * available - and strictly better than a fixed default that is wrong on
+     * every till outside one country.
+     */
+    timeZone: function () {
+        var t = PosnicPro.local.get('timezone');
+        if (t && t !== 'null' && t !== 'undefined') { return t; }
+        try { return moment.tz.guess(); } catch (e) { return 'Asia/Kolkata'; }
+    },
+
     commonDate: function () {
-        let timeZone = PosnicPro.local.get('timezone');
+        let timeZone = PosnicPro.timeZone();
         let dateTime = new Date();
         let currentDateTimeCentralTimeZone = moment(dateTime).tz(timeZone).format('YYYY/MM/DD hh:mm A');
         let currentDate = new Date(currentDateTimeCentralTimeZone);
@@ -3279,7 +3303,7 @@ PosnicPro = {
         $('#receiving_add_date,#time-format,#expenses_date').addClass('commonEditDate');
         var currentDateTimeCentralTimeZone = moment(date).format('YYYY/MM/DD hh:mm A');
 
-        var timeZone = PosnicPro.local.get('timezone');
+        var timeZone = PosnicPro.timeZone();
         $('.commonEditDate').datepicker({
             language: 'en',
             dateFormat: 'yyyy/mm/dd',

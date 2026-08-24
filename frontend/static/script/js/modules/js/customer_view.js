@@ -210,7 +210,7 @@ $(document).ready(function () {
 
     // The clock is the only thing that needs a timer.
     setInterval(function () {
-        var timeZone = PosnicPro.local.get('timezone');
+        var timeZone = PosnicPro.timeZone();
         var currentDateTimeCentralTimeZone = moment(new Date()).tz(timeZone).format('YYYY/MM/DD hh:mm:ss A');
         $('.custom_view_date').html(currentDateTimeCentralTimeZone);
     }, 1000);

@@ -166,7 +166,7 @@ PosnicPro.returnproductreport = {
                 var data = response.data;
                 $(data).each(function (key, val) {
                     var timeStamp_value = parseInt(val.return_date.$date.$numberLong);
-                    var timeZone = PosnicPro.local.get('timezone');
+                    var timeZone = PosnicPro.timeZone();
                     var updateDate = moment(timeStamp_value).tz(timeZone).format('YYYY/MM/DD LT');
                     $('#return_product_id_view').html(val.return_id);
                     $('#return_product_date_view').html(updateDate);
