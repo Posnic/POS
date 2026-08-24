@@ -4594,22 +4594,93 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
  * also means a transparent PNG and a white JPEG look the same, which
  * they never did before.
  */
-#sales_new .wsk-cp .wsk-cp-img:has(img) {
+#sales_new .wsk-cp .wsk-cp-img:has(img):not(.wsk-cp-img-placeholder) {
     background: #ffffff;
     border-radius: 8px;
     margin: 8px 8px 0;
     padding: 6px;
 }
-[data-theme] #sales_new .wsk-cp:hover .wsk-cp-img:has(img) { background: #ffffff; }
+[data-theme] #sales_new .wsk-cp:hover .wsk-cp-img:has(img):not(.wsk-cp-img-placeholder) { background: #ffffff; }
 /* Dark themes get a slightly softened plate: pure white at this size is
    a lamp on an otherwise dark screen, and this till is open all day. */
-[data-theme="dark"] #sales_new .wsk-cp .wsk-cp-img:has(img),
-[data-theme="terminal"] #sales_new .wsk-cp .wsk-cp-img:has(img),
-[data-theme="dosblue"] #sales_new .wsk-cp .wsk-cp-img:has(img),
-[data-theme="dark"] #sales_new .wsk-cp:hover .wsk-cp-img:has(img),
-[data-theme="terminal"] #sales_new .wsk-cp:hover .wsk-cp-img:has(img),
-[data-theme="dosblue"] #sales_new .wsk-cp:hover .wsk-cp-img:has(img) {
+[data-theme="dark"] #sales_new .wsk-cp .wsk-cp-img:has(img):not(.wsk-cp-img-placeholder),
+[data-theme="terminal"] #sales_new .wsk-cp .wsk-cp-img:has(img):not(.wsk-cp-img-placeholder),
+[data-theme="dosblue"] #sales_new .wsk-cp .wsk-cp-img:has(img):not(.wsk-cp-img-placeholder),
+[data-theme="dark"] #sales_new .wsk-cp:hover .wsk-cp-img:has(img):not(.wsk-cp-img-placeholder),
+[data-theme="terminal"] #sales_new .wsk-cp:hover .wsk-cp-img:has(img):not(.wsk-cp-img-placeholder),
+[data-theme="dosblue"] #sales_new .wsk-cp:hover .wsk-cp-img:has(img):not(.wsk-cp-img-placeholder) {
     background: #e8eaed;
+}
+
+/* ==================================================================
+ * THE THREE THINGS THAT WERE STILL LIGHT
+ *
+ * Reported against a screenshot: "new sales dark themes product boxes
+ * background color looks light light or gray. it does not suit and not
+ * looking good."
+ *
+ * The cards themselves were fixed. Three other surfaces were not, and
+ * together they are most of what a dark sale screen actually shows.
+ * ================================================================== */
+
+/*
+ * 1. THE CANVAS THE TILES SIT ON.
+ *
+ * `#sales_new .sale-tile-grid` was a flat #f6f8fa in every theme - the
+ * large pale panel behind and below every tile, and the single biggest
+ * light area on the screen. It was written when the till was light-only
+ * and there was no theme to follow.
+ *
+ * It follows the body now, which is the same relationship it always had
+ * in the light theme: a canvas one step back from the cards, so the
+ * cards read as raised rather than as floating on nothing.
+ */
+[data-theme] #sales_new .sale-tile-grid { background: var(--theme-body-bg); }
+
+/*
+ * 2. THE HOVER TINT.
+ *
+ * `.wsk-cp:hover .wsk-cp-img { background: #f6f8fa; }` painted a pale
+ * grey box behind whatever was in the image slot, in every theme. On a
+ * card with a photograph that is invisible - the plate above already
+ * covers it. On a coloured letter tile, or on the placeholder, it put a
+ * light rectangle on a dark card under the pointer, which is precisely
+ * where somebody is looking.
+ *
+ * A tile with a real photograph keeps its plate: the rules above are
+ * more specific, because :has(img) adds the specificity of its argument.
+ */
+[data-theme] #sales_new .wsk-cp:hover .wsk-cp-img { background: transparent; }
+
+/*
+ * 3. THE PLACEHOLDER PLATE.
+ *
+ * The plate exists so a product photograph shot on white does not glare
+ * against a dark card. The shipped placeholder is not a photograph - it
+ * is a line drawing on transparency - so framing it puts a large pale
+ * panel on a tile that has nothing to show. Four of them were on the
+ * reported screen at once.
+ *
+ * Excluded by a CLASS the renderer sets, not by sniffing the src for
+ * "/default/": a shop's own upload could contain any path, and a rule
+ * that guesses would one day un-frame a real photograph with no way to
+ * tell why.
+ */
+[data-theme] #sales_new .wsk-cp .wsk-cp-img-placeholder,
+#sales_new .wsk-cp .wsk-cp-img-placeholder {
+    background: transparent;
+    margin: 0;
+    padding: 8px;
+}
+
+/* The drawing is dark-on-transparent, so on a dark card it is a shape
+   nobody can see. Dimmed and inverted rather than plated: it is meant to
+   say "no picture", quietly, not to be read. */
+[data-theme="dark"] #sales_new .wsk-cp .wsk-cp-img-placeholder img,
+[data-theme="terminal"] #sales_new .wsk-cp .wsk-cp-img-placeholder img,
+[data-theme="dosblue"] #sales_new .wsk-cp .wsk-cp-img-placeholder img {
+    filter: invert(1) brightness(0.85);
+    opacity: 0.45;
 }
 
 /* ============================================================

@@ -109,3 +109,124 @@ test('the fix is token-based, so a new theme needs no new rule', () => {
   const stray = hardCoded.filter((h) => !allowed.has(h.toLowerCase()));
   assert.deepStrictEqual(stray, [], `hard-coded colours crept back in: ${stray.join(', ')}`);
 });
+
+/*
+ * The three surfaces that were STILL light after the cards were fixed.
+ *
+ * Reported against a screenshot of the sale screen in a dark preset: "new sales
+ * dark themes product boxes background color looks light light or gray. it does
+ * not suit and not looking good."
+ *
+ * The cards themselves had been corrected. What had not been touched was
+ * everything AROUND and INSIDE them, which between them is most of what the
+ * screen actually shows - and each one was a fixed hex written when the till was
+ * light-only.
+ *
+ * These are asserted individually rather than by scanning the section, because
+ * the section scan above stops at the next banner comment and would not reach
+ * them - a guard that silently covers nothing.
+ */
+const laterBlock = (() => {
+  const at = raw.indexOf('THE THREE THINGS THAT WERE STILL LIGHT');
+  assert.notStrictEqual(at, -1, 'the later dark-theme fixes are gone');
+  /* Bounded at the next banner, exactly like `block` above and for exactly the
+     same reason: slicing to EOF makes the no-hard-coded-colour check below
+     police every unrelated section that happens to come after. Written out a
+     second time rather than shared, because the two sections end at different
+     places and a helper would hide that. */
+  const next = raw.indexOf('/* ====', at);
+  assert.notStrictEqual(next, -1, 'this section has no section after it to end at');
+  return strip(raw.slice(at, next));
+})();
+
+test('the canvas behind the tiles follows the theme', () => {
+  /*
+   * #f6f8fa in every theme: the large pale panel behind and below every tile,
+   * and the single biggest light area on a dark sale screen. It kept its light
+   * value because the base rule had no dark counterpart at all.
+   */
+  assert.match(laterBlock, /\[data-theme\] #sales_new \.sale-tile-grid \{ background: var\(--theme-body-bg\); \}/);
+});
+
+test('hovering a tile does not put a light box on a dark card', () => {
+  /*
+   * `.wsk-cp:hover .wsk-cp-img { background: #f6f8fa }` painted a pale grey
+   * rectangle behind whatever was in the image slot. Invisible on a card with a
+   * photograph - the plate covers it - but on a coloured letter tile it lit up
+   * under the pointer, which is exactly where somebody is looking.
+   */
+  assert.match(laterBlock, /\[data-theme\] #sales_new \.wsk-cp:hover \.wsk-cp-img \{ background: transparent; \}/);
+});
+
+test('a real photograph still keeps its plate on hover', () => {
+  /*
+   * The transparent rule above must NOT win for a card with a photograph, or
+   * the white-shot glare it exists to prevent comes straight back on hover.
+   * :has(img) carries the specificity of its argument, so the plate rules
+   * outrank it - this asserts they are still written that way.
+   */
+  assert.match(block, /:hover \.wsk-cp-img:has\(img\):not\(\.wsk-cp-img-placeholder\)/);
+});
+
+test('EVERY plate selector excludes the placeholder, not just most of them', () => {
+  /*
+   * There are six of these - the base rule, its hover, and one line per dark
+   * preset for each. Asserting that the exclusion appears SOMEWHERE passes with
+   * five of the six correct, and the sixth is a preset where the placeholder is
+   * still framed. Whoever is using that preset sees it; nobody else does, and
+   * nothing reports it.
+   *
+   * Found by mutation: dropping the exclusion from one selector left this file
+   * green.
+   */
+  const plates = css.match(/\.wsk-cp-img:has\(img\)(:not\(\.wsk-cp-img-placeholder\))?/g) || [];
+  assert.ok(plates.length >= 6, `expected every plate selector, found ${plates.length}`);
+  const bare = plates.filter((p) => !p.includes(':not('));
+  assert.deepStrictEqual(bare, [],
+    `${bare.length} plate selector(s) still frame the placeholder`);
+});
+
+test('the shipped placeholder is not framed like a photograph', () => {
+  /*
+   * The plate exists so a product shot on white does not glare against a dark
+   * card. The placeholder is a line drawing on transparency, so framing it puts
+   * a large pale panel on a tile with nothing to show - four of them were on
+   * the reported screen at once.
+   */
+  assert.match(block, /\.wsk-cp-img:has\(img\):not\(\.wsk-cp-img-placeholder\)/);
+  assert.match(laterBlock, /\.wsk-cp-img-placeholder[\s\S]*?background: transparent/);
+});
+
+test('the placeholder is excluded by a class, not by sniffing the src', () => {
+  /*
+   * A rule keyed on "/default/" in the path would one day un-frame a real
+   * photograph whose URL happened to contain it, with nothing to say why. The
+   * renderer knows which one it drew; it says so.
+   */
+  const salesJs = fs.readFileSync(
+    path.join(ROOT, 'frontend', 'static', 'script', 'js', 'modules', 'js', 'sales.js'), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/^[ \t]*\/\/.*$/gm, '');
+
+  // Both renderers: the single item and the variant family tile.
+  assert.match(salesJs, /_isPlaceholder = getItemdata\[i\]\['image'\] === 'item\.svg'/);
+  assert.match(salesJs, /placeholderClass = rows\[0\]\['image'\] === 'item\.svg'/);
+  assert.match(salesJs, /wsk-cp-img' \+ \(_isPlaceholder \? ' wsk-cp-img-placeholder' : ''\)/);
+  assert.match(salesJs, /wsk-cp-img' \+ placeholderClass/);
+
+  assert.ok(!/wsk-cp-img\[src\*=|src\*="\/default\//.test(laterBlock),
+    'the placeholder must not be detected by sniffing the image path');
+});
+
+test('the placeholder drawing stays visible on a dark card', () => {
+  /* It is dark-on-transparent, so unplating it alone would leave a shape
+     nobody can see - which reads as a broken image, not as "no picture". */
+  assert.match(laterBlock, /\.wsk-cp-img-placeholder img[\s\S]*?filter: invert\(1\)/);
+  assert.match(laterBlock, /opacity: 0\.45/);
+});
+
+test('these fixes are token-based or deliberate, not a new set of fixed colours', () => {
+  const hardCoded = laterBlock.match(/#[0-9a-fA-F]{6}/g) || [];
+  assert.deepStrictEqual(hardCoded, [],
+    `the later fixes hard-code colours: ${hardCoded.join(', ')}`);
+});
