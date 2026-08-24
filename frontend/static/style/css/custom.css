@@ -4988,6 +4988,132 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     font-variant-numeric: tabular-nums;
 }
 
+/*
+ * MATRIX FAMILIES: two columns, both visible.
+ *
+ * Owner: "if product had matrix variant... we might think like sub menu."
+ *
+ * It is a sub-menu, docked rather than flown out. A flown-out panel has
+ * to be positioned, flipped at the screen edge, and held open while the
+ * pointer crosses the gap to it - and on a touch screen there is no
+ * hover to fly it out on, so it would need a second mechanism anyway.
+ * Docked, both levels are on screen at once and a mouse can go straight
+ * to the size it wants without summoning anything.
+ */
+.variant-pop-matrix {
+    max-width: 420px;
+}
+
+.variant-pop .vp-matrix {
+    display: flex;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.variant-pop .vp-col {
+    display: flex;
+    flex-direction: column;
+    /* min-width:0 because a flex item will not shrink below its longest
+       word by default, and a colour called "Midnight Navy" would push
+       the sizes off the right-hand edge with no scrollbar to reach. */
+    min-width: 0;
+}
+
+.variant-pop .vp-col-axis {
+    flex: 0 0 44%;
+    border-right: 1px solid var(--theme-border-color, #e5e8ef);
+    background: var(--theme-table-header-bg, #f6f7fb);
+}
+
+.variant-pop .vp-col-leaf {
+    flex: 1 1 auto;
+}
+
+/* Which axis is which. Without these the two columns are just lists,
+   and nothing says the left one is colours and the right one sizes. */
+.variant-pop .vp-col-head {
+    padding: 6px 12px;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--theme-text-muted, #5b6577);
+    border-bottom: 1px solid var(--theme-border-color, #e5e8ef);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.variant-pop .vp-col-body {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* 44px again: the first level is tapped as often as the second. */
+.variant-pop .vp-axis {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    min-height: 44px;
+    padding: 8px 12px;
+    border: 0;
+    border-bottom: 1px solid var(--theme-border-color, #e5e8ef);
+    background: transparent;
+    color: inherit;
+    font-size: 14px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.variant-pop .vp-axis:last-child {
+    border-bottom: 0;
+}
+
+.variant-pop .vp-axis:hover {
+    background: var(--theme-table-row-hover, #eef2fd);
+}
+
+/* The active row is joined to the column beside it, so the pair reads as
+   one selection rather than as two independent lists. */
+.variant-pop .vp-axis.is-active {
+    background: var(--theme-card-bg, #ffffff);
+    font-weight: 600;
+    box-shadow: inset 3px 0 0 var(--theme-primary-color, #506fe4);
+}
+
+.variant-pop .vp-axis:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 2px var(--theme-primary-color, #506fe4);
+}
+
+.variant-pop .vp-axis-count {
+    flex: 0 0 auto;
+    font-size: 11.5px;
+    font-variant-numeric: tabular-nums;
+    color: var(--theme-text-muted, #5b6577);
+}
+
+/*
+ * A narrow screen stacks them: side by side at 190px each, neither
+ * column has room for a word. The axis list is capped so the sizes -
+ * the half somebody is actually reaching for - are never pushed off the
+ * bottom by a long list of colours.
+ */
+@media (max-width: 420px) {
+    .variant-pop .vp-matrix {
+        flex-direction: column;
+    }
+
+    .variant-pop .vp-col-axis {
+        flex: 0 0 auto;
+        max-height: 40vh;
+        border-right: 0;
+        border-bottom: 1px solid var(--theme-border-color, #e5e8ef);
+    }
+}
+
 /* The tile keeps a mark while its list is open, so the panel and the
    thing it belongs to read as one object rather than as a card that
    appeared from nowhere. */
