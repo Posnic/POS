@@ -165,10 +165,24 @@
 
                 /* Booted = the sidebar is actually PAINTED. It exists in the
                    markup from the start, so visibility is the test - during
-                   the white page it measured 0 high. */
+                   the white page it measured 0 high.
+
+                   ANY sidebar, not the first: the layout carries one
+                   .vertical-menu per SECTION (dashboard, sale, Manage,
+                   reports) and shows exactly one. The first belongs to the
+                   dashboard - so on a direct load of a settings route this
+                   watchdog measured a menu that was legitimately hidden,
+                   declared the boot dead at 15s, and dropped its opaque card
+                   over a working page. Reload landed on settings again, 15
+                   seconds, card again - the owner's "every few seconds its
+                   breaking, whenever i go to module page" WAS THIS WATCHDOG,
+                   crying wolf on a page that was fine underneath. */
                 function booted() {
-                    var m = document.querySelector('.vertical-menu');
-                    return !!(m && m.offsetHeight > 0);
+                    var menus = document.querySelectorAll('.vertical-menu, .vertical-menu-icon');
+                    for (var i = 0; i < menus.length; i++) {
+                        if (menus[i].offsetHeight > 0) { return true; }
+                    }
+                    return false;
                 }
 
                 function resetData() {
@@ -191,10 +205,17 @@
 
                 function show() {
                     if (document.getElementById('posnic_boot_help')) { return; }
+                    /* Say so in the console: the rig greps for this, and a
+                       card that appears silently cannot be told apart from a
+                       page that hung. */
+                    try { console.log('[watchdog] boot card shown at ' + location.hash); } catch (e) { }
                     var card = document.createElement('div');
                     card.id = 'posnic_boot_help';
+                    /* TRANSLUCENT, deliberately. The solid backdrop made every
+                       card look like a dead white page - including the false
+                       alarm above, where the page behind it was working. */
                     card.setAttribute('style',
-                        'position:fixed;inset:0;z-index:2147483000;background:#f4f5f7;display:flex;' +
+                        'position:fixed;inset:0;z-index:2147483000;background:rgba(244,245,247,.9);display:flex;' +
                         'align-items:center;justify-content:center;font-family:system-ui,Segoe UI,Arial,sans-serif;');
                     card.innerHTML =
                         '<div style="max-width:460px;background:#fff;border:1px solid #dfe3e8;border-radius:12px;padding:26px 28px;box-shadow:0 12px 34px rgba(0,0,0,.12);">' +

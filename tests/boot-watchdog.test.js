@@ -51,10 +51,19 @@ test('it captures both error channels and reports once', () => {
   assert.match(script, /api\/client-errors/);
 });
 
-test('booted means PAINTED, not merely present', () => {
-  /* During the white page the sidebar existed in the DOM and measured 0 high
-     - existence would have called the broken page healthy. */
-  assert.match(script, /offsetHeight > 0/);
+test('booted means ANY sidebar painted - the layout carries one per section', () => {
+  /* One .vertical-menu per section (dashboard, sale, Manage, reports), one
+     shown at a time. Measuring only the FIRST declared settings routes dead
+     forever: the watchdog itself was the owner's "crash", every 15 seconds,
+     only on the module page, over a page that was fine underneath. */
+  assert.match(script, /querySelectorAll\('\.vertical-menu, \.vertical-menu-icon'\)/);
+  assert.match(script, /offsetHeight > 0\) \{ return true; \}/);
+});
+
+test('the card announces itself and never fakes a dead page', () => {
+  assert.match(script, /\[watchdog\] boot card shown/);
+  /* translucent backdrop: a false alarm must not LOOK like a white page */
+  assert.match(script, /rgba\(244,245,247,\.9\)/);
 });
 
 test('the recovery card offers the fix the owner performed by hand', () => {
