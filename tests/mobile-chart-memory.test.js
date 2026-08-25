@@ -60,3 +60,36 @@ test('the guard is an optimisation, never a gate', () => {
 test('the Apex donut stops animating under a finger too', () => {
   assert.match(dash, /animations: \{\s*enabled: !\(window\.matchMedia && window\.matchMedia\('\(pointer: coarse\)'\)\.matches\),?\s*\}/);
 });
+
+/*
+ * Round two: the relief valves were not enough - the owner's iPhone still
+ * dropped the tab. So the mechanism itself goes on touch devices: the 3D
+ * chart (several SVG faces per column, all re-laid-out per resize) becomes
+ * its flat twin, and charts stop answering the URL-bar resize storm at all.
+ */
+test('the dashboard chart is FLAT on touch - 3D is for desks', () => {
+    assert.match(dash, /coarse \? am4charts\.XYChart : am4charts\.XYChart3D/);
+    const seriesPicks = dash.match(/coarse \? new am4charts\.ColumnSeries\(\) : new am4charts\.ColumnSeries3D\(\)/g) || [];
+    assert.strictEqual(seriesPicks.length, 2, 'both column series must pick the flat twin on touch');
+});
+
+test('on touch, every chart stops listening to the viewport', () => {
+    /*
+     * iOS fires a REAL window resize for every URL-bar collapse under a
+     * scrolling thumb, and amCharts answers each with a full SVG relayout.
+     * The chart div never changes size in those resizes, so the work is
+     * all waste - and the waste is what killed the tab.
+     */
+    const tame = core.slice(core.indexOf('_tameForTouch:'), core.indexOf('_live: {}'));
+    assert.match(tame, /pointer: coarse/);
+    assert.match(tame, /autoResize = false/);
+    /* height-only resizes (the URL bar) are ignored; only a real width
+       change re-measures, debounced */
+    assert.match(tame, /window\.innerWidth === lastWidth\) \{ return; \}/);
+    assert.match(tame, /setTimeout/);
+    /* guarded as an optimisation - an untameable chart still renders */
+    assert.match(tame, /catch \(e\)/);
+    /* and the choke point actually calls it */
+    const create = core.slice(core.indexOf('create: function (id, type)'), core.indexOf('_tameForTouch:'));
+    assert.match(create, /PosnicPro\.chart\._tameForTouch\(chart\)/);
+});

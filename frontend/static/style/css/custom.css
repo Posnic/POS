@@ -324,7 +324,10 @@
 }
 .table_model_item{
     color: var(--theme-primary-color, #506fe4) !important;
-    font-weight: 900;
+    /* Owner: "item list name looks bold. same used for all data table.
+       bold not required." The colour already marks it as the row's link;
+       900 on top made every Name column shout over its own data. */
+    font-weight: normal;
     font-style: normal !important;
 }
 .sale_id{

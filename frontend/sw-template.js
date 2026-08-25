@@ -63,6 +63,15 @@ self.addEventListener('push', (event) => {
   event.waitUntil(self.registration.showNotification(data.title || 'Posnic', {
     body: data.body || '',
     tag: data.tag || 'posnic',
+    /*
+     * Same-tag notifications REPLACE each other, and a replacement is silent:
+     * no sound, no banner, just the text swapping inside a notification
+     * centre nobody is looking at. The owner's "send test works but second
+     * time not working" was exactly this - the second test replaced the
+     * first invisibly. renotify makes every arrival announce itself even
+     * when it lands on an existing tag.
+     */
+    renotify: true,
     icon: 'static/images/logo/posnic-logo.svg',
     data: { url: data.url || '/dashboard.html' },
   }));

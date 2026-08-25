@@ -1555,8 +1555,50 @@ PosnicPro = {
             if (!document.getElementById(id)) return null;
             PosnicPro.chart.dispose(id);
             var chart = am4core.create(id, type);
+            PosnicPro.chart._tameForTouch(chart);
             PosnicPro.chart._live[id] = chart;
             return chart;
+        },
+
+        /*
+         * On a phone, a chart stops listening to the viewport.
+         *
+         * Scrolling on iOS collapses and expands Safari's URL bar, and every
+         * collapse is a REAL window resize. amCharts answers each one with a
+         * full relayout of the chart's SVG - so a thumb-scroll past the
+         * dashboard ran layout after layout until iOS killed the tab. The
+         * chart's own div never changes size in those resizes (its height is
+         * CSS-fixed and the WIDTH is untouched by the URL bar), so the work
+         * was all waste.
+         *
+         * autoResize goes off at creation on coarse-pointer devices, and one
+         * shared listener re-measures every live chart only when the viewport
+         * WIDTH actually changes - a rotation, a split-view drag - debounced,
+         * after the dust settles. Guarded as an optimisation: a chart that
+         * cannot be tamed still renders.
+         */
+        _tameForTouch: function (chart) {
+            try {
+                if (!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches)) { return; }
+                chart.svgContainer.autoResize = false;
+                if (PosnicPro.chart._touchResizeArmed) { return; }
+                PosnicPro.chart._touchResizeArmed = true;
+                var lastWidth = window.innerWidth;
+                var settle = null;
+                window.addEventListener('resize', function () {
+                    if (window.innerWidth === lastWidth) { return; }
+                    lastWidth = window.innerWidth;
+                    clearTimeout(settle);
+                    settle = setTimeout(function () {
+                        var live = PosnicPro.chart._live;
+                        for (var id in live) {
+                            try {
+                                if (!live[id].isDisposed()) { live[id].svgContainer.measure(); }
+                            } catch (e) { /* one chart's trouble must not stop the rest */ }
+                        }
+                    }, 250);
+                });
+            } catch (e) { /* rendering matters more than taming */ }
         },
 
         /*
