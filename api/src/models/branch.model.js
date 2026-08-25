@@ -11,6 +11,7 @@ const { Schema, Types } = require('mongoose');
  * Not Found": a missing-data error for what was really a wrong-database one.
  */
 const { defineModel } = require('../db/model-registry');
+const { featureToggleRepairs } = require('../services/settings-groups');
 const BaseModel = require('./base.model');
 const User = require('./user.model');
 const CustomerModel = require('./customer.model');
@@ -617,6 +618,24 @@ class BranchModel {
           data: null,
           message: 'Branch not found',
         };
+      }
+
+      /*
+       * Self-healing read: a features key stored as the STRING 'true'/'false'
+       * (the group endpoint stored the welcome's checkbox map verbatim) reads
+       * as enabled through every `!== false` gate in the app. This endpoint
+       * is the whole legacy frontend's settings read, so the poisoned shops
+       * heal on their next open - answered fixed, and written back fixed. The
+       * write is best-effort: failing to repair must not fail the read.
+       */
+      const stringToggleFixes = featureToggleRepairs(branch);
+      if (Object.keys(stringToggleFixes).length) {
+        Object.assign(branch, stringToggleFixes);
+        try {
+          await this.model.updateOne({ _id: branch._id }, { $set: stringToggleFixes });
+        } catch (repairErr) {
+          console.error('branch toggle repair skipped:', repairErr.message);
+        }
       }
 
       // Simplify ObjectIds and Dates

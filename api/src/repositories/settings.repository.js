@@ -23,7 +23,11 @@
 
 const BaseModel = require('../models/base.model');
 const { ObjectId } = require('mongodb');
-const { GROUPS } = require('../services/settings-groups');
+const {
+  GROUPS,
+  coerceFeatureToggle,
+  featureToggleRepairs,
+} = require('../services/settings-groups');
 
 /* group -> collection. Named per group so an ACL can be put on secrets
    alone without teaching it about individual keys. */
@@ -104,6 +108,14 @@ class SettingsRepository extends BaseModel {
           values[key] = legacy[key];
           source[key] = 'legacy';
         }
+      }
+
+      /* Rows written before the save path coerced still hold string
+         booleans; the resolver answers with the boolean they meant, so a
+         poisoned row cannot show a switched-off shop as all-on. */
+      if (group === 'features') {
+        for (const k of Object.keys(values)) values[k] = coerceFeatureToggle(values[k]);
+        for (const k of Object.keys(inherited)) inherited[k] = coerceFeatureToggle(inherited[k]);
       }
 
       return { status: true, data: { group, values, source, inherited }, message: 'success' };
@@ -259,7 +271,11 @@ class SettingsRepository extends BaseModel {
     const rejected = [];
     for (const [key, value] of Object.entries(values || {})) {
       if (owned.has(key)) {
-        accepted[key] = value;
+        /* The welcome (and any checkbox map) sends 'true'/'false' strings.
+           Stored verbatim they read as ENABLED through every `!== false`
+           gate - the all-toggles-on incident. The boolean is stored, so no
+           reader ever meets the string. null still means inherit. */
+        accepted[key] = group === 'features' ? coerceFeatureToggle(value) : value;
       } else {
         rejected.push(key);
       }

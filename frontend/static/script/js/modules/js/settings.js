@@ -5707,14 +5707,20 @@ PosnicPro.features = {
            with "SAL" and "REC". The features endpoint knows only its own
            keys, so it cannot ask for them and would refuse them by name. */
         var payload = {};
+        /* BOOLEANS, never the strings 'true'/'false'. The group endpoint
+           once stored this payload verbatim, and every `!== false` reader
+           then took the string "false" for ENABLED - saving all-off lit
+           every feature up. The server coerces now, but the honest payload
+           means even a not-yet-updated server stores values that read
+           correctly. */
         $('.feature-intro-toggle').each(function () {
-            payload[$(this).data('key')] = $(this).is(':checked') ? 'true' : 'false';
+            payload[$(this).data('key')] = $(this).is(':checked');
         });
         /* Recorded in the same write as the choice it belongs to. A separate
            call could succeed while the toggles failed, and the shop would then
            never be offered the switches it did not manage to save. */
-        payload.first_run_done = 'true';
-        payload.first_run_decided = 'true';
+        payload.first_run_done = true;
+        payload.first_run_decided = true;
         $('#feature_intro_save').prop('disabled', true);
         PosnicPro.put({
             url: 'settings/group/features',
@@ -5770,7 +5776,7 @@ $(document).on('click', '#feature_intro_skip', function () {
     PosnicPro.features._decided = true;
     PosnicPro.put({
         url: 'settings/group/features',
-        data: JSON.stringify({ first_run_done: 'true', first_run_decided: 'true' })
+        data: JSON.stringify({ first_run_done: true, first_run_decided: true })
     }, function () {
         var b = PosnicPro.features._blob();
         b.first_run_done = true;

@@ -3448,8 +3448,13 @@ PosnicPro.itemdetails = {
                     var returnTotalValue = 0;
                     for (var i = 0; i < response.data.table.data.list.length; i++) {
                         var row = response.data.table.data.list[i];
-                        saleTotalValue += row.items_total;
-                        returnTotalValue += row.items_return_total;
+                        // A sale without denormalised totals (demo seeds, old
+                        // imports) must cost that CELL its number, never the
+                        // page - undefined.toFixed() here white-paged items.
+                        var rowSaleTotal = Number(row.items_total) || 0;
+                        var rowReturnTotal = Number(row.items_return_total) || 0;
+                        saleTotalValue += rowSaleTotal;
+                        returnTotalValue += rowReturnTotal;
                         if (row.sale_process == 'Add' || row.sale_process == 'Edit') {
                             process_class = "badge badge-success-inverse";
                         } else if (row.sale_process == 'PartialReturn') {
@@ -3474,7 +3479,7 @@ PosnicPro.itemdetails = {
                         // current time when no preformatted date is present.
                         let rawDate = row.string_date || row.date || row.created_date || row.updated_date;
                         let updateDate = rawDate ? PosnicPro.convertDate(rawDate) : '';
-                        let trow = '<tr> <td scope="row">' + row_no + '</td> <td>' + row.sales_id + '</td> <td class="export-date">' + updateDate + '</td> <td class="text-center"><span class="' + process_class + '">' + row.sale_process + '</span></td> <td class="text-center text-danger">' + returnQty + '</td> <td class="text-right text-danger">' + currency + '&nbsp;' + row.items_return_total.toFixed(2) + '</td><td class="text-center text-success">' + salesQty + '</td><td class="text-right text-success">' + currency + '&nbsp;' + row.items_total.toFixed(2) + '</td></tr>';
+                        let trow = '<tr> <td scope="row">' + row_no + '</td> <td>' + row.sales_id + '</td> <td class="export-date">' + updateDate + '</td> <td class="text-center"><span class="' + process_class + '">' + row.sale_process + '</span></td> <td class="text-center text-danger">' + returnQty + '</td> <td class="text-right text-danger">' + currency + '&nbsp;' + rowReturnTotal.toFixed(2) + '</td><td class="text-center text-success">' + salesQty + '</td><td class="text-right text-success">' + currency + '&nbsp;' + rowSaleTotal.toFixed(2) + '</td></tr>';
                         $('#view_itemdetails').children('tbody').append(trow);
                         $('span.number').number(true, 2);
                     }

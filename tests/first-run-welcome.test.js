@@ -164,7 +164,7 @@ test('only a DECISION ends the welcome - a casual dismissal brings it back', () 
     const skip = block(settingsCode, "'#feature_intro_skip', function", "'#fi_module_demo_data_enable'");
     assert.match(skip, /_decided = true/);
     assert.match(skip, /settings\/group\/features/);
-    assert.match(skip, /first_run_decided: 'true'/);
+    assert.match(skip, /first_run_decided: true/);
     // And a failed write un-decides, so the shop is asked again - correct
     // for a shop that was never recorded as asked.
     assert.match(skip, /_decided = false/);
@@ -184,8 +184,8 @@ test('saving writes the flag in the same request as the switches', () => {
      * A separate call could succeed while the toggles failed, and the shop
      * would then never again be offered switches it did not manage to save.
      */
-    assert.match(save, /payload\.first_run_done = 'true';/);
-    assert.match(save, /payload\.first_run_decided = 'true';/);
+    assert.match(save, /payload\.first_run_done = true;/);
+    assert.match(save, /payload\.first_run_decided = true;/);
     assert.match(save, /url: 'settings\/group\/features'/);
 });
 
