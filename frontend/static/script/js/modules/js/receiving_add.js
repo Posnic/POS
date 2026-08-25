@@ -1046,7 +1046,17 @@ PosnicPro.receivings = {
                     // The PO link is single-use: the next receiving on this
                     // screen is its own document unless Receive is pressed
                     // again.
+                    var cameFromPo = PosnicPro.receivings._sourcePoId;
                     PosnicPro.receivings._sourcePoId = null;
+                    /* Round trip, not a dead end: receiving that STARTED on
+                       a purchase order returns to that order with its fresh
+                       received quantities - "receive items going old design"
+                       at least comes straight back to the new one. */
+                    if (cameFromPo) {
+                        setTimeout(function () {
+                            hasher.setHash('purchaseorders/' + cameFromPo);
+                        }, 600);
+                    }
                     PosnicPro.receivings.clearReceivingForm();
                     PosnicPro.commonDate();
                     if (response.data.print === true) {
@@ -1907,7 +1917,7 @@ PosnicPro.purchaseorders = {
                     PosnicPro.purchaseorders._lines[String(line.item_id)] = {
                         name: line.item_name, barcode: line.barcode_id || '',
                         stock: '', incoming: '',
-                        qty: line.qty_ordered, cost: line.unit_cost
+                        qty: line.qty_ordered, cost: Math.round((Number(line.unit_cost) || 0) * 100) / 100
                     };
                 });
                 (po.additional_costs || []).forEach(function (c) {
@@ -1924,7 +1934,10 @@ PosnicPro.purchaseorders = {
                 name: row.item_name, barcode: row.barcode_id || '',
                 stock: (row.available_quantity === undefined ? '' : row.available_quantity),
                 incoming: (row.incoming === undefined ? '' : row.incoming),
-                qty: 1, cost: Number(row.company_price) || 0
+                /* Money, so two decimals: a company_price born of price*0.7
+                   arrives as 27.999999999999996 and the cost input printed
+                   every digit (owner: "purchase cost with so many decimal"). */
+                qty: 1, cost: Math.round((Number(row.company_price) || 0) * 100) / 100
             };
         }
         PosnicPro.purchaseorders.renderLines();
@@ -2017,6 +2030,7 @@ PosnicPro.purchaseorders = {
             var po = response && response.data;
             if (!po) { return; }
             PosnicPro.purchaseorders._detail = po;
+            PosnicPro.purchaseorders.renderAttachments(po.attachments || []);
             var currency = PosnicPro.local.get('currencySign');
             $('#po_view_id').text(po.po_id);
             $('#po_view_status').text(po.status);
@@ -2153,7 +2167,7 @@ PosnicPro.purchaseorders = {
                 if (!row) { return; } // item vanished; the receiving screen can add it manually
                 prefill.push(Object.assign({}, row, {
                     item_quantity: outstanding,
-                    company_price: Number(line.unit_cost) || row.company_price
+                    company_price: Math.round(((Number(line.unit_cost) || Number(row.company_price) || 0)) * 100) / 100
                 }));
             });
             if (!prefill.length) { PosnicPro.alert('info', 'Nothing outstanding on this order'); return; }
@@ -2241,4 +2255,59 @@ $(document).ready(function () {
 $(document).on('click', '#receivings_filter_btn', function () {
     PosnicPro.receivings.mountFilters();
     PosnicPro.listFilter.toggle('receivings');
+});
+
+/*
+ * The paperwork that belongs to a purchase (owner: "we cant upload any
+ * file. supplier po or some other stuff"). The endpoint accepts a receiving
+ * OR a purchase order id, so the one purchases door attaches to either.
+ */
+PosnicPro.purchaseorders.renderAttachments = function (list) {
+    var esc = function (v) { return $('<i>').text(v == null ? '' : v).html(); };
+    if (!list.length) {
+        $('#po_view_attachments').html('<li class="text-muted" style="font-size:12.5px;">Nothing attached yet.</li>');
+        return;
+    }
+    $('#po_view_attachments').html(list.map(function (a) {
+        var kb = a.size ? ' <span class="text-muted">(' + Math.max(1, Math.round(a.size / 1024)) + ' KB)</span>' : '';
+        return '<li class="mb-1" style="font-size:13px;">'
+            + '<a href="' + esc(a.url) + '" target="_blank" rel="noopener"><i class="feather icon-file mr-1"></i>' + esc(a.name) + '</a>' + kb
+            + ' <a href="javascript:void(0)" class="text-danger ml-2 po-attach-remove" data-att="' + esc(a.id) + '" title="Remove">&times;</a>'
+            + '</li>';
+    }).join(''));
+};
+$(document).on('change', '#po_attach_file', function () {
+    var file = this.files && this.files[0];
+    this.value = '';
+    var po = PosnicPro.purchaseorders._detail;
+    if (!file || !po) { return; }
+    if (file.size > 10 * 1024 * 1024) { PosnicPro.alert('error', 'That file is over 10MB.'); return; }
+    var fd = new FormData();
+    fd.append('file', file);
+    $.ajax({
+        url: 'api/receivings/' + po._id + '/attachments',
+        method: 'POST',
+        data: fd,
+        processData: false,
+        contentType: false,
+        headers: { Authorization: 'Bearer ' + PosnicPro.local.get('posnic_jwt_token') },
+        success: function (r) {
+            po.attachments = (po.attachments || []).concat([(r && r.data) || {}]);
+            PosnicPro.purchaseorders.renderAttachments(po.attachments);
+            PosnicPro.alert('success', 'Attached.');
+        },
+        error: function (xhr) {
+            var m = {}; try { m = JSON.parse(xhr.responseText); } catch (e) { }
+            PosnicPro.alert('error', m.message || 'Could not attach the file.');
+        }
+    });
+});
+$(document).on('click', '.po-attach-remove', function () {
+    var po = PosnicPro.purchaseorders._detail;
+    var attId = $(this).data('att');
+    if (!po || !attId) { return; }
+    PosnicPro.delete({ url: 'receivings/' + po._id + '/attachments/' + attId, data: JSON.stringify({}) }, function () {
+        po.attachments = (po.attachments || []).filter(function (a) { return a.id !== attId; });
+        PosnicPro.purchaseorders.renderAttachments(po.attachments);
+    }, function () { PosnicPro.alert('error', 'Could not remove it.'); });
 });

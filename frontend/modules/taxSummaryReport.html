@@ -55,6 +55,40 @@
                         </div>
                     </div>
                 </div>
+
+                <!--
+                    The GST position (owner: "we need to know how we already
+                    paid tax while purchase... how much need to pay"). Output
+                    tax on sales, minus the input tax credit already paid to
+                    suppliers, is what the period owes - the GSTR-3B shape.
+                -->
+                <div class="card m-b-30" id="taxsummary_gst_card" style="display:none;">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0"><lang class="lang_gst_position">GST position for this period</lang></h5>
+                        <small class="text-muted"><lang class="lang_gst_position_hint">Tax collected on sales, minus the input tax credit already paid on purchases. The excess of credit over output carries forward.</lang></small>
+                    </div>
+                    <div class="card-body">
+                        <div class="row" id="taxsummary_gst"></div>
+                        <div class="table-responsive mt-3">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th colspan="5"><lang class="lang_gst_itc_title">Input tax credit - purchases by rate</lang></th>
+                                    </tr>
+                                    <tr>
+                                        <th>Rate</th>
+                                        <th class="text-right">Net</th>
+                                        <th class="text-right">Tax paid</th>
+                                        <th class="text-right">Gross</th>
+                                        <th class="text-right">Lines</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="taxsummary_purchase_body"></tbody>
+                                <tfoot id="taxsummary_purchase_foot"></tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

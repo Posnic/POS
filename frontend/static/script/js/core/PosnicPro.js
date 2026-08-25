@@ -5087,6 +5087,9 @@ PosnicPro.taxsummaryreport = {
             PosnicPro.taxsummaryreport._last = d;
             var rows = (d && d.list) || [];
             var cur = PosnicPro.local.get('currencySign') || '';
+            /* The GST position renders even for a range with no sales - a
+               period of pure purchasing still builds credit. */
+            PosnicPro.taxsummaryreport.renderGst(d, cur);
             if (!rows.length) {
                 $('#taxsummary_body').html('<tr><td colspan="6" class="text-center text-muted">No sales in this range.</td></tr>');
                 return;
@@ -5118,6 +5121,57 @@ PosnicPro.taxsummaryreport = {
         }, function () {
             $('#taxsummary_body').html('<tr><td colspan="6" class="text-center text-danger">Could not load the summary.</td></tr>');
         });
+    },
+    /*
+     * The GST position (owner: "we need to know how we already paid tax
+     * while purchase... exactly how much need to pay"). Output minus input
+     * credit, the way GSTR-3B owes it; a credit surplus carries forward
+     * rather than going negative.
+     */
+    renderGst: function (d, cur) {
+        var gst = d && d.gst;
+        var p = (d && d.purchases) || { list: [], totals: {} };
+        if (!gst) { $('#taxsummary_gst_card').hide(); return; }
+        var money = function (v) { return cur + '&nbsp;' + (Number(v) || 0).toFixed(2); };
+        var cell = function (label, value, tone) {
+            return '<div class="col-md-3 col-6 mb-2">'
+                + '<div style="font-size:12px;color:#69758c;">' + label + '</div>'
+                + '<div style="font-size:18px;font-weight:700;' + (tone ? 'color:' + tone + ';' : '') + '">' + money(value) + '</div>'
+                + '</div>';
+        };
+        $('#taxsummary_gst').html(
+            cell('Output tax (sales)', gst.output_tax)
+            + cell('Input tax credit (purchases)', gst.input_tax_credit)
+            + cell('Net payable', gst.net_payable, '#d33a2c')
+            + (Number(gst.credit_carry_forward) > 0
+                ? cell('Credit carried forward', gst.credit_carry_forward, '#1a7f37')
+                : '')
+        );
+        var rows = p.list || [];
+        if (!rows.length) {
+            $('#taxsummary_purchase_body').html('<tr><td colspan="5" class="text-center text-muted">No purchases in this range.</td></tr>');
+            $('#taxsummary_purchase_foot').html('');
+        } else {
+            var html = '';
+            rows.forEach(function (r) {
+                html += '<tr>'
+                    + '<td>' + (r.rate ? r.rate + '%' : '<span class="text-muted">0% / untaxed</span>') + '</td>'
+                    + '<td class="text-right">' + money(r.net) + '</td>'
+                    + '<td class="text-right">' + money(r.tax) + '</td>'
+                    + '<td class="text-right">' + money(r.gross) + '</td>'
+                    + '<td class="text-right">' + (r.lines || 0) + '</td>'
+                    + '</tr>';
+            });
+            $('#taxsummary_purchase_body').html(html);
+            var t = p.totals || {};
+            $('#taxsummary_purchase_foot').html('<tr class="font-weight-bold">'
+                + '<td>Total</td>'
+                + '<td class="text-right">' + money(t.net) + '</td>'
+                + '<td class="text-right">' + money(t.tax) + '</td>'
+                + '<td class="text-right">' + money(t.gross) + '</td>'
+                + '<td></td></tr>');
+        }
+        $('#taxsummary_gst_card').show();
     },
     exportCsv: function () {
         var d = PosnicPro.taxsummaryreport._last;

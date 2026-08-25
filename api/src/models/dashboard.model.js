@@ -576,7 +576,12 @@ class DashboardModel extends BaseModel {
           $gte: new Date(fromTimestamp || 0),
           $lte: new Date(toTimestamp || Date.now()),
         },
-        receiving_status: { $in: ['Received', 'PartialReturn'] },
+        /* Deny-list, not allow-list. Legacy and imported rows carry other
+           spellings ('completed', absent entirely) and an allow-list of two
+           words silently dropped them from every purchase report and
+           dashboard number - the owner's "purchase not showing report".
+           Goods are IN unless the status says they never arrived. */
+        receiving_status: { $nin: ['Open', 'Cancelled', 'FullReturn'] },
       });
 
       const [salesTotal, purchaseTotal] = await Promise.all([
@@ -626,7 +631,12 @@ class DashboardModel extends BaseModel {
       });
       const purchaseMatch = this.getContextMatch({
         ...inRange,
-        receiving_status: { $in: ['Received', 'PartialReturn'] },
+        /* Deny-list, not allow-list. Legacy and imported rows carry other
+           spellings ('completed', absent entirely) and an allow-list of two
+           words silently dropped them from every purchase report and
+           dashboard number - the owner's "purchase not showing report".
+           Goods are IN unless the status says they never arrived. */
+        receiving_status: { $nin: ['Open', 'Cancelled', 'FullReturn'] },
       });
       const expenseMatch = this.getContextMatch({ ...inRange });
 
@@ -954,7 +964,12 @@ class DashboardModel extends BaseModel {
 
       const purchasecondition = this.getContextMatch({
         date: dateRange,
-        receiving_status: { $in: ['Received', 'PartialReturn'] },
+        /* Deny-list, not allow-list. Legacy and imported rows carry other
+           spellings ('completed', absent entirely) and an allow-list of two
+           words silently dropped them from every purchase report and
+           dashboard number - the owner's "purchase not showing report".
+           Goods are IN unless the status says they never arrived. */
+        receiving_status: { $nin: ['Open', 'Cancelled', 'FullReturn'] },
       });
 
       const return_condition = this.getContextMatch({

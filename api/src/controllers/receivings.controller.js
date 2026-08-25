@@ -781,6 +781,74 @@ class ReceivingsController extends BaseController {
    * PHP: receivingReportTable()
    * Get receiving report table
    */
+  /*
+   * Attach a document to a purchase: the supplier's own PO, an invoice
+   * scan, a delivery note. Owner: "we cant upload any file. supplier po or
+   * some other stuff." Files live under /uploads/attachments (multer wrote
+   * them before this runs); the receiving doc carries the metadata, so the
+   * purchase view can list and open them.
+   */
+  async addAttachment(req, res) {
+    try {
+      if (req.user?.access?.receiving?.write === false) {
+        return this.error(res, 'Unauthorized', 403);
+      }
+      if (!req.file) {
+        return this.error(res, 'Attach a PDF or an image file.', 400);
+      }
+      const { ObjectId } = require('mongodb');
+      const id = String(req.params.id || '');
+      if (!ObjectId.isValid(id)) return this.error(res, 'Purchase not found', 404);
+      const meta = {
+        id: String(new ObjectId()),
+        name: String(req.file.originalname || 'attachment').slice(0, 120),
+        url: '/uploads/attachments/' + req.file.filename,
+        size: req.file.size || 0,
+        type: req.file.mimetype || '',
+        uploaded_by: (req.user && (req.user.username || req.user.email)) || '',
+        date: new Date(),
+      };
+      const r = await req.db
+        .collection('receivings')
+        .updateOne({ _id: new ObjectId(id) }, { $push: { attachments: meta } });
+      if (!r.matchedCount) {
+        /* A purchase ORDER id can arrive here too - the one purchases door
+           attaches to either record. */
+        const po = await req.db
+          .collection('purchase_orders')
+          .updateOne({ _id: new ObjectId(id) }, { $push: { attachments: meta } });
+        if (!po.matchedCount) return this.error(res, 'Purchase not found', 404);
+      }
+      return this.success(res, meta, 'Attached');
+    } catch (error) {
+      console.error('Error in addAttachment:', error);
+      return this.error(res, error.message, 500);
+    }
+  }
+
+  async removeAttachment(req, res) {
+    try {
+      if (req.user?.access?.receiving?.write === false) {
+        return this.error(res, 'Unauthorized', 403);
+      }
+      const { ObjectId } = require('mongodb');
+      const id = String(req.params.id || '');
+      const attId = String(req.params.attId || '');
+      if (!ObjectId.isValid(id) || !attId) return this.error(res, 'Not found', 404);
+      const pull = { $pull: { attachments: { id: attId } } };
+      const r = await req.db.collection('receivings').updateOne({ _id: new ObjectId(id) }, pull);
+      if (!r.modifiedCount) {
+        await req.db.collection('purchase_orders').updateOne({ _id: new ObjectId(id) }, pull);
+      }
+      /* The file itself stays on disk deliberately: a removed listing must
+         be recoverable by support, and disk is cheaper than a regret. */
+      return this.success(res, { removed: attId }, 'Attachment removed');
+    } catch (error) {
+      console.error('Error in removeAttachment:', error);
+      return this.error(res, error.message, 500);
+    }
+  }
+
   async receivingReportTable(req, res) {
     try {
       if (!this.checkPermission('report', 'read', req.user)) {
@@ -1443,7 +1511,12 @@ class ReceivingsController extends BaseController {
             branch_id: { $in: branchObjectIds },
             // For supplier receiving summary, only include completed/partially returned
             // documents; exclude "Open" receivings from the report.
-            receiving_status: { $in: ['Received', 'PartialReturn'] },
+            /* Deny-list, not allow-list. Legacy and imported rows carry other
+           spellings ('completed', absent entirely) and an allow-list of two
+           words silently dropped them from every purchase report and
+           dashboard number - the owner's "purchase not showing report".
+           Goods are IN unless the status says they never arrived. */
+        receiving_status: { $nin: ['Open', 'Cancelled', 'FullReturn'] },
           },
           {
             updated_date: { $gte: fromDate, $lte: toDate },

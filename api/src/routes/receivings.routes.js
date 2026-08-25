@@ -86,6 +86,15 @@ router.get('/receivingsPdf', bindController(receivingsController.receivingsPdf))
 // Email the same PDF to the supplier (outward-facing: receiving write).
 router.post('/emailToSupplier', bindController(receivingsController.emailToSupplier));
 
+// Purchase attachments: the supplier's PO, invoice scans, delivery notes.
+const { documentUpload } = require('../middleware/upload');
+router.post(
+  '/:id/attachments',
+  documentUpload.single('file'),
+  bindController(receivingsController.addAttachment)
+);
+router.delete('/:id/attachments/:attId', bindController(receivingsController.removeAttachment));
+
 // PHP: exportReceivings() - Excel export
 router.post('/exportReceivings', bindController(receivingsController.exportReceivings));
 

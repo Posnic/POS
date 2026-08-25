@@ -3212,7 +3212,78 @@ class SalesController extends BaseController {
         }),
         { net: 0, tax: 0, gross: 0 }
       );
-      return this.success(res, { list, totals }, 'Tax summary retrieved successfully');
+
+      /*
+       * THE INPUT SIDE. Owner: "for GST we need to know how we already paid
+       * tax while purchase. so that we know exactly how much need to pay."
+       * That is the standard GST position (GSTR-3B shape): tax COLLECTED on
+       * outward supplies, minus the INPUT TAX CREDIT already paid to
+       * suppliers on inward supplies, is what the period actually owes.
+       * Purchases have carried per-line tax and tax_percentage since the
+       * receiving form gained exclusive tax - it was recorded and never
+       * accounted. Failure here degrades to an absent block, never a dead
+       * sales summary.
+       */
+      let purchases = { list: [], totals: { net: 0, tax: 0, gross: 0 } };
+      try {
+        const num = (expr) => ({
+          $convert: { input: expr, to: 'double', onError: 0, onNull: 0 },
+        });
+        const rMatch = {
+          branch_id: { $in: branchIds },
+          del_status: { $nin: [1, '1', true] },
+        };
+        if (Object.keys(dateFilter).length) rMatch.date = dateFilter;
+        const rrows = await req.db
+          .collection('receivings')
+          .aggregate([
+            { $match: rMatch },
+            { $unwind: '$items' },
+            {
+              $group: {
+                _id: num('$items.tax_percentage'),
+                tax: { $sum: num('$items.tax') },
+                net: {
+                  $sum: {
+                    $multiply: [num('$items.item_price'), num('$items.item_quantity')],
+                  },
+                },
+                lines: { $sum: 1 },
+              },
+            },
+            { $sort: { _id: 1 } },
+          ])
+          .toArray();
+        purchases.list = rrows.map((r) => ({
+          rate: roundToTwo(r._id || 0),
+          net: roundToTwo(r.net || 0),
+          tax: roundToTwo(r.tax || 0),
+          gross: roundToTwo((r.net || 0) + (r.tax || 0)),
+          lines: r.lines || 0,
+        }));
+        purchases.totals = purchases.list.reduce(
+          (acc, r) => ({
+            net: roundToTwo(acc.net + r.net),
+            tax: roundToTwo(acc.tax + r.tax),
+            gross: roundToTwo(acc.gross + r.gross),
+          }),
+          { net: 0, tax: 0, gross: 0 }
+        );
+      } catch (purchErr) {
+        console.error('taxSummary: purchase side skipped:', purchErr.message);
+      }
+
+      /* The position, stated the way it is owed. A period where credit
+         exceeds output does not go negative - the excess carries forward,
+         which is how GST actually works. */
+      const gst = {
+        output_tax: totals.tax,
+        input_tax_credit: purchases.totals.tax,
+        net_payable: roundToTwo(Math.max(0, totals.tax - purchases.totals.tax)),
+        credit_carry_forward: roundToTwo(Math.max(0, purchases.totals.tax - totals.tax)),
+      };
+
+      return this.success(res, { list, totals, purchases, gst }, 'Tax summary retrieved successfully');
     } catch (error) {
       console.error('Error in taxSummaryReportTable:', error);
       return this.error(res, 'Unable to load the tax summary. Please try again later.', 500, {
