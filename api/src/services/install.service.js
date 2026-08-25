@@ -813,21 +813,51 @@ class InstallService {
         return { status: false, data: null, message: 'Branch not found.' };
       }
 
-      const already = await db.collection('items').countDocuments(
-        {
-          demo_pack: { $exists: true },
-          'branch_access.branch_id': branchOid,
-          license: licenseOid,
-          del_status: { $nin: [1, '1', true] },
-        },
-        { limit: 1 }
-      );
-      if (already) {
-        return {
-          status: false,
-          data: null,
-          message: 'The sample data is already here - switch Demo Data on to see it.',
-        };
+      /*
+       * An EXPLICIT trade choice replaces; only the bare toggle-on refuses.
+       *
+       * The chooser's flow is purge-then-seed, but the purge KEEPS samples
+       * the shop has sold or edited - as promised. The old guard then saw
+       * those survivors, said "the sample data is already here", and no shop
+       * that had ever rung up a sample could swap trades or Reset again. The
+       * owner hit exactly this and then read a refusal that told him to
+       * flip a switch that was already on.
+       *
+       * So when a trade was ASKED FOR, the purge runs HERE, server-side -
+       * idempotent, with every protection it always had - and the seed
+       * proceeds regardless of protected survivors, which now simply belong
+       * to the shop. The refusal remains only for the un-asked path (the
+       * Demo Data toggle), whose job is to unhide, never to duplicate.
+       */
+      let keptNote = '';
+      if (asked) {
+        /* item.service exports the CLASS - a lesson this repo has already
+           paid for once. */
+        const ItemService = require('./item.service');
+        const purge = await new ItemService().purgeDemoData({ branchId, licenseId, user });
+        const kept = (purge && purge.data && purge.data.kept) || (purge && purge.kept) || [];
+        if (kept.length) {
+          keptNote =
+            ' Kept ' + kept.length + ' record' + (kept.length === 1 ? '' : 's') +
+            ' you have sold or edited.';
+        }
+      } else {
+        const already = await db.collection('items').countDocuments(
+          {
+            demo_pack: { $exists: true },
+            'branch_access.branch_id': branchOid,
+            license: licenseOid,
+            del_status: { $nin: [1, '1', true] },
+          },
+          { limit: 1 }
+        );
+        if (already) {
+          return {
+            status: false,
+            data: null,
+            message: 'The sample data is already here - switch Demo Data on to see it.',
+          };
+        }
       }
 
       /*
@@ -924,7 +954,9 @@ class InstallService {
           quotes: counts[2],
           purchases: counts[3],
         },
-        message: `Sample data restored: ${counts[0]} products, ${counts[1]} sales, ${counts[2]} quotes, ${counts[3]} purchases.`,
+        message:
+          `Sample data restored: ${counts[0]} products, ${counts[1]} sales, ` +
+          `${counts[2]} quotes, ${counts[3]} purchases.` + keptNote,
       };
     } catch (error) {
       console.error('Error in InstallService.reseedDemoData:', error);

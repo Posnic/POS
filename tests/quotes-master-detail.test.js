@@ -1293,18 +1293,33 @@ test('another trigger cannot smuggle a sub-minimum term into the request', () =>
   assert.ok(!/out\.search = st\.search/.test(params), 'sending the raw typed value is the bug');
 });
 
-test('an exact match is applied whatever its length', () => {
-  /* The reason is CORRECTNESS, not cost. Picking a name from the list sets
-     exact, so a customer called "K" must still filter - otherwise a deliberate
-     act does nothing at all. It is NOT that exact is cheaper: the server builds
-     /^term$/i and MongoDB cannot use a prefix index for a case-insensitive
-     regex, so the scan costs the same. What differs is the answer. */
+test('an exact or PICKED match is applied whatever its length', () => {
+  /* The reason is CORRECTNESS, not cost. Picking a name from the list used to
+     set exact - until the owner ruled the checkbox must never tick itself
+     ("exact tick should not ticked by default") - so the picked flag now
+     carries the same duty: a customer called "K" chosen from the suggestions
+     must still filter, or a deliberate act does nothing at all. */
   const applied = blockAt(listFilterSrc, '_applied: function (st) {');
-  assert.match(applied, /if \(st\.exact\) return t;/, 'a picked short name would be dropped');
+  assert.match(applied, /if \(st\.exact \|\| st\._picked\) return t;/, 'a picked short name would be dropped');
   assert.ok(
-    applied.indexOf('if (st.exact) return t;') < applied.indexOf('MIN_SEARCH'),
-    'the exact bypass must come before the length test, or it never runs',
+    applied.indexOf('if (st.exact || st._picked) return t;') < applied.indexOf('MIN_SEARCH'),
+    'the bypass must come before the length test, or it never runs',
   );
+  /* and the pick path itself no longer touches the checkbox */
+  const pick = blockAt(listFilterSrc, "$(document).on('click', '.lf-pick-row'");
+  assert.ok(!/state\.exact = true/.test(pick), 'picking ticks Exact again');
+  assert.match(pick, /_picked = true/);
+});
+
+test('suggestions appear only for the field they suggest for', () => {
+  /* Owner: "customer typeahead only drop down customer chose and show
+     customer typeahead." Offering customers under All fields read as the
+     search guessing, and picking one silently changed the field. */
+  const ta = blockAt(listFilterSrc, 'LF.typeahead = function (key, term) {');
+  assert.match(ta, /m\.state\.field !== m\.cfg\.typeaheadField/);
+  /* switching the field re-evaluates the box with the term already typed */
+  const fieldChange = blockAt(listFilterSrc, "$(document).on('change', '.lf-field,.lf-exact-cb'");
+  assert.match(fieldChange, /LF\.typeahead\(key/);
 });
 
 test('changing the search field with no term does not reload the list', () => {

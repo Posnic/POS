@@ -23,8 +23,22 @@ PosnicPro.settings = {
         // suffix (v-pills-unit). Clicking (not tab('show')) runs the pill's
         // own loader onclick; an already-active pill is a no-op, so the
         // hash-sync round trip cannot loop.
+        /*
+         * Sections that MOVED keep their old addresses working. The desktop
+         * app and old bookmarks still say #/settings/branches; walking that
+         * into a pill that no longer exists left whatever panes were last
+         * active stacked on screen - the owner's "broken page". A legacy key
+         * routes to the page that owns it now; a key nobody knows lands on
+         * Core Settings rather than on rubble.
+         */
+        var LEGACY_SECTIONS = { branches: 'branches', outlet: 'branches' };
+        if (LEGACY_SECTIONS[key]) {
+            hasher.setHash(LEGACY_SECTIONS[key]);
+            return;
+        }
         var $pill = $('#v-pills-' + key + '-tab');
         if (!$pill.length) { $pill = $('#v-pills-' + key); }
+        if (!$pill.length) { key = 'general'; $pill = $('#v-pills-general-tab'); }
         // NOT :visible - the whole pills rail is display:none now (the
         // Manage sidebar replaced it), which made every pill "invisible"
         // and silently refused every section switch. Module gating sets

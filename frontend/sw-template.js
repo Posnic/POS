@@ -144,6 +144,34 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  /*
+   * Uploaded images (product photos, logos, the demo catalogue's pictures)
+   * change when somebody edits them, so they get the reference treatment:
+   * answered from cache instantly, refreshed from the network behind the
+   * answer. A changed photo is one visit stale, never forever - and the
+   * versioned cache still sweeps the lot on every release.
+   */
+  if (/^\/uploads\//.test(url.pathname)) {
+    event.respondWith(
+      caches.open(CACHE).then((cache) =>
+        cache.match(request).then((hit) => {
+          const refresh = fetch(request).then((response) => {
+            if (response.ok && response.type === 'basic') {
+              cache.put(request, response.clone());
+            }
+            return response;
+          });
+          if (hit) {
+            refresh.catch(() => { /* stale answer already served */ });
+            return hit;
+          }
+          return refresh;
+        })
+      )
+    );
+    return;
+  }
+
   /* Static assets only — never pages, never /api. */
   if (!/^\/(static|style|script|fonts|images)\//.test(url.pathname)) return;
 
