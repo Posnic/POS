@@ -71,3 +71,16 @@ test('a cancelled add panel closes silently - the list it floats over is not re-
      still dispatch, or cancel strands the user on an empty page */
   assert.match(branch, /\$\('#view_' \+ parts\[0\]\)\.data\('total'\) !== undefined/);
 });
+
+test('closing a details panel is silent too - reading a record re-fetches nothing', () => {
+  const core = fs.readFileSync(
+    path.join(__dirname, '..', 'frontend', 'static', 'script', 'js', 'core', 'PosnicPro.js'), 'utf8');
+  const at = core.indexOf("typeof parts[2] === 'undefined'");
+  assert.ok(at > -1, 'the details-silence branch is gone');
+  const branch = core.slice(at, at + 900);
+  /* pure details only: an edit route may be a full page (items), where the
+     dispatch is the only way back to the list */
+  assert.match(branch, /INFOBAR_LIST_ADDS\[parts\[0\]\] \|\| parts\[0\] === 'items'/);
+  assert.match(branch, /data\('total'\) !== undefined/);
+  assert.match(branch, /hasher\.changed\.active = false;/);
+});
