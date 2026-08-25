@@ -104,3 +104,22 @@ test('the money-path lists are card-ready on phones (Mobile P2)', () => {
   const css = fsx.readFileSync(px.join(__dirname, '..', 'frontend', 'static', 'style', 'css', 'custom.css'), 'utf8');
   assert.match(css, /table\.m-cards td\[data-label\]::before/);
 });
+
+test('report tables keep their first column under a scrolling thumb (Mobile P3)', () => {
+  /* Dense numeric reports stay tables on phones - cards would bury the
+     numbers - but they scroll sideways, and without a pinned first column
+     the row names scroll away with them. Every report page opts in. */
+  const fsx = require('fs');
+  const px = require('path');
+  const css = fsx.readFileSync(px.join(__dirname, '..', 'frontend', 'static', 'style', 'css', 'custom.css'), 'utf8');
+  assert.match(css, /table\.m-sticky-first th:first-child/);
+  assert.match(css, /position: sticky/);
+  const dir = px.join(__dirname, '..', 'frontend', 'modules');
+  const reportPages = fsx.readdirSync(dir).filter((f) => /report\.html$/i.test(f));
+  assert.ok(reportPages.length >= 15, 'the report-page scan found almost nothing');
+  for (const f of reportPages) {
+    const s = fsx.readFileSync(px.join(dir, f), 'utf8');
+    if (!s.includes('table-borderless')) continue;
+    assert.ok(s.includes('m-sticky-first'), f + ' lost its sticky first column');
+  }
+});
