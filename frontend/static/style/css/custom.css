@@ -5364,3 +5364,17 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
         flex: none;
     }
 }
+
+/* Report tables on phones (Mobile P3): dense numeric tables keep their
+   shape and scroll sideways inside .table-responsive, but the FIRST
+   column - the row's name - stays pinned so the numbers never lose
+   their labels mid-scroll. Additive: .m-sticky-first only, phones only. */
+@media (max-width: 767.98px) {
+    table.m-sticky-first th:first-child,
+    table.m-sticky-first td:first-child {
+        position: sticky;
+        left: 0;
+        background: var(--theme-card-bg, #fff);
+        z-index: 2;
+    }
+}
