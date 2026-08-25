@@ -3224,7 +3224,7 @@ class SalesController extends BaseController {
        * accounted. Failure here degrades to an absent block, never a dead
        * sales summary.
        */
-      let purchases = { list: [], totals: { net: 0, tax: 0, gross: 0 } };
+      const purchases = { list: [], totals: { net: 0, tax: 0, gross: 0 } };
       try {
         const num = (expr) => ({
           $convert: { input: expr, to: 'double', onError: 0, onNull: 0 },
