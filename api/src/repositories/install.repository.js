@@ -87,6 +87,20 @@ class InstallRepository extends BaseModel {
   }
 
   /**
+   * The units a branch already has, so the demo seed joins the shop's own
+   * master instead of duplicating it.
+   * @param {ObjectId} branchId
+   * @param {ObjectId} licenseId
+   * @returns {Promise<Array>}
+   */
+  async findUnitsByBranch(branchId, licenseId) {
+    const unitCollection = await this.getCollection('unit');
+    return unitCollection
+      .find({ branch_id: branchId, license: licenseId }, { projection: { _id: 1, value: 1 } })
+      .toArray();
+  }
+
+  /**
    * Insert a tax record
    * @param {Object} taxData - Tax data to insert
    * @returns {Promise<ObjectId>}
