@@ -7702,12 +7702,17 @@ PosnicPro.sales.categoryMenu = {
                 $('#sales_new_categoryList').append('<div class="col col-xs-12" id="category-lists">');
 
                 if (categorydata.length > 0) {
+                    /*
+                     * ONE grid, no manual row breaks. sale-tile-grid is a CSS
+                     * grid that wraps by itself; the old every-fourth-tile
+                     * "</div><div class='row'>" split was a Bootstrap relic
+                     * that dropped every tile after the fourth OUT of the
+                     * grid into plain full-size columns - the owner's "why is
+                     * the first row a different size" screenshot, exactly.
+                     * The Items tab render above is the pattern.
+                     */
                     var app = "<div class='row sale-tile-grid'>";
                     for (var i = 0; i < categorydata.length; i++) {
-
-                        if (i > 0 && i % 4 === 0) {
-                            app += "</div><div class='row'>";
-                        }
 
                         var list_category_name = categorydata[i]['category_name'];
                         var image_path = (categorydata[i]['category_img'] !== "category.svg")
@@ -7761,9 +7766,12 @@ PosnicPro.sales.categoryMenu = {
                 $('#sales_new_categoryList').append('<div class="col col-xs-12" id="item-lists">');
 
                 var currency = PosnicPro.local.get('currencySign') || '';
-                var app = '<div class="row mb-3 sale-tile-grid">' +
+                /* The back button on its own row; the items in the SAME
+                   self-wrapping grid the Items tab uses, so a category's
+                   items look like the items they are. */
+                var app = '<div class="row mb-3">' +
                     '<button type="button" class="btn btn-dark-rgba font-18" onclick="PosnicPro.sales.categoryMenu.listCategories();">' +
-                    '<i class="feather icon-arrow-left profile_left_slide slick-arrow mr-2"></i></button></div><div class="row">';
+                    '<i class="feather icon-arrow-left profile_left_slide slick-arrow mr-2"></i></button></div><div class="row sale-tile-grid">';
 
                 var timeZone = PosnicPro.timeZone() || 'Asia/Kolkata';
                 var currentTimestamp = moment().tz(timeZone).valueOf();
@@ -7778,10 +7786,6 @@ PosnicPro.sales.categoryMenu = {
                     var showItem = (qty > 0 || allowNegative) && expiryValid;
 
                     if (showItem) {
-                        if (shown > 0 && shown % 4 === 0) {
-                            app += '</div><div class="row">';
-                        }
-
                         var image_path = (item.image && item.image !== "item.svg")
                             ? item.image
                             : 'static/images/default/item.svg';
@@ -12445,41 +12449,45 @@ PosnicPro.sales.saleDoneTimer = {
 };
 
 /*
- * What counts as the cashier using this card.
+ * What counts as the cashier using this card: A CLICK, and nothing less.
  *
- * THE FIRST VERSION CANCELLED ON HOVER ANYWHERE ON THE PANEL, and so it never
- * closed once - reported as "so far many sales it never closed, maybe mouse
- * moving somehow". Exactly that: the panel opens where the cursor already is,
- * because the button they just pressed is in the same place. mouseenter fired
- * on the frame it appeared, every time, and the countdown was cancelled before
- * it could be seen.
+ * This is the third definition, and each predecessor died the same death.
+ * Hover-anywhere cancelled on the frame the panel appeared (it opens under
+ * the cursor that just pressed Complete). Movement-over-12px then failed on
+ * EVERY SALE AFTER THE FIRST - the owner: "sales auto close stuff also only
+ * first time only" - because on the first sale the hand is still, watching,
+ * and on the next it is already travelling back from the button; the first
+ * post-open twitch crossed the threshold and silently held the card forever.
  *
- * Presence is not intent. Reaching for a BUTTON is, so the buttons hold it.
- * Typing, tabbing and touching are too. Sitting still under a panel that
- * arrived unasked is not.
+ * Presence is not intent. Movement is not intent either. A CLICK is - the
+ * owner's own rule: "if click anywhere then cancel that close otherwise just
+ * close it." Typing and tabbing keep counting too (a keyboard user's click).
+ * The two buttons that ARE actions stay out of it: the primary starts the
+ * new sale itself, and the close X must CLOSE, never hold - see below.
  *
  * Delegated, because the sale page rebuilds this markup.
  */
-$(document).on(
-    'mouseenter',
-    '#newsalespage .sale-done-actions a, #newsalespage .infobar-tender-close',
-    function () { PosnicPro.sales.saleDoneTimer.hold(); }
-);
-$(document).on(
-    'focusin keydown touchstart',
-    '#newsalespage',
-    function () { PosnicPro.sales.saleDoneTimer.hold(); }
-);
+$(document).on('mousedown touchstart', '#newsalespage', function (e) {
+    if ($(e.target).closest('.sale-done-primary, .infobar-tender-close').length) { return; }
+    PosnicPro.sales.saleDoneTimer.hold();
+});
+$(document).on('focusin keydown', '#newsalespage', function (e) {
+    if ($(e.target).closest('.sale-done-primary, .infobar-tender-close').length) { return; }
+    PosnicPro.sales.saleDoneTimer.hold();
+});
 /*
- * A pointer that actually MOVES over the card is somebody looking at it. The
- * first move is ignored: showing the panel under a stationary cursor produces
- * one mousemove on its own in some browsers, which would put us straight back
- * to never closing.
+ * The close X is a DECISION, not a pause. Owner: "dont ignore close button
+ * close. if user click close button then it needs to close and new sale."
+ * The X lives in the sidebar head above the card; its own handler only slid
+ * the sidebar away, leaving the finished sale's state behind it. When the
+ * done card is what the X is closing, closing means the same thing the
+ * countdown means: this sale is over, bring the next one. The primary's own
+ * click is left alone - it IS that path.
  */
-$(document).on('mousemove', '#newsalespage', function (e) {
-    var t = PosnicPro.sales.saleDoneTimer;
-    var last = t._lastPoint;
-    t._lastPoint = { x: e.pageX, y: e.pageY };
-    if (!last) { return; }
-    if (Math.abs(e.pageX - last.x) + Math.abs(e.pageY - last.y) > 12) { t.hold(); }
+$(document).on('click', '.infobar-tender-close', function () {
+    if (!$('#newsalespage').is(':visible')) { return; }
+    if ($(this).hasClass('sale-done-primary')) { return; }
+    PosnicPro.sales.saleDoneTimer.stop();
+    var primary = $('#newsalespage .sale-done-primary').get(0);
+    if (primary) { primary.click(); }
 });

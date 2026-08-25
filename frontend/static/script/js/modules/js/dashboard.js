@@ -529,8 +529,24 @@ PosnicPro.dashboard = {
             am4core.useTheme(am4themes_animated);
             // Themes end
 
+            /*
+             * The 3D chart is for desks; phones get the same chart flat.
+             *
+             * The owner's iPhone kept killing the tab while SCROLLING the
+             * dashboard, and calming the theme and render queue was not
+             * enough. ColumnSeries3D draws several SVG faces per column and
+             * re-lays all of them out on every viewport resize - which iOS
+             * fires continuously as the URL bar collapses under a scrolling
+             * thumb. At phone size the depth effect is invisible anyway;
+             * the flat twin carries the same data with a fraction of the
+             * nodes. (The resize storm itself is stopped at
+             * PosnicPro.chart.create for every chart on touch.)
+             */
+            var coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+
             // Create chart instance
-            PosnicPro.dashboard.sales_purchase_chart = PosnicPro.chart.create("chartdiv", am4charts.XYChart3D);
+            PosnicPro.dashboard.sales_purchase_chart = PosnicPro.chart.create(
+                "chartdiv", coarse ? am4charts.XYChart : am4charts.XYChart3D);
             if (!PosnicPro.dashboard.sales_purchase_chart) return; // the panel is not on the page
             PosnicPro.dashboard.sales_purchase_chart.scrollbarX = new am4core.Scrollbar();
 
@@ -549,8 +565,9 @@ PosnicPro.dashboard = {
             valueAxis.min = 0;
             valueAxis.cursorTooltipEnabled = false;
 
-            // Create series
-            var series = PosnicPro.dashboard.sales_purchase_chart.series.push(new am4charts.ColumnSeries3D());
+            // Create series - the flat twin on touch, see the chart comment
+            var series = PosnicPro.dashboard.sales_purchase_chart.series.push(
+                coarse ? new am4charts.ColumnSeries() : new am4charts.ColumnSeries3D());
             series.sequencedInterpolation = true;
             series.dataFields.valueY = "sales";
             series.dataFields.categoryX = "month";
@@ -580,7 +597,8 @@ PosnicPro.dashboard = {
             paretoValueAxis.numberFormatter = new am4core.NumberFormatter();
             paretoValueAxis.cursorTooltipEnabled = false;
 
-            var paretoSeries = PosnicPro.dashboard.sales_purchase_chart.series.push(new am4charts.ColumnSeries3D())
+            var paretoSeries = PosnicPro.dashboard.sales_purchase_chart.series.push(
+                coarse ? new am4charts.ColumnSeries() : new am4charts.ColumnSeries3D())
             paretoSeries.sequencedInterpolation = true;
             paretoSeries.dataFields.valueY = "purchase";
             paretoSeries.dataFields.categoryX = "month";
