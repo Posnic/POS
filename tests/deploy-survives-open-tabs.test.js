@@ -53,3 +53,17 @@ test('the service worker answers a dead hashed bundle with its current sibling',
   const hits = sw.match(/familyFallback\(url\.pathname\)/g) || [];
   assert.ok(hits.length >= 2, 'the fallback lost one of its two failure paths');
 });
+
+test('phantom images heal themselves instead of burning the beacon budget', () => {
+  /* src='' or src='undefined' resolves to the page URL and "fails" - our
+     own template bug, six of which once consumed the whole per-IP beacon
+     window while a real stylesheet 404 waited behind them. The watchdog
+     swaps them to the placeholder pixel and keeps them out of the journal. */
+  const dash = read('frontend/dashboard.html');
+  const at = dash.indexOf("tagName === 'IMG'");
+  assert.ok(at > -1, 'the phantom-image healer is gone');
+  const block = dash.slice(at, at + 700);
+  assert.match(block, /data:image\/gif;base64/);
+  assert.match(block, /return;/);
+  assert.match(block, /\(undefined\|null\)/);
+});

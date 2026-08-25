@@ -124,6 +124,21 @@
                 window.addEventListener('error', function (ev) {
                     var t = ev.target;
                     if (t && t !== window && (t.src || t.href)) {
+                        /* A dynamic img whose src ended up '' or 'undefined'
+                           resolves to the PAGE URL and "fails". That is our
+                           own template bug, not an outage: heal it to the
+                           placeholder pixel and keep it out of the journal -
+                           this noise once burned the whole beacon budget
+                           while a real stylesheet 404 waited behind it. */
+                        var u = String(t.src || t.href);
+                        if (t.tagName === 'IMG' && (
+                                u === '' || u === location.href ||
+                                u === location.origin + '/' ||
+                                /\/(undefined|null)$/.test(u) ||
+                                /\/dashboard\.html$/.test(u))) {
+                            t.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+                            return;
+                        }
                         var what = (t.tagName || 'resource').toLowerCase() + ' failed to load: ' + (t.src || t.href);
                         if (!firstError) { firstError = what; }
                         note('resource', what, location.href, '');
