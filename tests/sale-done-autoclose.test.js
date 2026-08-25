@@ -111,51 +111,40 @@ test('closing reuses the button rather than duplicating what it does', () => {
   assert.match(fn, /sale-done-primary/, 'the timeout does not use the New sale control');
 });
 
-test('the ring length is measured, not assumed', () => {
-  /* The card grows and shrinks with the buttons a shop has switched on, so a
-     hard-coded perimeter makes the ring finish early or late - and a
-     countdown that disagrees with the clock is worse than none. */
+test('the countdown is ONE line along the top, paced by the timer', () => {
+  /* Owner: "whole box animation going. instead top side itself enough
+     instead of all 4 sides." The ring around the card is gone; a single
+     top-edge bar shrinks over the same seconds the timer counts. CSS runs
+     it (is-closing starts the keyframe, the variable paces it), so
+     cancelling is removing one class - nothing to unwind. */
   const fn = blockAt(salesJs, 'start: function');
-  assert.match(fn, /getTotalLength\(\)/);
+  assert.match(fn, /--sale-done-secs/, 'the bar is not paced by the timer');
+  assert.ok(!/getTotalLength/.test(fn), 'the perimeter ring is back');
+  assert.match(css, /\.sale-done-card::before/);
+  assert.match(css, /sale-done-countdown var\(--sale-done-secs/);
+  assert.match(css, /@keyframes sale-done-countdown/);
 });
 
 test('reduced motion means the card does not close itself at all', () => {
-  /*
-   * The ring is the only warning this card gives. Hiding it but keeping the
-   * close would make the panel vanish with no notice - the exact surprise the
-   * ring exists to prevent.
-   */
+  /* The bar is the only warning this card gives. Hiding it but keeping the
+     close would make the panel vanish with no notice - the exact surprise
+     the bar exists to prevent. */
   const fn = blockAt(salesJs, 'start: function');
   assert.match(fn, /prefers-reduced-motion/, 'reduced motion is not considered');
   const at = fn.indexOf('prefers-reduced-motion');
-  const after = fn.slice(at, at + 200);
-  assert.match(after, /return/, 'reduced motion does not actually stop the auto-close');
-  /* Read from the raw stylesheet: ".sale-done-ring" is a prefix of four other
-     selectors, and this file has more than one reduced-motion block, so both
-     the selector and its surroundings have to be matched exactly. */
+  assert.match(fn.slice(at, at + 200), /return/, 'reduced motion does not stop the auto-close');
   assert.match(
     css,
-    /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\.sale-done-ring \{ display: none; \}/,
-    'the ring is not hidden for reduced motion',
+    /@media \(prefers-reduced-motion: reduce\) \{\s*\.sale-done-card\.is-closing::before \{ animation: none/,
+    'the bar still animates for reduced motion',
   );
 });
 
-test('the ring cannot swallow a click meant for a button', () => {
-  /* It covers the whole card. Without this it is an invisible sheet over
-     New sale and Print. */
-  /* With the brace, or this also matches .sale-done-ring-line and friends;
-     and from the section marker, because the reduced-motion block declares
-     the same selector further down. */
-  assert.match(
-    cssRule('.sale-done-ring {', '.sale-done-card { position: relative; }'),
-    /pointer-events:\s*none/,
-  );
-});
-
-test('the ring is only visible while the countdown is running', () => {
-  /* A full ring on a cancelled timer promises a close that is not coming. */
-  assert.match(cssRule('.sale-done-card.is-closing .sale-done-ring-line'), /opacity/);
-  assert.match(cssRule('.sale-done-ring-line'), /opacity:\s*0/);
+test('the bar cannot swallow a click and only runs while counting', () => {
+  const bar = cssRule('.sale-done-card::before');
+  assert.match(bar, /pointer-events:\s*none/);
+  /* the animation is bound to is-closing, so a cancelled timer shows no bar */
+  assert.match(css, /\.sale-done-card\.is-closing::before \{\s*animation: sale-done-countdown/);
 });
 
 test('a held card says so, rather than leaving the cashier guessing', () => {
@@ -164,16 +153,13 @@ test('a held card says so, rather than leaving the cashier guessing', () => {
   assert.match(cssRule('.sale-done-hint'), /display:\s*none/);
 });
 
-test('the ring is hidden from assistive technology', () => {
-  /* It carries no information a screen reader could use, and the behaviour it
-     describes is announced by the page changing. */
-  const at = html.indexOf('sale-done-ring');
-  const tag = html.slice(html.lastIndexOf('<svg', at), at + 200);
-  assert.match(tag, /aria-hidden="true"/);
-});
-
-test('the panel still works with the ring missing', () => {
-  /* Decoration for a behaviour must not become a dependency of it. */
-  const fn = blockAt(salesJs, 'start: function');
-  assert.match(fn, /el && el\.getTotalLength/, 'a missing ring would throw');
+test('one announcement per sale - the card, never a toast on top of it', () => {
+  /* "after sales complete i see two notification... sometime it might block
+     some action like close from mobile." The toast sat exactly over the
+     card's close button on a phone. Errors still toast - the card never
+     shows for those. */
+  const at = salesJs.indexOf("balance_view') === 'true')) {");
+  assert.ok(at > -1, 'the toast is unconditional again');
+  const around = salesJs.slice(at - 400, at + 120);
+  assert.match(around, /response\.type === 'success'/);
 });
