@@ -1152,9 +1152,13 @@ $("#logout").on("click", function () {
  * a per-browser choice, never a stored "done" that can lie.
  */
 PosnicPro.dashboard.SETUP_CARDS = {
-    outlet: { label: 'Set up your outlet info', hint: 'Address and phone print on receipts', hash: '#/settings/branches' },
+    /* {branch} resolves to THIS till's branch at render - the outlet card
+       lands on the outlet's own edit page, not on a settings section that
+       no longer exists ("#/settings/branches" was the broken page the owner
+       walked into from the desktop). */
+    outlet: { label: 'Set up your outlet info', hint: 'Address and phone print on receipts', hash: '#/branches/{branch}/edit' },
     items: { label: 'Add your first items', hint: 'Or import them from a file', hash: '#/items/new' },
-    receipt: { label: 'Add your logo', hint: 'It shows on receipts and the dashboard', hash: '#/settings/branches' },
+    receipt: { label: 'Add your logo', hint: 'It shows on receipts and the dashboard', hash: '#/branches/{branch}/edit' },
     employees: { label: 'Add your employees', hint: 'Each gets their own login and role', hash: '#/users' },
     taxes: { label: 'Set up taxes', hint: 'Rates apply to every sale automatically', hash: '#/settings/taxmodule' }
 };
@@ -1164,10 +1168,14 @@ PosnicPro.dashboard.loadSetupChecklist = function () {
         var checks = (response && response.data && response.data.checks) || [];
         var undone = checks.filter(function (c) { return !c.done; });
         if (!undone.length) { $('#setup_checklist_strip').hide(); return; }
+        var branchId = PosnicPro.local.get('branch_id_set') || '';
         var html = undone.map(function (c) {
             var card = PosnicPro.dashboard.SETUP_CARDS[c.key];
             if (!card) { return ''; }
-            return '<a href="' + card.hash + '" class="border rounded p-2 d-block" style="min-width:180px;text-decoration:none;">' +
+            var hash = branchId
+                ? card.hash.replace('{branch}', branchId)
+                : card.hash.replace('/{branch}/edit', '');
+            return '<a href="' + hash + '" class="border rounded p-2 d-block" style="min-width:180px;text-decoration:none;">' +
                 '<div style="font-weight:600;font-size:.85rem;"><i class="feather icon-circle mr-1"></i>' + card.label + '</div>' +
                 '<small class="text-muted">' + card.hint + '</small>' +
                 '</a>';

@@ -132,7 +132,7 @@ PosnicPro.listFilter = {
          * the scan costs what a fragment scan costs. The saving is in the
          * answer: one row rather than every row containing the letter.
          */
-        if (st.exact) return t;
+        if (st.exact || st._picked) return t;
         var min = PosnicPro.listFilter.MIN_SEARCH || 2;
         return t.length >= min ? t : '';
     },
@@ -458,6 +458,8 @@ PosnicPro.listFilter = {
         if (!key) return;
         var term = $.trim(this.value);
         LF._mounted[key].state.search = term;
+        /* typing again is no longer the picked value */
+        LF._mounted[key].state._picked = false;
 
         // cached, so it can keep up with every keystroke
         LF.typeahead(key, this.value);
@@ -477,6 +479,10 @@ PosnicPro.listFilter = {
         var st = LF._mounted[key].state;
         st.field = $(this).closest('[data-lf]').find('.lf-field').val();
         st.exact = $(this).closest('[data-lf]').find('.lf-exact-cb').is(':checked');
+        /* Choosing Customer is what SHOWS the customer suggestions now (and
+           choosing anything else hides them) - re-evaluate with the term
+           already typed. */
+        LF.typeahead(key, $(this).closest('[data-lf]').find('.lf-q').val());
 
         /*
          * Both of these MODIFY a search rather than being one. With no term in
@@ -692,6 +698,17 @@ PosnicPro.listFilter = {
         var entity = m.cfg.typeahead;
         var e = entity && LF.ENTITIES[entity];
         if (!e) { $box.hide().empty(); return; }
+        /*
+         * Owner: "customer typeahead only drop down customer chose and show
+         * customer typeahead." Suggestions belong to the field they suggest
+         * FOR - offering customers while the dropdown says All fields or
+         * Quote # reads as the search guessing, and picking one silently
+         * changed the field under the user. Choose Customer, get customers.
+         */
+        if (m.cfg.typeaheadField && m.state.field !== m.cfg.typeaheadField) {
+            $box.hide().empty();
+            return;
+        }
 
         var rows = LF.suggest(entity, term);
 
@@ -743,8 +760,15 @@ PosnicPro.listFilter = {
         ).show();
     };
 
-    /* Picking narrows the field and switches to exact - choosing from a list
-       means you have stopped wanting fuzzy. */
+    /*
+     * Picking fills the term - and TOUCHES NOTHING ELSE.
+     *
+     * The first version also ticked Exact, which read as the checkbox
+     * deciding things by itself (owner: "exact tick should not ticked by
+     * default"). The one job Exact was doing there - letting a one-letter
+     * customer name through the two-character minimum - moves to a picked
+     * flag that the next keystroke clears.
+     */
     $(document).on('click', '.lf-pick-row', function () {
         var $panel = $(this).closest('[data-lf]');
         var key = $panel.attr('data-lf');
@@ -752,13 +776,8 @@ PosnicPro.listFilter = {
         if (!m) return;
         var name = String($(this).data('name'));
         m.state.search = name;
-        m.state.exact = true;
-        if (m.cfg.typeaheadField) {
-            m.state.field = m.cfg.typeaheadField;
-            $panel.find('.lf-field').val(m.cfg.typeaheadField);
-        }
+        m.state._picked = true;
         $panel.find('.lf-q').val(name);
-        $panel.find('.lf-exact-cb').prop('checked', true);
         $panel.find('.lf-typeahead').hide().empty();
         LF._changed(key);
     });

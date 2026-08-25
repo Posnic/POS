@@ -5243,3 +5243,31 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 #posnic_tour .tour-dot.is-here {
     background: var(--theme-primary-color, #506fe4);
 }
+
+/*
+ * Quotes on a phone (owner: "quote design need mobile view properly").
+ * The 330px rail beside an A4 preview never fit a phone; the split STACKS:
+ * the list on top in its own scroll, the opened quote full-width below.
+ * Nothing changes for the desk - this is the narrow screen's own layout.
+ */
+@media (max-width: 767.98px) {
+    .master-detail { display: block; }
+    .master-detail > .md-rail {
+        flex: none;
+        max-width: none;
+        max-height: 42vh;
+        margin-bottom: 12px;
+    }
+    .master-detail > .md-detail { max-height: none; }
+    .master-detail .md-detail-body { overflow-x: auto; }
+    .master-detail .md-detail-body > * { max-width: 100%; }
+}
+
+/*
+ * The Demo Data pane: the chooser's buttons are buttons, not banners.
+ * module-subs lays its children in a flex row, and flex stretches every
+ * child to the tallest sibling - beside the two-line select column the
+ * buttons became 110px slabs (owner: "very big buttons").
+ */
+#v-pills-demodata .module-subs { align-items: flex-end; }
+#v-pills-demodata .module-subs .btn { align-self: flex-end; margin-bottom: 8px; }
