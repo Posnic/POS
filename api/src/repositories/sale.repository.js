@@ -2942,6 +2942,23 @@ class SalesRepository {
     }
   }
 
+  /*
+   * The item/category details tables send these rows to the client RAW, and
+   * the client renders row.items_total.toFixed(2) per row - so one sale
+   * document without the denormalised totals (demo-seeded sales carry
+   * sales_total only; imports and old PHP data vary too) white-paged the
+   * whole details view. The totals are answered here with the same fallbacks
+   * the sales list formatter uses, so every row is renderable.
+   */
+  _renderableSaleRows(rawList) {
+    const round2 = (v) => Math.round((Number(v) || 0) * 100) / 100;
+    return (rawList || []).map((doc) => ({
+      ...doc,
+      items_total: round2(doc.items_total ?? doc.sales_total ?? doc.total ?? 0),
+      items_return_total: round2(doc.items_return_total ?? 0),
+    }));
+  }
+
   async itemSaleDetailsPage(value, options = {}, { SaleModel } = {}) {
     try {
       const Model = this.getModel(SaleModel);
@@ -3036,7 +3053,9 @@ class SalesRepository {
       const sort = options.sort || { _id: 1 };
 
       // Fetch paginated list for table (similar to PHP parent::page result)
-      const list = await Model.find(tableFilters).sort(sort).skip(skip).limit(limit).lean();
+      const list = this._renderableSaleRows(
+        await Model.find(tableFilters).sort(sort).skip(skip).limit(limit).lean()
+      );
 
       const totalCount = await Model.countDocuments(tableFilters);
 
@@ -3189,7 +3208,9 @@ class SalesRepository {
       const sort = options.sort || { _id: 1 };
 
       // Fetch paginated list for table (similar to PHP parent::page result)
-      const list = await Model.find(tableFilters).sort(sort).skip(skip).limit(limit).lean();
+      const list = this._renderableSaleRows(
+        await Model.find(tableFilters).sort(sort).skip(skip).limit(limit).lean()
+      );
 
       const totalCount = await Model.countDocuments(tableFilters);
 
@@ -3321,7 +3342,9 @@ class SalesRepository {
       const skip = Math.max(0, (page - 1) * limit);
       const sort = options.sort || { _id: 1 };
 
-      const list = await Model.find(filters).sort(sort).skip(skip).limit(limit).lean();
+      const list = this._renderableSaleRows(
+        await Model.find(filters).sort(sort).skip(skip).limit(limit).lean()
+      );
 
       const totalCount = await Model.countDocuments(filters);
 
@@ -4265,7 +4288,9 @@ class SalesRepository {
       const sort = options.sort || { _id: 1 };
 
       // Fetch paginated list of sales for this customer
-      const list = await Model.find(matchFilter).sort(sort).skip(skip).limit(limit).lean();
+      const list = this._renderableSaleRows(
+        await Model.find(matchFilter).sort(sort).skip(skip).limit(limit).lean()
+      );
 
       const totalCount = await Model.countDocuments(matchFilter);
 
@@ -4366,7 +4391,9 @@ class SalesRepository {
       const sort = options.sort || { _id: 1 };
 
       // Fetch paginated list of sales for this customer category
-      const list = await Model.find(matchFilter).sort(sort).skip(skip).limit(limit).lean();
+      const list = this._renderableSaleRows(
+        await Model.find(matchFilter).sort(sort).skip(skip).limit(limit).lean()
+      );
 
       const totalCount = await Model.countDocuments(matchFilter);
 

@@ -892,3 +892,40 @@ describe('SalesRepository', () => {
     });
   });
 });
+
+/*
+ * The item/category/customer details tables render row.items_total.toFixed(2)
+ * on RAW sale documents. A demo-seeded sale (sales_total only) or an old
+ * import without the denormalised totals white-paged the whole details view:
+ * "Cannot read properties of undefined (reading 'toFixed')". Every row that
+ * leaves these endpoints must be renderable.
+ */
+describe('_renderableSaleRows', () => {
+  test('missing totals are answered from sales_total, returns from zero', () => {
+    const rows = salesRepository._renderableSaleRows([
+      { sales_id: 'S-DEMO-000001', sales_total: 149.999 },
+      { sales_id: 'S-000002', items_total: 10, items_return_total: 2.5 },
+      { sales_id: 'S-000003', total: 7 },
+    ]);
+    expect(rows[0].items_total).toBe(150);
+    expect(rows[0].items_return_total).toBe(0);
+    // rows that already carry totals keep them
+    expect(rows[1].items_total).toBe(10);
+    expect(rows[1].items_return_total).toBe(2.5);
+    expect(rows[2].items_total).toBe(7);
+    // and every row can be rendered the way the client renders it
+    for (const r of rows) {
+      expect(() => r.items_total.toFixed(2)).not.toThrow();
+      expect(() => r.items_return_total.toFixed(2)).not.toThrow();
+    }
+  });
+
+  test('junk shapes cost the number, never the page', () => {
+    const rows = salesRepository._renderableSaleRows([
+      { items_total: 'not-a-number', items_return_total: null },
+    ]);
+    expect(rows[0].items_total).toBe(0);
+    expect(rows[0].items_return_total).toBe(0);
+    expect(salesRepository._renderableSaleRows(null)).toEqual([]);
+  });
+});

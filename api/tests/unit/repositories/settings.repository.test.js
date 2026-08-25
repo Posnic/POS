@@ -196,6 +196,58 @@ describe('settings read path', () => {
     // and both lookups are walled to the licence
     expect(filters.every((f) => f.license)).toBe(true);
   });
+
+  /*
+   * 'false' is not false. The first-run welcome sends its toggles as
+   * 'true'/'false' STRINGS; stored verbatim, every `!== false` gate in the
+   * app read "false" as enabled - the owner saved all-off and watched every
+   * feature light up. The boolean is stored and resolved, never the string.
+   */
+  describe('string booleans - the all-toggles-on incident', () => {
+    test('a welcome-style payload is stored as booleans in BOTH stores', async () => {
+      seedWrite();
+      await repo.saveGroup(
+        'features',
+        { module_credit_enable: 'false', quotes_enable: 'true', first_run_decided: 'true' },
+        ctx
+      );
+      const $set = mockCollections.branch_features.updateOne.mock.calls[0][1].$set;
+      expect($set.module_credit_enable).toBe(false);
+      expect($set.quotes_enable).toBe(true);
+      expect($set.first_run_decided).toBe(true);
+      const legacy$set = mockCollections.branches.updateOne.mock.calls[0][1].$set;
+      expect(legacy$set.module_credit_enable).toBe(false);
+      expect(legacy$set.first_run_decided).toBe(true);
+    });
+
+    test('null still means INHERIT - coercion must not turn it into a value', async () => {
+      seedWrite();
+      await repo.saveGroup('features', { quotes_enable: null }, ctx);
+      const update = mockCollections.branch_features.updateOne.mock.calls[0][1];
+      expect(update.$unset).toEqual({ quotes_enable: '' });
+      expect(update.$set.quotes_enable).toBeUndefined();
+    });
+
+    test('a non-boolean features value passes through untouched', async () => {
+      seedWrite();
+      await repo.saveGroup('features', { till_lock_idle_minutes: '15' }, ctx);
+      const $set = mockCollections.branch_features.updateOne.mock.calls[0][1].$set;
+      expect($set.till_lock_idle_minutes).toBe('15');
+    });
+
+    test('rows poisoned before the fix still RESOLVE as booleans', async () => {
+      seed({
+        branchRow: { module_credit_enable: 'false' },
+        accountRow: { module_marketing_enable: 'true' },
+        legacy: { cash_register_enable: 'false' },
+      });
+      const r = await repo.resolveGroup('features', ctx);
+      expect(r.data.values.module_credit_enable).toBe(false);
+      expect(r.data.values.module_marketing_enable).toBe(true);
+      expect(r.data.values.cash_register_enable).toBe(false);
+      expect(r.data.inherited.module_marketing_enable).toBe(true);
+    });
+  });
 });
 
 /*
@@ -251,12 +303,13 @@ describe('clearing a branch override', () => {
     await repo.saveGroup('features', { quotes_enable: null, quick_sale_enable: 'true' }, ctx);
 
     const update = features.updateOne.mock.calls[0][1];
-    expect(update.$set.quick_sale_enable).toBe('true');
+    /* stored as the boolean the string meant - see the coercion tests */
+    expect(update.$set.quick_sale_enable).toBe(true);
     expect(update.$unset).toEqual({ quotes_enable: '' });
 
     // the legacy mirror must carry the SET key and never the cleared one
     const mirrored = branches.updateOne.mock.calls[0][1].$set;
-    expect(mirrored).toEqual({ quick_sale_enable: 'true' });
+    expect(mirrored).toEqual({ quick_sale_enable: true });
     expect('quotes_enable' in mirrored).toBe(false);
   });
 

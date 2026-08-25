@@ -130,6 +130,39 @@ const SECRETS = [
 const CLEAR_SECRET = '__posnic_clear__';
 
 /*
+ * 'false' is not false, and the day that mattered it switched a shop ON.
+ *
+ * The legacy save path always parsed its toggles ('true'/'false' arrive as
+ * strings from a checkbox map), but the group endpoint stored what it was
+ * sent, verbatim. So the first-run welcome - which sends strings - wrote
+ * quotes_enable:"false" style values into BOTH stores, and every reader that
+ * gates with `value !== false` read the string as enabled. The owner saved
+ * "everything off" and watched every feature light up.
+ *
+ * One rule, used by the write path (so it cannot recur), the resolver and
+ * the branch read (so rows already poisoned still read true): a literal
+ * 'true'/'false' string on a features key IS the boolean. Only the two
+ * literals convert - numbers, names and real booleans pass untouched, which
+ * is what keeps this safe for till_lock_idle_minutes and friends.
+ */
+const coerceFeatureToggle = (value) => {
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  return value;
+};
+
+/* The doc-level sweep: the features keys of `doc` that are string booleans,
+   as a ready-to-$set repair object. Empty means the doc is clean. */
+const featureToggleRepairs = (doc) => {
+  const fix = {};
+  if (!doc || typeof doc !== 'object') return fix;
+  for (const key of FEATURES) {
+    if (doc[key] === 'true' || doc[key] === 'false') fix[key] = doc[key] === 'true';
+  }
+  return fix;
+};
+
+/*
  * S4. Every credential that lives on the legacy `branches` document.
  *
  * SECRETS above is the new per-group store; this is the older reality the
@@ -258,6 +291,8 @@ module.exports = {
   SHARING,
   BRANCH_CREDENTIALS,
   CLEAR_SECRET,
+  coerceFeatureToggle,
+  featureToggleRepairs,
   secretUpdate,
   redactBranchSecrets,
   stripBranchSecrets,
