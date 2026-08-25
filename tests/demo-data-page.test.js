@@ -47,11 +47,12 @@ function between(source, from, to) {
 
 const demoPacks = between(settingsJs, 'PosnicPro.settings.demoPacks = {', "$(document).on('change', '#demo_pack_choice'");
 
-test('Demo Data has its own page with its own settings', () => {
-  /* featureInfo.section names the markup block the feature page adopts. Every
-     other feature without one opens as documentation with nothing to change. */
-  const info = between(settingsJs, 'module_demo_data_enable: {', 'module_recyclebin_enable: {');
-  assert.match(info, /section: '#fc_demodata'/);
+test('Demo Data has its own page - a real pane with a sidebar entry', () => {
+  /* One system (owner): the card shows the guide; configuration lives in the
+     feature's OWN entry under Manage. The chooser markup moved into the
+     v-pills-demodata pane, reached by #/settings/demodata. */
+  assert.match(settingsHtml, /id="v-pills-demodata"/);
+  assert.match(settingsHtml, /id="v-pills-demodata-tab"/);
   assert.match(settingsHtml, /id="fc_demodata"/);
   assert.match(settingsHtml, /id="demo_pack_choice"/);
   assert.match(settingsHtml, /id="demo_pack_install"/);
@@ -195,11 +196,10 @@ test('the progress bar says which work is running', () => {
 
 test('the list is fetched when the page opens, not at boot', () => {
   /* A request at boot is a request on the path to a shop's first sale, for a
-     screen most shops never open. */
-  const openPage = between(settingsJs, 'PosnicPro.settings.openFeaturePage = function',
-    'PosnicPro.settings._fpReturnSection = function');
-  assert.match(openPage, /if \(key === 'module_demo_data_enable'\)/);
-  assert.match(openPage, /demoPacks\.load\(\)/);
+     screen most shops never open. The pill that opens the pane is the
+     trigger now. */
+  assert.match(settingsHtml,
+    /id="v-pills-demodata-tab"[\s\S]{0,400}?onclick="PosnicPro\.settings\.demoPacks\.load\(\);"/);
 });
 
 test('a failed fetch says so instead of reading as still working', () => {

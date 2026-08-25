@@ -100,6 +100,22 @@
                                         class="feather icon-trash-2 mr-2"></i>
                                     <lang class="lang_recycle">Recycle Bin</lang>
                                 </a>
+                                <a class="nav-link mb-2" data-module="branch" data-access="write"
+                                    id="v-pills-demodata-tab" data-toggle="pill" href="#v-pills-demodata" role="tab"
+                                    aria-controls="v-pills-demodata" aria-selected="false"
+                                    onclick="PosnicPro.settings.demoPacks.load();"><i class="feather icon-package mr-2"></i>
+                                    <lang class="lang_module_demodata">Demo Data</lang>
+                                </a>
+                                <a class="nav-link mb-2" data-module="branch" data-access="write"
+                                    id="v-pills-quotes-tab" data-toggle="pill" href="#v-pills-quotes" role="tab"
+                                    aria-controls="v-pills-quotes" aria-selected="false"><i class="feather icon-file-text mr-2"></i>
+                                    <lang class="lang_quotes_title">Quotes</lang>
+                                </a>
+                                <a class="nav-link mb-2" data-module="branch" data-access="write"
+                                    id="v-pills-tillpin-tab" data-toggle="pill" href="#v-pills-tillpin" role="tab"
+                                    aria-controls="v-pills-tillpin" aria-selected="false"><i class="feather icon-lock mr-2"></i>
+                                    <lang class="lang_tilllock_title">Till PIN Lock</lang>
+                                </a>
                                 <a class="nav-link mb-2" data-module="branch" data-access="write" id="v-pills-workforce-tab"
                                     data-toggle="pill" href="#v-pills-workforce" role="tab"
                                     aria-controls="v-pills-workforce" aria-selected="false"
@@ -162,6 +178,19 @@
                                     <small class="text-muted"><lang class="lang_wf_hint">Shifts, attendance and the weekly roster. Staff see the schedule from the clock button; it is planned here.</lang></small>
                                 </div>
                                 <div class="card-body">
+                                    <div class="fc-section" id="fc_workforce">
+                                        <h6 class="fc-title"><lang class="lang_staffshifts_title">Workforce</lang></h6>
+                                            <div class="module-subs">
+                                                <div class="custom-control custom-switch">
+                                                    <input type="checkbox" class="custom-control-input" id="staff_tips_enable" name="staff_tips_enable">
+                                                    <label class="custom-control-label" for="staff_tips_enable"><lang class="lang_stafftips_title">Tips at clock-out</lang></label>
+                                                </div>
+                                                <div class="custom-control custom-switch">
+                                                    <input type="checkbox" class="custom-control-input" id="staff_roster_enable" name="staff_roster_enable">
+                                                    <label class="custom-control-label" for="staff_roster_enable"><lang class="lang_staffroster_title">Roster</lang></label>
+                                                </div>
+                                            </div>
+                                    </div>
                                     <div class="row">
                                         <div class="col-lg-3 core-subnav-col">
                                             <div class="nav flex-column nav-pills" id="workforce_subnav" role="tablist">
@@ -2673,111 +2702,20 @@
                                         of trades is right until somebody adds a pack, and then it
                                         is a menu quietly missing an option nobody knows exists.
                                     -->
-                                    <div class="fc-section" id="fc_demodata">
-                                        <h6 class="fc-title"><lang class="lang_demopack_title">Sample data for your trade</lang></h6>
-                                        <div class="module-subs">
-                                            <p class="text-muted mb-2" style="font-size:13px;">
-                                                <lang class="lang_demopack_help">Your shop was set up with one
-                                                    trade's sample products. Pick a different trade and we will
-                                                    swap them for that one.</lang>
-                                            </p>
-                                            <div class="form-group mb-2" style="min-width:240px;max-width:360px;">
-                                                <label for="demo_pack_choice" style="font-size:12.5px;" class="mb-1">
-                                                    <lang class="lang_demopack_label">Trade</lang>
-                                                </label>
-                                                <select id="demo_pack_choice"
-                                                    class="form-control form-control-sm border-control">
-                                                    <option value="">Loading…</option>
-                                                </select>
-                                                <small id="demo_pack_summary" class="text-muted"></small>
-                                            </div>
-                                            <button type="button" class="btn btn-sm btn-primary" id="demo_pack_install" disabled>
-                                                <lang class="lang_demopack_install">Install this trade's samples</lang>
-                                            </button>
-                                            <!-- Owner: "inside have reset button to have fresh data again
-                                                 withing same industry." Same delete-then-seed machinery as
-                                                 changing trade, pointed at the trade already installed. -->
-                                            <button type="button" class="btn btn-sm btn-outline-secondary ml-2" id="demo_pack_reset" disabled>
-                                                <lang class="lang_demopack_reset">Reset to fresh samples</lang>
-                                            </button>
-                                            <p class="text-muted mt-2 mb-0" style="font-size:12.5px;">
-                                                <lang class="lang_demopack_note">Only sample products are replaced.
-                                                    Anything you have edited, sold or received is kept, and named
-                                                    if it cannot be removed.</lang>
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div class="fc-section" id="fc_workforce">
-                                        <h6 class="fc-title"><lang class="lang_staffshifts_title">Workforce</lang></h6>
-                                            <div class="module-subs">
-                                                <div class="custom-control custom-switch">
-                                                    <input type="checkbox" class="custom-control-input" id="staff_tips_enable" name="staff_tips_enable">
-                                                    <label class="custom-control-label" for="staff_tips_enable"><lang class="lang_stafftips_title">Tips at clock-out</lang></label>
-                                                </div>
-                                                <div class="custom-control custom-switch">
-                                                    <input type="checkbox" class="custom-control-input" id="staff_roster_enable" name="staff_roster_enable">
-                                                    <label class="custom-control-label" for="staff_roster_enable"><lang class="lang_staffroster_title">Roster</lang></label>
-                                                </div>
-                                            </div>
-                                    </div>
-                                    <div class="fc-section" id="fc_tillpin">
-                                        <h6 class="fc-title"><lang class="lang_tilllock_title">Till PIN Lock</lang></h6>
-                                        <div class="module-subs">
-                                                <div class="form-group mb-0" style="min-width:200px;">
-                                                    <label for="till_lock_idle_minutes" style="font-size:12.5px;" class="mb-1">
-                                                        <lang class="lang_tilllockidle_title">Lock when idle</lang>
-                                                    </label>
-                                                    <select name="till_lock_idle_minutes" id="till_lock_idle_minutes"
-                                                        class="form-control form-control-sm border-control">
-                                                        <option value="0">Only when asked</option>
-                                                        <option value="2">After 2 minutes</option>
-                                                        <option value="5">After 5 minutes</option>
-                                                        <option value="10">After 10 minutes</option>
-                                                        <option value="30">After 30 minutes</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                    </div>
-                                    <div class="fc-section" id="fc_quotes">
-                                        <h6 class="fc-title"><lang class="lang_quotes_title">Quotes</lang></h6>
 
-                <div class="row">
-                    <div class="col-md-6">
-                        <label style="font-size:12.5px;" class="mb-1"><lang class="lang_quote_default_payment">Payment method on new quotes</lang></label>
-                        <input type="text" name="quote_default_payment_method" id="quote_default_payment_method"
-                            class="form-control form-control-sm mb-2" maxlength="60"
-                            placeholder="e.g. Bank transfer (NEFT/RTGS) or UPI" autocomplete="off">
-                        <label style="font-size:12.5px;" class="mb-1"><lang class="lang_quote_default_bank">Bank details on new quotes</lang></label>
-                        <textarea name="quote_default_bank_details" id="quote_default_bank_details"
-                            class="form-control form-control-sm mb-2" rows="3" maxlength="500"
-                            placeholder="Account name, number, IFSC"></textarea>
-                    </div>
-                    <div class="col-md-6">
-                        <label style="font-size:12.5px;" class="mb-1"><lang class="lang_quote_default_terms">Terms on new quotes</lang></label>
-                        <textarea name="quote_default_terms" id="quote_default_terms"
-                            class="form-control form-control-sm mb-2" rows="4" maxlength="1500"
-                            placeholder="e.g. 50% advance confirms the order. Prices valid till the date on the quote."></textarea>
-                        <label style="font-size:12.5px;" class="mb-1"><lang class="lang_quote_signature">Authorised signature (image)</lang></label>
-                        <input type="file" accept="image/*" class="form-control-file" id="quote_signature_file" style="font-size:12px;">
-                        <input type="hidden" id="quote_default_signature">
-                        <div class="mt-1">
-                            <img id="quote_signature_thumb" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="max-height:48px; max-width:160px; display:none; border:1px solid #e3e7ee; border-radius:4px; padding:2px;">
-                            <a href="javascript:void(0)" id="quote_signature_clear" class="small text-danger ml-2" style="display:none;">Remove</a>
-                        </div>
-                        <small class="text-muted d-block">No image = no signatory line on the quote.</small>
-                    </div>
-                </div>
-                                        <button type="button" class="btn btn-primary btn-sm mt-2" id="quote_settings_save"><lang class="lang_save_title">Save quotation settings</lang></button>
-                                    </div>
-                                    <div class="fc-section" id="fc_restaurant">
-                                        <h6 class="fc-title"><lang class="lang_modules_restaurant">Restaurant</lang></h6>
-                                        <a href="javascript:void(0)" onclick="$('#v-pills-tableorder-tab').click();" class="module-config-link"><lang class="lang_modules_managetables">Manage tables</lang></a>
-                                    </div>
+
+
+
+
                                                             </div>
                         <div class="tab-pane fade" id="v-pills-tableorder" role="tabpanel"
                             aria-labelledby="v-pills-tableorder-tab">
                             <div class="card m-b-30" data-module="plan" data-access="read">
                                 <div class="card-body">
+                                    <div class="fc-section" id="fc_restaurant">
+                                        <h6 class="fc-title"><lang class="lang_modules_restaurant">Restaurant</lang></h6>
+                                        <a href="javascript:void(0)" onclick="$('#v-pills-tableorder-tab').click();" class="module-config-link"><lang class="lang_modules_managetables">Manage tables</lang></a>
+                                    </div>
                                     <small class="form-text text-muted">
                                         <lang class="lang_modules_kot_hint">Restaurant / KOT mode is switched on
                                         under Settings &gt; Modules. This page manages the tables it uses.</lang>
@@ -3166,6 +3104,125 @@
                             </div>
                             <!--End row-->
                         </div>
+                        <div class="tab-pane fade" data-module="branch" data-access="write" id="v-pills-demodata"
+                            role="tabpanel" aria-labelledby="v-pills-demodata-tab">
+                            <div class="card m-b-30">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0"><lang class="lang_module_demodata">Demo Data</lang></h5>
+                                    <small class="text-muted"><lang class="lang_demodata_hint">The sample records your shop can try itself with - choose a trade, reset for a fresh set, or switch the feature off to remove them.</lang></small>
+                                </div>
+                                <div class="card-body">
+                                    <div class="fc-section" id="fc_demodata">
+                                        <h6 class="fc-title"><lang class="lang_demopack_title">Sample data for your trade</lang></h6>
+                                        <div class="module-subs">
+                                            <p class="text-muted mb-2" style="font-size:13px;">
+                                                <lang class="lang_demopack_help">Your shop was set up with one
+                                                    trade's sample products. Pick a different trade and we will
+                                                    swap them for that one.</lang>
+                                            </p>
+                                            <div class="form-group mb-2" style="min-width:240px;max-width:360px;">
+                                                <label for="demo_pack_choice" style="font-size:12.5px;" class="mb-1">
+                                                    <lang class="lang_demopack_label">Trade</lang>
+                                                </label>
+                                                <select id="demo_pack_choice"
+                                                    class="form-control form-control-sm border-control">
+                                                    <option value="">Loading…</option>
+                                                </select>
+                                                <small id="demo_pack_summary" class="text-muted"></small>
+                                            </div>
+                                            <button type="button" class="btn btn-sm btn-primary" id="demo_pack_install" disabled>
+                                                <lang class="lang_demopack_install">Install this trade's samples</lang>
+                                            </button>
+                                            <!-- Owner: "inside have reset button to have fresh data again
+                                                 withing same industry." Same delete-then-seed machinery as
+                                                 changing trade, pointed at the trade already installed. -->
+                                            <button type="button" class="btn btn-sm btn-outline-secondary ml-2" id="demo_pack_reset" disabled>
+                                                <lang class="lang_demopack_reset">Reset to fresh samples</lang>
+                                            </button>
+                                            <p class="text-muted mt-2 mb-0" style="font-size:12.5px;">
+                                                <lang class="lang_demopack_note">Only sample products are replaced.
+                                                    Anything you have edited, sold or received is kept, and named
+                                                    if it cannot be removed.</lang>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" data-module="branch" data-access="write" id="v-pills-quotes"
+                            role="tabpanel" aria-labelledby="v-pills-quotes-tab">
+                            <div class="card m-b-30">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0"><lang class="lang_quotes_title">Quotes</lang></h5>
+                                    <small class="text-muted"><lang class="lang_quotes_hint">Defaults every new quotation starts from - payment method, bank details, terms and the signature.</lang></small>
+                                </div>
+                                <div class="card-body">
+                                    <div class="fc-section" id="fc_quotes">
+                                        <h6 class="fc-title"><lang class="lang_quotes_title">Quotes</lang></h6>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <label style="font-size:12.5px;" class="mb-1"><lang class="lang_quote_default_payment">Payment method on new quotes</lang></label>
+                        <input type="text" name="quote_default_payment_method" id="quote_default_payment_method"
+                            class="form-control form-control-sm mb-2" maxlength="60"
+                            placeholder="e.g. Bank transfer (NEFT/RTGS) or UPI" autocomplete="off">
+                        <label style="font-size:12.5px;" class="mb-1"><lang class="lang_quote_default_bank">Bank details on new quotes</lang></label>
+                        <textarea name="quote_default_bank_details" id="quote_default_bank_details"
+                            class="form-control form-control-sm mb-2" rows="3" maxlength="500"
+                            placeholder="Account name, number, IFSC"></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label style="font-size:12.5px;" class="mb-1"><lang class="lang_quote_default_terms">Terms on new quotes</lang></label>
+                        <textarea name="quote_default_terms" id="quote_default_terms"
+                            class="form-control form-control-sm mb-2" rows="4" maxlength="1500"
+                            placeholder="e.g. 50% advance confirms the order. Prices valid till the date on the quote."></textarea>
+                        <label style="font-size:12.5px;" class="mb-1"><lang class="lang_quote_signature">Authorised signature (image)</lang></label>
+                        <input type="file" accept="image/*" class="form-control-file" id="quote_signature_file" style="font-size:12px;">
+                        <input type="hidden" id="quote_default_signature">
+                        <div class="mt-1">
+                            <img id="quote_signature_thumb" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="max-height:48px; max-width:160px; display:none; border:1px solid #e3e7ee; border-radius:4px; padding:2px;">
+                            <a href="javascript:void(0)" id="quote_signature_clear" class="small text-danger ml-2" style="display:none;">Remove</a>
+                        </div>
+                        <small class="text-muted d-block">No image = no signatory line on the quote.</small>
+                    </div>
+                </div>
+                                        <button type="button" class="btn btn-primary btn-sm mt-2" id="quote_settings_save"><lang class="lang_save_title">Save quotation settings</lang></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" data-module="branch" data-access="write" id="v-pills-tillpin"
+                            role="tabpanel" aria-labelledby="v-pills-tillpin-tab">
+                            <div class="card m-b-30">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0"><lang class="lang_tilllock_title">Till PIN Lock</lang></h5>
+                                    <small class="text-muted"><lang class="lang_tillpin_hint">Lock the screen between sales; staff resume with their PIN.</lang></small>
+                                </div>
+                                <div class="card-body">
+                                    <div class="fc-section" id="fc_tillpin">
+                                        <h6 class="fc-title"><lang class="lang_tilllock_title">Till PIN Lock</lang></h6>
+                                        <div class="module-subs">
+                                                <div class="form-group mb-0" style="min-width:200px;">
+                                                    <label for="till_lock_idle_minutes" style="font-size:12.5px;" class="mb-1">
+                                                        <lang class="lang_tilllockidle_title">Lock when idle</lang>
+                                                    </label>
+                                                    <select name="till_lock_idle_minutes" id="till_lock_idle_minutes"
+                                                        class="form-control form-control-sm border-control">
+                                                        <option value="0">Only when asked</option>
+                                                        <option value="2">After 2 minutes</option>
+                                                        <option value="5">After 5 minutes</option>
+                                                        <option value="10">After 10 minutes</option>
+                                                        <option value="30">After 30 minutes</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Recycle Bin Tab End -->
 
                         <!-- start restore access model -->

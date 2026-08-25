@@ -62,29 +62,49 @@ test('every entry actually says something', () => {
   }
 });
 
-test('every section anchor names a block that exists', () => {
-  /* THE ONE THAT MATTERS. `section` names the markup whose controls the dialog
-     adopts, and the renderer skips a missing one silently - so an invented
-     anchor costs nothing at runtime and looks wired forever. Only four of these
-     blocks exist; the first draft of this copy invented seven more. */
-  const sections = [...new Set([...infoBlock.matchAll(/section: '#([a-z_0-9]+)'/g)].map((m) => m[1]))];
-  assert.ok(sections.length > 0, 'no feature adopts its settings any more');
-  for (const id of sections) {
-    assert.ok(
-      settingsHtml.includes(`id="${id}"`),
-      `#${id} is named as a settings section but no markup defines it`,
-    );
-  }
+test('the guide adopts NOTHING - configuration lives in the sidebar, once', () => {
+  /*
+   * THE ONE SYSTEM, the owner's rule: "if user clicks on the feature box then
+   * show only details or guide... every feature should have its own left
+   * side." The old dialog adopted each feature's config form into itself,
+   * which made Demo Data configure one way and Tax another. Adoption is gone;
+   * a `section:` key reappearing means the second door is being rebuilt.
+   */
+  assert.ok(!/section: '#fc_/.test(infoBlock), 'a feature adopts config into the guide again');
+  assert.ok(!settingsJs.includes('_fpReturnSection'), 'the adoption machinery is back');
 });
 
-test('the renderer still guards a missing section', () => {
-  /* The guard is what makes an invented anchor harmless rather than a crash.
-     Removing it would turn the mistake above into a broken dialog. */
-  assert.match(
-    settingsJs,
-    /if \(info\.section && \$\(info\.section\)\.length\)/,
-    'a missing section would throw instead of being skipped',
+test('every configurable feature names its sidebar home, and the home exists', () => {
+  /* FEATURE_HOME maps feature key -> [route, label]. The route must have a
+     real pane, or the Configure link walks into a wall. */
+  const homeBlock = settingsJs.slice(
+    settingsJs.indexOf('PosnicPro.settings.FEATURE_HOME = {'),
+    settingsJs.indexOf('};', settingsJs.indexOf('PosnicPro.settings.FEATURE_HOME = {')),
   );
+  const routes = [...new Set([...homeBlock.matchAll(/\['([a-z_0-9]+)',/g)].map((m) => m[1]))];
+  assert.ok(routes.length >= 10, 'the Configure map lost its entries: ' + routes.length);
+  for (const r of routes) {
+    assert.ok(
+      settingsHtml.includes(`id="v-pills-${r}"`),
+      `#/settings/${r} is a Configure target but no pane v-pills-${r} exists`,
+    );
+  }
+  /* and the guide renders the link from the map */
+  assert.match(settingsJs, /FEATURE_HOME\[key\]/);
+  assert.match(settingsJs, /fp-configure-link/);
+});
+
+test('the moved config stores kept their markup - one pane per feature', () => {
+  /* Demo Data, Quotes and Till PIN got their own panes and sidebar entries;
+     Workforce and Restaurant folded into the pages they already had. */
+  for (const id of ['fc_demodata', 'fc_quotes', 'fc_tillpin', 'fc_workforce', 'fc_restaurant']) {
+    assert.ok(settingsHtml.includes(`id="${id}"`), `#${id} markup lost in the move`);
+  }
+  const sidebar = fs.readFileSync(
+    path.join(__dirname, '..', 'frontend', 'layouts', 'sidebar.html'), 'utf8');
+  for (const li of ['manage_li_demodata', 'manage_li_quotes', 'manage_li_tillpin']) {
+    assert.ok(sidebar.includes(`id="${li}"`), `${li} missing from the Manage sidebar`);
+  }
 });
 
 /*
