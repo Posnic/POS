@@ -71,7 +71,7 @@ PosnicPro.receivings = {
         $(".vertical-layout").addClass("toggle-menu");
         $('#v-pills-purchase-tab,.receiving_new_shortcut').addClass('active');
         $('#v-pills-purchase').addClass('show active');
-        $('.vertical-menu li a#view_receiving_page').addClass('active');
+        $('.vertical-menu li a#view_purchaseorders_page').addClass('active');
         $('.dashboard_img_menu').hide();
         $('#image_sidebar_purchase').show();
         $('#item_upload_receiving_status').val('no');
@@ -154,6 +154,10 @@ PosnicPro.receivings = {
                 { value: 'supplier_name', label: 'Supplier' },
                 { value: 'supplier_phone', label: 'Phone' }
             ],
+            /* Like the quotes bar (owner: "options like quote we need filter
+               typeahead"): choose Supplier, get this shop's suppliers. */
+            typeahead: 'supplier',
+            typeaheadField: 'supplier_name',
             onChange: function () {
                 var table = $('#view_receivings');
                 /* The column PosnicPro.search filtered this list on. */

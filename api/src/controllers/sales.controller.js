@@ -21,7 +21,9 @@ async function shopTransportOf(req) {
   } catch (e) {
     /* platform chain covers it */
   }
-  return resolveShopTransport(branchDoc);
+  /* The branch rides along: the mail LAYOUT needs the same document the
+     transport was resolved from (shop name, address, white-label). */
+  return { ...resolveShopTransport(branchDoc), branch: branchDoc };
 }
 const ItemService = require('../services/item.service');
 const LoyaltyService = require('../services/loyalty.service');
@@ -5036,20 +5038,36 @@ class SalesController extends BaseController {
       const resolved = await shopTransportOf(req);
       const transporter = resolved.transporter;
 
-      // Email content
+      // Email content - the shared layout, not a bare <h2> (owner: "not
+      // just unprofessional few text").
+      const { brandFor, renderEmail, kvBlock, itemsTable, totalRow } = require('../utils/email-layout');
+      const brand = brandFor(resolved.branch || { branch_name: req.user?.branch_name });
+      const currency = (resolved.branch && resolved.branch.currency) || '';
+      const lines = (Array.isArray(sale.items) ? sale.items : []).map((it) => ({
+        name: it.item_name || it.name || '',
+        qty: it.item_quantity || it.quantity || '',
+        price: Number(it.item_price ?? it.price ?? it.unit_price) || 0,
+        total: Number(it.total_amount ?? it.total) || 0,
+      }));
       const emailContent = {
-        from: `${req.user?.branch_name || 'Posnic POS'} <${resolved.from}>`,
+        from: `${brand.shopName || brand.name} <${resolved.from}>`,
         to: email,
-        subject: `Receipt - ${sale.sales_id}`,
-        html: `
-          <h2>Sale Receipt</h2>
-          <p><strong>Invoice #:</strong> ${sale.sales_id}</p>
-          <p><strong>Date:</strong> ${new Date(sale.date).toLocaleDateString()}</p>
-          <p><strong>Customer:</strong> ${sale.customer_name}</p>
-          <p><strong>Total:</strong> ${sale.items_total}</p>
-          <p><strong>Payment Mode:</strong> ${sale.payment_mode}</p>
-          <p>Thank you for your business!</p>
-        `,
+        subject: `Receipt ${sale.sales_id} from ${brand.shopName || brand.name}`,
+        html: renderEmail({
+          brand,
+          title: 'Your receipt',
+          preheader: `Receipt ${sale.sales_id} - thank you for your purchase`,
+          greeting: sale.customer_name ? `Dear ${sale.customer_name},` : undefined,
+          bodyHtml:
+            kvBlock([
+              ['Receipt #', sale.sales_id],
+              ['Date', new Date(sale.date).toLocaleDateString()],
+              ['Payment', sale.payment_mode],
+            ]) +
+            (lines.length ? itemsTable(lines, currency) : '') +
+            totalRow('Total', Number(sale.items_total) || sale.items_total, currency),
+          footerNote: 'Thank you for your business - we hope to see you again.',
+        }),
       };
 
       try {
@@ -5342,18 +5360,26 @@ class SalesController extends BaseController {
         const transporter = resolved.transporter;
 
         try {
+          const { brandFor, renderEmail, kvBlock } = require('../utils/email-layout');
+          const brand = brandFor(resolved.branch || { branch_name: req.user?.branch_name });
           await transporter.sendMail({
-            from: `${req.user?.branch_name || 'Posnic POS'} <${resolved.from}>`,
+            from: `${brand.shopName || brand.name} <${resolved.from}>`,
             to: email,
-            subject: `Invoice - ${sale.sales_id}`,
-            html: `
-              <h2>Invoice</h2>
-              <p>Dear ${sale.customer_name},</p>
-              <p>Please find attached your invoice.</p>
-              <p><strong>Invoice #:</strong> ${sale.sales_id}</p>
-              <p><strong>Amount:</strong> ${sale.items_total}</p>
-              <p>Thank you for your business!</p>
-            `,
+            subject: `Invoice ${sale.sales_id} from ${brand.shopName || brand.name}`,
+            html: renderEmail({
+              brand,
+              title: 'Your invoice',
+              preheader: `Invoice ${sale.sales_id} attached as PDF`,
+              greeting: sale.customer_name ? `Dear ${sale.customer_name},` : undefined,
+              bodyHtml:
+                '<p style="margin:0 0 12px;font-size:13.5px;color:#3a4459;">' +
+                'Please find your invoice attached as a PDF.</p>' +
+                kvBlock([
+                  ['Invoice #', sale.sales_id],
+                  ['Amount', sale.items_total],
+                ]),
+              footerNote: 'Thank you for your business!',
+            }),
             attachments: [
               {
                 filename: `invoice-${sale.sales_id}.pdf`,

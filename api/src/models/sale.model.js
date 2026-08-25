@@ -1215,21 +1215,28 @@ Sale.sendDailySalesMail = async function (input, shopTransport = null) {
        before Brevo, before the platform chain. */
     if (shopTransport && shopTransport.shopOwned) {
       const subject = ((sales_type ? sales_type + ' ' : '') + 'sales report').trim();
-      const text = [
-        `Sales report from ${from_date || '-'} to ${to_date || '-'}`,
-        '',
-        `Total quantity: ${qty_total}`,
-        `Subtotal: ${currency} ${price_total.toFixed(2)}`,
-        `Grand total: ${currency} ${amount_total.toFixed(2)}`,
-        `Profit: ${currency} ${profit_total.toFixed(2)}`,
-        `Tax total: ${currency} ${tax_total.toFixed(2)}`,
-        `Tender total: ${currency} ${tender_total.toFixed(2)}`,
-      ].join('\n');
+      /* The layout every mail wears now - a report over shop SMTP was the
+         last plain-text straggler. */
+      const { brandFor, renderEmail, kvBlock } = require('../utils/email-layout');
+      const brand = brandFor(shopTransport.branch || { branch_name: branch.branch_name });
       await shopTransport.transporter.sendMail({
         from: `${branch.branch_name || 'Posnic POS'} <${shopTransport.from}>`,
         to: input.email,
         subject,
-        text,
+        html: renderEmail({
+          brand,
+          title: subject.charAt(0).toUpperCase() + subject.slice(1),
+          preheader: `Sales from ${from_date || '-'} to ${to_date || '-'}`,
+          bodyHtml: kvBlock([
+            ['Period', `${from_date || '-'} to ${to_date || '-'}`],
+            ['Total quantity', qty_total],
+            ['Subtotal', `${currency} ${price_total.toFixed(2)}`],
+            ['Grand total', `${currency} ${amount_total.toFixed(2)}`],
+            ['Profit', `${currency} ${profit_total.toFixed(2)}`],
+            ['Tax total', `${currency} ${tax_total.toFixed(2)}`],
+            ['Tender total', `${currency} ${tender_total.toFixed(2)}`],
+          ]),
+        }),
       });
       return { status: true, data: { sent: true }, message: 'Mail sent successfully' };
     }

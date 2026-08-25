@@ -76,3 +76,23 @@ test('a repeated notification announces itself - same-tag replacement is silent'
     assert.match(push, /renotify: true/);
     assert.match(push, /tag: data\.tag \|\| 'posnic'/);
 });
+
+test('the settings save PATCHES - it does not repaint the world', () => {
+    /* Owner: "every save of form, some refresh is happening... i think its
+       lazy coding." The reference conversion: a snapshot at entry, and every
+       block gated by whether the value it exists FOR actually moved. The
+       low-stock network fetch is the canary - a save that did not touch the
+       threshold must not fetch. */
+    const settings = fs.readFileSync(
+        path.join(__dirname, '..', 'frontend', 'static', 'script', 'js', 'modules', 'js', 'settings.js'), 'utf8');
+    const start = settings.indexOf('var was = {');
+    const handler = settings.slice(start, settings.indexOf('PosnicPro.alert(response.type,', start));
+    assert.match(handler, /tableNow !== was\.table_options/);
+    assert.match(handler, /keyboardNow !== was\.keyboard/);
+    assert.match(handler, /notificationNow !== was\.notification/);
+    assert.match(handler, /generalNow !== was\.general/);
+    /* the fetch lives INSIDE its gate */
+    const fetchAt = handler.indexOf('viewLowStockDashboard');
+    const gateAt = handler.indexOf('notificationNow !== was.notification');
+    assert.ok(gateAt > -1 && fetchAt > gateAt, 'the low-stock fetch escaped its gate');
+});

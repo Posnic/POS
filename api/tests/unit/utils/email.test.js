@@ -1,16 +1,11 @@
 'use strict';
 
 const mockCreateTransport = jest.fn();
-const mockRenderFile = jest.fn();
 const mockConvert = jest.fn();
 const mockSendMail = jest.fn();
 
 jest.mock('nodemailer', () => ({
   createTransport: mockCreateTransport,
-}));
-
-jest.mock('pug', () => ({
-  renderFile: mockRenderFile,
 }));
 
 jest.mock('html-to-text', () => ({
@@ -41,11 +36,11 @@ describe('email utils', () => {
 
     expect(email.to).toBe('user@example.com');
     expect(email.firstName).toBe('Jane');
-    expect(email.from).toBe('Your App <no-reply@example.com>');
+    /* branded now - white-label name when configured, Posnic otherwise */
+    expect(email.from).toBe('Posnic <no-reply@example.com>');
   });
 
-  test('send uses html template and text conversion', async () => {
-    mockRenderFile.mockReturnValue('<h1>Hello</h1>');
+  test('send renders through the shared layout and converts to text', async () => {
     mockConvert.mockReturnValue('Hello');
     mockSendMail.mockResolvedValue({ message: 'ok' });
     mockCreateTransport.mockReturnValue({ sendMail: mockSendMail, options: {} });
@@ -53,8 +48,11 @@ describe('email utils', () => {
     const email = new Email({ email: 'user@example.com', name: 'User' }, 'http://x');
     await email.send('welcome', 'Welcome');
 
-    expect(mockRenderFile).toHaveBeenCalled();
-    expect(mockConvert).toHaveBeenCalledWith('<h1>Hello</h1>');
+    /* the shared frame, not a pug scaffold: header brand + footer + CTA */
+    const sent = mockSendMail.mock.calls[0][0];
+    expect(sent.html).toContain('Welcome aboard');
+    expect(sent.html).toContain('http://x');
+    expect(mockConvert).toHaveBeenCalled();
     expect(mockSendMail).toHaveBeenCalledWith(
       expect.objectContaining({
         to: 'user@example.com',
