@@ -807,7 +807,13 @@ PosnicPro.themeManager = {
     },
 
     initColorPickers: function() {
+        /* 157KB that only the theme pane uses - loaded when it is used
+           (bundle-split slice 1). */
         var self = this;
+        if (!$.fn.colorpicker) {
+            PosnicPro.lazy.load('colorpicker').then(function () { self.initColorPickers(); });
+            return;
+        }
 
         $('.theme-color-input').each(function() {
             var $input = $(this);

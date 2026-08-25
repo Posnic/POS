@@ -78,6 +78,8 @@ function copyLazyScripts(cb) {
         ['static/script/js/jspdf.umd.min.js', 'jspdf2.js'],
         ['static/script/js/html2canvas.min.js', 'html2canvas.js'],
         ['static/script/js/sortable.min.js', 'sortable.js'],
+        ['static/script/js/plugins/summernote/summernote-bs4.js', 'summernote.js'],
+        ['static/style/plugins/colorpicker/bootstrap-colorpicker.js', 'colorpicker.js'],
     ];
     const outDir = pathx.join(process.cwd(), publicDir, 'script', 'lazy');
     fsx.mkdirSync(outDir, { recursive: true });
