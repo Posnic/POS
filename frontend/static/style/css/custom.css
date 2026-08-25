@@ -5280,3 +5280,87 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     width: auto;
 }
 .demo-pack-row .btn { flex: none; white-space: nowrap; }
+
+/* ==================================================================
+ * MOBILE FOUNDATION (Intranet/docs/MOBILE_EXPERIENCE_PLAN.md, P1).
+ * Every rule here is ADDITIVE: coarse-pointer or narrow-width gates
+ * only - the desktop never matches them. That boundary is the
+ * contract ("without affecting desktop design").
+ * ================================================================== */
+
+/* Touch targets: WCAG 2.5.8 / HIG 44px on touch devices. The
+   Lighthouse red named the icon toolbars, table action dots and
+   pagination arrows. */
+@media (pointer: coarse) {
+    .btn-round,
+    .toolbar .tool-item,
+    .pagination .page-item .btn,
+    .pagination button.page-item,
+    .mobile_tooltip,
+    .lf-btn,
+    .infobar-settings-close,
+    .infobar-tender-close {
+        min-width: 44px;
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .custom-control-label { padding-top: 4px; padding-bottom: 4px; }
+}
+
+/* Right-slide panels become full sheets on phones - a 480px sidebar on
+   a 390px screen was neither open nor closed. */
+@media (max-width: 767.98px) {
+    .infobar-settings-sidebar,
+    #infobar-settings-sidebar-tender-details {
+        width: 100vw !important;
+        max-width: 100vw !important;
+    }
+}
+
+/* Notched phones: the header and footer respect the safe areas. */
+@supports (padding: env(safe-area-inset-left)) {
+    @media (max-width: 767.98px) {
+        .topbar, .breadcrumbbar {
+            padding-left: max(8px, env(safe-area-inset-left));
+            padding-right: max(8px, env(safe-area-inset-right));
+        }
+        .footerbar { padding-bottom: env(safe-area-inset-bottom); }
+    }
+}
+
+/* Table -> cards mechanism (P2 flips it on per list by adding
+   .m-cards to the table and data-label to its cells; without those
+   attributes this block changes nothing anywhere). */
+@media (max-width: 767.98px) {
+    table.m-cards thead { display: none; }
+    table.m-cards, table.m-cards tbody, table.m-cards tr, table.m-cards td, table.m-cards th {
+        display: block;
+        width: 100%;
+    }
+    table.m-cards tr {
+        border: 1px solid rgba(127, 127, 127, .25);
+        border-radius: 8px;
+        margin-bottom: 10px;
+        padding: 6px 10px;
+        background: inherit;
+    }
+    table.m-cards td[data-label], table.m-cards th[data-label] {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 6px 0;
+        border: 0;
+        text-align: right;
+    }
+    table.m-cards td[data-label]::before, table.m-cards th[data-label]::before {
+        content: attr(data-label);
+        font-size: 11.5px;
+        letter-spacing: .3px;
+        text-transform: uppercase;
+        color: var(--theme-text-secondary, #8a94a6);
+        text-align: left;
+        flex: none;
+    }
+}

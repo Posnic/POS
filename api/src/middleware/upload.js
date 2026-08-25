@@ -99,5 +99,34 @@ async function attachImageKey(req, res, next) {
   return next();
 }
 
+/*
+ * Document uploads: the supplier's own PO, an invoice scan, a delivery
+ * note - attached to a purchase (owner: "we cant upload any file.
+ * supplier po or some other stuff"). PDFs join the image types; the
+ * name is regenerated server-side so nothing a filename carries ever
+ * reaches the filesystem.
+ */
+const documentUpload = multer({
+  storage: multer.diskStorage({
+    destination: function (req, file, cb) {
+      const dir = path.join(uploadDir, 'attachments');
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+      cb(null, dir);
+    },
+    filename: function (req, file, cb) {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+      const ext = (path.extname(file.originalname) || '').toLowerCase().slice(0, 8);
+      cb(null, 'doc-' + uniqueSuffix + ext);
+    },
+  }),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const ok = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+    if (ok.includes(file.mimetype)) cb(null, true);
+    else cb(new Error('Only PDF and image files can be attached.'), false);
+  },
+});
+
 module.exports = upload;
 module.exports.attachImageKey = attachImageKey;
+module.exports.documentUpload = documentUpload;

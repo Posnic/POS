@@ -1100,7 +1100,12 @@ receivingSchema.statics.supplierReceivingReportPage = async function (value, opt
           branch_id: { $in: branchIds },
           // Supplier receiving summary should only include fully/partially
           // received documents; exclude Open receivings.
-          receiving_status: { $in: ['Received', 'PartialReturn'] },
+          /* Deny-list, not allow-list. Legacy and imported rows carry other
+           spellings ('completed', absent entirely) and an allow-list of two
+           words silently dropped them from every purchase report and
+           dashboard number - the owner's "purchase not showing report".
+           Goods are IN unless the status says they never arrived. */
+        receiving_status: { $nin: ['Open', 'Cancelled', 'FullReturn'] },
         },
         {
           updated_date: { $gte: new Date(fromDate), $lte: new Date(toDate) },
@@ -1228,7 +1233,12 @@ receivingSchema.statics.receivingReportPage = async function (value, options = {
     const andConditions = [
       {
         branch_id: { $in: branchIds },
-        receiving_status: { $in: ['Received', 'PartialReturn'] },
+        /* Deny-list, not allow-list. Legacy and imported rows carry other
+           spellings ('completed', absent entirely) and an allow-list of two
+           words silently dropped them from every purchase report and
+           dashboard number - the owner's "purchase not showing report".
+           Goods are IN unless the status says they never arrived. */
+        receiving_status: { $nin: ['Open', 'Cancelled', 'FullReturn'] },
       },
       {
         date: { $gte: fromDate, $lte: toDate },
@@ -1338,7 +1348,12 @@ receivingSchema.statics.receivingsGraphicalReports = async function (value) {
     // Received/PartialReturn receivings aggregation
     const receivedCondition = {
       branch_id: { $in: branchIds },
-      receiving_status: { $in: ['Received', 'PartialReturn'] },
+      /* Deny-list, not allow-list. Legacy and imported rows carry other
+           spellings ('completed', absent entirely) and an allow-list of two
+           words silently dropped them from every purchase report and
+           dashboard number - the owner's "purchase not showing report".
+           Goods are IN unless the status says they never arrived. */
+        receiving_status: { $nin: ['Open', 'Cancelled', 'FullReturn'] },
       updated_date: { $gte: new Date(fromDate), $lte: new Date(toDate) },
     };
     if (licenseId) receivedCondition.license = licenseId;
