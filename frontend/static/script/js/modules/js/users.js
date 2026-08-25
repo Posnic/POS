@@ -233,11 +233,19 @@ PosnicPro.users = {
                 $('#show_last_created_user').show();
                 var path = '#/users/' + response.data;
                 $('#last_created_user').attr('href', path);
-                PosnicPro.users.usersTable('users');
+                /* ONE reload, not two (saves patch): navigating to #/users
+                   loads the table through the route; the direct call is only
+                   for saves that stay on the list. */
                 if (PosnicPro.action === 'edit') {
                     $(".infobar-settings-sidebar-overlay").css({"background": "transparent", "position": "initial"});
                     $("#infobar-settings-sidebar-users").removeClass("sidebarshow");
-                    hasher.setHash('users');
+                    if (window.location.hash === '#/users') {
+                        PosnicPro.users.usersTable('users');
+                    } else {
+                        hasher.setHash('users');
+                    }
+                } else {
+                    PosnicPro.users.usersTable('users');
                 }
             } else {
                 PosnicPro.alert(response.type, response.message);
