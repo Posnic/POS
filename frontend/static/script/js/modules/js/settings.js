@@ -5495,11 +5495,29 @@ PosnicPro.features = {
              */
             if (!PosnicPro.features._fetchingGate) {
                 PosnicPro.features._fetchingGate = true;
-                PosnicPro.get({ url: 'settings/group/features', data: {} }, function (response) {
-                    var values = (response && response.data && response.data.values) || {};
+                /*
+                 * getOneStore, NOT the features-group resolver.
+                 *
+                 * The resolver answers with READ-TIME defaults - absent means
+                 * on - which is the right answer for gating a menu and a
+                 * catastrophic one to persist. The first version merged those
+                 * resolved values into the blob; the welcome rendered every
+                 * switch ON from them; the owner pressed Save; and his own
+                 * Save wrote all-on to a shop the installer had carefully
+                 * created all-off. "again all features toggled on" - the
+                 * poison travelled through the one button that should be
+                 * safest. The branch document carries the installer's
+                 * EXPLICIT values, so it is the only safe source to merge.
+                 */
+                PosnicPro.get({ url: 'branches/getOneStore', data: 'id=null' }, function (response) {
+                    var d = (response && response.data) || {};
                     var b = PosnicPro.features._blob();
-                    Object.keys(values).forEach(function (k) {
-                        if (b[k] === undefined) { b[k] = values[k]; }
+                    PosnicPro.features.INTRO.forEach(function (f) {
+                        var k = f[0];
+                        if (b[k] === undefined && d[k] !== undefined) { b[k] = d[k] !== false && d[k] !== 'false'; }
+                    });
+                    ['first_run_done', 'first_run_decided'].forEach(function (k) {
+                        if (b[k] === undefined && d[k] !== undefined) { b[k] = d[k] === true || d[k] === 'true'; }
                     });
                     PosnicPro.local.set('general_settings', JSON.stringify(b));
                     PosnicPro.features._fetchingGate = false;

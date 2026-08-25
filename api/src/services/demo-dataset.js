@@ -48,6 +48,12 @@ const MAX_ZIP_BYTES = 25 * 1024 * 1024;
  */
 const DATASET_TRADES = {
   auto_parts: 'Auto parts & garage',
+  restaurant: 'Restaurant & cafe',
+  bakery: 'Bakery',
+  textile: 'Clothing & textiles',
+  hardware: 'Hardware & tools',
+  pharmacy: 'Pharmacy',
+  retail: 'Supermarket & general retail',
 };
 
 /* Input vocabulary -> dataset key, same idea as DEMO_PACK_BY_TYPE. */
@@ -57,6 +63,24 @@ const DATASET_KEY_BY_TYPE = {
   autoparts: 'auto_parts',
   automobile: 'auto_parts',
   garage: 'auto_parts',
+  restaurant: 'restaurant',
+  cafe: 'restaurant',
+  coffee: 'restaurant',
+  bakery: 'bakery',
+  textile: 'textile',
+  textiles: 'textile',
+  apparel: 'textile',
+  clothing: 'textile',
+  hardware: 'hardware',
+  pharmacy: 'pharmacy',
+  chemist: 'pharmacy',
+  medical: 'pharmacy',
+  retail: 'retail',
+  supermarket: 'retail',
+  kirana: 'retail',
+  grocery: 'retail',
+  groceries: 'retail',
+  general: 'retail',
 };
 
 function datasetKeyFor(businessType) {

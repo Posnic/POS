@@ -39,12 +39,25 @@ const calDaysAgo = (d) => Math.round((startOfToday - new Date(dayKey(d) + 'T00:0
 describe('demo sales look like last week, not last fortnight', () => {
   const sales = demoSeed.buildSales({ items, customers, branch, pack: 'cafe', now });
 
-  test('every sale is inside the past seven days, and never today', () => {
+  test('sales cover today through the past week - TODAY included', () => {
+    /*
+     * The owner's revision: "there is no sale added same day of created...
+     * i dont see any count in dashboard." The dashboard's big number is
+     * today's takings, and a zero there on first login reads as a dead
+     * shop. So a couple of sales land today - stamped HOURS before now,
+     * never at clock-hours, so they are today in any timezone the shop
+     * resolves - and the rest cluster over the past week.
+     */
+    let today = 0;
     for (const s of sales) {
       const d = calDaysAgo(s.date);
-      expect(d).toBeGreaterThanOrEqual(1);
+      expect(d).toBeGreaterThanOrEqual(0);
       expect(d).toBeLessThanOrEqual(7);
+      expect(new Date(s.date) <= now).toBe(true);
+      if (d === 0) today += 1;
     }
+    expect(today).toBeGreaterThanOrEqual(1);
+    expect(demoSeed.SALES_PER_DAY[0]).toBeGreaterThanOrEqual(2);
   });
 
   test('at least one day carries three or more sales', () => {

@@ -102,7 +102,14 @@ test('an unloaded settings blob is not treated as a shop that has never been ask
     const empty = gate.slice(gate.indexOf('if (!Object.keys(blob).length)'),
         gate.indexOf('renderIntro') > -1 ? undefined : undefined);
     assert.match(empty, /if \(!PosnicPro\.features\._fetchingGate\) \{/);
-    assert.match(empty, /url: 'settings\/group\/features'/);
+    /* getOneStore, never the group resolver: the resolver's read-time
+       defaults (absent = on) merged into the blob once, the welcome rendered
+       all-on from them, and the owner's own Save persisted the poison. The
+       branch document carries the installer's EXPLICIT values. */
+    assert.match(empty, /branches\/getOneStore/);
+    assert.ok(!/settings\/group\/features/.test(empty),
+        'the gate is merging resolver-defaulted values again');
+    assert.match(empty, /!== false && d\[k\] !== 'false'/);
     assert.match(empty, /PosnicPro\.features\.maybeShowIntro\(\);/);
     assert.match(empty, /return false;/);
 });
