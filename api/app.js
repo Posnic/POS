@@ -631,11 +631,22 @@ const UPDATED_ASSETS = process.env.POSNIC_ASSET_DIR;
  * to the new hashed URLs, so it is the one thing that may never be stale.
  */
 const HASHED_ASSET = /\.[0-9a-f]{8}\.(js|css)$/;
+const STATIC_MEDIA = /\.(png|jpe?g|gif|svg|webp|ico|woff2?|ttf|eot|otf|mp3|wav)(\?.*)?$/i;
 function assetCacheHeaders(res, filePath) {
   if (HASHED_ASSET.test(filePath)) {
     res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
   } else if (filePath.endsWith('.html')) {
     res.setHeader('Cache-Control', 'no-cache');
+  } else if (STATIC_MEDIA.test(filePath)) {
+    /*
+     * Fonts and images went out with NO Cache-Control (this function only
+     * labelled the hashed bundles and html), so Cloudflare stamped its 4h
+     * default - Lighthouse: "use efficient cache lifetimes, 2,718 KiB".
+     * These names are not hashed, so not immutable - but a week is honest
+     * for artwork and font files that change a few times a year, and the
+     * service worker's versioned cache still refreshes them per release.
+     */
+    res.setHeader('Cache-Control', 'public, max-age=604800');
   }
 }
 
