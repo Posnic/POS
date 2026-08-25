@@ -66,7 +66,7 @@
                                 <ul class="list-inline-group text-left mb-0 pl-0">
                                     <li class="list-inline-item">
                                         <div class="form-group mb-0 amount-spent-select selecct-align">
-                                            <select class="form-control select_page" id="view_items_per_page" data-id="items" onChange="PosnicPro.setPerPage(this, 'Table');">
+                                            <select class="form-control select_page" id="view_items_per_page" data-id="items" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View items per page">
                                                 <option value="5" selected>5</option>
                                                 <option value="10">10</option>
                                                 <option value="25">25</option>
@@ -215,8 +215,8 @@
                             <div class="col-4">
                                 <nav aria-label="Page navigation example">
                                     <ul class="pagination mb-0">
-                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="items" onclick="PosnicPro.previousPage(this, 'Table')"> <i class="fa fa-angle-left font-20"></i> </button>
-                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="items" onclick="PosnicPro.nextPage(this, 'Table')"> <i class="fa fa-angle-right font-20"></i> </button>
+                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="items" onclick="PosnicPro.previousPage(this, 'Table')" aria-label="Previous page"> <i class="fa fa-angle-left font-20"></i> </button>
+                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="items" onclick="PosnicPro.nextPage(this, 'Table')" aria-label="Next page"> <i class="fa fa-angle-right font-20"></i> </button>
                                     </ul>
                                 </nav>
                             </div>
@@ -356,7 +356,7 @@
                                 <label><lang class="lang_name_title">Name </lang></label>
                             </div>
                             <div class="col-md-8 col-xs-12 input-container">
-                                <input id="branch-value" class="form-control border-control" type="text" value="posnic innovation pvt ltd."/>
+                                <input id="branch-value" class="form-control border-control" type="text" value="posnic innovation pvt ltd." aria-label="Branch"/>
                             </div>
                         </div>
 
@@ -364,11 +364,11 @@
                         <div class="row">
                             <div class="col-md-4 col-xs-12 col-md-offset-1 form-group">
                                 <label><lang class="lang_price_title">Price </lang></label>
-                                <input id="price-value" class="form-control border-control" type="text"/>
+                                <input id="price-value" class="form-control border-control" type="text" aria-label="Price"/>
                             </div>
                             <div class="col-md-4 col-xs-12 col-md-offset-1 form-group">
                                 <label><lang class="lang_price_title">MRP </lang></label>
-                                <input id="mrp-price-value" class="form-control border-control" type="text"/>
+                                <input id="mrp-price-value" class="form-control border-control" type="text" aria-label="Mrp price"/>
                             </div>
                         </div>
 
@@ -377,12 +377,12 @@
                             <div class="col-md-4 col-xs-12 col-md-offset-1 form-group">
                                 <label  for="mfg_checkbox">Mfg Date</label>
                                 <input  type="checkbox" id="mfg_checkbox" onclick="PosnicPro.items.mfgCheckbox(this.checked);">
-                                <input id="mfg-date-value" class="form-control border-control" type="text"/>
+                                <input id="mfg-date-value" class="form-control border-control" type="text" aria-label="Mfg date"/>
                             </div>
                             <div class="col-md-4 col-xs-12 col-md-offset-1 form-group">
                                 <label  for="exp_checkbox">Exp Date</label>
                                 <input  type="checkbox" id="exp_checkbox" onclick="PosnicPro.items.expCheckbox(this.checked);">
-                                <input id="exp-date-value" class="form-control border-control" type="text"/>
+                                <input id="exp-date-value" class="form-control border-control" type="text" aria-label="Exp date"/>
                             </div>
                         </div>
 
@@ -412,11 +412,11 @@
                                                 <div class="row">
                                                     <div class="col-md-5 col-xs-12 col-md-offset-1 form-group">
                                                         <label>Document width</label>
-                                                        <input id="document_width" name="document_width" class="form-control" type="number" value="1.96"/>
+                                                        <input id="document_width" name="document_width" class="form-control" type="number" value="1.96" aria-label="Document width"/>
                                                     </div>
                                                     <div class="col-md-5 col-xs-12 col-md-offset-1 form-group">
                                                         <label>Document height</label>
-                                                        <input id="document_height" class="form-control" type="number" value="1.18"/>
+                                                        <input id="document_height" class="form-control" type="number" value="1.18" aria-label="Document height"/>
                                                     </div>
                                                 </div>
 
@@ -424,11 +424,11 @@
                                                 <div class="row">
                                                     <div class="col-md-5 col-xs-12 col-md-offset-1 form-group">
                                                         <label>Margin Top</label>
-                                                        <input id="margin_top" class="form-control border-control" type="number" value=0 />
+                                                        <input id="margin_top" class="form-control border-control" type="number" value=0 aria-label="Margin top"/>
                                                     </div>
                                                     <div class="col-md-5 col-xs-12 col-md-offset-1 form-group">
                                                         <label>Margin Bottom</label>
-                                                        <input id="margin_bottom" class="form-control border-control" type="number" value=0 />
+                                                        <input id="margin_bottom" class="form-control border-control" type="number" value=0 aria-label="Margin bottom"/>
                                                     </div>
                                                 </div>
 
@@ -436,41 +436,41 @@
                                                 <div class="row">
                                                     <div class="col-md-5 col-xs-12 col-md-offset-1 form-group">
                                                         <label>Margin Left</label>
-                                                        <input id="margin_left" class="form-control border-control" type="number" value=0 />
+                                                        <input id="margin_left" class="form-control border-control" type="number" value=0 aria-label="Margin left"/>
                                                     </div>
                                                     <div class="col-md-5 col-xs-12 col-md-offset-1 form-group">
                                                         <label>Margin Right</label>
-                                                        <input id="margin_right" class="form-control border-control" type="number" value=0 />
+                                                        <input id="margin_right" class="form-control border-control" type="number" value=0 aria-label="Margin right"/>
                                                     </div>
                                                 </div>
 
                                                 <!-- Bar width -->
                                                 <div class="row">
                                                     <div class="col-md-12 col-xs-12 col-md-offset-1 description-text"><label><lang class="lang_barwidth">Bar Width</lang></label></div>
-                                                    <div class="col-md-7 col-xs-11 slider-container"><input id="bar-width" class="range-type" type="range" min="1" max="3.5" step="0.01" value="2.11"/></div>
+                                                    <div class="col-md-7 col-xs-11 slider-container"><input id="bar-width" class="range-type" type="range" min="1" max="3.5" step="0.01" value="2.11" aria-label="Bar width"/></div>
                                                     <div class="col-md-2 col-xs-2 value-text"><p><span id="bar-width-display"></span></p></div>
                                                 </div>
                                                 <!-- Height -->
                                                 <div class="row">
                                                     <div class="col-md-12 col-xs-12 col-md-offset-1 description-text"><label><lang class="lang_barheight">Bar Height</lang></label></div>
-                                                    <div class="col-md-7 col-xs-11 slider-container"><input id="bar-height" class="range-type" type="range" min="10" max="120" step="1" value="43" /></div>
+                                                    <div class="col-md-7 col-xs-11 slider-container"><input id="bar-height" class="range-type" type="range" min="10" max="120" step="1" value="43" aria-label="Bar height"/></div>
                                                     <div class="col-md-2 col-xs-2 value-text"><p><span id="bar-height-display"></span></p></div>
                                                 </div>
                                                 <!-- Margin -->
                                                 <div class="row">
                                                     <div class="col-md-12 col-xs-12 col-md-offset-1 description-text"><label><lang class="lang_margin">Margin</lang></label></div>
-                                                    <div class="col-md-7 col-xs-11 slider-container"><input id="bar-margin" class="range-type" type="range" min="0" max="25" step="0.01" value="1"/></div>
+                                                    <div class="col-md-7 col-xs-11 slider-container"><input id="bar-margin" class="range-type" type="range" min="0" max="25" step="0.01" value="1" aria-label="Bar margin"/></div>
                                                     <div class="col-md-2 col-xs-2 value-text"><p><span id="bar-margin-display"></span></p></div>
                                                 </div>
                                                 <!-- Background (color) -->
                                                 <div class="row">
                                                     <div class="col-md-12 col-xs-12 col-md-offset-1 description-text"><label><lang class="lang_background">Background</lang></label></div>
-                                                    <div class="col-md-8 col-xs-12 input-container"><input id="background-color" class="form-control border-control color" value="#FFFFFF"/></div>
+                                                    <div class="col-md-8 col-xs-12 input-container"><input id="background-color" class="form-control border-control color" value="#FFFFFF" aria-label="Background color"/></div>
                                                 </div>
                                                 <!-- Line color -->
                                                 <div class="row">
                                                     <div class="col-md-12 col-xs-12 col-md-offset-1 description-text"><label><lang class="lang_linecolor">Line Color</lang></label></div>
-                                                    <div class="col-md-8 col-xs-12 input-container"><input id="line-color" class="form-control border-control color" value="#000000"/></div>
+                                                    <div class="col-md-8 col-xs-12 input-container"><input id="line-color" class="form-control border-control color" value="#000000" aria-label="Line color"/></div>
                                                 </div>
                                                 <div id="font-options" style="margin-top: 10px;">
                                                     <!-- Text align -->
@@ -488,7 +488,7 @@
                                                     <div class="row">
                                                         <div class="col-md-12 col-md-offset-1 col-xs-12 col-xs-offset-0 description-text"><label><lang class="lang_font">Font</lang></label></div>
                                                         <div class="col-md-8 center-text">
-                                                            <select class="form-control border-control" id="font" style="font-family: monospace">
+                                                            <select class="form-control border-control" id="font" style="font-family: monospace" aria-label="Font">
                                                                 <option value="monospace" style="font-family: monospace" selected="selected">Monospace</option>
                                                                 <option value="sans-serif" style="font-family: sans-serif">Sans-serif</option>
                                                                 <option value="serif" style="font-family: serif">Serif</option>
@@ -509,13 +509,13 @@
                                                     <!-- Font size -->
                                                     <div class="row">
                                                         <div class="col-md-12 col-md-offset-1 col-xs-12 col-xs-offset-0 description-text"><label><lang class="lang_fontsize">Font Size</lang></label></div>
-                                                        <div class="col-md-7 col-xs-11 slider-container"><input id="bar-fontSize" class="range-type" type="range" min="3" max="22" step="1" value="12"/></div>
+                                                        <div class="col-md-7 col-xs-11 slider-container"><input id="bar-fontSize" class="range-type" type="range" min="3" max="22" step="1" value="12" aria-label="Bar fontSize"/></div>
                                                         <div class="col-md-2 col-xs-2 value-text"><p><span id="bar-fontSize-display"></span></p></div>
                                                     </div>
                                                     <!-- Text margin -->
                                                     <div class="row">
                                                         <div class="col-md-12 col-md-offset-1 col-xs-12 col-xs-offset-0 description-text"><label><lang class="lang_textmargin">Text Margin</lang></label></div>
-                                                        <div class="col-md-7 col-xs-11 slider-container"><input id="bar-text-margin" class="range-type" type="range" min="-2" max="40" step="0.5" value="1"/></div>
+                                                        <div class="col-md-7 col-xs-11 slider-container"><input id="bar-text-margin" class="range-type" type="range" min="-2" max="40" step="0.5" value="1" aria-label="Bar text margin"/></div>
                                                         <div class="col-md-2 col-xs-2 col-xs-11 value-text"><p><span id="bar-text-margin-display"></span></p></div>
                                                     </div>
                                                 </div>
@@ -573,12 +573,12 @@
 
                     <div class="form-group bulk-price-category-row" style="display:none;">
                         <label class="f-w-6">Category</label>
-                        <select class="form-control" id="bulk_price_category" style="width:100%;"></select>
+                        <select class="form-control" id="bulk_price_category" style="width:100%;" aria-label="Bulk price category"></select>
                     </div>
 
                     <div class="form-group">
                         <label class="f-w-6">Price to change</label>
-                        <select class="form-control" id="bulk_price_field">
+                        <select class="form-control" id="bulk_price_field" aria-label="Bulk price field">
                             <option value="selling_price" selected>Selling Price</option>
                             <option value="mrp_price">MRP price</option>
                             <option value="company_price">Company price</option>
@@ -589,13 +589,13 @@
                         <label class="f-w-6">Change by</label>
                         <div class="row">
                             <div class="col-4">
-                                <select class="form-control" id="bulk_price_direction">
+                                <select class="form-control" id="bulk_price_direction" aria-label="Bulk price direction">
                                     <option value="increase" selected>Increase</option>
                                     <option value="decrease">Decrease</option>
                                 </select>
                             </div>
                             <div class="col-4">
-                                <select class="form-control" id="bulk_price_op" onchange="PosnicPro.items.bulkPriceOpChanged();">
+                                <select class="form-control" id="bulk_price_op" onchange="PosnicPro.items.bulkPriceOpChanged();" aria-label="Bulk price op">
                                     <option value="percent" selected>by %</option>
                                     <option value="amount">by amount</option>
                                 </select>
@@ -672,20 +672,20 @@
 
                     <div class="form-group bulk-stock-category-row" style="display:none;">
                         <label class="f-w-6">Category</label>
-                        <select class="form-control" id="bulk_stock_category" style="width:100%;"></select>
+                        <select class="form-control" id="bulk_stock_category" style="width:100%;" aria-label="Bulk stock category"></select>
                     </div>
 
                     <div class="form-group">
                         <label class="f-w-6">Change by</label>
                         <div class="row">
                             <div class="col-4">
-                                <select class="form-control" id="bulk_stock_direction">
+                                <select class="form-control" id="bulk_stock_direction" aria-label="Bulk stock direction">
                                     <option value="increase" selected>Add</option>
                                     <option value="decrease">Remove</option>
                                 </select>
                             </div>
                             <div class="col-4">
-                                <select class="form-control" id="bulk_stock_op" onchange="PosnicPro.items.bulkStockOpChanged();">
+                                <select class="form-control" id="bulk_stock_op" onchange="PosnicPro.items.bulkStockOpChanged();" aria-label="Bulk stock op">
                                     <option value="amount" selected>by quantity</option>
                                     <option value="percent">by %</option>
                                 </select>
@@ -753,7 +753,7 @@
                         <div id="stock_adjust_custom_wrap" style="display:none;" class="mt-1">
                             <input type="text" class="form-control form-control-sm mb-1" id="stock_adjust_custom"
                                 maxlength="60" placeholder="Reason (e.g. Theft, Expiry)" autocomplete="off">
-                            <select class="form-control form-control-sm" id="stock_adjust_mode" onchange="PosnicPro.items.renderAdjRows();">
+                            <select class="form-control form-control-sm" id="stock_adjust_mode" onchange="PosnicPro.items.renderAdjRows();" aria-label="Stock adjust mode">
                                 <option value="subtract">Removes stock</option>
                                 <option value="add">Adds stock</option>
                                 <option value="set">Sets stock to the count</option>

@@ -25,14 +25,14 @@
                                 <div class="row">
                                     <div class="col-md-3 form-group">
                                         <label>Which items</label>
-                                        <select class="form-control" id="ps_margin_scope" onchange="PosnicPro.pricesettings.scopeToggle('margin');">
+                                        <select class="form-control" id="ps_margin_scope" onchange="PosnicPro.pricesettings.scopeToggle('margin');" aria-label="Ps margin scope">
                                             <option value="all">All items</option>
                                             <option value="category">One category</option>
                                         </select>
                                     </div>
                                     <div class="col-md-3 form-group" id="ps_margin_cat_wrap" style="display:none;">
                                         <label>Category</label>
-                                        <select class="form-control" id="ps_margin_category"></select>
+                                        <select class="form-control" id="ps_margin_category" aria-label="Ps margin category"></select>
                                     </div>
                                     <div class="col-md-2 form-group">
                                         <label>Margin</label>
@@ -63,18 +63,18 @@
                                 <div class="row">
                                     <div class="col-md-3 form-group">
                                         <label>Which items</label>
-                                        <select class="form-control" id="ps_custom_scope" onchange="PosnicPro.pricesettings.scopeToggle('custom');">
+                                        <select class="form-control" id="ps_custom_scope" onchange="PosnicPro.pricesettings.scopeToggle('custom');" aria-label="Ps custom scope">
                                             <option value="all">All items</option>
                                             <option value="category">One category</option>
                                         </select>
                                     </div>
                                     <div class="col-md-3 form-group" id="ps_custom_cat_wrap" style="display:none;">
                                         <label>Category</label>
-                                        <select class="form-control" id="ps_custom_category"></select>
+                                        <select class="form-control" id="ps_custom_category" aria-label="Ps custom category"></select>
                                     </div>
                                     <div class="col-md-3 form-group">
                                         <label>Price to change</label>
-                                        <select class="form-control" id="ps_custom_field">
+                                        <select class="form-control" id="ps_custom_field" aria-label="Ps custom field">
                                             <option value="selling_price">Selling Price</option>
                                             <option value="mrp_price">MRP</option>
                                             <option value="company_price">Cost Price</option>
@@ -82,14 +82,14 @@
                                     </div>
                                     <div class="col-md-3 form-group">
                                         <label>Direction</label>
-                                        <select class="form-control" id="ps_custom_direction">
+                                        <select class="form-control" id="ps_custom_direction" aria-label="Ps custom direction">
                                             <option value="increase">Increase</option>
                                             <option value="decrease">Decrease</option>
                                         </select>
                                     </div>
                                     <div class="col-md-3 form-group">
                                         <label>By</label>
-                                        <select class="form-control" id="ps_custom_op">
+                                        <select class="form-control" id="ps_custom_op" aria-label="Ps custom op">
                                             <option value="percent">by %</option>
                                             <option value="amount">by amount</option>
                                         </select>

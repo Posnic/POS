@@ -86,7 +86,7 @@
                                     </label>
                                 </div>
                                 <select class="form-control form-control-sm" id="item_service_unit"
-                                    style="display:none !important;">
+                                    style="display:none !important;" aria-label="Item service unit">
                                     <option value="fixed">Fixed price</option>
                                     <option value="hour">Per hour</option>
                                     <option value="day">Per day</option>
@@ -95,8 +95,8 @@
                                      and fill in items.js keeps working; the link drives them. -->
                                 <a href="javascript:void(0)" id="variant_mode_link" style="font-size:.85rem;">+ This item has variants</a>
                                 <div style="display:none;">
-                                    <input type="radio" id="product_without_variant" name="product_radio_variant" checked>
-                                    <input type="radio" id="product_with_variant" name="product_radio_variant">
+                                    <input type="radio" id="product_without_variant" name="product_radio_variant" checked aria-label="Product without variant">
+                                    <input type="radio" id="product_with_variant" name="product_radio_variant" aria-label="Product with variant">
                                 </div>
                             </div>
                         </div>
@@ -210,7 +210,7 @@
                                         <lang class="lang_choosecategory_title">Select Category</lang>
                                     </label>
                                     <select id='items_category' name="items_category" style='width: 100%;'
-                                        class="select2 items_category items_choose_error">
+                                        class="select2 items_category items_choose_error" aria-label="Items category">
                                     </select>
                                 </div>
                                 <div class="form-group col-md-6">
@@ -231,7 +231,7 @@
                                          every payload builder and edit-fill in items.js keeps
                                          reading the same ids. -->
                                     <select id="items_supplier_pick" class="select2 items_supplier_pick"
-                                        style="width:100%;"></select>
+                                        style="width:100%;" aria-label="Items supplier pick"></select>
                                     <input type="hidden" id="items_supplier" name="items_supplier">
                                     <input type="hidden" name="items_supplier_id" id="items_supplier_id">
                                 </div>
@@ -389,7 +389,7 @@
                                         <span class="text-danger">*</span>
                                     </label>
                                     <select id='items_variant' name="items_variant" style='width: 200px;'
-                                        class="select2 items_choose_error" required>
+                                        class="select2 items_choose_error" required aria-label="Items variant">
                                     </select>
                                 </div>
                             </div>
@@ -510,7 +510,7 @@
 
                         <div class="col-md-12 m-t-10" id="default_tax">
                             <select class="form-control select2 pricing-field items_tax items_choose_error"
-                                name="items_tax" id="items_tax" required>
+                                name="items_tax" id="items_tax" required aria-label="Items tax">
                             </select>
                         </div>
 
@@ -807,14 +807,14 @@
                                                 <input name="items_discount_amount" id="items_discount_amount"
                                                     type="text" aria-describedby="basic-addon1"
                                                     class="form-control border-control allow_decimal text-right" min="0"
-                                                    minlength="1" maxlength="10" value="0">
+                                                    minlength="1" maxlength="10" value="0" aria-label="Items discount amount">
 
                                                 <input name="items_discount_percentage" id="items_discount_percentage"
                                                     type="number" aria-describedby="basic-addon1"
                                                     class="form-control border-control text-right" min="0" max="100"
                                                     minlength="1" maxlength="4"
                                                     onkeyup="this.value = PosnicPro.minmax(this.value, 0, 100)"
-                                                    onkeypress="return PosnicPro.isNumber(event)" value="0">
+                                                    onkeypress="return PosnicPro.isNumber(event)" value="0" aria-label="Items discount percentage">
                                             </div>
                                         </div>
                                     </div>

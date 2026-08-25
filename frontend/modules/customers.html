@@ -15,7 +15,7 @@
                     </div>
                 </div>
                 <div class="col-lg-2 col-xl-2 hide-button-action tb_filter" style="display:none;">
-                    <select class="custom-select border-control" id="view_customers_fields" data-id="customers" onchange="PosnicPro.changePlaceholder(this)">
+                    <select class="custom-select border-control" id="view_customers_fields" data-id="customers" onchange="PosnicPro.changePlaceholder(this)" aria-label="View customers fields">
                         <option value="name" selected>
                         <lang class="lang_name_title">Name</lang>
                         </option>
@@ -83,7 +83,7 @@
                                 <ul class="list-inline-group text-left mb-0 pl-0">
                                     <li class="list-inline-item">
                                         <div class="form-group mb-0 amount-spent-select selecct-align">
-                                            <select class="form-control select_page" id="view_customers_per_page" data-id="customers" onChange="PosnicPro.setPerPage(this, 'Table');">
+                                            <select class="form-control select_page" id="view_customers_per_page" data-id="customers" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View customers per page">
                                                 <option value="5" selected>5</option>
                                                 <option value="10">10</option>
                                                 <option value="25">25</option>
@@ -200,8 +200,8 @@
                             <div class="col-4">
                                 <nav aria-label="Page navigation example">
                                     <ul class="pagination mb-0">
-                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="customers" onclick="PosnicPro.previousPage(this, 'Table')"> <i class="fa fa-angle-left font-20"></i> </button>
-                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="customers" onclick="PosnicPro.nextPage(this, 'Table')"> <i class="fa fa-angle-right font-20"></i> </button>
+                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="customers" onclick="PosnicPro.previousPage(this, 'Table')" aria-label="Previous page"> <i class="fa fa-angle-left font-20"></i> </button>
+                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="customers" onclick="PosnicPro.nextPage(this, 'Table')" aria-label="Next page"> <i class="fa fa-angle-right font-20"></i> </button>
                                     </ul>
                                 </nav>
                             </div>

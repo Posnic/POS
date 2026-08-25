@@ -5203,7 +5203,7 @@ PosnicPro.modifiers = {
             return '<div class="form-row mb-1 mod-opt-row">'
                 + '<div class="col-7"><input type="text" class="form-control form-control-sm mod-opt-name" maxlength="60" placeholder="e.g. Extra cheese" value="' + esc(o.name) + '"></div>'
                 + '<div class="col-4"><input type="number" step="0.01" class="form-control form-control-sm mod-opt-delta" placeholder="+/- price" value="' + (Number(o.price_delta) || 0) + '"></div>'
-                + '<div class="col-1"><a href="javascript:void(0);" class="text-danger mod-opt-remove"><i class="feather icon-x"></i></a></div>'
+                + '<div class="col-1"><a href="javascript:void(0);" class="text-danger mod-opt-remove" aria-label="Remove"><i class="feather icon-x"></i></a></div>'
                 + '</div>';
         };
         $('#modifier_editor_modal').remove();
@@ -5328,7 +5328,7 @@ PosnicPro.pricelists = {
             return '<div class="form-row mb-1 pl-ov-row">'
                 + '<div class="col-7"><input type="text" class="form-control form-control-sm pl-ov-name" placeholder="Type to search an item" value="' + esc(o.item_name) + '" data-itemid="' + esc(o.item_id) + '"></div>'
                 + '<div class="col-4"><input type="number" min="0" step="0.01" class="form-control form-control-sm pl-ov-price" placeholder="Price" value="' + (o.price === '' ? '' : (Number(o.price) || 0)) + '"></div>'
-                + '<div class="col-1"><a href="javascript:void(0);" class="text-danger pl-ov-remove"><i class="feather icon-x"></i></a></div>'
+                + '<div class="col-1"><a href="javascript:void(0);" class="text-danger pl-ov-remove" aria-label="Remove"><i class="feather icon-x"></i></a></div>'
                 + '</div>';
         };
         $('#pricelist_editor_modal').remove();

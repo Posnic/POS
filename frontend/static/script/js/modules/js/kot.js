@@ -263,7 +263,7 @@ PosnicPro.kot = {
                         background: #f8f9fa; min-height: 100px; padding: 10px; margin-bottom: 10px;">
                 <input type="text" class="form-control form-control-sm" id="custom_table_number_input" 
                        placeholder="Custom #" style="text-align: center; font-size: 14px; margin-bottom: 8px; border: 1px solid #17a2b8;">
-                <button type="button" class="btn btn-sm btn-info" onclick="PosnicPro.kot.addCustomTableKOT()" style="padding: 4px 12px;">
+                <button type="button" class="btn btn-sm btn-info" onclick="PosnicPro.kot.addCustomTableKOT()" style="padding: 4px 12px;" aria-label="Add">
                     <i class="feather icon-plus" style="font-size: 14px;"></i>
                 </button>
             </div>
@@ -526,11 +526,11 @@ PosnicPro.kot = {
                                     </div>
                                     <div class="kot-item-qty-controls" data-sale-id="${kot._id}" data-item-id="${itemId}" data-item-price="${itemPrice}" style="display: none; align-items: center; justify-content: flex-end;">
                                         <div class="btn-group btn-group-sm" style="display: inline-flex; align-items: center; margin-right: 8px;">
-                                            <button type="button" class="btn btn-light btn-sm qty-decrease" style="border: 1px solid #ced4da; padding: 2px 8px;">
+                                            <button type="button" class="btn btn-light btn-sm qty-decrease" style="border: 1px solid #ced4da; padding: 2px 8px;" aria-label="Decrease quantity">
                                                 <i class="feather icon-minus" style="font-size: 10px;"></i>
                                             </button>
                                             <input type="text" class="form-control form-control-sm qty-input" value="${itemQty}" min="1" style="width: 50px; text-align: center; padding: 2px 5px; height: 28px;">
-                                            <button type="button" class="btn btn-light btn-sm qty-increase" style="border: 1px solid #ced4da; padding: 2px 8px;">
+                                            <button type="button" class="btn btn-light btn-sm qty-increase" style="border: 1px solid #ced4da; padding: 2px 8px;" aria-label="Increase quantity">
                                                 <i class="feather icon-plus" style="font-size: 10px;"></i>
                                             </button>
                                         </div>
@@ -971,11 +971,11 @@ PosnicPro.kot = {
                         </div>
                         <div class="kot-item-qty-controls" data-sale-id="${saleId}" data-item-id="${itemId}" data-item-price="${itemPrice}" data-base-price="${basePrice || itemPrice}" style="display: inline-flex; align-items: center; justify-content: flex-end;">
                             <div class="btn-group btn-group-sm" style="display: inline-flex; align-items: center; margin-right: 8px;">
-                                <button type="button" class="btn btn-light btn-sm qty-decrease" style="border: 1px solid #ced4da; padding: 2px 8px;">
+                                <button type="button" class="btn btn-light btn-sm qty-decrease" style="border: 1px solid #ced4da; padding: 2px 8px;" aria-label="Decrease quantity">
                                     <i class="feather icon-minus" style="font-size: 10px;"></i>
                                 </button>
                                 <input type="text" class="form-control form-control-sm qty-input" value="1" min="1" style="width: 50px; text-align: center; padding: 2px 5px; height: 28px;">
-                                <button type="button" class="btn btn-light btn-sm qty-increase" style="border: 1px solid #ced4da; padding: 2px 8px;">
+                                <button type="button" class="btn btn-light btn-sm qty-increase" style="border: 1px solid #ced4da; padding: 2px 8px;" aria-label="Increase quantity">
                                     <i class="feather icon-plus" style="font-size: 10px;"></i>
                                 </button>
                             </div>
