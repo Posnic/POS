@@ -54,3 +54,31 @@ test('nothing still lights the removed menu ids', () => {
         assert.ok(!src.includes(".view_receivings_page')"), f + ' still targets the removed class');
     }
 });
+
+test('receive happens IN the purchases page - the old-design detour is gone', () => {
+    /* Owner: "while click on receive items its going old design." The
+       Receive action now opens a panel in the same page, posts the same
+       receivings payload the old screen posted (status Received, the PO id
+       riding as source_po_id so the mirror syncs), and reopens the order.
+       The old screen stays reachable for manual purchases - but nothing
+       routes to it from a purchase order any more. */
+    const html = read('modules/purchaseOrders.html');
+    assert.match(html, /id="po_receive_section"/);
+    assert.match(html, /Receive into stock/);
+    assert.match(html, /table-borderless m-cards/, 'the receive lines must be card-ready on phones');
+
+    const receive = receivingJs.slice(
+        receivingJs.indexOf('receive: function (id)'),
+        receivingJs.indexOf('saveReceive:'));
+    assert.ok(!receive.includes("hasher.setHash('receivings/new')"),
+        'Receive still detours to the old screen');
+    assert.match(receivingJs, /openReceive: function/);
+    assert.match(receivingJs, /saveReceive: function/);
+    const save = receivingJs.slice(receivingJs.indexOf('saveReceive: function'));
+    assert.match(save, /status: 'Received'/);
+    assert.match(save, /source_po_id: String\(po\._id\)/);
+    /* the dead prefill bridge went with the detour */
+    assert.ok(!receivingJs.includes('_poPrefill'), 'the prefill bridge is dead code now');
+    /* every sibling section hides the panel, so it cannot linger */
+    assert.match(receivingJs, /#po_form_section,#po_view_section,#po_receive_section'\)\.hide/);
+});
