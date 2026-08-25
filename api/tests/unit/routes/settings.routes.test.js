@@ -116,8 +116,13 @@ describe('settings.routes', () => {
        for every caller, and change only with a release. The versioned SW
        cache resets on every deploy, so THIS header is what makes the repeat
        fetch free ("getJSONState this is not covered with service worker?"). */
-    const refRoutes = ['/getJSONCountry', '/getJSONState', '/getJSONCurrency',
-      '/getJSONTimeZone', '/getJSONGstState'];
+    const refRoutes = [
+      '/getJSONCountry',
+      '/getJSONState',
+      '/getJSONCurrency',
+      '/getJSONTimeZone',
+      '/getJSONGstState',
+    ];
     for (const p of refRoutes) {
       const layer = router.stack.find((l) => l.route && l.route.path === p);
       expect(layer).toBeDefined();
@@ -127,7 +132,9 @@ describe('settings.routes', () => {
       const next = jest.fn();
       layer.route.stack[0].handle({}, res, next);
       expect(res.set).toHaveBeenCalledWith(
-        'Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
+        'Cache-Control',
+        'public, max-age=86400, stale-while-revalidate=604800'
+      );
       expect(next).toHaveBeenCalled();
     }
   });
