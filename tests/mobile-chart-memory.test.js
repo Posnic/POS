@@ -122,3 +122,23 @@ test('the one remaining direct Apex site carries the same refusal', () => {
         path.join(__dirname, '..', 'frontend', 'static', 'script', 'js', 'modules', 'js', 'report_kiosk.js'), 'utf8');
     assert.ok(!kiosk.includes('ApexCharts'), 'the kiosk graphs are back');
 });
+
+test('bundle-split slice 1: the editors load when used, never at boot', () => {
+    /* summernote (325KB) and bootstrap-colorpicker (157KB) rode every boot
+       for panes most sessions never open - and summernote also BUILT its
+       editor DOM at script load. Both are lazy sets now; the boot map must
+       not regain them. */
+    const map = fs.readFileSync(path.join(__dirname, '..', 'frontend', 'pages_css_js_map.json'), 'utf8');
+    assert.ok(!map.includes('summernote-bs4.js'), 'summernote is back in the boot bundle');
+    assert.ok(!map.includes('bootstrap-colorpicker.js'), 'colorpicker is back in the boot bundle');
+    assert.match(core, /summernote: \['script\/lazy\/summernote\.js'\]/);
+    assert.match(core, /colorpicker: \['script\/lazy\/colorpicker\.js'\]/);
+    /* the save path survives without the editors ever loading */
+    const settings = fs.readFileSync(
+        path.join(__dirname, '..', 'frontend', 'static', 'script', 'js', 'modules', 'js', 'settings.js'), 'utf8');
+    assert.match(settings, /_editorsReady\s*\?\s*\$\('#footer_print'\)\.summernote\('code'\)\s*:\s*PosnicPro\.settings\._printDocs\.footer/);
+    assert.match(settings, /initPrintEditors/);
+    const theme = fs.readFileSync(
+        path.join(__dirname, '..', 'frontend', 'static', 'script', 'js', 'core', 'themeManager.js'), 'utf8');
+    assert.match(theme, /lazy\.load\('colorpicker'\)/);
+});

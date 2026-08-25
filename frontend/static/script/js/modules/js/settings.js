@@ -381,6 +381,7 @@ PosnicPro.settings = {
         // a change saved on another till showed stale here until re-login -
         // and "does Module On/Off preserve the selections?" deserves a
         // guaranteed yes, not a usually.
+        PosnicPro.settings.initPrintEditors();
         PosnicPro.settings.viewSettings(PosnicPro.local.get('branch_id_set'));
         /* Core Settings is the tab that is already active, so a click handler
            alone never fires on the way in - the switches would sit at their
@@ -655,7 +656,8 @@ PosnicPro.settings = {
             data: 'id=' + id
         };
         $('#footer_print,#header_print').html('').text('');
-        $('#footer_print,#header_print').summernote('code', '');
+        PosnicPro.settings._printDocs = { header: '', footer: '' };
+        if (PosnicPro.settings._editorsReady) { $('#footer_print,#header_print').summernote('code', ''); }
         let loader = $(".loader-table-setting");
         $("<div class='loadingSpinner'></div>").appendTo(loader);
         PosnicPro.get(params, function (response) {
@@ -1170,13 +1172,15 @@ if ($wrapper.length) {
                 let headerContent = (data.header_print !== '') ? data.header_print : '';
                 $('#header_print').html('').append(headerContent);
                 var htmlHeaderView = $('#header_print').text();
-                $('#header_print').summernote('code', htmlHeaderView);
+                PosnicPro.settings._printDocs.header = htmlHeaderView;
+                if (PosnicPro.settings._editorsReady) { $('#header_print').summernote('code', htmlHeaderView); }
                 $('.header-content').html(htmlHeaderView);
 
                 let footerContent = (data.footer_print !== '') ? data.footer_print : 'Thank you for shopping...!';
                 $('#footer_print').html('').append(footerContent);
                 var htmlView = $('#footer_print').text();
-                $('#footer_print').summernote('code', htmlView);
+                PosnicPro.settings._printDocs.footer = htmlView;
+                if (PosnicPro.settings._editorsReady) { $('#footer_print').summernote('code', htmlView); }
                 $('.footer-content').html(htmlView);
 
                 $('.print_store_name').html(data.branch_name);
@@ -1639,8 +1643,13 @@ if ($wrapper.length) {
         var _taxId = (taxDetail && taxDetail[0] && taxDetail[0].element
             && taxDetail[0].element.attributes['data-tax-id'])
             ? taxDetail[0].element.attributes['data-tax-id'].value : '';
-        var content = $('textarea[name="footer_print"]').html($('#footer_print').summernote('code'));
-        var contentHeader = $('textarea[name="header_print"]').html($('#header_print').summernote('code'));
+        /* The editors are optional; the documents are not. */
+        var footerDoc = PosnicPro.settings._editorsReady
+            ? $('#footer_print').summernote('code') : PosnicPro.settings._printDocs.footer;
+        var headerDoc = PosnicPro.settings._editorsReady
+            ? $('#header_print').summernote('code') : PosnicPro.settings._printDocs.header;
+        var content = $('textarea[name="footer_print"]').html(footerDoc);
+        var contentHeader = $('textarea[name="header_print"]').html(headerDoc);
         var params = {
             url: 'setting/updateCommonSettings',
             data: JSON.stringify({
@@ -4658,7 +4667,20 @@ $("#payment_gateway").on('change', function (event) {
         }
     }
 });
-$('#footer_print,#header_print').summernote({
+/*
+ * The print-designer editors load ON DEMAND (bundle-split slice 1).
+ * summernote is 325KB that every boot parsed and initialised for a pane
+ * most sessions never open; the editors now build when Settings opens.
+ * _printDocs holds the truth meanwhile, so loads and saves that happen
+ * before (or without) the editors still carry the right documents.
+ */
+PosnicPro.settings._printDocs = { header: '', footer: '' };
+PosnicPro.settings._editorsReady = false;
+PosnicPro.settings.initPrintEditors = function () {
+    if (PosnicPro.settings._editorsReady) { return Promise.resolve(); }
+    return PosnicPro.lazy.load('summernote').then(function () {
+        if (PosnicPro.settings._editorsReady) { return; }
+        $('#footer_print,#header_print').summernote({
     height: 120,
     toolbar: [
         ['style', ['style']],
@@ -4707,6 +4729,12 @@ $('#footer_print,#header_print').summernote({
         }
     }
 });
+        PosnicPro.settings._editorsReady = true;
+        $('#header_print').summernote('code', PosnicPro.settings._printDocs.header);
+        $('#footer_print').summernote('code', PosnicPro.settings._printDocs.footer);
+    });
+};
+
 
 $(function () {
     PosnicPro.settings.store_telephone = window.intlTelInput(document.querySelector("#store_telephone"), {
