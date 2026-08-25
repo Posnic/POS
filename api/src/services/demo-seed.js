@@ -167,6 +167,9 @@ function buildSales({ items, customers, customer, branch, pack, now, count = SAL
          something to show. */
       payment_mode: rand() > 0.35 ? 'cash' : 'card',
       payment_status: 'paid',
+      /* Every genuine sale carries its process; the activity views badge
+         it. Without this the customer/item history showed 'undefined'. */
+      sale_process: 'Add',
       sales_status: 'completed',
       created_date: when,
       date: when,

@@ -592,7 +592,7 @@ PosnicPro.categorydetails = {
                         let row = response.data.table.data.list[i];
                         saleTotalValue += Number(row.items_total) || 0;
                         returnTotalValue += Number(row.items_return_total) || 0;
-                        if (row.sale_process == 'Add' || row.sale_process == 'Edit') {
+                        if (!row.sale_process || row.sale_process == 'Add' || row.sale_process == 'Edit') {
                             process_class = "badge badge-success-inverse";
                         } else if (row.sale_process == 'PartialReturn') {
                             process_class = "badge badge-secondary-inverse";
@@ -612,7 +612,7 @@ PosnicPro.categorydetails = {
 
                         let row_no = (table.data('current_page') - 1) * table.data('per_page') + i + 1;
                         let updateDate = PosnicPro.convertDate(row.string_date);
-                        let trow = '<tr> <td scope="row">' + row_no + '</td> <td>' + row.sales_id + '</td> <td class="export-date">' + updateDate + '</td> <td class="text-center"><span class="' + process_class + '">' + row.sale_process + '</span></td> <td class="text-center text-danger">' + returnQty + '</td> <td class="text-right text-danger">' + currency + '&nbsp;' + (Number(row.items_return_total) || 0).toFixed(2) + '</td><td class="text-center text-success">' + salesQty + '</td><td class="text-right text-success">' + currency + '&nbsp;' + (Number(row.items_total) || 0).toFixed(2) + '</td></tr>';
+                        let trow = '<tr> <td scope="row">' + row_no + '</td> <td>' + row.sales_id + '</td> <td class="export-date">' + updateDate + '</td> <td class="text-center"><span class="' + process_class + '">' + (row.sale_process || 'Add') + '</span></td> <td class="text-center text-danger">' + returnQty + '</td> <td class="text-right text-danger">' + currency + '&nbsp;' + (Number(row.items_return_total) || 0).toFixed(2) + '</td><td class="text-center text-success">' + salesQty + '</td><td class="text-right text-success">' + currency + '&nbsp;' + (Number(row.items_total) || 0).toFixed(2) + '</td></tr>';
                         $('#view_categorydetails').children('tbody').append(trow);
                     }
                     let total = 0;
@@ -659,7 +659,7 @@ PosnicPro.categorydetails = {
                             });
                         });
                         let date = PosnicPro.convertDate(val.string_date);
-                        let process = val.sale_process;
+                        let process = val.sale_process || 'Add';
                         let saleId = val.sales_id;
                         let returnTotal = val.items_return_total;
                         let saleTotal = val.items_total;

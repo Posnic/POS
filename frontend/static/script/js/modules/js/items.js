@@ -3455,7 +3455,7 @@ PosnicPro.itemdetails = {
                         var rowReturnTotal = Number(row.items_return_total) || 0;
                         saleTotalValue += rowSaleTotal;
                         returnTotalValue += rowReturnTotal;
-                        if (row.sale_process == 'Add' || row.sale_process == 'Edit') {
+                        if (!row.sale_process || row.sale_process == 'Add' || row.sale_process == 'Edit') {
                             process_class = "badge badge-success-inverse";
                         } else if (row.sale_process == 'PartialReturn') {
                             process_class = "badge badge-secondary-inverse";
@@ -3479,7 +3479,7 @@ PosnicPro.itemdetails = {
                         // current time when no preformatted date is present.
                         let rawDate = row.string_date || row.date || row.created_date || row.updated_date;
                         let updateDate = rawDate ? PosnicPro.convertDate(rawDate) : '';
-                        let trow = '<tr> <td scope="row">' + row_no + '</td> <td>' + row.sales_id + '</td> <td class="export-date">' + updateDate + '</td> <td class="text-center"><span class="' + process_class + '">' + row.sale_process + '</span></td> <td class="text-center text-danger">' + returnQty + '</td> <td class="text-right text-danger">' + currency + '&nbsp;' + rowReturnTotal.toFixed(2) + '</td><td class="text-center text-success">' + salesQty + '</td><td class="text-right text-success">' + currency + '&nbsp;' + rowSaleTotal.toFixed(2) + '</td></tr>';
+                        let trow = '<tr> <td scope="row">' + row_no + '</td> <td>' + row.sales_id + '</td> <td class="export-date">' + updateDate + '</td> <td class="text-center"><span class="' + process_class + '">' + (row.sale_process || 'Add') + '</span></td> <td class="text-center text-danger">' + returnQty + '</td> <td class="text-right text-danger">' + currency + '&nbsp;' + rowReturnTotal.toFixed(2) + '</td><td class="text-center text-success">' + salesQty + '</td><td class="text-right text-success">' + currency + '&nbsp;' + rowSaleTotal.toFixed(2) + '</td></tr>';
                         $('#view_itemdetails').children('tbody').append(trow);
                         $('span.number').number(true, 2);
                     }
@@ -3531,7 +3531,7 @@ PosnicPro.itemdetails = {
                         // exported report matches the on-screen Date column.
                         let exportRawDate = val.string_date || val.date || val.created_date || val.updated_date;
                         let date = exportRawDate ? PosnicPro.convertDate(exportRawDate) : '';
-                        let process = val.sale_process;
+                        let process = val.sale_process || 'Add';
                         let saleId = val.sales_id;
                         let returnTotal = val.items_return_total;
                         let saleTotal = val.items_total;
