@@ -736,8 +736,68 @@ PosnicPro = {
                 PosnicPro.alert('error', 'Could not load the chart / report tools - check the connection and try again.');
                 throw err;
             });
+            p = p.then(function () {
+                var init = PosnicPro.lazy._afterLoad[name];
+                if (init && !init._ran) { init._ran = true; init(); }
+            });
             PosnicPro.lazy._loads[name] = p;
             return p;
+        },
+
+        /*
+         * One-time taming, the moment a library lands - BEFORE any page draws
+         * with it, so every caller inherits the same rules.
+         */
+        _afterLoad: {
+            amcharts: function () {
+                /*
+                 * WHY THE IPHONE KILLED THE TAB. Owner: "i opened posnic web
+                 * app in my iphone 14 pro max. i just scrolled down. page is
+                 * keep crash."
+                 *
+                 * Scrolling on iOS collapses and expands Safari's URL bar,
+                 * and each change fires a real viewport resize. amCharts'
+                 * ResizeObserver answers every one with a FULL relayout of
+                 * the 3D SVG chart - thousands of nodes on a 3x screen - and
+                 * the animated theme replays its entrance tweens on each.
+                 * A few strokes of scrolling is a stack of full 3D
+                 * rebuild-and-animate cycles; memory climbs until iOS kills
+                 * the tab, which reads as "the page keeps crashing" and
+                 * leaves no error anywhere, because the process is simply
+                 * gone.
+                 *
+                 * The library ships its own relief valves for exactly this:
+                 */
+                try {
+                    /* one chart builds at a time, not all at once */
+                    am4core.options.queue = true;
+                    /* a chart renders when scrolled INTO view and suspends
+                       out of it - the crash was while scrolling PAST them */
+                    am4core.options.onlyShowOnViewport = true;
+                } catch (e) { /* an amcharts too old for the option */ }
+
+                /*
+                 * And the theme, fenced at the same choke point. Every page
+                 * that draws calls useTheme(am4themes_animated) on every
+                 * render, which STACKS - themes are a registry, not a set -
+                 * so the dashboard's fifth filter change animated everything
+                 * five times over. Deduped here for everyone; and on a
+                 * coarse-pointer device the animated theme is refused
+                 * outright, because entrance tweens on a phone are the
+                 * memory bill above with no benefit anybody asked for.
+                 */
+                try {
+                    var coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+                    var applied = [];
+                    var origUse = am4core.useTheme;
+                    am4core.useTheme = function (theme) {
+                        if (coarse && typeof am4themes_animated !== 'undefined' && theme === am4themes_animated) { return; }
+                        if (applied.indexOf(theme) !== -1) { return; }
+                        applied.push(theme);
+                        return origUse.call(am4core, theme);
+                    };
+                } catch (e) { /* the guard is an optimisation, never a gate */ }
+            },
         },
     },
 
