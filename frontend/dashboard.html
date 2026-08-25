@@ -57,15 +57,40 @@
                 var journal = [];
 
                 function note(kind, message, at, stack) {
+                    var msg = String(message || 'unknown').slice(0, 300);
+                    var refresh = function () {
+                        var box = document.getElementById('pbh_details_body');
+                        if (box) { box.textContent = detailsText(); }
+                    };
+                    /* Identical repeats collapse into one line with a count.
+                       The first journal the owner pasted was twelve copies of
+                       two missing images - noise that filled the book and
+                       EVICTED whatever the real exception was. */
+                    for (var i = 0; i < journal.length; i++) {
+                        if (journal[i].kind === kind && journal[i].message === msg) {
+                            journal[i].times += 1;
+                            refresh();
+                            return;
+                        }
+                    }
+                    /* And resource noise never crowds out real exceptions:
+                       failed loads get half the book at most. */
+                    if (kind === 'resource') {
+                        var resources = 0;
+                        for (var j = 0; j < journal.length; j++) {
+                            if (journal[j].kind === 'resource') { resources += 1; }
+                        }
+                        if (resources >= 6) { return; }
+                    }
                     if (journal.length >= 12) { return; }
                     journal.push({
                         kind: kind,
-                        message: String(message || 'unknown').slice(0, 300),
+                        message: msg,
                         at: String(at || '').slice(0, 240),
-                        stack: String(stack || '').slice(0, 1500)
+                        stack: String(stack || '').slice(0, 1500),
+                        times: 1
                     });
-                    var box = document.getElementById('pbh_details_body');
-                    if (box) { box.textContent = detailsText(); }
+                    refresh();
                 }
 
                 function report(err, at) {
@@ -129,7 +154,9 @@
                     var out = '';
                     for (var i = 0; i < journal.length; i++) {
                         var e = journal[i];
-                        out += (i + 1) + '. [' + e.kind + '] ' + e.message + '\n   at ' + e.at + '\n';
+                        out += (i + 1) + '. [' + e.kind + '] ' + e.message +
+                            (e.times > 1 ? '  (×' + e.times + ')' : '') +
+                            '\n   at ' + e.at + '\n';
                         if (e.stack) { out += e.stack.split('\n').slice(0, 6).join('\n') + '\n'; }
                         out += '\n';
                     }

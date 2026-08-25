@@ -79,3 +79,47 @@ test('the reporter can never add a second failure', () => {
   assert.match(reportFn, /try \{/);
   assert.match(reportFn, /catch \(e\)/);
 });
+
+/*
+ * The journal - "i want to know exact exception and or coding part of cause."
+ * And the lesson its first real capture taught: the owner pasted twelve
+ * copies of two missing images. Noise must collapse and must never evict
+ * the real exception.
+ */
+test('the card carries View details, Copy, and a live journal', () => {
+  assert.match(script, /pbh_details/);
+  assert.match(script, /pbh_copy/);
+  assert.match(script, /detailsText\(\)/);
+  /* resource failures - the old blind spot - are captured too, in the
+     CAPTURE phase where they actually fire */
+  assert.match(script, /failed to load/);
+  assert.match(script, /\}, true\);/);
+});
+
+test('identical captures collapse; resource noise gets half the book at most', () => {
+  const noteFn = script.slice(script.indexOf('function note'), script.indexOf('function report'));
+  assert.match(noteFn, /times \+= 1/);
+  assert.match(noteFn, /resources >= 6\) \{ return; \}/);
+  assert.match(noteFn, /journal\.length >= 12\) \{ return; \}/);
+  /* and the repeat count is visible in the details */
+  assert.match(script, /×/);
+});
+
+test('the journal rides the beacon so the cause is readable remotely', () => {
+  const reportFn = script.slice(script.indexOf('function report'), script.indexOf('function detailsText'));
+  assert.match(reportFn, /journal: journal\.slice\(0, 3\)/);
+});
+
+test('no partial ships a phantom image - //:0 and src="" fetch the page itself', () => {
+  /* An empty src resolves to the DOCUMENT URL; //:0 was a "blank" that
+     errors on every render. Both filled the journal's first outing. */
+  const glob = fs.readdirSync(path.join(__dirname, '..', 'frontend', 'modules'));
+  for (const f of glob.filter((n) => n.endsWith('.html'))) {
+    const src = fs.readFileSync(path.join(__dirname, '..', 'frontend', 'modules', f), 'utf8');
+    assert.ok(!src.includes('src="//:0"'), f + ' ships the //:0 phantom image');
+    assert.ok(!src.includes('src=""'), f + ' ships an empty img src');
+  }
+  const settings = fs.readFileSync(
+    path.join(__dirname, '..', 'frontend', 'static', 'script', 'js', 'modules', 'js', 'settings.js'), 'utf8');
+  assert.ok(!settings.includes('//:0'), 'settings.js sets the //:0 phantom again');
+});

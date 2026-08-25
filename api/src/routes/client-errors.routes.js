@@ -70,6 +70,14 @@ router.post('/', (req, res) => {
       console.error(line);
       const stack = String(b.stack || '').slice(0, 1000);
       if (stack) console.error('[client-error] stack:', stack.split('\n').slice(0, 4).join(' | '));
+      /* The watchdog's whole journal, one line per entry - the card's View
+         details, readable remotely. The first beacon field is only the FIRST
+         capture, and the first capture is routinely noise. */
+      if (Array.isArray(b.journal)) {
+        for (const entry of b.journal.slice(0, 3)) {
+          console.error('[client-error] journal:', String(entry).slice(0, 220));
+        }
+      }
     }
   } catch (e) {
     /* the reporter must never be the thing that fails */
