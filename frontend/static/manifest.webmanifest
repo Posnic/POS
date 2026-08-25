@@ -10,6 +10,24 @@
   "theme_color": "#506fe4",
   "icons": [
     {
+      "src": "images/icons-pwa/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "images/icons-pwa/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "images/icons-pwa/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
       "src": "images/logo/posnic-logo.svg",
       "sizes": "any",
       "type": "image/svg+xml",
