@@ -891,18 +891,26 @@ if ($wrapper.length) {
                 $('#payment_razorpay').prop('checked', payment_razorpay);
                 $('#payment_number').prop('checked', payment_number);
 
-                // Update Image Previews
-                var logoSrc = logo || defaultLogo;
-                $("#preview_logo").attr("src", logoSrc).css("display", "block");
-
-                var bannerSrc = banner || defaultBanner;
-                $("#preview_banner").attr("src", bannerSrc).css("display", "block");
-
-                var homebannerSrc = homebanner || defaultHomeBanner;
-                $("#preview_homebanner").attr("src", homebannerSrc).css("display", "block");
-
-                var advertisementSrc = advertisement || defaultAdvertisement;
-                $("#preview_advertisement").attr("src", advertisementSrc).css("display", "block");
+                /*
+                 * DEFERRED, not loaded. These previews live in a pane most
+                 * sessions never open, and two of the default images are
+                 * 1.6MB artwork - assigning src here made EVERY boot (the
+                 * sale screen included) download 3.2MB it would never show.
+                 * Lighthouse read it as the page's biggest cache line. The
+                 * kiosk pill promotes data-defer-src to src on first open.
+                 */
+                var deferPreview = function (sel, src) {
+                    var $img = $(sel);
+                    if ($('#v-pills-kiosk').hasClass('active')) {
+                        $img.attr('src', src).css('display', 'block');
+                    } else {
+                        $img.attr('data-defer-src', src).css('display', 'block');
+                    }
+                };
+                deferPreview('#preview_logo', logo || defaultLogo);
+                deferPreview('#preview_banner', banner || defaultBanner);
+                deferPreview('#preview_homebanner', homebanner || defaultHomeBanner);
+                deferPreview('#preview_advertisement', advertisement || defaultAdvertisement);
 
                 $('#indian_gst option[value="' + data.indian_gst + '"]').attr("selected", true);
                 $('#branch_gstin_number').val(data.branch_gstin_number);
@@ -6977,3 +6985,11 @@ PosnicPro.settings.syncDemoDataAfterSave = function (nowOnArg) {
         PosnicPro.settings.demoProgress.close(harmless ? null : (msg || 'Could not add the sample data'), harmless);
     });
 };
+
+/* The kiosk pane pays for its own artwork, on first open only - see the
+   deferPreview comment above. */
+$(document).on('click', '#v-pills-kiosk-tab, #manage_sec_kiosk', function () {
+    $('#v-pills-kiosk img[data-defer-src]').each(function () {
+        $(this).attr('src', $(this).attr('data-defer-src')).removeAttr('data-defer-src');
+    });
+});
