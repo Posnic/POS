@@ -4273,11 +4273,18 @@ $(document).ready(function () {
             $(".fontfamily").css({"text-align": val.textAlign});
 
             // Set slider values AND trigger visual updates in one go
-            $("#bar-height").val(val.height).rangeslider('update', true);
-            $("#bar-width").val(val.width).rangeslider('update', true);
-            $("#bar-margin").val(val.margin).rangeslider('update', true);
-            $("#bar-text-margin").val(val.textMargin).rangeslider('update', true);
-            $("#bar-fontSize").val(val.fontSize || 9).rangeslider('update', true);
+            /* Guarded: 'update' re-measures through the same hidden-parent
+               walk that throws on a detached input, and these five run from a
+               stored-preset load that can land after a page swap. */
+            PosnicPro.items.initBarcodeSliders();
+            [['#bar-height', val.height], ['#bar-width', val.width], ['#bar-margin', val.margin],
+             ['#bar-text-margin', val.textMargin], ['#bar-fontSize', val.fontSize || 9]
+            ].forEach(function (pair) {
+                var $el = $(pair[0]).val(pair[1]);
+                if ($el.length && document.contains($el[0]) && PosnicPro.items._barcodeSlidersReady) {
+                    try { $el.rangeslider('update', true); } catch (e) { /* redrawn on open */ }
+                }
+            });
 
             // Set font
             $("#font").val(val.font);
@@ -4345,13 +4352,44 @@ $(document).ready(function () {
 
     });
 
-    $('.range-type').rangeslider({
-        polyfill: false,
-        rangeClass: 'rangeslider',
-        fillClass: 'rangeslider__fill',
-        handleClass: 'rangeslider__handle',
-        onSlide: newBarcode,
-        onSlideEnd: newBarcode
+    /*
+     * Lazily, on the barcode designer actually opening - and only for inputs
+     * still IN the document.
+     *
+     * rangeslider (polyfill:false wraps everything) measures its input by
+     * walking parentNodes until a visible ancestor; on a DETACHED input that
+     * walk runs off the document into null and throws "Cannot read
+     * properties of null (reading 'offsetWidth')" - the exact line the boot
+     * watchdog carried on the owner's screen, on every refresh of one shop.
+     * Registering at module-ready also left the plugin's window-resize
+     * re-measure armed for the whole session over inputs whose panel the SPA
+     * may rebuild. Initialised where they are used, they exist, they are
+     * attached, and a shop that never opens the designer never runs any of
+     * this.
+     */
+    PosnicPro.items.initBarcodeSliders = function () {
+        if (PosnicPro.items._barcodeSlidersReady) { return; }
+        var $connected = $('.range-type').filter(function () {
+            return document.contains(this);
+        });
+        if (!$connected.length) { return; }
+        PosnicPro.items._barcodeSlidersReady = true;
+        try {
+            $connected.rangeslider({
+                polyfill: false,
+                rangeClass: 'rangeslider',
+                fillClass: 'rangeslider__fill',
+                handleClass: 'rangeslider__handle',
+                onSlide: newBarcode,
+                onSlideEnd: newBarcode
+            });
+        } catch (e) {
+            /* A failed slider must cost the slider, never the boot. */
+            console.error('[barcode] slider init failed:', e.message);
+        }
+    };
+    $(document).on('click focusin', '#barcode-container, .slider-container', function () {
+        PosnicPro.items.initBarcodeSliders();
     });
 
     $('.color').colorPicker({renderCallback: newBarcode});

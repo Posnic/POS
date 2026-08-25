@@ -210,18 +210,15 @@ describe('the trades a shop can choose from', () => {
      * treatment: installing a supermarket into a bakery because a key was
      * misspelt is a wrong answer delivered confidently.
      */
-    for (const bad of [
-      '',
-      ' ',
-      'pharmacy',
-      'kirana',
-      'grocery',
-      'retail',
-      'ELECTRICAL',
-      null,
-      undefined,
-    ]) {
+    /* pharmacy/kirana/grocery/retail graduated: the website now serves
+       their zips, so a deliberate chooser may name them. What must still
+       refuse is a word that is no trade at all - and case still matters,
+       because the chooser sends keys verbatim. */
+    for (const bad of ['', ' ', 'ELECTRICAL', 'spaceship', null, undefined]) {
       expect(demo.isDemoPack(bad)).toBe(false);
+    }
+    for (const nowReal of ['pharmacy', 'kirana', 'grocery', 'retail']) {
+      expect(demo.isDemoPack(nowReal)).toBe(true);
     }
     /* Aliases included: they are real inputs, and they are still not rows on
        the chooser - "kirana" resolves to the supermarket pack, so offering it

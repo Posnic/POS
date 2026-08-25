@@ -47,7 +47,13 @@ const SALE_COUNT = 14;
  * shape is DATA so the tests can hold it to his words rather than to an
  * implementation detail.
  */
-const SALES_PER_DAY = [3, 3, 2, 2, 2, 1, 1]; // index 0 = yesterday
+/* Index 0 = TODAY. Two sales land this morning, because the dashboard's
+   big number is today's takings and a zero there on first login reads as a
+   dead shop - the owner's exact report. The rest cluster over the past
+   week, busiest-recent-first. Today's entries are stamped one-to-three
+   HOURS ago rather than at shop-opening, so whatever timezone the shop
+   resolves "today" in, a sale from two hours ago is still today. */
+const SALES_PER_DAY = [2, 3, 3, 2, 2, 1, 1];
 const QUOTE_COUNT = 3;
 
 /* Deterministic, so a re-seed produces the same shop rather than a different
@@ -84,14 +90,23 @@ function buildSales({ items, customers, customer, branch, pack, now, count = SAL
      takings must be the shop's own. */
   const dayOf = [];
   SALES_PER_DAY.forEach((n, day) => {
-    for (let k = 0; k < n; k++) dayOf.push(day + 1);
+    for (let k = 0; k < n; k++) dayOf.push(day);
   });
 
   for (let i = 0; i < count; i++) {
     const daysAgo = dayOf[i] !== undefined ? dayOf[i] : 1 + (i % 7);
     const when = new Date(now.getTime() - daysAgo * 864e5);
-    /* Shop hours, so the hourly report is not a flat line at midnight. */
-    when.setHours(9 + Math.floor(rand() * 10), Math.floor(rand() * 60), 0, 0);
+    if (daysAgo === 0) {
+      /* Hours before now, never clock-hours: a 9am stamp is tomorrow-or-
+         yesterday depending on the shop's timezone, but two hours ago is
+         today in every timezone the shop could be in. */
+      when.setTime(
+        now.getTime() - (1 + Math.floor(rand() * 2)) * 3600e3 - Math.floor(rand() * 50) * 60e3
+      );
+    } else {
+      /* Shop hours, so the hourly report is not a flat line at midnight. */
+      when.setHours(9 + Math.floor(rand() * 10), Math.floor(rand() * 60), 0, 0);
+    }
 
     const lineCount = 1 + Math.floor(rand() * 3);
     const lines = [];
@@ -292,6 +307,12 @@ function buildPurchases({ items, suppliers, branch, pack, now, count = PURCHASE_
          column must never be blank, and DEMO can never collide with a live
          token. */
       receiving_id: 'R-DEMO-' + String(i + 1).padStart(6, '0'),
+      /* The collection carries a UNIQUE index on receiving_number. The first
+         seed omitted it, every row inserted null, the second row collided
+         (E11000) and the WHOLE demo-activity write died - the owner's report
+         was an empty dashboard, not a purchase complaint, which is how a
+         missing field on one collection surfaced as "no sales anywhere". */
+      receiving_number: 'R-DEMO-' + String(i + 1).padStart(6, '0'),
       demo_pack: pack,
       demo_seeded_at: now,
       branch_id: branch.branch_id,

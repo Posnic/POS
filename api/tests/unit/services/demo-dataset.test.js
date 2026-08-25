@@ -63,7 +63,9 @@ describe('trade vocabulary and URLs', () => {
     for (const t of ['auto_parts', 'auto parts', 'AutoParts', 'garage', 'automobile']) {
       expect(ds.datasetKeyFor(t)).toBe('auto_parts');
     }
-    expect(ds.datasetKeyFor('bakery')).toBeNull();
+    /* bakery graduated to a live zip; the never-a-trade words still refuse */
+    expect(ds.datasetKeyFor('bakery')).toBe('bakery');
+    expect(ds.datasetKeyFor('spaceship')).toBeNull();
     expect(ds.datasetKeyFor('')).toBeNull();
     expect(ds.datasetKeyFor(null)).toBeNull();
   });
