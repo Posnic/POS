@@ -65,6 +65,9 @@ test('a cancelled add panel closes silently - the list it floats over is not re-
     assert.ok(!list.includes(never), never.slice(0, -1) + ' is a FULL-PAGE form - silencing strands the user');
   }
   /* the silent branch really is silent, and keeps currentHash honest */
-  const branch = core.slice(core.indexOf("PosnicPro.INFOBAR_LIST_ADDS[parts[0]]"), core.indexOf("PosnicPro.INFOBAR_LIST_ADDS[parts[0]]") + 900);
+  const branch = core.slice(core.indexOf("PosnicPro.INFOBAR_LIST_ADDS[parts[0]]"), core.indexOf("PosnicPro.INFOBAR_LIST_ADDS[parts[0]]") + 1400);
   assert.match(branch, /hasher\.changed\.active = false;\s*hasher\.setHash\(parts\[0\]\);\s*hasher\.changed\.active = true;\s*currentHash = parts\[0\];/);
+  /* deep-link escape: a panel opened over a list that never loaded must
+     still dispatch, or cancel strands the user on an empty page */
+  assert.match(branch, /\$\('#view_' \+ parts\[0\]\)\.data\('total'\) !== undefined/);
 });

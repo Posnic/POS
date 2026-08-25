@@ -4657,15 +4657,19 @@ $(".infobar-settings-close").on("click", function (e) {
         hasher.setHash(parts[0] + '/' + parts[1]);
     } else if (parts[0] === 'kotorder' && parts[1] === 'new') {
         hasher.setHash(parts[0] + '/' + parts[1]); // Keep kotorder/new intact
-    } else if (parts[1] === 'new' && PosnicPro.INFOBAR_LIST_ADDS[parts[0]]) {
+    } else if (parts[1] === 'new' && PosnicPro.INFOBAR_LIST_ADDS[parts[0]]
+            && $('#view_' + parts[0]).data('total') !== undefined) {
         /*
          * Cancelling an add panel that floats OVER its list (saves patch,
          * close edition): the list beneath is already rendered and nothing
          * changed, so restore the hash WITHOUT the changed signal - which
          * is what the comment below always claimed and never did. The
          * route not firing is the point: no re-fetch, no re-render.
-         * Full-page forms (items, receivings) stay on the dispatching
-         * branch - for them the route IS the way back to the list.
+         * Two escapes stay on the dispatching branch: full-page forms
+         * (items, receivings), for which the route IS the way back - and
+         * a DEEP-LINKED add panel, where showAdd opened over a list that
+         * never loaded (data('total') unset until the table's first
+         * fetch), so the dispatch is what fills the empty page.
          */
         hasher.changed.active = false;
         hasher.setHash(parts[0]);
