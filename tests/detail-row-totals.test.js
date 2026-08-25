@@ -61,3 +61,30 @@ test('the welcome saves BOOLEANS - the string "false" reads as enabled everywher
   /* the "Not now" write too */
   assert.match(src, /\{ first_run_done: true, first_run_decided: true \}/);
 });
+
+test('the money-path lists are card-ready on phones (Mobile P2)', () => {
+  /* MOBILE_EXPERIENCE_PLAN P2: each list opts into the table-to-cards
+     mechanism (m-cards on the table, data-label on the cells). The
+     mechanism is inert on desktop and inert without the labels, so this
+     pin is what keeps a rewritten row template from quietly shipping a
+     label-less phone view. */
+  const fsx = require('fs');
+  const px = require('path');
+  const mod = (f) => fsx.readFileSync(px.join(__dirname, '..', 'frontend', 'modules', f), 'utf8');
+  const js = (f) => fsx.readFileSync(px.join(__dirname, '..', 'frontend', 'static', 'script', 'js', 'modules', 'js', f), 'utf8');
+  for (const f of ['items.html', 'receivings.html', 'sales_read.html', 'customers.html', 'suppliers.html']) {
+    assert.match(mod(f), /table-borderless m-cards/, f + ' lost its m-cards opt-in');
+  }
+  for (const [f, label] of [
+    ['items.js', 'data-label="Price"'],
+    ['receiving_add.js', 'data-label="Supplier"'],
+    ['sales.js', 'data-label="Total"'],
+    ['customers.js', 'data-label="Address"'],
+    ['suppliers.js', 'data-label="Address"'],
+  ]) {
+    assert.ok(js(f).includes(label), f + ' rows lost their ' + label);
+  }
+  /* and the mechanism itself is present and token-coloured */
+  const css = fsx.readFileSync(px.join(__dirname, '..', 'frontend', 'static', 'style', 'css', 'custom.css'), 'utf8');
+  assert.match(css, /table\.m-cards td\[data-label\]::before/);
+});

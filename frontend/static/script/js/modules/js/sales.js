@@ -656,16 +656,16 @@
 
                     var trow = '<tr>' +
                         '<td><input type="checkbox" class="sales-row-id" id="' + row._id + '" name="id[]" value="' + row._id + '" onclick="PosnicPro.checkboxSelectOne(this, \'sales\');"></td>' +
-                        '<td scope="row">' + row_no + '</td>' +
-                        '<td class="sale_id">' + row.sales_id + '</td>' +
-                        '<td class="sale_id">' + updateDate + '</td>' +
-                        '<td width="20%">' + row.customer_name + '</td>' +
-                        '<td class="sale_id text-right table-phone-hide"><a href="tel:' + row.customer_phone + '" class="table-phone text-right">' + row.customer_phone + '</a></td>' +
+                        '<td scope="row" data-label="#">' + row_no + '</td>' +
+                        '<td class="sale_id" data-label="Sale">' + row.sales_id + '</td>' +
+                        '<td class="sale_id" data-label="Date">' + updateDate + '</td>' +
+                        '<td width="20%" data-label="Customer">' + row.customer_name + '</td>' +
+                        '<td class="sale_id text-right table-phone-hide" data-label="Phone"><a href="tel:' + row.customer_phone + '" class="table-phone text-right">' + row.customer_phone + '</a></td>' +
                         '<td class="text-center table-number-hide"><span>' + table_number + '</span></td>' +
                         '<td class="text-center order-type-column"><span>' + dine_type + '</span></td>' +
-                        '<td class="text-center">' + processHtml + '</td>' +
-                        '<td class="sale_id text-right">' + currency + '&nbsp;<span class="number">' + price + '</span></td>' +
-                        '<td width="20%" class"right">' + paymentStatus + '</td>' +
+                        '<td class="text-center" data-label="Status">' + processHtml + '</td>' +
+                        '<td class="sale_id text-right" data-label="Total">' + currency + '&nbsp;<span class="number">' + price + '</span></td>' +
+                        '<td width="20%" data-label="Payment">' + paymentStatus + '</td>' +
                         '<td class="text-center"><span>' + action + ' </span></td>' +
                         '</tr>';
 
