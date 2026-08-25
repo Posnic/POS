@@ -35,3 +35,32 @@ describe('the shadow page stores what a normal sign-in stores', () => {
     expect(src).toMatch(/branch_access\[0\]/);
   });
 });
+
+describe('the next route (the rig lands on any page in one launch)', () => {
+  /*
+   * A page that only breaks on #/variants cannot be captured by a run that
+   * always lands on the dashboard - and a second browser launch loses the
+   * first one's storage when the harness kills Chrome before the profile
+   * flushes. So the sign-in page honours ?next=<route>. The property that
+   * MUST hold: next is a bare hash route, never a URL and never markup -
+   * this page's body is a working credential, and an open redirect or
+   * script injection here is a credential-stealing primitive.
+   */
+  test('next is allow-listed to route characters and length-capped', () => {
+    expect(src).toMatch(/\^\[a-zA-Z0-9\/_-\]\{1,80\}\$/);
+    /* the fallback for anything that fails the test is EMPTY, not the raw input */
+    expect(src).toMatch(/\.test\(nextRaw\) \? nextRaw : ''/);
+  });
+
+  test('the sanitised value travels through the JSON payload, never string-glued', () => {
+    /* JSON.stringify is the escaping; interpolating the raw query into the
+       script body would undo the whole allow-list. */
+    expect(src).toMatch(/next: nextRoute,/);
+    expect(src).not.toMatch(/\$\{nextRaw\}/);
+    expect(src).not.toMatch(/\$\{nextRoute\}/);
+  });
+
+  test('the redirect goes to the app shell with the hash, or home without one', () => {
+    expect(src).toMatch(/d\.next \? '\/dashboard\.html#\/' \+ d\.next : '\/'/);
+  });
+});

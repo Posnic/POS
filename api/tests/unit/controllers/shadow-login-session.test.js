@@ -55,7 +55,9 @@ describe('the page returned by shadow login', () => {
        browser would arrive at / with half a session. */
     const token = SOURCE.indexOf("localStorage.setItem('posnic_jwt_token'");
     const cookie = SOURCE.indexOf("document.cookie = 'loginuser=yes");
-    const redirect = SOURCE.indexOf("location.replace('/')");
+    /* The redirect honours a sanitised `next` route now, so the literal is
+       a ternary rather than a bare '/'. */
+    const redirect = SOURCE.indexOf('location.replace(');
     expect(token).toBeGreaterThan(-1);
     expect(cookie).toBeGreaterThan(-1);
     expect(redirect).toBeGreaterThan(-1);

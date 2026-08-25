@@ -1026,6 +1026,91 @@ class InstallService {
         categoryMap[cat.name] = { id: cat._id, name: cat.name };
       });
 
+      /*
+       * The units the samples actually SELL IN, in the shop's own master.
+       *
+       * Owner: "i see different unit products are created. but unit section
+       * not created. when demo product created handle other master records
+       * also properly created." The items carried the dataset's unit as a
+       * bare string ('pcs', 'litre', 'set') while unit_id pointed every one
+       * of them at the single default Quantity unit - so the Units screen
+       * knew nothing about the units the catalogue was visibly using, and an
+       * edited item's unit picker could not offer the unit it already had.
+       *
+       * Units the shop already owns are joined, never duplicated (matched by
+       * value, which is the field the picker keys on); only the missing ones
+       * are created, tagged demo like the categories so the purge can take
+       * them away when nothing is measured in them any more.
+       */
+      const unitMap = {};
+      try {
+        const UNIT_LABELS = {
+          qty: 'Quantity',
+          pcs: 'Pieces',
+          pc: 'Piece',
+          kg: 'Kilogram',
+          g: 'Gram',
+          l: 'Litre',
+          litre: 'Litre',
+          ltr: 'Litre',
+          ml: 'Millilitre',
+          m: 'Metre',
+          box: 'Box',
+          pair: 'Pair',
+          set: 'Set',
+          pack: 'Pack',
+          dozen: 'Dozen',
+          roll: 'Roll',
+          bag: 'Bag',
+          bottle: 'Bottle',
+          can: 'Can',
+          tube: 'Tube',
+          sheet: 'Sheet',
+          plate: 'Plate',
+          cup: 'Cup',
+        };
+        const existingUnits = await this.repository.findUnitsByBranch(branchId, licenseId);
+        for (const u of existingUnits || []) {
+          const v = String(u.value == null ? '' : u.value)
+            .trim()
+            .toLowerCase();
+          if (v && !unitMap[v]) unitMap[v] = u._id;
+        }
+        const wantedUnits = new Set(
+          demoData.products
+            .map((p) =>
+              String(p.unit == null || p.unit === '' ? 'qty' : p.unit)
+                .trim()
+                .toLowerCase()
+            )
+            .filter(Boolean)
+        );
+        for (const value of wantedUnits) {
+          if (unitMap[value]) continue;
+          const label = UNIT_LABELS[value] || value.charAt(0).toUpperCase() + value.slice(1);
+          // eslint-disable-next-line no-await-in-loop
+          unitMap[value] = await this.repository.insertUnit({
+            demo_pack: packTag,
+            demo_seeded_at: now,
+            branch_id: branchId,
+            branch_name: branchName,
+            name: label,
+            value,
+            created_date: now,
+            created_by: username,
+            created_by_id: userId,
+            updated_date: now,
+            updated_by: username,
+            updated_by_id: username,
+            license: licenseId,
+          });
+        }
+      } catch (e) {
+        /* A shop with samples measured in Quantity is a working shop; the
+           install must not fail over a nicety of the units master. */
+        console.error('Demo units skipped:', e.message);
+      }
+
       // Insert items/products
       const itemMultiData = [];
 
@@ -1112,8 +1197,19 @@ class InstallService {
             updated_date: now,
             updated_by: username,
             updated_by_id: username,
-            unit: product.unit || 'qty',
-            unit_id: unitId,
+            /* The item's unit and unit_id AGREE now: both name the unit the
+               dataset gave the product, freshly present in the units master.
+               The passed-in default remains the floor if the master write
+               above was skipped. */
+            unit: String(product.unit == null || product.unit === '' ? 'qty' : product.unit)
+              .trim()
+              .toLowerCase(),
+            unit_id:
+              unitMap[
+                String(product.unit == null || product.unit === '' ? 'qty' : product.unit)
+                  .trim()
+                  .toLowerCase()
+              ] || unitId,
           });
         }
       }

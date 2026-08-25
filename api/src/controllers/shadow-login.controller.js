@@ -172,9 +172,21 @@ async function shadowLogin(req, res) {
    * from My Account - ran half-signed-in, and each missing field failed as
    * its own separate mystery.
    */
+  /*
+   * Where to land after signing in. The diagnostic rig needs this: a page
+   * that only breaks on #/variants or one item's view can't be captured by
+   * a run that always lands on the dashboard, and a second browser launch
+   * loses the first one's storage when the harness kills Chrome before the
+   * profile flushes. One launch, straight to the route, is the only shape
+   * that always works. Strictly a hash ROUTE - a handful of safe characters,
+   * never a URL - so this can't become an open redirect or script injection.
+   */
+  const nextRaw = String((req.query && req.query.next) || '');
+  const nextRoute = /^[a-zA-Z0-9/_-]{1,80}$/.test(nextRaw) ? nextRaw : '';
   const firstBranch =
     Array.isArray(user.branch_access) && user.branch_access[0] ? user.branch_access[0] : {};
   const payload = JSON.stringify({
+    next: nextRoute,
     token: authToken,
     user: user.email,
     username: user.username || user.name || user.email,
@@ -215,8 +227,9 @@ async function shadowLogin(req, res) {
     document.cookie = 'loginuser=yes; expires=' + until.toGMTString() + '; path=/';
   } catch (e) {}
   /* replace, not assign: the back button should not return to a page that
-     still holds the token in its source. */
-  location.replace('/');
+     still holds the token in its source. d.next is server-sanitised to a
+     bare hash route (letters, digits, slash, dash, underscore only). */
+  location.replace(d.next ? '/dashboard.html#/' + d.next : '/');
 })();
 </script>`);
 }

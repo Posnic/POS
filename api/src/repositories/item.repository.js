@@ -1206,6 +1206,12 @@ class ItemRepository extends BaseModel {
           category_id: cat._id,
           'branch_access.branch_id': branch,
           license,
+          /* LIVE products only. The purge itself soft-deletes the samples
+             into the Recycle Bin, so counting binned rows meant every demo
+             category was held in place by the very products this purge had
+             just removed - "switch off demo data" left the categories
+             standing, every time, and nothing said why. */
+          del_status: { $nin: [1, '1', true] },
         });
         if (remaining === 0) {
           // eslint-disable-next-line no-await-in-loop
@@ -1219,10 +1225,49 @@ class ItemRepository extends BaseModel {
       console.error('purgeDemoData: category cleanup:', e.message);
     }
 
+    /*
+     * Units, by the category rule: a demo unit still measuring anything
+     * alive - a sample the shop sold or edited (kept above), an item of
+     * their own that adopted it - is now the shop's unit and stays. Only a
+     * unit measuring nothing leaves. Seed and purge are a pair: the seed
+     * writes these rows (install.service demo units), so the switch that
+     * promises "removed" must know how to remove them.
+     */
+    let unitsRemoved = 0;
+    try {
+      const unitsCol = await this.getCollection('unit');
+      const demoUnits = await unitsCol
+        .find(
+          { demo_pack: { $exists: true }, branch_id: branch, license },
+          { projection: { _id: 1 } }
+        )
+        .toArray();
+      for (const u of demoUnits) {
+        // eslint-disable-next-line no-await-in-loop
+        const remaining = await items.countDocuments({
+          /* unit_id is an ObjectId on rows the seed wrote and a string on
+             rows some editors write; matching one shape silently keeps or
+             orphans the other. */
+          unit_id: { $in: [u._id, String(u._id)] },
+          'branch_access.branch_id': branch,
+          license,
+          del_status: { $nin: [1, '1', true] },
+        });
+        if (remaining === 0) {
+          // eslint-disable-next-line no-await-in-loop
+          await unitsCol.deleteOne({ _id: u._id, license });
+          unitsRemoved++;
+        }
+      }
+    } catch (e) {
+      console.error('purgeDemoData: unit cleanup:', e.message);
+    }
+
     return {
       status: true,
       removed,
       categoriesRemoved,
+      unitsRemoved,
       salesRemoved,
       purchasesRemoved,
       quotesRemoved,

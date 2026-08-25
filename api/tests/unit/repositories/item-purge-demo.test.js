@@ -26,6 +26,8 @@ describe('purgeDemoData', () => {
   let collections;
   let updateMany;
   let deletedCategories;
+  let deletedUnits;
+  let countFilters;
   let deleted;
 
   const item = (id, name, over = {}) => ({
@@ -42,11 +44,15 @@ describe('purgeDemoData', () => {
     sales: salesArg = [],
     receivings = [],
     categories = [],
+    units = [],
     itemsLeftInCat = 0,
+    itemsLeftInUnit = 0,
   } = {}) => {
     let sales = salesArg.slice();
     updateMany = jest.fn().mockResolvedValue({ modifiedCount: 0 });
     deletedCategories = [];
+    deletedUnits = [];
+    countFilters = [];
     deleted = [];
 
     collections = {
@@ -57,7 +63,19 @@ describe('purgeDemoData', () => {
           const ids = a[0]._id.$in;
           return Promise.resolve({ modifiedCount: ids.length });
         },
-        countDocuments: async () => itemsLeftInCat,
+        /* One counter serves the category check and the unit check; the
+           filter says which is asking. */
+        countDocuments: async (f) => {
+          countFilters.push(f);
+          return f && f.unit_id ? itemsLeftInUnit : itemsLeftInCat;
+        },
+      },
+      unit: {
+        find: () => ({ toArray: async () => units }),
+        deleteOne: async (f) => {
+          deletedUnits.push(f._id);
+          return { deletedCount: 1 };
+        },
       },
       sales: {
         find: () => ({ toArray: async () => sales }),
@@ -221,6 +239,49 @@ describe('purgeDemoData', () => {
       setup({ items: [item('a1', 'Croissant')], categories: [{ _id: 'c1' }], itemsLeftInCat: 3 });
       await run();
       expect(deletedCategories).toEqual([]);
+    });
+
+    test('the emptiness check ignores the recycle bin the purge itself filled', async () => {
+      /* The purge soft-deletes the samples, so counting binned rows meant
+         every demo category was held in place by the very products this
+         purge had just removed - "switch off demo data" left the categories
+         standing, every time, and nothing said why. */
+      setup({ items: [item('a1', 'Croissant')], categories: [{ _id: 'c1' }] });
+      await run();
+      for (const f of countFilters) {
+        expect(f.del_status).toEqual({ $nin: [1, '1', true] });
+      }
+      expect(countFilters.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('units', () => {
+    /* Owner: "different unit products are created. but unit section not
+       created... handle other master records also properly." The seed now
+       writes the units the samples sell in; a switch that promises removal
+       must know how to remove them - by the category rule. */
+    test('a demo unit measuring nothing goes with the samples', async () => {
+      setup({ items: [item('a1', 'Croissant')], units: [{ _id: 'u1' }], itemsLeftInUnit: 0 });
+      const r = await run();
+      expect(deletedUnits).toEqual(['u1']);
+      expect(r.unitsRemoved).toBe(1);
+    });
+
+    test('a demo unit still measuring a live item is kept', async () => {
+      setup({ items: [item('a1', 'Croissant')], units: [{ _id: 'u1' }], itemsLeftInUnit: 2 });
+      const r = await run();
+      expect(deletedUnits).toEqual([]);
+      expect(r.unitsRemoved).toBe(0);
+    });
+
+    test('the usage check matches unit_id however it was stored', async () => {
+      /* ObjectId on seeded rows, string on some editors' writes - matching
+         one shape silently keeps or orphans the other. */
+      setup({ items: [item('a1', 'Croissant')], units: [{ _id: 'u1' }] });
+      await run();
+      const unitFilters = countFilters.filter((f) => f.unit_id);
+      expect(unitFilters.length).toBe(1);
+      expect(unitFilters[0].unit_id.$in.map(String).sort()).toEqual(['u1', 'u1']);
     });
   });
 

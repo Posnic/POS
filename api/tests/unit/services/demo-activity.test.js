@@ -164,13 +164,34 @@ describe('the demo endpoints stay wired - the CI check the owner asked for', () 
       .readFileSync(path.join(__dirname, '../../../src/repositories/item.repository.js'), 'utf8')
       .replace(/\/\*[\s\S]*?\*\//g, '');
     const purge = repo.slice(repo.indexOf('async purgeDemoData'));
-    for (const col of ['sales', 'quotes', 'receivings', 'customers', 'suppliers']) {
+    for (const col of ['sales', 'quotes', 'receivings', 'customers', 'suppliers', 'unit']) {
       expect(purge.includes(`getCollection('${col}')`)).toBe(true);
     }
     /* Reaching receivings is not enough - the purge also READS receivings to
        refuse received items, so a deleted deleteMany still left this test
        green. It must DELETE there. Found surviving mutation. */
     expect(purge).toMatch(/purchasesRemoved = \(await receivingsCol\.deleteMany\(demoScope\)\)/);
+    /* Same lesson for units: reading the collection is not removing from it. */
+    expect(purge).toMatch(/unitsCol\.deleteOne\(/);
+  });
+
+  test('the seed writes the units master, tagged so the purge can find them', () => {
+    /* Owner: "different unit products are created. but unit section not
+       created. when demo product created handle other master records also
+       properly created." The items carried unit STRINGS while unit_id
+       pointed everything at the one default Quantity - the Units screen
+       never learned the units the catalogue was visibly using. */
+    const fsSvc = fs
+      .readFileSync(path.join(__dirname, '../../../src/services/install.service.js'), 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '');
+    const seed = fsSvc.slice(
+      fsSvc.indexOf('async _insertBusinessTypeDemoData'),
+      fsSvc.indexOf('async _insertDemoActivity')
+    );
+    expect(seed).toMatch(/findUnitsByBranch/);
+    expect(seed).toMatch(/insertUnit\(\{\s*demo_pack: packTag/);
+    /* and the item rows point at the unit they claim, not the default */
+    expect(seed).toMatch(/unit_id:\s*unitMap\[/);
   });
 
   test('the installer writes every collection the purge expects', () => {
