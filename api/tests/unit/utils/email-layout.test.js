@@ -96,7 +96,9 @@ describe('every sender wears the frame - the CI check', () => {
   const fs = require('fs');
   const path = require('path');
   const read = (p) =>
-    fs.readFileSync(path.join(__dirname, '../../../src', p), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    fs
+      .readFileSync(path.join(__dirname, '../../../src', p), 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '');
 
   test('receipt, invoice, purchase order, report and auth mails all render through the layout', () => {
     for (const [file, marker] of [

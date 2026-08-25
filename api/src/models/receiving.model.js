@@ -1105,7 +1105,7 @@ receivingSchema.statics.supplierReceivingReportPage = async function (value, opt
            words silently dropped them from every purchase report and
            dashboard number - the owner's "purchase not showing report".
            Goods are IN unless the status says they never arrived. */
-        receiving_status: { $nin: ['Open', 'Cancelled', 'FullReturn'] },
+          receiving_status: { $nin: ['Open', 'Cancelled', 'FullReturn'] },
         },
         {
           updated_date: { $gte: new Date(fromDate), $lte: new Date(toDate) },
@@ -1353,7 +1353,7 @@ receivingSchema.statics.receivingsGraphicalReports = async function (value) {
            words silently dropped them from every purchase report and
            dashboard number - the owner's "purchase not showing report".
            Goods are IN unless the status says they never arrived. */
-        receiving_status: { $nin: ['Open', 'Cancelled', 'FullReturn'] },
+      receiving_status: { $nin: ['Open', 'Cancelled', 'FullReturn'] },
       updated_date: { $gte: new Date(fromDate), $lte: new Date(toDate) },
     };
     if (licenseId) receivedCondition.license = licenseId;

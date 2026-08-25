@@ -73,8 +73,7 @@ const kvBlock = (pairs) =>
  */
 const itemsTable = (lines, currency) => {
   const cur = esc(currency || '');
-  const money = (v) =>
-    typeof v === 'number' ? `${cur} ${v.toFixed(2)}` : esc(v == null ? '' : v);
+  const money = (v) => (typeof v === 'number' ? `${cur} ${v.toFixed(2)}` : esc(v == null ? '' : v));
   const rows = (lines || [])
     .map(
       (l) =>
@@ -119,7 +118,10 @@ const renderEmail = ({ brand, title, preheader, greeting, bodyHtml, footerNote }
   const logo = b.logoUrl
     ? `<img src="${esc(b.logoUrl)}" alt="${esc(headerName)}" height="34" style="height:34px;max-width:160px;border:0;display:block;" />`
     : `<div style="font-size:19px;font-weight:700;color:#ffffff;letter-spacing:.2px;">${esc(headerName)}</div>`;
-  const contactBits = [b.address, b.phone, b.email].filter(Boolean).map(esc).join(' &nbsp;·&nbsp; ');
+  const contactBits = [b.address, b.phone, b.email]
+    .filter(Boolean)
+    .map(esc)
+    .join(' &nbsp;·&nbsp; ');
   const powered = b.whiteLabel
     ? `Sent by ${esc(b.name)}`
     : `Sent by ${esc(b.shopName || 'your shop')} &nbsp;·&nbsp; Powered by Posnic`;
