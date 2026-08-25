@@ -93,3 +93,31 @@ test('on touch, every chart stops listening to the viewport', () => {
     const create = core.slice(core.indexOf('create: function (id, type)'), core.indexOf('_tameForTouch:'));
     assert.match(create, /PosnicPro\.chart\._tameForTouch\(chart\)/);
 });
+
+/*
+ * Round three, the owner's own rule: "if chart is issue disable graphical
+ * stuff to all mobile view. no problem at no one sees that report in
+ * mobile." No charts on a phone, full stop - a rule with no exceptions
+ * cannot leak memory through the exception.
+ */
+test('no chart is ever created on a coarse pointer - the choke point refuses', () => {
+    const gate = core.slice(core.indexOf('disabledHere:'), core.indexOf('_tameForTouch:'));
+    assert.match(gate, /pointer: coarse/);
+    /* the refusal happens INSIDE create, before am4core.create can run */
+    assert.match(gate, /disabledHere\(\)\) \{/);
+    assert.match(gate, /return null;/);
+    /* and the panel says so instead of sitting there as a hole */
+    assert.match(gate, /chart-empty-state/);
+    assert.match(gate, /desktop version/);
+});
+
+test('the two direct Apex sites carry the same refusal', () => {
+    /* Everything else goes through PosnicPro.chart.create; these two build
+       ApexCharts by hand and would quietly become the exception. */
+    const kiosk = fs.readFileSync(
+        path.join(__dirname, '..', 'frontend', 'static', 'script', 'js', 'modules', 'js', 'report_kiosk.js'), 'utf8');
+    for (const src of [dash, kiosk]) {
+        assert.match(src, /PosnicPro\.chart\.disabledHere\(\)/);
+        assert.match(src, /desktop version/);
+    }
+});
