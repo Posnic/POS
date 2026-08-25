@@ -88,7 +88,8 @@ test('the money-path lists are card-ready on phones (Mobile P2)', () => {
   const px = require('path');
   const mod = (f) => fsx.readFileSync(px.join(__dirname, '..', 'frontend', 'modules', f), 'utf8');
   const js = (f) => fsx.readFileSync(px.join(__dirname, '..', 'frontend', 'static', 'script', 'js', 'modules', 'js', f), 'utf8');
-  for (const f of ['items.html', 'receivings.html', 'sales_read.html', 'customers.html', 'suppliers.html']) {
+  for (const f of ['items.html', 'receivings.html', 'sales_read.html', 'customers.html', 'suppliers.html',
+    /* P3 slice 2 */ 'users.html', 'kothistory.html', 'stockactivity.html', 'variants.html', 'settings_write.html']) {
     assert.match(mod(f), /table-borderless m-cards/, f + ' lost its m-cards opt-in');
   }
   for (const [f, label] of [
@@ -97,6 +98,12 @@ test('the money-path lists are card-ready on phones (Mobile P2)', () => {
     ['sales.js', 'data-label="Total"'],
     ['customers.js', 'data-label="Address"'],
     ['suppliers.js', 'data-label="Address"'],
+    /* P3 slice 2 */
+    ['users.js', 'data-label="Role"'],
+    ['kothistory.js', 'data-label="Order type"'],
+    ['stocklog.js', 'data-label="Closing"'],
+    ['variants.js', 'data-label="Name"'],
+    ['expenses.js', 'data-label="Approved by"'],
   ]) {
     assert.ok(js(f).includes(label), f + ' rows lost their ' + label);
   }

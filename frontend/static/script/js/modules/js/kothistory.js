@@ -92,12 +92,12 @@ PosnicPro.kothistory = {
 
                     $('#date_view').html(updateDate);
                     var trow = '<tr data-table-number="' + table_number + '">' +
-                        '<td scope="row">' + row_no + '</td>' +
-                        '<td class="sale_id">' + row.sales_id + '</td>' +
-                        '<td class="sale_id">' + updateDate + '</td>' +
-                        '<td class="text-center table-number-hide"><span>' + table_number + '</span></td>' +
-                        '<td class="text-center"><span>' + person_count + '</span></td>' +
-                        '<td class="text-center order-type-column"><span>' + dine_type + '</span></td>' +
+                        '<td scope="row" data-label="#">' + row_no + '</td>' +
+                        '<td class="sale_id" data-label="Sale">' + row.sales_id + '</td>' +
+                        '<td class="sale_id" data-label="Date">' + updateDate + '</td>' +
+                        '<td class="text-center table-number-hide" data-label="Table"><span>' + table_number + '</span></td>' +
+                        '<td class="text-center" data-label="Guests"><span>' + person_count + '</span></td>' +
+                        '<td class="text-center order-type-column" data-label="Order type"><span>' + dine_type + '</span></td>' +
                         '<td class="text-center"><span>' + action + ' </span></td>' +
                         '</tr>';
                     $('#view_kothistory').children('tbody').append(trow);
