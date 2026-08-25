@@ -28,7 +28,7 @@
                     </select>
                 </div>
                 <div class="col-lg-2 col-xl-2 hide-button-action tb_filter" style="display:none;">
-                    <select class="form-control kiosk_method_filter" name="kiosk_method" id="kiosk_method">
+                    <select class="form-control kiosk_method_filter" name="kiosk_method" id="kiosk_method" aria-label="Kiosk method">
                         <option value="">All Methods</option>
                         <option value="Kiosk">Kiosk</option>
                         <option value="Self-Order">Self-Order</option>
@@ -108,7 +108,7 @@
                                     <div
                                         class="col-lg-1 col-md-1 col-md-2 form-group mb-0 amount-spent-select selecct-align">
                                         <select class="form-control select_page" id="view_kioskreport_per_page"
-                                            data-id="kioskreport" onChange="PosnicPro.setPerPage(this, 'Table');">
+                                            data-id="kioskreport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View kioskreport per page">
                                             <option value="5" selected>5</option>
                                             <option value="10">10</option>
                                             <option value="25">25</option>

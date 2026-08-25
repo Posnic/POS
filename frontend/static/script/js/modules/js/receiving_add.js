@@ -426,7 +426,7 @@ PosnicPro.receivings = {
                 '</div>';
         if (PosnicPro.receivings.receivingReturnAction !== 'return') {
             var remove = '<td id=addReceivingRemoveLineItem_' + id + '>' +
-                    '<button type="button" class="btn btn-danger-rgba mb-1" onclick="PosnicPro.receivings.removeLineItemReceiving(\'' + id + '\');" ><i class="feather icon-trash"></i></button>' +
+                    '<button type="button" class="btn btn-danger-rgba mb-1" onclick="PosnicPro.receivings.removeLineItemReceiving(\'' + id + '\');"  aria-label="Delete"><i class="feather icon-trash"></i></button>' +
                     '</td>';
             $('#return_hide_text').show();
             $('#return_show_text').hide();

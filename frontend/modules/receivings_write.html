@@ -183,12 +183,12 @@
                                                                             <div class="floating-label">
                                                                                 <input name="receiving_discount_amount" id="receiving_discount_amount"
                                                                                        type="text" min="0" minlength="1" maxlength="5" class="form-control border-control allow_decimal text-right display-discount-amount-value"
-                                                                                       onkeyup="return PosnicPro.receivings.addReceivingTableRowCalc();">
+                                                                                       onkeyup="return PosnicPro.receivings.addReceivingTableRowCalc();" aria-label="Receiving discount amount">
                                     
                                                                                 <input name="receiving_discount_percentage"
                                                                                        id="receiving_discount_percentage" type="number"
                                                                                        class="form-control border-control text-right display-discount-percentage-value"
-                                                                                       min="0" max="100" onkeypress="return PosnicPro.isNumber(event)" onkeypress="this.value = PosnicPro.minmax(this.value, 0, 100)" onkeyup="return PosnicPro.receivings.addReceivingTableRowCalc();">
+                                                                                       min="0" max="100" onkeypress="return PosnicPro.isNumber(event)" onkeypress="this.value = PosnicPro.minmax(this.value, 0, 100)" onkeyup="return PosnicPro.receivings.addReceivingTableRowCalc();" aria-label="Receiving discount percentage">
                                                                             </div>
                                                                         </div>-->
 
@@ -200,7 +200,7 @@
                                             <lang class="lang_paymentmode">Payment Mode</lang>  
                                         </label>
                                         <select class="form-control border-control custom-select" name="receiving_add_payment_mode"
-                                                id='receiving_add_payment_mode'>
+                                                id='receiving_add_payment_mode' aria-label="Receiving add payment mode">
                                         </select>
                                     </div>
                                     <div class="form-group col-lg-6 col-xl-6">

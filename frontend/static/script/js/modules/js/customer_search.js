@@ -115,7 +115,7 @@ PosnicPro.customersearch = {
                                 '</div>' +
                                 '<div class="col-6">' +
                                 '<div class="text-right">' +
-                                '<button type="button" class="btn btn-primary-rgba font-18" id="' + getItemdata[i]['_id'] + '" onclick="return PosnicPro.customersearch.viewCustomerViewItem(this.id);"><i class="fa fa-eye"></i></button>' +
+                                '<button type="button" class="btn btn-primary-rgba font-18" id="' + getItemdata[i]['_id'] + '" onclick="return PosnicPro.customersearch.viewCustomerViewItem(this.id);" aria-label="View details"><i class="fa fa-eye"></i></button>' +
                                 '</div>' +
                                 '</div>' +
                                 '</div>' +
@@ -450,7 +450,7 @@ $(function () {
                     '</div>' +
                     '<div class="col-6">' +
                     '<div class="text-right">' +
-                    '<button type="button" class="btn btn-primary-rgba font-18" id="' + suggestion.data.item_id + '" onclick="return PosnicPro.customersearch.viewCustomerViewItem(this.id);"><i class="fa fa-eye"></i></button>' +
+                    '<button type="button" class="btn btn-primary-rgba font-18" id="' + suggestion.data.item_id + '" onclick="return PosnicPro.customersearch.viewCustomerViewItem(this.id);" aria-label="View details"><i class="fa fa-eye"></i></button>' +
                     '</div>' +
                     '</div>' +
                     '</div>' +

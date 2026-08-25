@@ -63,7 +63,7 @@
                                 <!-- start table -->
                                 <div class="row reportrepurchase_header">
                                     <div class="col-lg-1 col-md-1 col-md-2 form-group mb-0 amount-spent-select selecct-align">
-                                        <select class="form-control select_page" id="view_returnreceivingreport_per_page" data-id="returnreceivingreport" onChange="PosnicPro.setPerPage(this, 'Table');">
+                                        <select class="form-control select_page" id="view_returnreceivingreport_per_page" data-id="returnreceivingreport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View returnreceivingreport per page">
                                             <option value="5" selected>5</option>
                                             <option value="10">10</option>
                                             <option value="25">25</option>
@@ -128,8 +128,8 @@
                                             <div class="col-4">
                                                 <nav aria-label="Page navigation example">
                                                     <ul class="pagination mb-0">
-                                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="returnreceivingreport" onclick="PosnicPro.previousPage(this, 'Table')"> <i class="fa fa-angle-left font-20"></i> </button>
-                                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="returnreceivingreport" onclick="PosnicPro.nextPage(this, 'Table')"> <i class="fa fa-angle-right font-20"></i> </button>
+                                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="returnreceivingreport" onclick="PosnicPro.previousPage(this, 'Table')" aria-label="Previous page"> <i class="fa fa-angle-left font-20"></i> </button>
+                                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="returnreceivingreport" onclick="PosnicPro.nextPage(this, 'Table')" aria-label="Next page"> <i class="fa fa-angle-right font-20"></i> </button>
                                                     </ul>
                                                 </nav>
                                             </div>
@@ -142,7 +142,7 @@
                                 <!-- start table -->
                                 <div class="row reportrepurchasepro_header">
                                     <div class="col-lg-1 col-md-1 col-md-2 form-group mb-0 amount-spent-select selecct-align">
-                                        <select class="form-control select_page" id="view_returnreceivingproductreport_per_page" data-id="returnreceivingproductreport" onChange="PosnicPro.setPerPage(this, 'Table');">
+                                        <select class="form-control select_page" id="view_returnreceivingproductreport_per_page" data-id="returnreceivingproductreport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View returnreceivingproductreport per page">
                                             <option value="5" selected>5</option>
                                             <option value="10">10</option>
                                             <option value="25">25</option>
@@ -210,8 +210,8 @@
                                             <div class="col-4">
                                                 <nav aria-label="Page navigation example">
                                                     <ul class="pagination mb-0">
-                                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="returnreceivingproductreport" onclick="PosnicPro.previousPage(this, 'Table')"> <i class="fa fa-angle-left font-20"></i> </button>
-                                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="returnreceivingproductreport" onclick="PosnicPro.nextPage(this, 'Table')"> <i class="fa fa-angle-right font-20"></i> </button>
+                                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="returnreceivingproductreport" onclick="PosnicPro.previousPage(this, 'Table')" aria-label="Previous page"> <i class="fa fa-angle-left font-20"></i> </button>
+                                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="returnreceivingproductreport" onclick="PosnicPro.nextPage(this, 'Table')" aria-label="Next page"> <i class="fa fa-angle-right font-20"></i> </button>
                                                     </ul>
                                                 </nav>
                                             </div>
@@ -264,10 +264,10 @@
                                                     <th scope="row" class="p-2">Name : <span class="supplier_view_name_return_receiving text-info"></span> </th>
                                                 </tr>
                                                 <tr id="supplier_view_phone_return_receiving">
-                                                    <th scope="row" class="p-2">phone : <span class="supplier_view_phone_return_receiving text-info"></span>&nbsp;<a class="customer_view_phone_icon_return_receiving"><i class="feather icon-phone mr-2"></i></a></th>
+                                                    <th scope="row" class="p-2">phone : <span class="supplier_view_phone_return_receiving text-info"></span>&nbsp;<a class="customer_view_phone_icon_return_receiving" aria-label="Call customer"><i class="feather icon-phone mr-2"></i></a></th>
                                                 </tr>
                                                 <tr id="supplier_view_email_return_receiving">
-                                                    <th scope="row" class="p-2">email : <span class="supplier_view_email_return_receiving text-info"></span>&nbsp;<a class="customer_view_email_icon_return_receiving"><i class="feather icon-message-square mr-2 pointer"></i></a></th>
+                                                    <th scope="row" class="p-2">email : <span class="supplier_view_email_return_receiving text-info"></span>&nbsp;<a class="customer_view_email_icon_return_receiving" aria-label="Send message"><i class="feather icon-message-square mr-2 pointer"></i></a></th>
                                                 </tr>
                                                 <tr id="supplier_view_address_return_receiving">
                                                     <th scope="row" class="p-2">Address : <span class="supplier_view_address_return_receiving text-info"></span></th>
@@ -297,7 +297,7 @@
                             <div class="portlet-body padding-top-0">
                                 <div class="row">
                                     <div class="col-lg-2 col-md-2 form-group mb-0 amount-spent-select selecct-align">
-                                        <select class="form-control select_page" id="view_returnreceivingproductdetails_per_page" data-id="returnreceivingproductdetails" onChange="PosnicPro.setPerPage(this, 'Table');">
+                                        <select class="form-control select_page" id="view_returnreceivingproductdetails_per_page" data-id="returnreceivingproductdetails" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View returnreceivingproductdetails per page">
                                             <option value="5" selected>5</option>
                                             <option value="10">10</option>
                                             <option value="25">25</option>
@@ -341,8 +341,8 @@
                                             <div class="col-4">
                                                 <nav aria-label="Page navigation example">
                                                     <ul class="pagination mb-0">
-                                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="returnreceivingproductdetails" onclick="PosnicPro.previousPage(this, 'Table')"> <i class="fa fa-angle-left font-20"></i> </button>
-                                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="returnreceivingproductdetails" onclick="PosnicPro.nextPage(this, 'Table')"> <i class="fa fa-angle-right font-20"></i> </button>
+                                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="returnreceivingproductdetails" onclick="PosnicPro.previousPage(this, 'Table')" aria-label="Previous page"> <i class="fa fa-angle-left font-20"></i> </button>
+                                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="returnreceivingproductdetails" onclick="PosnicPro.nextPage(this, 'Table')" aria-label="Next page"> <i class="fa fa-angle-right font-20"></i> </button>
                                                     </ul>
                                                 </nav>
                                             </div>

@@ -1059,7 +1059,7 @@
                 '<span class="btn btn-success-rgba button_qty_check"><i class="feather icon-plus"></i></span>' +
                 '</div>' +
                 '</div>';
-            var removeLineItem = '<button type="button" class="btn-danger-rgba mb-1" onclick="PosnicPro.sales.quantity.removeReturnsalesLineRowItems(\'' + id + '\');"><i class="feather icon-arrow-right-circle"></i></button>';
+            var removeLineItem = '<button type="button" class="btn-danger-rgba mb-1" onclick="PosnicPro.sales.quantity.removeReturnsalesLineRowItems(\'' + id + '\');" aria-label="Move to returns"><i class="feather icon-arrow-right-circle"></i></button>';
         } else {
             var addLineItemQty = '<div class="input-group">' +
                 '<div class="input-group-prepend">' +
@@ -5203,7 +5203,7 @@ PosnicPro.sales.quantity = {
             '    <td id="addSalesLineItemSupplier_' + id + '" style="display:none;">' + supplier + '</td>' +
             '    <td id="returnRemoveInLineTotal_' + id + '" style="display:none;">' + removeTotal + '</td>' +
             '    <td id="currentLineItemTotal_' + id + '" style="display:none;">' + itemLineTotal + '</td>' +
-            '    <td class="text-center"><button type="button" class="btn-success-rgba mb-1" onclick="PosnicPro.sales.quantity.removeReturnLineRowItems(\'' + id + '\');"><i class="feather icon-arrow-left-circle"></i></button></td>' +
+            '    <td class="text-center"><button type="button" class="btn-success-rgba mb-1" onclick="PosnicPro.sales.quantity.removeReturnLineRowItems(\'' + id + '\');" aria-label="Move back to sale"><i class="feather icon-arrow-left-circle"></i></button></td>' +
             '    <td id="discountSign' + id + '" style="display:none;">' + discount_sign + '</td>' +
             '    <td name="reSalesLinediscountval" id="reSalesLinediscountval' + id + '" style="display:none;">' + discount + '</td>' +
             '    <td id="rediscountSign' + id + '" style="display:none;">' + discount_sign + '</td>' +
@@ -5375,7 +5375,7 @@ PosnicPro.sales.quantity = {
             '<span class="btn btn-success-rgba button_qty_check"><i class="feather icon-plus"></i></span>' +
             '</div>' +
             '</div>';
-        var removeLineItem = '<button type="button" class="btn-danger-rgba mb-1" onclick="PosnicPro.sales.quantity.removeReturnsalesLineRowItems(\'' + id + '\');"><i class="feather icon-arrow-right-circle"></i></button>';
+        var removeLineItem = '<button type="button" class="btn-danger-rgba mb-1" onclick="PosnicPro.sales.quantity.removeReturnsalesLineRowItems(\'' + id + '\');" aria-label="Move to returns"><i class="feather icon-arrow-right-circle"></i></button>';
         var rowHTMLLine = '<tr id="touch_row_' + id + '" class="touch-sales-hover-effect border-top pt-3"> ' +
             '    <td id="addSalesLineItemName_' + id + '" class="font_size14" data-id="' + item_name + '" width="30%">' + item_name + '</td>' +
             '    <td id="addSalesLineItemQty_' + id + '" class="text-center add_circle font_size14">' + addLineItemQty + '</td>' +
@@ -5571,7 +5571,7 @@ PosnicPro.sales.quantity = {
                 '    <td id="rediscountSign' + id + '" style="display:none;">' + discount_sign + '</td>' +
                 '    <td name="reSalesLinediscountval" id="reSalesLinediscountval' + id + '" style="display:none;">' + discount + '</td>' +
                 '    <td name="reSalesLineDiscountPercentage" id="reSalesLineDiscountPercentage_' + id + '" style="display:none;">' + discount_percentage + '</td>' +
-                '    <td class="text-center"><button type="button" class="btn-success-rgba mb-1" onclick="PosnicPro.sales.quantity.removeReturnLineRowItems(\'' + id + '\');"><i class="feather icon-arrow-left-circle"></i></button></td>' +
+                '    <td class="text-center"><button type="button" class="btn-success-rgba mb-1" onclick="PosnicPro.sales.quantity.removeReturnLineRowItems(\'' + id + '\');" aria-label="Move back to sale"><i class="feather icon-arrow-left-circle"></i></button></td>' +
                 '    <td id="value_item' + id + '" style="display:none;">' + value_product + '</td>' +
                 '    <td id="returnSalesLineItemTaxType_' + id + '" style="display:none;"><span class="badge badge-info-inverse">' + tax_type + '</span></td>' +
                 '    <td id="addSalesLineItemSellingPrice_' + id + '" style="display:none;">' + item_price + '</td>' +
@@ -5692,7 +5692,7 @@ PosnicPro.sales.quantity = {
             '    <td id="currentLineItemTotal_' + id + '" style="display:none;">' + lineTotal + '</td>' +
             '    <td id="rediscountSign' + id + '" style="display:none;">' + discount_sign + '</td>' +
             '    <td name="reSalesLinediscountval" id="reSalesLinediscountval' + id + '" style="display:none;">' + discount + '</td>' +
-            '    <td class="text-center"><button type="button" class="btn-success-rgba mb-1" onclick="PosnicPro.sales.quantity.removeReturnLineRowItems(\'' + id + '\');"><i class="feather icon-arrow-left-circle"></i></button></td>' +
+            '    <td class="text-center"><button type="button" class="btn-success-rgba mb-1" onclick="PosnicPro.sales.quantity.removeReturnLineRowItems(\'' + id + '\');" aria-label="Move back to sale"><i class="feather icon-arrow-left-circle"></i></button></td>' +
             '    <td id="value_item' + id + '" style="display:none;">' + value_product + '</td>' +
             '    <td id="returnSalesLineItemTaxType_' + id + '" style="display:none;"><span class="badge badge-info-inverse">' + tax_type + '</span></td>' +
             '    <td id="addSalesLineItemSellingPrice_' + id + '" style="display:none;">' + itemLineprice + '</td>' +

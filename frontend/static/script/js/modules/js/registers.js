@@ -254,7 +254,7 @@ PosnicPro.registers = {
                         var trow = '<tr class="cashinout-row" data-type="in" data-amount="' + appendcash_in + '" data-index="' + index + '">' +
                                 '<td><span class="register_cashin_username register_user_fields" id="register_cashin_username">' + data.current_user + '</span></td>' +
                                 '<td><span class="register_price_fields" name="register_cash_in" id="register_cash_in"> ' + currency + '&nbsp;' + appendcash_in + '</span></td>' +
-                                '<td><button type="button" class="btn btn-outline-danger btn-sm delete-cashinout-btn"><i class="feather icon-trash"></i></button></td>' +
+                                '<td><button type="button" class="btn btn-outline-danger btn-sm delete-cashinout-btn" aria-label="Delete"><i class="feather icon-trash"></i></button></td>' +
                                 '</tr>';
                         $('.cash_Intable').append(trow);
                     }
@@ -263,7 +263,7 @@ PosnicPro.registers = {
                         var trow = '<tr class="cashinout-row" data-type="out" data-amount="' + appendcash_out + '" data-index="' + index + '">' +
                                 '<td><span class="register_cashout_username register_user_fields" id="register_cashout_username">' + data.current_user + '</span></td>' +
                                 '<td><span class="register_price_outfields" name="register_cash_out" id="register_cash_out"> ' + currency + '&nbsp;' + appendcash_out + '</span></td>' +
-                                '<td><button type="button" class="btn btn-outline-danger btn-sm delete-cashinout-btn"><i class="feather icon-trash"></i></button></td>' +
+                                '<td><button type="button" class="btn btn-outline-danger btn-sm delete-cashinout-btn" aria-label="Delete"><i class="feather icon-trash"></i></button></td>' +
                                 '</tr>';
                         $('.cash_Outtable').append(trow);
                     }
@@ -754,7 +754,7 @@ PosnicPro.registers = {
                         var trow = '<tr class="cashinout-row" data-type="in" data-amount="' + savedInAmount.toFixed(2) + '" data-index="' + currentIndex + '">' +
                                 '<td><span class="register_cashin_username register_user_fields">' + currentUser + '</span></td>' +
                                 '<td><span class="register_price_fields"> ' + currency + '&nbsp;' + savedInAmount.toFixed(2) + '</span></td>' +
-                                '<td><button type="button" class="btn btn-outline-danger btn-sm delete-cashinout-btn"><i class="feather icon-trash"></i></button></td>' +
+                                '<td><button type="button" class="btn btn-outline-danger btn-sm delete-cashinout-btn" aria-label="Delete"><i class="feather icon-trash"></i></button></td>' +
                                 '</tr>';
                         $('.cash_Intable').append(trow);
                         
@@ -774,7 +774,7 @@ PosnicPro.registers = {
                         var trow = '<tr class="cashinout-row" data-type="out" data-amount="' + savedOutAmount.toFixed(2) + '" data-index="' + currentIndex + '">' +
                                 '<td><span class="register_cashout_username register_user_fields">' + currentUser + '</span></td>' +
                                 '<td><span class="register_price_outfields"> ' + currency + '&nbsp;' + savedOutAmount.toFixed(2) + '</span></td>' +
-                                '<td><button type="button" class="btn btn-outline-danger btn-sm delete-cashinout-btn"><i class="feather icon-trash"></i></button></td>' +
+                                '<td><button type="button" class="btn btn-outline-danger btn-sm delete-cashinout-btn" aria-label="Delete"><i class="feather icon-trash"></i></button></td>' +
                                 '</tr>';
                         $('.cash_Outtable').append(trow);
                         

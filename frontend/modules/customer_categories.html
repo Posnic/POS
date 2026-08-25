@@ -14,7 +14,7 @@
                     </div>
                 </div>
                 <div class="col-lg-2 col-xl-2 hide-button-action tb_filter" style="display:none;">
-                    <select class="custom-select border-control" id="view_customercategory_fields">
+                    <select class="custom-select border-control" id="view_customercategory_fields" aria-label="View customercategory fields">
                         <option value="name" selected><lang class="lang_name_title">Name</lang></option>
                     </select>
                 </div>
@@ -65,7 +65,7 @@
                                 <ul class="list-inline-group text-left mb-0 pl-0">
                                     <li class="list-inline-item">
                                         <div class="form-group mb-0 amount-spent-select selecct-align">
-                                            <select class="form-control select_page" id="view_customercategory_per_page" data-id="customercategory" onChange="PosnicPro.setPerPage(this, 'Table');">
+                                            <select class="form-control select_page" id="view_customercategory_per_page" data-id="customercategory" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View customercategory per page">
                                                 <option value="5" selected>5</option>
                                                 <option value="10">10</option>
                                                 <option value="25">25</option>
@@ -161,8 +161,8 @@
                             <div class="col-4">
                                 <nav aria-label="Page navigation example">
                                     <ul class="pagination mb-0">
-                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="customercategory" onclick="PosnicPro.previousPage(this, 'Table')"> <i class="fa fa-angle-left font-20"></i> </button>
-                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="customercategory" onclick="PosnicPro.nextPage(this, 'Table')"> <i class="fa fa-angle-right font-20"></i> </button>
+                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="customercategory" onclick="PosnicPro.previousPage(this, 'Table')" aria-label="Previous page"> <i class="fa fa-angle-left font-20"></i> </button>
+                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="customercategory" onclick="PosnicPro.nextPage(this, 'Table')" aria-label="Next page"> <i class="fa fa-angle-right font-20"></i> </button>
                                     </ul>
                                 </nav>
                             </div>
@@ -310,7 +310,7 @@
                                     <div class="portlet-body padding-top-0 loader-customercategoryactivity">
                                         <div class="row customercategoryactivity_content">
                                             <div class="col-lg-2 col-md-2 form-group mb-0 amount-spent-select selecct-align">
-                                                <select class="form-control select_page" id="view_customercategorydetails_per_page" data-id="customercategorydetails" onChange="PosnicPro.setPerPage(this, 'Table');">
+                                                <select class="form-control select_page" id="view_customercategorydetails_per_page" data-id="customercategorydetails" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View customercategorydetails per page">
                                                     <option value="5" selected>5</option>
                                                     <option value="10">10</option>
                                                     <option value="25">25</option>
@@ -361,8 +361,8 @@
                                                     <div class="col-4">
                                                         <nav aria-label="Page navigation example">
                                                             <ul class="pagination mb-0">
-                                                                <button class="btn previous page-item text-dark-gradient f-w-7" data-id="customercategorydetails" onclick="PosnicPro.previousPage(this, 'Table')"> <i class="fa fa-angle-left font-20"></i> </button>
-                                                                <button class="btn next page-item text-dark-gradient f-w-7" data-id="customercategorydetails" onclick="PosnicPro.nextPage(this, 'Table')"> <i class="fa fa-angle-right font-20"></i> </button>
+                                                                <button class="btn previous page-item text-dark-gradient f-w-7" data-id="customercategorydetails" onclick="PosnicPro.previousPage(this, 'Table')" aria-label="Previous page"> <i class="fa fa-angle-left font-20"></i> </button>
+                                                                <button class="btn next page-item text-dark-gradient f-w-7" data-id="customercategorydetails" onclick="PosnicPro.nextPage(this, 'Table')" aria-label="Next page"> <i class="fa fa-angle-right font-20"></i> </button>
                                                             </ul>
                                                         </nav>
                                                     </div>

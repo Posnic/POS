@@ -630,10 +630,10 @@ PosnicPro.whatsapp = {
                     <td>${messagePreview}</td>
                     <td>${createdDate}</td>
                     <td>
-                        <button type="button" class="btn btn-sm btn-outline-primary mr-1" onclick="PosnicPro.whatsapp.editTemplate('${template._id}')">
+                        <button type="button" class="btn btn-sm btn-outline-primary mr-1" onclick="PosnicPro.whatsapp.editTemplate('${template._id}')" aria-label="Edit">
                             <i class="feather icon-edit"></i>
                         </button>
-                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="PosnicPro.whatsapp.deleteTemplate('${template._id}')">
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="PosnicPro.whatsapp.deleteTemplate('${template._id}')" aria-label="Delete">
                             <i class="feather icon-trash"></i>
                         </button>
                     </td>

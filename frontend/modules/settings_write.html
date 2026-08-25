@@ -225,11 +225,11 @@
                                                     <div class="form-row align-items-end mb-3">
                                                         <div class="col">
                                                             <label style="font-size:.8rem; font-weight:600;">From</label>
-                                                            <input type="date" class="form-control" id="roster_from">
+                                                            <input type="date" class="form-control" id="roster_from" aria-label="Roster from">
                                                         </div>
                                                         <div class="col">
                                                             <label style="font-size:.8rem; font-weight:600;">To</label>
-                                                            <input type="date" class="form-control" id="roster_to">
+                                                            <input type="date" class="form-control" id="roster_to" aria-label="Roster to">
                                                         </div>
                                                         <div class="col-auto">
                                                             <button type="button" class="btn btn-primary" onclick="PosnicPro.shiftWidget.runRoster();">Show</button>
@@ -256,16 +256,16 @@
                                                     <label style="font-weight:600; font-size:.85rem;"><lang class="lang_wf_planshift">Plan a shift</lang></label>
                                                     <div class="form-row align-items-end">
                                                         <div class="col-md-4">
-                                                            <select class="form-control form-control-sm" id="roster_user"></select>
+                                                            <select class="form-control form-control-sm" id="roster_user" aria-label="Roster user"></select>
                                                         </div>
                                                         <div class="col-md-3">
-                                                            <input type="date" class="form-control form-control-sm" id="roster_date">
+                                                            <input type="date" class="form-control form-control-sm" id="roster_date" aria-label="Roster date">
                                                         </div>
                                                         <div class="col-md-2">
-                                                            <input type="time" class="form-control form-control-sm" id="roster_start" value="09:00">
+                                                            <input type="time" class="form-control form-control-sm" id="roster_start" value="09:00" aria-label="Roster start">
                                                         </div>
                                                         <div class="col-md-2">
-                                                            <input type="time" class="form-control form-control-sm" id="roster_end" value="18:00">
+                                                            <input type="time" class="form-control form-control-sm" id="roster_end" value="18:00" aria-label="Roster end">
                                                         </div>
                                                         <div class="col-md-1">
                                                             <button type="button" class="btn btn-sm btn-outline-primary" id="roster_add_btn"
@@ -596,12 +596,12 @@
                                                 <h5 class="card-title"><lang class="lang_sale_summary"> Denomination</lang></h5>
                                             </div>
                                             <div class="col-lg-6 text-right">
-                                                <button type="button" class="btn btn-outline-success btn-sm" id="addCashcalculation" onclick="return PosnicPro.registers.addCashcalculation()" style="display: none !important;"><i class="feather icon-plus-square"></i></button>
-                                                <button type="button" class="btn btn-outline-primary btn-sm" id="editCashcalculation" onclick="return PosnicPro.registers.editCashcalculation()" style="display: none !important;"><i class="feather icon-check-square"></i></button>
+                                                <button type="button" class="btn btn-outline-success btn-sm" id="addCashcalculation" onclick="return PosnicPro.registers.addCashcalculation()" style="display: none !important;" aria-label="Add"><i class="feather icon-plus-square"></i></button>
+                                                <button type="button" class="btn btn-outline-primary btn-sm" id="editCashcalculation" onclick="return PosnicPro.registers.editCashcalculation()" style="display: none !important;" aria-label="Apply"><i class="feather icon-check-square"></i></button>
                                                 <button type="button" class="btn btn-success btn-sm" id="updateDenominationBtn" onclick="PosnicPro.registers.updateDenominationData();" style="display: none;">
                                                     <i class="feather icon-check mr-2"></i>Update Denomination
                                                 </button>
-                                                <button type="button" id="delete" class="btn btn-outline-danger btn-sm" onclick="return PosnicPro.registers.deleteCashcalculation()"><i class="feather icon-trash"></i></button>
+                                                <button type="button" id="delete" class="btn btn-outline-danger btn-sm" onclick="return PosnicPro.registers.deleteCashcalculation()" aria-label="Delete"><i class="feather icon-trash"></i></button>
                                             </div>
                                         </div>
                                     </div>
@@ -762,7 +762,7 @@
                     </div>
                 </div>
                 <div class="col-lg-2 col-xl-2 hide-button-action tb_filter" style="display:none;">
-                    <select class="custom-select border-control" id="view_expenses_fields" data-id="expenses" onchange="PosnicPro.changePlaceholder(this)">
+                    <select class="custom-select border-control" id="view_expenses_fields" data-id="expenses" onchange="PosnicPro.changePlaceholder(this)" aria-label="View expenses fields">
                         <option value="type">
                         <lang class="lang_type_title">Type</lang>
                         </option>
@@ -831,7 +831,7 @@
                                 <ul class="list-inline-group text-left mb-0 pl-0">
                                     <li class="list-inline-item">
                                         <div class="form-group mb-0 amount-spent-select selecct-align">
-                                            <select class="form-control select_page" id="view_expenses_per_page" data-id="expenses" onChange="PosnicPro.setPerPage(this, 'Table');">
+                                            <select class="form-control select_page" id="view_expenses_per_page" data-id="expenses" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View expenses per page">
                                                 <option value="5" selected>5</option>
                                                 <option value="10">10</option>
                                                 <option value="25">25</option>
@@ -926,8 +926,8 @@
                             <div class="col-4">
                                 <nav aria-label="Page navigation example">
                                     <ul class="pagination mb-0">
-                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="expenses" onclick="PosnicPro.previousPage(this, 'Table')"> <i class="fa fa-angle-left font-20"></i> </button>
-                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="expenses" onclick="PosnicPro.nextPage(this, 'Table')"> <i class="fa fa-angle-right font-20"></i> </button>
+                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="expenses" onclick="PosnicPro.previousPage(this, 'Table')" aria-label="Previous page"> <i class="fa fa-angle-left font-20"></i> </button>
+                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="expenses" onclick="PosnicPro.nextPage(this, 'Table')" aria-label="Next page"> <i class="fa fa-angle-right font-20"></i> </button>
                                     </ul>
                                 </nav>
                             </div>
@@ -1219,17 +1219,17 @@
                                             <div class="col-md-3 mb-2">
                                                 <label>Points earned</label>
                                                 <input type="number" min="0" step="1" class="form-control"
-                                                    id="loyalty_earn_points" value="1">
+                                                    id="loyalty_earn_points" value="1" aria-label="Loyalty earn points">
                                             </div>
                                             <div class="col-md-1 text-center mb-2 pb-2">per</div>
                                             <div class="col-md-4 mb-2">
                                                 <label>Amount spent (<span class="loyalty-currency-label">currency</span>)</label>
                                                 <input type="number" min="0" step="0.01" class="form-control"
-                                                    id="loyalty_earn_amount" value="100">
+                                                    id="loyalty_earn_amount" value="100" aria-label="Loyalty earn amount">
                                             </div>
                                             <div class="col-md-4 mb-2">
                                                 <label>Rounding</label>
-                                                <select class="form-control" id="loyalty_earn_rounding">
+                                                <select class="form-control" id="loyalty_earn_rounding" aria-label="Loyalty earn rounding">
                                                     <option value="floor">Round down (never over-credit)</option>
                                                     <option value="round">Nearest</option>
                                                     <option value="ceil">Round up</option>
@@ -1240,7 +1240,7 @@
                                             <div class="col-md-4 mb-2">
                                                 <label>Minimum spend to earn (<span class="loyalty-currency-label">currency</span>)</label>
                                                 <input type="number" min="0" step="0.01" class="form-control"
-                                                    id="loyalty_min_spend" value="0">
+                                                    id="loyalty_min_spend" value="0" aria-label="Loyalty min spend">
                                             </div>
                                         </div>
 
@@ -1249,30 +1249,30 @@
                                             <div class="col-md-3 mb-2">
                                                 <label>Points</label>
                                                 <input type="number" min="1" step="1" class="form-control"
-                                                    id="loyalty_redeem_points" value="1">
+                                                    id="loyalty_redeem_points" value="1" aria-label="Loyalty redeem points">
                                             </div>
                                             <div class="col-md-1 text-center mb-2 pb-2">=</div>
                                             <div class="col-md-4 mb-2">
                                                 <label>Value (<span class="loyalty-currency-label">currency</span>)</label>
                                                 <input type="number" min="0" step="0.01" class="form-control"
-                                                    id="loyalty_redeem_value" value="1">
+                                                    id="loyalty_redeem_value" value="1" aria-label="Loyalty redeem">
                                             </div>
                                         </div>
                                         <div class="form-row mb-4">
                                             <div class="col-md-4 mb-2">
                                                 <label>Minimum points to redeem</label>
                                                 <input type="number" min="0" step="1" class="form-control"
-                                                    id="loyalty_min_redeem" value="0">
+                                                    id="loyalty_min_redeem" value="0" aria-label="Loyalty min redeem">
                                             </div>
                                             <div class="col-md-4 mb-2">
                                                 <label>Max discount (% of bill)</label>
                                                 <input type="number" min="0" max="100" step="1" class="form-control"
-                                                    id="loyalty_max_redeem_percent" value="100">
+                                                    id="loyalty_max_redeem_percent" value="100" aria-label="Loyalty max redeem percent">
                                             </div>
                                             <div class="col-md-4 mb-2">
                                                 <label>Points expire after (months, 0 = never)</label>
                                                 <input type="number" min="0" step="1" class="form-control"
-                                                    id="loyalty_expiry_months" value="0">
+                                                    id="loyalty_expiry_months" value="0" aria-label="Loyalty expiry months">
                                             </div>
                                         </div>
 
@@ -1313,18 +1313,18 @@
                                             <div class="col-md-4 mb-2">
                                                 <label>Points to the referrer</label>
                                                 <input type="number" min="0" step="1" class="form-control"
-                                                    id="loyalty_referral_referrer_points" value="0">
+                                                    id="loyalty_referral_referrer_points" value="0" aria-label="Loyalty referral referrer points">
                                             </div>
                                             <div class="col-md-4 mb-2">
                                                 <label>Points to the new customer</label>
                                                 <input type="number" min="0" step="1" class="form-control"
-                                                    id="loyalty_referral_referee_points" value="0">
+                                                    id="loyalty_referral_referee_points" value="0" aria-label="Loyalty referral referee points">
                                             </div>
                                             <div class="col-md-4 mb-2">
                                                 <label>Min first-purchase spend
                                                     (<span class="loyalty-currency-label">currency</span>)</label>
                                                 <input type="number" min="0" step="0.01" class="form-control"
-                                                    id="loyalty_referral_min_spend" value="0">
+                                                    id="loyalty_referral_min_spend" value="0" aria-label="Loyalty referral min spend">
                                             </div>
                                         </div>
 
@@ -1379,7 +1379,7 @@
                                             <div class="form-row">
                                                 <div class="col-md-3 mb-2">
                                                     <label>Type</label>
-                                                    <select class="form-control" id="coupon_type">
+                                                    <select class="form-control" id="coupon_type" aria-label="Coupon type">
                                                         <option value="percent">Percentage off</option>
                                                         <option value="fixed">Fixed amount off</option>
                                                     </select>
@@ -1387,39 +1387,39 @@
                                                 <div class="col-md-3 mb-2">
                                                     <label>Value</label>
                                                     <input type="number" min="0" step="0.01" class="form-control"
-                                                        id="coupon_value" value="0">
+                                                        id="coupon_value" value="0" aria-label="Coupon">
                                                 </div>
                                                 <div class="col-md-3 mb-2">
                                                     <label>Min spend
                                                         (<span class="coupon-currency-label">currency</span>)</label>
                                                     <input type="number" min="0" step="0.01" class="form-control"
-                                                        id="coupon_min_spend" value="0">
+                                                        id="coupon_min_spend" value="0" aria-label="Coupon min spend">
                                                 </div>
                                                 <div class="col-md-3 mb-2" id="coupon_max_discount_wrap">
                                                     <label>Max discount
                                                         (<span class="coupon-currency-label">currency</span>, 0=none)</label>
                                                     <input type="number" min="0" step="0.01" class="form-control"
-                                                        id="coupon_max_discount" value="0">
+                                                        id="coupon_max_discount" value="0" aria-label="Coupon max discount">
                                                 </div>
                                             </div>
                                             <div class="form-row">
                                                 <div class="col-md-3 mb-2">
                                                     <label>Valid from</label>
-                                                    <input type="date" class="form-control" id="coupon_start_date">
+                                                    <input type="date" class="form-control" id="coupon_start_date" aria-label="Coupon start date">
                                                 </div>
                                                 <div class="col-md-3 mb-2">
                                                     <label>Valid until</label>
-                                                    <input type="date" class="form-control" id="coupon_end_date">
+                                                    <input type="date" class="form-control" id="coupon_end_date" aria-label="Coupon end date">
                                                 </div>
                                                 <div class="col-md-3 mb-2">
                                                     <label>Total uses (0=∞)</label>
                                                     <input type="number" min="0" step="1" class="form-control"
-                                                        id="coupon_usage_limit" value="0">
+                                                        id="coupon_usage_limit" value="0" aria-label="Coupon usage limit">
                                                 </div>
                                                 <div class="col-md-3 mb-2">
                                                     <label>Per customer (0=∞)</label>
                                                     <input type="number" min="0" step="1" class="form-control"
-                                                        id="coupon_per_customer_limit" value="0">
+                                                        id="coupon_per_customer_limit" value="0" aria-label="Coupon per customer limit">
                                                 </div>
                                             </div>
                                             <div class="custom-control custom-switch mb-3">
@@ -1473,24 +1473,24 @@
                                         <div class="col-md-3 mb-2">
                                             <label>Cashback %</label>
                                             <input type="number" min="0" max="100" step="0.1" class="form-control"
-                                                id="cashback_percent" value="0">
+                                                id="cashback_percent" value="0" aria-label="Cashback percent">
                                         </div>
                                         <div class="col-md-3 mb-2">
                                             <label>Min bill to earn
                                                 (<span class="cashback-currency-label">currency</span>)</label>
                                             <input type="number" min="0" step="0.01" class="form-control"
-                                                id="cashback_min_spend" value="0">
+                                                id="cashback_min_spend" value="0" aria-label="Cashback min spend">
                                         </div>
                                         <div class="col-md-3 mb-2">
                                             <label>Max cashback
                                                 (<span class="cashback-currency-label">currency</span>, 0=none)</label>
                                             <input type="number" min="0" step="0.01" class="form-control"
-                                                id="cashback_max" value="0">
+                                                id="cashback_max" value="0" aria-label="Cashback max">
                                         </div>
                                         <div class="col-md-3 mb-2">
                                             <label>Valid for (days)</label>
                                             <input type="number" min="1" step="1" class="form-control"
-                                                id="cashback_validity" value="30">
+                                                id="cashback_validity" value="30" aria-label="Cashback validity">
                                         </div>
                                     </div>
                                     <div class="form-row align-items-end">
@@ -1498,7 +1498,7 @@
                                             <label>Min bill to redeem
                                                 (<span class="cashback-currency-label">currency</span>)</label>
                                             <input type="number" min="0" step="0.01" class="form-control"
-                                                id="cashback_min_redeem" value="0">
+                                                id="cashback_min_redeem" value="0" aria-label="Cashback min redeem">
                                         </div>
                                         <div class="col-md-3 mb-2">
                                             <div class="custom-control custom-switch mt-4">
@@ -1509,7 +1509,7 @@
                                         </div>
                                         <div class="col-md-3 mb-2">
                                             <label>Send via</label>
-                                            <select class="form-control" id="cashback_channel">
+                                            <select class="form-control" id="cashback_channel" aria-label="Cashback channel">
                                                 <option value="none">Don't send (print only)</option>
                                                 <option value="sms">SMS</option>
                                                 <option value="whatsapp">WhatsApp</option>
@@ -1583,7 +1583,7 @@
                                                 </div>
                                                 <div class="col-md-3 mb-2">
                                                     <label>Channel</label>
-                                                    <select class="form-control" id="campaign_channel">
+                                                    <select class="form-control" id="campaign_channel" aria-label="Campaign channel">
                                                         <option value="whatsapp">WhatsApp</option>
                                                         <option value="sms">SMS</option>
                                                     </select>
@@ -1593,7 +1593,7 @@
                                             <div class="form-row align-items-end">
                                                 <div class="col-md-3 mb-2">
                                                     <label>Audience</label>
-                                                    <select class="form-control" id="campaign_seg_type">
+                                                    <select class="form-control" id="campaign_seg_type" aria-label="Campaign seg type">
                                                         <option value="all">All customers</option>
                                                         <option value="tier">Loyalty tier</option>
                                                         <option value="min_points">Minimum points</option>
@@ -1604,19 +1604,19 @@
                                                 <div class="col-md-3 mb-2 campaign-seg-field" id="campaign_seg_tier_wrap"
                                                     style="display:none;">
                                                     <label>Tier</label>
-                                                    <select class="form-control" id="campaign_seg_tier"></select>
+                                                    <select class="form-control" id="campaign_seg_tier" aria-label="Campaign seg tier"></select>
                                                 </div>
                                                 <div class="col-md-3 mb-2 campaign-seg-field"
                                                     id="campaign_seg_min_points_wrap" style="display:none;">
                                                     <label>Minimum points</label>
                                                     <input type="number" min="0" step="1" class="form-control"
-                                                        id="campaign_seg_min_points" value="0">
+                                                        id="campaign_seg_min_points" value="0" aria-label="Campaign seg min points">
                                                 </div>
                                                 <div class="col-md-3 mb-2 campaign-seg-field"
                                                     id="campaign_seg_lapsed_wrap" style="display:none;">
                                                     <label>No purchase in (days)</label>
                                                     <input type="number" min="0" step="1" class="form-control"
-                                                        id="campaign_seg_lapsed_days" value="30">
+                                                        id="campaign_seg_lapsed_days" value="30" aria-label="Campaign seg lapsed days">
                                                 </div>
                                                 <div class="col-md-4 mb-2 campaign-seg-field"
                                                     id="campaign_seg_category_wrap" style="display:none;">
@@ -1652,7 +1652,7 @@
                                                     now</button>
                                                 <div class="input-group input-group-sm mb-1" style="max-width: 300px;">
                                                     <input type="datetime-local" class="form-control"
-                                                        id="campaign_schedule_at">
+                                                        id="campaign_schedule_at" aria-label="Campaign schedule at">
                                                     <div class="input-group-append">
                                                         <button type="button" class="btn btn-outline-primary"
                                                             id="campaign_schedule_btn">Schedule</button>
@@ -1729,7 +1729,7 @@
                                         <div class="form-row">
                                             <div class="col-md-6 mb-3">
                                                 <label>Provider</label>
-                                                <select class="form-control" id="messaging_sms_provider"></select>
+                                                <select class="form-control" id="messaging_sms_provider" aria-label="Messaging sms provider"></select>
                                             </div>
                                         </div>
                                         <div id="messaging_provider_note"></div>
@@ -1769,7 +1769,7 @@
                                         <div class="form-row">
                                             <div class="col-md-6 mb-3">
                                                 <label>How do you connect WhatsApp?</label>
-                                                <select class="form-control" id="messaging_wa_mode">
+                                                <select class="form-control" id="messaging_wa_mode" aria-label="Messaging wa mode">
                                                     <option value="web">Scan on this machine (local device)</option>
                                                     <option value="cloud">Meta WhatsApp Cloud API</option>
                                                 </select>
@@ -1806,7 +1806,7 @@
                                                 </div>
                                                 <div class="col-md-6 mb-2">
                                                     <label>Phone number id <span class="text-danger">*</span></label>
-                                                    <input type="text" class="form-control" id="messaging_wa_phoneid">
+                                                    <input type="text" class="form-control" id="messaging_wa_phoneid" aria-label="Messaging wa phoneid">
                                                 </div>
                                                 <div class="col-md-4 mb-2">
                                                     <label>API version</label>
@@ -1815,7 +1815,7 @@
                                                 </div>
                                                 <div class="col-md-4 mb-2">
                                                     <label>Template name (marketing)</label>
-                                                    <input type="text" class="form-control" id="messaging_wa_tplname">
+                                                    <input type="text" class="form-control" id="messaging_wa_tplname" aria-label="Messaging wa tplname">
                                                 </div>
                                                 <div class="col-md-4 mb-2">
                                                     <label>Template language</label>
@@ -2566,12 +2566,12 @@
                                             <label>Default credit limit
                                                 (<span class="credit-currency-label">currency</span>, 0 = none)</label>
                                             <input type="number" min="0" step="0.01" class="form-control"
-                                                id="credit_default_limit" value="0">
+                                                id="credit_default_limit" value="0" aria-label="Credit default limit">
                                         </div>
                                         <div class="col-md-4 mb-2">
                                             <label>Credit terms (days, 0 = none)</label>
                                             <input type="number" min="0" step="1" class="form-control"
-                                                id="credit_terms_days" value="0">
+                                                id="credit_terms_days" value="0" aria-label="Credit terms days">
                                         </div>
                                     </div>
                                 </div>
@@ -2593,7 +2593,7 @@
                                     <div class="form-row">
                                         <div class="col-md-3 mb-2">
                                             <label>Channel</label>
-                                            <select class="form-control" id="credit_reminder_channel">
+                                            <select class="form-control" id="credit_reminder_channel" aria-label="Credit reminder channel">
                                                 <option value="sms">SMS</option>
                                                 <option value="whatsapp">WhatsApp</option>
                                             </select>
@@ -2602,7 +2602,7 @@
                                             <label>Only remind dues over
                                                 (<span class="credit-currency-label">currency</span>)</label>
                                             <input type="number" min="0" step="0.01" class="form-control"
-                                                id="credit_reminder_min_due" value="0">
+                                                id="credit_reminder_min_due" value="0" aria-label="Credit reminder min due">
                                         </div>
                                     </div>
                                     <div class="form-row">
@@ -2751,7 +2751,7 @@
                                             <div class="card-header">
                                                 <div class="row align-items-center">
                                                     <div class="col-sm-2">
-                                                        <select class="form-control" id="view_tableorder_per_page" onchange="PosnicPro.tableOrders.changePerPage()">
+                                                        <select class="form-control" id="view_tableorder_per_page" onchange="PosnicPro.tableOrders.changePerPage()" aria-label="View tableorder per page">
                                                             <option value="5">5</option>
                                                             <option value="10" selected>10</option>
                                                             <option value="25">25</option>
@@ -2845,7 +2845,7 @@
                                         <div class="col-sm">
                                             <select name="backuptablelist" id="backuptablelist"
                                                 class="custom-select border-control" data-id="recycle_bin"
-                                                onchange="PosnicPro.settings.changeInputFieldsValueBackupTable(this)">
+                                                onchange="PosnicPro.settings.changeInputFieldsValueBackupTable(this)" aria-label="Backuptablelist">
                                                 <option value="sales" selected>
                                                     <lang class="lang_sales_title">Sale</lang>
                                                 </option>
@@ -2892,7 +2892,7 @@
                                         <div class="col-sm">
                                             <select id="view_recycle_bin_fields" data-id="recycle_bin"
                                                 class="custom-select border-control"
-                                                onchange="PosnicPro.changePlaceholder(this)">
+                                                onchange="PosnicPro.changePlaceholder(this)" aria-label="View recycle bin fields">
                                                 <option value="sales_id" class="sales-recyclebin hide-recyclebin"
                                                     selected>
                                                     <lang class="lang_id_title">Id</lang>
@@ -3009,7 +3009,7 @@
                                                                 class="form-group mb-0 amount-spent-select selecct-align">
                                                                 <select class="form-control select_page"
                                                                     id="view_settings_per_page" data-id="settings"
-                                                                    onChange="PosnicPro.setPerPage(this, 'Table');">
+                                                                    onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View settings per page">
                                                                     <option value="5" selected>5</option>
                                                                     <option value="10">10</option>
                                                                     <option value="25">25</option>
@@ -3182,7 +3182,7 @@
                             class="form-control form-control-sm mb-2" rows="4" maxlength="1500"
                             placeholder="e.g. 50% advance confirms the order. Prices valid till the date on the quote."></textarea>
                         <label style="font-size:12.5px;" class="mb-1"><lang class="lang_quote_signature">Authorised signature (image)</lang></label>
-                        <input type="file" accept="image/*" class="form-control-file" id="quote_signature_file" style="font-size:12px;">
+                        <input type="file" accept="image/*" class="form-control-file" id="quote_signature_file" style="font-size:12px;" aria-label="Quote signature file">
                         <input type="hidden" id="quote_default_signature">
                         <div class="mt-1">
                             <img id="quote_signature_thumb" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="max-height:48px; max-width:160px; display:none; border:1px solid #e3e7ee; border-radius:4px; padding:2px;">
@@ -3578,7 +3578,7 @@
                                                     <div class="form-group col-md-6">
                                                         <input type="checkbox" id="default_customer_enable_disable"
                                                             name="default_customer_enable_disable"
-                                                            onclick="PosnicPro.settings.defaultCustomerData(this.checked);" />
+                                                            onclick="PosnicPro.settings.defaultCustomerData(this.checked);" aria-label="Default customer enable disable"/>
                                                         <label for="default_customer">
                                                             <lang class="lang_defaultcust_title"> Default Customer
                                                             </lang> <span class="text-danger">*</span>
@@ -3899,12 +3899,12 @@
                                                         <input name="discount_amount" id="discount_amount" type="text" min="0"
                                                             minlength="1" maxlength="5"
                                                             class="form-control border-control allow_decimal text-right display-discount-amount-value"
-                                                            required>
+                                                            required aria-label="Discount amount">
                                                         <input name="discount_percentage" id="discount_percentage" type="number"
                                                             class="form-control border-control text-right display-discount-percentage-value"
                                                             min="0" max="100" onkeypress="return PosnicPro.isNumber(event)"
                                                             onkeyup="this.value = PosnicPro.minmax(this.value, 0, 100)"
-                                                            style="display: none;" required>
+                                                            style="display: none;" required aria-label="Discount percentage">
                                                     </div>
                                                     <div class="form-group col-md-3" style="display:none;">
                                                         <div class="wallet-box" style="margin-top:0px;background: #fdfdfd;">
@@ -3927,7 +3927,7 @@
                                                     <div class="form-group col-md-6">
                                                         <input type="checkbox" id="default_supplier_enable_disable"
                                                             name="default_supplier_enable_disable"
-                                                            onclick="PosnicPro.settings.defaultSupplierData(this.checked);" />
+                                                            onclick="PosnicPro.settings.defaultSupplierData(this.checked);" aria-label="Default supplier enable disable"/>
                                                         <label for="default_supplier">
                                                             <lang class="lang_defaultsupply_title"> Default Supplier
                                                             </lang> <span class="text-danger">*</span>
@@ -4724,7 +4724,7 @@
                                                                     <label for="kiosk_homebanner"
                                                                         class="btn btn-success-rgba"><i
                                                                             class="feather icon-edit"></i></label>
-                                                                    <!-- <a href="javascript:void(0)" class="btn btn-danger-rgba" onclick="PosnicPro.kiosk.removeImagePreview('homebanner')">
+                                                                    <!-- <a href="javascript:void(0)" class="btn btn-danger-rgba" onclick="PosnicPro.kiosk.removeImagePreview('homebanner')" aria-label="Delete">
                                                                 <i class="feather icon-trash"></i>
                                                             </a> -->
                                                                     <img id="preview_homebanner" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
@@ -4743,7 +4743,7 @@
                                                                     <label for="kiosk_logo"
                                                                         class="btn btn-success-rgba"><i
                                                                             class="feather icon-edit"></i></label>
-                                                                    <!-- <a href="javascript:void(0)" class="btn btn-danger-rgba" onclick="PosnicPro.kiosk.removeImagePreview('logo')">
+                                                                    <!-- <a href="javascript:void(0)" class="btn btn-danger-rgba" onclick="PosnicPro.kiosk.removeImagePreview('logo')" aria-label="Delete">
                                                                 <i class="feather icon-trash"></i>
                                                             </a> -->
                                                                     <img id="preview_logo" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
@@ -4763,7 +4763,7 @@
                                                                     <label for="kiosk_banner"
                                                                         class="btn btn-success-rgba"><i
                                                                             class="feather icon-edit"></i></label>
-                                                                    <!-- <a href="javascript:void(0)" class="btn btn-danger-rgba" onclick="PosnicPro.kiosk.removeImagePreview('banner')">
+                                                                    <!-- <a href="javascript:void(0)" class="btn btn-danger-rgba" onclick="PosnicPro.kiosk.removeImagePreview('banner')" aria-label="Delete">
                                                                 <i class="feather icon-trash"></i>
                                                             </a> -->
                                                                     <img id="preview_banner" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
@@ -4783,7 +4783,7 @@
                                                                     <label for="kiosk_advertisement"
                                                                         class="btn btn-success-rgba"><i
                                                                             class="feather icon-edit"></i></label>
-                                                                    <!-- <a href="javascript:void(0)" class="btn btn-danger-rgba" onclick="PosnicPro.kiosk.removeImagePreview('advertisement')">
+                                                                    <!-- <a href="javascript:void(0)" class="btn btn-danger-rgba" onclick="PosnicPro.kiosk.removeImagePreview('advertisement')" aria-label="Delete">
                                                                 <i class="feather icon-trash"></i>
                                                             </a> -->
                                                                     <img id="preview_advertisement" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
