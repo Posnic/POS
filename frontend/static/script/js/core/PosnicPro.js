@@ -4615,6 +4615,16 @@ $(document).on('click', '[id^="last_created_"]', function () {
     PosnicPro.returnTo = currentHash || '';
 });
 
+/*
+ * The modules whose ADD form is an infobar floating over its own list -
+ * the only ones whose cancelled add may close silently. A module whose
+ * form is a full page (items, receivings, sales) must never join this
+ * list: for those the route dispatch is what brings the list back.
+ */
+PosnicPro.INFOBAR_LIST_ADDS = {
+    customers: 1, suppliers: 1, users: 1, expenses: 1,
+    categories: 1, customercategory: 1, variants: 1
+};
 $(".infobar-settings-close").on("click", function (e) {
     var category = 'sales/categories/new';
     if (currentHash === category) {
@@ -4647,6 +4657,20 @@ $(".infobar-settings-close").on("click", function (e) {
         hasher.setHash(parts[0] + '/' + parts[1]);
     } else if (parts[0] === 'kotorder' && parts[1] === 'new') {
         hasher.setHash(parts[0] + '/' + parts[1]); // Keep kotorder/new intact
+    } else if (parts[1] === 'new' && PosnicPro.INFOBAR_LIST_ADDS[parts[0]]) {
+        /*
+         * Cancelling an add panel that floats OVER its list (saves patch,
+         * close edition): the list beneath is already rendered and nothing
+         * changed, so restore the hash WITHOUT the changed signal - which
+         * is what the comment below always claimed and never did. The
+         * route not firing is the point: no re-fetch, no re-render.
+         * Full-page forms (items, receivings) stay on the dispatching
+         * branch - for them the route IS the way back to the list.
+         */
+        hasher.changed.active = false;
+        hasher.setHash(parts[0]);
+        hasher.changed.active = true;
+        currentHash = parts[0];
     } else if (parts[1] === 'new' || parts[1] === 'tax' || parts[1] === 'unit' || parts[1] === 'taxgroup' || parts[1] === 'denom' || parts[1] === 'default' || parts[1] === 'payment' || parts[1] === 'tableorder') {
         hasher.setHash(parts[0]); //set hash without dispatching changed signal
     } else if (parts[2] === 'new' && parts[2] !== 'sales/categories/new') {
