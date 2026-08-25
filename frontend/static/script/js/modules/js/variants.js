@@ -92,8 +92,8 @@ PosnicPro.variants = {
                             '<div data-toolbar="user-options" class="btn btn-round btn-primary-rgba round-pad" id="onclick-toolbar_' + i + '"><i class="feather icon-more-vertical-"></i></div>';
 
                     var trow = '<tr id="variantbgcolor_' + row._id + '" class="variantcheckbox">' +
-                            '<th><input type="checkbox" class="variants-row-id variantcheck_' + row._id + '" id="' + row._id + '" name="id[]" value="' + row._id + '" onclick="PosnicPro.checkboxSelectOne(this,\'variants\');"></th> <th scope="row">' + row_no + '</th>' +
-                            '<td width="30%">' + row.name + '</td>' +
+                            '<th><input type="checkbox" class="variants-row-id variantcheck_' + row._id + '" id="' + row._id + '" name="id[]" value="' + row._id + '" onclick="PosnicPro.checkboxSelectOne(this,\'variants\');"></th> <th scope="row" data-label="#">' + row_no + '</th>' +
+                            '<td width="30%" data-label="Name">' + row.name + '</td>' +
                             '<td class="text-center"><span>' + action + '</span></td>' +
                             '</tr>';
 
