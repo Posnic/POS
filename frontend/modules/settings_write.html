@@ -3110,39 +3110,45 @@
                                     <small class="text-muted"><lang class="lang_demodata_hint">The sample records your shop can try itself with - choose a trade, reset for a fresh set, or switch the feature off to remove them.</lang></small>
                                 </div>
                                 <div class="card-body">
+                                    <!--
+                                        Reads top to bottom the way it is used: what this is,
+                                        pick a trade, act on it, the promise. The chooser and
+                                        BOTH buttons share one row and one baseline - the old
+                                        flex bag mixed the help text into the same row, which
+                                        put the dropdown above the buttons and the buttons
+                                        adrift ("drop down and buttons not in same line").
+                                    -->
                                     <div class="fc-section" id="fc_demodata">
                                         <h6 class="fc-title"><lang class="lang_demopack_title">Sample data for your trade</lang></h6>
-                                        <div class="module-subs">
-                                            <p class="text-muted mb-2" style="font-size:13px;">
-                                                <lang class="lang_demopack_help">Your shop was set up with one
-                                                    trade's sample products. Pick a different trade and we will
-                                                    swap them for that one.</lang>
-                                            </p>
-                                            <div class="form-group mb-2" style="min-width:240px;max-width:360px;">
-                                                <label for="demo_pack_choice" style="font-size:12.5px;" class="mb-1">
-                                                    <lang class="lang_demopack_label">Trade</lang>
-                                                </label>
-                                                <select id="demo_pack_choice"
-                                                    class="form-control form-control-sm border-control">
-                                                    <option value="">Loading…</option>
-                                                </select>
-                                                <small id="demo_pack_summary" class="text-muted"></small>
-                                            </div>
+                                        <p class="text-muted mb-2" style="font-size:13px;">
+                                            <lang class="lang_demopack_help">Your shop was set up with one
+                                                trade's sample products. Pick a different trade and we will
+                                                swap them for that one.</lang>
+                                        </p>
+                                        <label for="demo_pack_choice" style="font-size:12.5px;" class="mb-1">
+                                            <lang class="lang_demopack_label">Trade</lang>
+                                        </label>
+                                        <div class="demo-pack-row">
+                                            <select id="demo_pack_choice"
+                                                class="form-control form-control-sm border-control">
+                                                <option value="">Loading…</option>
+                                            </select>
                                             <button type="button" class="btn btn-sm btn-primary" id="demo_pack_install" disabled>
                                                 <lang class="lang_demopack_install">Install this trade's samples</lang>
                                             </button>
                                             <!-- Owner: "inside have reset button to have fresh data again
                                                  withing same industry." Same delete-then-seed machinery as
                                                  changing trade, pointed at the trade already installed. -->
-                                            <button type="button" class="btn btn-sm btn-outline-secondary ml-2" id="demo_pack_reset" disabled>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" id="demo_pack_reset" disabled>
                                                 <lang class="lang_demopack_reset">Reset to fresh samples</lang>
                                             </button>
-                                            <p class="text-muted mt-2 mb-0" style="font-size:12.5px;">
-                                                <lang class="lang_demopack_note">Only sample products are replaced.
-                                                    Anything you have edited, sold or received is kept, and named
-                                                    if it cannot be removed.</lang>
-                                            </p>
                                         </div>
+                                        <small id="demo_pack_summary" class="text-muted d-block mt-1"></small>
+                                        <p class="text-muted mt-2 mb-0" style="font-size:12.5px;">
+                                            <lang class="lang_demopack_note">Only sample products are replaced.
+                                                Anything you have edited, sold or received is kept, and named
+                                                if it cannot be removed.</lang>
+                                        </p>
                                     </div>
                                 </div>
                             </div>
