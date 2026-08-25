@@ -182,10 +182,50 @@ self.addEventListener('fetch', (event) => {
         return fetch(request).then((response) => {
           if (response.ok && response.type === 'basic') {
             cache.put(request, response.clone());
+            return response;
+          }
+          /* Family fallback: a hashed bundle that 404s is a PREVIOUS build's
+             name - a page from before a deploy asking for a stylesheet the
+             deploy replaced. Serve the CURRENT build's file of the same
+             family (dashboard.<any>.css -> the precached dashboard css)
+             rather than letting the page lose its design system. */
+          if (!response.ok) {
+            const fb = familyFallback(url.pathname);
+            if (fb) {
+              return cache.match(fb).then((cur) => cur || fetch(fb).catch(() => response) || response)
+                .then((r) => r || response);
+            }
           }
           return response;
+        }).catch((err) => {
+          const fb = familyFallback(url.pathname);
+          if (fb) {
+            return cache.match(fb).then((cur) => {
+              if (cur) return cur;
+              throw err;
+            });
+          }
+          throw err;
         });
       })
     )
   );
 });
+
+/*
+ * dashboard.<hash8>.css -> the PRECACHE entry for the same family in THIS
+ * build, or null when the path is not a hashed bundle we precache. Only
+ * families in the precache list are eligible - guessing at others would
+ * serve wrong bytes with confidence.
+ */
+function familyFallback(pathname) {
+  const m = pathname.match(/^\/((?:script|style)\/[A-Za-z0-9_-]+)\.[0-9a-f]{8}\.(js|css)$/);
+  if (!m) return null;
+  const family = m[1] + '.';
+  for (const entry of PRECACHE) {
+    if (entry.indexOf(family) === 0 && entry !== pathname.slice(1)) {
+      return entry;
+    }
+  }
+  return null;
+}
