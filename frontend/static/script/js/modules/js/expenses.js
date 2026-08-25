@@ -165,12 +165,20 @@ PosnicPro.expenses = {
                     var path = '#/expenses/' + expenseId;
                     $('#last_created_expense').attr('href', path);
                     PosnicPro.commonDate();
-                    if (PosnicPro.action === 'edit') {
+                    /* ONE reload, not two (saves patch): setHash fires the
+                       route's own table load, so the direct call is only for
+                       saves that keep the current hash. */
+                    if (PosnicPro.action === 'edit' && window.location.hash !== '#/expenses') {
                         $(".infobar-settings-sidebar-overlay").css({"background": "transparent", "position": "initial"});
                         $("#infobar-settings-sidebar-expense").removeClass("sidebarshow");
                         hasher.setHash('expenses');
+                    } else {
+                        if (PosnicPro.action === 'edit') {
+                            $(".infobar-settings-sidebar-overlay").css({"background": "transparent", "position": "initial"});
+                            $("#infobar-settings-sidebar-expense").removeClass("sidebarshow");
+                        }
+                        PosnicPro.expenses.expensesTable('expenses');
                     }
-                    PosnicPro.expenses.expensesTable('expenses');
                     loader.find(".loadingSpinner:first").remove();
                     PosnicPro.alert(response.type, response.message);
                 } else {

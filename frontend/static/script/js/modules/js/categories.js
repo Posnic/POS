@@ -239,16 +239,25 @@ PosnicPro.categories = {
                     PosnicPro.categories.setCatTileShape('');
                     hasher.replaceHash('sales/new');
                 } else {
+                    /* ONE reload, not two (saves patch): when this navigation
+                       actually changes the hash, the route loads the table -
+                       the direct call below is only for saves made while
+                       already sitting on the list. */
+                    var wasOnCategoryList = (hash === '/categories');
                     hasher.setHash('categories');
                 }
                 if (PosnicPro.action === 'add') {
-                    PosnicPro.categories.categoriesTable('categories');
+                    if (wasOnCategoryList) {
+                        PosnicPro.categories.categoriesTable('categories');
+                    }
                     $('#show_last_created_category').show();
                     var path = '#/categories/' + response.data;
                     $('#last_created_category').attr('href', path);
                 }
                 if (PosnicPro.action === 'edit') {
-                    hasher.setHash('categories');
+                    if (wasOnCategoryList) {
+                        PosnicPro.categories.categoriesTable('categories');
+                    }
                     $(".infobar-settings-sidebar-overlay").css({"background": "transparent", "position": "initial"});
                     $("#infobar-settings-sidebar-category").removeClass("sidebarshow");
                 }
