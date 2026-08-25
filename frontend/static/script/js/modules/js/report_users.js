@@ -1,6 +1,6 @@
 PosnicPro.userreport = {
     showDataTablePage: function () {
-        var loader = $(".loader-user-report,.loader-user-graph-report");
+        var loader = $(".loader-user-report");
         loader.find(".loadingSpinner:first").remove();
         PosnicPro.dashboard.datePicker();
         PosnicPro.HideSideBarModal();
@@ -16,8 +16,6 @@ PosnicPro.userreport = {
             PosnicPro.userreport.userTableTabClick();
         } else if ($('a#user-status-tab-line').hasClass('active')) {
             PosnicPro.userstatusreport.userStatusTabClick();
-        } else {
-            PosnicPro.usergraphicalreport.userGraphTabClick();
         }
         $('.hide_date_filetr,.hide_value_filetr').hide();
         if (PosnicPro.local.get('userplan') === 'free') {
@@ -238,95 +236,13 @@ PosnicPro.userstatusreport = {
         PosnicPro.userstatusreport.userstatusreportTable();
     }
 }
-PosnicPro.usergraphicalreport = {
-    showGraphReport: function (weekdata) {
-        /* An empty chart draws as a grey rectangle that reads as a failure. */
-        if (!weekdata || !weekdata.length) {
-            PosnicPro.chart.empty('user-payment-report-amchart-circle-chart',
-                'No user activity in the selected period');
-            return;
-        }
-        am4core.ready(function () {
-            // Themes begin
-            am4core.useTheme(am4themes_animated);
-            // Themes end
 
-            // Create chart instance
-            var chart = PosnicPro.chart.create("user-payment-report-amchart-circle-chart", am4charts.PieChart);
-            if (!chart) return; // the panel is not on the page
-
-            // Add data
-            chart.data = weekdata;
-
-            // Add and configure Series
-            var pieSeries = chart.series.push(new am4charts.PieSeries());
-            pieSeries.dataFields.value = "sales";
-            pieSeries.dataFields.category = "week";
-            pieSeries.innerRadius = am4core.percent(50);
-            pieSeries.ticks.template.disabled = true;
-            pieSeries.labels.template.disabled = true;
-
-            var rgm = new am4core.RadialGradientModifier();
-            rgm.brightnesses.push(-0.8, -0.8, -0.5, 0, -0.5);
-            pieSeries.slices.template.fillModifier = rgm;
-            pieSeries.slices.template.strokeModifier = rgm;
-            pieSeries.slices.template.strokeOpacity = 0.4;
-            pieSeries.slices.template.strokeWidth = 0;
-
-            chart.legend = new am4charts.Legend();
-            chart.legend.position = "right";
-            chart.logo.disabled = true;
-
-        }); // end am4core.ready()
-    },
-    graphicalReportUser: function () {
-        var graphBranchId = $(".user_branch_value").val().toString();
-        if (graphBranchId !== '') {
-            var loader = $(".loader-user-graph-report");
-            $("<div class='loadingSpinner'></div>").appendTo(loader);
-            var daterange = $(".view_user_report_daterange").val();
-            var fields = daterange.split('-');
-            let user_id = ($(".users_input_id").val() !== '') ? $(".users_input_id").val() : '';
-            var data = {
-                starting_date: fields[0],
-                ending_date: fields[1],
-                branch: $(".user_branch_value").val(),
-                field_input: user_id
-            };
-            var params = {
-                url: 'sales/userGraphicalReports',
-                data: data
-            };
-            PosnicPro.get(params, function (response) {
-                loader.find(".loadingSpinner:first").remove();
-                if (response.type === 'success') {
-                    var data = response.data;
-                    PosnicPro.usergraphicalreport.showGraphReport(data);
-
-                } else {
-                    PosnicPro.alert(response.type, response.message);
-                }
-            }, function (xhr) {
-                var response = jQuery.parseJSON(xhr.responseText);
-                PosnicPro.alert(response.type, response.message);
-            });
-        } else {
-            $(".user_branch_value").focus();
-        }
-    },
-    userGraphTabClick: function () {
-        $('#change_user_view').data('id', 'graphicalView');
-        PosnicPro.usergraphicalreport.graphicalReportUser();
-    }
-};
 
 PosnicPro.userroot = {
     viewPage: function (index) {
         var type = $(index).data('id');
         if (type === 'tableView') {
             PosnicPro.userreport.userreportTable();
-        } else if (type === 'graphicalView') {
-            PosnicPro.usergraphicalreport.graphicalReportUser();
         } else {
             PosnicPro.userstatusreport.userstatusreportTable();
         }
@@ -336,7 +252,7 @@ PosnicPro.userroot = {
 $(document).ready(function () {
     var hash = window.location.hash.slice(1);
     if (hash === '/userreport') {
-        var loader = $(".loader-user-report,.loader-user-graph-report");
+        var loader = $(".loader-user-report");
         loader.find(".loadingSpinner:first").remove();
         PosnicPro.userreport.userreportTable();
     }

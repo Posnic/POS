@@ -17,8 +17,6 @@ PosnicPro.paymentreport = {
             PosnicPro.paymentransaction.paymentStatusTabClick();
         } else if ($('a#payment-return-tab-line').hasClass('active')) {
             PosnicPro.paymentreturntransaction.paymentReturnTabClick();
-        } else {
-            PosnicPro.paymentgraphicalreport.paymentGraphTabClick();
         }
         $('.hide_date_filetr,.hide_value_filetr').hide();
         PosnicPro.paymentreport.showPaymentMode();
@@ -343,117 +341,12 @@ PosnicPro.paymentreturntransaction = {
     }
 };
 
-PosnicPro.paymentgraphicalreport = {
-    showGraphReport: function (data) {
-        /* An empty chart draws as a grey rectangle that reads as a failure. */
-        if (!data || !data['sales'] || !data['sales'].length) {
-            PosnicPro.chart.empty('sales-payment-report-apex-circle-chart',
-                'No payments in the selected period');
-            return;
-        }
-        am4core.ready(function () {
 
-            // Themes begin
-            am4core.useTheme(am4themes_animated);
-            // Themes end
-
-            // Create chart instance
-            var chart = PosnicPro.chart.create("sales-payment-report-apex-circle-chart", am4charts.XYChart);
-            if (!chart) return; // the panel is not on the page
-
-            // Add data
-            chart.data = data['sales'];
-            chart.logo.disabled = true;
-
-            // Create axes
-            var categoryAxis = chart.yAxes.push(new am4charts.CategoryAxis());
-            categoryAxis.dataFields.category = "sales_payment_mode";
-            categoryAxis.numberFormatter.numberFormat = "#";
-            categoryAxis.renderer.inversed = true;
-            categoryAxis.renderer.grid.template.location = 0;
-            categoryAxis.renderer.cellStartLocation = 0.1;
-            categoryAxis.renderer.cellEndLocation = 0.9;
-
-            var valueAxis = chart.xAxes.push(new am4charts.ValueAxis());
-            valueAxis.renderer.opposite = true;
-
-            // Create series
-            function createSeries(field, name) {
-                var series = chart.series.push(new am4charts.ColumnSeries());
-                series.dataFields.valueX = field;
-                series.dataFields.categoryY = "sales_payment_mode";
-                series.name = name;
-                series.columns.template.tooltipText = "{name}: [bold]{valueX}[/]";
-                series.columns.template.height = am4core.percent(100);
-                series.sequencedInterpolation = true;
-
-                var valueLabel = series.bullets.push(new am4charts.LabelBullet());
-                valueLabel.label.text = "{valueX}";
-                valueLabel.label.horizontalCenter = "left";
-                valueLabel.label.dx = 10;
-                valueLabel.label.hideOversized = false;
-                valueLabel.label.truncate = false;
-
-                var categoryLabel = series.bullets.push(new am4charts.LabelBullet());
-                categoryLabel.label.horizontalCenter = "right";
-                categoryLabel.label.dx = -10;
-                categoryLabel.label.fill = am4core.color("#fff");
-                categoryLabel.label.hideOversized = true;
-                categoryLabel.label.truncate = true;
-            }
-
-            createSeries("sales_payment", "amount");
-            createSeries("sales_return_total", "return");
-
-        }); // end am4core.ready()
-
-    },
-    graphicalReportPayment: function () {
-        var graphBranchId = $(".payment_branch_value").val().toString();
-        if (graphBranchId !== '') {
-            var loader = $(".loader-payment-graph-report");
-            $("<div class='loadingSpinner'></div>").appendTo(loader);
-            var daterange = $(".view_payment_report_daterange").val();
-            var fields = daterange.split('-');
-            var data = {
-                starting_date: fields[0],
-                ending_date: fields[1],
-                branch: $(".payment_branch_value").val()
-            };
-            var params = {
-                url: 'sales/paymentGraphicalReports',
-                data: data
-            };
-            PosnicPro.get(params, function (response) {
-                loader.find(".loadingSpinner:first").remove();
-                if (response.type === 'success') {
-                    var data = response.data;
-                    PosnicPro.paymentgraphicalreport.showGraphReport(data);
-
-                } else {
-                    PosnicPro.alert(response.type, response.message);
-                }
-            }, function (xhr) {
-                var response = jQuery.parseJSON(xhr.responseText);
-                PosnicPro.alert(response.type, response.message);
-            });
-        } else {
-            $("#payment_graphical_input").focus();
-        }
-    },
-    paymentGraphTabClick: function () {
-        $('#change_payment_view').data('id', 'graphicalView');
-        $(".hide-payment-details").prop('disabled', true);
-        PosnicPro.paymentgraphicalreport.graphicalReportPayment();
-    }
-};
 PosnicPro.paymentroot = {
     viewPage: function (index) {
         var type = $(index).data('id');
         if (type === 'tableView') {
             PosnicPro.paymentreport.paymentSaleReportView();
-        } else if (type === 'graphicalView') {
-            PosnicPro.paymentgraphicalreport.graphicalReportPayment();
         } else if (type === 'statusReturnView') {
             PosnicPro.paymentreturntransaction.paymentreturntransactionTable();
         } else {

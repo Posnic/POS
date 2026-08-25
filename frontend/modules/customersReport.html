@@ -68,9 +68,7 @@
                             <li class="nav-item">
                                 <a class="nav-link active report_tab_font" id="customer-tab-line" data-toggle="tab" href="#customer-line" role="tab" aria-controls="customer-line" aria-selected="true" onClick="PosnicPro.customerreport.customerTableTabClick();"><i class="feather icon-users mr-1"></i><lang class="lang_customerdetails_title">Customer Details </lang></a>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link report_tab_font" id="customer-graph-tab-line" data-toggle="tab" href="#customer-graph-line" role="tab" aria-controls="customer-graph-line" aria-selected="false" onClick="PosnicPro.customergraphicalreport.customerGraphTabClick();"><i class="feather icon-pie-chart mr-1"></i><lang class="lang_graphicalcustomer_title">Graphical Customers</lang></a>
-                            </li>
+                            
                             <li class="nav-item">
                                 <a class="nav-link report_tab_font" id="customer-outstanding-tab-line" data-toggle="tab" href="#customer-outstanding-line" role="tab" aria-controls="customer-outstanding-line" aria-selected="false" onClick="PosnicPro.customeroutstandingreport.customeroutstandingTableTabClick();"><i class="feather icon-clock mr-1"></i><lang class="lang_graphicalcustomer_title">Outstanding Customers</lang></a>
                             </li>
@@ -160,19 +158,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="tab-pane fade" id="customer-graph-line" role="tabpanel" aria-labelledby="customer-graph-tab-line">
-                                <!-- start graph -->
-                                <div class="graphical-report-customer loader-customer-graph-report">
-                                    <div class="col-lg-12 col-md-12">
-                                        <div class="col-sm-6 col-md-12 col-lg-12" id="reportcustomergraph_img_hide" style="display:none;">
-                                            <img src="static/images/general/nodata.svg" class="img-fluid" style="opacity: 0.6;width: 100%;height: 250px;" alt="">
-                                        </div>
-                                        <div class="reportcustomergraph_norecord col-sm-6 col-md-12 col-lg-12" style="display:none;">
-                                        </div>
-                                        <div id="customer-report-apex-circle-chart"></div>
-                                    </div>
-                                </div>
-                            </div>
+                            
                             <div class="tab-pane fade" id="customer-outstanding-line" role="tabpanel" aria-labelledby="customer-outstanding-tab-line">
                                 <!-- start table -->
                                 <div class="row">

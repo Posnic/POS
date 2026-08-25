@@ -13,8 +13,6 @@ PosnicPro.customerreport = {
         $('#v-pills-report').addClass('show active');
         if ($('a#customer-tab-line').hasClass('active')) {
             PosnicPro.customerreport.customerTableTabClick();
-        } else if ($('a#customer-graph-tab-line').hasClass('active')) {
-            PosnicPro.customergraphicalreport.customerGraphTabClick();
         } else {
             PosnicPro.customeroutstandingreport.customeroutstandingTableTabClick();
         }
@@ -163,103 +161,7 @@ PosnicPro.customerreport = {
         $('.mobile_tooltip').tooltip('hide');
     }
 };
-PosnicPro.customergraphicalreport = {
-    showGraphReport: function (weekdata) {
-        /* An empty chart draws as a grey rectangle that reads as a failure. */
-        if (!weekdata || !weekdata.length) {
-            PosnicPro.chart.empty('customer-report-apex-circle-chart',
-                'No customer sales in the selected period');
-            return;
-        }
-        am4core.ready(function () {
-            // Themes begin
-            am4core.useTheme(am4themes_animated);
-            // Themes end
 
-            // Create chart instance
-            var chart = PosnicPro.chart.create("customer-report-apex-circle-chart", am4charts.PieChart);
-            if (!chart) return; // the panel is not on the page
-
-            // Add data
-            chart.data = weekdata;
-
-            // Add and configure Series
-            var pieSeries = chart.series.push(new am4charts.PieSeries());
-            pieSeries.dataFields.value = "sales";
-            pieSeries.dataFields.category = "week";
-            pieSeries.innerRadius = am4core.percent(50);
-            pieSeries.ticks.template.disabled = true;
-            pieSeries.labels.template.disabled = true;
-
-            var rgm = new am4core.RadialGradientModifier();
-            rgm.brightnesses.push(-0.8, -0.8, -0.5, 0, -0.5);
-            pieSeries.slices.template.fillModifier = rgm;
-            pieSeries.slices.template.strokeModifier = rgm;
-            pieSeries.slices.template.strokeOpacity = 0.4;
-            pieSeries.slices.template.strokeWidth = 0;
-
-            chart.legend = new am4charts.Legend();
-            chart.legend.position = "right";
-            chart.logo.disabled = true;
-
-        }); // end am4core.ready()
-
-    },
-    graphicalReportCustomer: function () {
-        $('#customerreport_daterange').removeClass('flatpickr-disabled');
-        var graphbranchId = $(".customer_branch_value").val().toString();
-        if (graphbranchId !== '') {
-            var loader = $(".loader-customer-graph-report");
-            $("<div class='loadingSpinner'></div>").appendTo(loader);
-            var daterange = $(".view_customer_report_daterange").val();
-            var fields = daterange.split('-');
-            var dataValue = {
-                starting_date: fields[0],
-                ending_date: fields[1],
-                branch: $(".customer_branch_value").val()
-            };
-            let customer_id = ($(".customers_input_id").val() !== '') ? $(".customers_input_id").val() : '';
-            var field_input = {
-                field_input: customer_id
-            };
-            if ($(".customers_input_id").val() !== '') {
-                dataValue = Object.assign(dataValue, field_input);
-            }
-            var params = {
-                url: 'customers/customerGraphicalReports',
-                data: dataValue
-            };
-            PosnicPro.get(params, function (response) {
-                loader.find(".loadingSpinner:first").remove();
-                if (response.type === 'success') {
-                    var data = response.data;
-                    if (data && data.length > 0) {
-                        // Show chart if data exists
-                        $('#customer-report-apex-circle-chart').show();
-                        $('#reportcustomergraph_img_hide, .reportcustomergraph_norecord').hide();
-                        PosnicPro.customergraphicalreport.showGraphReport(data);
-                    } else {
-                        // Show empty state if no data
-                        $('#customer-report-apex-circle-chart').hide();
-                        let dateRange = $('.view_customer_report_daterange').val();
-                        $('.reportcustomergraph_norecord').empty().append('<div class="text-center text-dark"> <p>No Records on ' + dateRange + ' </p></div>');
-                        $('#reportcustomergraph_img_hide, .reportcustomergraph_norecord').show();
-                    }
-                } else {
-                    PosnicPro.alert(response.type, response.message);
-                }
-            });
-        } else {
-            $(".customer_branch_value").focus();
-        }
-    },
-    customerGraphTabClick: function () {
-        $('#change_customer_view').data('id', 'graphView');
-        /* The fetch renders when it returns; the bare call that used to follow
-           put a second, dataless chart on the same div. */
-        PosnicPro.customergraphicalreport.graphicalReportCustomer();
-    }
-};
 
 PosnicPro.customeroutstandingreport = {
     showDataTablePage: function () {
@@ -276,8 +178,6 @@ PosnicPro.customeroutstandingreport = {
         $('#v-pills-report').addClass('show active');
         if ($('a#customer-tab-line').hasClass('active')) {
             PosnicPro.customerreport.customerTableTabClick();
-        } else if ($('a#customer-graph-tab-line').hasClass('active')) {
-            PosnicPro.customergraphicalreport.customerGraphTabClick();
         } else {
             PosnicPro.customeroutstandingreport.customeroutstandingTableTabClick();
         }
@@ -428,8 +328,6 @@ PosnicPro.customerroot = {
             PosnicPro.customerreport.customerreportTable();
         } else if (type === 'tableOutstandingView') {
             PosnicPro.customeroutstandingreport.customeroutstandingreportTable();
-        } else {
-            PosnicPro.customergraphicalreport.graphicalReportCustomer();
         }
     }
 };

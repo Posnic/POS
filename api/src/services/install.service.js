@@ -1316,6 +1316,9 @@ class InstallService {
       seededSuppliers = people.suppliers.map((sup, i) => ({
         _id: Object.values(rs.insertedIds)[i],
         name: sup.name,
+        /* The purchases print this; dropped here, every demo purchase's
+           Phone column went blank however carefully the seed carried it. */
+        phone: sup.phone || '',
       }));
     }
 

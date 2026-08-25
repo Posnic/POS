@@ -50,6 +50,23 @@
             (function () {
                 var firstError = null;
                 var reported = false;
+                /* Every capture, not just the first. Owner, staring at a card
+                   with no error line: "i want to know exact exception and or
+                   coding part of cause." One line was never going to answer
+                   that; the journal below is what View details shows. */
+                var journal = [];
+
+                function note(kind, message, at, stack) {
+                    if (journal.length >= 12) { return; }
+                    journal.push({
+                        kind: kind,
+                        message: String(message || 'unknown').slice(0, 300),
+                        at: String(at || '').slice(0, 240),
+                        stack: String(stack || '').slice(0, 1500)
+                    });
+                    var box = document.getElementById('pbh_details_body');
+                    if (box) { box.textContent = detailsText(); }
+                }
 
                 function report(err, at) {
                     if (reported) { return; }
@@ -61,20 +78,63 @@
                         xhr.send(JSON.stringify({
                             message: String((err && err.message) || err || 'unknown').slice(0, 300),
                             stack: String((err && err.stack) || '').slice(0, 1200),
-                            at: String(at || location.href).slice(0, 200)
+                            at: String(at || location.href).slice(0, 200),
+                            /* The same journal View details shows, so the
+                               shop's own log carries the exact exception and
+                               place - readable remotely, no screenshot
+                               round-trip. */
+                            journal: journal.slice(0, 3).map(function (e) {
+                                return e.kind + ' ' + e.message.slice(0, 120) + ' @ ' + e.at.slice(0, 120);
+                            })
                         }));
                     } catch (e) { /* reporting must never add a second failure */ }
                 }
 
+                /* CAPTURE phase, one listener, two different failures:
+                   a JS error (target is window, has a message) and a resource
+                   that failed to LOAD - a script or stylesheet 404ing after a
+                   deploy - which never reaches window.onerror at all and was
+                   this watchdog's blind spot: the whole app missing, the card
+                   showing, and not one line saying why. */
                 window.addEventListener('error', function (ev) {
+                    var t = ev.target;
+                    if (t && t !== window && (t.src || t.href)) {
+                        var what = (t.tagName || 'resource').toLowerCase() + ' failed to load: ' + (t.src || t.href);
+                        if (!firstError) { firstError = what; }
+                        note('resource', what, location.href, '');
+                        report(what, 'resource-load');
+                        return;
+                    }
                     if (!firstError) { firstError = ev.message || 'Script error'; }
+                    note('error', ev.message || 'Script error',
+                        (ev.filename || '') + ':' + (ev.lineno || 0) + ':' + (ev.colno || 0),
+                        ev.error && ev.error.stack);
                     report(ev.error || ev.message, ev.filename + ':' + ev.lineno);
-                });
+                }, true);
                 window.addEventListener('unhandledrejection', function (ev) {
                     var r = ev.reason || {};
                     if (!firstError) { firstError = String(r.message || r); }
+                    note('rejection', r.message || r, 'unhandled promise rejection', r.stack);
                     report(r, 'unhandledrejection');
                 });
+
+                function detailsText() {
+                    if (!journal.length) {
+                        return 'No JavaScript exception was caught.\n\n' +
+                            'The layout never appeared, which usually means a network call ' +
+                            'that never answered, or this browser is holding a page from an ' +
+                            'older update (Reset cached data fixes that).\n\n' +
+                            'Page: ' + location.href;
+                    }
+                    var out = '';
+                    for (var i = 0; i < journal.length; i++) {
+                        var e = journal[i];
+                        out += (i + 1) + '. [' + e.kind + '] ' + e.message + '\n   at ' + e.at + '\n';
+                        if (e.stack) { out += e.stack.split('\n').slice(0, 6).join('\n') + '\n'; }
+                        out += '\n';
+                    }
+                    return out + 'Page: ' + location.href;
+                }
 
                 /* Booted = the sidebar is actually PAINTED. It exists in the
                    markup from the start, so visibility is the test - during
@@ -120,6 +180,11 @@
                         '<button id="pbh_wait" style="min-height:40px;padding:0 14px;border:1px solid #dfe3e8;border-radius:8px;background:#fff;color:#16203a;font-size:14px;cursor:pointer;">Keep waiting</button>' +
                         '<button id="pbh_reload" style="min-height:40px;padding:0 14px;border:0;border-radius:8px;background:#506fe4;color:#fff;font-size:14px;cursor:pointer;">Reload</button>' +
                         '<button id="pbh_reset" style="min-height:40px;padding:0 14px;border:1px solid #f04438;border-radius:8px;background:#fff;color:#f04438;font-size:14px;cursor:pointer;">Reset cached data &amp; reload</button>' +
+                        '<button id="pbh_details" style="min-height:40px;padding:0 14px;border:1px solid #dfe3e8;border-radius:8px;background:#fff;color:#54627f;font-size:14px;cursor:pointer;">View details</button>' +
+                        '</div>' +
+                        '<div id="pbh_details_wrap" style="display:none;margin-top:12px;">' +
+                        '<pre id="pbh_details_body" style="max-height:220px;overflow:auto;font-size:11px;line-height:1.45;font-family:ui-monospace,Consolas,monospace;background:#16203a;color:#dbe3f4;border-radius:8px;padding:10px 12px;white-space:pre-wrap;word-break:break-all;margin:0 0 8px;"></pre>' +
+                        '<button id="pbh_copy" style="min-height:32px;padding:0 12px;border:1px solid #dfe3e8;border-radius:6px;background:#fff;color:#16203a;font-size:12.5px;cursor:pointer;">Copy details</button>' +
                         '</div></div>';
                     document.body.appendChild(card);
                     document.getElementById('pbh_wait').addEventListener('click', function () {
@@ -128,6 +193,37 @@
                     });
                     document.getElementById('pbh_reload').addEventListener('click', function () { location.reload(); });
                     document.getElementById('pbh_reset').addEventListener('click', resetData);
+                    /* "add some button or option view details. i want to know
+                       exact exception and or coding part of cause" - the
+                       journal, verbatim: every caught exception with its
+                       file:line:column and stack, every resource that failed
+                       to load, or an honest sentence when nothing was caught. */
+                    document.getElementById('pbh_details').addEventListener('click', function () {
+                        var wrap = document.getElementById('pbh_details_wrap');
+                        var open = wrap.style.display !== 'none';
+                        wrap.style.display = open ? 'none' : 'block';
+                        this.textContent = open ? 'View details' : 'Hide details';
+                        if (!open) { document.getElementById('pbh_details_body').textContent = detailsText(); }
+                    });
+                    document.getElementById('pbh_copy').addEventListener('click', function () {
+                        var text = detailsText();
+                        var done = function () { document.getElementById('pbh_copy').textContent = 'Copied'; };
+                        try {
+                            if (navigator.clipboard && navigator.clipboard.writeText) {
+                                navigator.clipboard.writeText(text).then(done, function () {});
+                                return;
+                            }
+                        } catch (e) { }
+                        try {
+                            var ta = document.createElement('textarea');
+                            ta.value = text;
+                            document.body.appendChild(ta);
+                            ta.select();
+                            document.execCommand('copy');
+                            document.body.removeChild(ta);
+                            done();
+                        } catch (e) { }
+                    });
                 }
 
                 setTimeout(function () { if (!booted()) { show(); } }, 15000);

@@ -236,6 +236,17 @@ PosnicPro.receivings = {
                             process_class = "badge badge-success-inverse";
                             edit_icon = '<span class="show_edit_icon" style="display:none;"></span>';
                             received_icon = '<span class="show_received_icon" style="display:none;"></span>';
+                        } else if (!row.items_return || row.items_return.length === 0) {
+                            /* NO RETURNS means it cannot be a return state.
+                               This else used to mean "anything I don't
+                               recognise is PartialReturn", and rows carrying
+                               an off-vocabulary status (seeded 'completed',
+                               legacy imports) all wore a return badge for a
+                               return that never happened. */
+                            var receiving_status = 'Received';
+                            process_class = "badge badge-success-inverse";
+                            edit_icon = '<span class="show_edit_icon" style="display:none;"></span>';
+                            received_icon = '<span class="show_received_icon" style="display:none;"></span>';
                         } else {
                             var receiving_status = 'PartialReturn';
                             process_class = "badge badge-secondary-inverse";
@@ -257,7 +268,14 @@ PosnicPro.receivings = {
                             '</div>' +
                             '<div data-toolbar="user-options" class="btn btn-round btn-primary-rgba round-pad" id="onclick-toolbar_' + i + '"><i class="feather icon-more-vertical-"></i></div>';
                     var updateDate = PosnicPro.convertDate(row.string_date);
-                    var trow = '<tr> <td><input type="checkbox" class="receivings-row-id" id="' + row._id + '" name="id[]" value="' + row._id + '" onclick="PosnicPro.checkboxSelectOne(this,\'receivings\');"></td> <td scope="row">' + row_no + '</td>  <td class="sale_id">' + row.receiving_id + '</td> <td class="sale_id">' + updateDate + '</td> <td width="20%">' + row.supplier_name + '</td> <td class="sale_id text-right"><a class="sale_color"  href="tel:' + row.supplier_phone + '">' + row.supplier_phone + '</a></td> <td class="text-center"><span class="' + process_class + '">' + receiving_status + '</span></td> <td class="text-right">' + currency + '&nbsp;<span class="number">' + row.total_amount + '</span></td> ' +
+                    /* A row without a phone shows NOTHING, not the word
+                       "undefined" wearing a tel: link - the owner's demo
+                       purchases printed exactly that. */
+                    var supplierPhone = row.supplier_phone || '';
+                    var phoneCell = supplierPhone
+                        ? '<a class="sale_color" href="tel:' + supplierPhone + '">' + supplierPhone + '</a>'
+                        : '';
+                    var trow = '<tr> <td><input type="checkbox" class="receivings-row-id" id="' + row._id + '" name="id[]" value="' + row._id + '" onclick="PosnicPro.checkboxSelectOne(this,\'receivings\');"></td> <td scope="row">' + row_no + '</td>  <td class="sale_id">' + row.receiving_id + '</td> <td class="sale_id">' + updateDate + '</td> <td width="20%">' + row.supplier_name + '</td> <td class="sale_id text-right">' + phoneCell + '</td> <td class="text-center"><span class="' + process_class + '">' + receiving_status + '</span></td> <td class="text-right">' + currency + '&nbsp;<span class="number">' + row.total_amount + '</span></td> ' +
                             '<td class="text-center"> <span>' + action + ' </span>' +
                             ' </td></tr>';
                     $('#view_receivings').children('tbody').append(trow);

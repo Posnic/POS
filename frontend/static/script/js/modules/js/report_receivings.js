@@ -13,8 +13,6 @@ PosnicPro.receivingreport = {
         $('#v-pills-report').addClass('show active');
         if ($('a#receiving-tab-line').hasClass('active')) {
             PosnicPro.receivingreport.receivingTableTabClick();
-        } else {
-            PosnicPro.receivinggraphicalreport.receivingGraphTabClick();
         }
         $('.hide_date_filetr,.hide_value_filetr').hide();
         if (PosnicPro.local.get('userplan') === 'free') {
@@ -179,205 +177,13 @@ PosnicPro.receivingreport = {
     }
 };
 
-PosnicPro.receivinggraphicalreport = {
-    showDataTablePage: function () {
-        var loader = $(".loader-receiving-graph-report");
-        loader.find(".loadingSpinner:first").remove();
-        $('.page_loader,#osk-container,.graphical-report-receiving').hide();
-        $('.page-title-box,#receivingreport_new').show();
-        $('#receiving_graph_nodata').hide();
-        $('#v-pills-report-tab').addClass('active');
-        $('#v-pills-report').addClass('show active');
-    },
-    showGraphReport: function (data) {
 
-        // If there is no data, hide charts and show "No Records" state
-        var hasData = Array.isArray(data) && data.length > 0;
-        if (!hasData) {
-            var dateRange = $('.view_receiving_report_daterange span span[data-toggle="tooltip"]').attr('data-original-title') ||
-                $('.view_receiving_report_daterange span').text();
-            var noRecordText = dateRange ? 'No Records on ' + dateRange : 'No Records';
-            $('#receiving_graph_nodata .m-t-10').html('<p>' + noRecordText + '</p>');
-            $('.graphical-report-receiving').hide();
-            $('#receiving_graph_nodata').show();
-            return;
-        }
-
-        $('.graphical-report-receiving').show();
-        $('#receiving_graph_nodata').hide();
-
-        am4core.ready(function () {
-
-// Themes begin
-            am4core.useTheme(am4themes_animated);
-// Themes end
-
-            var chart = PosnicPro.chart.create("receiving-received-report-apex-circle-chart", am4charts.XYChart);
-            if (!chart) return; // the panel is not on the page
-
-            chart.data = data;
-            chart.logo.disabled = true;
-
-// Create axes
-            var dateAxis = chart.xAxes.push(new am4charts.DateAxis());
-            dateAxis.renderer.minGridDistance = 60;
-
-            var valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
-
-// Create series
-            var series = chart.series.push(new am4charts.LineSeries());
-            series.name = "Received";
-            series.dataFields.valueY = "receiving_payment_received";
-            series.dataFields.dateX = "date_received";
-            series.tooltipText = "{valueY.value}";
-            series.fill = am4core.color("#28a745");
-            series.stroke = am4core.color("#28a745");
-
-            series.tooltip.pointerOrientation = "vertical";
-
-            chart.cursor = new am4charts.XYCursor();
-            chart.cursor.snapToSeries = series;
-            chart.cursor.xAxis = dateAxis;
-
-            chart.scrollbarX = new am4core.Scrollbar();
-
-            let topContainer = chart.chartContainer.createChild(am4core.Container);
-            topContainer.layout = "absolute";
-            topContainer.toBack();
-            topContainer.paddingBottom = 15;
-            topContainer.width = am4core.percent(100);
-
-            let axisTitle = topContainer.createChild(am4core.Label);
-            axisTitle.text = "Value";
-            axisTitle.fontWeight = 600;
-            axisTitle.align = "left";
-            axisTitle.paddingLeft = 10;
-
-            let dateTitle = topContainer.createChild(am4core.Label);
-            dateTitle.text = "RECEIVED - PURCHASE";
-            dateTitle.fontWeight = 600;
-            dateTitle.align = "right";
-
-        }); // end am4core.ready()
-
-        am4core.ready(function () {
-
-// Themes begin
-            am4core.useTheme(am4themes_animated);
-// Themes end
-
-            var chart = PosnicPro.chart.create("receiving-open-report-apex-circle-chart", am4charts.XYChart);
-            if (!chart) return; // the panel is not on the page
-
-            chart.data = data;
-            chart.logo.disabled = true;
-
-// Create axes
-            var dateAxis = chart.xAxes.push(new am4charts.DateAxis());
-            dateAxis.renderer.minGridDistance = 60;
-
-            var valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
-
-// Create series
-            var series = chart.series.push(new am4charts.LineSeries());
-            series.name = "Open";
-            series.dataFields.valueY = "receiving_payment_open";
-            series.dataFields.dateX = "date_open";
-            series.tooltipText = "{valueY.value}";
-            series.fill = am4core.color("#e59165");
-            series.stroke = am4core.color("#e59165");
-
-            series.tooltip.pointerOrientation = "vertical";
-
-            chart.cursor = new am4charts.XYCursor();
-            chart.cursor.snapToSeries = series;
-            chart.cursor.xAxis = dateAxis;
-
-            chart.scrollbarX = new am4core.Scrollbar();
-
-            let topContainer = chart.chartContainer.createChild(am4core.Container);
-            topContainer.layout = "absolute";
-            topContainer.toBack();
-            topContainer.paddingBottom = 15;
-            topContainer.width = am4core.percent(100);
-
-            let axisTitle = topContainer.createChild(am4core.Label);
-            axisTitle.text = "Value";
-            axisTitle.fontWeight = 600;
-            axisTitle.align = "left";
-            axisTitle.paddingLeft = 10;
-
-            let dateTitle = topContainer.createChild(am4core.Label);
-            dateTitle.text = "OPEN - PURCHASE";
-            dateTitle.fontWeight = 600;
-            dateTitle.align = "right";
-
-        }); // end am4core.ready()
-
-    },
-
-    graphicalReportReceiving: function () {
-        var graphBranchId = $(".receiving_branch_value").val().toString();
-        if (graphBranchId !== '') {
-            var loader = $(".loader-receiving-graph-report");
-            $("<div class='loadingSpinner'></div>").appendTo(loader);
-            var daterange = $(".view_receiving_report_daterange").val();
-            var fields = daterange.split('-');
-            var data = {
-                starting_date: fields[0],
-                ending_date: fields[1],
-                branch: $(".receiving_branch_value").val()
-            };
-            var params = {
-                url: 'receivings/receivingsGraphicalReports',
-                data: data
-            };
-            PosnicPro.get(params, function (response) {
-                loader.find(".loadingSpinner:first").remove();
-                if (response.type === 'success') {
-                    var data = response.data || [];
-                    PosnicPro.receivinggraphicalreport.showGraphReport(data);
-                } else {
-                    // On error, also show the no-data state with filter-based text
-                    var dateRange = $('.view_receiving_report_daterange span span[data-toggle="tooltip"]').attr('data-original-title') ||
-                        $('.view_receiving_report_daterange span').text();
-                    var noRecordText = dateRange ? 'No Records on ' + dateRange : 'No Records';
-                    $('#receiving_graph_nodata .m-t-10').html('<p>' + noRecordText + '</p>');
-                    $('.graphical-report-receiving').hide();
-                    $('#receiving_graph_nodata').show();
-                    PosnicPro.alert(response.type, response.message);
-                }
-
-            }, function (xhr) {
-                var response = jQuery.parseJSON(xhr.responseText);
-                var dateRange = $('.view_receiving_report_daterange span span[data-toggle="tooltip"]').attr('data-original-title') ||
-                    $('.view_receiving_report_daterange span').text();
-                var noRecordText = dateRange ? 'No Records on ' + dateRange : 'No Records';
-                $('#receiving_graph_nodata .m-t-10').html('<p>' + noRecordText + '</p>');
-                $('.graphical-report-receiving').hide();
-                $('#receiving_graph_nodata').show();
-                PosnicPro.alert(response.type, response.message);
-            });
-        } else {
-            $(".receiving_branch_value").focus();
-        }
-    },
-    receivingGraphTabClick: function () {
-        $('#change_receiving_view').data('id', 'graphView');
-        /* The fetch renders when it returns; the bare call that used to follow
-           put a second, dataless chart on the same div. */
-        PosnicPro.receivinggraphicalreport.graphicalReportReceiving();
-    }
-
-};
 
 PosnicPro.receivingroot = {
     viewPage: function (index) {
         var type = $(index).data('id');
         if (type === 'tableView') {
             PosnicPro.receivingreport.receivingreportTable();
-        } else {
-            PosnicPro.receivinggraphicalreport.graphicalReportReceiving();
         }
     }
 };
@@ -385,7 +191,7 @@ PosnicPro.receivingroot = {
 $(document).ready(function () {
     var hash = window.location.hash.slice(1);
     if (hash === '/receivingreport') {
-        var loader = $(".loader-receiving-report,.loader-receiving-graph-report");
+        var loader = $(".loader-receiving-report");
         loader.find(".loadingSpinner:first").remove();
         PosnicPro.receivingreport.receivingreportTable();
     }

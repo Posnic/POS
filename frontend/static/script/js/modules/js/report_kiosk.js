@@ -15,8 +15,6 @@ PosnicPro.kioskreport = {
             PosnicPro.kioskreport.kioskTableTabClick();
         } else if ($('a#kiosk-summary-tab-line').hasClass('active')) {
             PosnicPro.kiosksummaryreport.kioskSummaryTabClick();
-        } else {
-            PosnicPro.kioskgraphicalreport.kioskGraphTabClick();
         }
         $('.hide_date_filetr,.hide_value_filetr').hide();
         if (PosnicPro.local.get('userplan') === 'free') {
@@ -235,153 +233,7 @@ PosnicPro.kioskreport = {
     }
 };
 
-PosnicPro.kioskgraphicalreport = {
-    graphicalReportkiosk: function () {
-        var graphBranchId = $(".kiosk_branch_value").val().toString();
-        if (graphBranchId !== '') {
-            var loader = $(".loader-kiosks-graph-report");
-            $("<div class='loadingSpinner'></div>").appendTo(loader);
-            var daterange = $(".view_kiosk_report_daterange").val();
-            var fields = daterange.split('-');
-            var data = {
-                starting_date: fields[0],
-                ending_date: fields[1],
-                branch: $(".kiosk_branch_value").val(),
-                kiosk_method: $("#kiosk_method").val()
-            };
-            var params = {
-                url: 'sales/kiosksGraphicalReports',
-                data: data
-            };
-            PosnicPro.get(params, function (response) {
-                loader.find(".loadingSpinner:first").remove();
-                if (response.type === 'success') {
-                    var data = response.data;
-                    PosnicPro.kioskgraphicalreport.showChartJs(data);
-                } else {
-                    PosnicPro.alert(response.type, response.message);
-                }
-            }, function (xhr) {
-                var response = jQuery.parseJSON(xhr.responseText);
-                PosnicPro.alert(response.type, response.message);
-            });
-        } else {
-            $(".kiosk_branch_value").focus();
-        }
-    },
-    showChartJs: function (data) {
-        // Convert labels to timestamped data points
-        var cashSeries = [];
-        var upiSeries = [];
 
-        for (var i = 0; i < data.labels.length; i++) {
-            cashSeries.push({
-                x: new Date(data.labels[i]).getTime(),
-                y: data.cash[i]
-            });
-            upiSeries.push({
-                x: new Date(data.labels[i]).getTime(),
-                y: data.upi[i]
-            });
-        }
-
-        // Main area chart
-        var mainChartOptions = {
-            chart: {
-                id: 'main-chart',
-                type: 'area',
-                height: 350,
-                toolbar: { show: true },
-                zoom: { enabled: false }
-            },
-            colors: ['#ff6f61', '#007bff'],
-            dataLabels: { enabled: false },
-            stroke: { curve: 'smooth', width: 2 },
-            xaxis: {
-                type: 'datetime',
-                title: { text: 'Date & Time' },
-                labels: {
-                    rotate: -45,
-                    datetimeFormatter: {
-                        year: 'yyyy',
-                        month: "MMM 'yy",
-                        day: 'dd MMM',
-                        hour: 'dd MMM, hh:mm TT' // ✅ Show full date + time
-                    },
-                    format: 'dd MMM, hh:mm TT' // ✅ Ensure x-axis shows full datetime
-                }
-            },
-            tooltip: {
-                x: {
-                    format: 'dd MMM yyyy, hh:mm TT' // ✅ Tooltip format
-                },
-                y: {
-                    formatter: function (val) {
-                        return '₹ ' + val.toFixed(2);
-                    }
-                }
-            },            
-            series: [
-                { name: 'Cash', data: cashSeries },
-                { name: 'UPI / QR', data: upiSeries }
-            ]
-        };
-
-        // Range slider mini chart
-        var rangeSliderOptions = {
-            chart: {
-                id: 'slider-chart',
-                height: 130,
-                type: 'area',
-                brush: {
-                    target: 'main-chart',
-                    enabled: true
-                },
-                selection: {
-                    enabled: true,
-                    xaxis: {
-                        min: cashSeries.length > 0 ? cashSeries[0].x : new Date().getTime(),
-                        max: cashSeries.length > 5 ? cashSeries[5].x : new Date().getTime() + 3600000
-                    }
-                }
-            },
-            colors: ['#d1d1d1'],
-            series: [{ name: 'Cash', data: cashSeries }],
-            xaxis: {
-                type: 'datetime',
-                labels: { show: false },
-                tooltip: { enabled: false }
-            },
-            yaxis: { labels: { show: false } }
-        };
-
-        // Clear and render charts
-        $("#kiosks-report-apex-line-chart").html('');
-        $("#kiosks-report-apex-range-slider").html('');
-
-        /* Owner's rule: no charts on mobile at all - see
-           PosnicPro.chart.disabledHere. The graph tab says so instead. */
-        if (PosnicPro.chart.disabledHere()) {
-            $("#kiosks-report-apex-line-chart").html(
-                '<div class="chart-empty-state"><i class="icon-bar-chart"></i>' +
-                '<p>Charts are shown on the desktop version</p></div>');
-            return;
-        }
-
-        PosnicPro.lazy.load('apexcharts').then(function () {
-            var line = document.querySelector("#kiosks-report-apex-line-chart");
-            var slider = document.querySelector("#kiosks-report-apex-range-slider");
-            if (line) new ApexCharts(line, mainChartOptions).render();
-            if (slider) new ApexCharts(slider, rangeSliderOptions).render();
-        });
-
-    },
-    kioskGraphTabClick: function () {
-        $('#change_kiosk_view').data('id', 'graphView');
-        $(".hide-kiosk-details").prop('disabled', true);
-        PosnicPro.kioskgraphicalreport.graphicalReportkiosk();
-    }
-};
 
 PosnicPro.kiosksummaryreport = {
     summaryreportTable: function () {
@@ -456,8 +308,6 @@ PosnicPro.kioskroot = {
             PosnicPro.kioskreport.kioskreportTable();
         } else if (type === 'summaryView') {
             PosnicPro.kiosksummaryreport.summaryreportTable();
-        } else {
-            PosnicPro.kioskgraphicalreport.graphicalReportkiosk();
         }
     }
 };
@@ -465,7 +315,7 @@ PosnicPro.kioskroot = {
 $(document).ready(function () {
     var hash = window.location.hash.slice(1);
     if (hash === '/kioskreport') {
-        var loader = $(".loader-kiosk-report,.loader-kiosks-graph-report,.loader-summary-report");
+        var loader = $(".loader-kiosk-report,.loader-summary-report");
         loader.find(".loadingSpinner:first").remove();
         PosnicPro.kioskreport.kioskreportTable();
     }

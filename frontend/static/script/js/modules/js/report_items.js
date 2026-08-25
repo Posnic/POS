@@ -17,8 +17,6 @@ PosnicPro.itemreport = {
             PosnicPro.itemexpiry.itemExpiryTabClick();
         } else if ($('a#item-stock-line').hasClass('active')) {
             PosnicPro.itemstock.itemstockTable();
-        } else {
-            PosnicPro.itemgraphicalreport.itemGraphTabClick();
         }
         $('.hide_date_filetr,.hide_value_filetr').hide();
         if (PosnicPro.local.get('userplan') === 'free') {
@@ -341,178 +339,7 @@ PosnicPro.itemstock = {
     }
 };
 
-PosnicPro.itemgraphicalreport = {
-    CHART_ID: "report-items-apex-circle-chart",
 
-    showGraphReport: function (data) {
-
-        /* No sales in the range, or a caller with nothing to draw yet. Either
-           way there is no chart to make - see PosnicPro.chart. */
-        if (!data || !data.length) {
-            PosnicPro.chart.empty(PosnicPro.itemgraphicalreport.CHART_ID,
-                'No sales in the selected period');
-            return;
-        }
-
-        am4core.ready(function () {
-
-// Themes begin
-            am4core.useTheme(am4themes_animated);
-// Themes end
-
-// Create chart instance
-            var chart = PosnicPro.chart.create(PosnicPro.itemgraphicalreport.CHART_ID, am4charts.XYChart);
-            if (!chart) return; // the tab is not on the page
-            chart.responsive.enabled = true;
-
-
-            chart.data = data;
-            chart.logo.disabled = true;
-// Create axes
-            var categoryAxis = chart.yAxes.push(new am4charts.CategoryAxis());
-            categoryAxis.dataFields.category = "name";
-            categoryAxis.renderer.grid.template.location = 0;
-            categoryAxis.renderer.minGridDistance = 10;
-            categoryAxis.interpolationDuration = 2000;
-
-            var valueAxis = chart.xAxes.push(new am4charts.ValueAxis());
-            valueAxis.tooltip.disabled = true;
-
-// Create series
-            function createSeries(field, name) {
-                var series = chart.series.push(new am4charts.ColumnSeries());
-                series.dataFields.valueX = "amount";
-                series.dataFields.categoryY = "name";
-                series.columns.template.tooltipText = "[bold]{amount}[/]";
-                series.columns.template.cursorOverStyle = am4core.MouseCursorStyle.pointer;
-
-                var hs = series.columns.template.states.create("hover");
-                hs.properties.fillOpacity = 0.7;
-
-                var columnTemplate = series.columns.template;
-                columnTemplate.maxX = 0;
-                columnTemplate.draggable = true;
-
-                columnTemplate.events.on("dragstart", function (ev) {
-                    var dataItem = ev.target.dataItem;
-
-                    var axislabelItem = categoryAxis.dataItemsByCategory.getKey(
-                            dataItem.categoryY
-                            )._label;
-                    axislabelItem.isMeasured = false;
-                    axislabelItem.minX = axislabelItem.pixelX;
-                    axislabelItem.maxX = axislabelItem.pixelX;
-
-                    axislabelItem.dragStart(ev.target.interactions.downPointers.getIndex(0));
-                    axislabelItem.dragStart(ev.pointer);
-                });
-                columnTemplate.events.on("dragstop", function (ev) {
-                    var dataItem = ev.target.dataItem;
-                    var axislabelItem = categoryAxis.dataItemsByCategory.getKey(
-                            dataItem.categoryY
-                            )._label;
-                    axislabelItem.dragStop();
-                    handleDragStop(ev);
-                });
-            }
-            createSeries("amount", "Amount");
-
-            function handleDragStop(ev) {
-                data = [];
-                chart.series.each(function (series) {
-                    if (series instanceof am4charts.ColumnSeries) {
-                        series.dataItems.values.sort(compare);
-
-                        var indexes = {};
-                        series.dataItems.each(function (seriesItem, index) {
-                            indexes[seriesItem.categoryY] = index;
-                        });
-
-                        categoryAxis.dataItems.values.sort(function (a, b) {
-                            var ai = indexes[a.category];
-                            var bi = indexes[b.category];
-                            if (ai == bi) {
-                                return 0;
-                            } else if (ai < bi) {
-                                return -1;
-                            } else {
-                                return 1;
-                            }
-                        });
-
-                        var i = 0;
-                        categoryAxis.dataItems.each(function (dataItem) {
-                            dataItem._index = i;
-                            i++;
-                        });
-
-                        categoryAxis.validateDataItems();
-                        series.validateDataItems();
-                    }
-                });
-            }
-
-            function compare(a, b) {
-                if (a.column.pixelY < b.column.pixelY) {
-                    return 1;
-                }
-                if (a.column.pixelY > b.column.pixelY) {
-                    return -1;
-                }
-                return 0;
-            }
-
-            // Enable chart cursor
-            chart.cursor = new am4charts.XYCursor();
-            chart.cursor.behavior = "panZoom";
-
-            // Add scrollbar
-            chart.scrollbarX = new am4core.Scrollbar();
-            //  chart.scrollbarY = new am4core.Scrollbar();
-
-        }); // end am4core.ready()
-
-    },
-    graphicalReportItem: function () {
-        var grapgBranchId = $(".item_branch_value").val().toString();
-        if (grapgBranchId !== '') {
-            var loader = $(".loader-item-graph-report");
-            $("<div class='loadingSpinner'></div>").appendTo(loader);
-            var daterange = $(".view_item_report_daterange").val();
-            var fields = daterange.split('-');
-            var data = {
-                starting_date: fields[0],
-                ending_date: fields[1],
-                branch: $(".item_branch_value").val()
-            };
-            var params = {
-                url: 'sales/itemGraphicalReports',
-                data: data
-            };
-            PosnicPro.get(params, function (response) {
-                if (response.type === 'success') {
-                    loader.find(".loadingSpinner:first").remove();
-                    var data = response.data;
-                    PosnicPro.itemgraphicalreport.showGraphReport(data);
-                } else {
-                    PosnicPro.alert(response.type, response.message);
-                }
-            }, function (xhr) {
-                var response = jQuery.parseJSON(xhr.responseText);
-                PosnicPro.alert(response.type, response.message);
-            });
-        } else {
-            $(".item_branch_value").focus();
-        }
-    },
-    itemGraphTabClick: function () {
-        $('#change_item_view').data('id', 'graphView');
-        /* graphicalReportItem() fetches and then renders. The bare
-           showGraphReport() that used to follow rendered a second chart, with
-           no data, onto the same div - which is what broke this tab. */
-        PosnicPro.itemgraphicalreport.graphicalReportItem();
-    }
-};
 
 PosnicPro.itemroot = {
     viewPage: function (index) {
@@ -523,8 +350,6 @@ PosnicPro.itemroot = {
             PosnicPro.itemexpiry.itemexpiryTable();
         } else if (type === 'stockView') {
             PosnicPro.itemstock.itemstockTable();
-        } else {
-            PosnicPro.itemgraphicalreport.graphicalReportItem();
         }
     }
 };

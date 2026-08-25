@@ -320,14 +320,26 @@ function buildPurchases({ items, suppliers, branch, pack, now, count = PURCHASE_
       license: branch.license,
       supplier_id: supplier._id || null,
       supplier_name: supplier.name,
+      /* The list renders row.supplier_phone raw - absent printed the word
+         "undefined" in the Phone column of every demo purchase. */
+      supplier_phone: supplier.phone || '',
       items: lines,
+      /* Present and empty, because the list derives Full/Partial return
+         states from this array's SHAPE. */
+      items_return: [],
       number_of_items: lines.length,
       receiving_total: subtotal,
       total_amount: subtotal,
       paid_amount: subtotal,
       payment_mode: rand() > 0.5 ? 'cash' : 'card',
       payment_status: 'paid',
-      receiving_status: 'completed',
+      /*
+       * The app's own vocabulary, not an invented one. The list renderer
+       * knows Open / Received / Cancelled (and derives the return states);
+       * 'completed' fell through its else and every demo purchase wore a
+       * PartialReturn badge - the owner's screenshot, exactly.
+       */
+      receiving_status: 'Received',
       created_date: when,
       date: when,
       updated_date: when,

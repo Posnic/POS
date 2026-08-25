@@ -111,13 +111,14 @@ test('no chart is ever created on a coarse pointer - the choke point refuses', (
     assert.match(gate, /desktop version/);
 });
 
-test('the two direct Apex sites carry the same refusal', () => {
-    /* Everything else goes through PosnicPro.chart.create; these two build
-       ApexCharts by hand and would quietly become the exception. */
+test('the one remaining direct Apex site carries the same refusal', () => {
+    /* Everything else goes through PosnicPro.chart.create; the dashboard
+       donut builds ApexCharts by hand and would quietly become the
+       exception. The kiosk report's graphs were removed outright with the
+       rest of the graphical report sections. */
+    assert.match(dash, /PosnicPro\.chart\.disabledHere\(\)/);
+    assert.match(dash, /desktop version/);
     const kiosk = fs.readFileSync(
         path.join(__dirname, '..', 'frontend', 'static', 'script', 'js', 'modules', 'js', 'report_kiosk.js'), 'utf8');
-    for (const src of [dash, kiosk]) {
-        assert.match(src, /PosnicPro\.chart\.disabledHere\(\)/);
-        assert.match(src, /desktop version/);
-    }
+    assert.ok(!kiosk.includes('ApexCharts'), 'the kiosk graphs are back');
 });

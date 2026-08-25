@@ -53,13 +53,20 @@ test('a tab click renders once, not twice', () => {
   }
 });
 
-test('a chart is only built once its data has arrived', () => {
-  /* Without this an empty period renders an empty chart, which draws as a
-     grey rectangle indistinguishable from the failure above. */
-  const withGuard = REPORTS.filter(({ src }) => src.includes('PosnicPro.chart.empty('));
-  assert.ok(withGuard.length >= 5,
-    `only ${withGuard.length} reports handle having no data; ` +
-    `the rest will draw an empty grey panel`);
+test('the graphical report sections are GONE - and stay gone', () => {
+  /*
+   * Owner, 2026-08-25, after charts cost him one crash too many: "remove
+   * all graphical report section completely. remove its packages. jquery
+   * plugin css everything remove it. no need." Every report's graph tab,
+   * pane, renderer object and chart call was removed. The dashboard is the
+   * one chart surface left (desktop only - the mobile gate refuses).
+   */
+  for (const { name, src } of REPORTS) {
+    if (name === 'dashboard.js') continue;
+    assert.ok(!src.includes('graphicalreport'), name + ' grew a graph object back');
+    assert.ok(!src.includes('PosnicPro.chart.create('), name + ' creates a chart again');
+    assert.ok(!src.includes('ApexCharts'), name + ' uses ApexCharts again');
+  }
 });
 
 /* ---- and the helper that enforces it ---------------------------------- */
