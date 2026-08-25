@@ -24,8 +24,8 @@ const customers = [
   { _id: 'c2', name: 'Anand' },
 ];
 const suppliers = [
-  { _id: 's1', name: 'Balaji Distributors' },
-  { _id: 's2', name: 'Metro Supply Co' },
+  { _id: 's1', name: 'Balaji Distributors', phone: '9445022334' },
+  { _id: 's2', name: 'Metro Supply Co', phone: '9445044556' },
 ];
 const now = new Date('2026-08-24T12:00:00Z');
 
@@ -126,6 +126,23 @@ describe('demo purchases are proper entries', () => {
     for (const p of purchases) {
       expect(p.demo_pack).toBe('cafe');
       expect(p.demo_seeded_at).toBe(now);
+    }
+  });
+
+  test('the rows speak the LIST’S vocabulary - Received, a phone, an empty return', () => {
+    /*
+     * The owner's screenshot: every demo purchase wearing a PartialReturn
+     * badge over a phone column reading "undefined". The seed had invented
+     * receiving_status 'completed' (the renderer knows Open / Received /
+     * Cancelled; anything else fell through its else into PartialReturn),
+     * omitted supplier_phone (rendered raw), and omitted items_return
+     * (whose SHAPE derives the return states).
+     */
+    for (const p of purchases) {
+      expect(p.receiving_status).toBe('Received');
+      expect(p.supplier_phone).toBeTruthy();
+      expect(Array.isArray(p.items_return)).toBe(true);
+      expect(p.items_return).toHaveLength(0);
     }
   });
 

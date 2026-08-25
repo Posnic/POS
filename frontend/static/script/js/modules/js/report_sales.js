@@ -17,8 +17,6 @@ PosnicPro.salereport = {
             PosnicPro.instantreport.instantTableTabClick();
         } else if ($('a#sale-summary-tab-line').hasClass('active')) {
             PosnicPro.salesummaryreport.saleSummaryTabClick();
-        } else {
-            PosnicPro.salegraphicalreport.saleGraphTabClick();
         }
         $('.hide_date_filetr,.hide_value_filetr').hide();
         if (PosnicPro.local.get('userplan') === 'free') {
@@ -412,129 +410,7 @@ PosnicPro.instantdetails = {
     }
 };
 
-PosnicPro.salegraphicalreport = {
-    graphicalReportSale: function () {
-        var graphBranchId = $(".sale_branch_value").val().toString();
-        if (graphBranchId !== '') {
-            var loader = $(".loader-sales-graph-report");
-            $("<div class='loadingSpinner'></div>").appendTo(loader);
-            var daterange = $(".view_sale_report_daterange").val();
-            var fields = daterange.split('-');
-            var data = {
-                starting_date: fields[0],
-                ending_date: fields[1],
-                branch: $(".sale_branch_value").val()
-            };
-            var params = {
-                url: 'sales/salesGraphicalReports',
-                data: data
-            };
-            PosnicPro.get(params, function (response) {
-                loader.find(".loadingSpinner:first").remove();
-                if (response.type === 'success') {
-                    var data = response.data;
-                    PosnicPro.salegraphicalreport.showChartJs(data);
-                } else {
-                    PosnicPro.alert(response.type, response.message);
-                }
-            }, function (xhr) {
-                var response = jQuery.parseJSON(xhr.responseText);
-                PosnicPro.alert(response.type, response.message);
-            });
-        } else {
-            $(".sale_branch_value").focus();
-        }
-    },
-    showChartJs: function (data) {
 
-        /* An empty chart draws as a grey rectangle that reads as a failure. */
-        if (!data || !data.length) {
-            PosnicPro.chart.empty('sales-report-apex-circle-chart',
-                'No sales in the selected period');
-            return;
-        }
-
-        am4core.ready(function () {
-
-// Themes begin
-            am4core.useTheme(am4themes_animated);
-// Themes end
-
-// Create chart instance
-            var chart = PosnicPro.chart.create("sales-report-apex-circle-chart", am4charts.XYChart);
-            if (!chart) return; // the panel is not on the page
-
-// Add data
-            chart.data = data;
-            chart.logo.disabled = true;
-
-// Create axes
-            var dateAxis = chart.xAxes.push(new am4charts.DateAxis());
-            dateAxis.tooltip.disabled = true;
-            var valueAxis1 = chart.yAxes.push(new am4charts.ValueAxis());
-            valueAxis1.title.text = "Sales";
-
-            var valueAxis2 = chart.yAxes.push(new am4charts.ValueAxis());
-
-// Create series
-
-            let currency = PosnicPro.local.get('currencySign');
-            var series1 = chart.series.push(new am4charts.ColumnSeries());
-            series1.dataFields.valueY = "sales";
-            series1.dataFields.dateX = "date";
-            series1.yAxis = valueAxis1;
-            series1.name = "Sale";
-            series1.tooltipText = "{name}\n[bold font-size: 20]" + currency + "\t{valueY}[/]";
-            series1.fill = am4core.color("#67b7dc");
-            series1.strokeWidth = 0;
-            series1.clustered = false;
-            series1.columns.template.width = am4core.percent(50);
-
-            var series2 = chart.series.push(new am4charts.ColumnSeries());
-            series2.dataFields.valueY = "avg";
-            series2.dataFields.dateX = "date";
-            series2.yAxis = valueAxis1;
-            series2.name = "Avg Sale";
-            series2.tooltipText = "{name}\n[bold font-size: 20]" + currency + "\t{valueY}[/]";
-            series2.fill = am4core.color("#fd9c35");
-            series2.strokeWidth = 0;
-            series2.clustered = false;
-            series2.columns.template.width = am4core.percent(80);
-            series2.toBack();
-
-            var series3 = chart.series.push(new am4charts.ColumnSeries());
-            series3.dataFields.valueY = "profit";
-            series3.dataFields.dateX = "date";
-            series3.yAxis = valueAxis1;
-            series3.name = "Profit";
-            series3.tooltipText = "{name}\n[bold font-size: 20]" + currency + "\t{valueY}[/]";
-            series3.fill = am4core.color("#83cc8e");
-            series3.strokeWidth = 0;
-            series3.clustered = false;
-            series3.columns.template.width = am4core.percent(20);
-            series3.toFront();
-
-// Add cursor
-            chart.cursor = new am4charts.XYCursor();
-
-// Add legend
-            chart.legend = new am4charts.Legend();
-            chart.legend.position = "top";
-
-// Add scrollbar
-            chart.scrollbarX = new am4charts.XYChartScrollbar();
-            chart.scrollbarX.series.push(series1);
-            chart.scrollbarX.series.push(series3);
-            chart.scrollbarX.parent = chart.bottomAxesContainer;
-
-        }); // end am4core.ready()
-    },
-    saleGraphTabClick: function () {
-        $('#change_sale_view').data('id', 'graphView');
-        $(".hide-sale-details").prop('disabled', true);
-        PosnicPro.salegraphicalreport.graphicalReportSale();
-    }
-};
 
 PosnicPro.salesummaryreport = {
     summaryreportTable: function () {
@@ -663,8 +539,6 @@ PosnicPro.saleroot = {
             PosnicPro.instantreport.instantreportTable();
         } else if (type === 'summaryView') {
             PosnicPro.salesummaryreport.summaryreportTable();
-        } else {
-            PosnicPro.salegraphicalreport.graphicalReportSale();
         }
     }
 };
@@ -672,7 +546,7 @@ PosnicPro.saleroot = {
 $(document).ready(function () {
     var hash = window.location.hash.slice(1);
     if (hash === '/salereport') {
-        var loader = $(".loader-sale-report,.loader-instant-report,.loader-sales-graph-report,.loader-summary-report");
+        var loader = $(".loader-sale-report,.loader-instant-report,.loader-summary-report");
         loader.find(".loadingSpinner:first").remove();
         PosnicPro.salereport.salereportTable();
     }
