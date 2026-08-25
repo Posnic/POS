@@ -30,6 +30,22 @@ PosnicPro.settings = {
         // and silently refused every section switch. Module gating sets
         // INLINE display:none on individual pills; that is the real gate.
         if ($pill.length && $pill.css('display') !== 'none') { $pill[0].click(); }
+        /*
+         * The click ASKS Bootstrap to switch panes; this ENFORCES it.
+         *
+         * The general pane ships 'show active' in the markup, and this page
+         * already carries one duplicated-id landmine (#v-pills-tab exists
+         * twice - the sidebar rail got there first). When the tab plugin
+         * resolves the wrong "previously active" element, it activates the
+         * new pane WITHOUT deactivating general - and the owner's Features
+         * page grew the whole day-to-day settings form underneath its
+         * cards. One pane per section, whatever Bootstrap thought.
+         */
+        var $pane = $('#v-pills-' + key);
+        if ($pane.hasClass('tab-pane')) {
+            $pane.siblings('.tab-pane').removeClass('show active');
+            $pane.addClass('show active');
+        }
         if (key === 'general') { PosnicPro.settings.restoreCoreTab(); }
     },
     /*
@@ -3514,13 +3530,13 @@ PosnicPro.kiosk = {
     // Function to remove image preview
     removeImagePreview: function (type) {
         if (type === 'logo') {
-            $("#preview_logo").attr("src", "//:0").hide();
+            $("#preview_logo").attr("src", 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7').hide();
         } else if (type === 'banner') {
-            $("#preview_banner").attr("src", "//:0").hide();
+            $("#preview_banner").attr("src", 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7').hide();
         } else if (type === 'advertisement') {
-            $("#preview_advertisement").attr("src", "//:0").hide();
+            $("#preview_advertisement").attr("src", 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7').hide();
         } else {
-            $("#preview_homebanner").attr("src", "//:0").hide();
+            $("#preview_homebanner").attr("src", 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7').hide();
         }
     }
 

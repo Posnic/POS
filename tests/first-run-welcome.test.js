@@ -416,3 +416,17 @@ test('the strip is styled from theme tokens like the rest of the welcome', () =>
     const hard = strip.match(/(?:color|background):\s*#[0-9a-fA-F]{3,8}\s*;/g) || [];
     assert.deepStrictEqual(hard, [], 'the strip hard-codes colours: ' + hard.join(', '));
 });
+
+test('opening a section leaves exactly ONE pane standing', () => {
+    /*
+     * The general pane ships 'show active' statically, and the page carries
+     * a duplicated-id landmine; when Bootstrap resolved the wrong previous
+     * pane, the Features page grew the whole day-to-day settings form under
+     * its cards - "below features why setting page showing?" This enforces
+     * single-pane after every section switch, whatever the tab plugin did.
+     */
+    const open = block(settingsCode, 'openSection:', 'applyTaxProfile:');
+    assert.match(open, /siblings\('\.tab-pane'\)\.removeClass\('show active'\)/);
+    assert.match(open, /addClass\('show active'\)/);
+    assert.match(open, /hasClass\('tab-pane'\)/);
+});
