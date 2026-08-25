@@ -359,6 +359,15 @@ PosnicPro.kioskgraphicalreport = {
         $("#kiosks-report-apex-line-chart").html('');
         $("#kiosks-report-apex-range-slider").html('');
 
+        /* Owner's rule: no charts on mobile at all - see
+           PosnicPro.chart.disabledHere. The graph tab says so instead. */
+        if (PosnicPro.chart.disabledHere()) {
+            $("#kiosks-report-apex-line-chart").html(
+                '<div class="chart-empty-state"><i class="icon-bar-chart"></i>' +
+                '<p>Charts are shown on the desktop version</p></div>');
+            return;
+        }
+
         PosnicPro.lazy.load('apexcharts').then(function () {
             var line = document.querySelector("#kiosks-report-apex-line-chart");
             var slider = document.querySelector("#kiosks-report-apex-range-slider");

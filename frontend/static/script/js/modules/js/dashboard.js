@@ -364,6 +364,15 @@ PosnicPro.dashboard = {
                     loader.find(".loadingSpinner:first").remove();
                     return;
                 }
+                /* Owner's rule: no charts on mobile at all - see
+                   PosnicPro.chart.disabledHere. The donut is the note. */
+                if (PosnicPro.chart.disabledHere()) {
+                    loader.find(".loadingSpinner:first").remove();
+                    chartContainer.innerHTML =
+                        '<div class="chart-empty-state"><i class="icon-bar-chart"></i>' +
+                        '<p>Charts are shown on the desktop version</p></div>';
+                    return;
+                }
                 chartContainer.innerHTML = '';
 
                 // Check if we have data to display

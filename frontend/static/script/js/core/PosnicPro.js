@@ -1551,8 +1551,34 @@ PosnicPro = {
          * chart with no size and no parent gets created, and callers guard on
          * null rather than discovering that later.
          */
+        /*
+         * No charts on mobile. At all.
+         *
+         * Owner, after two rounds of taming still cost him the tab: "if
+         * chart is issue disable graphical stuff to all mobile view. no
+         * problem at no one sees that report in mobile." He is right about
+         * the economics - a chart nobody reads on a phone is not worth one
+         * crashed sale screen - and a rule with no exceptions is the only
+         * kind that cannot leak memory through the exception.
+         */
+        disabledHere: function () {
+            return !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+        },
+
         create: function (id, type) {
-            if (!document.getElementById(id)) return null;
+            var host = document.getElementById(id);
+            if (!host) return null;
+            if (PosnicPro.chart.disabledHere()) {
+                PosnicPro.chart.dispose(id);
+                /* The same quiet card empty() draws, so a chart panel reads
+                   as a choice rather than a hole. Callers already guard on
+                   null - that contract predates this rule. */
+                host.innerHTML =
+                    '<div class="chart-empty-state">' +
+                    '<i class="icon-bar-chart"></i>' +
+                    '<p>Charts are shown on the desktop version</p></div>';
+                return null;
+            }
             PosnicPro.chart.dispose(id);
             var chart = am4core.create(id, type);
             PosnicPro.chart._tameForTouch(chart);
