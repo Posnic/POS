@@ -378,6 +378,13 @@ PosnicPro.dashboard = {
                     chart: {
                         height: 300,
                         type: 'radialBar',
+                        /* Same iOS rule as the amCharts guard: scrolling
+                           collapses Safari's URL bar, each collapse is a
+                           resize, and an animated redraw per resize is a
+                           memory bill on a phone with no benefit. */
+                        animations: {
+                            enabled: !(window.matchMedia && window.matchMedia('(pointer: coarse)').matches),
+                        },
                         events: {
                             legendClick: function(chartContext, seriesIndex, config) {
                                 // This will trigger the chart to update and show selected amount
