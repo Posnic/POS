@@ -4410,7 +4410,17 @@ PosnicPro.sales.editSale = {
 
                     $('#extraDisc').text(0);
                     $('#extraDisc').editable('setValue', 0);
-                    PosnicPro.alert(response.type, response.message);
+                    /*
+                     * ONE announcement per sale. The done card is the
+                     * confirmation when it shows; a toast on top of it said
+                     * the same thing twice and, on a phone, sat exactly over
+                     * the card's close button (owner: "sometime it might
+                     * block some action like close from mobile"). Errors
+                     * still toast - the card never shows for those.
+                     */
+                    if (!(response.type === 'success' && PosnicPro.local.get('balance_view') === 'true')) {
+                        PosnicPro.alert(response.type, response.message);
+                    }
                     PosnicPro.sales.recentMenu.recentSalesTabDetails();
                     PosnicPro.sales.salesId = '';
                     (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('.changeSalesBtnText').text('புதுப்பி') : $('.changeSalesBtnText').text('Update');
@@ -12363,8 +12373,9 @@ $(document).on('click', '#print_receipt_a4, #print_receipt_thermal', function ()
  */
 PosnicPro.sales.saleDoneTimer = {
     /* Long enough to read the total and reach for Print; short enough that
-       the till is ready before the next customer has put their basket down. */
-    SECONDS: 10,
+       the till is ready before the next customer has put their basket down.
+       Ten felt like waiting (owner: "dont wait too much time to close"). */
+    SECONDS: 6,
 
     _timer: null,
     _card: function () { return $('#newsalespage .sale-done-card'); },
@@ -12389,34 +12400,19 @@ PosnicPro.sales.saleDoneTimer = {
         /* One sale, one countdown. Without this a second sale completing
            while the first card was open would leave two timers running and
            the card would close early, which looks exactly like a bug. */
-        $card.removeClass('is-held').addClass('is-closing');
-        /* Fresh baseline per sale, or the pointer position left over from the
-           previous card counts as movement on this one. */
-        self._lastPoint = null;
-
-        var $line = $card.find('.sale-done-ring-line');
-        var el = $line.get(0);
-        if (el && el.getTotalLength) {
-            /* Measured, not guessed: the card's height depends on which
-               buttons this shop has switched on, so a hard-coded perimeter
-               would make the ring finish early or late. */
-            var len = el.getTotalLength();
-            if (len > 0) {
-                $line.css({
-                    'stroke-dasharray': len,
-                    'stroke-dashoffset': 0,
-                    'transition': 'none'
-                });
-                /* Next frame, or the browser folds both values into one
-                   style change and there is nothing to animate between. */
-                window.requestAnimationFrame(function () {
-                    $line.css({
-                        'transition': 'stroke-dashoffset ' + self.SECONDS + 's linear, opacity .2s ease',
-                        'stroke-dashoffset': len
-                    });
-                });
-            }
-        }
+        /*
+         * The countdown is ONE line along the top now. The old version ran a
+         * ring around the whole card - "whole box animation going. instead
+         * top side itself enough" - and it is right: four animated edges
+         * read as the card doing something, one shrinking line reads as
+         * time. Pure CSS (the is-closing class starts the keyframe, the
+         * variable sets its pace), so removing the class is the whole stop.
+         */
+        $card.get(0).style.setProperty('--sale-done-secs', self.SECONDS + 's');
+        $card.removeClass('is-held is-closing');
+        /* next frame, so a back-to-back sale restarts the animation */
+        void $card.get(0).offsetWidth;
+        $card.addClass('is-closing');
 
         self._timer = window.setTimeout(function () {
             self._timer = null;
@@ -12442,9 +12438,7 @@ PosnicPro.sales.saleDoneTimer = {
     stop: function () {
         var self = PosnicPro.sales.saleDoneTimer;
         if (self._timer) { window.clearTimeout(self._timer); self._timer = null; }
-        var $card = self._card();
-        $card.removeClass('is-closing');
-        $card.find('.sale-done-ring-line').css({ 'transition': 'none', 'stroke-dashoffset': 0 });
+        self._card().removeClass('is-closing');
     }
 };
 

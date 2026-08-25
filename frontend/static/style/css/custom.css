@@ -4406,32 +4406,32 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
  * ------------------------------------------------------------------ */
 .sale-done-card { position: relative; }
 
-.sale-done-ring {
+/* The countdown is one line along the top (owner: "top side itself
+   enough instead of all 4 sides"). The is-closing class starts it, the
+   variable paces it, and removing the class is the whole cancel. */
+.sale-done-card::before {
+    content: '';
     position: absolute;
-    inset: 0;
+    top: 0; left: 0;
+    height: 3px;
     width: 100%;
-    height: 100%;
-    pointer-events: none;   /* never swallow a click meant for a button */
-    overflow: visible;
+    background: var(--theme-primary-color, #506fe4);
+    border-radius: 3px 3px 0 0;
+    transform-origin: left;
+    transform: scaleX(0);
+    pointer-events: none;
     z-index: 2;
 }
-.sale-done-ring rect {
-    x: 1px; y: 1px;
-    width: calc(100% - 2px);
-    height: calc(100% - 2px);
-    fill: none;
-    stroke-width: 2;
+.sale-done-card.is-closing::before {
+    animation: sale-done-countdown var(--sale-done-secs, 6s) linear forwards;
 }
-.sale-done-ring-track { stroke: transparent; }
-.sale-done-ring-line {
-    stroke: var(--theme-primary-color, #506fe4);
-    stroke-linecap: round;
-    opacity: 0;
-    transition: opacity .2s ease;
+@keyframes sale-done-countdown {
+    from { transform: scaleX(1); }
+    to { transform: scaleX(0); }
 }
-/* Only while the countdown is actually running. A ring sitting at full
-   length on a cancelled timer would promise a close that is not coming. */
-.sale-done-card.is-closing .sale-done-ring-line { opacity: .9; }
+@media (prefers-reduced-motion: reduce) {
+    .sale-done-card.is-closing::before { animation: none; transform: scaleX(0); }
+}
 
 /* The cashier engaged with the card, so the countdown stopped. Saying so
    beats leaving them to wonder whether it is still about to vanish. */
@@ -4448,7 +4448,6 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     /* No ring, and the ring is the only warning this card gives - so for
        these users the card does not close itself at all (see saleDoneTimer).
        A panel vanishing with no notice is the surprise the ring prevents. */
-    .sale-done-ring { display: none; }
 }
 
 /* ------------------------------------------------------------------

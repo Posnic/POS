@@ -65,7 +65,10 @@ test('the close X on the done card CLOSES into a new sale, never just hides', ()
 
 test('a second sale gets a fresh countdown - the held state does not leak', () => {
     const start = sales.slice(sales.indexOf('start: function ()'), sales.indexOf('hold: function ()'));
-    assert.match(start, /removeClass\('is-held'\)/);
+    assert.match(start, /removeClass\('is-held is-closing'\)/);
+    /* and the class round-trip restarts the CSS animation for back-to-back
+       sales - the reflow read is the restart */
+    assert.match(start, /offsetWidth/);
 });
 
 test('a repeated notification announces itself - same-tag replacement is silent', () => {
