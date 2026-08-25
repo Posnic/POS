@@ -145,3 +145,21 @@ test('report tables keep their first column under a scrolling thumb (Mobile P3)'
     assert.ok(s.includes('m-sticky-first'), f + ' lost its sticky first column');
   }
 });
+
+test('money and quantity fields ask the phone for the number pad (Mobile P2 tail)', () => {
+  /* inputmode="decimal" pops the numeric keyboard; without it a cashier
+     types every quantity through the full QWERTY. The qty inputs live in
+     JS row templates, the price fields in the items form. */
+  const fsx = require('fs');
+  const px = require('path');
+  const sales = fsx.readFileSync(px.join(__dirname, '..', 'frontend', 'static', 'script', 'js', 'modules', 'js', 'sales.js'), 'utf8');
+  const qty = sales.match(/inputmode="decimal" name="addSalesLineItemQty"/g) || [];
+  assert.ok(qty.length >= 4, 'the sale-screen qty inputs lost their number pad (' + qty.length + ')');
+  const recv = fsx.readFileSync(px.join(__dirname, '..', 'frontend', 'static', 'script', 'js', 'modules', 'js', 'receiving_add.js'), 'utf8');
+  assert.match(recv, /rec_sale_inp_val" inputmode="decimal"/);
+  const items = fsx.readFileSync(px.join(__dirname, '..', 'frontend', 'modules', 'items_write.html'), 'utf8');
+  for (const fid of ['items_selling_price', 'items_company_price', 'items_mrp_price', 'items_available_quantity']) {
+    const tag = items.match(new RegExp('<input[^>]*id="' + fid + '"[^>]*>'));
+    assert.ok(tag && tag[0].includes('inputmode="decimal"'), fid + ' lost its number pad');
+  }
+});

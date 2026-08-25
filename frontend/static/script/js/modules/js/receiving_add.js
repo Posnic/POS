@@ -418,7 +418,7 @@ PosnicPro.receivings = {
                 '<div class="input-group-prepend">' +
                 '<span class="btn btn-secondary-rgba receive_qty_check" id = ' + id + '  onclick="PosnicPro.receivings.qtyIncrementDecrease(this.id,0);"><i class="feather icon-minus"></i></span>' +
                 '</div>' +
-                '<input type="text" minlength="1" maxlength="5" size="3" min="0" max="100000" class="form-control cart-qty font_size14 float rec_sale_inp_val" id="addReceivingLineItemQty_' + id + '" value=' + item_quantity + ' onkeyup="PosnicPro.receivings.addLineReceivingChangeQty(\'' + id + '\');" style="text-align:center;" oninput="this.value = PosnicPro.minmax(this.value, 0, 100000)" onkeypress="PosnicPro.validate(event)" autocomplete="off">' +
+                '<input type="text" minlength="1" maxlength="5" size="3" min="0" max="100000" class="form-control cart-qty font_size14 float rec_sale_inp_val" inputmode="decimal" id="addReceivingLineItemQty_' + id + '" value=' + item_quantity + ' onkeyup="PosnicPro.receivings.addLineReceivingChangeQty(\'' + id + '\');" style="text-align:center;" oninput="this.value = PosnicPro.minmax(this.value, 0, 100000)" onkeypress="PosnicPro.validate(event)" autocomplete="off">' +
                 '<div class="input-group-append">' +
                 '<span class="btn btn-success-rgba receive_qty_check" id = ' + id + '  onclick="PosnicPro.receivings.qtyIncrementDecrease(this.id,1);"><i class="feather icon-plus"></i></span>' +
                 '</div>' +

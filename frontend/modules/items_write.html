@@ -132,7 +132,7 @@
                                     <label class="form-control-placeholder" for="items_selling_price">
                                         <lang class="lang_sales_title"> Selling </lang><span class="text-danger">*</span>
                                     </label>
-                                    <input type="text"
+                                    <input inputmode="decimal" type="text"
                                         class="form-control allow_decimal text-right clear_text_item hide_price_digit"
                                         id="items_selling_price" name="items_selling_price" minlength="1"
                                         maxlength="7" value="0.00" placeholder="Sale Price" autocomplete="off">
@@ -155,7 +155,7 @@
                                     <label class="form-control-placeholder" for="items_available_quantity">
                                         <lang class="lang_openquantity_title"> In stock (opening) </lang>
                                     </label>
-                                    <input type="text" class="form-control allow_decimal text-right clear_text_item"
+                                    <input inputmode="decimal" type="text" class="form-control allow_decimal text-right clear_text_item"
                                         id="items_available_quantity" name="items_available_quantity" min="0"
                                         minlength="1" maxlength="10" value="0" placeholder="Available Quantity"
                                         autocomplete="off">
@@ -262,7 +262,7 @@
                                         <label class="form-control-placeholder" for="items_company_price">
                                             <lang class="lang_company_title"> Cost </lang>
                                         </label>
-                                        <input type="text"
+                                        <input inputmode="decimal" type="text"
                                             class="form-control allow_decimal text-right clear_text_item hide_price_digit"
                                             id="items_company_price" name="items_company_price" minlength="1"
                                             maxlength="7" value="0.00" placeholder="Cost" autocomplete="off">
@@ -271,7 +271,7 @@
                                         <label class="form-control-placeholder" for="items_mrp_price">
                                             <lang class="lang_mrp_title"> M.R.P </lang>
                                         </label>
-                                        <input type="text"
+                                        <input inputmode="decimal" type="text"
                                             class="form-control allow_decimal text-right clear_text_item hide_price_digit"
                                             id="items_mrp_price" name="items_mrp_price" minlength="1" maxlength="7"
                                             value="0.00" placeholder="M.R.P" autocomplete="off">
@@ -804,12 +804,12 @@
                                                  box sat flush against the radios. -->
                                             <div class="col-md-4">
                                             <div class="floating-label">
-                                                <input name="items_discount_amount" id="items_discount_amount"
+                                                <input inputmode="decimal" name="items_discount_amount" id="items_discount_amount"
                                                     type="text" aria-describedby="basic-addon1"
                                                     class="form-control border-control allow_decimal text-right" min="0"
                                                     minlength="1" maxlength="10" value="0" aria-label="Items discount amount">
 
-                                                <input name="items_discount_percentage" id="items_discount_percentage"
+                                                <input inputmode="decimal" name="items_discount_percentage" id="items_discount_percentage"
                                                     type="number" aria-describedby="basic-addon1"
                                                     class="form-control border-control text-right" min="0" max="100"
                                                     minlength="1" maxlength="4"
