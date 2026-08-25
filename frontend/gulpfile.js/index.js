@@ -90,6 +90,35 @@ function copyLazyScripts(cb) {
     cb();
 }
 
+/*
+ * The reports chunk (bundle-split slice 2): every report page's module,
+ * concatenated and minified into ONE lazy file the router loads on the
+ * first report navigation. The list lives in pages_css_js_map.json under
+ * lazy_reports, so moving a module between boot and lazy is a map edit.
+ */
+async function buildLazyReports(cb) {
+    const fsx = require('fs');
+    const pathx = require('path');
+    const { minify } = require('terser');
+    try {
+        const map = JSON.parse(fsx.readFileSync('pages_css_js_map.json', 'utf8'));
+        const files = map.lazy_reports || [];
+        let out = '';
+        for (const rel of files) {
+            const src = fsx.readFileSync(rel.replace(/^\//, ''), 'utf8');
+            out += '\n;/* ' + pathx.basename(rel) + ' */\n' + src;
+        }
+        if (process.env.POSNIC_MINIFY !== '0') {
+            const m = await minify(out, { compress: true, mangle: true });
+            if (m && m.code) out = m.code;
+        }
+        const outDir = pathx.join(process.cwd(), publicDir, 'script', 'lazy');
+        fsx.mkdirSync(outDir, { recursive: true });
+        fsx.writeFileSync(pathx.join(outDir, 'reports.js'), out);
+        cb();
+    } catch (e) { cb(e); }
+}
+
 exports.default = function() {
     exports.build();
     // Every watcher that rewrites a bundle or a page must re-fingerprint:
@@ -118,4 +147,4 @@ function fingerprintAssets(cb) {
     fingerprint.fingerprintAssets(cb);
 }
 exports.fingerprint = fingerprintAssets;
-exports.build = series(parallel(copyStatic, copyVendorScripts, copyLazyScripts, buildCss, buildJs, buildHtml), fingerprintAssets, buildServiceWorker);
+exports.build = series(parallel(copyStatic, copyVendorScripts, copyLazyScripts, buildLazyReports, buildCss, buildJs, buildHtml), fingerprintAssets, buildServiceWorker);

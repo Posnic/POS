@@ -39,7 +39,11 @@ const moduleFiles = fs.readdirSync(MODULES).filter((f) => f.endsWith('.js'));
 function mappedBasenames() {
   const mapped = new Set();
   for (const cfg of Object.values(manifest)) {
-    for (const p of cfg.js || []) mapped.add(path.basename(p));
+    // Pages are { js: [...] }; lazy_reports (bundle-split slice 2) is a bare
+    // array that buildLazyReports ships as script/lazy/reports.js - both
+    // shapes reach a browser, so both count as "mapped".
+    const files = Array.isArray(cfg) ? cfg : cfg.js || [];
+    for (const p of files) mapped.add(path.basename(p));
   }
   return mapped;
 }

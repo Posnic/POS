@@ -714,6 +714,7 @@ PosnicPro = {
             sortable: ['script/lazy/sortable.js'],
             summernote: ['script/lazy/summernote.js'],
             colorpicker: ['script/lazy/colorpicker.js'],
+            reports: ['script/lazy/reports.js'],
         },
         _loads: {},
         _script: function (url) {

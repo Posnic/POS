@@ -142,3 +142,33 @@ test('bundle-split slice 1: the editors load when used, never at boot', () => {
         path.join(__dirname, '..', 'frontend', 'static', 'script', 'js', 'core', 'themeManager.js'), 'utf8');
     assert.match(theme, /lazy\.load\('colorpicker'\)/);
 });
+
+test('bundle-split slice 2: the 23 report modules ride a lazy chunk, not the boot', () => {
+    /* Every report page's module (586KB source, ~299KB minified) used to be
+       parsed on every boot for pages a session may never open. They now
+       build into script/lazy/reports.js, and the ROUTER is the loader: a
+       route whose module is missing loads the chunk once and retries. */
+    const map = JSON.parse(fs.readFileSync(
+        path.join(__dirname, '..', 'frontend', 'pages_css_js_map.json'), 'utf8'));
+    const bootReports = map.dashboard.js.filter((u) => u.includes('/modules/js/report_'));
+    assert.deepStrictEqual(bootReports, [], 'report modules are back in the boot bundle');
+    assert.ok(Array.isArray(map.lazy_reports) && map.lazy_reports.length >= 20,
+        'the lazy_reports list lost its modules');
+    /* the registry knows the chunk */
+    assert.match(core, /reports: \['script\/lazy\/reports\.js'\]/);
+    /* the router gate: missing module -> load chunk -> retry -> dispatch */
+    const routes = fs.readFileSync(
+        path.join(__dirname, '..', 'frontend', 'static', 'script', 'js', 'routes.js'), 'utf8');
+    assert.match(routes, /function withModule\(module, run\)/);
+    assert.match(routes, /lazy\.load\('reports'\)\.then/);
+    /* the bare {module} route - the main door to every report - goes THROUGH
+       the gate; an old-style existence guard outside it would 404 the first
+       report visit instead of loading the chunk */
+    const bare = routes.slice(routes.indexOf("addRoute('{module}',"));
+    assert.match(bare.slice(0, 400), /withModule\(module, function \(\) \{\s*if \(typeof PosnicPro\[module\]\.showDataTablePage/);
+    /* and the build actually produces the chunk */
+    const gulp = fs.readFileSync(
+        path.join(__dirname, '..', 'frontend', 'gulpfile.js', 'index.js'), 'utf8');
+    assert.match(gulp, /async function buildLazyReports/);
+    assert.match(gulp, /copyLazyScripts, buildLazyReports,/);
+});
