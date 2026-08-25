@@ -84,6 +84,15 @@ describe('demo sales look like last week, not last fortnight', () => {
     for (const id of ids) expect(id).toMatch(/^S-DEMO-\d{6}$/);
     expect(new Set(ids).size).toBe(ids.length);
   });
+
+  test('every sale carries the process a real sale carries', () => {
+    /*
+     * The customer/category/item activity views badge sale_process; a demo
+     * sale without it rendered a red "undefined" badge in every history
+     * table ("i see prcess undefined").
+     */
+    for (const s of sales) expect(s.sale_process).toBe('Add');
+  });
 });
 
 describe('demo purchases are proper entries', () => {

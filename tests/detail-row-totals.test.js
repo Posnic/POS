@@ -48,6 +48,22 @@ test('no detail page renders a raw row total - one legacy sale must not white-pa
   }
 });
 
+test('no activity view renders a raw sale_process - a legacy or demo sale must not badge "undefined"', () => {
+  /* Same incident family, third member: the Process column printed
+     row.sale_process raw, and a sale without the field (demo-seeded or
+     legacy) showed a red "undefined" badge. The seeder stamps 'Add' now,
+     and every reader defaults - installed data has no field to gain. */
+  for (const f of ['customers.js', 'categories.js', 'customer_categories.js', 'items.js']) {
+    const src = read(f);
+    assert.ok(!src.includes("+ row.sale_process + '</span>"),
+      f + ' still renders sale_process unguarded');
+    assert.match(src, /\(row\.sale_process \|\| 'Add'\)/, f);
+    assert.match(src, /!row\.sale_process \|\| row\.sale_process == 'Add'/,
+      f + ' badges a missing process as an error');
+    assert.match(src, /let process = val\.sale_process \|\| 'Add';/, f + ' (export path)');
+  }
+});
+
 test('the welcome saves BOOLEANS - the string "false" reads as enabled everywhere', () => {
   const src = read('settings.js');
   const saveIntro = src.slice(src.indexOf('saveIntro:'), src.indexOf('saveIntro:') + 2500);
