@@ -104,8 +104,23 @@ test('the money-path lists are card-ready on phones (Mobile P2)', () => {
     ['stocklog.js', 'data-label="Closing"'],
     ['variants.js', 'data-label="Name"'],
     ['expenses.js', 'data-label="Approved by"'],
+    /* P3 slice 3: the detail-view sales histories (the sale_process family) */
+    ['customers.js', 'data-label="Return total"'],
+    ['categories.js', 'data-label="Return total"'],
+    ['customer_categories.js', 'data-label="Return total"'],
+    ['items.js', 'data-label="Return total"'],
   ]) {
     assert.ok(js(f).includes(label), f + ' rows lost their ' + label);
+  }
+  /* the detail tables themselves opt in - two live in modals/ */
+  const anyf = (rel) => fsx.readFileSync(px.join(__dirname, '..', 'frontend', rel), 'utf8');
+  for (const [rel, id] of [
+    ['modals/customer.html', 'view_customerdetails'],
+    ['modals/items_read.html', 'view_itemdetails'],
+    ['modules/categories.html', 'view_categorydetails'],
+    ['modules/customer_categories.html', 'view_customercategorydetails'],
+  ]) {
+    assert.match(anyf(rel), new RegExp('id="' + id + '" class="table table-borderless m-cards"'), rel);
   }
   /* and the mechanism itself is present and token-coloured */
   const css = fsx.readFileSync(px.join(__dirname, '..', 'frontend', 'static', 'style', 'css', 'custom.css'), 'utf8');
