@@ -2829,6 +2829,12 @@ PosnicPro = {
         $('#manage_li_kiosk').toggle(on('module_channels_enable'));
         $('#manage_li_theme').toggle(on('module_themes_enable'));
         $('#manage_li_recyclebin').toggle(on('module_recyclebin_enable'));
+        /* One system, owner's rule: a feature's card explains it; a
+           feature's CONFIGURATION lives here, in its own entry - the same
+           door for every feature, however many we grow. */
+        $('#manage_li_demodata').toggle(on('module_demo_data_enable'));
+        $('#manage_li_quotes').toggle(on('quotes_enable'));
+        $('#manage_li_tillpin').toggle(s.till_lock_enable === true);
         $('#manage_modules_header').toggle(
             $('[id^="manage_li_"]').filter(function () { return $(this).css('display') !== 'none'; }).length > 0
         );

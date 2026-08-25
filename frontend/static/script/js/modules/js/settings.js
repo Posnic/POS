@@ -1900,6 +1900,9 @@ if ($("#sale_quick_edit").is(":checked")) {
         $('#v-pills-kiosk-tab').toggle(on('module_channels_enable'));
         $('#v-pills-recyclebin-tab').toggle(on('module_recyclebin_enable'));
         $('#v-pills-theme-tab').toggle(on('module_themes_enable'));
+        $('#v-pills-demodata-tab').toggle(on('module_demo_data_enable'));
+        $('#v-pills-quotes-tab').toggle(on('quotes_enable'));
+        $('#v-pills-tillpin-tab').toggle(s.till_lock_enable === true);
         $('#v-pills-cashregister-tab').toggle(on('cash_register_enable'));
         $('#v-pills-cashbook-tab').toggle(on('module_cashbook_enable'));
         $('#v-pills-workforce-tab').toggle(on('staff_shifts_enable'));
@@ -6073,7 +6076,6 @@ PosnicPro.settings.featureInfo = {
      * what makes it worth catching: it would have sat there reading as wired.
      */
     staff_tips_enable: {
-        section: '#fc_workforce',
         tagline: 'Record tips at clock-out and pay them out with wages.',
         about: 'Cash tips are declared by the person who earned them when they clock out, stored against that shift, and carried into the labour and payroll figures - so they are paid rather than remembered.',
         benefits: [
@@ -6088,7 +6090,6 @@ PosnicPro.settings.featureInfo = {
         ]
     },
     staff_roster_enable: {
-        section: '#fc_workforce',
         tagline: 'Plan the week ahead; staff see the shifts they are on.',
         about: 'A roster is next week decided this week. Plan a stretch for a person on a day, and the people you rostered can see their own shifts without asking.',
         benefits: [
@@ -6182,7 +6183,6 @@ PosnicPro.settings.featureInfo = {
         /* Its own settings: the trade chooser. Owner ask - "Demo data user
            should able to change the industry and install the different data.
            so keep dedicated page for that." */
-        section: '#fc_demodata',
         offNote: 'Switching off asks for confirmation, then removes the sample records. Your own work - anything edited, sold or received - is always kept.',
         tagline: 'Sample data you can remove, reset, or swap for another trade.',
         about: 'Every new shop arrives with sample products so the till can be tried before there is any real stock in it. Once your own catalogue is in, switch this off: it asks first, then removes the samples - products, sales, quotes, customers and suppliers. Anything you edited into a real product or already sold is kept. The Reset button below installs a fresh set for the same trade, and the chooser swaps trades.',
@@ -6242,10 +6242,8 @@ PosnicPro.settings.featureInfo = {
             'Share it; mark Accepted when the customer says yes',
             'Convert to sale - the receipt total matches the quote'
         ],
-        section: '#fc_quotes'
     },
     staff_shifts_enable: {
-        section: '#fc_workforce',
         tagline: 'Staff clock in and out from the header clock; labour report and payroll exports.',
         about: 'Workforce turns the till into the timesheet: clock in/out, shift history, labour costing and payroll exports - with tips and rosters as optional pieces below.',
         benefits: [
@@ -6273,7 +6271,6 @@ PosnicPro.settings.featureInfo = {
             'On a sale, pick dine-in and the table number',
             'Fire KOTs; settle the table when the meal ends'
         ],
-        section: '#fc_restaurant'
     },
     custom_charges_enable: {
         tagline: 'Parcel, service or delivery charges added on a sale.',
@@ -6332,7 +6329,6 @@ PosnicPro.settings.featureInfo = {
         ]
     },
     till_lock_enable: {
-        section: '#fc_tillpin',
         tagline: 'Staff unlock with a 4-digit PIN instead of a password.',
         about: 'The till locks to a PIN pad - fast for staff, safe for the counter. Choose an idle timeout below.',
         benefits: [
@@ -6456,6 +6452,21 @@ PosnicPro.settings.openFeaturePage = function ($card) {
         infoHtml += '<div class="q-label">How it works</div><ol class="fd-list">'
             + info.how.map(function (h) { return '<li>' + esc(h) + '</li>'; }).join('') + '</ol>';
     }
+    /*
+     * ONE SYSTEM, the owner's rule: "if user clicks on the feature box then
+     * show only details or guide for the features... every feature should
+     * have its own left side." So this page is TEXT - what the feature is,
+     * why, how - plus one link to the feature's own entry in the Manage
+     * sidebar. The old version adopted each feature's config form INTO this
+     * page, which made Demo Data configure one way and Tax another; with
+     * hundreds of features coming, two doors is one too many.
+     */
+    var home = PosnicPro.settings.FEATURE_HOME[key];
+    if (home) {
+        infoHtml += '<div class="q-label"><lang class="lang_fp_configure">Configure</lang></div>'
+            + '<p class="fd-text"><a class="fp-configure-link" href="#/settings/' + esc(home[0]) + '">'
+            + 'Manage &rarr; ' + esc(home[1]) + '</a></p>';
+    }
     /* The generic line is TRUE for every feature except Demo Data, whose off
        is now a consented deletion - a footer promising "never deletes" under
        a switch that deletes is exactly the kind of lie a new user remembers. */
@@ -6464,36 +6475,44 @@ PosnicPro.settings.openFeaturePage = function ($card) {
         + '</p>';
     $('#fp_info').html(infoHtml);
 
-    // adopt ONLY this feature's settings section from the store
-    PosnicPro.settings._fpReturnSection();
-    var $set = $('#fp_settings').empty();
-    if (info.section && $(info.section).length) {
-        PosnicPro.settings._fpSection = info.section;
-        $set.append($(info.section).children());
-    }
-    $('#fp_settings_title').toggle($set.children().length > 0);
-
-    /*
-     * Demo Data's chooser has to be filled from the server, and this is the
-     * moment it becomes visible. Fetching at boot instead would put a request
-     * on the path to a shop's first sale for a screen most shops never open.
-     */
-    if (key === 'module_demo_data_enable') {
-        PosnicPro.settings.demoPacks.load();
-    }
+    /* Nothing is adopted here any more; the store markup moved into each
+       feature's own pane. The empty shell stays hidden. */
+    $('#fp_settings').empty();
+    $('#fp_settings_title').hide();
 
     // show the page pane, keep the Features nav highlighted
     $('#v-pills-modules').removeClass('show active');
     $('#v-pills-featureconf').addClass('show active');
 };
-PosnicPro.settings._fpReturnSection = function () {
-    if (PosnicPro.settings._fpSection) {
-        $(PosnicPro.settings._fpSection).append($('#fp_settings').children());
-        PosnicPro.settings._fpSection = null;
-    }
+/*
+ * Where each feature's configuration LIVES - its Manage sidebar entry.
+ * [route key, label]. A feature added here gets its Configure link on the
+ * guide page; a feature with no entry simply shows no link.
+ */
+PosnicPro.settings.FEATURE_HOME = {
+    module_tax_enable: ['taxmodule', 'Tax'],
+    table_options: ['tableorder', 'Restaurant'],
+    cash_register_enable: ['cashregister', 'Cash Register'],
+    staff_shifts_enable: ['workforce', 'Workforce'],
+    staff_tips_enable: ['workforce', 'Workforce'],
+    staff_roster_enable: ['workforce', 'Workforce'],
+    module_cashbook_enable: ['cashbook', 'Cash Book'],
+    module_credit_enable: ['credit', 'Customer Credit'],
+    module_marketing_enable: ['marketingmodule', 'Marketing'],
+    module_messaging_enable: ['messagingmodule', 'Messaging'],
+    module_channels_enable: ['kiosk', 'Sales Channels'],
+    module_themes_enable: ['theme', 'Themes'],
+    module_recyclebin_enable: ['recyclebin', 'Recycle Bin'],
+    module_demo_data_enable: ['demodata', 'Demo Data'],
+    quotes_enable: ['quotes', 'Quotes'],
+    till_lock_enable: ['tillpin', 'Till PIN Lock'],
 };
+/* The Configure link leaves the guide the same way Back does; the hash
+   route opens the feature's own section. */
+$(document).on('click', '.fp-configure-link', function () {
+    PosnicPro.settings.closeFeaturePage();
+});
 PosnicPro.settings.closeFeaturePage = function () {
-    PosnicPro.settings._fpReturnSection();
     PosnicPro.settings._fpCard = null;
     $('#v-pills-featureconf').removeClass('show active');
     $('#v-pills-modules').addClass('show active');
@@ -6510,12 +6529,6 @@ $(document).on('change', '#fp_master', function () {
     $('#fp_state').text(on ? 'On' : 'Off')
         .toggleClass('badge-success', on)
         .toggleClass('badge-light', !on);
-});
-// leaving settings altogether returns the section too
-$(window).on('hashchange', function () {
-    if (!/settings/i.test(window.location.hash || '')) {
-        PosnicPro.settings._fpReturnSection();
-    }
 });
 // the whole card is the door to the feature's page
 $(document).on('click', '#v-pills-modules .module-card', function (e) {
