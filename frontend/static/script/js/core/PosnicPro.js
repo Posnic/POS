@@ -4650,6 +4650,20 @@ $(".infobar-settings-close").on("click", function (e) {
     if (typeof parts[1] !== 'undefined' && patt.test(parts[1])) {
         if (parts[0] === 'sales' && (parts[2] === 'hold' || parts[2] === 'edit')) {
             hasher.setHash(parts[0] + '/' + parts[1] + '/' + parts[2]);
+        } else if (typeof parts[2] === 'undefined'
+                && (PosnicPro.INFOBAR_LIST_ADDS[parts[0]] || parts[0] === 'items')
+                && $('#view_' + parts[0]).data('total') !== undefined) {
+            /*
+             * Closing a DETAILS panel over its loaded list: the same silent
+             * restore as a cancelled add - reading a record changes nothing,
+             * so the list needs no re-fetch. Pure details only (no parts[2]):
+             * an edit route may be a full page (items), where the dispatch
+             * is the way back.
+             */
+            hasher.changed.active = false;
+            hasher.setHash(parts[0]);
+            hasher.changed.active = true;
+            currentHash = parts[0];
         } else {
             hasher.setHash(parts[0]);
         }
