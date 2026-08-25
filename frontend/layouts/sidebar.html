@@ -239,26 +239,21 @@
                                     <lang class="lang_purchse_title">Purchase</lang>
                                 </h5>
                             </li>
-                            <li><a id="view_receiving_page" data-module="receiving" data-access="write"
-                                    href="#/receivings/new"><img src="static/images/svg-icon/newpurchase.svg"
-                                        class="img-fluid" alt="New Purchase">
-                                    <lang class="lang_newpurchase_title">New Purchase</lang>
-                                </a></li>
-                            <li>
-                                <a data-module="receiving" data-access="read||write||delete" href="#/receivings"
-                                    class="view_receivings_page receivings" id="view_receivings_page">
-                                    <img src="static/images/svg-icon/search_history.svg" class="img-fluid"
-                                        alt="History">
-                                    <lang class="lang_purchasehistory_title">Purchase History</lang>
-                                </a>
-                            </li>
-                            
+                            <!--
+                                ONE door for purchasing (owner: "i dont want
+                                two different options... have only one").
+                                New Purchase and Purchase History left the
+                                menu; their routes still work and the
+                                Purchases page carries a button to each, so
+                                every old flow is one click from the one
+                                entry.
+                            -->
                             <li>
                                 <a data-module="receiving" data-access="read||write" href="#/purchaseorders"
                                     class="purchaseorders" id="view_purchaseorders_page">
                                     <img src="static/images/svg-icon/newpurchase.svg" class="img-fluid"
-                                        alt="Purchase Orders">
-                                    <lang class="lang_po_title">Purchase Orders</lang>
+                                        alt="Purchases">
+                                    <lang class="lang_po_title">Purchases</lang>
                                 </a>
                             </li>
                             <li id="supplierModule">

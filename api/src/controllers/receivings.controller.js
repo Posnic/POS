@@ -1340,14 +1340,34 @@ class ReceivingsController extends BaseController {
       const transporter = resolved.transporter;
       const shopName = branch.branch_name || 'Posnic POS';
       const orderId = receiving.receiving_id || String(receiving._id);
+      const { brandFor, renderEmail, kvBlock } = require('../utils/email-layout');
+      const brand = brandFor(branch);
+      const customMessage = String(req.body.message || '').trim();
       const info = await transporter.sendMail({
         from: `${shopName} <${resolved.from}>`,
         to,
         subject:
-          String(req.body.subject || '').trim() || `Purchase order from ${shopName} (${orderId})`,
+          String(req.body.subject || '').trim() || `Purchase order ${orderId} from ${shopName}`,
+        html: renderEmail({
+          brand,
+          title: 'Purchase order',
+          preheader: `Purchase order ${orderId} from ${shopName} - PDF attached`,
+          greeting: receiving.supplier_name ? `Dear ${receiving.supplier_name},` : undefined,
+          bodyHtml:
+            '<p style="margin:0 0 12px;font-size:13.5px;color:#3a4459;">' +
+            (customMessage
+              ? require('../utils/email-layout').esc(customMessage)
+              : 'Please find our purchase order attached as a PDF.') +
+            '</p>' +
+            kvBlock([
+              ['Order #', orderId],
+              ['Items', receiving.number_of_items],
+              ['Order value', receiving.total_amount],
+            ]),
+          footerNote: 'Reply to this email to confirm availability and delivery.',
+        }),
         text:
-          String(req.body.message || '').trim() ||
-          `Please find attached purchase order ${orderId} from ${shopName}.`,
+          customMessage || `Please find attached purchase order ${orderId} from ${shopName}.`,
         attachments: [{ filename: `${orderId}.pdf`, content: pdfBuffer }],
       });
       /* The dev fallback transport prints to console instead of delivering -

@@ -1715,6 +1715,25 @@ if ($wrapper.length) {
         };
         PosnicPro.put(params, function (response) {
             if (response.type === 'success') {
+                /*
+                 * SAVES PATCH; they do not repaint the world.
+                 *
+                 * Owner: "every save of form, some refresh is happening...
+                 * whenever i save or close all get refreshed. i think its
+                 * lazy coding." This handler used to run every block below
+                 * unconditionally - menu rebuilds, a low-stock FETCH, the
+                 * keyboard re-init, KOT show/hide - on every save of any
+                 * field. Each block now runs only when the value it exists
+                 * FOR actually changed, measured against what was in force
+                 * before this save.
+                 */
+                var was = {
+                    general: PosnicPro.local.get('general_settings') || '',
+                    table_options: PosnicPro.local.get('table_options') || '',
+                    keyboard: PosnicPro.local.get('keyboard_view') || '',
+                    gst: PosnicPro.local.get('gst_action') || '',
+                    notification: localStorage.getItem('notificationrange') || ''
+                };
                 PosnicPro.settings._featuresDirty = false;
                 PosnicPro.settings.syncDemoDataAfterSave();
                 let htmlView = $('#footer_print').text();
@@ -1739,12 +1758,10 @@ if ($wrapper.length) {
                 var discount_amount = $('#discount_amount').val();
                 PosnicPro.local.set('setting-discount-amount', discount_amount);
                 PosnicPro.local.set('setting-discount-percentage', discount_percentage);
-                if ($('#indian_gst').val() === 'gst_on') {
-                    $('.indian-gstr').show();
-                    PosnicPro.local.set('gst_action', 'enable');
-                } else {
-                    $('.indian-gstr').hide();
-                    PosnicPro.local.set('gst_action', 'disable');
+                var gstNow = $('#indian_gst').val() === 'gst_on' ? 'enable' : 'disable';
+                if (gstNow !== was.gst) {
+                    PosnicPro.local.set('gst_action', gstNow);
+                    $('.indian-gstr').toggle(gstNow === 'enable');
                 }
 
 if ($("#sale_quick_edit").is(":checked")) {
@@ -1757,38 +1774,25 @@ if ($("#sale_quick_edit").is(":checked")) {
                 } else {
                     PosnicPro.local.set('enable_multi_payment', 'disable');
                 }
-                var $kotLi = $('#view_kot_page').closest('li');
-                var $kotOrderLi = $('#view_kotorder_page').closest('li');
-                var $kotHistoryLi = $('#view_kothistory_page').closest('li');
-                var $kotReportLi = $('#viewkotreport_page').closest('li');
-                var $newSaleLi = $('#view_touchsales_page').closest('li');
-                if ($("#table_options").is(":checked")) {
-                    PosnicPro.local.set('table_options', 'enable');
-                    PosnicPro.applyKotVisibility(true);
-                    $kotLi.show();
-                    $kotOrderLi.show();
-                    $kotHistoryLi.show();
-                    $kotReportLi.show();
-                    $newSaleLi.hide();
-                    $('#image_sidebar_newsale').hide();
-                    $('#kot_menu').show();
-                    $('#item_master_menu').show();
-                } else {
-                    PosnicPro.local.set('table_options', 'disable');
-                    $kotLi.hide();
-                    $kotOrderLi.hide();
-                    $kotHistoryLi.hide();
-                    $kotReportLi.hide();
-                    $newSaleLi.show();
-                    $('#kot_menu').hide();
-                    $('#item_master_menu').hide();
+                /* The whole restaurant-menu rebuild, only when the switch
+                   actually flipped. */
+                var tableNow = $("#table_options").is(":checked") ? 'enable' : 'disable';
+                if (tableNow !== was.table_options) {
+                    PosnicPro.local.set('table_options', tableNow);
+                    var kotOn = tableNow === 'enable';
+                    if (kotOn) { PosnicPro.applyKotVisibility(true); }
+                    $('#view_kot_page,#view_kotorder_page,#view_kothistory_page,#viewkotreport_page')
+                        .closest('li').toggle(kotOn);
+                    $('#view_touchsales_page').closest('li').toggle(!kotOn);
+                    if (kotOn) { $('#image_sidebar_newsale').hide(); }
+                    $('#kot_menu,#item_master_menu').toggle(kotOn);
                 }
 
-                if ($("#keyboard_view").is(":checked")) {
-                    PosnicPro.local.set('keyboard_view', 'true');
-                    keyboard_view();
-                } else {
-                    PosnicPro.local.set('keyboard_view', 'false');
+                /* Rebuilding the on-screen keyboard is visible work; a save
+                   that did not touch the switch does not pay for it. */
+                var keyboardNow = $("#keyboard_view").is(":checked") ? 'true' : 'false';
+                if (keyboardNow !== was.keyboard) {
+                    PosnicPro.local.set('keyboard_view', keyboardNow);
                     keyboard_view();
                 }
 
@@ -1796,9 +1800,14 @@ if ($("#sale_quick_edit").is(":checked")) {
                 ($('#default_customer_enable_disable').is(":checked")) ? PosnicPro.local.set('default_customer_enable_disable', "true") : PosnicPro.local.set('default_customer_enable_disable', "false");
                 ($('#default_supplier_enable_disable').is(":checked")) ? PosnicPro.local.set('default_supplier_enable_disable', "true") : PosnicPro.local.set('default_supplier_enable_disable', "false");
                 ($('#default_tax_enable_disable').is(":checked")) ? PosnicPro.local.set('default_tax_enable_disable', "true") : PosnicPro.local.set('default_tax_enable_disable', "false");
-                localStorage.setItem("notificationrange", $('#notification_value').val());
-                $("#low_item_stock_count").text($('#notification_value').val());
-                PosnicPro.stocklogs.viewLowStockDashboard();
+                /* The low-stock refresh is a network FETCH - the one thing a
+                   save must never do for a value that did not move. */
+                var notificationNow = String($('#notification_value').val() || '');
+                if (notificationNow !== was.notification) {
+                    localStorage.setItem("notificationrange", notificationNow);
+                    $("#low_item_stock_count").text(notificationNow);
+                    PosnicPro.stocklogs.viewLowStockDashboard();
+                }
                 
                 // Save the Module On/Off state to localStorage (checkboxes
                 // since the toggles-only rebuild).
@@ -1827,22 +1836,28 @@ if ($("#sale_quick_edit").is(":checked")) {
                     first_run_done: PosnicPro.features.keepFirstRunFlag(),
                     first_run_decided: PosnicPro.features.keepFirstRunFlag(null, 'first_run_decided')
                 };
-                PosnicPro.local.set('general_settings', JSON.stringify(generalSettings));
-                // Show or hide the header clock button to match, right away.
-                PosnicPro.shiftWidget.applyEnabled();
-                // Config's own left menu follows the switches immediately -
-                // the feedback loop that teaches "this switch shapes my app".
-                PosnicPro.settings.applyModuleNav();
-                PosnicPro.applyModuleSidebar();
-                // Register menu follows the module toggle the same way.
-                if (!$('#cash_register_enable').is(':checked')) {
-                    $('.cashRegisterModule').css('display', 'none');
-                } else {
-                    $('.cashRegisterModule').css('display', 'block');
-                    // Re-enabling must also re-arm the sale-screen gate: the
-                    // disable path parks branch_has_no_registers='true' to
-                    // stand the gate down, so clear it here.
-                    PosnicPro.local.set('branch_has_no_registers', '');
+                var generalNow = JSON.stringify(generalSettings);
+                PosnicPro.local.set('general_settings', generalNow);
+                /* Menus rebuild only when a SWITCH moved - the string is the
+                   diff. A save of a prefix or a phone number leaves every
+                   menu exactly where the eye left it. */
+                if (generalNow !== was.general) {
+                    // Show or hide the header clock button to match, right away.
+                    PosnicPro.shiftWidget.applyEnabled();
+                    // Config's own left menu follows the switches immediately -
+                    // the feedback loop that teaches "this switch shapes my app".
+                    PosnicPro.settings.applyModuleNav();
+                    PosnicPro.applyModuleSidebar();
+                    // Register menu follows the module toggle the same way.
+                    if (!$('#cash_register_enable').is(':checked')) {
+                        $('.cashRegisterModule').css('display', 'none');
+                    } else {
+                        $('.cashRegisterModule').css('display', 'block');
+                        // Re-enabling must also re-arm the sale-screen gate: the
+                        // disable path parks branch_has_no_registers='true' to
+                        // stand the gate down, so clear it here.
+                        PosnicPro.local.set('branch_has_no_registers', '');
+                    }
                 }
             }
             PosnicPro.alert(response.type,

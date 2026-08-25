@@ -1,5 +1,4 @@
 const nodemailer = require('nodemailer');
-const pug = require('pug');
 const { convert } = require('html-to-text');
 
 class Email {
@@ -18,7 +17,8 @@ class Email {
     this.url = url;
 
     const emailFrom = process.env.EMAIL_FROM || 'no-reply@posnic.local';
-    this.from = `Your App <${emailFrom}>`;
+    const brandName = process.env.WHITE_LABEL_NAME || 'Posnic';
+    this.from = `${brandName} <${emailFrom}>`;
   }
 
   newTransport() {
@@ -64,12 +64,34 @@ class Email {
 
   // Send the actual email
   async send(template, subject) {
-    // 1) Render HTML based on a pug template
-    const html = pug.renderFile(`${__dirname}/../views/email/${template}.pug`, {
-      firstName: this.firstName,
-      url: this.url,
-      subject,
-      email: this.to,
+    /*
+     * The shared layout, same as every document mail - the auth mails were
+     * the last two still wearing the scaffold pug files. The body copy
+     * lives here; the frame (header, footer, brand, white-label) is the
+     * one frame everything sends with.
+     */
+    const { brandFor, renderEmail, ctaButton, esc: e } = require('./email-layout');
+    const brand = brandFor(null);
+    const BODIES = {
+      welcome:
+        '<p style="margin:0 0 12px;font-size:13.5px;color:#3a4459;">' +
+        `Welcome aboard, ${e(this.firstName)}! Your account is ready - your shop, ` +
+        'your products and your sales all live in one place from here on.</p>' +
+        (this.url ? ctaButton('Open your dashboard', this.url) : ''),
+      passwordReset:
+        '<p style="margin:0 0 12px;font-size:13.5px;color:#3a4459;">' +
+        `Hi ${e(this.firstName)}, we received a request to reset your password. ` +
+        'The link below is valid for 10 minutes.</p>' +
+        (this.url ? ctaButton('Reset your password', this.url) : '') +
+        '<p style="margin:12px 0 0;font-size:12.5px;color:#69758c;">' +
+        'If you did not ask for this, you can safely ignore this email - ' +
+        'your password stays as it is.</p>',
+    };
+    const html = renderEmail({
+      brand,
+      title: subject,
+      preheader: subject,
+      bodyHtml: BODIES[template] || `<p style="font-size:13.5px;color:#3a4459;">${e(subject)}</p>`,
     });
 
     // 2) Define email options
@@ -92,7 +114,7 @@ class Email {
   }
 
   async sendWelcome() {
-    await this.send('welcome', 'Welcome to Your App!');
+    await this.send('welcome', `Welcome to ${process.env.WHITE_LABEL_NAME || 'Posnic'}!`);
   }
 
   async sendPasswordReset() {
@@ -112,7 +134,7 @@ const sendEmail = async (options) => {
 
   // 2) Define the email options
   const mailOptions = {
-    from: 'Your App <hello@yourapp.com>',
+    from: `${process.env.WHITE_LABEL_NAME || 'Posnic'} <${process.env.EMAIL_FROM || 'no-reply@posnic.local'}>`,
     to: options.email,
     subject: options.subject,
     text: options.message,
@@ -151,8 +173,17 @@ const resolveShopTransport = (branchDoc) => {
       }),
       from: String(b.email_smtp_from || b.email_smtp_username),
       shopOwned: true,
+      branch: b,
     };
   }
+  /*
+   * White-label from-address (owner: "from address white label as per their
+   * configuration"). Used on the PLATFORM paths below - a shop with its own
+   * SMTP already sends as itself above. The address must belong to a domain
+   * the white-label partner has verified with the mail provider, which is
+   * exactly what "as per their configuration" means.
+   */
+  const whiteLabelFrom = String(b.white_label_from || process.env.WHITE_LABEL_FROM || '').trim();
   /*
    * The platform's PROVEN mail path is Brevo (the daily reports arrive
    * through it); the legacy SMTP env rejects with EAUTH. So: Brevo when
@@ -200,15 +231,17 @@ const resolveShopTransport = (branchDoc) => {
           };
         },
       },
-      from: process.env.EMAIL_FROM || 'info@posnic.com',
+      from: whiteLabelFrom || process.env.EMAIL_FROM || 'info@posnic.com',
       shopOwned: false,
+      branch: b,
     };
   }
   const platform = new Email({ email: 'noreply', name: 'noreply' }, '').newTransport();
   return {
     transporter: platform,
-    from: process.env.EMAIL_FROM || 'no-reply@posnic.local',
+    from: whiteLabelFrom || process.env.EMAIL_FROM || 'no-reply@posnic.local',
     shopOwned: false,
+    branch: b,
   };
 };
 

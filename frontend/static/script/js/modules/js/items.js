@@ -925,13 +925,13 @@ PosnicPro.items = {
                             if (PosnicPro.receivings.editPriceAction === 'add') {
                                 hasher.setHash('receivings/new');
                                 PosnicPro.receivings.addReceivingLineItems(itemDetails);
-                                $('#view_receiving_page').addClass('active');
+                                $('#view_purchaseorders_page').addClass('active');
                             } else {
                                 hasher.setHash('receivings/' + PosnicPro.receivings.receivingAddId + '/edit');
                                 setTimeout(function () {
                                     PosnicPro.receivings.addReceivingLineItems(itemDetails);
                                 }, 1000);
-                                $('.view_receivings_page').addClass('active');
+                                $('#view_purchaseorders_page').addClass('active');
                             }
 
                             loader.find(".loadingSpinner:first").remove();
@@ -1004,14 +1004,14 @@ PosnicPro.items = {
                                 if (PosnicPro.receivings.editPriceAction === 'add') {
                                     hasher.setHash('receivings/new');
                                     PosnicPro.receivings.addReceivingLineItems(itemDetails);
-                                    $('#view_receiving_page').addClass('active');
+                                    $('#view_purchaseorders_page').addClass('active');
                                 } else {
                                     hasher.setHash('receivings/' + PosnicPro.receivings.receivingAddId + '/edit');
                                     setTimeout(function () {
                                         PosnicPro.receivings.removeLineItemReceiving(data.id);
                                         PosnicPro.receivings.addReceivingLineItems(itemDetails);
                                     }, 1000);
-                                    $('.view_receivings_page').addClass('active');
+                                    $('#view_purchaseorders_page').addClass('active');
                                 }
 
                                 loader.find(".loadingSpinner:first").remove();
