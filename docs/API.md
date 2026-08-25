@@ -16,7 +16,7 @@ Postman, Insomnia or Bruno, point Swagger UI or Redoc at it, or generate a
 client from it. It is OpenAPI 3.0.3.
 
 **102 of 591 endpoints carry a request schema** (17%), recovered from
-their `express-validator` middleware. The remaining 487 are listed with
+their `express-validator` middleware. The remaining 489 are listed with
 path, method and handler but no body, because inventing a schema is worse than
 admitting the gap.
 
@@ -483,6 +483,8 @@ Mounted at `/receivings`. Source: `api/src/routes/receivings.routes.js`.
 | GET | `/receivings/getDataChanges` | — | `receivingsController.getDataChanges` |
 | GET | `/receivings/receivingsPdf` | — | `receivingsController.receivingsPdf` |
 | POST | `/receivings/emailToSupplier` | — | `receivingsController.emailToSupplier` |
+| POST | `/receivings/:id/attachments` | — | `receivingsController.addAttachment` |
+| DELETE | `/receivings/:id/attachments/:attId` | — | `receivingsController.removeAttachment` |
 | POST | `/receivings/exportReceivings` | — | `receivingsController.exportReceivings` |
 | POST | `/receivings/exportreceivings` | — | `receivingsController.exportReceivings` |
 | GET | `/receivings/supplierReceivingDetails` | — | `receivingsController.supplierReceivingDetails` |
