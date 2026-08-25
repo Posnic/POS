@@ -6489,11 +6489,6 @@ PosnicPro.settings.openFeaturePage = function ($card) {
         + '</p>';
     $('#fp_info').html(infoHtml);
 
-    /* Nothing is adopted here any more; the store markup moved into each
-       feature's own pane. The empty shell stays hidden. */
-    $('#fp_settings').empty();
-    $('#fp_settings_title').hide();
-
     // show the page pane, keep the Features nav highlighted
     $('#v-pills-modules').removeClass('show active');
     $('#v-pills-featureconf').addClass('show active');
