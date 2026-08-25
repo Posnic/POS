@@ -92,7 +92,7 @@ PosnicPro.suppliers = {
                             '<div data-toolbar="user-options" class="btn btn-round btn-primary-rgba round-pad supplier_onclick" id="onclick-toolbar_' + i + '"><i class="feather icon-more-vertical-"></i></div>';
 
 
-                    var trow = '<tr><td><input type="checkbox" class="suppliers-row-id" id="' + row._id + '" name="id[]" value="' + row._id + '" onclick="PosnicPro.checkboxSelectOne(this,\'suppliers\');"></td> <td scope="row">' + row_no + '</td>  <td width="30%"><a href="#/suppliers/' + row._id + '"><i class="table_model_item">' + row.name + '</i></a></td> <td class="text-right"><a href="tel:' + phone + '" class="sale_color">' + phone + '</a></td> <td width="15%"><a href="mailto:' + email + '" class="sale_color">' + email + '</a></td> <td width="40%">' + address + '</td> ' +
+                    var trow = '<tr><td><input type="checkbox" class="suppliers-row-id" id="' + row._id + '" name="id[]" value="' + row._id + '" onclick="PosnicPro.checkboxSelectOne(this,\'suppliers\');"></td> <td scope="row" data-label="#">' + row_no + '</td>  <td width="30%" data-label="Name"><a href="#/suppliers/' + row._id + '"><i class="table_model_item">' + row.name + '</i></a></td> <td class="text-right" data-label="Phone"><a href="tel:' + phone + '" class="sale_color">' + phone + '</a></td> <td width="15%" data-label="Email"><a href="mailto:' + email + '" class="sale_color">' + email + '</a></td> <td width="40%" data-label="Address">' + address + '</td> ' +
                             '<td width="15%" class="text-center"><span>' + action + '</span></td>' +
                             '</tr>';
                     $('#view_suppliers').children('tbody').append(trow);
