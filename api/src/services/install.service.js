@@ -838,7 +838,10 @@ class InstallService {
         const kept = (purge && purge.data && purge.data.kept) || (purge && purge.kept) || [];
         if (kept.length) {
           keptNote =
-            ' Kept ' + kept.length + ' record' + (kept.length === 1 ? '' : 's') +
+            ' Kept ' +
+            kept.length +
+            ' record' +
+            (kept.length === 1 ? '' : 's') +
             ' you have sold or edited.';
         }
       } else {
@@ -956,7 +959,8 @@ class InstallService {
         },
         message:
           `Sample data restored: ${counts[0]} products, ${counts[1]} sales, ` +
-          `${counts[2]} quotes, ${counts[3]} purchases.` + keptNote,
+          `${counts[2]} quotes, ${counts[3]} purchases.` +
+          keptNote,
       };
     } catch (error) {
       console.error('Error in InstallService.reseedDemoData:', error);

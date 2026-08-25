@@ -3283,7 +3283,11 @@ class SalesController extends BaseController {
         credit_carry_forward: roundToTwo(Math.max(0, purchases.totals.tax - totals.tax)),
       };
 
-      return this.success(res, { list, totals, purchases, gst }, 'Tax summary retrieved successfully');
+      return this.success(
+        res,
+        { list, totals, purchases, gst },
+        'Tax summary retrieved successfully'
+      );
     } catch (error) {
       console.error('Error in taxSummaryReportTable:', error);
       return this.error(res, 'Unable to load the tax summary. Please try again later.', 500, {
@@ -5111,7 +5115,13 @@ class SalesController extends BaseController {
 
       // Email content - the shared layout, not a bare <h2> (owner: "not
       // just unprofessional few text").
-      const { brandFor, renderEmail, kvBlock, itemsTable, totalRow } = require('../utils/email-layout');
+      const {
+        brandFor,
+        renderEmail,
+        kvBlock,
+        itemsTable,
+        totalRow,
+      } = require('../utils/email-layout');
       const brand = brandFor(resolved.branch || { branch_name: req.user?.branch_name });
       const currency = (resolved.branch && resolved.branch.currency) || '';
       const lines = (Array.isArray(sale.items) ? sale.items : []).map((it) => ({

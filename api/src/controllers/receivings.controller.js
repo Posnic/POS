@@ -1434,8 +1434,7 @@ class ReceivingsController extends BaseController {
             ]),
           footerNote: 'Reply to this email to confirm availability and delivery.',
         }),
-        text:
-          customMessage || `Please find attached purchase order ${orderId} from ${shopName}.`,
+        text: customMessage || `Please find attached purchase order ${orderId} from ${shopName}.`,
         attachments: [{ filename: `${orderId}.pdf`, content: pdfBuffer }],
       });
       /* The dev fallback transport prints to console instead of delivering -
@@ -1516,7 +1515,7 @@ class ReceivingsController extends BaseController {
            words silently dropped them from every purchase report and
            dashboard number - the owner's "purchase not showing report".
            Goods are IN unless the status says they never arrived. */
-        receiving_status: { $nin: ['Open', 'Cancelled', 'FullReturn'] },
+            receiving_status: { $nin: ['Open', 'Cancelled', 'FullReturn'] },
           },
           {
             updated_date: { $gte: fromDate, $lte: toDate },
