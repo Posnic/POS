@@ -5263,10 +5263,20 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 }
 
 /*
- * The Demo Data pane: the chooser's buttons are buttons, not banners.
- * module-subs lays its children in a flex row, and flex stretches every
- * child to the tallest sibling - beside the two-line select column the
- * buttons became 110px slabs (owner: "very big buttons").
+ * The Demo Data pane: the trade chooser and BOTH buttons share one row and
+ * one baseline (owner, twice: "very big buttons", then "drop down and
+ * buttons not in same line"). The row wraps on narrow screens with the
+ * select keeping a readable width.
  */
-#v-pills-demodata .module-subs { align-items: flex-end; }
-#v-pills-demodata .module-subs .btn { align-self: flex-end; margin-bottom: 8px; }
+.demo-pack-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+.demo-pack-row #demo_pack_choice {
+    flex: 0 1 320px;
+    min-width: 220px;
+    width: auto;
+}
+.demo-pack-row .btn { flex: none; white-space: nowrap; }
