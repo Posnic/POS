@@ -31,11 +31,22 @@ const bindController = (handler) => {
   return (req, res, next) => handler.call(settingController, req, res, next);
 };
 
+// Reference data (country/state/currency/timezone lists): anonymous,
+// byte-identical for every caller, changed only by a release. A day in the
+// plain HTTP cache turns the repeat ~450ms fetch into 0ms for every browser,
+// with or without the service worker (owner: "getJSONState this is not
+// covered with service worker?" - it was, but the versioned SW cache resets
+// on every deploy; the HTTP cache does not).
+const referenceCache = (req, res, next) => {
+  res.set('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
+  next();
+};
+
 // Use the controller instance methods
-router.get('/getJSONCountry', bindController(settingController.getJSONCountry));
-router.get('/getJSONState', bindController(settingController.getJSONState));
-router.get('/getJSONCurrency', bindController(settingController.getJSONCurrency));
-router.get('/getJSONTimeZone', bindController(settingController.getJSONTimeZone));
+router.get('/getJSONCountry', referenceCache, bindController(settingController.getJSONCountry));
+router.get('/getJSONState', referenceCache, bindController(settingController.getJSONState));
+router.get('/getJSONCurrency', referenceCache, bindController(settingController.getJSONCurrency));
+router.get('/getJSONTimeZone', referenceCache, bindController(settingController.getJSONTimeZone));
 
 // Legacy unauthenticated endpoints expected under /setting
 router.post(
@@ -286,7 +297,7 @@ router.post(
 );
 
 // PHP: JSON routes
-router.get('/getJSONGstState', bindController(settingController.getJSONGstState));
+router.get('/getJSONGstState', referenceCache, bindController(settingController.getJSONGstState));
 
 // PHP: Backup routes
 router.post('/restoreBackup', bindController(settingController.restoreBackup));

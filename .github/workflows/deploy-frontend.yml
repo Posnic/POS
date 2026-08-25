@@ -93,13 +93,43 @@ jobs:
       # Keeping it means an instance is a mirror of a known build rather than
       # a pile of whatever any deploy ever left behind, which is what made the
       # original failure so hard to see.
+      # Hashed bundles are PROTECTED from --delete (rsync filter), because a
+      # page already open in a browser still references the previous hashes -
+      # deleting them mid-session strips a working shop of its stylesheet
+      # ("mobile view add category shown and page broken. crashed" was an open
+      # tab meeting a deploy that had pruned style/dashboard.<oldhash>.css).
+      # The CDN workflow learned this on day one; this one learns it now.
+      # The mirror principle survives via the retention step below: newest 3
+      # per bundle family stay, older ones go.
       - name: Sync to the tenant instance
         run: |
           rsync -az --delete \
+            --filter='protect public/script/*.js' \
+            --filter='protect public/style/*.css' \
             --exclude node_modules --exclude .git --exclude '.gitignore' \
             --exclude 'public/all.zip' \
             -e "ssh -i ~/.ssh/deploy.pem" \
             frontend/ "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:~/apps/tenants/app/frontend/"
+
+      # Retention: for every hashed bundle family (name.<hash8>.ext), keep the
+      # newest 3 and remove the rest. An open tab survives at least two more
+      # deploys; the instance never accumulates unboundedly.
+      - name: Prune old hashed bundles (keep newest 3 per family)
+        run: |
+          ssh -i ~/.ssh/deploy.pem "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" 'bash -s' <<'REMOTE'
+          set -u
+          for d in ~/apps/tenants/app/frontend/public/script ~/apps/tenants/app/frontend/public/style; do
+            [ -d "$d" ] || continue
+            cd "$d"
+            ls -1 2>/dev/null | grep -E '^[A-Za-z0-9_-]+\.[0-9a-f]{8}\.(js|css)$' \
+              | sed -E 's/\.[0-9a-f]{8}\.(js|css)$/.\1/' | sort -u \
+              | while read -r fam; do
+                  base="${fam%.*}"; ext="${fam##*.}"
+                  ls -1t "$base".????????."$ext" 2>/dev/null | tail -n +4 \
+                    | while read -r old; do rm -f -- "$old" && echo "pruned $d/$old"; done
+                done
+          done
+          REMOTE
 
       # No pm2 restart on purpose: these are static files read from disk per
       # request, so the tenants pick them up with no interruption to a shop

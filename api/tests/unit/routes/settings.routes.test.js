@@ -110,4 +110,25 @@ describe('settings.routes', () => {
   test('exposes settings routes', () => {
     expect(router.stack.filter((layer) => layer.route).length).toBeGreaterThan(10);
   });
+
+  test('reference data carries a day of HTTP cache', () => {
+    /* Country/state/currency/timezone lists are anonymous, byte-identical
+       for every caller, and change only with a release. The versioned SW
+       cache resets on every deploy, so THIS header is what makes the repeat
+       fetch free ("getJSONState this is not covered with service worker?"). */
+    const refRoutes = ['/getJSONCountry', '/getJSONState', '/getJSONCurrency',
+      '/getJSONTimeZone', '/getJSONGstState'];
+    for (const p of refRoutes) {
+      const layer = router.stack.find((l) => l.route && l.route.path === p);
+      expect(layer).toBeDefined();
+      /* two handlers: the cache middleware, then the controller */
+      expect(layer.route.stack.length).toBeGreaterThanOrEqual(2);
+      const res = { set: jest.fn() };
+      const next = jest.fn();
+      layer.route.stack[0].handle({}, res, next);
+      expect(res.set).toHaveBeenCalledWith(
+        'Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
+      expect(next).toHaveBeenCalled();
+    }
+  });
 });
