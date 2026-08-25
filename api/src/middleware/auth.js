@@ -175,7 +175,26 @@ const auth = async (req, res, next) => {
     // GRANT ACCESS TO PROTECTED ROUTE
     return continueWithTenant(req, res, next, currentUser);
   } catch (error) {
-    next(new UnauthorizedError('Invalid token or user not found'));
+    /*
+     * Only a BAD TOKEN is a 401 here. This catch used to stamp every
+     * failure "Invalid token" - including the database timing out under
+     * load - and this middleware guards users/verify, the session
+     * heartbeat. So a demo-data install (a zip download and hundreds of
+     * inserts on a small shared instance) could make one heartbeat's user
+     * lookup fail, the client saw 401, and it did the only correct thing
+     * with a 401: signed the owner out, mid-install. An infrastructure
+     * hiccup is a 500 and a toast, never a sign-out; `protect` below has
+     * always drawn the line this way.
+     */
+    if (
+      error &&
+      (error.name === 'JsonWebTokenError' ||
+        error.name === 'TokenExpiredError' ||
+        error.name === 'NotBeforeError')
+    ) {
+      return next(new UnauthorizedError('Invalid token or user not found'));
+    }
+    return next(error);
   }
 };
 

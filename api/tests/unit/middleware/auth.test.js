@@ -61,4 +61,49 @@ describe('middleware/auth', () => {
     expect(findUserByIdentifier).toHaveBeenCalledWith('u1');
     expect(next).toHaveBeenCalled();
   });
+
+  /*
+   * Only a BAD TOKEN may 401 here. This middleware guards users/verify - the
+   * session heartbeat - and its catch used to stamp EVERY failure "Invalid
+   * token": the owner's demo-data install loaded the database enough that one
+   * heartbeat's user lookup threw, the client saw 401, and it did the only
+   * correct thing with a 401 - signed him out, mid-install.
+   */
+  test('a database failure is NOT a 401 - an outage must never sign people out', async () => {
+    jwt.verify.mockResolvedValue({ id: 'u1', iat: 1 });
+    const dbDown = new Error('pool timed out');
+    findUserByIdentifier.mockRejectedValue(dbDown);
+    const next = jest.fn();
+
+    await auth.auth({ headers: { authorization: 'Bearer token' }, cookies: {} }, {}, next);
+
+    expect(next).toHaveBeenCalledWith(dbDown);
+    const forwarded = next.mock.calls[0][0];
+    expect(forwarded.statusCode).toBeUndefined();
+    expect(String(forwarded.message)).not.toMatch(/invalid token/i);
+  });
+
+  test('a genuinely bad token IS a 401', async () => {
+    const bad = new Error('jwt malformed');
+    bad.name = 'JsonWebTokenError';
+    jwt.verify.mockRejectedValue(bad);
+    const next = jest.fn();
+
+    await auth.auth({ headers: { authorization: 'Bearer nonsense' }, cookies: {} }, {}, next);
+
+    const forwarded = next.mock.calls[0][0];
+    expect(String(forwarded.message)).toMatch(/invalid token or user not found/i);
+  });
+
+  test('an expired token IS a 401 too', async () => {
+    const expired = new Error('jwt expired');
+    expired.name = 'TokenExpiredError';
+    jwt.verify.mockRejectedValue(expired);
+    const next = jest.fn();
+
+    await auth.auth({ headers: { authorization: 'Bearer old' }, cookies: {} }, {}, next);
+
+    const forwarded = next.mock.calls[0][0];
+    expect(String(forwarded.message)).toMatch(/invalid token or user not found/i);
+  });
 });
