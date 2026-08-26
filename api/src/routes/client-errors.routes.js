@@ -87,7 +87,9 @@ router.post('/', (req, res) => {
       const line = [
         '[client-error]',
         String(req.headers.host || '').slice(0, 80),
-        String(b.message || '(no message)').slice(0, 300),
+        /* flight records carry the device's last movements - they get the
+           room they need; everything else stays tight */
+        String(b.message || '(no message)').slice(0, isFlight ? 900 : 300),
         '@',
         String(b.at || '').slice(0, 200),
       ].join(' ');

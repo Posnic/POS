@@ -41,6 +41,31 @@
                         }
                     };
                     localStorage.setItem(K, JSON.stringify(rec));
+                    /* Owner: "keep record everything ... every movement of
+                       browser. when i refresh send previous records." Every
+                       route, every tap, every background/foreground and
+                       connectivity flip rides the record, so the report
+                       reads as the device's last minutes, not one number. */
+                    rec.moves = [];
+                    function move(what) {
+                        try {
+                            rec.moves.push(Math.round((Date.now() - rec.started) / 100) / 10 + 's ' + what);
+                            if (rec.moves.length > 25) { rec.moves.splice(0, rec.moves.length - 25); }
+                            localStorage.setItem(K, JSON.stringify(rec));
+                        } catch (e) { }
+                    }
+                    window.addEventListener('hashchange', function () { move('nav ' + location.hash.slice(0, 40)); });
+                    document.addEventListener('click', function (ev) {
+                        var t = ev.target || {};
+                        var d = (t.tagName || '?') + (t.id ? '#' + t.id : '') +
+                            (!t.id && t.className && t.className.slice ? '.' + String(t.className).split(' ')[0] : '');
+                        move('tap ' + d.slice(0, 45));
+                    }, true);
+                    document.addEventListener('visibilitychange', function () {
+                        move(document.hidden ? 'BACKGROUNDED' : 'foregrounded');
+                    });
+                    window.addEventListener('offline', function () { move('OFFLINE'); });
+                    window.addEventListener('online', function () { move('online'); });
                     setInterval(function () {
                         try {
                             rec.alive = Date.now() - rec.started;
@@ -61,7 +86,8 @@
                             (prev.booted ? 'AFTER booting' : 'DURING boot') +
                             ' at ~' + (prev.alive || 0) + 'ms on "' + (prev.hash || '?') + '"' +
                             (prev.mem ? ' heap ' + prev.mem : '') +
-                            ' stages: ' + (prev.stages || []).slice(-8).join(' > ') +
+                            ' stages: ' + (prev.stages || []).slice(-6).join(' > ') +
+                            ' moves: ' + (prev.moves || []).slice(-8).join(' | ') +
                             ' ua: ' + (prev.ua || '');
                         /* IMMEDIATELY - a session dying faster than any delay
                            would lose the previous session's report forever
