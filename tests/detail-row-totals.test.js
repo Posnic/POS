@@ -184,3 +184,31 @@ test('phone inputs build on demand, never at boot (DOM diet)', () => {
     assert.match(js(f), /PosnicPro\.lazyPhoneInput\('#/, f);
   }
 });
+
+test('mobile full-sheet drawers widen only when OPEN', () => {
+  /* The drawers are hidden by WIDTH ZERO (scss/_custom-topbar.scss). A
+     mobile rule that widened the BARE class overrode the closed state too,
+     so ~20 drawers rendered full-screen over the app on every phone -
+     iPhone and Android alike ("Add Customer Category" covering the
+     dashboard). Only the state classes may be widened. */
+  const fsx = require('fs');
+  const px = require('path');
+  const css = fsx.readFileSync(px.join(__dirname, '..', 'frontend', 'static', 'style', 'css', 'custom.css'), 'utf8');
+  /* find the RULE, not this file's prose about it */
+  const at = css.indexOf('.infobar-settings-sidebar.sidebarshow');
+  assert.ok(at > -1, 'the full-sheet rule vanished');
+  const block = css.slice(css.lastIndexOf('@media', at), css.indexOf('}', css.indexOf('100vw', at)));
+  assert.match(block, /\.infobar-settings-sidebar\.sidebarshow/);
+  assert.match(block, /\.infobar-settings-sidebar\.sidebarview/);
+  /* the bare class must NOT be a selector of that rule */
+  assert.ok(!/\n\s*\.infobar-settings-sidebar,\s*\n/.test(block),
+    'the bare drawer class is being widened again - every closed drawer becomes full-screen');
+  /* and the built stylesheet must agree */
+  const built = fsx.readdirSync(px.join(__dirname, '..', 'frontend', 'public', 'style'))
+    .filter((f) => /^dashboard\..*\.css$/.test(f))[0];
+  if (built) {
+    const b = fsx.readFileSync(px.join(__dirname, '..', 'frontend', 'public', 'style', built), 'utf8');
+    assert.ok(!/\.infobar-settings-sidebar,#infobar-settings-sidebar-tender-details\{width:100vw!important/.test(b),
+      'the built css still widens closed drawers');
+  }
+});
