@@ -12424,10 +12424,12 @@ PosnicPro.sales.renderTenderReceiptPreview = function () {
         items.push({ name: name, qty: qty, price: unitPrice, total: lineTotal });
     });
 
-    var sub = $('#sales_new_subtotal').text() || '0.00';
-    var disc = $('#discount_sale_amount').text() || '0.00';
-    var tax = $('#tax').text() || '0.00';
-    var grand = $('.tendered_total').first().text() || '0.00';
+    /* these displays are .number()-formatted - read them without the
+       thousand separators or parseFloat stops at the first comma */
+    var sub = ($('#sales_new_subtotal').text() || '0.00').replace(/,/g, '');
+    var disc = ($('#discount_sale_amount').text() || '0.00').replace(/,/g, '');
+    var tax = ($('#tax').text() || '0.00').replace(/,/g, '');
+    var grand = ($('.tendered_total').first().text() || '0.00').replace(/,/g, '');
     var money = function (v) { return currency + ' ' + esc(v); };
 
     var head =

@@ -4683,6 +4683,104 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 }
 
 /* ============================================================
+ * THE RECEIPT PREVIEW (#tender_receipt_preview)
+ *
+ * Owner: "before save sale... show summary like thermal printer
+ * design. exactly like how print will be. if normal or a4 chose in
+ * setting that design... it should look good."
+ *
+ * A receipt is PAPER, so the card is deliberately white in every
+ * theme - a dark-mode receipt would be a preview of something that
+ * cannot exist. The thermal variant holds the 80mm roll width and
+ * the same Product/Qty/Price columns as the print template; the A4
+ * variant is the bordered invoice table.
+ */
+.receipt-preview {
+    background: #fff;
+    color: #1c2430;
+    margin: 0 auto;
+    padding: 14px 12px 16px;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, .18);
+    font-size: 12.5px;
+    line-height: 1.5;
+}
+
+.receipt-preview.rp-thermal {
+    max-width: 302px; /* the 80mm roll at screen resolution */
+    font-family: 'Courier New', ui-monospace, monospace;
+    /* the sawtooth tear-off edge every roll printer leaves */
+    -webkit-mask-image: linear-gradient(#000 calc(100% - 7px), transparent calc(100% - 7px)),
+        radial-gradient(circle at 6px 100%, transparent 6px, #000 6.5px);
+    -webkit-mask-size: 100% 100%, 12px 14px;
+    -webkit-mask-position: 0 0, 0 100%;
+    -webkit-mask-repeat: no-repeat, repeat-x;
+    mask-image: linear-gradient(#000 calc(100% - 7px), transparent calc(100% - 7px)),
+        radial-gradient(circle at 6px 100%, transparent 6px, #000 6.5px);
+    mask-size: 100% 100%, 12px 14px;
+    mask-position: 0 0, 0 100%;
+    mask-repeat: no-repeat, repeat-x;
+    padding-bottom: 24px;
+}
+
+.receipt-preview .rp-store { text-align: center; }
+.receipt-preview .rp-shop { font-weight: 900; font-size: 14.5px; letter-spacing: .2px; }
+.receipt-preview .rp-line { font-size: 11.5px; color: #333c48; overflow-wrap: anywhere; }
+
+.receipt-preview .rp-rule {
+    border-top: 1px dashed #9aa3ad;
+    margin: 8px 0;
+}
+
+.receipt-preview .rp-cols,
+.receipt-preview .rp-tot {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+}
+.receipt-preview .rp-cols { font-weight: 700; }
+.receipt-preview .rp-cols span:last-child { text-align: right; }
+
+.receipt-preview .rp-item { margin: 2px 0; }
+.receipt-preview .rp-item-name { overflow-wrap: anywhere; }
+.receipt-preview .rp-item-nums {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    padding-left: 12px;
+    font-variant-numeric: tabular-nums;
+}
+
+.receipt-preview .rp-tot { font-variant-numeric: tabular-nums; }
+.receipt-preview .rp-tot.rp-grand { font-weight: 900; font-size: 15px; margin-top: 2px; }
+.receipt-preview .rp-thanks { text-align: center; margin-top: 10px; font-size: 11.5px; }
+
+/* the A4 invoice look */
+.receipt-preview.rp-a4 { max-width: 100%; font-family: inherit; }
+.receipt-preview .rp-doc-title {
+    text-align: center;
+    font-weight: 900;
+    letter-spacing: 1px;
+    font-size: 13.5px;
+    margin-bottom: 6px;
+}
+.receipt-preview .rp-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-variant-numeric: tabular-nums;
+}
+.receipt-preview .rp-table th,
+.receipt-preview .rp-table td {
+    border: 1px solid #cfd6dd;
+    padding: 4px 7px;
+    font-size: 12px;
+    color: #1c2430;
+}
+.receipt-preview .rp-table th { background: #f2f5f8; }
+.receipt-preview .rp-num { text-align: right; white-space: nowrap; }
+.receipt-preview .rp-grand td { font-weight: 900; font-size: 13.5px; }
+
+/* ============================================================
  * THE WELCOME (#feature_intro_modal)
  *
  * Shown once, to a shop that has never been asked which features it
@@ -5471,102 +5569,3 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 #receiving_print td:last-child {
     white-space: nowrap;
 }
-
-
-/* ============================================================
- * THE RECEIPT PREVIEW (#tender_receipt_preview)
- *
- * Owner: "before save sale... show summary like thermal printer
- * design. exactly like how print will be. if normal or a4 chose in
- * setting that design... it should look good."
- *
- * A receipt is PAPER, so the card is deliberately white in every
- * theme - a dark-mode receipt would be a preview of something that
- * cannot exist. The thermal variant holds the 80mm roll width and
- * the same Product/Qty/Price columns as the print template; the A4
- * variant is the bordered invoice table.
- */
-.receipt-preview {
-    background: #fff;
-    color: #1c2430;
-    margin: 0 auto;
-    padding: 14px 12px 16px;
-    box-shadow: 0 1px 6px rgba(0, 0, 0, .18);
-    font-size: 12.5px;
-    line-height: 1.5;
-}
-
-.receipt-preview.rp-thermal {
-    max-width: 302px; /* the 80mm roll at screen resolution */
-    font-family: 'Courier New', ui-monospace, monospace;
-    /* the sawtooth tear-off edge every roll printer leaves */
-    -webkit-mask-image: linear-gradient(#000 calc(100% - 7px), transparent calc(100% - 7px)),
-        radial-gradient(circle at 6px 100%, transparent 6px, #000 6.5px);
-    -webkit-mask-size: 100% 100%, 12px 14px;
-    -webkit-mask-position: 0 0, 0 100%;
-    -webkit-mask-repeat: no-repeat, repeat-x;
-    mask-image: linear-gradient(#000 calc(100% - 7px), transparent calc(100% - 7px)),
-        radial-gradient(circle at 6px 100%, transparent 6px, #000 6.5px);
-    mask-size: 100% 100%, 12px 14px;
-    mask-position: 0 0, 0 100%;
-    mask-repeat: no-repeat, repeat-x;
-    padding-bottom: 24px;
-}
-
-.receipt-preview .rp-store { text-align: center; }
-.receipt-preview .rp-shop { font-weight: 900; font-size: 14.5px; letter-spacing: .2px; }
-.receipt-preview .rp-line { font-size: 11.5px; color: #333c48; overflow-wrap: anywhere; }
-
-.receipt-preview .rp-rule {
-    border-top: 1px dashed #9aa3ad;
-    margin: 8px 0;
-}
-
-.receipt-preview .rp-cols,
-.receipt-preview .rp-tot {
-    display: flex;
-    justify-content: space-between;
-    gap: 8px;
-}
-.receipt-preview .rp-cols { font-weight: 700; }
-.receipt-preview .rp-cols span:last-child { text-align: right; }
-
-.receipt-preview .rp-item { margin: 2px 0; }
-.receipt-preview .rp-item-name { overflow-wrap: anywhere; }
-.receipt-preview .rp-item-nums {
-    display: flex;
-    justify-content: space-between;
-    gap: 8px;
-    padding-left: 12px;
-    font-variant-numeric: tabular-nums;
-}
-
-.receipt-preview .rp-tot { font-variant-numeric: tabular-nums; }
-.receipt-preview .rp-tot.rp-grand { font-weight: 900; font-size: 15px; margin-top: 2px; }
-.receipt-preview .rp-thanks { text-align: center; margin-top: 10px; font-size: 11.5px; }
-
-/* the A4 invoice look */
-.receipt-preview.rp-a4 { max-width: 100%; font-family: inherit; }
-.receipt-preview .rp-doc-title {
-    text-align: center;
-    font-weight: 900;
-    letter-spacing: 1px;
-    font-size: 13.5px;
-    margin-bottom: 6px;
-}
-.receipt-preview .rp-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-    font-variant-numeric: tabular-nums;
-}
-.receipt-preview .rp-table th,
-.receipt-preview .rp-table td {
-    border: 1px solid #cfd6dd;
-    padding: 4px 7px;
-    font-size: 12px;
-    color: #1c2430;
-}
-.receipt-preview .rp-table th { background: #f2f5f8; }
-.receipt-preview .rp-num { text-align: right; white-space: nowrap; }
-.receipt-preview .rp-grand td { font-weight: 900; font-size: 13.5px; }
