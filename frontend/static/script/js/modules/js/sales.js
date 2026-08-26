@@ -1601,6 +1601,7 @@
         $('#tendered_amount').val(saleNewTot.toFixed(2));
         $('#tendered_balance').text('0.00');
         $('#render_amount').html('');
+        PosnicPro.sales.renderTenderReceiptPreview();
         var currency = PosnicPro.local.get('currencySign');
         
         // Reset denomination counts
@@ -12371,6 +12372,118 @@ $(document).on('click', '#print_receipt_a4, #print_receipt_thermal', function ()
  * the case where the next thing is handing paper to a customer, and
  * having the screen change during that is the wrong moment.
  */
+/*
+ * The receipt, before it exists.
+ *
+ * Owner: "before save sale, we have box sale summary. there show summary
+ * like thermal printer design. exactly like how print will be. if normal
+ * or a4 chose in setting that design if thermal show same design as
+ * thermal print."
+ *
+ * So the tender page's summary card draws the RECEIPT: the same store
+ * header, the same Product/Qty/Price columns, the same footer rows, in
+ * whichever layout the shop's Print Type setting will actually print -
+ * the 80mm roll, or the A4 invoice. Line items come from the same
+ * per-row ids the save itself reads (addSalesLineItemName_/Total_,
+ * touchsale_item_qty), so the paper and the preview cannot disagree
+ * about the data. Returns keep the plain list - a return prints its own
+ * document and previewing the wrong one helps nobody.
+ */
+PosnicPro.sales.renderTenderReceiptPreview = function () {
+    var box = $('#tender_receipt_preview');
+    if (!box.length) { return; }
+    var esc = function (v) { return $('<i>').text(v == null ? '' : v).html(); };
+
+    if (PosnicPro.sales.SaleAction === 'return') {
+        box.hide(); $('#tender_amount_list').show();
+        return;
+    }
+    $('#tender_amount_list').hide(); box.show();
+
+    var isA4 = String(PosnicPro.local.get('print_type')) === 'a4';
+    var currency = PosnicPro.local.get('currencySign') || '';
+    var shop = PosnicPro.local.get('branchname') || '';
+    var addr = PosnicPro.local.get('branchaddress') || '';
+    var phone = PosnicPro.local.get('branchphone') || '';
+    var gstin = PosnicPro.local.get('branchgstin') || '';
+    var customer = $('#sales_new_customer_name').val() || '';
+    var when = moment().format(
+        (PosnicPro.local.get('client_dateformat') === 'mm/dd/yyyy' ? 'MM/DD/YYYY' : 'DD/MM/YYYY') + ' h:mm A');
+
+    var items = [];
+    var totalQty = 0;
+    $('#sales_new_items_table tbody tr').each(function () {
+        var id = $(this).find(':nth-child(9)').text();
+        if (!id) { return; }
+        var name = $('#addSalesLineItemName_' + id).text();
+        if (!name) { return; }
+        var qty = parseFloat($('#touchsale_item_qty' + id).val()) || 0;
+        var lineTotal = $('#addSalesLineTotal_' + id).text() || '0.00';
+        var unitPrice = $('#addSalesLineItemPrice_' + id).text() || '';
+        totalQty += qty;
+        items.push({ name: name, qty: qty, price: unitPrice, total: lineTotal });
+    });
+
+    var sub = $('#sales_new_subtotal').text() || '0.00';
+    var disc = $('#discount_sale_amount').text() || '0.00';
+    var tax = $('#tax').text() || '0.00';
+    var grand = $('.tendered_total').first().text() || '0.00';
+    var money = function (v) { return currency + ' ' + esc(v); };
+
+    var head =
+        '<div class="rp-store">' +
+        (shop ? '<div class="rp-shop">' + esc(shop) + '</div>' : '') +
+        (gstin ? '<div class="rp-line">GSTIN: ' + esc(gstin) + '</div>' : '') +
+        (addr ? '<div class="rp-line">' + esc(addr) + '</div>' : '') +
+        (phone ? '<div class="rp-line">Tel: ' + esc(phone) + '</div>' : '') +
+        '<div class="rp-line">' + esc(when) + '</div>' +
+        (customer ? '<div class="rp-line">Customer: ' + esc(customer) + '</div>' : '') +
+        '</div>';
+
+    var html;
+    if (!isA4) {
+        var rows = items.map(function (it) {
+            return '<div class="rp-item"><div class="rp-item-name">' + esc(it.name) + '</div>' +
+                '<div class="rp-item-nums"><span>' + esc(it.qty) + ' x ' + esc(it.price) + '</span>' +
+                '<span>' + esc(it.total) + '</span></div></div>';
+        }).join('');
+        var foot = function (label, value, cls) {
+            return '<div class="rp-tot ' + (cls || '') + '"><span>' + label + '</span><span>' + value + '</span></div>';
+        };
+        html = '<div class="receipt-preview rp-thermal">' + head +
+            '<div class="rp-rule"></div>' +
+            '<div class="rp-cols"><span>Product</span><span>Qty.</span><span>Price</span></div>' +
+            '<div class="rp-rule"></div>' + rows +
+            '<div class="rp-rule"></div>' +
+            foot('Total Qty', esc(totalQty)) +
+            foot('Sub Total', money(sub)) +
+            (parseFloat(disc) > 0 ? foot('Discount', '- ' + money(disc)) : '') +
+            (parseFloat(tax) > 0 ? foot('Tax', money(tax)) : '') +
+            '<div class="rp-rule"></div>' +
+            foot('TOTAL', money(grand), 'rp-grand') +
+            '<div class="rp-thanks">Thank you, visit again</div>' +
+            '</div>';
+    } else {
+        var trs = items.map(function (it) {
+            return '<tr><td>' + esc(it.name) + '</td><td class="rp-num">' + esc(it.qty) + '</td>' +
+                '<td class="rp-num">' + esc(it.price) + '</td><td class="rp-num">' + esc(it.total) + '</td></tr>';
+        }).join('');
+        var trow = function (label, value, cls) {
+            return '<tr class="' + (cls || '') + '"><td colspan="3" class="rp-num">' + label + '</td>' +
+                '<td class="rp-num">' + value + '</td></tr>';
+        };
+        html = '<div class="receipt-preview rp-a4"><div class="rp-doc-title">TAX INVOICE</div>' + head +
+            '<table class="rp-table"><thead><tr><th>Item</th><th class="rp-num">Qty</th>' +
+            '<th class="rp-num">Price</th><th class="rp-num">Total</th></tr></thead><tbody>' + trs +
+            trow('Sub Total', money(sub)) +
+            (parseFloat(disc) > 0 ? trow('Discount', '- ' + money(disc)) : '') +
+            (parseFloat(tax) > 0 ? trow('Tax', money(tax)) : '') +
+            trow('Grand Total', money(grand), 'rp-grand') +
+            '</tbody></table></div>';
+    }
+    box.html(html);
+};
+
 PosnicPro.sales.saleDoneTimer = {
     /* Long enough to read the total and reach for Print; short enough that
        the till is ready before the next customer has put their basket down.
