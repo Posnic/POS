@@ -367,6 +367,20 @@
                        the OS or the browser took the tab. Say precisely where. */
                     if (prev && prev.started !== now && !prev.clean) {
                         try { localStorage.removeItem('posnic_fresh_boot'); } catch (efr) { }
+                        /* CONVALESCENT BOOT. The death records show the
+                           pattern in pairs: a kill, then the reopened tab
+                           dead again within seconds - a tab relaunched
+                           while the OS is still reclaiming memory gets the
+                           smallest budget it will ever have. So a session
+                           that opens within five minutes of a kill boots on
+                           tiptoe: the staged warm-up calls stay parked until
+                           the first navigation actually needs a screen,
+                           instead of firing on a timer into the squeeze. */
+                        try {
+                            if (prev.started && (Date.now() - prev.started - (prev.alive || 0)) < 300000) {
+                                window.__posnicConvalescent = true;
+                            }
+                        } catch (ecv) { }
                         var line = '[boot-flight] previous session DIED ' +
                             (prev.booted ? 'AFTER booting' : 'DURING boot') +
                             ' at ~' + (prev.alive || 0) + 'ms on "' + (prev.hash || '?') + '"' +

@@ -144,7 +144,29 @@ function buildAllHtml(cb, skip) {
     }, 500);
 }
 
-function mergeDirectory(dir) {
+/*
+ * Panes a phone can live without until asked (PAGE_SPLIT_ANALYSIS Option A,
+ * first slice). Each of these is a report screen: big, self-contained, its
+ * JS in the lazy `reports` chunk - so nothing in the boot bundle touches its
+ * markup, and the owner's own ruling stands ("no one sees that report in
+ * mobile"). Wrapped in <template> they are parsed but never rendered: no
+ * render tree, no style matching, no standing nodes. Desktop inflates them
+ * all immediately at boot (byte-identical behaviour); a phone inflates them
+ * the first time the reports chunk is asked for. Every pane here was checked
+ * script-free - adopting template content executes any <script> it holds.
+ */
+const PHONE_DEFER = new Set([
+    'categoryReport.html', 'customersReport.html', 'dailyReport.html',
+    'expensesReport.html', 'itemReport.html', 'kioskReport.html',
+    'kotReport.html', 'paymentReport.html', 'pendingReport.html',
+    'priceSettings.html', 'registerReport.html', 'receivingsReport.html',
+    'returnReport.html', 'returnreceivingReport.html', 'salesReport.html',
+    'supplierReport.html', 'taxdiscountReport.html', 'userReport.html',
+    'report_gstrone.html', 'report_gstrtwo.html', 'report_gstrtwob.html',
+    'report_gstrthree.html', 'report_gstrnine.html',
+]);
+
+function mergeDirectory(dir, dirName) {
     // Key order here is fs.readFile completion order - a race that made every
     // build byte-different (modules inlined in a different order each run).
     // Sort so identical sources produce identical pages: the service worker's
@@ -152,7 +174,11 @@ function mergeDirectory(dir) {
     // moves when nothing changed forces cache flushes and phantom updates.
     let content = '';
     for (const file of Object.keys(dir).sort()) {
-        content += dir[file];
+        let piece = dir[file];
+        if (dirName === 'modules' && PHONE_DEFER.has(file)) {
+            piece = '<template class="pane-defer" data-pane="' + file + '">' + piece + '</template>';
+        }
+        content += piece;
     }
     return content;
 }

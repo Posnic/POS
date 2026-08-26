@@ -14,6 +14,10 @@ PosnicPro._bootStage = {
     DEFER: /(AjaxList|getJSON(Country|State|Currency|TimeZone|GstState)|getDenomAll|getPaymentAll|getTableOrderAll|taxProfile|getDefaultCustomer|getDefaultSupplier|getTaxAll$|getBranchList|quantityCount)/,
     shouldDefer: function (params, method) {
         if (!window.__mobileSafeMode || method !== 'GET' || this.draining) { return false; }
+        /* a convalescent boot (reopened within minutes of a kill) never
+           fires the warm-ups at all - the tab is living on the smallest
+           memory budget iOS will ever give it */
+        if (window.__posnicConvalescent) { return true; }
         if (Date.now() - this.start > 8000) { return false; }
         var h = window.location.hash;
         if (h && h !== '#/' && h !== '#/dashboard') { return false; }
@@ -31,7 +35,9 @@ PosnicPro._bootStage = {
         })();
     }
 };
-setTimeout(function () { PosnicPro._bootStage.drain(); }, 8000);
+setTimeout(function () {
+    if (!window.__posnicConvalescent) { PosnicPro._bootStage.drain(); }
+}, 8000);
 window.addEventListener('hashchange', function () {
     if (window.location.hash !== '#/dashboard') { PosnicPro._bootStage.drain(); }
 });
