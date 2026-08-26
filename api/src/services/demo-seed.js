@@ -81,7 +81,16 @@ const round2 = (n) => Math.round(n * 100) / 100;
  *
  * Exported separately so the shape can be tested without a database.
  */
-function buildSales({ items, customers, customer, branch, pack, now, count = SALE_COUNT }) {
+function buildSales({
+  items,
+  customers,
+  customer,
+  branch,
+  pack,
+  now,
+  count = SALE_COUNT,
+  userName = '',
+}) {
   if (!Array.isArray(items) || !items.length) return [];
   const rand = rng(String(branch.branch_id || 'demo'));
   const sales = [];
@@ -163,6 +172,32 @@ function buildSales({ items, customers, customer, branch, pack, now, count = SAL
       sales_total: subtotal,
       total_amount: subtotal,
       paid_amount: subtotal,
+      /*
+       * items_total is THE revenue field: the shop's own dashboard, the
+       * intranet's business stats and every report sum `$items_total` -
+       * and these docs did not carry it, so a fresh demo shop greeted its
+       * brand-new owner with fourteen bills and ₹0 revenue on every
+       * screen. The zeros beside it are the companion fields the same
+       * aggregations subtract or group by; absent, they read as
+       * "undefined" in histories and skew nothing only by luck.
+       */
+      items_total: subtotal,
+      items_subtotal: subtotal,
+      sales_sub_total: subtotal,
+      items_return_total: 0,
+      items_return_subtotal: 0,
+      tax: 0,
+      gst: 0,
+      return_tax: 0,
+      discount: 0,
+      return_discount: 0,
+      extra_discount: 0,
+      sale_extra_discount: 0,
+      round_off: 0,
+      sales_round_off: 0,
+      /* the staff column showed "not set" for every demo bill */
+      user_name: userName || 'Demo data',
+      user_id: '',
       /* Cash and card in a believable mix, so the payment-mode report has
          something to show. */
       payment_mode: rand() > 0.35 ? 'cash' : 'card',

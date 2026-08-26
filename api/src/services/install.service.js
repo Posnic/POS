@@ -1455,6 +1455,7 @@ class InstallService {
       branch,
       pack,
       now,
+      userName: username,
     });
     const quotes = demoSeed.buildQuotes({ items: stored, branch, pack, now });
     /* Both sides of the counter: a Purchase History that opens empty says
