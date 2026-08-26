@@ -114,6 +114,22 @@
                     window.addEventListener('pagehide', function () {
                         try { rec.clean = true; localStorage.setItem(K, JSON.stringify(rec)); } catch (e) { }
                     });
+                    /* PROBE (temporary): dashboard.html?nocss=1 boots with
+                       every stylesheet disabled before first paint. A device
+                       that dies at frame 2 normally but SURVIVES this proves
+                       the killer lives in CSS layout/paint; everything else
+                       acquits it. The flag rides the search string so the
+                       hash router never sees it. */
+                    if (location.search.indexOf('nocss=1') !== -1) {
+                        document.addEventListener('DOMContentLoaded', function () {
+                            try {
+                                for (var si = 0; si < document.styleSheets.length; si++) {
+                                    try { document.styleSheets[si].disabled = true; } catch (e2) { }
+                                }
+                                __flight.stamp('nocss-applied');
+                            } catch (e3) { }
+                        });
+                    }
                     /*
                      * AUTO-QUARANTINE. Every crash-free reproduction of this
                      * page ran WITHOUT a service worker; the dying device runs
