@@ -66,6 +66,41 @@
                     });
                     window.addEventListener('offline', function () { move('OFFLINE'); });
                     window.addEventListener('online', function () { move('online'); });
+                    /* The record says death lands between bundle-parse
+                       (~0.8s) and the first heartbeat (2s). These stamps
+                       split that window: DOMContentLoaded and load bound
+                       the script side; rAF ticks bound the RENDER side -
+                       a record whose last word is dom-ready with no raf1
+                       died in WebKit's first layout/paint of our CSS, not
+                       in our JavaScript. Plus a 250ms micro-heartbeat for
+                       the first six seconds. */
+                    document.addEventListener('DOMContentLoaded', function () {
+                        __flight.stamp('dom-ready');
+                        var n = 0;
+                        (function raf() {
+                            n += 1;
+                            if (n <= 3) { __flight.stamp('raf' + n); requestAnimationFrame(raf); }
+                        })();
+                    });
+                    window.addEventListener('load', function () { __flight.stamp('win-load'); });
+                    /* Mobile browsers fire resizes at boot that desktops
+                       never see; a handler that re-triggers layout can storm.
+                       Count them - a record ending in a huge resize count IS
+                       the diagnosis. */
+                    var resizes = 0;
+                    window.addEventListener('resize', function () {
+                        resizes += 1;
+                        if (resizes <= 5 || resizes === 20 || resizes === 100 || resizes === 1000) {
+                            move('resize#' + resizes + ' ' + window.innerWidth + 'x' + window.innerHeight);
+                        }
+                    });
+                    var micro = setInterval(function () {
+                        try {
+                            rec.alive = Date.now() - rec.started;
+                            if (rec.alive > 6000) { clearInterval(micro); return; }
+                            localStorage.setItem(K, JSON.stringify(rec));
+                        } catch (e) { }
+                    }, 250);
                     setInterval(function () {
                         try {
                             rec.alive = Date.now() - rec.started;
