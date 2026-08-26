@@ -78,8 +78,12 @@ router.post('/', (req, res) => {
     rec.count += 1;
     seen.set(ip, rec);
 
-    if (rec.count <= PER_IP_PER_WINDOW) {
-      const b = req.body && typeof req.body === 'object' ? req.body : {};
+    const b = req.body && typeof req.body === 'object' ? req.body : {};
+    /* Flight-recorder death records outrank the budget: they are the single
+       highest-value line this endpoint carries, at most one per page open,
+       and the budget exists to stop floods of everything else. */
+    const isFlight = String(b.at || '') === 'boot-flight';
+    if (isFlight || rec.count <= PER_IP_PER_WINDOW) {
       const line = [
         '[client-error]',
         String(req.headers.host || '').slice(0, 80),

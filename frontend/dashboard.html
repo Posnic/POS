@@ -63,18 +63,21 @@
                             (prev.mem ? ' heap ' + prev.mem : '') +
                             ' stages: ' + (prev.stages || []).slice(-8).join(' > ') +
                             ' ua: ' + (prev.ua || '');
-                        setTimeout(function () {
-                            try {
-                                var payload = JSON.stringify({ message: line, at: 'boot-flight' });
-                                if (navigator.sendBeacon) { navigator.sendBeacon('client-errors', new Blob([payload], { type: 'application/json' })); }
-                                else {
-                                    var x = new XMLHttpRequest();
-                                    x.open('POST', 'client-errors', true);
-                                    x.setRequestHeader('Content-Type', 'application/json');
-                                    x.send(payload);
-                                }
-                            } catch (e) { }
-                        }, 1500);
+                        /* IMMEDIATELY - a session dying faster than any delay
+                           would lose the previous session's report forever
+                           (it did: four opens beaconed resource noise, zero
+                           flight records arrived). sendBeacon is fire-and-
+                           forget; it cannot slow the boot it rides on. */
+                        try {
+                            var payload = JSON.stringify({ message: line, at: 'boot-flight' });
+                            if (navigator.sendBeacon) { navigator.sendBeacon('client-errors', new Blob([payload], { type: 'application/json' })); }
+                            else {
+                                var x = new XMLHttpRequest();
+                                x.open('POST', 'client-errors', true);
+                                x.setRequestHeader('Content-Type', 'application/json');
+                                x.send(payload);
+                            }
+                        } catch (e) { }
                     }
                 } catch (e) { /* the recorder must never be a failure itself */ }
             })();
@@ -205,9 +208,15 @@
                             return;
                         }
                         var what = (t.tagName || 'resource').toLowerCase() + ' failed to load: ' + (t.src || t.href);
+                        /* THIRD-PARTY scripts (Cloudflare Insights, blocked
+                           by every content blocker) are not our outage and
+                           must not spend the beacon budget - four of them
+                           once crowded out the flight records this page
+                           exists to deliver. Journal locally, never beacon. */
+                        var sameOrigin = String(t.src || t.href).indexOf(location.origin) === 0;
                         if (!firstError) { firstError = what; }
                         note('resource', what, location.href, '');
-                        report(what, 'resource-load');
+                        if (sameOrigin) { report(what, 'resource-load'); }
                         /* A page whose own STYLESHEET or main SCRIPT died is
                            holding a bundle pairing that no longer exists (a
                            deploy passed under an open tab, or a wedged cache
