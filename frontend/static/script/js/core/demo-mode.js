@@ -6,6 +6,9 @@
  *     and where to get the real thing;
  *   - on the login page, one-tap "Enter as admin / manager / cashier"
  *     buttons - the logins are published, nobody should have to type.
+ *   - one signup nudge, three minutes into real use, once per browser
+ *     EVER (localStorage) - the owner's brief was "market little bit...
+ *     not too much annoy", and a second showing is where annoy starts.
  *
  * Everywhere else this file is a fetch and a no-op. The buttons only FILL
  * the form; the server's own login path does the rest, so nothing here is
@@ -59,6 +62,62 @@
                     if (anchor && anchor.parentElement) {
                         anchor.parentElement.appendChild(wrap);
                     }
+                }
+
+                /* The nudge. Only past the login door (a visitor reading the
+                   login page has not used anything yet), only after three
+                   minutes of actual use measured across pages, and only once
+                   per browser, ever. localStorage failures mean no nudge -
+                   never a broken page. */
+                if (!user && !pass) {
+                    try {
+                        if (!localStorage.getItem('posnic_demo_nudge_done')) {
+                            var first = parseInt(localStorage.getItem('posnic_demo_first_seen'), 10);
+                            if (!first || first > Date.now()) {
+                                first = Date.now();
+                                localStorage.setItem('posnic_demo_first_seen', String(first));
+                            }
+                            var waited = Date.now() - first;
+                            /* however long they have explored, let the page
+                               they just opened breathe before interrupting */
+                            var delay = Math.max(180000 - waited, 30000);
+                            setTimeout(function () {
+                                try {
+                                    if (localStorage.getItem('posnic_demo_nudge_done')) { return; }
+                                    localStorage.setItem('posnic_demo_nudge_done', '1');
+                                    var veil = document.createElement('div');
+                                    veil.id = 'posnic_demo_nudge';
+                                    veil.setAttribute('style',
+                                        'position:fixed;inset:0;z-index:2147483000;background:rgba(10,14,25,.55);' +
+                                        'display:flex;align-items:center;justify-content:center;padding:20px;');
+                                    var card = document.createElement('div');
+                                    card.setAttribute('style',
+                                        'background:#fff;color:#16203a;max-width:420px;width:100%;border-radius:10px;' +
+                                        'padding:26px 24px 20px;font:14px/1.55 system-ui,Segoe UI,Arial,sans-serif;' +
+                                        'box-shadow:0 18px 50px rgba(0,0,0,.35);text-align:center;');
+                                    card.innerHTML =
+                                        '<div style="font-size:19px;font-weight:700;margin-bottom:8px;">Making this shop yours?</div>' +
+                                        '<div style="margin-bottom:18px;">Create your own free shop in a minute. No credit card, no commitment — ' +
+                                        'if you never renew, you simply continue on the free Community Edition.</div>' +
+                                        '<a href="https://posnic.com/signup.html" target="_blank" rel="noopener" style="display:block;' +
+                                        'background:#16203a;color:#fff;text-decoration:none;font-weight:600;padding:11px;border-radius:7px;margin-bottom:10px;">' +
+                                        'Create my free shop</a>' +
+                                        '<button type="button" id="posnic_demo_nudge_close" style="background:none;border:none;color:#5a6478;' +
+                                        'cursor:pointer;font-size:13px;padding:6px;">Keep exploring</button>';
+                                    veil.appendChild(card);
+                                    var close = function () {
+                                        if (veil.parentElement) { veil.parentElement.removeChild(veil); }
+                                        document.removeEventListener('keydown', onKey);
+                                    };
+                                    var onKey = function (ev) { if (ev.key === 'Escape') { close(); } };
+                                    veil.onclick = function (ev) { if (ev.target === veil) { close(); } };
+                                    document.addEventListener('keydown', onKey);
+                                    document.body.appendChild(veil);
+                                    card.querySelector('#posnic_demo_nudge_close').onclick = close;
+                                } catch (e) { /* no nudge over a broken page, ever */ }
+                            }, delay);
+                        }
+                    } catch (e) { /* localStorage unavailable - skip the nudge */ }
                 }
             } catch (e) { /* the demo face must never break a real till */ }
         };
