@@ -4119,6 +4119,23 @@ PosnicPro = {
  * noticing a change. Phones skip the idle build on purpose: there the whole
  * point is that those nodes never exist unless the field is used.
  */
+/*
+ * "Collapse the menu so this screen gets the room" - what the sale, item
+ * and receiving screens have always done on entry. The catch is that
+ * 'toggle-menu' is two different states depending on the breakpoint: on
+ * desktop the theme reads it as menu COLLAPSED to the icon rail, but on a
+ * phone the hamburger toggles the very same class to mean menu OPEN (an
+ * unwrapped `.toggle-menu .leftbar { margin-left: 0 }` in the theme wins
+ * over the phone's off-canvas hide by specificity). So a screen adding it
+ * unconditionally was opening the full menu OVER itself on every phone.
+ * One door for the gesture, with the breakpoint check inside.
+ */
+PosnicPro.collapseMenuForWorkspace = function () {
+    if (window.matchMedia('(min-width: 768px)').matches) {
+        $('.vertical-layout').addClass('toggle-menu');
+    }
+};
+
 PosnicPro.lazyPhoneInput = function (selector, target, prop, opts) {
     var made = null;
     function build() {

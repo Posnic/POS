@@ -4873,6 +4873,36 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     .first-run-foot-actions .btn {
         flex: 1 1 0;
     }
+
+    /* On a phone the whole card is taller than the screen, and the only
+       thing below the fold was the row of Save buttons - the footer NOTE
+       was the last visible line, which reads as "that's the end". Cap
+       the card to the viewport and make the BODY the scroller, so the
+       buttons are always on screen and only the feature list moves.
+       dvh, where supported, tracks the iOS toolbar collapse; the vh line
+       is the fallback. */
+    #feature_intro_modal .modal-dialog {
+        margin: 8px;
+        max-width: none;
+    }
+
+    #feature_intro_modal .modal-content.first-run {
+        max-height: calc(100vh - 16px);
+        max-height: calc(100dvh - 16px);
+    }
+
+    #feature_intro_modal .first-run-body {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* the body scrolls now; a second inner scrollbar would fight it */
+    #feature_intro_modal .first-run-list {
+        max-height: none;
+        overflow-y: visible;
+    }
 }
 
 /* ============================================================
@@ -5347,11 +5377,20 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
    .m-cards to the table and data-label to its cells; without those
    attributes this block changes nothing anywhere). */
 @media (max-width: 767.98px) {
-    table.m-cards thead { display: none; }
+    /* !important against INLINE styles, not other stylesheets: the lists'
+       empty-state code does $('.xxx_header').show() on the thead+tbody
+       pair, and jQuery's show() writes display:table-header-group as an
+       inline style - which beat this hide and rendered the header cells
+       as a stacked ghost box on top of the first card. In card mode the
+       thead never shows and the tbody is always the block stack; an
+       empty tbody renders nothing, so the empty-state toggle loses
+       nothing by being overruled here. */
+    table.m-cards thead { display: none !important; }
     table.m-cards, table.m-cards tbody, table.m-cards tr, table.m-cards td, table.m-cards th {
         display: block;
         width: 100%;
     }
+    table.m-cards tbody { display: block !important; }
     table.m-cards tr {
         border: 1px solid rgba(127, 127, 127, .25);
         border-radius: 8px;
@@ -5366,6 +5405,10 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
         padding: 6px 0;
         border: 0;
         text-align: right;
+        /* a long value (an email address) wraps inside the card instead
+           of running past its right edge */
+        min-width: 0;
+        overflow-wrap: anywhere;
     }
     table.m-cards td[data-label]::before, table.m-cards th[data-label]::before {
         content: attr(data-label);

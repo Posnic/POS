@@ -14,7 +14,7 @@ PosnicPro.items = {
         PosnicPro.items.renderModifierGroups([]);
         $('#item_discount').hide();
         $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
-        $(".vertical-layout").addClass("toggle-menu");
+        PosnicPro.collapseMenuForWorkspace();
         $(".vertical-menu li a").removeClass("active");
         PosnicPro.showAddModal('item');
         $('.page_loader,#osk-container').hide();
