@@ -29,6 +29,11 @@
                     try { prev = JSON.parse(localStorage.getItem(K) || 'null'); } catch (e) { }
                     var now = Date.now();
                     var rec = { started: now, stages: ['head:0'], hash: location.hash, ua: navigator.userAgent.slice(0, 120), clean: false, booted: false };
+                    /* set FIRST - the bisect trigger below reads it, and the
+                       first shipped order had it defined only later, which
+                       silently disarmed the whole search */
+                    window.__mobileSafeMode = Math.min(screen.width || 9999, screen.height || 9999) < 820
+                        && 'ontouchstart' in window;
                     window.__flight = {
                         stamp: function (name) {
                             try {
@@ -260,9 +265,7 @@
                      * convicted and the subsystems return one at a time.
                      */
                     try {
-                        var phoneish = Math.min(screen.width || 9999, screen.height || 9999) < 820
-                            && 'ontouchstart' in window;
-                        window.__mobileSafeMode = phoneish;
+                        var phoneish = window.__mobileSafeMode;
                         if (phoneish) {
                             if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
                                 navigator.serviceWorker.getRegistrations().then(function (rs) {
