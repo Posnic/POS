@@ -1382,6 +1382,7 @@ class InstallService {
           now,
           pack: businessType,
           items: itemMultiData,
+          userName: username,
         });
       } catch (e) {
         console.error('Demo sales and quotes skipped:', e.message);
@@ -1405,7 +1406,7 @@ class InstallService {
    * which should happen for a demonstration - a demo sale that moved stock
    * would leave a shop whose counts are wrong before they have sold anything.
    */
-  async _insertDemoActivity({ branchId, branchName, licenseId, now, pack, items }) {
+  async _insertDemoActivity({ branchId, branchName, licenseId, now, pack, items, userName }) {
     const demoSeed = require('./demo-seed');
     const BaseModel = require('../models/base.model');
 
@@ -1477,7 +1478,7 @@ class InstallService {
       branch,
       pack,
       now,
-      userName: username,
+      userName: userName,
     });
     const quotes = demoSeed.buildQuotes({ items: stored, branch, pack, now });
     /* Both sides of the counter: a Purchase History that opens empty says
