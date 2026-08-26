@@ -14,6 +14,71 @@
             remains the only thing that decides what a theme means; this only
             stops the wrong one being visible while it gets there.
         -->
+        <!-- BOOT FLIGHT RECORDER (owner: "add some temporary system and find
+             out... i want know very exact reason"). An iOS memory-kill is
+             silent and instant: no error event, no beacon, nothing. So the
+             page stamps every boot stage and a 2s heartbeat (with the current
+             hash) into localStorage - which SURVIVES the kill - and the NEXT
+             open reads the previous session's record and beacons exactly
+             where and when it died. First script in the page on purpose. -->
+        <script>
+            (function () {
+                try {
+                    var K = 'posnic_boot_flight';
+                    var prev = null;
+                    try { prev = JSON.parse(localStorage.getItem(K) || 'null'); } catch (e) { }
+                    var now = Date.now();
+                    var rec = { started: now, stages: ['head:0'], hash: location.hash, ua: navigator.userAgent.slice(0, 120), clean: false, booted: false };
+                    window.__flight = {
+                        stamp: function (name) {
+                            try {
+                                rec.stages.push(name + ':' + (Date.now() - rec.started));
+                                if (name === 'booted-ok') { rec.booted = true; }
+                                if (rec.stages.length > 40) { rec.stages.splice(1, rec.stages.length - 40); }
+                                rec.hash = location.hash;
+                                localStorage.setItem(K, JSON.stringify(rec));
+                            } catch (e) { }
+                        }
+                    };
+                    localStorage.setItem(K, JSON.stringify(rec));
+                    setInterval(function () {
+                        try {
+                            rec.alive = Date.now() - rec.started;
+                            rec.hash = location.hash;
+                            if (window.performance && performance.memory) {
+                                rec.mem = Math.round(performance.memory.usedJSHeapSize / 1048576) + 'MB';
+                            }
+                            localStorage.setItem(K, JSON.stringify(rec));
+                        } catch (e) { }
+                    }, 2000);
+                    window.addEventListener('pagehide', function () {
+                        try { rec.clean = true; localStorage.setItem(K, JSON.stringify(rec)); } catch (e) { }
+                    });
+                    /* The previous session's verdict: died without pagehide =
+                       the OS or the browser took the tab. Say precisely where. */
+                    if (prev && prev.started !== now && !prev.clean) {
+                        var line = '[boot-flight] previous session DIED ' +
+                            (prev.booted ? 'AFTER booting' : 'DURING boot') +
+                            ' at ~' + (prev.alive || 0) + 'ms on "' + (prev.hash || '?') + '"' +
+                            (prev.mem ? ' heap ' + prev.mem : '') +
+                            ' stages: ' + (prev.stages || []).slice(-8).join(' > ') +
+                            ' ua: ' + (prev.ua || '');
+                        setTimeout(function () {
+                            try {
+                                var payload = JSON.stringify({ message: line, at: 'boot-flight' });
+                                if (navigator.sendBeacon) { navigator.sendBeacon('client-errors', new Blob([payload], { type: 'application/json' })); }
+                                else {
+                                    var x = new XMLHttpRequest();
+                                    x.open('POST', 'client-errors', true);
+                                    x.setRequestHeader('Content-Type', 'application/json');
+                                    x.send(payload);
+                                }
+                            } catch (e) { }
+                        }, 1500);
+                    }
+                } catch (e) { /* the recorder must never be a failure itself */ }
+            })();
+        </script>
         <script>
             (function () {
                 try {
@@ -303,6 +368,13 @@
                 }
 
                 setTimeout(function () { if (!booted()) { show(); } }, 15000);
+                /* flight recorder: note the moment boot visibly succeeded */
+                var bootedPoll = setInterval(function () {
+                    if (booted()) {
+                        clearInterval(bootedPoll);
+                        try { window.__flight && __flight.stamp('booted-ok'); } catch (e) { }
+                    }
+                }, 1000);
             }());
         </script>
 
@@ -536,7 +608,9 @@
             <!-- End Containerbar -->
             <link type='directory' href='modals' />
             <!-- Start js -->
+            <script>try { window.__flight && __flight.stamp('pre-bundle'); } catch (e) { }</script>
             <script   type="application/javascript" src="script/dashboard.js"></script>
+            <script>try { window.__flight && __flight.stamp('bundle-parsed'); } catch (e) { }</script>
             <!-- End js -->
 
             <script type="text/javascript">
