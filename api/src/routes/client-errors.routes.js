@@ -56,13 +56,42 @@ function sweep(now) {
  */
 const RING_MAX = 30;
 const ring = [];
+
+/*
+ * The ring must outlive the process. Three api deploys in one afternoon
+ * each wiped it, and the one thing it exists to carry - a phone's death
+ * record, filed on the NEXT open, often hours later - was gone before
+ * anyone read it. A bounded file in tmpdir (per port: several tenant
+ * processes share a box) carries the same truncated lines across
+ * restarts. Still nothing like storage: same cap, same truncation, and
+ * every touch is allowed to fail without taking the reporter with it.
+ */
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
+const RING_FILE = path.join(
+  os.tmpdir(),
+  'posnic-client-errors-' + String(process.env.PORT || 'default') + '.log'
+);
+try {
+  const kept = fs.readFileSync(RING_FILE, 'utf8').split('\n').filter(Boolean).slice(-RING_MAX);
+  ring.push(...kept);
+} catch (e) {
+  /* first boot, or tmp cleaned - the ring just starts empty */
+}
+
 function remember(line) {
   ring.push(new Date().toISOString() + ' ' + line);
   if (ring.length > RING_MAX) ring.shift();
+  try {
+    fs.writeFileSync(RING_FILE, ring.join('\n') + '\n');
+  } catch (e) {
+    /* a full disk must not break the reporter */
+  }
 }
 
 router.get('/recent', (req, res) => {
-  res.type('text/plain').send(ring.length ? ring.join('\n') : '(nothing reported since restart)');
+  res.type('text/plain').send(ring.length ? ring.join('\n') : '(nothing reported yet)');
 });
 
 router.post('/', (req, res) => {
