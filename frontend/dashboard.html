@@ -261,10 +261,11 @@
                                 __flight.stamp('nocss-applied');
                             } catch (e3) { }
                         });
-                    } else if (window.__mobileSafeMode && cd >= 3) {
+                    } else if (window.__mobileSafeMode && cd >= 3
+                            && !localStorage.getItem('posnic_fresh_boot')) {
                         try {
                             var FP = 'posnic_fn_probe';
-                            var SKIPS = ['all', 'menu', 'overview', 'store'];
+                            var SKIPS = ['hold', 'all', 'menu', 'overview', 'store'];
                             var fpi = parseInt(localStorage.getItem(FP) || '0', 10) || 0;
                             localStorage.setItem(FP, String(fpi + 1));
                             var skipName = SKIPS[fpi % SKIPS.length];
@@ -285,6 +286,7 @@
                                 localStorage.setItem('posnic_css_seen', buildId);
                                 localStorage.setItem(K + '_cdeaths', '0');
                                 localStorage.setItem('posnic_fn_probe', '0');
+                                localStorage.setItem('posnic_fresh_boot', '1');
                                 beaconMsg('FRESH BUILD ' + buildId.slice(-30) + ' - streak and probes reset');
                             }
                         } catch (efb) { }
@@ -294,6 +296,7 @@
                     setTimeout(function () {
                         try {
                             localStorage.setItem(K + '_cdeaths', '0');
+                            localStorage.removeItem('posnic_fresh_boot');
                             if (rec.probe && rec.probe.indexOf('skip-') === 0) {
                                 beaconMsg('FNPROBE "' + rec.probe.slice(5) + '" SURVIVED 20s - THE KILLER RENDER IS ' + rec.probe.slice(5).toUpperCase());
                             }
@@ -356,6 +359,7 @@
                     /* The previous session's verdict: died without pagehide =
                        the OS or the browser took the tab. Say precisely where. */
                     if (prev && prev.started !== now && !prev.clean) {
+                        try { localStorage.removeItem('posnic_fresh_boot'); } catch (efr) { }
                         var line = '[boot-flight] previous session DIED ' +
                             (prev.booted ? 'AFTER booting' : 'DURING boot') +
                             ' at ~' + (prev.alive || 0) + 'ms on "' + (prev.hash || '?') + '"' +
@@ -919,7 +923,17 @@
             <!-- Start js -->
             <script>try { window.__flight && __flight.stamp('pre-bundle'); } catch (e) { }</script>
             <script   type="application/javascript" src="script/dashboard.js"></script>
-            <script>try { window.__flight && __flight.stamp('bundle-parsed'); } catch (e) { }</script>
+            <script>try { window.__flight && __flight.stamp('bundle-parsed'); } catch (e) { }
+                /* boot-ladder rung: freeze the entire ready phase. Survival
+                   here convicts the ready-handlers; death here convicts
+                   parse-time work. */
+                try {
+                    if (window.__posnicSkip === 'hold' && window.jQuery) {
+                        jQuery.holdReady(true);
+                        __flight.stamp('ready-held');
+                    }
+                } catch (eh) { }
+            </script>
             <!-- End js -->
 
             <script type="text/javascript">
