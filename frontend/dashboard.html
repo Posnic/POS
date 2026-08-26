@@ -122,6 +122,45 @@
                     document.addEventListener('visibilitychange', function () {
                         move(document.hidden ? 'BACKGROUNDED' : 'foregrounded');
                     });
+                    /*
+                     * PHANTOM IMAGE GUARD, mechanism-level. An <img> whose
+                     * src is empty resolves to THE PAGE URL: the browser
+                     * fetches 900KB of HTML into its image decoder, per
+                     * image, per render - and on iPhones that storm rides
+                     * shotgun with every recorded death. Template audits
+                     * keep missing sites (static, dynamic, single-quoted,
+                     * attr()-assigned), so the DOCUMENT enforces it: any
+                     * img born with or mutated to an empty-ish src becomes
+                     * the transparent pixel before the fetch can matter.
+                     */
+                    try {
+                        var PIXEL = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+                        var healImg = function (el) {
+                            try {
+                                if (!el || el.tagName !== 'IMG') { return; }
+                                var a = el.getAttribute('src');
+                                if (a === '' || a === null || a === 'undefined' || a === 'null') { el.src = PIXEL; }
+                            } catch (eh) { }
+                        };
+                        new MutationObserver(function (muts) {
+                            for (var mi = 0; mi < muts.length; mi++) {
+                                var mu = muts[mi];
+                                if (mu.type === 'attributes') { healImg(mu.target); continue; }
+                                for (var ni = 0; ni < mu.addedNodes.length; ni++) {
+                                    var nd = mu.addedNodes[ni];
+                                    if (!nd || nd.nodeType !== 1) { continue; }
+                                    healImg(nd);
+                                    if (nd.querySelectorAll) {
+                                        var ims = nd.querySelectorAll('img');
+                                        for (var ki = 0; ki < ims.length; ki++) { healImg(ims[ki]); }
+                                    }
+                                }
+                            }
+                        }).observe(document.documentElement, {
+                            childList: true, subtree: true,
+                            attributes: true, attributeFilter: ['src']
+                        });
+                    } catch (eo) { }
                     window.addEventListener('offline', function () { move('OFFLINE'); });
                     window.addEventListener('online', function () { move('online'); });
                     /* The record says death lands between bundle-parse
