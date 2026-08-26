@@ -45,6 +45,26 @@ function sweep(now) {
   }
 }
 
+/*
+ * TEMPORARY diagnostic window (owner: "add some temporary system and find
+ * out... i want know very exact reason"): the last few reported lines,
+ * readable over HTTP, because the shop under investigation runs where no
+ * audited log-read path exists. Deliberately tiny and already-truncated -
+ * the ring holds exactly the console lines above, nothing more - and the
+ * boot-flight death records are the reason it exists. Remove with the
+ * flight recorder once the mobile crash is closed (OWNER_QUEUE row 193).
+ */
+const RING_MAX = 30;
+const ring = [];
+function remember(line) {
+  ring.push(new Date().toISOString() + ' ' + line);
+  if (ring.length > RING_MAX) ring.shift();
+}
+
+router.get('/recent', (req, res) => {
+  res.type('text/plain').send(ring.length ? ring.join('\n') : '(nothing reported since restart)');
+});
+
 router.post('/', (req, res) => {
   try {
     const now = Date.now();
@@ -68,6 +88,7 @@ router.post('/', (req, res) => {
         String(b.at || '').slice(0, 200),
       ].join(' ');
       console.error(line);
+      remember(line);
       const stack = String(b.stack || '').slice(0, 1000);
       if (stack) console.error('[client-error] stack:', stack.split('\n').slice(0, 4).join(' | '));
       /* The watchdog's whole journal, one line per entry - the card's View
