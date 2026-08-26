@@ -66,7 +66,15 @@
                        ride the death report. Registered here, first script,
                        so nothing can throw earlier than we listen. */
                     window.addEventListener('error', function (ev) {
-                        move('ERR ' + String((ev && ev.message) || 'err').slice(0, 60));
+                        /* name the thing: a resource error has no message,
+                           but its target says what failed to load - and four
+                           nameless ones preceded every recorded death */
+                        var t = ev && ev.target;
+                        var what = (ev && ev.message)
+                            || (t && t !== window && t.tagName
+                                ? t.tagName + ' ' + String(t.currentSrc || t.src || t.href || '').slice(-55)
+                                : 'err');
+                        move('ERR ' + String(what).slice(0, 70));
                     }, true);
                     window.addEventListener('unhandledrejection', function (ev) {
                         var r = (ev && ev.reason) || {};
