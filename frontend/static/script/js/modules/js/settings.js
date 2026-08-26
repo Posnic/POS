@@ -2198,8 +2198,11 @@ if ($("#sale_quick_edit").is(":checked")) {
      * options across four navigation cycles). Pass true to force a reload.
      */
 loadSelectSettingCountry: function (force) {
-        var alreadyCountry = PosnicPro.settings._refLoaded.country && $('.setCountry').children('option').length;
-        if (!force && alreadyCountry) { return; }
+        /* Flag FIRST and unconditionally: the leak was two navigations
+            racing inside the in-flight window, both passing a guard that
+            asked whether options existed yet - they did not, so both
+            fetched and both appended, forever. */
+        if (!force && PosnicPro.settings._refLoaded.country) { return; }
         PosnicPro.settings._refLoaded.country = true;
         var countrySelect = $('.setCountry');
         var params = {
@@ -2215,6 +2218,8 @@ loadSelectSettingCountry: function (force) {
             });
             countrySelect.val(PosnicPro.local.get("country_setting")).trigger('change.select2');
         }, function (xhr) {
+            /* a failed fetch must not lock the list out for the session */
+            PosnicPro.settings._refLoaded.country = false;
             var response = jQuery.parseJSON(xhr.responseText);
             PosnicPro.alert(response.type, response.message);
         });
@@ -2252,8 +2257,7 @@ loadSelectSettingCountry: function (force) {
      * options across four navigation cycles). Pass true to force a reload.
      */
 loadSelectSettingCurrency: function (force) {
-        var alreadyCurrency = PosnicPro.settings._refLoaded.currency && $('#currency_setting').children('option').length;
-        if (!force && alreadyCurrency) { return; }
+        if (!force && PosnicPro.settings._refLoaded.currency) { return; }
         PosnicPro.settings._refLoaded.currency = true;
         var currencySelect = $('#currency_setting');
         var params = {
@@ -2296,8 +2300,7 @@ loadSelectSettingCurrency: function (force) {
      * options across four navigation cycles). Pass true to force a reload.
      */
     timeZone: function (force) {
-        var alreadyTz = PosnicPro.settings._refLoaded.timezone && $('#time_zone').children('option').length;
-        if (!force && alreadyTz) { return; }
+        if (!force && PosnicPro.settings._refLoaded.timezone) { return; }
         PosnicPro.settings._refLoaded.timezone = true;
         var timezoneSelect = $('#time_zone');
         var params = {
