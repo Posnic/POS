@@ -42,3 +42,12 @@ test('runtime-info exposes the flag and the face rides both bundles', () => {
 test('the refusal says it is the demo, in words', () => {
   assert.match(read('api/src/config/demo-mode.js'), /resets on the hour/);
 });
+
+test('the signup nudge fires once per browser and sells the no-commitment path', () => {
+  const face = read('frontend/static/script/js/core/demo-mode.js');
+  /* once EVER: the done-flag is written before the modal is built, so no
+     code path can show it twice */
+  assert.match(face, /posnic_demo_nudge_done/);
+  assert.match(face, /no commitment/i);
+  assert.match(face, /Community Edition/);
+});
