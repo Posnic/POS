@@ -185,8 +185,10 @@ class InstallService {
           taxData,
           unitId,
           businessType: data.businessType || 'supermarket', // Generic retail default
-          currencyCode: (this._currencyForCountry(data.register_country, data.register_currency)
-            .currency_value[0] || {}).currency_text,
+          currencyCode: (
+            this._currencyForCountry(data.register_country, data.register_currency)
+              .currency_value[0] || {}
+          ).currency_text,
         });
       } else {
         console.log('⚠️ Loading default single product...');
@@ -358,19 +360,30 @@ class InstallService {
       server: DEFAULTS.SERVER_DATEFORMAT,
       text: DEFAULTS.DATEFORMAT_TEXT,
     };
-    const choice = String(explicit || '').trim().toLowerCase();
+    const choice = String(explicit || '')
+      .trim()
+      .toLowerCase();
     if (choice === 'mdy') return MDY;
     if (choice === 'dmy') return DMY;
     const MDY_COUNTRIES = ['US', 'PH', 'FM', 'MH', 'PW', 'GU', 'AS', 'VI', 'PR', 'UM'];
     try {
-      const name = String(countryName || '').trim().toLowerCase();
+      const name = String(countryName || '')
+        .trim()
+        .toLowerCase();
       if (!name) return DMY;
-      const countries = JSON.parse(
-        fs.readFileSync(path.join(__dirname, '../json/countries.json'), 'utf8')
-      ).countries || [];
-      const country = countries.find((c) => String(c.value || '').trim().toLowerCase() === name);
+      const countries =
+        JSON.parse(fs.readFileSync(path.join(__dirname, '../json/countries.json'), 'utf8'))
+          .countries || [];
+      const country = countries.find(
+        (c) =>
+          String(c.value || '')
+            .trim()
+            .toLowerCase() === name
+      );
       if (country && MDY_COUNTRIES.includes(String(country.sortname).toUpperCase())) return MDY;
-    } catch (e) { /* unknown stays day-first */ }
+    } catch (e) {
+      /* unknown stays day-first */
+    }
     return DMY;
   }
 
@@ -412,17 +425,24 @@ class InstallService {
         currency_value: [{ currency_text: hit.text, currency_sign: hit.symbol }],
       });
 
-      const wanted = String(explicitCode || '').trim().toUpperCase();
+      const wanted = String(explicitCode || '')
+        .trim()
+        .toUpperCase();
       if (wanted) {
         const chosen = list.find((c) => c.text === wanted && c.symbol);
         if (chosen) return asResult(chosen);
       }
       if (!name) return fallback;
 
-      const countries = JSON.parse(
-        fs.readFileSync(path.join(__dirname, '../json/countries.json'), 'utf8')
-      ).countries || [];
-      const country = countries.find((c) => String(c.value || '').trim().toLowerCase() === name);
+      const countries =
+        JSON.parse(fs.readFileSync(path.join(__dirname, '../json/countries.json'), 'utf8'))
+          .countries || [];
+      const country = countries.find(
+        (c) =>
+          String(c.value || '')
+            .trim()
+            .toLowerCase() === name
+      );
       if (country && country.sortname) {
         const codes = JSON.parse(
           fs.readFileSync(path.join(__dirname, '../json/country_currency.json'), 'utf8')
