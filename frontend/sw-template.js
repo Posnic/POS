@@ -129,7 +129,7 @@ self.addEventListener('fetch', (event) => {
         cache.match(request).then((hit) => {
           const refresh = fetch(request).then((response) => {
             if (response.ok && response.type === 'basic') {
-              cache.put(request, response.clone());
+              cache.put(request, response.clone()).catch(() => { /* full store loses the copy, not the answer */ });
             }
             return response;
           });
@@ -139,7 +139,10 @@ self.addEventListener('fetch', (event) => {
           }
           return refresh;
         })
-      )
+      /* A wedged cache store (full disk, private mode, corrupt storage)
+         must NEVER take the request down with it - the worker steps aside
+         and the network answers as if there were no worker at all. */
+      ).catch(() => fetch(request))
     );
     return;
   }
@@ -157,7 +160,7 @@ self.addEventListener('fetch', (event) => {
         cache.match(request).then((hit) => {
           const refresh = fetch(request).then((response) => {
             if (response.ok && response.type === 'basic') {
-              cache.put(request, response.clone());
+              cache.put(request, response.clone()).catch(() => { /* full store loses the copy, not the answer */ });
             }
             return response;
           });
@@ -167,7 +170,7 @@ self.addEventListener('fetch', (event) => {
           }
           return refresh;
         })
-      )
+      ).catch(() => fetch(request))
     );
     return;
   }
@@ -208,7 +211,9 @@ self.addEventListener('fetch', (event) => {
           throw err;
         });
       })
-    )
+    /* Same rule as above: a broken cache layer steps aside, it never
+       becomes the reason the page has no stylesheet. */
+    ).catch(() => fetch(request))
   );
 });
 
