@@ -691,7 +691,7 @@ PosnicPro = {
     /*
      * Lazy libraries (S1 feel-fast).
      *
-     * amCharts (1.1MB), ApexCharts (425KB), jsPDF (619KB) and html2canvas
+     * The chart libraries (1.5MB, since removed outright), jsPDF (619KB) and html2canvas
      * (194KB) used to be parsed by every till on every boot, to draw charts
      * and exports most sessions never open. They now load on first use: the
      * build copies them to script/lazy/ under stable names, the service
@@ -1452,7 +1452,7 @@ PosnicPro = {
     /*
      * REMOVED 2026-08-26, owner order "delete all chart related code":
      * the PosnicPro.chart namespace (create/dispose/disabledHere and the
-     * touch-taming), the am4core lazy stub, and the amcharts/apexcharts
+     * touch-taming), the chart-loader stub, and the chart vendor
      * lazy chunks. The graph report sections were already deleted; the
      * dashboard's two remaining chart functions had no callers and no
      * containers. Do not reintroduce charts - and NEVER on mobile.
