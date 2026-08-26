@@ -1,5 +1,6 @@
 // src/controllers/sales_controller.js
 const BaseController = require('./base.controller');
+const { clientIp } = require('../utils/client-ip');
 const { currentConnection } = require('../db/tenant-context');
 const Sale = require('../models/sale.model');
 const BaseModel = require('../models/base.model');
@@ -244,7 +245,7 @@ const writeSaleAudit = async (req, action, entityId, description, changes) => {
     changes,
     branch: resolveBranchId(user, req.session) || BaseModel.currentBranch,
     license: user.license || user.licenseId || BaseModel.license,
-    ipAddress: req.ip,
+    ipAddress: clientIp(req),
     userAgent: typeof req.get === 'function' ? req.get('user-agent') : req.headers?.['user-agent'],
   });
 
