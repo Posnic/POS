@@ -24,6 +24,31 @@
     }
 })();
 
+/*
+ * The deferred panes (PAGE_SPLIT_ANALYSIS Option A, first slice).
+ *
+ * The build wraps every report pane in <template class="pane-defer"> -
+ * parsed, never rendered, no standing DOM. Inflating replaces the template
+ * with its own content, markup byte-identical to the old page, so every
+ * selector and test downstream behaves as before.
+ *
+ * Desktop inflates everything right here, at core load - before any other
+ * bundle file runs, which keeps desktop behaviour indistinguishable from
+ * the pre-template page. A phone keeps the panes furled and inflates them
+ * at ONE choke point: the first PosnicPro.lazy.load('reports') call - the
+ * moment a report route is actually entered - which also runs before the
+ * chunk's own top-level code can look for its markup.
+ */
+function __posnicInflatePanes() {
+    document.querySelectorAll('template.pane-defer').forEach(function (tpl) {
+        tpl.replaceWith(tpl.content);
+    });
+}
+window.__posnicInflatePanes = __posnicInflatePanes;
+if (!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches)) {
+    __posnicInflatePanes();
+}
+
 PosnicPro = {
     config: [],
     modules: ['customers', 'suppliers', 'categories', 'items', 'users', 'branches', 'expenses', 'receivings', 'sales', 'registers'],
@@ -747,6 +772,9 @@ PosnicPro = {
             });
         },
         load: function (name) {
+            /* a phone's furled report panes must exist before the chunk's
+               own code goes looking for them */
+            if (name === 'reports') { __posnicInflatePanes(); }
             if (PosnicPro.lazy._loads[name]) return PosnicPro.lazy._loads[name];
             var files = PosnicPro.lazy._sets[name] || [];
             var p = files.reduce(function (prev, url) {
