@@ -64,7 +64,10 @@ tried. If you find otherwise, that is a bug — please [report it](SECURITY.md).
 Everything below is **off until you configure it**, and each sends data to a
 provider you pick and hold the account with. We are not in the path and we never
 see it. Configuring one makes that provider your processor, not ours — their
-terms and their privacy policy apply to what they receive.
+terms and their privacy policy apply to what they receive. That includes
+analytics: if you switch Google Analytics on, you are the controller of what
+it collects about your visitors, and until you do, the page's own security
+policy refuses Google's domains outright.
 
 | Feature | Off by default | What it sends | To whom | Turn it off by |
 |---|---|---|---|---|
@@ -72,6 +75,7 @@ terms and their privacy policy apply to what they receive.
 | SMS receipts and alerts | Yes | Customer phone number, message text, delivery status | Brevo, or the SMS provider you configure | Clearing the SMS settings |
 | WhatsApp receipts | Yes | Phone number and message content; the session lives on your machine | WhatsApp / Meta | Disconnecting WhatsApp |
 | Online payments | Yes | Payment amount, order reference, payment status | Razorpay, using your own merchant keys | Removing the gateway keys |
+| Google Analytics | Yes | Page views and usage events from this shop's pages, under Google's own collection | Google, into the Analytics account whose measurement id you enter | Switching the toggle off (Settings → Integrations → Analytics) |
 | S3 file storage | Yes | Item and user images you upload | The S3 bucket you own | Leaving storage set to local |
 | Posnic Cloud sync | Yes | Your shop data, as described below | Us | Not subscribing, or disconnecting |
 

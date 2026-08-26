@@ -112,7 +112,8 @@
             "static/script/js/modules/js/users.js",
             "static/script/js/plugins/rangeslider/rangeslider.min.js",
             "static/script/js/plugins/colorpicker/jqColorPicker.min.js",
-            "static/script/js/routes.js"
+            "static/script/js/routes.js",
+            "static/script/js/core/analytics-inject.js"
         ]
     },
     "login": {
@@ -135,7 +136,8 @@
             "static/script/js/core/lock-screen.js",
             "static/script/js/core/receipt-data.js",
             "static/script/js/core/ajax.js",
-            "static/script/js/modules/js/users.js"
+            "static/script/js/modules/js/users.js",
+            "static/script/js/core/analytics-inject.js"
         ],
         "css": [
             "static/style/css/jquery.toast.min.css",

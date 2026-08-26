@@ -147,16 +147,35 @@ if (process.env.NODE_ENV !== 'production') {
   cspDirectives['upgrade-insecure-requests'] = null;
 }
 
-app.use(
-  helmet({
-    contentSecurityPolicy: {
-      directives: cspDirectives,
-    },
-    referrerPolicy: {
-      policy: 'strict-origin-when-cross-origin',
-    },
-  })
-);
+/*
+ * Two policies, chosen per request: the locked-down one, and - only while
+ * the shop's own Google Analytics feature is ON (a Settings toggle plus the
+ * shop's own measurement id) - one that admits the Google domains. An
+ * unconfigured shop never carries the wider policy, so the PRIVACY.md
+ * promise is enforced by the header itself, not by convention.
+ */
+const { getAnalytics } = require('./src/services/analytics-config');
+const gaCspDirectives = {
+  ...cspDirectives,
+  'script-src': [...cspDirectives['script-src'], 'https://www.googletagmanager.com'],
+  'connect-src': [
+    ...cspDirectives['connect-src'],
+    'https://*.google-analytics.com',
+    'https://*.analytics.google.com',
+    'https://*.googletagmanager.com',
+  ],
+};
+const helmetOptions = (directives) => ({
+  contentSecurityPolicy: { directives },
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+});
+const helmetBase = helmet(helmetOptions(cspDirectives));
+const helmetGa = helmet(helmetOptions(gaCspDirectives));
+app.use((req, res, next) => {
+  getAnalytics()
+    .then((a) => (a.enabled ? helmetGa : helmetBase)(req, res, next))
+    .catch(() => helmetBase(req, res, next));
+});
 
 /*
  * Health, for a supervisor rather than a person. Registered here, before the
@@ -191,13 +210,27 @@ app.use(
  * tenant-free by design - the login page and the update machinery read it
  * before any authentication exists.
  */
-app.get('/api/runtime-info', (req, res) => {
+app.get('/api/runtime-info', async (req, res) => {
   const { buildRuntimeInfo } = require('./src/utils/runtime-info');
-  return res.status(200).json(buildRuntimeInfo());
+  const info = buildRuntimeInfo();
+  /* the login page injects the shop's own GA pre-auth from here - the id is
+     not a secret (it sits in the page source of every GA-carrying site) */
+  try {
+    info.analytics = await getAnalytics();
+  } catch (e) {
+    info.analytics = { enabled: false, id: '' };
+  }
+  return res.status(200).json(info);
 });
-app.get('/runtime-info', (req, res) => {
+app.get('/runtime-info', async (req, res) => {
   const { buildRuntimeInfo } = require('./src/utils/runtime-info');
-  return res.status(200).json(buildRuntimeInfo());
+  const info = buildRuntimeInfo();
+  try {
+    info.analytics = await getAnalytics();
+  } catch (e) {
+    info.analytics = { enabled: false, id: '' };
+  }
+  return res.status(200).json(info);
 });
 
 app.get('/api/healthz', (req, res) => {
