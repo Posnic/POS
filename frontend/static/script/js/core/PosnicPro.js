@@ -4414,7 +4414,47 @@ $(".newbranch").on('change', function () {
 
 
 //https://dexie.org/
-var db = new Dexie("posnicpro");
+/*
+ * NO DEXIE ON PHONES (owner's order mid crash-hunt: "stop dexie itself.
+ * dont include in mobile and lets see."). Apple's IndexedDB backend is the
+ * one boot subsystem no probe ever gated - it is shared by every iOS
+ * browser, absent from desktop WebKit builds, and carries a long history
+ * of WebKit process crashes. On phones the db is an inert stand-in whose
+ * every read answers empty and every write vanishes: the features it
+ * backs (customer display sync, focus restore, print label memory) are
+ * desk-till features anyway. Desktop keeps real Dexie, unchanged.
+ */
+var db;
+if (window.__mobileSafeMode) {
+    db = (function () {
+        var done = function () { return Promise.resolve(); };
+        var none = function (cb) {
+            /* Dexie's toArray accepts a callback - honour both styles */
+            if (typeof cb === 'function') { try { cb([]); } catch (e) { } }
+            return Promise.resolve([]);
+        };
+        var chain = { toArray: none, delete: done, first: function () { return Promise.resolve(undefined); }, modify: done, count: function () { return Promise.resolve(0); } };
+        var tbl = {
+            get: function () { return Promise.resolve(undefined); },
+            put: done, add: done, delete: done, clear: done, update: done, bulkPut: done,
+            toArray: none,
+            where: function () { return { equals: function () { return chain; }, anyOf: function () { return chain; } }; }
+        };
+        var stub = {
+            version: function () { return { stores: function () { return this; }, upgrade: function () { return this; } }; },
+            open: done, close: function () { }, delete: done,
+            table: function () { return tbl; },
+            on: function () { }
+        };
+        ['customers', 'items', 'suppliers', 'categories', 'users', 'branches', 'expenses',
+         'receivings', 'sales', 'offline_hash', 'queue', 'currentbranch', 'currentregister',
+         'customerDisplay', 'saleAutoFocus', 'recevingAutoFocus', 'customerPlan',
+         'printLableValues'].forEach(function (t) { stub[t] = tbl; });
+        return stub;
+    })();
+} else {
+    db = new Dexie("posnicpro");
+}
 // Define Database Schema
 db.version(1).stores({
     customers: "id, jsDate, name, branch_id",
