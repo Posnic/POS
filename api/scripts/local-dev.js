@@ -97,10 +97,16 @@ async function main() {
   setTimeout(async () => {
     try {
       const base = 'http://localhost:' + PORT;
-      const probe = await fetch(base + '/api/users/checkUser?username=' + encodeURIComponent(LOGIN.user))
-        .then((r) => r.json()).catch(() => null);
-      const alreadyInstalled = probe && probe.data;
-      if (!alreadyInstalled) {
+      /*
+       * Install exactly ONCE per local database. Re-running install/add on
+       * an existing license does NOT upsert - it creates a NEW branch id
+       * every time, orphaning the previous branch's items and settings
+       * (that is how the local shop kept "losing" its catalogue between
+       * restarts). Until the endpoint is made idempotent server-side, a
+       * marker beside the data files is the guard.
+       */
+      const installedMarker = path.join(DB_DIR, 'installed.marker');
+      if (!fs.existsSync(installedMarker)) {
         const res = await fetch(base + '/api/install/add', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -127,6 +133,9 @@ async function main() {
           }),
         }).then((r) => r.json()).catch((e) => ({ error: e.message }));
         console.log('[local] shop install: ' + (res && (res.message || res.type || res.error || 'done')));
+        if (res && res.type !== 'error' && !res.error) {
+          fs.writeFileSync(installedMarker, new Date().toISOString());
+        }
       }
     } catch (e) {
       console.log('[local] shop install skipped: ' + e.message);

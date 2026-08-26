@@ -948,6 +948,30 @@ class InstallService {
         }),
       ]);
 
+      /*
+       * Turn the switch the CATALOGUE reads.
+       *
+       * Sample products are hidden from the item list whenever the Demo Data
+       * feature is off, and that flag lives in the branch_features group -
+       * not on the branch document. Seeding without setting it produced the
+       * exact report this fixes: "item available but item list not showing.
+       * when i do purchase with supplier all item its coming" - the products
+       * were there, the list was told to hide them, and the purchase picker
+       * (which never applied the rule) showed them anyway. Restoring sample
+       * data plainly means the shop wants to see it.
+       */
+      try {
+        const demo = require('./demo-data');
+        await demo._repo().saveGroup(
+          'features',
+          { module_demo_data_enable: true },
+          { licenseId, branchId }
+        );
+        demo.invalidate(licenseId);
+      } catch (e) {
+        console.error('reseedDemoData: could not enable the Demo Data switch:', e.message);
+      }
+
       return {
         status: true,
         data: {

@@ -240,11 +240,23 @@ describe('InstallRepository', () => {
   });
 
   describe('insertCategories', () => {
-    test('insertMany into categories and returns ids', async () => {
-      const cats = [{ name: 'A' }, { name: 'B' }];
-      col.categories.insertMany.mockResolvedValueOnce({ insertedIds: { 0: 'id1', 1: 'id2' } });
+    test('UPSERTS each category and returns ids - a reseed must reuse survivors, not die on E11000', async () => {
+      /* categories carry a unique (name, branch_id) index; the purge keeps
+         sold items' categories, so a blind insertMany collided with them
+         and the whole demo install died half-done ("restored 30 products",
+         list of 11). Existing categories are reused by upsert. */
+      const cats = [{ name: 'A', branch_id: 'b1' }, { name: 'B', branch_id: 'b1' }];
+      col.categories.findOneAndUpdate = jest
+        .fn()
+        .mockResolvedValueOnce({ _id: 'id1', name: 'A' })
+        .mockResolvedValueOnce({ _id: 'id2', name: 'B' });
       const r = await repository.insertCategories(cats);
-      expect(col.categories.insertMany).toHaveBeenCalledWith(cats);
+      expect(col.categories.findOneAndUpdate).toHaveBeenCalledWith(
+        { name: 'A', branch_id: 'b1' },
+        { $setOnInsert: cats[0] },
+        { upsert: true, returnDocument: 'after' }
+      );
+      expect(col.categories.insertMany).not.toHaveBeenCalled();
       expect(r).toEqual(['id1', 'id2']);
     });
     test('rethrows error', async () => {

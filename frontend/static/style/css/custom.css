@@ -5391,3 +5391,43 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
         z-index: 2;
     }
 }
+
+/*
+ * Line-item rows keep their shape (owner: "when product name goes second
+ * line that line height affected. looks big and action button goes two
+ * lines").
+ *
+ * Two separate inflations, one cause each:
+ *  - the qty stepper is a Bootstrap input-group, and input-groups WRAP by
+ *    default - in a narrow cell the [+] fell to a second line, so every
+ *    row stood twice as tall before a name ever wrapped;
+ *  - the action cell let its icons wrap once the name column pushed into
+ *    it.
+ * The stepper is pinned to one line at its natural width, cells centre
+ * vertically, wrapped names keep a normal line height, and action icons
+ * stay on one line.
+ */
+#sales_new_items_table td,
+#sales_return_items_table td,
+#receiving_print td {
+    vertical-align: middle;
+    line-height: 1.45;
+}
+#sales_new_items_table .input-group,
+#sales_return_items_table .input-group,
+#receiving_print .input-group {
+    flex-wrap: nowrap;
+    width: max-content;
+}
+#sales_new_items_table .cart-qty,
+#sales_return_items_table .cart-qty,
+#receiving_print .cart-qty {
+    flex: 0 0 64px;
+    width: 64px;
+    min-width: 52px;
+}
+#sales_new_items_table td:last-child,
+#sales_return_items_table td:last-child,
+#receiving_print td:last-child {
+    white-space: nowrap;
+}

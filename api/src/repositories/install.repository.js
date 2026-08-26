@@ -152,8 +152,25 @@ class InstallRepository extends BaseModel {
   async insertCategories(categoriesData) {
     const categoryCollection = await this.getCollection('categories');
     console.log(`🗄️ Repository: Inserting ${categoriesData.length} categories into DB...`);
-    const result = await categoryCollection.insertMany(categoriesData);
-    const ids = Object.values(result.insertedIds);
+    /*
+     * Upsert, never blind-insert. Categories carry a unique
+     * (name, branch_id) index, and a RESEED meets survivors: the purge
+     * keeps sold items and their categories, so the next pack's
+     * "Paper & Office" collides with the old pack's, insertMany threw
+     * E11000, and the whole demo install died half-done - the owner saw
+     * "restored 30 products" and a list of 11. An existing category is
+     * simply reused; only genuinely new ones are created.
+     */
+    const ids = [];
+    for (const cat of categoriesData) {
+      const found = await categoryCollection.findOneAndUpdate(
+        { name: cat.name, branch_id: cat.branch_id },
+        { $setOnInsert: cat },
+        { upsert: true, returnDocument: 'after' }
+      );
+      const doc = found && (found.value || found);
+      if (doc && doc._id) ids.push(doc._id);
+    }
     return ids;
   }
 
