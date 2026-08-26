@@ -66,7 +66,7 @@ PosnicPro.customerview = {
         }).catch(function () {
             // Only render empty state once to prevent blink
             if (!PosnicPro.customerview.isEmptyStateShown) {
-                $('#list_linelitem').html('<tr class="sales_new_tablerow_content_area" id="sales_new_tablerow_content_area"><td colspan="8"><div class="text-center text-dark"> <p class="table_cart_content"><lang class="lang_sale_empty">Sale Order Empty</lang></p></div><img src="static/images/general/wallet.svg" class="img-fluid sales-cart-image" style="opacity: 0.4;width: 100%;" alt="wallet"></td></tr>');
+                $('#list_linelitem').html('<tr class="sales_new_tablerow_content_area" id="sales_new_tablerow_content_area"><td colspan="8"><div class="text-center text-dark"> <p class="table_cart_content"><lang class="lang_sale_empty">Sale Order Empty</lang></p></div><img loading="lazy" decoding="async" src="static/images/general/wallet.svg" class="img-fluid sales-cart-image" style="opacity: 0.4;width: 100%;" alt="wallet"></td></tr>');
                 var imgHeight = $(window).height() - 200;
                 $('.sales-cart-image').height(imgHeight);
                 PosnicPro.customerview.isEmptyStateShown = true;
@@ -102,7 +102,7 @@ PosnicPro.customerview = {
                 if (!PosnicPro.customerview.isEmptyStateShown) {
                     var container = document.getElementById('list_linelitem');
                     if (container) {
-                        container.innerHTML = '<div class="text-center text-dark" style="padding: 40px;"><p style="font-size: 18px; margin-bottom: 20px;"><strong>Sale Order Empty</strong></p><img src="static/images/general/wallet.svg" class="img-fluid" style="opacity: 0.4; max-width: 300px;" alt="wallet"></div>';
+                        container.innerHTML = '<div class="text-center text-dark" style="padding: 40px;"><p style="font-size: 18px; margin-bottom: 20px;"><strong>Sale Order Empty</strong></p><img loading="lazy" decoding="async" src="static/images/general/wallet.svg" class="img-fluid" style="opacity: 0.4; max-width: 300px;" alt="wallet"></div>';
                         PosnicPro.customerview.isEmptyStateShown = true;
                     }
                 }

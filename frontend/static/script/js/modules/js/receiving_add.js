@@ -583,7 +583,7 @@ PosnicPro.receivings = {
             if (extension === 'pdf') {
                 filepath = '<iframe class="img-thumbnail image_style" src="' + image_path + '" frameborder="0" style="border:none;" data-toggle="tooltip" title="' + escape(title) + '"></iframe>';
             } else {
-                filepath = '<img class="img-thumbnail image_style" src="' + image_path + '" \
+                filepath = '<img loading="lazy" decoding="async" class="img-thumbnail image_style" src="' + image_path + '" \
                             data-toggle="tooltip" title="' + escape(title) + '" />';
             }
 
@@ -934,7 +934,7 @@ PosnicPro.receivings = {
                 });
                 $('#item-display-preview').append(
                         '<div id="selector_' + key + '" class="receiving-image-wrapper image-area" style="position: relative;"> \
-                        <img class="image_style" class="img-thumbnail" src="' + image_path + '" \
+                        <img loading="lazy" decoding="async" class="image_style" class="img-thumbnail" src="' + image_path + '" \
                         title="' + escape(val.name) + '" /><br /> \
                     <span id="coverimage_selector_' + key + '" class="coverImageAdd" style="display: block;border: 1px solid #ddd;border-radius: 5px;margin-top: 2px; background: #506fe4; color: #fff" onclick="PosnicPro.items.coverImageEdit(this.id,\'' + key + '\',\'' + val.name + '\',\'' + val.size + '\')">Choose Cover</span><a class="remove-image" style="cursor:pointer;display: inline;position: absolute; top: -10px; right: -10px; border-radius: 10em; padding: 2px 6px 3px; text-decoration: none; font: 700 21px/20px sans-serif; background: #f48787; border: 3px solid #fff; color: #FFF; box-shadow: 0 2px 6px rgba(0,0,0,0.5), inset 0 2px 4px rgba(0,0,0,0.3); text-shadow: 0 1px 2px rgba(0,0,0,0.5); -webkit-transition: background 0.5s; transition: background 0.5s;" onclick="PosnicPro.items.image_edit_remove_selected(\'' + key + '\',\'' + val.name + '\')">&#215;</a> \
                         </div>');

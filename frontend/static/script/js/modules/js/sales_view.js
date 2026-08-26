@@ -906,7 +906,7 @@ PosnicPro.sales.view = {
                 }
                 $('span.number').number(true, 2);
                 $("#sales_return_items_table tbody tr").remove();
-                $('#sales_return_items_table tbody').append('<tr class="sales_new_tablerow_content_area" id="sales_new_tablerow_content_area"><td colspan="9"><div class="text-center text-dark"> <p class="table_cart_content"> Return Items Order Empty</p></div><img src="static/images/general/wallet.svg" class="img-fluid sales-cart-image" style="opacity: 0.4;width: 100%;" alt="wallet"></td></tr>');
+                $('#sales_return_items_table tbody').append('<tr class="sales_new_tablerow_content_area" id="sales_new_tablerow_content_area"><td colspan="9"><div class="text-center text-dark"> <p class="table_cart_content"> Return Items Order Empty</p></div><img loading="lazy" decoding="async" src="static/images/general/wallet.svg" class="img-fluid sales-cart-image" style="opacity: 0.4;width: 100%;" alt="wallet"></td></tr>');
                 var imgHeight = $(window).height() - 500;
                 $('.sales-cart-image').height(imgHeight);
                 let extra_discount_type = data.extra_discount_type;
@@ -1947,7 +1947,7 @@ PosnicPro.sales.view = {
                             + _escX(_terms).split(String.fromCharCode(10)).join('<br>') + '</div>';
                     }
                     _x += '<div style="margin-top:26px; width:220px; margin-left:auto; text-align:center;">'
-                        + (_sig ? '<img src="' + _escX(_sig) + '" alt="" style="max-height:38px; max-width:170px; display:block; margin:0 auto;">' : '')
+                        + (_sig ? '<img loading="lazy" decoding="async" src="' + _escX(_sig) + '" alt="" style="max-height:38px; max-width:170px; display:block; margin:0 auto;">' : '')
                         + '<div style="border-top:1px solid #8a94a6; padding-top:5px;">Authorised signatory</div>'
                         + '</div></div>';
                     $('.print-modal-a4-body').append(_x);

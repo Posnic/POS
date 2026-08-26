@@ -348,7 +348,7 @@ PosnicPro.receivings.view = {
                     } else {
                         var imgCard = '<div class="col-sm-4">' +
                                 '<div class="card" style="border: 1px solid #f0eeee;padding-left: 13px; padding-top: 5px; margin-top: 10px;">' +
-                                '<img class="card-img-top" src="' + base64Img + '" data-toggle="tooltip" title="' + title + '" style="width: 150px;">' +
+                                '<img loading="lazy" decoding="async" class="card-img-top" src="' + base64Img + '" data-toggle="tooltip" title="' + title + '" style="width: 150px;">' +
                                 '<div class="card-body">' +
                                 '<button class="btn btn-primary-rgba" onclick="downloadImage(\'' + image_path + '\')">Download</button>' +
                                 '<div>' +

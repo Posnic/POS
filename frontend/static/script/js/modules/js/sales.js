@@ -5262,7 +5262,7 @@ PosnicPro.sales.quantity = {
             return itemid;
         }).length;
         if (removeCount === 0) {
-            $('#sales_new_items_table tbody').append('<tr class="sales_new_tablerow_content_area" id="sales_new_tablerow_content_area"><td colspan="8"><div class="text-center text-dark"> <p class="table_cart_content"><lang class="lang_sale_empty">Sale Order Empty</lang> </p></div><img src="static/images/general/wallet.svg" class="img-fluid sales-cart-image" style="opacity: 0.4;width: 100%;" alt="wallet"></td></tr>');
+            $('#sales_new_items_table tbody').append('<tr class="sales_new_tablerow_content_area" id="sales_new_tablerow_content_area"><td colspan="8"><div class="text-center text-dark"> <p class="table_cart_content"><lang class="lang_sale_empty">Sale Order Empty</lang> </p></div><img loading="lazy" decoding="async" src="static/images/general/wallet.svg" class="img-fluid sales-cart-image" style="opacity: 0.4;width: 100%;" alt="wallet"></td></tr>');
             var imgHeight = $(window).height() - 500;
             $('.sales-cart-image').height(imgHeight);
             $("#save_submit").removeClass("disabled");
@@ -5455,7 +5455,7 @@ PosnicPro.sales.quantity = {
             $('#extraDisc').text(0);
             $('#extraDisc').editable('setValue', 0);
             $("#save_submit,#check_button").attr("disabled", true);
-            $('#sales_return_items_table tbody').append('<tr class="sales_new_tablerow_content_area" id="sales_new_tablerow_content_area"><td colspan="9"><div class="text-center text-dark"> <p class="table_cart_content"><lang class="lang_empty_return">Return Items Order Empty</lang></p></div><img src="static/images/general/wallet.svg" class="img-fluid sales-cart-image" style="opacity: 0.4;width: 100%;" alt="wallet"></td></tr>');
+            $('#sales_return_items_table tbody').append('<tr class="sales_new_tablerow_content_area" id="sales_new_tablerow_content_area"><td colspan="9"><div class="text-center text-dark"> <p class="table_cart_content"><lang class="lang_empty_return">Return Items Order Empty</lang></p></div><img loading="lazy" decoding="async" src="static/images/general/wallet.svg" class="img-fluid sales-cart-image" style="opacity: 0.4;width: 100%;" alt="wallet"></td></tr>');
             var imgHeight = $(window).height() - 500;
             $('.sales-cart-image').height(imgHeight);
         }
@@ -5602,7 +5602,7 @@ PosnicPro.sales.quantity = {
             $('#touch_row_' + PosnicPro.sales.addLineTable[i].id).remove();
             $('table#sales_return_items_table tr#sales_new_tablerow_content_area').remove();
             $("#sales_new_items_table tbody tr").remove();
-            $('#sales_new_items_table tbody').append('<tr class="sales_new_tablerow_content_area" id="sales_new_tablerow_content_area"><td colspan="8"><div class="text-center text-dark"> <p class="table_cart_content"><lang class="lang_sale_empty">Sale Order Empty</lang></p></div><img src="static/images/general/wallet.svg" class="img-fluid sales-cart-image" style="opacity: 0.4;width: 100%;" alt="wallet"></td></tr>');
+            $('#sales_new_items_table tbody').append('<tr class="sales_new_tablerow_content_area" id="sales_new_tablerow_content_area"><td colspan="8"><div class="text-center text-dark"> <p class="table_cart_content"><lang class="lang_sale_empty">Sale Order Empty</lang></p></div><img loading="lazy" decoding="async" src="static/images/general/wallet.svg" class="img-fluid sales-cart-image" style="opacity: 0.4;width: 100%;" alt="wallet"></td></tr>');
             var imgHeight = $(window).height() - 500;
             $('.sales-cart-image').height(imgHeight);
         }
@@ -5928,7 +5928,7 @@ PosnicPro.sales.quantity = {
             removeRightcount += parseFloat(rightTableCount[i].count);
         }
         if (removeRightcount === 0) {
-            $('#sales_return_items_table tbody').append('<tr class="sales_new_tablerow_content_area" id="sales_new_tablerow_content_area"><td colspan="9"><div class="text-center text-dark"> <p class="table_cart_content"><lang class="lang_empty_return">Return Items Order Empty</lang></p></div><img src="static/images/general/wallet.svg" class="img-fluid sales-cart-image" style="opacity: 0.4;width: 100%;" alt="wallet"></td></tr>');
+            $('#sales_return_items_table tbody').append('<tr class="sales_new_tablerow_content_area" id="sales_new_tablerow_content_area"><td colspan="9"><div class="text-center text-dark"> <p class="table_cart_content"><lang class="lang_empty_return">Return Items Order Empty</lang></p></div><img loading="lazy" decoding="async" src="static/images/general/wallet.svg" class="img-fluid sales-cart-image" style="opacity: 0.4;width: 100%;" alt="wallet"></td></tr>');
             var imgHeight = $(window).height() - 500;
             $('.sales-cart-image').height(imgHeight);
         }
@@ -5944,7 +5944,7 @@ PosnicPro.sales.quantity = {
             removecount += parseFloat(leftTableCount[i].count);
         }
         if (removecount === 0) {
-            $('#sales_new_items_table tbody').append('<tr class="sales_new_tablerow_content_area" id="sales_new_tablerow_content_area"><td colspan="8"><div class="text-center text-dark"> <p class="table_cart_content"><lang class="lang_sale_empty">Sale Order Empty</lang> </p></div><img src="static/images/general/wallet.svg" class="img-fluid sales-cart-image" style="opacity: 0.4;width: 100%;" alt="wallet"></td></tr>');
+            $('#sales_new_items_table tbody').append('<tr class="sales_new_tablerow_content_area" id="sales_new_tablerow_content_area"><td colspan="8"><div class="text-center text-dark"> <p class="table_cart_content"><lang class="lang_sale_empty">Sale Order Empty</lang> </p></div><img loading="lazy" decoding="async" src="static/images/general/wallet.svg" class="img-fluid sales-cart-image" style="opacity: 0.4;width: 100%;" alt="wallet"></td></tr>');
             var imgHeight = $(window).height() - 500;
             $('.sales-cart-image').height(imgHeight);
             $("#save_submit").removeClass("disabled");
@@ -6728,7 +6728,7 @@ PosnicPro.sales.setSaleDefaults = function () {
 
     if ($('#sales_new_items_table tbody tr').find(':nth-child(10)').text() === '') {
         $('#sales_new_items_table tbody tr').remove();
-        $('#sales_new_items_table tbody').append('<tr class="sales_new_tablerow_content_area" id="sales_new_tablerow_content_area"><td colspan="8"><div class="text-center text-dark"> <p class="table_cart_content"> <lang class="lang_sale_empty">Sale Order Empty</lang></p></div><img src="static/images/general/wallet.svg" class="img-fluid sales-cart-image" style="opacity: 0.4;width: 100%;" alt="wallet"></td></tr>');
+        $('#sales_new_items_table tbody').append('<tr class="sales_new_tablerow_content_area" id="sales_new_tablerow_content_area"><td colspan="8"><div class="text-center text-dark"> <p class="table_cart_content"> <lang class="lang_sale_empty">Sale Order Empty</lang></p></div><img loading="lazy" decoding="async" src="static/images/general/wallet.svg" class="img-fluid sales-cart-image" style="opacity: 0.4;width: 100%;" alt="wallet"></td></tr>');
         var imgHeight = $(window).height() - 500;
         $('.sales-cart-image').height(imgHeight);
     }
@@ -6810,7 +6810,7 @@ PosnicPro.sales.setDefaults = function () {
     PosnicPro.sales.salesExchange = false;
     $('table#sales_return_items_table tr#sales_new_tablerow_content_area').remove();
     $("#sales_new_items_table tbody tr").remove();
-    $('#sales_new_items_table tbody').append('<tr class="sales_new_tablerow_content_area" id="sales_new_tablerow_content_area"><td colspan="8"><div class="text-center text-dark"> <p class="table_cart_content"><lang class="lang_sale_empty">Sale Order Empty</lang></p></div><img src="static/images/general/wallet.svg" class="img-fluid sales-cart-image" style="opacity: 0.4;width: 100%;" alt="wallet"></td></tr>');
+    $('#sales_new_items_table tbody').append('<tr class="sales_new_tablerow_content_area" id="sales_new_tablerow_content_area"><td colspan="8"><div class="text-center text-dark"> <p class="table_cart_content"><lang class="lang_sale_empty">Sale Order Empty</lang></p></div><img loading="lazy" decoding="async" src="static/images/general/wallet.svg" class="img-fluid sales-cart-image" style="opacity: 0.4;width: 100%;" alt="wallet"></td></tr>');
     var imgHeight = $(window).height() - 500;
     $('.sales-cart-image').height(imgHeight);
     db.customerDisplay.where("clear").equals("yes").delete();
@@ -7033,7 +7033,7 @@ PosnicPro.sales.itemsMenu = {
                              */
                             var _isPlaceholder = getItemdata[i]['image'] === 'item.svg';
                             var _tileHtml = '<div class="wsk-cp-img' + (_isPlaceholder ? ' wsk-cp-img-placeholder' : '') + '">'
-                                + '<img src="' + image_path + '" alt="Product" class="img-responsive" /></div>';
+                                + '<img loading="lazy" decoding="async" src="' + image_path + '" alt="Product" class="img-responsive" /></div>';
                             var _rt = PosnicPro.resolveTile(getItemdata[i]);
                             var _tileColor = _rt.color;
                             if (getItemdata[i]['image'] === 'item.svg' && _tileColor) {
@@ -7063,7 +7063,7 @@ PosnicPro.sales.itemsMenu = {
                                 '</div>' +
                                 '</div>';
                             app = app + '' + product + '';
-                            //app = app + '<a style="padding-right:5px;" href="javascript:void(0)" data-searchval="' + list_item_name + '" class="search-product" data-toggle="tooltip" title="' + list_item_name + " ( Available Stock : " + item_stock + ' )" id="' + getItemdata[i]['id'] + '" onclick="PosnicPro.sales.itemsMenu.addToLineItemsList(this.id)"><div class="product color01 flat-box waves-effect waves-block"><h3 id="proname">' + list_item_name.slice(0, 6) + '</h3><img src=' + image_path + ' alt="no image found"><div class="product_two"><div class="mask"><p> </p><h4>' + currency + '<span class="number">' + getItemdata[i]['selling_price'] + ' </span></h4></div></div></div></a>&nbsp;';
+                            //app = app + '<a style="padding-right:5px;" href="javascript:void(0)" data-searchval="' + list_item_name + '" class="search-product" data-toggle="tooltip" title="' + list_item_name + " ( Available Stock : " + item_stock + ' )" id="' + getItemdata[i]['id'] + '" onclick="PosnicPro.sales.itemsMenu.addToLineItemsList(this.id)"><div class="product color01 flat-box waves-effect waves-block"><h3 id="proname">' + list_item_name.slice(0, 6) + '</h3><img loading="lazy" decoding="async" src=' + image_path + ' alt="no image found"><div class="product_two"><div class="mask"><p> </p><h4>' + currency + '<span class="number">' + getItemdata[i]['selling_price'] + ' </span></h4></div></div></div></a>&nbsp;';
                         }
                     }
                     app = app + '</div>';
@@ -7125,7 +7125,7 @@ PosnicPro.sales.itemsMenu = {
             esc(parent) +
             ' <span class="badge badge-light">' + rows.length + '</span></p>' +
             '</div>' +
-            '<div class="wsk-cp-img' + placeholderClass + '"><img src="' + esc(image) + '" alt="Product" class="img-responsive" /></div>' +
+            '<div class="wsk-cp-img' + placeholderClass + '"><img loading="lazy" decoding="async" src="' + esc(image) + '" alt="Product" class="img-responsive" /></div>' +
             '<div class="wsk-cp-text mt-3">' +
             '<div class="price-text-color">' +
             '<div class="text-center"><span class="price">' + (differ ? 'from ' : '') +
@@ -7738,7 +7738,7 @@ PosnicPro.sales.categoryMenu = {
                             '<p data-searchval="' + list_category_name + '">' + list_category_name + '</p>' +
                             '</div>' +
                             '<div class="wsk-cp-img">' +
-                            '<img src="' + image_path + '" alt="Category" class="img-responsive" />' +
+                            '<img loading="lazy" decoding="async" src="' + image_path + '" alt="Category" class="img-responsive" />' +
                             '</div></div></div>';
                     }
                     app += "</div>";
@@ -7808,7 +7808,7 @@ PosnicPro.sales.categoryMenu = {
                             '<p data-searchval="' + item.item_name + '" title="' + item.item_name + '">' +
                             item.item_name + '</p></div>' +
                             '<div class="wsk-cp-img text-center">' +
-                            '<img src="' + image_path + '" alt="Product" class="img-fluid rounded" style="max-height:120px;" />' +
+                            '<img loading="lazy" decoding="async" src="' + image_path + '" alt="Product" class="img-fluid rounded" style="max-height:120px;" />' +
                             '</div><div class="wsk-cp-text mt-3 text-center">' +
                             '<span class="price">' + currency + ' ' + parseFloat(item.selling_price).toFixed(2) + '</span>' +
                             '</div></div></div>';
@@ -8655,7 +8655,7 @@ PosnicPro.quotes = {
         var vu = $('#qe_valid_until').val();
         var h = '<div class="q-head">'
             + '<div class="q-seller">'
-            + (logo && logo !== 'store.png' ? '<img class="q-logo" src="' + esc(logo) + '" alt="">' : '')
+            + (logo && logo !== 'store.png' ? '<img loading="lazy" decoding="async" class="q-logo" src="' + esc(logo) + '" alt="">' : '')
             + '<div class="q-shop">' + esc(PosnicPro.local.get('branchname') || '') + '</div>'
             /* Same _real filter as the finished document: this preview is a
                promise about what the customer will get, so it must not show a
@@ -8725,7 +8725,7 @@ PosnicPro.quotes = {
         if (sig) {
             // the image sits ABOVE the rule - the line is what one signs on,
             // and the uploaded signature stands in for that stroke
-            h += '<div class="q-sign-img"><img src="' + sig + '" alt="" style="max-height:40px; max-width:160px; display:block; margin:0 auto;"></div>'
+            h += '<div class="q-sign-img"><img loading="lazy" decoding="async" src="' + sig + '" alt="" style="max-height:40px; max-width:160px; display:block; margin:0 auto;"></div>'
                 + '<div class="q-sign">Authorised signatory</div>';
         }
         $('#qe_preview').html(h);
@@ -9035,7 +9035,7 @@ PosnicPro.quotes = {
             var body = '<div class="q-sheet">'
                 + '<div class="q-head">'
                 + '<div class="q-seller">'
-                + (logo && logo !== 'store.png' ? '<img class="q-logo" src="' + esc(logo) + '" alt="">' : '')
+                + (logo && logo !== 'store.png' ? '<img loading="lazy" decoding="async" class="q-logo" src="' + esc(logo) + '" alt="">' : '')
                 + '<div class="q-shop">' + esc(PosnicPro.local.get('branchname') || '') + '</div>'
                 + (function () {
                     /* Each line appears only if it has something real to say. */
@@ -9146,7 +9146,7 @@ PosnicPro.quotes = {
                     return out + '</div>';
                 })()
                 + (PosnicPro.local.get('quotesignature')
-                    ? '<div class="q-sign-img"><img src="' + esc(PosnicPro.local.get('quotesignature')) + '" alt="" style="max-height:40px; max-width:160px; display:block; margin:0 auto;"></div>'
+                    ? '<div class="q-sign-img"><img loading="lazy" decoding="async" src="' + esc(PosnicPro.local.get('quotesignature')) + '" alt="" style="max-height:40px; max-width:160px; display:block; margin:0 auto;"></div>'
                         + '<div class="q-sign">Authorised signatory</div>'
                     : '')
                 + '</div>';
@@ -9991,7 +9991,7 @@ PosnicPro.sales.qr = {
                     img2.onload = function () {
                         console.log('Using CSS cropping method');
                         // Use CSS to crop and display the image
-                        qrContainer.innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#fff;border-radius:15px;box-shadow:0 8px 32px rgba(0,0,0,0.1);"><div style="width:400px;height:400px;overflow:hidden;display:flex;align-items:center;justify-content:center;border-radius:10px;position:relative;"><img src="' + img2.src + '" alt="QR Code" style="width:100%;height:auto;object-fit:contain;clip-path:inset(25% 15% 15% 15%);" /></div></div>';
+                        qrContainer.innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#fff;border-radius:15px;box-shadow:0 8px 32px rgba(0,0,0,0.1);"><div style="width:400px;height:400px;overflow:hidden;display:flex;align-items:center;justify-content:center;border-radius:10px;position:relative;"><img loading="lazy" decoding="async" src="' + img2.src + '" alt="QR Code" style="width:100%;height:auto;object-fit:contain;clip-path:inset(25% 15% 15% 15%);" /></div></div>';
 
                         var qrRecord = [];
                         qrRecord.push({ amount: amount, image_url: data.image_url, status: 'yes' });
@@ -10453,7 +10453,7 @@ PosnicPro.sales.renderRecentItems = function () {
     box.html(list.map(function (it, i) {
         var img = (it.image && it.image !== 'item.svg') ? it.image : 'static/images/default/item.svg';
         return '<div class="autocomplete-suggestion recent-item-row" data-i="' + i + '" style="cursor:pointer;">' +
-            '<img src="' + img + '" height="40" width="40" style="border-radius: 25%;" /> ' +
+            '<img loading="lazy" decoding="async" src="' + img + '" height="40" width="40" style="border-radius: 25%;" /> ' +
             '<div class="suggestion-name">' + $('<span>').text(it.name).html() + '</div>' +
             '<span><span class="suggestion-price pull-right">' + currency + '&nbsp;' + (Number(it.price) || 0).toFixed(2) + '</span></span></div>';
     }).join(''))
@@ -11179,7 +11179,7 @@ $(document).on('change', '.payment_mode', function () {
 });
 $(document).ready(function () {
     $("#sales_new_items_table tbody tr").remove();
-    $('#sales_new_items_table tbody').append('<tr class="sales_new_tablerow_content_area" id="sales_new_tablerow_content_area"><td colspan="8"><div class="text-center text-dark"> <p class="table_cart_content"> <lang class="lang_sale_empty">Sale Order Empty</lang></p></div><img src="static/images/general/wallet.svg" class="img-fluid sales-cart-image" style="opacity: 0.4;width: 100%;" alt="wallet"></td></tr>');
+    $('#sales_new_items_table tbody').append('<tr class="sales_new_tablerow_content_area" id="sales_new_tablerow_content_area"><td colspan="8"><div class="text-center text-dark"> <p class="table_cart_content"> <lang class="lang_sale_empty">Sale Order Empty</lang></p></div><img loading="lazy" decoding="async" src="static/images/general/wallet.svg" class="img-fluid sales-cart-image" style="opacity: 0.4;width: 100%;" alt="wallet"></td></tr>');
     $("#sales_return_items_table tbody tr").remove();
     $('#sales_return_items_table tbody').append('<tr class="sales_new_tablerow_content_area" id="sales_new_tablerow_content_area"><td colspan="9"><div class="text-center text-dark"> <p class="table_cart_content"><lang class="lang_empty_return">Return Items Order Empty</lang></p></div></td></tr>');
     var imgHeight = $(window).height() - 500;
