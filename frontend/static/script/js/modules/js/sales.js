@@ -3783,7 +3783,7 @@ PosnicPro.sales.addSale = {
                 if (response.type === 'success') {
                     // Stock just changed on the server; cached items are stale.
                     PosnicPro.sales.itemCache.clear();
-                    window.intlTelInputGlobals.getInstance(document.querySelector("#customer_sms_phone")).setCountry(response.data.country_sort);
+                    (sendSms.cust_phone || { setCountry: function () {} }).setCountry(response.data.country_sort);
                     $('#extraDisc').text(0);
                     $('#extraDisc').editable('setValue', 0);
                     // A sale born from a quote stamps it converted (fire-safe).
@@ -11610,7 +11610,7 @@ $(document).ready(function () {
     });
     $(window).trigger('resize');
 
-    sendSms.cust_phone = window.intlTelInput(document.querySelector("#customer_sms_phone"), {
+    PosnicPro.lazyPhoneInput('#customer_sms_phone', sendSms, 'cust_phone', {
         separateDialCode: true,
         preferredCountries: ['in'],
         hiddenInput: "full",

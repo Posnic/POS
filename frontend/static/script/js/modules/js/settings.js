@@ -2224,7 +2224,7 @@ if ($("#sale_quick_edit").is(":checked")) {
             } else {
                 $('#setting_state option:eq(0)').prop('selected', true);
             }
-            window.intlTelInputGlobals.getInstance(document.querySelector("#store_telephone")).setCountry(response.data['countrySortName']);
+            (PosnicPro.settings.store_telephone || { setCountry: function () {} }).setCountry(response.data['countrySortName']);
         }, function (xhr) {
             var response = jQuery.parseJSON(xhr.responseText);
             PosnicPro.alert(response.type, response.message);
@@ -4737,7 +4737,7 @@ PosnicPro.settings.initPrintEditors = function () {
 
 
 $(function () {
-    PosnicPro.settings.store_telephone = window.intlTelInput(document.querySelector("#store_telephone"), {
+    PosnicPro.lazyPhoneInput('#store_telephone', PosnicPro.settings, 'store_telephone', {
         separateDialCode: true,
         preferredCountries: ['in'],
         hiddenInput: "full",

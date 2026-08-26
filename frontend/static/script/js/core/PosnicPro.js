@@ -4088,6 +4088,46 @@ PosnicPro = {
 };
 
 /*** Common Function For LocalStorage ***/
+/*
+ * Phone inputs, built when they are wanted rather than at boot.
+ *
+ * intl-tel-input renders its whole country list into the DOM the moment it
+ * initialises: ~1,222 nodes EACH. Three of them were live on the dashboard -
+ * 3,666 nodes, 14% of the entire document - for dropdowns behind forms most
+ * sessions never open, and all three were built inside the first second,
+ * which is exactly the window where iPhones were dying (OWNER_QUEUE 193/195).
+ *
+ * Nothing about the call sites changes: the instance property is a getter,
+ * so `PosnicPro.customers.customer_phone.isValidNumber()` still works and
+ * simply builds the widget at that moment. Three triggers, whichever comes
+ * first: the user focusing the field, any code touching the property, or -
+ * on desktop only - an idle callback, so the flag appears without anyone
+ * noticing a change. Phones skip the idle build on purpose: there the whole
+ * point is that those nodes never exist unless the field is used.
+ */
+PosnicPro.lazyPhoneInput = function (selector, target, prop, opts) {
+    var made = null;
+    function build() {
+        if (made) { return made; }
+        var el = document.querySelector(selector);
+        if (!el) { return null; }
+        try {
+            var existing = window.intlTelInputGlobals && window.intlTelInputGlobals.getInstance(el);
+            made = existing || window.intlTelInput(el, opts || {});
+        } catch (e) { return null; }
+        return made;
+    }
+    try {
+        Object.defineProperty(target, prop, { configurable: true, get: build });
+    } catch (e) { target[prop] = build(); }
+    $(document).on('focusin', selector, build);
+    if (!window.__mobileSafeMode) {
+        var idle = window.requestIdleCallback || function (fn) { return setTimeout(fn, 4000); };
+        idle(function () { build(); });
+    }
+    return build;
+};
+
 PosnicPro.local = {
     set: function (key, value) {
         localStorage.setItem(key, value);
