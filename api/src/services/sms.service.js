@@ -31,6 +31,10 @@ class SmsService {
    * @returns {Promise<{ ok: boolean, error?: string }>}
    */
   async sendText(phone, message) {
+    if (require('../config/demo-mode').isDemoMode()) {
+      return { ok: false, error: require('../config/demo-mode').DEMO_BLOCKED_MESSAGE };
+    }
+
     if (!phone) return { ok: false, error: 'No phone number' };
     if (this.provider !== 'brevo') {
       return {
@@ -85,6 +89,10 @@ class SmsService {
    * @returns {Promise<Object>} { status, data, message }
    */
   async sendSalesReceipt(data) {
+    if (require('../config/demo-mode').isDemoMode()) {
+      return { ok: false, error: require('../config/demo-mode').DEMO_BLOCKED_MESSAGE };
+    }
+
     try {
       // Generate encrypted ID (matching PHP line 2649)
       const encryptedId = Encryption.generateEncryptedId(data.customer_sms_id);
@@ -147,6 +155,10 @@ class SmsService {
    * @returns {Promise<string>} 'delivered' or 'failed'
    */
   async sendSmsViaBrevo(data, encryptedId) {
+    if (require('../config/demo-mode').isDemoMode()) {
+      return { ok: false, error: require('../config/demo-mode').DEMO_BLOCKED_MESSAGE };
+    }
+
     try {
       const url = 'https://api.brevo.com/v3/transactionalSMS/sms';
       const receiptUrl = `www.posnic.io/customersMailPrint.html?id=${encryptedId}`;
@@ -184,6 +196,10 @@ class SmsService {
    * @returns {Promise<string>} 'delivered' or 'failed'
    */
   async sendSmsViaMsg91(data, encryptedId) {
+    if (require('../config/demo-mode').isDemoMode()) {
+      return { ok: false, error: require('../config/demo-mode').DEMO_BLOCKED_MESSAGE };
+    }
+
     try {
       // Remove '+' from phone number (matching PHP line 2708)
       const userPhone = data.customer_sms_fullphone.replace('+', '');
