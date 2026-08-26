@@ -207,13 +207,14 @@
                                    HERE, where the link exists; the first
                                    version checked from the head's first
                                    script and never saw it. */
-                                var cssId = link.getAttribute('href');
-                                if (localStorage.getItem('posnic_css_seen') !== cssId) {
-                                    localStorage.setItem('posnic_css_seen', cssId);
+                                var jsEl = document.querySelector('script[src*="script/dashboard."]');
+                                var buildId = link.getAttribute('href') + '+' + (jsEl ? jsEl.getAttribute('src') : '');
+                                if (localStorage.getItem('posnic_css_seen') !== buildId) {
+                                    localStorage.setItem('posnic_css_seen', buildId);
                                     localStorage.setItem(K + '_cdeaths', '0');
                                     localStorage.removeItem(BK);
                                     rec.probe = '';
-                                    beaconMsg('FRESH CSS ' + cssId.slice(-16) + ' - normal styled boot, streak reset');
+                                    beaconMsg('FRESH BUILD ' + buildId.slice(-30) + ' - normal styled boot, streak reset');
                                     return;
                                 }
                                 for (var si = 0; si < document.styleSheets.length; si++) {
