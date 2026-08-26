@@ -545,10 +545,10 @@ PosnicPro.branches = {
 
             if (PosnicPro.local.get('edit_branch_state') !== '' && action === 'edit') {
                 stateSelect.val(PosnicPro.local.get('edit_branch_state')).trigger('change.select2');
-                window.intlTelInputGlobals.getInstance(document.querySelector("#branch_phone")).setCountry(response.data['countrySortName']);
+                (PosnicPro.branches.branch_phone || { setCountry: function () {} }).setCountry(response.data['countrySortName']);
             } else {
                 $('#branch_state option:eq(0)').prop('selected', true);
-                window.intlTelInputGlobals.getInstance(document.querySelector("#branch_phone")).setCountry(response.data['countrySortName']);
+                (PosnicPro.branches.branch_phone || { setCountry: function () {} }).setCountry(response.data['countrySortName']);
             }
         });
     },
@@ -724,7 +724,7 @@ $('#branch_country').one('change', function () {
     });
 });
 $(function () {
-    PosnicPro.branches.branch_phone = window.intlTelInput(document.querySelector("#branch_phone"), {
+    PosnicPro.lazyPhoneInput('#branch_phone', PosnicPro.branches, 'branch_phone', {
         separateDialCode: true,
         preferredCountries: ['in'],
         hiddenInput: "full",

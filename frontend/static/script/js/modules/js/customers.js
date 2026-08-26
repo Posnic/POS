@@ -562,10 +562,10 @@ PosnicPro.customers = {
 
             if (PosnicPro.local.get('edit_customer_state') !== '' && action === 'edit') {
                 stateSelect.val(PosnicPro.local.get('edit_customer_state')).trigger('change.select2');
-                window.intlTelInputGlobals.getInstance(document.querySelector("#customer_phone")).setCountry(response.data['countrySortName']);
+                (PosnicPro.customers.customer_phone || { setCountry: function () {} }).setCountry(response.data['countrySortName']);
             } else {
                 $('#customer_state option:eq(0)').prop('selected', true);
-                window.intlTelInputGlobals.getInstance(document.querySelector("#customer_phone")).setCountry(response.data['countrySortName']);
+                (PosnicPro.customers.customer_phone || { setCountry: function () {} }).setCountry(response.data['countrySortName']);
             }
         }, function (xhr) {
             var response = jQuery.parseJSON(xhr.responseText);
@@ -1196,7 +1196,7 @@ $(function () {
             }
     });
 
-    PosnicPro.customers.customer_phone = window.intlTelInput(document.querySelector("#customer_phone"), {
+    PosnicPro.lazyPhoneInput('#customer_phone', PosnicPro.customers, 'customer_phone', {
         separateDialCode: true,
         preferredCountries: ['in'],
         hiddenInput: "full",

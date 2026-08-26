@@ -163,3 +163,24 @@ test('money and quantity fields ask the phone for the number pad (Mobile P2 tail
     assert.ok(tag && tag[0].includes('inputmode="decimal"'), fid + ' lost its number pad');
   }
 });
+
+test('phone inputs build on demand, never at boot (DOM diet)', () => {
+  /* intl-tel-input renders ~1,222 nodes of country list per instance. Three
+     were live on the dashboard - 14% of the whole document - inside the
+     first second, which is the window iPhones were dying in. The call sites
+     are untouched because the instance is a getter; what changed is WHEN it
+     is built. */
+  const fsx = require('fs');
+  const px = require('path');
+  const core = fsx.readFileSync(px.join(__dirname, '..', 'frontend', 'static', 'script', 'js', 'core', 'PosnicPro.js'), 'utf8');
+  assert.match(core, /PosnicPro\.lazyPhoneInput = function/);
+  assert.match(core, /Object\.defineProperty\(target, prop, \{ configurable: true, get: build \}\)/);
+  assert.match(core, /\$\(document\)\.on\('focusin', selector, build\)/);
+  assert.match(core, /if \(!window\.__mobileSafeMode\) \{/);
+  const js = (f) => fsx.readFileSync(px.join(__dirname, '..', 'frontend', 'static', 'script', 'js', 'modules', 'js', f), 'utf8');
+  for (const f of ['branches.js', 'customers.js', 'suppliers.js', 'settings.js', 'sales.js']) {
+    assert.ok(!js(f).includes('= window.intlTelInput(document.querySelector'),
+      f + ' builds a phone widget at boot again');
+    assert.match(js(f), /PosnicPro\.lazyPhoneInput\('#/, f);
+  }
+});
