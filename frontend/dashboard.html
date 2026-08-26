@@ -114,22 +114,43 @@
                     window.addEventListener('pagehide', function () {
                         try { rec.clean = true; localStorage.setItem(K, JSON.stringify(rec)); } catch (e) { }
                     });
-                    /* PROBE (temporary): dashboard.html?nocss=1 boots with
-                       every stylesheet disabled before first paint. A device
-                       that dies at frame 2 normally but SURVIVES this proves
-                       the killer lives in CSS layout/paint; everything else
-                       acquits it. The flag rides the search string so the
-                       hash router never sees it. */
-                    if (location.search.indexOf('nocss=1') !== -1) {
+                    /* PROBE: boots with every stylesheet disabled before
+                       first paint. A device that dies at frame 2 normally
+                       but SURVIVES naked proves the killer lives in CSS
+                       layout/paint. Manual via ?nocss=1 - and AUTOMATIC:
+                       storage was wiped by safe mode and the deaths kept
+                       coming, so after three straight deaths the next boot
+                       runs the probe by itself and reports both the attempt
+                       and the outcome. */
+                    var cd = 0;
+                    try { cd = parseInt(localStorage.getItem(K + '_cdeaths') || '0', 10) || 0; } catch (e9) { }
+                    if (prev && prev.started !== now && !prev.clean) { cd += 1; }
+                    try { localStorage.setItem(K + '_cdeaths', String(cd)); } catch (e10) { }
+                    var probeNow = location.search.indexOf('nocss=1') !== -1 || (window.__mobileSafeMode && cd >= 3);
+                    if (probeNow) {
+                        rec.probe = 'nocss';
                         document.addEventListener('DOMContentLoaded', function () {
                             try {
                                 for (var si = 0; si < document.styleSheets.length; si++) {
                                     try { document.styleSheets[si].disabled = true; } catch (e2) { }
                                 }
                                 __flight.stamp('nocss-applied');
+                                var pp = JSON.stringify({ message: '[boot-flight] NOCSS-PROBE running after ' + cd + ' straight deaths - if the next record is SURVIVED, the killer is CSS paint', at: 'boot-flight' });
+                                if (navigator.sendBeacon) { navigator.sendBeacon('client-errors', new Blob([pp], { type: 'application/json' })); }
                             } catch (e3) { }
                         });
                     }
+                    /* Twenty seconds alive = this configuration SURVIVES.
+                       Say so, and reset the streak. */
+                    setTimeout(function () {
+                        try {
+                            localStorage.setItem(K + '_cdeaths', '0');
+                            if (rec.probe === 'nocss') {
+                                var ps = JSON.stringify({ message: '[boot-flight] NOCSS-PROBE SURVIVED 20s - CSS paint is the killer; the styled boot dies, the naked boot lives', at: 'boot-flight' });
+                                if (navigator.sendBeacon) { navigator.sendBeacon('client-errors', new Blob([ps], { type: 'application/json' })); }
+                            }
+                        } catch (e11) { }
+                    }, 20000);
                     /*
                      * MOBILE SAFE MODE (owner's order: "local storage or
                      * indexed db or service workers. those just stop and
