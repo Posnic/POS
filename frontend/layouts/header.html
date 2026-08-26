@@ -5,7 +5,7 @@
             <div class="mobile-logobar">
                 <a href="#" class="mobile-logo">
                     <h1 class="title_h2">Posnic</h1>
-                    <!--                    <img src="static/images/logo.svg" class="img-fluid" alt="logo">-->
+                    <!--                    <img src="static/images/logo.svg" class="img-fluid" alt="logo" loading="lazy" decoding="async">-->
                 </a>
             </div>
             <div class="mobile-togglebar">
@@ -14,9 +14,9 @@
                         <div class="topbar-toggle-icon">
                             <a class="topbar-toggle-hamburger" href="javascript:void(0)">
                                 <img src="static/images/svg-icon/horizontal.svg"
-                                    class="img-fluid menu-hamburger-horizontal" alt="horizontal">
+                                    class="img-fluid menu-hamburger-horizontal" alt="horizontal" loading="lazy" decoding="async">
                                 <img src="static/images/svg-icon/verticle.svg" class="img-fluid menu-hamburger-vertical"
-                                    alt="verticle">
+                                    alt="verticle" loading="lazy" decoding="async">
                             </a>
                         </div>
                     </li>
@@ -24,9 +24,9 @@
                         <div class="menubar">
                             <a class="menu-hamburger" href="javascript:void(0)">
                                 <img src="static/images/svg-icon/menu.svg" class="img-fluid menu-hamburger-collapse"
-                                    alt="collapse">
+                                    alt="collapse" loading="lazy" decoding="async">
                                 <img src="static/images/svg-icon/close.svg" class="img-fluid menu-hamburger-close"
-                                    alt="close">
+                                    alt="close" loading="lazy" decoding="async">
                             </a>
                         </div>
                     </li>
@@ -58,9 +58,9 @@
                         <div class="menubar">
                             <a class="menu-hamburger" href="javascript:void(0)">
                                 <img src="static/images/svg-icon/menu.svg" class="img-fluid menu-hamburger-collapse"
-                                    alt="menu">
+                                    alt="menu" loading="lazy" decoding="async">
                                 <img src="static/images/svg-icon/horizontal.svg" class="img-fluid menu-hamburger-close"
-                                    alt="close">
+                                    alt="close" loading="lazy" decoding="async">
                             </a>
                         </div>
                     </li>
@@ -147,7 +147,7 @@
                             <a href="#" id="infobar-fullscreen-open" class="infobar-icon fullscreen-mode"
                                 onclick="PosnicPro.dashboard.toggleFullScreen();">
                                 <img src="static/images/svg-icon/fullscreenmaximise.svg" class="img-fluid"
-                                    id="fullscreen" style="width: 19px !important;" alt="fullscreen">
+                                    id="fullscreen" style="width: 19px !important;" alt="fullscreen" loading="lazy" decoding="async">
                             </a>
                         </div>
                     </li>
@@ -186,7 +186,7 @@
                                 data-action="add" data-target="#shortcutpage" role="button"
                                 onclick="PosnicPro.settings.showShortcut();">
                                 <img src="static/images/svg-icon/shortcut.svg" class="img-fluid icon-svg"
-                                    alt="shortcut">
+                                    alt="shortcut" loading="lazy" decoding="async">
                             </a>
                         </div>
                     </li>
@@ -196,7 +196,7 @@
                                 <a class="infobar-icon" href="javascript:void(0)" role="button"
                                     id="themelink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
                                     style="width:auto;justify-content:center;">
-                                    <img src="static/images/svg-icon/theme.svg" class="img-fluid" style="width:21px;" alt="theme">
+                                    <img src="static/images/svg-icon/theme.svg" class="img-fluid" style="width:21px;" alt="theme" loading="lazy" decoding="async">
                                 </a>
                                 <div class="dropdown-menu dropdown-menu-right" aria-labelledby="themelink"
                                     style="min-width:234px;padding:6px;">
@@ -273,7 +273,7 @@
                                 <a class="dropdown-toggle infobar-icon" href="javascript:void(0)" role="button"
                                     id="notoficationlink" data-toggle="dropdown" aria-haspopup="true"
                                     aria-expanded="false"><img src="static/images/svg-icon/notifications.svg"
-                                        class="img-fluid" alt="notifications">
+                                        class="img-fluid" alt="notifications" loading="lazy" decoding="async">
                                     <span class="live-icon" id="low_item_stock_count"></span>
                                     <span id="bell_feed_badge" style="display:none;"></span></a>
 
@@ -316,7 +316,7 @@
                             <div class="dropdown">
                                 <a class="dropdown-toggle" href="#" role="button" id="profilelink"
                                     data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><img src='/'
-                                        id="user-image" class="img-fluid rounded-circle" alt="profile"><span
+                                        id="user-image" class="img-fluid rounded-circle" alt="profile" loading="lazy" decoding="async"><span
                                         class="live-icon"><span class="user-name"></span></span><span
                                         class="feather icon-chevron-down live-icon"></span></a>
                                 <div class="dropdown-menu dropdown-menu-right" aria-labelledby="profilelink">
@@ -331,14 +331,14 @@
                                                 <a href="javascript:void(0)" id="change_profile"
                                                     onclick="PosnicPro.users.updateUserImageform();"
                                                     class="profile-icon"><img src="static/images/svg-icon/crm.svg"
-                                                        class="img-fluid" alt="profile">
+                                                        class="img-fluid" alt="profile" loading="lazy" decoding="async">
                                                     <lang class="lang_myacc_title">My Profile</lang>
                                                 </a>
                                             </li>
                                             <li class="media dropdown-item">
                                                 <a href="javascript:void(0)" id="change_password"
                                                     class="profile-icon"><img src="static/images/svg-icon/email.svg"
-                                                        class="img-fluid" alt="password">
+                                                        class="img-fluid" alt="password" loading="lazy" decoding="async">
                                                     <lang class="lang_password_title">Password</lang>
                                                 </a>
                                             </li>
@@ -349,7 +349,7 @@
                                             <li class="media dropdown-item" id="lock_screen_item" style="display:none;">
                                                 <a href="javascript:void(0)" id="lock_screen" class="profile-icon"><img
                                                         src="static/images/svg-icon/logout.svg" class="img-fluid"
-                                                        alt="lock">
+                                                        alt="lock" loading="lazy" decoding="async">
                                                     <lang class="lang_lock_title">Lock Screen</lang>
                                                     <small class="text-muted ml-1">Ctrl+L</small>
                                                 </a>
@@ -357,7 +357,7 @@
                                             <li class="media dropdown-item">
                                                 <a href="javascript:void(0)" id="logout" class="profile-icon"><img
                                                         src="static/images/svg-icon/logout.svg" class="img-fluid"
-                                                        alt="logout">
+                                                        alt="logout" loading="lazy" decoding="async">
                                                     <lang class="lang_logout_title">Logout</lang>
                                                 </a>
                                             </li>

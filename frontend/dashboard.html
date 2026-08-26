@@ -269,8 +269,7 @@
                                 __flight.stamp('nocss-applied');
                             } catch (e3) { }
                         });
-                    } else if (window.__mobileSafeMode && cd >= 3
-                            && !localStorage.getItem('posnic_fresh_boot')) {
+                    } else if (false) { /* PROBES DISARMED - the owner's device is not a lab */
                         try {
                             var FP = 'posnic_fn_probe';
                             var SKIPS = ['noapi', 'hold', 'all', 'menu', 'overview', 'store'];
@@ -879,7 +878,7 @@
                         <div class="modal-content">
                             <div class="modal-body">
                                 <div class="row justify-content-center">
-                                    <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" class='image_view' width='200' height='200' alt="NoImg">
+                                    <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" class='image_view' width='200' height='200' alt="NoImg" loading="lazy" decoding="async">
                                 </div>
                             </div>
                         </div>

@@ -891,7 +891,7 @@ PosnicPro.transactiondetails = {
                                     <td class="text-center">' + currency + '&nbsp;' + (saleTotal - salesPending) + '</td>\n\
                                     <td class="text-center">' + currency + '&nbsp;' + salesPending + '</td>\n\
                                     <td class="text-center">' + currency + '&nbsp;' + saleTotal + '</td>\n\
-                                    <td class="text-center"><img src=' + image_path + ' width=30 height=20 class="imagezoom" id="' + image_path + '" onclick="PosnicPro.viewImage(this.id,\'customers\');"></td>\n\
+                                    <td class="text-center"><img loading="lazy" decoding="async" src=' + image_path + ' width=30 height=20 class="imagezoom" id="' + image_path + '" onclick="PosnicPro.viewImage(this.id,\'customers\');"></td>\n\
                                     <td class="text-center">' + trash + '</td></tr>';
                         $('#view_customer_transaction_details').children('tbody').append(trow);
                         $('span.number').number(true, 2);

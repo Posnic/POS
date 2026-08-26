@@ -1703,7 +1703,7 @@ PosnicPro.kot = {
         }
 
         // Use table.png icon with gray filter
-        var tableIcon = '<img src="static/images/icons/table.png" width="40" height="40" style="opacity: 0.4; filter: grayscale(100%);" alt="Table">';
+        var tableIcon = '<img loading="lazy" decoding="async" src="static/images/icons/table.png" width="40" height="40" style="opacity: 0.4; filter: grayscale(100%);" alt="Table">';
 
         return `
             <div class="col-lg-6 col-xl-4 mb-4">
@@ -2695,7 +2695,7 @@ PosnicPro.kot = {
                                 <a href="javascript:void(0);" class="list-group-item list-group-item-action" 
                                    style="display: flex; align-items: center; padding: 10px; opacity: ${opacity}; cursor: ${cursor};" 
                                    ${clickAction}>
-                                    <img src="${imagePath}" style="width: 40px; height: 40px; border-radius: 4px; object-fit: cover; margin-right: 15px;">
+                                    <img loading="lazy" decoding="async" src="${imagePath}" style="width: 40px; height: 40px; border-radius: 4px; object-fit: cover; margin-right: 15px;">
                                     <div style="flex: 1;">
                                         <div class="d-flex justify-content-between align-items-center">
                                             <h6 class="mb-0" style="font-weight: 600;">${itemName} ${stockBadge}</h6>

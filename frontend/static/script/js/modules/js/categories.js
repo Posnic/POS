@@ -121,7 +121,7 @@ PosnicPro.categories = {
                     var trow = '<tr> \n\
                                 <th><input type="checkbox" class="categories-row-id" id="' + row._id + '" name="id[]" value="' + row._id + '" onclick="PosnicPro.checkboxSelectOne(this,\'categories\');"></th> <th scope="row">' + row_no + '</th>  \n\
                                 <td><a href="#/categories/' + row._id + '" ><i data-toggle="tooltip" class="table_model_item">' + row.name + '</i></a></td> \n\
-                                <td><img src=' + image_path + ' width=30 height=20 class="imagezoom" id="' + row.image + '" onclick="PosnicPro.viewImage(this.id,\'category\');"></td> \n\
+                                <td><img loading="lazy" decoding="async" src=' + image_path + ' width=30 height=20 class="imagezoom" id="' + row.image + '" onclick="PosnicPro.viewImage(this.id,\'category\');"></td> \n\
                                 <td class="text-right">' + discount_percentage + '</td> \n\
                                 <td class="text-center">' + description + '</td> ' +
                             '<td class="text-center"><span>' + action + '</span></td>' +

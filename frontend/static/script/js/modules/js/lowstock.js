@@ -49,7 +49,7 @@ PosnicPro.lowstockitems = {
                             '<a data-module = "receiving" data-access = "write" href="#/receivings/new"  id="' + row._id + '" data-id="receivings/new" onclick="PosnicPro.lowstockitems.loadLowStockValue(this.id)"  data-toggle="tooltip" title="Add Stock" class="point-cursor mobile_tooltip"><i class="feather icon-plus mr-2"></i></a>' +
                             '</div>' +
                             '<div data-toolbar="user-options" class="btn btn-round btn-primary-rgba round-pad" id="onclick-toolbar_' + i + '"><i class="feather icon-more-vertical-"></i></div>';
-                    var trow = '<tr> <td scope="row">' + row_no + '</td>  <td>' + row.name + '</td> <td><img src=' + image_path + ' class="imagezoom table_img_alter" id="' + row.image + '" onclick="PosnicPro.viewImage(this.id,\'item\');"></td> <td class="text-center">' + row.itemid + '</td> <td>' + row.supplier_name + '</td> <td>' + row.category_name + '</td> <td class="text-center">' + row.available_quantity + '</td> ' +
+                    var trow = '<tr> <td scope="row">' + row_no + '</td>  <td>' + row.name + '</td> <td><img loading="lazy" decoding="async" src=' + image_path + ' class="imagezoom table_img_alter" id="' + row.image + '" onclick="PosnicPro.viewImage(this.id,\'item\');"></td> <td class="text-center">' + row.itemid + '</td> <td>' + row.supplier_name + '</td> <td>' + row.category_name + '</td> <td class="text-center">' + row.available_quantity + '</td> ' +
                             '<td class="text-center"><span>' + action + '</span></td>' +
                             '</tr>';
                     $('#view_lowstockitems').children('tbody').append(trow);

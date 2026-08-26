@@ -85,7 +85,7 @@ PosnicPro.customersearch = {
                         app = app + '<div class="col-lg-6 col-xl-3">' +
                                 '<div class="product-bar m-b-30">' +
                                 '<div class="product-head">' +
-                                '<a href="javascript:void(0);" id="' + getItemdata[i]['_id'] + '" onclick="return PosnicPro.customersearch.viewCustomerViewItem(this.id);"><img src="' + image_path + '" class="img-fluid" alt="product"></a>' +
+                                '<a href="javascript:void(0);" id="' + getItemdata[i]['_id'] + '" onclick="return PosnicPro.customersearch.viewCustomerViewItem(this.id);"><img loading="lazy" decoding="async" src="' + image_path + '" class="img-fluid" alt="product"></a>' +
                                 '</div>' +
                                 '<div class="product-body py-3">' +
                                 '<div class="row align-items-center">' +
@@ -240,11 +240,11 @@ PosnicPro.customersearch = {
 
                     var image_path = val.name;
                     var image_effect_for = '<div class="product-preview">' +
-                            '<img src="' + image_path + '" class="img-fluid" style="height:270px" alt="Product">' +
+                            '<img loading="lazy" decoding="async" src="' + image_path + '" class="img-fluid" style="height:270px" alt="Product">' +
                             '</div>';
                     $('#item_display_preview_for').append(image_effect_for);
                     var image_effect_nav = '<div class="product-preview">' +
-                            '<img src="' + image_path + '" class="img-fluid" style="height:30px;width:75px" alt="Product">' +
+                            '<img loading="lazy" decoding="async" src="' + image_path + '" class="img-fluid" style="height:30px;width:75px" alt="Product">' +
                             '</div>';
                     $('#item_display_preview_nav').append(image_effect_nav);
 
@@ -252,7 +252,7 @@ PosnicPro.customersearch = {
                 if (data.multi_image.length === 0) {
                     var image_path = 'static/images/default/item.svg';
                     var image_effect_for = '<div class="product-preview">' +
-                            '<img src="' + image_path + '" class="img-fluid" style="height:270px" alt="Product">' +
+                            '<img loading="lazy" decoding="async" src="' + image_path + '" class="img-fluid" style="height:270px" alt="Product">' +
                             '</div>';
                     $('#item_display_preview_for').append(image_effect_for);
                 }
@@ -420,7 +420,7 @@ $(function () {
             var listItem = '<div class="col-lg-6 col-xl-3">' +
                     '<div class="product-bar m-b-30">' +
                     '<div class="product-head">' +
-                    '<a href="javascript:void(0);" id="' + suggestion.data.item_id + '" onclick="return PosnicPro.customersearch.viewCustomerViewItem(this.id);"><img src="' + image_path + '" class="img-fluid" alt="product"></a>' +
+                    '<a href="javascript:void(0);" id="' + suggestion.data.item_id + '" onclick="return PosnicPro.customersearch.viewCustomerViewItem(this.id);"><img loading="lazy" decoding="async" src="' + image_path + '" class="img-fluid" alt="product"></a>' +
                     '</div>' +
                     '<div class="product-body py-3">' +
                     '<div class="row align-items-center">' +
@@ -531,7 +531,7 @@ $(function () {
             var action = '' + final_price + '' +
                     '' + del_price + '';
             var image_path = (data !== "item.svg") ? data : 'static/images/default/item.svg';
-            return '<img src="' + image_path + '" height="40" width="40" style="border-radius: 25%;" /> ' +
+            return '<img loading="lazy" decoding="async" src="' + image_path + '" height="40" width="40" style="border-radius: 25%;" /> ' +
                     '<div class="suggestion-name">' +
                     $.Autocomplete.formatResult(suggestion, currentValue) +
                     '</div><span>' + action + '</span>';

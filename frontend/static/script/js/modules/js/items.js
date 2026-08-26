@@ -378,7 +378,7 @@ PosnicPro.items = {
                             '<input type="checkbox" id="kiosk_' + row._id + '" class="kiosk-toggle" ' + isChecked + '>' +
                             '<span class="slider round"></span>' +
                             '</label>';
-                    var trow = '<tr> <th><input type="checkbox" class="items-row-id" id="' + row._id + '" name="id[]" value="' + row._id + '" onclick="PosnicPro.checkboxSelectOne(this,\'items\');"></th> <th scope="row" data-label="#">' + row_no + '</th>  <td width="30%" data-label="Name"><a href="#/items/' + row._id + '"><i class="table_model_item">' + row.name + '</i></a></td> <td>' + (_listTile !== '' ? _listTile : '<img src=' + image_path + ' width=30 height=20 class="imagezoom" id="' + row.image + '" onerror="this.onerror=null;this.src=\'static/images/default/item.svg\';" onclick="PosnicPro.viewImage(this.id,\'item\');">') + '</td> <td class="text-center" data-label="Item ID">' + row.itemid + '</td> <td class="text-right" data-label="Stock">' + row.available_quantity + ' ' + item_unit + '</td> <td class="text-center" data-label="Status"><span class="' + process_class + '">' + row.item_status + '</span></td> <td class="text-right" data-label="Price">' + currency + '&nbsp;<span class="number">' + row.selling_price + '</span></td> ' +
+                    var trow = '<tr> <th><input type="checkbox" class="items-row-id" id="' + row._id + '" name="id[]" value="' + row._id + '" onclick="PosnicPro.checkboxSelectOne(this,\'items\');"></th> <th scope="row" data-label="#">' + row_no + '</th>  <td width="30%" data-label="Name"><a href="#/items/' + row._id + '"><i class="table_model_item">' + row.name + '</i></a></td> <td>' + (_listTile !== '' ? _listTile : '<img loading="lazy" decoding="async" src=' + image_path + ' width=30 height=20 class="imagezoom" id="' + row.image + '" onerror="this.onerror=null;this.src=\'static/images/default/item.svg\';" onclick="PosnicPro.viewImage(this.id,\'item\');">') + '</td> <td class="text-center" data-label="Item ID">' + row.itemid + '</td> <td class="text-right" data-label="Stock">' + row.available_quantity + ' ' + item_unit + '</td> <td class="text-center" data-label="Status"><span class="' + process_class + '">' + row.item_status + '</span></td> <td class="text-right" data-label="Price">' + currency + '&nbsp;<span class="number">' + row.selling_price + '</span></td> ' +
                             '<td class="text-center kiosk-column">' + kioskToggle + '</td>' + '<td class="text-center"><span>' + action + ' </span></td></tr>';
 
                     $('#view_items').children('tbody').append(trow);
@@ -1165,7 +1165,7 @@ PosnicPro.items = {
             $('#item-image-tab').show();
             $('#show_product_image').show();
             var image_path = val.name;
-            let img = jQuery('<img class="imagezoom item_tab_images" id="' + image_path + '" src="" style="height:150px; width:150px;border: 2px solid #ccc;border-radius: 10px;padding:5px;margin-right: 20px;" onclick="PosnicPro.viewImage(this.id);">');
+            let img = jQuery('<img loading="lazy" decoding="async" class="imagezoom item_tab_images" id="' + image_path + '" src="" style="height:150px; width:150px;border: 2px solid #ccc;border-radius: 10px;padding:5px;margin-right: 20px;" onclick="PosnicPro.viewImage(this.id);">');
             img.attr('src', image_path);
             $('#item_view_image').append(img);
         });
@@ -1424,7 +1424,7 @@ PosnicPro.items = {
 
                     $('#item-display-preview').append(
                             '<div id="selector_' + key + '" class="receiving-image-wrapper image-area" style="position: relative;"> \
-                        <img class="image_style" class="img-thumbnail" src="' + image_path + '" \
+                        <img loading="lazy" decoding="async" class="image_style" class="img-thumbnail" src="' + image_path + '" \
                         title="' + escape(val.name) + '" /><br /> \
                     <span id="coverimage_selector_' + key + '" class="coverImageAdd" style="display: block;border: 1px solid #ddd;border-radius: 5px;margin-top: 2px; background: #506fe4; color: #fff" onclick="PosnicPro.items.coverImageEdit(this.id,\'' + key + '\',\'' + val.name + '\',\'' + val.size + '\')">Choose Cover</span><a class="remove-image" style="cursor:pointer;display: inline;position: absolute; top: -10px; right: -10px; border-radius: 10em; padding: 2px 6px 3px; text-decoration: none; font: 700 21px/20px sans-serif; background: #f48787; border: 3px solid #fff; color: #FFF; box-shadow: 0 2px 6px rgba(0,0,0,0.5), inset 0 2px 4px rgba(0,0,0,0.3); text-shadow: 0 1px 2px rgba(0,0,0,0.5); -webkit-transition: background 0.5s; transition: background 0.5s;" onclick="PosnicPro.items.image_edit_remove_selected(\'' + key + '\',\'' + val.name + '\')">&#215;</a> \
                         </div>');
@@ -1984,7 +1984,7 @@ PosnicPro.items = {
                     });
                     $('#item-display-preview').append(
                             '<div id="selector_' + key + '" class="receiving-image-wrapper image-area" style="position: relative;"> \
-                        <img class="image_style" class="img-thumbnail" src="' + image_path + '" \
+                        <img loading="lazy" decoding="async" class="image_style" class="img-thumbnail" src="' + image_path + '" \
                         title="' + escape(val.name) + '" /><br /> \
                     <span id="coverimage_selector_' + key + '" class="coverImageAdd" style="display: block;border: 1px solid #ddd;border-radius: 5px;margin-top: 2px; background: #506fe4; color: #fff" onclick="PosnicPro.items.coverImageEdit(this.id,\'' + key + '\',\'' + val.name + '\',\'' + val.size + '\')">Choose Cover</span><a class="remove-image" style="cursor:pointer;display: inline;position: absolute; top: -10px; right: -10px; border-radius: 10em; padding: 2px 6px 3px; text-decoration: none; font: 700 21px/20px sans-serif; background: #f48787; border: 3px solid #fff; color: #FFF; box-shadow: 0 2px 6px rgba(0,0,0,0.5), inset 0 2px 4px rgba(0,0,0,0.3); text-shadow: 0 1px 2px rgba(0,0,0,0.5); -webkit-transition: background 0.5s; transition: background 0.5s;" onclick="PosnicPro.items.image_edit_remove_selected(\'' + key + '\',\'' + val.name + '\')">&#215;</a> \
                         </div>');
@@ -2891,7 +2891,7 @@ PosnicPro.items = {
                 $('#item_upload_image_status').val('yes');
                 $('#item-display-preview').append(
                         '<div id="selector_' + count + '" class="receiving-image-wrapper image-area" style="position: relative;"> \
-                        <img class="image_style" class="img-thumbnail" src="' + e.target.result + '" \
+                        <img loading="lazy" decoding="async" class="image_style" class="img-thumbnail" src="' + e.target.result + '" \
                         title="' + escape(file_data.name) + '" /><br /> \
                             <span id="coverimage_selector_' + count + '" class="coverImageAdd" style="display: block;border: 1px solid #ddd;border-radius: 5px;margin-top: 2px; background: #506fe4; color: #fff" onclick="PosnicPro.items.coverImage(this.id,\'' + count + '\',\'' + file_data.name + '\',\'' + file_data.size + '\',\'' + fileImage + '\')">Choose Cover</span><a class="remove-image" style="cursor:pointer;display: inline;position: absolute; top: -10px; right: -10px; border-radius: 10em; padding: 2px 6px 3px; text-decoration: none; font: 700 21px/20px sans-serif; background: #f48787; border: 3px solid #fff; color: #FFF; box-shadow: 0 2px 6px rgba(0,0,0,0.5), inset 0 2px 4px rgba(0,0,0,0.3); text-shadow: 0 1px 2px rgba(0,0,0,0.5); -webkit-transition: background 0.5s; transition: background 0.5s;" onclick="PosnicPro.items.image_remove_selected(\'' + count + '\',\'' + file_data.name + '\')">&#215;</a> \
                         </div>');

@@ -92,7 +92,7 @@ PosnicPro.whatsapp = {
                     
                     if (qr_code) {
                         // Display QR code
-                        $('#whatsapp_qr_code').html(`<img src="${qr_code}" alt="WhatsApp QR Code" style="max-width:300px;">`);
+                        $('#whatsapp_qr_code').html(`<img loading="lazy" decoding="async" src="${qr_code}" alt="WhatsApp QR Code" style="max-width:300px;">`);
                         
                         // Start status checking
                         clearInterval(this.qrCheckInterval);
@@ -177,7 +177,7 @@ PosnicPro.whatsapp = {
                 
                 // Display QR code
                 $('#whatsapp_qr_code').html(`
-                    <img src="${response.data.qr_code}" alt="WhatsApp QR Code" style="max-width:300px; border:1px solid #ddd; padding:10px; border-radius:8px;">
+                    <img loading="lazy" decoding="async" src="${response.data.qr_code}" alt="WhatsApp QR Code" style="max-width:300px; border:1px solid #ddd; padding:10px; border-radius:8px;">
                     <p class="mt-3 text-muted">Scan this QR code with WhatsApp on your phone</p>
                 `);
                 
