@@ -39,6 +39,7 @@
  * moment a report route is actually entered - which also runs before the
  * chunk's own top-level code can look for its markup.
  */
+var __panesInflatedLate = false;
 function __posnicInflatePanes() {
     document.querySelectorAll('template.pane-defer').forEach(function (tpl) {
         if (tpl.content && tpl.content.firstChild) {
@@ -49,9 +50,50 @@ function __posnicInflatePanes() {
             tpl.insertAdjacentHTML('beforebegin', tpl.__paneHtml);
             tpl.__paneHtml = null;
             tpl.remove();
+            __panesInflatedLate = true;
         } else {
             tpl.remove();
         }
+    });
+}
+
+/*
+ * A pane inflated after boot missed every boot-time BROADCAST: the branch
+ * fill (setBranchDropdownOption writes every .load-select-branch select on
+ * the page - the Day-End report's own filter among them), the tax fill,
+ * the currency signs, the date pickers. The owner's first phone report
+ * after the furl: "i dont see any details inside" - the report's guard
+ * read its empty branch select and silently returned.
+ *
+ * So inflation owes a repair, and the branch fill must COMPLETE before a
+ * report can run its guard - it is awaited inside the reports chunk's
+ * load promise; the rest may land eventually.
+ */
+function __posnicRepairInflatedPanes() {
+    if (!__panesInflatedLate) { return Promise.resolve(); }
+    __panesInflatedLate = false;
+    try { $('.display-currency').html(PosnicPro.local.get('currencySign') || ''); } catch (e) { }
+    /* selects born after boot never met select2 - the branch setter calls
+       .select2('val', ...) and select2 throws at uninitialised elements */
+    try {
+        $('select.select2').each(function () {
+            if (!$(this).data('select2')) { $(this).select2(); }
+        });
+    } catch (e) { }
+    try { PosnicPro.dashboard.datePicker(); } catch (e) { }
+    try { PosnicPro.getBranchTaxList(); } catch (e) { }
+    return new Promise(function (resolve) {
+        var done = function () { resolve(); };
+        try {
+            PosnicPro.get('branches/getBranchList', function (response) {
+                try {
+                    if (response.type === 'success') {
+                        PosnicPro.setBranchDropdownOption(response.data);
+                    }
+                } catch (e) { }
+                done();
+            }, done);
+        } catch (e) { done(); }
     });
 }
 window.__posnicInflatePanes = __posnicInflatePanes;
@@ -804,6 +846,11 @@ PosnicPro = {
             var p = files.reduce(function (prev, url) {
                 return prev.then(function () { return PosnicPro.lazy._script(url); });
             }, Promise.resolve());
+            if (name === 'reports') {
+                /* the late panes' broadcasts (branch fill above all) must be
+                   in place before the router runs a report's own code */
+                p = p.then(function () { return __posnicRepairInflatedPanes(); });
+            }
             p = p.catch(function (err) {
                 /* A failed load must be retryable on the next click, never
                    cached as forever-broken. */
