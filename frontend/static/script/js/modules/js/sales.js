@@ -7000,7 +7000,7 @@ PosnicPro.sales.itemsMenu = {
                         } else {
                             price = getItemdata[i]['selling_price']
                         }
-                        var image_path = (getItemdata[i]['image'] !== "item.svg") ? getItemdata[i]['image'] : 'static/images/default/' + getItemdata[i]['image'];
+                        var image_path = (getItemdata[i]['image'] && getItemdata[i]['image'] !== "item.svg") ? getItemdata[i]['image'] : 'static/images/default/item.svg';
                         let timeZone = PosnicPro.timeZone();
                         let dateTime = new Date().getTime();
                         let currentDateTimeCentralTimeZone = moment(dateTime).tz(timeZone).format('YYYY/MM/DD hh:mm A');
@@ -7725,9 +7725,7 @@ PosnicPro.sales.categoryMenu = {
                     for (var i = 0; i < categorydata.length; i++) {
 
                         var list_category_name = categorydata[i]['category_name'];
-                        var image_path = (categorydata[i]['category_img'] !== "category.svg")
-                            ? categorydata[i]['category_img']
-                            : 'static/images/default/' + categorydata[i]['category_img'];
+                        var image_path = (categorydata[i]['category_img'] && categorydata[i]['category_img'] !== "category.svg") ? categorydata[i]['category_img'] : 'static/images/default/category.svg';
                         var _cat = PosnicPro.sales._catTiles[String(categorydata[i]['id'] || '')];
 
                         app += '<div class="wsk-cp cbutton--effect-novak col-lg-3 col-md-4 col-sm-6 col-12 mb-3" ' +
