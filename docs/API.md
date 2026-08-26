@@ -178,7 +178,7 @@ Mounted at `/client-errors`. Source: `api/src/routes/client-errors.routes.js`.
 
 | Method | Path | Body documented | Handler |
 |---|---|---|---|
-| GET | `/client-errors/recent` | — | `restart` |
+| GET | `/client-errors/recent` | — | `yet` |
 | POST | `/client-errors` | — | `res.status` |
 
 ### Common pdf

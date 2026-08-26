@@ -2386,7 +2386,7 @@
     },
     "/client-errors/recent": {
       "get": {
-        "summary": "restart",
+        "summary": "yet",
         "operationId": "get_client_errors_recent",
         "tags": [
           "Client errors"
