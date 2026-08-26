@@ -64,6 +64,11 @@ class Email {
 
   // Send the actual email
   async send(template, subject) {
+    /* the public demo sends nothing anywhere - see config/demo-mode.js */
+    if (require('../config/demo-mode').isDemoMode()) {
+      console.info('[demo] email suppressed:', subject);
+      return;
+    }
     /*
      * The shared layout, same as every document mail - the auth mails were
      * the last two still wearing the scaffold pug files. The body copy

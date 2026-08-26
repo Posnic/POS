@@ -77,13 +77,25 @@ test('no shipped page loads an analytics or error-reporting script', () => {
   );
 });
 
-test('the API content-security-policy does not allow a telemetry host', () => {
+test('the BASE content-security-policy does not allow a telemetry host', () => {
   const app = fs.readFileSync(path.join(ROOT, 'api', 'app.js'), 'utf8');
 
-  // Only the directives matter. The explanatory comment above them names the
-  // hosts on purpose - it is the record of why they were removed - so strip
-  // comment lines before looking.
-  const directives = app
+  /*
+   * The contract evolved with the owner's Google Analytics FEATURE
+   * (2026-08-27, "make it as feature. on / off with entering GA value"):
+   * an opt-in toggle whose id belongs to the shop. The promise this pin
+   * guards is unchanged where it matters - the policy an UNCONFIGURED
+   * shop serves must never name a telemetry host. The Google domains may
+   * appear ONLY inside the gaCspDirectives variant, which the server
+   * serves exclusively while the shop's own toggle is on, and the
+   * dispatch between the two must exist.
+   */
+  const gaStart = app.indexOf('const gaCspDirectives');
+  assert.ok(gaStart !== -1, 'the GA CSP variant vanished - did the feature move?');
+  const gaEnd = app.indexOf('};', gaStart) + 2;
+  const outsideGaBlock = app.slice(0, gaStart) + app.slice(gaEnd);
+
+  const directives = outsideGaBlock
     .split('\n')
     .filter((line) => !line.trim().startsWith('//'))
     .join('\n');
@@ -92,9 +104,12 @@ test('the API content-security-policy does not allow a telemetry host', () => {
   assert.deepStrictEqual(
     allowed,
     [],
-    `CSP allowlists ${allowed.join(', ')}. A page could load a script from ` +
-      'there, which is what the loader used to do.',
+    `The base CSP (or anything outside gaCspDirectives) allowlists ${allowed.join(', ')}. ` +
+      'Only the opt-in GA variant may name Google, and only inside its own block.',
   );
+
+  /* the dispatch that keeps the base policy the default */
+  assert.match(app, /a\.enabled \? helmetGa : helmetBase/);
 });
 
 test('no analytics or crash-reporting package is a dependency', () => {

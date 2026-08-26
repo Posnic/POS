@@ -220,6 +220,7 @@ app.get('/api/runtime-info', async (req, res) => {
   } catch (e) {
     info.analytics = { enabled: false, id: '' };
   }
+  info.demo = require('./src/config/demo-mode').isDemoMode();
   return res.status(200).json(info);
 });
 app.get('/runtime-info', async (req, res) => {
@@ -230,6 +231,7 @@ app.get('/runtime-info', async (req, res) => {
   } catch (e) {
     info.analytics = { enabled: false, id: '' };
   }
+  info.demo = require('./src/config/demo-mode').isDemoMode();
   return res.status(200).json(info);
 });
 

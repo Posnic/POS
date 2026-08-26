@@ -1,5 +1,6 @@
 const { loginLimiter, registerLimiter } = require('../middleware/auth-rate-limit');
 const express = require('express');
+const { demoGuard } = require('../config/demo-mode');
 const router = express.Router();
 const userController = require('../controllers/users.controller');
 const { protect } = require('../middleware/auth');
@@ -20,6 +21,7 @@ const bindController = (handler) => handler.bind(userController);
 // Public routes
 router.post(
   '/register',
+  demoGuard,
   registerLimiter,
   validateUser,
   handleValidationErrors,
@@ -67,6 +69,7 @@ router.get('/getUserKeyDetails', bindController(userController.getUserKeyDetails
 // PHP: updateNewPassword() - Update password using forgot password key (public)
 router.post(
   '/updateNewPassword',
+  demoGuard,
   validatePasswordUpdate,
   handleValidationErrors,
   bindController(userController.updateNewPassword)
@@ -115,7 +118,7 @@ router.patch('/update-me', upload.single('photo'), (req, res) => {
 router.patch('/update-password', bindController(userController.updatePassword));
 
 // Deactivate account
-router.delete('/deactivate-me', (req, res) => {
+router.delete('/deactivate-me', demoGuard, (req, res) => {
   req.params = { id: req.user._id };
   return userController.delete(req, res);
 });
@@ -129,7 +132,7 @@ router
 
 // Legacy route aliases for frontend compatibility
 router.get('/listAll', bindController(userController.getAll));
-router.delete('/delete', bindController(userController.delete));
+router.delete('/delete', demoGuard, bindController(userController.delete));
 
 // Legacy report route that frontend still requests under /users
 router.get('/userstatusReportTable', bindController(userController.userstatusReportTable));
@@ -165,6 +168,7 @@ router.get('/printType', bindController(userController.printType));
 // PHP: userProfile() - Update user profile
 router.post(
   '/userProfile',
+  demoGuard,
   validateUserProfile,
   handleValidationErrors,
   bindController(userController.userProfile)
