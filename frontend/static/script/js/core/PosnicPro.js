@@ -3630,6 +3630,20 @@ PosnicPro = {
     },
 
     appendViewDataTableBody: function (table) {
+        /*
+         * Sweep the row-menu popups before the list re-renders.
+         *
+         * jquery.toolbar appends a `.tool-container` straight to <body> for
+         * EVERY row's action button and ships no destroy method, so each
+         * re-render orphaned another set - measured at ~196 detached nodes
+         * per navigation cycle that were never released. Worse, the plugin
+         * re-binds its handlers to `$('.tool-container')` (all of them) on
+         * every init, so the cost compounds with each orphan left behind.
+         * Every list render passes through here, and every container is
+         * rebuilt per row anyway, so clearing them here is both safe and
+         * the only place that catches all 14 lists.
+         */
+        $('body > .tool-container').remove();
         $('#BackupReportName').html(table + ' Document').css('textTransform', 'capitalize').show();
         var TableBody = {
             'sales': '<tr><th><input name="sales-select-all" type="checkbox" onclick="PosnicPro.checkboxSelectAll(this,\'sales\');"></th><th>#</th><th>Id</th><th>Date</th><th width="20%">Customer</th><th class="text-right table-phone-hide">Phone</th><th class="text-center table-number-hide">Table</th><th class="text-center order-type-column" width="10%">Order Type</th><th class="text-center">Process</th><th class="text-right">Price</th><th width="20%">Payment status</th><th class="text-center" width="16%">Actions</th></tr>',
