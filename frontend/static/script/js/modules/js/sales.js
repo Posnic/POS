@@ -6905,7 +6905,7 @@ PosnicPro.sales.itemsMenu = {
     /*sales Product Display*/
     onlineProductList: function () {
         /* crash-hunt probe gate: skippable render */
-        if (window.__posnicSkip === 'menu') { return; }
+        if (window.__posnicSkip === 'menu' || window.__posnicSkip === 'all') { return; }
         var loader = $(".loader-product");
         $("<div class='loadingSpinner'></div>").appendTo(loader);
         $('#sales_new_productList').show();
