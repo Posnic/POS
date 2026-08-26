@@ -275,7 +275,22 @@ class SettingsRepository extends BaseModel {
            Stored verbatim they read as ENABLED through every `!== false`
            gate - the all-toggles-on incident. The boolean is stored, so no
            reader ever meets the string. null still means inherit. */
-        accepted[key] = group === 'features' ? coerceFeatureToggle(value) : value;
+        if (key === 'analytics_enable') {
+          /* same string-boolean trap as the feature toggles */
+          accepted[key] = coerceFeatureToggle(value);
+        } else if (key === 'analytics_ga_id') {
+          const id = String(value == null ? '' : value).trim().toUpperCase();
+          if (id !== '' && !require('../services/analytics-config').isPlausibleGaId(id)) {
+            return {
+              status: false,
+              data: null,
+              message: 'The Google Analytics id should look like G-XXXXXXXXXX',
+            };
+          }
+          accepted[key] = id;
+        } else {
+          accepted[key] = group === 'features' ? coerceFeatureToggle(value) : value;
+        }
       } else {
         rejected.push(key);
       }
@@ -333,6 +348,16 @@ class SettingsRepository extends BaseModel {
       if (!isAccount && Object.keys(toSet).length) {
         const branches = await this.getCollection('branches');
         await branches.updateOne({ _id: ids.branch, license: ids.license }, { $set: toSet });
+      }
+
+      /* the CSP + runtime-info read analytics through a 30s cache - a
+         toggle must bite on the very next request */
+      if (group === 'preferences') {
+        try {
+          require('../services/analytics-config').invalidate();
+        } catch (e) {
+          /* the cache TTL still catches up */
+        }
       }
 
       return {

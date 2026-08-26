@@ -7061,3 +7061,44 @@ $(document).on('click', '#v-pills-kiosk-tab, #manage_sec_kiosk', function () {
         $(this).attr('src', $(this).attr('data-defer-src')).removeAttr('data-defer-src');
     });
 });
+
+
+/*
+ * The Analytics card (Integrations tab). Loaded when its sub-tab is opened,
+ * saved through the preferences group endpoint - the same door every other
+ * grouped setting uses, so validation and the CSP cache invalidation happen
+ * server-side in one place. Delegated handlers only: this pane lives inside
+ * the settings screen and direct bindings at load are the dead-selector trap.
+ */
+$(document).on('shown.bs.tab', 'a[href="#int-sub-analytics"]', function () {
+    PosnicPro.get({ url: 'settings/group/preferences' }, function (response) {
+        if (response.type !== 'success' || !response.data) { return; }
+        var v = response.data.values || response.data;
+        $('#analytics_enable').prop('checked', v.analytics_enable === true || v.analytics_enable === 'true');
+        $('#analytics_ga_id').val(v.analytics_ga_id || '');
+        $('#analytics_saved_note').hide();
+    }, function () { /* the card still lets you type and save */ });
+});
+
+$(document).on('click', '#analytics_save', function () {
+    var payload = {
+        analytics_enable: $('#analytics_enable').is(':checked'),
+        analytics_ga_id: String($('#analytics_ga_id').val() || '').trim().toUpperCase()
+    };
+    if (payload.analytics_enable && !/^G-[A-Z0-9]{4,14}$/.test(payload.analytics_ga_id)) {
+        PosnicPro.alert('error', 'The Google Analytics id should look like G-XXXXXXXXXX');
+        return;
+    }
+    PosnicPro.put({
+        url: 'settings/group/preferences',
+        data: JSON.stringify(payload)
+    }, function (response) {
+        if (response.type === 'success') {
+            $('#analytics_saved_note').show();
+        } else {
+            PosnicPro.alert(response.type, response.message);
+        }
+    }, function () {
+        PosnicPro.alert('error', 'Could not save the analytics settings');
+    });
+});
