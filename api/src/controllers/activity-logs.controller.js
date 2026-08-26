@@ -1,4 +1,5 @@
 const activityLogger = require('../utils/activityLogger');
+const { clientIp } = require('../utils/client-ip');
 const catchAsync = require('../utils/catchAsync');
 const { AppError } = require('../utils/appError');
 const mongoose = require('mongoose');
@@ -156,7 +157,7 @@ exports.createActivityLog = catchAsync(async (req, res, next) => {
     entity: req.body.entity,
     entityId: req.body.entityId,
     details: req.body.details,
-    ipAddress: req.ip,
+    ipAddress: clientIp(req),
     userAgent: req.get('user-agent'),
     ...(scope || {}),
   });

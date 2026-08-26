@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const { clientIp } = require('../utils/client-ip');
 const { promisify } = require('util');
 const { authCookieOptions } = require('../utils/auth-cookie');
 /* Per request. A signing key read once at module load is the process's key,
@@ -119,7 +120,7 @@ const createAndSendToken = async (user, statusCode, res, req) => {
         login_time: loginTime,
         logout_time: null,
         is_active: true,
-        ip_address: req.ip || '127.0.0.1',
+        ip_address: clientIp(req),
         created_date: loginTime,
       };
 
