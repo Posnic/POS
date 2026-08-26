@@ -18,29 +18,34 @@
  * Cached for 30 seconds; the settings save invalidates on write, so a
  * toggle bites on the next request rather than the next half minute.
  */
-const { MongoClient } = require('mongodb');
+const mongoose = require('mongoose');
 
 const TTL_MS = 30 * 1000;
 const GA_ID_SHAPE = /^G-[A-Z0-9]{4,14}$/;
 
 let cache = { at: 0, value: { enabled: false, id: '' } };
-let dbPromise = null;
 
 function isPlausibleGaId(id) {
-  return GA_ID_SHAPE.test(String(id || '').trim().toUpperCase());
+  return GA_ID_SHAPE.test(
+    String(id || '')
+      .trim()
+      .toUpperCase()
+  );
 }
 
-async function db() {
-  if (!dbPromise) {
-    const uri = process.env.MONGODB_URI || process.env.MONGO_URL;
-    dbPromise = MongoClient.connect(uri).then((c) => c.db());
-  }
-  return dbPromise;
+/* The app's ONE connection, not a private client - a connection per module
+   is a pool per module, and the single-entry-point pin rightly refuses it.
+   Before mongoose is connected this returns null and the feature reads as
+   OFF, which is the correct answer for a server still booting. */
+function db() {
+  const c = mongoose.connection;
+  return c && c.readyState === 1 ? c.db : null;
 }
 
 async function readOnce() {
   try {
-    const d = await db();
+    const d = db();
+    if (!d) return { enabled: false, id: '' };
     const row = await d
       .collection('branch_preferences')
       .findOne({ analytics_enable: true, analytics_ga_id: { $type: 'string' } });

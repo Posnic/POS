@@ -1,5 +1,6 @@
 const { passwordResetLimiter } = require('../middleware/auth-rate-limit');
 const express = require('express');
+const { demoGuard } = require('../config/demo-mode');
 const router = express.Router();
 require('express-validator');
 const { protect } = require('../middleware/auth');
@@ -51,6 +52,7 @@ router.get('/getJSONTimeZone', referenceCache, bindController(settingController.
 // Legacy unauthenticated endpoints expected under /setting
 router.post(
   '/forgotPassword',
+  demoGuard,
   passwordResetLimiter,
   bindController(settingController.forgotPassword)
 );
@@ -273,6 +275,7 @@ router.get('/updateSupplierSettings', bindController(settingController.updateSup
 // PHP: Password routes
 router.post(
   '/changePassword',
+  demoGuard,
   validateChangePassword,
   handleValidationErrors,
   bindController(settingController.changePassword)

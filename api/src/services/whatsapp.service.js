@@ -210,6 +210,9 @@ class WhatsAppService extends EventEmitter {
   }
 
   async sendMessage(deviceId, branchId, phoneNumber, message) {
+    if (require('../config/demo-mode').isDemoMode()) {
+      return { status: false, message: require('../config/demo-mode').DEMO_BLOCKED_MESSAGE };
+    }
     const clientKey = this._clientKey(deviceId, branchId);
     const client = this.clients.get(clientKey);
 
