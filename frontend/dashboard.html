@@ -194,6 +194,19 @@
                         } catch (eb) { }
                     }
                     var BK = 'posnic_css_bisect';
+                    /* A CHANGED stylesheet gets a fresh chance: the fix for
+                       what killed the old one deserves a normal styled boot,
+                       not an immediate re-probe. The death streak resets
+                       when the css hash moves. */
+                    try {
+                        var cssLink = document.querySelector('link[href*="style/dashboard."]');
+                        var cssId = cssLink ? cssLink.getAttribute('href') : '';
+                        if (cssId && localStorage.getItem('posnic_css_seen') !== cssId) {
+                            localStorage.setItem('posnic_css_seen', cssId);
+                            localStorage.setItem(K + '_cdeaths', '0');
+                            cd = 0;
+                        }
+                    } catch (e17) { }
                     var probeNow = location.search.indexOf('nocss=1') !== -1 || (window.__mobileSafeMode && cd >= 3);
                     if (probeNow) {
                         rec.probe = 'bisect';
