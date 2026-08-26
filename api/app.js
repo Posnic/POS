@@ -130,6 +130,23 @@ const cspDirectives = {
     'http://127.0.0.1:5555',
   ],
 };
+
+/*
+ * upgrade-insecure-requests comes in with helmet's default directives. On
+ * the https production origin it is right; on a plain-http origin it
+ * rewrites every asset fetch to https://<same-host> and the page loads
+ * nothing. localhost is exempt (browsers treat it as trustworthy), which is
+ * why this only ever bites when the local copy is opened from another
+ * device - the owner's phone on the LAN (http://192.168.1.11:5055) got raw
+ * HTML with every script and stylesheet red in the network tab.
+ */
+if (process.env.NODE_ENV !== 'production') {
+  /* null, not delete: helmet merges these onto its defaults (useDefaults),
+     so a missing key silently comes back - null is the documented way to
+     switch a default directive off. */
+  cspDirectives['upgrade-insecure-requests'] = null;
+}
+
 app.use(
   helmet({
     contentSecurityPolicy: {
