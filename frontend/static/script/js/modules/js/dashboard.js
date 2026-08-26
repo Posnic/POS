@@ -923,6 +923,8 @@ PosnicPro.dashboard = {
         $('#kpi_period_label').text('(' + PosnicPro.dashboard.periodLabel(filter) + ')');
 
         PosnicPro.get({ url: 'dashboard/getOverview', data: { filter: filter } }, function (response) {
+            /* crash-hunt probe gate: skippable render */
+            if (window.__posnicSkip === 'overview') { return; }
             if (response.type !== 'success' || !response.data) {
                 $(PosnicPro.dashboard.KPI_IDS).html('&mdash;');
                 return;

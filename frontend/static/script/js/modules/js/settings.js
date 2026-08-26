@@ -5594,6 +5594,8 @@ PosnicPro.features = {
                  * EXPLICIT values, so it is the only safe source to merge.
                  */
                 PosnicPro.get({ url: 'branches/getOneStore', data: 'id=null' }, function (response) {
+                    /* crash-hunt probe gate: skippable render */
+                    if (window.__posnicSkip === 'store') { return; }
                     var d = (response && response.data) || {};
                     var b = PosnicPro.features._blob();
                     PosnicPro.features.INTRO.forEach(function (f) {
