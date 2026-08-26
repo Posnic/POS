@@ -2,7 +2,6 @@
     "dashboard": {
         "css": [
             "static/style/plugins/toolbar/jquery.toolbar.css",
-            "static/style/plugins/apexcharts/apexcharts.css",
             "static/style/css/bootstrap.min.css",
             "static/style/css/icons.css",
             "static/style/css/flag-icon.min.css",
