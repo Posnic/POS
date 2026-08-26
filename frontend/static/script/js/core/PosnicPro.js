@@ -41,12 +41,36 @@
  */
 function __posnicInflatePanes() {
     document.querySelectorAll('template.pane-defer').forEach(function (tpl) {
-        tpl.replaceWith(tpl.content);
+        if (tpl.content && tpl.content.firstChild) {
+            tpl.replaceWith(tpl.content);
+        } else if (tpl.__paneHtml) {
+            /* phone path: the pane lives as a STRING - parse it back into
+               exactly the spot the template holds */
+            tpl.insertAdjacentHTML('beforebegin', tpl.__paneHtml);
+            tpl.__paneHtml = null;
+            tpl.remove();
+        } else {
+            tpl.remove();
+        }
     });
 }
 window.__posnicInflatePanes = __posnicInflatePanes;
 if (!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches)) {
     __posnicInflatePanes();
+} else {
+    /*
+     * The honest phone win is NODE MEMORY, and a template's content is
+     * still 6,442 parsed nodes - display:none panes never had render
+     * boxes to save. So on a phone the furled panes are demoted further:
+     * each template keeps its pane as one STRING (bytes, roughly a tenth
+     * of the same markup as live nodes) and the parsed fragment is
+     * dropped for the collector. The empty template element stays as the
+     * position marker; inflation parses the string back into place.
+     */
+    document.querySelectorAll('template.pane-defer').forEach(function (tpl) {
+        tpl.__paneHtml = tpl.innerHTML;
+        tpl.innerHTML = '';
+    });
 }
 
 PosnicPro = {
