@@ -1,4 +1,6 @@
 PosnicPro.settings = {
+    /* which reference lists have been fetched this session */
+    _refLoaded: {},
     store_telephone: null,
     /*
      * #/settings/<x> serves two callers: a 24-hex Mongo id is a recycle-bin
@@ -2187,7 +2189,18 @@ if ($("#sale_quick_edit").is(":checked")) {
             $(".tax-text-enable").css("color", '#20a83b');
         }
     },
-    loadSelectSettingCountry: function () {
+        /*
+     * Reference data loads ONCE. Countries, currencies and timezones do not
+     * change during a session, yet these ran on every navigation - refetching
+     * and rebuilding ~1,100 <option> nodes for forms the user may never open,
+     * and overlapping calls appended duplicates that never went away
+     * (measured: +400 timezone, +246 country x4 selects, +193 currency
+     * options across four navigation cycles). Pass true to force a reload.
+     */
+loadSelectSettingCountry: function (force) {
+        var alreadyCountry = PosnicPro.settings._refLoaded.country && $('.setCountry').children('option').length;
+        if (!force && alreadyCountry) { return; }
+        PosnicPro.settings._refLoaded.country = true;
         var countrySelect = $('.setCountry');
         var params = {
             url: 'setting/getJSONCountry',
@@ -2230,7 +2243,18 @@ if ($("#sale_quick_edit").is(":checked")) {
             PosnicPro.alert(response.type, response.message);
         });
     },
-    loadSelectSettingCurrency: function () {
+        /*
+     * Reference data loads ONCE. Countries, currencies and timezones do not
+     * change during a session, yet these ran on every navigation - refetching
+     * and rebuilding ~1,100 <option> nodes for forms the user may never open,
+     * and overlapping calls appended duplicates that never went away
+     * (measured: +400 timezone, +246 country x4 selects, +193 currency
+     * options across four navigation cycles). Pass true to force a reload.
+     */
+loadSelectSettingCurrency: function (force) {
+        var alreadyCurrency = PosnicPro.settings._refLoaded.currency && $('#currency_setting').children('option').length;
+        if (!force && alreadyCurrency) { return; }
+        PosnicPro.settings._refLoaded.currency = true;
         var currencySelect = $('#currency_setting');
         var params = {
             url: 'setting/getJSONCurrency'
@@ -2263,7 +2287,18 @@ if ($("#sale_quick_edit").is(":checked")) {
             PosnicPro.alert(response.type, response.message);
         });
     },
-    timeZone: function () {
+    /*
+     * Reference data loads ONCE. Countries, currencies and timezones do not
+     * change during a session, yet these ran on every navigation - refetching
+     * and rebuilding ~1,100 <option> nodes for forms the user may never open,
+     * and overlapping calls appended duplicates that never went away
+     * (measured: +400 timezone, +246 country x4 selects, +193 currency
+     * options across four navigation cycles). Pass true to force a reload.
+     */
+    timeZone: function (force) {
+        var alreadyTz = PosnicPro.settings._refLoaded.timezone && $('#time_zone').children('option').length;
+        if (!force && alreadyTz) { return; }
+        PosnicPro.settings._refLoaded.timezone = true;
         var timezoneSelect = $('#time_zone');
         var params = {
             url: 'setting/getJSONTimeZone'
