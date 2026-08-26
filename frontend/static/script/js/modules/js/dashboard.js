@@ -924,7 +924,7 @@ PosnicPro.dashboard = {
 
         PosnicPro.get({ url: 'dashboard/getOverview', data: { filter: filter } }, function (response) {
             /* crash-hunt probe gate: skippable render */
-            if (window.__posnicSkip === 'overview') { return; }
+            if (window.__posnicSkip === 'overview' || window.__posnicSkip === 'all') { return; }
             if (response.type !== 'success' || !response.data) {
                 $(PosnicPro.dashboard.KPI_IDS).html('&mdash;');
                 return;

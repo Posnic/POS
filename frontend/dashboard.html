@@ -264,7 +264,7 @@
                     } else if (window.__mobileSafeMode && cd >= 3) {
                         try {
                             var FP = 'posnic_fn_probe';
-                            var SKIPS = ['menu', 'overview', 'store'];
+                            var SKIPS = ['all', 'menu', 'overview', 'store'];
                             var fpi = parseInt(localStorage.getItem(FP) || '0', 10) || 0;
                             localStorage.setItem(FP, String(fpi + 1));
                             var skipName = SKIPS[fpi % SKIPS.length];

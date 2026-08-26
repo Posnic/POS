@@ -5595,7 +5595,7 @@ PosnicPro.features = {
                  */
                 PosnicPro.get({ url: 'branches/getOneStore', data: 'id=null' }, function (response) {
                     /* crash-hunt probe gate: skippable render */
-                    if (window.__posnicSkip === 'store') { return; }
+                    if (window.__posnicSkip === 'store' || window.__posnicSkip === 'all') { return; }
                     var d = (response && response.data) || {};
                     var b = PosnicPro.features._blob();
                     PosnicPro.features.INTRO.forEach(function (f) {
