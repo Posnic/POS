@@ -70,6 +70,11 @@ const ALLOWED_ANONYMOUS = {
     // BEFORE auth works. Stores nothing, per-IP budgeted, truncated,
     // always 204 - see the route file.
     '/',
+    // TEMPORARY diagnostic window (OWNER_QUEUE row 193): the last 30
+    // already-truncated report lines, readable where no audited log path
+    // exists. Comes out with the boot flight recorder once the mobile
+    // crash is closed.
+    '/recent',
   ],
   'auth.routes.js': [
     '/register', '/login', '/verify', '/forgot-password', '/reset-password/:token',
