@@ -1,5 +1,47 @@
+/*
+ * MOBILE BOOT STAGING. Every death record from the iOS crash hunt shows the
+ * same scene: a dozen parallel warm-up calls (master lists, reference data)
+ * landing together at 1-3s and the engine dying in the churn. On phones,
+ * those calls now WAIT: nothing on the defer list leaves the device until
+ * 8s after boot (or the first navigation away from the dashboard), and then
+ * one at a time, 300ms apart. Dashboard content itself (overview, checklist,
+ * low stock, auth) is never deferred. Desktop is untouched.
+ */
+PosnicPro._bootStage = {
+    start: Date.now(),
+    queue: [],
+    draining: false,
+    DEFER: /(AjaxList|getJSON(Country|State|Currency|TimeZone|GstState)|getDenomAll|getPaymentAll|getTableOrderAll|taxProfile|getDefaultCustomer|getDefaultSupplier|getTaxAll$|getBranchList|quantityCount)/,
+    shouldDefer: function (params, method) {
+        if (!window.__mobileSafeMode || method !== 'GET' || this.draining) { return false; }
+        if (Date.now() - this.start > 8000) { return false; }
+        var h = window.location.hash;
+        if (h && h !== '#/' && h !== '#/dashboard') { return false; }
+        return this.DEFER.test(String(params.url || ''));
+    },
+    drain: function () {
+        if (this.draining) { return; }
+        this.draining = true;
+        var self = this;
+        (function next() {
+            var job = self.queue.shift();
+            if (!job) { return; }
+            try { PosnicPro.request(job.p, job.cb, job.fail); } catch (e) { }
+            setTimeout(next, 300);
+        })();
+    }
+};
+setTimeout(function () { PosnicPro._bootStage.drain(); }, 8000);
+window.addEventListener('hashchange', function () {
+    if (window.location.hash !== '#/dashboard') { PosnicPro._bootStage.drain(); }
+});
+
 PosnicPro.request = function (params, callback, failure = null) {
     var method = params.method ? params.method : 'GET';
+    if (PosnicPro._bootStage.shouldDefer(params, method)) {
+        PosnicPro._bootStage.queue.push({ p: params, cb: callback, fail: failure });
+        return;
+    }
     var url = API_URL + params.url;
     var data = params.data ? params.data : {};
 
