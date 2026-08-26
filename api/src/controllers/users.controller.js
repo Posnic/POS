@@ -1,4 +1,5 @@
 const { redact } = require('../utils/redact');
+const { clientIp } = require('../utils/client-ip');
 const { currentConnection } = require('../db/tenant-context');
 const { searchPattern } = require('../utils/safe-search');
 const BaseController = require('./base.controller');
@@ -571,7 +572,7 @@ class UsersController extends BaseController {
                     session_id: req.sessionID,
                     license: user.license,
                     branch_id: branchId,
-                    ip_address: req.ip || req.connection.remoteAddress,
+                    ip_address: clientIp(req),
                     user_agent: req.get('User-Agent'),
                     updated_date: currentTime,
                   },
@@ -596,7 +597,7 @@ class UsersController extends BaseController {
                 updated_date: currentTime,
                 license: user.license,
                 branch_id: branchId,
-                ip_address: req.ip || req.connection.remoteAddress,
+                ip_address: clientIp(req),
                 user_agent: req.get('User-Agent'),
               };
 
@@ -1011,11 +1012,7 @@ class UsersController extends BaseController {
           activeTenant.licenseId,
           {
             userAgent: req.headers['user-agent'] || '',
-            ip:
-              req.ip ||
-              req.connection?.remoteAddress ||
-              req.headers['x-forwarded-for']?.split(',')[0] ||
-              'unknown',
+            ip: clientIp(req),
           }
         ).catch((err) => console.warn('changeUserLog failed:', err.message));
 
@@ -1882,11 +1879,7 @@ class UsersController extends BaseController {
           activeTenant.licenseId,
           {
             userAgent: req.headers['user-agent'] || '',
-            ip:
-              req.ip ||
-              req.connection?.remoteAddress ||
-              req.headers['x-forwarded-for']?.split(',')[0] ||
-              'unknown',
+            ip: clientIp(req),
           }
         ).catch((err) => console.warn('changeUserLog failed:', err.message));
 
