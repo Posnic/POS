@@ -143,6 +143,19 @@
                         if (!firstError) { firstError = what; }
                         note('resource', what, location.href, '');
                         report(what, 'resource-load');
+                        /* A page whose own STYLESHEET or main SCRIPT died is
+                           holding a bundle pairing that no longer exists (a
+                           deploy passed under an open tab, or a wedged cache
+                           served half a build). One fresh navigation re-pairs
+                           it with the current build; the sessionStorage guard
+                           makes it ONE - a still-broken origin never loops. */
+                        try {
+                            var isOwn = /\/(style|script)\/(dashboard|login)\.[0-9a-f]{8}\.(css|js)/.test(String(t.href || t.src));
+                            if (isOwn && !sessionStorage.getItem('posnic_repair_reload')) {
+                                sessionStorage.setItem('posnic_repair_reload', '1');
+                                location.reload();
+                            }
+                        } catch (e) { /* storage blocked: stay put, the card will tell */ }
                         return;
                     }
                     if (!firstError) { firstError = ev.message || 'Script error'; }

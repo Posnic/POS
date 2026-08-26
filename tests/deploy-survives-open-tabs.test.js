@@ -67,3 +67,29 @@ test('phantom images heal themselves instead of burning the beacon budget', () =
   assert.match(block, /return;/);
   assert.match(block, /\(undefined\|null\)/);
 });
+
+test('the worker steps aside when its cache layer is wedged', () => {
+  /* A full or corrupt Cache Storage made caches.open reject, the
+     respondWith promise reject with it, and EVERY asset request die -
+     a phone that "does not even open" while the origin is perfectly
+     healthy. Each cached branch now ends by falling back to a plain
+     network fetch, so a broken cache never outranks a working network. */
+  const sw = read('frontend/sw-template.js');
+  const fallthroughs = sw.match(/\)\.catch\(\(\) => fetch\(request\)\)/g) || [];
+  assert.ok(fallthroughs.length >= 3,
+    'a cached branch lost its network fall-through (' + fallthroughs.length + '/3)');
+  /* and a failed cache WRITE never takes the answer with it */
+  const putGuards = sw.match(/cache\.put\(request, response\.clone\(\)\)\.catch/g) || [];
+  assert.ok(putGuards.length >= 2, 'a cache.put lost its guard');
+});
+
+test('a page that watches its own stylesheet die reloads once to re-pair', () => {
+  const dash = read('frontend/dashboard.html');
+  const at = dash.indexOf('posnic_repair_reload');
+  assert.ok(at > -1, 'the one-shot repair reload is gone');
+  const block = dash.slice(at - 700, at + 400);
+  /* own bundles only, and exactly once per tab session */
+  assert.match(block, /(dashboard\|login)/);
+  assert.match(block, /sessionStorage\.getItem\('posnic_repair_reload'\)/);
+  assert.match(block, /location\.reload\(\)/);
+});
