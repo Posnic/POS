@@ -1,3 +1,29 @@
+/*
+ * Tooltips are a hover concept, and a phone has no hover.
+ *
+ * What they delivered on touch devices instead: Bootstrap's sanitizer runs
+ * the template through DOMParser once per CONSTRUCTION - a full throwaway
+ * HTML document each time - and the modules re-initialise their tooltips on
+ * every render. Measured on the owner's crash hunt: 240 documents
+ * manufactured at boot, +160 per navigation cycle, on a tab iOS was already
+ * killing for memory. Plus the classic stuck-tooltip-after-tap jank.
+ *
+ * One door: on a coarse-pointer device the whole plugin becomes a chainable
+ * no-op, so every existing call site stays byte-identical and costs nothing.
+ * Desktop keeps real tooltips. Popover is NOT gated - it can be legitimate
+ * tap-driven UI (summernote's toolbars use it).
+ */
+(function () {
+    if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches
+        && window.jQuery && jQuery.fn.tooltip) {
+        var real = jQuery.fn.tooltip;
+        var noop = function () { return this; };
+        noop.Constructor = real.Constructor;
+        noop.noConflict = function () { jQuery.fn.tooltip = real; return noop; };
+        jQuery.fn.tooltip = noop;
+    }
+})();
+
 PosnicPro = {
     config: [],
     modules: ['customers', 'suppliers', 'categories', 'items', 'users', 'branches', 'expenses', 'receivings', 'sales', 'registers'],
