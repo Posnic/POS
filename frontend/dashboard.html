@@ -194,30 +194,32 @@
                         } catch (eb) { }
                     }
                     var BK = 'posnic_css_bisect';
-                    /* A CHANGED stylesheet gets a fresh chance: the fix for
-                       what killed the old one deserves a normal styled boot,
-                       not an immediate re-probe. The death streak resets
-                       when the css hash moves. */
-                    try {
-                        var cssLink = document.querySelector('link[href*="style/dashboard."]');
-                        var cssId = cssLink ? cssLink.getAttribute('href') : '';
-                        if (cssId && localStorage.getItem('posnic_css_seen') !== cssId) {
-                            localStorage.setItem('posnic_css_seen', cssId);
-                            localStorage.setItem(K + '_cdeaths', '0');
-                            cd = 0;
-                        }
-                    } catch (e17) { }
                     var probeNow = location.search.indexOf('nocss=1') !== -1 || (window.__mobileSafeMode && cd >= 3);
                     if (probeNow) {
                         rec.probe = 'bisect';
                         document.addEventListener('DOMContentLoaded', function () {
                             try {
+                                var link = document.querySelector('link[href*="style/dashboard."]');
+                                if (!link) { beaconMsg('BISECT: no dashboard css link found'); return; }
+                                /* A CHANGED stylesheet gets a fresh chance -
+                                   the fix for what killed the old one
+                                   deserves a normal styled boot. Checked
+                                   HERE, where the link exists; the first
+                                   version checked from the head's first
+                                   script and never saw it. */
+                                var cssId = link.getAttribute('href');
+                                if (localStorage.getItem('posnic_css_seen') !== cssId) {
+                                    localStorage.setItem('posnic_css_seen', cssId);
+                                    localStorage.setItem(K + '_cdeaths', '0');
+                                    localStorage.removeItem(BK);
+                                    rec.probe = '';
+                                    beaconMsg('FRESH CSS ' + cssId.slice(-16) + ' - normal styled boot, streak reset');
+                                    return;
+                                }
                                 for (var si = 0; si < document.styleSheets.length; si++) {
                                     try { document.styleSheets[si].disabled = true; } catch (e2) { }
                                 }
                                 __flight.stamp('sheets-off');
-                                var link = document.querySelector('link[href*="style/dashboard."]');
-                                if (!link) { beaconMsg('BISECT: no dashboard css link found'); return; }
                                 fetch(link.href).then(function (r) { return r.text(); }).then(function (css) {
                                     var rules = [], depth = 0, start = 0;
                                     for (var i = 0; i < css.length; i++) {
