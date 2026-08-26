@@ -114,6 +114,42 @@
                     window.addEventListener('pagehide', function () {
                         try { rec.clean = true; localStorage.setItem(K, JSON.stringify(rec)); } catch (e) { }
                     });
+                    /*
+                     * AUTO-QUARANTINE. Every crash-free reproduction of this
+                     * page ran WITHOUT a service worker; the dying device runs
+                     * WITH one, over its whole cache history - and a page that
+                     * dies at ~850ms may never complete the worker update that
+                     * carries the fix, a trap with no exit from the inside.
+                     * This runs at 0ms, before the death: two recorded deaths
+                     * in a row and it removes every worker and cache, reports
+                     * itself, and reloads once. If the state was the killer,
+                     * the device cures itself on the next open.
+                     */
+                    try {
+                        var deaths = 0;
+                        try { deaths = parseInt(localStorage.getItem(K + '_deaths') || '0', 10) || 0; } catch (e0) { }
+                        if (prev && prev.started !== now && !prev.clean) { deaths += 1; }
+                        else if (prev && prev.clean) { deaths = 0; }
+                        localStorage.setItem(K + '_deaths', String(deaths));
+                        if (deaths >= 2 && !sessionStorage.getItem('posnic_quarantine')) {
+                            sessionStorage.setItem('posnic_quarantine', '1');
+                            localStorage.setItem(K + '_deaths', '0');
+                            var payloadQ = JSON.stringify({ message: '[boot-flight] QUARANTINE after ' + deaths + ' straight deaths: unregistering workers + clearing caches, then one reload', at: 'boot-flight' });
+                            if (navigator.sendBeacon) { navigator.sendBeacon('client-errors', new Blob([payloadQ], { type: 'application/json' })); }
+                            var done = function () { try { location.reload(); } catch (e1) { } };
+                            var t = setTimeout(done, 2500);
+                            Promise.all([
+                                (navigator.serviceWorker && navigator.serviceWorker.getRegistrations)
+                                    ? navigator.serviceWorker.getRegistrations().then(function (rs) {
+                                        return Promise.all(rs.map(function (r) { return r.unregister(); }));
+                                    }) : Promise.resolve(),
+                                (window.caches && caches.keys)
+                                    ? caches.keys().then(function (ks) {
+                                        return Promise.all(ks.map(function (k) { return caches.delete(k); }));
+                                    }) : Promise.resolve()
+                            ]).then(function () { clearTimeout(t); done(); }, function () { clearTimeout(t); done(); });
+                        }
+                    } catch (eq) { /* quarantine must never be a new failure */ }
                     /* The previous session's verdict: died without pagehide =
                        the OS or the browser took the tab. Say precisely where. */
                     if (prev && prev.started !== now && !prev.clean) {
