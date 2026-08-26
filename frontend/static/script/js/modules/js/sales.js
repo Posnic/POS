@@ -82,7 +82,7 @@
         $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
         $(".vertical-menu li a").removeClass("active");
         (PosnicPro.local.get('gst_action') === 'enable') ? $('.indian-gstr').show() : $('.indian-gstr').hide();
-        $(".vertical-layout").addClass("toggle-menu");
+        PosnicPro.collapseMenuForWorkspace();
         $("#sales_new_item_name").css("display", "block");
         $('#image_sidebar_dashboard,#image_sidebar_salehistry').hide();
         $('.dashboard_img_menu').hide();
@@ -118,7 +118,7 @@
         var displayPage = 'sales';
         $('#' + displayPage + '_new').show();
         db.saleAutoFocus.get('1').then(function (data) {
-            if (data.addSale === true) {
+            if (data && data.addSale === true) {
                 $('#sales_new_item_name').focus();
             } else {
                 $('#sales_new_item_name').blur();
@@ -187,7 +187,7 @@
         // layout sidebar. This keeps the current page (KOT History) visible
         // behind the tender popup and avoids a sidebar flicker.
         if (!(PosnicPro.sales.kotPaymentMode === true && PosnicPro.sales.paymentOnlyMode === true)) {
-            $(".vertical-layout").addClass("toggle-menu");
+            PosnicPro.collapseMenuForWorkspace();
         }
         $('#show-sale-already-return-table').hide();
         $('#v-pills-dashboard-tab').addClass('active');
@@ -366,7 +366,7 @@
         $('#table_return_page,#table_sale_page').find('table').removeAttr('id');
         $('#sales_table').find('table').attr('id', 'sales_new_items_table');
         (PosnicPro.local.get('gst_action') === 'enable') ? $('.indian-gstr').show() : $('.indian-gstr').hide();
-        $(".vertical-layout").addClass("toggle-menu");
+        PosnicPro.collapseMenuForWorkspace();
         $('#show-sale-already-return-table').hide();
         $('#v-pills-dashboard-tab').addClass('active');
         $('#v-pills-dashboard').addClass('show active');
@@ -7637,7 +7637,7 @@ PosnicPro.sales.itemsMenu = {
             let hash = window.location.hash.slice(1);
             if (hash === '/sales/new') {
                 db.saleAutoFocus.get('1').then(function (data) {
-                    if (data.addSale === true) {
+                    if (data && data.addSale === true) {
                         $('#sales_new_item_name').focus();
                     } else {
                         $('#sales_new_item_name').blur();
@@ -8196,7 +8196,7 @@ PosnicPro.sales.recentMenu = {
 
         if (isKotEditFlow || PosnicPro.sales.EditRecentSaleParams.sale_process !== 'Hold') {
             db.saleAutoFocus.get('1').then(function (data) {
-                if (data.editSale === true) {
+                if (data && data.editSale === true) {
                     $('#sales_new_item_name').focus();
                 } else {
                     $('#sales_new_item_name').blur();
@@ -8236,7 +8236,7 @@ PosnicPro.sales.recentMenu = {
             }
         } else {
             db.saleAutoFocus.get('1').then(function (data) {
-                if (data.holdSale === true) {
+                if (data && data.holdSale === true) {
                     $('#sales_new_item_name').focus();
                 } else {
                     $('#sales_new_item_name').blur();
@@ -8250,7 +8250,7 @@ PosnicPro.sales.recentMenu = {
             }
 
             $('#closeSaleButton').hide();
-            $(".vertical-layout").addClass("toggle-menu");
+            PosnicPro.collapseMenuForWorkspace();
             $('#time-format').addClass('commonDate');
             $('#time-format').removeClass('commonEditDate');
             PosnicPro.commonDate();
@@ -8378,7 +8378,7 @@ PosnicPro.quotes = {
            it the rail's border, so the authoring page takes the width back. */
         $('#quotes_new .contentbar').removeClass('master-detail quotes-split rail-collapsed');
         $('#quotes_edit_card').show();
-        $('.vertical-layout').addClass('toggle-menu');
+        PosnicPro.collapseMenuForWorkspace();
         PosnicPro.quotes._edInitSort();
     },
     /* Row drag (Q5): SortableJS rides the lazy rail; a failed load only
