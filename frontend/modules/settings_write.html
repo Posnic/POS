@@ -294,6 +294,7 @@
                                                 <a class="nav-link active" data-toggle="pill" href="#int-sub-tokens" role="tab"><i class="feather icon-key mr-2"></i><lang class="lang_int_tokens">API Tokens</lang></a>
                                                 <a class="nav-link" data-toggle="pill" href="#int-sub-webhooks" role="tab"><i class="feather icon-send mr-2"></i><lang class="lang_int_webhooks">Webhooks</lang></a>
                                                 <a class="nav-link" data-toggle="pill" href="#int-sub-connectors" role="tab" id="int_connectors_subtab" style="display:none;" onclick="PosnicPro.integrations.loadConnectors();"><i class="feather icon-box mr-2"></i><lang class="lang_int_connectors">Connectors</lang></a>
+                                                <a class="nav-link" data-toggle="pill" href="#int-sub-analytics" role="tab" id="int_analytics_subtab"><i class="feather icon-bar-chart-2 mr-2"></i><lang class="lang_int_analytics">Analytics</lang></a>
                                             </div>
                                         </div>
                                         <div class="col-lg-9">
@@ -319,6 +320,29 @@
                                                             <tbody id="int_tokens_body"><tr><td colspan="5" class="text-center text-muted">Loading&hellip;</td></tr></tbody>
                                                         </table>
                                                     </div>
+                                                </div>
+
+                                                <div class="tab-pane fade" id="int-sub-analytics" role="tabpanel">
+                                                    <!-- The shop's OWN Google Analytics (owner: "make it as
+                                                         feature. on / off with entering GA value"). Off by
+                                                         default; the server only opens its CSP to the Google
+                                                         domains while this is on, and the id is the shop's,
+                                                         so the data goes to the shop's own Google account -
+                                                         the same contract as every integration on this page. -->
+                                                    <small class="text-muted d-block mb-3"><lang class="lang_int_analytics_hint">Measure visits to this shop's pages with your own Google Analytics. Nothing is sent anywhere until you switch it on - and then only to your own Google account.</lang></small>
+                                                    <div class="form-group">
+                                                        <label class="d-flex align-items-center" for="analytics_enable" style="gap:10px;">
+                                                            <input type="checkbox" id="analytics_enable" name="analytics_enable">
+                                                            <span><b><lang class="lang_int_analytics_toggle">Enable Google Analytics</lang></b></span>
+                                                        </label>
+                                                    </div>
+                                                    <div class="form-group" style="max-width:340px;">
+                                                        <label for="analytics_ga_id"><lang class="lang_int_analytics_id">Measurement id</lang></label>
+                                                        <input type="text" class="form-control" id="analytics_ga_id" placeholder="G-XXXXXXXXXX" maxlength="16" autocomplete="off" style="text-transform:uppercase;">
+                                                        <small class="text-muted"><lang class="lang_int_analytics_where">Google Analytics &gt; Admin &gt; Data streams &gt; your stream &gt; Measurement ID.</lang></small>
+                                                    </div>
+                                                    <button type="button" class="btn btn-primary" id="analytics_save"><lang class="lang_int_analytics_save">Save</lang></button>
+                                                    <span class="text-success ml-2" id="analytics_saved_note" style="display:none;"><lang class="lang_int_analytics_saved">Saved - takes effect on next page load.</lang></span>
                                                 </div>
 
                                                 <div class="tab-pane fade" id="int-sub-webhooks" role="tabpanel">

@@ -95,6 +95,11 @@ const PREFERENCES = [
   'discount_amount',
   'indian_gst',
   'branch_gstin_number',
+  /* Google Analytics, the shop's own (owner: "make it as feature. on / off
+     with entering GA value"). Off by default; the CSP only opens the Google
+     domains while this is on - see services/analytics-config.js. */
+  'analytics_enable',
+  'analytics_ga_id',
   // reminders
   'enable_notification_reminders',
   'enable_email_reminders',
