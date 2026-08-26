@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Posnic boot probe</title>
+<!-- TEMPORARY diagnostic harness (owner: "can create some custom page load
+     this page using js and see what is the issue?"). Assembles the app one
+     piece at a time with pauses, beaconing each survival. The step a phone
+     dies AFTER is the component that kills it. Remove with the flight
+     recorder (OWNER_QUEUE row 193). -->
+</head>
+<body>
+<h3 id="s">probe: starting</h3>
+<pre id="log"></pre>
+<script>
+(function () {
+    'use strict';
+    function say(m) {
+        try {
+            document.getElementById('s').textContent = 'probe: ' + m;
+            document.getElementById('log').textContent += m + '\n';
+            var p = JSON.stringify({ message: '[boot-flight] PROBE-PAGE ' + m, at: 'boot-flight' });
+            if (navigator.sendBeacon) { navigator.sendBeacon('/client-errors', new Blob([p], { type: 'application/json' })); }
+        } catch (e) { }
+    }
+    window.addEventListener('error', function (ev) {
+        say('js-error: ' + String((ev && ev.message) || (ev.target && ev.target.tagName) || '?').slice(0, 80));
+    }, true);
+
+    say('stage-A empty page alive (ua ' + navigator.userAgent.slice(0, 60) + ')');
+
+    var cssHref = null, jsSrc = null;
+    fetch('/dashboard.html', { credentials: 'omit' }).then(function (r) { return r.text(); }).then(function (html) {
+        var m1 = html.match(/style\/dashboard\.[0-9a-f]{8}\.css/);
+        var m2 = html.match(/script\/dashboard\.[0-9a-f]{8}\.js/);
+        cssHref = m1 && m1[0];
+        jsSrc = m2 && m2[0];
+        say('refs found: ' + cssHref + ' + ' + jsSrc);
+
+        setTimeout(function () {
+            say('stage-B loading the full stylesheet...');
+            var l = document.createElement('link');
+            l.rel = 'stylesheet';
+            l.href = '/' + cssHref;
+            l.onload = function () {
+                say('stage-B stylesheet LOADED - waiting 8s under full CSS');
+                setTimeout(function () {
+                    say('stage-B SURVIVED 8s of full CSS');
+                    say('stage-C loading the full JS bundle...');
+                    var sc = document.createElement('script');
+                    sc.src = '/' + jsSrc;
+                    sc.onload = function () {
+                        say('stage-C bundle PARSED+RAN - waiting 10s');
+                        setTimeout(function () {
+                            say('HARNESS COMPLETE: css alive, bundle alive - the killer needs the REAL page (its DOM or its boot flow)');
+                        }, 10000);
+                    };
+                    sc.onerror = function () { say('stage-C bundle failed to load'); };
+                    document.body.appendChild(sc);
+                }, 8000);
+            };
+            l.onerror = function () { say('stage-B stylesheet failed to load'); };
+            document.head.appendChild(l);
+        }, 5000);
+    }).catch(function (e) { say('could not read refs: ' + String(e && e.message).slice(0, 60)); });
+})();
+</script>
+</body>
+</html>
