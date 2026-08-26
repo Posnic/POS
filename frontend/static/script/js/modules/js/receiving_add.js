@@ -68,7 +68,7 @@ PosnicPro.receivings = {
         //$('#receiving_logo').val('receiving.png');
         $('.fileupload-preview').html('Upload file');
         $('.update-button').attr('disabled', 'disabled').removeClass('btn-outline-success');
-        $(".vertical-layout").addClass("toggle-menu");
+        PosnicPro.collapseMenuForWorkspace();
         $('#v-pills-purchase-tab,.receiving_new_shortcut').addClass('active');
         $('#v-pills-purchase').addClass('show active');
         $('.vertical-menu li a#view_purchaseorders_page').addClass('active');
