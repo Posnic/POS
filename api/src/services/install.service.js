@@ -185,8 +185,8 @@ class InstallService {
           taxData,
           unitId,
           businessType: data.businessType || 'supermarket', // Generic retail default
-          currencyCode: (this._currencyForCountry(data.register_country).currency_value[0] || {})
-            .currency_text,
+          currencyCode: (this._currencyForCountry(data.register_country, data.register_currency)
+            .currency_value[0] || {}).currency_text,
         });
       } else {
         console.log('⚠️ Loading default single product...');
@@ -341,13 +341,58 @@ class InstallService {
   }
 
   /*
+   * Day-first or month-first, from the shop's country. Only a handful of
+   * places read dates month-first (the US and the territories that follow
+   * it); everywhere else on the till's map reads day-first, which is also
+   * the long-standing default. register_dateformat ('mdy'/'dmy') is the
+   * onboarding override and wins when present.
+   */
+  _dateFormatForCountry(countryName, explicit) {
+    const MDY = {
+      client: 'mm/dd/yyyy',
+      server: 'm/d/Y',
+      text: '01/31/2018 -- mm/dd/yyyy',
+    };
+    const DMY = {
+      client: DEFAULTS.CLIENT_DATEFORMAT,
+      server: DEFAULTS.SERVER_DATEFORMAT,
+      text: DEFAULTS.DATEFORMAT_TEXT,
+    };
+    const choice = String(explicit || '').trim().toLowerCase();
+    if (choice === 'mdy') return MDY;
+    if (choice === 'dmy') return DMY;
+    const MDY_COUNTRIES = ['US', 'PH', 'FM', 'MH', 'PW', 'GU', 'AS', 'VI', 'PR', 'UM'];
+    try {
+      const name = String(countryName || '').trim().toLowerCase();
+      if (!name) return DMY;
+      const countries = JSON.parse(
+        fs.readFileSync(path.join(__dirname, '../json/countries.json'), 'utf8')
+      ).countries || [];
+      const country = countries.find((c) => String(c.value || '').trim().toLowerCase() === name);
+      if (country && MDY_COUNTRIES.includes(String(country.sortname).toUpperCase())) return MDY;
+    } catch (e) { /* unknown stays day-first */ }
+    return DMY;
+  }
+
+  /*
    * The shop's own money, not ours: currency used to be hardcoded to INR
    * whatever country was chosen at install (a US shop opened priced in ₹).
-   * currency.json's entries lead with the country name, so the chosen
-   * country resolves its currency; no match keeps the old default, which
-   * preserves India and anything unrecognised exactly as before.
+   *
+   * Resolution is by ISO CODE, not by name. The first fix here matched
+   * currency.json entries by country-name prefix, and an audit against the
+   * full country list showed 73 of 246 countries fell straight through to
+   * the INR fallback - "United Arab Emirates" had no matching entry at all,
+   * so a Dubai signup opened priced in ₹. Now: the country's ISO code
+   * (countries.json sortname) looks up its ISO-4217 code in
+   * country_currency.json, and currency.json supplies that code's symbol.
+   * The old name-prefix match stays as the second attempt so any country
+   * missing from the ISO table behaves exactly as before, and no match at
+   * all still keeps the INR default.
+   *
+   * explicitCode (register_currency) wins over everything: it is the shop
+   * owner's own onboarding choice, e.g. a USD-priced shop in the Emirates.
    */
-  _currencyForCountry(countryName) {
+  _currencyForCountry(countryName, explicitCode) {
     const fallback = {
       currency: DEFAULTS.CURRENCY,
       currency_text: DEFAULTS.CURRENCY_TEXT,
@@ -357,30 +402,52 @@ class InstallService {
     const name = String(countryName || '')
       .trim()
       .toLowerCase();
-    if (!name) return fallback;
     try {
       const raw = fs.readFileSync(path.join(__dirname, '../json/currency.json'), 'utf8');
       const list = (JSON.parse(raw).currency || []).filter((c) => c && c.value);
-      const hit = list.find((c) =>
+      const asResult = (hit) => ({
+        currency: hit.symbol,
+        currency_text: hit.value.trim(),
+        currency_type: hit.symbol,
+        currency_value: [{ currency_text: hit.text, currency_sign: hit.symbol }],
+      });
+
+      const wanted = String(explicitCode || '').trim().toUpperCase();
+      if (wanted) {
+        const chosen = list.find((c) => c.text === wanted && c.symbol);
+        if (chosen) return asResult(chosen);
+      }
+      if (!name) return fallback;
+
+      const countries = JSON.parse(
+        fs.readFileSync(path.join(__dirname, '../json/countries.json'), 'utf8')
+      ).countries || [];
+      const country = countries.find((c) => String(c.value || '').trim().toLowerCase() === name);
+      if (country && country.sortname) {
+        const codes = JSON.parse(
+          fs.readFileSync(path.join(__dirname, '../json/country_currency.json'), 'utf8')
+        );
+        const code = codes[String(country.sortname).toUpperCase()];
+        const hit = code && list.find((c) => c.text === code && c.symbol);
+        if (hit) return asResult(hit);
+      }
+
+      const prefixHit = list.find((c) =>
         c.value
           .trim()
           .toLowerCase()
           .startsWith(name + ' ')
       );
-      if (!hit || !hit.symbol || !hit.text) return fallback;
-      return {
-        currency: hit.symbol,
-        currency_text: hit.value.trim(),
-        currency_type: hit.symbol,
-        currency_value: [{ currency_text: hit.text, currency_sign: hit.symbol }],
-      };
+      if (!prefixHit || !prefixHit.symbol || !prefixHit.text) return fallback;
+      return asResult(prefixHit);
     } catch (e) {
       return fallback;
     }
   }
 
   async _createBranch(data, licenseId, userId, now, regularBodyPrint, thermalBodyPrint) {
-    const money = this._currencyForCountry(data.register_country);
+    const money = this._currencyForCountry(data.register_country, data.register_currency);
+    const dateFmt = this._dateFormatForCountry(data.register_country, data.register_dateformat);
     const branchData = {
       theme: DEFAULTS.THEME,
       branch_name: data.register_companyname.trim(),
@@ -390,7 +457,7 @@ class InstallService {
       country: (data.register_country || '').trim(),
       country_id: data.register_countryid || '',
       state: (data.register_state || '').trim(),
-      city: '',
+      city: (data.register_city || '').trim(),
       pincode: '',
       website: '',
       logo: DEFAULTS.LOGO,
@@ -469,10 +536,10 @@ class InstallService {
         },
       },
       sale_inline_editor: false,
-      client_dateformat: DEFAULTS.CLIENT_DATEFORMAT,
+      client_dateformat: dateFmt.client,
       time_format: 'enable',
-      server_dateformat: DEFAULTS.SERVER_DATEFORMAT,
-      dateformat_text: DEFAULTS.DATEFORMAT_TEXT,
+      server_dateformat: dateFmt.server,
+      dateformat_text: dateFmt.text,
       default_customer: '',
       default_supplier: '',
       default_tax: '',

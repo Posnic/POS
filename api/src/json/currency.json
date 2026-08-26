@@ -1,1207 +1,1426 @@
 {
-    "currency": [
-        {
-            "id": 1,
-            "value": "Afghanistan Afghani / AFN or؋ ",
-            "text": "AFN",
-            "symbol": "؋"
-        },
-        {
-            "id": 2,
-            "value": "Albania Lek / ALL or Lek",
-            "text": "ALL",
-            "symbol": "Lek"
-        },
-
-        {
-            "id": 3,
-            "value": "American Samoa US Dollar  / USD or $",
-            "text": "USD",
-            "symbol": "$"
-        },
-
-        {
-            "id": 4,
-            "value": "Andorra Euro / EUR or €",
-            "text": "EUR",
-            "symbol": "€"
-        },
-        {
-            "id": 5,
-            "value": "Angola Kwanza / AOA or Kz",
-            "text": "AOA",
-            "symbol": "Kz"
-        },
-        {
-            "id": 6,
-            "value": "Anguilla Dollar / XCD or $",
-            "text": "XCD",
-            "symbol": "$"
-        },
-
-        {
-            "id": 7,
-            "value": "Antigua and Barbuda Dollar / XCD or $",
-            "text": "XCD",
-            "symbol": "$"
-        },
-        {
-            "id": 8,
-            "value": "Argentina Peso / ARS or $",
-            "text": "ARS",
-            "symbol": "$"
-        },
-
-        {
-            "id": 9,
-            "value": "Aruba Guilder / AWG or ƒ ",
-            "text": "AWG",
-            "symbol": "ƒ"
-        },
-        {
-            "id": 10,
-            "value": "Australia Dollar / AUD or $",
-            "text": "AUD",
-            "symbol": "$"
-        },
-        {
-            "id": 11,
-            "value": "Austria Euro / EUR or €",
-            "text": "EUR",
-            "symbol": "€"
-        },
-        {
-            "id": 12,
-            "value": "Azerbaijan Manat / AZN or ман",
-            "text": "AZN",
-            "symbol": "ман"
-        },
-        {
-            "id": 13,
-            "value": "Bahamas Dollar / BSD or $",
-            "text": "BSD",
-            "symbol": "$"
-        },
-
-        {
-            "id": 14,
-            "value": "Barbados Dollar / BBD or $",
-            "text": "BBD",
-            "symbol": "$"
-        },
-
-        {
-            "id": 15,
-            "value": "Venezuela Bolivar / VEF or Bs",
-            "text": "VEF",
-            "symbol": "Bs"
-        },
-        {
-            "id": 16,
-            "value": "Vietnam Dong / VND or ₫",
-            "text": "VND",
-            "symbol": "₫"
-        },
-
-        {
-            "id": 17,
-            "value": "Yemen Rial / YER or ﷼",
-            "text": "YER",
-            "symbol": "﷼"
-        },
-        {
-            "id": 18,
-            "value": "Zambia Kwacha / ZMK or ZK",
-            "text": "ZMK",
-            "symbol": "ZK"
-        },
-        {
-            "id": 19,
-            "value": "Zimbabwe Dollar / ZWD or Z$",
-            "text": "ZWD",
-            "symbol": "Z$"
-        },
-
-        {
-            "id": 20,
-            "value": "Belarus Ruble / BYR or p.",
-            "text": "BYR",
-            "symbol": "p."
-        },
-        {
-            "id": 21,
-            "value": "Belgium Euro / EUR or €",
-            "text": "EUR",
-            "symbol": "€"
-        },
-        {
-            "id": 22,
-            "value": "Belize Dollar / BZD or BZ$",
-            "text": "BZD",
-            "symbol": "BZ$"
-        },
-
-        {
-            "id": 23,
-            "value": "Bermuda Dollar / BMD or $",
-            "text": "BMD",
-            "symbol": "$"
-        },
-        {
-            "id": 24,
-            "value": "Vanuatu Vatu / VUV or Vt",
-            "text": "VUV",
-            "symbol": "Vt"
-        },
-        {
-            "id": 25,
-            "value": "Vatican Euro / EUR or €",
-            "text": "EUR",
-            "symbol": "€"
-        },
-
-        {
-            "id": 26,
-            "value": "Bolivia Boliviano / BOB or $b",
-            "text": "BOB",
-            "symbol": "$b"
-        },
-        {
-            "id": 27,
-            "value": "Bosnia and Herzegovina Marka / BAM or KM",
-            "text": "BAM",
-            "symbol": "KM"
-        },
-        {
-            "id": 28,
-            "value": "Botswana Pula / BWP or P",
-            "text": "BWP",
-            "symbol": "P"
-        },
-        {
-            "id": 29,
-            "value": "Bouvet Island Krone / NOK or kr",
-            "text": "NOK",
-            "symbol": "kr"
-        },
-        {
-            "id": 30,
-            "value": "Brazil Real / BRL or R$",
-            "text": "BRL",
-            "symbol": "R$"
-        },
-        {
-            "id": 31,
-            "value": "British Indian Ocean Territory Dollar / USD or $",
-            "text": "USD",
-            "symbol": "$"
-        },
-        {
-            "id": 32,
-            "value": "British Virgin Islands Dollar / USD or $",
-            "text": "USD",
-            "symbol": "$"
-        },
-        {
-            "id": 33,
-            "value": "Brunei Dollar / BND or $",
-            "text": "BND",
-            "symbol": "$"
-        },
-        {
-            "id": 34,
-            "value": "Bulgaria Lev / BGN or лв",
-            "text": "BGN",
-            "symbol": "лв"
-        },
-        {
-            "id": 35,
-            "value": "Uruguay Peso / UYU or $U",
-            "text": "UYU",
-            "symbol": "$U"
-        },
-        {
-            "id": 36,
-            "value": "Uzbekistan Som / UZS or лв",
-            "text": "UZS",
-            "symbol": "лв"
-        },
-
-        {
-            "id": 37,
-            "value": "Cambodia Riels / KHR or ៛",
-            "text": "KHR",
-            "symbol": "៛"
-        },
-        {
-            "id": 38,
-            "value": "Cameroon Franc / XAF or FCF",
-            "text": "XAF",
-            "symbol": "FCF"
-        },
-        {
-            "id": 39,
-            "value": "Canada Dollar / CAD or $",
-            "text": "CAD",
-            "symbol": "$"
-        },
-        {
-            "id": 40,
-            "value": "United States Minor Outlying Islands Dollar / USD or $",
-            "text": "USD",
-            "symbol": "$"
-        },
-
-        {
-            "id": 41,
-            "value": "Cayman Islands Dollar / KYD or $",
-            "text": "KYD",
-            "symbol": "$"
-        },
-        {
-            "id": 42,
-            "value": "Central African Republic Franc / XAF or FCF",
-            "text": "XAF",
-            "symbol": "FCF"
-        },
-
-        {
-            "id": 43,
-            "value": "China YuanRenminbi / CNY or ¥",
-            "text": "CNY",
-            "symbol": "¥"
-        },
-        {
-            "id": 44,
-            "value": "United Kingdom Pound / GBP or £",
-            "text": "GBP",
-            "symbol": "£"
-        },
-        {
-            "id": 45,
-            "value": "United States Dollar / USD or $",
-            "text": "USD",
-            "symbol": "$"
-        },
-
-        {
-            "id": 46,
-            "value": "Christmas Island Dollar / AUD or $",
-            "text": "AUD",
-            "symbol": "$"
-        },
-        {
-            "id": 47,
-            "value": "Cocos Islands Dollar / AUD or $",
-            "text": "AUD",
-            "symbol": "$"
-        },
-        {
-            "id": 48,
-            "value": "Colombia Peso / COP or $",
-            "text": "COP",
-            "symbol": "$"
-        },
-        {
-            "id": 49,
-            "value": "Ukraine Hryvnia / UAH or ₴",
-            "text": "UAH",
-            "symbol": "₴"
-        },
-
-        {
-            "id": 50,
-            "value": "Cook Islands Dollar / NZD or $",
-            "text": "NZD",
-            "symbol": "$"
-        },
-        {
-            "id": 51,
-            "value": "Costa Rica Colon / CRC or ₡",
-            "text": "CRC",
-            "symbol": "₡"
-        },
-        {
-            "id": 52,
-            "value": "Croatia Kuna / HRK or kn",
-            "text": "HRK",
-            "symbol": "kn"
-        },
-        {
-            "id": 53,
-            "value": "Cuba Peso / CUP or ₱",
-            "text": "CUP",
-            "symbol": "₱"
-        },
-
-        {
-            "id": 54,
-            "value": "Czech Republic Koruna / CZK or Kč",
-            "text": "CZK",
-            "symbol": "Kč"
-        },
-
-        {
-            "id": 55,
-            "value": "Denmark Krone / DKK or kr",
-            "text": "DKK",
-            "symbol": "kr"
-        },
-
-        {
-            "id": 56,
-            "value": "Turks and Caicos Islands Dollar / USD or $",
-            "text": "USD",
-            "symbol": "$"
-        },
-        {
-            "id": 57,
-            "value": "Tuvalu Dollar / AUD or $",
-            "text": "AUD",
-            "symbol": "$"
-        },
-        {
-            "id": 58,
-            "value": "U.S. Virgin Islands Dollar / USD or $",
-            "text": "USD",
-            "symbol": "$"
-        },
-
-        {
-            "id": 59,
-            "value": "Dominica Dollar / XCD or $",
-            "text": "XCD",
-            "symbol": "$"
-        },
-        {
-            "id": 60,
-            "value": "Dominican Republic Peso / DOP or RD$",
-            "text": "DOP",
-            "symbol": "RD$"
-        },
-        {
-            "id": 61,
-            "value": "East Timor Dollar / USD or $",
-            "text": "USD",
-            "symbol": "$"
-        },
-        {
-            "id": 62,
-            "value": "Ecuador Dollar / USD or $",
-            "text": "USD",
-            "symbol": "$"
-        },
-        {
-            "id": 63,
-            "value": "Egypt Pound / EGP or £",
-            "text": "EGP",
-            "symbol": "£"
-        },
-        {
-            "id": 64,
-            "value": "El Salvador Colone / SVC or $",
-            "text": "SVC",
-            "symbol": "$"
-        },
-        {
-            "id": 65,
-            "value": "Equatorial Guinea Franc / XAF or FCF",
-            "text": "XAF",
-            "symbol": "FCF"
-        },
-        {
-            "id": 66,
-            "value": "Eritrea Nakfa / ERN or Nfk",
-            "text": "ERN",
-            "symbol": "Nfk"
-        },
-        {
-            "id": 67,
-            "value": "Estonia Kroon / EEK or kr",
-            "text": "EEK",
-            "symbol": "kr"
-        },
-
-        {
-            "id": 68,
-            "value": "Turkmenistan Manat / TMM or m",
-            "text": "TMM",
-            "symbol": "m"
-        },	
-
-        {
-            "id": 69,
-            "value": "Falkland Islands Pound / FKP or £",
-            "text": "FKP",
-            "symbol": "£"
-        },
-        {
-            "id": 70,
-            "value": "Faroe Islands Krone / DKK or kr",
-            "text": "DKK",
-            "symbol": "kr"
-        },
-        {
-            "id": 71,
-            "value": "Fiji Dollar  / FJD or $",
-            "text": "FJD ",
-            "symbol": "$"
-        },
-        {
-            "id": 72,
-            "value": "Finland Euro / EUR or €",
-            "text": "EUR",
-            "symbol": "€"
-        },
-        {
-            "id": 73,
-            "value": "France Euro / EUR or €",
-            "text": "EUR",
-            "symbol": "€"
-        },
-        {
-            "id": 74,
-            "value": "French Guiana Euro / EUR or €",
-            "text": "EUR",
-            "symbol": "€"
-        },
-        {
-            "id": 75,
-            "value": "Turkmenistan Manat / TMM or m",
-            "text": "TMM",
-            "symbol": "m"
-        },
-
-        {
-            "id": 76,
-            "value": "French Southern Territories Euro / EUR or €",
-            "text": "EUR",
-            "symbol": "€"
-        },
-        {
-            "id": 77,
-            "value": "Gabon Franc / XAF or FCF",
-            "text": "XAF",
-            "symbol": "FCF"
-        },
-        {
-            "id": 78,
-            "value": "Gambia Dalasi / GMD or D",
-            "text": "GMD",
-            "symbol": "D"
-        },
-        {
-            "id": 79,
-            "value": "Turkey Lira / TRY or YTL",
-            "text": "TRY",
-            "symbol": "YTL"
-        },
-
-        {
-            "id": 80,
-            "value": "Germany Euro / EUR or €",
-            "text": "EUR",
-            "symbol": "€"
-        },
-        {
-            "id": 81,
-            "value": "Ghana Cedi / GHC or ¢",
-            "text": "GHC",
-            "symbol": "¢"
-        },
-        {
-            "id": 82,
-            "value": "Gibraltar Pound / GIP or £",
-            "text": "GIP",
-            "symbol": "£"
-        },
-        {
-            "id": 83,
-            "value": "Greece Euro / EUR or €",
-            "text": "EUR",
-            "symbol": "€"
-        },
-        {
-            "id": 84,
-            "value": "Greenland Krone / DKK or kr",
-            "text": "DKK",
-            "symbol": "kr"
-        },
-        {
-            "id": 85,
-            "value": "Grenada Dollar / XCD or $",
-            "text": "XCD",
-            "symbol": "$"
-        },
-        {
-            "id": 86,
-            "value": "Guadeloupe Euro / EUR or €",
-            "text": "EUR",
-            "symbol": "€"
-        },
-        {
-            "id": 87,
-            "value": "Guam Dollar / USD or $",
-            "text": "USD",
-            "symbol": "$"
-        },
-        {
-            "id": 88,
-            "value": "Guatemala Quetzal / GTQ or Q",
-            "text": "GTQ",
-            "symbol": "Q"
-        },
-        {
-            "id": 89,
-            "value": "Tonga Paanga / TOP or T$",
-            "text": "TOP",
-            "symbol": "T$"
-        },
-        {
-            "id": 90,
-            "value": "Trinidad and Tobago Dollar / TTD or TT$",
-            "text": "TTD",
-            "symbol": "TT$"
-        },
-
-        {
-            "id": 91,
-            "value": "Guyana Dollar / GYD or $",
-            "text": "GYD",
-            "symbol": "$"
-        },
-        {
-            "id": 92,
-            "value": "Haiti Gourde / HTG or G",
-            "text": "HTG",
-            "symbol": "G"
-        },
-        {
-            "id": 93,
-            "value": "Heard Island and McDonald Islands Dollar / AUD or $",
-            "text": "AUD",
-            "symbol": "$"
-        },
-        {
-            "id": 94,
-            "value": "Honduras Lempira / HNL or L",
-            "text": "HNL",
-            "symbol": "L"
-        },
-        {
-            "id": 95,
-            "value": "Hong Kong Dollar / HKD or $",
-            "text": "HKD",
-            "symbol": "$"
-        },
-        {
-            "id": 96,
-            "value": "Hungary Forint / HUF or Ft",
-            "text": "HUF",
-            "symbol": "Ft"
-        },
-        {
-            "id": 97,
-            "value": "Iceland Krona / ISK or kr",
-            "text": "ISK",
-            "symbol": "kr"
-        },
-        {
-            "id": 98,
-            "value": "India Rupee / INR or ₹",
-            "text": "INR",
-            "symbol": "₹"
-        },
-        {
-            "id": 99,
-            "value": "Indonesia Rupiah / IDR or Rp",
-            "text": "IDR",
-            "symbol": "Rp"
-        },
-        {
-            "id": 100,
-            "value": "Iran Rial / IRR or ﷼",
-            "text": "IRR",
-            "symbol": "﷼"
-        },
-        {
-            "id": 101,
-            "value": "Tokelau Dollar / NZD or $",
-            "text": "NZD",
-            "symbol": "$"
-        },
-
-        {
-            "id": 102,
-            "value": "Ireland Euro / EUR or €",
-            "text": "EUR",
-            "symbol": "€"
-        },
-        {
-            "id": 103,
-            "value": "Israel Shekel / ILS or ₪",
-            "text": "ILS",
-            "symbol": "₪"
-        },
-        {
-            "id": 104,
-            "value": "Italy Euro / EUR or €",
-            "text": "EUR",
-            "symbol": "€"
-        },
-
-        {
-            "id": 105,
-            "value": "Jamaica Dollar / JMD or $",
-            "text": "JMD",
-            "symbol": "$"
-        },
-        {
-            "id": 106,
-            "value": "Japan Yen / JPY or ¥",
-            "text": "JPY",
-            "symbol": "¥"
-        },
-
-        {
-            "id": 107,
-            "value": "Kazakhstan Tenge / KZT or лв",
-            "text": "KZT",
-            "symbol": "лв"
-        },
-
-        {
-            "id": 108,
-            "value": "Kiribati Dollar / AUD or $",
-            "text": "AUD",
-            "symbol": "$"
-        },
-        {
-            "id": 109,
-            "value": "Switzerland Franc / CHF or CHF",
-            "text": "CHF",
-            "symbol": "CHF"
-        },
-        {
-            "id": 110,
-            "value": "Syria Pound / SYP or £",
-            "text": "SYP",
-            "symbol": "£"
-        },
-        {
-            "id": 111,
-            "value": "Taiwan Dollar / TWD or NT$",
-            "text": "TWD",
-            "symbol": "NT$"
-        },
-
-        {
-            "id": 112,
-            "value": "Thailand Baht / THB or ฿",
-            "text": "THB",
-            "symbol": "฿"
-        },
-
-        {
-            "id": 113,
-            "value": "Kyrgyzstan Som / KGS or лв",
-            "text": "KGS",
-            "symbol": "лв"
-        },
-        {
-            "id": 114,
-            "value": "Laos Kip / LAK or ₭",
-            "text": "LAK",
-            "symbol": "₭"
-        },
-        {
-            "id": 115,
-            "value": "Latvia Lat / LVL or Ls",
-            "text": "LVL",
-            "symbol": "Ls"
-        },
-        {
-            "id": 116,
-            "value": "Lebanon Pound / LBP or £",
-            "text": "LBP",
-            "symbol": "£"
-        },
-        {
-            "id": 117,
-            "value": "Lesotho Loti / LSL or L",
-            "text": "LSL",
-            "symbol": "L"
-        },
-        {
-            "id": 118,
-            "value": "Liberia Dollar / LRD or $",
-            "text": "LRD",
-            "symbol": "$"
-        },
-        {
-            "id": 119,
-            "value": "Sweden Krona / SEK or kr",
-            "text": "SEK",
-            "symbol": "kr"
-        },
-
-        {
-            "id": 120,
-            "value": "Liechtenstein Franc / CHF or CHF",
-            "text": "CHF",
-            "symbol": "CHF"
-        },
-        {
-            "id": 121,
-            "value": "Lithuania Litas / LTL or Lt",
-            "text": "LTL",
-            "symbol": "Lt"
-        },
-        {
-            "id": 122,
-            "value": "Luxembourg Euro / EUR or €",
-            "text": "EUR",
-            "symbol": "€"
-        },
-        {
-            "id": 123,
-            "value": "Macao Pataca / MOP or MOP",
-            "text": "MOP",
-            "symbol": "MOP"
-        },
-        {
-            "id": 124,
-            "value": "Macedonia Denar / MKD or ден",
-            "text": "MKD",
-            "symbol": "ден"
-        },
-        {
-            "id": 125,
-            "value": "Svalbard and Jan Mayen Krone / NOK or kr",
-            "text": "NOK",
-            "symbol": "kr"
-        },
-
-        {
-            "id": 126,
-            "value": "Malawi Kwacha / MWK or MK",
-            "text": "MWK",
-            "symbol": "MK"
-        },
-        {
-            "id": 127,
-            "value": "Malaysia Ringgit / MYR or RM",
-            "text": "MYR",
-            "symbol": "RM"
-        },
-        {
-            "id": 128,
-            "value": "Maldives Rufiyaa / MVR or Rf",
-            "text": "MVR",
-            "symbol": "Rf"
-        },
-        {
-            "id": 129,
-            "value": "Sri Lanka Rupee / LKR or ₨",
-            "text": "LKR",
-            "symbol": "₨"
-        },
-
-        {
-            "id": 130,
-            "value": "Surivalue Dollar / SRD or $",
-            "text": "SRD",
-            "symbol": "$"
-        },
-
-        {
-            "id": 131,
-            "value": "Marshall Islands Dollar / USD or $",
-            "text": "USD",
-            "symbol": "$"
-        },
-        {
-            "id": 132,
-            "value": "Martinique Euro / EUR or €",
-            "text": "EUR",
-            "symbol": "€"
-        },
-        {
-            "id": 133,
-            "value": "Mauritania Ouguiya / MRO or UM",
-            "text": "MRO",
-            "symbol": "UM"
-        },
-        {
-            "id": 134,
-            "value": "Mauritius Rupee / MUR or ₨",
-            "text": "MUR",
-            "symbol": "₨"
-        },
-        {
-            "id": 135,
-            "value": "Mayotte Euro / EUR or €",
-            "text": "EUR",
-            "symbol": "€"
-        },
-        {
-            "id": 136,
-            "value": "Mexico Peso / MXN or $",
-            "text": "MXN",
-            "symbol": "$"
-        },
-        {
-            "id": 137,
-            "value": "Micronesia Dollar / USD or $",
-            "text": "USD",
-            "symbol": "$"
-        },
-
-        {
-            "id": 138,
-            "value": "Spain Euro / EUR or €",
-            "text": "EUR",
-            "symbol": "€"
-        },
-
-        {
-            "id": 139,
-            "value": "Monaco Euro / EUR or €",
-            "text": "EUR",
-            "symbol": "€"
-        },
-        {
-            "id": 140,
-            "value": "Mongolia Tugrik / MNT or ₮",
-            "text": "MNT",
-            "symbol": "₮"
-        },
-        {
-            "id": 141,
-            "value": "Montserrat Dollar / XCD or $",
-            "text": "XCD",
-            "symbol": "$"
-        },
-        {
-            "id": 142,
-            "value": "South Korea Won / KRW or ₩",
-            "text": "KRW",
-            "symbol": "₩"
-        },
-
-        {
-            "id": 143,
-            "value": "Mozambique Meticail / MZN or MT",
-            "text": "MZN",
-            "symbol": "MT"
-        },
-        {
-            "id": 144,
-            "value": "Myanmar Kyat / MMK or K",
-            "text": "MMK",
-            "symbol": "K"
-        },
-        {
-            "id": 145,
-            "value": "Namibia Dollar / NAD or $",
-            "text": "NAD",
-            "symbol": "$"
-        },
-        {
-            "id": 146,
-            "value": "Nauru Dollar / AUD or $",
-            "text": "AUD",
-            "symbol": "$"
-        },
-        {
-            "id": 147,
-            "value": "Nepal Rupee / NPR or ₨",
-            "text": "NPR",
-            "symbol": "₨"
-        },
-        {
-            "id": 148,
-            "value": "Netherlands Euro/ EUR or €",
-            "text": "EUR",
-            "symbol": "€"
-        },
-        {
-            "id": 149,
-            "value": "Netherlands Antilles Guilder / ANG or ƒ",
-            "text": "ANG",
-            "symbol": "ƒ"
-        },
-
-        {
-            "id": 150,
-            "value": "New Zealand Dollar / NZD or $",
-            "text": "NZD",
-            "symbol": "$"
-        },
-        {
-            "id": 151,
-            "value": "Nicaragua Cordoba / NIO or C$",
-            "text": "NIO",
-            "symbol": "C$"
-        },
-        {
-            "id": 152,
-            "value": "South Georgia and the South Sandwich Islands Pound / GBP or £",
-            "text": "GBP",
-            "symbol": "£"
-        },
-
-        {
-            "id": 153,
-            "value": "South Africa Rand / ZAR or R",
-            "text": "ZAR",
-            "symbol": "R"
-        },
-
-        {
-            "id": 154,
-            "value": "Nigeria Naira / NGN or ₦",
-            "text": "NGN",
-            "symbol": "₦"
-        },
-        {
-            "id": 155,
-            "value": "Niue Dollar / NZD or $",
-            "text": "NZD",
-            "symbol": "$"
-        },
-        {
-            "id": 156,
-            "value": "Norfolk Island Dollar / AUD or $",
-            "text": "AUD",
-            "symbol": "$"
-        },
-        {
-            "id": 157,
-            "value": "North Korea Won / KPW or ₩",
-            "text": "KPW",
-            "symbol": "₩"
-        },
-        {
-            "id": 158,
-            "value": "Northern Mariana Islands Dollar / USD or $",
-            "text": "USD",
-            "symbol": "$"
-        },
-        {
-            "id": 159,
-            "value": "Norway Krone / NOK or kr",
-            "text": "NOK",
-            "symbol": "kr"
-        },
-        {
-            "id": 160,
-            "value": "Oman Rial / OMR or ﷼",
-            "text": "OMR",
-            "symbol": "﷼"
-        },
-        {
-            "id": 161,
-            "value": "Pakistan Rupee / PKR or ₨",
-            "text": "PKR",
-            "symbol": "₨"
-        },
-        {
-            "id": 162,
-            "value": "Palau Dollar / USD or $",
-            "text": "USD",
-            "symbol": "$"
-        },
-        {
-            "id": 163,
-            "value": "Palestinian Territory Shekel / ILS or ₪",
-            "text": "ILS",
-            "symbol": "₪"
-        },
-        {
-            "id": 164,
-            "value": "Panama Balboa / PAB or B/.",
-            "text": "PAB",
-            "symbol": "B/."
-        },
-        {
-            "id": 165,
-            "value": "Somalia Shilling / SOS or S",
-            "text": "SOS",
-            "symbol": "S"
-        },
-
-        {
-            "id": 166,
-            "value": "Paraguay Guarani / PYG or Gs",
-            "text": "PYG",
-            "symbol": "Gs"
-        },
-        {
-            "id": 167,
-            "value": "Peru Sol / PEN or S/.",
-            "text": "PEN",
-            "symbol": "S/."
-        },
-        {
-            "id": 168,
-            "value": "Philippines Peso / PHP or Php",
-            "text": "PHP",
-            "symbol": "Php"
-        },
-        {
-            "id": 169,
-            "value": "Pitcairn Dollar / NZD or $",
-            "text": "NZD",
-            "symbol": "$"
-        },
-        {
-            "id": 170,
-            "value": "Poland Zloty / PLN or zł",
-            "text": "PLN",
-            "symbol": "zł"
-        },
-        {
-            "id": 171,
-            "value": "Portugal Euro / EUR or €",
-            "text": "EUR",
-            "symbol": "€"
-        },
-        {
-            "id": 172,
-            "value": "Puerto Rico Dollar / USD or $",
-            "text": "USD",
-            "symbol": "$"
-        },
-        {
-            "id": 173,
-            "value": "Qatar Rial / QAR or ﷼",
-            "text": "QAR",
-            "symbol": "﷼"
-        },
-        {
-            "id": 174,
-            "value": "Republic of the Congo Franc / XAF or FCF",
-            "text": "XAF",
-            "symbol": "FCF"
-        },
-        {
-            "id": 175,
-            "value": "Reunion Euro / EUR or €",
-            "text": "EUR",
-            "symbol": "€"
-        },
-        {
-            "id": 176,
-            "value": "Romania Leu / RON or lei",
-            "text": "RON",
-            "symbol": "lei"
-        },
-        {
-            "id": 177,
-            "value": "Russia Ruble / RUB or руб",
-            "text": "RUB",
-            "symbol": "руб"
-        },
-
-        {
-            "id": 178,
-            "value": "Solomon Islands Dollar / SBD or $",
-            "text": "SBD",
-            "symbol": "$"
-        },
-
-        {
-            "id": 179,
-            "value": "Saint Helena Pound / SHP or £",
-            "text": "SHP",
-            "symbol": "£"
-        },
-        {
-            "id": 180,
-            "value": "Saint Kitts and Nevis Dollar / XCD or $",
-            "text": "XCD",
-            "symbol": "$"
-        },
-        {
-            "id": 181,
-            "value": "Saint Lucia Dollar / XCD or $",
-            "text": "XCD",
-            "symbol": "$"
-        },
-        {
-            "id": 182,
-            "value": "Saint Pierre and Miquelon Euro / EUR or €",
-            "text": "EUR",
-            "symbol": "€"
-        },
-        {
-            "id": 183,
-            "value": "Saint Vincent and the Grenadines Dollar / XCD or $",
-            "text": "XCD",
-            "symbol": "$"
-        },
-        {
-            "id": 184,
-            "value": "Samoa Tala / WST or WS$",
-            "text": "WST",
-            "symbol": "WS$"
-        },
-        {
-            "id": 185,
-            "value": "San Marino Euro / EUR or €",
-            "text": "EUR",
-            "symbol": "€"
-        },
-        {
-            "id": 186,
-            "value": "Sao Tome and Principe Dobra/ STD or Db",
-            "text": "STD",
-            "symbol": "Db"
-        },
-        {
-            "id": 187,
-            "value": "Saudi Arabia Rial / SAR or ﷼",
-            "text": "SAR",
-            "symbol": "﷼"
-        },
-        {
-            "id": 188,
-            "value": "Slovenia Euro / EUR or €",
-            "text": "EUR",
-            "symbol": "€"
-        },
-
-        {
-            "id": 189,
-            "value": "Serbia and Montenegro Dinar / RSD or Дин",
-            "text": "RSD",
-            "symbol": "Дин"
-        },
-        {
-            "id": 190,
-            "value": "Seychelles Rupee / SCR or ₨",
-            "text": "SCR",
-            "symbol": "₨"
-        },
-        {
-            "id": 191,
-            "value": "Sierra Leone Leone / SLL or Le",
-            "text": "SLL",
-            "symbol": "Le"
-        },
-        {
-            "id": 192,
-            "value": "Singapore Dollar / SGD or $",
-            "text": "SGD",
-            "symbol": "$"
-        },
-        {
-            "id": 193,
-            "value": "Slovakia Koruna / SKK or Sk",
-            "text": "SKK",
-            "symbol": "Sk"
-        }
-
-    ]
+ "currency": [
+  {
+   "id": 1,
+   "value": "Afghanistan Afghani / AFN or؋ ",
+   "text": "AFN",
+   "symbol": "؋"
+  },
+  {
+   "id": 2,
+   "value": "Albania Lek / ALL or Lek",
+   "text": "ALL",
+   "symbol": "Lek"
+  },
+  {
+   "id": 3,
+   "value": "American Samoa US Dollar  / USD or $",
+   "text": "USD",
+   "symbol": "$"
+  },
+  {
+   "id": 4,
+   "value": "Andorra Euro / EUR or €",
+   "text": "EUR",
+   "symbol": "€"
+  },
+  {
+   "id": 5,
+   "value": "Angola Kwanza / AOA or Kz",
+   "text": "AOA",
+   "symbol": "Kz"
+  },
+  {
+   "id": 6,
+   "value": "Anguilla Dollar / XCD or $",
+   "text": "XCD",
+   "symbol": "$"
+  },
+  {
+   "id": 7,
+   "value": "Antigua and Barbuda Dollar / XCD or $",
+   "text": "XCD",
+   "symbol": "$"
+  },
+  {
+   "id": 8,
+   "value": "Argentina Peso / ARS or $",
+   "text": "ARS",
+   "symbol": "$"
+  },
+  {
+   "id": 9,
+   "value": "Aruba Guilder / AWG or ƒ ",
+   "text": "AWG",
+   "symbol": "ƒ"
+  },
+  {
+   "id": 10,
+   "value": "Australia Dollar / AUD or $",
+   "text": "AUD",
+   "symbol": "$"
+  },
+  {
+   "id": 11,
+   "value": "Austria Euro / EUR or €",
+   "text": "EUR",
+   "symbol": "€"
+  },
+  {
+   "id": 12,
+   "value": "Azerbaijan Manat / AZN or ман",
+   "text": "AZN",
+   "symbol": "ман"
+  },
+  {
+   "id": 13,
+   "value": "Bahamas Dollar / BSD or $",
+   "text": "BSD",
+   "symbol": "$"
+  },
+  {
+   "id": 14,
+   "value": "Barbados Dollar / BBD or $",
+   "text": "BBD",
+   "symbol": "$"
+  },
+  {
+   "id": 15,
+   "value": "Venezuela Bolivar / VEF or Bs",
+   "text": "VEF",
+   "symbol": "Bs"
+  },
+  {
+   "id": 16,
+   "value": "Vietnam Dong / VND or ₫",
+   "text": "VND",
+   "symbol": "₫"
+  },
+  {
+   "id": 17,
+   "value": "Yemen Rial / YER or ﷼",
+   "text": "YER",
+   "symbol": "﷼"
+  },
+  {
+   "id": 18,
+   "value": "Zambia Kwacha / ZMK or ZK",
+   "text": "ZMK",
+   "symbol": "ZK"
+  },
+  {
+   "id": 19,
+   "value": "Zimbabwe Dollar / ZWD or Z$",
+   "text": "ZWD",
+   "symbol": "Z$"
+  },
+  {
+   "id": 20,
+   "value": "Belarus Ruble / BYR or p.",
+   "text": "BYR",
+   "symbol": "p."
+  },
+  {
+   "id": 21,
+   "value": "Belgium Euro / EUR or €",
+   "text": "EUR",
+   "symbol": "€"
+  },
+  {
+   "id": 22,
+   "value": "Belize Dollar / BZD or BZ$",
+   "text": "BZD",
+   "symbol": "BZ$"
+  },
+  {
+   "id": 23,
+   "value": "Bermuda Dollar / BMD or $",
+   "text": "BMD",
+   "symbol": "$"
+  },
+  {
+   "id": 24,
+   "value": "Vanuatu Vatu / VUV or Vt",
+   "text": "VUV",
+   "symbol": "Vt"
+  },
+  {
+   "id": 25,
+   "value": "Vatican Euro / EUR or €",
+   "text": "EUR",
+   "symbol": "€"
+  },
+  {
+   "id": 26,
+   "value": "Bolivia Boliviano / BOB or $b",
+   "text": "BOB",
+   "symbol": "$b"
+  },
+  {
+   "id": 27,
+   "value": "Bosnia and Herzegovina Marka / BAM or KM",
+   "text": "BAM",
+   "symbol": "KM"
+  },
+  {
+   "id": 28,
+   "value": "Botswana Pula / BWP or P",
+   "text": "BWP",
+   "symbol": "P"
+  },
+  {
+   "id": 29,
+   "value": "Bouvet Island Krone / NOK or kr",
+   "text": "NOK",
+   "symbol": "kr"
+  },
+  {
+   "id": 30,
+   "value": "Brazil Real / BRL or R$",
+   "text": "BRL",
+   "symbol": "R$"
+  },
+  {
+   "id": 31,
+   "value": "British Indian Ocean Territory Dollar / USD or $",
+   "text": "USD",
+   "symbol": "$"
+  },
+  {
+   "id": 32,
+   "value": "British Virgin Islands Dollar / USD or $",
+   "text": "USD",
+   "symbol": "$"
+  },
+  {
+   "id": 33,
+   "value": "Brunei Dollar / BND or $",
+   "text": "BND",
+   "symbol": "$"
+  },
+  {
+   "id": 34,
+   "value": "Bulgaria Lev / BGN or лв",
+   "text": "BGN",
+   "symbol": "лв"
+  },
+  {
+   "id": 35,
+   "value": "Uruguay Peso / UYU or $U",
+   "text": "UYU",
+   "symbol": "$U"
+  },
+  {
+   "id": 36,
+   "value": "Uzbekistan Som / UZS or лв",
+   "text": "UZS",
+   "symbol": "лв"
+  },
+  {
+   "id": 37,
+   "value": "Cambodia Riels / KHR or ៛",
+   "text": "KHR",
+   "symbol": "៛"
+  },
+  {
+   "id": 38,
+   "value": "Cameroon Franc / XAF or FCF",
+   "text": "XAF",
+   "symbol": "FCF"
+  },
+  {
+   "id": 39,
+   "value": "Canada Dollar / CAD or $",
+   "text": "CAD",
+   "symbol": "$"
+  },
+  {
+   "id": 40,
+   "value": "United States Minor Outlying Islands Dollar / USD or $",
+   "text": "USD",
+   "symbol": "$"
+  },
+  {
+   "id": 41,
+   "value": "Cayman Islands Dollar / KYD or $",
+   "text": "KYD",
+   "symbol": "$"
+  },
+  {
+   "id": 42,
+   "value": "Central African Republic Franc / XAF or FCF",
+   "text": "XAF",
+   "symbol": "FCF"
+  },
+  {
+   "id": 43,
+   "value": "China YuanRenminbi / CNY or ¥",
+   "text": "CNY",
+   "symbol": "¥"
+  },
+  {
+   "id": 44,
+   "value": "United Kingdom Pound / GBP or £",
+   "text": "GBP",
+   "symbol": "£"
+  },
+  {
+   "id": 45,
+   "value": "United States Dollar / USD or $",
+   "text": "USD",
+   "symbol": "$"
+  },
+  {
+   "id": 46,
+   "value": "Christmas Island Dollar / AUD or $",
+   "text": "AUD",
+   "symbol": "$"
+  },
+  {
+   "id": 47,
+   "value": "Cocos Islands Dollar / AUD or $",
+   "text": "AUD",
+   "symbol": "$"
+  },
+  {
+   "id": 48,
+   "value": "Colombia Peso / COP or $",
+   "text": "COP",
+   "symbol": "$"
+  },
+  {
+   "id": 49,
+   "value": "Ukraine Hryvnia / UAH or ₴",
+   "text": "UAH",
+   "symbol": "₴"
+  },
+  {
+   "id": 50,
+   "value": "Cook Islands Dollar / NZD or $",
+   "text": "NZD",
+   "symbol": "$"
+  },
+  {
+   "id": 51,
+   "value": "Costa Rica Colon / CRC or ₡",
+   "text": "CRC",
+   "symbol": "₡"
+  },
+  {
+   "id": 52,
+   "value": "Croatia Kuna / HRK or kn",
+   "text": "HRK",
+   "symbol": "kn"
+  },
+  {
+   "id": 53,
+   "value": "Cuba Peso / CUP or ₱",
+   "text": "CUP",
+   "symbol": "₱"
+  },
+  {
+   "id": 54,
+   "value": "Czech Republic Koruna / CZK or Kč",
+   "text": "CZK",
+   "symbol": "Kč"
+  },
+  {
+   "id": 55,
+   "value": "Denmark Krone / DKK or kr",
+   "text": "DKK",
+   "symbol": "kr"
+  },
+  {
+   "id": 56,
+   "value": "Turks and Caicos Islands Dollar / USD or $",
+   "text": "USD",
+   "symbol": "$"
+  },
+  {
+   "id": 57,
+   "value": "Tuvalu Dollar / AUD or $",
+   "text": "AUD",
+   "symbol": "$"
+  },
+  {
+   "id": 58,
+   "value": "U.S. Virgin Islands Dollar / USD or $",
+   "text": "USD",
+   "symbol": "$"
+  },
+  {
+   "id": 59,
+   "value": "Dominica Dollar / XCD or $",
+   "text": "XCD",
+   "symbol": "$"
+  },
+  {
+   "id": 60,
+   "value": "Dominican Republic Peso / DOP or RD$",
+   "text": "DOP",
+   "symbol": "RD$"
+  },
+  {
+   "id": 61,
+   "value": "East Timor Dollar / USD or $",
+   "text": "USD",
+   "symbol": "$"
+  },
+  {
+   "id": 62,
+   "value": "Ecuador Dollar / USD or $",
+   "text": "USD",
+   "symbol": "$"
+  },
+  {
+   "id": 63,
+   "value": "Egypt Pound / EGP or £",
+   "text": "EGP",
+   "symbol": "£"
+  },
+  {
+   "id": 64,
+   "value": "El Salvador Colone / SVC or $",
+   "text": "SVC",
+   "symbol": "$"
+  },
+  {
+   "id": 65,
+   "value": "Equatorial Guinea Franc / XAF or FCF",
+   "text": "XAF",
+   "symbol": "FCF"
+  },
+  {
+   "id": 66,
+   "value": "Eritrea Nakfa / ERN or Nfk",
+   "text": "ERN",
+   "symbol": "Nfk"
+  },
+  {
+   "id": 67,
+   "value": "Estonia Kroon / EEK or kr",
+   "text": "EEK",
+   "symbol": "kr"
+  },
+  {
+   "id": 68,
+   "value": "Turkmenistan Manat / TMM or m",
+   "text": "TMM",
+   "symbol": "m"
+  },
+  {
+   "id": 69,
+   "value": "Falkland Islands Pound / FKP or £",
+   "text": "FKP",
+   "symbol": "£"
+  },
+  {
+   "id": 70,
+   "value": "Faroe Islands Krone / DKK or kr",
+   "text": "DKK",
+   "symbol": "kr"
+  },
+  {
+   "id": 71,
+   "value": "Fiji Dollar  / FJD or $",
+   "text": "FJD ",
+   "symbol": "$"
+  },
+  {
+   "id": 72,
+   "value": "Finland Euro / EUR or €",
+   "text": "EUR",
+   "symbol": "€"
+  },
+  {
+   "id": 73,
+   "value": "France Euro / EUR or €",
+   "text": "EUR",
+   "symbol": "€"
+  },
+  {
+   "id": 74,
+   "value": "French Guiana Euro / EUR or €",
+   "text": "EUR",
+   "symbol": "€"
+  },
+  {
+   "id": 75,
+   "value": "Turkmenistan Manat / TMM or m",
+   "text": "TMM",
+   "symbol": "m"
+  },
+  {
+   "id": 76,
+   "value": "French Southern Territories Euro / EUR or €",
+   "text": "EUR",
+   "symbol": "€"
+  },
+  {
+   "id": 77,
+   "value": "Gabon Franc / XAF or FCF",
+   "text": "XAF",
+   "symbol": "FCF"
+  },
+  {
+   "id": 78,
+   "value": "Gambia Dalasi / GMD or D",
+   "text": "GMD",
+   "symbol": "D"
+  },
+  {
+   "id": 79,
+   "value": "Turkey Lira / TRY or YTL",
+   "text": "TRY",
+   "symbol": "YTL"
+  },
+  {
+   "id": 80,
+   "value": "Germany Euro / EUR or €",
+   "text": "EUR",
+   "symbol": "€"
+  },
+  {
+   "id": 81,
+   "value": "Ghana Cedi / GHC or ¢",
+   "text": "GHC",
+   "symbol": "¢"
+  },
+  {
+   "id": 82,
+   "value": "Gibraltar Pound / GIP or £",
+   "text": "GIP",
+   "symbol": "£"
+  },
+  {
+   "id": 83,
+   "value": "Greece Euro / EUR or €",
+   "text": "EUR",
+   "symbol": "€"
+  },
+  {
+   "id": 84,
+   "value": "Greenland Krone / DKK or kr",
+   "text": "DKK",
+   "symbol": "kr"
+  },
+  {
+   "id": 85,
+   "value": "Grenada Dollar / XCD or $",
+   "text": "XCD",
+   "symbol": "$"
+  },
+  {
+   "id": 86,
+   "value": "Guadeloupe Euro / EUR or €",
+   "text": "EUR",
+   "symbol": "€"
+  },
+  {
+   "id": 87,
+   "value": "Guam Dollar / USD or $",
+   "text": "USD",
+   "symbol": "$"
+  },
+  {
+   "id": 88,
+   "value": "Guatemala Quetzal / GTQ or Q",
+   "text": "GTQ",
+   "symbol": "Q"
+  },
+  {
+   "id": 89,
+   "value": "Tonga Paanga / TOP or T$",
+   "text": "TOP",
+   "symbol": "T$"
+  },
+  {
+   "id": 90,
+   "value": "Trinidad and Tobago Dollar / TTD or TT$",
+   "text": "TTD",
+   "symbol": "TT$"
+  },
+  {
+   "id": 91,
+   "value": "Guyana Dollar / GYD or $",
+   "text": "GYD",
+   "symbol": "$"
+  },
+  {
+   "id": 92,
+   "value": "Haiti Gourde / HTG or G",
+   "text": "HTG",
+   "symbol": "G"
+  },
+  {
+   "id": 93,
+   "value": "Heard Island and McDonald Islands Dollar / AUD or $",
+   "text": "AUD",
+   "symbol": "$"
+  },
+  {
+   "id": 94,
+   "value": "Honduras Lempira / HNL or L",
+   "text": "HNL",
+   "symbol": "L"
+  },
+  {
+   "id": 95,
+   "value": "Hong Kong Dollar / HKD or $",
+   "text": "HKD",
+   "symbol": "$"
+  },
+  {
+   "id": 96,
+   "value": "Hungary Forint / HUF or Ft",
+   "text": "HUF",
+   "symbol": "Ft"
+  },
+  {
+   "id": 97,
+   "value": "Iceland Krona / ISK or kr",
+   "text": "ISK",
+   "symbol": "kr"
+  },
+  {
+   "id": 98,
+   "value": "India Rupee / INR or ₹",
+   "text": "INR",
+   "symbol": "₹"
+  },
+  {
+   "id": 99,
+   "value": "Indonesia Rupiah / IDR or Rp",
+   "text": "IDR",
+   "symbol": "Rp"
+  },
+  {
+   "id": 100,
+   "value": "Iran Rial / IRR or ﷼",
+   "text": "IRR",
+   "symbol": "﷼"
+  },
+  {
+   "id": 101,
+   "value": "Tokelau Dollar / NZD or $",
+   "text": "NZD",
+   "symbol": "$"
+  },
+  {
+   "id": 102,
+   "value": "Ireland Euro / EUR or €",
+   "text": "EUR",
+   "symbol": "€"
+  },
+  {
+   "id": 103,
+   "value": "Israel Shekel / ILS or ₪",
+   "text": "ILS",
+   "symbol": "₪"
+  },
+  {
+   "id": 104,
+   "value": "Italy Euro / EUR or €",
+   "text": "EUR",
+   "symbol": "€"
+  },
+  {
+   "id": 105,
+   "value": "Jamaica Dollar / JMD or $",
+   "text": "JMD",
+   "symbol": "$"
+  },
+  {
+   "id": 106,
+   "value": "Japan Yen / JPY or ¥",
+   "text": "JPY",
+   "symbol": "¥"
+  },
+  {
+   "id": 107,
+   "value": "Kazakhstan Tenge / KZT or лв",
+   "text": "KZT",
+   "symbol": "лв"
+  },
+  {
+   "id": 108,
+   "value": "Kiribati Dollar / AUD or $",
+   "text": "AUD",
+   "symbol": "$"
+  },
+  {
+   "id": 109,
+   "value": "Switzerland Franc / CHF or CHF",
+   "text": "CHF",
+   "symbol": "CHF"
+  },
+  {
+   "id": 110,
+   "value": "Syria Pound / SYP or £",
+   "text": "SYP",
+   "symbol": "£"
+  },
+  {
+   "id": 111,
+   "value": "Taiwan Dollar / TWD or NT$",
+   "text": "TWD",
+   "symbol": "NT$"
+  },
+  {
+   "id": 112,
+   "value": "Thailand Baht / THB or ฿",
+   "text": "THB",
+   "symbol": "฿"
+  },
+  {
+   "id": 113,
+   "value": "Kyrgyzstan Som / KGS or лв",
+   "text": "KGS",
+   "symbol": "лв"
+  },
+  {
+   "id": 114,
+   "value": "Laos Kip / LAK or ₭",
+   "text": "LAK",
+   "symbol": "₭"
+  },
+  {
+   "id": 115,
+   "value": "Latvia Lat / LVL or Ls",
+   "text": "LVL",
+   "symbol": "Ls"
+  },
+  {
+   "id": 116,
+   "value": "Lebanon Pound / LBP or £",
+   "text": "LBP",
+   "symbol": "£"
+  },
+  {
+   "id": 117,
+   "value": "Lesotho Loti / LSL or L",
+   "text": "LSL",
+   "symbol": "L"
+  },
+  {
+   "id": 118,
+   "value": "Liberia Dollar / LRD or $",
+   "text": "LRD",
+   "symbol": "$"
+  },
+  {
+   "id": 119,
+   "value": "Sweden Krona / SEK or kr",
+   "text": "SEK",
+   "symbol": "kr"
+  },
+  {
+   "id": 120,
+   "value": "Liechtenstein Franc / CHF or CHF",
+   "text": "CHF",
+   "symbol": "CHF"
+  },
+  {
+   "id": 121,
+   "value": "Lithuania Litas / LTL or Lt",
+   "text": "LTL",
+   "symbol": "Lt"
+  },
+  {
+   "id": 122,
+   "value": "Luxembourg Euro / EUR or €",
+   "text": "EUR",
+   "symbol": "€"
+  },
+  {
+   "id": 123,
+   "value": "Macao Pataca / MOP or MOP",
+   "text": "MOP",
+   "symbol": "MOP"
+  },
+  {
+   "id": 124,
+   "value": "Macedonia Denar / MKD or ден",
+   "text": "MKD",
+   "symbol": "ден"
+  },
+  {
+   "id": 125,
+   "value": "Svalbard and Jan Mayen Krone / NOK or kr",
+   "text": "NOK",
+   "symbol": "kr"
+  },
+  {
+   "id": 126,
+   "value": "Malawi Kwacha / MWK or MK",
+   "text": "MWK",
+   "symbol": "MK"
+  },
+  {
+   "id": 127,
+   "value": "Malaysia Ringgit / MYR or RM",
+   "text": "MYR",
+   "symbol": "RM"
+  },
+  {
+   "id": 128,
+   "value": "Maldives Rufiyaa / MVR or Rf",
+   "text": "MVR",
+   "symbol": "Rf"
+  },
+  {
+   "id": 129,
+   "value": "Sri Lanka Rupee / LKR or ₨",
+   "text": "LKR",
+   "symbol": "₨"
+  },
+  {
+   "id": 130,
+   "value": "Surivalue Dollar / SRD or $",
+   "text": "SRD",
+   "symbol": "$"
+  },
+  {
+   "id": 131,
+   "value": "Marshall Islands Dollar / USD or $",
+   "text": "USD",
+   "symbol": "$"
+  },
+  {
+   "id": 132,
+   "value": "Martinique Euro / EUR or €",
+   "text": "EUR",
+   "symbol": "€"
+  },
+  {
+   "id": 133,
+   "value": "Mauritania Ouguiya / MRO or UM",
+   "text": "MRO",
+   "symbol": "UM"
+  },
+  {
+   "id": 134,
+   "value": "Mauritius Rupee / MUR or ₨",
+   "text": "MUR",
+   "symbol": "₨"
+  },
+  {
+   "id": 135,
+   "value": "Mayotte Euro / EUR or €",
+   "text": "EUR",
+   "symbol": "€"
+  },
+  {
+   "id": 136,
+   "value": "Mexico Peso / MXN or $",
+   "text": "MXN",
+   "symbol": "$"
+  },
+  {
+   "id": 137,
+   "value": "Micronesia Dollar / USD or $",
+   "text": "USD",
+   "symbol": "$"
+  },
+  {
+   "id": 138,
+   "value": "Spain Euro / EUR or €",
+   "text": "EUR",
+   "symbol": "€"
+  },
+  {
+   "id": 139,
+   "value": "Monaco Euro / EUR or €",
+   "text": "EUR",
+   "symbol": "€"
+  },
+  {
+   "id": 140,
+   "value": "Mongolia Tugrik / MNT or ₮",
+   "text": "MNT",
+   "symbol": "₮"
+  },
+  {
+   "id": 141,
+   "value": "Montserrat Dollar / XCD or $",
+   "text": "XCD",
+   "symbol": "$"
+  },
+  {
+   "id": 142,
+   "value": "South Korea Won / KRW or ₩",
+   "text": "KRW",
+   "symbol": "₩"
+  },
+  {
+   "id": 143,
+   "value": "Mozambique Meticail / MZN or MT",
+   "text": "MZN",
+   "symbol": "MT"
+  },
+  {
+   "id": 144,
+   "value": "Myanmar Kyat / MMK or K",
+   "text": "MMK",
+   "symbol": "K"
+  },
+  {
+   "id": 145,
+   "value": "Namibia Dollar / NAD or $",
+   "text": "NAD",
+   "symbol": "$"
+  },
+  {
+   "id": 146,
+   "value": "Nauru Dollar / AUD or $",
+   "text": "AUD",
+   "symbol": "$"
+  },
+  {
+   "id": 147,
+   "value": "Nepal Rupee / NPR or ₨",
+   "text": "NPR",
+   "symbol": "₨"
+  },
+  {
+   "id": 148,
+   "value": "Netherlands Euro/ EUR or €",
+   "text": "EUR",
+   "symbol": "€"
+  },
+  {
+   "id": 149,
+   "value": "Netherlands Antilles Guilder / ANG or ƒ",
+   "text": "ANG",
+   "symbol": "ƒ"
+  },
+  {
+   "id": 150,
+   "value": "New Zealand Dollar / NZD or $",
+   "text": "NZD",
+   "symbol": "$"
+  },
+  {
+   "id": 151,
+   "value": "Nicaragua Cordoba / NIO or C$",
+   "text": "NIO",
+   "symbol": "C$"
+  },
+  {
+   "id": 152,
+   "value": "South Georgia and the South Sandwich Islands Pound / GBP or £",
+   "text": "GBP",
+   "symbol": "£"
+  },
+  {
+   "id": 153,
+   "value": "South Africa Rand / ZAR or R",
+   "text": "ZAR",
+   "symbol": "R"
+  },
+  {
+   "id": 154,
+   "value": "Nigeria Naira / NGN or ₦",
+   "text": "NGN",
+   "symbol": "₦"
+  },
+  {
+   "id": 155,
+   "value": "Niue Dollar / NZD or $",
+   "text": "NZD",
+   "symbol": "$"
+  },
+  {
+   "id": 156,
+   "value": "Norfolk Island Dollar / AUD or $",
+   "text": "AUD",
+   "symbol": "$"
+  },
+  {
+   "id": 157,
+   "value": "North Korea Won / KPW or ₩",
+   "text": "KPW",
+   "symbol": "₩"
+  },
+  {
+   "id": 158,
+   "value": "Northern Mariana Islands Dollar / USD or $",
+   "text": "USD",
+   "symbol": "$"
+  },
+  {
+   "id": 159,
+   "value": "Norway Krone / NOK or kr",
+   "text": "NOK",
+   "symbol": "kr"
+  },
+  {
+   "id": 160,
+   "value": "Oman Rial / OMR or ﷼",
+   "text": "OMR",
+   "symbol": "﷼"
+  },
+  {
+   "id": 161,
+   "value": "Pakistan Rupee / PKR or ₨",
+   "text": "PKR",
+   "symbol": "₨"
+  },
+  {
+   "id": 162,
+   "value": "Palau Dollar / USD or $",
+   "text": "USD",
+   "symbol": "$"
+  },
+  {
+   "id": 163,
+   "value": "Palestinian Territory Shekel / ILS or ₪",
+   "text": "ILS",
+   "symbol": "₪"
+  },
+  {
+   "id": 164,
+   "value": "Panama Balboa / PAB or B/.",
+   "text": "PAB",
+   "symbol": "B/."
+  },
+  {
+   "id": 165,
+   "value": "Somalia Shilling / SOS or S",
+   "text": "SOS",
+   "symbol": "S"
+  },
+  {
+   "id": 166,
+   "value": "Paraguay Guarani / PYG or Gs",
+   "text": "PYG",
+   "symbol": "Gs"
+  },
+  {
+   "id": 167,
+   "value": "Peru Sol / PEN or S/.",
+   "text": "PEN",
+   "symbol": "S/."
+  },
+  {
+   "id": 168,
+   "value": "Philippines Peso / PHP or Php",
+   "text": "PHP",
+   "symbol": "Php"
+  },
+  {
+   "id": 169,
+   "value": "Pitcairn Dollar / NZD or $",
+   "text": "NZD",
+   "symbol": "$"
+  },
+  {
+   "id": 170,
+   "value": "Poland Zloty / PLN or zł",
+   "text": "PLN",
+   "symbol": "zł"
+  },
+  {
+   "id": 171,
+   "value": "Portugal Euro / EUR or €",
+   "text": "EUR",
+   "symbol": "€"
+  },
+  {
+   "id": 172,
+   "value": "Puerto Rico Dollar / USD or $",
+   "text": "USD",
+   "symbol": "$"
+  },
+  {
+   "id": 173,
+   "value": "Qatar Rial / QAR or ﷼",
+   "text": "QAR",
+   "symbol": "﷼"
+  },
+  {
+   "id": 174,
+   "value": "Republic of the Congo Franc / XAF or FCF",
+   "text": "XAF",
+   "symbol": "FCF"
+  },
+  {
+   "id": 175,
+   "value": "Reunion Euro / EUR or €",
+   "text": "EUR",
+   "symbol": "€"
+  },
+  {
+   "id": 176,
+   "value": "Romania Leu / RON or lei",
+   "text": "RON",
+   "symbol": "lei"
+  },
+  {
+   "id": 177,
+   "value": "Russia Ruble / RUB or руб",
+   "text": "RUB",
+   "symbol": "руб"
+  },
+  {
+   "id": 178,
+   "value": "Solomon Islands Dollar / SBD or $",
+   "text": "SBD",
+   "symbol": "$"
+  },
+  {
+   "id": 179,
+   "value": "Saint Helena Pound / SHP or £",
+   "text": "SHP",
+   "symbol": "£"
+  },
+  {
+   "id": 180,
+   "value": "Saint Kitts and Nevis Dollar / XCD or $",
+   "text": "XCD",
+   "symbol": "$"
+  },
+  {
+   "id": 181,
+   "value": "Saint Lucia Dollar / XCD or $",
+   "text": "XCD",
+   "symbol": "$"
+  },
+  {
+   "id": 182,
+   "value": "Saint Pierre and Miquelon Euro / EUR or €",
+   "text": "EUR",
+   "symbol": "€"
+  },
+  {
+   "id": 183,
+   "value": "Saint Vincent and the Grenadines Dollar / XCD or $",
+   "text": "XCD",
+   "symbol": "$"
+  },
+  {
+   "id": 184,
+   "value": "Samoa Tala / WST or WS$",
+   "text": "WST",
+   "symbol": "WS$"
+  },
+  {
+   "id": 185,
+   "value": "San Marino Euro / EUR or €",
+   "text": "EUR",
+   "symbol": "€"
+  },
+  {
+   "id": 186,
+   "value": "Sao Tome and Principe Dobra/ STD or Db",
+   "text": "STD",
+   "symbol": "Db"
+  },
+  {
+   "id": 187,
+   "value": "Saudi Arabia Rial / SAR or ﷼",
+   "text": "SAR",
+   "symbol": "﷼"
+  },
+  {
+   "id": 188,
+   "value": "Slovenia Euro / EUR or €",
+   "text": "EUR",
+   "symbol": "€"
+  },
+  {
+   "id": 189,
+   "value": "Serbia and Montenegro Dinar / RSD or Дин",
+   "text": "RSD",
+   "symbol": "Дин"
+  },
+  {
+   "id": 190,
+   "value": "Seychelles Rupee / SCR or ₨",
+   "text": "SCR",
+   "symbol": "₨"
+  },
+  {
+   "id": 191,
+   "value": "Sierra Leone Leone / SLL or Le",
+   "text": "SLL",
+   "symbol": "Le"
+  },
+  {
+   "id": 192,
+   "value": "Singapore Dollar / SGD or $",
+   "text": "SGD",
+   "symbol": "$"
+  },
+  {
+   "id": 193,
+   "value": "Slovakia Koruna / SKK or Sk",
+   "text": "SKK",
+   "symbol": "Sk"
+  },
+  {
+   "id": 194,
+   "value": "Algeria Dinar / DZD or دج",
+   "text": "DZD",
+   "symbol": "دج"
+  },
+  {
+   "id": 195,
+   "value": "Armenia Dram / AMD or ֏",
+   "text": "AMD",
+   "symbol": "֏"
+  },
+  {
+   "id": 196,
+   "value": "Bahrain Dinar / BHD or .د.ب",
+   "text": "BHD",
+   "symbol": ".د.ب"
+  },
+  {
+   "id": 197,
+   "value": "Bangladesh Taka / BDT or ৳",
+   "text": "BDT",
+   "symbol": "৳"
+  },
+  {
+   "id": 198,
+   "value": "Belarus Ruble / BYN or Br",
+   "text": "BYN",
+   "symbol": "Br"
+  },
+  {
+   "id": 199,
+   "value": "West African CFA Franc / XOF or CFA",
+   "text": "XOF",
+   "symbol": "CFA"
+  },
+  {
+   "id": 200,
+   "value": "Bhutan Ngultrum / BTN or Nu.",
+   "text": "BTN",
+   "symbol": "Nu."
+  },
+  {
+   "id": 201,
+   "value": "Burundi Franc / BIF or FBu",
+   "text": "BIF",
+   "symbol": "FBu"
+  },
+  {
+   "id": 202,
+   "value": "Cape Verde Escudo / CVE or $",
+   "text": "CVE",
+   "symbol": "$"
+  },
+  {
+   "id": 203,
+   "value": "Chile Peso / CLP or $",
+   "text": "CLP",
+   "symbol": "$"
+  },
+  {
+   "id": 204,
+   "value": "Comoros Franc / KMF or CF",
+   "text": "KMF",
+   "symbol": "CF"
+  },
+  {
+   "id": 205,
+   "value": "Congo Franc / CDF or FC",
+   "text": "CDF",
+   "symbol": "FC"
+  },
+  {
+   "id": 206,
+   "value": "Djibouti Franc / DJF or Fdj",
+   "text": "DJF",
+   "symbol": "Fdj"
+  },
+  {
+   "id": 207,
+   "value": "Swaziland Lilangeni / SZL or E",
+   "text": "SZL",
+   "symbol": "E"
+  },
+  {
+   "id": 208,
+   "value": "Ethiopia Birr / ETB or Br",
+   "text": "ETB",
+   "symbol": "Br"
+  },
+  {
+   "id": 209,
+   "value": "Fiji Islands Dollar / FJD or FJ$",
+   "text": "FJD",
+   "symbol": "FJ$"
+  },
+  {
+   "id": 210,
+   "value": "CFP Franc / XPF or ₣",
+   "text": "XPF",
+   "symbol": "₣"
+  },
+  {
+   "id": 211,
+   "value": "Georgia Lari / GEL or ₾",
+   "text": "GEL",
+   "symbol": "₾"
+  },
+  {
+   "id": 212,
+   "value": "Ghana Cedi / GHS or GH₵",
+   "text": "GHS",
+   "symbol": "GH₵"
+  },
+  {
+   "id": 213,
+   "value": "Guinea Franc / GNF or FG",
+   "text": "GNF",
+   "symbol": "FG"
+  },
+  {
+   "id": 214,
+   "value": "Iraq Dinar / IQD or ع.د",
+   "text": "IQD",
+   "symbol": "ع.د"
+  },
+  {
+   "id": 215,
+   "value": "Jordan Dinar / JOD or د.ا",
+   "text": "JOD",
+   "symbol": "د.ا"
+  },
+  {
+   "id": 216,
+   "value": "Kenya Shilling / KES or KSh",
+   "text": "KES",
+   "symbol": "KSh"
+  },
+  {
+   "id": 217,
+   "value": "Kuwait Dinar / KWD or د.ك",
+   "text": "KWD",
+   "symbol": "د.ك"
+  },
+  {
+   "id": 218,
+   "value": "Libya Dinar / LYD or ل.د",
+   "text": "LYD",
+   "symbol": "ل.د"
+  },
+  {
+   "id": 219,
+   "value": "Madagascar Ariary / MGA or Ar",
+   "text": "MGA",
+   "symbol": "Ar"
+  },
+  {
+   "id": 220,
+   "value": "Mauritania Ouguiya / MRU or UM",
+   "text": "MRU",
+   "symbol": "UM"
+  },
+  {
+   "id": 221,
+   "value": "Moldova Leu / MDL or L",
+   "text": "MDL",
+   "symbol": "L"
+  },
+  {
+   "id": 222,
+   "value": "Morocco Dirham / MAD or د.م.",
+   "text": "MAD",
+   "symbol": "د.م."
+  },
+  {
+   "id": 223,
+   "value": "Papua new Guinea Kina / PGK or K",
+   "text": "PGK",
+   "symbol": "K"
+  },
+  {
+   "id": 224,
+   "value": "Rwanda Franc / RWF or FRw",
+   "text": "RWF",
+   "symbol": "FRw"
+  },
+  {
+   "id": 225,
+   "value": "Sao Tome and Principe Dobra / STN or Db",
+   "text": "STN",
+   "symbol": "Db"
+  },
+  {
+   "id": 226,
+   "value": "Sierra Leone Leone / SLE or Le",
+   "text": "SLE",
+   "symbol": "Le"
+  },
+  {
+   "id": 227,
+   "value": "South Sudan Pound / SSP or £",
+   "text": "SSP",
+   "symbol": "£"
+  },
+  {
+   "id": 228,
+   "value": "Sudan Pound / SDG or ج.س",
+   "text": "SDG",
+   "symbol": "ج.س"
+  },
+  {
+   "id": 229,
+   "value": "Tajikistan Somoni / TJS or SM",
+   "text": "TJS",
+   "symbol": "SM"
+  },
+  {
+   "id": 230,
+   "value": "Tanzania Shilling / TZS or TSh",
+   "text": "TZS",
+   "symbol": "TSh"
+  },
+  {
+   "id": 231,
+   "value": "Tunisia Dinar / TND or د.ت",
+   "text": "TND",
+   "symbol": "د.ت"
+  },
+  {
+   "id": 232,
+   "value": "Turkmenistan Manat / TMT or m",
+   "text": "TMT",
+   "symbol": "m"
+  },
+  {
+   "id": 233,
+   "value": "Uganda Shilling / UGX or USh",
+   "text": "UGX",
+   "symbol": "USh"
+  },
+  {
+   "id": 234,
+   "value": "United Arab Emirates Dirham / AED or د.إ",
+   "text": "AED",
+   "symbol": "د.إ"
+  },
+  {
+   "id": 235,
+   "value": "Venezuela Bolivar / VES or Bs.",
+   "text": "VES",
+   "symbol": "Bs."
+  },
+  {
+   "id": 236,
+   "value": "Zambia Kwacha / ZMW or ZK",
+   "text": "ZMW",
+   "symbol": "ZK"
+  },
+  {
+   "id": 237,
+   "value": "Zimbabwe Gold / ZWG or ZiG",
+   "text": "ZWG",
+   "symbol": "ZiG"
+  }
+ ]
 }
