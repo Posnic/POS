@@ -87,9 +87,9 @@ function getLinkContent(data, lang) {
         let content = ''
         if (type === 'directory') {
             if (dir[1] && dir[1].length > 0) {
-                content = mergeDirectory(html[lang][dir[0]][dir[1]]);
+                content = mergeDirectory(html[lang][dir[0]][dir[1]], dir[0]);
             } else {
-                content = mergeDirectory(html[lang][dir[0]]);
+                content = mergeDirectory(html[lang][dir[0]], dir[0]);
             }
         }
         if (type === 'file') {

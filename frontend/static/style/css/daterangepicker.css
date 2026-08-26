@@ -88,7 +88,22 @@
   border-top: 6px solid #fff;
 }
 
-.daterangepicker.single .daterangepicker .ranges, .daterangepicker.single .drp-calendar {
+/*
+ * THE RULE THAT KILLED EVERY iPHONE TAB (2026-08-26, OWNER_QUEUE row 193).
+ *
+ * Upstream daterangepicker ships this selector with ".daterangepicker"
+ * doubled - a picker nested inside a picker, which never exists - and on
+ * iOS 18.7 WebKit, matching that compound selector against this page's DOM
+ * crashes the renderer at first layout: "A problem repeatedly occurred",
+ * both Safari and Chrome-iOS, no error ever thrown, desktop unaffected.
+ * The owner's phone bisected 9,004 rules down to THIS ONE, alone, twice.
+ *
+ * The doubled half is dropped (it styled nothing); the real half keeps its
+ * one declaration. Never reintroduce the nested form - and if a vendor
+ * update brings it back, the in-page css bisect will name it again.
+ */
+.daterangepicker.single .ranges,
+.daterangepicker.single .drp-calendar {
   float: none;
 }
 
