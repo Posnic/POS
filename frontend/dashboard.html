@@ -103,6 +103,14 @@
                         XMLHttpRequest.prototype.send = function () {
                             var x = this, t0 = Date.now();
                             try {
+                                /* boot-ladder rung: with noapi active nothing
+                                   leaves the device - the skeleton boots
+                                   alone, and its survival or death splits
+                                   parse code from its API callbacks */
+                                if (window.__posnicSkip === 'noapi' && String(x.__fl || '').indexOf('client-errors') === -1) {
+                                    move('api-BLOCKED ' + x.__fl);
+                                    return;
+                                }
                                 if (x.__fl && String(x.__fl).indexOf('client-errors') === -1) {
                                     move('api> ' + x.__fl);
                                     x.addEventListener('loadend', function () {
@@ -265,7 +273,7 @@
                             && !localStorage.getItem('posnic_fresh_boot')) {
                         try {
                             var FP = 'posnic_fn_probe';
-                            var SKIPS = ['hold', 'all', 'menu', 'overview', 'store'];
+                            var SKIPS = ['noapi', 'hold', 'all', 'menu', 'overview', 'store'];
                             var fpi = parseInt(localStorage.getItem(FP) || '0', 10) || 0;
                             localStorage.setItem(FP, String(fpi + 1));
                             var skipName = SKIPS[fpi % SKIPS.length];
