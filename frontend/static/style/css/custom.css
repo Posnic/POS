@@ -5311,9 +5311,22 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 
 /* Right-slide panels become full sheets on phones - a 480px sidebar on
    a 390px screen was neither open nor closed. */
+/*
+ * ONLY WHEN OPEN. The drawers are hidden by WIDTH ZERO (see
+ * scss/_custom-topbar.scss: `.infobar-settings-sidebar { width: 0 }`, and
+ * `.sidebarshow { width: 420px }` to open). The first version of this rule
+ * set `width: 100vw !important` on the bare class, which overrode the
+ * closed state too - so on every phone about twenty drawers were full-width
+ * and painted on top of the app. That is what put "Add Customer Category"
+ * over the owner's dashboard on both iPhone and Android, and it is why a
+ * phone rendered ~20 extra full-screen panels' worth of layout on boot.
+ * The state classes are what may be widened; never the base class.
+ */
 @media (max-width: 767.98px) {
-    .infobar-settings-sidebar,
-    #infobar-settings-sidebar-tender-details {
+    .infobar-settings-sidebar.sidebarshow,
+    .infobar-settings-sidebar.sidebarview,
+    #infobar-settings-sidebar-tender-details.sidebarshow,
+    #infobar-settings-sidebar-tender-details.sidebarview {
         width: 100vw !important;
         max-width: 100vw !important;
     }
