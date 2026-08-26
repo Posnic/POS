@@ -131,41 +131,61 @@
                         });
                     }
                     /*
-                     * AUTO-QUARANTINE. Every crash-free reproduction of this
-                     * page ran WITHOUT a service worker; the dying device runs
-                     * WITH one, over its whole cache history - and a page that
-                     * dies at ~850ms may never complete the worker update that
-                     * carries the fix, a trap with no exit from the inside.
-                     * This runs at 0ms, before the death: two recorded deaths
-                     * in a row and it removes every worker and cache, reports
-                     * itself, and reloads once. If the state was the killer,
-                     * the device cures itself on the next open.
+                     * MOBILE SAFE MODE (owner's order: "local storage or
+                     * indexed db or service workers. those just stop and
+                     * check first."). On phones, UNCONDITIONALLY at 0ms:
+                     * unregister every worker, delete every cache, delete
+                     * every IndexedDB database, and say so once per session.
+                     * Every crash-free reproduction ran with these stores
+                     * empty; the dying iPhone runs with months of them.
+                     * If the deaths stop here, the storage layer is
+                     * convicted and the subsystems return one at a time.
                      */
                     try {
-                        var deaths = 0;
-                        try { deaths = parseInt(localStorage.getItem(K + '_deaths') || '0', 10) || 0; } catch (e0) { }
-                        if (prev && prev.started !== now && !prev.clean) { deaths += 1; }
-                        else if (prev && prev.clean) { deaths = 0; }
-                        localStorage.setItem(K + '_deaths', String(deaths));
-                        if (deaths >= 2 && !sessionStorage.getItem('posnic_quarantine')) {
-                            sessionStorage.setItem('posnic_quarantine', '1');
-                            localStorage.setItem(K + '_deaths', '0');
-                            var payloadQ = JSON.stringify({ message: '[boot-flight] QUARANTINE after ' + deaths + ' straight deaths: unregistering workers + clearing caches, then one reload', at: 'boot-flight' });
-                            if (navigator.sendBeacon) { navigator.sendBeacon('client-errors', new Blob([payloadQ], { type: 'application/json' })); }
-                            var done = function () { try { location.reload(); } catch (e1) { } };
-                            var t = setTimeout(done, 2500);
-                            Promise.all([
-                                (navigator.serviceWorker && navigator.serviceWorker.getRegistrations)
-                                    ? navigator.serviceWorker.getRegistrations().then(function (rs) {
-                                        return Promise.all(rs.map(function (r) { return r.unregister(); }));
-                                    }) : Promise.resolve(),
-                                (window.caches && caches.keys)
-                                    ? caches.keys().then(function (ks) {
-                                        return Promise.all(ks.map(function (k) { return caches.delete(k); }));
-                                    }) : Promise.resolve()
-                            ]).then(function () { clearTimeout(t); done(); }, function () { clearTimeout(t); done(); });
+                        var phoneish = Math.min(screen.width || 9999, screen.height || 9999) < 820
+                            && 'ontouchstart' in window;
+                        window.__mobileSafeMode = phoneish;
+                        if (phoneish) {
+                            if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+                                navigator.serviceWorker.getRegistrations().then(function (rs) {
+                                    rs.forEach(function (r) { r.unregister().catch(function () { }); });
+                                }).catch(function () { });
+                            }
+                            if (window.caches && caches.keys) {
+                                caches.keys().then(function (ks) {
+                                    ks.forEach(function (k) { caches.delete(k).catch(function () { }); });
+                                }).catch(function () { });
+                            }
+                            try {
+                                if (window.indexedDB && indexedDB.databases) {
+                                    indexedDB.databases().then(function (dbs) {
+                                        (dbs || []).forEach(function (d) {
+                                            if (d && d.name) { try { indexedDB.deleteDatabase(d.name); } catch (e5) { } }
+                                        });
+                                    }).catch(function () { });
+                                }
+                            } catch (e6) { }
+                            if (!sessionStorage.getItem('posnic_safemode_said')) {
+                                sessionStorage.setItem('posnic_safemode_said', '1');
+                                try {
+                                    var payloadS = JSON.stringify({ message: '[boot-flight] SAFE-MODE active: worker unregistered, caches + indexeddb wiped on this phone boot', at: 'boot-flight' });
+                                    if (navigator.sendBeacon) { navigator.sendBeacon('client-errors', new Blob([payloadS], { type: 'application/json' })); }
+                                } catch (e7) { }
+                            }
                         }
-                    } catch (eq) { /* quarantine must never be a new failure */ }
+                    } catch (eq) { /* safe mode must never be a new failure */ }
+                    /* A browser restoring a dead session brings its old URL
+                       back with it - which greeted the owner with an empty
+                       Add form after login ("why first showing add category
+                       form after login?"). A restored ADD route is nobody's
+                       intent: strip it to the list before the router runs. */
+                    try {
+                        /* panel-add routes only - never sales/new or
+                           kotorder/new, which are real destinations */
+                        if (/^#\/(customercategory|customers|suppliers|users|expenses|categories|variants)\/new$/.test(location.hash)) {
+                            history.replaceState(null, '', location.pathname + location.search + location.hash.replace(/\/new$/, ''));
+                        }
+                    } catch (e8) { }
                     /* The previous session's verdict: died without pagehide =
                        the OS or the browser took the tab. Say precisely where. */
                     if (prev && prev.started !== now && !prev.clean) {
@@ -909,7 +929,12 @@
            and asset-updater. Cache invalidation is the worker's own contract -
            its cache name carries the build hash, so a server deploy replaces
            every cached bundle on the next navigation. */
-        if ('serviceWorker' in navigator && navigator.userAgent.indexOf('Electron') === -1) {
+        /* MOBILE SAFE MODE (owner: "local storage or indexed db or service
+           workers. those just stop and check first."): phones get NO worker
+           until the iOS crash is closed - and window.__mobileSafeMode (set
+           by the flight recorder, which also wipes the stores) is the flag. */
+        if ('serviceWorker' in navigator && navigator.userAgent.indexOf('Electron') === -1
+                && !window.__mobileSafeMode) {
             window.addEventListener('load', function () {
                 navigator.serviceWorker.register('sw.js').catch(function () { /* optional */ });
             });
