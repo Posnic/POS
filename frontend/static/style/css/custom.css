@@ -1531,10 +1531,7 @@ input[type="checkbox"]:checked:after, .checkbox input[type="checkbox"]:checked:a
     border: none !important;
 }
 /*end popup overlay*/
-#receiving-received-report-apex-circle-chart,#receiving-open-report-apex-circle-chart,#sales-payment-report-apex-circle-chart,#report-items-apex-circle-chart,#sales-report-apex-circle-chart,#user-payment-report-amchart-circle-chart,#supplier-report-apex-circle-chart,#customer-report-apex-circle-chart,#sales-returnreport-apex-circle-chart {
-    width: 100%;
-    height: 350px;
-}
+/* report chart container sizes removed with the chart purge */
 
 
 /*gst report table style*/

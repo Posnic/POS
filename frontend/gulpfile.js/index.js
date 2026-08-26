@@ -71,10 +71,6 @@ function copyLazyScripts(cb) {
     const fsx = require('fs');
     const pathx = require('path');
     const LAZY = [
-        ['static/script/js/plugins/amcharts/core.js', 'amcharts-core.js'],
-        ['static/script/js/plugins/amcharts/charts.js', 'amcharts-charts.js'],
-        ['static/script/js/plugins/amcharts/theme/animated.js', 'amcharts-animated.js'],
-        ['static/script/js/plugins/apexcharts/apexcharts.min.js', 'apexcharts.js'],
         ['static/script/js/jspdf.umd.min.js', 'jspdf2.js'],
         ['static/script/js/html2canvas.min.js', 'html2canvas.js'],
         ['static/script/js/sortable.min.js', 'sortable.js'],

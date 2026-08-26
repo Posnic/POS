@@ -703,12 +703,6 @@ PosnicPro = {
      */
     lazy: {
         _sets: {
-            amcharts: [
-                'script/lazy/amcharts-core.js',
-                'script/lazy/amcharts-charts.js',
-                'script/lazy/amcharts-animated.js',
-            ],
-            apexcharts: ['script/lazy/apexcharts.js'],
             jspdf: ['script/lazy/jspdf2.js'],
             html2canvas: ['script/lazy/html2canvas.js'],
             sortable: ['script/lazy/sortable.js'],
@@ -736,7 +730,7 @@ PosnicPro = {
                 /* A failed load must be retryable on the next click, never
                    cached as forever-broken. */
                 delete PosnicPro.lazy._loads[name];
-                PosnicPro.alert('error', 'Could not load the chart / report tools - check the connection and try again.');
+                PosnicPro.alert('error', 'Could not load the report tools - check the connection and try again.');
                 throw err;
             });
             p = p.then(function () {
@@ -751,57 +745,10 @@ PosnicPro = {
          * One-time taming, the moment a library lands - BEFORE any page draws
          * with it, so every caller inherits the same rules.
          */
-        _afterLoad: {
-            amcharts: function () {
-                /*
-                 * WHY THE IPHONE KILLED THE TAB. Owner: "i opened posnic web
-                 * app in my iphone 14 pro max. i just scrolled down. page is
-                 * keep crash."
-                 *
-                 * Scrolling on iOS collapses and expands Safari's URL bar,
-                 * and each change fires a real viewport resize. amCharts'
-                 * ResizeObserver answers every one with a FULL relayout of
-                 * the 3D SVG chart - thousands of nodes on a 3x screen - and
-                 * the animated theme replays its entrance tweens on each.
-                 * A few strokes of scrolling is a stack of full 3D
-                 * rebuild-and-animate cycles; memory climbs until iOS kills
-                 * the tab, which reads as "the page keeps crashing" and
-                 * leaves no error anywhere, because the process is simply
-                 * gone.
-                 *
-                 * The library ships its own relief valves for exactly this:
-                 */
-                try {
-                    /* one chart builds at a time, not all at once */
-                    am4core.options.queue = true;
-                    /* a chart renders when scrolled INTO view and suspends
-                       out of it - the crash was while scrolling PAST them */
-                    am4core.options.onlyShowOnViewport = true;
-                } catch (e) { /* an amcharts too old for the option */ }
-
-                /*
-                 * And the theme, fenced at the same choke point. Every page
-                 * that draws calls useTheme(am4themes_animated) on every
-                 * render, which STACKS - themes are a registry, not a set -
-                 * so the dashboard's fifth filter change animated everything
-                 * five times over. Deduped here for everyone; and on a
-                 * coarse-pointer device the animated theme is refused
-                 * outright, because entrance tweens on a phone are the
-                 * memory bill above with no benefit anybody asked for.
-                 */
-                try {
-                    var coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
-                    var applied = [];
-                    var origUse = am4core.useTheme;
-                    am4core.useTheme = function (theme) {
-                        if (coarse && typeof am4themes_animated !== 'undefined' && theme === am4themes_animated) { return; }
-                        if (applied.indexOf(theme) !== -1) { return; }
-                        applied.push(theme);
-                        return origUse.call(am4core, theme);
-                    };
-                } catch (e) { /* the guard is an optimisation, never a gate */ }
-            },
-        },
+        /* One-time taming hooks, keyed by set name; ran once after a set
+           loads. Empty since the chart purge - the shape stays for the next
+           library that needs it. */
+        _afterLoad: {},
     },
 
     /*
@@ -1503,152 +1450,14 @@ PosnicPro = {
     },
 
     /*
-     * Charts.
-     *
-     * Every report used to call am4core.create() straight onto its div, and no
-     * report ever disposed the chart it replaced. amCharts does not object: it
-     * adds the second chart to the div alongside the first, and the two then
-     * measure the same container while resizing it, each triggering the other
-     * until the stack runs out. What the shop sees is a grey panel with
-     * "Maximum call stack size exceeded" in a small box - amCharts' own error
-     * modal - and no report.
-     *
-     * Reported on Item Reports / Top 5 Selling, where a tab click both fetched
-     * the data and rendered a chart with no data, so two charts landed on one
-     * div every time. The same shape existed in eight other places waiting for
-     * a second render: a date-range change, a branch switch, a revisited tab.
-     *
-     * So no report creates charts directly any more. This disposes whatever was
-     * on the div before putting anything new there, which is the whole fix.
+     * REMOVED 2026-08-26, owner order "delete all chart related code":
+     * the PosnicPro.chart namespace (create/dispose/disabledHere and the
+     * touch-taming), the am4core lazy stub, and the amcharts/apexcharts
+     * lazy chunks. The graph report sections were already deleted; the
+     * dashboard's two remaining chart functions had no callers and no
+     * containers. Do not reintroduce charts - and NEVER on mobile.
      */
-    chart: {
-        /*
-         * Anything currently living on this div, gone.
-         *
-         * Tracked by id, plus a sweep of amCharts' own registry: a chart made
-         * before this existed, or by a page still doing it the old way, is
-         * still attached to the div and would still fight the new one.
-         */
-        dispose: function (id) {
-            var kept = PosnicPro.chart._live[id];
-            if (kept) {
-                try { if (!kept.isDisposed()) kept.dispose(); } catch (e) { /* already gone */ }
-                delete PosnicPro.chart._live[id];
-            }
 
-            try {
-                var sprites = am4core.registry.baseSprites || [];
-                for (var i = sprites.length - 1; i >= 0; i--) {
-                    var s = sprites[i];
-                    var host = s && s.svgContainer && s.svgContainer.htmlElement;
-                    if (host && host.id === id) s.dispose();
-                }
-            } catch (e) { /* an amCharts without a registry: the tracked one was enough */ }
-        },
-
-        /*
-         * A chart on a clean div.
-         *
-         * Returns null when the div is not on the page - a tab that was never
-         * opened, a panel a permission hid. Rendering into nothing is how the
-         * chart with no size and no parent gets created, and callers guard on
-         * null rather than discovering that later.
-         */
-        /*
-         * No charts on mobile. At all.
-         *
-         * Owner, after two rounds of taming still cost him the tab: "if
-         * chart is issue disable graphical stuff to all mobile view. no
-         * problem at no one sees that report in mobile." He is right about
-         * the economics - a chart nobody reads on a phone is not worth one
-         * crashed sale screen - and a rule with no exceptions is the only
-         * kind that cannot leak memory through the exception.
-         */
-        disabledHere: function () {
-            return !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
-        },
-
-        create: function (id, type) {
-            var host = document.getElementById(id);
-            if (!host) return null;
-            if (PosnicPro.chart.disabledHere()) {
-                PosnicPro.chart.dispose(id);
-                /* The same quiet card empty() draws, so a chart panel reads
-                   as a choice rather than a hole. Callers already guard on
-                   null - that contract predates this rule. */
-                host.innerHTML =
-                    '<div class="chart-empty-state">' +
-                    '<i class="icon-bar-chart"></i>' +
-                    '<p>Charts are shown on the desktop version</p></div>';
-                return null;
-            }
-            PosnicPro.chart.dispose(id);
-            var chart = am4core.create(id, type);
-            PosnicPro.chart._tameForTouch(chart);
-            PosnicPro.chart._live[id] = chart;
-            return chart;
-        },
-
-        /*
-         * On a phone, a chart stops listening to the viewport.
-         *
-         * Scrolling on iOS collapses and expands Safari's URL bar, and every
-         * collapse is a REAL window resize. amCharts answers each one with a
-         * full relayout of the chart's SVG - so a thumb-scroll past the
-         * dashboard ran layout after layout until iOS killed the tab. The
-         * chart's own div never changes size in those resizes (its height is
-         * CSS-fixed and the WIDTH is untouched by the URL bar), so the work
-         * was all waste.
-         *
-         * autoResize goes off at creation on coarse-pointer devices, and one
-         * shared listener re-measures every live chart only when the viewport
-         * WIDTH actually changes - a rotation, a split-view drag - debounced,
-         * after the dust settles. Guarded as an optimisation: a chart that
-         * cannot be tamed still renders.
-         */
-        _tameForTouch: function (chart) {
-            try {
-                if (!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches)) { return; }
-                chart.svgContainer.autoResize = false;
-                if (PosnicPro.chart._touchResizeArmed) { return; }
-                PosnicPro.chart._touchResizeArmed = true;
-                var lastWidth = window.innerWidth;
-                var settle = null;
-                window.addEventListener('resize', function () {
-                    if (window.innerWidth === lastWidth) { return; }
-                    lastWidth = window.innerWidth;
-                    clearTimeout(settle);
-                    settle = setTimeout(function () {
-                        var live = PosnicPro.chart._live;
-                        for (var id in live) {
-                            try {
-                                if (!live[id].isDisposed()) { live[id].svgContainer.measure(); }
-                            } catch (e) { /* one chart's trouble must not stop the rest */ }
-                        }
-                    }, 250);
-                });
-            } catch (e) { /* rendering matters more than taming */ }
-        },
-
-        /*
-         * Nothing to plot.
-         *
-         * An empty chart draws as a grey rectangle, which reads as a failure
-         * rather than as a quiet month. This says so in words instead.
-         */
-        empty: function (id, message) {
-            var host = document.getElementById(id);
-            if (!host) return;
-            PosnicPro.chart.dispose(id);
-            host.innerHTML =
-                '<div class="chart-empty-state">' +
-                '<i class="icon-bar-chart"></i>' +
-                '<p>' + (message || 'No data for the selected period') + '</p>' +
-                '</div>';
-        },
-
-        _live: {}
-    },
 
     minmax: function (value, min, max) {
         var text = String(value);
@@ -4597,27 +4406,6 @@ db.version(2).stores({
     });
 })();
 
-/*
- * amCharts loads lazily, and no report file knows it.
- *
- * Every chart in the product enters through am4core.ready(cb) - the library's
- * own idiom. This stub queues that callback, loads the real library (whose
- * UMD assigns window.am4core wholesale, replacing the stub), then hands the
- * callback to the real ready(). Eight report modules stay byte-identical
- * while 1.1MB leaves the boot path.
- */
-(function () {
-    function stubReady(cb) {
-        PosnicPro.lazy.load('amcharts').then(function () {
-            if (window.am4core && window.am4core.ready !== stubReady) {
-                window.am4core.ready(cb);
-            } else {
-                console.error('[lazy] amcharts loaded but did not replace the stub');
-            }
-        }).catch(function () { /* already surfaced by lazy.load */ });
-    }
-    if (!window.am4core) window.am4core = { ready: stubReady };
-})();
 
 /*
  * Realtime wiring for the generic lists (S2). The dashboard is the only
