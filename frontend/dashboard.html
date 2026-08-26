@@ -55,6 +55,51 @@
                         } catch (e) { }
                     }
                     window.addEventListener('hashchange', function () { move('nav ' + location.hash.slice(0, 40)); });
+                    /* Sentry-style capture INTO the record (owner: "any js
+                       error or console error we can record like sentry
+                       stuff?"): errors, rejections and console.error lines
+                       ride the death report. Registered here, first script,
+                       so nothing can throw earlier than we listen. */
+                    window.addEventListener('error', function (ev) {
+                        move('ERR ' + String((ev && ev.message) || 'err').slice(0, 60));
+                    }, true);
+                    window.addEventListener('unhandledrejection', function (ev) {
+                        var r = (ev && ev.reason) || {};
+                        move('REJ ' + String(r.message || r).slice(0, 60));
+                    });
+                    try {
+                        var origErr = console.error.bind(console);
+                        console.error = function () {
+                            try { move('CON ' + Array.prototype.join.call(arguments, ' ').slice(0, 60)); } catch (e12) { }
+                            return origErr.apply(null, arguments);
+                        };
+                    } catch (e13) { }
+                    /* API calls ride the record too (owner: "we can record
+                       api calls etc?") - method, path, status, duration.
+                       The one call still marked pending when a record ends
+                       is the call that was in flight at death. */
+                    try {
+                        var origOpen = XMLHttpRequest.prototype.open;
+                        var origSend = XMLHttpRequest.prototype.send;
+                        XMLHttpRequest.prototype.open = function (m, u) {
+                            try {
+                                this.__fl = m + ' ' + String(u).replace(location.origin, '').split('?')[0].slice(0, 45);
+                            } catch (e14) { }
+                            return origOpen.apply(this, arguments);
+                        };
+                        XMLHttpRequest.prototype.send = function () {
+                            var x = this, t0 = Date.now();
+                            try {
+                                if (x.__fl && String(x.__fl).indexOf('client-errors') === -1) {
+                                    move('api> ' + x.__fl);
+                                    x.addEventListener('loadend', function () {
+                                        move('api< ' + x.status + ' ' + (Date.now() - t0) + 'ms ' + x.__fl.split(' ')[1]);
+                                    });
+                                }
+                            } catch (e15) { }
+                            return origSend.apply(this, arguments);
+                        };
+                    } catch (e16) { }
                     document.addEventListener('click', function (ev) {
                         var t = ev.target || {};
                         var d = (t.tagName || '?') + (t.id ? '#' + t.id : '') +
