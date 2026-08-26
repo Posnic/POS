@@ -1,5 +1,4 @@
 PosnicPro.dashboard = {
-    sales_purchase_chart: '',
     showDataTablePage: function () {
         PosnicPro.HideSideBarModal();
         $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
@@ -338,292 +337,20 @@ PosnicPro.dashboard = {
 
     },
 
-    getDashboardSalesPaymentModeData: function (filter) {
-        let loader = $(".loader-login");
-        $("<div class='loadingSpinner'></div>").appendTo(loader);
-        var params = {
-            url: 'dashboard/getDashboardPaymentModeData',
-            data: {
-                filter: filter
-            },
-        };
-        PosnicPro.get(params, function (response) {
-            if (response.type === 'success') {
-                var data = response.data;
-
-                /*
-                 * The payment data arrives asynchronously. If the operator has
-                 * already left the dashboard for another screen, its
-                 * #apex-circle-chart element is gone - and handing ApexCharts a
-                 * null container is exactly what threw "Cannot read properties
-                 * of null (reading 'offsetWidth')". There is nothing to draw
-                 * into, so stop here rather than crash.
-                 */
-                var chartContainer = document.querySelector("#apex-circle-chart");
-                if (!chartContainer) {
-                    loader.find(".loadingSpinner:first").remove();
-                    return;
-                }
-                /* Owner's rule: no charts on mobile at all - see
-                   PosnicPro.chart.disabledHere. The donut is the note. */
-                if (PosnicPro.chart.disabledHere()) {
-                    loader.find(".loadingSpinner:first").remove();
-                    chartContainer.innerHTML =
-                        '<div class="chart-empty-state"><i class="icon-bar-chart"></i>' +
-                        '<p>Charts are shown on the desktop version</p></div>';
-                    return;
-                }
-                chartContainer.innerHTML = '';
-
-                // Check if we have data to display
-                if (!data.percentage_series || data.percentage_series.length === 0) {
-                    chartContainer.innerHTML = '<div style="text-align: center; padding: 50px; color: #999;">No payment data available</div>';
-                    loader.find(".loadingSpinner:first").remove();
-                    return;
-                }
-                
-                /* -- Apex Circle Chart -- */
-                var options = {
-                    chart: {
-                        height: 300,
-                        type: 'radialBar',
-                        /* Same iOS rule as the amCharts guard: scrolling
-                           collapses Safari's URL bar, each collapse is a
-                           resize, and an animated redraw per resize is a
-                           memory bill on a phone with no benefit. */
-                        animations: {
-                            enabled: !(window.matchMedia && window.matchMedia('(pointer: coarse)').matches),
-                        },
-                        events: {
-                            legendClick: function(chartContext, seriesIndex, config) {
-                                // This will trigger the chart to update and show selected amount
-                            }
-                        }
-                    },
-                    plotOptions: {
-                        radialBar: {
-                            dataLabels: {
-                                name: {
-                                    fontSize: '14px',
-                                    fontFamily: 'Mukta Vaani',
-                                },
-                                value: {
-                                    fontSize: '12px',
-                                    fontFamily: 'Mukta Vaani',
-                                    formatter: function (val) {
-                                        return parseFloat(val || 0).toFixed(2) + "%";
-                                    }
-                                },
-                                total: {
-                                    show: true,
-                                    label: 'Total',
-                                    formatter: function (w) {
-                                        // Check if any series is selected/isolated
-                                        var selectedSeries = w.globals.selectedDataPoints[0];
-                                        if (selectedSeries && selectedSeries.length > 0) {
-                                            // Show selected payment mode's amount
-                                            var index = selectedSeries[0];
-                                            var amount = data.paymode_data[index].amount || 0;
-                                            var mode = data.pay_mode_series[index] || '';
-                                            return mode + '\n₹' + amount.toFixed(2);
-                                        } else {
-                                            // Show total amount
-                                            var totalAmount = data.total_amount || 0;
-                                            return 'Total\n₹' + totalAmount.toFixed(2);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    colors: ['#506fe4', '#43d187', '#f7bb4d', '#96a3b6', '#FF4560', '#775DD0', '#00E396',
-                        '#FEB019', '#FF4560', '#775DD0'],
-                    series: data.percentage_series,
-                    labels: data.pay_mode_series,
-                    legend: {
-                        show: true,
-                        position: 'bottom',
-                        fontSize: '12px',
-                        fontFamily: 'Mukta Vaani',
-                        formatter: function(seriesName, opts) {
-                            var index = opts.seriesIndex;
-                            var amount = data.paymode_data[index].amount || 0;
-                            var percentage = data.percentage_series[index] || 0;
-                            return seriesName + ': ₹' + amount.toFixed(2) + ' (' + percentage.toFixed(2) + '%)';
-                        }
-                    },
-                    tooltip: {
-                        enabled: true,
-                        fillSeriesColor: false,
-                        y: {
-                            formatter: function(val, opts) {
-                                if (!opts || opts.seriesIndex === undefined) return '';
-                                var index = opts.seriesIndex;
-                                var amount = data.paymode_data[index] ? data.paymode_data[index].amount || 0 : 0;
-                                var mode = data.pay_mode_series[index] || '';
-                                var percentage = parseFloat(val || 0);
-                                return mode + ': ₹' + amount.toFixed(2) + ' (' + percentage.toFixed(2) + '%)';
-                            }
-                        }
-                    }
-                };
-                
-                loader.find(".loadingSpinner:first").remove();
-                PosnicPro.lazy.load('apexcharts').then(function () {
-                    // The operator may have left the dashboard while the
-                    // library was fetched; rendering into a detached node
-                    // throws on offsetWidth.
-                    if (!chartContainer.isConnected) return;
-                    var chart = new ApexCharts(chartContainer, options);
-                    chart.render();
-                });
-            } else {
-                PosnicPro.alert(response.type, response.message);
-            }
-        }, function (xhr) {
-            var response = jQuery.parseJSON(xhr.responseText);
-            PosnicPro.alert(response.type, response.message);
-        });
-    },
-
     /*
-     * REMOVED 2026-08-21: getDashboardTotalAmounts and smallChartsData.
+     * REMOVED 2026-08-21: getDashboardTotalAmounts and smallChartsData -
+     * 147 lines that could not run (defined, never called, wrote to ids the
+     * markup no longer had).
      *
-     * 147 lines that could not run. getDashboardTotalAmounts was defined and
-     * never called - the only other mention of the name in the whole frontend
-     * was its own url - and smallChartsData was called from nowhere else, so
-     * both went together.
-     *
-     * Every id they wrote to had already been removed from the markup:
-     * #dashboard_sales_count and its three siblings, #dashboard_sales_amount
-     * and its three, and the four apex-line-chart-* containers. The dashboard
-     * shows its numbers through the profit card now (#profit_revenue and
-     * friends), which is live and tested.
-     *
-     * Worth deleting rather than leaving: smallChartsData opens with
-     * `document.getElementById(id).remove()`, which throws on a missing
-     * element. Anyone wiring this back up would get a TypeError, not a chart.
-     *
-     * The SERVER endpoint dashboard/getDashboardTotalAmounts is deliberately
-     * left in place - it is routed, modelled and tested, and this repo is not
-     * the only thing that can call it.
+     * REMOVED 2026-08-26, owner order "delete all chart related code":
+     * getDashboardSalesPaymentModeData (the apex donut - its
+     * #apex-circle-chart container was already gone from the markup),
+     * getDashboardSalesPurchase and salesPurchaseGraphData (the amCharts
+     * sales/purchase bars - no caller anywhere). The SERVER endpoints
+     * dashboard/getDashboardPaymentModeData, dashboard/getDashboardSalesPurchase
+     * and dashboard/getDashboardTotalAmounts stay: routed, modelled and
+     * tested, and this repo is not the only possible caller.
      */
-
-    getDashboardSalesPurchase: function (filter) {
-        var params = {
-            url: 'dashboard/getDashboardSalesPurchase',
-            data: {
-                filter: filter
-            }
-        };
-
-        PosnicPro.get(params, function (response) {
-            if (response.type === 'success') {
-                var data = response.data;
-                PosnicPro.dashboard.salesPurchaseGraphData(data);
-            } else {
-                PosnicPro.alert(response.type, response.message);
-            }
-        }, function (xhr) {
-            var response = jQuery.parseJSON(xhr.responseText);
-            PosnicPro.alert(response.type, response.message);
-        });
-    },
-
-    salesPurchaseGraphData: function (sales_purchase_data) {
-        //**** AM Charts - Sales Sample Data
-        am4core.ready(function () {
-
-            // Themes begin
-            am4core.useTheme(am4themes_animated);
-            // Themes end
-
-            /*
-             * The 3D chart is for desks; phones get the same chart flat.
-             *
-             * The owner's iPhone kept killing the tab while SCROLLING the
-             * dashboard, and calming the theme and render queue was not
-             * enough. ColumnSeries3D draws several SVG faces per column and
-             * re-lays all of them out on every viewport resize - which iOS
-             * fires continuously as the URL bar collapses under a scrolling
-             * thumb. At phone size the depth effect is invisible anyway;
-             * the flat twin carries the same data with a fraction of the
-             * nodes. (The resize storm itself is stopped at
-             * PosnicPro.chart.create for every chart on touch.)
-             */
-            var coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
-
-            // Create chart instance
-            PosnicPro.dashboard.sales_purchase_chart = PosnicPro.chart.create(
-                "chartdiv", coarse ? am4charts.XYChart : am4charts.XYChart3D);
-            if (!PosnicPro.dashboard.sales_purchase_chart) return; // the panel is not on the page
-            PosnicPro.dashboard.sales_purchase_chart.scrollbarX = new am4core.Scrollbar();
-
-            // Add data
-            PosnicPro.dashboard.sales_purchase_chart.data = sales_purchase_data;
-
-            // Create axes
-            var categoryAxis = PosnicPro.dashboard.sales_purchase_chart.xAxes.push(new am4charts.CategoryAxis());
-            categoryAxis.dataFields.category = "month";
-            categoryAxis.renderer.grid.template.location = 0;
-            categoryAxis.renderer.minGridDistance = 60;
-            categoryAxis.tooltip.disabled = true;
-
-            var valueAxis = PosnicPro.dashboard.sales_purchase_chart.yAxes.push(new am4charts.ValueAxis());
-            valueAxis.renderer.minWidth = 50;
-            valueAxis.min = 0;
-            valueAxis.cursorTooltipEnabled = false;
-
-            // Create series - the flat twin on touch, see the chart comment
-            var series = PosnicPro.dashboard.sales_purchase_chart.series.push(
-                coarse ? new am4charts.ColumnSeries() : new am4charts.ColumnSeries3D());
-            series.sequencedInterpolation = true;
-            series.dataFields.valueY = "sales";
-            series.dataFields.categoryX = "month";
-            series.clustered = false;
-            series.columns.template.tooltipText = "Sales: [{categoryX}: bold]{valueY}[/]";
-            series.tooltip.background.cornerRadius = 20;
-            series.columns.template.fillOpacity = 0.9;
-            series.tooltip.pointerOrientation = "right";
-            series.tooltipX = am4core.percent(100);
-
-            // on hover, make corner radiuses bigger
-            var hoverState = series.columns.template.column.states.create("hover");
-            hoverState.properties.cornerRadiusTopLeft = 0;
-            hoverState.properties.cornerRadiusTopRight = 0;
-            hoverState.properties.fillOpacity = 1;
-
-            // remove logo
-            PosnicPro.dashboard.sales_purchase_chart.logo.disabled = true;
-
-            series.columns.template.adapter.add("fill", function (fill, target) {
-                return PosnicPro.dashboard.sales_purchase_chart.colors.getIndex(target.dataItem.index);
-            });
-
-            var paretoValueAxis = PosnicPro.dashboard.sales_purchase_chart.yAxes.push(new am4charts.ValueAxis());
-            paretoValueAxis.renderer.opposite = true;
-            paretoValueAxis.renderer.grid.template.disabled = true;
-            paretoValueAxis.numberFormatter = new am4core.NumberFormatter();
-            paretoValueAxis.cursorTooltipEnabled = false;
-
-            var paretoSeries = PosnicPro.dashboard.sales_purchase_chart.series.push(
-                coarse ? new am4charts.ColumnSeries() : new am4charts.ColumnSeries3D())
-            paretoSeries.sequencedInterpolation = true;
-            paretoSeries.dataFields.valueY = "purchase";
-            paretoSeries.dataFields.categoryX = "month";
-            paretoSeries.tooltipHTML = '<div style="margin-right:20px;"> Purchase: {valueY}</div>';
-            paretoSeries.clustered = false;
-            paretoSeries.columns.template.tooltipText = "Purchase: [{categoryX}: bold]{valueY}[/]";
-            paretoSeries.tooltip.background.cornerRadius = 20;
-            paretoSeries.columns.template.fillOpacity = 0.9;
-            paretoSeries.tooltip.pointerOrientation = "left";
-            paretoSeries.tooltipX = am4core.percent(0);
-
-            // Cursor
-            PosnicPro.dashboard.sales_purchase_chart.cursor = new am4charts.XYCursor();
-            PosnicPro.dashboard.sales_purchase_chart.cursor.behavior = "panX";
-        }); // end am4core.ready()
-    },
 
     getDashboardTopPerformers: function (filter) {
         var params = {
@@ -970,30 +697,8 @@ PosnicPro.dashboard = {
         tbody.html(html);
     },
 
-    // Light HTML bars instead of a chart library - the same information, none of
-    // the megabytes. Rupee amounts only for a user allowed the financial layer.
-    renderPaymentMix: function (mix, financials) {
-        var box = $('#apex-circle-chart');
-        if (!box.length) { return; }
-        if (!mix.length) {
-            box.html('<div class="text-center text-muted" style="padding:24px 8px;">No payments in this period</div>');
-            return;
-        }
-        var esc = function (v) { return $('<div>').text(v == null ? '' : v).html(); };
-        var colors = ['#506fe4', '#43d187', '#f7bb4d', '#96a3b6', '#FF4560', '#775DD0'];
-        var html = '<div style="padding:10px 12px;">';
-        for (var i = 0; i < mix.length; i++) {
-            var m = mix[i];
-            var pct = Number(m.pct) || 0;
-            var right = financials && m.amount != null ? PosnicPro.dashboard.money(m.amount) : pct + '%';
-            html += '<div style="margin-bottom:10px;">' +
-                '<div style="display:flex; justify-content:space-between; font-size:13px;"><span>' + esc(m.mode) + '</span><span class="f-w-6">' + right + '</span></div>' +
-                '<div style="height:6px; background:#eef0f3; border-radius:4px; overflow:hidden; margin-top:3px;"><div style="height:6px; width:' + pct + '%; background:' + colors[i % colors.length] + ';"></div></div>' +
-                '</div>';
-        }
-        html += '</div>';
-        box.html(html);
-    },
+    /* renderPaymentMix removed with the chart purge - no caller and no
+       #apex-circle-chart container anywhere in the markup. */
 
     renderProfit: function (profit, filter) {
         if (!$('#profit_net').length) { return; } // hidden for non-financial users

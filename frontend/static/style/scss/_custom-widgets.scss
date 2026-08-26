@@ -95,18 +95,7 @@
         }
     }
 }
-.chartist-widget-color {
-    height: 194px !important;
-    .ct-series-a .ct-bar {
-        stroke: $white;
-    }
-    .ct-label {
-        fill: $white;
-        color: $white;
-        font-size: 14px;
-        margin-top: 5px;
-    }
-}
+
 .blog-meta {
   text-align: right;
   font-size: 14px;
@@ -145,26 +134,7 @@
     right: 0;
     margin: 0 auto;
 }
-.ecom-chart-btn {
-    font-size: 18px;
-    font-weight: 600;
-    color: $white;
-    position: absolute;
-    bottom: 5%;
-    left: 4%;
-    span {
-        background-color: $white;
-        border-radius: 3px;
-        color: $dark;
-        padding: 5px 10px;
-        font-size: 14px;
-    }
-}
-#apex-pie-chart {
-    .apexcharts-canvas {
-        margin: 0 auto;
-    }
-}
+
 .appointment-widget {
     .bg-icon {
         margin-bottom: 0;
