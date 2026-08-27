@@ -3372,6 +3372,7 @@ class SettingModel extends BaseModel {
         data: {
           code,
           regime,
+          country: (branch && branch.country) || '',
           label: profile.label,
           registration: profile.registration,
           components: { mode: profile.components.mode },
