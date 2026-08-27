@@ -1468,9 +1468,17 @@ PosnicPro = {
         _badge: function () {
             var el = document.getElementById('bell_feed_badge');
             if (!el) return;
-            var n = PosnicPro.bellFeed._unseen;
+            /* ONE number on the bell (owner: "notification show two number
+               ... need fix") - unseen activity plus low-stock, combined.
+               The split into sections happens inside the panel, not on the
+               icon. */
+            var n = PosnicPro.bellFeed._unseen + (PosnicPro.bellFeed._lowStock || 0);
             el.style.display = n > 0 ? 'inline-block' : 'none';
             el.textContent = n > 99 ? '99+' : String(n);
+        },
+        setLowStock: function (count) {
+            PosnicPro.bellFeed._lowStock = parseInt(count, 10) || 0;
+            PosnicPro.bellFeed._badge();
         },
         _ago: function (at) {
             var s = Math.max(0, Math.round((Date.now() - at) / 1000));

@@ -178,6 +178,34 @@ class ReceivingsController extends BaseController {
    * Void a purchase (G8): delete-level permission, reason mandatory,
    * record kept, stock reversed, credit withdrawn. Never a delete.
    */
+  /*
+   * Receive goods in steps (international partial receiving): {all:true},
+   * or {lines:[{item_id, qty}]}, plus {close_short:true} to cancel the
+   * remainder. Write access - receiving goods is the module's core act.
+   */
+  async receive(req, res) {
+    try {
+      if (!this.checkPermission('receiving', 'write', req.user)) {
+        return this.error(res, 'Unauthorized', 403);
+      }
+      await this.ensureContext(req);
+      const result = await Receiving.receivePartial(
+        req.params.id,
+        {
+          all: req.body?.all === true,
+          lines: Array.isArray(req.body?.lines) ? req.body.lines : [],
+          close_short: req.body?.close_short === true,
+        },
+        {}
+      );
+      if (result.status === true) return this.success(res, result.data, result.message);
+      return this.error(res, result.message || 'Could not receive', 400);
+    } catch (error) {
+      console.error('Error in receive:', error);
+      return this.error(res, error.message, 500);
+    }
+  }
+
   async void(req, res) {
     try {
       if (!this.checkPermission('receiving', 'delete', req.user)) {

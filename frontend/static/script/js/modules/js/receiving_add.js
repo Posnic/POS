@@ -113,204 +113,9 @@ PosnicPro.receivings = {
         PosnicPro.receivings.view.viewReceiving(id);
     },
     showDataTablePage: function () {
-        var loader = $(".loader-table-receiving");
-        loader.find(".loadingSpinner:first").remove();
-        PosnicPro.dashboard.datePicker();
-        PosnicPro.HideSideBarModal();
-        $(".vertical-layout").removeClass("toggle-menu");
-        $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
-        $(".vertical-menu li a").removeClass("active");
-        $('#v-pills-purchase-tab').addClass('active');
-        $('#v-pills-purchase').addClass('show active');
-        $('.page_loader,#osk-container,#receiving_view_receiving_edit').hide();
-        $('.page-title-box,#showreceivingbody,#receiving_view_view_receiving_table,#receivings').show();
-        PosnicPro.receivings.mountFilters();
-        PosnicPro.receivings.applyTaxRegimeWording();
-        PosnicPro.receivings.receivingsTable('receivings');
-        $('.dashboard_img_menu').hide();
-        $('#image_sidebar_purchasehistory').show();
-        var loader = $(".loader-receiving");
-        loader.find(".loadingSpinner:first").remove();
-    },
-    /*
-     * The shared filter bar on Purchase History - the same one the item list,
-     * Sales History and quotes use.
-     *
-     * Writes into data('filters') and calls the same receivingsTable, so the
-     * endpoint keeps taking the blob it always took; legacyFilters builds the
-     * regex PosnicPro.search built, so a shop's existing search habits return
-     * the same rows.
-     */
-    mountFilters: function () {
-        if (!$('#receivings_filter_panel').length) { return; }
-        PosnicPro.listFilter.mount({
-            key: 'receivings',
-            container: '#receivings_filter_panel',
-            button: '#receivings_filter_btn',
-            searchPlaceholder: 'Search purchase no, supplier or phone',
-            dateField: 'Bill date',
-            searchFields: [
-                { value: 'all', label: 'All fields' },
-                { value: 'receiving_id', label: 'Purchase no' },
-                { value: 'supplier_name', label: 'Supplier' },
-                { value: 'supplier_phone', label: 'Phone' }
-            ],
-            /* Like the quotes bar (owner: "options like quote we need filter
-               typeahead"): choose Supplier, get this shop's suppliers. */
-            typeahead: 'supplier',
-            typeaheadField: 'supplier_name',
-            onChange: function () {
-                var table = $('#view_receivings');
-                /* The column PosnicPro.search filtered this list on. */
-                var filters = PosnicPro.listFilter.legacyFilters('receivings', { dateKey: 'updated_date' });
-                table.data('filters', JSON.stringify(filters));
-                table.data('current_page', 1);
-                PosnicPro.receivings.receivingsTable('receivings');
-            }
-        });
-    },
-
-    receivingsTable: function () {
-        var loader = $(".loader-table-receiving");
-        $("<div class='loadingSpinner'></div>").appendTo(loader);
-        PosnicPro.appendViewDataTableBody('receivings');
-        var table = $('#view_receivings');
-        var params = {
-            url: 'receivings',
-            data: {
-                page: table.data('current_page'),
-                limit: parseInt($('#view_receivings_per_page  option:selected').text()),
-                filters: table.data('filters')
-            }
-        };
-        PosnicPro.get(params, function (response) {
-            if (response.type === 'success') {
-                table.data('total', response.data.total);
-                table.data('total_pages', response.data.total_pages);
-                table.data('current_page', response.data.current_page);
-                table.data('per_page', response.data.per_page);
-                PosnicPro.paging(response.data.total_pages, response.data.current_page);
-                table.children('tbody').text('');
-                $('#view_receivings_total').text(response.data.total);
-                var rowTotal = response.data.total;
-                if (rowTotal === 0) {
-                    $('.purchase_header').hide();
-                    let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
-                    $('.purchase_norecord').empty().append('<div class="text-center text-dark"> <p>No Records on ' + dateRange + '</p></div>');
-                    $('#purchase_img_hide,.purchase_norecord').show();
-                } else {
-                    $('.purchase_norecord').empty();
-                    $('#purchase_img_hide,.purchase_norecord').hide();
-                    $('.purchase_header').show();
-                }
-
-                var row_total = (table.data('current_page') - 1) * table.data('per_page') + 1;
-                $('#view_receivings_page_total').text(row_total);
-                var page_totals = (table.data('current_page') - 1) * table.data('per_page');
-                $('#view_receivings_page_perpage_total').text(page_totals + response.data.list.length);
-                var currency = PosnicPro.local.get('currencySign');
-                for (var i = 0; i < response.data.list.length; i++) {
-                    var row = response.data.list[i];
-                    var row_no = (table.data('current_page') - 1) * table.data('per_page') + i + 1;
-                    var process_class = "";
-                    var print_icon = '<a data-module = "receiving" data-access = "read" data-toggle="tooltip" title="Receiving Print" href="#/receivings/' + row._id + '/print" data-id="receivings/' + row._id + '/print" class="point-cursor mobile_tooltip"><i class="feather icon-printer"></i></a>';
-                    var pdf_icon = '<a data-module = "receiving" data-access = "read" href="#/receivings/' + row._id + '/pdf" data-id="receivings/' + row._id + '/pdf"  data-toggle="tooltip" title="Pdf" class="point-cursor mobile_tooltip"><i class="feather icon-file"></i></a>';
-                    // Loyverse study L2: send the same PDF to the supplier.
-                    var email_icon = '<a data-module = "receiving" data-access = "write" href="javascript:void(0)" onclick="PosnicPro.receivings.view.emailToSupplier(\'' + row._id + '\');" data-toggle="tooltip" title="Email to supplier" class="point-cursor mobile_tooltip"><i class="feather icon-mail"></i></a>';
-                    var view_icon = '<a data-module = "receiving" data-access = "read"  href="#/receivings/' + row._id + '" data-id="receivings/' + row._id + '"   data-toggle="tooltip" title="View" class="point-cursor mobile_tooltip"><i class="feather icon-eye"></i></a>';
-                    var edit_icon = '<a data-module = "receiving" data-access = "write" href="#/receivings/' + row._id + '/edit" data-id="receivings/' + row._id + '/edit" id="edit_receiving_' + row._id + '" data-toggle="tooltip" title="Edit" class="point-cursor mobile_tooltip"><i class="feather icon-edit"></i></a>';
-                    var return_icon = '<a data-module = "receiving" data-access = "write" href="#/receivings/' + row._id + '/return" data-id="receivings/' + row._id + '/return" id="return_receiving_' + row._id + '" data-toggle="tooltip" title="Receiving Return" class="point-cursor mobile_tooltip"><i class="feather icon-corner-up-left"></i></a>';
-                    var received_icon = '<a data-module = "receiving" data-access = "write" href="#/receivings/' + row._id + '/received" data-id="receivings/' + row._id + '/received" data-toggle="tooltip" title="Received" class="point-cursor mobile_tooltip"><i class="feather icon-arrow-down-circle"></i></a>';
-                    if (row.receiving_status === 'Open') {
-                        var receiving_status = row.receiving_status;
-                        process_class = "badge badge-primary-inverse";
-                        return_icon = '<span class="show_return_icon" style="display:none;"></span>';
-                    } else {
-
-                        if (row.items.length === 0 && row.items_return.length > 0) {
-                            var receiving_status = 'FullReturn';
-                            process_class = "badge badge-danger-inverse";
-                            pdf_icon = '<span class="show_pdf_icon" style="display:none;"></span>';
-                            email_icon = '<span class="show_email_icon" style="display:none;"></span>';
-                            print_icon = '<span class="show_print_icon" style="display:none;"></span>';
-                            return_icon = '<span class="show_return_icon" style="display:none;"></span>';
-                            edit_icon = '<span class="show_edit_icon" style="display:none;"></span>';
-                            received_icon = '<span class="show_received_icon" style="display:none;"></span>';
-                        } else if (row.receiving_status === 'Received') {
-                            var receiving_status = row.receiving_status;
-                            process_class = "badge badge-success-inverse";
-                            edit_icon = '<span class="show_edit_icon" style="display:none;"></span>';
-                            received_icon = '<span class="show_received_icon" style="display:none;"></span>';
-                        } else if (!row.items_return || row.items_return.length === 0) {
-                            /* NO RETURNS means it cannot be a return state.
-                               This else used to mean "anything I don't
-                               recognise is PartialReturn", and rows carrying
-                               an off-vocabulary status (seeded 'completed',
-                               legacy imports) all wore a return badge for a
-                               return that never happened. */
-                            var receiving_status = 'Received';
-                            process_class = "badge badge-success-inverse";
-                            edit_icon = '<span class="show_edit_icon" style="display:none;"></span>';
-                            received_icon = '<span class="show_received_icon" style="display:none;"></span>';
-                        } else {
-                            var receiving_status = 'PartialReturn';
-                            process_class = "badge badge-secondary-inverse";
-                            edit_icon = '<span class="show_edit_icon" style="display:none;"></span>';
-                            received_icon = '<span class="show_received_icon" style="display:none;"></span>';
-                        }
-
-                    }
-
-                    var action = '<div id="onclick-toolbar-options_' + i + '" class="hidden">' +
-                            '<span class="show_print_icon" style="display:none;">' + print_icon + ' </span>' +
-                            '<span class="show_pdf_icon" style="display:none;">' + pdf_icon + ' </span>' +
-                            '<span class="show_email_icon" style="display:none;">' + email_icon + ' </span>' +
-                            '<span class="show_return_icon" style="display:none;">' + return_icon + ' </span>' +
-                            '<span class="show_received_icon" style="display:none;">' + received_icon + ' </span>' +
-                            '<span class="show_view_icon" style="display:none;">' + view_icon + ' </span>' +
-                            '<span class="show_edit_icon" style="display:none;">' + edit_icon + ' </span>' +
-                            '<a data-module = "receiving" data-access = "delete" data-toggle="tooltip" title="Delete Sale" href="#/receivings/' + row._id + '/delete" data-id="receivings/' + row._id + '/delete" class="point-cursor mobile_tooltip"><i class="feather icon-trash"></i></a>' +
-                            '</div>' +
-                            '<div data-toolbar="user-options" class="btn btn-round btn-primary-rgba round-pad" id="onclick-toolbar_' + i + '"><i class="feather icon-more-vertical-"></i></div>';
-                    var updateDate = PosnicPro.convertDate(row.string_date);
-                    /* A row without a phone shows NOTHING, not the word
-                       "undefined" wearing a tel: link - the owner's demo
-                       purchases printed exactly that. */
-                    var supplierPhone = row.supplier_phone || '';
-                    var phoneCell = supplierPhone
-                        ? '<a class="sale_color" href="tel:' + supplierPhone + '">' + supplierPhone + '</a>'
-                        : '';
-                    var trow = '<tr> <td><input type="checkbox" class="receivings-row-id" id="' + row._id + '" name="id[]" value="' + row._id + '" onclick="PosnicPro.checkboxSelectOne(this,\'receivings\');"></td> <td scope="row" data-label="#">' + row_no + '</td>  <td class="sale_id" data-label="Purchase">' + row.receiving_id + '</td> <td class="sale_id" data-label="Date">' + updateDate + '</td> <td width="20%" data-label="Supplier">' + row.supplier_name + '</td> <td class="sale_id text-right" data-label="Phone">' + phoneCell + '</td> <td class="text-center" data-label="Status"><span class="' + process_class + '">' + receiving_status + '</span></td> <td class="text-right" data-label="Total">' + currency + '&nbsp;<span class="number">' + row.total_amount + '</span></td> ' +
-                            '<td class="text-center"> <span>' + action + ' </span>' +
-                            ' </td></tr>';
-                    $('#view_receivings').children('tbody').append(trow);
-                }
-                $('span.number').number(true, 2);
-                $(document).ready(function () {
-                    for (var i = 0; i < response.data.list.length; i++) {
-                        $('#onclick-toolbar_' + i).toolbar({
-                            content: '#onclick-toolbar-options_' + i,
-                            event: 'click',
-                            style: 'primary',
-                            hideOnClick: true
-                        });
-                        $('#onclick-toolbar_' + i).on('toolbarItemClick', function (event, element) {
-                            hasher.setHash($(element).data('id'));
-                            $(this).trigger('click');
-                            $('.mobile_tooltip').tooltip('hide');
-                        });
-                    }
-                });
-                PosnicPro.setSelectedCheckbox(PosnicPro["receivings_checkbox"], 'receivings');
-                PosnicPro.ACLForModule('receiving');
-                loader.find(".loadingSpinner:first").remove();
-            } else {
-                PosnicPro.alert(response.type, response.message);
-            }
-        }, function (xhr) {
-            var response = jQuery.parseJSON(xhr.responseText);
-            PosnicPro.alert(response.type, response.message);
-        });
+        /* Purchase History retired (owner order): purchases has ONE surface.
+           Old links, bookmarks and post-action redirects all land there. */
+        hasher.setHash('purchaseorders');
     },
     searchItemReceiving: function (id) {
         var matched = false;
@@ -606,7 +411,21 @@ PosnicPro.receivings = {
            targeted #open/#received, ids that never existed, so editing a
            Received purchase silently saved it back to Open. */
         var ep = PosnicPro.receivingsEditParams;
-        $('#receiving_status_select').val(ep.receiving_receiving_status === 'Received' ? 'Received' : 'Open').trigger('change');
+        /* A partially received document's status belongs to the Receive
+           flow, not the edit page: it shows, locked, and rides through the
+           save untouched (the server keeps what arrived as fact). */
+        $('#receiving_status_select option[value="Partial"]').remove();
+        if (ep.receiving_receiving_status === 'Partial') {
+            $('#receiving_status_select')
+                .append('<option value="Partial">Partially received</option>')
+                .val('Partial')
+                .prop('disabled', true)
+                .attr('title', 'Managed by the Receive flow - receive or cancel the rest from the purchase document');
+            $('#receiving_expected_wrap').show();
+        } else {
+            $('#receiving_status_select').prop('disabled', false);
+            $('#receiving_status_select').val(ep.receiving_receiving_status === 'Received' ? 'Received' : 'Open').trigger('change');
+        }
         $('#receiving_itc_eligible').prop('checked', ep.receiving_itc_eligible !== false);
         $('#receiving_expected_date').val(ep.receiving_expected_date ? String(ep.receiving_expected_date).slice(0, 10) : '');
         $('#receiving_invoice_total_declared').val(ep.receiving_invoice_total_declared || '');
@@ -1406,12 +1225,12 @@ PosnicPro.receivings = {
                             PosnicPro.receivings.view.returnPrintReceivings(response.data.receiving_id);
                         }
                         loader.find(".loadingSpinner:first").remove();
-                        hasher.setHash('receivings');
+                        hasher.setHash('purchaseorders');
                         return false;
                     }
                     PosnicPro.stocklogs.viewLowStockDashboard();
                     loader.find(".loadingSpinner:first").remove();
-                    hasher.setHash('receivings');
+                    hasher.setHash('purchaseorders');
 //                    $('#receiving_add_item_name').focus();
                 } else {
                     loader.find(".loadingSpinner:first").remove();
@@ -1442,7 +1261,8 @@ PosnicPro.receivings = {
         $('#receiving_discount_amount').val(PosnicPro.local.get('setting-discount-amount'));
         $("#receiving_add_payment_mode").val('Cash');
         $("#receiving_add_payment_description").val('');
-        $('#receiving_status_select').val('Open').trigger('change');
+        $('#receiving_status_select option[value="Partial"]').remove();
+        $('#receiving_status_select').prop('disabled', false).val('Open').trigger('change');
         $('#receiving_charges_rows').empty();
         $('#receiving_charges_row').hide();
         $('#display-preview').html('');
@@ -2062,7 +1882,9 @@ PosnicPro.purchaseorders = {
             if (done.po === null || done.rec === null) { return; }
             var rows = done.po.concat(done.rec);
             var ts = function (v) { var t = new Date(v || 0).getTime(); return isNaN(t) ? 0 : t; };
-            rows.sort(function (a, b) { return ts(b.date) - ts(a.date); });
+            /* Same bill date is the NORMAL case (today's purchases) - the
+               tie breaks on created time so the newest entry leads. */
+            rows.sort(function (a, b) { return ts(b.date) - ts(a.date) || ts(b.created) - ts(a.created); });
             self._lastRows = rows;
             var chip = self._status;
             var filtered = !chip ? rows : rows.filter(function (r) {
@@ -2252,6 +2074,7 @@ PosnicPro.purchaseorders = {
      * Toolbar above the paper; the void strip asks its reason inline.
      */
     renderPurchaseDoc: function (d) {
+        PosnicPro.purchaseorders._doc = d;
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
         var money = function (v) { return PosnicPro.local.get('currencySign') + '&nbsp;' + (Number(v) || 0).toFixed(2); };
         var dt = function (v) { return v ? new Date(v).toLocaleDateString('en-IN') : '-'; };
@@ -2259,7 +2082,8 @@ PosnicPro.purchaseorders = {
         var open = d.receiving_status === 'Open';
         var cancelled = d.receiving_status === 'Cancelled';
         var P = PosnicPro.purchaseorders.STATUS_PILL, L = PosnicPro.purchaseorders.STATUS_LABEL;
-        var st = cancelled ? 'cancelled' : open ? 'ordered' : 'received';
+        var partial = d.receiving_status === 'Partial';
+        var st = cancelled ? 'cancelled' : partial ? 'partial' : open ? 'ordered' : 'received';
         var chip = '<span class="rs-pill ' + P[st] + '">' + L[st] + '</span>';
         var itc = d.itc_eligible === false
             ? '<span class="rs-pill unpaid" title="No input credit on this purchase">No credit</span>' : '';
@@ -2278,7 +2102,17 @@ PosnicPro.purchaseorders = {
             + '<button type="button" class="btn btn-sm btn-light" title="Show or hide the list" aria-label="Show or hide the list" onclick="PosnicPro.masterDetail.toggleRail(\'#purchases_split\');"><i class="feather icon-sidebar"></i></button>'
             + '<span class="p-doc-title">' + esc(d.receiving_id) + '</span>' + chip + itc + mismatch
             + '<span class="ml-auto"></span>'
-            + (open && !cancelled ? '<button type="button" class="btn btn-sm btn-primary" onclick="PosnicPro.receivings.view.receivedProcess(\'' + esc(d._id) + '\'); setTimeout(function(){ PosnicPro.purchaseorders.loadList(); PosnicPro.purchaseorders.openDoc(\'purchase\',\'' + esc(d._id) + '\'); }, 900);"><i class="feather icon-check mr-1"></i>Receive</button>' : '')
+            + ((open || partial) && !cancelled
+                ? '<div class="btn-group">'
+                    + '<button type="button" class="btn btn-sm btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="feather icon-check mr-1"></i>Receive</button>'
+                    + '<div class="dropdown-menu">'
+                    + '<a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.purchaseorders.receiveAll(\'' + esc(d._id) + '\');">Received all</a>'
+                    + '<a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.purchaseorders.receiveStripOpen(\'' + esc(d._id) + '\');">Partially \u2026</a>'
+                    + (partial
+                        ? '<div class="dropdown-divider"></div><a class="dropdown-item text-danger" href="javascript:void(0)" onclick="PosnicPro.purchaseorders.closeShortOpen(\'' + esc(d._id) + '\');">Cancel remaining</a>'
+                        : '')
+                    + '</div></div>'
+                : '')
             + (!cancelled ? '<button type="button" class="btn btn-sm btn-light" onclick="hasher.setHash(\'receivings/' + esc(d._id) + '/edit\');"><i class="feather icon-edit-2 mr-1"></i>Edit</button>' : '')
             + more
             + '<button type="button" class="btn btn-sm btn-light" title="Close this purchase and show the full list" aria-label="Close" onclick="PosnicPro.purchaseorders.closeDoc();"><i class="feather icon-x"></i></button>'
@@ -2326,8 +2160,12 @@ PosnicPro.purchaseorders = {
             + '</tr></thead><tbody>';
         (d.items || []).forEach(function (l, i) {
             var tax = (Number(l.igst_tax) || 0) + (Number(l.cgst_tax) || 0) + (Number(l.sgst_tax) || 0);
+            var got = l.qty_received !== undefined && l.qty_received !== null ? parseFloat(l.qty_received) : null;
+            var qtyCell = got !== null && got < (parseFloat(l.item_quantity) || 0)
+                ? got + ' / ' + esc(l.item_quantity)
+                : esc(l.item_quantity);
             items += '<tr><td>' + (i + 1) + '</td><td>' + esc(l.item_name) + '</td>'
-                + '<td class="text-right">' + esc(l.item_quantity) + ' ' + esc(l.item_unit || '') + '</td>'
+                + '<td class="text-right"' + (got !== null && got < (parseFloat(l.item_quantity) || 0) ? ' title="Received so far / ordered"' : '') + '>' + qtyCell + ' ' + esc(l.item_unit || '') + '</td>'
                 + '<td class="text-right">' + money(l.item_price) + '</td>'
                 + '<td class="text-right">' + money(tax) + '</td>'
                 + '<td class="text-right">' + money(l.total_amount) + '</td></tr>';
@@ -2373,9 +2211,71 @@ PosnicPro.purchaseorders = {
             + '<div class="q-head">' + seller + title + '</div>'
             + supplier + items + footer
             + '</div>';
-        $('#purchases_doc').html(toolbar + voidStrip + sheet);
+        var receiveStrip = '<div class="p-receive-strip" id="p_receive_strip" style="display:none;"></div>';
+        $('#purchases_doc').html(toolbar + voidStrip + receiveStrip + sheet);
     },
     /* Void asks its reason inline, in the pane - no native prompt. */
+    /* ---- Partial receiving (owner: "received 5 items but remaining will
+       receive later") - all, entered per line, or cancel the rest ---- */
+    receiveAll: function (id) {
+        PosnicPro.purchaseorders._postReceive(id, { all: true });
+    },
+    receiveStripOpen: function (id) {
+        var d = PosnicPro.purchaseorders._doc || {};
+        var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
+        var rows = '';
+        (d.items || []).forEach(function (l, i) {
+            var ordered = parseFloat(l.item_quantity) || 0;
+            var got = l.qty_received !== undefined && l.qty_received !== null ? (parseFloat(l.qty_received) || 0) : 0;
+            var remaining = Math.max(0, ordered - got);
+            if (remaining <= 0) { return; }
+            rows += '<div class="p-rcv-row" data-item="' + esc(l.item_id) + '">'
+                + '<span class="p-rcv-name">' + esc(l.item_name) + '</span>'
+                + '<span class="p-rcv-progress">' + got + ' of ' + ordered + ' ' + esc(l.item_unit || '') + '</span>'
+                + '<input type="number" class="form-control form-control-sm p-rcv-qty" min="0" max="' + remaining + '" step="any" value="' + remaining + '" aria-label="Quantity arriving now">'
+                + '</div>';
+        });
+        if (!rows) { PosnicPro.alert('warning', 'Nothing left to receive.'); return; }
+        $('#p_receive_strip').html(
+            '<div class="p-rcv-head">Receiving now \u2014 adjust what actually arrived:</div>'
+            + rows
+            + '<div class="p-rcv-actions">'
+            + '<button type="button" class="btn btn-sm btn-primary" onclick="PosnicPro.purchaseorders.receiveConfirm(\'' + esc(d._id) + '\');">Receive these quantities</button>'
+            + '<button type="button" class="btn btn-sm btn-light" onclick="$(\'#p_receive_strip\').slideUp(120);">Cancel</button>'
+            + '</div>'
+        ).slideDown(120);
+    },
+    receiveConfirm: function (id) {
+        var lines = $('#p_receive_strip .p-rcv-row').map(function () {
+            return {
+                item_id: $(this).data('item'),
+                qty: parseFloat($(this).find('.p-rcv-qty').val()) || 0
+            };
+        }).get().filter(function (l) { return l.qty > 0; });
+        if (!lines.length) { PosnicPro.alert('warning', 'Enter a quantity for at least one line.'); return; }
+        PosnicPro.purchaseorders._postReceive(id, { lines: lines });
+    },
+    closeShortOpen: function (id) {
+        var d = PosnicPro.purchaseorders._doc || {};
+        var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
+        $('#p_receive_strip').html(
+            '<span>Close <b>' + esc(d.receiving_id) + '</b> at what has arrived \u2014 the remaining quantities will no longer be expected. No stock moves.</span>'
+            + '<div class="p-rcv-actions">'
+            + '<button type="button" class="btn btn-sm btn-danger" onclick="PosnicPro.purchaseorders._postReceive(\'' + esc(d._id) + '\', { close_short: true });">Cancel remaining</button>'
+            + '<button type="button" class="btn btn-sm btn-light" onclick="$(\'#p_receive_strip\').slideUp(120);">Back</button>'
+            + '</div>'
+        ).slideDown(120);
+    },
+    _postReceive: function (id, payload) {
+        PosnicPro.post({ url: 'receivings/' + id + '/receive', data: JSON.stringify(payload) }, function (r) {
+            PosnicPro.alert(r.type || 'success', r.message || 'Received');
+            PosnicPro.purchaseorders.loadList();
+            PosnicPro.purchaseorders.openDoc('purchase', id);
+        }, function (xhr) {
+            var resp = {}; try { resp = jQuery.parseJSON(xhr.responseText) || {}; } catch (e) { }
+            PosnicPro.alert('error', resp.message || 'Could not receive');
+        });
+    },
     voidPurchase: function (id, no) {
         $('#p_void_strip').slideDown(120);
         setTimeout(function () { $('#p_void_reason').trigger('focus'); }, 140);
@@ -2929,13 +2829,6 @@ $(document).ready(function () {
         autoSelectFirst: true,
         triggerSelectOnValidInput: false
     });
-});
-
-/* Open and close the purchase filter panel. Delegated, because the button
-   lives in markup that is re-rendered on page entry. */
-$(document).on('click', '#receivings_filter_btn', function () {
-    PosnicPro.receivings.mountFilters();
-    PosnicPro.listFilter.toggle('receivings');
 });
 
 /* The joined purchases surface shares the same filter machinery; each page

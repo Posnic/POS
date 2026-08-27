@@ -1101,7 +1101,7 @@ PosnicPro.receivings.view = {
     },
     receivingPdf: function (id) {
         window.open(API_URL + 'receivings/receivingsPdf?id=' + id, "_blank");
-        hasher.setHash('receivings');
+        hasher.setHash('purchaseorders');
     },
     /* Loyverse study L2: the same PDF, mailed to the supplier. Leave the
        address empty to use the supplier's saved email - the server owns
@@ -1147,12 +1147,6 @@ PosnicPro.receivings.view = {
         /* v6 REJECTS with 'cancel' when the dialog is dismissed. Without this
            every cancelled dialog raised an unhandled rejection. */
         }).catch(function () { /* dismissed */ });
-    },
-    exportReceivings: function () {
-        PosnicPro.exportTableData(PosnicPro.receivings_checkbox, 'receivings');
-    },
-    deleteSelectedReceivings: function () {
-        PosnicPro.deleteTableData(PosnicPro.receivings_checkbox, 'receivings');
     },
     receivedProcess: function (id) {
         PosnicPro.get('receivings/' + id, function (response) {

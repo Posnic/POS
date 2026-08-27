@@ -42,7 +42,6 @@
         "modules/quotes.html",
         "modules/paymentReport.html",
         "modules/pendingReport.html",
-        "modules/receivings.html",
         "modules/receivingsReport.html",
         "modules/receivings_write.html",
         "modules/registerReport.html",

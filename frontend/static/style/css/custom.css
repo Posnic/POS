@@ -5616,6 +5616,9 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     border-color: var(--theme-primary-color, #0969da);
     color: var(--theme-primary-color, #0969da);
 }
+/* The purchases header keeps its height even with the filter closed
+   (owner: "whole bar height needs to increase ... when normal also"). */
+#purchaseorders_new .breadcrumbbar { padding-top: 10px; padding-bottom: 12px; }
 /* The strip on the header line sits clear of the header's bottom border. */
 .breadcrumbbar .lf-panel { margin: 4px 0 10px; }
 /* The control row at the top of every list card: Filter top-left, New
@@ -5672,3 +5675,15 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     border-radius: 6px;
 }
 .p-void-strip .form-control { max-width: 300px; flex: 1 1 180px; }
+/* The receive strip: one row per outstanding line. */
+.p-receive-strip {
+    margin: 0 0 12px; padding: 10px 14px; font-size: 13px;
+    border: 1px solid var(--theme-border-color, #d0d7de);
+    border-radius: 6px;
+}
+.p-rcv-head { color: var(--theme-text-muted, #57606a); margin-bottom: 8px; }
+.p-rcv-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.p-rcv-name { flex: 1 1 auto; min-width: 0; }
+.p-rcv-progress { color: var(--theme-text-muted, #57606a); font-size: 12px; white-space: nowrap; }
+.p-rcv-qty { flex: 0 0 90px; text-align: right; }
+.p-rcv-actions { display: flex; gap: 8px; margin-top: 10px; }

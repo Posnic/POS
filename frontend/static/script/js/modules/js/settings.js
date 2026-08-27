@@ -62,6 +62,13 @@ PosnicPro.settings = {
             $pane.siblings('.tab-pane').removeClass('show active');
             $pane.addClass('show active');
         }
+        /* The Manage-sidebar highlight mirrors from shown.bs.tab - which
+           Bootstrap never fires for a pill that is ALREADY active. Core
+           Settings ships active in the markup, so the FIRST entry never
+           highlighted its menu row (owner report). Mirror directly; the
+           event handler doing it again is harmless. */
+        $('.manage-settings-entry').removeClass('active');
+        $('#manage_sec_' + key).addClass('active');
         if (key === 'general') { PosnicPro.settings.restoreCoreTab(); }
         if (key === 'taxmodule') { PosnicPro.settings.taxSystemLoad(); }
     },
@@ -1894,7 +1901,7 @@ if ($("#sale_quick_edit").is(":checked")) {
                 var notificationNow = String($('#notification_value').val() || '');
                 if (notificationNow !== was.notification) {
                     localStorage.setItem("notificationrange", notificationNow);
-                    $("#low_item_stock_count").text(notificationNow);
+                    PosnicPro.bellFeed.setLowStock(notificationNow);
                     PosnicPro.stocklogs.viewLowStockDashboard();
                 }
                 

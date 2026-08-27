@@ -32,10 +32,15 @@ test('the sidebar has exactly ONE purchasing entry', () => {
 
 test('the one door reaches every flow the old doors reached', () => {
     assert.match(poPage, /href="#\/receivings\/new"/);
-    assert.match(poPage, /href="#\/receivings"/);
-    /* and the old routes still have their handlers - removing a menu entry
-       must never remove a page */
-    assert.match(receivingJs, /showDataTablePage: function/);
+    /* Purchase History is RETIRED (owner, 2026-08-27: "delete existing
+       routes and html and etc") - nothing may link to it, and the old route
+       redirects to the one surface instead of a page that no longer exists. */
+    assert.ok(!poPage.includes('href="#/receivings"'), 'a link points at the retired archive');
+    const shower = receivingJs.slice(
+        receivingJs.indexOf('showDataTablePage: function'),
+        receivingJs.indexOf('},', receivingJs.indexOf('showDataTablePage: function')),
+    );
+    assert.match(shower, /setHash\('purchaseorders'\)/, 'the old route must redirect, not 404');
 });
 
 test('the history filter offers suppliers, like quotes offers customers', () => {
