@@ -600,6 +600,15 @@ const saleSchema = new mongoose.Schema(
       trim: true,
     },
 
+    // Permanent public invoice link: the S3 key IS the secret. One key for
+    // the sale's lifetime - createInvoiceLink answers the stored key on
+    // every later call. Without this schema entry the strict schema silently
+    // strips the $set and every share mints a fresh PDF.
+    invoice_key: {
+      type: String,
+      trim: true,
+    },
+
     // For strict PHP parity we do not require subtotal/total on the document;
     // they may be omitted entirely when saving via the legacy sales service.
     subtotal: {

@@ -250,6 +250,45 @@
     showWhatsapp: function (id) {
         PosnicPro.sales.view.whatsappSale(id, 'sale');
     },
+    /*
+     * Permanent invoice link (built like quotes): the server renders the
+     * PDF once, parks it under an unguessable S3 key, and the same URL
+     * answers forever. With a callback, hands the URL over (or null);
+     * without one, copies it to the clipboard.
+     */
+    invoiceLink: function (id, then) {
+        PosnicPro.post({ url: 'sales/' + id + '/invoiceLink', data: JSON.stringify({}) }, function (r) {
+            var url = r && r.data && r.data.url;
+            if (r.type !== 'success' || !url) {
+                PosnicPro.alert(r.type === 'success' ? 'error' : r.type, r.message || 'Could not create the link');
+                if (then) { then(null); }
+                return;
+            }
+            if (then) { then(url); return; }
+            var copied = function () { PosnicPro.alert('success', 'Invoice link copied - it works forever. ' + url); };
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(url).then(copied, function () { window.prompt('Copy the invoice link:', url); });
+            } else {
+                window.prompt('Copy the invoice link:', url);
+            }
+        }, function (xhr) {
+            var resp = {}; try { resp = JSON.parse(xhr.responseText); } catch (e) { /* plain */ }
+            PosnicPro.alert('warning', resp.message || 'Could not create the link');
+            if (then) { then(null); }
+        });
+    },
+    /* Link-first WhatsApp, like quotes: the message carries the invoice
+       URL; servers without S3 fall back to the classic text summary. */
+    whatsappSaleLink: function (id, billNo, total) {
+        var shop = PosnicPro.local.get('branchname') || 'Our shop';
+        PosnicPro.sales.invoiceLink(id, function (url) {
+            if (!url) { PosnicPro.sales.showWhatsapp(id); return; }
+            var msg = 'Invoice ' + (billNo || '') + ' from ' + shop
+                + (total ? '\nTotal: ' + total : '')
+                + '\n\nView or download your invoice:\n' + url;
+            window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+        });
+    },
     showSMS: function (id, phone, name) {
         $('#smsModal').modal('show');
         $('#customer_sms_id').val(id);
@@ -716,8 +755,10 @@
             + '<a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.sales.showPrint(\'' + esc(id) + '\'); return false;"><i class="feather icon-printer mr-2"></i>Print</a>'
             + '<a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.sales.showPdf(\'' + esc(id) + '\'); return false;"><i class="feather icon-file mr-2"></i>Download PDF</a>'
             + '<a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.sales.emailSale(\'' + esc(id) + '\', \'' + esc(d.customer_email || '') + '\');"><i class="feather icon-mail mr-2"></i>Email</a>'
-            + '<a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.sales.showWhatsapp(\'' + esc(id) + '\');"><i class="feather icon-message-circle mr-2"></i>WhatsApp</a>'
+            + '<a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.sales.whatsappSaleLink(\'' + esc(id) + '\', \'' + esc(d.sales_id || '') + '\', \'' + esc(String(d.items_total || '')) + '\');"><i class="feather icon-message-circle mr-2"></i>WhatsApp</a>'
             + '<a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.sales.showSMS(\'' + esc(id) + '\', \'' + esc(d.customer_phone || '') + '\', \'' + esc(d.customer_name || '') + '\');"><i class="feather icon-smartphone mr-2"></i>SMS</a>'
+            + '<div class="dropdown-divider"></div>'
+            + '<a class="dropdown-item sale-invoice-link" href="javascript:void(0)" data-sale-id="' + esc(id) + '"><i class="feather icon-link mr-2"></i>Copy invoice link</a>'
             + '</div></div>'
             + (!/return/i.test(proc)
                 ? '<div class="btn-group">'
@@ -10376,21 +10417,7 @@ PosnicPro.sales.applyQuickSaleGate = function () {
  */
 /* Q2: mint (or fetch) the sale's permanent invoice link and copy it. */
 $(document).on('click', '.sale-invoice-link', function () {
-    var saleId = $(this).data('sale-id');
-    PosnicPro.post({ url: 'sales/' + saleId + '/invoiceLink', data: JSON.stringify({}) }, function (response) {
-        var url = response && response.data && response.data.url;
-        if (response.type === 'success' && url) {
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(url);
-            }
-            PosnicPro.alert('success', 'Invoice link copied - it works forever');
-        } else {
-            PosnicPro.alert(response.type || 'error', response.message || 'Could not create the link');
-        }
-    }, function (xhr) {
-        var resp = {}; try { resp = JSON.parse(xhr.responseText); } catch (e) { /* plain */ }
-        PosnicPro.alert('error', resp.message || 'Could not create the link');
-    });
+    PosnicPro.sales.invoiceLink($(this).data('sale-id'));
 });
 
 /* Tip quick-picks (owner feedback): focus the tip box, tap an amount. */
