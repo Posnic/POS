@@ -52,17 +52,33 @@
             <div id="purchases_split">
                 <div class="card m-b-30 md-rail" id="purchases_list_card">
                     <div class="card-body">
-                        <div class="m-b-10 d-flex align-items-center flex-wrap" style="gap:8px;" id="purchases_status_chips">
-                            <button type="button" class="btn btn-sm btn-primary-rgba p-chip" data-status="">All</button>
-                            <button type="button" class="btn btn-sm btn-secondary-rgba p-chip" data-status="ordered">Ordered</button>
-                            <button type="button" class="btn btn-sm btn-secondary-rgba p-chip" data-status="partial">Partial</button>
-                            <button type="button" class="btn btn-sm btn-secondary-rgba p-chip" data-status="received">Received</button>
-                            <button type="button" class="btn btn-sm btn-secondary-rgba p-chip" data-status="cancelled">Cancelled</button>
-                            <span class="text-muted ml-2" style="font-size:12px;">Expected:</span>
-                            <button type="button" class="btn btn-sm btn-primary-rgba p-exp-chip" data-expected="">Any</button>
-                            <button type="button" class="btn btn-sm btn-secondary-rgba p-exp-chip" data-expected="today">Today</button>
-                            <button type="button" class="btn btn-sm btn-secondary-rgba p-exp-chip" data-expected="tomorrow">Tomorrow</button>
-                            <button type="button" class="btn btn-sm btn-secondary-rgba p-exp-chip" data-expected="week">This week</button>
+                        <!-- Status and Expected as labeled dropdowns (owner: the
+                             chip row ran out of width in the rail - "just make as
+                             drop down same as More button"). -->
+                        <div class="m-b-10 d-flex align-items-center flex-wrap" style="gap:8px;" id="purchases_quick_filters">
+                            <span class="p-qf-label">Status</span>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown"
+                                    aria-haspopup="true" aria-expanded="false" id="purchases_status_dd">All</button>
+                                <div class="dropdown-menu">
+                                    <a class="dropdown-item p-status-opt" href="javascript:void(0)" data-status="">All</a>
+                                    <a class="dropdown-item p-status-opt" href="javascript:void(0)" data-status="ordered">Ordered</a>
+                                    <a class="dropdown-item p-status-opt" href="javascript:void(0)" data-status="partial">Partially received</a>
+                                    <a class="dropdown-item p-status-opt" href="javascript:void(0)" data-status="received">Received</a>
+                                    <a class="dropdown-item p-status-opt" href="javascript:void(0)" data-status="cancelled">Cancelled</a>
+                                </div>
+                            </div>
+                            <span class="p-qf-label">Expected</span>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown"
+                                    aria-haspopup="true" aria-expanded="false" id="purchases_expected_dd">Any</button>
+                                <div class="dropdown-menu">
+                                    <a class="dropdown-item p-exp-opt" href="javascript:void(0)" data-expected="">Any</a>
+                                    <a class="dropdown-item p-exp-opt" href="javascript:void(0)" data-expected="today">Today</a>
+                                    <a class="dropdown-item p-exp-opt" href="javascript:void(0)" data-expected="tomorrow">Tomorrow</a>
+                                    <a class="dropdown-item p-exp-opt" href="javascript:void(0)" data-expected="week">This week</a>
+                                </div>
+                            </div>
                         </div>
                         <div id="po_list_rows" class="md-rail-rows text-muted">Loading purchases ...</div>
                         <div class="q-pager" id="po_list_paging"></div>

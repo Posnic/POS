@@ -478,7 +478,7 @@ PosnicPro.receivings.view = {
                 if (name === 'receiving') {
                     $('.print-title').html(PosnicPro.local.get('receiving_title'));
                     $('.print_date').text(data.created_date);
-                    if (print_type.value === 'a4') {
+                    if (PosnicPro.resolvePrintType() === 'a4') {
                         var rowHTMLTaxLine;
                         var igst = 0;
                         var cgst = 0;
@@ -621,7 +621,7 @@ PosnicPro.receivings.view = {
                 } else {
                     $('.print-title').html(PosnicPro.local.get('receiving_return_title'));
                     $('.print_date').text(data.updated_date);
-                    if (print_type.value === 'a4') {
+                    if (PosnicPro.resolvePrintType() === 'a4') {
                         var rowHTMLTaxLine;
                         var igst = 0;
                         var cgst = 0;
@@ -801,7 +801,7 @@ PosnicPro.receivings.view = {
                     }
                 } else {
                     $('.indian-gstr').hide();
-                    if (print_type.value === 'a4') {
+                    if (PosnicPro.resolvePrintType() === 'a4') {
                         if (parseFloat(itemTotalTax) > 0) {
                             $('.tax_print_hide').show();
                             $('#tax_print_hide').show();
@@ -819,7 +819,7 @@ PosnicPro.receivings.view = {
                 var contentone = $(".print-modal-a4-body").html();
                 var canvas = document.getElementById("canvasTarget");
                 var img = data.receipt_barcode === true ? canvas.toDataURL("image/png") : '';
-                PosnicPro.printView(print_type.value === 'a4' ? contentone : contents, img);
+                PosnicPro.printView(PosnicPro.resolvePrintType() === 'a4' ? contentone : contents, img);
                 $('.invoice-table-content div').empty();
             } else {
                 PosnicPro.alert(response.type, response.message);
@@ -870,7 +870,7 @@ PosnicPro.receivings.view = {
                 var subTotal = 0;
                 var grandTotal = 0;
                 var length = response.data.return_data.length;
-                if (print_type.value === 'a4') {
+                if (PosnicPro.resolvePrintType() === 'a4') {
                     var rowHTMLTaxLine;
                     var igst = 0;
                     var cgst = 0;
@@ -1068,7 +1068,7 @@ PosnicPro.receivings.view = {
                 } else {
                     $('.indian-gstr').hide();
 
-                    if (print_type.value === 'a4') {
+                    if (PosnicPro.resolvePrintType() === 'a4') {
                         if (parseFloat(itemTotalTax) > 0) {
                             $('.tax_print_hide').show();
                             $('#tax_print_hide').show();
@@ -1088,7 +1088,7 @@ PosnicPro.receivings.view = {
                 var contentone = $(".print-modal-a4-body").html();
                 var canvas = document.getElementById("canvasTarget");
                 var img = data.receipt_barcode === true ? canvas.toDataURL("image/png") : '';
-                PosnicPro.printView(print_type.value === 'a4' ? contentone : contents, img);
+                PosnicPro.printView(PosnicPro.resolvePrintType() === 'a4' ? contentone : contents, img);
                 $('.invoice-table-content div').empty();
 
             } else {
