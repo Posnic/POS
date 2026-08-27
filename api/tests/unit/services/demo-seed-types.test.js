@@ -42,7 +42,11 @@ const items = Array.from({ length: 8 }, (_, i) => ({
 
 const people = demoSeed.buildPeople({ branch, pack: 'supermarket', now, base: {} });
 const customers = people.customers.map((c) => ({ _id: new ObjectId(), name: c.name }));
-const suppliers = people.suppliers.map((s) => ({ _id: new ObjectId(), name: s.name, phone: s.phone || '' }));
+const suppliers = people.suppliers.map((s) => ({
+  _id: new ObjectId(),
+  name: s.name,
+  phone: s.phone || '',
+}));
 
 const sales = demoSeed.buildSales({
   items,
