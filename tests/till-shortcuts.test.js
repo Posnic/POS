@@ -100,7 +100,7 @@ test('the keys the shell claims are not also claimed by the page', () => {
    * desktop while still working in a browser - which is the kind of difference
    * that gets reported as "the shortcut works on my laptop".
    */
-  const main = fs.readFileSync(path.join(__dirname, '..', 'main.js'), 'utf8');
+  const main = fs.readFileSync(path.join(__dirname, '..', 'src', 'main.js'), 'utf8');
   const shellKeys = [...main.matchAll(/accelerator: 'CmdOrCtrl\+([A-Z])'/g)]
     .map((m) => 'ctrl+' + m[1].toLowerCase());
 

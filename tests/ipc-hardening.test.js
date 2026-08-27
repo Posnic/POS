@@ -25,7 +25,7 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 const read = (f) => fs.readFileSync(path.join(ROOT, f), 'utf8');
 
-const IPC_FILES = ['main.js', 'hardware-ipc.js', 'pin-lock-ipc.js', 'update-integration.js'];
+const IPC_FILES = ['src/main.js', 'src/hardware-ipc.js', 'src/pin-lock-ipc.js', 'src/update-integration.js'];
 
 test('no file registers an IPC handler on the raw ipcMain', () => {
   /* The guard works by shadowing the binding: each file destructures
@@ -61,7 +61,7 @@ test('every IPC file routes through the guard', () => {
 });
 
 test('the guard trusts this application and refuses everything else', () => {
-  const { isTrustedFrame } = require('../ipc-guard');
+  const { isTrustedFrame } = require('../src/ipc-guard');
   const previous = process.env.PORT;
   process.env.PORT = '42590';
 
@@ -126,7 +126,7 @@ test('the guard does not care which port the app ended up on', () => {
   /* Whatever resolveLocalPorts derives, and whatever a second window is served
      from, loopback is loopback. This used to compare against one port and would
      have refused the customer display. */
-  const { isTrustedFrame } = require('../ipc-guard');
+  const { isTrustedFrame } = require('../src/ipc-guard');
   for (const port of [5555, 42590, 43111, 8080]) {
     assert.ok(
       isTrustedFrame({ url: `http://localhost:${port}/x` }),
@@ -136,7 +136,7 @@ test('the guard does not care which port the app ended up on', () => {
 });
 
 test('a refused message never reaches its handler', () => {
-  const { guard } = require('../ipc-guard');
+  const { guard } = require('../src/ipc-guard');
 
   const registered = new Map();
   const fakeIpcMain = {
@@ -168,7 +168,7 @@ test('every window that loads our preload is sandboxed', () => {
   /* An attacker looks for the weakest renderer, not the main one. The main
      window always set sandbox and webSecurity; the backup, hardware, cloud and
      update windows did not, and they all load the same preload. */
-  const src = read('main.js');
+  const src = read('src/main.js');
   const blocks = src.split('webPreferences:').slice(1);
 
   const weak = [];
@@ -188,7 +188,7 @@ test('every window that loads our preload is sandboxed', () => {
 });
 
 test('permissions are denied by default and navigation is confined', () => {
-  const src = read('main.js');
+  const src = read('src/main.js');
 
   assert.match(
     src,

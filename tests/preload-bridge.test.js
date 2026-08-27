@@ -21,7 +21,7 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 
 function bridgeMethods() {
-  const preload = fs.readFileSync(path.join(ROOT, 'preload.js'), 'utf8');
+  const preload = fs.readFileSync(path.join(ROOT, 'src', 'preload.js'), 'utf8');
   const defined = new Set();
   for (const m of preload.matchAll(/^\s*([a-zA-Z][a-zA-Z0-9_]*)\s*:/gm)) defined.add(m[1]);
   return defined;

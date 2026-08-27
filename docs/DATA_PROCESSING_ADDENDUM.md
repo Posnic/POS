@@ -3,7 +3,7 @@
 **Version 1.0 — 5 August 2026**
 
 For customers who need a written data processing agreement covering Posnic
-Cloud. Forms part of [TERMS_OF_USE.md](../TERMS_OF_USE.md).
+Cloud. Forms part of [TERMS_OF_USE.md](TERMS_OF_USE.md).
 
 ---
 
@@ -91,7 +91,7 @@ Measures in place:
 
 We may change these as technology moves, provided security is not reduced. The
 current position, including its limits, is described honestly in
-[SECURITY.md](../SECURITY.md).
+[SECURITY.md](../.github/SECURITY.md).
 
 ## 6. Personal data breach
 
@@ -151,7 +151,7 @@ backups are encrypted, not used for anything else, and expire within **90 days**
 
 ## 10. Order of precedence
 
-Where this addendum conflicts with [TERMS_OF_USE.md](../TERMS_OF_USE.md), this
+Where this addendum conflicts with [TERMS_OF_USE.md](TERMS_OF_USE.md), this
 addendum wins on data protection. Where it conflicts with mandatory law, the law
 wins.
 

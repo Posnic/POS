@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { renderSale, COLUMNS } = require('../escpos-receipt');
+const { renderSale, COLUMNS } = require('../src/escpos-receipt');
 
 /*
  * A receipt is only correct if it fits the paper, and the paper is the one

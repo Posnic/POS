@@ -16,8 +16,8 @@ const crypto = require('crypto');
 const { execFileSync } = require('child_process');
 
 const ROOT = path.join(__dirname, '..');
-const { compareVersions, reconcileWithInstaller } = require(path.join(ROOT, 'asset-channel'));
-const { AssetUpdater } = require(path.join(ROOT, 'asset-updater'));
+const { compareVersions, reconcileWithInstaller } = require(path.join(ROOT, 'src', 'asset-channel'));
+const { AssetUpdater } = require(path.join(ROOT, 'src', 'asset-updater'));
 
 test('compareVersions orders plain semvers and refuses to guess otherwise', () => {
   assert.ok(compareVersions('1.4.0', '1.4.1') < 0);

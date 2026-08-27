@@ -123,7 +123,7 @@ jobs:
 
       # MongoDB ships inside the installer and its binaries are not in git -
       # they are 90 MB of someone else's build output. A developer gets them
-      # from download-mongodb.bat; a runner has to fetch them itself, and
+      # from src/download-mongodb.bat; a runner has to fetch them itself, and
       # without this the packaged app has no database to start.
       # The database, for whichever machine this is.
       #
@@ -137,8 +137,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          VERSION=$(grep -oE 'set MONGODB_VERSION=[0-9.]+' download-mongodb.bat | cut -d= -f2)
-          echo "MongoDB $VERSION, the version download-mongodb.bat pins"
+          VERSION=$(grep -oE 'set MONGODB_VERSION=[0-9.]+' src/download-mongodb.bat | cut -d= -f2)
+          echo "MongoDB $VERSION, the version src/download-mongodb.bat pins"
 
           fetch_tgz() {   # url, destination bin directory
             curl -fsSL -o mongo.tgz "$1"

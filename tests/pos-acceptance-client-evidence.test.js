@@ -6,7 +6,7 @@ const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
 const { JSDOM } = require('jsdom');
-const { renderSale, COLUMNS } = require('../escpos-receipt');
+const { renderSale, COLUMNS } = require('../src/escpos-receipt');
 const { blockAt } = require('./helpers/source-lookup');
 
 /*

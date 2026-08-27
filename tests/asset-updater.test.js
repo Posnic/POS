@@ -5,7 +5,7 @@ const os = require('os');
 const path = require('path');
 const crypto = require('crypto');
 
-const { AssetUpdater, MAX_BOOT_ATTEMPTS } = require('../asset-updater');
+const { AssetUpdater, MAX_BOOT_ATTEMPTS } = require('../src/asset-updater');
 
 /*
  * These tests are written from the assumption that a bad update will go out.

@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { renderReport, COLUMNS } = require('../escpos-report');
+const { renderReport, COLUMNS } = require('../src/escpos-report');
 
 /*
  * A cash-up slip has to fit the roll and say the right things in the right

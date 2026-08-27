@@ -2,7 +2,7 @@
   "name": "posnic",
   "version": "1.5.0",
   "description": "Free, offline-first point-of-sale software for retail and restaurants. Posnic source is AGPL-3.0-only; packages contain separately licensed components.",
-  "main": "main.js",
+  "main": "src/main.js",
   "desktopName": "com.posnic.app.desktop",
   "scripts": {
     "postinstall": "node scripts/enable-installer-extraction-details.js",
@@ -72,47 +72,47 @@
       "buildResources": "builds"
     },
     "files": [
-      "main.js",
-      "ipc-guard.js",
-      "splash.js",
-      "shutdown-state.js",
-      "scheduled-task.js",
-      "startup-auth.js",
-      "sync-agent-manager.js",
-      "asset-updater.js",
-      "asset-channel.js",
-      "agent-update-apply.js",
-      "connector-runtime.js",
-      "window-chrome.js",
-      "window-theme.js",
-      "window-theme.css",
-      "cloud-setup.html",
-      "512-posnic.png",
+      "src/main.js",
+      "src/ipc-guard.js",
+      "src/splash.js",
+      "src/shutdown-state.js",
+      "src/scheduled-task.js",
+      "src/startup-auth.js",
+      "src/sync-agent-manager.js",
+      "src/asset-updater.js",
+      "src/asset-channel.js",
+      "src/agent-update-apply.js",
+      "src/connector-runtime.js",
+      "src/window-chrome.js",
+      "src/window-theme.js",
+      "src/window-theme.css",
+      "src/cloud-setup.html",
+      "builds/512-posnic.png",
       "builds/icon-256.png",
-      "loading.html",
-      "install-wizard.html",
-      "install-mongodb.bat",
-      "download-mongodb.bat",
-      "start-bundled-mongodb.bat",
-      "mongodb-manager.js",
-      "local-ports.js",
-      "backup-manager.html",
-      "backup-manager.js",
-      "update-integration.js",
-      "update-service.js",
-      "update-manager.html",
-      "log-viewer.html",
-      "support-request.html",
+      "src/loading.html",
+      "src/install-wizard.html",
+      "src/install-mongodb.bat",
+      "src/download-mongodb.bat",
+      "src/start-bundled-mongodb.bat",
+      "src/mongodb-manager.js",
+      "src/local-ports.js",
+      "src/backup-manager.html",
+      "src/backup-manager.js",
+      "src/update-integration.js",
+      "src/update-service.js",
+      "src/update-manager.html",
+      "src/log-viewer.html",
+      "src/support-request.html",
       "dev-app-update.yml",
-      "hardware-manager.html",
-      "hardware-manager.js",
-      "hardware-ipc.js",
-      "kot-manager.js",
-      "print-window-guard.js",
-      "print-pdf.js",
-      "escpos-receipt.js",
-      "escpos-report.js",
-      "preload.js",
+      "src/hardware-manager.html",
+      "src/hardware-manager.js",
+      "src/hardware-ipc.js",
+      "src/kot-manager.js",
+      "src/print-window-guard.js",
+      "src/print-pdf.js",
+      "src/escpos-receipt.js",
+      "src/escpos-report.js",
+      "src/preload.js",
       "package.json",
       "!**/*.md",
       "THIRD-PARTY-NOTICES.md",
@@ -123,10 +123,10 @@
       "!**/__tests__/**",
       "!**/*.test.js",
       "!**/*.spec.js",
-      "scale-parser.js",
-      "essae-weight-reader.js",
-      "pin-lock.js",
-      "pin-lock-ipc.js"
+      "src/scale-parser.js",
+      "src/essae-weight-reader.js",
+      "src/pin-lock.js",
+      "src/pin-lock-ipc.js"
     ],
     "extraResources": [
       {
@@ -165,27 +165,27 @@
         ]
       },
       {
-        "from": "server.js",
+        "from": "src/server.js",
         "to": "server.js"
       },
       {
-        "from": "database-health.js",
+        "from": "src/database-health.js",
         "to": "database-health.js"
       },
       {
-        "from": "setup-mongodb.js",
+        "from": "src/setup-mongodb.js",
         "to": "setup-mongodb.js"
       },
       {
-        "from": "credentials-store.js",
+        "from": "src/credentials-store.js",
         "to": "credentials-store.js"
       },
       {
-        "from": "print-document-store.js",
+        "from": "src/print-document-store.js",
         "to": "print-document-store.js"
       },
       {
-        "from": "local-crypto.js",
+        "from": "src/local-crypto.js",
         "to": "local-crypto.js"
       },
       {
@@ -253,11 +253,11 @@
         "to": "api/node_modules.zip.id"
       },
       {
-        "from": "asset-signing-key.pub",
+        "from": "src/asset-signing-key.pub",
         "to": "asset-signing-key.pub"
       },
       {
-        "from": "api-runtime.js",
+        "from": "src/api-runtime.js",
         "to": "api-runtime.js"
       },
       {
@@ -385,7 +385,7 @@
       "license": "builds/installer-license.txt"
     },
     "mac": {
-      "icon": "512-posnic.png",
+      "icon": "builds/512-posnic.png",
       "category": "public.app-category.business",
       "target": [
         {
@@ -419,7 +419,7 @@
       ]
     },
     "linux": {
-      "icon": "512-posnic.png",
+      "icon": "builds/512-posnic.png",
       "syncDesktopName": true,
       "category": "Office",
       "maintainer": "info@posnic.com",

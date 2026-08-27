@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { renderSale, COLUMNS } = require('../escpos-receipt');
+const { renderSale, COLUMNS } = require('../src/escpos-receipt');
 
 /*
  * The item table is a table, and every row uses the same columns.

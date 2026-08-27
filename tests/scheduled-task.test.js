@@ -18,10 +18,10 @@ const assert = require('node:assert');
 const fs = require('fs');
 const path = require('path');
 
-const st = require('../scheduled-task');
+const st = require('../src/scheduled-task');
 
 const ROOT = path.join(__dirname, '..');
-const MAIN = fs.readFileSync(path.join(ROOT, 'main.js'), 'utf8');
+const MAIN = fs.readFileSync(path.join(ROOT, 'src', 'main.js'), 'utf8');
 
 test('only tasks main.js can actually run may be scheduled', () => {
   const fn = MAIN.slice(MAIN.indexOf('async function runScheduledTaskAndExit'));
@@ -144,8 +144,8 @@ test('the backup destination is printed when the caller knows it', () => {
 test('the screen the user guide sends people to actually exists', () => {
   /* The guide says Posnic writes the command for you. If nothing renders it,
      that sentence sends a shopkeeper looking for a button that is not there. */
-  const ui = fs.readFileSync(path.join(ROOT, 'backup-manager.html'), 'utf8');
-  const preload = fs.readFileSync(path.join(ROOT, 'preload.js'), 'utf8');
+  const ui = fs.readFileSync(path.join(ROOT, 'src', 'backup-manager.html'), 'utf8');
+  const preload = fs.readFileSync(path.join(ROOT, 'src', 'preload.js'), 'utf8');
 
   assert.match(ui, /id="btnShowSchedule"/, 'no control to show the command');
   assert.match(ui, /getScheduleInstructions\(/, 'the control is not wired to the bridge');

@@ -57,7 +57,7 @@ shop's decisions, and they are the only ones that change these numbers.
 
 **These are intentions, not commitments.** They have not been measured by a
 real restore drill, hosting is not final, and there is no SLA — see
-[TERMS_OF_USE.md](../TERMS_OF_USE.md). They are written here so that when the
+[TERMS_OF_USE.md](TERMS_OF_USE.md). They are written here so that when the
 drill happens there is a number to check against, rather than a feeling.
 
 **Cloud being down does not stop a shop trading.** Sync catches up afterwards.

@@ -7,7 +7,7 @@ const Module = require('module');
 // This allows setup-mongodb.js to find 'mongodb' package
 const initialApiPath = electronApp.isPackaged 
   ? path.join(process.resourcesPath, 'api')
-  : path.join(__dirname, 'api');
+  : path.join(__dirname, '..', 'api');
 let apiNodeModules = path.join(initialApiPath, 'node_modules');
 
 if (!module.paths.includes(apiNodeModules)) {
@@ -115,7 +115,7 @@ module.exports = async function startServer(options = {}) {
     apiPath = path.join(process.resourcesPath, 'api');
   } else {
     // In development, use __dirname
-    apiPath = path.join(__dirname, 'api');
+    apiPath = path.join(__dirname, '..', 'api');
   }
   
   console.log('API Path:', apiPath);
@@ -127,7 +127,7 @@ module.exports = async function startServer(options = {}) {
     
     // Try alternative paths
     const alternatives = [
-      path.join(__dirname, 'api'),
+      path.join(__dirname, '..', 'api'),
       path.join(process.resourcesPath, 'api'),
       path.join(process.resourcesPath, 'app', 'api')
     ];

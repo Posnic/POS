@@ -20,7 +20,7 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 const read = (f) => fs.readFileSync(path.join(ROOT, f), 'utf8');
 
-const DOCS = ['SUPPORT.md', 'CONTRIBUTING.md', 'docs/DEVELOPMENT.md', 'docs/USER_GUIDE.md'];
+const DOCS = ['.github/SUPPORT.md', '.github/CONTRIBUTING.md', 'docs/DEVELOPMENT.md', 'docs/USER_GUIDE.md'];
 
 /*
  * Electron's userData is %APPDATA%\<name> on Windows,
@@ -30,7 +30,7 @@ const DOCS = ['SUPPORT.md', 'CONTRIBUTING.md', 'docs/DEVELOPMENT.md', 'docs/USER
 const APP_NAME = require(path.join(ROOT, 'package.json')).name;
 
 test('main.js still writes the log directly under userData', () => {
-  const main = read('main.js');
+  const main = read('src/main.js');
   assert.match(
     main,
     /const LOG_FILE = path\.join\(app\.getPath\('userData'\), 'app\.log'\)/,

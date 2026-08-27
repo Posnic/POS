@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 
 const { chromeFor, luminance, contrast, CHROME_FALLBACK, MIN_ICON_CONTRAST } =
-  require('../window-chrome');
+  require('../src/window-chrome');
 
 /*
  * The window controls have to stay visible on whatever the shop picked.

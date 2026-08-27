@@ -27,9 +27,9 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 const read = (...p) => fs.readFileSync(path.join(ROOT, ...p), 'utf8').replace(/\r\n/g, '\n');
 
-const KOT = read('kot-manager.js');
-const HARDWARE = read('hardware-manager.js');
-const GUARD = read('print-window-guard.js');
+const KOT = read('src/kot-manager.js');
+const HARDWARE = read('src/hardware-manager.js');
+const GUARD = read('src/print-window-guard.js');
 
 /** The webPreferences block of the print window in a given source file. */
 function printWindowPrefs(src) {
@@ -127,7 +127,7 @@ test('a print window still cannot reach IPC, whatever its web security', () => {
   /* This is the boundary that actually matters, and it is independent of both
      settings above: ipc-guard trusts file: and loopback http: origins only, so
      a data: page is refused. */
-  const ipcGuard = read('ipc-guard.js');
+  const ipcGuard = read('src/ipc-guard.js');
   const fn = ipcGuard.slice(ipcGuard.indexOf('function isTrustedFrame'));
   const body = fn.slice(0, fn.indexOf('\n}\n'));
 

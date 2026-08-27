@@ -10,7 +10,7 @@
 
 const test = require('node:test');
 const assert = require('node:assert');
-const { renumberDuplicateSales } = require('../database-health');
+const { renumberDuplicateSales } = require('../src/database-health');
 
 // A minimal fake Mongo that records every write.
 function makeDb({ groups = [], tag = 'DEV1', counterStart = 100, existingSales = [] } = {}) {

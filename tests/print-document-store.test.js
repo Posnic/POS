@@ -27,8 +27,8 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 const read = (...p) => fs.readFileSync(path.join(ROOT, ...p), 'utf8').replace(/\r\n/g, '\n');
 
-const store = require('../print-document-store');
-const HARDWARE = read('hardware-manager.js');
+const store = require('../src/print-document-store');
+const HARDWARE = read('src/hardware-manager.js');
 const APP = read('api', 'app.js');
 const pkg = require('../package.json');
 
@@ -147,12 +147,12 @@ test('the store ships where both sides can reach the same instance', () => {
   const extra = pkg.build.extraResources.filter((r) => typeof r.from === 'string').map((r) => r.from);
 
   assert.ok(
-    extra.includes('print-document-store.js'),
+    extra.includes('src/print-document-store.js'),
     'print-document-store.js is not in extraResources, so api/app.js cannot ' +
       'require it in a packaged build',
   );
   assert.ok(
-    !pkg.build.files.includes('print-document-store.js'),
+    !pkg.build.files.includes('src/print-document-store.js'),
     'print-document-store.js is in build.files as well - electron-builder then ' +
       'leaves it out of the asar entirely, and the two sides get different Maps',
   );

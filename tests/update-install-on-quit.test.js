@@ -29,11 +29,11 @@ const ROOT = path.join(__dirname, '..');
 const read = (...p) =>
   fs.readFileSync(path.join(ROOT, ...p), "utf8").replace(/\r\n/g, "\n");
 
-const MAIN = read("main.js");
-const SERVICE = read("update-service.js");
-const UI = read("update-manager.html");
-const INTEGRATION = read("update-integration.js");
-const PRELOAD = read("preload.js");
+const MAIN = read("src/main.js");
+const SERVICE = read("src/update-service.js");
+const UI = read("src/update-manager.html");
+const INTEGRATION = read("src/update-integration.js");
+const PRELOAD = read("src/preload.js");
 
 test("electron-updater's own quit installer stays off", () => {
   /* Turning it on would silently drop the pre-update backup. */

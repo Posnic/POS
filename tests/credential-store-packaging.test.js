@@ -28,7 +28,7 @@ const ROOT = path.join(__dirname, '..');
 const pkg = require('../package.json');
 
 /* Modules that are required from both sides of the asar boundary. */
-const NEEDED_BOTH_SIDES = ['credentials-store.js', 'local-crypto.js'];
+const NEEDED_BOTH_SIDES = ['src/credentials-store.js', 'src/local-crypto.js'];
 
 test('the credential modules ship in resources/, beside the code that requires them', () => {
   const extra = pkg.build.extraResources
@@ -59,7 +59,7 @@ test('and are kept out of the asar, because they cannot be in both', () => {
 });
 
 test('so main.js resolves the store by an absolute path, not a sibling require', () => {
-  const src = fs.readFileSync(path.join(ROOT, 'main.js'), 'utf8');
+  const src = fs.readFileSync(path.join(ROOT, 'src', 'main.js'), 'utf8');
 
   assert.doesNotMatch(
     src,
@@ -77,7 +77,7 @@ test('so main.js resolves the store by an absolute path, not a sibling require',
 test('setup-mongodb.js resolves the store from where it is packaged', () => {
   /* Packaged, both are at resources/. The relative require has to be a sibling
      lookup, not a walk up into the app directory. */
-  const src = fs.readFileSync(path.join(ROOT, 'setup-mongodb.js'), 'utf8');
+  const src = fs.readFileSync(path.join(ROOT, 'src', 'setup-mongodb.js'), 'utf8');
   assert.match(
     src,
     /require\(['"]\.\/credentials-store['"]\)/,

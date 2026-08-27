@@ -7,7 +7,7 @@ try {
   // Determine api path
   const apiPath = electronApp && electronApp.isPackaged
     ? path.join(process.resourcesPath, 'api')
-    : path.join(__dirname, 'api');
+    : path.join(__dirname, '..', 'api');
   
   const mongodbPath = path.join(apiPath, 'node_modules', 'mongodb');
   const mongodb = require(mongodbPath);
@@ -62,7 +62,7 @@ function loadCredentials() {
   const credentialsPaths = [
     path.join(writableBase, '.mongodb-credentials.json'),
     path.join(__dirname, '.mongodb-credentials.json'),
-    path.join(__dirname, 'api', '.mongodb-credentials.json'),
+    path.join(__dirname, '..', 'api', '.mongodb-credentials.json'),
   ];
 
   let store;
@@ -366,7 +366,7 @@ async function isFirstTimeSetup() {
   const credentialsFiles = [
     path.join(getWritableBasePath(), '.mongodb-credentials.json'),
     path.join(__dirname, '.mongodb-credentials.json'),
-    path.join(__dirname, 'api', '.mongodb-credentials.json'),
+    path.join(__dirname, '..', 'api', '.mongodb-credentials.json'),
   ];
   
   for (const credFile of credentialsFiles) {

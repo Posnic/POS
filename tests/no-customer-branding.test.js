@@ -125,7 +125,7 @@ test('no customer name appears in tracked source', () => {
 test('the runtime brand hooks are still there', () => {
   /* Removing these would break white-labelling for shops that already have it,
      and it would break on their counter rather than here. */
-  const main = fs.readFileSync(path.join(ROOT, 'main.js'), 'utf8');
+  const main = fs.readFileSync(path.join(ROOT, 'src', 'main.js'), 'utf8');
 
   assert.match(main, /function seedBrandFromBuild/,
     'the build-time seed is no longer read, so an installer the build repo '

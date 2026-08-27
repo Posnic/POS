@@ -23,7 +23,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const { AssetUpdater } = require('../asset-updater');
+const { AssetUpdater } = require('../src/asset-updater');
 
 const out = process.argv[2];
 if (!out) {
@@ -71,7 +71,7 @@ manifest.signature = crypto
 
 // Prove the pair: verify with the committed public key before shipping.
 const publicKey = process.env.POSNIC_ASSET_PUBLIC_KEY
-  || fs.readFileSync(path.join(root, 'asset-signing-key.pub'), 'utf8');
+  || fs.readFileSync(path.join(root, 'src', 'asset-signing-key.pub'), 'utf8');
 const check = new AssetUpdater({ root: '/tmp/x', publicKey, baseline: null }).verifyManifest(manifest);
 if (!check.ok) {
   console.error('signed manifest does not verify against asset-signing-key.pub:', check.reason);

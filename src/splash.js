@@ -122,7 +122,7 @@ function splashIsOpen() {
    file path against. Read once; a missing file just means no mark. */
 function markDataUri() {
   try {
-    const file = path.join(__dirname, 'builds', 'icon-256.png');
+    const file = path.join(__dirname, '..', 'builds', 'icon-256.png');
     if (!fs.existsSync(file)) return null;
     return `data:image/png;base64,${fs.readFileSync(file).toString('base64')}`;
   } catch (e) {

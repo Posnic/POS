@@ -348,7 +348,7 @@ just this one.
 
 Which is why the four steps above are worth more than anything we could add to
 the software. The
-[security policy](../SECURITY.md) sets out the reasoning in full if you want it.
+[security policy](../.github/SECURITY.md) sets out the reasoning in full if you want it.
 
 ---
 
@@ -397,7 +397,7 @@ it from you too.
 - **Something is broken:** [open an issue](https://github.com/Posnic/POS/issues)
   — say what you did, what happened, and attach the log
 - **A question:** [Discussions](https://github.com/Posnic/POS/discussions)
-- **A security problem:** see [SECURITY.md](../SECURITY.md), not a public issue
+- **A security problem:** see [SECURITY.md](../.github/SECURITY.md), not a public issue
 - **Paid support or Cloud:** info@posnic.com
 
 Posnic is free software. Nobody is obliged to answer, but people usually do —

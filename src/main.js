@@ -1340,7 +1340,7 @@ const BRAND_DIR = path.join(app.getPath('userData'), 'brand');
 const ASSET_PUBLIC_KEY_FILE = path.join(process.resourcesPath || __dirname, 'asset-signing-key.pub');
 const assetUpdater = new AssetUpdater({
   root: path.join(app.getPath('userData'), 'assets'),
-  baseline: path.join(process.resourcesPath || __dirname, 'frontend', 'public'),
+  baseline: path.join(process.resourcesPath || path.join(__dirname, '..'), 'frontend', 'public'),
   publicKey: (() => {
     try {
       return fs.existsSync(ASSET_PUBLIC_KEY_FILE)
@@ -1849,7 +1849,7 @@ function createWindow(showStartupLoader = !isWarmStartup()) {
   });
 
   if (showStartupLoader) {
-    mainWindow.loadFile('loading.html');
+    mainWindow.loadFile('src/loading.html');
     console.log('Electron window created with loading screen\n');
   } else {
     console.log('Warm startup - checks running in background\n');
@@ -1890,7 +1890,7 @@ function createWindow(showStartupLoader = !isWarmStartup()) {
         return;
       }
 
-      mainWindow.loadFile('loading.html').catch(() => {});
+      mainWindow.loadFile('src/loading.html').catch(() => {});
       mainWindow.show();
       console.log('Startup is taking a moment; showing the loading screen');
     }, 2500);
@@ -2154,7 +2154,7 @@ function createWindow(showStartupLoader = !isWarmStartup()) {
 // Redirect to installation wizard for first time setup
 async function redirectToWizard() {
   if (mainWindow) {
-    await mainWindow.loadFile('install-wizard.html');
+    await mainWindow.loadFile('src/install-wizard.html');
     if (!mainWindow.isVisible()) mainWindow.show();
     mainWindow.focus();
     writeStartupPerformanceSummary('Installation wizard');
@@ -2776,7 +2776,7 @@ function openSupportRequest() {
     },
   });
   supportWindow.setMenuBarVisibility(false);
-  supportWindow.loadFile('support-request.html');
+  supportWindow.loadFile('src/support-request.html');
   supportWindow.on('closed', () => { supportWindow = null; });
 }
 
@@ -2815,7 +2815,7 @@ function openLogViewer() {
     },
   });
   logWindow.setMenuBarVisibility(false);
-  logWindow.loadFile('log-viewer.html');
+  logWindow.loadFile('src/log-viewer.html');
   logWindow.on('closed', () => { logWindow = null; });
 }
 
@@ -2905,7 +2905,7 @@ function openAboutWindow() {
      file path against. */
   let logoTag = '';
   try {
-    const mark = path.join(__dirname, 'builds', 'icon-256.png');
+    const mark = path.join(__dirname, '..', 'builds', 'icon-256.png');
     if (fs.existsSync(mark)) {
       logoTag = `<img alt="" src="data:image/png;base64,${fs.readFileSync(mark).toString('base64')}">`;
     }
@@ -3346,7 +3346,7 @@ async function removeFullAccountData() {
   const userDataPath = app.getPath('userData');
   const safeRoots = [
     path.join(userDataPath, 'mongodb'),
-    path.join(__dirname, 'mongodb')
+    path.join(__dirname, '..', 'mongodb')
   ];
 
   const pathsToRemove = [
@@ -3354,7 +3354,7 @@ async function removeFullAccountData() {
     path.join(userDataPath, '.mongodb-setup-done'),
     path.join(__dirname, '.mongodb-credentials.json'),
     path.join(__dirname, '.mongodb-setup-done'),
-    path.join(__dirname, 'api', '.mongodb-credentials.json'),
+    path.join(__dirname, '..', 'api', '.mongodb-credentials.json'),
     mongoDBManager?.dataPath,
     mongoDBManager?.logPath ? path.dirname(mongoDBManager.logPath) : null
   ].filter(Boolean);
@@ -3758,8 +3758,8 @@ function appIconPath() {
   const candidates = app.isPackaged
     ? [path.join(process.resourcesPath, file), path.join(process.resourcesPath, 'app.ico')]
     : [
-        path.join(__dirname, 'builds', file === 'app.png' ? 'icon-256.png' : 'app.ico'),
-        path.join(__dirname, 'builds', 'app.ico'),
+        path.join(__dirname, '..', 'builds', file === 'app.png' ? 'icon-256.png' : 'app.ico'),
+        path.join(__dirname, '..', 'builds', 'app.ico'),
       ];
   /* The .ico is kept as a last resort rather than returning nothing: a wrong
      icon is better than a missing window. */
@@ -3864,7 +3864,7 @@ function openCloudManager() {
   });
   cloudWindow.setMenuBarVisibility(false);
   cloudWindow.on('closed', () => { cloudWindow = null; });
-  cloudWindow.loadFile('cloud-setup.html').catch((error) => {
+  cloudWindow.loadFile('src/cloud-setup.html').catch((error) => {
     console.error('Failed to load Posnic Cloud window:', error);
   });
 }
@@ -3894,7 +3894,7 @@ function openBackupManager() {
   });
   backupWindow.setMenuBarVisibility(false);
 
-  backupWindow.loadFile('backup-manager.html').catch((error) => {
+  backupWindow.loadFile('src/backup-manager.html').catch((error) => {
     console.error('Failed to load Backup Manager:', error);
     if (backupWindow && !backupWindow.isDestroyed()) {
       backupWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(`
@@ -3939,7 +3939,7 @@ function openHardwareManager() {
   });
   hardwareWindow.setMenuBarVisibility(false);
 
-  hardwareWindow.loadFile('hardware-manager.html');
+  hardwareWindow.loadFile('src/hardware-manager.html');
 
   hardwareWindow.on('closed', () => {
     hardwareWindow = null;
@@ -3979,7 +3979,7 @@ function openUpdateManager() {
   });
   updateWindow.setMenuBarVisibility(false);
 
-  updateWindow.loadFile('update-manager.html');
+  updateWindow.loadFile('src/update-manager.html');
 
   updateWindow.on('closed', () => {
     updateWindow = null;
@@ -4285,7 +4285,7 @@ function seedBrandFromBuild() {
   try {
     const seedDir = app.isPackaged
       ? path.join(process.resourcesPath, 'brand-seed')
-      : path.join(__dirname, 'builds', 'brand-seed');
+      : path.join(__dirname, '..', 'builds', 'brand-seed');
     if (!fs.existsSync(path.join(seedDir, 'brand.json'))) return;   // stock build
 
     /*

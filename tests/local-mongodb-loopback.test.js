@@ -11,18 +11,18 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const ROOT = path.join(__dirname, '..');
-const credentialsStore = require('../credentials-store');
+const credentialsStore = require('../src/credentials-store');
 
 const DESKTOP_DATABASE_FILES = [
-  'main.js',
-  'backup-manager.js',
-  'credentials-store.js',
-  'setup-mongodb.js',
+  path.join('src', 'main.js'),
+  path.join('src', 'backup-manager.js'),
+  path.join('src', 'credentials-store.js'),
+  path.join('src', 'setup-mongodb.js'),
   path.join('api', 'src', 'services', 'install.service.js'),
 ];
 
 test('desktop-owned MongoDB URIs use the interface mongod binds to', () => {
-  const manager = fs.readFileSync(path.join(ROOT, 'mongodb-manager.js'), 'utf8');
+  const manager = fs.readFileSync(path.join(ROOT, 'src', 'mongodb-manager.js'), 'utf8');
   assert.match(manager, /'--bind_ip',\s*'127\.0\.0\.1'/);
 
   for (const file of DESKTOP_DATABASE_FILES) {
@@ -60,7 +60,7 @@ test('credential migration preserves explicitly configured remote hosts', () => 
 });
 
 test('database failure help does not give Windows-only or false install advice', () => {
-  const source = fs.readFileSync(path.join(ROOT, 'main.js'), 'utf8');
+  const source = fs.readFileSync(path.join(ROOT, 'src', 'main.js'), 'utf8');
   const start = source.indexOf('<h1>Posnic could not start its local database</h1>');
   const end = source.indexOf('`)}`);', start);
 

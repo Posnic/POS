@@ -89,14 +89,14 @@ class MongoDBManager {
       // Packaged app - mongod.exe in resources path
       binBasePath = process.resourcesPath;
     } else {
-      // Development - use __dirname
-      binBasePath = __dirname;
+      // Development - the repo root, one level above src/
+      binBasePath = path.join(__dirname, '..');
     }
 
     // Determine writable base path for data/log/credentials
     // In packaged app, use userData folder (writable)
-    // In dev, use __dirname
-    let writableBasePath = __dirname;
+    // In dev, the repo root - src/ holds code, never data
+    let writableBasePath = path.join(__dirname, '..');
     try {
       const { app } = require('electron');
       if (app.isPackaged) {
