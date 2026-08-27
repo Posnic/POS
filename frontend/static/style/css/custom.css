@@ -5655,6 +5655,22 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 @media (max-width: 1499px) {
     .items-split .i-col-price { display: none; }
 }
+/* The catalogue columns (owner: the full-width list had spare room - "add
+   very useful columns"). They exist for the WIDE list only: the split rail
+   sheds all four at once, and narrow screens drop detail before identity. */
+.items-split .i-col-supplier,
+.items-split .i-col-cost,
+.items-split .i-col-margin,
+.items-split .i-col-tax { display: none; }
+@media (max-width: 1239px) {
+    .i-col-margin, .i-col-tax { display: none; }
+}
+@media (max-width: 991px) {
+    .i-col-supplier, .i-col-cost { display: none; }
+}
+@media (max-width: 767px) {
+    .i-col-sku, .i-col-category { display: none; }
+}
 #items_doc { padding: 16px 20px 22px; display: flex; flex-direction: column; max-height: calc(100vh - 150px); }
 #items_doc .s-doc-body { overflow-y: auto; min-height: 0; }
 @media (max-width: 767.98px) {

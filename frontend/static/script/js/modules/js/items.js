@@ -288,6 +288,13 @@ PosnicPro.items = {
     PAGE_SIZE: 25,
     _lastRows: [],
     _openDocId: null,
+    /* The name the OLD table machinery answered to. Save flows (bulk price,
+       stock adjust, bulk stock, save-from-receiving) and the shared
+       clearListFilters/refresh doors still call <module>Table - without the
+       alias every one of them throws after a successful save. */
+    itemsTable: function () {
+        PosnicPro.items.loadList(1);
+    },
     loadList: function (page) {
         PosnicPro.items.mountFilters();
         var self = PosnicPro.items;
@@ -311,8 +318,12 @@ PosnicPro.items = {
             var cur = PosnicPro.local.get('currencySign');
             var html = '<div class="table-responsive"><table class="table table-borderless">'
                 + '<thead><tr><th style="width:44px;"></th><th>Name</th><th class="i-col-sku">SKU</th>'
-                + '<th class="i-col-category">Category</th><th class="text-right">Stock</th>'
+                + '<th class="i-col-category">Category</th><th class="i-col-supplier">Supplier</th>'
+                + '<th class="text-right">Stock</th>'
+                + '<th class="text-right i-col-cost">Cost</th>'
                 + '<th class="text-right i-col-price">Price</th>'
+                + '<th class="text-right i-col-margin">Margin</th>'
+                + '<th class="text-right i-col-tax">Tax</th>'
                 + '<th class="text-center kiosk-column">Kiosk</th></tr></thead><tbody>';
             list.forEach(function (r) {
                 var unit = r.unit || 'qty';
@@ -333,14 +344,27 @@ PosnicPro.items = {
                 var stockCell = tracked
                     ? (low ? '<span class="rs-pill unpaid">' : '<span>') + esc(r.available_quantity) + ' ' + esc(unit) + (low ? '</span>' : '</span>')
                     : '<span class="q-muted">-</span>';
+                /* The margin the shop actually keeps on a unit - the number a
+                   retailer scans a catalogue for. Blank when either price is
+                   missing: a made-up 100% is worse than a dash. */
+                var cost = Number(r.company_price) || 0;
+                var sell = Number(r.selling_price) || 0;
+                var marginCell = (cost > 0 && sell > 0)
+                    ? (((sell - cost) / sell) * 100).toFixed(1) + '%'
+                    : '-';
+                var taxCell = (Number(r.tax) > 0) ? Number(r.tax) + '%' : '-';
                 html += '<tr class="md-row items-row highlight-select' + (self._openDocId === String(r._id) ? ' is-active' : '') + '"'
                     + ' data-id="' + esc(r._id) + '" style="cursor:pointer;">'
                     + '<td>' + thumb + '</td>'
                     + '<td>' + esc(r.name) + '</td>'
                     + '<td class="i-col-sku">' + esc(r.itemid || '-') + '</td>'
                     + '<td class="i-col-category">' + esc(r.category_name || '-') + '</td>'
+                    + '<td class="i-col-supplier">' + esc(r.supplier_name || '-') + '</td>'
                     + '<td class="text-right">' + stockCell + '</td>'
-                    + '<td class="text-right i-col-price">' + cur + '&nbsp;' + (Number(r.selling_price) || 0).toFixed(2) + '</td>'
+                    + '<td class="text-right i-col-cost q-muted">' + (cost > 0 ? cur + '&nbsp;' + cost.toFixed(2) : '-') + '</td>'
+                    + '<td class="text-right i-col-price">' + cur + '&nbsp;' + sell.toFixed(2) + '</td>'
+                    + '<td class="text-right i-col-margin">' + marginCell + '</td>'
+                    + '<td class="text-right i-col-tax q-muted">' + taxCell + '</td>'
                     + '<td class="text-center kiosk-column"><input type="checkbox" id="kiosk_' + esc(r._id) + '" class="kiosk-toggle" aria-label="Show on kiosk"' + (r.isAvailable ? ' checked' : '') + '></td>'
                     + '</tr>';
             });
