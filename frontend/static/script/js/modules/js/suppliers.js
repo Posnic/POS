@@ -35,113 +35,276 @@ PosnicPro.suppliers = {
     showDelete: function (id) {
         PosnicPro.deleteTableRowData(id, 'suppliers');
     },
+    /* #/suppliers/<id>: the profile opens in the right pane - never a
+       popup (LIST_PAGE_UX_STANDARD). Recognises the echo of its own
+       setHash and does nothing. */
     showDetails: function (id) {
-        var loader = $(".loader-view-supplier");
-        loader.find(".loadingSpinner:first").remove();
-        PosnicPro.showViewModal('suppliers');
-        PosnicPro.suppliers.viewSupplier(id);
+        var self = PosnicPro.suppliers;
+        if (self._openDocId === String(id) && $('#suppliers_detail_card').is(':visible')) { return; }
+        self._chrome();
+        self.loadList(1);
+        self.openDoc(id);
     },
 
-    suppliersTable: function () {
-        var loader = $(".loader-table-supplier");
-        $("<div class='loadingSpinner'></div>").appendTo(loader);
-        PosnicPro.appendViewDataTableBody('suppliers');
-        var table = $('#view_suppliers');
-        var params = {
-            url: 'suppliers',
-            data: {
-                page: table.data('current_page'),
-                limit: parseInt($('#view_suppliers_per_page  option:selected').text()),
-                filters: table.data('filters')
-            }
-        };
-        PosnicPro.get(params, function (response) {
-            if (response.type === 'success') {
-                table.data('total', response.data.total);
-                table.data('total_pages', response.data.total_pages);
-                table.data('current_page', response.data.current_page);
-                table.data('per_page', response.data.per_page);
-                PosnicPro.paging(response.data.total_pages, response.data.current_page);
-                table.children('tbody').text('');
-                $('#view_suppliers_total').text(response.data.total);
-                var rowTotal = response.data.total;
-                if (rowTotal === 0) {
-                    $('.supplier_header').hide();
-                    $('#supplier_img_hide').show();
-
-                } else {
-                    $('#supplier_img_hide').hide();
-                    $('.supplier_header').show();
-                }
-
-                var row_total = (table.data('current_page') - 1) * table.data('per_page') + 1;
-                $('#view_suppliers_page_total').text(row_total);
-                var page_totals = (table.data('current_page') - 1) * table.data('per_page');
-                $('#view_suppliers_page_perpage_total').text(page_totals + response.data.list.length);
-                for (var i = 0; i < response.data.list.length; i++) {
-                    var row = response.data.list[i];
-                    var row_no = (table.data('current_page') - 1) * table.data('per_page') + i + 1;
-                    var phone = row.phone || '';
-                    var email = row.email || '';
-                    var address = row.address || '';
-                    var action = '<div id="onclick-toolbar-options_' + i + '" class="hidden">' +
-                            '<a data-module = "supplier" data-access = "read" href="#/suppliers/' + row._id + '" data-id="suppliers/' + row._id + '"  data-toggle="tooltip" title="View Supplier" class="point-cursor mobile_tooltip"><i class="feather icon-eye"></i></a>' +
-                            '<a data-module = "supplier" data-access = "write" href="#/suppliers/' + row._id + '/edit" data-id="suppliers/' + row._id + '/edit"  data-toggle="tooltip" title="Edit Supplier" class="point-cursor mobile_tooltip"><i class="feather icon-edit"></i></a>' +
-                            '<a data-module = "supplier" data-access = "delete" href="#/suppliers/' + row._id + '/delete" data-id="suppliers/' + row._id + '/delete" data-toggle="tooltip" title="Delete Supplier" class="point-cursor mobile_tooltip"><i class="feather icon-trash"></i></a>' +
-                            '</div>' +
-                            '<div data-toolbar="user-options" class="btn btn-round btn-primary-rgba round-pad supplier_onclick" id="onclick-toolbar_' + i + '"><i class="feather icon-more-vertical-"></i></div>';
-
-
-                    var trow = '<tr><td><input type="checkbox" class="suppliers-row-id" id="' + row._id + '" name="id[]" value="' + row._id + '" onclick="PosnicPro.checkboxSelectOne(this,\'suppliers\');"></td> <td scope="row" data-label="#">' + row_no + '</td>  <td width="30%" data-label="Name"><a href="#/suppliers/' + row._id + '"><i class="table_model_item">' + row.name + '</i></a></td> <td class="text-right" data-label="Phone"><a href="tel:' + phone + '" class="sale_color">' + phone + '</a></td> <td width="15%" data-label="Email"><a href="mailto:' + email + '" class="sale_color">' + email + '</a></td> <td width="40%" data-label="Address">' + address + '</td> ' +
-                            '<td width="15%" class="text-center"><span>' + action + '</span></td>' +
-                            '</tr>';
-                    $('#view_suppliers').children('tbody').append(trow);
-                }
-                $(document).ready(function () {
-                    for (var i = 0; i < response.data.list.length; i++) {
-                        $('#onclick-toolbar_' + i).toolbar({
-                            content: '#onclick-toolbar-options_' + i,
-                            event: 'click',
-                            style: 'primary',
-                            hideOnClick: true
-                        });
-                        $('#onclick-toolbar_' + i).on('toolbarItemClick', function (event, element) {
-                            hasher.setHash($(element).data('id'));
-                            $(this).trigger('click');
-                            $('.mobile_tooltip').tooltip('hide');
-                        });
-                    }
-                });
-
-                PosnicPro.setSelectedCheckbox(PosnicPro["suppliers_checkbox"], 'suppliers');
-                PosnicPro.ACLForModule('supplier');
-                loader.find(".loadingSpinner:first").remove();
-            } else {
-                PosnicPro.alert(response.type, response.message);
-            }
-        }, function (xhr) {
-            var response = jQuery.parseJSON(xhr.responseText);
-            PosnicPro.alert(response.type, response.message);
-        });
-
-    },
-    showDataTablePage: function () {
-        var loader = $(".loader-table-supplier");
-        loader.find(".loadingSpinner:first").remove();
-        PosnicPro.dashboard.datePicker();
+    _page: 1,
+    PAGE_SIZE: 25,
+    _lastRows: [],
+    _openDocId: null,
+    /* Page chrome shared by list entry and deep links - the left menu
+       highlight must survive a refresh (standard rule). */
+    _chrome: function () {
         PosnicPro.HideSideBarModal();
-        $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
-        $(".vertical-layout").removeClass("toggle-menu");
-        $(".vertical-menu li a").removeClass("active");
-        $('.dropdown-item').removeClass('active');
         $('.page_loader,#osk-container').hide();
-        $('.page-title-box,#suppliers').show();
-        $('#suppliers_new,#suppliers_view').modal('hide');
-        PosnicPro.suppliers.suppliersTable('suppliers');
+        $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
+        $('.vertical-menu li a').removeClass('active');
         $('#v-pills-purchase-tab').addClass('active');
         $('#v-pills-purchase').addClass('show active');
+        $('.vertical-menu li a#view_suppliers_page').addClass('active');
+        $('.page-title-box,#suppliers').show();
+        $('#suppliers_new,#suppliers_view').modal('hide');
         $('.dashboard_img_menu').hide();
         $('#image_sidebar_supply').show();
+    },
+    showDataTablePage: function () {
+        PosnicPro.suppliers._chrome();
+        PosnicPro.suppliers.closeDoc();
+        PosnicPro.suppliers.loadList(1);
+    },
+    mountFilters: function (force) {
+        if (!$('#suppliers_filter_panel').length) { return; }
+        if (!force && $('#suppliers_filter_panel').data('mounted')) { return; }
+        $('#suppliers_filter_panel').data('mounted', true);
+        PosnicPro.listFilter.mount({
+            key: 'suppliers',
+            container: '#suppliers_filter_panel',
+            button: '#suppliers_filter_btn',
+            searchPlaceholder: 'Search name, phone or email',
+            dateField: 'Added',
+            searchFields: [
+                { value: 'all', label: 'All fields' },
+                { value: 'name', label: 'Name' },
+                { value: 'phone', label: 'Phone' },
+                { value: 'email', label: 'Email' },
+                { value: 'address', label: 'Address' }
+            ],
+            onChange: function () { PosnicPro.suppliers.loadList(1); }
+        });
+    },
+    loadList: function (page) {
+        PosnicPro.suppliers.mountFilters();
+        var self = PosnicPro.suppliers;
+        if (page) { self._page = page; }
+        var filters = PosnicPro.listFilter.legacyFilters('suppliers', { dateKey: 'created_date' });
+        var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
+        PosnicPro.get({
+            url: 'suppliers',
+            data: { page: self._page, limit: self.PAGE_SIZE, filters: JSON.stringify(filters) }
+        }, function (response) {
+            var data = (response && response.data) || {};
+            var list = data.list || [];
+            self._lastRows = list;
+            if (!list.length) {
+                var filtered = PosnicPro.listFilter.activeCount('suppliers') > 0;
+                $('#suppliers_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">'
+                    + (filtered ? 'No suppliers match this filter.' : 'No suppliers yet - press New to add the first.') + '</div>');
+                $('#suppliers_list_paging').html('');
+                return;
+            }
+            var html = '<div class="table-responsive"><table class="table table-borderless">'
+                + '<thead><tr><th>Name</th><th class="s-col-phone">Phone</th>'
+                + '<th class="s-col-email">Email</th><th class="s-col-address">Address</th></tr></thead><tbody>';
+            list.forEach(function (r) {
+                html += '<tr class="md-row suppliers-row highlight-select' + (self._openDocId === String(r._id) ? ' is-active' : '') + '"'
+                    + ' data-id="' + esc(r._id) + '" style="cursor:pointer;">'
+                    + '<td>' + esc(r.name) + '</td>'
+                    + '<td class="s-col-phone">' + esc(r.phone || '-') + '</td>'
+                    + '<td class="s-col-email">' + esc(r.email || '-') + '</td>'
+                    + '<td class="s-col-address">' + esc(r.address || '-') + '</td>'
+                    + '</tr>';
+            });
+            html += '</tbody></table></div>';
+            $('#suppliers_list_rows').html(html);
+            self.renderPager(Number(data.total) || list.length);
+        }, function () {
+            $('#suppliers_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">Could not load suppliers - try again.</div>');
+        });
+    },
+    renderPager: function (total) {
+        var self = PosnicPro.suppliers;
+        var p = self._page, size = self.PAGE_SIZE;
+        var pages = Math.ceil(total / size) || 1;
+        var label = total + (total === 1 ? ' supplier' : ' suppliers');
+        if (pages > 1) { label = 'Page ' + p + ' of ' + pages + ' \u00b7 ' + label; }
+        var btn = function (to, text, off, cls) {
+            return '<button type="button" class="btn btn-sm ' + (cls || 'btn-secondary-rgba') + ' q-pg-btn"' + (off ? ' disabled' : '')
+                + ' onclick="PosnicPro.suppliers.goPage(' + to + ');">' + text + '</button>';
+        };
+        var html = '';
+        if (pages > 1) {
+            html += btn(p - 1, '&laquo;', p <= 1);
+            var end = Math.min(pages, Math.max(1, p - 2) + 4);
+            var start = Math.max(1, end - 4);
+            for (var n = start; n <= end; n++) {
+                html += '<span class="q-pg-num">' + btn(n, n, false, n === p ? 'btn-primary-rgba' : 'btn-secondary-rgba') + '</span>';
+            }
+        }
+        html += '<span class="q-pg-count">' + label + '</span>';
+        if (pages > 1) { html += btn(p + 1, '&raquo;', p >= pages); }
+        $('#suppliers_list_paging').html(html);
+    },
+    goPage: function (n) {
+        if (!n || n < 1) { return; }
+        PosnicPro.suppliers._page = n;
+        PosnicPro.suppliers.loadList();
+    },
+    exportCsv: function () {
+        var rows = [['Name', 'Phone', 'Email', 'Address', 'Tax number']];
+        (PosnicPro.suppliers._lastRows || []).forEach(function (r) {
+            rows.push([r.name, r.phone || '', r.email || '', r.address || '', r.gst_number || '']);
+        });
+        var csv = rows.map(function (r) {
+            return r.map(function (c) { return '"' + String(c == null ? '' : c).replace(/"/g, '""') + '"'; }).join(',');
+        }).join('\n');
+        var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'suppliers.csv';
+        a.click();
+        URL.revokeObjectURL(a.href);
+    },
+    /* ---- the profile pane ---- */
+    openDoc: function (id) {
+        var self = PosnicPro.suppliers;
+        if (!PosnicPro.masterDetail.inSplit('#suppliers_split', 'suppliers-split')) {
+            PosnicPro.masterDetail.enter('#suppliers_split', 'suppliers-split');
+            $('#suppliers_detail_card').show();
+        }
+        self._openDocId = String(id);
+        $('#suppliers_list_rows tr.suppliers-row').removeClass('is-active');
+        $('#suppliers_list_rows tr.suppliers-row[data-id="' + id + '"]').addClass('is-active');
+        if (window.location.hash.slice(2) !== 'suppliers/' + id) {
+            hasher.setHash('suppliers/' + id);
+        }
+        $('#suppliers_doc').html('<div class="text-center text-muted" style="padding:60px;">Loading ...</div>');
+        PosnicPro.get('suppliers/' + id, function (response) {
+            if (response.type !== 'success') {
+                $('#suppliers_doc').html('<div class="text-danger p-4">Could not open this supplier.</div>');
+                return;
+            }
+            PosnicPro.suppliers.renderSupplierDoc(response.data);
+        }, function () {
+            $('#suppliers_doc').html('<div class="text-danger p-4">Could not open this supplier.</div>');
+        });
+    },
+    closeDoc: function () {
+        PosnicPro.suppliers._openDocId = null;
+        $('#suppliers_detail_card').hide();
+        $('#suppliers_list_rows tr.suppliers-row').removeClass('is-active');
+        PosnicPro.masterDetail.leave('#suppliers_split', 'suppliers-split');
+        if (window.location.hash.slice(2).indexOf('suppliers/') === 0) {
+            hasher.setHash('suppliers');
+        }
+    },
+    renderSupplierDoc: function (d) {
+        var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
+        var real = function (v) { return v && v !== 'null' && v !== 'undefined' ? v : ''; };
+        var taxLabel = PosnicPro.local.get('gst_action') === 'enable' ? 'GSTIN' : 'Tax ID';
+        var id = String(d._id || PosnicPro.suppliers._openDocId);
+        var toolbar = '<div class="p-doc-toolbar">'
+            + '<button type="button" class="btn btn-sm btn-light" title="Show or hide the list" aria-label="Show or hide the list" onclick="PosnicPro.masterDetail.toggleRail(\'#suppliers_split\');"><i class="feather icon-sidebar"></i></button>'
+            + '<span class="p-doc-title">' + esc(d.name) + '</span>'
+            + '<span class="ml-auto"></span>'
+            + '<button type="button" class="btn btn-sm btn-light" onclick="hasher.setHash(\'suppliers/' + esc(id) + '/edit\');"><i class="feather icon-edit-2 mr-1"></i>Edit</button>'
+            + '<div class="btn-group">'
+            + '<button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">More</button>'
+            + '<div class="dropdown-menu dropdown-menu-right">'
+            + '<a class="dropdown-item text-danger" href="javascript:void(0)" onclick="PosnicPro.suppliers.deleteAsk();"><i class="feather icon-trash mr-2"></i>Delete</a>'
+            + '</div></div>'
+            + '<button type="button" class="btn btn-sm btn-light" title="Close and show the full list" aria-label="Close" onclick="PosnicPro.suppliers.closeDoc();"><i class="feather icon-x"></i></button>'
+            + '</div>';
+        var strip = '<div class="p-void-strip" id="s_delete_strip" style="display:none;">'
+            + '<span>Delete <b>' + esc(d.name) + '</b>? Their purchases stay on record; only the supplier card goes.</span>'
+            + '<button type="button" class="btn btn-sm btn-danger" onclick="PosnicPro.suppliers.deleteConfirm(\'' + esc(id) + '\');">Delete supplier</button>'
+            + '<button type="button" class="btn btn-sm btn-light" onclick="$(\'#s_delete_strip\').slideUp(120);">Cancel</button>'
+            + '</div>';
+        var contact = '<div class="q-block"><div class="q-label">Contact</div>'
+            + (real(d.phone) ? '<div><a href="tel:' + esc(d.phone) + '">' + esc(d.phone) + '</a></div>' : '')
+            + (real(d.email) ? '<div><a href="mailto:' + esc(d.email) + '">' + esc(d.email) + '</a></div>' : '')
+            + (real(d.address) ? '<div class="q-muted">' + esc(d.address) + '</div>' : '')
+            + (real(d.state) ? '<div class="q-muted">' + esc(d.state) + (real(d.country) ? ', ' + esc(d.country) : '') + '</div>' : '')
+            + '</div>';
+        var tax = (real(d.gst_type) || real(d.gst_number))
+            ? '<div class="q-block"><div class="q-label">Tax</div>'
+                + (real(d.gst_type) ? '<div>' + esc(d.gst_type) + '</div>' : '')
+                + (real(d.gst_number) ? '<div class="q-muted">' + taxLabel + ': ' + esc(d.gst_number) + '</div>' : '')
+                + '</div>'
+            : '';
+        var record = '<div class="q-block"><div class="q-label">On record</div>'
+            + (d.created_date ? '<div class="q-muted">Added ' + esc(PosnicPro.convertDate(d.created_date)) + '</div>' : '')
+            + (d.updated_date ? '<div class="q-muted">Updated ' + esc(PosnicPro.convertDate(d.updated_date)) + '</div>' : '')
+            + '</div>';
+        var body = '<div class="s-doc-body">'
+            + '<div class="q-footer">' + contact + tax + record + '</div>'
+            + '<div class="q-label" style="margin-top:14px;">Recent purchases</div>'
+            + '<div id="s_doc_purchases" class="text-muted" style="font-size:13px;">Loading ...</div>'
+            + '</div>';
+        $('#suppliers_doc').html(toolbar + strip + body);
+        PosnicPro.suppliers.loadRecentPurchases(id);
+    },
+    /* The supplier's latest purchases, cross-linked to their documents on
+       the purchases surface (#/purchaseorders/<id>). */
+    loadRecentPurchases: function (id) {
+        PosnicPro.get({
+            url: 'receivings/supplierReceivingDetails',
+            data: { page: 1, limit: 5, supplier_id: id, branch: [PosnicPro.local.get('branch_id_set')] }
+        }, function (response) {
+            var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
+            var t = response && response.data && response.data.table && response.data.table.data;
+            var list = (t && (t.list || t.rows)) || [];
+            if (!list.length) {
+                $('#s_doc_purchases').html('<div class="text-muted">No purchases from this supplier yet.</div>');
+                return;
+            }
+            var html = '';
+            list.forEach(function (r) {
+                var docId = r._id || r.id || '';
+                var no = r.receiving_id || r.po_id || '';
+                var when = r.date || r.created_date || '';
+                var total = r.items_total != null ? r.items_total : r.total_amount != null ? r.total_amount : r.grand_total;
+                var st = String(r.receiving_status || '').toLowerCase();
+                var pill = st
+                    ? ' <span class="rs-pill ' + (st === 'received' ? 'paid' : st === 'cancelled' ? 'unpaid' : 'hold') + '">'
+                        + (st === 'open' ? 'Ordered' : esc(r.receiving_status)) + '</span>'
+                    : '';
+                html += '<div class="s-doc-purchase-row"'
+                    + (docId ? ' onclick="hasher.setHash(\'purchaseorders/' + esc(docId) + '\');" style="cursor:pointer;"' : '')
+                    + '>'
+                    + '<span>' + esc(no) + pill + '</span>'
+                    + '<span class="q-muted">' + esc(when ? String(when).slice(0, 10) : '') + '</span>'
+                    + '<span class="text-right">' + PosnicPro.local.get('currencySign') + '&nbsp;' + (Number(total) || 0).toFixed(2) + '</span>'
+                    + '</div>';
+            });
+            $('#s_doc_purchases').html(html);
+        }, function () {
+            $('#s_doc_purchases').html('<div class="text-muted">Purchase history unavailable.</div>');
+        });
+    },
+    deleteAsk: function () {
+        $('#s_delete_strip').slideDown(120);
+    },
+    deleteConfirm: function (id) {
+        PosnicPro.request({
+            method: 'DELETE',
+            url: 'suppliers',
+            data: JSON.stringify({ id: [id] })
+        }, function (r) {
+            PosnicPro.alert(r.type || 'success', r.message || 'Supplier deleted');
+            PosnicPro.suppliers.closeDoc();
+            PosnicPro.suppliers.loadList(1);
+        }, function (xhr) {
+            var resp = {}; try { resp = jQuery.parseJSON(xhr.responseText) || {}; } catch (e) { }
+            PosnicPro.alert('error', resp.message || 'Could not delete this supplier');
+        });
     },
     triggerModules: function () {
         PosnicPro.showAddModal('supplier');
@@ -216,7 +379,7 @@ PosnicPro.suppliers = {
                         $('.error_item').css('display', 'none');
                     }
                     if (PosnicPro.action === 'add') {
-                        PosnicPro.suppliers.suppliersTable('suppliers');
+                        PosnicPro.suppliers.loadList(1);
                         $('#show_last_created_supplier').show();
                         var path = '#/suppliers/' + supplierId;
                         $('#last_created_supplier').attr('href', path);
@@ -239,49 +402,6 @@ PosnicPro.suppliers = {
         }
     },
     /*To display the supplier details form*/
-    viewSupplier: function (id) {
-        var loader = $(".loader-view-supplier");
-        $("<div class='loadingSpinner'></div>").appendTo(loader);
-        PosnicPro.get('suppliers/' + id, function (response) {
-            if (response.type === 'success') {
-                PosnicPro.record_id = id;
-                PosnicPro.suppliers.viewSupplierData(response);
-                loader.find(".loadingSpinner:first").remove();
-            } else {
-                PosnicPro.alert(response.type, response.message);
-            }
-        });
-    },
-    viewSupplierData: function (response) {
-        $(".infobar-settings-sidebar-overlay").css({"background": "rgba(0,0,0,0.4)", "position": "fixed"});
-        $("#infobar-settings-sidebar-supplier-details").addClass("sidebarview");
-        $("#supplier-detail-tab").addClass("active");
-        $("#supplier-receiving-tab").removeClass("active");
-        $("#supplier_detail").addClass("active show");
-        $("#supplier_receiving").removeClass("active show");
-        var data = response.data;
-        $('#supplier_view_phone_icon').attr('href', 'tel:' + data.phone);
-        $('#supplier_view_email_icon').attr('href', 'mailto:' + data.email);
-        $.each(data, function (key, val) {
-            if (val === '') {
-                $('#supplier_view_' + key).text('');
-                $('#supplier_view_' + key + '_icon').hide();
-            } else {
-                $('#supplier_view_' + key + '_icon').show();
-                $('#supplier_view_' + key).text(val);
-            }
-        });
-        var updateCreateDate = PosnicPro.convertDate(data.created_date);
-        $('#supplier_view_created_date').text(updateCreateDate);
-        var updateUpdateDate = PosnicPro.convertDate(data.updated_date);
-        $('#supplier_view_updated_date').text(updateUpdateDate);
-
-        $('.indian-gstr').hide();
-        if (PosnicPro.local.get('gst_action') === 'enable' && data.gst === 'enable') {
-            $('.indian-gstr').show();
-        }
-
-    },
     /*Edit supplier details*/
     editSupplier: function (id) {
         var loader = $(".loader-supplier");
@@ -356,12 +476,6 @@ PosnicPro.suppliers = {
         (PosnicPro.local.get('gst_action') === 'enable') ? $('.indian-gstr').show() : $('.indian-gstr').hide();
         $('.supplier-gstr-number').hide();
         $('#show_last_created_supplier').hide();
-    },
-    exportSuppliers: function () {
-        PosnicPro.exportTableData(PosnicPro.suppliers_checkbox, 'suppliers');
-    },
-    deleteSelectedSuppliers: function () {
-        PosnicPro.deleteTableData(PosnicPro.suppliers_checkbox, 'suppliers');
     },
     gstFields: function () {
         $('.supplier-gstr-number').hide();
@@ -690,4 +804,9 @@ $(function () {
 });
 /*end*/
 
-
+/* The filter toggle, delegated - the same contract every standard page
+   uses: mount (or remount) then flip the strip. */
+$(document).on('click', '#suppliers_filter_btn', function () {
+    PosnicPro.suppliers.mountFilters(true);
+    PosnicPro.listFilter.toggle('suppliers');
+});

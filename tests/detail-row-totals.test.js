@@ -90,7 +90,9 @@ test('the money-path lists are card-ready on phones (Mobile P2)', () => {
   const js = (f) => fsx.readFileSync(px.join(__dirname, '..', 'frontend', 'static', 'script', 'js', 'modules', 'js', f), 'utf8');
   /* receivings.html retired 2026-08-27 - the purchases surface stacks on
      phones through the master-detail column rule instead of m-cards. */
-  for (const f of ['items.html', 'sales_read.html', 'customers.html', 'suppliers.html',
+  /* suppliers.html moved to the master-detail standard 2026-08-27 - phones
+     get the stacked split, not m-cards. */
+  for (const f of ['items.html', 'sales_read.html', 'customers.html',
     /* P3 slice 2 */ 'users.html', 'kothistory.html', 'stockactivity.html', 'variants.html', 'settings_write.html']) {
     assert.match(mod(f), /table-borderless m-cards/, f + ' lost its m-cards opt-in');
   }
@@ -98,7 +100,6 @@ test('the money-path lists are card-ready on phones (Mobile P2)', () => {
     ['items.js', 'data-label="Price"'],
     ['sales.js', 'data-label="Total"'],
     ['customers.js', 'data-label="Address"'],
-    ['suppliers.js', 'data-label="Address"'],
     /* P3 slice 2 */
     ['users.js', 'data-label="Role"'],
     ['kothistory.js', 'data-label="Order type"'],

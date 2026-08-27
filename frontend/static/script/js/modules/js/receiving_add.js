@@ -1449,16 +1449,14 @@ $(function () {
             var readList = function (key) {
                 try { return JSON.parse(PosnicPro.local.get(key) || '[]') || []; } catch (e) { return []; }
             };
-            var favs = readList('fav_suppliers');
-            var favIds = {};
-            favs.forEach(function (f) { favIds[f.id] = true; });
+            /* Favourites were PUSHED BACK (owner, 2026-08-27): recency
+               self-maintains, stars rot. Default, then recents, then the
+               latest from the server. */
             var def = $(inputSel).data('prefilled-default');
             if (def && def.id) {
-                push({ id: def.id, name: def.name, phone: def.phone || '' },
-                    { isDefault: true, isFav: !!favIds[def.id] });
+                push({ id: def.id, name: def.name, phone: def.phone || '' }, { isDefault: true });
             }
-            favs.forEach(function (f) { push(f, { isFav: true }); });
-            readList('recent_suppliers').forEach(function (r) { push(r, { isFav: !!favIds[r.id] }); });
+            readList('recent_suppliers').forEach(function (r) { push(r); });
             PosnicPro.get({
                 url: 'suppliers/getSuppliersAjaxList',
                 data: 'query=&branch=' + PosnicPro.local.get("branch_id_set")
@@ -1471,7 +1469,7 @@ $(function () {
                 if (!$(inputSel).is(':focus')) { done({ suggestions: [] }); return; }
                 (response.suggestions || []).forEach(function (d) {
                     push({ id: d.id, name: d.name, phone: d.phone, address: d.address, email: d.email,
-                        state: d.state, gst_type: d.gst_type, gst_number: d.gst_number }, { isFav: !!favIds[d.id] });
+                        state: d.state, gst_type: d.gst_type, gst_number: d.gst_number });
                 });
                 done({ suggestions: out });
             }, function () {
@@ -2802,6 +2800,9 @@ $(document).on('click', '.po-line-remove', function () {
 });
 $(document).on('click', '#po_list_rows tr.purchases-row', function () {
     PosnicPro.purchaseorders.openDoc($(this).data('kind'), $(this).data('id'));
+});
+$(document).on('click', '#suppliers_list_rows tr.suppliers-row', function () {
+    PosnicPro.suppliers.openDoc($(this).data('id'));
 });
 $(document).on('click', '#purchases_quick_filters .p-status-opt', function () {
     PosnicPro.purchaseorders._status = $(this).data('status') || '';

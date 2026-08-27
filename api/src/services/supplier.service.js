@@ -25,6 +25,29 @@ class SupplierService {
         queryFilters.branch_id = new ObjectId(filters.branch_id);
       }
 
+      /* The shared filter bar's "All fields" search arrives as an $or over
+         the searchable fields. Sanitised: only known fields, only regex
+         strings - never a raw operator passthrough. */
+      if (Array.isArray(filters.$or)) {
+        const allowed = ['name', 'phone', 'email', 'address'];
+        const or = [];
+        for (const clause of filters.$or) {
+          for (const key of Object.keys(clause || {})) {
+            if (!allowed.includes(key)) continue;
+            const v = clause[key];
+            if (v && typeof v.$regex === 'string') {
+              or.push({
+                [key]: {
+                  $regex: v.$regex.replace(/\(\?=\.\*|\)/g, ''),
+                  $options: typeof v.$options === 'string' ? v.$options : 'i',
+                },
+              });
+            }
+          }
+        }
+        if (or.length) queryFilters.$or = or;
+      }
+
       // Handle name filter with regex
       if (filters.name) {
         if (filters.name.$regex) {
