@@ -37,113 +37,328 @@ PosnicPro.customers = {
     showDelete: function (id) {
         PosnicPro.deleteTableRowData(id, 'customers');
     },
+    /* #/customers/<id>: the dossier opens in the right pane - never a
+       popup. (The customer REPORT page keeps its own viewCustomer sidebar;
+       only this page's route changed.) */
     showDetails: function (id) {
-        var loader = $(".loader-view-customer");
-        loader.find(".loadingSpinner:first").remove();
-        PosnicPro.showViewModal('customers');
-        PosnicPro.customers.viewCustomer(id);
+        var self = PosnicPro.customers;
+        if (self._openDocId === String(id) && $('#customers_detail_card').is(':visible')) { return; }
+        self._chrome();
+        self.loadList(1);
+        self.openDoc(id);
     },
-    customersTable: function () {
-        var loader = $(".loader-table-customer");
-        $("<div class='loadingSpinner'></div>").appendTo(loader);
-        PosnicPro.appendViewDataTableBody('customers');
-        var table = $('#view_customers');
-        var params = {
-            url: 'customers',
-            data: {
-                page: table.data('current_page'),
-                limit: parseInt($('#view_customers_per_page  option:selected').text()),
-                filters: table.data('filters')
-            }
-        };
-        PosnicPro.get(params, function (response) {
-            if (response.type === 'success') {
-                table.data('total', response.data.total);
-                table.data('total_pages', response.data.total_pages);
-                table.data('current_page', response.data.current_page);
-                table.data('per_page', response.data.per_page);
-                PosnicPro.paging(response.data.total_pages, response.data.current_page);
-                table.children('tbody').text('');
-                $('#view_customers_total').text(response.data.total);
-                var rowTotal = response.data.total;
-                if (rowTotal === 0) {
-                    /* Which kind of empty - see customers.html and
-                       PosnicPro.hasActiveFilters. */
-                    var filtered = PosnicPro.hasActiveFilters('customers');
-                    $('.customer_header').hide();
-                    $('#customer_img_hide').toggle(!filtered);
-                    $('#customer_no_match').toggle(filtered);
-                } else {
-                    $('#customer_img_hide,#customer_no_match').hide();
-                    $('.customer_header').show();
-                }
 
-                var row_total = (table.data('current_page') - 1) * table.data('per_page') + 1;
-                $('#view_customers_page_total').text(row_total);
-                var page_totals = (table.data('current_page') - 1) * table.data('per_page');
-                $('#view_customers_page_perpage_total').text(page_totals + response.data.list.length);
-                for (var i = 0; i < response.data.list.length; i++) {
-                    var row = response.data.list[i];
-                    var transactionTab = '';
-                    if (row.partial_balance) {
-                        transactionTab = '<a data-module="customer" data-access="read" href="#/customers/' + row._id + '/transaction" data-id="customers/' + row._id + '/transaction" data-toggle="tooltip" title="Customer transaction" class="point-cursor mobile_tooltip"><i class="feather icon-credit-card"></i></a>';
-                    }
-                    var row_no = (table.data('current_page') - 1) * table.data('per_page') + i + 1;
-                    var action = '<div id="onclick-toolbar-options_' + i + '" class="hidden">' +
-                            transactionTab +
-                            '<a data-module = "customer" data-access = "read" href="#/customers/' + row._id + '" data-id="customers/' + row._id + '" data-toggle="tooltip" title="View Customer" class="point-cursor mobile_tooltip"><i class="feather icon-eye"></i></a>' +
-                            '<a data-module = "customer" data-access = "write" href="#/customers/' + row._id + '/edit" data-id="customers/' + row._id + '/edit" data-toggle="tooltip" title="Edit Customer" class="point-cursor mobile_tooltip"><i class="feather icon-edit"></i></a>' +
-                            '<a data-module = "customer" data-access = "delete" href="#/customers/' + row._id + '/delete" data-id="customers/' + row._id + '/delete" data-toggle="tooltip" title="Delete Customer" class="point-cursor mobile_tooltip"><i class="feather icon-trash"></i></a>' +
-                            '</div>' +
-                            '<div data-toolbar="user-options" class="btn btn-round btn-primary-rgba round-pad" id="onclick-toolbar_' + i + '"><i class="feather icon-more-vertical-"></i></div>';
-
-                    var trow = '<tr><th><input type="checkbox" class="customers-row-id" id="' + row._id + '" name="id[]" value="' + row._id + '" onclick="PosnicPro.checkboxSelectOne(this,\'customers\');"></th><th scope="row" data-label="#">' + row_no + '</th><td width="30%" data-label="Name"><a href="#/customers/' + row._id + '"><i class="table_model_item">' + row.name + '</i></a></td> <td class="text-right" data-label="Phone"><a class="sale_color" href="tel:' + (row.phone || '') + '">' + (row.phone || '') + '</a></td> <td width="15%" data-label="Email"><a class="sale_color" href="mailto:' + (row.email || '') + '">' + (row.email || '') + '</a></td> <td width="40%" data-label="Address">' + (row.address || '') + '</td>' +
-                            '<td class="text-center"><span>' + action + '</span></td>' +
-                            '</tr>';
-                    $('#view_customers').children('tbody').append(trow);
-                }
-                $(document).ready(function () {
-                    for (var i = 0; i < response.data.list.length; i++) {
-                        $('#onclick-toolbar_' + i).toolbar({
-                            content: '#onclick-toolbar-options_' + i,
-                            event: 'click',
-                            style: 'primary',
-                            hideOnClick: true
-                        });
-                        $('#onclick-toolbar_' + i).on('toolbarItemClick', function (event, element) {
-                            hasher.setHash($(element).data('id'));
-                            $(this).trigger('click');
-                            $('.mobile_tooltip').tooltip('hide');
-                        });
-                    }
-                });
-                PosnicPro.setSelectedCheckbox(PosnicPro["customers_checkbox"], 'customers');
-                PosnicPro.ACLForModule('customer');
-                loader.find(".loadingSpinner:first").remove();
-            } else {
-                PosnicPro.alert(response.type, response.message);
-            }
-        }, function (xhr) {
-            var response = jQuery.parseJSON(xhr.responseText);
-            PosnicPro.alert(response.type, response.message);
-        });
-    },
-    showDataTablePage: function () {
-        var loader = $(".loader-table-customer");
-        loader.find(".loadingSpinner:first").remove();
-        PosnicPro.dashboard.datePicker();
+    _page: 1,
+    PAGE_SIZE: 25,
+    _lastRows: [],
+    _openDocId: null,
+    _chrome: function () {
         PosnicPro.HideSideBarModal();
-        $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
-        $(".vertical-menu li a").removeClass("active");
-        $(".vertical-layout").removeClass("toggle-menu");
         $('.page_loader,#osk-container').hide();
-        $('.page-title-box,#customers').show();
-        $('#customers_new,#customers_view').modal('hide');
-        PosnicPro.customers.customersTable('customers');
+        $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
+        $('.vertical-menu li a').removeClass('active');
         $('#v-pills-customer-tab').addClass('active');
         $('#v-pills-customer').addClass('show active');
+        $('.vertical-menu li a#view_customers_page').addClass('active');
+        $('.page-title-box,#customers').show();
+        $('#customers_new,#customers_view').modal('hide');
         $('.dashboard_img_menu').hide();
         $('#image_sidebar_customsdetails').show();
+    },
+    showDataTablePage: function () {
+        PosnicPro.customers._chrome();
+        PosnicPro.customers.closeDoc();
+        PosnicPro.customers.loadList(1);
+    },
+    mountFilters: function (force) {
+        if (!$('#customers_filter_panel').length) { return; }
+        if (!force && $('#customers_filter_panel').data('mounted')) { return; }
+        $('#customers_filter_panel').data('mounted', true);
+        PosnicPro.listFilter.mount({
+            key: 'customers',
+            container: '#customers_filter_panel',
+            button: '#customers_filter_btn',
+            searchPlaceholder: 'Search name, phone or email',
+            dateField: 'Added',
+            searchFields: [
+                { value: 'all', label: 'All fields' },
+                { value: 'name', label: 'Name' },
+                { value: 'phone', label: 'Phone' },
+                { value: 'email', label: 'Email' },
+                { value: 'address', label: 'Address' }
+            ],
+            onChange: function () { PosnicPro.customers.loadList(1); }
+        });
+    },
+    loadList: function (page) {
+        PosnicPro.customers.mountFilters();
+        var self = PosnicPro.customers;
+        if (page) { self._page = page; }
+        var filters = PosnicPro.listFilter.legacyFilters('customers', { dateKey: 'created_date' });
+        var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
+        PosnicPro.get({
+            url: 'customers',
+            data: { page: self._page, limit: self.PAGE_SIZE, filters: JSON.stringify(filters) }
+        }, function (response) {
+            var data = (response && response.data) || {};
+            var list = data.list || [];
+            self._lastRows = list;
+            if (!list.length) {
+                var filtered = PosnicPro.listFilter.activeCount('customers') > 0;
+                $('#customers_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">'
+                    + (filtered ? 'No customers match this filter.' : 'No customers yet - press New to add the first.') + '</div>');
+                $('#customers_list_paging').html('');
+                return;
+            }
+            var html = '<div class="table-responsive"><table class="table table-borderless">'
+                + '<thead><tr><th>Name</th><th class="c-col-phone">Phone</th>'
+                + '<th class="c-col-email">Email</th><th class="c-col-address">Address</th><th class="text-center">Dues</th></tr></thead><tbody>';
+            list.forEach(function (r) {
+                var due = Number(r.partial_balance) > 0
+                    ? '<span class="rs-pill unpaid">Due</span>'
+                    : '<span class="q-muted">-</span>';
+                html += '<tr class="md-row customers-row highlight-select' + (self._openDocId === String(r._id) ? ' is-active' : '') + '"'
+                    + ' data-id="' + esc(r._id) + '" style="cursor:pointer;">'
+                    + '<td>' + esc(r.name) + '</td>'
+                    + '<td class="c-col-phone">' + esc(r.phone || '-') + '</td>'
+                    + '<td class="c-col-email">' + esc(r.email || '-') + '</td>'
+                    + '<td class="c-col-address">' + esc(r.address || '-') + '</td>'
+                    + '<td class="text-center">' + due + '</td>'
+                    + '</tr>';
+            });
+            html += '</tbody></table></div>';
+            $('#customers_list_rows').html(html);
+            self.renderPager(Number(data.total) || list.length);
+        }, function () {
+            $('#customers_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">Could not load customers - try again.</div>');
+        });
+    },
+    renderPager: function (total) {
+        var self = PosnicPro.customers;
+        var p = self._page, size = self.PAGE_SIZE;
+        var pages = Math.ceil(total / size) || 1;
+        var label = total + (total === 1 ? ' customer' : ' customers');
+        if (pages > 1) { label = 'Page ' + p + ' of ' + pages + ' \u00b7 ' + label; }
+        var btn = function (to, text, off, cls) {
+            return '<button type="button" class="btn btn-sm ' + (cls || 'btn-secondary-rgba') + ' q-pg-btn"' + (off ? ' disabled' : '')
+                + ' onclick="PosnicPro.customers.goPage(' + to + ');">' + text + '</button>';
+        };
+        var html = '';
+        if (pages > 1) {
+            html += btn(p - 1, '&laquo;', p <= 1);
+            var end = Math.min(pages, Math.max(1, p - 2) + 4);
+            var start = Math.max(1, end - 4);
+            for (var n = start; n <= end; n++) {
+                html += '<span class="q-pg-num">' + btn(n, n, false, n === p ? 'btn-primary-rgba' : 'btn-secondary-rgba') + '</span>';
+            }
+        }
+        html += '<span class="q-pg-count">' + label + '</span>';
+        if (pages > 1) { html += btn(p + 1, '&raquo;', p >= pages); }
+        $('#customers_list_paging').html(html);
+    },
+    goPage: function (n) {
+        if (!n || n < 1) { return; }
+        PosnicPro.customers._page = n;
+        PosnicPro.customers.loadList();
+    },
+    exportCsv: function () {
+        var rows = [['Name', 'Phone', 'Email', 'Address', 'Tax number']];
+        (PosnicPro.customers._lastRows || []).forEach(function (r) {
+            rows.push([r.name, r.phone || '', r.email || '', r.address || '', r.gst_number || '']);
+        });
+        var csv = rows.map(function (r) {
+            return r.map(function (c) { return '"' + String(c == null ? '' : c).replace(/"/g, '""') + '"'; }).join(',');
+        }).join('\n');
+        var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'customers.csv';
+        a.click();
+        URL.revokeObjectURL(a.href);
+    },
+    /* ---- the dossier pane ---- */
+    openDoc: function (id) {
+        var self = PosnicPro.customers;
+        if (!PosnicPro.masterDetail.inSplit('#customers_split', 'customers-split')) {
+            PosnicPro.masterDetail.enter('#customers_split', 'customers-split');
+            $('#customers_detail_card').show();
+        }
+        self._openDocId = String(id);
+        $('#customers_list_rows tr.customers-row').removeClass('is-active');
+        $('#customers_list_rows tr.customers-row[data-id="' + id + '"]').addClass('is-active');
+        if (window.location.hash.slice(2) !== 'customers/' + id) {
+            hasher.setHash('customers/' + id);
+        }
+        $('#customers_doc').html('<div class="text-center text-muted" style="padding:60px;">Loading ...</div>');
+        PosnicPro.get('customers/' + id, function (response) {
+            if (response.type !== 'success') {
+                $('#customers_doc').html('<div class="text-danger p-4">Could not open this customer.</div>');
+                return;
+            }
+            PosnicPro.customers.renderCustomerDoc(response.data);
+        }, function () {
+            $('#customers_doc').html('<div class="text-danger p-4">Could not open this customer.</div>');
+        });
+    },
+    closeDoc: function () {
+        PosnicPro.customers._openDocId = null;
+        $('#customers_detail_card').hide();
+        $('#customers_list_rows tr.customers-row').removeClass('is-active');
+        PosnicPro.masterDetail.leave('#customers_split', 'customers-split');
+        if (window.location.hash.slice(2).indexOf('customers/') === 0) {
+            hasher.setHash('customers');
+        }
+    },
+    renderCustomerDoc: function (d) {
+        var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
+        var real = function (v) { return v && v !== 'null' && v !== 'undefined' ? v : ''; };
+        var taxLabel = PosnicPro.local.get('gst_action') === 'enable' ? 'GSTIN' : 'Tax ID';
+        var id = String(d._id || PosnicPro.customers._openDocId);
+        var toolbar = '<div class="p-doc-toolbar">'
+            + '<button type="button" class="btn btn-sm btn-light" title="Show or hide the list" aria-label="Show or hide the list" onclick="PosnicPro.masterDetail.toggleRail(\'#customers_split\');"><i class="feather icon-sidebar"></i></button>'
+            + '<span class="p-doc-title">' + esc(d.name) + '</span>'
+            + (Number(d.partial_balance) > 0 ? '<span class="rs-pill unpaid">Dues ' + PosnicPro.local.get('currencySign') + '&nbsp;' + Number(d.partial_balance).toFixed(2) + '</span>' : '')
+            + '<span class="ml-auto"></span>'
+            + (Number(d.partial_balance) > 0
+                ? '<button type="button" class="btn btn-sm btn-primary" onclick="hasher.setHash(\'customers/' + esc(id) + '/transaction\');"><i class="feather icon-credit-card mr-1"></i>Settle dues</button>'
+                : '')
+            + '<button type="button" class="btn btn-sm btn-light" onclick="hasher.setHash(\'customers/' + esc(id) + '/edit\');"><i class="feather icon-edit-2 mr-1"></i>Edit</button>'
+            + '<div class="btn-group">'
+            + '<button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">More</button>'
+            + '<div class="dropdown-menu dropdown-menu-right">'
+            + '<a class="dropdown-item text-danger" href="javascript:void(0)" onclick="PosnicPro.customers.deleteAsk();"><i class="feather icon-trash mr-2"></i>Delete</a>'
+            + '</div></div>'
+            + '<button type="button" class="btn btn-sm btn-light" title="Close and show the full list" aria-label="Close" onclick="PosnicPro.customers.closeDoc();"><i class="feather icon-x"></i></button>'
+            + '</div>';
+        var strip = '<div class="p-void-strip" id="c_delete_strip" style="display:none;">'
+            + '<span>Delete <b>' + esc(d.name) + '</b>? Their sales stay on record; only the customer card goes.</span>'
+            + '<button type="button" class="btn btn-sm btn-danger" onclick="PosnicPro.customers.deleteConfirm(\'' + esc(id) + '\');">Delete customer</button>'
+            + '<button type="button" class="btn btn-sm btn-light" onclick="$(\'#c_delete_strip\').slideUp(120);">Cancel</button>'
+            + '</div>';
+        var contact = '<div class="q-block"><div class="q-label">Contact</div>'
+            + (real(d.phone) ? '<div><a href="tel:' + esc(d.phone) + '">' + esc(d.phone) + '</a></div>' : '')
+            + (real(d.email) ? '<div><a href="mailto:' + esc(d.email) + '">' + esc(d.email) + '</a></div>' : '')
+            + (real(d.address) ? '<div class="q-muted">' + esc(d.address) + '</div>' : '')
+            + (real(d.state) ? '<div class="q-muted">' + esc(d.state) + (real(d.country) ? ', ' + esc(d.country) : '') + '</div>' : '')
+            + '</div>';
+        var tax = (real(d.gst_type) || real(d.gst_number))
+            ? '<div class="q-block"><div class="q-label">Tax</div>'
+                + (real(d.gst_type) ? '<div>' + esc(d.gst_type) + '</div>' : '')
+                + (real(d.gst_number) ? '<div class="q-muted">' + taxLabel + ': ' + esc(d.gst_number) + '</div>' : '')
+                + '</div>'
+            : '';
+        var record = '<div class="q-block"><div class="q-label">On record</div>'
+            + (d.created_date ? '<div class="q-muted">Added ' + esc(PosnicPro.convertDate(d.created_date)) + '</div>' : '')
+            + (d.updated_date ? '<div class="q-muted">Updated ' + esc(PosnicPro.convertDate(d.updated_date)) + '</div>' : '')
+            + '<div class="q-muted" id="c_doc_loyalty"></div>'
+            + '</div>';
+        var body = '<div class="s-doc-body"><div class="q-sheet s-sheet">'
+            + '<div class="s-doc-stats" id="c_doc_stats"></div>'
+            + '<div class="s-doc-grid">' + contact + tax + record + '</div>'
+            + '<div class="q-label" style="margin-top:18px;">Recent sales</div>'
+            + '<div id="c_doc_sales" class="text-muted" style="font-size:13px;">Loading ...</div>'
+            + '</div></div>';
+        $('#customers_doc').html(toolbar + strip + body);
+        PosnicPro.customers.loadRecentSales(id, d);
+        /* loyalty points, when the branch runs the programme */
+        if (PosnicPro.loyalty && PosnicPro.loyalty.summary) {
+            PosnicPro.loyalty.summary(id, function (sum) {
+                if (sum && sum.enabled) {
+                    $('#c_doc_loyalty').text('Loyalty: ' + (sum.points != null ? sum.points + ' points' : '')
+                        + (sum.tier ? ' \u00b7 ' + sum.tier : ''));
+                }
+            });
+        }
+    },
+    /*
+     * Overview first: the report endpoint carries the authoritative
+     * lifetime aggregates (it also powers the customer report), and the
+     * sales list supplies the latest documents. Two small fetches, one
+     * dossier.
+     */
+    loadRecentSales: function (id, d) {
+        var cur = PosnicPro.local.get('currencySign');
+        var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
+        var dues = Number(d && d.partial_balance) || 0;
+        PosnicPro.get({
+            url: 'sales/customerSalesReportTable',
+            data: { page: 1, limit: 1, starting_date: '', ending_date: '', branch: PosnicPro.local.get('branch_id_set'), field_input: id }
+        }, function (r) {
+            var row = ((r.data || {}).list || [])[0] || {};
+            $('#c_doc_stats').html(
+                '<div class="s-stat"><div class="s-stat-value">' + cur + '&nbsp;' + (Number(row.sales_payment) || 0).toFixed(2) + '</div>'
+                + '<div class="s-stat-label">Lifetime sales</div></div>'
+                + '<div class="s-stat"><div class="s-stat-value">' + (Number(row.sales_count) || 0) + '</div>'
+                + '<div class="s-stat-label">' + (Number(row.sales_count) === 1 ? 'Sale' : 'Sales') + '</div></div>'
+                + '<div class="s-stat"><div class="s-stat-value">' + cur + '&nbsp;' + (Number(row.sales_avg) || 0).toFixed(2) + '</div>'
+                + '<div class="s-stat-label">Average sale</div></div>'
+                + (Number(row.refund_payment) > 0
+                    ? '<div class="s-stat"><div class="s-stat-value">' + cur + '&nbsp;' + Number(row.refund_payment).toFixed(2) + '</div>'
+                        + '<div class="s-stat-label">Refunded</div></div>'
+                    : '')
+                + (dues > 0
+                    ? '<div class="s-stat"><div class="s-stat-value" style="color: var(--theme-danger-color, #c0392b);">' + cur + '&nbsp;' + dues.toFixed(2) + '</div>'
+                        + '<div class="s-stat-label">Dues</div></div>'
+                    : '')
+            );
+        }, function () { $('#c_doc_stats').html(''); });
+        /* the latest documents - matched by the exact customer name the
+           sales carry (the list endpoint takes the same blob as the page) */
+        var nameExact = String((d && d.name) || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        PosnicPro.get({
+            url: 'sales',
+            data: { page: 1, limit: 5, filters: JSON.stringify({ customer_name: { $regex: '^' + nameExact + '$', $options: 'i' } }) }
+        }, function (response) {
+            var list = ((response && response.data) || {}).list || [];
+            var total = Number((response.data || {}).total) || list.length;
+            if (!list.length) {
+                $('#c_doc_sales').html('<div class="text-muted">No sales for this customer yet.</div>');
+                return;
+            }
+            var html = '<table class="q-items s-doc-purchases-table"><thead><tr>'
+                + '<th>Sale #</th><th>Status</th><th class="text-right">Date</th><th class="text-right">Total</th>'
+                + '</tr></thead><tbody>';
+            list.forEach(function (r) {
+                var unpaid = String(r.payment_status || '').toLowerCase() === 'unpaid' || Number(r.partial_balance) > 0;
+                var refunded = /return/i.test(String(r.sale_process || ''));
+                var pill = refunded
+                    ? '<span class="rs-pill hold">' + esc(r.sale_process) + '</span>'
+                    : unpaid
+                        ? '<span class="rs-pill unpaid">Unpaid</span>'
+                        : '<span class="rs-pill paid">Paid</span>';
+                html += '<tr>'
+                    + '<td>' + esc(r.sales_id || '') + '</td>'
+                    + '<td>' + pill + '</td>'
+                    + '<td class="text-right q-muted">' + esc(r.date ? String(r.date).slice(0, 10) : '') + '</td>'
+                    + '<td class="text-right">' + cur + '&nbsp;' + (Number(r.sales_total) || 0).toFixed(2) + '</td>'
+                    + '</tr>';
+            });
+            html += '</tbody></table>';
+            if (total > 5) {
+                html += '<div class="q-muted" style="font-size:12.5px; padding: 8px 4px 0;">'
+                    + (total - 5) + ' more in <a href="javascript:void(0)" onclick="hasher.setHash(\'sales\');">Sales History</a></div>';
+            }
+            $('#c_doc_sales').html(html);
+        }, function () {
+            $('#c_doc_sales').html('<div class="text-muted">Sales history unavailable.</div>');
+        });
+    },
+    deleteAsk: function () {
+        $('#c_delete_strip').slideDown(120);
+    },
+    deleteConfirm: function (id) {
+        PosnicPro.request({
+            method: 'DELETE',
+            url: 'customers',
+            data: JSON.stringify({ id: [id] })
+        }, function (r) {
+            PosnicPro.alert(r.type || 'success', r.message || 'Customer deleted');
+            PosnicPro.customers.closeDoc();
+            PosnicPro.customers.loadList(1);
+        }, function (xhr) {
+            var resp = {}; try { resp = jQuery.parseJSON(xhr.responseText) || {}; } catch (e) { }
+            PosnicPro.alert('error', resp.message || 'Could not delete this customer');
+        });
     },
     triggerModules: function () {
         PosnicPro.showAddModal('customer');
@@ -526,12 +741,6 @@ PosnicPro.customers = {
         (PosnicPro.local.get('gst_action') === 'enable') ? $('.indian-gstr').show() : $('.indian-gstr').hide();
         $('.customer-gstr-number').hide();
         $('#show_last_created_customer').hide();
-    },
-    exportCustomers: function () {
-        PosnicPro.exportTableData(PosnicPro.customers_checkbox, 'customers');
-    },
-    deleteSelectedCustomers: function () {
-        PosnicPro.deleteTableData(PosnicPro.customers_checkbox, 'customers');
     },
     gstFields: function () {
         $('.customer-gstr-number').hide();
@@ -1205,3 +1414,11 @@ $(function () {
 });
 
 /*end*/
+
+$(document).on('click', '#customers_list_rows tr.customers-row', function () {
+    PosnicPro.customers.openDoc($(this).data('id'));
+});
+$(document).on('click', '#customers_filter_btn', function () {
+    PosnicPro.customers.mountFilters(true);
+    PosnicPro.listFilter.toggle('customers');
+});

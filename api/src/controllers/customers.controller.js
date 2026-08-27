@@ -242,10 +242,7 @@ class CustomerController extends BaseController {
     if (branchId && !branchName) {
       try {
         const BaseModel = require('../models/base.model');
-        const branchesCollection = await BaseModel.prototype.getCollection.call(
-          { collectionName: 'branches' },
-          'branches'
-        );
+        const branchesCollection = await new BaseModel('branches').getCollection('branches');
         const branchDoc = await branchesCollection.findOne({
           _id: new ObjectId(branchId),
           license: req.tenantContext?.licenseId,
@@ -660,10 +657,7 @@ class CustomerController extends BaseController {
     let branchCity = '';
 
     try {
-      const branchesCollection = await BaseModel.prototype.getCollection.call(
-        { collectionName: 'branches' },
-        'branches'
-      );
+      const branchesCollection = await new BaseModel('branches').getCollection('branches');
       const branchDoc = await branchesCollection.findOne({
         _id: new ObjectId(branchId),
         license: req.tenantContext?.licenseId,
@@ -945,10 +939,7 @@ class CustomerController extends BaseController {
       }
 
       // Get transaction collection
-      const transactionCollection = await BaseModel.prototype.getCollection.call(
-        { collectionName: 'transaction' },
-        'transaction'
-      );
+      const transactionCollection = await new BaseModel('transaction').getCollection('transaction');
 
       // Get paginated transactions
       const skip = (page - 1) * limit;
@@ -1084,10 +1075,7 @@ class CustomerController extends BaseController {
       }
 
       // Get customer details
-      const customerCollection = await BaseModel.prototype.getCollection.call(
-        { collectionName: 'customers' },
-        'customers'
-      );
+      const customerCollection = await new BaseModel('customers').getCollection('customers');
 
       const customer = await customerCollection.findOne({
         _id: new ObjectId(id),
@@ -1103,10 +1091,7 @@ class CustomerController extends BaseController {
       }
 
       // Get transaction collection
-      const transactionCollection = await BaseModel.prototype.getCollection.call(
-        { collectionName: 'transaction' },
-        'transaction'
-      );
+      const transactionCollection = await new BaseModel('transaction').getCollection('transaction');
 
       // Create transaction document
       const transactionDate = date ? new Date(date) : new Date();
@@ -1236,10 +1221,7 @@ class CustomerController extends BaseController {
         });
       }
 
-      const transactionCollection = await BaseModel.prototype.getCollection.call(
-        { collectionName: 'transaction' },
-        'transaction'
-      );
+      const transactionCollection = await new BaseModel('transaction').getCollection('transaction');
 
       /* Scoped by customer AND license, never by id alone: an id on its own
          would let one customer's row be deleted from another's screen. */
@@ -1299,10 +1281,7 @@ class CustomerController extends BaseController {
 
       const newBalance = aggregateResult.length > 0 ? aggregateResult[0].balance : 0;
 
-      const customerCollection = await BaseModel.prototype.getCollection.call(
-        { collectionName: 'customers' },
-        'customers'
-      );
+      const customerCollection = await new BaseModel('customers').getCollection('customers');
       await customerCollection.updateOne(
         { _id: new ObjectId(customer_id), license: BaseModel.license },
         { $set: { balance: newBalance, updated_date: new Date() } }

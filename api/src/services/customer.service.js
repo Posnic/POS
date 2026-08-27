@@ -20,6 +20,29 @@ class CustomerService {
       // Build query filters
       const queryFilters = {};
 
+      /* The shared filter bar's "All fields" search arrives as an $or over
+         the searchable fields. Sanitised: only known fields, only regex
+         strings - never a raw operator passthrough. */
+      if (Array.isArray(filters.$or)) {
+        const allowedOr = ['name', 'phone', 'email', 'address'];
+        const orClauses = [];
+        for (const clause of filters.$or) {
+          for (const key of Object.keys(clause || {})) {
+            if (!allowedOr.includes(key)) continue;
+            const v = clause[key];
+            if (v && typeof v.$regex === 'string') {
+              orClauses.push({
+                [key]: {
+                  $regex: v.$regex.replace(/\(\?=\.\*|\)/g, ''),
+                  $options: typeof v.$options === 'string' ? v.$options : 'i',
+                },
+              });
+            }
+          }
+        }
+        if (orClauses.length) queryFilters.$or = orClauses;
+      }
+
       if (filters.branch_id) {
         queryFilters.branch_id = new ObjectId(filters.branch_id);
       }

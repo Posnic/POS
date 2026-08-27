@@ -5630,6 +5630,21 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 }
 .md-rail-rows .rs-pill { font-size: 12px; }
 
+/* ==== Customers master-detail (third page on the standard) ==== */
+#customers_split.master-detail { margin: 0 !important; }
+#customers_list_rows tr.customers-row:hover { background: var(--theme-table-row-hover, #eef3ff); }
+.customers-split .c-col-email,
+.customers-split .c-col-address { display: none; }
+@media (max-width: 1499px) {
+    .customers-split .c-col-phone { display: none; }
+}
+#customers_doc { padding: 16px 20px 22px; display: flex; flex-direction: column; max-height: calc(100vh - 150px); }
+#customers_doc .s-doc-body { overflow-y: auto; min-height: 0; }
+@media (max-width: 767.98px) {
+    #customers_doc { max-height: none; display: block; }
+    #customers_doc .s-doc-body { overflow: visible; }
+}
+
 /* ==== Suppliers master-detail (second page on the standard) ==== */
 #suppliers_split.master-detail { margin: 0 !important; }
 #suppliers_list_rows tr.suppliers-row:hover { background: var(--theme-table-row-hover, #eef3ff); }
