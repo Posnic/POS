@@ -549,7 +549,12 @@ PosnicPro = {
                 $('.default-supplier-id').val(responseData['supplier_id']);
                 $('.default-supplier-name').val(responseData['supplier_name']);
                 $('#receiving_add_supplier_id').val(responseData['supplier_id']);
-                $('#receiving_add_supplier_name').val(responseData['supplier_name']);
+                $('#receiving_add_supplier_name').val(responseData['supplier_name'])
+                    .data('prefilled-default', {
+                        id: responseData['supplier_id'],
+                        name: responseData['supplier_name'],
+                        phone: responseData['supplier_phone'] || ''
+                    });
                 $('#receiving_add_supplier_address').val(responseData['supplier_address']);
                 $('#receiving_add_supplier_phone').val(responseData['supplier_phone']);
                 $('#receiving_add_supplier_email').val(responseData['supplier_email']);
