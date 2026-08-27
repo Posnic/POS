@@ -5849,7 +5849,8 @@ tr.s-doc-purchase-row:hover td { background: rgba(9, 105, 218, 0.05); }
  * ---------------------------------------------------------------------- */
 @media (max-width: 991px) {
     .il-col-ref, .il-col-by,
-    .ls-col-supplier, .ls-col-category { display: none; }
+    .ls-col-supplier, .ls-col-category,
+    .cg-col-created { display: none; }
 }
 @media (max-width: 767px) {
     .il-col-bal, .il-col-date,

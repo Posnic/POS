@@ -368,11 +368,49 @@ class CategoriesController extends BaseController {
     const result = await this.service.getAllCategories(filters, { page, limit });
 
     if (result.status) {
+      // The number a retailer actually scans this list for: how many items
+      // live under each category. One pass over the page's categories -
+      // items carrying category_id group under the id, legacy name-only
+      // items group under the name, so the two sets cannot double count.
+      let itemCounts = null;
+      try {
+        const rows = result.data.data || [];
+        const ids = rows
+          .map((c) => c._id)
+          .filter(Boolean)
+          .map((v) => new Types.ObjectId(String(v)));
+        const names = rows.map((c) => c.name).filter(Boolean);
+        if (ids.length || names.length) {
+          const itemsCol = await new BaseModel('items').getCollection('items');
+          const groups = await itemsCol
+            .aggregate([
+              {
+                $match: {
+                  $or: [{ category_id: { $in: ids } }, { category_name: { $in: names } }],
+                },
+              },
+              { $project: { key: { $ifNull: ['$category_id', '$category_name'] } } },
+              { $group: { _id: '$key', n: { $sum: 1 } } },
+            ])
+            .toArray();
+          itemCounts = {};
+          groups.forEach((g) => {
+            itemCounts[String(g._id)] = g.n;
+          });
+        }
+      } catch (e) {
+        // the count is a garnish - the list must never fail over it
+        itemCounts = null;
+      }
+
       const list = (result.data.data || []).map((category) => ({
         ...category,
         image: this.normalizeCategoryImage(category.image, req),
         discount_amount: category.discount_amount || DEFAULTS.DISCOUNT_AMOUNT,
         discount_percentage: category.discount_percentage || DEFAULTS.DISCOUNT_PERCENTAGE,
+        items_count: itemCounts
+          ? (itemCounts[String(category._id)] || 0) + (itemCounts[String(category.name)] || 0)
+          : null,
       }));
 
       return this.success(
