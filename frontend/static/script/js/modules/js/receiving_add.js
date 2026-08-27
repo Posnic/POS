@@ -2109,57 +2109,21 @@ PosnicPro.purchaseorders = {
      * same q-sheet vocabulary, same CSS, so the two documents age together.
      * Toolbar above the paper; the void strip asks its reason inline.
      */
-    renderPurchaseDoc: function (d) {
-        PosnicPro.purchaseorders._doc = d;
+    /*
+     * The A4 sheet alone - shared with every pane that previews a purchase
+     * (the supplier profile embeds it, so reading a supplier's history
+     * never means leaving the page and hunting for the back button).
+     */
+    buildPurchaseSheet: function (d) {
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
         var money = function (v) { return PosnicPro.local.get('currencySign') + '&nbsp;' + (Number(v) || 0).toFixed(2); };
         var dt = function (v) { return v ? new Date(v).toLocaleDateString('en-IN') : '-'; };
         var real = function (v) { return v && v !== 'null' && v !== 'undefined' ? v : ''; };
         var open = d.receiving_status === 'Open';
         var cancelled = d.receiving_status === 'Cancelled';
-        var P = PosnicPro.purchaseorders.STATUS_PILL, L = PosnicPro.purchaseorders.STATUS_LABEL;
         var partial = d.receiving_status === 'Partial';
+        var L = PosnicPro.purchaseorders.STATUS_LABEL;
         var st = cancelled ? 'cancelled' : partial ? 'partial' : open ? 'ordered' : 'received';
-        var chip = '<span class="rs-pill ' + P[st] + '">' + L[st] + '</span>';
-        var itc = d.itc_eligible === false
-            ? '<span class="rs-pill unpaid" title="No input credit on this purchase">No credit</span>' : '';
-        var mismatch = d.invoice_total_mismatch
-            ? '<span class="rs-pill hold" title="Declared invoice total does not match the lines"><i class="feather icon-alert-triangle"></i> Mismatch</span>' : '';
-        var more = '<div class="btn-group">'
-            + '<button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">More</button>'
-            + '<div class="dropdown-menu dropdown-menu-right">'
-            + '<a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.receivings.showPrint(\'' + esc(d._id) + '\'); return false;"><i class="feather icon-printer mr-2"></i>Print</a>'
-            + (!cancelled
-                ? '<div class="dropdown-divider"></div>'
-                    + '<a class="dropdown-item text-danger" href="javascript:void(0)" onclick="PosnicPro.purchaseorders.voidPurchase(\'' + esc(d._id) + '\',\'' + esc(d.receiving_id) + '\');"><i class="feather icon-slash mr-2"></i>Void</a>'
-                : '')
-            + '</div></div>';
-        var toolbar = '<div class="p-doc-toolbar">'
-            + '<button type="button" class="btn btn-sm btn-light" title="Show or hide the list" aria-label="Show or hide the list" onclick="PosnicPro.masterDetail.toggleRail(\'#purchases_split\');"><i class="feather icon-sidebar"></i></button>'
-            + '<span class="p-doc-title">' + esc(d.receiving_id) + '</span>' + chip + itc + mismatch
-            + '<span class="ml-auto"></span>'
-            + ((open || partial) && !cancelled
-                ? '<div class="btn-group">'
-                    + '<button type="button" class="btn btn-sm btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="feather icon-check mr-1"></i>Receive</button>'
-                    + '<div class="dropdown-menu">'
-                    + '<a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.purchaseorders.receiveAll(\'' + esc(d._id) + '\');">Received all</a>'
-                    + '<a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.purchaseorders.receiveStripOpen(\'' + esc(d._id) + '\');">Partially \u2026</a>'
-                    + (partial
-                        ? '<div class="dropdown-divider"></div><a class="dropdown-item text-danger" href="javascript:void(0)" onclick="PosnicPro.purchaseorders.closeShortOpen(\'' + esc(d._id) + '\');">Cancel remaining</a>'
-                        : '')
-                    + '</div></div>'
-                : '')
-            + (!cancelled ? '<button type="button" class="btn btn-sm btn-light" onclick="hasher.setHash(\'receivings/' + esc(d._id) + '/edit\');"><i class="feather icon-edit-2 mr-1"></i>Edit</button>' : '')
-            + more
-            + '<button type="button" class="btn btn-sm btn-light" title="Close this purchase and show the full list" aria-label="Close" onclick="PosnicPro.purchaseorders.closeDoc();"><i class="feather icon-x"></i></button>'
-            + '</div>';
-        var voidStrip = '<div class="p-void-strip" id="p_void_strip" style="display:none;">'
-            + '<span>Void <b>' + esc(d.receiving_id) + '</b> \u2014 stock reverses, the record stays, the tax leaves the input credit.</span>'
-            + '<input type="text" class="form-control form-control-sm" id="p_void_reason" maxlength="200" placeholder="Reason (required)" aria-label="Void reason">'
-            + '<button type="button" class="btn btn-sm btn-danger" onclick="PosnicPro.purchaseorders.voidConfirm(\'' + esc(d._id) + '\');">Void purchase</button>'
-            + '<button type="button" class="btn btn-sm btn-light" onclick="$(\'#p_void_strip\').slideUp(120);">Cancel</button>'
-            + '</div>';
-        /* --- the paper --- */
         var logo = PosnicPro.local.get('branchimage');
         var taxLabel = PosnicPro.local.get('gst_action') === 'enable' ? 'GSTIN' : 'Tax ID';
         var seller = '<div class="q-seller">'
@@ -2243,10 +2207,62 @@ PosnicPro.purchaseorders = {
                 + '<div>' + esc(d.void_reason) + '</div></div>';
         }
         footer += '</div>';
-        var sheet = '<div class="q-sheet">'
+        return '<div class="q-sheet">'
             + '<div class="q-head">' + seller + title + '</div>'
             + supplier + items + footer
             + '</div>';
+    },
+    renderPurchaseDoc: function (d) {
+        PosnicPro.purchaseorders._doc = d;
+        var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
+        var money = function (v) { return PosnicPro.local.get('currencySign') + '&nbsp;' + (Number(v) || 0).toFixed(2); };
+        var dt = function (v) { return v ? new Date(v).toLocaleDateString('en-IN') : '-'; };
+        var real = function (v) { return v && v !== 'null' && v !== 'undefined' ? v : ''; };
+        var open = d.receiving_status === 'Open';
+        var cancelled = d.receiving_status === 'Cancelled';
+        var P = PosnicPro.purchaseorders.STATUS_PILL, L = PosnicPro.purchaseorders.STATUS_LABEL;
+        var partial = d.receiving_status === 'Partial';
+        var st = cancelled ? 'cancelled' : partial ? 'partial' : open ? 'ordered' : 'received';
+        var chip = '<span class="rs-pill ' + P[st] + '">' + L[st] + '</span>';
+        var itc = d.itc_eligible === false
+            ? '<span class="rs-pill unpaid" title="No input credit on this purchase">No credit</span>' : '';
+        var mismatch = d.invoice_total_mismatch
+            ? '<span class="rs-pill hold" title="Declared invoice total does not match the lines"><i class="feather icon-alert-triangle"></i> Mismatch</span>' : '';
+        var more = '<div class="btn-group">'
+            + '<button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">More</button>'
+            + '<div class="dropdown-menu dropdown-menu-right">'
+            + '<a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.receivings.showPrint(\'' + esc(d._id) + '\'); return false;"><i class="feather icon-printer mr-2"></i>Print</a>'
+            + (!cancelled
+                ? '<div class="dropdown-divider"></div>'
+                    + '<a class="dropdown-item text-danger" href="javascript:void(0)" onclick="PosnicPro.purchaseorders.voidPurchase(\'' + esc(d._id) + '\',\'' + esc(d.receiving_id) + '\');"><i class="feather icon-slash mr-2"></i>Void</a>'
+                : '')
+            + '</div></div>';
+        var toolbar = '<div class="p-doc-toolbar">'
+            + '<button type="button" class="btn btn-sm btn-light" title="Show or hide the list" aria-label="Show or hide the list" onclick="PosnicPro.masterDetail.toggleRail(\'#purchases_split\');"><i class="feather icon-sidebar"></i></button>'
+            + '<span class="p-doc-title">' + esc(d.receiving_id) + '</span>' + chip + itc + mismatch
+            + '<span class="ml-auto"></span>'
+            + ((open || partial) && !cancelled
+                ? '<div class="btn-group">'
+                    + '<button type="button" class="btn btn-sm btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="feather icon-check mr-1"></i>Receive</button>'
+                    + '<div class="dropdown-menu">'
+                    + '<a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.purchaseorders.receiveAll(\'' + esc(d._id) + '\');">Received all</a>'
+                    + '<a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.purchaseorders.receiveStripOpen(\'' + esc(d._id) + '\');">Partially \u2026</a>'
+                    + (partial
+                        ? '<div class="dropdown-divider"></div><a class="dropdown-item text-danger" href="javascript:void(0)" onclick="PosnicPro.purchaseorders.closeShortOpen(\'' + esc(d._id) + '\');">Cancel remaining</a>'
+                        : '')
+                    + '</div></div>'
+                : '')
+            + (!cancelled ? '<button type="button" class="btn btn-sm btn-light" onclick="hasher.setHash(\'receivings/' + esc(d._id) + '/edit\');"><i class="feather icon-edit-2 mr-1"></i>Edit</button>' : '')
+            + more
+            + '<button type="button" class="btn btn-sm btn-light" title="Close this purchase and show the full list" aria-label="Close" onclick="PosnicPro.purchaseorders.closeDoc();"><i class="feather icon-x"></i></button>'
+            + '</div>';
+        var voidStrip = '<div class="p-void-strip" id="p_void_strip" style="display:none;">'
+            + '<span>Void <b>' + esc(d.receiving_id) + '</b> \u2014 stock reverses, the record stays, the tax leaves the input credit.</span>'
+            + '<input type="text" class="form-control form-control-sm" id="p_void_reason" maxlength="200" placeholder="Reason (required)" aria-label="Void reason">'
+            + '<button type="button" class="btn btn-sm btn-danger" onclick="PosnicPro.purchaseorders.voidConfirm(\'' + esc(d._id) + '\');">Void purchase</button>'
+            + '<button type="button" class="btn btn-sm btn-light" onclick="$(\'#p_void_strip\').slideUp(120);">Cancel</button>'
+            + '</div>';
+        var sheet = PosnicPro.purchaseorders.buildPurchaseSheet(d);
         var receiveStrip = '<div class="p-receive-strip" id="p_receive_strip" style="display:none;"></div>';
         $('#purchases_doc').html(toolbar + voidStrip + receiveStrip + sheet);
     },
