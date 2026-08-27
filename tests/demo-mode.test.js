@@ -43,6 +43,20 @@ test('the refusal says it is the demo, in words', () => {
   assert.match(read('api/src/config/demo-mode.js'), /resets on the hour/);
 });
 
+test('the desktop-app pitch is an inline card below the form, never a wall', () => {
+  /* Owner's ruling: the old appNudge modal covered the whole viewport - on
+     the demo it sat ON TOP of the Enter-as buttons (caught by the external
+     smoke, not by review). Now it must be a card inserted after login_form,
+     and nothing in its block may take over the screen. */
+  const login = read('frontend/login.html');
+  const start = login.indexOf('posnic_app_card');
+  assert.ok(start !== -1, 'the inline app card vanished from login.html');
+  const block = login.slice(login.lastIndexOf('<script>', start), login.indexOf('</script>', start));
+  assert.match(block, /insertAdjacentElement\('afterend'/);
+  assert.ok(!/position:fixed|inset:0/.test(block), 'the app pitch blocks the view again');
+  assert.ok(!login.includes('appNudge'), 'the old blocking appNudge modal is back');
+});
+
 test('the signup nudge fires once per browser and sells the no-commitment path', () => {
   const face = read('frontend/static/script/js/core/demo-mode.js');
   /* once EVER: the done-flag is written before the modal is built, so no
