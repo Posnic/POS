@@ -1811,7 +1811,24 @@ receivingSchema.statics.receivingInsertUpdate = async function (data, id) {
       let csgstValue = 0.0;
 
       if (indianGstSetting === 'gst_on') {
-        if (data.supplier_state !== currentBranchState) {
+        /*
+         * PURCHASE_TAX_PLAN P2: when the supplier's GSTIN is present and
+         * well-formed, its first two digits ARE the state code - a fact the
+         * invoice itself certifies - so the intra/inter decision stops
+         * depending on a hand-typed state name. The name comparison stays as
+         * the fallback for suppliers recorded without a GSTIN.
+         */
+        let interState = data.supplier_state !== currentBranchState;
+        const gstin = String(data.supplier_gst_number || '').trim();
+        if (/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(gstin)) {
+          const supplierCode = gstin.slice(0, 2);
+          const states = require('../json/gst_state_code.json').gststate || [];
+          const branchRow = states.find(
+            (s) => String(s.value).toLowerCase() === String(currentBranchState).toLowerCase()
+          );
+          if (branchRow) interState = supplierCode !== branchRow.id;
+        }
+        if (interState) {
           igstValue = parseFloat(item.gst || 0);
         } else {
           csgstValue = parseFloat(item.gst || 0) / 2;
@@ -1956,6 +1973,38 @@ receivingSchema.statics.receivingInsertUpdate = async function (data, id) {
        AFTER this commit, recomputed from all linked receivings. */
     if (data.source_po_id && ObjectId.isValid(String(data.source_po_id))) {
       updateData.source_po_id = new ObjectId(String(data.source_po_id));
+    }
+
+    /*
+     * PURCHASE_TAX_PLAN P2: the shop's tax decisions on this purchase.
+     * Presence-gated like source_po_id - the PO-receive door and older
+     * clients that do not send them change nothing, and an edit that omits
+     * them keeps what is stored.
+     *
+     * itc_eligible: whether this purchase's tax counts as input credit
+     * (composition suppliers and blocked credits switch it off). Default at
+     * READ time is true, so absent means eligible - the common case.
+     *
+     * invoice_total_declared: the total the SUPPLIER'S invoice states,
+     * including tax. Compared against what the lines add up to; a mismatch
+     * is recorded and shown, never blocked - the goods are already in the
+     * shop, and a visible flag beats a save that refuses (owner's call).
+     */
+    if (data.itc_eligible !== undefined) {
+      updateData.itc_eligible =
+        data.itc_eligible === true || data.itc_eligible === 'true' || data.itc_eligible === 'on';
+    }
+    if (data.invoice_total_declared !== undefined && String(data.invoice_total_declared) !== '') {
+      const declared = parseFloat(data.invoice_total_declared);
+      if (!Number.isNaN(declared)) {
+        const computedGrand =
+          parseFloat(receivingTotalAmount) +
+          ((data.exclusive_tax || '').trim() === 'on'
+            ? Math.round(receivingTaxAmount * 100) / 100
+            : 0);
+        updateData.invoice_total_declared = Math.round(declared * 100) / 100;
+        updateData.invoice_total_mismatch = Math.abs(declared - computedGrand) > 0.5;
+      }
     }
 
     if (!id) {
