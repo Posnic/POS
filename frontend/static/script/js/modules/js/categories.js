@@ -121,18 +121,37 @@ PosnicPro.categories = {
             }
             var currency = PosnicPro.local.get('currencySign');
             var html = '<div class="table-responsive"><table class="table table-borderless">'
-                + '<thead><tr><th style="width:44px;"></th><th>Name</th><th class="text-right">Discount</th>'
-                + '<th class="cg-col-desc">Description</th><th style="width:90px;"></th></tr></thead><tbody>';
+                + '<thead><tr><th style="width:44px;"></th><th>Name</th>'
+                + '<th class="text-right">Items</th><th class="text-right">Discount</th>'
+                + '<th class="cg-col-desc">Description</th><th class="cg-col-created">Added</th>'
+                + '<th style="width:90px;"></th></tr></thead><tbody>';
             list.forEach(function (r) {
-                var img = (r.image && r.image !== 'category.svg') ? r.image : 'static/images/default/category.svg';
+                /* The sale screen paints each category as its TILE - the list
+                   shows the same identity instead of one grey stock icon per
+                   row. A real photo wins; a tile color renders as its chip;
+                   plain categories get a neutral initial. */
+                var thumb;
+                if (r.image && r.image !== 'category.svg') {
+                    thumb = '<img loading="lazy" decoding="async" src="' + esc(r.image) + '" style="width:30px; height:30px; object-fit:cover; border-radius:5px;" alt="">';
+                } else {
+                    var shape = r.tile_shape === 'circle' ? 'border-radius:50%;' : 'border-radius:6px;';
+                    var ground = r.tile_color || 'var(--theme-secondary-color, #8896ab)';
+                    thumb = '<span style="display:inline-flex;width:30px;height:30px;' + shape
+                        + 'background:' + esc(ground) + ';color:#fff;font-weight:700;font-size:12.5px;align-items:center;justify-content:center;">'
+                        + esc(String(r.name || '?').trim().charAt(0).toUpperCase()) + '</span>';
+                }
                 var discount = (Number(r.discount_amount) > 0)
                     ? currency + ' ' + r.discount_amount
                     : (Number(r.discount_percentage) > 0 ? r.discount_percentage + ' %' : '-');
+                var count = (r.items_count == null) ? '-'
+                    : (Number(r.items_count) === 1 ? '1 item' : r.items_count + ' items');
                 html += '<tr class="md-row categories-row highlight-select" data-id="' + esc(r._id) + '" style="cursor:pointer;">'
-                    + '<td><img loading="lazy" decoding="async" src="' + esc(img) + '" style="width:30px; height:30px; object-fit:cover; border-radius:5px;" alt=""></td>'
+                    + '<td>' + thumb + '</td>'
                     + '<td>' + esc(r.name) + '</td>'
+                    + '<td class="text-right' + (Number(r.items_count) > 0 ? '' : ' q-muted') + '">' + esc(count) + '</td>'
                     + '<td class="text-right">' + esc(discount) + '</td>'
                     + '<td class="cg-col-desc q-muted">' + esc(r.description || '-') + '</td>'
+                    + '<td class="cg-col-created q-muted">' + esc(r.created_date ? PosnicPro.convertDate(r.created_date) : '-') + '</td>'
                     + '<td class="text-right" style="white-space:nowrap;">'
                     + '<a data-module="category" data-access="write" href="#/categories/' + esc(r._id) + '/edit" class="btn btn-sm btn-light cg-row-act" data-toggle="tooltip" title="Edit"><i class="feather icon-edit-2"></i></a> '
                     + '<a data-module="category" data-access="delete" href="#/categories/' + esc(r._id) + '/delete" class="btn btn-sm btn-light cg-row-act" data-toggle="tooltip" title="Delete"><i class="feather icon-trash-2"></i></a>'
@@ -176,9 +195,11 @@ PosnicPro.categories = {
         PosnicPro.categories.loadList();
     },
     exportCsv: function () {
-        var rows = [['Name', 'Discount amount', 'Discount %', 'Description']];
+        var rows = [['Name', 'Items', 'Discount amount', 'Discount %', 'Description', 'Added']];
         (PosnicPro.categories._lastRows || []).forEach(function (r) {
-            rows.push([r.name, r.discount_amount || 0, r.discount_percentage || 0, r.description || '']);
+            rows.push([r.name, r.items_count == null ? '' : r.items_count, r.discount_amount || 0,
+                r.discount_percentage || 0, r.description || '',
+                r.created_date ? PosnicPro.convertDate(r.created_date) : '']);
         });
         var csv = rows.map(function (r) {
             return r.map(function (c) { return '"' + String(c == null ? '' : c).replace(/"/g, '""') + '"'; }).join(',');
