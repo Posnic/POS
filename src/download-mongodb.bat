@@ -1,4 +1,6 @@
 @echo off
+REM Always work at the repo root, wherever this was launched from
+cd /d "%~dp0.."
 echo ========================================
 echo Downloading MongoDB for Posnic
 echo ========================================

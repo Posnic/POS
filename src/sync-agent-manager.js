@@ -65,7 +65,7 @@ class SyncAgentManager {
       this.app.isPackaged ? path.join(process.resourcesPath, 'sync-agent') : null,
       path.join(this.app.getPath('userData'), 'sync-agent'),
       // dev convenience: sibling Cloud checkout
-      !this.app.isPackaged ? path.join(__dirname, '..', 'Gateway', 'apps', 'sync-agent') : null,
+      !this.app.isPackaged ? path.join(__dirname, '..', '..', 'Gateway', 'apps', 'sync-agent') : null,
     ].filter(Boolean);
     return candidates.find((dir) => fs.existsSync(path.join(dir, 'src', 'index.js'))) || null;
   }
@@ -181,7 +181,7 @@ class SyncAgentManager {
        * than guessing at a directory.
        */
       UPLOADS_DIR: path.join(
-        this.app.isPackaged ? process.resourcesPath : __dirname,
+        this.app.isPackaged ? process.resourcesPath : path.join(__dirname, '..'),
         'api',
         'uploads'
       ),

@@ -1,4 +1,6 @@
 @echo off
+REM Always work at the repo root, wherever this was launched from
+cd /d "%~dp0.."
 echo Starting bundled MongoDB...
 
 set MONGODB_PATH=%~dp0mongodb
