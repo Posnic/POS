@@ -1538,27 +1538,67 @@ PosnicPro.receivings = {
 };
 $(function () {
     // One-time init like the sale search: never rebuild per keystroke.
+    /*
+     * OWNER STANDING RULE (2026-08-27): every master picker shows something
+     * the moment it is focused - frequently-used first (the recent_* lists
+     * the sale screen feeds), the latest 10 as the fallback, and typeahead
+     * narrows from there. Never an empty box waiting for typing.
+     */
+    PosnicPro.receivings.supplierLookup = function (inputSel) {
+        return function (query, done) {
+            var q = String(query || '').trim();
+            if (!q) {
+                var recent = [];
+                try { recent = JSON.parse(PosnicPro.local.get('recent_suppliers') || '[]'); } catch (e) { }
+                if (recent && recent.length) {
+                    done({ suggestions: recent.slice(0, 10).map(function (r) {
+                        return { value: r.name, data: { id: r.id, name: r.name, phone: r.phone } };
+                    }) });
+                    return;
+                }
+            }
+            var suggestions = [];
+            PosnicPro.get({
+                url: 'suppliers/getSuppliersAjaxList',
+                data: 'query=' + encodeURIComponent(q) + '&branch=' + PosnicPro.local.get("branch_id_set")
+            }, function (response) {
+                if (response.suggestions && response.suggestions.length > 0) {
+                    $.map(response.suggestions.slice(0, q ? response.suggestions.length : 10), function (dataItem) {
+                        suggestions.push({ value: dataItem.name, data: dataItem });
+                    });
+                } else if (q) {
+                    suggestions.push({ value: $(inputSel).val() + ' ', data: -1 });
+                }
+                done({ suggestions: suggestions });
+            });
+        };
+    };
+    /* The purchase-order form's Supplier field gets the same typeahead the
+       purchase form has (owner, live from the local verify: "supplier
+       typeahead not working"). Same endpoint, same recency feed; picking a
+       suggestion carries the id so the PO links to a real supplier. */
+    $('#po_supplier_name').autocomplete({
+        deferRequestBy: 120,
+        minChars: 0,
+        lookup: PosnicPro.receivings.supplierLookup('#po_supplier_name'),
+        onSelect: function (suggestion) {
+            if (suggestion.data && suggestion.data !== -1) {
+                $('#po_supplier_id').val(suggestion.data.id);
+                if (PosnicPro.sales && PosnicPro.sales._recentPush) {
+                    PosnicPro.sales._recentPush('recent_suppliers', {
+                        id: suggestion.data.id,
+                        name: suggestion.value || suggestion.data.name,
+                        phone: suggestion.data.phone
+                    }, 'id');
+                }
+            }
+        }
+    });
+
     $('#receiving_add_supplier_name').autocomplete({
         deferRequestBy: 120,
-            lookup: function (query, done) {
-                var result = {};
-                var suggestions = [];
-                var params = {
-                    url: 'suppliers/getSuppliersAjaxList',
-                    data: 'query=' + query + '&branch=' + PosnicPro.local.get("branch_id_set")
-                };
-                PosnicPro.get(params, function (response) {
-                    if (response.suggestions.length > 0) {
-                        suggestions: $.map(response.suggestions, function (dataItem) {
-                            suggestions.push({"value": dataItem.name, "data": dataItem});
-                        });
-                    } else {
-                        suggestions.push({value: $('#receiving_add_supplier_name').val() + ' ', data: -1});
-                    }
-                    result["suggestions"] = suggestions;
-                    done(result);
-                });
-            },
+            minChars: 0,
+            lookup: PosnicPro.receivings.supplierLookup('#receiving_add_supplier_name'),
             onSelect: function (suggestion) {
                 if (suggestion.data !== -1) {
                     $(".clear-supplier-error").find('.error').text("").removeClass('error');
