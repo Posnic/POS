@@ -134,6 +134,6 @@ PosnicPro.lowstockitems = {
     },
     showDetails: function (id) {
         hasher.setHash('lowstockitems/' + id);
-        PosnicPro.items.viewItem(id);
+        hasher.setHash('items/' + id);
     }
 };

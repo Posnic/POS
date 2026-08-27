@@ -24,13 +24,7 @@ const read = (...p) => fs.readFileSync(path.join(ROOT, ...p), 'utf8');
 
 const core = read('frontend', 'static', 'script', 'js', 'core', 'PosnicPro.js');
 const LISTS = [
-  {
-    module: 'items',
-    html: read('frontend', 'modules', 'items.html'),
-    js: read('frontend', 'static', 'script', 'js', 'modules', 'js', 'items.js'),
-    empty: 'item_img_hide',
-    noMatch: 'item_no_match',
-  },
+  /* items moved to the master-detail standard - pinned below. */
   /* customers moved to the master-detail standard (2026-08-27): its two
      empty states are sentences rendered by loadList - pinned below. */
 ];
@@ -42,6 +36,7 @@ test('standard master-detail lists keep two DISTINCT empty sentences', () => {
   for (const [file, key] of [
     ['customers.js', 'customers'],
     ['suppliers.js', 'suppliers'],
+    ['items.js', 'items'],
   ]) {
     const js = read('frontend', 'static', 'script', 'js', 'modules', 'js', file);
     assert.match(js, /match this filter/, `${key}: the filtered state is gone`);

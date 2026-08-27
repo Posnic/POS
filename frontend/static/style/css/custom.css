@@ -5630,6 +5630,38 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 }
 .md-rail-rows .rs-pill { font-size: 12px; }
 
+/* ==== Sales History master-detail (fifth page on the standard) ==== */
+#sales_split.master-detail { margin: 0 !important; }
+#sales_list_rows tr.sales-row:hover { background: var(--theme-table-row-hover, #eef3ff); }
+.saleshist-split .sl-col-date,
+.saleshist-split .sl-col-items { display: none; }
+#sales_doc { padding: 16px 20px 22px; display: flex; flex-direction: column; max-height: calc(100vh - 150px); }
+#sales_doc .doc-scroll { overflow-y: auto; min-height: 0; }
+@media (max-width: 767.98px) {
+    #sales_doc { max-height: none; display: block; }
+    #sales_doc .doc-scroll { overflow: visible; }
+}
+
+/* ==== Items master-detail (fourth page on the standard) ==== */
+#items_split.master-detail { margin: 0 !important; }
+#items_list_rows tr.items-row:hover { background: var(--theme-table-row-hover, #eef3ff); }
+.items-split .i-col-sku,
+.items-split .i-col-category { display: none; }
+@media (max-width: 1499px) {
+    .items-split .i-col-price { display: none; }
+}
+#items_doc { padding: 16px 20px 22px; display: flex; flex-direction: column; max-height: calc(100vh - 150px); }
+#items_doc .s-doc-body { overflow-y: auto; min-height: 0; }
+@media (max-width: 767.98px) {
+    #items_doc { max-height: none; display: block; }
+    #items_doc .s-doc-body { overflow: visible; }
+}
+.i-doc-top { display: flex; gap: 24px; align-items: flex-start; }
+.i-doc-main { flex: 1 1 auto; min-width: 0; }
+.i-doc-photo { flex: 0 0 150px; }
+.i-doc-photo img { width: 150px; height: 150px; object-fit: cover; border-radius: 8px; border: 1px solid var(--theme-border-color, #e3e7ee); }
+@media (max-width: 900px) { .i-doc-top { flex-direction: column-reverse; } }
+
 /* ==== Customers master-detail (third page on the standard) ==== */
 #customers_split.master-detail { margin: 0 !important; }
 #customers_list_rows tr.customers-row:hover { background: var(--theme-table-row-hover, #eef3ff); }
