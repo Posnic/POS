@@ -6,7 +6,7 @@ const pngToIco = require('png-to-ico');
 const fs = require('fs');
 const path = require('path');
 
-const pngSourcePath = path.join(__dirname, 'favicon.png');
+const pngSourcePath = path.join(__dirname, '..', 'builds', 'favicon.png');
 const buildsDir = path.join(__dirname, 'builds');
 
 async function convertSvgToIcons() {

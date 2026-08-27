@@ -24,9 +24,9 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 const read = (f) => fs.readFileSync(path.join(ROOT, f), 'utf8').replace(/\r\n/g, '\n');
 
-const MAIN = read('main.js');
-const HARDWARE = read('hardware-manager.html');
-const PRELOAD = read('preload.js');
+const MAIN = read('src/main.js');
+const HARDWARE = read('src/hardware-manager.html');
+const PRELOAD = read('src/preload.js');
 
 test('macOS gets one set of window controls, not two', () => {
   assert.match(

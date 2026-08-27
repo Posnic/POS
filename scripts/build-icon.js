@@ -10,7 +10,7 @@ const options = {
   report: true
 };
 
-const input = path.join(__dirname, 'favicon.png');
+const input = path.join(__dirname, '..', 'builds', 'favicon.png');
 const output = path.join(__dirname, 'builds');
 
 console.log('🎨 Generating Windows ICO from favicon.png...');

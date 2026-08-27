@@ -53,7 +53,7 @@ function discoverArtifacts(distDir) {
 }
 
 function readMongoVersion() {
-  const batch = fs.readFileSync(path.join(ROOT, 'download-mongodb.bat'), 'utf8');
+  const batch = fs.readFileSync(path.join(ROOT, 'src', 'download-mongodb.bat'), 'utf8');
   const match = batch.match(/^set MONGODB_VERSION=([0-9.]+)$/m);
   if (!match) throw new Error('download-mongodb.bat does not pin MONGODB_VERSION');
   return match[1];

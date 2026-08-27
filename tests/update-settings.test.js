@@ -30,11 +30,11 @@ const ROOT = path.join(__dirname, '..');
 const read = (...p) =>
   fs.readFileSync(path.join(ROOT, ...p), "utf8").replace(/\r\n/g, "\n");
 
-const UI = read("update-manager.html");
-const SERVICE = read("update-service.js");
-const INTEGRATION = read("update-integration.js");
-const PRELOAD = read("preload.js");
-const MAIN = read("main.js");
+const UI = read("src/update-manager.html");
+const SERVICE = read("src/update-service.js");
+const INTEGRATION = read("src/update-integration.js");
+const PRELOAD = read("src/preload.js");
+const MAIN = read("src/main.js");
 
 test('the automatic-update setting is reachable without editing a JSON file', () => {
   assert.match(UI, /id="setAutoCheck"/, 'no control for automatic checking');

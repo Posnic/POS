@@ -17,8 +17,8 @@ const path = require('path');
 const crypto = require('crypto');
 const { EventEmitter } = require('events');
 
-const { AssetUpdater } = require('../asset-updater');
-const { ConnectorSupervisor, CRASH_LIMIT } = require('../connector-runtime');
+const { AssetUpdater } = require('../src/asset-updater');
+const { ConnectorSupervisor, CRASH_LIMIT } = require('../src/connector-runtime');
 
 const keys = crypto.generateKeyPairSync('ed25519');
 const PUBLIC_KEY = keys.publicKey.export({ type: 'spki', format: 'pem' });

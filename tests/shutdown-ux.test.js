@@ -27,9 +27,9 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 const read = (f) => fs.readFileSync(path.join(ROOT, f), 'utf8').replace(/\r\n/g, '\n');
 
-const MAIN = read('main.js');
-const SPLASH = read('splash.js');
-const state = require('../shutdown-state');
+const MAIN = read('src/main.js');
+const SPLASH = read('src/splash.js');
+const state = require('../src/shutdown-state');
 
 // ── The note left for the next launch ───────────────────────────────────────
 

@@ -3,7 +3,7 @@ const assert = require('node:assert');
 const fs = require('fs');
 const path = require('path');
 
-const { contrast } = require('../window-chrome');
+const { contrast } = require('../src/window-chrome');
 
 /*
  * Every theme, checked for the combinations nobody can read.

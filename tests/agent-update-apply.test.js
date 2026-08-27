@@ -15,8 +15,8 @@ const os = require('os');
 const path = require('path');
 const crypto = require('crypto');
 
-const { AssetUpdater } = require('../asset-updater');
-const { applyIncoming } = require('../agent-update-apply');
+const { AssetUpdater } = require('../src/asset-updater');
+const { applyIncoming } = require('../src/agent-update-apply');
 
 const keys = crypto.generateKeyPairSync('ed25519');
 const PUBLIC_KEY = keys.publicKey.export({ type: 'spki', format: 'pem' });

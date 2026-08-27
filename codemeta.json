@@ -80,7 +80,7 @@
   "dateModified": "2026-08-23",
   "readme": "https://github.com/Posnic/POS/blob/main/README.md",
   "buildInstructions": "https://github.com/Posnic/POS/blob/main/docs/DEVELOPMENT.md",
-  "releaseNotes": "https://github.com/Posnic/POS/blob/main/ROADMAP.md",
+  "releaseNotes": "https://github.com/Posnic/POS/blob/main/docs/ROADMAP.md",
   "isSourceCodeOf": {
     "@id": "https://posnic.com/#software",
     "@type": "SoftwareApplication",

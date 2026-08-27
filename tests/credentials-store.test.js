@@ -19,8 +19,8 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
-const store = require('../credentials-store');
-const lc = require('../local-crypto');
+const store = require('../src/credentials-store');
+const lc = require('../src/local-crypto');
 
 const PASSWORD = 'JstHH8Az3bJaqE*^9YUM';
 const USERNAME = 'posnic_admin';

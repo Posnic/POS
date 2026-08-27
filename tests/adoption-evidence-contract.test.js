@@ -11,8 +11,8 @@ const read = (relativePath) => fs.readFileSync(path.join(ROOT, relativePath), 'u
 const TEMPLATE = read('.github/ISSUE_TEMPLATE/deployment_evidence.yml');
 const POLICY = read('docs/ADOPTION_EVIDENCE.md');
 const README = read('README.md');
-const CONTRIBUTING = read('CONTRIBUTING.md');
-const ROADMAP = read('ROADMAP.md');
+const CONTRIBUTING = read('.github/CONTRIBUTING.md');
+const ROADMAP = read('docs/ROADMAP.md');
 
 test('deployment evidence form captures identity, scope, failures, and limits', () => {
   for (const id of [

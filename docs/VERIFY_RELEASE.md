@@ -125,4 +125,4 @@ in one column cannot substitute for a missing check in another.
 For a mismatched checksum, missing SBOM, wrong component version or incorrect
 licence record, open a public issue without attaching shop data. Report a
 security vulnerability privately to **security@posnic.com** as described in
-[SECURITY.md](../SECURITY.md).
+[SECURITY.md](../.github/SECURITY.md).

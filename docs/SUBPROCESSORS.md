@@ -40,7 +40,7 @@ yours, not of ours, and you choose whether they exist at all.
 
 **We never see the credentials for these.** They are held on your machine,
 encrypted, and are marked cloud-only in the field policy so they are not synced
-in plain form. See [SECURITY.md](../SECURITY.md).
+in plain form. See [SECURITY.md](../.github/SECURITY.md).
 
 ---
 
@@ -95,6 +95,6 @@ it if you wish.
 ---
 
 **Questions:** info@posnic.com
-**Related:** [PRIVACY.md](../PRIVACY.md) ·
+**Related:** [PRIVACY.md](PRIVACY.md) ·
 [DATA_PROCESSING_ADDENDUM.md](DATA_PROCESSING_ADDENDUM.md) ·
-[TERMS_OF_USE.md](../TERMS_OF_USE.md)
+[TERMS_OF_USE.md](TERMS_OF_USE.md)

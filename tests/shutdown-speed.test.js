@@ -37,7 +37,7 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 const read = (f) => fs.readFileSync(path.join(ROOT, f), 'utf8').replace(/\r\n/g, '\n');
 
-const MANAGER = read('mongodb-manager.js');
+const MANAGER = read('src/mongodb-manager.js');
 const STOP = MANAGER.slice(MANAGER.indexOf('async stop()'));
 
 test('the shutdown connects with the credentials the application uses', () => {
@@ -99,7 +99,7 @@ test('the shutdown budget still leaves room for the force exit', () => {
      the per-step budget ever exceeds the total, the force exit fires first and
      kills mongod mid-write - the exact thing the clean shutdown exists to
      avoid. */
-  const MAIN = read('main.js');
+  const MAIN = read('src/main.js');
   const block = MAIN.slice(MAIN.indexOf('const SHUTDOWN_TIMEOUTS'));
   const budget = block.slice(0, block.indexOf('});'));
 

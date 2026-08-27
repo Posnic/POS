@@ -50,8 +50,9 @@ function localRefs(html) {
 }
 
 /* The Electron windows: top-level HTML the main process loads directly. */
-const WINDOWS = fs.readdirSync(ROOT)
+const WINDOWS = fs.readdirSync(path.join(ROOT, 'src'))
   .filter((f) => f.endsWith('.html'))
+  .map((f) => 'src/' + f)
   .filter((f) => packaged(f));
 
 test('every window that ships is listed in build.files', () => {
@@ -66,9 +67,9 @@ for (const win of WINDOWS) {
          this is about the loose files beside main.js. */
       if (ref.includes('/')) continue;
 
-      assert.ok(fs.existsSync(path.join(ROOT, ref)),
+      assert.ok(fs.existsSync(path.join(ROOT, 'src', ref)),
         `${win} references ${ref}, which does not exist`);
-      assert.ok(packaged(ref),
+      assert.ok(packaged('src/' + ref),
         `${win} references ${ref}, which is missing from package.json build.files - ` +
         `the window will open without it and fail quietly`);
     }
@@ -78,7 +79,7 @@ for (const win of WINDOWS) {
 test('the theming a window asks for is the theming it gets', () => {
   /* Named explicitly rather than inferred: this pair is the reason the test
      exists, and a rename that drops one of them should fail here. */
-  for (const asset of ['window-theme.js', 'window-theme.css']) {
+  for (const asset of ['src/window-theme.js', 'src/window-theme.css']) {
     assert.ok(packaged(asset), `${asset} must be in build.files`);
   }
 });

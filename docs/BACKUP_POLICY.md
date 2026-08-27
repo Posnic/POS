@@ -120,7 +120,7 @@ worse than none.
 - **A disk that fails between backups.** The window is however long since the
   last one ran — up to 24 hours on the default schedule.
 - **Someone with administrator rights on the machine.** They can delete backups
-  as easily as data. See [SECURITY.md](../SECURITY.md).
+  as easily as data. See [SECURITY.md](../.github/SECURITY.md).
 - **Theft of the computer.** Backups on the same disk leave with it. Device
   encryption protects the contents; it does not give you a copy.
 

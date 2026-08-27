@@ -115,8 +115,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          VERSION=$(grep -oE 'set MONGODB_VERSION=[0-9.]+' download-mongodb.bat | cut -d= -f2)
-          echo "MongoDB $VERSION, the version download-mongodb.bat pins"
+          VERSION=$(grep -oE 'set MONGODB_VERSION=[0-9.]+' src/download-mongodb.bat | cut -d= -f2)
+          echo "MongoDB $VERSION, the version src/download-mongodb.bat pins"
 
           fetch_tgz() {   # url, destination bin directory
             curl -fsSL -o mongo.tgz "$1"

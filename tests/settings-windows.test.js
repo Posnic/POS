@@ -30,8 +30,9 @@ const ROOT = path.join(__dirname, '..');
 const read = (f) => fs.readFileSync(path.join(ROOT, f), 'utf8');
 
 /* The windows this file covers: every top-level page wearing window-theme. */
-const WINDOWS = fs.readdirSync(ROOT)
+const WINDOWS = fs.readdirSync(path.join(ROOT, 'src'))
   .filter((f) => f.endsWith('.html'))
+  .map((f) => 'src/' + f)
   .filter((f) => read(f).includes('window-theme.css'));
 
 test('the themed windows are the four settings windows', () => {
@@ -79,7 +80,7 @@ for (const win of WINDOWS) {
 
 /* ---- the theme laid over them ----------------------------------------- */
 
-const THEME = read('window-theme.css');
+const THEME = read('src/window-theme.css');
 
 /* Declaration blocks, minus comments. */
 function blocks(css) {

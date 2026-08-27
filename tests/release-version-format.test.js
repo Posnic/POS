@@ -55,7 +55,7 @@ test('a prefixed version would be unreadable, which is why it must not be used',
 test('an unreadable version still fails safe, not open', () => {
   /* The failure direction matters more than the failure. Waiting for a click is
      recoverable; installing something unclassified is not. */
-  const src = fs.readFileSync(path.join(ROOT, 'update-service.js'), 'utf8');
+  const src = fs.readFileSync(path.join(ROOT, 'src', 'update-service.js'), 'utf8');
   const fn = src.slice(src.indexOf('_classify(version)'));
   const body = fn.slice(0, fn.indexOf('\n    }'));
 

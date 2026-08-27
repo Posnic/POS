@@ -24,7 +24,7 @@ test('the database really is bound to loopback, as the policy claims', () => {
   /* SECURITY.md tells shops nothing on the LAN can reach MongoDB. If the bind
      address ever widens, that sentence becomes false and a shop would have no
      way to know. */
-  const manager = read('mongodb-manager.js');
+  const manager = read('src/mongodb-manager.js');
   assert.match(
     manager,
     /--bind_ip[\s'",]+127\.0\.0\.1|bind_ip.*127\.0\.0\.1/,
@@ -40,7 +40,7 @@ test('the database really is bound to loopback, as the policy claims', () => {
 test('credentials are still generated per install, not shipped', () => {
   /* "No shared secret between shops" only holds while these are random at
      first run rather than constants in the source. */
-  const main = read('main.js');
+  const main = read('src/main.js');
   assert.match(
     main,
     /crypto\.randomBytes\(\d+\)\.toString\('hex'\)/,
@@ -49,7 +49,7 @@ test('credentials are still generated per install, not shipped', () => {
 });
 
 test('the policy states the limits rather than implying protection', () => {
-  const policy = read('SECURITY.md');
+  const policy = read('.github/SECURITY.md');
 
   /* The two things that defeat everything, named explicitly. */
   assert.match(

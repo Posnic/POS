@@ -22,7 +22,7 @@ const os = require('os');
 const path = require('path');
 const crypto = require('crypto');
 
-const { AssetUpdater, MAX_BOOT_ATTEMPTS } = require('../asset-updater');
+const { AssetUpdater, MAX_BOOT_ATTEMPTS } = require('../src/asset-updater');
 
 const ROOT = path.join(__dirname, '..');
 const ASSETS_DIR = path.join(ROOT, 'frontend', 'public');

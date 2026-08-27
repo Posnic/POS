@@ -35,7 +35,7 @@ supported window can be short without leaving people stranded.
 
 **A security issue** is anything that lets someone reach a shop's data or
 machine when they should not. Report it privately — see
-[SECURITY.md](../SECURITY.md), not a public issue. Acknowledged within 3
+[SECURITY.md](../.github/SECURITY.md), not a public issue. Acknowledged within 3
 working days, with an assessment of severity and an intended fix date.
 
 **A data-loss bug** — anything that loses, corrupts or miscounts sales, stock or
@@ -81,7 +81,7 @@ A shop whose Cloud subscription lapses keeps a working local till with all its
 data — it loses sync, not trade.
 
 Commercial terms, privacy and data processing arrangements for Cloud are
-published: [TERMS_OF_USE.md](../TERMS_OF_USE.md),
+published: [TERMS_OF_USE.md](TERMS_OF_USE.md),
 [SUBPROCESSORS.md](SUBPROCESSORS.md) and
 [DATA_PROCESSING_ADDENDUM.md](DATA_PROCESSING_ADDENDUM.md).
 
@@ -114,7 +114,7 @@ around the clock rather than left to a queue.
 
 ## Getting help
 
-- **Security problem:** [SECURITY.md](../SECURITY.md) — privately, not an issue
+- **Security problem:** [SECURITY.md](../.github/SECURITY.md) — privately, not an issue
 - **Something is broken:** [open an issue](https://github.com/Posnic/POS/issues)
   with what you did, what happened, and the log attached
 - **A question:** [Discussions](https://github.com/Posnic/POS/discussions)

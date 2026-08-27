@@ -20,9 +20,9 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 const read = (...p) => fs.readFileSync(path.join(ROOT, ...p), 'utf8').replace(/\r\n/g, '\n');
 
-const MAIN = read('main.js');
-const SPLASH = read('splash.js');
-const splash = require('../splash');
+const MAIN = read('src/main.js');
+const SPLASH = read('src/splash.js');
+const splash = require('../src/splash');
 const pkg = require('../package.json');
 
 test('it can be loaded without Electron', () => {
@@ -105,7 +105,7 @@ test('the progress bar does not claim to measure anything', () => {
 });
 
 test('it ships', () => {
-  assert.ok(pkg.build.files.includes('splash.js'), 'splash.js is missing from build.files');
+  assert.ok(pkg.build.files.includes('src/splash.js'), 'splash.js is missing from build.files');
 });
 
 test('the mark it draws is actually packaged', () => {

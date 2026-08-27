@@ -32,7 +32,7 @@ const assert = require('node:assert');
 const fs = require('fs');
 const path = require('path');
 
-const MAIN = fs.readFileSync(path.join(__dirname, '..', 'main.js'), 'utf8');
+const MAIN = fs.readFileSync(path.join(__dirname, '..', 'src', 'main.js'), 'utf8');
 
 test('the loading screen stands down while the interface is loading', () => {
   /* The timer's only guard was isVisible(), and a page that is still loading is
@@ -129,7 +129,7 @@ test('an aborted navigation is still not treated as a failure', () => {
 
 test('the loading screen is a real file, since the timer loads it', () => {
   assert.ok(
-    fs.existsSync(path.join(__dirname, '..', 'loading.html')),
+    fs.existsSync(path.join(__dirname, '..', 'src', 'loading.html')),
     'loading.html has gone but the startup timer still loads it',
   );
 });
