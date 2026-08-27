@@ -235,11 +235,13 @@ PosnicPro.items = {
         $('#item_weight_flag_wrap').toggle(weightOn);
         if (!weightOn) { $('#item_weight_machine_based').prop('checked', false); }
     },
+    /* #/items/<id>: the dossier opens in the right pane - never a popup. */
     showDetails: function (id) {
-        var loader = $(".loader-view-item");
-        loader.find(".loadingSpinner:first").remove();
-        PosnicPro.showViewModal('items');
-        PosnicPro.items.viewItem(id);
+        var self = PosnicPro.items;
+        if (self._openDocId === String(id) && $('#items_detail_card').is(':visible')) { return; }
+        self._chrome();
+        self.loadList(1);
+        self.openDoc(id);
     },
     showBarcode: function (id) {
         PosnicPro.items.printLableView(id);
@@ -278,177 +280,306 @@ PosnicPro.items = {
                 { value: 'itemid', label: 'SKU' },
                 { value: 'barcode_id', label: 'Barcode' }
             ],
-            onChange: function () {
-                var table = $('#view_items');
-                /* updated_date is the column PosnicPro.search filtered on for
-                   this list; using anything else would filter a different
-                   column while looking like it worked. */
-                var filters = PosnicPro.listFilter.legacyFilters('items', { dateKey: 'updated_date' });
-                table.data('filters', JSON.stringify(filters));
-                table.data('current_page', 1);
-                PosnicPro.items.itemsTable('items');
-            }
+            onChange: function () { PosnicPro.items.loadList(1); }
         });
     },
 
-    itemsTable: function () {
-        // A fresh page/search/refresh ends any "select all N" - the set behind
-        // the list has changed, so the old whole-set selection no longer holds.
-        PosnicPro.clearSelectAllMatching('items');
-        var loader = $(".loader-table-item");
-        $("<div class='loadingSpinner'></div>").appendTo(loader);
-        PosnicPro.appendViewDataTableBody('items');
-        var table = $('#view_items');
-        var params = {
+    _page: 1,
+    PAGE_SIZE: 25,
+    _lastRows: [],
+    _openDocId: null,
+    loadList: function (page) {
+        PosnicPro.items.mountFilters();
+        var self = PosnicPro.items;
+        if (page) { self._page = page; }
+        var filters = PosnicPro.listFilter.legacyFilters('items', { dateKey: 'updated_date' });
+        var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
+        PosnicPro.get({
             url: 'items',
-            data: {
-                page: table.data('current_page'),
-                limit: parseInt($('#view_items_per_page  option:selected').text()),
-                filters: table.data('filters')
+            data: { page: self._page, limit: self.PAGE_SIZE, filters: JSON.stringify(filters) }
+        }, function (response) {
+            var data = (response && response.data) || {};
+            var list = data.list || [];
+            self._lastRows = list;
+            if (!list.length) {
+                var filtered = PosnicPro.listFilter.activeCount('items') > 0;
+                $('#items_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">'
+                    + (filtered ? 'No items match this filter.' : 'No items yet - press New to add the first.') + '</div>');
+                $('#items_list_paging').html('');
+                return;
             }
-        };
-        PosnicPro.get(params, function (response) {
-            if (response.type === 'success') {
-                table.data('total', response.data.total);
-                table.data('total_pages', response.data.total_pages);
-                table.data('current_page', response.data.current_page);
-                table.data('per_page', response.data.per_page);
-                PosnicPro.paging(response.data.total_pages, response.data.current_page);
-                table.children('tbody').text('');
-                $('#view_items_total').text(response.data.total);
-
-                var rowTotal = response.data.total;
-                if (rowTotal === 0) {
-                    /* Which kind of empty. "No items yet" over a filtered view
-                       tells a shop with a full catalogue that it has none -
-                       see items.html and PosnicPro.hasActiveFilters. */
-                    var filtered = PosnicPro.hasActiveFilters('items');
-                    $('.item_header').hide();
-                    $('#item_img_hide').toggle(!filtered);
-                    $('#item_no_match').toggle(filtered);
+            var cur = PosnicPro.local.get('currencySign');
+            var html = '<div class="table-responsive"><table class="table table-borderless">'
+                + '<thead><tr><th style="width:44px;"></th><th>Name</th><th class="i-col-sku">SKU</th>'
+                + '<th class="i-col-category">Category</th><th class="text-right">Stock</th>'
+                + '<th class="text-right i-col-price">Price</th>'
+                + '<th class="text-center kiosk-column">Kiosk</th></tr></thead><tbody>';
+            list.forEach(function (r) {
+                var unit = r.unit || 'qty';
+                var thumb;
+                var tile = PosnicPro.resolveTile ? PosnicPro.resolveTile(r) : { color: r.tile_color, shape: r.tile_shape };
+                if ((!r.image || r.image === 'item.svg') && tile.color) {
+                    var shape = tile.shape === 'circle' ? 'border-radius:50%;' : 'border-radius:6px;';
+                    thumb = '<span style="display:inline-flex;width:32px;height:32px;' + shape
+                        + 'background:' + esc(tile.color) + ';color:#fff;font-weight:700;font-size:13px;align-items:center;justify-content:center;">'
+                        + esc(String(r.name || '?').trim().charAt(0).toUpperCase()) + '</span>';
                 } else {
-                    $('#item_img_hide,#item_no_match').hide();
-                    $('.item_header').show();
+                    var img = (r.image && r.image !== 'item.svg') ? r.image : 'static/images/default/item.svg';
+                    thumb = '<img loading="lazy" decoding="async" src="' + esc(img) + '" width="32" height="32" style="object-fit:cover;border-radius:6px;"'
+                        + " onerror=\"this.onerror=null;this.src='static/images/default/item.svg';\">";
                 }
-
-                var row_total = (table.data('current_page') - 1) * table.data('per_page') + 1;
-                $('#view_items_page_total').text(row_total);
-                var page_totals = (table.data('current_page') - 1) * table.data('per_page');
-                $('#view_items_page_perpage_total').text(page_totals + response.data.list.length);
-                var currency = PosnicPro.local.get('currencySign');
-                for (var i = 0; i < response.data.list.length; i++) {
-                    var row = response.data.list[i];
-                    var row_no = (table.data('current_page') - 1) * table.data('per_page') + i + 1;
-                    if (row.barcode_id === undefined || row.barcode_id === '') {
-                        var lableicon = '<span id="show_label_icon" style="display:none;"></span>';
-                        $('#show_label_icon').hide();
-                    } else {
-                        $('#show_label_icon').show();
-                        var lableicon = '<a data-module = "item" data-access = "write" href="#/items/' + row._id + '/barcode" data-id="items/' + row._id + '/barcode" data-toggle="tooltip" title="Barcode Item" class="point-cursor mobile_tooltip"><i class="feather icon-align-justify"></i></a>';
-                    }
-
-                    let image_path = (row.image && row.image !== "item.svg") ? row.image : 'static/images/default/item.svg';
-                    // A colour/shape item shows its tile in the Image column -
-                    // that is what the colour is FOR (owner report).
-                    var _listTile = '';
-                    var _lrt = (PosnicPro.resolveTile ? PosnicPro.resolveTile(row) : { color: row.tile_color, shape: row.tile_shape });
-                    if ((!row.image || row.image === 'item.svg') && _lrt.color) {
-                        var _lShape = PosnicPro.tileShapeCss(_lrt.shape || '', '4px');
-                        _listTile = '<span style="display:inline-flex;width:30px;height:30px;' + _lShape + 'background:' + _lrt.color + ';color:#fff;font-weight:700;font-size:13px;align-items:center;justify-content:center;">' + String(row.name || '?').trim().charAt(0).toUpperCase() + '</span>';
-                    }
-                    let process_class = '';
-                    let edit_icon = '<a data-module = "item" data-access = "write" href="#/items/' + row._id + '/edit" data-id="items/' + row._id + '/edit"  data-toggle="tooltip" title="Edit Item" class="point-cursor mobile_tooltip"><i class="feather icon-edit"></i></a>';
-                    if (row.item_status === 'instant') {
-                        process_class = "badge badge-warning-inverse";
-                        edit_icon = '<span id="item_show_edit_icon" style="display:none;"></span>';
-                    } else {
-                        process_class = "badge badge-success-inverse";
-                    }
-                    let item_unit = (typeof (row.unit) != "undefined" && row.unit !== null) ? row.unit : "qty";
-                    let action = '<div id="onclick-toolbar-options_' + i + '" class="hidden">' +
-                            '<span id="show_label_icon" style="display:none;">' + lableicon + ' </span>' +
-                            '<a data-module = "item" data-access = "write" href="#/items/' + row._id + '/clone" data-id="items/' + row._id + '/clone" data-toggle="tooltip" title="Clone" class="point-cursor mobile_tooltip"><i class="feather icon-external-link"></i></a>' +
-                            '<a data-module = "item" data-access = "read" href="#/items/' + row._id + '" data-id="items/' + row._id + '"  data-toggle="tooltip" title="View Item" class="point-cursor mobile_tooltip"><i class="feather icon-eye"></i></a>' +
-                            '<span id="item_show_edit_icon" style="display:none;">' + edit_icon + ' </span>' +
-                            '<a data-module = "item" data-access = "delete" href="#/items/' + row._id + '/delete" data-id="items/' + row._id + '/delete" data-toggle="tooltip" title="Delete Item" class="point-cursor mobile_tooltip"><i class="feather icon-trash"></i></a>' +
-                            '</div>' +
-                            '<div data-toolbar="user-options" class="btn btn-round btn-primary-rgba round-pad" id="onclick-toolbar_' + i + '"><i class="feather icon-more-vertical-"></i></div>';
-                    let isChecked = row.isAvailable ? 'checked' : '';
-                    let kioskToggle = '<label class="switch">' +
-                            '<input type="checkbox" id="kiosk_' + row._id + '" class="kiosk-toggle" ' + isChecked + '>' +
-                            '<span class="slider round"></span>' +
-                            '</label>';
-                    var trow = '<tr> <th><input type="checkbox" class="items-row-id" id="' + row._id + '" name="id[]" value="' + row._id + '" onclick="PosnicPro.checkboxSelectOne(this,\'items\');"></th> <th scope="row" data-label="#">' + row_no + '</th>  <td width="30%" data-label="Name"><a href="#/items/' + row._id + '"><i class="table_model_item">' + row.name + '</i></a></td> <td>' + (_listTile !== '' ? _listTile : '<img loading="lazy" decoding="async" src=' + image_path + ' width=30 height=20 class="imagezoom" id="' + row.image + '" onerror="this.onerror=null;this.src=\'static/images/default/item.svg\';" onclick="PosnicPro.viewImage(this.id,\'item\');">') + '</td> <td class="text-center" data-label="Item ID">' + row.itemid + '</td> <td class="text-right" data-label="Stock">' + row.available_quantity + ' ' + item_unit + '</td> <td class="text-center" data-label="Status"><span class="' + process_class + '">' + row.item_status + '</span></td> <td class="text-right" data-label="Price">' + currency + '&nbsp;<span class="number">' + row.selling_price + '</span></td> ' +
-                            '<td class="text-center kiosk-column">' + kioskToggle + '</td>' + '<td class="text-center"><span>' + action + ' </span></td></tr>';
-
-                    $('#view_items').children('tbody').append(trow);
-                }
-
-                /*
-                 * The Kiosk column, only where there is a kiosk.
-                 *
-                 * A shop that has not set up Kiosk Settings has no use for a
-                 * per-item kiosk toggle: the switch would do nothing anybody
-                 * could see, while taking space from Quantity and Price on the
-                 * page staff are in all day.
-                 *
-                 * The server decides - see isKioskConfigured in the items
-                 * controller - because it is the only side that knows whether a
-                 * store id has been entered without the Settings page having
-                 * been opened first.
-                 */
-                if (response.data.kiosk_configured) {
-                    $('.kiosk-column').show();
-                } else {
-                    $('.kiosk-column').hide();
-                }
-
-                $('span.number').number(true, 2);
-                $(document).ready(function () {
-                    for (var i = 0; i < response.data.list.length; i++) {
-                        $('#onclick-toolbar_' + i).toolbar({
-                            content: '#onclick-toolbar-options_' + i,
-                            event: 'click',
-                            style: 'primary',
-                            hideOnClick: true
-                        });
-                        $('#onclick-toolbar_' + i).on('toolbarItemClick', function (event, element) {
-                            hasher.setHash($(element).data('id'));
-                            $(this).trigger('click');
-                            $('.mobile_tooltip').tooltip('hide');
-                        });
-                    }
-                });
-                PosnicPro.setSelectedCheckbox(PosnicPro["items_checkbox"], 'items');
-                PosnicPro.ACLForModule('item');
-                loader.find(".loadingSpinner:first").remove();
+                var tracked = r.track_inventory === true || r.track_inventory === 'true';
+                var low = tracked && Number(r.available_quantity) <= Number(r.low_stock || 0);
+                var stockCell = tracked
+                    ? (low ? '<span class="rs-pill unpaid">' : '<span>') + esc(r.available_quantity) + ' ' + esc(unit) + (low ? '</span>' : '</span>')
+                    : '<span class="q-muted">-</span>';
+                html += '<tr class="md-row items-row highlight-select' + (self._openDocId === String(r._id) ? ' is-active' : '') + '"'
+                    + ' data-id="' + esc(r._id) + '" style="cursor:pointer;">'
+                    + '<td>' + thumb + '</td>'
+                    + '<td>' + esc(r.name) + '</td>'
+                    + '<td class="i-col-sku">' + esc(r.itemid || '-') + '</td>'
+                    + '<td class="i-col-category">' + esc(r.category_name || '-') + '</td>'
+                    + '<td class="text-right">' + stockCell + '</td>'
+                    + '<td class="text-right i-col-price">' + cur + '&nbsp;' + (Number(r.selling_price) || 0).toFixed(2) + '</td>'
+                    + '<td class="text-center kiosk-column"><input type="checkbox" id="kiosk_' + esc(r._id) + '" class="kiosk-toggle" aria-label="Show on kiosk"' + (r.isAvailable ? ' checked' : '') + '></td>'
+                    + '</tr>';
+            });
+            html += '</tbody></table></div>';
+            $('#items_list_rows').html(html);
+            /* the Kiosk column shows only where a kiosk is configured */
+            if (response.data.kiosk_configured) {
+                $('.kiosk-column').show();
             } else {
-                PosnicPro.alert(response.type, response.message);
+                $('.kiosk-column').hide();
             }
-        }, function (xhr) {
-            var response = jQuery.parseJSON(xhr.responseText);
-            PosnicPro.alert(response.type, response.message);
+            self.renderPager(Number(data.total) || list.length);
+        }, function () {
+            $('#items_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">Could not load items - try again.</div>');
         });
     },
-    showDataTablePage: function () {
-        var loader = $(".loader-table-item");
-        loader.find(".loadingSpinner:first").remove();
-        PosnicPro.dashboard.datePicker();
+    renderPager: function (total) {
+        var self = PosnicPro.items;
+        var p = self._page, size = self.PAGE_SIZE;
+        var pages = Math.ceil(total / size) || 1;
+        var label = total + (total === 1 ? ' item' : ' items');
+        if (pages > 1) { label = 'Page ' + p + ' of ' + pages + ' \u00b7 ' + label; }
+        var btn = function (to, text, off, cls) {
+            return '<button type="button" class="btn btn-sm ' + (cls || 'btn-secondary-rgba') + ' q-pg-btn"' + (off ? ' disabled' : '')
+                + ' onclick="PosnicPro.items.goPage(' + to + ');">' + text + '</button>';
+        };
+        var html = '';
+        if (pages > 1) {
+            html += btn(p - 1, '&laquo;', p <= 1);
+            var end = Math.min(pages, Math.max(1, p - 2) + 4);
+            var start = Math.max(1, end - 4);
+            for (var n = start; n <= end; n++) {
+                html += '<span class="q-pg-num">' + btn(n, n, false, n === p ? 'btn-primary-rgba' : 'btn-secondary-rgba') + '</span>';
+            }
+        }
+        html += '<span class="q-pg-count">' + label + '</span>';
+        if (pages > 1) { html += btn(p + 1, '&raquo;', p >= pages); }
+        $('#items_list_paging').html(html);
+    },
+    goPage: function (n) {
+        if (!n || n < 1) { return; }
+        PosnicPro.items._page = n;
+        PosnicPro.items.loadList();
+    },
+    exportCsv: function () {
+        var rows = [['Name', 'SKU', 'Category', 'Stock', 'Unit', 'Selling price', 'Cost']];
+        (PosnicPro.items._lastRows || []).forEach(function (r) {
+            rows.push([r.name, r.itemid || '', r.category_name || '', r.available_quantity, r.unit || 'qty', r.selling_price, r.company_price || '']);
+        });
+        var csv = rows.map(function (r) {
+            return r.map(function (c) { return '"' + String(c == null ? '' : c).replace(/"/g, '""') + '"'; }).join(',');
+        }).join('\n');
+        var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'items.csv';
+        a.click();
+        URL.revokeObjectURL(a.href);
+    },
+    /* ---- the dossier pane ---- */
+    openDoc: function (id) {
+        var self = PosnicPro.items;
+        if (!PosnicPro.masterDetail.inSplit('#items_split', 'items-split')) {
+            PosnicPro.masterDetail.enter('#items_split', 'items-split');
+            $('#items_detail_card').show();
+        }
+        self._openDocId = String(id);
+        $('#items_list_rows tr.items-row').removeClass('is-active');
+        $('#items_list_rows tr.items-row[data-id="' + id + '"]').addClass('is-active');
+        if (window.location.hash.slice(2) !== 'items/' + id) {
+            hasher.setHash('items/' + id);
+        }
+        $('#items_doc').html('<div class="text-center text-muted" style="padding:60px;">Loading ...</div>');
+        PosnicPro.get('items/' + id, function (response) {
+            if (response.type !== 'success') {
+                $('#items_doc').html('<div class="text-danger p-4">Could not open this item.</div>');
+                return;
+            }
+            PosnicPro.items.renderItemDoc(response.data);
+        }, function () {
+            $('#items_doc').html('<div class="text-danger p-4">Could not open this item.</div>');
+        });
+    },
+    closeDoc: function () {
+        PosnicPro.items._openDocId = null;
+        $('#items_detail_card').hide();
+        $('#items_list_rows tr.items-row').removeClass('is-active');
+        PosnicPro.masterDetail.leave('#items_split', 'items-split');
+        if (window.location.hash.slice(2).indexOf('items/') === 0) {
+            hasher.setHash('items');
+        }
+    },
+    renderItemDoc: function (d) {
+        var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
+        var real = function (v) { return v && v !== 'null' && v !== 'undefined' ? v : ''; };
+        var cur = PosnicPro.local.get('currencySign');
+        var id = String(d._id || PosnicPro.items._openDocId);
+        var sell = Number(d.selling_price) || 0;
+        var cost = Number(d.company_price) || 0;
+        var margin = sell > 0 && cost > 0 ? ((sell - cost) / sell) * 100 : null;
+        var tracked = d.track_inventory === true || d.track_inventory === 'true';
+        var low = tracked && Number(d.available_quantity) <= Number(d.low_stock || 0);
+        var toolbar = '<div class="p-doc-toolbar">'
+            + '<button type="button" class="btn btn-sm btn-light" title="Show or hide the list" aria-label="Show or hide the list" onclick="PosnicPro.masterDetail.toggleRail(\'#items_split\');"><i class="feather icon-sidebar"></i></button>'
+            + '<span class="p-doc-title">' + esc(d.name) + '</span>'
+            + (low ? '<span class="rs-pill unpaid">Low stock</span>' : '')
+            + '<span class="ml-auto"></span>'
+            + '<button type="button" class="btn btn-sm btn-light" onclick="hasher.setHash(\'items/' + esc(id) + '/edit\');"><i class="feather icon-edit-2 mr-1"></i>Edit</button>'
+            + '<div class="btn-group">'
+            + '<button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">More</button>'
+            + '<div class="dropdown-menu dropdown-menu-right">'
+            + '<a class="dropdown-item" href="javascript:void(0)" onclick="hasher.setHash(\'items/' + esc(id) + '/clone\');"><i class="feather icon-copy mr-2"></i>Clone</a>'
+            + (real(d.barcode_id) ? '<a class="dropdown-item" href="javascript:void(0)" onclick="hasher.setHash(\'items/' + esc(id) + '/barcode\');"><i class="feather icon-align-justify mr-2"></i>Barcode labels</a>' : '')
+            + '<div class="dropdown-divider"></div>'
+            + '<a class="dropdown-item text-danger" href="javascript:void(0)" onclick="PosnicPro.items.deleteAsk();"><i class="feather icon-trash mr-2"></i>Delete</a>'
+            + '</div></div>'
+            + '<button type="button" class="btn btn-sm btn-light" title="Close and show the full list" aria-label="Close" onclick="PosnicPro.items.closeDoc();"><i class="feather icon-x"></i></button>'
+            + '</div>';
+        var strip = '<div class="p-void-strip" id="i_delete_strip" style="display:none;">'
+            + '<span>Delete <b>' + esc(d.name) + '</b>? Past sales and purchases keep their lines; only the catalogue entry goes.</span>'
+            + '<button type="button" class="btn btn-sm btn-danger" onclick="PosnicPro.items.deleteConfirm(\'' + esc(id) + '\');">Delete item</button>'
+            + '<button type="button" class="btn btn-sm btn-light" onclick="$(\'#i_delete_strip\').slideUp(120);">Cancel</button>'
+            + '</div>';
+        var img = (d.image && d.image !== 'item.svg') ? d.image : '';
+        var stats = '<div class="s-doc-stats">'
+            + '<div class="s-stat"><div class="s-stat-value"' + (low ? ' style="color: var(--theme-danger-color, #c0392b);"' : '') + '>'
+            + (tracked ? esc(d.available_quantity) + ' ' + esc(d.unit || 'qty') : '\u2014') + '</div>'
+            + '<div class="s-stat-label">' + (tracked ? 'In stock' + (low ? ' \u00b7 low' : '') : 'Not tracked') + '</div></div>'
+            + '<div class="s-stat"><div class="s-stat-value">' + cur + '&nbsp;' + sell.toFixed(2) + '</div>'
+            + '<div class="s-stat-label">Selling price</div></div>'
+            + (cost > 0
+                ? '<div class="s-stat"><div class="s-stat-value">' + cur + '&nbsp;' + cost.toFixed(2) + '</div>'
+                    + '<div class="s-stat-label">Cost</div></div>'
+                : '')
+            + (margin !== null
+                ? '<div class="s-stat"><div class="s-stat-value">' + margin.toFixed(1) + '%</div>'
+                    + '<div class="s-stat-label">Margin</div></div>'
+                : '')
+            + '</div>';
+        var identity = '<div class="q-block"><div class="q-label">Identity</div>'
+            + (real(d.itemid) ? '<div>SKU: ' + esc(d.itemid) + '</div>' : '')
+            + (real(d.barcode_id) ? '<div class="q-muted">Barcode: ' + esc(d.barcode_id) + '</div>' : '')
+            + (real(d.category_name) ? '<div class="q-muted">' + esc(d.category_name) + '</div>' : '')
+            + '<div class="q-muted">Unit: ' + esc(d.unit || 'qty') + '</div>'
+            + '</div>';
+        var pricingBits = '';
+        if (real(d.tax_name) || Number(d.tax) > 0) {
+            pricingBits += '<div class="q-muted">Tax: ' + esc(d.tax_name || (d.tax + '%')) + (d.tax_type ? ' (' + esc(d.tax_type) + ')' : '') + '</div>';
+        }
+        if (real(d.supplier_name)) { pricingBits += '<div class="q-muted">Supplier: ' + esc(d.supplier_name) + '</div>'; }
+        var pricing = '<div class="q-block"><div class="q-label">Pricing &amp; supply</div>'
+            + '<div>MRP ' + cur + '&nbsp;' + (Number(d.mrp_price || d.selling_price) || 0).toFixed(2) + '</div>'
+            + pricingBits
+            + '</div>';
+        var record = '<div class="q-block"><div class="q-label">On record</div>'
+            + (d.created_date ? '<div class="q-muted">Added ' + esc(PosnicPro.convertDate(d.created_date)) + '</div>' : '')
+            + (d.updated_date ? '<div class="q-muted">Updated ' + esc(PosnicPro.convertDate(d.updated_date)) + '</div>' : '')
+            + (tracked && Number(d.low_stock) > 0 ? '<div class="q-muted">Low-stock alert at ' + esc(d.low_stock) + '</div>' : '')
+            + '</div>';
+        var photo = img
+            ? '<div class="i-doc-photo"><img loading="lazy" decoding="async" src="' + esc(img) + '" alt="' + esc(d.name) + '" onerror="this.style.display=\'none\';"></div>'
+            : '';
+        var body = '<div class="s-doc-body"><div class="q-sheet s-sheet">'
+            + '<div class="i-doc-top">' + '<div class="i-doc-main">' + stats
+            + '<div class="s-doc-grid">' + identity + pricing + record + '</div>'
+            + '</div>' + photo + '</div>'
+            + '<div class="q-label" style="margin-top:18px;">Recent stock movements</div>'
+            + '<div id="i_doc_moves" class="text-muted" style="font-size:13px;">Loading ...</div>'
+            + '</div></div>';
+        $('#items_doc').html(toolbar + strip + body);
+        PosnicPro.items.loadStockMoves(d);
+    },
+    /* The item's latest ledger lines, straight from the stocklogs the
+       transition machinery writes. */
+    loadStockMoves: function (d) {
+        var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
+        var nameExact = String(d.name || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        PosnicPro.get({
+            url: 'stocklogs',
+            data: { page: 1, limit: 5, filters: JSON.stringify({ item_name: { $regex: '^' + nameExact + '$', $options: 'i' } }) }
+        }, function (response) {
+            var list = ((response && response.data) || {}).list || [];
+            if (!list.length) {
+                $('#i_doc_moves').html('<div class="text-muted">No stock movements yet.</div>');
+                return;
+            }
+            var html = '<table class="q-items s-doc-purchases-table"><thead><tr>'
+                + '<th>Movement</th><th>Reference</th><th class="text-right">Change</th><th class="text-right">Balance</th>'
+                + '</tr></thead><tbody>';
+            list.forEach(function (r) {
+                var n = Number(r.count) || 0;
+                html += '<tr>'
+                    + '<td>' + esc(r.process) + '</td>'
+                    + '<td class="q-muted">' + esc(r.reference || '-') + '</td>'
+                    + '<td class="text-right" style="color:' + (n < 0 ? 'var(--theme-danger-color, #c0392b)' : 'var(--theme-success-color, #1a7f37)') + ';">'
+                    + (n > 0 ? '+' : '') + n + '</td>'
+                    + '<td class="text-right q-muted">' + esc(r.opening_balance) + ' \u2192 ' + esc(r.closing_balance) + '</td>'
+                    + '</tr>';
+            });
+            html += '</tbody></table>';
+            $('#i_doc_moves').html(html);
+        }, function () {
+            $('#i_doc_moves').html('<div class="text-muted">Stock history unavailable.</div>');
+        });
+    },
+    deleteAsk: function () {
+        $('#i_delete_strip').slideDown(120);
+    },
+    deleteConfirm: function (id) {
+        PosnicPro.request({
+            method: 'DELETE',
+            url: 'items',
+            data: JSON.stringify({ id: [id] })
+        }, function (r) {
+            PosnicPro.alert(r.type || 'success', r.message || 'Item deleted');
+            PosnicPro.items.closeDoc();
+            PosnicPro.items.loadList(1);
+        }, function (xhr) {
+            var resp = {}; try { resp = jQuery.parseJSON(xhr.responseText) || {}; } catch (e) { }
+            PosnicPro.alert('error', resp.message || 'Could not delete this item');
+        });
+    },
+    _chrome: function () {
         PosnicPro.HideSideBarModal();
-        $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
-        $(".vertical-layout").removeClass("toggle-menu");
-        $(".vertical-menu li a").removeClass("active");
-        $('.dropdown-item').removeClass('active');
         $('.page_loader,#osk-container').hide();
-        $('.page-title-box,#items').show();
-        $('#items_new,#items_view').modal('hide');
+        $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
+        $('.vertical-menu li a').removeClass('active');
         $('#v-pills-inventory-tab,#view_items_page').addClass('active');
         $('#v-pills-inventory').addClass('show active');
-        PosnicPro.items.mountFilters();
-        PosnicPro.items.itemsTable('items');
+        $('.page-title-box,#items').show();
+        $('#items_new,#items_view').modal('hide');
         $('.dashboard_img_menu').hide();
         $('#image_sidebar_itemdetail').show();
-
+    },
+    showDataTablePage: function () {
+        PosnicPro.items._chrome();
+        PosnicPro.items.mountFilters();
+        PosnicPro.items.closeDoc();
+        PosnicPro.items.loadList(1);
     },
     triggerAddNew: function () {
         PosnicPro.items.showAdd();
@@ -4930,3 +5061,6 @@ $(document).on('change', '.kiosk-toggle', function () {
 });
 /*end*/
 
+$(document).on('click', '#items_list_rows tr.items-row', function () {
+    PosnicPro.items.openDoc($(this).data('id'));
+});

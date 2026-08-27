@@ -91,8 +91,10 @@ test('the list sends its answer to the page', () => {
 
 test('header and cells carry the same marker', () => {
   /* Hiding one without the other leaves a column of headers over the wrong
-     cells, which is worse than the column that was there before. */
-  assert.match(CORE_JS, /<th class="text-center kiosk-column">Kiosk<\/th>/,
+     cells, which is worse than the column that was there before. The list
+     moved to the master-detail standard (2026-08-27): loadList writes its
+     own header, so both markers live in items.js now. */
+  assert.match(ITEMS_JS, /<th class="text-center kiosk-column">Kiosk<\/th>/,
     'the Kiosk header is not marked');
   assert.match(ITEMS_JS, /<td class="text-center kiosk-column">/,
     'the Kiosk cell is not marked');
@@ -104,11 +106,12 @@ test('the page hides the column when the server says there is no kiosk', () => {
 });
 
 test('the header exists before the answer arrives', () => {
-  /* appendViewDataTableBody writes the header row; the show/hide runs in the
-     list response. If that order ever flips there is nothing to hide. */
-  const headerAt = ITEMS_JS.indexOf("appendViewDataTableBody('items')");
+  /* loadList writes the header in the same render that toggles the column;
+     the toggle must come AFTER the rows land in the DOM. */
+  const headerAt = ITEMS_JS.indexOf('kiosk-column">Kiosk');
+  const renderAt = ITEMS_JS.indexOf("$('#items_list_rows').html(html)");
   const toggleAt = ITEMS_JS.indexOf("$('.kiosk-column')");
   assert.ok(headerAt > -1, 'the item table header is no longer written here');
-  assert.ok(headerAt < toggleAt,
-    'the Kiosk column is hidden before its header is written');
+  assert.ok(renderAt > -1 && renderAt < toggleAt,
+    'the Kiosk column is toggled before its header is in the DOM');
 });

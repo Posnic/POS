@@ -404,14 +404,26 @@
             PosnicPro.alert(response.type, response.message);
         });
     },
+    /* #/sales/<id>: the invoice opens in the right pane - never a popup. */
     showDetails: function (id) {
-        var loader = $(".loader-view-sale");
-        loader.find(".loadingSpinner:first").remove();
-        PosnicPro.showViewModal('sales');
-        PosnicPro.sales.view.viewSale(id);
+        var self = PosnicPro.sales;
+        if (self._openDocId === String(id) && $('#sales_detail_card').is(':visible')) { return; }
+        PosnicPro.sales.showDataTablePage._chromeOnly = true;
+        try { PosnicPro.sales._historyChrome(); } finally { PosnicPro.sales.showDataTablePage._chromeOnly = false; }
+        self.loadHistory(1);
+        self.openDoc(id);
     },
     viewSaleDetails: function (id) {
         PosnicPro.sales.showDetails(id);
+    },
+    _historyChrome: function () {
+        PosnicPro.HideSideBarModal();
+        $('.page_loader,#osk-container').hide();
+        $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
+        $('.vertical-menu li a').removeClass('active');
+        $('#v-pills-dashboard-tab,#view_sales_page').addClass('active');
+        $('#v-pills-dashboard').addClass('show active');
+        $('.page-title-box,#sales,#view_sales_table,#showsalesbody').show();
     },
     showDataTablePage: function () {
         PosnicPro.sales.recentSaleAction = false;
@@ -429,7 +441,8 @@
         $('#view_sales_per_page').closest('.form-group').show();
         $('.card.m-b-30.sales_header .ecommerce-pagination').closest('.card.m-b-30').show();
         PosnicPro.sales.mountHistoryFilters();
-        PosnicPro.sales.salesTable('sales');
+        PosnicPro.sales.closeDoc();
+        PosnicPro.sales.loadHistory(1);
         $('#image_sidebar_dashboard,#image_sidebar_newsale').hide();
         $('.dashboard_img_menu').hide();
         $('#image_sidebar_salehistry').show();
@@ -468,282 +481,226 @@
             /* Suggestions come from the customers this till already uses. */
             typeahead: 'customer',
             typeaheadField: 'customer_name',
-            onChange: function () {
-                var table = $('#view_sales');
-                /* The column PosnicPro.search filtered this list on. */
-                var filters = PosnicPro.listFilter.legacyFilters('sales', { dateKey: 'updated_date' });
-                table.data('filters', JSON.stringify(filters));
-                table.data('current_page', 1);
-                PosnicPro.sales.salesTable('sales');
-            }
+            onChange: function () { PosnicPro.sales.loadHistory(1); }
         });
     },
 
-    salesTable: function () {
-        var loader = $(".loader-table-sale");
-        $("<div class='loadingSpinner'></div>").appendTo(loader);
-        // ✅ Hide "+ New" button when viewing Sales History (not in sale creation/edit mode)
-        if (PosnicPro.local.get('table_options') === 'enable') {
-            $('#sales_new_button').hide();
-        } else{
-            $('#sales_new_button').show();
-        }
-        PosnicPro.appendViewDataTableBody('sales');
-        var table = $('#view_sales');
-
-        var existingFilters = table.data('filters');
-        var filterObj = {};
-        if (existingFilters) {
-            try {
-                filterObj = (typeof existingFilters === 'string') ? JSON.parse(existingFilters) : existingFilters;
-            } catch (e) {
-                filterObj = {};
-            }
-        }
-
-        var saleProcessFilter = filterObj.sale_process;
-        if (!saleProcessFilter || typeof saleProcessFilter !== 'object') {
-            saleProcessFilter = {};
-        }
-        // Exclude KOT records from main Sales History
-        saleProcessFilter['$ne'] = 'KOT';
-        filterObj.sale_process = saleProcessFilter;
-        var salesFilters = JSON.stringify(filterObj);
-
-        // Load client-side cache of KOT proceeded sale ids to ensure we hide
-        // edit actions even if the backend doesn't yet return was_kot_proceeded.
-        var kotProceededIds = [];
-        try {
-            var storedKotIds = PosnicPro.local.get('kot_proceeded_ids');
-            if (storedKotIds) {
-                kotProceededIds = JSON.parse(storedKotIds);
-            }
-        } catch (e) {
-            kotProceededIds = [];
-        }
-
-        var params = {
+    _histPage: 1,
+    HIST_PAGE_SIZE: 25,
+    _histRows: [],
+    _openDocId: null,
+    loadHistory: function (page) {
+        PosnicPro.sales.mountHistoryFilters();
+        var self = PosnicPro.sales;
+        if (page) { self._histPage = page; }
+        var filters = PosnicPro.listFilter.legacyFilters('sales', { dateKey: 'updated_date' });
+        var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
+        PosnicPro.get({
             url: 'sales',
-            data: {
-                page: table.data('current_page'),
-                limit: parseInt($('#view_sales_per_page  option:selected').text()),
-                filters: salesFilters
+            data: { page: self._histPage, limit: self.HIST_PAGE_SIZE, filters: JSON.stringify(filters) }
+        }, function (response) {
+            var data = (response && response.data) || {};
+            var list = data.list || [];
+            self._histRows = list;
+            if (!list.length) {
+                var filtered = PosnicPro.listFilter.activeCount('sales') > 0;
+                $('#sales_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">'
+                    + (filtered ? 'No sales match this filter.' : 'No sales yet - the first bill will appear here.') + '</div>');
+                $('#sales_list_paging').html('');
+                return;
             }
-        };
-
-        PosnicPro.get(params, function (response) {
-            if (response.type === 'success') {
-                table.data('total', response.data.total);
-                table.data('total_pages', response.data.total_pages);
-                table.data('current_page', response.data.current_page);
-                table.data('per_page', response.data.per_page);
-
-                PosnicPro.paging(response.data.total_pages, response.data.current_page);
-                table.children('tbody').text('');
-
-                $('#view_sales_total').text(response.data.total);
-                var rowTotal = response.data.total;
-                if (rowTotal === 0) {
-                    $('.sales_header').hide();
-                    var dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
-                    $('.sales_norecord').empty().append('<div class="text-center text-dark"> <p>No Records on  ' + dateRange + '</p></div>');
-                    $('#sales_img_hide,.sales_norecord').show();
-                } else {
-                    $('.sales_norecord').empty();
-                    $('#sales_img_hide,.sales_norecord').hide();
-                    $('.sales_header').show();
-                }
-
-                var rowStart = (table.data('current_page') - 1) * table.data('per_page') + 1;
-                $('#view_sales_page_total').text(rowStart);
-                var pageTotals = (table.data('current_page') - 1) * table.data('per_page');
-                $('#view_sales_page_perpage_total').text(pageTotals + response.data.list.length);
-
-                var currency = PosnicPro.local.get('currencySign');
-
-                for (var i = 0; i < response.data.list.length; i++) {
-                    var row = response.data.list[i];
-                    var table_number = row.table_number || '';
-                    var dine_type = row.dine_type || '';
-                    var row_no = (table.data('current_page') - 1) * table.data('per_page') + i + 1;
-                    var price = parseFloat(row.sales_total).toFixed(2);
-
-                    var pdf_icon = '<a href="#/sales/' + row._id + '/pdf" target="_blank" data-module="sales" data-access="read" data-id="sales/' + row._id + '/pdf" data-toggle="tooltip" title="Pdf" class="point-cursor mobile_tooltip"><i class="feather icon-file"></i></a>';
-                    // Q2: permanent S3 invoice link - copied to the clipboard.
-                    var link_icon = '<a href="javascript:void(0)" data-module="sales" data-access="read" data-sale-id="' + row._id + '" data-toggle="tooltip" title="Copy invoice link" class="point-cursor mobile_tooltip sale-invoice-link"><i class="feather icon-link"></i></a>';
-                    var print_icon = '<a data-module="sales" data-access="read" data-toggle="tooltip" title="Sale Print" href="#/sales/' + row._id + '/print" data-id="sales/' + row._id + '/print" class="point-cursor mobile_tooltip"><i class="feather icon-printer"></i></a>';
-                    var return_icon = '<a data-module="sales" data-access="write" href="#/sales/' + row._id + '/return" data-id="sales/' + row._id + '/return" id="return_sales_' + row._id + '" data-toggle="tooltip" title="Sales Return" class="point-cursor mobile_tooltip"><i class="feather icon-corner-up-left"></i></a>';
-                    var view_icon = '<a data-module="sales" data-access="read" href="#/sales/' + row._id + '" data-id="sales/' + row._id + '" data-toggle="tooltip" title="View" class="point-cursor mobile_tooltip"><i class="feather icon-eye"></i></a>';
-                    var edit_icon = '<a data-module="sales" data-access="write" href="#/sales/' + row._id + '/edit" data-id="sales/' + row._id + '/edit" id="edit_sales_' + row._id + '" data-toggle="tooltip" title="Edit" class="point-cursor mobile_tooltip"><i class="feather icon-edit"></i></a>';
-                    var hold_icon = '<a data-module="sales" data-access="write" href="#/sales/' + row._id + '/hold" data-id="sales/' + row._id + '/hold" data-toggle="tooltip" title="Retrieve parked sale" class="point-cursor mobile_tooltip"><i class="feather icon-play-circle"></i></a>';
-
-                    var paymentStatusText = (typeof (row.payment_status) === 'undefined' || row.payment_status === null) ? 'Paid' : row.payment_status;
-                    var showUnpaidPayment = (paymentStatusText === 'Unpaid') && (row.sale_process === 'Add' || row.sale_process === 'Edit');
-                    var payment_icon = '';
-                    if (showUnpaidPayment) {
-                        payment_icon = '<a data-module="sales" data-access="write" href="javascript:void(0);" onclick="PosnicPro.sales.showPayment(\'' + row._id + '\');" data-toggle="tooltip" title="Add Payment" class="point-cursor mobile_tooltip"><i class="feather icon-dollar-sign"></i></a>';
-                    }
-
-                    var process_class = '';
-                    if (row.sale_process === 'Add' || row.sale_process === 'Edit') {
-                        process_class = (row.sale_process === 'Add') ? 'badge badge-success-inverse' : 'badge badge-primary-inverse';
-                        hold_icon = '<span id="show_hold_icon" style="display:none;"></span>';
-                    } else if (row.sale_process === 'PartialReturn') {
-                        process_class = 'badge badge-secondary-inverse';
-                        edit_icon = '<span id="show_edit_icon" style="display:none;"></span>';
-                        hold_icon = '<span id="show_hold_icon" style="display:none;"></span>';
-                    } else if (row.sale_process === 'FullReturn') {
-                        process_class = 'badge badge-dark-inverse';
-                        pdf_icon = '<span id="show_pdf_icon" style="display:none;"></span>';
-                        print_icon = '<span id="show_print_icon" style="display:none;"></span>';
-                        return_icon = '<span id="show_return_icon" style="display:none;"></span>';
-                        edit_icon = '<span id="show_edit_icon" style="display:none;"></span>';
-                        hold_icon = '<span id="show_hold_icon" style="display:none;"></span>';
-                    } else {
-                        process_class = 'badge badge-warning-inverse';
-                        return_icon = '<span id="show_return_icon" style="display:none;"></span>';
-                        edit_icon = '<span id="show_edit_icon" style="display:none;"></span>';
-                    }
-
-                    var processHtml;
-                    if (row.sale_process === 'cancelled' || row.sale_process === 'Cancelled') {
-                        processHtml = '<span class="badge badge-danger-inverse">Cancel</span>';
-                        hold_icon = '<span id="show_hold_icon" style="display:none;"></span>';
-                    } else {
-                        // Show "Parked" for held sales (keep the stored value 'Hold').
-                        var processLabel = (row.sale_process === 'Hold') ? 'Parked' : row.sale_process;
-                        processHtml = '<span class="' + process_class + '">' + processLabel + '</span>';
-                    }
-
-                    // Hide Edit (but not Return) for KOT orders that have been
-                    // settled into Sales History and whose payment status is Paid.
-                    // Use the persistent backend flag first and fall back to the
-                    // local cache so behaviour is stable even after cache clear.
-                    var isKotProceededSale = (row.was_kot_proceeded === true) ||
-                        (kotProceededIds.indexOf(row._id) !== -1);
-                    var isKotProceededAndPaid = isKotProceededSale && (paymentStatusText === 'Paid');
-                    if (isKotProceededAndPaid) {
-                        edit_icon = '<span id="show_edit_icon" style="display:none;"></span>';
-                    }
-
-                    var updateDate = PosnicPro.convertDate(row.string_date);
-                    $('#date_view').html(updateDate);
-
-                    var paymentStatus;
-                    if (showUnpaidPayment) {
-                        paymentStatus = '<span class="badge badge-warning-inverse payment-status-unpaid" data-toggle="tooltip" data-placement="top" title="Add Payment" onclick="PosnicPro.sales.showPayment(\'' + row._id + '\');">Unpaid</span>';
-                    } else {
-                        if (paymentStatusText === 'Cancelled' || paymentStatusText === 'cancelled') {
-                            paymentStatus = '<span class="badge badge-danger-inverse">' + paymentStatusText + '</span>';
-                        } else if (paymentStatusText === 'Paid') {
-                            paymentStatus = '<span class="badge badge-success-inverse">Paid</span>';
-                        } else {
-                            paymentStatus = '<span class="badge badge-warning-inverse">' + paymentStatusText + '</span>';
-                        }
-                    }
-
-                    var action = '<div id="onclick-toolbar-options_' + i + '" class="hidden">' +
-                        '<span id="show_print_icon" style="display:none;">' + print_icon + ' </span>' +
-                        '<span id="show_pdf_icon" style="display:none;">' + pdf_icon + link_icon + ' </span>' +
-                        '<span id="show_return_icon" style="display:none;">' + return_icon + ' </span>' +
-                        '<span id="show_view_icon" style="display:none;">' + view_icon + ' </span>' +
-                        '<span id="show_edit_icon" style="display:none;">' + edit_icon + ' </span>' +
-                        '<span id="show_payment_icon" style="display:none;">' + payment_icon + ' </span>' +
-                        '<span id="show_hold_icon" style="display:none;">' + hold_icon + ' </span>' +
-                        '<a data-module="sales" data-access="delete" data-toggle="tooltip" title="Delete Sale" href="#/sales/' + row._id + '/delete" data-id="sales/' + row._id + '/delete" class="point-cursor mobile_tooltip"><i class="feather icon-trash"></i></a>' +
-                        '</div>' +
-                        '<div data-toolbar="user-options" class="btn btn-round btn-primary-rgba round-pad" id="onclick-toolbar_' + i + '"><i class="feather icon-more-vertical-"></i></div>';
-
-                    var trow = '<tr>' +
-                        '<td><input type="checkbox" class="sales-row-id" id="' + row._id + '" name="id[]" value="' + row._id + '" onclick="PosnicPro.checkboxSelectOne(this, \'sales\');"></td>' +
-                        '<td scope="row" data-label="#">' + row_no + '</td>' +
-                        '<td class="sale_id" data-label="Sale">' + row.sales_id + '</td>' +
-                        '<td class="sale_id" data-label="Date">' + updateDate + '</td>' +
-                        '<td width="20%" data-label="Customer">' + row.customer_name + '</td>' +
-                        '<td class="sale_id text-right table-phone-hide" data-label="Phone"><a href="tel:' + row.customer_phone + '" class="table-phone text-right">' + row.customer_phone + '</a></td>' +
-                        '<td class="text-center table-number-hide"><span>' + table_number + '</span></td>' +
-                        '<td class="text-center order-type-column"><span>' + dine_type + '</span></td>' +
-                        '<td class="text-center" data-label="Status">' + processHtml + '</td>' +
-                        '<td class="sale_id text-right" data-label="Total">' + currency + '&nbsp;<span class="number">' + price + '</span></td>' +
-                        '<td width="20%" data-label="Payment">' + paymentStatus + '</td>' +
-                        '<td class="text-center"><span>' + action + ' </span></td>' +
-                        '</tr>';
-
-                    $('#view_sales').children('tbody').append(trow);
-                }
-
-                if (PosnicPro.local.get('table_options') === 'enable') {
-                    $('.table-number-hide').show();
-                    $('.table-phone-hide').hide();
-                    $('.order-type-column').show();
-                } else {
-                    $('.table-number-hide').hide();
-                    $('.table-phone-hide').show();
-                    $('.order-type-column').hide();
-                }
-
-                // Re-evaluate column visibility based on actual row data.
-                // If all rows have empty table/order type, hide those columns and show phone.
-                (function () {
-                    var hasTableOrOrderTypeData = false;
-                    $('#view_sales').find('tbody tr').each(function () {
-                        var tableText = $.trim($(this).find('.table-number-hide span').text());
-                        var orderTypeText = $.trim($(this).find('.order-type-column span').text());
-                        if (tableText !== '' || orderTypeText !== '') {
-                            hasTableOrOrderTypeData = true;
-                            return false; // break loop
-                        }
-                    });
-
-                    if (PosnicPro.local.get('table_options') === 'enable' && hasTableOrOrderTypeData) {
-                        $('.table-number-hide').show();
-                        $('.table-phone-hide').hide();
-                        $('.order-type-column').show();
-                    } else {
-                        $('.table-number-hide').hide();
-                        $('.table-phone-hide').show();
-                        $('.order-type-column').hide();
-                    }
-                })();
-
-                $(document).ready(function () {
-
-                    for (var k = 0; k < response.data.list.length; k++) {
-                        $('#onclick-toolbar_' + k).toolbar({
-                            content: '#onclick-toolbar-options_' + k,
-                            event: 'click',
-                            style: 'primary',
-                            hideOnClick: true
-                        });
-                        $('#onclick-toolbar_' + k).on('toolbarItemClick', function (event, element) {
-                            var targetId = $(element).data('id');
-                            if (targetId) {
-                                hasher.setHash(targetId);
-                            }
-                            $(this).trigger('click');
-                            $('.mobile_tooltip').tooltip('hide');
-                        });
-                    }
-                });
-
-                $('span.number').number(true, 2);
-                PosnicPro.setSelectedCheckbox(PosnicPro["sales_checkbox"], 'sales');
-                PosnicPro.ACLForModule('sales');
-                if (PosnicPro.local.get('table_options') === 'enable') {
-                    $('.auto-refresh-hide').show();
-                } else {
-                    $('.auto-refresh-hide').hide();
-                }
-                loader.find(".loadingSpinner:first").remove();
-            } else {
-                loader.find(".loadingSpinner:first").remove();
-                PosnicPro.alert(response.type, response.message);
-            }
-        }, function (xhr) {
-            loader.find(".loadingSpinner:first").remove();
-            var response = jQuery.parseJSON(xhr.responseText);
-            PosnicPro.alert(response.type, response.message);
+            var cur = PosnicPro.local.get('currencySign');
+            var html = '<div class="table-responsive"><table class="table table-borderless">'
+                + '<thead><tr><th>Bill #</th><th>Customer</th><th class="sl-col-date">Date</th>'
+                + '<th class="text-right sl-col-items">Items</th><th class="text-right">Total</th>'
+                + '<th class="text-center">Status</th></tr></thead><tbody>';
+            list.forEach(function (r) {
+                var unpaid = String(r.payment_status || '').toLowerCase() === 'unpaid';
+                var proc = String(r.sale_process || '');
+                var pill = /return/i.test(proc)
+                    ? '<span class="rs-pill hold">' + esc(proc) + '</span>'
+                    : unpaid
+                        ? '<span class="rs-pill unpaid">Unpaid</span>'
+                        : '<span class="rs-pill paid">Paid</span>';
+                html += '<tr class="md-row sales-row highlight-select' + (self._openDocId === String(r._id) ? ' is-active' : '') + '"'
+                    + ' data-id="' + esc(r._id) + '" style="cursor:pointer;">'
+                    + '<td>' + esc(r.sales_id) + '</td>'
+                    + '<td>' + esc(r.customer_name || 'Walk-in') + '</td>'
+                    + '<td class="sl-col-date">' + esc(r.date ? String(r.string_date || r.date).slice(0, 10) : '-') + '</td>'
+                    + '<td class="text-right sl-col-items">' + esc(r.number_of_items != null ? r.number_of_items : (r.items || []).length) + '</td>'
+                    + '<td class="text-right">' + cur + '&nbsp;' + (Number(r.sales_total) || 0).toFixed(2) + '</td>'
+                    + '<td class="text-center">' + pill + '</td>'
+                    + '</tr>';
+            });
+            html += '</tbody></table></div>';
+            $('#sales_list_rows').html(html);
+            self.renderHistoryPager(Number(data.total) || list.length);
+        }, function () {
+            $('#sales_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">Could not load sales - try again.</div>');
         });
+    },
+    renderHistoryPager: function (total) {
+        var self = PosnicPro.sales;
+        var p = self._histPage, size = self.HIST_PAGE_SIZE;
+        var pages = Math.ceil(total / size) || 1;
+        var label = total + (total === 1 ? ' sale' : ' sales');
+        if (pages > 1) { label = 'Page ' + p + ' of ' + pages + ' \u00b7 ' + label; }
+        var btn = function (to, text, off, cls) {
+            return '<button type="button" class="btn btn-sm ' + (cls || 'btn-secondary-rgba') + ' q-pg-btn"' + (off ? ' disabled' : '')
+                + ' onclick="PosnicPro.sales.goHistoryPage(' + to + ');">' + text + '</button>';
+        };
+        var html = '';
+        if (pages > 1) {
+            html += btn(p - 1, '&laquo;', p <= 1);
+            var end = Math.min(pages, Math.max(1, p - 2) + 4);
+            var start = Math.max(1, end - 4);
+            for (var n = start; n <= end; n++) {
+                html += '<span class="q-pg-num">' + btn(n, n, false, n === p ? 'btn-primary-rgba' : 'btn-secondary-rgba') + '</span>';
+            }
+        }
+        html += '<span class="q-pg-count">' + label + '</span>';
+        if (pages > 1) { html += btn(p + 1, '&raquo;', p >= pages); }
+        $('#sales_list_paging').html(html);
+    },
+    goHistoryPage: function (n) {
+        if (!n || n < 1) { return; }
+        PosnicPro.sales._histPage = n;
+        PosnicPro.sales.loadHistory();
+    },
+    /* ---- the invoice pane ---- */
+    openDoc: function (id) {
+        var self = PosnicPro.sales;
+        if (!PosnicPro.masterDetail.inSplit('#sales_split', 'saleshist-split')) {
+            PosnicPro.masterDetail.enter('#sales_split', 'saleshist-split');
+            $('#sales_detail_card').show();
+        }
+        self._openDocId = String(id);
+        $('#sales_list_rows tr.sales-row').removeClass('is-active');
+        $('#sales_list_rows tr.sales-row[data-id="' + id + '"]').addClass('is-active');
+        if (window.location.hash.slice(2) !== 'sales/' + id) {
+            hasher.setHash('sales/' + id);
+        }
+        $('#sales_doc').html('<div class="text-center text-muted" style="padding:60px;">Loading ...</div>');
+        PosnicPro.get('sales/' + id, function (response) {
+            if (response.type !== 'success' || !response.data) {
+                $('#sales_doc').html('<div class="text-danger p-4">Could not open this sale.</div>');
+                return;
+            }
+            PosnicPro.sales.renderSaleDoc(response.data);
+        }, function () {
+            $('#sales_doc').html('<div class="text-danger p-4">Could not open this sale.</div>');
+        });
+    },
+    closeDoc: function () {
+        PosnicPro.sales._openDocId = null;
+        $('#sales_detail_card').hide();
+        $('#sales_list_rows tr.sales-row').removeClass('is-active');
+        PosnicPro.masterDetail.leave('#sales_split', 'saleshist-split');
+        if (/^sales\/[0-9a-f]{24}$/i.test(window.location.hash.slice(2))) {
+            hasher.setHash('sales');
+        }
+    },
+    /* The sale as its own INVOICE sheet - the same q-sheet language every
+       document in the product wears. */
+    buildSaleSheet: function (d) {
+        var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
+        var money = function (v) { return PosnicPro.local.get('currencySign') + '&nbsp;' + (Number(v) || 0).toFixed(2); };
+        var real = function (v) { return v && v !== 'null' && v !== 'undefined' ? v : ''; };
+        var unpaid = String(d.payment_status || '').toLowerCase() === 'unpaid';
+        var proc = String(d.sale_process || '');
+        var stamp = /return/i.test(proc) ? proc.toUpperCase() : unpaid ? 'UNPAID' : 'PAID';
+        var logo = PosnicPro.local.get('branchimage');
+        var taxLabel = PosnicPro.local.get('gst_action') === 'enable' ? 'GSTIN' : 'Tax ID';
+        var seller = '<div class="q-seller">'
+            + (logo && logo !== 'store.png' ? '<img loading="lazy" decoding="async" class="q-logo" src="' + esc(logo) + '" alt="">' : '')
+            + '<div class="q-shop">' + esc(PosnicPro.local.get('branchname') || '') + '</div>';
+        var addr = real(PosnicPro.local.get('branchaddress'));
+        var ph = real(PosnicPro.local.get('branchphone'));
+        var em = real(PosnicPro.local.get('branchemail'));
+        var gst = real(PosnicPro.local.get('branchgstin'));
+        if (addr) { seller += '<div class="q-muted">' + esc(addr) + '</div>'; }
+        if (ph || em) { seller += '<div class="q-muted">' + esc(ph) + (ph && em ? ' &middot; ' : '') + esc(em) + '</div>'; }
+        if (gst) { seller += '<div class="q-muted">' + taxLabel + ': ' + esc(gst) + '</div>'; }
+        seller += '</div>';
+        var title = '<div class="q-title-block">'
+            + '<div class="q-doc-title">INVOICE</div>'
+            + '<div class="q-num">' + esc(d.sales_id) + '</div>'
+            + '<div class="q-muted">Date: ' + esc(d.string_date ? String(d.string_date).slice(0, 10) : (d.date ? String(d.date).slice(0, 10) : '-')) + '</div>'
+            + '<div class="q-status">' + esc(stamp) + '</div>'
+            + '</div>';
+        var billto = '<div class="q-billto"><div class="q-label">Bill To</div>'
+            + '<div class="q-cust">' + esc(d.customer_name || 'Walk-in customer') + '</div>'
+            + (real(d.customer_phone) ? '<div class="q-muted">Phone: ' + esc(d.customer_phone) + '</div>' : '')
+            + (real(d.customer_email) ? '<div class="q-muted">' + esc(d.customer_email) + '</div>' : '')
+            + '</div>';
+        var items = '<div class="table-responsive"><table class="q-items"><thead><tr>'
+            + '<th>#</th><th>Item</th><th class="text-right">Qty</th>'
+            + '<th class="text-right">Price</th><th class="text-right">Amount</th>'
+            + '</tr></thead><tbody>';
+        (d.items || []).forEach(function (l, i) {
+            items += '<tr><td>' + (i + 1) + '</td><td>' + esc(l.item_name) + '</td>'
+                + '<td class="text-right">' + esc(l.item_quantity) + ' ' + esc(l.item_unit || '') + '</td>'
+                + '<td class="text-right">' + money(l.item_price) + '</td>'
+                + '<td class="text-right">' + money(l.total_amount) + '</td></tr>';
+        });
+        items += '</tbody><tfoot>'
+            + '<tr class="q-sub"><td colspan="4" class="text-right">Subtotal</td>'
+            + '<td class="text-right">' + money(d.sales_sub_total) + '</td></tr>'
+            + (Number(d.discount) > 0
+                ? '<tr class="q-sub"><td colspan="4" class="text-right">Discount</td><td class="text-right">-' + money(d.discount) + '</td></tr>'
+                : '')
+            + (Number(d.tax) > 0
+                ? '<tr class="q-sub"><td colspan="4" class="text-right">Tax</td><td class="text-right">' + money(d.tax) + '</td></tr>'
+                : '')
+            + '<tr class="q-grand"><th colspan="4" class="text-right">TOTAL</th>'
+            + '<th class="text-right">' + money(d.sales_total) + '</th></tr>'
+            + '</tfoot></table></div>';
+        var footer = '<div class="q-footer">';
+        footer += '<div class="q-block"><div class="q-label">Payment</div>'
+            + '<div>' + esc(d.payment_mode || '-') + '</div>'
+            + (unpaid && Number(d.partial_balance) > 0
+                ? '<div class="q-muted" style="color: var(--theme-danger-color, #c0392b);">Pending: ' + money(d.partial_balance) + '</div>'
+                : '')
+            + (real(d.payment_description) ? '<div class="q-muted">' + esc(d.payment_description) + '</div>' : '')
+            + '</div>';
+        if (real(d.sales_description)) {
+            footer += '<div class="q-block"><div class="q-label">Notes</div><div class="q-muted">' + esc(d.sales_description) + '</div></div>';
+        }
+        footer += '</div>';
+        return '<div class="q-sheet">'
+            + '<div class="q-head">' + seller + title + '</div>'
+            + billto + items + footer
+            + '</div>';
+    },
+    renderSaleDoc: function (d) {
+        var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
+        var id = String(d._id || d.id || PosnicPro.sales._openDocId);
+        var unpaid = String(d.payment_status || '').toLowerCase() === 'unpaid';
+        var proc = String(d.sale_process || '');
+        var pill = /return/i.test(proc)
+            ? '<span class="rs-pill hold">' + esc(proc) + '</span>'
+            : unpaid ? '<span class="rs-pill unpaid">Unpaid</span>' : '<span class="rs-pill paid">Paid</span>';
+        var toolbar = '<div class="p-doc-toolbar">'
+            + '<button type="button" class="btn btn-sm btn-light" title="Show or hide the list" aria-label="Show or hide the list" onclick="PosnicPro.masterDetail.toggleRail(\'#sales_split\');"><i class="feather icon-sidebar"></i></button>'
+            + '<span class="p-doc-title">' + esc(d.sales_id) + '</span>' + pill
+            + '<span class="ml-auto"></span>'
+            + (unpaid
+                ? '<button type="button" class="btn btn-sm btn-primary" onclick="PosnicPro.sales.showPayment(\'' + esc(id) + '\');"><i class="feather icon-credit-card mr-1"></i>Settle payment</button>'
+                : '')
+            + '<button type="button" class="btn btn-sm btn-light" onclick="hasher.setHash(\'sales/' + esc(id) + '/edit\');"><i class="feather icon-edit-2 mr-1"></i>Edit</button>'
+            + '<div class="btn-group">'
+            + '<button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">More</button>'
+            + '<div class="dropdown-menu dropdown-menu-right">'
+            + '<a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.sales.showPrint(\'' + esc(id) + '\'); return false;"><i class="feather icon-printer mr-2"></i>Print</a>'
+            + '<a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.sales.showPdf(\'' + esc(id) + '\'); return false;"><i class="feather icon-file mr-2"></i>Download PDF</a>'
+            + (!/return/i.test(proc)
+                ? '<div class="dropdown-divider"></div>'
+                    + '<a class="dropdown-item" href="javascript:void(0)" onclick="hasher.setHash(\'sales/' + esc(id) + '/return\');"><i class="feather icon-corner-up-left mr-2"></i>Return items</a>'
+                : '')
+            + '</div></div>'
+            + '<button type="button" class="btn btn-sm btn-light" title="Close and show the full list" aria-label="Close" onclick="PosnicPro.sales.closeDoc();"><i class="feather icon-x"></i></button>'
+            + '</div>';
+        $('#sales_doc').html(toolbar + '<div class="doc-scroll">' + PosnicPro.sales.buildSaleSheet(d) + '</div>');
     },
     searchItem: function (id) {
         var matched = false;
@@ -12601,4 +12558,8 @@ $(document).on('click', '.infobar-tender-close', function () {
     PosnicPro.sales.saleDoneTimer.stop();
     var primary = $('#newsalespage .sale-done-primary').get(0);
     if (primary) { primary.click(); }
+});
+
+$(document).on('click', '#sales_list_rows tr.sales-row', function () {
+    PosnicPro.sales.openDoc($(this).data('id'));
 });

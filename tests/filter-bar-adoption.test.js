@@ -25,12 +25,17 @@ const lf = read('frontend', 'static', 'script', 'js', 'core', 'list-filter.js');
 
 const SCREENS = [
   {
+    /* items moved to the master-detail standard (2026-08-27): same key,
+       same header controls, list fed by loadList. */
     key: 'items',
+    idPrefix: 'items',
     html: read('frontend', 'modules', 'items.html'),
     js: read('frontend', 'static', 'script', 'js', 'modules', 'js', 'items.js'),
   },
   {
+    /* sales history moved to the master-detail standard (2026-08-27). */
     key: 'sales',
+    idPrefix: 'sales',
     html: read('frontend', 'modules', 'sales_read.html'),
     js: read('frontend', 'static', 'script', 'js', 'modules', 'js', 'sales.js'),
   },
@@ -114,7 +119,7 @@ test('the bar writes the blob these endpoints already took', () => {
     if (s.idPrefix) {
       /* the purchases surface has no DataTable: the bar's onChange reloads
          page 1 and the fetch carries the same blob in its query */
-      assert.match(body, /loadList\(1\)/, `${s.key}: a filter change must land on page 1`);
+      assert.match(body, /load(?:List|History)\(1\)/, `${s.key}: a filter change must land on page 1`);
       assert.match(body, /filters: JSON\.stringify/, `${s.key}: never sends the filter`);
     } else {
       assert.match(body, /data\('filters', JSON\.stringify/, `${s.key}: never applies the filter`);

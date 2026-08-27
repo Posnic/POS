@@ -8,7 +8,7 @@ PosnicPro.stocklogs = {
         PosnicPro.stocklogs.viewStock(id);
     },
     showModuleDetails: function (id) {
-        PosnicPro.items.viewItem(id);
+        hasher.setHash('items/' + id);
     },
     stocklogsTable: function () {
         var loader = $(".loader-table-stocklog");
