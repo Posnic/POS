@@ -1068,6 +1068,7 @@ PosnicPro.receivings = {
                     image: PosnicPro.receivings.imageParams,
                     exclusive_tax: ($('#exclusive_tax').is(':checked', true)) ? 'on' : 'off',
                     itc_eligible: $('#receiving_itc_eligible').is(':checked'),
+                    expected_date: $('#receiving_expected_date').val(),
                     invoice_total_declared: $('#receiving_invoice_total_declared').val()
                 })
             };
@@ -1331,6 +1332,7 @@ PosnicPro.receivings = {
                 image: PosnicPro.receivings.imageParams,
                 exclusive_tax: ($('#exclusive_tax').is(':checked', true)) ? 'on' : 'off',
                     itc_eligible: $('#receiving_itc_eligible').is(':checked'),
+                    expected_date: $('#receiving_expected_date').val(),
                     invoice_total_declared: $('#receiving_invoice_total_declared').val()
             };
             if (PosnicPro.receivings.receivingReturnAction === 'return') {
@@ -1907,45 +1909,96 @@ PosnicPro.purchaseorders = {
     showAdd: function () { PosnicPro.purchaseorders.showDataTablePage(); PosnicPro.purchaseorders.openForm(''); },
     showEdit: function (id) { PosnicPro.purchaseorders.showDataTablePage(); PosnicPro.purchaseorders.openForm(id); },
     showDetails: function (id) { PosnicPro.purchaseorders.showDataTablePage(); PosnicPro.purchaseorders.openView(id); },
+    /*
+     * ONE list for the whole purchases area (owner: "keep one"). Orders and
+     * received purchases, merged newest-first. Orders open their document;
+     * purchases open the receiving view. Paging is a growing window over
+     * both sources - simple, honest, and gone entirely when the
+     * master-detail surface replaces this page.
+     */
+    _listWindow: 20,
     loadList: function (page) {
+        if (page === 1) { PosnicPro.purchaseorders._listWindow = 20; }
+        var want = PosnicPro.purchaseorders._listWindow;
         var status = $('#po_filter_status').val() || '';
-        PosnicPro.get({
-            url: 'purchaseOrders',
-            data: 'page=' + (page || 1) + '&limit=10' + (status ? '&status=' + encodeURIComponent(status) : '')
-        }, function (response) {
-            var d = (response && response.data) || {};
-            var rows = d.list || [];
-            if (!rows.length) {
-                $('#po_list_rows').html('<tr><td colspan="8" class="text-center text-muted">No purchase orders yet.</td></tr>');
+        var currency = PosnicPro.local.get('currencySign');
+        var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
+        var done = { po: null, rec: null };
+        var render = function () {
+            if (done.po === null || done.rec === null) { return; }
+            var rows = done.po.concat(done.rec);
+            if (status) {
+                rows = rows.filter(function (r) { return r.status === status; });
+            }
+            rows.sort(function (a, b) { return (b.date || '').localeCompare(a.date || ''); });
+            var shown = rows.slice(0, want);
+            if (!shown.length) {
+                $('#po_list_rows').html('<tr><td colspan="8" class="text-center text-muted">No purchases yet - press New Purchase to record the first.</td></tr>');
                 $('#po_list_paging').html('');
                 return;
             }
-            var currency = PosnicPro.local.get('currencySign');
-            var html = rows.map(function (po, i) {
-                var pct = po.ordered_qty > 0 ? Math.min(100, Math.round(po.received_qty * 100 / po.ordered_qty)) : 0;
-                var progress = '<div class="progress" style="height:6px;"><div class="progress-bar" style="width:' + pct + '%;"></div></div>' +
-                    '<small class="text-muted">' + po.received_qty + ' of ' + po.ordered_qty + '</small>';
-                var expected = po.expected_date ? String(po.expected_date).slice(0, 10) : '-';
-                return '<tr class="point-cursor po-list-row" data-id="' + po.id + '">' +
-                    '<td>' + ((d.current_page - 1) * d.per_page + i + 1) + '</td>' +
-                    '<td>' + po.po_id + '</td>' +
-                    '<td>' + String(po.order_date).slice(0, 10) + '</td>' +
-                    '<td>' + $('<span>').text(po.supplier_name).html() + '</td>' +
-                    '<td class="text-center"><span class="badge badge-primary-inverse">' + po.status + '</span></td>' +
-                    '<td>' + progress + '</td>' +
-                    '<td>' + expected + '</td>' +
-                    '<td class="text-right">' + currency + '&nbsp;' + (Number(po.grand_total) || 0).toFixed(2) + '</td>' +
+            var CHIP = {
+                ordered: 'hold', partial: 'hold', draft: 'hold',
+                received: 'paid', closed: 'paid',
+                cancelled: 'unpaid'
+            };
+            var LABEL = {
+                ordered: 'Ordered', partial: 'Partially received', draft: 'Draft',
+                received: 'Received', closed: 'Received', cancelled: 'Cancelled'
+            };
+            var html = shown.map(function (r, i) {
+                var open = r.kind === 'po'
+                    ? 'PosnicPro.purchaseorders.openView(\'' + r.id + '\');'
+                    : 'hasher.setHash(\'receivings/' + r.id + '\');';
+                return '<tr class="point-cursor" onclick="' + open + '">' +
+                    '<td>' + (i + 1) + '</td>' +
+                    '<td>' + esc(r.no) + '</td>' +
+                    '<td>' + esc((r.date || '').slice(0, 10)) + '</td>' +
+                    '<td>' + esc(r.supplier) + '</td>' +
+                    '<td class="text-center"><span class="rs-pill ' + (CHIP[r.status] || 'hold') + '">' + (LABEL[r.status] || esc(r.status)) + '</span></td>' +
+                    '<td>' + (r.progress || '-') + '</td>' +
+                    '<td>' + esc(r.expected || '-') + '</td>' +
+                    '<td class="text-right">' + currency + '&nbsp;' + (Number(r.total) || 0).toFixed(2) + '</td>' +
                     '</tr>';
             }).join('');
             $('#po_list_rows').html(html);
-            var paging = '';
-            for (var p = 1; p <= (d.total_pages || 1); p++) {
-                paging += '<a href="javascript:void(0)" class="btn btn-sm ' + (p === d.current_page ? 'btn-primary-rgba' : '') + '" onclick="PosnicPro.purchaseorders.loadList(' + p + ');">' + p + '</a> ';
-            }
-            $('#po_list_paging').html((d.total_pages || 1) > 1 ? paging : '');
-        }, function () {
-            $('#po_list_rows').html('<tr><td colspan="8" class="text-center text-danger">Could not load purchase orders.</td></tr>');
-        });
+            $('#po_list_paging').html(rows.length > want
+                ? '<a href="javascript:void(0)" class="btn btn-sm btn-secondary-rgba" onclick="PosnicPro.purchaseorders._listWindow += 20; PosnicPro.purchaseorders.loadList();">Show more</a>'
+                : '');
+        };
+        PosnicPro.get({ url: 'purchaseOrders', data: 'page=1&limit=' + want }, function (response) {
+            var list = ((response && response.data) || {}).list || [];
+            done.po = list.map(function (po) {
+                var pct = po.ordered_qty > 0 ? Math.min(100, Math.round(po.received_qty * 100 / po.ordered_qty)) : 0;
+                return {
+                    kind: 'po', id: po.id, no: po.po_id,
+                    date: String(po.order_date || ''),
+                    supplier: po.supplier_name, status: po.status,
+                    progress: '<div class="progress" style="height:6px;"><div class="progress-bar" style="width:' + pct + '%;"></div></div>' +
+                        '<small class="text-muted">' + po.received_qty + ' of ' + po.ordered_qty + '</small>',
+                    expected: po.expected_date ? String(po.expected_date).slice(0, 10) : '',
+                    total: po.grand_total
+                };
+            });
+            render();
+        }, function () { done.po = []; render(); });
+        PosnicPro.get({ url: 'receivings', data: { page: 1, limit: want } }, function (response) {
+            var list = ((response && response.data) || {}).list || [];
+            done.rec = list.map(function (r) {
+                return {
+                    kind: 'purchase', id: r._id, no: r.receiving_id,
+                    date: String(r.date || r.updated_date || ''),
+                    supplier: r.supplier_name,
+                    status: r.receiving_status === 'Open' ? 'ordered'
+                        : r.receiving_status === 'Received' ? 'received'
+                        : String(r.receiving_status || '').toLowerCase(),
+                    progress: '',
+                    expected: r.expected_date ? String(r.expected_date).slice(0, 10) : '',
+                    total: r.total_amount
+                };
+            });
+            render();
+        }, function () { done.rec = []; render(); });
     },
     backToList: function () {
         $('#po_form_section,#po_view_section,#po_receive_section').hide();

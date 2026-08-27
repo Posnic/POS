@@ -17,10 +17,7 @@
                         class="btn btn-primary-rgba" data-toggle="tooltip" title="Receive stock into inventory">
                         <i class="feather icon-plus mr-1"></i><lang class="lang_newpurchase_title">New Purchase</lang>
                     </a>
-                    <a data-module="receiving" data-access="read" href="#/receivings"
-                        class="btn btn-primary-rgba ml-2" data-toggle="tooltip" title="Every purchase received, with filters">
-                        <i class="feather icon-clock mr-1"></i><lang class="lang_purchasehistory_title">Purchase History</lang>
-                    </a>
+
                 </div>
             </div>
         </div>
@@ -31,22 +28,24 @@
         <div id="po_list_section">
             <div class="card m-b-30">
                 <div class="card-body">
+                    <!-- ONE list (owner: "why everything two... keep one").
+                         Orders and received purchases together, newest first;
+                         New Purchase in the page header is the only door. -->
                     <div class="form-row align-items-end mb-2">
-                        <div class="form-group col-auto mb-2">
-                            <button type="button" class="btn btn-primary-rgba" data-module="receiving" data-access="write"
-                                onclick="PosnicPro.purchaseorders.openForm('');">
-                                <i class="feather icon-plus mr-1"></i><lang class="lang_po_add">Add purchase order</lang>
-                            </button>
-                        </div>
                         <div class="form-group col-md-3 col-6 mb-2">
-                            <select class="form-control" id="po_filter_status" onchange="PosnicPro.purchaseorders.loadList(1);" aria-label="Po filter status">
-                                <option value="">All statuses</option>
-                                <option value="draft">Draft</option>
+                            <select class="form-control" id="po_filter_status" onchange="PosnicPro.purchaseorders.loadList(1);" aria-label="Filter purchases by status">
+                                <option value="">All purchases</option>
                                 <option value="ordered">Ordered</option>
                                 <option value="partial">Partially received</option>
+                                <option value="received">Received</option>
                                 <option value="closed">Closed</option>
                                 <option value="cancelled">Cancelled</option>
                             </select>
+                        </div>
+                        <div class="form-group col text-right mb-2">
+                            <a data-module="receiving" data-access="read" href="#/receivings" class="text-muted" style="font-size:13px;">
+                                <i class="feather icon-filter mr-1"></i><lang class="lang_purchase_archive">Filtered archive</lang>
+                            </a>
                         </div>
                     </div>
                     <div style="overflow-x:auto;">
@@ -54,7 +53,7 @@
                             <thead>
                                 <tr>
                                     <th>#</th>
-                                    <th><lang class="lang_po_num">PO</lang></th>
+                                    <th><lang class="lang_po_num">No</lang></th>
                                     <th><lang class="lang_date_title">Date</lang></th>
                                     <th><lang class="lang_supplier_title">Supplier</lang></th>
                                     <th class="text-center"><lang class="lang_status_title">Status</lang></th>

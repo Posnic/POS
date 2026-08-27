@@ -1990,6 +1990,12 @@ receivingSchema.statics.receivingInsertUpdate = async function (data, id) {
      * is recorded and shown, never blocked - the goods are already in the
      * shop, and a visible flag beats a save that refuses (owner's call).
      */
+    /* The order's promised delivery date - the purchase-order module's one
+       field worth keeping when the two doors became one. Presence-gated. */
+    if (data.expected_date !== undefined) {
+      const expected = String(data.expected_date || '').trim();
+      updateData.expected_date = expected ? new Date(expected) : null;
+    }
     if (data.itc_eligible !== undefined) {
       updateData.itc_eligible =
         data.itc_eligible === true || data.itc_eligible === 'true' || data.itc_eligible === 'on';
