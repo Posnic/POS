@@ -6135,7 +6135,13 @@ class SalesRepository {
           .toArray(),
         receivingsCollection
           .aggregate([
-            { $match: { ...scope, itc_eligible: { $ne: false } } },
+            {
+              $match: {
+                ...scope,
+                itc_eligible: { $ne: false },
+                receiving_status: { $ne: 'Cancelled' },
+              },
+            },
             { $unwind: '$items' },
             { $group: { _id: monthKey, ...headSums } },
           ])
@@ -6209,6 +6215,7 @@ class SalesRepository {
           {
             $project: {
               receiving_id: 1,
+              receiving_status: 1,
               date: 1,
               supplier_name: 1,
               supplier_gst_number: 1,

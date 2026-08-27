@@ -174,6 +174,29 @@ class ReceivingsController extends BaseController {
     }
   }
 
+  /*
+   * Void a purchase (G8): delete-level permission, reason mandatory,
+   * record kept, stock reversed, credit withdrawn. Never a delete.
+   */
+  async void(req, res) {
+    try {
+      if (!this.checkPermission('receiving', 'delete', req.user)) {
+        return this.error(res, 'Unauthorized - voiding needs delete access', 403);
+      }
+      await this.ensureContext(req);
+      const reason = String(req.body?.reason || '').trim();
+      if (!reason) {
+        return this.error(res, 'A reason is required to void a purchase', 400);
+      }
+      const result = await Receiving.voidReceiving(req.params.id, reason, {});
+      if (result.status === true) return this.success(res, null, result.message);
+      return this.error(res, result.message || 'Could not void this purchase', 400);
+    } catch (error) {
+      console.error('Error in void:', error);
+      return this.error(res, error.message, 500);
+    }
+  }
+
   /**
    * PHP: edit()
    * Update an existing receiving order

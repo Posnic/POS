@@ -143,6 +143,8 @@ router.get(
 );
 
 // Legacy bulk delete endpoint used by frontend: DELETE /receivings/delete
+// G8: void keeps the record, reverses stock, withdraws the credit
+router.post('/:id/void', bindController(receivingsController.void));
 router.delete('/delete', bindController(receivingsController.delete));
 
 // GET /api/receivings/:id - Single receiving
