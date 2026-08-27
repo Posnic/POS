@@ -171,3 +171,6 @@ test-install.sh
 *.clean.js
 *-refactored.controller.js
 
+
+# local dev database + machine-only secrets (never committed)
+.local-db/

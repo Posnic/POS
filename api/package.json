@@ -25,7 +25,8 @@
     "test:api": "node scripts/test-local.js tests/api --forceExit --runInBand",
     "audit:money": "node scripts/audit-money.js",
     "test:all": "jest --detectOpenHandles --forceExit",
-    "test:coverage:all": "jest --coverage --detectOpenHandles --forceExit"
+    "test:coverage:all": "jest --coverage --detectOpenHandles --forceExit",
+    "local": "node scripts/local-dev.js"
   },
   "keywords": [
     "posnic",
@@ -90,6 +91,7 @@
     "glob": "^13.0.6",
     "globals": "^17.11.0",
     "jest": "^30.4.2",
+    "mongodb-memory-server": "^11.2.0",
     "nodemon": "^3.1.14",
     "prettier": "^3.9.6",
     "swagger-ui-express": "^5.0.1"

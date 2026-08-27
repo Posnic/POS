@@ -10,6 +10,11 @@ const {
   SUCCESS_MESSAGES,
   ERROR_MESSAGES,
 } = require('../constants/items.constants');
+
+/* One definition of "not deleted", shared by every item query. It used to
+   live inside a single method, which is how the purchase picker ended up
+   without it. */
+const NOT_DELETED = Object.freeze({ del_status: { $nin: [1, '1', true] } });
 const { ObjectId } = require('mongodb');
 const { formatDate } = require('../utils/helpers');
 const StockLogsRepository = require('./stock-log.repository');
@@ -86,7 +91,6 @@ class ItemRepository extends BaseModel {
   }
 
   static withoutTombstones(coll) {
-    const NOT_DELETED = { del_status: { $nin: [1, '1', true] } };
     const merge = (f) => {
       if (!f || typeof f !== 'object' || Array.isArray(f)) return { ...NOT_DELETED };
       /* A filter already using $or at the top level (the branch filters do)
@@ -2873,6 +2877,12 @@ class ItemRepository extends BaseModel {
         { 'branch_access.branch_id': new ObjectId(String(branchId)) },
         { item_status: { $ne: ITEM_STATUS.INSTANT } },
         { supplier_id: new ObjectId(String(supplierId)) },
+        /* A deleted product is not purchasable. Every other item query
+           carries NOT_DELETED; this one did not, so the purchase picker
+           happily offered items the catalogue had already removed - the
+           owner found it as "item list not showing but purchase shows
+           all items", which is the same fact seen from both ends. */
+        NOT_DELETED,
       ];
       if (licenseId && ObjectId.isValid(String(licenseId))) {
         conditions.push({ license: new ObjectId(String(licenseId)) });
