@@ -279,7 +279,9 @@ class SettingsRepository extends BaseModel {
           /* same string-boolean trap as the feature toggles */
           accepted[key] = coerceFeatureToggle(value);
         } else if (key === 'analytics_ga_id') {
-          const id = String(value == null ? '' : value).trim().toUpperCase();
+          const id = String(value == null ? '' : value)
+            .trim()
+            .toUpperCase();
           if (id !== '' && !require('../services/analytics-config').isPlausibleGaId(id)) {
             return {
               status: false,

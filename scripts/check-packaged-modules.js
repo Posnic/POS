@@ -37,8 +37,11 @@ function scan(rel) {
   const src = fs.readFileSync(abs, 'utf8');
 
   // require('./thing') and require('./dir/thing') - relative, so it is ours.
+  // Resolved against the REQUIRING file's directory: the shell lives in src/,
+  // so src/main.js requiring './ipc-guard' means src/ipc-guard.js.
   for (const m of src.matchAll(/require\(\s*['"](\.\/[A-Za-z0-9_./-]+)['"]\s*\)/g)) {
-    let target = m[1].replace(/^\.\//, '');
+    const dir = path.posix.dirname(rel.replace(/\\/g, '/'));
+    let target = path.posix.join(dir, m[1]);
     if (!/\.[a-z]+$/.test(target)) target += '.js';
     // extraResources cover files loaded by absolute path at runtime, not these.
     if (!includedSet.has(target) && !includedSet.has(target.replace(/\.js$/, ''))) {
@@ -54,7 +57,7 @@ ENTRIES.forEach(scan);
 if (missing.length) {
   console.error('\n[package] modules required at runtime but not in build.files:\n');
   for (const m of missing) {
-    console.error(`  ${m.from} requires ./${m.needs}` + (m.exists ? '' : '   (and the file does not exist)'));
+    console.error(`  ${m.from} requires ${m.needs}` + (m.exists ? '' : '   (and the file does not exist)'));
   }
   console.error('\nAdd them to "build" -> "files" in package.json, or the app will start');
   console.error('from source and fail on a customer machine with "Cannot find module".\n');
