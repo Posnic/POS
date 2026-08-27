@@ -5673,6 +5673,8 @@ tr.s-doc-purchase-row:hover td { background: rgba(9, 105, 218, 0.05); }
     display: flex; align-items: center; justify-content: space-between;
     font-size: 12.5px; padding: 0 4px 8px;
 }
+.s-doc-preview-actions { display: inline-flex; align-items: center; gap: 14px; }
+.s-preview-close { color: var(--theme-text-muted, #8b949e); }
 
 /* Attachment as one crisp chip. */
 .p-attach {
@@ -5721,9 +5723,22 @@ tr.s-doc-purchase-row:hover td { background: rgba(9, 105, 218, 0.05); }
 .purchases-split .p-col-created,
 .purchases-split .p-col-expected { display: none; }
 .p-col-progress { display: inline; }
-.purchases-split .u-quiet,
 .purchases-split .q-pg-num { display: none; }
-#purchases_detail_card { overflow: auto; }
+/* Panes scroll INSIDE, below their toolbar, so dropdown menus stay
+   unclipped and a long document's total is always reachable (owner: "not
+   able to scroll bottom"). Phones fall back to the page scroll. */
+#purchases_doc { display: flex; flex-direction: column; max-height: calc(100vh - 150px); }
+#purchases_doc .doc-scroll { overflow-y: auto; min-height: 0; }
+#suppliers_doc { display: flex; flex-direction: column; max-height: calc(100vh - 150px); }
+#suppliers_doc .s-doc-body { overflow-y: auto; min-height: 0; }
+@media (max-width: 767.98px) {
+    #purchases_doc, #suppliers_doc { max-height: none; display: block; }
+    #purchases_doc .doc-scroll, #suppliers_doc .s-doc-body { overflow: visible; }
+}
+/* No zebra anywhere on a standard list - rows are told apart by hairlines,
+   hover and selection, never by banding (owner: "no dark and light row"). */
+.md-rail-rows table tbody tr:nth-of-type(odd) > td,
+.md-rail-rows table tbody tr:nth-of-type(even) > td { background-color: transparent; }
 /* Hover highlight (owner rule): same treatment as quotes, theme-aware. */
 #po_list_rows tr.purchases-row:hover { background: var(--theme-table-row-hover, #eef3ff); }
 [data-theme] #po_list_rows tr.purchases-row:hover { background: var(--theme-table-row-hover); }

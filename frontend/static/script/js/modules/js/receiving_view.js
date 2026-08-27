@@ -1101,7 +1101,6 @@ PosnicPro.receivings.view = {
     },
     receivingPdf: function (id) {
         window.open(API_URL + 'receivings/receivingsPdf?id=' + id, "_blank");
-        hasher.setHash('purchaseorders');
     },
     /* Loyverse study L2: the same PDF, mailed to the supplier. Leave the
        address empty to use the supplier's saved email - the server owns

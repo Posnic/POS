@@ -2232,6 +2232,11 @@ PosnicPro.purchaseorders = {
             + '<button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">More</button>'
             + '<div class="dropdown-menu dropdown-menu-right">'
             + '<a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.receivings.showPrint(\'' + esc(d._id) + '\'); return false;"><i class="feather icon-printer mr-2"></i>Print</a>'
+            + '<a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.receivings.view.receivingPdf(\'' + esc(d._id) + '\');"><i class="feather icon-file mr-2"></i>Download PDF</a>'
+            + '<a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.receivings.view.emailToSupplier(\'' + esc(d._id) + '\');"><i class="feather icon-mail mr-2"></i>Email supplier</a>'
+            + (!open && !cancelled
+                ? '<a class="dropdown-item" href="javascript:void(0)" onclick="hasher.setHash(\'receivings/' + esc(d._id) + '/return\');"><i class="feather icon-corner-up-left mr-2"></i>Return items</a>'
+                : '')
             + (!cancelled
                 ? '<div class="dropdown-divider"></div>'
                     + '<a class="dropdown-item text-danger" href="javascript:void(0)" onclick="PosnicPro.purchaseorders.voidPurchase(\'' + esc(d._id) + '\',\'' + esc(d.receiving_id) + '\');"><i class="feather icon-slash mr-2"></i>Void</a>'
@@ -2264,7 +2269,7 @@ PosnicPro.purchaseorders = {
             + '</div>';
         var sheet = PosnicPro.purchaseorders.buildPurchaseSheet(d);
         var receiveStrip = '<div class="p-receive-strip" id="p_receive_strip" style="display:none;"></div>';
-        $('#purchases_doc').html(toolbar + voidStrip + receiveStrip + sheet);
+        $('#purchases_doc').html(toolbar + voidStrip + receiveStrip + '<div class="doc-scroll">' + sheet + '</div>');
     },
     /* Void asks its reason inline, in the pane - no native prompt. */
     /* ---- Partial receiving (owner: "received 5 items but remaining will
