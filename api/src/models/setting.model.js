@@ -3351,14 +3351,32 @@ class SettingModel extends BaseModel {
       });
       const taxProfiles = require('../services/tax-profiles');
       const { code, profile } = taxProfiles.profileForBranch(branch || {});
+      /* The regime rides along so the Tax Configuration page can say which
+         family the shop lives in without a second request; the shop's own
+         override (the tax settings group) is applied by resolveRegime. */
+      const { resolveRegime } = require('../services/tax-regime');
+      let taxGroup = {};
+      try {
+        const SettingsRepository = require('../repositories/settings.repository');
+        const r = await new SettingsRepository().resolveGroup('tax', {
+          licenseId: this.licenseId,
+          branchId: this.branchId,
+        });
+        if (r && r.status && r.data && r.data.values) taxGroup = r.data.values;
+      } catch (e) {
+        /* decisions unavailable -> profile alone answers */
+      }
+      const { regime } = resolveRegime(branch || {}, taxGroup);
       return {
         status: true,
         data: {
           code,
+          regime,
           label: profile.label,
           registration: profile.registration,
           components: { mode: profile.components.mode },
           display: profile.display,
+          decisions: taxGroup,
         },
         message: 'success',
       };

@@ -984,6 +984,81 @@
                                         <div class="col-lg-9">
                                             <div class="tab-content">
                                                 <div class="tab-pane fade show active" id="tax-sub-general" role="tabpanel">
+<!-- Tax System (PURCHASE_TAX_PLAN G6): the regime the shop lives under and
+     the decisions it makes inside it. Country knowledge comes from the tax
+     profile; only the decisions below are stored, in the tax settings group. -->
+<div class="card m-b-30" id="tax_system_card">
+                                <div class="card-header d-flex align-items-center justify-content-between">
+                                    <h5 class="card-title mb-0"><lang class="lang_taxsystem_title">Tax System</lang></h5>
+                                    <span class="badge badge-light" id="tax_system_summary" style="font-size:12px;"></span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-row">
+                                        <div class="form-group col-md-6">
+                                            <label for="tax_regime_override" class="label-text-color">
+                                                <lang class="lang_taxsystem_regime">Tax system</lang>
+                                            </label>
+                                            <select id="tax_regime_override" class="form-control border-control"
+                                                onchange="PosnicPro.settings.taxSystemRegimeChanged();">
+                                                <option value="">Automatic (from country)</option>
+                                                <option value="vat_credit">VAT / GST — credit method</option>
+                                                <option value="sales_tax">Sales tax (no input credit)</option>
+                                                <option value="none">No consumption tax</option>
+                                            </select>
+                                            <small class="text-muted"><lang class="lang_taxsystem_regime_help">Automatic follows the shop's country. Override only if your registration differs.</lang></small>
+                                        </div>
+                                    </div>
+                                    <div id="tax_system_india" style="display:none;">
+                                        <div class="form-row">
+                                            <div class="form-group col-md-6">
+                                                <label for="india_gst_type" class="label-text-color">
+                                                    <lang class="lang_taxsystem_gsttype">GST registration type</lang>
+                                                </label>
+                                                <select id="india_gst_type" class="form-control border-control"
+                                                    onchange="PosnicPro.settings.taxSystemRegimeChanged();">
+                                                    <option value="regular">Regular</option>
+                                                    <option value="composition">Composition scheme</option>
+                                                    <option value="unregistered">Unregistered</option>
+                                                </select>
+                                                <small class="text-muted" id="india_gst_type_note"></small>
+                                            </div>
+                                            <div class="form-group col-md-6">
+                                                <label class="label-text-color d-block">
+                                                    <lang class="lang_taxsystem_turnover">Annual turnover</lang>
+                                                </label>
+                                                <label class="label-text-color" style="font-weight:normal;">
+                                                    <input type="checkbox" id="india_turnover_above_5cr"
+                                                        onchange="PosnicPro.settings.taxSystemRegimeChanged();" />
+                                                    <lang class="lang_taxsystem_5cr">Above ₹5 crore</lang>
+                                                </label>
+                                                <small class="text-muted d-block" id="india_5cr_note"></small>
+                                                <label class="label-text-color mt-2" style="font-weight:normal;" id="india_qrmp_row">
+                                                    <input type="checkbox" id="india_qrmp" />
+                                                    <lang class="lang_taxsystem_qrmp">QRMP — file quarterly</lang>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div id="tax_system_us" style="display:none;">
+                                        <div class="form-row">
+                                            <div class="form-group col-md-6">
+                                                <label for="us_resale_certificate" class="label-text-color">
+                                                    <lang class="lang_taxsystem_resale">Resale certificate number</lang>
+                                                </label>
+                                                <input type="text" id="us_resale_certificate" maxlength="40"
+                                                    class="form-control border-control" placeholder="Shown on purchase records" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <button type="button" class="btn btn-outline-primary btn-sm"
+                                            onclick="PosnicPro.settings.taxSystemSave();"><i
+                                                class="feather icon-save mr-1"></i>
+                                            <lang class="lang_save_title">Save</lang>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
 <div class="card m-b-30">
                                 <div class="card-header">
                                     <h5 class="card-title mb-0"><lang class="lang_taxdefaults_title">Tax Defaults</lang></h5>
