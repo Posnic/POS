@@ -2091,11 +2091,30 @@ receivingSchema.statics.receivingInsertUpdate = async function (data, id) {
       updateData.itc_eligible =
         data.itc_eligible === true || data.itc_eligible === 'true' || data.itc_eligible === 'on';
     }
+    /* Additional charges (freight, loading ...) ride on the purchase
+       TOTAL - never on item cost, never on the tax heads, so Tax Payable
+       and per-line costing stay untouched. Presence-gated like the rest:
+       a door that does not send them changes nothing. */
+    let chargesTotal = 0;
+    if (data.additional_charges !== undefined) {
+      const cleaned = (Array.isArray(data.additional_charges) ? data.additional_charges : [])
+        .map((c) => ({
+          label: String((c && c.label) || '').trim(),
+          amount: Math.round((parseFloat(c && c.amount) || 0) * 100) / 100,
+        }))
+        .filter((c) => c.amount > 0 || c.label);
+      chargesTotal = cleaned.reduce((sum, c) => sum + c.amount, 0);
+      updateData.additional_charges = cleaned;
+      updateData.additional_charges_total = Math.round(chargesTotal * 100) / 100;
+      updateData.total_amount = parseFloat((receivingTotalAmount + chargesTotal).toFixed(2));
+    }
     if (data.invoice_total_declared !== undefined && String(data.invoice_total_declared) !== '') {
       const declared = parseFloat(data.invoice_total_declared);
       if (!Number.isNaN(declared)) {
+        /* The supplier's printed total includes the charges. */
         const computedGrand =
           parseFloat(receivingTotalAmount) +
+          chargesTotal +
           ((data.exclusive_tax || '').trim() === 'on'
             ? Math.round(receivingTaxAmount * 100) / 100
             : 0);

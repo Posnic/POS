@@ -358,20 +358,18 @@ test('Save changes stays hidden until something is actually edited', () => {
   assert.ok(reveal.includes("$('#q_save_edits').show()"), 'editing must reveal it');
 });
 
-test('New sits beside Filter in the control row (LIST_PAGE_UX_STANDARD)', () => {
+test('New sits in the page header like every other list screen', () => {
   assert.ok(
     !/New quotation<\/button>/.test(quotesHtml),
     'the green block inside the list is what the owner objected to',
   );
-  /* The owner's list-page standard (2026-08-27) moved New out of the
-     header: it lives in the list card's control row, right of Filter. */
-  const controls = quotesHtml.slice(
-    quotesHtml.indexOf('id="quotes_controls"'),
-    quotesHtml.indexOf('id="quotes_filter_panel"'),
+  const bar = quotesHtml.slice(
+    quotesHtml.indexOf('<div class="breadcrumbbar">'),
+    quotesHtml.indexOf('<div class="contentbar">'),
   );
-  assert.ok(controls.includes('quotes/new'), 'New belongs in the control row');
+  assert.ok(bar.includes('widgetbar'), 'it belongs in the header widgetbar');
   assert.ok(
-    controls.includes('btn-primary-rgba'),
+    bar.includes('btn-primary-rgba'),
     'and takes the same class as Customers and Items, not a one-off green',
   );
 });
@@ -499,7 +497,11 @@ test('the selection is drawn in ink, not in the accent colour', () => {
         `${tooDark} overshot - the selection needs to be more than its neighbours, not dark`,
       );
     }
-    assert.match(line, /#c9d1d9/i, 'a hair above the ordinary border, nothing more');
+    /* 2026-08-27, the owner again: "instead black border to highlight try
+       same as github border stuff. same border as rightside border." So the
+       selection frame is now EXACTLY the split's own #d0d7de - the white
+       ground and the weight carry the selection; the frame whispers. */
+    assert.match(line, /#d0d7de/i, 'the same grey as the split border, nothing darker');
   }
 });
 
@@ -713,26 +715,22 @@ test('it is loaded by the build, after PosnicPro and before the modules', () => 
   assert.ok(lf < sales, 'and before the module that mounts it');
 });
 
-test('the controls live at the top of the list card, Filter first (LIST_PAGE_UX_STANDARD)', () => {
-  /* The bar used to sit on the header line; the owner's list-page standard
-     (2026-08-27) moved it: Filter is a toggle at the TOP LEFT of the list
-     card, New sits beside it, and the strip expands below them. */
+test('the whole bar lives on the header line, between title and buttons', () => {
   const html = fs.readFileSync(path.join(ROOT, 'frontend', 'modules', 'quotes.html'), 'utf8');
   const header = html.slice(html.indexOf('<div class="breadcrumbbar">'), html.indexOf('<div class="contentbar">'));
-  const card = html.slice(html.indexOf('<div class="contentbar">'));
 
-  assert.ok(!header.includes('quotes_filter_btn'), 'the Filter button left the header');
-  assert.ok(!header.includes('quotes_filter_panel'), 'and so did the panel it opens');
-  assert.ok(card.includes('md-controls'), 'the list card opens with the shared control row');
-  assert.ok(card.includes('quotes_filter_btn'), 'Filter lives in the control row');
-  assert.ok(card.indexOf('quotes_filter_btn') < card.indexOf('quotes/new'), 'Filter before New');
+  assert.ok(header.includes('quotes_filter_btn'), 'the Filter button belongs in the header');
+  assert.ok(header.includes('quotes_filter_panel'), 'and so does the panel it opens');
+  assert.ok(header.indexOf('quotes_filter_btn') < header.indexOf('quotes/new'), 'Filter before New');
+
+  // title, then the panel, then the buttons - in that order on one line
   assert.ok(
-    card.indexOf('quotes/new') < card.indexOf('quotes_filter_panel'),
-    'the strip expands below the control row',
+    header.indexOf('lang_quotes_title') < header.indexOf('quotes_filter_panel'),
+    'the panel goes after the title',
   );
   assert.ok(
-    card.indexOf('quotes_filter_panel') < card.indexOf('quotes_filter_chips'),
-    'and above the status chips',
+    header.indexOf('quotes_filter_panel') < header.indexOf('quotes_filter_btn'),
+    'and before the buttons',
   );
 
   const panel = html.slice(html.indexOf('id="quotes_filter_panel"'));
