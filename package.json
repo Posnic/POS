@@ -472,7 +472,8 @@
       "artifactName": "${productName}-${version}-windows-x64-portable.${ext}"
     },
     "dmg": {
-      "artifactName": "${productName}-${version}-macos-${arch}.${ext}"
+      "artifactName": "${productName}-${version}-macos-${arch}.${ext}",
+      "sign": true
     },
     "appImage": {
       "artifactName": "${productName}-${version}-linux-${arch}.${ext}"
