@@ -90,6 +90,13 @@ jobs:
           - { os: macos-latest,   name: macOS,   flag: '--mac' }
           - { os: ubuntu-latest,  name: Linux,   flag: '--linux --x64' }
     runs-on: ${{ matrix.os }}
+    # secrets cannot appear in step-level `if:` expressions (GitHub refuses
+    # the whole file, silently, as a 0-second startup failure) - so their
+    # PRESENCE is computed here, where secrets are legal, and the steps
+    # branch on these strings instead.
+    env:
+      HAVE_MAC_CERT: ${{ secrets.MAC_CERT_P12 != '' }}
+      HAVE_NOTARY: ${{ secrets.ASC_API_KEY_P8 != '' }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -202,7 +209,7 @@ jobs:
       # Windows key (hardware card, desk only), Apple credentials are files,
       # so CI is the right place for them.
       - name: Stage Apple notarization credentials
-        if: matrix.name == 'macOS' && secrets.ASC_API_KEY_P8 != ''
+        if: matrix.name == 'macOS' && env.HAVE_NOTARY == 'true'
         env:
           ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
         run: |
@@ -215,7 +222,7 @@ jobs:
       - name: Build
         run: >
           npx electron-builder ${{ matrix.flag }} --publish never
-          ${{ matrix.name == 'macOS' && secrets.ASC_API_KEY_P8 != '' && '--config.mac.notarize=true' || '' }}
+          ${{ matrix.name == 'macOS' && env.HAVE_NOTARY == 'true' && '--config.mac.notarize=true' || '' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_LINK: ${{ matrix.name == 'macOS' && secrets.MAC_CERT_P12 || '' }}
@@ -227,9 +234,7 @@ jobs:
       # credentials exist - the same promise scripts/release-windows.js makes
       # for the exe: signed and accepted by the OS's own assessor, or no build.
       - name: Verify macOS signature and notarization
-        if: matrix.name == 'macOS' && secrets.MAC_CERT_P12 != ''
-        env:
-          HAVE_NOTARY: ${{ secrets.ASC_API_KEY_P8 != '' }}
+        if: matrix.name == 'macOS' && env.HAVE_MAC_CERT == 'true'
         run: |
           set -euo pipefail
           APP=$(find dist/mac* -maxdepth 1 -name '*.app' | head -1)
@@ -245,7 +250,7 @@ jobs:
           fi
 
       - name: Warn when the macOS build ships unsigned
-        if: matrix.name == 'macOS' && secrets.MAC_CERT_P12 == ''
+        if: matrix.name == 'macOS' && env.HAVE_MAC_CERT != 'true'
         run: echo "::warning::macOS build is UNSIGNED - Apple secrets (MAC_CERT_P12 etc.) are not configured yet. See RELEASE_TRUST_PLAN.md §3."
 
       # The clean-Windows runtime check moved to scripts/release-windows.js
