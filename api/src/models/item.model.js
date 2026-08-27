@@ -44,6 +44,18 @@ const itemSchema = new mongoose.Schema(
 itemSchema.plugin(toJSON);
 itemSchema.plugin(paginate);
 
+/*
+ * The Item List's whitelisted sorts (price, cost, stock, recency, name) each
+ * walk one of these; without them every re-sort scans the branch's whole
+ * catalogue. Margin sort is computed per query and cannot use an index -
+ * that one is documented as a scan in item.repository.findPage.
+ */
+itemSchema.index({ license: 1, branch_id: 1, selling_price: -1 });
+itemSchema.index({ license: 1, branch_id: 1, company_price: -1 });
+itemSchema.index({ license: 1, branch_id: 1, available_quantity: 1 });
+itemSchema.index({ license: 1, branch_id: 1, updated_date: -1 });
+itemSchema.index({ license: 1, branch_id: 1, name: 1 });
+
 const Item = defineModel('Item', itemSchema);
 
 // Attach the legacy BaseModel-based implementation so callers can import

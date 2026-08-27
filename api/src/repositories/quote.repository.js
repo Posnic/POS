@@ -410,6 +410,17 @@ class QuoteRepository extends BaseModel {
       { branch_id: 1, license: 1, created_date: -1 },
       { name: 'quote_list_by_branch' }
     );
+    /* The whitelisted sorts (high amount, valid-till) walk these. */
+    await ensureIndexOnce(
+      collection,
+      { branch_id: 1, license: 1, total: -1 },
+      { name: 'quote_list_by_total' }
+    );
+    await ensureIndexOnce(
+      collection,
+      { branch_id: 1, license: 1, valid_until: 1 },
+      { name: 'quote_list_by_valid_until' }
+    );
   }
 
   async listQuotes(params = {}, context = {}) {
@@ -494,18 +505,32 @@ class QuoteRepository extends BaseModel {
       let total = null;
       let rows;
 
+      /*
+       * Sort, whitelisted (owner: high amount, valid-till, date). Only
+       * these names reach the query - a raw client field would sort by
+       * anything on the document.
+       */
+      const QUOTE_SORTS = {
+        recent: { created_date: -1 },
+        total_desc: { total: -1, _id: -1 },
+        total_asc: { total: 1, _id: -1 },
+        valid_asc: { valid_until: 1, _id: -1 },
+        valid_desc: { valid_until: -1, _id: -1 },
+      };
+      const sort = QUOTE_SORTS[String(params.sort || '')] || { created_date: -1 };
+
       if (countable) {
         total = await collection.countDocuments(filter);
         rows = await collection
           .find(filter)
-          .sort({ created_date: -1 })
+          .sort(sort)
           .skip((page - 1) * limit)
           .limit(limit)
           .toArray();
       } else {
         rows = await collection
           .find(filter)
-          .sort({ created_date: -1 })
+          .sort(sort)
           .skip((page - 1) * limit)
           .limit(limit + 1)
           .toArray();

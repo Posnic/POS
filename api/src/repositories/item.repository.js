@@ -213,17 +213,55 @@ class ItemRepository extends BaseModel {
     const effectivePage = parseInt(page, 10) || 1;
     const skip = (effectivePage - 1) * effectiveLimit;
 
-    const [total, items] = await Promise.all([
-      collection.countDocuments(filter),
-      collection
+    /*
+     * Margin is COMPUTED (selling vs cost), so it cannot ride a find().sort()
+     * - the special { $margin: 1|-1 } marker switches to an aggregation that
+     * derives it per item. Items missing a selling price sort LAST in either
+     * direction: an uncomputable margin is not a low one, and surfacing it
+     * first would read as "these are your worst items" when nothing is known.
+     */
+    const marginDir = sort && sort.$margin;
+    let itemsPromise;
+    if (marginDir === 1 || marginDir === -1) {
+      itemsPromise = collection
+        .aggregate([
+          { $match: filter },
+          {
+            $addFields: {
+              _margin: {
+                $cond: [
+                  { $gt: [{ $ifNull: ['$selling_price', 0] }, 0] },
+                  {
+                    $divide: [
+                      {
+                        $subtract: ['$selling_price', { $ifNull: ['$company_price', 0] }],
+                      },
+                      '$selling_price',
+                    ],
+                  },
+                  marginDir === 1 ? Number.MAX_SAFE_INTEGER : -Number.MAX_SAFE_INTEGER,
+                ],
+              },
+            },
+          },
+          { $sort: { _margin: marginDir, _id: -1 } },
+          { $skip: skip },
+          { $limit: effectiveLimit },
+          { $project: BaseModel.getSelectFields(LegacyItemModel.fields) },
+        ])
+        .toArray();
+    } else {
+      itemsPromise = collection
         .find(filter, {
           projection: BaseModel.getSelectFields(LegacyItemModel.fields),
         })
         .sort(sort)
         .skip(skip)
         .limit(effectiveLimit)
-        .toArray(),
-    ]);
+        .toArray();
+    }
+
+    const [total, items] = await Promise.all([collection.countDocuments(filter), itemsPromise]);
 
     const list = items.map((doc) => BaseModel.simplifyFields(doc));
 
