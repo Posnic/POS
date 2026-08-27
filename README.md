@@ -29,6 +29,14 @@ before making a package-level licence statement.
 
 ### [⬇ Download for Windows](https://github.com/Posnic/POS/releases/latest) · [macOS](https://github.com/Posnic/POS/releases/latest) · [Linux](https://github.com/Posnic/POS/releases/latest)
 
+### [▶ Try the live demo](https://demo.posnic.io) — nothing to install, resets on the hour
+
+Log in as `admin` / `admin`, `manager` / `manager` or `cashier` / `cashier` —
+the login page has one-tap buttons for all three. It is a real supermarket
+shop with a week of sample trading, running the same code as this repository;
+ring up sales, break things freely, and the whole shop is restored on the
+hour. Outbound email, SMS and password changes are switched off there.
+
 [Website](https://posnic.com/) · [Verified product facts](https://posnic.com/posnic-facts) · [Package evidence](https://posnic.com/assets/posnic-package-license-evidence.json) · [CodeMeta metadata](codemeta.json) · [Citation metadata](CITATION.cff) · [Roadmap](ROADMAP.md) · [User guide](docs/USER_GUIDE.md) · [Developer guide](docs/DEVELOPMENT.md) · [Architecture](docs/ARCHITECTURE.md) · [API](docs/API.md) · [Discussions](https://github.com/Posnic/POS/discussions)
 
 </div>

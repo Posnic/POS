@@ -55,6 +55,9 @@ test('the desktop-app pitch is an inline card below the form, never a wall', () 
   assert.match(block, /insertAdjacentElement\('afterend'/);
   assert.ok(!/position:fixed|inset:0/.test(block), 'the app pitch blocks the view again');
   assert.ok(!login.includes('appNudge'), 'the old blocking appNudge modal is back');
+  /* owner: every WEB login carries it; the desktop shell alone skips it */
+  assert.match(block, /Electron.*return/);
+  assert.ok(!/posnic\.io.*\.test\(location\.hostname\)/.test(block), 'the card is hostname-gated again - it belongs on every web login');
 });
 
 test('the signup nudge fires once per browser and sells the no-commitment path', () => {
