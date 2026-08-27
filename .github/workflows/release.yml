@@ -235,13 +235,23 @@ jobs:
       # for the exe: signed and accepted by the OS's own assessor, or no build.
       - name: Verify macOS signature and notarization
         if: matrix.name == 'macOS' && env.HAVE_MAC_CERT == 'true'
+        env:
+          APPLE_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+          APPLE_API_ISSUER: ${{ secrets.ASC_API_ISSUER }}
         run: |
           set -euo pipefail
           APP=$(find dist/mac* -maxdepth 1 -name '*.app' | head -1)
           codesign --verify --deep --strict --verbose=2 "$APP"
           if [ "$HAVE_NOTARY" = "true" ]; then
             spctl -a -vv "$APP"
+            # electron-builder notarizes the APP while packing - the dmg is
+            # born afterwards, signed but ticketless, and Gatekeeper's
+            # assessment of the container then says "Unnotarized Developer
+            # ID". The container earns its own ticket here, stapled so an
+            # offline install verifies too.
             for DMG in dist/*.dmg; do
+              xcrun notarytool submit "$DMG" --key "$APPLE_API_KEY"                 --key-id "$APPLE_API_KEY_ID" --issuer "$APPLE_API_ISSUER" --wait
+              xcrun stapler staple "$DMG"
               spctl -a -t open -vv --context context:primary-signature "$DMG"
             done
             echo "macOS artifacts are signed, notarized and Gatekeeper-approved"
