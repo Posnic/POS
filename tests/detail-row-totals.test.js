@@ -95,16 +95,16 @@ test('the money-path lists are card-ready on phones (Mobile P2)', () => {
   /* customers.html moved to the master-detail standard 2026-08-27. */
   /* items.html moved to the master-detail standard 2026-08-27. */
   /* sales_read.html moved to the master-detail standard 2026-08-27. */
+  /* stockactivity.html + variants.html moved to the list standard 2026-08-27 -
+     phones get the column-shedding rules, not m-cards. */
   for (const f of [
-    /* P3 slice 2 */ 'users.html', 'kothistory.html', 'stockactivity.html', 'variants.html', 'settings_write.html']) {
+    /* P3 slice 2 */ 'users.html', 'kothistory.html', 'settings_write.html']) {
     assert.match(mod(f), /table-borderless m-cards/, f + ' lost its m-cards opt-in');
   }
   for (const [f, label] of [
     /* P3 slice 2 */
     ['users.js', 'data-label="Role"'],
     ['kothistory.js', 'data-label="Order type"'],
-    ['stocklog.js', 'data-label="Closing"'],
-    ['variants.js', 'data-label="Name"'],
     ['expenses.js', 'data-label="Approved by"'],
     /* P3 slice 3: the detail-view sales histories (the sale_process family) */
     ['customers.js', 'data-label="Return total"'],

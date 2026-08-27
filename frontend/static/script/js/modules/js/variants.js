@@ -40,108 +40,128 @@ PosnicPro.variants = {
         PosnicPro.showViewModal('variants');
         PosnicPro.variants.viewVariant(id);
     },
+    /* The name the OLD table machinery answered to - the save flow and the
+       shared clearListFilters/refresh doors still call it. */
     variantsTable: function () {
-        var loader = $(".loader-table-variant");
-        $("<div class='loadingSpinner'></div>").appendTo(loader);
-        PosnicPro.appendViewDataTableBody('variants');
-        var table = $('#view_variants');
-        var params = {
-            url: 'variants',
-            data: {
-                page: table.data('current_page'),
-                limit: parseInt($('#view_variants_per_page  option:selected').text()),
-                filters: table.data('filters')
-            }
-        };
-        PosnicPro.get(params, function (response) {
-            if (response.type === 'success') {
-                table.data('total', response.data.total);
-                table.data('total_pages', response.data.total_pages);
-                table.data('current_page', response.data.current_page);
-                table.data('per_page', response.data.per_page);
-                PosnicPro.paging(response.data.total_pages, response.data.current_page);
-                table.children('tbody').text('');
-                $('#view_variants_total').text(response.data.total);
-                var rowTotal = response.data.total;
-                if (rowTotal === 0) {
-                    $('.variant_header').hide();
-                    let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
-                    $('.variant_norecord').empty().append('<div class="text-center text-dark"> <p>No Records on ' + dateRange + '</p></div>');
-                    $('#variant_img_hide,.variant_norecord').show();
-
-                } else {
-                    $('.category_norecord').empty();
-                    $('#variant_img_hide,.variant_norecord').hide();
-                    $('.variant_header').show();
-                }
-
-                var row_total = (table.data('current_page') - 1) * table.data('per_page') + 1;
-                $('#view_variants_page_total').text(row_total);
-                var page_totals = (table.data('current_page') - 1) * table.data('per_page');
-                $('#view_variants_page_perpage_total').text(page_totals + response.data.list.length);
-
-                for (var i = 0; i < response.data.list.length; i++) {
-                    var row = response.data.list[i];
-                    var row_no = (table.data('current_page') - 1) * table.data('per_page') + i + 1;
-
-                    var action = '<div id="onclick-toolbar-options_' + i + '" class="hidden">' +
-                            '<a data-module = "item" data-access = "read" href="#/variants/' + row._id + '" data-id="variants/' + row._id + '"  data-toggle="tooltip" title="View Variant" class="point-cursor mobile_tooltip"><i class="feather icon-eye"></i></a>' +
-                            '<a data-module = "item" data-access = "write" href="#/variants/' + row._id + '/edit" data-id="variants/' + row._id + '/edit"  data-toggle="tooltip" title="Edit Variant" class="point-cursor mobile_tooltip"><i class="feather icon-edit"></i></a>' +
-                            '<a data-module = "item" data-access = "delete" href="#/variants/' + row._id + '/delete" data-id="variants/' + row._id + '/delete" data-toggle="tooltip" title="Delete Variant" class="point-cursor mobile_tooltip"><i class="feather icon-trash"></i></a>' +
-                            '</div>' +
-                            '<div data-toolbar="user-options" class="btn btn-round btn-primary-rgba round-pad" id="onclick-toolbar_' + i + '"><i class="feather icon-more-vertical-"></i></div>';
-
-                    var trow = '<tr id="variantbgcolor_' + row._id + '" class="variantcheckbox">' +
-                            '<th><input type="checkbox" class="variants-row-id variantcheck_' + row._id + '" id="' + row._id + '" name="id[]" value="' + row._id + '" onclick="PosnicPro.checkboxSelectOne(this,\'variants\');"></th> <th scope="row" data-label="#">' + row_no + '</th>' +
-                            '<td width="30%" data-label="Name">' + row.name + '</td>' +
-                            '<td class="text-center"><span>' + action + '</span></td>' +
-                            '</tr>';
-
-                    $('#view_variants').children('tbody').append(trow);
-                }
-                $(document).ready(function () {
-                    for (var i = 0; i < response.data.list.length; i++) {
-                        $('#onclick-toolbar_' + i).toolbar({
-                            content: '#onclick-toolbar-options_' + i,
-                            event: 'click',
-                            style: 'primary',
-                            hideOnClick: true
-                        });
-                        $('#onclick-toolbar_' + i).on('toolbarItemClick', function (event, element) {
-                            hasher.setHash($(element).data('id'));
-                            $(this).trigger('click');
-                            $('.mobile_tooltip').tooltip('hide');
-                        });
-                    }
-                });
-                PosnicPro.setSelectedCheckbox(PosnicPro["variants_checkbox"], 'variants');
-                PosnicPro.ACLForModule('item');
-                loader.find(".loadingSpinner:first").remove();
-            } else {
-                PosnicPro.alert(response.type, response.message);
-            }
-        }, function (xhr) {
-            var response = jQuery.parseJSON(xhr.responseText);
-            PosnicPro.alert(response.type, response.message);
-        });
+        PosnicPro.variants.loadList(1);
     },
-    showDataTablePage: function () {
-        var loader = $(".loader-table-variant");
-        loader.find(".loadingSpinner:first").remove();
-        PosnicPro.dashboard.datePicker();
+    _page: 1,
+    PAGE_SIZE: 25,
+    _lastRows: [],
+    _chrome: function () {
         PosnicPro.HideSideBarModal();
-        $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
-        $(".vertical-layout").removeClass("toggle-menu");
-        $(".vertical-menu li a").removeClass("active");
-        $('.dropdown-item').removeClass('active');
         $('.page_loader,#osk-container').hide();
+        $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
+        $('.vertical-menu li a').removeClass('active');
+        $('#v-pills-inventory-tab,#view_variants_page').addClass('active');
+        $('#v-pills-inventory').addClass('show active');
         $('.page-title-box,#variants').show();
         $('#variants_new,#variants_view').modal('hide');
-        $('#v-pills-inventory-tab').addClass('active');
-        $('#v-pills-inventory').addClass('show active');
-        PosnicPro.variants.variantsTable('variants');
         $('.dashboard_img_menu').hide();
         $('#image_sidebar_itemvariant').show();
+    },
+    showDataTablePage: function () {
+        PosnicPro.variants._chrome();
+        PosnicPro.variants.loadList(1);
+    },
+    mountFilters: function (force) {
+        if (!$('#variants_filter_panel').length) { return; }
+        if (!force && $('#variants_filter_panel').data('mounted')) { return; }
+        $('#variants_filter_panel').data('mounted', true);
+        PosnicPro.listFilter.mount({
+            key: 'variants',
+            container: '#variants_filter_panel',
+            button: '#variants_filter_btn',
+            searchPlaceholder: 'Search variant name',
+            searchFields: [
+                { value: 'name', label: 'Name' }
+            ],
+            onChange: function () { PosnicPro.variants.loadList(1); }
+        });
+    },
+    loadList: function (page) {
+        PosnicPro.variants.mountFilters();
+        var self = PosnicPro.variants;
+        if (page) { self._page = page; }
+        var filters = PosnicPro.listFilter.legacyFilters('variants', {});
+        var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
+        PosnicPro.get({
+            url: 'variants',
+            data: { page: self._page, limit: self.PAGE_SIZE, filters: JSON.stringify(filters) }
+        }, function (response) {
+            var data = (response && response.data) || {};
+            var list = data.list || [];
+            self._lastRows = list;
+            if (!list.length) {
+                var filtered = PosnicPro.listFilter.activeCount('variants') > 0;
+                $('#variants_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">'
+                    + (filtered ? 'No variants match this filter.' : 'No variants yet - press New to add the first.') + '</div>');
+                $('#variants_list_paging').html('');
+                return;
+            }
+            var html = '<div class="table-responsive"><table class="table table-borderless">'
+                + '<thead><tr><th>Name</th><th class="vr-col-values">Values</th><th style="width:120px;"></th></tr></thead><tbody>';
+            list.forEach(function (r) {
+                var values = (r.fields || []).map(function (f) { return f && f.name; }).filter(Boolean).join(', ');
+                html += '<tr class="md-row variants-row highlight-select" data-id="' + esc(r._id) + '" style="cursor:pointer;">'
+                    + '<td>' + esc(r.name) + '</td>'
+                    + '<td class="vr-col-values q-muted">' + esc(values || '-') + '</td>'
+                    + '<td class="text-right" style="white-space:nowrap;">'
+                    + '<a data-module="item" data-access="read" href="#/variants/' + esc(r._id) + '" class="btn btn-sm btn-light vr-row-act" data-toggle="tooltip" title="View"><i class="feather icon-eye"></i></a> '
+                    + '<a data-module="item" data-access="delete" href="#/variants/' + esc(r._id) + '/delete" class="btn btn-sm btn-light vr-row-act" data-toggle="tooltip" title="Delete"><i class="feather icon-trash-2"></i></a>'
+                    + '</td>'
+                    + '</tr>';
+            });
+            html += '</tbody></table></div>';
+            $('#variants_list_rows').html(html);
+            PosnicPro.ACLForModule('item');
+            self.renderPager(Number(data.total) || list.length);
+        }, function () {
+            $('#variants_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">Could not load variants - try again.</div>');
+        });
+    },
+    renderPager: function (total) {
+        var self = PosnicPro.variants;
+        var p = self._page, size = self.PAGE_SIZE;
+        var pages = Math.ceil(total / size) || 1;
+        var label = total + (total === 1 ? ' variant' : ' variants');
+        if (pages > 1) { label = 'Page ' + p + ' of ' + pages + ' · ' + label; }
+        var btn = function (to, text, off, cls) {
+            return '<button type="button" class="btn btn-sm ' + (cls || 'btn-secondary-rgba') + ' q-pg-btn"' + (off ? ' disabled' : '')
+                + ' onclick="PosnicPro.variants.goPage(' + to + ');">' + text + '</button>';
+        };
+        var html = '';
+        if (pages > 1) {
+            html += btn(p - 1, '&laquo;', p <= 1);
+            var end = Math.min(pages, Math.max(1, p - 2) + 4);
+            var start = Math.max(1, end - 4);
+            for (var n = start; n <= end; n++) {
+                html += '<span class="q-pg-num">' + btn(n, n, false, n === p ? 'btn-primary-rgba' : 'btn-secondary-rgba') + '</span>';
+            }
+        }
+        html += '<span class="q-pg-count">' + label + '</span>';
+        if (pages > 1) { html += btn(p + 1, '&raquo;', p >= pages); }
+        $('#variants_list_paging').html(html);
+    },
+    goPage: function (n) {
+        if (!n || n < 1) { return; }
+        PosnicPro.variants._page = n;
+        PosnicPro.variants.loadList();
+    },
+    exportCsv: function () {
+        var rows = [['Name', 'Values']];
+        (PosnicPro.variants._lastRows || []).forEach(function (r) {
+            rows.push([r.name, (r.fields || []).map(function (f) { return f && f.name; }).filter(Boolean).join(', ')]);
+        });
+        var csv = rows.map(function (r) {
+            return r.map(function (c) { return '"' + String(c == null ? '' : c).replace(/"/g, '""') + '"'; }).join(',');
+        }).join('\n');
+        var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'variants.csv';
+        a.click();
+        URL.revokeObjectURL(a.href);
     },
     /*This Variants Function Used To Add & Edit*/
     variant: function () {
@@ -294,12 +314,6 @@ PosnicPro.variants = {
         $('.update-button').attr('disabled', 'disabled').removeClass('btn-outline-success');
         $('#variant_id').val('');
     },
-    exportVarients: function () {
-        PosnicPro.exportTableData(PosnicPro.variants_checkbox, 'variants');
-    },
-    deleteSelectedVariants: function () {
-        PosnicPro.deleteTableData(PosnicPro.variants_checkbox, 'variants');
-    },
     variantClearForm: function () {
         $(".variant_add").trigger('reset');
         $('.error_variant').css('display', 'none');
@@ -310,6 +324,17 @@ PosnicPro.variants = {
         $('.add-variant-field', $lastChild).show();
     }
 };
+
+/* Standard list wiring: Filter button, row click into the edit sidebar,
+   row action buttons that must not also open the row. */
+$(document).on('click', '#variants_filter_btn', function () {
+    PosnicPro.variants.mountFilters(true);
+    PosnicPro.listFilter.toggle('variants');
+});
+$(document).on('click', '#variants_list_rows tr.variants-row', function (e) {
+    if ($(e.target).closest('.vr-row-act').length) { return; }
+    hasher.setHash('variants/' + $(this).data('id') + '/edit');
+});
 
 $(function () {
     // Validate signup form on keyup and submit

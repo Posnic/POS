@@ -52,126 +52,143 @@ PosnicPro.categories = {
         PosnicPro.showViewModal('categories');
         PosnicPro.categories.viewCategory(id);
     },
+    /* The name the OLD table machinery answered to - the save flow and the
+       shared clearListFilters/refresh doors still call it. */
     categoriesTable: function () {
-        var loader = $(".loader-table-category");
-        $("<div class='loadingSpinner'></div>").appendTo(loader);
-        PosnicPro.appendViewDataTableBody('categories');
-        var table = $('#view_categories');
-        var params = {
-            url: 'categories',
-            data: {
-                page: table.data('current_page'),
-                limit: parseInt($('#view_categories_per_page  option:selected').text()),
-                filters: table.data('filters'),
-                // Send the active branch so the list matches the branch the user
-                // has open (consistent with category create).
-                branch_id: PosnicPro.local.get('branch_id_set')
-            }
-        };
-        PosnicPro.get(params, function (response) {
-            if (response.type === 'success') {
-                table.data('total', response.data.total);
-                table.data('total_pages', response.data.total_pages);
-                table.data('current_page', response.data.current_page);
-                table.data('per_page', response.data.per_page);
-                PosnicPro.paging(response.data.total_pages, response.data.current_page);
-                table.children('tbody').text('');
-                $('#view_categories_total').text(response.data.total);
-
-                var rowTotal = response.data.total;
-                if (rowTotal === 0) {
-                    $('.category_header').hide();
-                    $('#category_img_hide').show();
-
-                } else {
-                    $('#category_img_hide').hide();
-                    $('.category_header').show();
-                }
-                var row_total = (table.data('current_page') - 1) * table.data('per_page') + 1;
-                $('#view_categories_page_total').text(row_total);
-                var page_totals = (table.data('current_page') - 1) * table.data('per_page');
-                $('#view_categories_page_perpage_total').text(page_totals + response.data.list.length);
-                var currency = PosnicPro.local.get('currencySign');
-                for (var i = 0; i < response.data.list.length; i++) {
-                    var row = response.data.list[i];
-                    var description = row.description || '';
-                    var discountSign = (row.discount_amount > 0) ? currency : '%';
-
-                    if (row.discount_amount > 0) {
-                        var discount = row.discount_amount;
-                    } else {
-                        discount = row.discount_percentage;
-                    }
-                    var row_no = (table.data('current_page') - 1) * table.data('per_page') + i + 1;
-                    var image_path = (row.image !== "category.svg") ? row.image : 'static/images/default/' + row.image;
-
-                    if (discountSign === '%') {
-                        var discount_percentage = '' + discount + ' ' + discountSign + '';
-                    } else {
-                        var discount_percentage = '' + discountSign + ' ' + discount + '';
-                    }
-
-                    var action = '<div id="onclick-toolbar-options_' + i + '" class="hidden">' +
-                            '<a data-module = "category" data-access = "read" href="#/categories/' + row._id + '" data-id="categories/' + row._id + '"  data-toggle="tooltip" title="View Category" class="point-cursor mobile_tooltip"><i class="feather icon-eye"></i></a>' +
-                            '<a data-module = "category" data-access = "write" href="#/categories/' + row._id + '/edit" data-id="categories/' + row._id + '/edit"  data-toggle="tooltip" title="Edit Category" class="point-curso mobile_tooltipr"><i class="feather icon-edit"></i></a>' +
-                            '<a data-module = "category" data-access = "delete" href="#/categories/' + row._id + '/delete" data-id="categories/' + row._id + '/delete" data-toggle="tooltip" title="Delete Category" class="point-cursor mobile_tooltip"><i class="feather icon-trash"></i></a>' +
-                            '</div>' +
-                            '<div data-toolbar="user-options" class="btn btn-round btn-primary-rgba round-pad" id="onclick-toolbar_' + i + '"><i class="feather icon-more-vertical-"></i></div>';
-
-                    var trow = '<tr> \n\
-                                <th><input type="checkbox" class="categories-row-id" id="' + row._id + '" name="id[]" value="' + row._id + '" onclick="PosnicPro.checkboxSelectOne(this,\'categories\');"></th> <th scope="row">' + row_no + '</th>  \n\
-                                <td><a href="#/categories/' + row._id + '" ><i data-toggle="tooltip" class="table_model_item">' + row.name + '</i></a></td> \n\
-                                <td><img loading="lazy" decoding="async" src=' + image_path + ' width=30 height=20 class="imagezoom" id="' + row.image + '" onclick="PosnicPro.viewImage(this.id,\'category\');"></td> \n\
-                                <td class="text-right">' + discount_percentage + '</td> \n\
-                                <td class="text-center">' + description + '</td> ' +
-                            '<td class="text-center"><span>' + action + '</span></td>' +
-                            '</tr>';
-
-                    $('#view_categories').children('tbody').append(trow);
-                }
-                $(document).ready(function () {
-                    for (var i = 0; i < response.data.list.length; i++) {
-                        $('#onclick-toolbar_' + i).toolbar({
-                            content: '#onclick-toolbar-options_' + i,
-                            event: 'click',
-                            style: 'primary',
-                            hideOnClick: true
-                        });
-                        $('#onclick-toolbar_' + i).on('toolbarItemClick', function (event, element) {
-                            hasher.setHash($(element).data('id'));
-                            $(this).trigger('click');
-                            $('.mobile_tooltip').tooltip('hide');
-                        });
-                    }
-                });
-                PosnicPro.setSelectedCheckbox(PosnicPro["categories_checkbox"], 'categories');
-                PosnicPro.ACLForModule('category');
-
-                loader.find(".loadingSpinner:first").remove();
-            } else {
-                PosnicPro.alert(response.type, response.message);
-            }
-        }, function (xhr) {
-            var response = jQuery.parseJSON(xhr.responseText);
-            PosnicPro.alert(response.type, response.message);
-        });
+        PosnicPro.categories.loadList(1);
     },
-    showDataTablePage: function () {
-        var loader = $(".loader-table-category");
-        loader.find(".loadingSpinner:first").remove();
-        PosnicPro.dashboard.datePicker();
+    _page: 1,
+    PAGE_SIZE: 25,
+    _lastRows: [],
+    _chrome: function () {
         PosnicPro.HideSideBarModal();
-        $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
-        $(".vertical-layout").removeClass("toggle-menu");
-        $(".vertical-menu li a").removeClass("active");
         $('.page_loader,#osk-container').hide();
+        $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
+        $('.vertical-menu li a').removeClass('active');
+        $('#v-pills-inventory-tab,#view_categories_page').addClass('active');
+        $('#v-pills-inventory').addClass('show active');
         $('.page-title-box,#categories').show();
         $('#categories_new,#categories_view').modal('hide');
-        $('#v-pills-inventory-tab').addClass('active');
-        $('#v-pills-inventory').addClass('show active');
-        PosnicPro.categories.categoriesTable('categories');
         $('.dashboard_img_menu').hide();
         $('#image_sidebar_itemcatgory').show();
+    },
+    showDataTablePage: function () {
+        PosnicPro.categories._chrome();
+        PosnicPro.categories.loadList(1);
+    },
+    mountFilters: function (force) {
+        if (!$('#categories_filter_panel').length) { return; }
+        if (!force && $('#categories_filter_panel').data('mounted')) { return; }
+        $('#categories_filter_panel').data('mounted', true);
+        PosnicPro.listFilter.mount({
+            key: 'categories',
+            container: '#categories_filter_panel',
+            button: '#categories_filter_btn',
+            searchPlaceholder: 'Search category name',
+            dateField: 'Added',
+            searchFields: [
+                { value: 'name', label: 'Name' }
+            ],
+            onChange: function () { PosnicPro.categories.loadList(1); }
+        });
+    },
+    loadList: function (page) {
+        PosnicPro.categories.mountFilters();
+        var self = PosnicPro.categories;
+        if (page) { self._page = page; }
+        var filters = PosnicPro.listFilter.legacyFilters('categories', { dateKey: 'created_date' });
+        var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
+        PosnicPro.get({
+            url: 'categories',
+            data: {
+                page: self._page,
+                limit: self.PAGE_SIZE,
+                filters: JSON.stringify(filters),
+                // Send the active branch so the list matches the branch the
+                // user has open (consistent with category create).
+                branch_id: PosnicPro.local.get('branch_id_set')
+            }
+        }, function (response) {
+            var data = (response && response.data) || {};
+            var list = data.list || [];
+            self._lastRows = list;
+            if (!list.length) {
+                var filtered = PosnicPro.listFilter.activeCount('categories') > 0;
+                $('#categories_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">'
+                    + (filtered ? 'No categories match this filter.' : 'No categories yet - press New to add the first.') + '</div>');
+                $('#categories_list_paging').html('');
+                return;
+            }
+            var currency = PosnicPro.local.get('currencySign');
+            var html = '<div class="table-responsive"><table class="table table-borderless">'
+                + '<thead><tr><th style="width:44px;"></th><th>Name</th><th class="text-right">Discount</th>'
+                + '<th class="cg-col-desc">Description</th><th style="width:90px;"></th></tr></thead><tbody>';
+            list.forEach(function (r) {
+                var img = (r.image && r.image !== 'category.svg') ? r.image : 'static/images/default/category.svg';
+                var discount = (Number(r.discount_amount) > 0)
+                    ? currency + ' ' + r.discount_amount
+                    : (Number(r.discount_percentage) > 0 ? r.discount_percentage + ' %' : '-');
+                html += '<tr class="md-row categories-row highlight-select" data-id="' + esc(r._id) + '" style="cursor:pointer;">'
+                    + '<td><img loading="lazy" decoding="async" src="' + esc(img) + '" style="width:30px; height:30px; object-fit:cover; border-radius:5px;" alt=""></td>'
+                    + '<td>' + esc(r.name) + '</td>'
+                    + '<td class="text-right">' + esc(discount) + '</td>'
+                    + '<td class="cg-col-desc q-muted">' + esc(r.description || '-') + '</td>'
+                    + '<td class="text-right" style="white-space:nowrap;">'
+                    + '<a data-module="category" data-access="write" href="#/categories/' + esc(r._id) + '/edit" class="btn btn-sm btn-light cg-row-act" data-toggle="tooltip" title="Edit"><i class="feather icon-edit-2"></i></a> '
+                    + '<a data-module="category" data-access="delete" href="#/categories/' + esc(r._id) + '/delete" class="btn btn-sm btn-light cg-row-act" data-toggle="tooltip" title="Delete"><i class="feather icon-trash-2"></i></a>'
+                    + '</td>'
+                    + '</tr>';
+            });
+            html += '</tbody></table></div>';
+            $('#categories_list_rows').html(html);
+            PosnicPro.ACLForModule('category');
+            self.renderPager(Number(data.total) || list.length);
+        }, function () {
+            $('#categories_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">Could not load categories - try again.</div>');
+        });
+    },
+    renderPager: function (total) {
+        var self = PosnicPro.categories;
+        var p = self._page, size = self.PAGE_SIZE;
+        var pages = Math.ceil(total / size) || 1;
+        var label = total + (total === 1 ? ' category' : ' categories');
+        if (pages > 1) { label = 'Page ' + p + ' of ' + pages + ' · ' + label; }
+        var btn = function (to, text, off, cls) {
+            return '<button type="button" class="btn btn-sm ' + (cls || 'btn-secondary-rgba') + ' q-pg-btn"' + (off ? ' disabled' : '')
+                + ' onclick="PosnicPro.categories.goPage(' + to + ');">' + text + '</button>';
+        };
+        var html = '';
+        if (pages > 1) {
+            html += btn(p - 1, '&laquo;', p <= 1);
+            var end = Math.min(pages, Math.max(1, p - 2) + 4);
+            var start = Math.max(1, end - 4);
+            for (var n = start; n <= end; n++) {
+                html += '<span class="q-pg-num">' + btn(n, n, false, n === p ? 'btn-primary-rgba' : 'btn-secondary-rgba') + '</span>';
+            }
+        }
+        html += '<span class="q-pg-count">' + label + '</span>';
+        if (pages > 1) { html += btn(p + 1, '&raquo;', p >= pages); }
+        $('#categories_list_paging').html(html);
+    },
+    goPage: function (n) {
+        if (!n || n < 1) { return; }
+        PosnicPro.categories._page = n;
+        PosnicPro.categories.loadList();
+    },
+    exportCsv: function () {
+        var rows = [['Name', 'Discount amount', 'Discount %', 'Description']];
+        (PosnicPro.categories._lastRows || []).forEach(function (r) {
+            rows.push([r.name, r.discount_amount || 0, r.discount_percentage || 0, r.description || '']);
+        });
+        var csv = rows.map(function (r) {
+            return r.map(function (c) { return '"' + String(c == null ? '' : c).replace(/"/g, '""') + '"'; }).join(',');
+        }).join('\n');
+        var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'categories.csv';
+        a.click();
+        URL.revokeObjectURL(a.href);
     },
     triggerModules: function () {
         PosnicPro.showAddModal('category');
@@ -423,12 +440,6 @@ PosnicPro.categories = {
             $('#category_discount_amount').attr('disabled', 'disabled').addClass('bg-white').hide().val('0.00');
             $('#category_discount_percentage').removeAttr('disabled', 'disabled').show().val(PosnicPro.local.get('setting-discount-percentage'));
         }
-    },
-    exportCategories: function () {
-        PosnicPro.exportTableData(PosnicPro.categories_checkbox, 'categories');
-    },
-    deleteSelectedCategories: function () {
-        PosnicPro.deleteTableData(PosnicPro.categories_checkbox, 'categories');
     },
     categoryImageFormSubmit: function () {
         var data = new FormData(document.getElementById("category_image_upload_form"));
@@ -718,6 +729,17 @@ $("#categorySubmitForm").one('click', function () {
 });
 /*end*/
 
+
+/* Standard list wiring: Filter button, row click into the details
+   slide-over, row action buttons that must not also open the row. */
+$(document).on('click', '#categories_filter_btn', function () {
+    PosnicPro.categories.mountFilters(true);
+    PosnicPro.listFilter.toggle('categories');
+});
+$(document).on('click', '#categories_list_rows tr.categories-row', function (e) {
+    if ($(e.target).closest('.cg-row-act').length) { return; }
+    hasher.setHash('categories/' + $(this).data('id'));
+});
 
 $(document).on('click', '#category_tile_swatches .tile-swatch', function () {
     PosnicPro.categories.setCatTileColor($(this).data('color') || '');

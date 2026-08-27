@@ -1,145 +1,168 @@
 PosnicPro.stocklogs = {
-    showDelete: function (id) {
-        PosnicPro.deleteTableRowData(id, 'stocklogs');
-    },
+    /* A ledger line has no document of its own - the deep link lands on the
+       ITEM the movement belongs to, where the whole trail is shown. */
     showDetails: function (id) {
-        var loader = $(".loader-view-stocklog");
-        loader.find(".loadingSpinner:first").remove();
-        PosnicPro.stocklogs.viewStock(id);
+        PosnicPro.get('stocklogs/' + id, function (response) {
+            var itemId = response && response.data && response.data.view_item_id;
+            if (response.type === 'success' && itemId) {
+                hasher.setHash('items/' + itemId);
+            } else {
+                hasher.setHash('stocklogs');
+            }
+        }, function () {
+            hasher.setHash('stocklogs');
+        });
     },
     showModuleDetails: function (id) {
         hasher.setHash('items/' + id);
     },
-    stocklogsTable: function () {
-        var loader = $(".loader-table-stocklog");
-        $("<div class='loadingSpinner'></div>").appendTo(loader);
-        PosnicPro.appendViewDataTableBody('stocklog');
-        var table = $('#view_stocklogs');
-        var params = {
-            url: 'stocklogs',
-            data: {
-                page: table.data('current_page'),
-                limit: parseInt($('#view_stocklogs_per_page  option:selected').text()),
-                filters: table.data('filters')
-            }
-        };
-        PosnicPro.get(params, function (response) {
-            if (response.type === 'success') {
-                table.data('total', response.data.total);
-                table.data('total_pages', response.data.total_pages);
-                table.data('current_page', response.data.current_page);
-                table.data('per_page', response.data.per_page);
-                PosnicPro.paging(response.data.total_pages, response.data.current_page);
-                table.children('tbody').text('');
-                $('#view_stocklogs_total').text(response.data.total);
 
-                var rowTotal = response.data.total;
-                if (rowTotal === 0) {
-                    $('.stock_header').hide();
-                    let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
-                    $('.stock_norecord').empty().append('<div class="text-center text-dark"> <p>No Records on ' + dateRange + ' </p></div>');
-                    $('#stock_img_hide,.stock_norecord').show();
-
-                } else {
-                    $('.stock_norecord').empty();
-                    $('#stock_img_hide,.stock_norecord').hide();
-                    $('.stock_header').show();
-                }
-
-                var row_total = (table.data('current_page') - 1) * table.data('per_page') + 1;
-                $('#view_stocklogs_page_total').text(row_total);
-                var page_totals = (table.data('current_page') - 1) * table.data('per_page');
-                $('#view_stocklogs_page_perpage_total').text(page_totals + response.data.list.length);
-                for (var i = 0; i < response.data.list.length; i++) {
-                    var row = response.data.list[i];
-                    var row_no = (table.data('current_page') - 1) * table.data('per_page') + i + 1;
-                    var updateDate = PosnicPro.convertDate(row.string_date);
-
-                    var process_class = "";
-                    if (row.process === "Add Item" || row.process === "Add Sale" || row.process === "Add Receiving") {
-                        process_class = "badge badge-success-inverse";
-                    } else if (row.process === "Edit Item" || row.process === "Edit Sale" || row.process === "Edit Receiving") {
-                        process_class = "badge badge-primary-inverse";
-                    } else if (row.process === "Delete Sale" || row.process === "Delete Receiving" || row.process === "Delete Item") {
-                        process_class = "badge badge-danger-inverse";
-                    } else {
-                        process_class = "badge badge-secondary-inverse";
-                    }
-
-                    var action = '<div id="onclick-toolbar-options_' + i + '" class="hidden">' +
-                            '<a data-module = "item" data-access = "read" href="#/stocklogs/' + row._id + '" data-id="stocklogs/' + row._id + '"  data-toggle="tooltip" title="View" class="point-cursor mobile_tooltip"><i class="feather icon-eye"></i></a>' +
-//                            '<a data-module = "user" data-access = "delete" href="#/stocklogs/' + row._id + '/delete" data-id="stocklogs/' + row._id + '/delete" data-toggle="tooltip" title="Delete Log" class="point-cursor mobile_tooltip"><i class="feather icon-trash"></i></a>' +
-                            '</div>' +
-                            '<div data-toolbar="user-options" class="btn btn-round btn-primary-rgba round-pad" id="onclick-toolbar_' + i + '"><i class="feather icon-more-vertical-"></i></div>';
-
-                    // Escape the free-text note before it goes into the row (it
-                    // is user-entered, unlike the fixed process labels).
-                    var noteEsc = row.note ? $('<div>').text(row.note).html() : '';
-                    var trow = '<tr><td data-module="item" data-access="write"><input type="checkbox" class="stocklogs-row-id" id="' + row._id + '" name="id[]" value="' + row._id + '" onclick="PosnicPro.checkboxSelectOne(this,\'stocklogs\');"></td> <td scope="row" data-label="#">' + row_no + '</td> <td width="30%" data-label="Item">' + row.item_name + '</td><td data-label="Date">' + updateDate + '</td> <td class="text-center" data-label="Change"><span class="' + process_class + '">' + row.process + '</span>' + (noteEsc ? '<div class="text-muted" style="font-size:11px;margin-top:3px;white-space:normal;word-break:break-word;">' + noteEsc + '</div>' : '') + '</td><td class="text-center" data-label="By">' + row.changed_by + '</td><td class="text-right" data-label="Opening"><span>' + row.opening_balance + '</span></td><td class="text-right" data-label="Qty">' + row.count + '</td><td class="text-right" data-label="Closing"><span>' + row.closing_balance + '</span></td> ' +
-                            '<td class="text-center"> <span>' + action + ' </span>' +
-                            ' </td></tr>';
-                    $('#view_stocklogs').children('tbody').append(trow);
-                }
-                $('span.number').number(true, 2);
-                $(document).ready(function () {
-                    for (var i = 0; i < response.data.list.length; i++) {
-                        $('#onclick-toolbar_' + i).toolbar({
-                            content: '#onclick-toolbar-options_' + i,
-                            event: 'click',
-                            style: 'primary',
-                            hideOnClick: true
-                        });
-                        $('#onclick-toolbar_' + i).on('toolbarItemClick', function (event, element) {
-                            hasher.setHash($(element).data('id'));
-                            $(this).trigger('click');
-                            $('.mobile_tooltip').tooltip('hide');
-                        });
-                    }
-                });
-                PosnicPro.setSelectedCheckbox(PosnicPro["stocklogs_checkbox"], 'stocklogs');
-                PosnicPro.ACLForModule('user');
-                loader.find(".loadingSpinner:first").remove();
-            } else {
-                PosnicPro.alert(response.type, response.message);
-            }
-        }, function (xhr) {
-            var response = jQuery.parseJSON(xhr.responseText);
-            PosnicPro.alert(response.type, response.message);
-        });
-    },
-    showDataTablePage: function () {
-        var loader = $(".loader-table-stocklog");
-        loader.find(".loadingSpinner:first").remove();
-        PosnicPro.dashboard.datePicker();
+    _page: 1,
+    PAGE_SIZE: 25,
+    _lastRows: [],
+    _chrome: function () {
         PosnicPro.HideSideBarModal();
-        $(".vertical-layout").removeClass("toggle-menu");
-        $(".vertical-menu li a").removeClass("active");
-        $('.dropdown-item').removeClass('active');
         $('.page_loader,#osk-container').hide();
-        $('.page-title-box,#stocklogs').show();
-        PosnicPro.stocklogs.stocklogsTable('stocklogs');
-        $('#v-pills-inventory-tab').addClass('active');
+        $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
+        $('.vertical-menu li a').removeClass('active');
+        $('#v-pills-inventory-tab,#stockReport_page').addClass('active');
         $('#v-pills-inventory').addClass('show active');
+        $('.page-title-box,#stocklogs').show();
         $('.dashboard_img_menu').hide();
         $('#image_sidebar_inventory').show();
     },
-    //view stored database details in stocklog activity
-    viewStock: function (id) {
-        var loader = $(".loader-view-stocklog");
-        $("<div class='loadingSpinner'></div>").appendTo(loader);
-        PosnicPro.get('stocklogs/' + id, function (response) {
-            if (response.type === 'success') {
-                PosnicPro.stocklogs.viewStockData(response);
-                loader.find(".loadingSpinner:first").remove();
-            } else {
-                PosnicPro.alert(response.type, response.message);
-            }
-        }, function (xhr) {
-            var response = jQuery.parseJSON(xhr.responseText);
-            PosnicPro.alert(response.type, response.message);
-        });
-        return false;
+    showDataTablePage: function () {
+        PosnicPro.stocklogs._chrome();
+        PosnicPro.stocklogs.loadList(1);
     },
+    mountFilters: function (force) {
+        if (!$('#stocklogs_filter_panel').length) { return; }
+        if (!force && $('#stocklogs_filter_panel').data('mounted')) { return; }
+        $('#stocklogs_filter_panel').data('mounted', true);
+        PosnicPro.listFilter.mount({
+            key: 'stocklogs',
+            container: '#stocklogs_filter_panel',
+            button: '#stocklogs_filter_btn',
+            searchPlaceholder: 'Search item, activity or reference',
+            dateField: 'Stock date',
+            searchFields: [
+                { value: 'all', label: 'All fields' },
+                { value: 'item_name', label: 'Item' },
+                { value: 'process', label: 'Activity' },
+                { value: 'reference', label: 'Reference' }
+            ],
+            onChange: function () { PosnicPro.stocklogs.loadList(1); }
+        });
+    },
+    /* The Movement dropdown narrows `process` server-side: every log's
+       process names its door (Add Receiving, Edit Sale, Delete Item ...),
+       so a family is one regex, not a list to keep in step. */
+    MOVES: {
+        purchases: { label: 'Purchases', re: 'Receiving|Purchase' },
+        sales: { label: 'Sales', re: 'Sale' },
+        items: { label: 'Item edits', re: 'Item' }
+    },
+    setMove: function (key) {
+        var m = PosnicPro.stocklogs.MOVES[key];
+        $('#stocklogs_move_dd').text(m ? m.label : 'All');
+        PosnicPro.stocklogs.mountFilters();
+        PosnicPro.listFilter.setExtra('stocklogs', 'process',
+            m ? { $regex: m.re, $options: 'i' } : '');
+    },
+    loadList: function (page) {
+        PosnicPro.stocklogs.mountFilters();
+        var self = PosnicPro.stocklogs;
+        if (page) { self._page = page; }
+        var filters = PosnicPro.listFilter.legacyFilters('stocklogs', { dateKey: 'date' });
+        var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
+        PosnicPro.get({
+            url: 'stocklogs',
+            data: { page: self._page, limit: self.PAGE_SIZE, filters: JSON.stringify(filters) }
+        }, function (response) {
+            var data = (response && response.data) || {};
+            var list = data.list || [];
+            self._lastRows = list;
+            if (!list.length) {
+                var filtered = PosnicPro.listFilter.activeCount('stocklogs') > 0;
+                $('#stocklogs_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">'
+                    + (filtered ? 'No movements match this filter.' : 'No stock movements yet - receive or sell an item and its trail starts here.') + '</div>');
+                $('#stocklogs_list_paging').html('');
+                return;
+            }
+            var html = '<div class="table-responsive"><table class="table table-borderless">'
+                + '<thead><tr><th>Item</th><th>Movement</th><th class="il-col-ref">Reference</th>'
+                + '<th class="il-col-by">By</th><th class="il-col-date">Date</th>'
+                + '<th class="text-right il-col-bal">Opening</th><th class="text-right">Change</th>'
+                + '<th class="text-right il-col-bal">Closing</th></tr></thead><tbody>';
+            list.forEach(function (r) {
+                var n = Number(r.count) || 0;
+                var note = r.note ? '<div class="q-muted" style="font-size:11.5px; white-space:normal;">' + esc(r.note) + '</div>' : '';
+                html += '<tr class="md-row stocklogs-row highlight-select" data-item-id="' + esc(r.view_item_id || '') + '" style="cursor:pointer;">'
+                    + '<td>' + esc(r.item_name) + '</td>'
+                    + '<td>' + esc(r.process) + note + '</td>'
+                    + '<td class="il-col-ref q-muted">' + esc(r.reference || '-') + '</td>'
+                    + '<td class="il-col-by">' + esc(r.changed_by || '-') + '</td>'
+                    + '<td class="il-col-date">' + esc(PosnicPro.convertDate(r.string_date)) + '</td>'
+                    + '<td class="text-right il-col-bal q-muted">' + esc(r.opening_balance) + '</td>'
+                    + '<td class="text-right" style="color:' + (n < 0 ? 'var(--theme-danger-color, #c0392b)' : 'var(--theme-success-color, #1a7f37)') + ';">'
+                    + (n > 0 ? '+' : '') + n + '</td>'
+                    + '<td class="text-right il-col-bal q-muted">' + esc(r.closing_balance) + '</td>'
+                    + '</tr>';
+            });
+            html += '</tbody></table></div>';
+            $('#stocklogs_list_rows').html(html);
+            self.renderPager(Number(data.total) || list.length);
+        }, function () {
+            $('#stocklogs_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">Could not load the stock ledger - try again.</div>');
+        });
+    },
+    renderPager: function (total) {
+        var self = PosnicPro.stocklogs;
+        var p = self._page, size = self.PAGE_SIZE;
+        var pages = Math.ceil(total / size) || 1;
+        var label = total + (total === 1 ? ' movement' : ' movements');
+        if (pages > 1) { label = 'Page ' + p + ' of ' + pages + ' · ' + label; }
+        var btn = function (to, text, off, cls) {
+            return '<button type="button" class="btn btn-sm ' + (cls || 'btn-secondary-rgba') + ' q-pg-btn"' + (off ? ' disabled' : '')
+                + ' onclick="PosnicPro.stocklogs.goPage(' + to + ');">' + text + '</button>';
+        };
+        var html = '';
+        if (pages > 1) {
+            html += btn(p - 1, '&laquo;', p <= 1);
+            var end = Math.min(pages, Math.max(1, p - 2) + 4);
+            var start = Math.max(1, end - 4);
+            for (var n = start; n <= end; n++) {
+                html += '<span class="q-pg-num">' + btn(n, n, false, n === p ? 'btn-primary-rgba' : 'btn-secondary-rgba') + '</span>';
+            }
+        }
+        html += '<span class="q-pg-count">' + label + '</span>';
+        if (pages > 1) { html += btn(p + 1, '&raquo;', p >= pages); }
+        $('#stocklogs_list_paging').html(html);
+    },
+    goPage: function (n) {
+        if (!n || n < 1) { return; }
+        PosnicPro.stocklogs._page = n;
+        PosnicPro.stocklogs.loadList();
+    },
+    exportCsv: function () {
+        var rows = [['Item', 'Movement', 'Note', 'Reference', 'By', 'Date', 'Opening', 'Change', 'Closing']];
+        (PosnicPro.stocklogs._lastRows || []).forEach(function (r) {
+            rows.push([r.item_name, r.process, r.note || '', r.reference || '', r.changed_by || '',
+                PosnicPro.convertDate(r.string_date), r.opening_balance, r.count, r.closing_balance]);
+        });
+        var csv = rows.map(function (r) {
+            return r.map(function (c) { return '"' + String(c == null ? '' : c).replace(/"/g, '""') + '"'; }).join(',');
+        }).join('\n');
+        var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'inventory-logs.csv';
+        a.click();
+        URL.revokeObjectURL(a.href);
+    },
+    /* The Recycle Bin's preview door (settings.js viewRecycleBinDetails):
+       a deleted log's item may no longer exist, so its facts open in the
+       modal rather than a cross-link. The list itself never calls this. */
     viewStockData: function (response) {
         $('#view_stock_log').modal('show');
         var data = response.data;
@@ -155,8 +178,6 @@ PosnicPro.stocklogs = {
                 $('#view_stock_' + key).text(val);
             }
         });
-
-
         var updateCreateDate = PosnicPro.convertDate(data.created_date);
         $('#view_stock_date').text(updateCreateDate);
     },
@@ -203,11 +224,18 @@ PosnicPro.stocklogs = {
             var response = jQuery.parseJSON(xhr.responseText);
             PosnicPro.alert(response.type, response.message);
         });
-    },
-    exportStocklogs: function () {
-        PosnicPro.exportTableData(PosnicPro.stocklogs_checkbox, 'stocklogs');
-    },
-    deleteSelectedStocklogs: function () {
-        PosnicPro.deleteTableData(PosnicPro.stocklogs_checkbox, 'stocklogs');
     }
 };
+
+/* Filter button + Movement dropdown + row cross-link into the item dossier. */
+$(document).on('click', '#stocklogs_filter_btn', function () {
+    PosnicPro.stocklogs.mountFilters(true);
+    PosnicPro.listFilter.toggle('stocklogs');
+});
+$(document).on('click', '.il-move-opt', function () {
+    PosnicPro.stocklogs.setMove($(this).data('move'));
+});
+$(document).on('click', '#stocklogs_list_rows tr.stocklogs-row', function () {
+    var itemId = $(this).data('item-id');
+    if (itemId) { hasher.setHash('items/' + itemId); }
+});

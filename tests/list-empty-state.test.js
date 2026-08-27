@@ -37,10 +37,28 @@ test('standard master-detail lists keep two DISTINCT empty sentences', () => {
     ['customers.js', 'customers'],
     ['suppliers.js', 'suppliers'],
     ['items.js', 'items'],
+    ['categories.js', 'categories'],
+    ['variants.js', 'variants'],
+    ['customer_categories.js', 'customercategory'],
   ]) {
     const js = read('frontend', 'static', 'script', 'js', 'modules', 'js', file);
     assert.match(js, /match this filter/, `${key}: the filtered state is gone`);
     assert.match(js, /yet - press New/, `${key}: the none-yet state is gone`);
+    assert.match(
+      js,
+      new RegExp("activeCount\\('" + key + "'\\)"),
+      `${key}: the branch no longer reads the real filter state`,
+    );
+  }
+  /* The read-only ledgers have no New button, so their none-yet sentence
+     explains where rows COME FROM instead of inviting a first record. */
+  for (const [file, key, noneYet] of [
+    ['stocklog.js', 'stocklogs', /receive or sell an item/],
+    ['lowstock.js', 'lowstockitems', /above its alert level/],
+  ]) {
+    const js = read('frontend', 'static', 'script', 'js', 'modules', 'js', file);
+    assert.match(js, /match this filter/, `${key}: the filtered state is gone`);
+    assert.match(js, noneYet, `${key}: the none-yet state is gone`);
     assert.match(
       js,
       new RegExp("activeCount\\('" + key + "'\\)"),
