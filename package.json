@@ -444,6 +444,12 @@
           "arch": [
             "x64"
           ]
+        },
+        {
+          "target": "snap",
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "synopsis": "Free open-source point of sale",
@@ -477,7 +483,17 @@
         "builds/linux/com.posnic.app.metainfo.xml=/usr/share/metainfo/com.posnic.app.metainfo.xml"
       ]
     },
-    "afterPack": "scripts/after-pack.js"
+    "afterPack": "scripts/after-pack.js",
+    "snap": {
+      "confinement": "strict",
+      "grade": "stable",
+      "summary": "Free open-source point of sale",
+      "plugs": [
+        "default",
+        "network-bind",
+        "removable-media"
+      ]
+    }
   },
   "author": "Posnic Innovations Private Limited",
   "license": "AGPL-3.0-only",
