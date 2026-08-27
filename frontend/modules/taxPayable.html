@@ -1,0 +1,59 @@
+<!-- Tax Payable (PURCHASE_TAX_PLAN P4/G4): the plain-words answer to "how
+     much do I owe this period" - output tax on sales, input tax on
+     credit-claimable purchases, net per head with the statutory credit
+     order applied. The register beneath is the accountant's working paper.
+     Regime-aware: single-head shops see one clean column set. -->
+<div class="vertical-layout page_loader" id="taxpayable_new" style="display: none">
+    <div id="containerbar">
+        <div class="breadcrumbbar crumbbar_padding">
+            <div class="row align-items-center row_filter">
+                <div class="col-lg-6 col-xl-6">
+                    <h4 class="page-title break_title"><lang class="lang_taxpayable_title">Tax Payable</lang></h4>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="contentbar">
+        <div class="row">
+            <div class="col-md-12 m-t-10">
+                <div class="card m-b-30">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center flex-wrap mb-3" style="gap:10px;">
+                            <input type="date" id="taxpayable_from" aria-label="From date" class="form-control border-control" style="width:auto;">
+                            <span class="text-muted">to</span>
+                            <input type="date" id="taxpayable_to" aria-label="To date" class="form-control border-control" style="width:auto;">
+                            <button type="button" class="btn btn-primary-rgba" onclick="PosnicPro.taxpayable.run();">
+                                <i class="feather icon-refresh-cw mr-1"></i><lang class="lang_run_title">Run</lang>
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" onclick="PosnicPro.taxpayable.exportCsv();">
+                                <i class="feather icon-download mr-1"></i>CSV
+                            </button>
+                            <span class="text-muted" id="taxpayable_regime_note" style="font-size:13px;"></span>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered" id="taxpayable_months">
+                                <thead id="taxpayable_months_head"></thead>
+                                <tbody id="taxpayable_months_body">
+                                    <tr><td class="text-muted">Pick a period and press Run.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="card m-b-30">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0"><lang class="lang_purchase_register">Purchase register</lang></h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table" id="taxpayable_register">
+                                <thead id="taxpayable_register_head"></thead>
+                                <tbody id="taxpayable_register_body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
