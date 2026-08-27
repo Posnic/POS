@@ -5613,6 +5613,25 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 /* The rail's quick-filter labels clear the left border (owner: "move right
    at least 10px"). */
 .purchases-split #purchases_quick_filters { padding-left: 12px; padding-right: 10px; }
+/* ==== Suppliers master-detail (second page on the standard) ==== */
+#suppliers_split.master-detail { margin: 0 !important; }
+#suppliers_list_rows tr.suppliers-row:hover { background: var(--theme-table-row-hover, #eef3ff); }
+.suppliers-split .s-col-email,
+.suppliers-split .s-col-address { display: none; }
+@media (max-width: 1499px) {
+    .suppliers-split .s-col-phone { display: none; }
+}
+#suppliers_doc { padding: 14px 16px 18px; }
+.s-doc-body { padding: 4px 4px 10px; }
+.s-doc-purchase-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 7px 8px; border-bottom: 1px solid var(--theme-border-color, #eef1f4);
+    font-size: 13.5px;
+}
+.s-doc-purchase-row:hover { background: rgba(9, 105, 218, 0.05); }
+.s-doc-purchase-row span:first-child { flex: 1 1 auto; }
+.s-doc-purchase-row span:last-child { min-width: 90px; text-align: right; }
+
 /* Attachment as one crisp chip. */
 .p-attach {
     display: inline-flex; align-items: center; gap: 6px;
