@@ -6088,6 +6088,175 @@ class SalesRepository {
     }
   }
 
+  /*
+   * The Tax Payable view (PURCHASE_TAX_PLAN P4/G4): the plain-words answer
+   * to "how much do I owe this period" that every regime gets.
+   *
+   * Month by month: output tax collected on sales | input tax paid on
+   * credit-claimable purchases | net payable per head, with the credits
+   * applied in the statutory order - IGST credit spends against IGST, then
+   * CGST, then SGST; CGST credit against CGST then IGST; SGST against SGST
+   * then IGST; CGST and SGST NEVER pay each other. Single-head regimes fall
+   * out naturally: their cgst/sgst columns are simply zero.
+   *
+   * Purchases whose itc_eligible flag is false are excluded from the input
+   * side; ABSENT means eligible - every purchase recorded before the flag
+   * existed keeps the credit it always represented.
+   */
+  async taxPayablePage(data) {
+    try {
+      const { starting_date, ending_date, branch_id, license } = data;
+      const FromDate = new Date(starting_date);
+      const ToDate = new Date(ending_date);
+      const salesCollection = currentConnection(mongoose.connection).collection('sales');
+      const receivingsCollection = currentConnection(mongoose.connection).collection('receivings');
+
+      const monthKey = { year: { $year: '$date' }, month: { $month: '$date' } };
+      const headSums = {
+        igst: { $sum: { $ifNull: ['$items.igst_tax', 0] } },
+        cgst: { $sum: { $ifNull: ['$items.cgst_tax', 0] } },
+        sgst: { $sum: { $ifNull: ['$items.sgst_tax', 0] } },
+        taxable: { $sum: { $ifNull: ['$items.subtotal', '$items.total_amount'] } },
+      };
+
+      const scope = {
+        branch_id: new ObjectId(branch_id),
+        license: new ObjectId(license),
+        date: { $gte: FromDate, $lte: ToDate },
+      };
+
+      const [salesRows, purchaseRows] = await Promise.all([
+        salesCollection
+          .aggregate([
+            { $match: scope },
+            { $unwind: '$items' },
+            { $group: { _id: monthKey, ...headSums } },
+          ])
+          .toArray(),
+        receivingsCollection
+          .aggregate([
+            { $match: { ...scope, itc_eligible: { $ne: false } } },
+            { $unwind: '$items' },
+            { $group: { _id: monthKey, ...headSums } },
+          ])
+          .toArray(),
+      ]);
+
+      const r2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
+      const months = new Map();
+      const bucket = (id) => {
+        const key = `${id.year}-${String(id.month).padStart(2, '0')}`;
+        if (!months.has(key)) {
+          months.set(key, {
+            period: key,
+            output: { igst: 0, cgst: 0, sgst: 0, taxable: 0 },
+            input: { igst: 0, cgst: 0, sgst: 0, taxable: 0 },
+          });
+        }
+        return months.get(key);
+      };
+      for (const row of salesRows) {
+        const b = bucket(row._id).output;
+        b.igst = r2(row.igst);
+        b.cgst = r2(row.cgst);
+        b.sgst = r2(row.sgst);
+        b.taxable = r2(row.taxable);
+      }
+      for (const row of purchaseRows) {
+        const b = bucket(row._id).input;
+        b.igst = r2(row.igst);
+        b.cgst = r2(row.cgst);
+        b.sgst = r2(row.sgst);
+        b.taxable = r2(row.taxable);
+      }
+
+      const rows = Array.from(months.values()).sort((a, b) => a.period.localeCompare(b.period));
+      const { netTaxHeads } = require('../utils/tax-netting');
+      for (const m of rows) {
+        const netted = netTaxHeads(m.output, m.input);
+        m.net = netted.net;
+        m.credit_carried = netted.credit_carried;
+        m.output.total = r2(m.output.igst + m.output.cgst + m.output.sgst);
+        m.input.total = r2(m.input.igst + m.input.cgst + m.input.sgst);
+      }
+
+      return { status: true, data: { months: rows }, message: 'success' };
+    } catch (error) {
+      console.error('Error in taxPayablePage:', error);
+      return { status: false, data: null, message: error.message };
+    }
+  }
+
+  /*
+   * The purchase register beneath the payable view: every purchase in the
+   * period with its tax identity - supplier, tax-ID, the three heads, the
+   * credit flag and whether the declared invoice total disagreed. The
+   * accountant's working paper, exportable like every other report.
+   */
+  async taxPayableRegisterPage(data) {
+    try {
+      const { starting_date, ending_date, branch_id, license } = data;
+      const receivingsCollection = currentConnection(mongoose.connection).collection('receivings');
+      const rows = await receivingsCollection
+        .aggregate([
+          {
+            $match: {
+              branch_id: new ObjectId(branch_id),
+              license: new ObjectId(license),
+              date: { $gte: new Date(starting_date), $lte: new Date(ending_date) },
+            },
+          },
+          {
+            $project: {
+              receiving_id: 1,
+              date: 1,
+              supplier_name: 1,
+              supplier_gst_number: 1,
+              itc_eligible: 1,
+              invoice_total_declared: 1,
+              invoice_total_mismatch: 1,
+              total_amount: 1,
+              subtotal_amount: 1,
+              has_document: { $gt: [{ $size: { $ifNull: ['$image', []] } }, 0] },
+              igst: {
+                $sum: {
+                  $map: {
+                    input: { $ifNull: ['$items', []] },
+                    as: 'i',
+                    in: { $ifNull: ['$$i.igst_tax', 0] },
+                  },
+                },
+              },
+              cgst: {
+                $sum: {
+                  $map: {
+                    input: { $ifNull: ['$items', []] },
+                    as: 'i',
+                    in: { $ifNull: ['$$i.cgst_tax', 0] },
+                  },
+                },
+              },
+              sgst: {
+                $sum: {
+                  $map: {
+                    input: { $ifNull: ['$items', []] },
+                    as: 'i',
+                    in: { $ifNull: ['$$i.sgst_tax', 0] },
+                  },
+                },
+              },
+            },
+          },
+          { $sort: { date: -1 } },
+        ])
+        .toArray();
+      return { status: true, data: { list: rows }, message: 'success' };
+    } catch (error) {
+      console.error('Error in taxPayableRegisterPage:', error);
+      return { status: false, data: null, message: error.message };
+    }
+  }
+
   async gstThreeReportPage(data, { SaleModel } = {}) {
     try {
       const { starting_date, ending_date, branch_id, license, branch_state } = data;

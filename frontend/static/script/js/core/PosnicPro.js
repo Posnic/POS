@@ -1234,6 +1234,7 @@ PosnicPro = {
         { root: '#supplierreport_new', title: 'Supplier Report', range: '.view_supplier_report_daterange', file: 'supplier-report',
             full: [{ table: '#view_supplierreport', per: '#view_supplierreport_per_page', load: 'supplierreport.supplierreportTable' }] },
         { root: '#taxsummaryreport_new', title: 'Tax Summary', range: '', file: 'tax-summary' },
+        { root: '#taxpayable_new', title: 'Tax Payable', range: '', file: 'tax-payable' },
         // scans the whole catalogue already - no paging to expand
         { root: '#gstreadiness_new', title: 'GST 2.0 Readiness', range: '', file: 'gst-readiness' },
         { root: '#taxdiscountreport_new', title: 'Tax Report', range: '.view_tax_sales_report_daterange', file: 'tax-report' },
@@ -2698,6 +2699,7 @@ PosnicPro = {
             { hash: 'paymentreport', label: 'Payment', icon: 'dollar-sign' },
             { hash: 'taxreport', label: 'Tax', icon: 'percent', module: 'module_tax_enable' },
             { hash: 'taxsummaryreport', label: 'Tax Summary', icon: 'layers', module: 'module_tax_enable' },
+            { hash: 'taxpayable', label: 'Tax Payable', icon: 'trending-up', module: 'module_tax_enable' },
             { hash: 'gstreadiness', label: 'GST 2.0 Readiness', icon: 'check-square', module: 'module_tax_enable' },
             { hash: 'expensesreport', label: 'Cash Book', icon: 'file-text', module: 'module_cashbook_enable' },
         ] },
@@ -5122,6 +5124,144 @@ $(document).on('click', '.gstready-row', function () {
     var id = $(this).data('id');
     if (id) { hasher.setHash('items/' + id + '/edit'); }
 });
+
+/* Tax Payable (#/taxpayable, PURCHASE_TAX_PLAN P4) - months of output vs
+ * input tax and the net owed, credits in the statutory order (server math,
+ * tested in tax-netting). Regime-aware: single-head shops see one column
+ * set. The route table dispatches {module} -> PosnicPro.taxpayable. */
+PosnicPro.taxpayable = {
+    _months: null,
+    _register: null,
+    _threeHead: true,
+    _label: 'Tax',
+    display: function () {
+        PosnicPro.HideSideBarModal();
+        $(".vertical-layout").removeClass("toggle-menu");
+        $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
+        $(".vertical-menu li a").removeClass("active");
+        $('.page_loader,#osk-container').hide();
+        $('.page-title-box,#taxpayable_new').show();
+        $('#v-pills-report-tab').addClass('active');
+        $('#v-pills-report').addClass('show active');
+        PosnicPro.injectReportGroupTabs();
+        var to = new Date();
+        var from = new Date(to.getFullYear(), to.getMonth() - 2, 1);
+        var iso = function (d) { return d.toISOString().slice(0, 10); };
+        if (!$('#taxpayable_from').val()) { $('#taxpayable_from').val(iso(from)); }
+        if (!$('#taxpayable_to').val()) { $('#taxpayable_to').val(iso(to)); }
+        PosnicPro.get({ url: 'setting/taxProfile', data: {} }, function (r) {
+            var d = (r && r.data) || {};
+            PosnicPro.taxpayable._threeHead = (d.components && d.components.mode === 'split_equal');
+            PosnicPro.taxpayable._label = d.label || 'Tax';
+            var family = d.regime === 'sales_tax' ? 'sales tax collected'
+                : d.regime === 'none' ? 'no consumption tax configured'
+                : 'output minus input credit';
+            $('#taxpayable_regime_note').text((d.label || 'Tax') + ' \u2014 ' + family);
+            PosnicPro.taxpayable.run();
+        }, function () { PosnicPro.taxpayable.run(); });
+    },
+    run: function () {
+        var q = 'starting_date=' + $('#taxpayable_from').val() + '&ending_date=' + $('#taxpayable_to').val() + ' 23:59:59';
+        PosnicPro.get({ url: 'sales/taxPayable?' + q, data: {} }, function (r) {
+            PosnicPro.taxpayable._months = (r.data && r.data.months) || [];
+            PosnicPro.taxpayable.renderMonths();
+        }, function () { $('#taxpayable_months_body').html('<tr><td class="text-danger">Could not load - try again.</td></tr>'); });
+        PosnicPro.get({ url: 'sales/taxPayableRegister?' + q, data: {} }, function (r) {
+            PosnicPro.taxpayable._register = (r.data && r.data.list) || [];
+            PosnicPro.taxpayable.renderRegister();
+        }, function () { /* register is secondary */ });
+    },
+    renderMonths: function () {
+        var three = PosnicPro.taxpayable._threeHead;
+        var L = PosnicPro.taxpayable._label;
+        var n = function (v) { return (Number(v) || 0).toFixed(2); };
+        var head = three
+            ? '<tr><th rowspan="2">Month</th><th colspan="4" class="text-center">Output (' + L + ' collected)</th>'
+              + '<th colspan="4" class="text-center">Input credit (purchases)</th>'
+              + '<th colspan="4" class="text-center">Net payable</th><th rowspan="2" class="text-right">Credit carried</th></tr>'
+              + '<tr><th class="text-right">IGST</th><th class="text-right">CGST</th><th class="text-right">SGST</th><th class="text-right">Total</th>'
+              + '<th class="text-right">IGST</th><th class="text-right">CGST</th><th class="text-right">SGST</th><th class="text-right">Total</th>'
+              + '<th class="text-right">IGST</th><th class="text-right">CGST</th><th class="text-right">SGST</th><th class="text-right">Total</th></tr>'
+            : '<tr><th>Month</th><th class="text-right">' + L + ' collected</th><th class="text-right">Input credit</th><th class="text-right">Net payable</th><th class="text-right">Credit carried</th></tr>';
+        $('#taxpayable_months_head').html(head);
+        var rows = PosnicPro.taxpayable._months || [];
+        if (!rows.length) {
+            $('#taxpayable_months_body').html('<tr><td class="text-muted" colspan="14">Nothing in this period.</td></tr>');
+            return;
+        }
+        var html = '';
+        rows.forEach(function (m) {
+            html += three
+                ? '<tr><td>' + m.period + '</td>'
+                  + '<td class="text-right">' + n(m.output.igst) + '</td><td class="text-right">' + n(m.output.cgst) + '</td><td class="text-right">' + n(m.output.sgst) + '</td><td class="text-right"><b>' + n(m.output.total) + '</b></td>'
+                  + '<td class="text-right">' + n(m.input.igst) + '</td><td class="text-right">' + n(m.input.cgst) + '</td><td class="text-right">' + n(m.input.sgst) + '</td><td class="text-right"><b>' + n(m.input.total) + '</b></td>'
+                  + '<td class="text-right">' + n(m.net.igst) + '</td><td class="text-right">' + n(m.net.cgst) + '</td><td class="text-right">' + n(m.net.sgst) + '</td><td class="text-right"><b>' + n(m.net.total) + '</b></td>'
+                  + '<td class="text-right">' + n(m.credit_carried) + '</td></tr>'
+                : '<tr><td>' + m.period + '</td>'
+                  + '<td class="text-right">' + n(m.output.total) + '</td>'
+                  + '<td class="text-right">' + n(m.input.total) + '</td>'
+                  + '<td class="text-right"><b>' + n(m.net.total) + '</b></td>'
+                  + '<td class="text-right">' + n(m.credit_carried) + '</td></tr>';
+        });
+        $('#taxpayable_months_body').html(html);
+    },
+    renderRegister: function () {
+        var three = PosnicPro.taxpayable._threeHead;
+        var n = function (v) { return (Number(v) || 0).toFixed(2); };
+        var esc = function (t) { return $('<i/>').text(t == null ? '' : t).html(); };
+        $('#taxpayable_register_head').html('<tr><th>Purchase</th><th>Date</th><th>Supplier</th><th>Tax ID</th>'
+            + (three ? '<th class="text-right">IGST</th><th class="text-right">CGST</th><th class="text-right">SGST</th>' : '<th class="text-right">Tax paid</th>')
+            + '<th class="text-right">Total</th><th class="text-center">Credit</th><th class="text-center">Doc</th></tr>');
+        var rows = PosnicPro.taxpayable._register || [];
+        if (!rows.length) {
+            $('#taxpayable_register_body').html('<tr><td class="text-muted" colspan="10">No purchases in this period.</td></tr>');
+            return;
+        }
+        var html = '';
+        rows.forEach(function (r) {
+            var warn = r.invoice_total_mismatch ? ' <i class="feather icon-alert-triangle text-warning" title="Declared invoice total does not match the lines"></i>' : '';
+            html += '<tr><td>' + esc(r.receiving_id) + warn + '</td>'
+                + '<td>' + (r.date ? new Date(r.date).toLocaleDateString('en-IN') : '-') + '</td>'
+                + '<td>' + esc(r.supplier_name) + '</td>'
+                + '<td>' + esc(r.supplier_gst_number || '-') + '</td>'
+                + (three
+                    ? '<td class="text-right">' + n(r.igst) + '</td><td class="text-right">' + n(r.cgst) + '</td><td class="text-right">' + n(r.sgst) + '</td>'
+                    : '<td class="text-right">' + n((Number(r.igst) || 0) + (Number(r.cgst) || 0) + (Number(r.sgst) || 0)) + '</td>')
+                + '<td class="text-right">' + n(r.total_amount) + '</td>'
+                + '<td class="text-center">' + (r.itc_eligible === false ? '<span class="rs-pill unpaid">No</span>' : '<span class="rs-pill paid">Yes</span>') + '</td>'
+                + '<td class="text-center">' + (r.has_document ? '<i class="feather icon-paperclip"></i>' : '-') + '</td>'
+                + '</tr>';
+        });
+        $('#taxpayable_register_body').html(html);
+    },
+    exportCsv: function () {
+        var rows = [['Period', 'Output IGST', 'Output CGST', 'Output SGST', 'Output Total',
+            'Input IGST', 'Input CGST', 'Input SGST', 'Input Total',
+            'Net IGST', 'Net CGST', 'Net SGST', 'Net Total', 'Credit carried']];
+        (PosnicPro.taxpayable._months || []).forEach(function (m) {
+            rows.push([m.period, m.output.igst, m.output.cgst, m.output.sgst, m.output.total,
+                m.input.igst, m.input.cgst, m.input.sgst, m.input.total,
+                m.net.igst, m.net.cgst, m.net.sgst, m.net.total, m.credit_carried]);
+        });
+        rows.push([]);
+        rows.push(['Purchase', 'Date', 'Supplier', 'Tax ID', 'IGST', 'CGST', 'SGST', 'Total', 'Credit claimable', 'Mismatch', 'Document']);
+        (PosnicPro.taxpayable._register || []).forEach(function (r) {
+            rows.push([r.receiving_id, r.date ? new Date(r.date).toISOString().slice(0, 10) : '',
+                r.supplier_name, r.supplier_gst_number || '', r.igst, r.cgst, r.sgst,
+                r.total_amount, r.itc_eligible === false ? 'no' : 'yes',
+                r.invoice_total_mismatch ? 'yes' : '', r.has_document ? 'yes' : '']);
+        });
+        var csv = rows.map(function (r) {
+            return r.map(function (c) { return '"' + String(c == null ? '' : c).replace(/"/g, '""') + '"'; }).join(',');
+        }).join('\n');
+        var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'tax-payable.csv';
+        a.click();
+        URL.revokeObjectURL(a.href);
+    }
+};
 
 /* Tax summary report (#/taxsummaryreport, T3) - totals per rate class over
  * a period, straight off the generic endpoint. The route table dispatches

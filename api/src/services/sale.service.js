@@ -3639,6 +3639,8 @@ module.exports = {
     salesRepository.gstThreeReportPage(data, {
       SaleModel: getModel(SaleModel),
     }),
+  taxPayablePage: async (data) => salesRepository.taxPayablePage(data),
+  taxPayableRegisterPage: async (data) => salesRepository.taxPayableRegisterPage(data),
   gstOneReportPageJson: async (data, { SaleModel } = {}) =>
     salesRepository.gstOneReportPageJson(data, {
       SaleModel: getModel(SaleModel),

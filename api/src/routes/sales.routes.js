@@ -407,6 +407,10 @@ router.get(
   bindController(salesController.gstThreeReportTable)
 );
 
+// Tax Payable (PURCHASE_TAX_PLAN P4): the plain-words monthly view + register
+router.get('/taxPayable', bindController(salesController.taxPayable));
+router.get('/taxPayableRegister', bindController(salesController.taxPayableRegister));
+
 // PHP: gstOneReportTableJson() - Get GST-1 report JSON
 router.get(
   '/gstOneReportTableJson',
