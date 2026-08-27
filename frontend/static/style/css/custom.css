@@ -4037,7 +4037,7 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     top: 0;
     z-index: 2;
 }
-.quotes-split #quotes_list_card #quotes_filter_chips .btn { font-size: 11.5px; padding: 3px 7px; }
+.quotes-split #quotes_list_card #quotes_filter_chips .btn { font-size: 13px; padding: 4px 10px; }
 
 /* Under about 1500px the rail cannot carry six columns, so the three that
    identify a quote survive - number, who it is for, what it comes to - plus
@@ -4047,6 +4047,20 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     .quotes-split #quotes_list_card .q-col-date,
     .quotes-split #quotes_list_card .q-col-valid,
     .quotes-split #quotes_list_card .q-col-qty { display: none; }
+    /* the 330px rail cannot seat number + supplier + total + status; the
+       number yields - the open document states it (owner: "Status column
+       will show and then only right side detail page will show") */
+    .purchases-split .p-col-num { display: none; }
+}
+/* Phones: the split stacks - list on top (its own scroll), document below.
+   The pull button still hides the list entirely for full-width reading. */
+@media (max-width: 767.98px) {
+    .master-detail { flex-direction: column; }
+    .master-detail > .md-rail {
+        flex: 0 0 auto;
+        max-width: 100%;
+        max-height: 40vh;
+    }
 }
 @media (min-width: 1500px) {
     /* MD:rail-wide */
@@ -5574,13 +5588,14 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 /* The quick-filter labels read at body size with real spacing (owner:
    "status and expected labels give proper padding also correct font size"). */
 #purchases_quick_filters { padding: 4px 0 10px; }
-#purchases_quick_filters .p-qf-label {
+.p-qf-label {
     font-size: 13px;
     color: var(--theme-text-muted, #57606a);
     margin: 0 4px 0 10px;
 }
-#purchases_quick_filters .p-qf-label:first-child { margin-left: 0; }
-#purchases_quick_filters .btn { font-size: 13px; }
+.p-qf-label:first-child { margin-left: 0; }
+#purchases_quick_filters .btn,
+#quotes_filter_chips .btn { font-size: 13px; }
 /* Purchase form: supplier block above the item box; the item strip loses
    its dead air (owner: "below item input box some gap available"). */
 .p-form-top { padding: 16px 16px 0; }

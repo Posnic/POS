@@ -11097,10 +11097,12 @@ $(document).on('click', '.quotes-chip', function () {
    them back to All instead of leaving a lit chip over an unfiltered list. */
 PosnicPro.quotes._paintChips = function (status) {
     PosnicPro.quotes._status = status || '';
-    $('.quotes-chip').removeClass('btn-primary-rgba').addClass('btn-secondary-rgba');
-    $('.quotes-chip').filter(function () {
+    /* The chips became a labelled dropdown - painting now means putting the
+       active choice on the button, still from the bar's state. */
+    var lit = $('.quotes-chip').filter(function () {
         return String($(this).data('status') || '') === String(status || '');
-    }).removeClass('btn-secondary-rgba').addClass('btn-primary-rgba');
+    }).first();
+    $('#quotes_status_dd').text(lit.length ? $.trim(lit.text()) : 'All');
 };
 $(document).on('click', '.recent-customer-row', function () {
     var list = PosnicPro.sales._recentRendered || [];
