@@ -4284,7 +4284,14 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 /* Unselected rows sit ON the grey, so nothing may paint them white. */
 /* MD:unselected-row */
 .master-detail .md-row > td { background: transparent; }
-.master-detail .md-row:hover > td { background: #eaeef2; }
+/* NOT the table-row-hover token: the owner's theme defines that token as
+   #f6f8fa - the rail's exact ground - so the hover was invisible by
+   collision. A translucent brand tint reads on ANY ground; the rgba line
+   is the fallback where color-mix is missing. */
+.master-detail .md-row:hover > td {
+    background: rgba(9, 105, 218, 0.07) !important;
+    background: color-mix(in srgb, var(--theme-primary-color, #0969da) 9%, transparent) !important;
+}
 
 /* The pager sits at the foot of the rail and always states the count, so the
    list says how much of itself you are seeing even on a single page. */
@@ -4298,7 +4305,8 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     margin-top: 6px;
     border-top: 1px solid #eaeef2;
 }
-.q-pg-count { font-size: 12px; color: #57606a; }
+.q-pg-count { font-size: 13.5px; color: #57606a; }
+.q-pager .btn { font-size: 13px; }
 .q-pg-btn { min-width: 30px; padding: 2px 8px; line-height: 1.5; }
 
 /* The sheet keeps its paper border - it is a preview of the printed thing -
@@ -4346,7 +4354,8 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     border-left-color: var(--theme-border-color, #d0d7de) !important;
 }
 [data-theme] .master-detail .md-row:hover > td {
-    background: var(--theme-table-row-hover);
+    background: rgba(9, 105, 218, 0.09) !important;
+    background: color-mix(in srgb, var(--theme-primary-color, #0969da) 12%, transparent) !important;
 }
 [data-theme] .quotes-split #quotes_list_card #quotes_filter_chips {
     border-bottom-color: var(--theme-border-color);
