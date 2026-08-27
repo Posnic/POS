@@ -1,0 +1,107 @@
+# packages.posnic.com - the signed APT repository (RELEASE_TRUST_PLAN §4).
+#
+# Runs when a release is PUBLISHED - not when the draft is assembled - so the
+# apt repo can never get ahead of the human decision that makes a release
+# public. Everything is dormant until the Linux signing secrets exist; until
+# then each run says exactly what is missing and succeeds without publishing.
+#
+# What it does with the secrets in place:
+#   1. downloads the published release's .deb and AppImage,
+#   2. signs them (detached .asc) and uploads the signatures back to the
+#      release beside the artifacts,
+#   3. rebuilds the APT repository tree with the new .deb and syncs it to the
+#      packages bucket that Cloudflare serves as packages.posnic.com.
+#
+# Secrets/vars it waits for:
+#   LINUX_GPG_KEY        - armored private signing subkey (offline master
+#                          stays on the desk - see the key ceremony notes)
+#   LINUX_GPG_KEY_ID     - fingerprint of that subkey
+#   PACKAGES_AWS_KEY_ID / PACKAGES_AWS_SECRET - scoped to the bucket only
+#   vars.PACKAGES_BUCKET - e.g. posnic-packages
+name: Publish APT repository
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to (re)publish, e.g. v1.6.0"
+        required: true
+
+permissions:
+  contents: write   # uploads .asc signatures back to the release
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Explain and stop when signing is not configured yet
+        if: ${{ secrets.LINUX_GPG_KEY == '' }}
+        run: |
+          echo "::warning::Linux signing is not configured (LINUX_GPG_KEY missing) - the apt repo was NOT updated. See RELEASE_TRUST_PLAN.md §4."
+
+      - name: Download the release artifacts
+        if: ${{ secrets.LINUX_GPG_KEY != '' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag || github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          gh release download "$TAG" --dir artifacts --pattern '*.deb' --pattern '*.AppImage'
+          ls -l artifacts
+
+      - name: Import the signing subkey
+        if: ${{ secrets.LINUX_GPG_KEY != '' }}
+        env:
+          LINUX_GPG_KEY: ${{ secrets.LINUX_GPG_KEY }}
+        run: |
+          set -euo pipefail
+          echo "$LINUX_GPG_KEY" | gpg --batch --import
+          gpg --list-secret-keys --keyid-format long
+
+      - name: Sign the artifacts and upload signatures to the release
+        if: ${{ secrets.LINUX_GPG_KEY != '' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag || github.event.release.tag_name }}
+          KEY_ID: ${{ secrets.LINUX_GPG_KEY_ID }}
+        run: |
+          set -euo pipefail
+          cd artifacts
+          for f in *.deb *.AppImage; do
+            [ -e "$f" ] || continue
+            gpg --batch --yes -u "$KEY_ID" --armor --detach-sign "$f"
+            sha256sum "$f" > "$f.sha256"
+          done
+          gh release upload "$TAG" ./*.asc ./*.sha256 --clobber
+
+      - name: Build the APT repository
+        if: ${{ secrets.LINUX_GPG_KEY != '' }}
+        env:
+          APT_GPG_KEY_ID: ${{ secrets.LINUX_GPG_KEY_ID }}
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq && sudo apt-get install -y -qq reprepro
+          bash scripts/build-apt-repo.sh artifacts/*.deb apt-repo
+
+      - name: Sync to packages.posnic.com
+        if: ${{ secrets.LINUX_GPG_KEY != '' && vars.PACKAGES_BUCKET != '' }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.PACKAGES_AWS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.PACKAGES_AWS_SECRET }}
+          AWS_DEFAULT_REGION: ap-south-1
+          BUCKET: ${{ vars.PACKAGES_BUCKET }}
+          TAG: ${{ inputs.tag || github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+          # pool/ is content-addressed and append-only; dists/ metadata must
+          # replace atomically enough that apt never sees a half-written index,
+          # so the pool syncs first and the signed index last.
+          aws s3 sync apt-repo/pool "s3://$BUCKET/apt/pool"
+          aws s3 sync apt-repo/dists "s3://$BUCKET/apt/dists" --delete
+          aws s3 cp apt-repo/gpg.key "s3://$BUCKET/gpg.key"
+          echo "packages.posnic.com updated for $TAG"

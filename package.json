@@ -387,6 +387,10 @@
     "mac": {
       "icon": "builds/512-posnic.png",
       "category": "public.app-category.business",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "builds/entitlements.mac.plist",
+      "entitlementsInherit": "builds/entitlements.mac.plist",
       "target": [
         {
           "target": "dmg",
