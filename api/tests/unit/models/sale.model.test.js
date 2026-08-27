@@ -990,3 +990,17 @@ describe('item_available_quantity is a snapshot, not a constraint', () => {
     }
   });
 });
+
+describe('invoice_key survives the strict schema', () => {
+  /*
+   * createInvoiceLink stores its S3 key with updateOne({ $set: { invoice_key } }).
+   * The schema is strict, and a strict schema STRIPS unknown $set paths without
+   * a word - the endpoint kept answering 200 while every call minted a brand
+   * new PDF under a brand new key, because the stored key never stuck. The
+   * field in the schema is the whole fix; this pin keeps it there.
+   */
+  test('the schema declares the field the endpoint writes', () => {
+    expect(Sale.schema.path('invoice_key')).toBeDefined();
+    expect(Sale.schema.path('invoice_key').instance).toBe('String');
+  });
+});
