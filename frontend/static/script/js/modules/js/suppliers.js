@@ -243,50 +243,106 @@ PosnicPro.suppliers = {
             + (d.created_date ? '<div class="q-muted">Added ' + esc(PosnicPro.convertDate(d.created_date)) + '</div>' : '')
             + (d.updated_date ? '<div class="q-muted">Updated ' + esc(PosnicPro.convertDate(d.updated_date)) + '</div>' : '')
             + '</div>';
-        var body = '<div class="s-doc-body">'
-            + '<div class="q-footer">' + contact + tax + record + '</div>'
-            + '<div class="q-label" style="margin-top:14px;">Recent purchases</div>'
+        var body = '<div class="s-doc-body"><div class="q-sheet s-sheet">'
+            + '<div class="s-doc-stats" id="s_doc_stats"></div>'
+            + '<div class="s-doc-grid">' + contact + tax + record + '</div>'
+            + '<div class="q-label" style="margin-top:18px;">Recent purchases</div>'
             + '<div id="s_doc_purchases" class="text-muted" style="font-size:13px;">Loading ...</div>'
-            + '</div>';
+            + '</div></div>';
         $('#suppliers_doc').html(toolbar + strip + body);
         PosnicPro.suppliers.loadRecentPurchases(id);
     },
     /* The supplier's latest purchases, cross-linked to their documents on
        the purchases surface (#/purchaseorders/<id>). */
+    /*
+     * One fetch feeds both the overview and the detail (Shneiderman:
+     * overview first, details on demand): the stats strip totals what this
+     * supplier has cost, the table names its columns, and every row
+     * PREVIEWS its A4 sheet in place - no leaving the page, no back button.
+     */
     loadRecentPurchases: function (id) {
         PosnicPro.get({
             url: 'receivings/supplierReceivingDetails',
-            data: { page: 1, limit: 5, supplier_id: id, branch: [PosnicPro.local.get('branch_id_set')] }
+            data: { page: 1, limit: 100, supplier_id: id, branch: [PosnicPro.local.get('branch_id_set')] }
         }, function (response) {
             var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
             var t = response && response.data && response.data.table && response.data.table.data;
             var list = (t && (t.list || t.rows)) || [];
+            var total = (t && Number(t.total)) || list.length;
+            var live = list.filter(function (r) { return r.receiving_status !== 'Cancelled'; });
+            var spend = live.reduce(function (sum, r) { return sum + (Number(r.items_total) || 0); }, 0);
+            var last = list.length ? (list[0].date || list[0].created_date || '') : '';
+            var cur = PosnicPro.local.get('currencySign');
+            $('#s_doc_stats').html(
+                '<div class="s-stat"><div class="s-stat-value">' + cur + '&nbsp;' + spend.toFixed(2) + '</div>'
+                + '<div class="s-stat-label">Purchased' + (total > list.length ? ' (last ' + list.length + ')' : '') + '</div></div>'
+                + '<div class="s-stat"><div class="s-stat-value">' + total + '</div>'
+                + '<div class="s-stat-label">' + (total === 1 ? 'Purchase' : 'Purchases') + '</div></div>'
+                + '<div class="s-stat"><div class="s-stat-value">' + (last ? esc(String(last).slice(0, 10)) : '\u2014') + '</div>'
+                + '<div class="s-stat-label">Last purchase</div></div>'
+            );
             if (!list.length) {
                 $('#s_doc_purchases').html('<div class="text-muted">No purchases from this supplier yet.</div>');
                 return;
             }
-            var html = '';
-            list.forEach(function (r) {
+            var html = '<table class="q-items s-doc-purchases-table"><thead><tr>'
+                + '<th>Purchase #</th><th>Status</th><th class="text-right">Date</th><th class="text-right">Total</th>'
+                + '</tr></thead><tbody>';
+            list.slice(0, 5).forEach(function (r) {
                 var docId = r._id || r.id || '';
                 var no = r.receiving_id || r.po_id || '';
                 var when = r.date || r.created_date || '';
-                var total = r.items_total != null ? r.items_total : r.total_amount != null ? r.total_amount : r.grand_total;
+                var rowTotal = r.items_total != null ? r.items_total : r.total_amount;
                 var st = String(r.receiving_status || '').toLowerCase();
                 var pill = st
-                    ? ' <span class="rs-pill ' + (st === 'received' ? 'paid' : st === 'cancelled' ? 'unpaid' : 'hold') + '">'
+                    ? '<span class="rs-pill ' + (st === 'received' ? 'paid' : st === 'cancelled' ? 'unpaid' : 'hold') + '">'
                         + (st === 'open' ? 'Ordered' : esc(r.receiving_status)) + '</span>'
                     : '';
-                html += '<div class="s-doc-purchase-row"'
-                    + (docId ? ' onclick="hasher.setHash(\'purchaseorders/' + esc(docId) + '\');" style="cursor:pointer;"' : '')
+                html += '<tr class="s-doc-purchase-row"'
+                    + (docId ? ' data-doc="' + esc(docId) + '" style="cursor:pointer;" title="Preview this purchase"' : '')
                     + '>'
-                    + '<span>' + esc(no) + pill + '</span>'
-                    + '<span class="q-muted">' + esc(when ? String(when).slice(0, 10) : '') + '</span>'
-                    + '<span class="text-right">' + PosnicPro.local.get('currencySign') + '&nbsp;' + (Number(total) || 0).toFixed(2) + '</span>'
-                    + '</div>';
+                    + '<td>' + esc(no) + '</td>'
+                    + '<td>' + pill + '</td>'
+                    + '<td class="text-right q-muted">' + esc(when ? String(when).slice(0, 10) : '') + '</td>'
+                    + '<td class="text-right">' + cur + '&nbsp;' + (Number(rowTotal) || 0).toFixed(2) + '</td>'
+                    + '</tr>';
             });
+            html += '</tbody></table>';
+            if (total > 5) {
+                html += '<div class="q-muted" style="font-size:12.5px; padding: 8px 4px 0;">'
+                    + (total - 5) + ' more in <a href="javascript:void(0)" onclick="hasher.setHash(\'purchaseorders\');">Purchases</a></div>';
+            }
             $('#s_doc_purchases').html(html);
         }, function () {
             $('#s_doc_purchases').html('<div class="text-muted">Purchase history unavailable.</div>');
+        });
+    },
+    /*
+     * Inline preview: the purchase's A4 sheet unfolds under its row (owner:
+     * bouncing to Purchases and back is "bit weird"). One open at a time;
+     * the full document with its actions is one deliberate click further.
+     */
+    togglePurchasePreview: function ($row, docId) {
+        var open = $row.next('.s-doc-preview-tr');
+        if (open.length) { open.remove(); return; }
+        $('#suppliers_doc .s-doc-preview-tr').remove();
+        var $tr = $('<tr class="s-doc-preview-tr"><td colspan="4"><div class="s-doc-preview"><div class="text-muted" style="padding:16px;">Loading ...</div></div></td></tr>');
+        $row.after($tr);
+        var $box = $tr.find('.s-doc-preview');
+        PosnicPro.get('receivings/' + docId, function (response) {
+            if (response.type !== 'success' || !response.data) {
+                $box.html('<div class="text-muted" style="padding:16px;">Could not load this purchase.</div>');
+                return;
+            }
+            $box.html(
+                '<div class="s-doc-preview-bar">'
+                + '<span class="q-muted">Preview</span>'
+                + '<a href="javascript:void(0)" onclick="hasher.setHash(\'purchaseorders/' + String(docId) + '\');">Open in Purchases <i class="feather icon-arrow-right"></i></a>'
+                + '</div>'
+                + PosnicPro.purchaseorders.buildPurchaseSheet(response.data)
+            );
+        }, function () {
+            $box.html('<div class="text-muted" style="padding:16px;">Could not load this purchase.</div>');
         });
     },
     deleteAsk: function () {
@@ -809,4 +865,8 @@ $(function () {
 $(document).on('click', '#suppliers_filter_btn', function () {
     PosnicPro.suppliers.mountFilters(true);
     PosnicPro.listFilter.toggle('suppliers');
+});
+
+$(document).on('click', '#s_doc_purchases .s-doc-purchase-row[data-doc]', function () {
+    PosnicPro.suppliers.togglePurchasePreview($(this), $(this).data('doc'));
 });
