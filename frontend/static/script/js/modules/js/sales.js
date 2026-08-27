@@ -522,6 +522,16 @@
             typeaheadField: 'customer_name',
             onChange: function () { PosnicPro.sales.loadHistory(1); }
         });
+        PosnicPro.listSort.mount('sales', {
+            options: [
+                { v: 'date_desc', l: 'Business date: newest' },
+                { v: 'date_asc', l: 'Business date: oldest' },
+                { v: 'total_desc', l: 'Highest bill first' },
+                { v: 'total_asc', l: 'Lowest bill first' },
+                { v: 'items_desc', l: 'Most items first' }
+            ],
+            onChange: function () { PosnicPro.sales.loadHistory(1); }
+        });
     },
 
     _histPage: 1,
@@ -536,7 +546,12 @@
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
         PosnicPro.get({
             url: 'sales',
-            data: { page: self._histPage, limit: self.HIST_PAGE_SIZE, filters: JSON.stringify(filters) }
+            data: (function () {
+                var d = { page: self._histPage, limit: self.HIST_PAGE_SIZE, filters: JSON.stringify(filters) };
+                var sv = PosnicPro.listSort.value('sales');
+                if (sv) { d.sort = sv; }
+                return d;
+            }())
         }, function (response) {
             var data = (response && response.data) || {};
             var list = data.list || [];
@@ -550,7 +565,7 @@
             }
             var cur = PosnicPro.local.get('currencySign');
             var html = '<div class="table-responsive"><table class="table table-borderless">'
-                + '<thead><tr><th>Bill #</th><th>Customer</th><th class="sl-col-date">Date</th>'
+                + '<thead><tr><th>Bill #</th><th>Customer</th><th class="sl-col-date">Date &amp; time</th>'
                 + '<th class="text-right sl-col-items">Items</th><th class="text-right">Total</th>'
                 + '<th class="text-center">Status</th></tr></thead><tbody>';
             list.forEach(function (r) {
@@ -565,7 +580,7 @@
                     + ' data-id="' + esc(r._id) + '" style="cursor:pointer;">'
                     + '<td>' + esc(r.sales_id) + '</td>'
                     + '<td>' + esc(r.customer_name || 'Walk-in') + '</td>'
-                    + '<td class="sl-col-date">' + esc(r.date ? String(r.string_date || r.date).slice(0, 10) : '-') + '</td>'
+                    + '<td class="sl-col-date">' + esc(r.string_date ? PosnicPro.convertDate(r.string_date) : (r.date ? String(r.date).slice(0, 10) : '-')) + '</td>'
                     + '<td class="text-right sl-col-items">' + esc(r.number_of_items != null ? r.number_of_items : (r.items || []).length) + '</td>'
                     + '<td class="text-right">' + cur + '&nbsp;' + (Number(r.sales_total) || 0).toFixed(2) + '</td>'
                     + '<td class="text-center">' + pill + '</td>'
@@ -8930,6 +8945,8 @@ PosnicPro.quotes = {
            clears it; a chip filtering under a button reading "0" is exactly the
            forgotten filter the count exists to catch. */
         $.extend(params, PosnicPro.listFilter.params('quotes'));
+        var qsort = PosnicPro.listSort.value('quotes');
+        if (qsort) { params.sort = qsort; }
         PosnicPro.get({ url: 'quotes', data: params }, function (r) {
             if (mine !== PosnicPro.quotes._seq) { return; }
             PosnicPro.quotes._rows = (r && r.data) || [];
@@ -10561,6 +10578,17 @@ PosnicPro.sales.quickSale = {
             $('#quick_sale_amount').on('keydown', function (e) {
                 if (e.key === 'Enter') { PosnicPro.sales.quickSale.add(); }
             });
+            /* Enter from the NOTE field too (owner): amount typed, name
+               typed, Enter - the line is in the cart. No amount yet means
+               Enter walks back to the amount box instead of nagging. */
+            $('#quick_sale_note').on('keydown', function (e) {
+                if (e.key !== 'Enter') { return; }
+                if (parseFloat($('#quick_sale_amount').val()) > 0) {
+                    PosnicPro.sales.quickSale.add();
+                } else {
+                    $('#quick_sale_amount').focus();
+                }
+            });
         }
         PosnicPro.sales.quickSale._count = 0;
         $('#quick_sale_added').text('');
@@ -11109,6 +11137,15 @@ PosnicPro.quotes.mountFilters = function () {
             PosnicPro.quotes._paintChips((state.extra && state.extra.status) || '');
             PosnicPro.quotes.load();
         }
+    });
+    PosnicPro.listSort.mount('quotes', {
+        options: [
+            { v: 'total_desc', l: 'Highest amount first' },
+            { v: 'total_asc', l: 'Lowest amount first' },
+            { v: 'valid_asc', l: 'Valid till: soonest' },
+            { v: 'valid_desc', l: 'Valid till: latest' }
+        ],
+        onChange: function () { PosnicPro.quotes.loadList(); }
     });
     PosnicPro.quotes._filterMounted = true;
 };

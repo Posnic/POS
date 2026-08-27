@@ -4,9 +4,9 @@
         <div class="breadcrumbbar crumbbar_padding">
             <div class="row align-items-center row_filter">
                 <div class="col-auto mr-auto d-flex align-items-center">
-                    <h4 class="page-title break_title mb-0 mr-3"><lang class="lang_user_title">Users</lang></h4>
+                    <h4 class="page-title break_title mb-0 mr-3"><lang class="lang_user_title">Employees</lang></h4>
                     <ul class="nav nav-tabs users-roles-tabs">
-                        <li class="nav-item"><a class="nav-link" href="#/users"><i class="feather icon-users mr-2"></i><lang class="lang_user_title">Users</lang></a></li>
+                        <li class="nav-item"><a class="nav-link" href="#/users"><i class="feather icon-users mr-2"></i><lang class="lang_user_title">Employees</lang></a></li>
                         <li class="nav-item"><a class="nav-link active" href="#/roles"><i class="feather icon-shield mr-2"></i><lang class="lang_roles_title">Roles</lang></a></li>
                     </ul>
                 </div>
@@ -18,21 +18,22 @@
             </div>
         </div>
         <div class="contentbar">
-            <div class="card m-b-30">
+            <div id="roles_split">
+            <div class="card m-b-30 md-rail" id="roles_list_card">
                 <div class="card-body">
                     <p class="text-muted" style="font-size:.85rem;">
                         A role is a reusable permission set: the module access matrix plus the
                         till actions its holders may do without a manager. Assign roles on the
                         user form. Editing a role updates every user holding it immediately.
                     </p>
-                    <div class="table-responsive">
-                        <table class="table table-sm">
+                    <div class="table-responsive md-rail-rows" id="roles_list_rows">
+                        <table class="table table-borderless">
                             <thead>
                                 <tr>
                                     <th>Role</th>
-                                    <th>Type</th>
-                                    <th>Description</th>
-                                    <th>Till authority</th>
+                                    <th class="rl-col-type">Type</th>
+                                    <th class="rl-col-desc">Description</th>
+                                    <th class="rl-col-auth">Till authority</th>
                                     <th class="text-right">Actions</th>
                                 </tr>
                             </thead>
@@ -42,6 +43,10 @@
                         </table>
                     </div>
                 </div>
+            </div>
+            <div class="card m-b-30 md-detail" id="roles_detail_card" style="display:none;">
+                <div id="roles_doc"></div>
+            </div>
             </div>
         </div>
     </div>

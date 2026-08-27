@@ -167,20 +167,32 @@ PosnicPro.customers = {
         PosnicPro.customers._page = n;
         PosnicPro.customers.loadList();
     },
+    _csvSpec: function () {
+        return {
+            head: ['Name', 'Phone', 'Email', 'Address', 'Tax number'],
+            map: function (r) {
+                return [r.name, r.phone || '', r.email || '', r.address || '', r.gst_number || ''];
+            }
+        };
+    },
     exportCsv: function () {
-        var rows = [['Name', 'Phone', 'Email', 'Address', 'Tax number']];
-        (PosnicPro.customers._lastRows || []).forEach(function (r) {
-            rows.push([r.name, r.phone || '', r.email || '', r.address || '', r.gst_number || '']);
+        var spec = PosnicPro.customers._csvSpec();
+        PosnicPro.listExport.save(
+            [spec.head].concat((PosnicPro.customers._lastRows || []).map(spec.map)), 'customers.csv');
+    },
+    /* Everything matching the CURRENT filter, paged through the same
+       endpoint the list reads - never a shapeless full dump. */
+    exportAllCsv: function () {
+        var spec = PosnicPro.customers._csvSpec();
+        PosnicPro.listExport.all({
+            url: 'customers',
+            params: function (page, limit) {
+                return { page: page, limit: limit, filters: JSON.stringify(PosnicPro.listFilter.legacyFilters('customers', { dateKey: 'created_date' })) };
+            },
+            head: spec.head,
+            map: spec.map,
+            filename: 'customers.csv'
         });
-        var csv = rows.map(function (r) {
-            return r.map(function (c) { return '"' + String(c == null ? '' : c).replace(/"/g, '""') + '"'; }).join(',');
-        }).join('\n');
-        var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        var a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'customers.csv';
-        a.click();
-        URL.revokeObjectURL(a.href);
     },
     /* ---- the dossier pane ---- */
     openDoc: function (id) {
@@ -356,7 +368,7 @@ PosnicPro.customers = {
         PosnicPro.request({
             method: 'DELETE',
             url: 'customers',
-            data: JSON.stringify({ id: [id] })
+            data: JSON.stringify({ data: [id] })
         }, function (r) {
             PosnicPro.alert(r.type || 'success', r.message || 'Customer deleted');
             PosnicPro.customers.closeDoc();

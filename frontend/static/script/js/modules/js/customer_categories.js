@@ -35,11 +35,99 @@ PosnicPro.customercategory = {
     showDelete: function (id) {
         PosnicPro.deleteTableRowData(id, 'customerCategory');
     },
+    /* Deep link #/customercategory/<id>: the list with that category
+       open in the right pane. Recognises its own setHash echo. */
     showDetails: function (id) {
-        var loader = $(".loader-view-category");
-        loader.find(".loadingSpinner:first").remove();
-        PosnicPro.showViewModal('customercategory');
-        PosnicPro.customercategory.viewCategory(id);
+        if (PosnicPro.listDoc.activeId('customercategory') === String(id)
+            && $('#customercategory_detail_card').is(':visible')) { return; }
+        PosnicPro.customercategory._chrome();
+        PosnicPro.customercategory.loadList(1);
+        PosnicPro.customercategory.openDoc(id);
+    },
+    openDoc: function (id) {
+        var self = PosnicPro.customercategory;
+        var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
+        var actions = '<button type="button" class="btn btn-sm btn-light" data-module="customer" data-access="write" data-toggle="tooltip" title="Edit this category" aria-label="Edit"'
+            + ' onclick="hasher.setHash(\'customercategory/' + esc(id) + '/edit\');"><i class="feather icon-edit-2"></i></button>'
+            + '<button type="button" class="btn btn-sm btn-light" data-module="customer" data-access="delete" data-toggle="tooltip" title="Delete this category" aria-label="Delete"'
+            + ' onclick="PosnicPro.listDoc.close(\'customercategory\'); hasher.setHash(\'customercategory/' + esc(id) + '/delete\');"><i class="feather icon-trash-2"></i></button>';
+        var r = (self._lastRows || []).filter(function (x) { return String(x._id) === String(id); })[0];
+        if (r) {
+            PosnicPro.listDoc.open({ key: 'customercategory', id: id, title: r.name, actions: actions, body: self._docBody(r) });
+            PosnicPro.ACLForModule('customer');
+            self.loadActivity(id);
+            return;
+        }
+        PosnicPro.listDoc.open({ key: 'customercategory', id: id, title: 'Customer category', actions: actions });
+        PosnicPro.ACLForModule('customer');
+        PosnicPro.get('customerCategory/' + id, function (response) {
+            var d = response && response.data;
+            if (response.type !== 'success' || !d) {
+                PosnicPro.listDoc.body('customercategory', '<div class="text-danger p-3">Could not open this category.</div>');
+                return;
+            }
+            d._id = d._id || id;
+            PosnicPro.listDoc.title('customercategory', d.name || 'Customer category');
+            PosnicPro.listDoc.body('customercategory', self._docBody(d));
+            self.loadActivity(id);
+        }, function () {
+            PosnicPro.listDoc.body('customercategory', '<div class="text-danger p-3">Could not open this category.</div>');
+        });
+    },
+    _docBody: function (r) {
+        var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
+        return '<div class="s-doc-stats" id="cc_doc_stats"></div>'
+            + PosnicPro.listDoc.grid([
+                { label: 'About', lines: [
+                    r.description ? '<div>' + esc(r.description) + '</div>' : '<div class="q-muted">No description</div>'
+                ] },
+                { label: 'On record', lines: [
+                    r.created_date ? '<div class="q-muted">Added ' + esc(PosnicPro.convertDate(r.created_date)) + '</div>' : '',
+                    r.updated_date ? '<div class="q-muted">Updated ' + esc(PosnicPro.convertDate(r.updated_date)) + '</div>' : ''
+                ] }
+            ])
+            + '<div class="q-label" style="margin-top:18px;">Recent sales</div>'
+            + '<div id="cc_doc_sales" class="q-muted" style="font-size:13px;">Loading ...</div>';
+    },
+    /* The customer category's sales, IN the pane - the slide-over is the
+       recycle bin's door now, never the list's. */
+    loadActivity: function (id) {
+        var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
+        var cur = PosnicPro.local.get('currencySign');
+        PosnicPro.get({
+            url: 'sales/customerCategorySaleDetails',
+            data: { page: 1, limit: 5, category_id: id, branch: [PosnicPro.local.get('branch_id_set')] }
+        }, function (response) {
+            var t = response && response.data && response.data.table && response.data.table.data;
+            var list = (t && t.list) || [];
+            var total = (t && Number(t.total)) || 0;
+            if (!list.length) {
+                $('#cc_doc_sales').html('No sales from this category yet.');
+                return;
+            }
+            var pageValue = 0;
+            var rows = list.map(function (r) {
+                pageValue += Number(r.items_total) || 0;
+                var saleId = r._id && r._id.$oid ? r._id.$oid : r._id;
+                return '<tr class="cc-doc-sale-row" data-id="' + esc(saleId) + '" style="cursor:pointer;">'
+                    + '<td>' + esc(r.sales_id) + '</td>'
+                    + '<td class="q-muted">' + esc(r.string_date ? PosnicPro.convertDate(r.string_date) : '') + '</td>'
+                    + '<td>' + esc(r.sale_process || 'Add') + '</td>'
+                    + '<td class="text-right">' + cur + '&nbsp;' + (Number(r.items_total) || 0).toFixed(2) + '</td>'
+                    + '</tr>';
+            }).join('');
+            $('#cc_doc_stats').append(
+                '<div class="s-stat"><div class="s-stat-value">' + total + '</div>'
+                + '<div class="s-stat-label">' + (total === 1 ? 'Sale' : 'Sales') + '</div></div>'
+                + '<div class="s-stat"><div class="s-stat-value">' + cur + '&nbsp;' + pageValue.toFixed(2) + '</div>'
+                + '<div class="s-stat-label">Sold' + (total > list.length ? ' (last ' + list.length + ')' : '') + '</div></div>');
+            $('#cc_doc_sales').removeClass('q-muted').html(
+                '<table class="q-items s-doc-purchases-table"><thead><tr>'
+                + '<th>Bill #</th><th>Date</th><th>Process</th><th class="text-right">Total</th>'
+                + '</tr></thead><tbody>' + rows + '</tbody></table>');
+        }, function () {
+            $('#cc_doc_sales').html('Sales history unavailable.');
+        });
     },
     /* The name the OLD table machinery answered to - the save flow and the
        shared clearListFilters/refresh doors still call it. */
@@ -104,7 +192,8 @@ PosnicPro.customercategory = {
             var html = '<div class="table-responsive"><table class="table table-borderless">'
                 + '<thead><tr><th>Name</th><th class="cc-col-desc">Description</th><th style="width:90px;"></th></tr></thead><tbody>';
             list.forEach(function (r) {
-                html += '<tr class="md-row customercategory-row highlight-select" data-id="' + esc(r._id) + '" style="cursor:pointer;">'
+                html += '<tr class="md-row customercategory-row highlight-select'
+                    + (PosnicPro.listDoc.activeId('customercategory') === String(r._id) ? ' is-active' : '') + '" data-id="' + esc(r._id) + '" style="cursor:pointer;">'
                     + '<td>' + esc(r.name) + '</td>'
                     + '<td class="cc-col-desc q-muted">' + esc(r.description || '-') + '</td>'
                     + '<td class="text-right" style="white-space:nowrap;">'
@@ -149,20 +238,36 @@ PosnicPro.customercategory = {
         PosnicPro.customercategory._page = n;
         PosnicPro.customercategory.loadList();
     },
+    _csvSpec: function () {
+        return {
+            head: ['Name', 'Description', 'Added'],
+            map: function (r) {
+                return [r.name, r.description || '',
+                    r.created_date ? PosnicPro.convertDate(r.created_date) : ''];
+            }
+        };
+    },
     exportCsv: function () {
-        var rows = [['Name', 'Description']];
-        (PosnicPro.customercategory._lastRows || []).forEach(function (r) {
-            rows.push([r.name, r.description || '']);
+        var spec = PosnicPro.customercategory._csvSpec();
+        PosnicPro.listExport.save(
+            [spec.head].concat((PosnicPro.customercategory._lastRows || []).map(spec.map)), 'customer-categories.csv');
+    },
+    /* Everything matching the CURRENT filter, paged through the same
+       endpoint the list reads - never a shapeless full dump. */
+    exportAllCsv: function () {
+        var spec = PosnicPro.customercategory._csvSpec();
+        PosnicPro.listExport.all({
+            url: 'customerCategory',
+            params: function (page, limit) {
+                return {
+                    page: page, limit: limit,
+                    filters: JSON.stringify(PosnicPro.listFilter.legacyFilters('customercategory', {}))
+                };
+            },
+            head: spec.head,
+            map: spec.map,
+            filename: 'customer-categories.csv'
         });
-        var csv = rows.map(function (r) {
-            return r.map(function (c) { return '"' + String(c == null ? '' : c).replace(/"/g, '""') + '"'; }).join(',');
-        }).join('\n');
-        var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        var a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'customer-categories.csv';
-        a.click();
-        URL.revokeObjectURL(a.href);
     },
     /*This Categories Function Used To Add & Edit*/
     category: function () {
@@ -384,7 +489,7 @@ $(document).on('click', '#customercategory_filter_btn', function () {
 });
 $(document).on('click', '#customercategory_list_rows tr.customercategory-row', function (e) {
     if ($(e.target).closest('.cc-row-act').length) { return; }
-    hasher.setHash('customercategory/' + $(this).data('id'));
+    PosnicPro.customercategory.openDoc($(this).data('id'));
 });
 
 $("#customercategorySubmitForm").one('click', function () {
@@ -555,3 +660,9 @@ PosnicPro.customercategorydetails = {
 
 /*end*/
 
+
+/* Recent-sale rows in the category panes open that bill in Sales history. */
+$(document).on('click', '#cc_doc_sales tr.cc-doc-sale-row, #cg_doc_sales tr.cg-doc-sale-row', function () {
+    var id = $(this).data('id');
+    if (id) { hasher.setHash('sales/' + id); }
+});

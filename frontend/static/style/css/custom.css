@@ -5758,7 +5758,18 @@ tr.s-doc-purchase-row:hover td { background: rgba(9, 105, 218, 0.05); }
 }
 /* The purchases header keeps its height even with the filter closed
    (owner: "whole bar height needs to increase ... when normal also"). */
-#purchaseorders_new .breadcrumbbar { padding-top: 10px; padding-bottom: 12px; }
+/* The header control bar breathes (owner: "filter and other button bar
+   can have more height or little more padding") - one rule for EVERY
+   standard list header, not a per-page copy. */
+#purchaseorders_new .breadcrumbbar, #items .breadcrumbbar,
+#sales .breadcrumbbar, #suppliers .breadcrumbbar,
+#customers .breadcrumbbar, #stocklogs .breadcrumbbar,
+#lowstockitems .breadcrumbbar, #categories .breadcrumbbar,
+#variants .breadcrumbbar, #customercategory .breadcrumbbar,
+#users .breadcrumbbar, #branches .breadcrumbbar,
+#roles_admin_detail .breadcrumbbar {
+    padding-top: 14px; padding-bottom: 14px;
+}
 /* The strip on the header line sits clear of the header's bottom border. */
 .breadcrumbbar .lf-panel { margin: 4px 0 10px; }
 /* The control row at the top of every list card: Filter top-left, New
@@ -5847,6 +5858,24 @@ tr.s-doc-purchase-row:hover td { background: rgba(9, 105, 218, 0.05); }
  * secondary columns only yield on genuinely narrow screens, shedding
  * detail -> identity, never the row's meaning (LIST_PAGE_UX_STANDARD 5).
  * ---------------------------------------------------------------------- */
+/* One hover for EVERY standard list row, split or not. The per-split rules
+   only fired inside .master-detail, so the five full-width pages had no
+   hover at all (owner: "no mouse hover highlight"). The translucent brand
+   tint, not the theme's row-hover token - that token equals the rail grey
+   in the owner's theme and disappears against it. */
+.md-rail-rows tr.highlight-select { cursor: pointer; }
+.md-rail-rows tr.highlight-select:hover > td,
+.md-rail-rows tr.highlight-select:hover > th {
+    background: rgba(9, 105, 218, 0.09) !important;
+}
+.md-rail-rows tr.highlight-select:hover > td,
+.md-rail-rows tr.highlight-select:hover > th {
+    background: color-mix(in srgb, var(--theme-primary-color, #0969da) 9%, transparent) !important;
+}
+[data-theme] .md-rail-rows tr.highlight-select:hover > td,
+[data-theme] .md-rail-rows tr.highlight-select:hover > th {
+    background: color-mix(in srgb, var(--theme-primary-color, #0969da) 12%, transparent) !important;
+}
 @media (max-width: 991px) {
     .il-col-ref, .il-col-by,
     .ls-col-supplier, .ls-col-category,
@@ -5857,3 +5886,57 @@ tr.s-doc-purchase-row:hover td { background: rgba(9, 105, 218, 0.05); }
     .ls-col-sku,
     .cg-col-desc, .cc-col-desc, .vr-col-values { display: none; }
 }
+
+/* -------------------------------------------------------------------------
+ * Mini-dossier splits (owner: "similar right side open design. maintain
+ * consistency") - the eight small lists open their record in the same
+ * right pane the big pages use. Doc scrolls INSIDE below its toolbar;
+ * secondary rail columns yield once the pane is open.
+ * ---------------------------------------------------------------------- */
+#stocklogs_split.master-detail, #lowstockitems_split.master-detail,
+#categories_split.master-detail, #variants_split.master-detail,
+#customercategory_split.master-detail, #users_split.master-detail,
+#branches_split.master-detail, #roles_split.master-detail { margin: 0 !important; }
+
+#stocklogs_doc, #lowstockitems_doc, #categories_doc, #variants_doc,
+#customercategory_doc, #users_doc, #branches_doc, #roles_doc {
+    padding: 16px 20px 22px;
+    display: flex; flex-direction: column;
+    max-height: calc(100vh - 150px);
+}
+#stocklogs_doc .s-doc-body, #lowstockitems_doc .s-doc-body,
+#categories_doc .s-doc-body, #variants_doc .s-doc-body,
+#customercategory_doc .s-doc-body, #users_doc .s-doc-body,
+#branches_doc .s-doc-body, #roles_doc .s-doc-body {
+    overflow-y: auto; min-height: 0;
+}
+/* The record breathes inside its sheet (owner: labels sat "very near to
+   corner border" once the pane opened). */
+#stocklogs_doc .q-sheet, #lowstockitems_doc .q-sheet,
+#categories_doc .q-sheet, #variants_doc .q-sheet,
+#customercategory_doc .q-sheet, #users_doc .q-sheet,
+#branches_doc .q-sheet, #roles_doc .q-sheet { padding: 30px 36px; }
+@media (max-width: 767.98px) {
+    #stocklogs_doc, #lowstockitems_doc, #categories_doc, #variants_doc,
+    #customercategory_doc, #users_doc, #branches_doc, #roles_doc {
+        max-height: none; display: block;
+    }
+    #stocklogs_doc .s-doc-body, #lowstockitems_doc .s-doc-body,
+    #categories_doc .s-doc-body, #variants_doc .s-doc-body,
+    #customercategory_doc .s-doc-body, #users_doc .s-doc-body,
+    #branches_doc .s-doc-body, #roles_doc .s-doc-body { overflow: visible; }
+}
+
+/* In the split the rail sheds detail down to identity + the key number. */
+.stocklogs-split .il-col-ref, .stocklogs-split .il-col-by,
+.stocklogs-split .il-col-date, .stocklogs-split .il-col-bal,
+.lowstockitems-split .ls-col-sku, .lowstockitems-split .ls-col-supplier,
+.lowstockitems-split .ls-col-category,
+.lowstockitems-split #lowstockitems_list_rows .ls-restock,
+.categories-split .cg-col-desc, .categories-split .cg-col-created,
+.variants-split .vr-col-values,
+.customercategory-split .cc-col-desc,
+.users-split .us-col-email,
+.branches-split .br-col-email, .branches-split .br-col-address,
+.branches-split .br-col-state,
+.roles-split .rl-col-desc, .roles-split .rl-col-auth { display: none; }

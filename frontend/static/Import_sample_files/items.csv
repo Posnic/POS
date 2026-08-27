@@ -1,2 +1,3 @@
 name,itemid,barcode_id,category_name,supplier_name,discount_amount,discount_percentage,hsncode,hsndescription,tax_name,tax,tax_type,mrp_price,company_price,selling_price,available_quantity,unit,sort_order
-"vivo2 v23H","v23","v23","mobiles","Anonymous",0,0,"","","gst6%",6,"exclusive","100","120","100",0,"qty","0"
+"Vivo V23 5G","V23-128","8901234567890","Mobiles","Vivo Distributors",0,0,"8517","Smartphones","gst18%",18,"exclusive","24999","19500","23499",10,"qty","1"
+"USB-C Fast Charger 33W","CHG-33W","8901234567891","Accessories","Vivo Distributors",0,5,"8504","Chargers","gst18%",18,"inclusive","1499","650","1199",25,"qty","2"

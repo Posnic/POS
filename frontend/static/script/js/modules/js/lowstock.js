@@ -17,9 +17,70 @@ PosnicPro.lowstockitems = {
         PosnicPro.lowstockitems._chrome();
         PosnicPro.lowstockitems.loadList(1);
     },
-    /* The watchlist is about the item, so the deep link is the item's. */
+    /* Deep link #/lowstockitems/<id>: the watchlist with that item open
+       in the right pane. Recognises its own setHash echo. */
     showDetails: function (id) {
-        hasher.setHash('items/' + id);
+        if (PosnicPro.listDoc.activeId('lowstockitems') === String(id)
+            && $('#lowstockitems_detail_card').is(':visible')) { return; }
+        PosnicPro.lowstockitems._chrome();
+        PosnicPro.lowstockitems.loadList(1);
+        PosnicPro.lowstockitems.openDoc(id);
+    },
+    openDoc: function (id) {
+        var self = PosnicPro.lowstockitems;
+        var r = (self._lastRows || []).filter(function (x) { return String(x._id) === String(id); })[0];
+        var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
+        var actions = '<button type="button" class="btn btn-sm btn-primary-rgba ls-restock" data-module="receiving" data-access="write" data-id="' + esc(id) + '">'
+            + '<i class="feather icon-plus mr-1"></i>Restock</button>';
+        if (r) {
+            PosnicPro.listDoc.open({ key: 'lowstockitems', id: id, title: r.name, actions: actions, body: self._docBody(r) });
+            PosnicPro.ACLForModule('receiving');
+            return;
+        }
+        /* deep link before the list landed - the item record fills in */
+        PosnicPro.listDoc.open({ key: 'lowstockitems', id: id, title: 'Item', actions: actions });
+        PosnicPro.ACLForModule('receiving');
+        PosnicPro.get('items/' + id, function (response) {
+            var d = response && response.data;
+            if (response.type !== 'success' || !d) {
+                PosnicPro.listDoc.body('lowstockitems', '<div class="text-danger p-3">Could not open this item.</div>');
+                return;
+            }
+            PosnicPro.listDoc.title('lowstockitems', d.name || 'Item');
+            PosnicPro.listDoc.body('lowstockitems', self._docBody({
+                _id: id,
+                name: d.name,
+                itemid: d.itemid,
+                category_name: d.category_name,
+                supplier_name: d.supplier_name,
+                available_quantity: d.available_quantity,
+                image: d.image
+            }));
+        }, function () {
+            PosnicPro.listDoc.body('lowstockitems', '<div class="text-danger p-3">Could not open this item.</div>');
+        });
+    },
+    _docBody: function (r) {
+        var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
+        var img = (r.image && r.image !== 'item.svg') ? r.image : 'static/images/default/item.svg';
+        return '<div style="display:flex; gap:20px; align-items:flex-start;">'
+            + '<img src="' + esc(img) + '" style="width:84px; height:84px; object-fit:cover; border-radius:8px; flex:0 0 84px; border:1px solid var(--theme-border-color, #e3e7ee);" alt="">'
+            + '<div style="flex:1 1 auto; min-width:0;">'
+            + PosnicPro.listDoc.stats([
+                { v: '<span style="color:var(--theme-danger-color, #c0392b);">' + esc(r.available_quantity) + '</span>', l: 'Left in stock' },
+                { v: esc(r.itemid || '—'), l: 'SKU' }
+            ])
+            + '</div></div>'
+            + PosnicPro.listDoc.grid([
+                { label: 'Identity', lines: [
+                    r.category_name ? '<div>' + esc(r.category_name) + '</div>' : '',
+                    '<div class="q-muted">' + esc(r.name) + '</div>'
+                ] },
+                { label: 'Supply', lines: [
+                    r.supplier_name ? '<div>' + esc(r.supplier_name) + '</div>' : '<div class="q-muted">No supplier on record</div>'
+                ] }
+            ])
+            + PosnicPro.listDoc.link('Open in Item List', "hasher.setHash('items/" + esc(r._id) + "');");
     },
     mountFilters: function (force) {
         if (!$('#lowstockitems_filter_panel').length) { return; }
@@ -71,7 +132,8 @@ PosnicPro.lowstockitems = {
                 + '<th class="text-right">Left</th><th style="width:110px;"></th></tr></thead><tbody>';
             list.forEach(function (r) {
                 var img = (r.image && r.image !== 'item.svg') ? r.image : 'static/images/default/item.svg';
-                html += '<tr class="md-row lowstockitems-row highlight-select" data-id="' + esc(r._id) + '" style="cursor:pointer;">'
+                html += '<tr class="md-row lowstockitems-row highlight-select'
+                    + (PosnicPro.listDoc.activeId('lowstockitems') === String(r._id) ? ' is-active' : '') + '" data-id="' + esc(r._id) + '" style="cursor:pointer;">'
                     + '<td><img loading="lazy" decoding="async" src="' + esc(img) + '" style="width:30px; height:30px; object-fit:cover; border-radius:5px;" alt=""></td>'
                     + '<td>' + esc(r.name) + '</td>'
                     + '<td class="ls-col-sku q-muted">' + esc(r.itemid || '-') + '</td>'
@@ -118,20 +180,32 @@ PosnicPro.lowstockitems = {
         PosnicPro.lowstockitems._page = n;
         PosnicPro.lowstockitems.loadList();
     },
+    _csvSpec: function () {
+        return {
+            head: ['Item', 'SKU', 'Supplier', 'Category', 'Available'],
+            map: function (r) {
+                return [r.name, r.itemid || '', r.supplier_name || '', r.category_name || '', r.available_quantity];
+            }
+        };
+    },
     exportCsv: function () {
-        var rows = [['Item', 'SKU', 'Supplier', 'Category', 'Available']];
-        (PosnicPro.lowstockitems._lastRows || []).forEach(function (r) {
-            rows.push([r.name, r.itemid || '', r.supplier_name || '', r.category_name || '', r.available_quantity]);
+        var spec = PosnicPro.lowstockitems._csvSpec();
+        PosnicPro.listExport.save(
+            [spec.head].concat((PosnicPro.lowstockitems._lastRows || []).map(spec.map)), 'low-stock.csv');
+    },
+    /* Everything matching the CURRENT filter, paged through the same
+       endpoint the list reads - never a shapeless full dump. */
+    exportAllCsv: function () {
+        var spec = PosnicPro.lowstockitems._csvSpec();
+        PosnicPro.listExport.all({
+            url: 'items/itemLowStockTable',
+            params: function (page, limit) {
+                return { page: page, limit: limit, filters: JSON.stringify(PosnicPro.listFilter.legacyFilters('lowstockitems', {})), notificationrange: localStorage.getItem('notificationrange') };
+            },
+            head: spec.head,
+            map: spec.map,
+            filename: 'low-stock.csv'
         });
-        var csv = rows.map(function (r) {
-            return r.map(function (c) { return '"' + String(c == null ? '' : c).replace(/"/g, '""') + '"'; }).join(',');
-        }).join('\n');
-        var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        var a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'low-stock.csv';
-        a.click();
-        URL.revokeObjectURL(a.href);
     },
     /* Restock: open a new purchase with the item AND its supplier already
        filled - the flow the old Add Stock action carried, kept as-is. */
@@ -178,8 +252,11 @@ $(document).on('click', '#lowstockitems_filter_btn', function () {
     PosnicPro.lowstockitems.mountFilters(true);
     PosnicPro.listFilter.toggle('lowstockitems');
 });
-$(document).on('click', '#lowstockitems_list_rows tr.lowstockitems-row', function () {
-    hasher.setHash('items/' + $(this).data('id'));
+/* Details first, in the right pane (owner: no popups, no redirects -
+   "similar right side open design"). */
+$(document).on('click', '#lowstockitems_list_rows tr.lowstockitems-row', function (e) {
+    if ($(e.target).closest('.ls-restock').length) { return; }
+    PosnicPro.lowstockitems.openDoc($(this).data('id'));
 });
 $(document).on('click', '.ls-restock', function (e) {
     e.stopPropagation();

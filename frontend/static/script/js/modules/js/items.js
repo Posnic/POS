@@ -282,6 +282,19 @@ PosnicPro.items = {
             ],
             onChange: function () { PosnicPro.items.loadList(1); }
         });
+        PosnicPro.listSort.mount('items', {
+            options: [
+                { v: 'recent', l: 'Recently updated' },
+                { v: 'margin_desc', l: 'High margin first' },
+                { v: 'margin_asc', l: 'Low margin first' },
+                { v: 'stock_asc', l: 'Low stock first' },
+                { v: 'price_desc', l: 'Price: high to low' },
+                { v: 'price_asc', l: 'Price: low to high' },
+                { v: 'cost_desc', l: 'Cost: high to low' },
+                { v: 'name', l: 'Name A to Z' }
+            ],
+            onChange: function () { PosnicPro.items.loadList(1); }
+        });
     },
 
     _page: 1,
@@ -303,7 +316,12 @@ PosnicPro.items = {
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
         PosnicPro.get({
             url: 'items',
-            data: { page: self._page, limit: self.PAGE_SIZE, filters: JSON.stringify(filters) }
+            data: (function () {
+                var d = { page: self._page, limit: self.PAGE_SIZE, filters: JSON.stringify(filters) };
+                var sv = PosnicPro.listSort.value('items');
+                if (sv) { d.sort = sv; }
+                return d;
+            }())
         }, function (response) {
             var data = (response && response.data) || {};
             var list = data.list || [];
@@ -409,20 +427,32 @@ PosnicPro.items = {
         PosnicPro.items._page = n;
         PosnicPro.items.loadList();
     },
+    _csvSpec: function () {
+        return {
+            head: ['Name', 'SKU', 'Category', 'Stock', 'Unit', 'Selling price', 'Cost'],
+            map: function (r) {
+                return [r.name, r.itemid || '', r.category_name || '', r.available_quantity, r.unit || 'qty', r.selling_price, r.company_price || ''];
+            }
+        };
+    },
     exportCsv: function () {
-        var rows = [['Name', 'SKU', 'Category', 'Stock', 'Unit', 'Selling price', 'Cost']];
-        (PosnicPro.items._lastRows || []).forEach(function (r) {
-            rows.push([r.name, r.itemid || '', r.category_name || '', r.available_quantity, r.unit || 'qty', r.selling_price, r.company_price || '']);
+        var spec = PosnicPro.items._csvSpec();
+        PosnicPro.listExport.save(
+            [spec.head].concat((PosnicPro.items._lastRows || []).map(spec.map)), 'items.csv');
+    },
+    /* Everything matching the CURRENT filter, paged through the same
+       endpoint the list reads - never a shapeless full dump. */
+    exportAllCsv: function () {
+        var spec = PosnicPro.items._csvSpec();
+        PosnicPro.listExport.all({
+            url: 'items',
+            params: function (page, limit) {
+                return (function () { var d = { page: page, limit: limit, filters: JSON.stringify(PosnicPro.listFilter.legacyFilters('items', { dateKey: 'updated_date' })) }; var sv = PosnicPro.listSort.value('items'); if (sv) { d.sort = sv; } return d; }());
+            },
+            head: spec.head,
+            map: spec.map,
+            filename: 'items.csv'
         });
-        var csv = rows.map(function (r) {
-            return r.map(function (c) { return '"' + String(c == null ? '' : c).replace(/"/g, '""') + '"'; }).join(',');
-        }).join('\n');
-        var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        var a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'items.csv';
-        a.click();
-        URL.revokeObjectURL(a.href);
     },
     /* ---- the dossier pane ---- */
     openDoc: function (id) {
@@ -577,7 +607,7 @@ PosnicPro.items = {
         PosnicPro.request({
             method: 'DELETE',
             url: 'items',
-            data: JSON.stringify({ id: [id] })
+            data: JSON.stringify({ data: [id] })
         }, function (r) {
             PosnicPro.alert(r.type || 'success', r.message || 'Item deleted');
             PosnicPro.items.closeDoc();

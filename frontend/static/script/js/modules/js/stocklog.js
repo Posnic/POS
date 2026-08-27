@@ -1,17 +1,124 @@
 PosnicPro.stocklogs = {
-    /* A ledger line has no document of its own - the deep link lands on the
-       ITEM the movement belongs to, where the whole trail is shown. */
+    /* Deep link #/stocklogs/<id>: land on the ledger with that movement
+       open in the right pane - the item's own page is a link inside,
+       never a redirect (owner rule). Recognises the echo of its own
+       setHash and does nothing. */
     showDetails: function (id) {
+        if (PosnicPro.listDoc.activeId('stocklogs') === String(id)
+            && $('#stocklogs_detail_card').is(':visible')) { return; }
+        PosnicPro.stocklogs._chrome();
+        PosnicPro.stocklogs.loadList(1);
+        PosnicPro.listDoc.open({ key: 'stocklogs', id: id, title: 'Movement' });
         PosnicPro.get('stocklogs/' + id, function (response) {
-            var itemId = response && response.data && response.data.view_item_id;
-            if (response.type === 'success' && itemId) {
-                hasher.setHash('items/' + itemId);
-            } else {
-                hasher.setHash('stocklogs');
+            var d = response && response.data;
+            if (response.type !== 'success' || !d) {
+                PosnicPro.listDoc.body('stocklogs', '<div class="text-danger p-3">Could not open this movement.</div>');
+                return;
             }
+            PosnicPro.listDoc.title('stocklogs', d.item_name || 'Movement');
+            PosnicPro.listDoc.body('stocklogs', PosnicPro.stocklogs._docBody({
+                process: d.process,
+                qty: d.item_quantity,
+                opening: d.opening_balance !== 'N/A' ? d.opening_balance : null,
+                closing: d.closing_balance,
+                reference: d.reference,
+                by: d.changed_by,
+                date: PosnicPro.convertDate(d.created_date),
+                item_id: d.view_item_id
+            }));
         }, function () {
-            hasher.setHash('stocklogs');
+            PosnicPro.listDoc.body('stocklogs', '<div class="text-danger p-3">Could not open this movement.</div>');
         });
+    },
+    /* Row click: the pane fills straight from the row the list holds. */
+    openDoc: function (logId) {
+        var r = (PosnicPro.stocklogs._lastRows || []).filter(function (x) { return String(x._id) === String(logId); })[0];
+        if (!r) { return; }
+        var n = Number(r.count) || 0;
+        PosnicPro.listDoc.open({
+            key: 'stocklogs',
+            id: r._id,
+            title: r.item_name,
+            body: PosnicPro.stocklogs._docBody({
+                process: r.process,
+                note: r.note,
+                change: n,
+                opening: r.opening_balance,
+                closing: r.closing_balance,
+                reference: r.reference,
+                by: r.changed_by,
+                date: PosnicPro.convertDate(r.string_date),
+                item_id: r.view_item_id
+            })
+        });
+    },
+    _docBody: function (o) {
+        var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
+        var change = '—';
+        if (o.change != null) {
+            change = '<span style="color:' + (o.change < 0 ? 'var(--theme-danger-color, #c0392b)' : 'var(--theme-success-color, #1a7f37)') + ';">'
+                + (o.change > 0 ? '+' : '') + o.change + '</span>';
+        } else if (o.qty != null) {
+            change = esc(o.qty);
+        }
+        /* The reference IS a document - a bill number for sale movements, a
+           purchase number for receivings - so it links to its record
+           (owner: "have option go to sale record as well"). */
+        var refLine = '';
+        if (o.reference) {
+            var refTarget = /sale/i.test(o.process || '') ? 'sale'
+                : /receiving|purchase/i.test(o.process || '') ? 'purchase' : '';
+            refLine = refTarget
+                ? '<div><a href="javascript:void(0)" onclick="PosnicPro.stocklogs.openReference(\'' + refTarget + '\', \'' + esc(o.reference) + '\');">'
+                    + esc(o.reference) + ' &rarr;</a>'
+                    + '<span class="q-muted" style="margin-left:6px;">' + (refTarget === 'sale' ? 'the bill' : 'the purchase') + '</span></div>'
+                : '<div class="q-muted">Ref: ' + esc(o.reference) + '</div>';
+        }
+        return PosnicPro.listDoc.stats([
+            { v: change, l: 'Change' },
+            { v: o.opening != null ? esc(o.opening) : null, l: 'Opening' },
+            { v: o.opening != null ? esc(o.closing) : null, l: 'Closing' }
+        ])
+            + PosnicPro.listDoc.grid([
+                { label: 'Movement', lines: [
+                    '<div>' + esc(o.process) + '</div>',
+                    o.note ? '<div class="q-muted">' + esc(o.note) + '</div>' : ''
+                ] },
+                { label: 'Reference', lines: [refLine] },
+                { label: 'Recorded', lines: [
+                    o.by ? '<div>' + esc(o.by) + '</div>' : '',
+                    o.date ? '<div class="q-muted">' + esc(o.date) + '</div>' : ''
+                ] }
+            ])
+            + (o.item_id
+                ? PosnicPro.listDoc.link('Open item in Item List', "hasher.setHash('items/" + esc(o.item_id) + "');")
+                : '');
+    },
+    /* Resolve a reference number to its document and land on it - the
+       ledger stores the NUMBER, the pages navigate by id. */
+    openReference: function (kind, ref) {
+        var exact = String(ref).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        if (kind === 'sale') {
+            PosnicPro.get({
+                url: 'sales',
+                data: { page: 1, limit: 1, filters: JSON.stringify({ sales_id: { $regex: '^' + exact + '$', $options: 'i' } }) }
+            }, function (r) {
+                var row = r && r.data && r.data.list && r.data.list[0];
+                var id = row && (row._id && row._id.$oid ? row._id.$oid : row._id);
+                if (id) { hasher.setHash('sales/' + id); }
+                else { PosnicPro.alert('warning', 'That bill is not in Sales History any more'); }
+            }, function () { PosnicPro.alert('warning', 'Could not look up the bill'); });
+            return;
+        }
+        PosnicPro.get({
+            url: 'receivings',
+            data: { page: 1, limit: 1, filters: JSON.stringify({ receiving_id: { $regex: '^' + exact + '$', $options: 'i' } }) }
+        }, function (r) {
+            var row = r && r.data && r.data.list && r.data.list[0];
+            var id = row && (row._id && row._id.$oid ? row._id.$oid : row._id);
+            if (id) { hasher.setHash('purchaseorders/' + id); }
+            else { PosnicPro.alert('warning', 'That purchase is not on record any more'); }
+        }, function () { PosnicPro.alert('warning', 'Could not look up the purchase'); });
     },
     showModuleDetails: function (id) {
         hasher.setHash('items/' + id);
@@ -97,7 +204,8 @@ PosnicPro.stocklogs = {
             list.forEach(function (r) {
                 var n = Number(r.count) || 0;
                 var note = r.note ? '<div class="q-muted" style="font-size:11.5px; white-space:normal;">' + esc(r.note) + '</div>' : '';
-                html += '<tr class="md-row stocklogs-row highlight-select" data-item-id="' + esc(r.view_item_id || '') + '" style="cursor:pointer;">'
+                html += '<tr class="md-row stocklogs-row highlight-select'
+                    + (PosnicPro.listDoc.activeId('stocklogs') === String(r._id) ? ' is-active' : '') + '" data-id="' + esc(r._id) + '" style="cursor:pointer;">'
                     + '<td>' + esc(r.item_name) + '</td>'
                     + '<td>' + esc(r.process) + note + '</td>'
                     + '<td class="il-col-ref q-muted">' + esc(r.reference || '-') + '</td>'
@@ -144,21 +252,33 @@ PosnicPro.stocklogs = {
         PosnicPro.stocklogs._page = n;
         PosnicPro.stocklogs.loadList();
     },
+    _csvSpec: function () {
+        return {
+            head: ['Item', 'Movement', 'Note', 'Reference', 'By', 'Date', 'Opening', 'Change', 'Closing'],
+            map: function (r) {
+                return [r.item_name, r.process, r.note || '', r.reference || '', r.changed_by || '',
+                    PosnicPro.convertDate(r.string_date), r.opening_balance, r.count, r.closing_balance];
+            }
+        };
+    },
     exportCsv: function () {
-        var rows = [['Item', 'Movement', 'Note', 'Reference', 'By', 'Date', 'Opening', 'Change', 'Closing']];
-        (PosnicPro.stocklogs._lastRows || []).forEach(function (r) {
-            rows.push([r.item_name, r.process, r.note || '', r.reference || '', r.changed_by || '',
-                PosnicPro.convertDate(r.string_date), r.opening_balance, r.count, r.closing_balance]);
+        var spec = PosnicPro.stocklogs._csvSpec();
+        PosnicPro.listExport.save(
+            [spec.head].concat((PosnicPro.stocklogs._lastRows || []).map(spec.map)), 'inventory-logs.csv');
+    },
+    /* Everything matching the CURRENT filter, paged through the same
+       endpoint the list reads - never a shapeless full dump. */
+    exportAllCsv: function () {
+        var spec = PosnicPro.stocklogs._csvSpec();
+        PosnicPro.listExport.all({
+            url: 'stocklogs',
+            params: function (page, limit) {
+                return { page: page, limit: limit, filters: JSON.stringify(PosnicPro.listFilter.legacyFilters('stocklogs', { dateKey: 'date' })) };
+            },
+            head: spec.head,
+            map: spec.map,
+            filename: 'inventory-logs.csv'
         });
-        var csv = rows.map(function (r) {
-            return r.map(function (c) { return '"' + String(c == null ? '' : c).replace(/"/g, '""') + '"'; }).join(',');
-        }).join('\n');
-        var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        var a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'inventory-logs.csv';
-        a.click();
-        URL.revokeObjectURL(a.href);
     },
     /* The Recycle Bin's preview door (settings.js viewRecycleBinDetails):
        a deleted log's item may no longer exist, so its facts open in the
@@ -227,7 +347,9 @@ PosnicPro.stocklogs = {
     }
 };
 
-/* Filter button + Movement dropdown + row cross-link into the item dossier. */
+/* Filter button + Movement dropdown + the row's peek (details first, in
+   place - owner: "dont redirect to item page or sales page. show details
+   first may give link inside"). */
 $(document).on('click', '#stocklogs_filter_btn', function () {
     PosnicPro.stocklogs.mountFilters(true);
     PosnicPro.listFilter.toggle('stocklogs');
@@ -236,6 +358,5 @@ $(document).on('click', '.il-move-opt', function () {
     PosnicPro.stocklogs.setMove($(this).data('move'));
 });
 $(document).on('click', '#stocklogs_list_rows tr.stocklogs-row', function () {
-    var itemId = $(this).data('item-id');
-    if (itemId) { hasher.setHash('items/' + itemId); }
+    PosnicPro.stocklogs.openDoc($(this).data('id'));
 });

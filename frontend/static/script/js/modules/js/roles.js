@@ -53,28 +53,81 @@ PosnicPro.roles = {
             var id = r._id && r._id.$oid ? r._id.$oid : r._id;
             var pos = r.pos || {};
             var allowed = PosnicPro.roles.POS_KEYS.filter(function (k) { return pos[k] === true; });
+            var mgrCount = (r.requires_manager_approval || []).length;
+            /* A COUNT, not the full list - eleven comma-separated actions
+               made every row four lines tall (owner: "hight looks big").
+               The pane spells them out; the row only has to say how much. */
             var authority = allowed.length
-                ? allowed.map(function (k) { return PosnicPro.roles.POS_LABELS[k]; }).join(', ')
+                ? allowed.length + ' till action' + (allowed.length === 1 ? '' : 's')
+                    + (mgrCount ? ' · ' + mgrCount + ' need a manager' : '')
                 : 'Everything needs a manager';
-            html += '<tr>'
-                + '<td style="font-weight:600;">' + esc(r.name) + '</td>'
-                + '<td>' + (r.is_system
+            html += '<tr class="md-row roles-row highlight-select'
+                + (PosnicPro.listDoc.activeId('roles') === String(id) ? ' is-active' : '') + '" data-id="' + esc(id) + '" style="cursor:pointer;">'
+                + '<td style="font-weight:600; white-space:nowrap;">' + esc(r.name) + '</td>'
+                + '<td class="rl-col-type">' + (r.is_system
                     ? '<span class="badge badge-primary-inverse">System</span>'
                     : '<span class="badge badge-success-inverse">Custom</span>') + '</td>'
-                + '<td style="max-width:280px;"><small>' + esc(r.description || '') + '</small></td>'
-                + '<td style="max-width:260px;"><small class="text-muted">' + esc(authority) + '</small></td>'
+                + '<td class="rl-col-desc" style="max-width:320px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">' + esc(r.description || '') + '</td>'
+                + '<td class="rl-col-auth q-muted" style="white-space:nowrap;">' + esc(authority) + '</td>'
                 + '<td class="text-right" style="white-space:nowrap;">'
                 + (canWrite
-                    ? '<a href="javascript:void(0);" class="mr-2" title="Edit" onclick="PosnicPro.roles.openEditor(\'' + id + '\');"><i class="feather icon-edit-2"></i></a>'
-                      + '<a href="javascript:void(0);" class="mr-2" title="Clone as custom role" onclick="PosnicPro.roles.openEditor(\'' + id + '\', true);"><i class="feather icon-copy"></i></a>'
+                    ? '<a href="javascript:void(0);" class="btn btn-sm btn-light rl-row-act" title="Edit" onclick="PosnicPro.roles.openEditor(\'' + id + '\');"><i class="feather icon-edit-2"></i></a> '
+                      + '<a href="javascript:void(0);" class="btn btn-sm btn-light rl-row-act" title="Clone as custom role" onclick="PosnicPro.roles.openEditor(\'' + id + '\', true);"><i class="feather icon-copy"></i></a>'
                       + (r.is_system ? ''
-                          : '<a href="javascript:void(0);" class="text-danger" title="Delete" onclick="PosnicPro.roles.remove(\'' + id + '\');"><i class="feather icon-trash-2"></i></a>')
+                          : ' <a href="javascript:void(0);" class="btn btn-sm btn-light text-danger rl-row-act" title="Delete" onclick="PosnicPro.roles.remove(\'' + id + '\');"><i class="feather icon-trash-2"></i></a>')
                     : '')
                 + '</td>'
                 + '</tr>';
         });
         $('#roles_admin_body').html(html
             || '<tr><td colspan="5" class="text-center text-muted">No roles yet.</td></tr>');
+        if (PosnicPro.roles._pendingDoc) {
+            var pending = PosnicPro.roles._pendingDoc;
+            PosnicPro.roles._pendingDoc = null;
+            PosnicPro.roles.openDoc(pending);
+        }
+    },
+    /* Deep link #/roles/<id>: the list with that role open in the right
+       pane - what it permits at a glance; editing is the deliberate act.
+       Recognises its own setHash echo. */
+    showDetails: function (roleId) {
+        if (PosnicPro.listDoc.activeId('roles') === String(roleId)
+            && $('#roles_detail_card').is(':visible')) { return; }
+        PosnicPro.roles.showDataTablePage();
+        PosnicPro.roles._pendingDoc = String(roleId);
+    },
+    openDoc: function (roleId) {
+        var esc = PosnicPro.roles._esc;
+        var r = (PosnicPro.roles.listCache || []).filter(function (x) {
+            var id = x._id && x._id.$oid ? x._id.$oid : x._id;
+            return String(id) === String(roleId);
+        })[0];
+        if (!r) { return; }
+        var pos = r.pos || {};
+        var allowed = PosnicPro.roles.POS_KEYS.filter(function (k) { return pos[k] === true; })
+            .map(function (k) { return '<span class="badge badge-secondary-inverse mr-1">' + esc(PosnicPro.roles.POS_LABELS[k]) + '</span>'; });
+        var mgr = (r.requires_manager_approval || [])
+            .map(function (k) { return '<span class="badge badge-warning-inverse mr-1">' + esc(PosnicPro.roles.POS_LABELS[k] || k) + '</span>'; });
+        var caps = [];
+        if (pos.discount_max_percent > 0) { caps.push('Discount up to ' + pos.discount_max_percent + '%'); }
+        if (pos.refund_max_amount > 0) { caps.push('Refund up to ' + pos.refund_max_amount); }
+        var body = PosnicPro.listDoc.table(
+            PosnicPro.listDoc.row('Type', r.is_system
+                ? '<span class="badge badge-primary-inverse">System</span>'
+                : '<span class="badge badge-success-inverse">Custom</span>')
+            + PosnicPro.listDoc.row('Description', esc(r.description || '-'))
+            + PosnicPro.listDoc.row('Till authority', allowed.length ? allowed.join(' ') : 'Everything needs a manager')
+            + PosnicPro.listDoc.row('Needs a manager', mgr.length ? mgr.join(' ') : '')
+            + PosnicPro.listDoc.row('Caps', caps.length ? esc(caps.join(' · ')) : ''));
+        var canWrite = PosnicPro.checkAccess('user', 'write')
+            || ['super_admin', 'admin', 'manager'].indexOf(PosnicPro.local.get('usertype')) !== -1;
+        var actions = canWrite
+            ? '<button type="button" class="btn btn-sm btn-light" data-toggle="tooltip" title="Clone as custom role" aria-label="Clone"'
+                + ' onclick="PosnicPro.roles.openEditor(\'' + esc(roleId) + '\', true);"><i class="feather icon-copy"></i></button>'
+                + '<button type="button" class="btn btn-sm btn-light" data-toggle="tooltip" title="Edit this role" aria-label="Edit"'
+                + ' onclick="PosnicPro.roles.openEditor(\'' + esc(roleId) + '\');"><i class="feather icon-edit-2"></i></button>'
+            : '';
+        PosnicPro.listDoc.open({ key: 'roles', id: roleId, title: r.name, actions: actions, body: body });
     },
     _renderEditorGrids: function () {
         if ($('#role_editor_acl_body tr').length) { return; }
@@ -200,3 +253,9 @@ PosnicPro.roles = {
         }, function () {});
     },
 };
+
+/* Row click peeks the role in place; the action buttons never also open it. */
+$(document).on('click', '#roles_admin_body tr.roles-row', function (e) {
+    if ($(e.target).closest('.rl-row-act').length) { return; }
+    PosnicPro.roles.openDoc($(this).data('id'));
+});

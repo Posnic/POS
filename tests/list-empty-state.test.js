@@ -40,6 +40,8 @@ test('standard master-detail lists keep two DISTINCT empty sentences', () => {
     ['categories.js', 'categories'],
     ['variants.js', 'variants'],
     ['customer_categories.js', 'customercategory'],
+    ['users.js', 'users'],
+    ['branches.js', 'branches'],
   ]) {
     const js = read('frontend', 'static', 'script', 'js', 'modules', 'js', file);
     assert.match(js, /match this filter/, `${key}: the filtered state is gone`);

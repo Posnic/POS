@@ -34,11 +34,40 @@ PosnicPro.variants = {
     showDelete: function (id) {
         PosnicPro.deleteTableRowData(id, 'variants');
     },
+    /* Deep link #/variants/<id>: the list with that variant open in the
+       right pane. Recognises its own setHash echo. */
     showDetails: function (id) {
-        var loader = $(".loader-view-variant");
-        loader.find(".loadingSpinner:first").remove();
-        PosnicPro.showViewModal('variants');
-        PosnicPro.variants.viewVariant(id);
+        if (PosnicPro.listDoc.activeId('variants') === String(id)
+            && $('#variants_detail_card').is(':visible')) { return; }
+        PosnicPro.variants._chrome();
+        PosnicPro.variants.loadList(1);
+        PosnicPro.variants.openDoc(id);
+    },
+    openDoc: function (id) {
+        var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
+        var actions = '<button type="button" class="btn btn-sm btn-light" data-module="item" data-access="write" data-toggle="tooltip" title="Edit this variant" aria-label="Edit"'
+            + ' onclick="hasher.setHash(\'variants/' + esc(id) + '/edit\');"><i class="feather icon-edit-2"></i></button>'
+            + '<button type="button" class="btn btn-sm btn-light" data-module="item" data-access="delete" data-toggle="tooltip" title="Delete this variant" aria-label="Delete"'
+            + ' onclick="PosnicPro.listDoc.close(\'variants\'); hasher.setHash(\'variants/' + esc(id) + '/delete\');"><i class="feather icon-trash-2"></i></button>';
+        PosnicPro.listDoc.open({ key: 'variants', id: id, title: 'Variant', actions: actions });
+        PosnicPro.ACLForModule('item');
+        PosnicPro.get('variants/' + id, function (response) {
+            var d = response && response.data;
+            if (response.type !== 'success' || !d) {
+                PosnicPro.listDoc.body('variants', '<div class="text-danger p-3">Could not open this variant.</div>');
+                return;
+            }
+            var values = (d.fields || []).map(function (f) { return f && f.name; }).filter(Boolean);
+            PosnicPro.listDoc.title('variants', d.name || 'Variant');
+            PosnicPro.listDoc.body('variants', PosnicPro.listDoc.table(
+                PosnicPro.listDoc.row('Values', values.length
+                    ? values.map(function (v) { return '<span class="badge badge-secondary-inverse mr-1">' + esc(v) + '</span>'; }).join(' ')
+                    : '-')
+                + PosnicPro.listDoc.row('Added', d.created_date ? esc(PosnicPro.convertDate(d.created_date)) : '')
+                + PosnicPro.listDoc.row('Updated', d.updated_date ? esc(PosnicPro.convertDate(d.updated_date)) : '')));
+        }, function () {
+            PosnicPro.listDoc.body('variants', '<div class="text-danger p-3">Could not open this variant.</div>');
+        });
     },
     /* The name the OLD table machinery answered to - the save flow and the
        shared clearListFilters/refresh doors still call it. */
@@ -56,7 +85,7 @@ PosnicPro.variants = {
         $('#v-pills-inventory-tab,#view_variants_page').addClass('active');
         $('#v-pills-inventory').addClass('show active');
         $('.page-title-box,#variants').show();
-        $('#variants_new,#variants_view').modal('hide');
+        $('#variants_new').modal('hide');
         $('.dashboard_img_menu').hide();
         $('#image_sidebar_itemvariant').show();
     },
@@ -103,11 +132,12 @@ PosnicPro.variants = {
                 + '<thead><tr><th>Name</th><th class="vr-col-values">Values</th><th style="width:120px;"></th></tr></thead><tbody>';
             list.forEach(function (r) {
                 var values = (r.fields || []).map(function (f) { return f && f.name; }).filter(Boolean).join(', ');
-                html += '<tr class="md-row variants-row highlight-select" data-id="' + esc(r._id) + '" style="cursor:pointer;">'
+                html += '<tr class="md-row variants-row highlight-select'
+                    + (PosnicPro.listDoc.activeId('variants') === String(r._id) ? ' is-active' : '') + '" data-id="' + esc(r._id) + '" style="cursor:pointer;">'
                     + '<td>' + esc(r.name) + '</td>'
                     + '<td class="vr-col-values q-muted">' + esc(values || '-') + '</td>'
                     + '<td class="text-right" style="white-space:nowrap;">'
-                    + '<a data-module="item" data-access="read" href="#/variants/' + esc(r._id) + '" class="btn btn-sm btn-light vr-row-act" data-toggle="tooltip" title="View"><i class="feather icon-eye"></i></a> '
+                    + '<a data-module="item" data-access="write" href="#/variants/' + esc(r._id) + '/edit" class="btn btn-sm btn-light vr-row-act" data-toggle="tooltip" title="Edit"><i class="feather icon-edit-2"></i></a> '
                     + '<a data-module="item" data-access="delete" href="#/variants/' + esc(r._id) + '/delete" class="btn btn-sm btn-light vr-row-act" data-toggle="tooltip" title="Delete"><i class="feather icon-trash-2"></i></a>'
                     + '</td>'
                     + '</tr>';
@@ -218,35 +248,6 @@ PosnicPro.variants = {
         });
         return false;
     },
-    /*Display the variant details*/
-    viewVariant: function (id) {
-        var loader = $(".loader-view-variant");
-        $("<div class='loadingSpinner'></div>").appendTo(loader);
-        $('#variants_view').modal('show');
-        $('#view_variant_fields').html('');
-        PosnicPro.get('variants/' + id, function (response) {
-            if (response.type === 'success') {
-                var data = response.data;
-                PosnicPro.record_id = id;
-                $('#variant_view_name').text(data.name);
-                var fieldsAppend;
-                $.each(data.fields, function (index, value) {
-                    fieldsAppend += '<tr><th scope="row">Product variant <span>' + (index + 1) + '</span> :</th><td>' + value.name + '</td></tr>';
-                });
-                $('#view_variant_fields').append(fieldsAppend);
-                var updateCreateDate = PosnicPro.convertDate(data.created_date);
-                $('#variant_view_created_date').text(updateCreateDate);
-                var updateUpdateDate = PosnicPro.convertDate(data.updated_date);
-                $('#variant_view_updated_date').text(updateUpdateDate);
-                loader.find(".loadingSpinner:first").remove();
-            } else {
-                PosnicPro.alert(response.type, response.message);
-            }
-        }, function (xhr) {
-            var response = jQuery.parseJSON(xhr.responseText);
-            PosnicPro.alert(response.type, response.message);
-        });
-    },
     /*Edit variant details*/
     editVariant: function (id) {
         var loader = $(".loader-variant");
@@ -333,7 +334,7 @@ $(document).on('click', '#variants_filter_btn', function () {
 });
 $(document).on('click', '#variants_list_rows tr.variants-row', function (e) {
     if ($(e.target).closest('.vr-row-act').length) { return; }
-    hasher.setHash('variants/' + $(this).data('id') + '/edit');
+    PosnicPro.variants.openDoc($(this).data('id'));
 });
 
 $(function () {

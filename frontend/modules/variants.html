@@ -14,10 +14,16 @@
                 </div>
                 <div class="col-auto text-right">
                     <div class="widgetbar" id="variants_controls">
-                        <button type="button" class="btn btn-primary-rgba" onclick="PosnicPro.variants.exportCsv();"
-                            data-toggle="tooltip" title="Export the filtered rows" aria-label="Export CSV">
+                        <div class="btn-group">
+                        <button type="button" class="btn btn-primary-rgba dropdown-toggle" data-toggle="dropdown"
+                            aria-haspopup="true" aria-expanded="false" title="Export CSV" aria-label="Export CSV">
                             <i class="feather icon-share"></i>
                         </button>
+                        <div class="dropdown-menu dropdown-menu-right">
+                            <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.variants.exportCsv(); return false;">This page (what is shown)</a>
+                            <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.variants.exportAllCsv(); return false;">Everything matching the filter</a>
+                        </div>
+                        </div>
                         <button type="button" class="btn btn-primary-rgba lf-btn" id="variants_filter_btn"
                             data-toggle="tooltip" title="Filter variants">
                             <i class="feather icon-filter mr-2"></i>Filter
@@ -33,10 +39,15 @@
     </div>
 
     <div class="contentbar">
+        <div id="variants_split">
         <div class="card m-b-30 md-rail" id="variants_list_card">
             <div class="card-body">
                 <div id="variants_list_rows" class="md-rail-rows text-muted">Loading variants ...</div>
                 <div class="q-pager" id="variants_list_paging"></div>
+            </div>
+        </div>
+            <div class="card m-b-30 md-detail" id="variants_detail_card" style="display:none;">
+                <div id="variants_doc"></div>
             </div>
         </div>
     </div>
@@ -44,49 +55,4 @@
 <!-- End Containerbar -->
 
 
-<div class="modal fade close_on_esc" id="variants_view" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content loader-view-variant">
-            <div class="modal-header">
-                <h5 class="modal-title"><lang class="lang_variantdetail"> Variant Details </lang></h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="row justify-content-center">
-                    <div class="row">
-                        <div class="col-lg-12">
-                            <h4><span id="variant_view_name" class="text-primary"></span></h4>
-                            <div class="table-responsive">
-                                <table class="table table-borderless mb-0">
-                                    <tbody id="view_variant_fields"></tbody>
-                                    <tbody>
-                                    <tr>
-                                        <th scope="row"><lang class="lang_createdate_title"> Created Date </lang> :</th>
-                                    <td>
-                                        <span id="variant_view_created_date"></span>
-                                    </td>
-                                    </tr>
-                                    <tr>
-                                        <th scope="row"><lang class="lang_update_title"> Updated Date </lang> :</th>
-                                    <td>
-                                        <span id="variant_view_updated_date"></span>
-                                    </td>
-                                    </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-danger" data-dismiss="modal">
-                    <i class="feather icon-x-circle mr-2"></i><lang class="lang_close_title"> Close</lang>
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
 <!-- end  -->

@@ -47,128 +47,243 @@ PosnicPro.users = {
     showDelete: function (id) {
         PosnicPro.deleteTableRowData(id, 'users');
     },
+    /* Deep link #/users/<id>: the list with that employee open in the
+       right pane; the full profile sidebar - branch access, activity -
+       stays one deliberate click away inside. Recognises its own
+       setHash echo. */
     showDetails: function (id) {
-        var loader = $(".loader-view-user");
-        loader.find(".loadingSpinner:first").remove();
-        PosnicPro.showViewModal('users');
-        PosnicPro.users.viewUser(id);
+        if (PosnicPro.listDoc.activeId('users') === String(id)
+            && $('#users_detail_card').is(':visible')) { return; }
+        PosnicPro.users.showDataTablePage();
+        PosnicPro.users.openDoc(id);
     },
-    usersTable: function () {
-        var loader = $(".loader-table-user");
-        $("<div class='loadingSpinner'></div>").appendTo(loader);
-        PosnicPro.appendViewDataTableBody('users');
-        var table = $('#view_users');
-        var params = {
-            url: 'users',
-            data: {
-                page: table.data('current_page'),
-                limit: parseInt($('#view_users_per_page  option:selected').text()),
-                filters: table.data('filters')
+    openDoc: function (id) {
+        var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
+        var mine = PosnicPro.local.get('userid') === String(id);
+        var actions = mine ? '' : '<button type="button" class="btn btn-sm btn-light" data-module="user" data-access="write" data-toggle="tooltip" title="Edit this employee" aria-label="Edit"'
+            + ' onclick="hasher.setHash(\'users/' + esc(id) + '/edit\');"><i class="feather icon-edit-2"></i></button>';
+        PosnicPro.listDoc.open({ key: 'users', id: id, title: 'Employee', actions: actions });
+        PosnicPro.ACLForModule('user');
+        PosnicPro.get('users/' + id, function (response) {
+            var d = response && response.data;
+            if (response.type !== 'success' || !d) {
+                PosnicPro.listDoc.body('users', '<div class="text-danger p-3">Could not open this employee.</div>');
+                return;
             }
-        };
-        PosnicPro.get(params, function (response) {
-            if (response.type === 'success') {
-                (response.data.total > 0) ? $('#userreport_exportbtn').removeAttr('disabled') : $('#userreport_exportbtn').attr('disabled', 'disabled');
-                table.data('total', response.data.total);
-                table.data('total_pages', response.data.total_pages);
-                table.data('current_page', response.data.current_page);
-                table.data('per_page', response.data.per_page);
-                PosnicPro.paging(response.data.total_pages, response.data.current_page);
-                table.children('tbody').text('');
-                $('#view_users_total').text(response.data.total);
-                var rowTotal = response.data.total;
-                if (rowTotal === 0) {
-                    $('.user_header').hide();
-                    let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
-                    $('.user_norecord').empty().append('<div class="text-center text-dark"> <p>No Records on ' + dateRange + ' </p></div>');
-                    $('#user_img_hide,.user_norecord').show();
-                } else {
-                    $('.user_norecord').empty();
-                    $('#user_img_hide,.user_norecord').hide();
-                    $('.user_header').show();
-                }
-
-                var row_total = (table.data('current_page') - 1) * table.data('per_page') + 1;
-                $('#view_users_page_total').text(row_total);
-                var page_totals = (table.data('current_page') - 1) * table.data('per_page');
-                $('#view_users_page_perpage_total').text(page_totals + response.data.list.length);
-                for (var i = 0; i < response.data.list.length; i++) {
-                    var row = response.data.list[i];
-                    var row_no = (table.data('current_page') - 1) * table.data('per_page') + i + 1;
-                    if (row.activate === true) {
-                        var activate = '<span class="badge badge-success-inverse">Active</span>';
-                    } else {
-                        var activate = '<span class="badge badge-danger-inverse">InActive</span>';
-                    }
-
-                    var process_class = '';
-                    if (row.usertype == 'super_admin') {
-                        process_class = "badge badge-success-inverse";
-                    } else if (row.usertype == 'admin') {
-                        process_class = "badge badge-primary-inverse";
-                    } else {
-                        process_class = "badge badge-info-inverse";
-                    }
-
-                    var edit_icon = '<a data-module = "user" data-access = "write" href="#/users/' + row._id + '/edit" data-id="users/' + row._id + '/edit"  data-toggle="tooltip" title="Edit User" class="point-cursor mobile_tooltip"><i class="feather icon-edit"></i></a>';
-                    if (PosnicPro.local.get('userid') === row._id) {
-                        edit_icon = '<span class="show_edit_icon" style="display:none;"></span>';
-                    }
-                    var action = '<div id="onclick-toolbar-options_' + i + '" class="hidden">' +
-                            '<a data-module = "user" data-access = "read" href="#/users/' + row._id + '"  data-id="users/' + row._id + '"  data-toggle="tooltip" title="View User" class="point-cursor mobile_tooltip"><i class="feather icon-eye"></i></a>' +
-                            '<span class="show_edit_icon" style="display:none;">' + edit_icon + ' </span>' +
-                            '<a data-module = "user" data-access = "delete" href="#/users/' + row._id + '/delete" data-id="users/' + row._id + '/delete" data-toggle="tooltip" title="Delete User" class="point-cursor mobile_tooltip"><i class="feather icon-trash"></i></a>' +
-                            '</div>' +
-                            '<div data-toolbar="user-options" class="btn btn-round btn-primary-rgba round-pad" id="onclick-toolbar_' + i + '"><i class="feather icon-more-vertical-"></i></div>';
-                    var image_path = (row.image !== "user.svg") ? row.image : 'static/images/default/' + row.image;
-                    var trow = '<tr> <th><input type="checkbox" class="users-row-id" id="' + row._id + '" name="id[]" value="' + row._id + '" onclick="PosnicPro.checkboxSelectOne(this,\'users\');"></th> <th scope="row" data-label="#">' + row_no + '</th>  <td width="20%" data-label="Name"><a href="#/users/' + row._id + '"><i class="table_model_item">' + row.username + '</i></a></td> <td class="sale_id"><img loading="lazy" decoding="async" src=' + image_path + ' class="imagezoom table_img_alter" id="' + row.image + '" onclick="PosnicPro.viewImage(this.id,\'user\');"></td> <td class="sale_id" width="15%" data-label="Email"><a class="sale_color" href="mailto:' + (row.email || '') + '">' + (row.email || '') + '</a></td> <td class="sale_id text-center" data-label="Role"><span class="' + process_class + '">' + row.usertype + '</span></td><td class="text-center" data-label="Status">' + activate + '</td>' +
-                            '<td class="text-center"><span>' + action + '</span></td>' +
-                            '</tr>';
-                    $('#view_users').children('tbody').append(trow);
-                }
-                $(document).ready(function () {
-                    for (var i = 0; i < response.data.list.length; i++) {
-                        $('#onclick-toolbar_' + i).toolbar({
-                            content: '#onclick-toolbar-options_' + i,
-                            event: 'click',
-                            style: 'primary',
-                            hideOnClick: true
-                        });
-                        $('#onclick-toolbar_' + i).on('toolbarItemClick', function (event, element) {
-                            hasher.setHash($(element).data('id'));
-                            $(this).trigger('click');
-                            $('.mobile_tooltip').tooltip('hide');
-                        });
-                    }
-                });
-                PosnicPro.setSelectedCheckbox(PosnicPro["users_checkbox"], 'users');
-                PosnicPro.ACLForModule('user');
-                loader.find(".loadingSpinner:first").remove();
-            } else {
-                PosnicPro.alert(response.type, response.message);
-            }
-        }, function (xhr) {
-            var response = jQuery.parseJSON(xhr.responseText);
-            PosnicPro.alert(response.type, response.message);
+            var img = (d.image && d.image !== 'user.svg') ? d.image : 'static/images/default/user.svg';
+            var status = d.activate === true
+                ? '<span class="badge badge-success-inverse">Active</span>'
+                : '<span class="badge badge-danger-inverse">Inactive</span>';
+            var branches = $.map(d.branch_access || [], function (b) { return b && b.branch_name; });
+            var registers = $.map(d.registers || [], function (r) { return (r && r.register_name) || null; });
+            var lastLogin = d.lastLogin || d.last_login;
+            PosnicPro.listDoc.title('users', d.username || 'Employee');
+            PosnicPro.listDoc.body('users',
+                '<div style="display:flex; gap:20px; align-items:flex-start;">'
+                + '<img src="' + esc(img) + '" style="width:84px; height:84px; object-fit:cover; border-radius:50%; flex:0 0 84px; border:1px solid var(--theme-border-color, #e3e7ee);" alt="">'
+                + '<div style="flex:1 1 auto; min-width:0;">'
+                + '<div class="s-doc-stats" id="u_doc_stats">'
+                + '<div class="s-stat"><div class="s-stat-value">' + esc(d.usertype || '—') + '</div><div class="s-stat-label">Role</div></div>'
+                + '<div class="s-stat"><div class="s-stat-value">' + status + '</div><div class="s-stat-label">Status</div></div>'
+                + '</div>'
+                + '</div></div>'
+                + PosnicPro.listDoc.grid([
+                    { label: 'Contact', lines: [
+                        d.email ? '<div><a href="mailto:' + esc(d.email) + '">' + esc(d.email) + '</a></div>' : '<div class="q-muted">No email on record</div>'
+                    ] },
+                    { label: 'Access', lines: [
+                        branches.length ? '<div>' + esc(branches.join(', ')) + '</div>' : '<div class="q-muted">No branch access</div>',
+                        registers.length ? '<div class="q-muted">Registers: ' + esc(registers.join(', ')) + '</div>'
+                            : '<div class="q-muted">All registers of the branch</div>'
+                    ] },
+                    { label: 'On record', lines: [
+                        d.created_date ? '<div class="q-muted">Added ' + esc(PosnicPro.convertDate(d.created_date)) + '</div>' : '',
+                        lastLogin ? '<div class="q-muted">Last login ' + esc(PosnicPro.convertDate(lastLogin)) + '</div>' : ''
+                    ] }
+                ])
+                + '<div class="q-label" style="margin-top:18px;">Recent sales</div>'
+                + '<div id="u_doc_sales" class="q-muted" style="font-size:13px;">Loading ...</div>');
+            PosnicPro.users.loadRecentSales(id);
+        }, function () {
+            PosnicPro.listDoc.body('users', '<div class="text-danger p-3">Could not open this employee.</div>');
         });
     },
+    /* The employee's latest bills + their sales weight, from the same
+       report door the user report reads - authoritative, not recomputed. */
+    loadRecentSales: function (id) {
+        var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
+        var cur = PosnicPro.local.get('currencySign');
+        PosnicPro.get({
+            url: 'sales/userSalesDetails',
+            data: { page: 1, limit: 5, user_id: id, branch: [PosnicPro.local.get('branch_id_set')] }
+        }, function (response) {
+            var t = response && response.data && response.data.table && response.data.table.data;
+            var list = (t && t.list) || [];
+            var total = (t && Number(t.total)) || 0;
+            if (!list.length) {
+                $('#u_doc_sales').html('No sales rung up yet.');
+                return;
+            }
+            var value = 0;
+            var rows = list.map(function (r) {
+                value += Number(r.items_total) || 0;
+                var saleId = r._id && r._id.$oid ? r._id.$oid : r._id;
+                return '<tr class="u-doc-sale-row" data-id="' + esc(saleId) + '" style="cursor:pointer;">'
+                    + '<td>' + esc(r.sales_id) + '</td>'
+                    + '<td class="q-muted">' + esc(r.string_date ? PosnicPro.convertDate(r.string_date) : '') + '</td>'
+                    + '<td>' + esc(r.sale_process || 'Add') + '</td>'
+                    + '<td class="text-right">' + cur + '&nbsp;' + (Number(r.items_total) || 0).toFixed(2) + '</td>'
+                    + '</tr>';
+            }).join('');
+            $('#u_doc_stats').append(
+                '<div class="s-stat"><div class="s-stat-value">' + total + '</div>'
+                + '<div class="s-stat-label">' + (total === 1 ? 'Sale' : 'Sales') + '</div></div>'
+                + '<div class="s-stat"><div class="s-stat-value">' + cur + '&nbsp;' + value.toFixed(2) + '</div>'
+                + '<div class="s-stat-label">Rung up' + (total > list.length ? ' (last ' + list.length + ')' : '') + '</div></div>');
+            $('#u_doc_sales').removeClass('q-muted').html(
+                '<table class="q-items s-doc-purchases-table"><thead><tr>'
+                + '<th>Bill #</th><th>Date</th><th>Process</th><th class="text-right">Total</th>'
+                + '</tr></thead><tbody>' + rows + '</tbody></table>');
+        }, function () {
+            $('#u_doc_sales').html('Sales history unavailable.');
+        });
+    },
+    /* The name the OLD table machinery answered to - save flows and the
+       shared clearListFilters/refresh doors still call it. */
+    usersTable: function () {
+        PosnicPro.users.loadList(1);
+    },
+    _page: 1,
+    PAGE_SIZE: 25,
+    _lastRows: [],
+    mountFilters: function (force) {
+        if (!$('#users_filter_panel').length) { return; }
+        if (!force && $('#users_filter_panel').data('mounted')) { return; }
+        $('#users_filter_panel').data('mounted', true);
+        PosnicPro.listFilter.mount({
+            key: 'users',
+            container: '#users_filter_panel',
+            button: '#users_filter_btn',
+            searchPlaceholder: 'Search name or email',
+            searchFields: [
+                { value: 'all', label: 'All fields' },
+                { value: 'username', label: 'Name' },
+                { value: 'email', label: 'Email' }
+            ],
+            onChange: function () { PosnicPro.users.loadList(1); }
+        });
+    },
+    loadList: function (page) {
+        PosnicPro.users.mountFilters();
+        var self = PosnicPro.users;
+        if (page) { self._page = page; }
+        var filters = PosnicPro.listFilter.legacyFilters('users', {});
+        var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
+        PosnicPro.get({
+            url: 'users',
+            data: { page: self._page, limit: self.PAGE_SIZE, filters: JSON.stringify(filters) }
+        }, function (response) {
+            var data = (response && response.data) || {};
+            var list = data.list || [];
+            self._lastRows = list;
+            if (!list.length) {
+                var filtered = PosnicPro.listFilter.activeCount('users') > 0;
+                $('#users_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">'
+                    + (filtered ? 'No employees match this filter.' : 'No employees yet - press New to add the first.') + '</div>');
+                $('#users_list_paging').html('');
+                return;
+            }
+            var me = PosnicPro.local.get('userid');
+            var html = '<div class="table-responsive"><table class="table table-borderless">'
+                + '<thead><tr><th style="width:44px;"></th><th>Name</th><th class="us-col-email">Email</th>'
+                + '<th class="text-center">Role</th><th class="text-center">Status</th>'
+                + '<th style="width:90px;"></th></tr></thead><tbody>';
+            list.forEach(function (r) {
+                var img = (r.image && r.image !== 'user.svg') ? r.image : 'static/images/default/user.svg';
+                var roleClass = r.usertype === 'super_admin' ? 'badge badge-success-inverse'
+                    : r.usertype === 'admin' ? 'badge badge-primary-inverse' : 'badge badge-info-inverse';
+                var status = r.activate === true
+                    ? '<span class="badge badge-success-inverse">Active</span>'
+                    : '<span class="badge badge-danger-inverse">Inactive</span>';
+                var canEdit = me !== String(r._id);
+                html += '<tr class="md-row users-row highlight-select'
+                    + (PosnicPro.listDoc.activeId('users') === String(r._id) ? ' is-active' : '') + '" data-id="' + esc(r._id) + '" style="cursor:pointer;">'
+                    + '<td><img loading="lazy" decoding="async" src="' + esc(img) + '" style="width:32px; height:32px; object-fit:cover; border-radius:50%;" alt=""></td>'
+                    + '<td>' + esc(r.username) + '</td>'
+                    + '<td class="us-col-email q-muted">' + esc(r.email || '-') + '</td>'
+                    + '<td class="text-center"><span class="' + roleClass + '">' + esc(r.usertype) + '</span></td>'
+                    + '<td class="text-center">' + status + '</td>'
+                    + '<td class="text-right" style="white-space:nowrap;">'
+                    + (canEdit
+                        ? '<a data-module="user" data-access="write" href="#/users/' + esc(r._id) + '/edit" class="btn btn-sm btn-light us-row-act" data-toggle="tooltip" title="Edit"><i class="feather icon-edit-2"></i></a> '
+                        : '')
+                    + '<a data-module="user" data-access="delete" href="#/users/' + esc(r._id) + '/delete" class="btn btn-sm btn-light us-row-act" data-toggle="tooltip" title="Delete"><i class="feather icon-trash-2"></i></a>'
+                    + '</td>'
+                    + '</tr>';
+            });
+            html += '</tbody></table></div>';
+            $('#users_list_rows').html(html);
+            PosnicPro.ACLForModule('user');
+            self.renderPager(Number(data.total) || list.length);
+        }, function () {
+            $('#users_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">Could not load employees - try again.</div>');
+        });
+    },
+    renderPager: function (total) {
+        var self = PosnicPro.users;
+        var p = self._page, size = self.PAGE_SIZE;
+        var pages = Math.ceil(total / size) || 1;
+        var label = total + (total === 1 ? ' employee' : ' employees');
+        if (pages > 1) { label = 'Page ' + p + ' of ' + pages + ' \u00b7 ' + label; }
+        var btn = function (to, text, off, cls) {
+            return '<button type="button" class="btn btn-sm ' + (cls || 'btn-secondary-rgba') + ' q-pg-btn"' + (off ? ' disabled' : '')
+                + ' onclick="PosnicPro.users.goPage(' + to + ');">' + text + '</button>';
+        };
+        var html = '';
+        if (pages > 1) {
+            html += btn(p - 1, '&laquo;', p <= 1);
+            var end = Math.min(pages, Math.max(1, p - 2) + 4);
+            var start = Math.max(1, end - 4);
+            for (var n = start; n <= end; n++) {
+                html += '<span class="q-pg-num">' + btn(n, n, false, n === p ? 'btn-primary-rgba' : 'btn-secondary-rgba') + '</span>';
+            }
+        }
+        html += '<span class="q-pg-count">' + label + '</span>';
+        if (pages > 1) { html += btn(p + 1, '&raquo;', p >= pages); }
+        $('#users_list_paging').html(html);
+    },
+    goPage: function (n) {
+        if (!n || n < 1) { return; }
+        PosnicPro.users._page = n;
+        PosnicPro.users.loadList();
+    },
+    exportCsv: function () {
+        var rows = [['Name', 'Email', 'Role', 'Status']];
+        (PosnicPro.users._lastRows || []).forEach(function (r) {
+            rows.push([r.username, r.email || '', r.usertype || '', r.activate === true ? 'Active' : 'Inactive']);
+        });
+        var csv = rows.map(function (r) {
+            return r.map(function (c) { return '"' + String(c == null ? '' : c).replace(/"/g, '""') + '"'; }).join(',');
+        }).join('\n');
+        var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'employees.csv';
+        a.click();
+        URL.revokeObjectURL(a.href);
+    },
     showDataTablePage: function () {
-        var loader = $(".loader-table-user");
-        loader.find(".loadingSpinner:first").remove();
-        PosnicPro.dashboard.datePicker();
         PosnicPro.HideSideBarModal();
-        $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
-        $(".vertical-layout").removeClass("toggle-menu");
-        $(".vertical-menu li a").removeClass("active");
-        $('.dropdown-item').removeClass('active');
         $('.page_loader,#osk-container').hide();
+        $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
+        $('.vertical-menu li a').removeClass('active');
         $('.page-title-box,#users').show();
         $('#users_new,#users_view').modal('hide');
-        PosnicPro.users.usersTable('users');
         $('#v-pills-manage-tab').addClass('active');
         $('#v-pills-manage').addClass('show active');
         $('.dashboard_img_menu').hide();
         $('#image_sidebar_user').show();
+        PosnicPro.users.loadList(1);
     },
     //This Users Function Used To Add & Edit
     user: function () {
@@ -797,12 +912,6 @@ PosnicPro.users = {
             $('.apiAccessLabel').hide();
             $('.hide_show_user_password').show();
         }
-    },
-    exportUsers: function () {
-        PosnicPro.exportTableData(PosnicPro.users_checkbox, 'users');
-    },
-    deleteSelectedUsers: function () {
-        PosnicPro.deleteTableData(PosnicPro.users_checkbox, 'users');
     },
     userForm: function () {
         if ($('#user_value_check').val() !== '' && $('#branchtype option:selected').length > 0) {
@@ -2323,3 +2432,21 @@ $('.userimageview').click(function () {
     $('#user_img_popup').modal('show');
 });
 /*end*/
+
+/* Standard list wiring: Filter button, row click peeks the employee in
+   place, row action buttons never also open the row. */
+$(document).on('click', '#users_filter_btn', function () {
+    PosnicPro.users.mountFilters(true);
+    PosnicPro.listFilter.toggle('users');
+});
+$(document).on('click', '#users_list_rows tr.users-row', function (e) {
+    if ($(e.target).closest('.us-row-act').length) { return; }
+    PosnicPro.users.openDoc($(this).data('id'));
+});
+
+/* A recent-sale row in the employee pane opens that bill in Sales history -
+   a deliberate navigation, labelled by the row itself. */
+$(document).on('click', '#u_doc_sales tr.u-doc-sale-row', function () {
+    var id = $(this).data('id');
+    if (id) { hasher.setHash('sales/' + id); }
+});

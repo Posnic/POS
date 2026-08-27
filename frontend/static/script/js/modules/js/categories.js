@@ -46,11 +46,120 @@ PosnicPro.categories = {
     showDelete: function (id) {
         PosnicPro.deleteTableRowData(id, 'categories');
     },
+    /* Deep link #/categories/<id>: the list with that category open in
+       the right pane. Recognises its own setHash echo. */
     showDetails: function (id) {
-        var loader = $(".loader-view-category");
-        loader.find(".loadingSpinner:first").remove();
-        PosnicPro.showViewModal('categories');
-        PosnicPro.categories.viewCategory(id);
+        if (PosnicPro.listDoc.activeId('categories') === String(id)
+            && $('#categories_detail_card').is(':visible')) { return; }
+        PosnicPro.categories._chrome();
+        PosnicPro.categories.loadList(1);
+        PosnicPro.categories.openDoc(id);
+    },
+    openDoc: function (id) {
+        var self = PosnicPro.categories;
+        var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
+        var actions = '<button type="button" class="btn btn-sm btn-light" data-module="category" data-access="write" data-toggle="tooltip" title="Edit this category" aria-label="Edit"'
+            + ' onclick="hasher.setHash(\'categories/' + esc(id) + '/edit\');"><i class="feather icon-edit-2"></i></button>'
+            + '<button type="button" class="btn btn-sm btn-light" data-module="category" data-access="delete" data-toggle="tooltip" title="Delete this category" aria-label="Delete"'
+            + ' onclick="PosnicPro.listDoc.close(\'categories\'); hasher.setHash(\'categories/' + esc(id) + '/delete\');"><i class="feather icon-trash-2"></i></button>';
+        var r = (self._lastRows || []).filter(function (x) { return String(x._id) === String(id); })[0];
+        if (r) {
+            PosnicPro.listDoc.open({ key: 'categories', id: id, title: r.name, actions: actions, body: self._docBody(r) });
+            PosnicPro.ACLForModule('category');
+            self.loadActivity(id);
+            return;
+        }
+        PosnicPro.listDoc.open({ key: 'categories', id: id, title: 'Category', actions: actions });
+        PosnicPro.ACLForModule('category');
+        PosnicPro.get('categories/' + id, function (response) {
+            var d = response && response.data;
+            if (response.type !== 'success' || !d) {
+                PosnicPro.listDoc.body('categories', '<div class="text-danger p-3">Could not open this category.</div>');
+                return;
+            }
+            d._id = d._id || id;
+            PosnicPro.listDoc.title('categories', d.name || 'Category');
+            PosnicPro.listDoc.body('categories', self._docBody(d));
+            self.loadActivity(id);
+        }, function () {
+            PosnicPro.listDoc.body('categories', '<div class="text-danger p-3">Could not open this category.</div>');
+        });
+    },
+    _docBody: function (r) {
+        var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
+        var currency = PosnicPro.local.get('currencySign');
+        var discount = (Number(r.discount_amount) > 0)
+            ? currency + ' ' + r.discount_amount
+            : (Number(r.discount_percentage) > 0 ? r.discount_percentage + ' %' : '-');
+        var shape = r.tile_shape === 'circle' ? 'border-radius:50%;' : 'border-radius:8px;';
+        var ground = r.tile_color || 'var(--theme-secondary-color, #8896ab)';
+        var chip = (r.image && r.image !== 'category.svg')
+            ? '<img src="' + esc(r.image) + '" style="width:56px; height:56px; object-fit:cover; border-radius:8px; flex:0 0 56px;" alt="">'
+            : '<span style="display:inline-flex; width:56px; height:56px; ' + shape
+                + 'background:' + esc(ground) + '; color:#fff; font-weight:700; font-size:22px; align-items:center; justify-content:center; flex:0 0 56px;">'
+                + esc(String(r.name || '?').trim().charAt(0).toUpperCase()) + '</span>';
+        return '<div style="display:flex; gap:20px; align-items:flex-start;">'
+            + chip
+            + '<div style="flex:1 1 auto; min-width:0;"><div class="s-doc-stats" id="cg_doc_stats">'
+            + '<div class="s-stat"><div class="s-stat-value">' + (r.items_count == null ? '—' : esc(String(r.items_count))) + '</div>'
+            + '<div class="s-stat-label">' + (r.items_count === 1 ? 'Item' : 'Items') + '</div></div>'
+            + '<div class="s-stat"><div class="s-stat-value">' + esc(discount) + '</div><div class="s-stat-label">Discount</div></div>'
+            + '</div></div></div>'
+            + PosnicPro.listDoc.grid([
+                { label: 'About', lines: [
+                    r.description ? '<div>' + esc(r.description) + '</div>' : '<div class="q-muted">No description</div>'
+                ] },
+                { label: 'On record', lines: [
+                    r.created_date ? '<div class="q-muted">Added ' + esc(PosnicPro.convertDate(r.created_date)) + '</div>' : '',
+                    r.updated_date ? '<div class="q-muted">Updated ' + esc(PosnicPro.convertDate(r.updated_date)) + '</div>' : ''
+                ] }
+            ])
+            + '<div class="q-label" style="margin-top:18px;">Recent sales</div>'
+            + '<div id="cg_doc_sales" class="q-muted" style="font-size:13px;">Loading ...</div>';
+    },
+    /* The category's sales weight + latest bills, straight from the same
+       report door the old slide-over read - IN the pane now (owner: no
+       pop-ups; the design is the dossier). */
+    loadActivity: function (id) {
+        var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
+        var cur = PosnicPro.local.get('currencySign');
+        PosnicPro.get({
+            url: 'sales/categorySaleDetails',
+            data: { page: 1, limit: 5, category_id: id, branch: [PosnicPro.local.get('branch_id_set')] }
+        }, function (response) {
+            var t = response && response.data && response.data.table && response.data.table.data;
+            var list = (t && t.list) || [];
+            var total = (t && Number(t.total)) || 0;
+            var value = response && response.data && response.data.sale_amount != null
+                ? Number(response.data.sale_amount) : null;
+            if (!list.length) {
+                $('#cg_doc_sales').html('No sales in this category yet.');
+                return;
+            }
+            var pageValue = 0;
+            var rows = list.map(function (r) {
+                pageValue += Number(r.items_total) || 0;
+                var saleId = r._id && r._id.$oid ? r._id.$oid : r._id;
+                return '<tr class="cg-doc-sale-row" data-id="' + esc(saleId) + '" style="cursor:pointer;">'
+                    + '<td>' + esc(r.sales_id) + '</td>'
+                    + '<td class="q-muted">' + esc(r.string_date ? PosnicPro.convertDate(r.string_date) : '') + '</td>'
+                    + '<td>' + esc(r.sale_process || 'Add') + '</td>'
+                    + '<td class="text-right">' + cur + '&nbsp;' + (Number(r.items_total) || 0).toFixed(2) + '</td>'
+                    + '</tr>';
+            }).join('');
+            $('#cg_doc_stats').append(
+                '<div class="s-stat"><div class="s-stat-value">' + total + '</div>'
+                + '<div class="s-stat-label">' + (total === 1 ? 'Sale' : 'Sales') + '</div></div>'
+                + '<div class="s-stat"><div class="s-stat-value">' + cur + '&nbsp;'
+                + (value != null ? value.toFixed(2) : pageValue.toFixed(2)) + '</div>'
+                + '<div class="s-stat-label">Sold' + (value == null && total > list.length ? ' (last ' + list.length + ')' : '') + '</div></div>');
+            $('#cg_doc_sales').removeClass('q-muted').html(
+                '<table class="q-items s-doc-purchases-table"><thead><tr>'
+                + '<th>Bill #</th><th>Date</th><th>Process</th><th class="text-right">Total</th>'
+                + '</tr></thead><tbody>' + rows + '</tbody></table>');
+        }, function () {
+            $('#cg_doc_sales').html('Sales history unavailable.');
+        });
     },
     /* The name the OLD table machinery answered to - the save flow and the
        shared clearListFilters/refresh doors still call it. */
@@ -145,7 +254,8 @@ PosnicPro.categories = {
                     : (Number(r.discount_percentage) > 0 ? r.discount_percentage + ' %' : '-');
                 var count = (r.items_count == null) ? '-'
                     : (Number(r.items_count) === 1 ? '1 item' : r.items_count + ' items');
-                html += '<tr class="md-row categories-row highlight-select" data-id="' + esc(r._id) + '" style="cursor:pointer;">'
+                html += '<tr class="md-row categories-row highlight-select'
+                    + (PosnicPro.listDoc.activeId('categories') === String(r._id) ? ' is-active' : '') + '" data-id="' + esc(r._id) + '" style="cursor:pointer;">'
                     + '<td>' + thumb + '</td>'
                     + '<td>' + esc(r.name) + '</td>'
                     + '<td class="text-right' + (Number(r.items_count) > 0 ? '' : ' q-muted') + '">' + esc(count) + '</td>'
@@ -194,32 +304,38 @@ PosnicPro.categories = {
         PosnicPro.categories._page = n;
         PosnicPro.categories.loadList();
     },
-    exportCsv: function () {
-        var rows = [['Name', 'Items', 'Discount amount', 'Discount %', 'Description', 'Added']];
-        (PosnicPro.categories._lastRows || []).forEach(function (r) {
-            rows.push([r.name, r.items_count == null ? '' : r.items_count, r.discount_amount || 0,
-                r.discount_percentage || 0, r.description || '',
-                r.created_date ? PosnicPro.convertDate(r.created_date) : '']);
-        });
-        var csv = rows.map(function (r) {
-            return r.map(function (c) { return '"' + String(c == null ? '' : c).replace(/"/g, '""') + '"'; }).join(',');
-        }).join('\n');
-        var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        var a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'categories.csv';
-        a.click();
-        URL.revokeObjectURL(a.href);
+    _csvSpec: function () {
+        return {
+            head: ['Name', 'Items', 'Discount amount', 'Discount %', 'Description', 'Added'],
+            map: function (r) {
+                return [r.name, r.items_count == null ? '' : r.items_count, r.discount_amount || 0,
+                    r.discount_percentage || 0, r.description || '',
+                    r.created_date ? PosnicPro.convertDate(r.created_date) : ''];
+            }
+        };
     },
-    triggerModules: function () {
-        PosnicPro.showAddModal('category');
-        PosnicPro.categories.addCategoryButton();
-        $('#category_reset').show();
-        $('.category_edit_reset').hide();
-        if (PosnicPro.categories.categoryAction === 'edit') {
-            PosnicPro.categories.categoryClearForm();
-        }
-        PosnicPro.categories.categoryAction = 'add';
+    exportCsv: function () {
+        var spec = PosnicPro.categories._csvSpec();
+        PosnicPro.listExport.save(
+            [spec.head].concat((PosnicPro.categories._lastRows || []).map(spec.map)), 'categories.csv');
+    },
+    /* Everything matching the CURRENT filter, paged through the same
+       endpoint the list reads - never a shapeless full dump. */
+    exportAllCsv: function () {
+        var spec = PosnicPro.categories._csvSpec();
+        PosnicPro.listExport.all({
+            url: 'categories',
+            params: function (page, limit) {
+                return {
+                    page: page, limit: limit,
+                    filters: JSON.stringify(PosnicPro.listFilter.legacyFilters('categories', { dateKey: 'created_date' })),
+                    branch_id: PosnicPro.local.get('branch_id_set')
+                };
+            },
+            head: spec.head,
+            map: spec.map,
+            filename: 'categories.csv'
+        });
     },
     /*This Categories Function Used To Add & Edit*/
     category: function () {
@@ -759,7 +875,7 @@ $(document).on('click', '#categories_filter_btn', function () {
 });
 $(document).on('click', '#categories_list_rows tr.categories-row', function (e) {
     if ($(e.target).closest('.cg-row-act').length) { return; }
-    hasher.setHash('categories/' + $(this).data('id'));
+    PosnicPro.categories.openDoc($(this).data('id'));
 });
 
 $(document).on('click', '#category_tile_swatches .tile-swatch', function () {
