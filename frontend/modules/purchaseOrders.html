@@ -12,54 +12,54 @@
                     stock and the history all start here. The two buttons
                     reach the flows that used to be separate menu entries.
                 -->
-                <div class="col text-right">
-                    <a data-module="receiving" data-access="write" href="#/receivings/new"
-                        class="btn btn-primary-rgba" data-toggle="tooltip" title="Receive stock into inventory">
-                        <i class="feather icon-plus mr-1"></i><lang class="lang_newpurchase_title">New Purchase</lang>
-                    </a>
-
-                </div>
+                <div class="col text-right"></div>
             </div>
         </div>
     </div>
 
     <div class="contentbar">
-        <!-- 1 · The joined surface (owner: "like quote based design").
-             List left with the same filter bar the archive has; the open
-             purchase document right. One create door lives in the header. -->
+        <!-- 1 · Purchases, built to LIST_PAGE_UX_STANDARD.md: a full-width
+             list first (control row: Filter top-left, New beside it, quiet
+             utilities right); a row click enters the split via
+             PosnicPro.masterDetail and the document opens beside the rail. -->
         <div id="po_list_section">
-            <div class="master-detail purchases-split" id="purchases_split">
-                <div class="card md-rail" id="purchases_list_card">
+            <div id="purchases_split">
+                <div class="card m-b-30 md-rail" id="purchases_list_card">
                     <div class="card-body">
-                        <div class="d-flex align-items-center flex-wrap" id="purchases_rail_top" style="gap:8px;padding:12px 10px;border-bottom:1px solid #d8dee4;">
-                            <button type="button" class="btn btn-sm btn-primary-rgba lf-btn" id="purchases_filter_btn" data-toggle="tooltip" title="Filter purchases">
-                                <i class="feather icon-filter"></i>
+                        <div class="md-controls" id="purchases_controls">
+                            <button type="button" class="btn btn-primary-rgba lf-btn" id="purchases_filter_btn"
+                                data-toggle="tooltip" title="Filter purchases">
+                                <i class="feather icon-filter mr-2"></i>Filter
                             </button>
-                            <select class="form-control form-control-sm" id="po_filter_status" style="width:auto;" onchange="PosnicPro.purchaseorders.loadList(1);" aria-label="Filter purchases by status">
-                                <option value="">All</option>
-                                <option value="ordered">Ordered</option>
-                                <option value="partial">Partial</option>
-                                <option value="received">Received</option>
-                                <option value="cancelled">Cancelled</option>
-                            </select>
-                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="PosnicPro.purchaseorders.exportCsv();" data-toggle="tooltip" title="Export the filtered rows">
+                            <a data-module="receiving" data-access="write" href="#/receivings/new"
+                                class="btn btn-primary-rgba" data-toggle="tooltip" title="Record a purchase or an order">
+                                <i class="feather icon-plus mr-2"></i><lang class="lang_newpurchase_title">New Purchase</lang>
+                            </a>
+                            <span class="ml-auto"></span>
+                            <button type="button" class="btn btn-sm btn-light u-quiet" onclick="PosnicPro.purchaseorders.exportCsv();"
+                                data-toggle="tooltip" title="Export the filtered rows" aria-label="Export CSV">
                                 <i class="feather icon-download"></i>
                             </button>
-                            <a data-module="receiving" data-access="read" href="#/receivings" class="btn btn-sm btn-secondary-rgba" data-toggle="tooltip" title="Full archive with every column">
+                            <a data-module="receiving" data-access="read" href="#/receivings"
+                                class="btn btn-sm btn-light u-quiet" data-toggle="tooltip"
+                                title="Full archive with every column" aria-label="Purchase archive">
                                 <i class="feather icon-archive"></i>
                             </a>
                         </div>
-                        <div class="lf-panel" id="purchases_filter_panel" style="display:none;padding:10px;border-bottom:1px solid #d8dee4;"></div>
+                        <div class="lf-panel" id="purchases_filter_panel" style="display:none;"></div>
+                        <div class="m-b-10 d-flex align-items-center flex-wrap" style="gap:8px;" id="purchases_status_chips">
+                            <button type="button" class="btn btn-sm btn-primary-rgba p-chip" data-status="">All</button>
+                            <button type="button" class="btn btn-sm btn-secondary-rgba p-chip" data-status="ordered">Ordered</button>
+                            <button type="button" class="btn btn-sm btn-secondary-rgba p-chip" data-status="partial">Partial</button>
+                            <button type="button" class="btn btn-sm btn-secondary-rgba p-chip" data-status="received">Received</button>
+                            <button type="button" class="btn btn-sm btn-secondary-rgba p-chip" data-status="cancelled">Cancelled</button>
+                        </div>
                         <div id="po_list_rows" class="md-rail-rows text-muted">Loading purchases ...</div>
-                        <div class="text-center" id="po_list_paging" style="padding:8px;border-top:1px solid #d8dee4;"></div>
+                        <div class="q-pager" id="po_list_paging"></div>
                     </div>
                 </div>
-                <div class="card md-detail" id="purchases_detail_card">
-                    <div id="purchases_doc_empty" class="text-center text-muted" style="padding:80px 20px;">
-                        <i class="feather icon-file-text" style="font-size:40px;opacity:.4;"></i>
-                        <p class="mt-2">Pick a purchase on the left to read it here.</p>
-                    </div>
-                    <div id="purchases_doc" style="display:none;"></div>
+                <div class="card m-b-30 md-detail" id="purchases_detail_card" style="display:none;">
+                    <div id="purchases_doc"></div>
                     <div id="purchases_po_host" style="display:none;"></div>
                 </div>
             </div>
