@@ -342,12 +342,15 @@
         });
     </script>
     <script>
-    // Cloud web access: the desktop-app pitch. Owner's ruling 2026-08-27:
-    // never a modal that blocks the view - an inline card BELOW the login
-    // form (on the demo that also puts it below the Enter-as buttons, which
-    // live inside the form). Dismissable for good with the small x.
+    // The desktop-app pitch. Owner's rulings 2026-08-27: never a modal that
+    // blocks the view - an inline card BELOW the login form (on the demo
+    // that also puts it under the Enter-as buttons, which live inside the
+    // form) - and "make it for all other login page": every WEB login shows
+    // it, cloud or custom domain or LAN counter. Only the desktop shell
+    // skips it - the app does not advertise the app. Dismissable for good
+    // with the small x.
     (function () {
-      if (!/.posnic.io$/.test(location.hostname)) return;
+      if (navigator.userAgent.indexOf('Electron') !== -1) return;
       if (localStorage.getItem('posnic_web_ok') === '1') return;
       var form = document.getElementById('login_form');
       if (!form) return;
