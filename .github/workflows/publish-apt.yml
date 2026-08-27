@@ -35,16 +35,20 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    # secrets are not legal in step-level `if:` - presence is computed here
+    env:
+      HAVE_GPG: ${{ secrets.LINUX_GPG_KEY != '' }}
+      HAVE_BUCKET: ${{ vars.PACKAGES_BUCKET != '' }}
     steps:
       - uses: actions/checkout@v7
 
       - name: Explain and stop when signing is not configured yet
-        if: ${{ secrets.LINUX_GPG_KEY == '' }}
+        if: env.HAVE_GPG != 'true'
         run: |
           echo "::warning::Linux signing is not configured (LINUX_GPG_KEY missing) - the apt repo was NOT updated. See RELEASE_TRUST_PLAN.md §4."
 
       - name: Download the release artifacts
-        if: ${{ secrets.LINUX_GPG_KEY != '' }}
+        if: env.HAVE_GPG == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ inputs.tag || github.event.release.tag_name }}
@@ -55,7 +59,7 @@ jobs:
           ls -l artifacts
 
       - name: Import the signing subkey
-        if: ${{ secrets.LINUX_GPG_KEY != '' }}
+        if: env.HAVE_GPG == 'true'
         env:
           LINUX_GPG_KEY: ${{ secrets.LINUX_GPG_KEY }}
         run: |
@@ -64,7 +68,7 @@ jobs:
           gpg --list-secret-keys --keyid-format long
 
       - name: Sign the artifacts and upload signatures to the release
-        if: ${{ secrets.LINUX_GPG_KEY != '' }}
+        if: env.HAVE_GPG == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ inputs.tag || github.event.release.tag_name }}
@@ -80,7 +84,7 @@ jobs:
           gh release upload "$TAG" ./*.asc ./*.sha256 --clobber
 
       - name: Build the APT repository
-        if: ${{ secrets.LINUX_GPG_KEY != '' }}
+        if: env.HAVE_GPG == 'true'
         env:
           APT_GPG_KEY_ID: ${{ secrets.LINUX_GPG_KEY_ID }}
         run: |
@@ -89,7 +93,7 @@ jobs:
           bash scripts/build-apt-repo.sh artifacts/*.deb apt-repo
 
       - name: Sync to packages.posnic.com
-        if: ${{ secrets.LINUX_GPG_KEY != '' && vars.PACKAGES_BUCKET != '' }}
+        if: env.HAVE_GPG == 'true' && env.HAVE_BUCKET == 'true'
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.PACKAGES_AWS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.PACKAGES_AWS_SECRET }}
