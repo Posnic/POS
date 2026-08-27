@@ -623,7 +623,7 @@
         if (gst) { seller += '<div class="q-muted">' + taxLabel + ': ' + esc(gst) + '</div>'; }
         seller += '</div>';
         var title = '<div class="q-title-block">'
-            + '<div class="q-doc-title">INVOICE</div>'
+            + '<div class="q-doc-title">' + (PosnicPro.local.get('gst_action') === 'enable' ? 'TAX INVOICE' : 'SALES RECEIPT') + '</div>'
             + '<div class="q-num">' + esc(d.sales_id) + '</div>'
             + '<div class="q-muted">Date: ' + esc(d.string_date ? String(d.string_date).slice(0, 10) : (d.date ? String(d.date).slice(0, 10) : '-')) + '</div>'
             + '<div class="q-status">' + esc(stamp) + '</div>'
@@ -672,6 +672,28 @@
             + billto + items + footer
             + '</div>';
     },
+    /* Email the bill's PDF - the address defaults to the customer's own. */
+    emailSale: function (id, defaultEmail) {
+        swal({
+            title: 'Email this bill',
+            text: defaultEmail ? 'Leave empty to send to ' + defaultEmail : 'Where should the PDF go?',
+            input: 'text',
+            inputPlaceholder: defaultEmail || 'customer@example.com',
+            showCancelButton: true,
+            confirmButtonText: 'Send'
+        }).then(function (result) {
+            if (result && result.dismiss) { return; }
+            var typed = typeof result === 'string' ? result : (result && result.value) || '';
+            var to = $.trim(typed) || defaultEmail;
+            if (!to) { PosnicPro.alert('warning', 'No email address to send to.'); return; }
+            PosnicPro.get({ url: 'sales/salesMailPdf', data: { id: id, email: to } }, function (r) {
+                PosnicPro.alert(r.type || 'success', r.message || 'Sent');
+            }, function (xhr) {
+                var resp = {}; try { resp = jQuery.parseJSON(xhr.responseText) || {}; } catch (e) { }
+                PosnicPro.alert('error', resp.message || 'Could not send the email');
+            });
+        }).catch(function () { /* dismissed */ });
+    },
     renderSaleDoc: function (d) {
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
         var id = String(d._id || d.id || PosnicPro.sales._openDocId);
@@ -687,17 +709,23 @@
             + (unpaid
                 ? '<button type="button" class="btn btn-sm btn-primary" onclick="PosnicPro.sales.showPayment(\'' + esc(id) + '\');"><i class="feather icon-credit-card mr-1"></i>Settle payment</button>'
                 : '')
-            + '<button type="button" class="btn btn-sm btn-light" onclick="hasher.setHash(\'sales/' + esc(id) + '/edit\');"><i class="feather icon-edit-2 mr-1"></i>Edit</button>'
+            + '<button type="button" class="btn btn-sm btn-light" data-toggle="tooltip" title="Edit this bill" aria-label="Edit" onclick="hasher.setHash(\'sales/' + esc(id) + '/edit\');"><i class="feather icon-edit-2"></i></button>'
             + '<div class="btn-group">'
-            + '<button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">More</button>'
+            + '<button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Share</button>'
             + '<div class="dropdown-menu dropdown-menu-right">'
             + '<a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.sales.showPrint(\'' + esc(id) + '\'); return false;"><i class="feather icon-printer mr-2"></i>Print</a>'
             + '<a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.sales.showPdf(\'' + esc(id) + '\'); return false;"><i class="feather icon-file mr-2"></i>Download PDF</a>'
-            + (!/return/i.test(proc)
-                ? '<div class="dropdown-divider"></div>'
-                    + '<a class="dropdown-item" href="javascript:void(0)" onclick="hasher.setHash(\'sales/' + esc(id) + '/return\');"><i class="feather icon-corner-up-left mr-2"></i>Return items</a>'
-                : '')
+            + '<a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.sales.emailSale(\'' + esc(id) + '\', \'' + esc(d.customer_email || '') + '\');"><i class="feather icon-mail mr-2"></i>Email</a>'
+            + '<a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.sales.showWhatsapp(\'' + esc(id) + '\');"><i class="feather icon-message-circle mr-2"></i>WhatsApp</a>'
+            + '<a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.sales.showSMS(\'' + esc(id) + '\', \'' + esc(d.customer_phone || '') + '\', \'' + esc(d.customer_name || '') + '\');"><i class="feather icon-smartphone mr-2"></i>SMS</a>'
             + '</div></div>'
+            + (!/return/i.test(proc)
+                ? '<div class="btn-group">'
+                    + '<button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">More</button>'
+                    + '<div class="dropdown-menu dropdown-menu-right">'
+                    + '<a class="dropdown-item" href="javascript:void(0)" onclick="hasher.setHash(\'sales/' + esc(id) + '/return\');"><i class="feather icon-corner-up-left mr-2"></i>Return items</a>'
+                    + '</div></div>'
+                : '')
             + '<button type="button" class="btn btn-sm btn-light" title="Close and show the full list" aria-label="Close" onclick="PosnicPro.sales.closeDoc();"><i class="feather icon-x"></i></button>'
             + '</div>';
         $('#sales_doc').html(toolbar + '<div class="doc-scroll">' + PosnicPro.sales.buildSaleSheet(d) + '</div>');

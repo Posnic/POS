@@ -5635,6 +5635,11 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 #sales_list_rows tr.sales-row:hover { background: var(--theme-table-row-hover, #eef3ff); }
 .saleshist-split .sl-col-date,
 .saleshist-split .sl-col-items { display: none; }
+/* the bill toolbar carries five controls - tighter buttons keep it to
+   one line inside the split */
+.saleshist-split .p-doc-title { font-size: 15px; }
+.saleshist-split .p-doc-toolbar { gap: 6px; }
+.saleshist-split .p-doc-toolbar .btn { padding-left: 9px; padding-right: 9px; }
 #sales_doc { padding: 16px 20px 22px; display: flex; flex-direction: column; max-height: calc(100vh - 150px); }
 #sales_doc .doc-scroll { overflow-y: auto; min-height: 0; }
 @media (max-width: 767.98px) {
