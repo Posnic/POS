@@ -5130,6 +5130,32 @@ $(document).on('click', '.gstready-row', function () {
     if (id) { hasher.setHash('items/' + id + '/edit'); }
 });
 
+/*
+ * The shared master-detail pattern (owner: "these designs should be common
+ * and sharable to other features"). A page starts as a plain full-width
+ * list; opening a document adds the split classes so the list becomes the
+ * rail and the document sits beside it. Quotes pioneered the look; every
+ * adopter passes its own ids and shares the CSS.
+ */
+PosnicPro.masterDetail = {
+    /* sel is the element that BECOMES the split surface - quotes uses its
+       contentbar, purchases an inner wrapper. The splitClass is the page's
+       own name for its split, so page CSS can differ without forking the
+       pattern. */
+    enter: function (sel, splitClass) {
+        $(sel).addClass('master-detail ' + splitClass);
+    },
+    leave: function (sel, splitClass) {
+        $(sel).removeClass('master-detail ' + splitClass + ' rail-collapsed');
+    },
+    inSplit: function (sel, splitClass) {
+        return $(sel).hasClass(splitClass);
+    },
+    toggleRail: function (sel) {
+        $(sel).toggleClass('rail-collapsed');
+    }
+};
+
 /* Tax Payable (#/taxpayable, PURCHASE_TAX_PLAN P4) - months of output vs
  * input tax and the net owed, credits in the statutory order (server math,
  * tested in tax-netting). Regime-aware: single-head shops see one column

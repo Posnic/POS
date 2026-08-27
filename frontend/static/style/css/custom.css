@@ -5569,3 +5569,66 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 #receiving_print td:last-child {
     white-space: nowrap;
 }
+
+
+/* ==== LIST_PAGE_UX_STANDARD - shared pieces ==== */
+/* The control row at the top of every list card: Filter top-left, New
+   beside it, quiet utilities pushed right. */
+.md-controls {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+/* Motion (standard §5): the document glides in, selection fades, nothing
+   moves for people who asked it not to. */
+.master-detail > .md-detail { animation: mdDocIn 0.18s ease-out; }
+@keyframes mdDocIn {
+    from { opacity: 0; transform: translateX(8px); }
+    to { opacity: 1; transform: none; }
+}
+.md-rail-rows tr { transition: background-color 0.12s ease; }
+@media (prefers-reduced-motion: reduce) {
+    .master-detail > .md-detail { animation: none; }
+    .md-rail-rows tr { transition: none; }
+}
+
+/* ==== Purchases master-detail (first page built to the standard). The
+   split classes sit on #purchases_split INSIDE the contentbar, so the
+   contentbar keeps the page gutters and the split drops its own. ==== */
+#purchases_split.master-detail { margin: 0 !important; }
+.purchases-split .p-col-date,
+.purchases-split .p-col-created,
+.purchases-split .p-col-expected { display: none; }
+.p-col-progress { display: inline; }
+.purchases-split .u-quiet,
+.purchases-split .q-pg-num { display: none; }
+#purchases_detail_card { overflow: auto; }
+
+/* The document, paper-styled: soft hairlines, muted labels, the theme's
+   font - one bold figure at the end (the total). */
+.p-doc-toolbar {
+    display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+    padding: 12px 18px; border-bottom: 1px solid var(--theme-border-color, #eef1f4);
+}
+.p-doc-title { font-size: 15.5px; font-weight: 600; color: inherit; }
+.p-doc-voidnote { padding: 8px 18px; color: var(--theme-danger-color, #c0392b); background: var(--theme-card-bg, #fdf3f2); font-size: 13px; }
+.p-doc-meta {
+    display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 12px;
+    padding: 14px 18px; border-bottom: 1px solid var(--theme-border-color, #eef1f4); font-size: 13.5px;
+}
+.p-doc-label {
+    display: block; font-size: 11px; text-transform: uppercase;
+    letter-spacing: 0.4px; color: var(--theme-text-muted, #8b949e); margin-bottom: 2px;
+}
+.p-doc-lines { padding: 4px 6px; }
+.p-doc-lines table th {
+    color: var(--theme-text-muted, #8b949e); font-weight: 500; font-size: 12px;
+    border-bottom: 1px solid var(--theme-border-color, #eef1f4) !important;
+}
+.p-doc-lines table td { font-size: 13.5px; }
+.p-doc-totals { text-align: right; padding: 0 24px 10px; font-size: 13px; }
+.p-doc-grand { font-size: 16px; font-weight: 600; margin-top: 4px; }
+.p-doc-files { padding: 10px 18px 16px; border-top: 1px solid var(--theme-border-color, #eef1f4); font-size: 13px; }
+@media (max-width: 900px) { .p-doc-meta { grid-template-columns: 1fr 1fr; } }
