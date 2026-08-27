@@ -43,7 +43,9 @@ function localRefs(html) {
   while ((m = rx.exec(html)) !== null) {
     const ref = m[1].trim();
     if (!ref || /^(https?:|data:|#|mailto:|\/\/)/i.test(ref)) continue;
-    if (!/\.(js|css)$/i.test(ref)) continue;
+    /* Images too: the loading screen shipped with a logo reference its own
+       move had broken, and this filter was why no test said so. */
+    if (!/\.(js|css|png|svg|ico|jpe?g|gif|webp)$/i.test(ref)) continue;
     out.push(ref.replace(/^\.\//, '').split(/[?#]/)[0]);
   }
   return out;
@@ -60,18 +62,22 @@ test('every window that ships is listed in build.files', () => {
 });
 
 for (const win of WINDOWS) {
-  test(`${win}: its scripts and stylesheets are packaged`, () => {
+  test(`${win}: its scripts, stylesheets and images are packaged`, () => {
     const html = fs.readFileSync(path.join(ROOT, win), 'utf8');
     for (const ref of localRefs(html)) {
-      /* Anything under a directory the build ships wholesale is already covered;
-         this is about the loose files beside main.js. */
-      if (ref.includes('/')) continue;
-
-      assert.ok(fs.existsSync(path.join(ROOT, 'src', ref)),
+      /* Resolved the way the renderer resolves it - relative to the window's
+         own file. '../builds/x.png' from src/ is builds/x.png in the repo and
+         in the asar alike, so one check covers both. */
+      const resolved = path.posix.normalize(
+        path.posix.join(path.posix.dirname(win.replace(/\\/g, '/')), ref),
+      );
+      assert.ok(!resolved.startsWith('..'),
+        `${win} references ${ref}, which escapes the app root`);
+      assert.ok(fs.existsSync(path.join(ROOT, resolved)),
         `${win} references ${ref}, which does not exist`);
-      assert.ok(packaged('src/' + ref),
-        `${win} references ${ref}, which is missing from package.json build.files - ` +
-        `the window will open without it and fail quietly`);
+      assert.ok(packaged(resolved),
+        `${win} references ${ref} (${resolved}), which is missing from package.json ` +
+        `build.files - the window will open without it and fail quietly`);
     }
   });
 }
