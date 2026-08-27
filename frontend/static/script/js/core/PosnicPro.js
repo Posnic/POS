@@ -2990,12 +2990,18 @@ PosnicPro = {
             var page = parts[0] + '/' + parts[1];
             if (page === 'sales/new' || page === 'receivings/new') {
                 hasher.setHash(page);
-            } else {
-                hasher.setHash(parts[0]);
-            }
-            if (page === 'sales/new') {
                 $("#infobar-settings-sidebar-tender-details").addClass("sidebarview");
+                return;
             }
+            /* A document address (#/purchaseorders/<id>, #/suppliers/<id>)
+               is exactly where the reader wants to remain - resetting the
+               hash here CLOSED the open document after every print. The
+               reset was for modal-era pages whose print swallowed the
+               screen; the master-detail pages keep their place. */
+            if (parts.length === 2 && /^[0-9a-f]{24}$/i.test(parts[1] || '')) {
+                return;
+            }
+            hasher.setHash(parts[0]);
         }, 800);
     },
 
@@ -3271,14 +3277,18 @@ PosnicPro = {
         setTimeout(function () {
             var parts = currentHash.split('/');
             if (parts[0] + '/' + parts[1] === 'sales/new' || parts[0] + '/' + parts[1] === 'receivings/new') {
-                var url = parts[0] + '/' + parts[1];
-                hasher.setHash(url);
-            } else {
-                hasher.setHash(parts[0]);
-            }
-            if (parts[0] + '/' + parts[1] === 'sales/new') {
+                hasher.setHash(parts[0] + '/' + parts[1]);
                 $("#infobar-settings-sidebar-tender-details").addClass("sidebarview");
+                return;
             }
+            /* Same rule as afterPrint: a document address on a
+               master-detail page stays put - this inline twin of the old
+               epilogue was closing the open purchase after every browser
+               print. */
+            if (parts.length === 2 && /^[0-9a-f]{24}$/i.test(parts[1] || '')) {
+                return;
+            }
+            hasher.setHash(parts[0]);
         }, 800);
 
     },

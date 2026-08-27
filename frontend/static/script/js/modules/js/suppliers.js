@@ -337,7 +337,10 @@ PosnicPro.suppliers = {
             $box.html(
                 '<div class="s-doc-preview-bar">'
                 + '<span class="q-muted">Preview</span>'
+                + '<span class="s-doc-preview-actions">'
                 + '<a href="javascript:void(0)" onclick="hasher.setHash(\'purchaseorders/' + String(docId) + '\');">Open in Purchases <i class="feather icon-arrow-right"></i></a>'
+                + '<a href="javascript:void(0)" class="s-preview-close" onclick="$(this).closest(\'.s-doc-preview-tr\').remove();" aria-label="Close preview"><i class="feather icon-x"></i></a>'
+                + '</span>'
                 + '</div>'
                 + PosnicPro.purchaseorders.buildPurchaseSheet(response.data)
             );
@@ -862,6 +865,8 @@ $(function () {
 
 /* The filter toggle, delegated - the same contract every standard page
    uses: mount (or remount) then flip the strip. */
+
+
 $(document).on('click', '#suppliers_filter_btn', function () {
     PosnicPro.suppliers.mountFilters(true);
     PosnicPro.listFilter.toggle('suppliers');
