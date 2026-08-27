@@ -4260,13 +4260,12 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
    which is the whole point of the join. .table-borderless means the last cell
    simply has no right border to remove. */
 .master-detail .md-row.is-active > td {
-    border-top: 1px solid #c9d1d9 !important;
-    border-bottom: 1px solid #c9d1d9 !important;
+    border-top: 1px solid #d0d7de !important;
+    border-bottom: 1px solid #d0d7de !important;
     font-weight: 600;
-    color: #1f2328;
 }
 .master-detail .md-row.is-active > td:first-child {
-    border-left: 3px solid #c9d1d9 !important;
+    border-left: 3px solid #d0d7de !important;
 }
 /* Unselected rows sit ON the grey, so nothing may paint them white. */
 /* MD:unselected-row */
@@ -4326,11 +4325,11 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 }
 [data-theme] .master-detail .md-row.is-active > td {
     color: var(--theme-text-primary);
-    border-top-color: var(--theme-text-muted, #8c959f) !important;
-    border-bottom-color: var(--theme-text-muted, #8c959f) !important;
+    border-top-color: var(--theme-border-color, #d0d7de) !important;
+    border-bottom-color: var(--theme-border-color, #d0d7de) !important;
 }
 [data-theme] .master-detail .md-row.is-active > td:first-child {
-    border-left-color: var(--theme-text-muted, #8c959f) !important;
+    border-left-color: var(--theme-border-color, #d0d7de) !important;
 }
 [data-theme] .master-detail .md-row:hover > td {
     background: var(--theme-table-row-hover);
@@ -5605,6 +5604,9 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 .purchases-split .u-quiet,
 .purchases-split .q-pg-num { display: none; }
 #purchases_detail_card { overflow: auto; }
+/* Hover highlight (owner rule): same treatment as quotes, theme-aware. */
+#po_list_rows tr.purchases-row:hover { background: var(--theme-table-row-hover, #eef3ff); }
+[data-theme] #po_list_rows tr.purchases-row:hover { background: var(--theme-table-row-hover); }
 
 /* The document, paper-styled: soft hairlines, muted labels, the theme's
    font - one bold figure at the end (the total). */

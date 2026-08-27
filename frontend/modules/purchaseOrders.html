@@ -12,7 +12,33 @@
                     stock and the history all start here. The two buttons
                     reach the flows that used to be separate menu entries.
                 -->
-                <div class="col text-right"></div>
+                <!-- The filter strip expands on the header line; Filter and
+                     New sit top right above the box - the owner's placement,
+                     the same as quotes (LIST_PAGE_UX_STANDARD §2). -->
+                <div class="col">
+                    <div class="lf-panel" id="purchases_filter_panel" style="display:none;"></div>
+                </div>
+                <div class="col-auto text-right">
+                    <div class="widgetbar" id="purchases_controls">
+                        <button type="button" class="btn btn-primary-rgba" onclick="PosnicPro.purchaseorders.exportCsv();"
+                            data-toggle="tooltip" title="Export the filtered rows" aria-label="Export CSV">
+                            <i class="feather icon-download"></i>
+                        </button>
+                        <a data-module="receiving" data-access="read" href="#/receivings"
+                            class="btn btn-primary-rgba" data-toggle="tooltip"
+                            title="Full archive with every column" aria-label="Purchase archive">
+                            <i class="feather icon-archive"></i>
+                        </a>
+                        <button type="button" class="btn btn-primary-rgba lf-btn" id="purchases_filter_btn"
+                            data-toggle="tooltip" title="Filter purchases">
+                            <i class="feather icon-filter mr-2"></i>Filter
+                        </button>
+                        <a data-module="receiving" data-access="write" href="#/receivings/new"
+                            class="btn btn-primary-rgba" data-toggle="tooltip" title="Record a purchase or an order">
+                            <i class="feather icon-plus mr-2"></i><lang class="lang_newpurchase_title">New Purchase</lang>
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -26,33 +52,17 @@
             <div id="purchases_split">
                 <div class="card m-b-30 md-rail" id="purchases_list_card">
                     <div class="card-body">
-                        <div class="md-controls" id="purchases_controls">
-                            <button type="button" class="btn btn-primary-rgba lf-btn" id="purchases_filter_btn"
-                                data-toggle="tooltip" title="Filter purchases">
-                                <i class="feather icon-filter mr-2"></i>Filter
-                            </button>
-                            <a data-module="receiving" data-access="write" href="#/receivings/new"
-                                class="btn btn-primary-rgba" data-toggle="tooltip" title="Record a purchase or an order">
-                                <i class="feather icon-plus mr-2"></i><lang class="lang_newpurchase_title">New Purchase</lang>
-                            </a>
-                            <span class="ml-auto"></span>
-                            <button type="button" class="btn btn-sm btn-light u-quiet" onclick="PosnicPro.purchaseorders.exportCsv();"
-                                data-toggle="tooltip" title="Export the filtered rows" aria-label="Export CSV">
-                                <i class="feather icon-download"></i>
-                            </button>
-                            <a data-module="receiving" data-access="read" href="#/receivings"
-                                class="btn btn-sm btn-light u-quiet" data-toggle="tooltip"
-                                title="Full archive with every column" aria-label="Purchase archive">
-                                <i class="feather icon-archive"></i>
-                            </a>
-                        </div>
-                        <div class="lf-panel" id="purchases_filter_panel" style="display:none;"></div>
                         <div class="m-b-10 d-flex align-items-center flex-wrap" style="gap:8px;" id="purchases_status_chips">
                             <button type="button" class="btn btn-sm btn-primary-rgba p-chip" data-status="">All</button>
                             <button type="button" class="btn btn-sm btn-secondary-rgba p-chip" data-status="ordered">Ordered</button>
                             <button type="button" class="btn btn-sm btn-secondary-rgba p-chip" data-status="partial">Partial</button>
                             <button type="button" class="btn btn-sm btn-secondary-rgba p-chip" data-status="received">Received</button>
                             <button type="button" class="btn btn-sm btn-secondary-rgba p-chip" data-status="cancelled">Cancelled</button>
+                            <span class="text-muted ml-2" style="font-size:12px;">Expected:</span>
+                            <button type="button" class="btn btn-sm btn-primary-rgba p-exp-chip" data-expected="">Any</button>
+                            <button type="button" class="btn btn-sm btn-secondary-rgba p-exp-chip" data-expected="today">Today</button>
+                            <button type="button" class="btn btn-sm btn-secondary-rgba p-exp-chip" data-expected="tomorrow">Tomorrow</button>
+                            <button type="button" class="btn btn-sm btn-secondary-rgba p-exp-chip" data-expected="week">This week</button>
                         </div>
                         <div id="po_list_rows" class="md-rail-rows text-muted">Loading purchases ...</div>
                         <div class="q-pager" id="po_list_paging"></div>

@@ -91,13 +91,19 @@
                     <!--start col-->
                     <div class="col-lg-5 col-xl-5">
                         <!--start checkout--> 
+                        <!-- The details card, compact on purpose (owner: "i need to
+                             scroll down for the details" - no more): supplier and the
+                             document facts aligned at the top, hints as tooltips
+                             instead of paragraphs. Status is a select with
+                             international labels; the stored values stay Open and
+                             Received so nothing downstream moves. -->
                         <div class="card m-b-5 receving-return-hide">
                             <div class="card-body">
                                 <div class="row">
-                                    <div class="form-group col-lg-12 col-xl-12 clear-supplier-error">
+                                    <div class="form-group col-lg-7 col-xl-7 clear-supplier-error">
                                         <label class="form-control-placeholder" for="receiving_add_supplier_name">
                                             <lang class="lang_itemname_title">Supplier</lang>
-                                            <span class="text-danger">*</span> 
+                                            <span class="text-danger">*</span>
                                         </label>
 
                                         <div class="input-group">
@@ -130,109 +136,48 @@
                                                    id="receiving_add_supplier_gst_number"
                                                    name="receiving_add_supplier_gst_number">
                                         </div>
-                                    </div> 
-                                </div> 
-
-                                <div class="row">
-                                    <div class="form-group col-lg-6 col-xl-6">
+                                    </div>
+                                    <div class="form-group col-lg-5 col-xl-5">
                                         <label class="form-control-placeholder" for="receiving_add_date">
-                                            <lang class="lang_date_title">Date</lang> 
-                                            <span class="text-danger">*</span> 
+                                            <lang class="lang_date_title">Bill date</lang>
+                                            <span class="text-danger">*</span>
                                         </label>
                                         <input type="text" class="form-control border-control commonDate" placeholder="Enter the date"
                                                id="receiving_add_date" name="receiving_add_date">
                                     </div>
+                                </div>
 
-                                    <div class="form-group col-lg-6 col-xl-6" style="margin-top: 24px;">
-                                        <input type="checkbox" class="custom-control-input" id="exclusive_tax" name="exclusive_tax">
-                                        <label class="custom-control-label" for="exclusive_tax">
-                                            Exclusive Tax
+                                <div class="row">
+                                    <div class="form-group col-lg-4 col-xl-4 receving-return-hide">
+                                        <label class="form-control-placeholder" for="receiving_status_select">
+                                            <lang class="lang_status_title">Status</lang>
                                         </label>
+                                        <select class="form-control border-control custom-select receiving-status"
+                                                id="receiving_status_select" aria-label="Purchase status">
+                                            <option value="Open" selected>Ordered</option>
+                                            <option value="Received">Received</option>
+                                        </select>
                                     </div>
-
-
-
-                                    <!--                                    <div class="form-group col-lg-6 col-xl-6">
-                                                                            <label class="form-control-placeholder" for="receiving_tax">
-                                                                                <lang class="lang_tax_title"> Tax Rate </lang>
-                                                                            </label>
-                                                                            <div class="input-group">
-                                                                                <select class="form-control border-control custom-select pricing-field items_tax" name="receiving_tax" id="receiving_tax"
-                                                                                        onchange="return PosnicPro.receivings.addReceivingTableRowCalc();">
-                                                                                </select>
-                                                                            </div>
-                                                                        </div>-->
-                                </div>
-
-                                <div class="row">
-                                    <!--                                    <div class="form-group col-lg-6 col-xl-6">
-                                                                            <label class="custom-radio" style="margin-bottom: .1rem;">
-                                                                                <label for="radio_receiving_discount_amount"
-                                                                                       class="control custom-radio">
-                                                                                    <input type="radio" class="radio_discount" name="radio_discount"
-                                                                                           id="radio_receiving_discount_amount" checked="checked">&nbsp; <lang class="lang_discount_title">Disc</lang> <span class="display-currency"></span>
-                                                                                </label>
-                                                                            </label>
-                                                                            <label class="custom-radio pull-right discount_tamil_right" style="margin-bottom: .1rem;">
-                                                                                <label for="radio_receiving_discount_percentage"
-                                                                                       class="control custom-radio"> 
-                                                                                    <input type="radio" class="radio_discount" name="radio_discount"
-                                                                                           id="radio_receiving_discount_percentage">&nbsp; <lang class="lang_discount_title">Disc </lang>%
-                                                                                </label>
-                                                                            </label>
-                                                                            <div class="floating-label">
-                                                                                <input name="receiving_discount_amount" id="receiving_discount_amount"
-                                                                                       type="text" min="0" minlength="1" maxlength="5" class="form-control border-control allow_decimal text-right display-discount-amount-value"
-                                                                                       onkeyup="return PosnicPro.receivings.addReceivingTableRowCalc();" aria-label="Receiving discount amount">
-                                    
-                                                                                <input name="receiving_discount_percentage"
-                                                                                       id="receiving_discount_percentage" type="number"
-                                                                                       class="form-control border-control text-right display-discount-percentage-value"
-                                                                                       min="0" max="100" onkeypress="return PosnicPro.isNumber(event)" onkeypress="this.value = PosnicPro.minmax(this.value, 0, 100)" onkeyup="return PosnicPro.receivings.addReceivingTableRowCalc();" aria-label="Receiving discount percentage">
-                                                                            </div>
-                                                                        </div>-->
-
-                                </div>
-
-                                <div class="row">
-                                    <div class="form-group col-lg-6 col-xl-6 receving-return-hide">
-                                        <label class="form-control-placeholder" for="receiving_expected_date">
+                                    <div class="form-group col-lg-4 col-xl-4 receving-return-hide" id="receiving_expected_wrap">
+                                        <label class="form-control-placeholder" for="receiving_expected_date"
+                                               data-toggle="tooltip" title="When the order is due - shown while the status is Ordered">
                                             <lang class="lang_expected_on">Expected on</lang>
                                         </label>
                                         <input type="date" id="receiving_expected_date"
                                                class="form-control border-control clear-receiving-text"
                                                aria-label="Expected delivery date" />
-                                        <small class="form-text text-muted">For orders awaiting delivery (status Open) - leave empty when goods are already in hand.</small>
                                     </div>
-                                    <div class="form-group col-lg-6 col-xl-6">
+                                    <div class="form-group col-lg-4 col-xl-4">
                                         <label class="form-control-placeholder" for="receiving_add_payment_mode">
-                                            <lang class="lang_paymentmode">Payment Mode</lang>  
+                                            <lang class="lang_paymentmode">Payment Mode</lang>
                                         </label>
                                         <select class="form-control border-control custom-select" name="receiving_add_payment_mode"
                                                 id='receiving_add_payment_mode' aria-label="Receiving add payment mode">
                                         </select>
                                     </div>
-                                    <div class="form-group col-lg-6 col-xl-6">
-                                        <label class="form-control-placeholder" for="receiving_add_payment_description">
-                                            <lang class="lang_paymentnote_title">Payment Note</lang>    
-                                        </label>
-                                        <textarea name="receiving_add_payment_description"
-                                                  id='receiving_add_payment_description' maxlength="500" rows="1"
-                                                  class="form-control border-control" placeholder="Enter payment note"></textarea>
-                                    </div>
                                 </div>
-                                <!-- PURCHASE_TAX_PLAN P2: the tax decisions on this purchase.
-                                     The credit flag's wording follows the shop's regime; the
-                                     declared total is what the SUPPLIER'S invoice says, checked
-                                     against the lines - a mismatch warns, never blocks. -->
-                                <div class="row receving-return-hide">
-                                    <div class="form-group col-lg-6 col-xl-6">
-                                        <label class="form-control-placeholder" for="receiving_itc_eligible" style="position:static;">
-                                            <input type="checkbox" id="receiving_itc_eligible" checked />
-                                            <span id="receiving_itc_label"><lang class="lang_itc_eligible">Input credit claimable</lang></span>
-                                        </label>
-                                        <small class="form-text text-muted" style="margin-top:-4px;">Switch off for composition-scheme suppliers or blocked credits.</small>
-                                    </div>
+
+                                <div class="row">
                                     <div class="form-group col-lg-6 col-xl-6">
                                         <label class="form-control-placeholder" for="receiving_invoice_total_declared">
                                             <lang class="lang_invoice_total_declared">Invoice total (incl. tax)</lang>
@@ -243,55 +188,68 @@
                                                oninput="PosnicPro.receivings.invoiceTotalCheck();" />
                                         <small class="form-text" id="receiving_invoice_total_note"></small>
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-                        <!--end checkout-->
-
-                        <div class="row receving-return-hide">
-                            <div class="col-12">
-                                <label class="d-block text-muted mb-1"
-                                    style="font-size:12px;font-weight:600;">Order status</label>
-                                <div class="btn-group-toggle d-flex receiving-status-toggle" data-toggle="buttons">
-                                    <div class="btn btn-payment-mode open_status_active active flex-fill mr-2">
-                                        <label>
-                                            <input type="radio" class="receiving-status" name="receiving_status" id="Open" value="Open" checked/><lang class="lang_open">Open</lang></label>
-                                    </div>
-                                    <div class="btn btn-payment-mode flex-fill">
-                                        <label>
-                                            <input type="radio" class="receiving-status" name="receiving_status" id="Received" value="Received"><lang class="lang_receive">Received</lang></label>
+                                    <div class="form-group col-lg-6 col-xl-6">
+                                        <label class="form-control-placeholder" for="receiving_add_payment_description">
+                                            <lang class="lang_paymentnote_title">Payment Note</lang>
+                                        </label>
+                                        <textarea name="receiving_add_payment_description"
+                                                  id='receiving_add_payment_description' maxlength="500" rows="1"
+                                                  class="form-control border-control" placeholder="Enter payment note"></textarea>
                                     </div>
                                 </div>
-                                <small class="form-text text-muted mt-1">Open = ordered, awaiting delivery.
-                                    Received = goods received into stock.</small>
-                            </div>
-                        </div>
 
-                        <!-- Start col -->
-                        <div class="card doctor-box m-b-10 receving-return-hide">
-                            <div class="card-footer">
-                                <label class="d-block text-muted mb-1" style="font-size:12px;font-weight:600;">
-                                    Attachment <span class="font-weight-normal">(optional, for your records)</span>
-                                </label>
-                                <input type="hidden" id="item_upload_receiving_status" value="no">
                                 <div class="row">
-                                    <div class="input-group mb-1">
+                                    <div class="form-group col-lg-6 col-xl-6 mb-0">
+                                        <input type="checkbox" class="custom-control-input" id="exclusive_tax" name="exclusive_tax">
+                                        <label class="custom-control-label" for="exclusive_tax"
+                                               data-toggle="tooltip" title="Item prices are before tax; tax is added on top">
+                                            Exclusive Tax
+                                        </label>
+                                    </div>
+                                    <div class="form-group col-lg-6 col-xl-6 mb-0 receving-return-hide">
+                                        <input type="checkbox" id="receiving_itc_eligible" checked />
+                                        <label for="receiving_itc_eligible"
+                                               data-toggle="tooltip" title="Switch off for composition-scheme suppliers or blocked credits">
+                                            <span id="receiving_itc_label"><lang class="lang_itc_eligible">Input credit claimable</lang></span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Charges and the attachment share one row so the whole
+                                     form stays on one screen (owner: "make sure i dont
+                                     need to scroll and enter all in one screen"). -->
+                                <div class="row mt-2 receving-return-hide"
+                                     style="border-top: 1px solid var(--theme-border-color, #eef1f4); padding-top: 10px;">
+                                    <div class="col-lg-6 col-xl-6">
+                                        <div class="d-flex align-items-center">
+                                            <label class="mb-0 text-muted" style="font-size:12px;"
+                                                   data-toggle="tooltip" title="Freight, loading and the rest - added to the total, never to item cost or tax">
+                                                <lang class="lang_additional_charges">Additional charges</lang>
+                                            </label>
+                                            <a class="ml-auto" href="javascript:void(0)" onclick="PosnicPro.receivings.addChargeRow();">
+                                                <i class="feather icon-plus mr-1"></i><lang class="lang_add_charge">Add charge</lang>
+                                            </a>
+                                        </div>
+                                        <div id="receiving_charges_rows"></div>
+                                    </div>
+                                    <div class="col-lg-6 col-xl-6">
+                                        <label class="d-block text-muted mb-1" style="font-size:12px;"
+                                               data-toggle="tooltip" title="The supplier invoice or payment proof (image or PDF), kept with this purchase">
+                                            Attachment
+                                        </label>
+                                        <input type="hidden" id="item_upload_receiving_status" value="no">
                                         <div class="custom-file">
                                             <input type="file" name="ImageReceiving[]" class="custom-file-input" id="receiving_upload_image" onchange="PosnicPro.receivings.receiving_image_preview(this)" accept=".gif, .jpg, .png, .jpeg, .bmp, .pdf" multiple>
                                             <label class="custom-file-label btn-primary-rgba" for="receiving_upload_image"><lang class="lang_file">Choose file</lang></label>
                                             <input type="hidden" name="receiving_logo" id="receiving_logo">
                                         </div>
+                                        <div id="display-preview"></div>
+                                        <div id="receving_image_count" style="display: none;">0</div>
                                     </div>
                                 </div>
-                                <small class="form-text text-muted">Attach the supplier invoice or payment proof
-                                    (image or PDF) to keep with this purchase for reference.</small>
                             </div>
-                            <div class="col-lg-12 col-xl-12">
-                                <div id="display-preview"></div>
-                                <div id="receving_image_count" style="display: none;">0</div>
-                            </div>  
                         </div>
-                        <!-- End col --> 
+                        <!--end checkout--> 
 
 
 
@@ -315,6 +273,10 @@
                                                             <td class="text-left"><lang class="lang_tax_title">Tax :</lang></td>
                                                     <td class="text-right"> + <span class="tax-receiving-value">0.00</span></td>
                                                     </tr>                                                      
+                                                    <tr id="receiving_charges_row" style="display:none;">
+                                                        <td class="text-left"><lang class="lang_charges_title">Charges :</lang></td>
+                                                        <td class="text-right"> + <span class="charges-receiving-value">0.00</span></td>
+                                                    </tr>
                                                     <tr>
                                                         <td class="f-w-7 font-18 text-left"><b><lang class="lang_grandamount">Grand Total :</lang></b></td>
                                                         <td class="f-w-7 font-18 text-right"><b><span class="display-currency"></span> <span class="add-sales-clear-text" id='receiving_add_total_amount'>0.00</span></b></td>

@@ -602,10 +602,43 @@ PosnicPro.receivings = {
         });
 
         $('.hide-add-page').show();
-        $('#receiving-status-open').hide();
-        $('#receiving-status-receive').addClass('active');
-        $("#open:radio").attr("checked", false);
-        $("#received:radio").attr('checked', true);
+        /* Restore EVERYTHING the record carries - the old radio block here
+           targeted #open/#received, ids that never existed, so editing a
+           Received purchase silently saved it back to Open. */
+        var ep = PosnicPro.receivingsEditParams;
+        $('#receiving_status_select').val(ep.receiving_receiving_status === 'Received' ? 'Received' : 'Open').trigger('change');
+        $('#receiving_itc_eligible').prop('checked', ep.receiving_itc_eligible !== false);
+        $('#receiving_expected_date').val(ep.receiving_expected_date ? String(ep.receiving_expected_date).slice(0, 10) : '');
+        $('#receiving_invoice_total_declared').val(ep.receiving_invoice_total_declared || '');
+        $('#receiving_charges_rows').empty();
+        (ep.receiving_additional_charges || []).forEach(function (c) {
+            PosnicPro.receivings.addChargeRow(c.label, c.amount);
+        });
+        PosnicPro.receivings.addReceivingTableRowCalc();
+    },
+    /* ---- Additional charges (freight etc.) - ride on the total ---- */
+    addChargeRow: function (label, amount) {
+        $('#receiving_charges_rows').append(
+            '<div class="form-row charge-row align-items-center mt-2">'
+            + '<div class="col-7"><input type="text" class="form-control form-control-sm charge-label" placeholder="Freight" maxlength="40" aria-label="Charge label"></div>'
+            + '<div class="col-4"><input type="number" step="0.01" min="0" class="form-control form-control-sm text-right charge-amount" placeholder="0.00" aria-label="Charge amount"></div>'
+            + '<div class="col-1 text-center"><a href="javascript:void(0)" class="charge-remove text-danger" aria-label="Remove charge"><i class="feather icon-x"></i></a></div>'
+            + '</div>');
+        var row = $('#receiving_charges_rows .charge-row').last();
+        if (label !== undefined) { row.find('.charge-label').val(label); }
+        if (amount !== undefined) { row.find('.charge-amount').val(amount); }
+        if (label === undefined) { row.find('.charge-label').trigger('focus'); }
+    },
+    collectCharges: function () {
+        return $('#receiving_charges_rows .charge-row').map(function () {
+            return {
+                label: $.trim($(this).find('.charge-label').val() || ''),
+                amount: parseFloat($(this).find('.charge-amount').val()) || 0
+            };
+        }).get().filter(function (c) { return c.amount > 0 || c.label; });
+    },
+    chargesTotal: function () {
+        return PosnicPro.receivings.collectCharges().reduce(function (sum, c) { return sum + c.amount; }, 0);
     },
     addReceivingTableRowCalc: function () {
 
@@ -639,9 +672,20 @@ PosnicPro.receivings = {
             $('.tax-receiving-value').html('<span class="number">' + tax_value + '</span>');
             var tot = ((parseFloat(addReceivingLineTotal) - parseFloat(tax_value)));
             $('#receiving_add_subtotal_amount').number(tot, 2);
-            var receivegrandTotal = (PosnicPro.roundoff === true) ? Math.round(addReceivingLineTotal).toFixed(2) : Number(addReceivingLineTotal).toFixed(2);
+            /* Additional charges ride on the grand total - never on item
+               cost, never on the tax heads. The declared-invoice check uses
+               the same base, because the supplier's total includes them. */
+            var chargesTotal = PosnicPro.receivings.chargesTotal();
+            if (chargesTotal > 0) {
+                $('#receiving_charges_row').show();
+                $('.charges-receiving-value').text(chargesTotal.toFixed(2));
+            } else {
+                $('#receiving_charges_row').hide();
+            }
+            var withCharges = parseFloat(addReceivingLineTotal) + chargesTotal;
+            var receivegrandTotal = (PosnicPro.roundoff === true) ? Math.round(withCharges).toFixed(2) : Number(withCharges).toFixed(2);
             $("#receiving_add_total_amount").number(receivegrandTotal, 2);
-            $("#receiving_total").val(addReceivingLineTotal);
+            $("#receiving_total").val(withCharges.toFixed(2));
             $('span.number').number(true, 2);
         }
 
@@ -1069,7 +1113,8 @@ PosnicPro.receivings = {
                     exclusive_tax: ($('#exclusive_tax').is(':checked', true)) ? 'on' : 'off',
                     itc_eligible: $('#receiving_itc_eligible').is(':checked'),
                     expected_date: $('#receiving_expected_date').val(),
-                    invoice_total_declared: $('#receiving_invoice_total_declared').val()
+                    invoice_total_declared: $('#receiving_invoice_total_declared').val(),
+                    additional_charges: PosnicPro.receivings.collectCharges()
                 })
             };
             PosnicPro.post(params, function (response) {
@@ -1145,6 +1190,10 @@ PosnicPro.receivings = {
                     receiving_payment_description: result.payment_description,
                     receiving_payment_mode: result.payment_mode,
                     receiving_receiving_status: result.receiving_status,
+                    receiving_itc_eligible: result.itc_eligible,
+                    receiving_expected_date: result.expected_date,
+                    receiving_invoice_total_declared: result.invoice_total_declared,
+                    receiving_additional_charges: result.additional_charges,
                     receiving_image: result.image,
                     receiving_exclusive_tax: result.exclusive_tax
                 };
@@ -1333,7 +1382,8 @@ PosnicPro.receivings = {
                 exclusive_tax: ($('#exclusive_tax').is(':checked', true)) ? 'on' : 'off',
                     itc_eligible: $('#receiving_itc_eligible').is(':checked'),
                     expected_date: $('#receiving_expected_date').val(),
-                    invoice_total_declared: $('#receiving_invoice_total_declared').val()
+                    invoice_total_declared: $('#receiving_invoice_total_declared').val(),
+                    additional_charges: PosnicPro.receivings.collectCharges()
             };
             if (PosnicPro.receivings.receivingReturnAction === 'return') {
                 var $checkboxes = $('#receiving_print tr td input[type="checkbox"]');
@@ -1392,11 +1442,9 @@ PosnicPro.receivings = {
         $('#receiving_discount_amount').val(PosnicPro.local.get('setting-discount-amount'));
         $("#receiving_add_payment_mode").val('Cash');
         $("#receiving_add_payment_description").val('');
-        $(".receiving-status").prop("checked", false);
-        $("#Open").val("Open");
-        $('#Open').prop("checked", true);
-        $('.open_status_active').addClass("active").siblings().removeClass("active");
-        $('.open_status_active').addClass("active");
+        $('#receiving_status_select').val('Open').trigger('change');
+        $('#receiving_charges_rows').empty();
+        $('#receiving_charges_row').hide();
         $('#display-preview').html('');
         $('#receiving_discount_amount,#receiving_total').val("0");
         $('#receiving_add_total_amount,#receiving_add_subtotal_amount,.discount-receiving-value,.tax-receiving-value').text("0.00");
@@ -1806,8 +1854,16 @@ $(function () {
         }
     });
 });
-$(document).on('change', '.receiving-status', function () {
-    $('.receiving-status').val(this.id);
+/* Expected-on only matters while the order is still out (status Ordered). */
+$(document).on('change', '#receiving_status_select', function () {
+    $('#receiving_expected_wrap').toggle($(this).val() === 'Open');
+});
+$(document).on('input', '#receiving_charges_rows .charge-amount, #receiving_charges_rows .charge-label', function () {
+    PosnicPro.receivings.addReceivingTableRowCalc();
+});
+$(document).on('click', '#receiving_charges_rows .charge-remove', function () {
+    $(this).closest('.charge-row').remove();
+    PosnicPro.receivings.addReceivingTableRowCalc();
 });
 $('#receiving_upload_image').customFile();
 $(document).ready(function () {
@@ -1934,6 +1990,7 @@ PosnicPro.purchaseorders = {
     _lastRows: [],
     _openDocKey: null,
     _status: '',
+    _expected: '',
     mountPurchaseFilters: function (force) {
         if (!$('#purchases_filter_panel').length) { return; }
         if (!force && $('#purchases_filter_panel').data('mounted')) { return; }
@@ -2006,10 +2063,26 @@ PosnicPro.purchaseorders = {
                 if (chip === 'received') { return r.status === 'received' || r.status === 'closed'; }
                 return r.status === chip;
             });
+            /* Expected-date quick chips (owner): due today, tomorrow, or in
+               the coming seven days. Calendar days, local time. */
+            var expChip = self._expected;
+            if (expChip) {
+                var today = new Date(); today.setHours(0, 0, 0, 0);
+                filtered = filtered.filter(function (r) {
+                    if (!r.expected) { return false; }
+                    var due = new Date(r.expected);
+                    if (isNaN(due.getTime())) { return false; }
+                    due.setHours(0, 0, 0, 0);
+                    var days = Math.round((due - today) / 86400000);
+                    if (expChip === 'today') { return days === 0; }
+                    if (expChip === 'tomorrow') { return days === 1; }
+                    return days >= 0 && days <= 6;
+                });
+            }
             if (p > 1 && !filtered.slice((p - 1) * size).length) { self._page = 1; p = 1; }
             var pageRows = filtered.slice((p - 1) * size, p * size);
             if (!pageRows.length) {
-                var isFiltered = !!chip || PosnicPro.listFilter.activeCount('receivings') > 0;
+                var isFiltered = !!chip || !!expChip || PosnicPro.listFilter.activeCount('receivings') > 0;
                 $('#po_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">'
                     + (isFiltered ? 'No purchases match this filter.' : 'No purchases yet - press New Purchase to record the first.') + '</div>');
                 $('#po_list_paging').html('');
@@ -2041,7 +2114,7 @@ PosnicPro.purchaseorders = {
             });
             html += '</tbody></table></div>';
             $('#po_list_rows').html(html);
-            self.renderPager(filtered.length, chip ? null : totals.po + totals.rec);
+            self.renderPager(filtered.length, chip || expChip ? null : totals.po + totals.rec);
         };
         PosnicPro.get({ url: 'purchaseOrders', data: 'page=1&limit=' + fetchLimit }, function (response) {
             var data = (response && response.data) || {};
@@ -2726,6 +2799,12 @@ $(document).on('click', '#purchases_status_chips .p-chip', function () {
     $('#purchases_status_chips .p-chip').removeClass('btn-primary-rgba').addClass('btn-secondary-rgba');
     $(this).removeClass('btn-secondary-rgba').addClass('btn-primary-rgba');
     PosnicPro.purchaseorders._status = $(this).data('status') || '';
+    PosnicPro.purchaseorders.loadList(1);
+});
+$(document).on('click', '#purchases_status_chips .p-exp-chip', function () {
+    $('#purchases_status_chips .p-exp-chip').removeClass('btn-primary-rgba').addClass('btn-secondary-rgba');
+    $(this).removeClass('btn-secondary-rgba').addClass('btn-primary-rgba');
+    PosnicPro.purchaseorders._expected = $(this).data('expected') || '';
     PosnicPro.purchaseorders.loadList(1);
 });
 

@@ -1332,6 +1332,23 @@ describe('Receiving — static method registration', () => {
       /* recorded and shown, never blocked - the owner's ruling */
       expect(src).not.toMatch(/invoice_total_mismatch[\s\S]{0,120}throw/);
     });
+
+    test('additional charges ride the total, never the tax heads', () => {
+      /* Freight and its friends (the PO form block the owner asked back):
+         presence-gated, summed onto total_amount, counted in the declared-
+         invoice comparison - and nowhere near the per-line tax math. */
+      expect(src).toMatch(/data\.additional_charges !== undefined/);
+      expect(src).toMatch(/updateData\.additional_charges_total/);
+      expect(src).toMatch(/receivingTotalAmount \+ chargesTotal/);
+      const mismatchBlock = src.slice(
+        src.indexOf('invoice_total_declared !== undefined'),
+        src.indexOf('invoice_total_mismatch')
+      );
+      expect(mismatchBlock).toMatch(/chargesTotal/);
+      /* the tax heads never see a charge */
+      const taxBlock = src.slice(src.indexOf('igst_tax:'), src.indexOf('tax_fields:'));
+      expect(taxBlock).not.toMatch(/charge/i);
+    });
   });
 
   test('returnPrintDetailsPage is a function', () => {
