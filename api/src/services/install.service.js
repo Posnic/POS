@@ -2025,12 +2025,20 @@ class InstallService {
        * the password, and a connection string containing it, as plain text -
        * so `type` showed it and any copy of the folder carried it.
        *
-       * The store is at the repository root because setup-mongodb.js and
-       * main.js read it too, and nine call sites each doing their own
-       * JSON.parse is how a migration goes wrong in one of them.
+       * The store ships beside the api (resources/ when packaged, src/ in a
+       * checkout) because setup-mongodb.js and main.js read it too, and nine
+       * call sites each doing their own JSON.parse is how a migration goes
+       * wrong in one of them.
        */
       try {
-        const store = require(path.join(__dirname, '..', '..', '..', 'credentials-store'));
+        let store;
+        try {
+          /* packaged: resources/api/... up to resources/credentials-store.js */
+          store = require(path.join(__dirname, '..', '..', '..', 'credentials-store'));
+        } catch (resolveErr) {
+          /* dev checkout: the desktop shell lives in src/ beside api/ */
+          store = require(path.join(__dirname, '..', '..', '..', 'src', 'credentials-store'));
+        }
         const keyDir = path.dirname(savePaths[0]);
         const written = store.write(savePaths, credentials, keyDir);
         for (const file of written) console.log('✅ Credentials saved (encrypted) to:', file);

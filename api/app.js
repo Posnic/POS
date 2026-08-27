@@ -761,9 +761,15 @@ app.get('/print/:token', (req, res) => {
 
   let store;
   try {
+    /* packaged: resources/api beside resources/print-document-store.js */
     store = require('../print-document-store');
   } catch (e) {
-    return res.status(503).end();
+    try {
+      /* dev checkout: the desktop shell lives in src/ */
+      store = require('../src/print-document-store');
+    } catch (e2) {
+      return res.status(503).end();
+    }
   }
 
   const html = store.take(req.params.token);

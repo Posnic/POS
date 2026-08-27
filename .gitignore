@@ -99,3 +99,6 @@ builds/brand-seed/
 screenshot-*.png
 asset-signing-key.private.pem
 .demo-review/
+
+# a dev till pointed at the wrong anchor once wrote its database here
+src/mongodb/
