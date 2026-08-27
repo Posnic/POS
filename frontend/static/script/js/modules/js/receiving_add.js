@@ -125,6 +125,7 @@ PosnicPro.receivings = {
         $('.page_loader,#osk-container,#receiving_view_receiving_edit').hide();
         $('.page-title-box,#showreceivingbody,#receiving_view_view_receiving_table,#receivings').show();
         PosnicPro.receivings.mountFilters();
+        PosnicPro.receivings.applyTaxRegimeWording();
         PosnicPro.receivings.receivingsTable('receivings');
         $('.dashboard_img_menu').hide();
         $('#image_sidebar_purchasehistory').show();
@@ -644,6 +645,36 @@ PosnicPro.receivings = {
             $('span.number').number(true, 2);
         }
 
+        PosnicPro.receivings.invoiceTotalCheck();
+    },
+    /*
+     * P2: the declared invoice total against what the lines add up to.
+     * A mismatch WARNS - the goods are already in the shop; the badge makes
+     * somebody look, the save never refuses (owner's ruling).
+     */
+    invoiceTotalCheck: function () {
+        var declared = parseFloat($('#receiving_invoice_total_declared').val());
+        var note = $('#receiving_invoice_total_note');
+        if (!declared || isNaN(declared)) { note.text('').attr('class', 'form-text'); return; }
+        var computed = parseFloat($('#receiving_total').val()) || 0;
+        if (Math.abs(declared - computed) > 0.5) {
+            note.text('Does not match the lines (' + computed.toFixed(2) + ') - saved with a warning flag.')
+                .attr('class', 'form-text text-warning');
+        } else {
+            note.text('Matches the lines.').attr('class', 'form-text text-success');
+        }
+    },
+    /* The credit flag speaks the shop's regime (set once per page load). */
+    applyTaxRegimeWording: function () {
+        PosnicPro.get({ url: 'setting/taxProfile', data: {} }, function (r) {
+            var d = r && r.data;
+            if (!d || !d.regime) { return; }
+            if (d.regime === 'sales_tax') {
+                $('#receiving_itc_label').text('Purchased for resale (tax-exempt)');
+            } else if (d.regime === 'none') {
+                $('#receiving_itc_eligible').closest('.form-group').hide();
+            }
+        }, function () { /* wording only */ });
     },
     receivingTextboxQtyChange: function (ItemQty, id) {
         $('#addReceivingLineItemQty_' + id).val(ItemQty);
@@ -1035,7 +1066,9 @@ PosnicPro.receivings = {
                     items: PosnicPro.receivings.addLineReceivingTable,
                     id: PosnicPro.receivings.receivingAddId,
                     image: PosnicPro.receivings.imageParams,
-                    exclusive_tax: ($('#exclusive_tax').is(':checked', true)) ? 'on' : 'off'
+                    exclusive_tax: ($('#exclusive_tax').is(':checked', true)) ? 'on' : 'off',
+                    itc_eligible: $('#receiving_itc_eligible').is(':checked'),
+                    invoice_total_declared: $('#receiving_invoice_total_declared').val()
                 })
             };
             PosnicPro.post(params, function (response) {
@@ -1296,7 +1329,9 @@ PosnicPro.receivings = {
                 id: PosnicPro.receivings.receivingAddId,
                 alternative_id: PosnicPro.receivings.receivingId,
                 image: PosnicPro.receivings.imageParams,
-                exclusive_tax: ($('#exclusive_tax').is(':checked', true)) ? 'on' : 'off'
+                exclusive_tax: ($('#exclusive_tax').is(':checked', true)) ? 'on' : 'off',
+                    itc_eligible: $('#receiving_itc_eligible').is(':checked'),
+                    invoice_total_declared: $('#receiving_invoice_total_declared').val()
             };
             if (PosnicPro.receivings.receivingReturnAction === 'return') {
                 var $checkboxes = $('#receiving_print tr td input[type="checkbox"]');

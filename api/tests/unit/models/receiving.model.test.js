@@ -1312,6 +1312,28 @@ describe('Receiving — static method registration', () => {
     expect(typeof Receiving.receivingInsertUpdate).toBe('function');
   });
 
+  describe('purchase tax capture (PURCHASE_TAX_PLAN P2) - source contracts', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const src = fs.readFileSync(
+      path.join(__dirname, '../../../src/models/receiving.model.js'),
+      'utf8'
+    );
+
+    test('a well-formed GSTIN decides intra vs inter state, not the typed name', () => {
+      expect(src).toMatch(/gstin\.slice\(0, 2\)/);
+      expect(src).toMatch(/gst_state_code\.json/);
+    });
+
+    test('the credit flag and declared invoice total are presence-gated', () => {
+      expect(src).toMatch(/data\.itc_eligible !== undefined/);
+      expect(src).toMatch(/invoice_total_declared !== undefined/);
+      expect(src).toMatch(/invoice_total_mismatch/);
+      /* recorded and shown, never blocked - the owner's ruling */
+      expect(src).not.toMatch(/invoice_total_mismatch[\s\S]{0,120}throw/);
+    });
+  });
+
   test('returnPrintDetailsPage is a function', () => {
     expect(typeof Receiving.returnPrintDetailsPage).toBe('function');
   });
