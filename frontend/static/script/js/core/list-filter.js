@@ -291,9 +291,18 @@ PosnicPro.listFilter = {
         var existing = LF._mounted[key];
         if (existing && existing.cfg.container === cfg.container) {
             /* Config can legitimately change between mounts (a screen adding a
-               field), so it is refreshed; the STATE is what must survive. */
+               field), so it is refreshed; the STATE is what must survive.
+             *
+             * The STRIP must survive too. Every loadList re-mounts on its way
+             * through, and rebuilding the strip here REPLACED the search input
+             * while someone was typing in it - focus fell to the page and the
+             * very next letters became navigation shortcuts (owner: "focus
+             * going outside input box ... it went to different page"). A live
+             * strip is never rebuilt; only an EMPTY container renders. */
             existing.cfg = cfg;
-            LF.render(key);
+            if (!$(cfg.container).children().length) {
+                LF.render(key);
+            }
             return existing;
         }
         LF._mounted[key] = {
