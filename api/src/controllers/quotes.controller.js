@@ -117,6 +117,7 @@ module.exports = {
           exact: req.query.exact,
           from: req.query.from,
           to: req.query.to,
+          sort: req.query.sort,
         },
         contextOf(req)
       );

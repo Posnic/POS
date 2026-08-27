@@ -585,11 +585,13 @@ describe('QuoteRepository', () => {
       expect(r.status).toBe(true);
     });
 
-    test('it is built once per database, not on every request', async () => {
+    test('each index is built once per database, not on every request', async () => {
       await repo.listQuotes({}, ctx);
       await repo.listQuotes({}, ctx);
       await repo.listQuotes({}, ctx);
-      expect(mockCollection.createIndex).toHaveBeenCalledTimes(1);
+      /* THREE list indexes now (created_date, total, valid_until - the
+         whitelisted sorts), each ensured exactly once. */
+      expect(mockCollection.createIndex).toHaveBeenCalledTimes(3);
     });
   });
 });

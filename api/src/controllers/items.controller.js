@@ -244,7 +244,24 @@ class ItemsController extends BaseController {
         return this.sendError(res, `Filter operator "${rejected}" is not allowed`, 400);
       }
 
-      const options = { limit, page, sort: { _id: -1 } };
+      /*
+       * Sort, whitelisted (owner: high/low margin, recent, low stock, cost,
+       * price). Only these names reach the query; { $margin } is the
+       * repository's computed-sort marker, not a Mongo operator.
+       */
+      const ITEM_SORTS = {
+        recent: { updated_date: -1, _id: -1 },
+        name: { name: 1 },
+        margin_desc: { $margin: -1 },
+        margin_asc: { $margin: 1 },
+        price_desc: { selling_price: -1, _id: -1 },
+        price_asc: { selling_price: 1, _id: -1 },
+        cost_desc: { company_price: -1, _id: -1 },
+        cost_asc: { company_price: 1, _id: -1 },
+        stock_asc: { available_quantity: 1, _id: -1 },
+        stock_desc: { available_quantity: -1, _id: -1 },
+      };
+      const options = { limit, page, sort: ITEM_SORTS[req.query.sort] || { _id: -1 } };
 
       // Use the service layer (ItemService → ItemRepository → LegacyItemModel)
       const branchId = this.model?.branchId || null;

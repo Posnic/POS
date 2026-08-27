@@ -895,6 +895,14 @@ saleSchema.pre('save', async function () {
 // Validate that the original sale quantities are still available in stock
 // for the given sale id. Mirrors Api/src/model/sales_model.php::getSaleQtyDetailModel.
 // Static method for exporting sales data (ported from PHP exportSalesOrder)
+/*
+ * Sales History's whitelisted sorts (bill total, item count, business date)
+ * each walk one of these; created_date already rides the default listing.
+ */
+saleSchema.index({ license: 1, branch_id: 1, sales_total: -1 });
+saleSchema.index({ license: 1, branch_id: 1, number_of_items: -1 });
+saleSchema.index({ license: 1, branch_id: 1, date: -1 });
+
 saleSchema.index(
   { license: 1, billing_transaction_id: 1 },
   {

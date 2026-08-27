@@ -1047,6 +1047,23 @@ class SalesController extends BaseController {
         sortBy: 'created_date:desc,_id:desc',
       };
 
+      /*
+       * Sort, whitelisted (owner: highest bill, most items, date). Only
+       * these names reach the query - a raw client-supplied field would
+       * sort by anything on the document.
+       */
+      const SALE_SORTS = {
+        recent: 'created_date:desc,_id:desc',
+        date_desc: 'date:desc,_id:desc',
+        date_asc: 'date:asc,_id:asc',
+        total_desc: 'sales_total:desc,_id:desc',
+        total_asc: 'sales_total:asc,_id:desc',
+        items_desc: 'number_of_items:desc,_id:desc',
+      };
+      if (SALE_SORTS[req.query.sort]) {
+        options.sortBy = SALE_SORTS[req.query.sort];
+      }
+
       const result = await salesService.listSales(filter, options, { SaleModel });
 
       const docs = Array.isArray(result?.results) ? result.results : [];

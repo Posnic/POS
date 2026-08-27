@@ -16,13 +16,18 @@ const mockDoc = () => {
     rotate: jest.fn().mockReturnThis(),
     text: jest.fn().mockReturnThis(),
     rect: jest.fn().mockReturnThis(),
+    roundedRect: jest.fn().mockReturnThis(),
     fillAndStroke: jest.fn().mockReturnThis(),
     moveTo: jest.fn().mockReturnThis(),
     lineTo: jest.fn().mockReturnThis(),
     stroke: jest.fn().mockReturnThis(),
     image: jest.fn().mockReturnThis(),
     lineWidth: jest.fn().mockReturnThis(),
+    widthOfString: jest.fn().mockReturnValue(30),
+    heightOfString: jest.fn().mockReturnValue(12),
   };
+  /* doc.y is read and assigned by the flowing layout */
+  doc.y = 46;
   return doc;
 };
 
@@ -84,7 +89,15 @@ describe('pdfGenerator', () => {
     );
     const doc = PDFDocument.mock.results[0].value;
     expect(doc.pipe).toHaveBeenCalledWith(res);
-    expect(doc.text).toHaveBeenCalledWith('Main Store', 50, 40);
+    /* the q-sheet redesign: letterhead name flows at the top-left margin */
+    expect(doc.text).toHaveBeenCalledWith('Main Store', 50, expect.any(Number), expect.any(Object));
+    /* no GSTIN on this branch, so the sheet titles itself a receipt */
+    expect(doc.text).toHaveBeenCalledWith(
+      'SALES RECEIPT',
+      expect.any(Number),
+      expect.any(Number),
+      expect.objectContaining({ align: 'right' })
+    );
     expect(doc.text).toHaveBeenCalledWith(
       'Item A',
       expect.any(Number),
