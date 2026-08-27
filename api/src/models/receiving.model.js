@@ -1640,11 +1640,16 @@ receivingSchema.statics.voidReceiving = async function (id, reason, context = {}
       return { status: false, message: 'This purchase is already voided' };
     }
 
-    if (receiving.receiving_status === 'Received') {
+    if (receiving.receiving_status === 'Received' || receiving.receiving_status === 'Partial') {
       for (const line of receiving.items || []) {
         if (!line.item_id || !ObjectId.isValid(String(line.item_id))) continue;
         const itemId = new ObjectId(String(line.item_id));
-        const qty = parseFloat(line.item_quantity || 0);
+        /* Reverse what actually went INTO stock - on a partial document
+           that is the cumulative qty_received, not the face quantity. */
+        const qty =
+          line.qty_received !== undefined && line.qty_received !== null
+            ? parseFloat(line.qty_received) || 0
+            : parseFloat(line.item_quantity || 0);
         if (!qty) continue;
         const itemDoc = await itemsCollection.findOne({
           _id: itemId,
@@ -1699,6 +1704,171 @@ receivingSchema.statics.voidReceiving = async function (id, reason, context = {}
     return { status: true, message: 'Purchase voided - stock reversed, record kept' };
   } catch (error) {
     console.error('Error in voidReceiving:', error);
+    return { status: false, message: error.message };
+  }
+};
+
+/*
+ * Receive goods against an Ordered or Partial purchase - all remaining,
+ * or entered per line (owner: "received 5 items but remaining will
+ * receive later"). Stock moves by exactly what arrives NOW; each event
+ * leaves a 'Receive Purchase' stocklog; the document's status settles to
+ * Partial or Received from its lines. close_short stops expecting the
+ * rest: the status closes at Received, the shortfall stays visible on the
+ * lines, and no stock moves for goods that never came.
+ */
+receivingSchema.statics.receivePartial = async function (id, payload = {}, context = {}) {
+  try {
+    const baseModel = new BaseModel('receivings');
+    const collection = await baseModel.getCollection('receivings');
+    const itemsCollection = await baseModel.getCollection('items');
+    const stockLogsCollection = await baseModel.getCollection('stocklogs');
+    const license = context.license || BaseModel.license;
+    const loggedUser = context.userId || BaseModel.loggedUser;
+    const loggedUserName = context.userName || BaseModel.loggedUserName || '';
+    const now = new Date();
+
+    const receiving = await collection.findOne({
+      _id: new ObjectId(String(id)),
+      license: new ObjectId(String(license)),
+    });
+    if (!receiving) return { status: false, message: 'Purchase not found' };
+    if (receiving.receiving_status === 'Cancelled') {
+      return { status: false, message: 'This purchase was voided - nothing can be received' };
+    }
+    if (receiving.receiving_status === 'Received') {
+      return { status: false, message: 'This purchase is already fully received' };
+    }
+
+    const receivedOf = (line) => {
+      if (line.qty_received !== undefined && line.qty_received !== null) {
+        return parseFloat(line.qty_received) || 0;
+      }
+      return 0;
+    };
+
+    /* How much of each item is being received in THIS event. */
+    const pool = {};
+    if (payload.all === true) {
+      for (const line of receiving.items || []) {
+        if (!line.item_id) continue;
+        const key = String(line.item_id);
+        const remaining = (parseFloat(line.item_quantity) || 0) - receivedOf(line);
+        if (remaining > 0) pool[key] = (pool[key] || 0) + remaining;
+      }
+    } else {
+      for (const req of payload.lines || []) {
+        if (!req || !req.item_id) continue;
+        const qty = parseFloat(req.qty);
+        if (!qty || qty <= 0) continue;
+        pool[String(req.item_id)] = (pool[String(req.item_id)] || 0) + qty;
+      }
+    }
+    const receivingNow = Object.keys(pool).length > 0;
+    if (!receivingNow && payload.close_short !== true) {
+      return { status: false, message: 'Nothing to receive - enter a quantity' };
+    }
+
+    /* Apply to the lines, capped at each line's remainder, and total the
+         stock movement per item. */
+    const stockDelta = {};
+    const lines = (receiving.items || []).map((line) => ({ ...line }));
+    for (const line of lines) {
+      if (!line.item_id) continue;
+      const key = String(line.item_id);
+      const already = receivedOf(line);
+      const remaining = Math.max(0, (parseFloat(line.item_quantity) || 0) - already);
+      const take = Math.min(remaining, pool[key] || 0);
+      pool[key] = (pool[key] || 0) - take;
+      line.qty_received = Math.round((already + take) * 1000) / 1000;
+      if (take > 0) stockDelta[key] = (stockDelta[key] || 0) + take;
+    }
+
+    /* Move the stock that arrived. The log is gated by stock_management,
+         the quantity is not - same contract as every other door. */
+    const branchesCollection = await baseModel.getCollection('branches');
+    const branchDoc = receiving.branch_id
+      ? await branchesCollection.findOne({ _id: new ObjectId(String(receiving.branch_id)) })
+      : null;
+    const stockManagement = branchDoc?.stock_management === true;
+    const stockLogStatus = branchDoc?.stock_management_log !== false;
+    for (const key of Object.keys(stockDelta)) {
+      if (!ObjectId.isValid(key)) continue;
+      const delta = stockDelta[key];
+      const itemDoc = await itemsCollection.findOne({
+        _id: new ObjectId(key),
+        license: new ObjectId(String(license)),
+      });
+      if (!itemDoc || !(itemDoc.track_inventory === true || itemDoc.track_inventory === 'true')) {
+        continue;
+      }
+      const currentQty = parseFloat(itemDoc.available_quantity || 0);
+      const newQty = currentQty + delta;
+      if (stockManagement) {
+        await stockLogsCollection.insertOne({
+          stocklog: stockLogStatus,
+          branch_id: receiving.branch_id,
+          view_item_id: itemDoc._id,
+          item_barcode_id: itemDoc.barcode_id || '',
+          item_name: itemDoc.name || '',
+          item_quantity: delta,
+          process: 'Receive Purchase',
+          reference: receiving.receiving_id,
+          opening_balance: currentQty,
+          closing_balance: newQty,
+          count: delta,
+          date: now,
+          action: 'Add',
+          changed_by_userid: loggedUser ? new ObjectId(String(loggedUser)) : null,
+          changed_by: loggedUserName,
+          license: new ObjectId(String(license)),
+          created_date: now,
+          updated_date: now,
+        });
+      }
+      await itemsCollection.updateOne(
+        { _id: itemDoc._id, license: new ObjectId(String(license)) },
+        { $set: { available_quantity: newQty } }
+      );
+    }
+
+    /* Settle the document. */
+    let anyReceived = false;
+    let allFull = true;
+    for (const line of lines) {
+      const ordered = parseFloat(line.item_quantity) || 0;
+      const got = receivedOf(line);
+      if (got > 0) anyReceived = true;
+      if (got < ordered) allFull = false;
+    }
+    let newStatus = allFull ? 'Received' : anyReceived ? 'Partial' : 'Open';
+    const set = {
+      items: lines,
+      receiving_status: newStatus,
+      updated_date: now,
+      updated_by: loggedUserName,
+    };
+    if (payload.close_short === true && newStatus !== 'Received') {
+      set.receiving_status = 'Received';
+      set.closed_short = true;
+      set.closed_short_at = now;
+      set.closed_short_by = loggedUserName;
+      newStatus = 'Received';
+    }
+    await collection.updateOne({ _id: receiving._id }, { $set: set });
+    const movedTotal = Object.values(stockDelta).reduce((a, b) => a + b, 0);
+    return {
+      status: true,
+      message:
+        payload.close_short === true && movedTotal === 0
+          ? 'Remaining quantities cancelled - the purchase is closed'
+          : newStatus === 'Received'
+            ? 'All goods received into stock'
+            : 'Received into stock - the rest stays expected',
+      data: { receiving_status: newStatus },
+    };
+  } catch (error) {
+    console.error('Error in receivePartial:', error);
     return { status: false, message: error.message };
   }
 };
@@ -2284,6 +2454,16 @@ receivingSchema.statics.receivingInsertUpdate = async function (data, id) {
         };
       }
 
+      /* A voided purchase is a closed book: its stock reversal and audit
+         line are already written, and an edit would contradict both. */
+      if (existingReceiving.receiving_status === 'Cancelled') {
+        return {
+          status: false,
+          data: null,
+          message: 'This purchase was voided - it can no longer be edited',
+        };
+      }
+
       // Preserve original date unless explicitly provided in update
       if (!data.date && existingReceiving.date) {
         updateData.date = existingReceiving.date;
@@ -2305,71 +2485,127 @@ receivingSchema.statics.receivingInsertUpdate = async function (data, id) {
         itemCount: items.length,
       });
 
-      // Update item quantities and create stock logs if status is 'Received' (PHP line 439-443)
-      if (data.status === 'Received') {
-        for (const itemUpdate of items) {
-          const itemId = new ObjectId(itemUpdate.item_id);
-          const itemQuantity = parseFloat(itemUpdate.item_quantity || 0);
-          const itemName = itemUpdate.item_name || '';
-
+      /*
+       * Stock moves on TRANSITIONS, never on saves. The legacy path (a
+       * faithful port of the PHP) re-added every line's full quantity each
+       * time a Received purchase was saved - invisible for years only
+       * because the edit form's status radio targeted ids that never
+       * existed and posted every edit back as Open. The ledger now reads
+       * the PREVIOUS state from the stored document:
+       *
+       *   Ordered  -> Received : count the received quantities in
+       *   Received -> Received : apply per-line DELTAS (edited quantities,
+       *                          added lines, removed lines)
+       *   Received -> Ordered  : give back everything previously counted
+       *
+       * Every movement leaves one stocklog whose count carries its sign,
+       * so the stock register reads as the item's true history.
+       */
+      const prevStatus = existingReceiving.receiving_status;
+      const nextStatus = (data.status || '').trim();
+      /* What a line has actually put INTO stock: its cumulative
+         qty_received when the partial machinery has stamped one, else the
+         full quantity on a fully Received document, else nothing. */
+      const receivedOf = (line, docStatus) => {
+        if (line.qty_received !== undefined && line.qty_received !== null) {
+          return parseFloat(line.qty_received) || 0;
+        }
+        return docStatus === 'Received' ? parseFloat(line.item_quantity) || 0 : 0;
+      };
+      const countedBefore = {};
+      for (const line of existingReceiving.items || []) {
+        if (!line.item_id) continue;
+        const key = String(line.item_id);
+        countedBefore[key] = (countedBefore[key] || 0) + receivedOf(line, prevStatus);
+      }
+      const countedAfter = {};
+      const lineNames = {};
+      if (nextStatus === 'Received') {
+        for (const line of items) {
+          if (!line.item_id) continue;
+          const key = String(line.item_id);
+          countedAfter[key] = (countedAfter[key] || 0) + (parseFloat(line.item_quantity) || 0);
+          if (line.item_name) lineNames[key] = line.item_name;
+        }
+      } else if (nextStatus === 'Partial') {
+        /* Editing a partially received document: what already arrived is a
+           FACT and rides along - matched per item, capped at the edited
+           ordered quantity. The edit cannot receive or un-receive; only
+           the Receive flow moves goods. */
+        for (const line of items) {
+          if (!line.item_id) continue;
+          const key = String(line.item_id);
+          const already = countedBefore[key] || 0;
+          const ordered = parseFloat(line.item_quantity) || 0;
+          countedAfter[key] = Math.min(already, (countedAfter[key] || 0) + ordered);
+          if (line.item_name) lineNames[key] = line.item_name;
+        }
+      }
+      /* Stamp the received quantities onto the stored lines and settle the
+         document's status from them. */
+      {
+        const pool = { ...countedAfter };
+        let anyReceived = false;
+        let allFull = true;
+        for (const line of updateData.items || []) {
+          const key = String(line.item_id || '');
+          const ordered = parseFloat(line.item_quantity) || 0;
+          const take = Math.min(ordered, pool[key] || 0);
+          pool[key] = (pool[key] || 0) - take;
+          line.qty_received = Math.round(take * 1000) / 1000;
+          if (take > 0) anyReceived = true;
+          if (take < ordered) allFull = false;
+        }
+        if (nextStatus === 'Partial') {
+          updateData.receiving_status = allFull ? 'Received' : anyReceived ? 'Partial' : 'Open';
+        }
+      }
+      const touchedIds = new Set([...Object.keys(countedBefore), ...Object.keys(countedAfter)]);
+      if (touchedIds.size > 0) {
+        const stockLogsCollection = await baseModel.getCollection('stocklogs');
+        for (const key of touchedIds) {
+          const delta = (countedAfter[key] || 0) - (countedBefore[key] || 0);
+          if (!delta || !ObjectId.isValid(key)) continue;
           const itemDoc = await itemsCollection.findOne({
-            _id: itemId,
+            _id: new ObjectId(key),
             license: new ObjectId(license),
           });
-
-          console.log('[RECEIVING UPDATE DEBUG] Item check:', {
-            item_id: itemUpdate.item_id,
-            track_inventory: itemDoc?.track_inventory,
-            track_inventory_type: typeof itemDoc?.track_inventory,
-          });
-
-          // PHP checks: $documents['track_inventory'] === true (boolean or string 'true')
-          if (itemDoc && (itemDoc.track_inventory === true || itemDoc.track_inventory === 'true')) {
-            const availableQty = parseFloat(itemDoc.available_quantity || 0);
-            const newQty = itemQuantity + availableQty;
-
-            // Create stock log for EDIT Receiving (PHP line 439-441)
-            // Only if stock_management is enabled
-            if (stockManagement) {
-              console.log(
-                '[RECEIVING UPDATE DEBUG] Creating stock log for item:',
-                itemUpdate.item_id
-              );
-
-              const stockLogData = {
-                stocklog: stockLogStatus,
-                branch_id: new ObjectId(currentBranch),
-                view_item_id: itemId,
-                item_barcode_id: itemDoc.barcode_id || '',
-                item_name: itemName || itemDoc.name || '',
-                item_quantity: itemQuantity,
-                process: 'Edit Receiving',
-                reference: data.alternative_id || '',
-                opening_balance: availableQty,
-                closing_balance: newQty,
-                count: itemQuantity,
-                date: receivingDate,
-                action: 'Add',
-                changed_by_userid: new ObjectId(loggedUser),
-                changed_by: loggedUserName,
-                license: new ObjectId(license),
-                created_date: receivingDate,
-                updated_date: receivingDate,
-              };
-
-              const stockLogsCollection = await baseModel.getCollection('stocklogs');
-              await stockLogsCollection.insertOne(stockLogData);
-              console.log('[RECEIVING UPDATE] Stock log created successfully');
-            } else {
-              console.log('[RECEIVING UPDATE DEBUG] Stock management disabled, skipping stock log');
-            }
-
-            // Update item quantity (PHP line 442)
-            await itemsCollection.updateOne(
-              { _id: itemId, license: new ObjectId(license) },
-              { $set: { available_quantity: newQty } }
-            );
+          if (
+            !itemDoc ||
+            !(itemDoc.track_inventory === true || itemDoc.track_inventory === 'true')
+          ) {
+            continue;
           }
+          const currentQty = parseFloat(itemDoc.available_quantity || 0);
+          const newQty = currentQty + delta;
+          if (stockManagement) {
+            await stockLogsCollection.insertOne({
+              stocklog: stockLogStatus,
+              branch_id: new ObjectId(currentBranch),
+              view_item_id: itemDoc._id,
+              item_barcode_id: itemDoc.barcode_id || '',
+              item_name: lineNames[key] || itemDoc.name || '',
+              item_quantity: Math.abs(delta),
+              process: 'Edit Receiving',
+              reference: data.alternative_id || existingReceiving.receiving_id || '',
+              opening_balance: currentQty,
+              closing_balance: newQty,
+              count: delta,
+              date: receivingDate,
+              action: delta > 0 ? 'Add' : 'Deduct',
+              changed_by_userid: new ObjectId(loggedUser),
+              changed_by: loggedUserName,
+              license: new ObjectId(license),
+              created_date: receivingDate,
+              updated_date: receivingDate,
+            });
+          }
+          // Quantities move even with stock_management off (the insert path
+          // has always behaved this way); only the LOG is optional.
+          await itemsCollection.updateOne(
+            { _id: itemDoc._id, license: new ObjectId(license) },
+            { $set: { available_quantity: newQty } }
+          );
         }
       }
 
@@ -2856,6 +3092,7 @@ Receiving.receivingReportPage = receivingSchema.statics.receivingReportPage;
 Receiving.receivingsGraphicalReports = receivingSchema.statics.receivingsGraphicalReports;
 Receiving.getReceivingOrder = receivingSchema.statics.getReceivingOrder;
 Receiving.receivingInsertUpdate = receivingSchema.statics.receivingInsertUpdate;
+Receiving.receivePartial = receivingSchema.statics.receivePartial;
 const { returnReceivingOrder } = require('./receiving-return.model');
 Receiving.returnReceivingOrder = returnReceivingOrder;
 Receiving.deleteReceivingCollectionData = receivingSchema.statics.deleteReceivingCollectionData;

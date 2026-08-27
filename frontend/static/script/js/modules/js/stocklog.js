@@ -172,7 +172,7 @@ PosnicPro.stocklogs = {
         PosnicPro.get(params, function (response) {
             if (response.type === 'success') {
                 var data = response.data;
-                $('#low_item_stock_count').text(data.count);
+                PosnicPro.bellFeed.setLowStock(data.count);
                 var totalCount = parseInt(data.count);
                 $('#list_lowstock_name').html('');
                 $(data.list).each(function (key, val) {
@@ -191,10 +191,8 @@ PosnicPro.stocklogs = {
                 // dropdown behaviour off the bell like it used to.
                 if (totalCount === 0) {
                     $('.lowstock-section').hide();
-                    $('#low_item_stock_count').hide();
                 } else {
                     $('.lowstock-section').show();
-                    $('#low_item_stock_count').show();
                 }
                 let loader = $(".loader-login");
                 loader.find(".loadingSpinner:first").remove();

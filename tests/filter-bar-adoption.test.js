@@ -35,16 +35,21 @@ const SCREENS = [
     js: read('frontend', 'static', 'script', 'js', 'modules', 'js', 'sales.js'),
   },
   {
+    /* Purchase History retired (2026-08-27): the bar's 'receivings' key
+       lives on, mounted by the ONE purchases surface whose controls carry
+       the purchases_ prefix. */
     key: 'receivings',
-    html: read('frontend', 'modules', 'receivings.html'),
+    idPrefix: 'purchases',
+    html: read('frontend', 'modules', 'purchaseOrders.html'),
     js: read('frontend', 'static', 'script', 'js', 'modules', 'js', 'receiving_add.js'),
   },
 ];
 
 test('each list has the bar mounted with a panel and a button', () => {
   for (const s of SCREENS) {
-    assert.match(s.html, new RegExp(`id="${s.key}_filter_panel"`), `${s.key}: no filter panel`);
-    assert.match(s.html, new RegExp(`id="${s.key}_filter_btn"`), `${s.key}: no filter button`);
+    const prefix = s.idPrefix || s.key;
+    assert.match(s.html, new RegExp(`id="${prefix}_filter_panel"`), `${s.key}: no filter panel`);
+    assert.match(s.html, new RegExp(`id="${prefix}_filter_btn"`), `${s.key}: no filter button`);
     assert.match(
       s.js,
       new RegExp(`key: '${s.key}'`),
@@ -103,10 +108,18 @@ test('the bar writes the blob these endpoints already took', () => {
      impossible to attribute. */
   for (const s of SCREENS) {
     const at = s.js.indexOf(`key: '${s.key}'`);
-    const body = s.js.slice(at, at + 1600);
+    /* the purchases surface's loadList sits farther from its mount config */
+    const body = s.js.slice(at, at + (s.idPrefix ? 12000 : 1600));
     assert.match(body, /legacyFilters\(/, `${s.key}: does not translate to the filters blob`);
-    assert.match(body, /data\('filters', JSON\.stringify/, `${s.key}: never applies the filter`);
-    assert.match(body, /current_page', 1/, `${s.key}: stays on a page the new filter may not have`);
+    if (s.idPrefix) {
+      /* the purchases surface has no DataTable: the bar's onChange reloads
+         page 1 and the fetch carries the same blob in its query */
+      assert.match(body, /loadList\(1\)/, `${s.key}: a filter change must land on page 1`);
+      assert.match(body, /filters: JSON\.stringify/, `${s.key}: never sends the filter`);
+    } else {
+      assert.match(body, /data\('filters', JSON\.stringify/, `${s.key}: never applies the filter`);
+      assert.match(body, /current_page', 1/, `${s.key}: stays on a page the new filter may not have`);
+    }
   }
 });
 

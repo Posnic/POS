@@ -1333,6 +1333,21 @@ describe('Receiving — static method registration', () => {
       expect(src).not.toMatch(/invoice_total_mismatch[\s\S]{0,120}throw/);
     });
 
+    test('stock moves on transitions, never on saves', () => {
+      /* The legacy update path re-added every line's quantity on each save
+         of a Received purchase - masked for years by the broken status
+         radio that posted every edit back as Open. The ledger now diffs
+         the stored state against the incoming one. */
+      const update = src.slice(src.indexOf('// UPDATE existing receiving'));
+      expect(update).toMatch(/prevStatus = existingReceiving\.receiving_status/);
+      expect(update).toMatch(/countedAfter\[key\] \|\| 0\) - \(countedBefore\[key\] \|\| 0\)/);
+      expect(update).toMatch(/action: delta > 0 \? 'Add' : 'Deduct'/);
+      /* the unconditional re-add is gone */
+      expect(update).not.toMatch(/newQty = itemQuantity \+ availableQty/);
+      /* a voided purchase is a closed book */
+      expect(update).toMatch(/voided - it can no longer be edited/);
+    });
+
     test('additional charges ride the total, never the tax heads', () => {
       /* Freight and its friends (the PO form block the owner asked back):
          presence-gated, summed onto total_amount, counted in the declared-
