@@ -4027,7 +4027,7 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 /* Collapsed rail: the quote takes the full width, the toggle brings it back. */
 .master-detail.rail-collapsed > .md-rail { display: none; }
 
-.master-detail .md-rail table { font-size: 12.5px; margin-bottom: 0; }
+.master-detail .md-rail table { font-size: 13.5px; margin-bottom: 0; }
 .master-detail .md-rail td,
 .master-detail .md-rail th { padding: 8px 10px; }
 .master-detail .md-rail thead th {
@@ -5571,6 +5571,18 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 
 
 /* ==== LIST_PAGE_UX_STANDARD - shared pieces ==== */
+/* The quick-filter labels read at body size with real spacing (owner:
+   "status and expected labels give proper padding also correct font size"). */
+#purchases_quick_filters { padding: 4px 0 10px; }
+#purchases_quick_filters .p-qf-label {
+    font-size: 13px;
+    color: var(--theme-text-muted, #57606a);
+    margin: 0 4px 0 10px;
+}
+#purchases_quick_filters .p-qf-label:first-child { margin-left: 0; }
+#purchases_quick_filters .btn { font-size: 13px; }
+/* The strip on the header line sits clear of the header's bottom border. */
+.breadcrumbbar .lf-panel { margin: 4px 0 10px; }
 /* The control row at the top of every list card: Filter top-left, New
    beside it, quiet utilities pushed right. */
 .md-controls {
@@ -5608,29 +5620,20 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 #po_list_rows tr.purchases-row:hover { background: var(--theme-table-row-hover, #eef3ff); }
 [data-theme] #po_list_rows tr.purchases-row:hover { background: var(--theme-table-row-hover); }
 
-/* The document, paper-styled: soft hairlines, muted labels, the theme's
-   font - one bold figure at the end (the total). */
+/* The toolbar above the paper; the sheet itself is .q-sheet - the same
+   classes the quote document uses, on purpose (shared design language). */
 .p-doc-toolbar {
     display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
-    padding: 12px 18px; border-bottom: 1px solid var(--theme-border-color, #eef1f4);
+    padding: 0 0 12px;
 }
 .p-doc-title { font-size: 15.5px; font-weight: 600; color: inherit; }
-.p-doc-voidnote { padding: 8px 18px; color: var(--theme-danger-color, #c0392b); background: var(--theme-card-bg, #fdf3f2); font-size: 13px; }
-.p-doc-meta {
-    display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 12px;
-    padding: 14px 18px; border-bottom: 1px solid var(--theme-border-color, #eef1f4); font-size: 13.5px;
+#purchases_doc { padding: 14px 16px 18px; }
+.purchases-split #purchases_doc .q-sheet { padding: 24px 26px; }
+/* Void asks inline - a quiet danger frame, theme-toned. */
+.p-void-strip {
+    display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+    margin: 0 0 12px; padding: 10px 14px; font-size: 13px;
+    border: 1px solid var(--theme-danger-color, #e5534b);
+    border-radius: 6px;
 }
-.p-doc-label {
-    display: block; font-size: 11px; text-transform: uppercase;
-    letter-spacing: 0.4px; color: var(--theme-text-muted, #8b949e); margin-bottom: 2px;
-}
-.p-doc-lines { padding: 4px 6px; }
-.p-doc-lines table th {
-    color: var(--theme-text-muted, #8b949e); font-weight: 500; font-size: 12px;
-    border-bottom: 1px solid var(--theme-border-color, #eef1f4) !important;
-}
-.p-doc-lines table td { font-size: 13.5px; }
-.p-doc-totals { text-align: right; padding: 0 24px 10px; font-size: 13px; }
-.p-doc-grand { font-size: 16px; font-weight: 600; margin-top: 4px; }
-.p-doc-files { padding: 10px 18px 16px; border-top: 1px solid var(--theme-border-color, #eef1f4); font-size: 13px; }
-@media (max-width: 900px) { .p-doc-meta { grid-template-columns: 1fr 1fr; } }
+.p-void-strip .form-control { max-width: 300px; flex: 1 1 180px; }

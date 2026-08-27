@@ -148,7 +148,7 @@ PosnicPro.receivings = {
             container: '#receivings_filter_panel',
             button: '#receivings_filter_btn',
             searchPlaceholder: 'Search purchase no, supplier or phone',
-            dateField: 'Date',
+            dateField: 'Bill date',
             searchFields: [
                 { value: 'all', label: 'All fields' },
                 { value: 'receiving_id', label: 'Purchase no' },
@@ -2000,7 +2000,7 @@ PosnicPro.purchaseorders = {
             container: '#purchases_filter_panel',
             button: '#purchases_filter_btn',
             searchPlaceholder: 'Search purchase no, supplier or phone',
-            dateField: 'Date',
+            dateField: 'Bill date',
             searchFields: [
                 { value: 'all', label: 'All fields' },
                 { value: 'receiving_id', label: 'Purchase no' },
@@ -2238,9 +2238,17 @@ PosnicPro.purchaseorders = {
      * pills, grouped actions right (one primary, Edit, More, close last).
      * Soft hairlines and muted labels - the theme's font does the talking.
      */
+    /*
+     * The document is the quote's A4 sheet (owner: "show similar as quote.
+     * like full box and neatly aligned professional like A4 document") -
+     * same q-sheet vocabulary, same CSS, so the two documents age together.
+     * Toolbar above the paper; the void strip asks its reason inline.
+     */
     renderPurchaseDoc: function (d) {
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
         var money = function (v) { return PosnicPro.local.get('currencySign') + '&nbsp;' + (Number(v) || 0).toFixed(2); };
+        var dt = function (v) { return v ? new Date(v).toLocaleDateString('en-IN') : '-'; };
+        var real = function (v) { return v && v !== 'null' && v !== 'undefined' ? v : ''; };
         var open = d.receiving_status === 'Open';
         var cancelled = d.receiving_status === 'Cancelled';
         var P = PosnicPro.purchaseorders.STATUS_PILL, L = PosnicPro.purchaseorders.STATUS_LABEL;
@@ -2253,7 +2261,7 @@ PosnicPro.purchaseorders = {
         var more = '<div class="btn-group">'
             + '<button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">More</button>'
             + '<div class="dropdown-menu dropdown-menu-right">'
-            + '<a class="dropdown-item" href="javascript:void(0)" onclick="hasher.setHash(\'receivings/' + esc(d._id) + '/print\');"><i class="feather icon-printer mr-2"></i>Print</a>'
+            + '<a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.receivings.showPrint(\'' + esc(d._id) + '\'); return false;"><i class="feather icon-printer mr-2"></i>Print</a>'
             + (!cancelled
                 ? '<div class="dropdown-divider"></div>'
                     + '<a class="dropdown-item text-danger" href="javascript:void(0)" onclick="PosnicPro.purchaseorders.voidPurchase(\'' + esc(d._id) + '\',\'' + esc(d.receiving_id) + '\');"><i class="feather icon-slash mr-2"></i>Void</a>'
@@ -2268,54 +2276,109 @@ PosnicPro.purchaseorders = {
             + more
             + '<button type="button" class="btn btn-sm btn-light" title="Close this purchase and show the full list" aria-label="Close" onclick="PosnicPro.purchaseorders.closeDoc();"><i class="feather icon-x"></i></button>'
             + '</div>';
-        var voided = cancelled && d.void_reason
-            ? '<div class="p-doc-voidnote">Voided by ' + esc(d.voided_by || '?') + (d.voided_at ? ' on ' + new Date(d.voided_at).toLocaleDateString('en-IN') : '') + ' \u2014 ' + esc(d.void_reason) + '</div>' : '';
-        var meta = '<div class="p-doc-meta">'
-            + '<div><span class="p-doc-label">Supplier</span>' + esc(d.supplier_name)
-            + (d.supplier_phone ? '<div class="text-muted">' + esc(d.supplier_phone) + '</div>' : '')
-            + (d.supplier_gst_number ? '<div class="text-muted">' + esc(d.supplier_gst_number) + '</div>' : '')
-            + '</div>'
-            + '<div><span class="p-doc-label">Bill date</span>' + (d.date ? new Date(d.date).toLocaleDateString('en-IN') : '-') + '</div>'
-            + '<div><span class="p-doc-label">Expected</span>' + (d.expected_date ? new Date(d.expected_date).toLocaleDateString('en-IN') : '-') + '</div>'
-            + '<div><span class="p-doc-label">Payment</span>' + esc(d.payment_mode || '-') + '</div>'
+        var voidStrip = '<div class="p-void-strip" id="p_void_strip" style="display:none;">'
+            + '<span>Void <b>' + esc(d.receiving_id) + '</b> \u2014 stock reverses, the record stays, the tax leaves the input credit.</span>'
+            + '<input type="text" class="form-control form-control-sm" id="p_void_reason" maxlength="200" placeholder="Reason (required)" aria-label="Void reason">'
+            + '<button type="button" class="btn btn-sm btn-danger" onclick="PosnicPro.purchaseorders.voidConfirm(\'' + esc(d._id) + '\');">Void purchase</button>'
+            + '<button type="button" class="btn btn-sm btn-light" onclick="$(\'#p_void_strip\').slideUp(120);">Cancel</button>'
             + '</div>';
-        var lines = '<div class="p-doc-lines"><table class="table table-borderless"><thead><tr>'
-            + '<th>Item</th><th class="text-right">Qty</th><th class="text-right">Cost</th><th class="text-right">Tax</th><th class="text-right">Total</th>'
+        /* --- the paper --- */
+        var logo = PosnicPro.local.get('branchimage');
+        var taxLabel = PosnicPro.local.get('gst_action') === 'enable' ? 'GSTIN' : 'Tax ID';
+        var seller = '<div class="q-seller">'
+            + (logo && logo !== 'store.png' ? '<img loading="lazy" decoding="async" class="q-logo" src="' + esc(logo) + '" alt="">' : '')
+            + '<div class="q-shop">' + esc(PosnicPro.local.get('branchname') || '') + '</div>';
+        var addr = real(PosnicPro.local.get('branchaddress'));
+        var ph = real(PosnicPro.local.get('branchphone'));
+        var em = real(PosnicPro.local.get('branchemail'));
+        var gst = real(PosnicPro.local.get('branchgstin'));
+        if (addr) { seller += '<div class="q-muted">' + esc(addr) + '</div>'; }
+        if (ph || em) { seller += '<div class="q-muted">' + esc(ph) + (ph && em ? ' &middot; ' : '') + esc(em) + '</div>'; }
+        if (gst) { seller += '<div class="q-muted">' + taxLabel + ': ' + esc(gst) + '</div>'; }
+        seller += '</div>';
+        var title = '<div class="q-title-block">'
+            + '<div class="q-doc-title">PURCHASE</div>'
+            + '<div class="q-num">' + esc(d.receiving_id) + '</div>'
+            + '<div class="q-muted">Bill date: ' + dt(d.date) + '</div>'
+            + (d.expected_date ? '<div class="q-muted">Expected: ' + dt(d.expected_date) + '</div>' : '')
+            + '<div class="q-status">' + L[st].toUpperCase() + '</div>'
+            + '</div>';
+        var supplier = '<div class="q-billto"><div class="q-label">Supplier</div>'
+            + '<div class="q-cust">' + esc(d.supplier_name || '-') + '</div>'
+            + (real(d.supplier_address) ? '<div class="q-muted">' + esc(d.supplier_address) + '</div>' : '')
+            + '<div class="q-muted">'
+            + (real(d.supplier_phone) ? 'Phone: ' + esc(d.supplier_phone) : '')
+            + (real(d.supplier_phone) && real(d.supplier_gst_number) ? ' &middot; ' : '')
+            + (real(d.supplier_gst_number) ? taxLabel + ': ' + esc(d.supplier_gst_number) : '')
+            + '</div>'
+            + (real(d.supplier_email) ? '<div class="q-muted">Email: ' + esc(d.supplier_email) + '</div>' : '')
+            + '</div>';
+        var items = '<div class="table-responsive"><table class="q-items"><thead><tr>'
+            + '<th>#</th><th>Item</th><th class="text-right">Qty</th>'
+            + '<th class="text-right">Unit cost</th><th class="text-right">Tax</th><th class="text-right">Amount</th>'
             + '</tr></thead><tbody>';
-        (d.items || []).forEach(function (l) {
+        (d.items || []).forEach(function (l, i) {
             var tax = (Number(l.igst_tax) || 0) + (Number(l.cgst_tax) || 0) + (Number(l.sgst_tax) || 0);
-            lines += '<tr><td>' + esc(l.item_name) + '</td>'
+            items += '<tr><td>' + (i + 1) + '</td><td>' + esc(l.item_name) + '</td>'
                 + '<td class="text-right">' + esc(l.item_quantity) + ' ' + esc(l.item_unit || '') + '</td>'
                 + '<td class="text-right">' + money(l.item_price) + '</td>'
                 + '<td class="text-right">' + money(tax) + '</td>'
                 + '<td class="text-right">' + money(l.total_amount) + '</td></tr>';
         });
-        lines += '</tbody></table></div>';
-        var charges = '';
-        (d.additional_charges || []).forEach(function (c) {
-            charges += '<div class="text-muted">' + esc(c.label || 'Charge') + ': ' + money(c.amount) + '</div>';
-        });
-        var totals = '<div class="p-doc-totals">'
-            + '<div class="text-muted">Subtotal: ' + money(d.subtotal_amount) + '</div>'
-            + '<div class="text-muted">Tax: ' + money(d.tax) + '</div>'
-            + charges
-            + (d.invoice_total_declared ? '<div class="text-muted">Invoice says: ' + money(d.invoice_total_declared) + '</div>' : '')
-            + '<div class="p-doc-grand">Total: ' + money(d.total_amount) + '</div></div>';
-        var files = '';
+        items += '</tbody><tfoot>'
+            + '<tr class="q-sub"><td colspan="5" class="text-right">Subtotal</td>'
+            + '<td class="text-right">' + money(d.subtotal_amount) + '</td></tr>'
+            + (Number(d.tax) > 0
+                ? '<tr class="q-sub"><td colspan="5" class="text-right">Tax</td><td class="text-right">' + money(d.tax) + '</td></tr>'
+                : '')
+            + (d.additional_charges || []).map(function (c) {
+                return '<tr class="q-sub"><td colspan="5" class="text-right">' + esc(c.label || 'Charge')
+                    + '</td><td class="text-right">' + money(c.amount) + '</td></tr>';
+            }).join('')
+            + (d.invoice_total_declared
+                ? '<tr class="q-sub"><td colspan="5" class="text-right">Supplier\u2019s invoice states'
+                    + (d.invoice_total_mismatch ? ' <i class="feather icon-alert-triangle text-warning"></i>' : '')
+                    + '</td><td class="text-right">' + money(d.invoice_total_declared) + '</td></tr>'
+                : '')
+            + '<tr class="q-grand"><th colspan="5" class="text-right">TOTAL</th>'
+            + '<th class="text-right">' + money(d.total_amount) + '</th></tr>'
+            + '</tfoot></table></div>';
+        var footer = '<div class="q-footer">';
+        footer += '<div class="q-block"><div class="q-label">Payment details</div>'
+            + '<div>' + esc(d.payment_mode || '-') + '</div>'
+            + (real(d.payment_description) ? '<div class="q-muted">' + esc(d.payment_description) + '</div>' : '')
+            + '</div>';
         if (d.image && d.image.length) {
-            files = '<div class="p-doc-files"><span class="p-doc-label">Attachments</span>';
+            footer += '<div class="q-block"><div class="q-label">Attachments</div>';
             d.image.forEach(function (f) {
-                files += '<a href="' + esc(f.name) + '" target="_blank" rel="noopener" class="mr-3"><i class="feather icon-paperclip mr-1"></i>' + esc(String(f.name).split('/').pop()) + '</a>';
+                footer += '<div><a href="' + esc(f.name) + '" target="_blank" rel="noopener"><i class="feather icon-paperclip mr-1"></i>' + esc(String(f.name).split('/').pop()) + '</a></div>';
             });
-            files += '</div>';
+            footer += '</div>';
         }
-        $('#purchases_doc').html(toolbar + voided + meta + lines + totals + files);
+        if (cancelled && d.void_reason) {
+            footer += '<div class="q-block"><div class="q-label">Voided</div>'
+                + '<div class="q-muted">By ' + esc(d.voided_by || '?')
+                + (d.voided_at ? ' on ' + dt(d.voided_at) : '') + '</div>'
+                + '<div>' + esc(d.void_reason) + '</div></div>';
+        }
+        footer += '</div>';
+        var sheet = '<div class="q-sheet">'
+            + '<div class="q-head">' + seller + title + '</div>'
+            + supplier + items + footer
+            + '</div>';
+        $('#purchases_doc').html(toolbar + voidStrip + sheet);
     },
+    /* Void asks its reason inline, in the pane - no native prompt. */
     voidPurchase: function (id, no) {
-        var reason = window.prompt('Void ' + no + '?\nThe purchase stays on record, stock is reversed, and its tax leaves the input credit.\n\nReason (required):');
-        if (reason === null) { return; }
-        reason = $.trim(reason);
-        if (!reason) { PosnicPro.alert('error', 'A reason is required to void a purchase.'); return; }
+        $('#p_void_strip').slideDown(120);
+        setTimeout(function () { $('#p_void_reason').trigger('focus'); }, 140);
+    },
+    voidConfirm: function (id) {
+        var reason = $.trim($('#p_void_reason').val() || '');
+        if (!reason) {
+            $('#p_void_reason').addClass('is-invalid').attr('placeholder', 'A reason is required').trigger('focus');
+            return;
+        }
         PosnicPro.post({ url: 'receivings/' + id + '/void', data: JSON.stringify({ reason: reason }) }, function (r) {
             PosnicPro.alert(r.type || 'success', r.message || 'Purchase voided');
             PosnicPro.purchaseorders.loadList();
@@ -2795,16 +2858,14 @@ $(document).on('click', '.po-line-remove', function () {
 $(document).on('click', '#po_list_rows tr.purchases-row', function () {
     PosnicPro.purchaseorders.openDoc($(this).data('kind'), $(this).data('id'));
 });
-$(document).on('click', '#purchases_status_chips .p-chip', function () {
-    $('#purchases_status_chips .p-chip').removeClass('btn-primary-rgba').addClass('btn-secondary-rgba');
-    $(this).removeClass('btn-secondary-rgba').addClass('btn-primary-rgba');
+$(document).on('click', '#purchases_quick_filters .p-status-opt', function () {
     PosnicPro.purchaseorders._status = $(this).data('status') || '';
+    $('#purchases_status_dd').text($(this).text());
     PosnicPro.purchaseorders.loadList(1);
 });
-$(document).on('click', '#purchases_status_chips .p-exp-chip', function () {
-    $('#purchases_status_chips .p-exp-chip').removeClass('btn-primary-rgba').addClass('btn-secondary-rgba');
-    $(this).removeClass('btn-secondary-rgba').addClass('btn-primary-rgba');
+$(document).on('click', '#purchases_quick_filters .p-exp-opt', function () {
     PosnicPro.purchaseorders._expected = $(this).data('expected') || '';
+    $('#purchases_expected_dd').text($(this).text());
     PosnicPro.purchaseorders.loadList(1);
 });
 
