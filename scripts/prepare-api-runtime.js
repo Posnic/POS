@@ -43,6 +43,18 @@ const EXCLUDE = [
   '-xr!LICENSE', '-xr!LICENCE', '-xr!LICENSE.*', '-xr!LICENCE.*',
   '-xr!CHANGELOG*', '-xr!AUTHORS', '-xr!CONTRIBUTING*',
   '-xr!.github',
+  /*
+   * Binaries for the Bare runtime (bare-fs, bare-path, ...), dragged in by
+   * whatsapp-web.js's tar stack. The api runs under Node, which never loads
+   * a .bare file - but Apple's notary service unpacks the archive and found
+   * 36 unsigned Mach-O binaries in there, every one of them bare-*, and
+   * refused the whole build ("Archive contains critical validation errors").
+   * Nothing that cannot run may ship; that rule also drops the iOS-simulator
+   * and Android prebuilds these packages carry for phones we are not.
+   */
+  '-xr!*.bare',
+  '-xr!ios-x64-simulator', '-xr!ios-arm64', '-xr!ios-arm64-simulator',
+  '-xr!android-arm64', '-xr!android-arm', '-xr!android-x64', '-xr!android-ia32',
 ];
 
 // -mx=9 rather than -mx=1: this archive is built once and then downloaded by
