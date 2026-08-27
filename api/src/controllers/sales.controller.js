@@ -6244,6 +6244,55 @@ class SalesController extends BaseController {
     }
   }
 
+  /*
+   * The Tax Payable view (PURCHASE_TAX_PLAN P4): months of output vs input
+   * tax and the net owed per head, credits applied in the statutory order.
+   */
+  async taxPayable(req, res) {
+    try {
+      if (req.user?.access?.report?.read !== true) {
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
+      }
+      const data = {
+        starting_date: req.query.starting_date,
+        ending_date: req.query.ending_date,
+        branch_id: req.session?.branch_id,
+        license: req.user?.license,
+      };
+      const response = await salesService.taxPayablePage(data);
+      if (response.status === true) {
+        return this.success(res, response.data, SUCCESS_MESSAGES.GET_SUCCESSFULLY);
+      }
+      return this.error(res, response.message || ERROR_MESSAGES.SALES_DETAILS_NOT_FOUND, 404);
+    } catch (error) {
+      console.error('Error in taxPayable:', error);
+      return this.error(res, error.message, 500);
+    }
+  }
+
+  /* The purchase register beneath it - the accountant's working paper. */
+  async taxPayableRegister(req, res) {
+    try {
+      if (req.user?.access?.report?.read !== true) {
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
+      }
+      const data = {
+        starting_date: req.query.starting_date,
+        ending_date: req.query.ending_date,
+        branch_id: req.session?.branch_id,
+        license: req.user?.license,
+      };
+      const response = await salesService.taxPayableRegisterPage(data);
+      if (response.status === true) {
+        return this.success(res, response.data, SUCCESS_MESSAGES.GET_SUCCESSFULLY);
+      }
+      return this.error(res, response.message || ERROR_MESSAGES.SALES_DETAILS_NOT_FOUND, 404);
+    } catch (error) {
+      console.error('Error in taxPayableRegister:', error);
+      return this.error(res, error.message, 500);
+    }
+  }
+
   /**
    * PHP: gstOneReportTableJson()
    * Get GST-1 report as JSON
