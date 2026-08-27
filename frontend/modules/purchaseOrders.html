@@ -24,54 +24,43 @@
     </div>
 
     <div class="contentbar">
-        <!-- 1 · List -->
+        <!-- 1 · The joined surface (owner: "like quote based design").
+             List left with the same filter bar the archive has; the open
+             purchase document right. One create door lives in the header. -->
         <div id="po_list_section">
-            <div class="card m-b-30">
-                <div class="card-body">
-                    <!-- ONE list (owner: "why everything two... keep one").
-                         Orders and received purchases together, newest first;
-                         New Purchase in the page header is the only door. -->
-                    <div class="form-row align-items-end mb-2">
-                        <div class="form-group col-md-3 col-6 mb-2">
-                            <select class="form-control" id="po_filter_status" onchange="PosnicPro.purchaseorders.loadList(1);" aria-label="Filter purchases by status">
-                                <option value="">All purchases</option>
+            <div class="master-detail purchases-split" id="purchases_split">
+                <div class="card md-rail" id="purchases_list_card">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center flex-wrap" id="purchases_rail_top" style="gap:8px;padding:12px 10px;border-bottom:1px solid #d8dee4;">
+                            <button type="button" class="btn btn-sm btn-primary-rgba lf-btn" id="purchases_filter_btn" data-toggle="tooltip" title="Filter purchases">
+                                <i class="feather icon-filter"></i>
+                            </button>
+                            <select class="form-control form-control-sm" id="po_filter_status" style="width:auto;" onchange="PosnicPro.purchaseorders.loadList(1);" aria-label="Filter purchases by status">
+                                <option value="">All</option>
                                 <option value="ordered">Ordered</option>
-                                <option value="partial">Partially received</option>
+                                <option value="partial">Partial</option>
                                 <option value="received">Received</option>
-                                <option value="closed">Closed</option>
                                 <option value="cancelled">Cancelled</option>
                             </select>
-                        </div>
-                        <div class="form-group col text-right mb-2">
-                            <button type="button" class="btn btn-sm btn-outline-primary mr-2" onclick="PosnicPro.purchaseorders.exportCsv();">
-                                <i class="feather icon-download mr-1"></i>CSV
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="PosnicPro.purchaseorders.exportCsv();" data-toggle="tooltip" title="Export the filtered rows">
+                                <i class="feather icon-download"></i>
                             </button>
-                            <a data-module="receiving" data-access="read" href="#/receivings" class="text-muted" style="font-size:13px;">
-                                <i class="feather icon-filter mr-1"></i><lang class="lang_purchase_archive">Filtered archive</lang>
+                            <a data-module="receiving" data-access="read" href="#/receivings" class="btn btn-sm btn-secondary-rgba" data-toggle="tooltip" title="Full archive with every column">
+                                <i class="feather icon-archive"></i>
                             </a>
                         </div>
+                        <div class="lf-panel" id="purchases_filter_panel" style="display:none;padding:10px;border-bottom:1px solid #d8dee4;"></div>
+                        <div id="po_list_rows" class="md-rail-rows text-muted">Loading purchases ...</div>
+                        <div class="text-center" id="po_list_paging" style="padding:8px;border-top:1px solid #d8dee4;"></div>
                     </div>
-                    <div style="overflow-x:auto;">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th><lang class="lang_po_num">No</lang></th>
-                                    <th><lang class="lang_date_title">Date</lang></th>
-                                    <th><lang class="lang_created_title">Created</lang></th>
-                                    <th><lang class="lang_supplier_title">Supplier</lang></th>
-                                    <th class="text-center"><lang class="lang_status_title">Status</lang></th>
-                                    <th style="min-width:140px;"><lang class="lang_po_received">Received</lang></th>
-                                    <th><lang class="lang_po_expected">Expected</lang></th>
-                                    <th class="text-right"><lang class="lang_total_title">Total</lang></th>
-                                </tr>
-                            </thead>
-                            <tbody id="po_list_rows">
-                                <tr><td colspan="8" class="text-center text-muted">Loading…</td></tr>
-                            </tbody>
-                        </table>
+                </div>
+                <div class="card md-detail" id="purchases_detail_card">
+                    <div id="purchases_doc_empty" class="text-center text-muted" style="padding:80px 20px;">
+                        <i class="feather icon-file-text" style="font-size:40px;opacity:.4;"></i>
+                        <p class="mt-2">Pick a purchase on the left to read it here.</p>
                     </div>
-                    <div class="text-center" id="po_list_paging"></div>
+                    <div id="purchases_doc" style="display:none;"></div>
+                    <div id="purchases_po_host" style="display:none;"></div>
                 </div>
             </div>
         </div>

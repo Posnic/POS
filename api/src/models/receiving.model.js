@@ -1612,6 +1612,97 @@ receivingSchema.statics.getReceivingOrder = async function (receiving_id) {
  * @param {String} id - Receiving ID (null for create, ID for update)
  * @returns {Promise<Object>}
  */
+/*
+ * Void a purchase (PURCHASE_TAX_PLAN G8). Never a delete: the record stays
+ * whole and gains an audit line; stock moved by a Received purchase is
+ * reversed through the same stocklog machinery that put it in; a voided
+ * purchase leaves the input-credit side of Tax Payable because the
+ * aggregations exclude Cancelled. An Open order never moved stock, so
+ * voiding it is bookkeeping only.
+ */
+receivingSchema.statics.voidReceiving = async function (id, reason, context = {}) {
+  try {
+    const baseModel = new BaseModel('receivings');
+    const collection = await baseModel.getCollection('receivings');
+    const itemsCollection = await baseModel.getCollection('items');
+    const stockLogsCollection = await baseModel.getCollection('stocklogs');
+    const license = context.license || BaseModel.license;
+    const loggedUser = context.userId || BaseModel.loggedUser;
+    const loggedUserName = context.userName || BaseModel.loggedUserName || '';
+    const now = new Date();
+
+    const receiving = await collection.findOne({
+      _id: new ObjectId(String(id)),
+      license: new ObjectId(String(license)),
+    });
+    if (!receiving) return { status: false, message: 'Purchase not found' };
+    if (receiving.receiving_status === 'Cancelled') {
+      return { status: false, message: 'This purchase is already voided' };
+    }
+
+    if (receiving.receiving_status === 'Received') {
+      for (const line of receiving.items || []) {
+        if (!line.item_id || !ObjectId.isValid(String(line.item_id))) continue;
+        const itemId = new ObjectId(String(line.item_id));
+        const qty = parseFloat(line.item_quantity || 0);
+        if (!qty) continue;
+        const itemDoc = await itemsCollection.findOne({
+          _id: itemId,
+          license: new ObjectId(String(license)),
+        });
+        if (!itemDoc) continue;
+        const tracks = itemDoc.track_inventory === true || itemDoc.track_inventory === 'true';
+        if (!tracks) continue;
+        const currentQty = parseFloat(itemDoc.available_quantity || 0);
+        const newQty = currentQty - qty;
+        await itemsCollection.updateOne(
+          { _id: itemId, license: new ObjectId(String(license)) },
+          { $set: { available_quantity: newQty } }
+        );
+        await stockLogsCollection.insertOne({
+          stocklog: true,
+          branch_id: receiving.branch_id,
+          view_item_id: itemId,
+          item_barcode_id: itemDoc.barcode_id || '',
+          item_name: line.item_name || itemDoc.name || '',
+          item_quantity: qty,
+          process: 'Void Purchase',
+          reference: receiving.receiving_id,
+          opening_balance: currentQty,
+          closing_balance: newQty,
+          count: -qty,
+          date: now,
+          action: 'Void',
+          changed_by_userid: loggedUser ? new ObjectId(String(loggedUser)) : null,
+          changed_by: loggedUserName,
+          license: new ObjectId(String(license)),
+          created_date: now,
+          updated_date: now,
+        });
+      }
+    }
+
+    await collection.updateOne(
+      { _id: receiving._id },
+      {
+        $set: {
+          receiving_status: 'Cancelled',
+          voided_by: loggedUserName,
+          voided_by_id: loggedUser ? new ObjectId(String(loggedUser)) : null,
+          voided_at: now,
+          void_reason: String(reason || '').trim(),
+          updated_date: now,
+          updated_by: loggedUserName,
+        },
+      }
+    );
+    return { status: true, message: 'Purchase voided - stock reversed, record kept' };
+  } catch (error) {
+    console.error('Error in voidReceiving:', error);
+    return { status: false, message: error.message };
+  }
+};
+
 receivingSchema.statics.receivingInsertUpdate = async function (data, id) {
   try {
     const BaseModel = require('./base.model');
