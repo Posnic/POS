@@ -3,31 +3,21 @@
     <div id="containerbar">
         <div class="breadcrumbbar crumbbar_padding">
             <div class="row align-items-center row_filter">
-                <div class="col-lg-2 col-xl-2">
-                    <h4 class="page-title"> <lang class="lang_itemdetail_title">Item List</lang></h4>
+                <div class="col-auto">
+                    <h4 class="page-title break_title mb-0"> <lang class="lang_itemdetail_title">Item List</lang></h4>
                 </div>
-                <div class="col-md-8 col-lg-8"></div>
-
+                <div class="col">
+                    <div id="items_filter_panel" class="lf-panel" style="display:none;"></div>
+                </div>
                 <!--
-                    The shared filter bar (list-filter.js) replaces the five
-                    controls that used to live here: a date range, a field
-                    selector, a search box and an Apply/Clear pair, all revealed
-                    by a Filter button that toggled them as a group.
-
-                    What that arrangement could not do is say a filter is ON.
-                    The panel closes, the controls go with it, and a list
-                    narrowed to one category looks exactly like a list with one
-                    category in it - so the next person reports the catalogue as
-                    broken. The bar's button carries the active count for that
-                    reason, and Apply is gone because a filter you have to
-                    confirm is one you can forget to.
-
-                    The old ids are removed rather than hidden. Leaving
-                    #view_items_input in the markup with nothing writing to it
-                    is how the quotes search bug worked: a selector that still
-                    reads, from an input nobody can see.
+                    The shared filter bar (list-filter.js) owns search, dates
+                    and fields; its button carries the active count so a
+                    narrowed list can never masquerade as an empty one. The
+                    old ids are removed rather than hidden - a selector that
+                    still reads from an input nobody can see is how the
+                    quotes search bug worked.
                 -->
-                <div class="col-lg-12 col-xl-2 tb_widget">
+                <div class="col-auto text-right">
                     <div class="widgetbar">
                         <a data-module="item" data-access="write" href="#/items" class="btn btn-primary-rgba"
                             onclick="PosnicPro.importTableFile('items'); return false;"
@@ -38,19 +28,15 @@
                             data-toggle="tooltip" title="Export the filtered rows" aria-label="Export CSV">
                             <i class="feather icon-share"></i>
                         </button>
-                        <button type="button" id="items_filter_btn"
-                                class="btn btn-round btn-primary-rgba adjuce_left add_new_tooltip lf-btn"
-                                data-toggle="tooltip" title="Filter"><i class="feather icon-filter" aria-hidden="true"></i></button>
+                        <button type="button" id="items_filter_btn" class="btn btn-primary-rgba lf-btn"
+                                data-toggle="tooltip" title="Filter items">
+                            <i class="feather icon-filter mr-2"></i>Filter
+                        </button>
                         <a data-module="category" data-access="write" href='#/items/new' onClick="PosnicPro.items.addItemButton();" class="btn btn-primary-rgba dash_sale_count add_new_tooltip" data-toggle="tooltip" title="New Item">
                             <i class="feather icon-plus mr-2"></i>
                             <lang class="lang_addvariant_title">New</lang>
                         </a>
                     </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-12">
-                    <div id="items_filter_panel" class="lf-panel" style="display:none;"></div>
                 </div>
             </div>
             <!--
