@@ -1010,6 +1010,19 @@
                                     </div>
                                     <div id="tax_system_india" style="display:none;">
                                         <div class="form-row">
+                                            <div class="hide_indian_gst form-group col-md-6">
+                                                <label for="indian_gst" class="label-text-color">
+                                                    <lang class="lang_indiangst_title">GST on invoices</lang>
+                                                </label>
+                                                <select name="indian_gst" class="form-control border-control"
+                                                    id="indian_gst" onchange="PosnicPro.settings.updateCommonSetting('GST invoicing saved');">
+                                                    <option value="gst_off">Off — plain tax lines</option>
+                                                    <option value="gst_on">On — CGST/SGST/IGST on every bill</option>
+                                                </select>
+                                                <small class="text-muted">On splits every tax line into the GST heads and unlocks the GSTR filing reports. Registered shops keep this on.</small>
+                                            </div>
+                                        </div>
+                                        <div class="form-row">
                                             <div class="form-group col-md-6">
                                                 <label for="india_gst_type" class="label-text-color">
                                                     <lang class="lang_taxsystem_gsttype">GST registration type</lang>
@@ -1070,26 +1083,16 @@
                                                 <input type="checkbox" id="default_tax_enable_disable"
                                                     name="default_tax_enable_disable"
                                                     onclick="PosnicPro.settings.defaultTaxData(this.checked);" />
-                                                <lang class="lang_tax_title">Default Tax </lang><span
-                                                    class="text-danger">*</span>
+                                                <lang class="lang_tax_title">Apply a default tax rate to new items</lang>
                                             </label>
+                                            <small class="text-muted d-block" style="margin-top:-4px;">Every new product starts with this rate; change it per item any time. Untick if most of your catalogue is untaxed.</small>
                                             <div class="input-group">
                                                 <select name="tax_percentage" id="tax_percentage"
                                                     class="select2 form-control border-control items_tax">
                                                 </select>
                                             </div>
                                         </div>
-                                        <div class="hide_indian_gst form-group col-md-6">
-                                            <label for="indian_gst" data-toggle="tooltip" title="Indian gst"
-                                                class="label-text-color">
-                                                <lang class="lang_indiangst_title">Indian GST</lang>
-                                            </label>
-                                            <select name="indian_gst" class="form-control border-control"
-                                                id="indian_gst">
-                                                <option value="gst_off">Disable</option>
-                                                <option value="gst_on">Enable</option>
-                                            </select>
-                                        </div>
+
                                     </div>
                                     <div class="text-right">
                                         <button type="button" class="btn btn-outline-primary btn-sm"

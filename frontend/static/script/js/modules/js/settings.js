@@ -63,6 +63,7 @@ PosnicPro.settings = {
             $pane.addClass('show active');
         }
         if (key === 'general') { PosnicPro.settings.restoreCoreTab(); }
+        if (key === 'taxmodule') { PosnicPro.settings.taxSystemLoad(); }
     },
     /*
      * The branch's tax profile dresses the registration field (T2): every
@@ -95,6 +96,14 @@ PosnicPro.settings = {
             var d = r && r.data;
             if (!d) { return; }
             PosnicPro.settings._taxSystem = d;
+            /* One source of truth for every India-only surface: the resolved
+               profile. Entering this section directly used to leave the
+               Indian GST select visible to a shop in Berlin - the old toggle
+               only ran inside the settings-data callback. */
+            PosnicPro.local.set('tax_profile_code', d.code || '');
+            var isIndia = d.code === 'IN';
+            $('.hide_indian_gst,.indian-gstr').toggle(isIndia);
+            $('#tax_system_india').toggle(isIndia);
             var dec = d.decisions || {};
             $('#tax_regime_override').val(dec.tax_regime || '');
             $('#india_gst_type').val(dec.india_gst_type || 'regular');
@@ -110,7 +119,8 @@ PosnicPro.settings = {
         var regime = override || d.regime || 'vat_credit';
         var family = regime === 'vat_credit' ? 'credit method'
             : regime === 'sales_tax' ? 'no input credit' : 'no consumption tax';
-        $('#tax_system_summary').text((d.label || 'Tax') + ' (' + (d.code === '_default' ? 'generic' : d.code) + ') — ' + family);
+        var where = d.country || (d.code === '_default' ? 'generic' : d.code);
+        $('#tax_system_summary').text((d.label || 'Tax') + ' — ' + where + ' — ' + family);
         var india = d.code === 'IN' && regime === 'vat_credit';
         $('#tax_system_india').toggle(india);
         $('#tax_system_us').toggle(regime === 'sales_tax');

@@ -44,8 +44,17 @@ async function syncPoFromReceivings(poId, context = {}) {
     const receivedByItem = new Map();
     for (const receiving of receivings) {
       for (const line of receiving.items || []) {
-        const key = String(line.item);
-        receivedByItem.set(key, (receivedByItem.get(key) || 0) + (Number(line.quantity) || 0));
+        /*
+         * Receiving lines store item_id and item_quantity - reading `item`
+         * and `quantity` here meant every key was "undefined" and every
+         * count zero, so no PO ever moved off "ordered" however completely
+         * it was received. Found by the owner on the first live try; the
+         * fire-safe catch had been swallowing the no-op since the bridge
+         * shipped. The old names stay as fallbacks for any historic doc.
+         */
+        const key = String(line.item_id != null ? line.item_id : line.item);
+        const qty = Number(line.item_quantity != null ? line.item_quantity : line.quantity) || 0;
+        receivedByItem.set(key, (receivedByItem.get(key) || 0) + qty);
       }
     }
 
