@@ -41,106 +41,128 @@ PosnicPro.customercategory = {
         PosnicPro.showViewModal('customercategory');
         PosnicPro.customercategory.viewCategory(id);
     },
+    /* The name the OLD table machinery answered to - the save flow and the
+       shared clearListFilters/refresh doors still call it. */
     customercategoryTable: function () {
-        var loader = $(".loader-table-customercategory");
-        $("<div class='loadingSpinner'></div>").appendTo(loader);
-        PosnicPro.appendViewDataTableBody('customercategory');
-        var table = $('#view_customercategory');
-        var params = {
-            url: 'customerCategory',
-            data: {
-                page: table.data('current_page'),
-                limit: parseInt($('#view_customercategory_per_page  option:selected').text()),
-                filters: table.data('filters')
-            }
-        };
-        PosnicPro.get(params, function (response) {
-            if (response.type === 'success') {
-                table.data('total', response.data.total);
-                table.data('total_pages', response.data.total_pages);
-                table.data('current_page', response.data.current_page);
-                table.data('per_page', response.data.per_page);
-                PosnicPro.paging(response.data.total_pages, response.data.current_page);
-                table.children('tbody').text('');
-                $('#view_customercategory_total').text(response.data.total);
-
-                var rowTotal = response.data.total;
-                if (rowTotal === 0) {
-                    $('.customercategory_header').hide();
-                    $('#customercategory_img_hide').show();
-
-                } else {
-                    $('#customercategory_img_hide').hide();
-                    $('.customercategory_header').show();
-                }
-                var row_total = (table.data('current_page') - 1) * table.data('per_page') + 1;
-                $('#view_customercategory_page_total').text(row_total);
-                var page_totals = (table.data('current_page') - 1) * table.data('per_page');
-                $('#view_customercategory_page_perpage_total').text(page_totals + response.data.list.length);
-                for (var i = 0; i < response.data.list.length; i++) {
-                    var row = response.data.list[i];
-                    var row_no = (table.data('current_page') - 1) * table.data('per_page') + i + 1;
-
-                    var action = '<div id="onclick-toolbar-options_' + i + '" class="hidden">' +
-                            '<a data-module = "category" data-access = "read" href="#/customercategory/' + row._id + '" data-id="customercategory/' + row._id + '"  data-toggle="tooltip" title="View Category" class="point-cursor mobile_tooltip"><i class="feather icon-eye"></i></a>' +
-                            '<a data-module = "category" data-access = "write" href="#/customercategory/' + row._id + '/edit" data-id="customercategory/' + row._id + '/edit"  data-toggle="tooltip" title="Edit Category" class="point-curso mobile_tooltipr"><i class="feather icon-edit"></i></a>' +
-                            '<a data-module = "category" data-access = "delete" href="#/customercategory/' + row._id + '/delete" data-id="customercategory/' + row._id + '/delete" data-toggle="tooltip" title="Delete Category" class="point-cursor mobile_tooltip"><i class="feather icon-trash"></i></a>' +
-                            '</div>' +
-                            '<div data-toolbar="user-options" class="btn btn-round btn-primary-rgba round-pad" id="onclick-toolbar_' + i + '"><i class="feather icon-more-vertical-"></i></div>';
-
-                    var trow = '<tr> \n\
-                                <th><input type="checkbox" class="customercategory-row-id" id="' + row._id + '" name="id[]" value="' + row._id + '" onclick="PosnicPro.checkboxSelectOne(this,\'customercategory\');"></th> <th scope="row">' + row_no + '</th>  \n\
-                                <td><a href="#/customercategory/' + row._id + '" ><i data-toggle="tooltip" class="table_model_item">' + row.name + '</i></a></td> \n\
-                                <td>' + (row.description || '') + '</td> ' +
-                            '<td class="text-center"><span>' + action + '</span></td>' +
-                            '</tr>';
-
-                    $('#view_customercategory').children('tbody').append(trow);
-                }
-                $(document).ready(function () {
-                    for (var i = 0; i < response.data.list.length; i++) {
-                        $('#onclick-toolbar_' + i).toolbar({
-                            content: '#onclick-toolbar-options_' + i,
-                            event: 'click',
-                            style: 'primary',
-                            hideOnClick: true
-                        });
-                        $('#onclick-toolbar_' + i).on('toolbarItemClick', function (event, element) {
-                            hasher.setHash($(element).data('id'));
-                            $(this).trigger('click');
-                            $('.mobile_tooltip').tooltip('hide');
-                        });
-                    }
-                });
-                PosnicPro.setSelectedCheckbox(PosnicPro["customercategory_checkbox"], 'customercategory');
-                PosnicPro.ACLForModule('customer');
-
-                loader.find(".loadingSpinner:first").remove();
-            } else {
-                PosnicPro.alert(response.type, response.message);
-            }
-        }, function (xhr) {
-            var response = jQuery.parseJSON(xhr.responseText);
-            PosnicPro.alert(response.type, response.message);
-        });
+        PosnicPro.customercategory.loadList(1);
     },
-    showDataTablePage: function () {
-        var loader = $(".loader-table-customercategory");
-        loader.find(".loadingSpinner:first").remove();
-        PosnicPro.dashboard.datePicker();
+    _page: 1,
+    PAGE_SIZE: 25,
+    _lastRows: [],
+    _chrome: function () {
         PosnicPro.HideSideBarModal();
-        $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
-        $(".vertical-layout").removeClass("toggle-menu");
-        $(".vertical-menu li a").removeClass("active");
         $('.page_loader,#osk-container').hide();
+        $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
+        $('.vertical-menu li a').removeClass('active');
+        $('#v-pills-customer-tab,#page_customercategory').addClass('active');
+        $('#v-pills-customer').addClass('show active');
         $('.page-title-box,#customercategory').show();
         $('#customercategory_new,#customercategory_view').modal('hide');
-        $('#page_customercategory').addClass('active');
-        $('#v-pills-customer-tab').addClass('active');
-        $('#v-pills-customer').addClass('show active');
-        PosnicPro.customercategory.customercategoryTable('customercategory');
         $('.dashboard_img_menu').hide();
-
+    },
+    showDataTablePage: function () {
+        PosnicPro.customercategory._chrome();
+        PosnicPro.customercategory.loadList(1);
+    },
+    mountFilters: function (force) {
+        if (!$('#customercategory_filter_panel').length) { return; }
+        if (!force && $('#customercategory_filter_panel').data('mounted')) { return; }
+        $('#customercategory_filter_panel').data('mounted', true);
+        PosnicPro.listFilter.mount({
+            key: 'customercategory',
+            container: '#customercategory_filter_panel',
+            button: '#customercategory_filter_btn',
+            searchPlaceholder: 'Search category name',
+            searchFields: [
+                { value: 'all', label: 'All fields' },
+                { value: 'name', label: 'Name' },
+                { value: 'description', label: 'Description' }
+            ],
+            onChange: function () { PosnicPro.customercategory.loadList(1); }
+        });
+    },
+    loadList: function (page) {
+        PosnicPro.customercategory.mountFilters();
+        var self = PosnicPro.customercategory;
+        if (page) { self._page = page; }
+        var filters = PosnicPro.listFilter.legacyFilters('customercategory', {});
+        var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
+        PosnicPro.get({
+            url: 'customerCategory',
+            data: { page: self._page, limit: self.PAGE_SIZE, filters: JSON.stringify(filters) }
+        }, function (response) {
+            var data = (response && response.data) || {};
+            var list = data.list || [];
+            self._lastRows = list;
+            if (!list.length) {
+                var filtered = PosnicPro.listFilter.activeCount('customercategory') > 0;
+                $('#customercategory_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">'
+                    + (filtered ? 'No customer categories match this filter.' : 'No customer categories yet - press New to add the first.') + '</div>');
+                $('#customercategory_list_paging').html('');
+                return;
+            }
+            var html = '<div class="table-responsive"><table class="table table-borderless">'
+                + '<thead><tr><th>Name</th><th class="cc-col-desc">Description</th><th style="width:90px;"></th></tr></thead><tbody>';
+            list.forEach(function (r) {
+                html += '<tr class="md-row customercategory-row highlight-select" data-id="' + esc(r._id) + '" style="cursor:pointer;">'
+                    + '<td>' + esc(r.name) + '</td>'
+                    + '<td class="cc-col-desc q-muted">' + esc(r.description || '-') + '</td>'
+                    + '<td class="text-right" style="white-space:nowrap;">'
+                    + '<a data-module="customer" data-access="write" href="#/customercategory/' + esc(r._id) + '/edit" class="btn btn-sm btn-light cc-row-act" data-toggle="tooltip" title="Edit"><i class="feather icon-edit-2"></i></a> '
+                    + '<a data-module="customer" data-access="delete" href="#/customercategory/' + esc(r._id) + '/delete" class="btn btn-sm btn-light cc-row-act" data-toggle="tooltip" title="Delete"><i class="feather icon-trash-2"></i></a>'
+                    + '</td>'
+                    + '</tr>';
+            });
+            html += '</tbody></table></div>';
+            $('#customercategory_list_rows').html(html);
+            PosnicPro.ACLForModule('customer');
+            self.renderPager(Number(data.total) || list.length);
+        }, function () {
+            $('#customercategory_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">Could not load customer categories - try again.</div>');
+        });
+    },
+    renderPager: function (total) {
+        var self = PosnicPro.customercategory;
+        var p = self._page, size = self.PAGE_SIZE;
+        var pages = Math.ceil(total / size) || 1;
+        var label = total + (total === 1 ? ' customer category' : ' customer categories');
+        if (pages > 1) { label = 'Page ' + p + ' of ' + pages + ' · ' + label; }
+        var btn = function (to, text, off, cls) {
+            return '<button type="button" class="btn btn-sm ' + (cls || 'btn-secondary-rgba') + ' q-pg-btn"' + (off ? ' disabled' : '')
+                + ' onclick="PosnicPro.customercategory.goPage(' + to + ');">' + text + '</button>';
+        };
+        var html = '';
+        if (pages > 1) {
+            html += btn(p - 1, '&laquo;', p <= 1);
+            var end = Math.min(pages, Math.max(1, p - 2) + 4);
+            var start = Math.max(1, end - 4);
+            for (var n = start; n <= end; n++) {
+                html += '<span class="q-pg-num">' + btn(n, n, false, n === p ? 'btn-primary-rgba' : 'btn-secondary-rgba') + '</span>';
+            }
+        }
+        html += '<span class="q-pg-count">' + label + '</span>';
+        if (pages > 1) { html += btn(p + 1, '&raquo;', p >= pages); }
+        $('#customercategory_list_paging').html(html);
+    },
+    goPage: function (n) {
+        if (!n || n < 1) { return; }
+        PosnicPro.customercategory._page = n;
+        PosnicPro.customercategory.loadList();
+    },
+    exportCsv: function () {
+        var rows = [['Name', 'Description']];
+        (PosnicPro.customercategory._lastRows || []).forEach(function (r) {
+            rows.push([r.name, r.description || '']);
+        });
+        var csv = rows.map(function (r) {
+            return r.map(function (c) { return '"' + String(c == null ? '' : c).replace(/"/g, '""') + '"'; }).join(',');
+        }).join('\n');
+        var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'customer-categories.csv';
+        a.click();
+        URL.revokeObjectURL(a.href);
     },
     /*This Categories Function Used To Add & Edit*/
     category: function () {
@@ -278,12 +300,6 @@ PosnicPro.customercategory = {
         $('#customercategory_new .alert').remove();
         $('#show_last_created_customercategory').hide();
     },
-    exportCategories: function () {
-        PosnicPro.exportTableData(PosnicPro.customercategory_checkbox, 'customerCategory');
-    },
-    deleteSelectedCategories: function () {
-        PosnicPro.deleteTableData(PosnicPro.customercategory_checkbox, 'customerCategory');
-    },
     categoryClearForm: function () {
         $(".customercategory_add")[0].reset();
         $('.error_category').css('display', 'none');
@@ -360,6 +376,17 @@ PosnicPro.customercategory = {
         });
     }
 };
+/* Standard list wiring: Filter button, row click into the details
+   slide-over, row action buttons that must not also open the row. */
+$(document).on('click', '#customercategory_filter_btn', function () {
+    PosnicPro.customercategory.mountFilters(true);
+    PosnicPro.listFilter.toggle('customercategory');
+});
+$(document).on('click', '#customercategory_list_rows tr.customercategory-row', function (e) {
+    if ($(e.target).closest('.cc-row-act').length) { return; }
+    hasher.setHash('customercategory/' + $(this).data('id'));
+});
+
 $("#customercategorySubmitForm").one('click', function () {
     PosnicPro.customercategory.validForm();
 });

@@ -5824,3 +5824,19 @@ tr.s-doc-purchase-row:hover td { background: rgba(9, 105, 218, 0.05); }
 .p-rcv-progress { color: var(--theme-text-muted, #57606a); font-size: 12px; white-space: nowrap; }
 .p-rcv-qty { flex: 0 0 90px; text-align: right; }
 .p-rcv-actions { display: flex; gap: 8px; margin-top: 10px; }
+
+/* -------------------------------------------------------------------------
+ * Small list pages on the standard (Inventory Logs, Low Stock, Categories,
+ * Variants, Customer Categories). Full-width lists - no split pane - so the
+ * secondary columns only yield on genuinely narrow screens, shedding
+ * detail -> identity, never the row's meaning (LIST_PAGE_UX_STANDARD 5).
+ * ---------------------------------------------------------------------- */
+@media (max-width: 991px) {
+    .il-col-ref, .il-col-by,
+    .ls-col-supplier, .ls-col-category { display: none; }
+}
+@media (max-width: 767px) {
+    .il-col-bal, .il-col-date,
+    .ls-col-sku,
+    .cg-col-desc, .cc-col-desc, .vr-col-values { display: none; }
+}
