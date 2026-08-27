@@ -90,6 +90,12 @@ PosnicPro.customers = {
             onChange: function () { PosnicPro.customers.loadList(1); }
         });
     },
+    /* The name the OLD table machinery answered to - the save flow still
+       calls it after adding a customer, and the shared clearListFilters/
+       refresh doors resolve <module>Table by convention. */
+    customersTable: function () {
+        PosnicPro.customers.loadList(1);
+    },
     loadList: function (page) {
         PosnicPro.customers.mountFilters();
         var self = PosnicPro.customers;
