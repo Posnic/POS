@@ -82,6 +82,18 @@ for (const win of WINDOWS) {
   });
 }
 
+test('a desk build ships the same api bytes a clean checkout would', () => {
+  /* Found by the packaging smoke, not by review: the Windows release is
+     built on the owner's desk, where api/ carries a live .local-db (the
+     local-dev harness), runtime uploads/, generated public/ exports and -
+     one day - a .env. None of that exists in CI, so CI could never catch
+     it, and each would have shipped inside the installer. */
+  const api = pkg.build.extraResources.find((e) => e && e.from === 'api');
+  for (const guard of ['!.env', '!.env.*', '!.local-db/**', '!uploads/**', '!public/**']) {
+    assert.ok(api.filter.includes(guard), `the api packaging filter lost ${guard}`);
+  }
+});
+
 test('the theming a window asks for is the theming it gets', () => {
   /* Named explicitly rather than inferred: this pair is the reason the test
      exists, and a rename that drops one of them should fail here. */
