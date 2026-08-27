@@ -201,8 +201,8 @@ jobs:
       # submits to Apple's notary service and staples the ticket. Unlike the
       # Windows key (hardware card, desk only), Apple credentials are files,
       # so CI is the right place for them.
-      - name: Stage Apple signing credentials
-        if: matrix.name == 'macOS' && secrets.MAC_CERT_P12 != ''
+      - name: Stage Apple notarization credentials
+        if: matrix.name == 'macOS' && secrets.ASC_API_KEY_P8 != ''
         env:
           ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
         run: |
@@ -215,7 +215,7 @@ jobs:
       - name: Build
         run: >
           npx electron-builder ${{ matrix.flag }} --publish never
-          ${{ matrix.name == 'macOS' && secrets.MAC_CERT_P12 != '' && '--config.mac.notarize=true' || '' }}
+          ${{ matrix.name == 'macOS' && secrets.ASC_API_KEY_P8 != '' && '--config.mac.notarize=true' || '' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_LINK: ${{ matrix.name == 'macOS' && secrets.MAC_CERT_P12 || '' }}
@@ -228,15 +228,21 @@ jobs:
       # for the exe: signed and accepted by the OS's own assessor, or no build.
       - name: Verify macOS signature and notarization
         if: matrix.name == 'macOS' && secrets.MAC_CERT_P12 != ''
+        env:
+          HAVE_NOTARY: ${{ secrets.ASC_API_KEY_P8 != '' }}
         run: |
           set -euo pipefail
           APP=$(find dist/mac* -maxdepth 1 -name '*.app' | head -1)
           codesign --verify --deep --strict --verbose=2 "$APP"
-          spctl -a -vv "$APP"
-          for DMG in dist/*.dmg; do
-            spctl -a -t open -vv --context context:primary-signature "$DMG"
-          done
-          echo "macOS artifacts are signed, notarized and Gatekeeper-approved"
+          if [ "$HAVE_NOTARY" = "true" ]; then
+            spctl -a -vv "$APP"
+            for DMG in dist/*.dmg; do
+              spctl -a -t open -vv --context context:primary-signature "$DMG"
+            done
+            echo "macOS artifacts are signed, notarized and Gatekeeper-approved"
+          else
+            echo "::warning::signed but NOT notarized - ASC API key not configured yet (RELEASE_TRUST_PLAN Appendix A2)"
+          fi
 
       - name: Warn when the macOS build ships unsigned
         if: matrix.name == 'macOS' && secrets.MAC_CERT_P12 == ''
