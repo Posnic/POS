@@ -1575,28 +1575,6 @@ $(function () {
             });
         };
     };
-    /* The purchase-order form's Supplier field gets the same typeahead the
-       purchase form has (owner, live from the local verify: "supplier
-       typeahead not working"). Same endpoint, same recency feed; picking a
-       suggestion carries the id so the PO links to a real supplier. */
-    $('#po_supplier_name').autocomplete({
-        deferRequestBy: 120,
-        minChars: 0,
-        lookup: PosnicPro.receivings.supplierLookup('#po_supplier_name'),
-        onSelect: function (suggestion) {
-            if (suggestion.data && suggestion.data !== -1) {
-                $('#po_supplier_id').val(suggestion.data.id);
-                if (PosnicPro.sales && PosnicPro.sales._recentPush) {
-                    PosnicPro.sales._recentPush('recent_suppliers', {
-                        id: suggestion.data.id,
-                        name: suggestion.value || suggestion.data.name,
-                        phone: suggestion.data.phone
-                    }, 'id');
-                }
-            }
-        }
-    });
-
     $('#receiving_add_supplier_name').autocomplete({
         deferRequestBy: 120,
             minChars: 0,
@@ -1917,6 +1895,25 @@ PosnicPro.purchaseorders = {
      * master-detail surface replaces this page.
      */
     _listWindow: 20,
+    _lastRows: [],
+    exportCsv: function () {
+        var rows = [['No', 'Kind', 'Bill date', 'Created', 'Supplier', 'Status', 'Expected', 'Total']];
+        (PosnicPro.purchaseorders._lastRows || []).forEach(function (r) {
+            rows.push([r.no, r.kind === 'po' ? 'order' : 'purchase',
+                r.date ? new Date(r.date).toISOString().slice(0, 10) : '',
+                r.created ? new Date(r.created).toISOString().slice(0, 10) : '',
+                r.supplier, r.status, r.expected || '', r.total]);
+        });
+        var csv = rows.map(function (r) {
+            return r.map(function (c) { return '"' + String(c == null ? '' : c).replace(/"/g, '""') + '"'; }).join(',');
+        }).join('\n');
+        var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'purchases.csv';
+        a.click();
+        URL.revokeObjectURL(a.href);
+    },
     loadList: function (page) {
         if (page === 1) { PosnicPro.purchaseorders._listWindow = 20; }
         var want = PosnicPro.purchaseorders._listWindow;
@@ -1930,10 +1927,12 @@ PosnicPro.purchaseorders = {
             if (status) {
                 rows = rows.filter(function (r) { return r.status === status; });
             }
-            rows.sort(function (a, b) { return (b.date || '').localeCompare(a.date || ''); });
+            var ts = function (v) { var t = new Date(v || 0).getTime(); return isNaN(t) ? 0 : t; };
+            rows.sort(function (a, b) { return ts(b.date) - ts(a.date); });
+            PosnicPro.purchaseorders._lastRows = rows;
             var shown = rows.slice(0, want);
             if (!shown.length) {
-                $('#po_list_rows').html('<tr><td colspan="8" class="text-center text-muted">No purchases yet - press New Purchase to record the first.</td></tr>');
+                $('#po_list_rows').html('<tr><td colspan="9" class="text-center text-muted">No purchases yet - press New Purchase to record the first.</td></tr>');
                 $('#po_list_paging').html('');
                 return;
             }
@@ -1953,7 +1952,8 @@ PosnicPro.purchaseorders = {
                 return '<tr class="point-cursor" onclick="' + open + '">' +
                     '<td>' + (i + 1) + '</td>' +
                     '<td>' + esc(r.no) + '</td>' +
-                    '<td>' + esc((r.date || '').slice(0, 10)) + '</td>' +
+                    '<td>' + (r.date ? new Date(r.date).toLocaleDateString('en-IN') : '-') + '</td>' +
+                    '<td>' + (r.created ? new Date(r.created).toLocaleDateString('en-IN') : '-') + '</td>' +
                     '<td>' + esc(r.supplier) + '</td>' +
                     '<td class="text-center"><span class="rs-pill ' + (CHIP[r.status] || 'hold') + '">' + (LABEL[r.status] || esc(r.status)) + '</span></td>' +
                     '<td>' + (r.progress || '-') + '</td>' +
@@ -1973,6 +1973,7 @@ PosnicPro.purchaseorders = {
                 return {
                     kind: 'po', id: po.id, no: po.po_id,
                     date: String(po.order_date || ''),
+                    created: po.created_date || po.order_date || '',
                     supplier: po.supplier_name, status: po.status,
                     progress: '<div class="progress" style="height:6px;"><div class="progress-bar" style="width:' + pct + '%;"></div></div>' +
                         '<small class="text-muted">' + po.received_qty + ' of ' + po.ordered_qty + '</small>',
@@ -1988,6 +1989,7 @@ PosnicPro.purchaseorders = {
                 return {
                     kind: 'purchase', id: r._id, no: r.receiving_id,
                     date: String(r.date || r.updated_date || ''),
+                    created: r.created_date || '',
                     supplier: r.supplier_name,
                     status: r.receiving_status === 'Open' ? 'ordered'
                         : r.receiving_status === 'Received' ? 'received'
@@ -2460,16 +2462,20 @@ $(document).on('click', '.po-line-remove', function () {
     delete PosnicPro.purchaseorders._lines[$(this).data('id')];
     PosnicPro.purchaseorders.renderLines();
 });
+$(document).on('focus', '#receiving_add_supplier_name, #po_supplier_name', function () {
+    /* devbridge fires no lookup on plain focus, even at minChars 0 - the
+       standing picker rule (frequent-on-focus) needs this nudge. */
+    var ac = $(this).data('autocomplete');
+    if (ac && !$(this).val()) { ac.onValueChange(); }
+});
+
 $(document).ready(function () {
     // Supplier + item autocompletes for the PO form.
     $('#po_supplier_name').autocomplete({
-        lookup: function (query, done) {
-            PosnicPro.get({ url: 'suppliers/getSuppliersAjaxList', data: 'query=' + encodeURIComponent(query) }, function (response) {
-                done({ suggestions: $.map(response.suggestions || [], function (d) { return { value: d.name, data: d }; }) });
-            }, function () { done({ suggestions: [] }); });
-        },
+        minChars: 0,
+        lookup: PosnicPro.receivings.supplierLookup('#po_supplier_name'),
         onSelect: function (suggestion) {
-            if (suggestion.data) { $('#po_supplier_id').val(suggestion.data.id); }
+            if (suggestion.data && suggestion.data !== -1) { $('#po_supplier_id').val(suggestion.data.id); }
         },
         autoSelectFirst: true,
         triggerSelectOnValidInput: false

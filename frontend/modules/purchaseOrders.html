@@ -43,6 +43,9 @@
                             </select>
                         </div>
                         <div class="form-group col text-right mb-2">
+                            <button type="button" class="btn btn-sm btn-outline-primary mr-2" onclick="PosnicPro.purchaseorders.exportCsv();">
+                                <i class="feather icon-download mr-1"></i>CSV
+                            </button>
                             <a data-module="receiving" data-access="read" href="#/receivings" class="text-muted" style="font-size:13px;">
                                 <i class="feather icon-filter mr-1"></i><lang class="lang_purchase_archive">Filtered archive</lang>
                             </a>
@@ -55,6 +58,7 @@
                                     <th>#</th>
                                     <th><lang class="lang_po_num">No</lang></th>
                                     <th><lang class="lang_date_title">Date</lang></th>
+                                    <th><lang class="lang_created_title">Created</lang></th>
                                     <th><lang class="lang_supplier_title">Supplier</lang></th>
                                     <th class="text-center"><lang class="lang_status_title">Status</lang></th>
                                     <th style="min-width:140px;"><lang class="lang_po_received">Received</lang></th>
