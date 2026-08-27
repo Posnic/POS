@@ -1,0 +1,64 @@
+# Snap Store publication (RELEASE_TRUST_PLAN §4, phase approved 2026-08-27).
+#
+# Same shape and same reasoning as publish-apt.yml: runs only when a release
+# is PUBLISHED - the human decision - and stays dormant, loudly, until the
+# store credential exists. The .snap itself is built by the normal release
+# matrix (electron-builder's snap target); this job only moves it to the
+# store, where Canonical's infrastructure handles trust and updates.
+#
+# Secrets it waits for:
+#   SNAPCRAFT_STORE_CREDENTIALS - `snapcraft export-login` output for the
+#                                 account that registered the name `posnic`
+name: Publish to Snap Store
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to (re)publish, e.g. v1.6.0"
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    # secrets are not legal in step-level `if:` - presence is computed here
+    env:
+      HAVE_SNAP_LOGIN: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS != '' }}
+    steps:
+      - name: Explain and stop when the store login is not configured yet
+        if: env.HAVE_SNAP_LOGIN != 'true'
+        run: |
+          echo "::warning::Snap publishing is not configured (SNAPCRAFT_STORE_CREDENTIALS missing) - the store was NOT updated. See RELEASE_TRUST_PLAN.md Appendix D."
+
+      - name: Download the release .snap
+        if: env.HAVE_SNAP_LOGIN == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag || github.event.release.tag_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          gh release download "$TAG" --repo "$REPO" --pattern '*.snap' --dir .
+          ls -l ./*.snap
+
+      - name: Upload to the Snap Store
+        if: env.HAVE_SNAP_LOGIN == 'true'
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
+        run: |
+          set -euo pipefail
+          sudo snap install snapcraft --classic
+          # Betas land in the beta channel; stable tags in stable. A visitor
+          # running `snap install posnic` only ever gets the stable channel.
+          TAG="${{ inputs.tag || github.event.release.tag_name }}"
+          case "$TAG" in
+            *beta*) CHANNEL=beta ;;
+            *)      CHANNEL=stable ;;
+          esac
+          snapcraft upload ./*.snap --release "$CHANNEL"
+          echo "published to the $CHANNEL channel"
