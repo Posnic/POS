@@ -38,13 +38,24 @@
             <div class="contentbar">
                 <div class="card m-b-30 md-rail" id="quotes_list_card">
                     <div class="card-body">
+                        <!-- Status as a labelled dropdown, same as purchases (owner:
+                             "make Status filter with label and drop down in quotes").
+                             The entries keep the quotes-chip class so the existing
+                             bar wiring (setExtra -> repaint) is untouched. -->
                         <div class="m-b-10 d-flex align-items-center flex-wrap" style="gap:8px;" id="quotes_filter_chips">
-                            <button type="button" class="btn btn-sm btn-primary-rgba quotes-chip" data-status="">All</button>
-                            <button type="button" class="btn btn-sm btn-secondary-rgba quotes-chip" data-status="open">Open</button>
-                            <button type="button" class="btn btn-sm btn-secondary-rgba quotes-chip" data-status="accepted">Accepted</button>
-                            <button type="button" class="btn btn-sm btn-secondary-rgba quotes-chip" data-status="declined">Declined</button>
-                            <button type="button" class="btn btn-sm btn-secondary-rgba quotes-chip" data-status="converted">Converted</button>
-                            <button type="button" class="btn btn-sm btn-secondary-rgba quotes-chip" data-status="cancelled">Cancelled</button>
+                            <span class="p-qf-label">Status</span>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown"
+                                    aria-haspopup="true" aria-expanded="false" id="quotes_status_dd">All</button>
+                                <div class="dropdown-menu">
+                                    <a class="dropdown-item quotes-chip" href="javascript:void(0)" data-status="">All</a>
+                                    <a class="dropdown-item quotes-chip" href="javascript:void(0)" data-status="open">Open</a>
+                                    <a class="dropdown-item quotes-chip" href="javascript:void(0)" data-status="accepted">Accepted</a>
+                                    <a class="dropdown-item quotes-chip" href="javascript:void(0)" data-status="declined">Declined</a>
+                                    <a class="dropdown-item quotes-chip" href="javascript:void(0)" data-status="converted">Converted</a>
+                                    <a class="dropdown-item quotes-chip" href="javascript:void(0)" data-status="cancelled">Cancelled</a>
+                                </div>
+                            </div>
                         </div>
                         <div id="quotes_list_rows" class="md-rail-rows text-muted">Loading quotes ...</div>
                     </div>

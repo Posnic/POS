@@ -2099,7 +2099,7 @@ PosnicPro.purchaseorders = {
             var P = self.STATUS_PILL, L = self.STATUS_LABEL;
             var html = '<div class="table-responsive"><table class="table table-borderless">'
                 + '<thead><tr>'
-                + '<th>Purchase #</th><th>Supplier</th><th class="p-col-date">Date</th><th class="p-col-created">Created</th>'
+                + '<th class="p-col-num">Purchase #</th><th>Supplier</th><th class="p-col-date">Date</th><th class="p-col-created">Created</th>'
                 + '<th class="p-col-expected">Expected</th><th class="text-right">Total</th><th class="text-center">Status</th>'
                 + '</tr></thead><tbody>';
             pageRows.forEach(function (r) {
@@ -2110,7 +2110,7 @@ PosnicPro.purchaseorders = {
                 var pill = '<span class="rs-pill ' + (P[r.status] || 'hold') + '">' + (L[r.status] || esc(r.status)) + '</span>';
                 html += '<tr class="md-row purchases-row highlight-select' + (self._openDocKey === key ? ' is-active' : '') + '"'
                     + ' data-kind="' + r.kind + '" data-id="' + esc(r.id) + '" style="cursor:pointer;">'
-                    + '<td>' + esc(r.no) + badges + '</td>'
+                    + '<td class="p-col-num">' + esc(r.no) + badges + '</td>'
                     + '<td>' + esc(r.supplier) + (r.progress ? ' <span class="text-muted p-col-progress">' + esc(r.progress) + '</span>' : '') + '</td>'
                     + '<td class="p-col-date">' + d(r.date) + '</td>'
                     + '<td class="p-col-created">' + d(r.created) + '</td>'
