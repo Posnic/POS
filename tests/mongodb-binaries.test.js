@@ -65,7 +65,7 @@ test('the binaries are not tracked in git', () => {
 });
 
 test('there is a documented way to get them back', () => {
-  const script = path.join(ROOT, 'download-mongodb.bat');
+  const script = path.join(ROOT, 'src', 'download-mongodb.bat');
   assert.ok(fs.existsSync(script),
     'download-mongodb.bat is gone, and it is the only way to restore the ' +
     'binaries this repository no longer carries');
@@ -131,7 +131,7 @@ test('macOS picks the binary for the architecture it is building', () => {
 });
 
 test('the app looks for the right binary name', () => {
-  const manager = fs.readFileSync(path.join(ROOT, 'mongodb-manager.js'), 'utf8');
+  const manager = fs.readFileSync(path.join(ROOT, 'src', 'mongodb-manager.js'), 'utf8');
   assert.match(
     manager,
     /process\.platform === 'win32' \? 'mongod\.exe' : 'mongod'/,

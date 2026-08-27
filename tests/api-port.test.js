@@ -24,7 +24,7 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
-const MAIN = fs.readFileSync(path.join(ROOT, 'main.js'), 'utf8');
+const MAIN = fs.readFileSync(path.join(ROOT, 'src', 'main.js'), 'utf8');
 
 test('the API port is never captured in a module-scope constant', () => {
   /* The specific shape that broke: a top-level const reading process.env.PORT.
@@ -103,7 +103,7 @@ test('resolveLocalPorts is what sets the port, exactly once', () => {
 test('the derived port really is not 5555, so this matters', () => {
   /* If the derivation happened to return 5555 the bug would have been
      invisible. It does not: it is a hash of the application name. */
-  const { derive, API_BASE, MONGO_BASE } = require('../local-ports');
+  const { derive, API_BASE, MONGO_BASE } = require('../src/local-ports');
   const stockApi = derive('posnic', API_BASE);
 
   assert.notStrictEqual(

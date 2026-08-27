@@ -27,7 +27,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 const path = require('node:path');
 
-const BackupManager = require('../backup-manager.js');
+const BackupManager = require('../src/backup-manager.js');
 
 /* An instance without touching disk: these are pure path decisions. */
 function manager(configuredRoot) {
@@ -160,7 +160,7 @@ test('only the main process can grant, and it does', () => {
   /* The grant is called from the folder-picker handler, with what the OS
      dialog returned - not with anything the renderer sent. */
   const fs = require('node:fs');
-  const main = fs.readFileSync(path.join(__dirname, '..', 'main.js'), 'utf8');
+  const main = fs.readFileSync(path.join(__dirname, '..', 'src', 'main.js'), 'utf8');
 
   const from = main.indexOf("ipcMain.handle('backup:browse-folder'");
   assert.notStrictEqual(from, -1, 'the folder-picker handler has gone');

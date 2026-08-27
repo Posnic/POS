@@ -92,7 +92,7 @@ test('whether a release is offered to installed copies is a decision, not a cons
 test('the updater still refuses pre-releases', () => {
   /* If this ever flips, the pre-release flag stops protecting anyone: every
      beta would be offered to every shop automatically. */
-  const service = fs.readFileSync(path.join(ROOT, 'update-service.js'), 'utf8');
+  const service = fs.readFileSync(path.join(ROOT, 'src', 'update-service.js'), 'utf8');
   assert.match(
     service,
     /allowPrerelease\s*=\s*false/,

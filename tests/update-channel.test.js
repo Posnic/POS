@@ -25,8 +25,8 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 const read = (f) => fs.readFileSync(path.join(ROOT, f), 'utf8').replace(/\r\n/g, '\n');
 
-const SERVICE = read('update-service.js');
-const UI = read('update-manager.html');
+const SERVICE = read('src/update-service.js');
+const UI = read('src/update-manager.html');
 
 test('stable is what you get by not choosing', () => {
   const defaults = SERVICE.slice(SERVICE.indexOf('loadConfig()'));
@@ -163,7 +163,7 @@ test('the preload bridges have not silently diverged again', () => {
    * exactly what happened. This does not demand they be identical; it demands
    * that anything a page calls on window.electron is actually on it.
    */
-  const PRELOAD = read('preload.js');
+  const PRELOAD = read('src/preload.js');
   const keysOf = (name) => {
     const i = PRELOAD.indexOf(`exposeInMainWorld('${name}'`);
     if (i < 0) return [];

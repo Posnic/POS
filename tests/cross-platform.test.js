@@ -72,7 +72,7 @@ test('and nothing hands a .exe to a platform that cannot run one', () => {
 test('the code asks for the binary by the name it was shipped under', () => {
   /* Shipping the right file is only half of it. server.js asked for
      tools/7za.exe on every platform, which is how this failed. */
-  const SERVER = read('server.js');
+  const SERVER = read('src/server.js');
   const call = SERVER.slice(SERVER.indexOf('sevenZipPath'));
   const expr = call.slice(0, call.indexOf('\n      user'));
 
@@ -95,7 +95,7 @@ test('printing has a path that is not PowerShell', () => {
    * and Linux every receipt failed - naming a command the machine does not
    * have.
    */
-  const HW = read('hardware-manager.js');
+  const HW = read('src/hardware-manager.js');
 
   assert.match(HW, /_sendRawViaCups/, 'raw printing is PowerShell-only');
   assert.match(HW, /'-o', 'raw'/, 'the CUPS path does not ask for raw mode, so ESC/POS is filtered as text');
@@ -120,7 +120,7 @@ test('the printer name is an argument, not something a shell parses', () => {
   /* Printer names contain spaces as a matter of course, and apostrophes often
      enough. Interpolating one into a shell string is both a bug and a way to
      run whatever a printer is called. */
-  const HW = read('hardware-manager.js');
+  const HW = read('src/hardware-manager.js');
   /* The definition, not the call. The call inside sendRawToPrinter comes
      first in the file and passes the same argument names, so the anchor has to
      be the opening brace that only a declaration has. */
@@ -172,7 +172,7 @@ test('a failure to sign does not lose the Windows and Linux release', () => {
 // ── The database, which had none of this ────────────────────────────────────
 
 test('mongod is selected per platform, and shipped for each', () => {
-  const MANAGER = read('mongodb-manager.js');
+  const MANAGER = read('src/mongodb-manager.js');
   assert.match(
     MANAGER,
     /win32' \? 'mongod\.exe' : 'mongod'/,
@@ -198,9 +198,10 @@ test('nothing but print-pdf.js may reach for the Windows-only printer', () => {
    * The test that was here checked hardware-manager alone, which is precisely
    * how the second caller went unnoticed. It asks about the whole app now.
    */
-  const OWNER = 'print-pdf.js';
+  const OWNER = 'src/print-pdf.js';
   const callers = fs
-    .readdirSync(ROOT)
+    .readdirSync(path.join(ROOT, 'src'))
+    .map((f) => 'src/' + f)
     .filter((f) => f.endsWith('.js') && f !== OWNER)
     /* COMMENTS STRIPPED: the explanation in kot-manager names the package it
        no longer calls, and matching prose reported it as a caller. */
@@ -223,7 +224,7 @@ test('nothing but print-pdf.js may reach for the Windows-only printer', () => {
 });
 
 test('both printers go through the shared path', () => {
-  for (const f of ['hardware-manager.js', 'kot-manager.js']) {
+  for (const f of ['src/hardware-manager.js', 'src/kot-manager.js']) {
     assert.match(read(f), /printPdfFile/, f + ' does not use the shared PDF print path');
   }
 });

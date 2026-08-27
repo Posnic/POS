@@ -112,7 +112,7 @@ to be trusted with a shop's takings should be readable about its failures.
 
 ## Reporting one to us
 
-**Security vulnerabilities:** [SECURITY.md](../SECURITY.md) — privately, never a
+**Security vulnerabilities:** [SECURITY.md](../.github/SECURITY.md) — privately, never a
 public issue. Acknowledged within 3 working days.
 
 **Suspected breach of your data:** security@posnic.com, marked urgent.

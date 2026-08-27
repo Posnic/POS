@@ -78,7 +78,7 @@ function main() {
   console.error('  Not kept in git - 60MB of somebody else\'s software under the SSPL.');
   console.error('  Fetch it once with:');
   console.error('');
-  console.error('      download-mongodb.bat');
+  console.error('      src/download-mongodb.bat');
   console.error('');
   console.error('  Building without it produces an installer that looks fine and');
   console.error('  fails on the counter, the first time it tries to start its database.');

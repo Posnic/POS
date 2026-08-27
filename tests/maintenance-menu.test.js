@@ -17,7 +17,7 @@ const path = require('path');
  * enough to hold the arrangement and to catch a handler wired to nothing.
  */
 const ROOT = path.join(__dirname, '..');
-const main = fs.readFileSync(path.join(ROOT, 'main.js'), 'utf8');
+const main = fs.readFileSync(path.join(ROOT, 'src', 'main.js'), 'utf8');
 
 function menuLabels() {
   const start = main.indexOf('const template = [');

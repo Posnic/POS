@@ -9,7 +9,7 @@
 
 const test = require('node:test');
 const assert = require('node:assert');
-const lc = require('../local-crypto');
+const lc = require('../src/local-crypto');
 
 const SECRET = 'JstHH8Az3bJaqE*^9YUM';
 

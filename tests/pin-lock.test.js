@@ -3,7 +3,7 @@ const assert = require('node:assert');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { PinLock, isTooObvious, MAX_FAILURES } = require('../pin-lock');
+const { PinLock, isTooObvious, MAX_FAILURES } = require('../src/pin-lock');
 
 /*
  * The property that matters is not "a wrong PIN is rejected" - it is that a

@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { ScaleReader, parseFrame } = require('../scale-parser');
+const { ScaleReader, parseFrame } = require('../src/scale-parser');
 
 test('reads the wire formats real scales send', () => {
   const cases = [

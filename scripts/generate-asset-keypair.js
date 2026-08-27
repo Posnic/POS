@@ -23,7 +23,7 @@ const path = require('path');
 const crypto = require('crypto');
 
 const root = path.join(__dirname, '..');
-const pubPath = path.join(root, 'asset-signing-key.pub');
+const pubPath = path.join(root, 'src', 'asset-signing-key.pub');
 const privPath = path.join(root, 'asset-signing-key.private.pem');
 
 if (fs.existsSync(pubPath)) {

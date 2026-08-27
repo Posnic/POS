@@ -54,7 +54,7 @@ test('the save door coerces the toggle and refuses a malformed id', () => {
 });
 
 test('PRIVACY.md tells the truth about the switch', () => {
-  const privacy = read('PRIVACY.md');
+  const privacy = read('docs/PRIVACY.md');
   assert.match(privacy, /Google Analytics \| Yes \|/);
   assert.match(privacy, /refuses Google's domains outright/);
 });

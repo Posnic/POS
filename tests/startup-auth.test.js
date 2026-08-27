@@ -5,7 +5,7 @@ const {
   hasUnexpiredAuthCookie,
   validateSavedLogin,
   clearStaleLogin
-} = require('../startup-auth');
+} = require('../src/startup-auth');
 
 function startVerifyServer(statusCode, inspectRequest = () => {}) {
   return new Promise(resolve => {

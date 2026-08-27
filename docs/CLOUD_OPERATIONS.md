@@ -173,7 +173,7 @@ side is built around.
 1. **A till trades with the service down.** Sync queues; billing does not stop.
 2. **A till trades with the subscription cancelled.** No licence check, no
    expiry, no kill switch. Stated contractually in
-   [TERMS_OF_USE.md](../TERMS_OF_USE.md), and it is a design property first.
+   [TERMS_OF_USE.md](TERMS_OF_USE.md), and it is a design property first.
 3. **One shop's data is never in another's database.**
 4. **A device token is stored hashed**, never in clear.
 5. **Nothing is exposed to the internet except the gateway** and the dashboard.

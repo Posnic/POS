@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="512-posnic.png" alt="Posnic" width="120">
+<img src="builds/512-posnic.png" alt="Posnic" width="120">
 
 # Posnic
 
@@ -37,7 +37,7 @@ shop with a week of sample trading, running the same code as this repository;
 ring up sales, break things freely, and the whole shop is restored on the
 hour. Outbound email, SMS and password changes are switched off there.
 
-[Website](https://posnic.com/) · [Verified product facts](https://posnic.com/posnic-facts) · [Package evidence](https://posnic.com/assets/posnic-package-license-evidence.json) · [CodeMeta metadata](codemeta.json) · [Citation metadata](CITATION.cff) · [Roadmap](ROADMAP.md) · [User guide](docs/USER_GUIDE.md) · [Developer guide](docs/DEVELOPMENT.md) · [Architecture](docs/ARCHITECTURE.md) · [API](docs/API.md) · [Discussions](https://github.com/Posnic/POS/discussions)
+[Website](https://posnic.com/) · [Verified product facts](https://posnic.com/posnic-facts) · [Package evidence](https://posnic.com/assets/posnic-package-license-evidence.json) · [CodeMeta metadata](codemeta.json) · [Citation metadata](CITATION.cff) · [Roadmap](docs/ROADMAP.md) · [User guide](docs/USER_GUIDE.md) · [Developer guide](docs/DEVELOPMENT.md) · [Architecture](docs/ARCHITECTURE.md) · [API](docs/API.md) · [Discussions](https://github.com/Posnic/POS/discussions)
 
 </div>
 
@@ -67,7 +67,7 @@ recovery or every workflow. Review the
   services and downtime can still create operating costs.
 - **Local data path.** The local edition needs no Posnic account, and its
   published privacy policy says it sends no analytics or telemetry to Posnic.
-  See [PRIVACY.md](PRIVACY.md).
+  See [PRIVACY.md](docs/PRIVACY.md).
 - **Posnic source under AGPL-3.0-only.** Read it, change it, self-host it and
   fork it under the licence terms. Review each bundled component separately.
 
@@ -165,7 +165,7 @@ source is AGPL-3.0-only, while bundled components keep their separate licences.
 
 **We do not move features from the left column to the right.** What is free
 today stays free. Cloud has to earn its price by being useful, not by making
-the free edition worse. This is written down in [GOVERNANCE.md](GOVERNANCE.md).
+the free edition worse. This is written down in [GOVERNANCE.md](docs/GOVERNANCE.md).
 
 ## Documentation
 
@@ -182,21 +182,21 @@ the free edition worse. This is written down in [GOVERNANCE.md](GOVERNANCE.md).
 | [Release verification](docs/VERIFY_RELEASE.md) | Match a package to its checksum, CycloneDX inventory, provenance and component licences |
 | [Support lifecycle](docs/SUPPORT_LIFECYCLE.md) | Which versions get fixes, and for how long |
 | [Incident response](docs/INCIDENT_RESPONSE.md) | Who decides, who is told, and when |
-| [Terms of use](TERMS_OF_USE.md) | Customer terms for Posnic Cloud |
+| [Terms of use](docs/TERMS_OF_USE.md) | Customer terms for Posnic Cloud |
 | [Subprocessors](docs/SUBPROCESSORS.md) | Who else can touch your data. For the local edition: nobody |
 | [Cloud operations](docs/CLOUD_OPERATIONS.md) | What the paid service is made of, and what is still to be decided |
 | [Data processing addendum](docs/DATA_PROCESSING_ADDENDUM.md) | For customers who need a written DPA |
-| [Contributing](CONTRIBUTING.md) | How to get a change merged |
-| [Public roadmap](ROADMAP.md) | Current priorities, evidence gaps and structured ways to help |
+| [Contributing](.github/CONTRIBUTING.md) | How to get a change merged |
+| [Public roadmap](docs/ROADMAP.md) | Current priorities, evidence gaps and structured ways to help |
 | [Citation metadata](CITATION.cff) | Human and tool-readable citation identity for exact releases or commits |
 | [Adoption evidence](docs/ADOPTION_EVIDENCE.md) | How real deployment reports are scoped, reviewed, cited, corrected and kept privacy-safe |
-| [Support](SUPPORT.md) | Where to ask, and what happens to your issue |
-| [Governance](GOVERNANCE.md) | Who decides what, and what we have promised |
-| [Privacy](PRIVACY.md) | What the app collects, and what it does not |
-| [Security](SECURITY.md) | What Posnic protects, what it cannot, and reporting a vulnerability |
+| [Support](.github/SUPPORT.md) | Where to ask, and what happens to your issue |
+| [Governance](docs/GOVERNANCE.md) | Who decides what, and what we have promised |
+| [Privacy](docs/PRIVACY.md) | What the app collects, and what it does not |
+| [Security](.github/SECURITY.md) | What Posnic protects, what it cannot, and reporting a vulnerability |
 | [Third-party notices](THIRD-PARTY-NOTICES.md) | Separately licensed software included in release packages |
 | [CodeMeta](codemeta.json) | Machine-readable product, publisher, source, licence and platform identity |
-| [Code of conduct](CODE_OF_CONDUCT.md) | How we treat each other |
+| [Code of conduct](.github/CODE_OF_CONDUCT.md) | How we treat each other |
 
 ## Contributing
 
@@ -208,8 +208,8 @@ Good places to begin are listed in the
 21 real latent bugs the linter found, and two very large files that want
 splitting.
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md) first. Security issues go to
-[SECURITY.md](SECURITY.md), privately — never a public issue.
+Read [CONTRIBUTING.md](.github/CONTRIBUTING.md) first. Security issues go to
+[SECURITY.md](.github/SECURITY.md), privately — never a public issue.
 
 ## Buy the team a chai ☕
 
@@ -232,13 +232,13 @@ Sponsors are named in releases unless they would rather not be.
 | | |
 |---|---|
 | Sales and licensing | **info@posnic.com** |
-| Support | [SUPPORT.md](SUPPORT.md) · [Discussions](https://github.com/Posnic/POS/discussions) |
-| Security | **security@posnic.com** — privately, never a public issue ([SECURITY.md](SECURITY.md)) |
+| Support | [SUPPORT.md](.github/SUPPORT.md) · [Discussions](https://github.com/Posnic/POS/discussions) |
+| Security | **security@posnic.com** — privately, never a public issue ([SECURITY.md](.github/SECURITY.md)) |
 | Web | [posnic.com](https://posnic.com) |
 
 Paid setup, migration from an existing till, hardware selection, custom
 reporting and white-labelled installers are all available. The software stays
-free either way — see [GOVERNANCE.md](GOVERNANCE.md) for what we have promised
+free either way — see [GOVERNANCE.md](docs/GOVERNANCE.md) for what we have promised
 never to move behind a paywall.
 
 ## Source and package licences
