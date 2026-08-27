@@ -5581,6 +5581,26 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 }
 #purchases_quick_filters .p-qf-label:first-child { margin-left: 0; }
 #purchases_quick_filters .btn { font-size: 13px; }
+/* Purchase form: supplier block above the item box; the item strip loses
+   its dead air (owner: "below item input box some gap available"). */
+.p-form-top { padding: 16px 16px 0; }
+#receivings_new .chat-list { padding-bottom: 0 !important; margin-bottom: 6px !important; }
+#receivings_new .chat-list .chat-search { padding: 12px 16px 10px !important; }
+/* The rail's quick-filter labels clear the left border (owner: "move right
+   at least 10px"). */
+.purchases-split #purchases_quick_filters { padding-left: 12px; padding-right: 10px; }
+/* Attachment as one crisp chip. */
+.p-attach {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 14px; margin: 0;
+    border: 1px dashed var(--theme-border-color, #d0d7de);
+    border-radius: 6px; cursor: pointer; font-size: 13px;
+    color: var(--theme-text-secondary, #57606a);
+}
+.p-attach:hover {
+    border-color: var(--theme-primary-color, #0969da);
+    color: var(--theme-primary-color, #0969da);
+}
 /* The strip on the header line sits clear of the header's bottom border. */
 .breadcrumbbar .lf-panel { margin: 4px 0 10px; }
 /* The control row at the top of every list card: Filter top-left, New

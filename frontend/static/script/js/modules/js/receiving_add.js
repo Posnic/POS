@@ -1643,12 +1643,20 @@ $(function () {
                 url: 'suppliers/getSuppliersAjaxList',
                 data: 'query=&branch=' + PosnicPro.local.get("branch_id_set")
             }, function (response) {
+                /* The on-focus list may resolve AFTER focus has moved on -
+                   page entry focuses the field for a beat before the item
+                   box takes over, and rendering then leaves an orphaned
+                   dropdown floating over the form. Only speak while the
+                   field is still listening. */
+                if (!$(inputSel).is(':focus')) { done({ suggestions: [] }); return; }
                 (response.suggestions || []).forEach(function (d) {
                     push({ id: d.id, name: d.name, phone: d.phone, address: d.address, email: d.email,
                         state: d.state, gst_type: d.gst_type, gst_number: d.gst_number }, { isFav: !!favIds[d.id] });
                 });
                 done({ suggestions: out });
-            }, function () { done({ suggestions: out }); });
+            }, function () {
+                done({ suggestions: $(inputSel).is(':focus') ? out : [] });
+            });
         };
     };
     /* Star rendering for the on-focus list; typed searches stay plain. */
@@ -1865,7 +1873,6 @@ $(document).on('click', '#receiving_charges_rows .charge-remove', function () {
     $(this).closest('.charge-row').remove();
     PosnicPro.receivings.addReceivingTableRowCalc();
 });
-$('#receiving_upload_image').customFile();
 $(document).ready(function () {
     $('#receiving_print tbody').children("tr").remove();
     $("#receiving_print").find("tr:not(:first)").remove();

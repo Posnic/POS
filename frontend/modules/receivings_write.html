@@ -22,6 +22,57 @@
                         <div class="tab-content loader-edit-receiving loader-add-receiving loader-low_stock" id="v-pills-tabContent">
                             <!-- My Wallet Start -->
                             <div class="card m-b-30">
+                                <!-- Supplier first (owner: "move Supplier above item input
+                                     box... move expected date next to supplier") - the
+                                     picker opens right here, above the lines it feeds. -->
+                                <div class="p-form-top receving-return-hide">
+                                    <div class="row">
+                                        <div class="form-group col-lg-8 col-xl-8 clear-supplier-error mb-0">
+                                            <label class="form-control-placeholder" for="receiving_add_supplier_name">
+                                                <lang class="lang_itemname_title">Supplier</lang>
+                                                <span class="text-danger">*</span>
+                                            </label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" placeholder="Choose a Supplier" id="receiving_add_supplier_name"
+                                                       name="receiving_add_supplier_name" minlength="3" maxlength="20" aria-label="Search" aria-describedby="button-addon-supplier" autocomplete="off">
+                                                <div class="input-group-append">
+                                                    <a data-module="supplier" data-access="write" id="button-addon-supplier" class="btn btn-success-rgba" href="#/receivings/suppliers/new"><i class="feather icon-plus" data-toggle="tooltip" title="Add new supplier easily"></i>
+                                                    </a>
+                                                </div>
+                                                <input type="hidden" class="form-control clear-receiving-text"
+                                                       id="receiving_add_supplier_id"
+                                                       name="receiving_add_supplier_id">
+                                                <input type="hidden" class="form-control clear-receiving-text"
+                                                       id="receiving_add_supplier_address"
+                                                       name="receiving_add_supplier_address">
+                                                <input type="hidden" class="form-control clear-receiving-text"
+                                                       id="receiving_add_supplier_phone"
+                                                       name="receiving_add_supplier_phone">
+                                                <input type="hidden" class="form-control clear-receiving-text"
+                                                       id="receiving_add_supplier_email"
+                                                       name="receiving_add_supplier_email">
+                                                <input type="hidden" class="form-control clear-receiving-text"
+                                                       id="receiving_add_supplier_state"
+                                                       name="receiving_add_supplier_state">
+                                                <input type="hidden" class="form-control clear-receiving-text"
+                                                       id="receiving_add_supplier_gst_type"
+                                                       name="receiving_add_supplier_gst_type">
+                                                <input type="hidden" class="form-control clear-receiving-text"
+                                                       id="receiving_add_supplier_gst_number"
+                                                       name="receiving_add_supplier_gst_number">
+                                            </div>
+                                        </div>
+                                        <div class="form-group col-lg-4 col-xl-4 mb-0" id="receiving_expected_wrap">
+                                            <label class="form-control-placeholder" for="receiving_expected_date"
+                                                   data-toggle="tooltip" title="When the order is due - shown while the status is Ordered">
+                                                <lang class="lang_expected_on">Expected on</lang>
+                                            </label>
+                                            <input type="date" id="receiving_expected_date"
+                                                   class="form-control border-control clear-receiving-text"
+                                                   aria-label="Expected delivery date" />
+                                        </div>
+                                    </div>
+                                </div>
                                 <div class="chat-list">
                                     <div class="chat-search">
                                         <div class="input-group">
@@ -100,44 +151,7 @@
                         <div class="card m-b-5 receving-return-hide">
                             <div class="card-body">
                                 <div class="row">
-                                    <div class="form-group col-lg-7 col-xl-7 clear-supplier-error">
-                                        <label class="form-control-placeholder" for="receiving_add_supplier_name">
-                                            <lang class="lang_itemname_title">Supplier</lang>
-                                            <span class="text-danger">*</span>
-                                        </label>
-
-                                        <div class="input-group">
-                                            <input type="text" class="form-control" placeholder="Choose a Supplier" id="receiving_add_supplier_name"
-                                                   name="receiving_add_supplier_name" minlength="3" maxlength="20" aria-label="Search" aria-describedby="button-addon-supplier" autocomplete="off">
-                                            <div class="input-group-append">
-                                                <a data-module="supplier" data-access="write" id="button-addon-supplier" class="btn btn-success-rgba" href="#/receivings/suppliers/new"><i class="feather icon-plus" data-toggle="tooltip" title="Add new supplier easily"></i>
-                                                </a>
-                                            </div>
-
-                                            <input type="hidden" class="form-control clear-receiving-text"
-                                                   id="receiving_add_supplier_id"
-                                                   name="receiving_add_supplier_id">
-                                            <input type="hidden" class="form-control clear-receiving-text"
-                                                   id="receiving_add_supplier_address"
-                                                   name="receiving_add_supplier_address">
-                                            <input type="hidden" class="form-control clear-receiving-text"
-                                                   id="receiving_add_supplier_phone"
-                                                   name="receiving_add_supplier_phone">
-                                            <input type="hidden" class="form-control clear-receiving-text"
-                                                   id="receiving_add_supplier_email"
-                                                   name="receiving_add_supplier_email">
-                                            <input type="hidden" class="form-control clear-receiving-text"
-                                                   id="receiving_add_supplier_state"
-                                                   name="receiving_add_supplier_state">
-                                            <input type="hidden" class="form-control clear-receiving-text"
-                                                   id="receiving_add_supplier_gst_type"
-                                                   name="receiving_add_supplier_gst_type">
-                                            <input type="hidden" class="form-control clear-receiving-text"
-                                                   id="receiving_add_supplier_gst_number"
-                                                   name="receiving_add_supplier_gst_number">
-                                        </div>
-                                    </div>
-                                    <div class="form-group col-lg-5 col-xl-5">
+                                    <div class="form-group col-lg-6 col-xl-6">
                                         <label class="form-control-placeholder" for="receiving_add_date">
                                             <lang class="lang_date_title">Bill date</lang>
                                             <span class="text-danger">*</span>
@@ -145,10 +159,7 @@
                                         <input type="text" class="form-control border-control commonDate" placeholder="Enter the date"
                                                id="receiving_add_date" name="receiving_add_date">
                                     </div>
-                                </div>
-
-                                <div class="row">
-                                    <div class="form-group col-lg-4 col-xl-4 receving-return-hide">
+                                    <div class="form-group col-lg-6 col-xl-6 receving-return-hide">
                                         <label class="form-control-placeholder" for="receiving_status_select">
                                             <lang class="lang_status_title">Status</lang>
                                         </label>
@@ -158,16 +169,10 @@
                                             <option value="Received">Received</option>
                                         </select>
                                     </div>
-                                    <div class="form-group col-lg-4 col-xl-4 receving-return-hide" id="receiving_expected_wrap">
-                                        <label class="form-control-placeholder" for="receiving_expected_date"
-                                               data-toggle="tooltip" title="When the order is due - shown while the status is Ordered">
-                                            <lang class="lang_expected_on">Expected on</lang>
-                                        </label>
-                                        <input type="date" id="receiving_expected_date"
-                                               class="form-control border-control clear-receiving-text"
-                                               aria-label="Expected delivery date" />
-                                    </div>
-                                    <div class="form-group col-lg-4 col-xl-4">
+                                </div>
+
+                                <div class="row">
+                                    <div class="form-group col-lg-6 col-xl-6">
                                         <label class="form-control-placeholder" for="receiving_add_payment_mode">
                                             <lang class="lang_paymentmode">Payment Mode</lang>
                                         </label>
@@ -175,9 +180,6 @@
                                                 id='receiving_add_payment_mode' aria-label="Receiving add payment mode">
                                         </select>
                                     </div>
-                                </div>
-
-                                <div class="row">
                                     <div class="form-group col-lg-6 col-xl-6">
                                         <label class="form-control-placeholder" for="receiving_invoice_total_declared">
                                             <lang class="lang_invoice_total_declared">Invoice total (incl. tax)</lang>
@@ -188,7 +190,10 @@
                                                oninput="PosnicPro.receivings.invoiceTotalCheck();" />
                                         <small class="form-text" id="receiving_invoice_total_note"></small>
                                     </div>
-                                    <div class="form-group col-lg-6 col-xl-6">
+                                </div>
+
+                                <div class="row">
+                                    <div class="form-group col-lg-12 col-xl-12">
                                         <label class="form-control-placeholder" for="receiving_add_payment_description">
                                             <lang class="lang_paymentnote_title">Payment Note</lang>
                                         </label>
@@ -233,16 +238,17 @@
                                         <div id="receiving_charges_rows"></div>
                                     </div>
                                     <div class="col-lg-6 col-xl-6">
-                                        <label class="d-block text-muted mb-1" style="font-size:12px;"
-                                               data-toggle="tooltip" title="The supplier invoice or payment proof (image or PDF), kept with this purchase">
-                                            Attachment
-                                        </label>
                                         <input type="hidden" id="item_upload_receiving_status" value="no">
-                                        <div class="custom-file">
-                                            <input type="file" name="ImageReceiving[]" class="custom-file-input" id="receiving_upload_image" onchange="PosnicPro.receivings.receiving_image_preview(this)" accept=".gif, .jpg, .png, .jpeg, .bmp, .pdf" multiple>
-                                            <label class="custom-file-label btn-primary-rgba" for="receiving_upload_image"><lang class="lang_file">Choose file</lang></label>
-                                            <input type="hidden" name="receiving_logo" id="receiving_logo">
-                                        </div>
+                                        <!-- One chip, not three labels (owner: "make it short
+                                             and crisp attachment stuff"). -->
+                                        <label class="p-attach" for="receiving_upload_image" data-toggle="tooltip"
+                                               title="Supplier invoice or payment proof - image or PDF, kept with this purchase">
+                                            <i class="feather icon-paperclip"></i><span><lang class="lang_attach_invoice">Attach invoice</lang></span>
+                                        </label>
+                                        <input type="file" name="ImageReceiving[]" id="receiving_upload_image" class="d-none"
+                                               onchange="PosnicPro.receivings.receiving_image_preview(this)"
+                                               accept=".gif, .jpg, .png, .jpeg, .bmp, .pdf" multiple>
+                                        <input type="hidden" name="receiving_logo" id="receiving_logo">
                                         <div id="display-preview"></div>
                                         <div id="receving_image_count" style="display: none;">0</div>
                                     </div>
