@@ -1793,18 +1793,48 @@ $('#exclusive_tax').click(function () {
 PosnicPro.purchaseorders = {
     _lines: {},
     _detail: null,
-    showDataTablePage: function () {
+    /* The page chrome, shared by list entry and deep links: pane, title,
+       and the LEFT MENU highlight - which must also survive a refresh
+       (owner: "when refresh left side correct menu not highlighted"). */
+    _chrome: function () {
         PosnicPro.HideSideBarModal();
         $('.page_loader,#osk-container').hide();
+        $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
+        $('.vertical-menu li a').removeClass('active');
+        $('#v-pills-purchase-tab').addClass('active');
+        $('#v-pills-purchase').addClass('show active');
+        $('#view_purchaseorders_page').addClass('active');
         $('.page-title-box,#purchaseorders_new').show();
         $('#po_form_section,#po_view_section,#po_receive_section').hide();
         $('#po_list_section').show();
+    },
+    showDataTablePage: function () {
+        PosnicPro.purchaseorders._chrome();
         PosnicPro.purchaseorders.closeDoc();
         PosnicPro.purchaseorders.loadList(1);
     },
     showAdd: function () { PosnicPro.purchaseorders.showDataTablePage(); PosnicPro.purchaseorders.openForm(''); },
     showEdit: function (id) { PosnicPro.purchaseorders.showDataTablePage(); PosnicPro.purchaseorders.openForm(id); },
-    showDetails: function (id) { PosnicPro.purchaseorders.showDataTablePage(); PosnicPro.purchaseorders.openView(id); },
+    /*
+     * #/purchaseorders/<id> - the document's own address, like a quote's
+     * (owner: "its not changing... as quote url system"). A refresh or a
+     * shared link lands on the OPEN document; the hash echo of a row click
+     * is recognised and ignored.
+     */
+    showDetails: function (id) {
+        var self = PosnicPro.purchaseorders;
+        var key = self._openDocKey || '';
+        if (key.slice(key.indexOf(':') + 1) === String(id) && $('#purchases_detail_card').is(':visible')) {
+            return;
+        }
+        self._chrome();
+        self.loadList(1);
+        /* which kind lives at this id? a receiving answers; a PO does not */
+        PosnicPro.get('receivings/' + id, function (r) {
+            if (r && r.type === 'success' && r.data) { self.openDoc('purchase', id); }
+            else { self.openDoc('po', id); }
+        }, function () { self.openDoc('po', id); });
+    },
     /*
      * ONE list for the whole purchases area (owner: "keep one"). Orders and
      * received purchases, merged newest-first. Orders open their document;
@@ -2039,6 +2069,11 @@ PosnicPro.purchaseorders = {
         self._openDocKey = kind + ':' + id;
         $('#po_list_rows tr.purchases-row').removeClass('is-active');
         $('#po_list_rows tr.purchases-row[data-id="' + id + '"]').addClass('is-active');
+        /* the document's address, like a quote's - showDetails recognises
+           the echo of this setHash and does nothing */
+        if (window.location.hash.slice(2) !== 'purchaseorders/' + id) {
+            hasher.setHash('purchaseorders/' + id);
+        }
         if (kind === 'po') {
             $('#purchases_doc').hide();
             $('#purchases_po_host').show();
@@ -2061,6 +2096,9 @@ PosnicPro.purchaseorders = {
         $('#purchases_detail_card').hide();
         $('#po_list_rows tr.purchases-row').removeClass('is-active');
         PosnicPro.masterDetail.leave('#purchases_split', 'purchases-split');
+        if (window.location.hash.slice(2).indexOf('purchaseorders/') === 0) {
+            hasher.setHash('purchaseorders');
+        }
     },
     /*
      * The document pane, paper-styled (standard §4): pull first, title and

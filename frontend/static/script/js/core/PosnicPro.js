@@ -1472,12 +1472,25 @@ PosnicPro = {
                ... need fix") - unseen activity plus low-stock, combined.
                The split into sections happens inside the panel, not on the
                icon. */
-            var n = PosnicPro.bellFeed._unseen + (PosnicPro.bellFeed._lowStock || 0);
+            /* Opening the panel marks things SEEN and the number rests at
+               zero (owner: "after see the notification numbers will reset
+               or not?"). Activity clears outright; low stock clears down to
+               a remembered water-mark, so only NEW lows re-light the badge
+               - the standing list stays readable inside the panel. */
+            var seen = parseInt(PosnicPro.local.get('bell_lowstock_seen'), 10) || 0;
+            var low = PosnicPro.bellFeed._lowStock || 0;
+            var n = PosnicPro.bellFeed._unseen + Math.max(0, low - seen);
             el.style.display = n > 0 ? 'inline-block' : 'none';
             el.textContent = n > 99 ? '99+' : String(n);
         },
         setLowStock: function (count) {
             PosnicPro.bellFeed._lowStock = parseInt(count, 10) || 0;
+            /* restocking below the water-mark lowers it, so the NEXT new
+               low is a fresh +1 instead of being swallowed */
+            var seen = parseInt(PosnicPro.local.get('bell_lowstock_seen'), 10) || 0;
+            if (PosnicPro.bellFeed._lowStock < seen) {
+                PosnicPro.local.set('bell_lowstock_seen', String(PosnicPro.bellFeed._lowStock));
+            }
             PosnicPro.bellFeed._badge();
         },
         _ago: function (at) {
@@ -1580,6 +1593,7 @@ PosnicPro = {
             if (!$dd.length) return;
             $dd.on('shown.bs.dropdown', function () {
                 PosnicPro.bellFeed._unseen = 0;
+                PosnicPro.local.set('bell_lowstock_seen', String(PosnicPro.bellFeed._lowStock || 0));
                 PosnicPro.bellFeed._badge();
                 PosnicPro.bellFeed._paint();
                 PosnicPro.bellFeed._pushSetup();
