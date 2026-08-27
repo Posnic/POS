@@ -15,10 +15,16 @@
                 </div>
                 <div class="col-auto text-right">
                     <div class="widgetbar" id="stocklogs_controls">
-                        <button type="button" class="btn btn-primary-rgba" onclick="PosnicPro.stocklogs.exportCsv();"
-                            data-toggle="tooltip" title="Export the filtered rows" aria-label="Export CSV">
+                        <div class="btn-group">
+                        <button type="button" class="btn btn-primary-rgba dropdown-toggle" data-toggle="dropdown"
+                            aria-haspopup="true" aria-expanded="false" title="Export CSV" aria-label="Export CSV">
                             <i class="feather icon-share"></i>
                         </button>
+                        <div class="dropdown-menu dropdown-menu-right">
+                            <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.stocklogs.exportCsv(); return false;">This page (what is shown)</a>
+                            <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.stocklogs.exportAllCsv(); return false;">Everything matching the filter</a>
+                        </div>
+                        </div>
                         <button type="button" class="btn btn-primary-rgba lf-btn" id="stocklogs_filter_btn"
                             data-toggle="tooltip" title="Filter movements">
                             <i class="feather icon-filter mr-2"></i>Filter
@@ -30,6 +36,7 @@
     </div>
 
     <div class="contentbar">
+        <div id="stocklogs_split">
         <div class="card m-b-30 md-rail" id="stocklogs_list_card">
             <div class="card-body">
                 <!-- Movement as a labeled dropdown (LIST_PAGE_UX_STANDARD §2:
@@ -49,6 +56,10 @@
                 </div>
                 <div id="stocklogs_list_rows" class="md-rail-rows text-muted">Loading movements ...</div>
                 <div class="q-pager" id="stocklogs_list_paging"></div>
+            </div>
+        </div>
+            <div class="card m-b-30 md-detail" id="stocklogs_detail_card" style="display:none;">
+                <div id="stocklogs_doc"></div>
             </div>
         </div>
     </div>

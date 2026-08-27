@@ -24,10 +24,17 @@
                             data-toggle="tooltip" title="Import from CSV/Excel" aria-label="Import items">
                             <i class="feather icon-download"></i>
                         </a>
-                        <button type="button" class="btn btn-primary-rgba" onclick="PosnicPro.items.exportCsv();"
-                            data-toggle="tooltip" title="Export the filtered rows" aria-label="Export CSV">
+                        <div class="btn-group">
+                        <button type="button" class="btn btn-primary-rgba dropdown-toggle" data-toggle="dropdown"
+                            aria-haspopup="true" aria-expanded="false" title="Export CSV" aria-label="Export CSV">
                             <i class="feather icon-share"></i>
                         </button>
+                        <div class="dropdown-menu dropdown-menu-right">
+                            <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.items.exportCsv(); return false;">This page (what is shown)</a>
+                            <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.items.exportAllCsv(); return false;">Everything matching the filter</a>
+                        </div>
+                        </div>
+                        <span id="items_sort_host"></span>
                         <button type="button" id="items_filter_btn" class="btn btn-primary-rgba lf-btn"
                                 data-toggle="tooltip" title="Filter items">
                             <i class="feather icon-filter mr-2"></i>Filter

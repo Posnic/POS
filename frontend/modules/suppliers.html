@@ -19,10 +19,16 @@
                             data-toggle="tooltip" title="Import from CSV/Excel" aria-label="Import suppliers">
                             <i class="feather icon-download"></i>
                         </a>
-                        <button type="button" class="btn btn-primary-rgba" onclick="PosnicPro.suppliers.exportCsv();"
-                            data-toggle="tooltip" title="Export the filtered rows" aria-label="Export CSV">
+                        <div class="btn-group">
+                        <button type="button" class="btn btn-primary-rgba dropdown-toggle" data-toggle="dropdown"
+                            aria-haspopup="true" aria-expanded="false" title="Export CSV" aria-label="Export CSV">
                             <i class="feather icon-share"></i>
                         </button>
+                        <div class="dropdown-menu dropdown-menu-right">
+                            <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.suppliers.exportCsv(); return false;">This page (what is shown)</a>
+                            <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.suppliers.exportAllCsv(); return false;">Everything matching the filter</a>
+                        </div>
+                        </div>
                         <button type="button" class="btn btn-primary-rgba lf-btn" id="suppliers_filter_btn"
                             data-toggle="tooltip" title="Filter suppliers">
                             <i class="feather icon-filter mr-2"></i>Filter

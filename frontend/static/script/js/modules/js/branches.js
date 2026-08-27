@@ -113,11 +113,55 @@ PosnicPro.branches = {
     showDelete: function (id) {
         PosnicPro.deleteTableRowData(id, 'branches');
     },
+    /* Deep link #/branches/<id>: the list with that branch open in the
+       right pane; switching and editing are the deliberate acts inside.
+       Recognises its own setHash echo. */
     showDetails: function (id) {
-        var loader = $(".loader-view-branch");
-        loader.find(".loadingSpinner:first").remove();
-        PosnicPro.showViewModal('branches');
-        PosnicPro.branches.viewBranch(id);
+        if (PosnicPro.listDoc.activeId('branches') === String(id)
+            && $('#branches_detail_card').is(':visible')) { return; }
+        PosnicPro.branches.showDataTablePage();
+        PosnicPro.branches.openDoc(id);
+    },
+    openDoc: function (id) {
+        var self = PosnicPro.branches;
+        var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
+        var current = PosnicPro.local.get('branch_id_set') === String(id);
+        var actions = '<button type="button" class="btn btn-sm btn-light" data-module="branch" data-access="write" data-toggle="tooltip" title="Edit this branch" aria-label="Edit"'
+            + ' onclick="hasher.setHash(\'branches/' + esc(id) + '/edit\');"><i class="feather icon-edit-2"></i></button>';
+        var pills = current ? '<span class="badge badge-success-inverse">Current</span>' : '';
+        var r = (self._lastRows || []).filter(function (x) { return String(x._id) === String(id); })[0];
+        if (r) {
+            PosnicPro.listDoc.open({ key: 'branches', id: id, title: r.branch_name, pills: pills, actions: actions, body: self._docBody(r, current) });
+            PosnicPro.ACLForModule('branch');
+            return;
+        }
+        PosnicPro.listDoc.open({ key: 'branches', id: id, title: 'Branch', pills: pills, actions: actions });
+        PosnicPro.ACLForModule('branch');
+        PosnicPro.get('branches/' + id, function (response) {
+            var d = response && response.data;
+            if (response.type !== 'success' || !d) {
+                PosnicPro.listDoc.body('branches', '<div class="text-danger p-3">Could not open this branch.</div>');
+                return;
+            }
+            d._id = d._id || id;
+            d.branch_name = d.branch_name || d.name;
+            PosnicPro.listDoc.title('branches', d.branch_name || 'Branch');
+            PosnicPro.listDoc.body('branches', self._docBody(d, current));
+        }, function () {
+            PosnicPro.listDoc.body('branches', '<div class="text-danger p-3">Could not open this branch.</div>');
+        });
+    },
+    _docBody: function (r, current) {
+        var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
+        return PosnicPro.listDoc.table(
+            PosnicPro.listDoc.row('Phone', esc(r.store_telephone || '-'))
+            + PosnicPro.listDoc.row('Email', esc(r.store_email || '-'))
+            + PosnicPro.listDoc.row('Address', esc(r.store_address || '-'))
+            + PosnicPro.listDoc.row('State', esc(r.state || '-'))
+            + PosnicPro.listDoc.row('Country', esc(r.country || '-')))
+            + (current ? ''
+                : '<div style="margin-top:14px; font-size:13px;"><a href="javascript:void(0)"'
+                    + ' onclick="PosnicPro.branches.showChange(\'' + esc(r._id) + '\');">Switch to this branch &rarr;</a></div>');
     },
     showChange: function (id) {
         PosnicPro.local.set('changebranchid', id);
@@ -134,102 +178,137 @@ PosnicPro.branches = {
             $('#branch_register_swipe').modal('hide');
         });
     },
+    /* The name the OLD table machinery answered to - settings flows still
+       call it after branch saves. */
     branchesTable: function () {
-        var loader = $(".loader-table-branch");
-        $("<div class='loadingSpinner'></div>").appendTo(loader);
-        PosnicPro.appendViewDataTableBody('branches');
-        var table = $('#view_branches');
-        var params = {
-            url: 'branches',
-            data: {
-                page: table.data('current_page'),
-                limit: parseInt($('#view_branches_per_page  option:selected').text()),
-                filters: table.data('filters')
-            }
-        };
-        PosnicPro.get(params, function (response) {
-            if (response.type === 'success') {
-                table.data('total', response.data.total);
-                table.data('total_pages', response.data.total_pages);
-                table.data('current_page', response.data.current_page);
-                table.data('per_page', response.data.per_page);
-                PosnicPro.paging(response.data.total_pages, response.data.current_page);
-                table.children('tbody').text('');
-                $('#view_branches_total').text(response.data.total);
-                var rowTotal = response.data.total;
-                if (rowTotal === 0) {
-                    $('.branch_header').hide();
-                    let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
-                    $('.branch_norecord').empty().append('<div class="text-center text-dark"> <p>No Records on ' + dateRange + '</p></div>');
-                    $('#branch_img_hide,.branch_norecord').show();
-
-                } else {
-                    $('.branch_norecord').empty();
-                    $('#branch_img_hide,.branch_norecord').hide();
-                    $('.branch_header').show();
-                }
-
-                var row_total = (table.data('current_page') - 1) * table.data('per_page') + 1;
-                $('#view_branches_page_total').text(row_total);
-                var page_totals = (table.data('current_page') - 1) * table.data('per_page');
-                $('#view_branches_page_perpage_total').text(page_totals + response.data.list.length);
-                for (var i = 0; i < response.data.list.length; i++) {
-                    var row = response.data.list[i];
-                    var row_no = (table.data('current_page') - 1) * table.data('per_page') + i + 1;
-                    var action = '<div id="onclick-toolbar-options_' + i + '" class="hidden">' +
-                            '<a data-module = "branch" data-access = "read" href="#/branches/' + row._id + '" data-id="branches/' + row._id + '"  data-toggle="tooltip" title="View Branch" class="point-cursor mobile_tooltip"><i class="feather icon-eye"></i></a>' +
-                            '<a data-module = "branch" data-access = "write" href="#/branches/' + row._id + '/edit" data-id="branches/' + row._id + '/edit"  data-toggle="tooltip" title="Edit Branch" class="point-cursor mobile_tooltip"><i class="feather icon-edit"></i></a>' +
-                            '<a data-module = "branch" data-access = "delete" href="#/branches/' + row._id + '/delete" data-id="branches/' + row._id + '/delete" data-toggle="tooltip" title="Delete Branch" class="point-cursor mobile_tooltip"><i class="feather icon-trash"></i></a>' +
-                            '</div>' +
-                            '<div data-toolbar="user-options" class="btn btn-round btn-primary-rgba round-pad" id="onclick-toolbar_' + i + '"><i class="feather icon-more-vertical-"></i></div>';
-
-                    var trow = '<tr><th><input type="checkbox" class="branches-row-id" id="' + row._id + '" name="id[]" value="' + row._id + '" onclick="PosnicPro.checkboxSelectOne(this,\'branches\');"></th> <th scope="row">' + row_no + '</th>  <td>' + row.branch_name + '</td> <td class="text-right"><a class="sale_color" href="tel:' + row.store_telephone + '">' + row.store_telephone + '</a></td> <td><a class="sale_color" href="mailto:' + row.store_email + '">' + row.store_email + '</a></td> <td>' + row.store_address + '</td>'
-                            + '<td>' + row.state + '</td>' + '<td>' + row.country + '</td>' + '<td class="text-center"><span>' + action + '</span></td>' +
-                            '</tr>';
-                    $('#view_branches').children('tbody').append(trow);
-                }
-                $(document).ready(function () {
-                    for (var i = 0; i < response.data.list.length; i++) {
-                        $('#onclick-toolbar_' + i).toolbar({
-                            content: '#onclick-toolbar-options_' + i,
-                            event: 'click',
-                            style: 'primary',
-                            hideOnClick: true
-                        });
-                        $('#onclick-toolbar_' + i).on('toolbarItemClick', function (event, element) {
-                            hasher.setHash($(element).data('id'));
-                            $(this).trigger('click');
-                            $('.mobile_tooltip').tooltip('hide');
-                        });
-                    }
-                });
-                PosnicPro.setSelectedCheckbox(PosnicPro["branches_checkbox"], 'branches');
-                PosnicPro.ACLForModule('branch');
-                loader.find(".loadingSpinner:first").remove();
-            } else {
-                PosnicPro.alert(response.type, response.message);
-            }
-        }, function (xhr) {
-            var response = jQuery.parseJSON(xhr.responseText);
-            PosnicPro.alert(response.type, response.message);
+        PosnicPro.branches.loadList(1);
+    },
+    _page: 1,
+    PAGE_SIZE: 25,
+    _lastRows: [],
+    mountFilters: function (force) {
+        if (!$('#branches_filter_panel').length) { return; }
+        if (!force && $('#branches_filter_panel').data('mounted')) { return; }
+        $('#branches_filter_panel').data('mounted', true);
+        PosnicPro.listFilter.mount({
+            key: 'branches',
+            container: '#branches_filter_panel',
+            button: '#branches_filter_btn',
+            searchPlaceholder: 'Search name, phone or email',
+            searchFields: [
+                { value: 'all', label: 'All fields' },
+                { value: 'branch_name', label: 'Name' },
+                { value: 'store_telephone', label: 'Phone' },
+                { value: 'store_email', label: 'Email' },
+                { value: 'store_address', label: 'Address' }
+            ],
+            onChange: function () { PosnicPro.branches.loadList(1); }
         });
     },
+    loadList: function (page) {
+        PosnicPro.branches.mountFilters();
+        var self = PosnicPro.branches;
+        if (page) { self._page = page; }
+        var filters = PosnicPro.listFilter.legacyFilters('branches', {});
+        var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
+        PosnicPro.get({
+            url: 'branches',
+            data: { page: self._page, limit: self.PAGE_SIZE, filters: JSON.stringify(filters) }
+        }, function (response) {
+            var data = (response && response.data) || {};
+            var list = data.list || [];
+            self._lastRows = list;
+            if (!list.length) {
+                var filtered = PosnicPro.listFilter.activeCount('branches') > 0;
+                $('#branches_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">'
+                    + (filtered ? 'No branches match this filter.' : 'No branches yet - press New to add the first.') + '</div>');
+                $('#branches_list_paging').html('');
+                return;
+            }
+            var current = PosnicPro.local.get('branch_id_set');
+            var html = '<div class="table-responsive"><table class="table table-borderless">'
+                + '<thead><tr><th>Name</th><th class="br-col-phone">Phone</th><th class="br-col-email">Email</th>'
+                + '<th class="br-col-address">Address</th><th class="br-col-state">State</th>'
+                + '<th style="width:90px;"></th></tr></thead><tbody>';
+            list.forEach(function (r) {
+                var isCurrent = current === String(r._id);
+                html += '<tr class="md-row branches-row highlight-select'
+                    + (PosnicPro.listDoc.activeId('branches') === String(r._id) ? ' is-active' : '') + '" data-id="' + esc(r._id) + '" style="cursor:pointer;">'
+                    + '<td>' + esc(r.branch_name)
+                    + (isCurrent ? ' <span class="badge badge-success-inverse">Current</span>' : '') + '</td>'
+                    + '<td class="br-col-phone">' + esc(r.store_telephone || '-') + '</td>'
+                    + '<td class="br-col-email q-muted">' + esc(r.store_email || '-') + '</td>'
+                    + '<td class="br-col-address q-muted">' + esc(r.store_address || '-') + '</td>'
+                    + '<td class="br-col-state">' + esc(r.state || '-') + '</td>'
+                    + '<td class="text-right" style="white-space:nowrap;">'
+                    + '<a data-module="branch" data-access="write" href="#/branches/' + esc(r._id) + '/edit" class="btn btn-sm btn-light br-row-act" data-toggle="tooltip" title="Edit"><i class="feather icon-edit-2"></i></a> '
+                    + '<a data-module="branch" data-access="delete" href="#/branches/' + esc(r._id) + '/delete" class="btn btn-sm btn-light br-row-act" data-toggle="tooltip" title="Delete"><i class="feather icon-trash-2"></i></a>'
+                    + '</td>'
+                    + '</tr>';
+            });
+            html += '</tbody></table></div>';
+            $('#branches_list_rows').html(html);
+            PosnicPro.ACLForModule('branch');
+            self.renderPager(Number(data.total) || list.length);
+        }, function () {
+            $('#branches_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">Could not load branches - try again.</div>');
+        });
+    },
+    renderPager: function (total) {
+        var self = PosnicPro.branches;
+        var p = self._page, size = self.PAGE_SIZE;
+        var pages = Math.ceil(total / size) || 1;
+        var label = total + (total === 1 ? ' branch' : ' branches');
+        if (pages > 1) { label = 'Page ' + p + ' of ' + pages + ' \u00b7 ' + label; }
+        var btn = function (to, text, off, cls) {
+            return '<button type="button" class="btn btn-sm ' + (cls || 'btn-secondary-rgba') + ' q-pg-btn"' + (off ? ' disabled' : '')
+                + ' onclick="PosnicPro.branches.goPage(' + to + ');">' + text + '</button>';
+        };
+        var html = '';
+        if (pages > 1) {
+            html += btn(p - 1, '&laquo;', p <= 1);
+            var end = Math.min(pages, Math.max(1, p - 2) + 4);
+            var start = Math.max(1, end - 4);
+            for (var n = start; n <= end; n++) {
+                html += '<span class="q-pg-num">' + btn(n, n, false, n === p ? 'btn-primary-rgba' : 'btn-secondary-rgba') + '</span>';
+            }
+        }
+        html += '<span class="q-pg-count">' + label + '</span>';
+        if (pages > 1) { html += btn(p + 1, '&raquo;', p >= pages); }
+        $('#branches_list_paging').html(html);
+    },
+    goPage: function (n) {
+        if (!n || n < 1) { return; }
+        PosnicPro.branches._page = n;
+        PosnicPro.branches.loadList();
+    },
+    exportCsv: function () {
+        var rows = [['Name', 'Phone', 'Email', 'Address', 'State', 'Country']];
+        (PosnicPro.branches._lastRows || []).forEach(function (r) {
+            rows.push([r.branch_name, r.store_telephone || '', r.store_email || '', r.store_address || '', r.state || '', r.country || '']);
+        });
+        var csv = rows.map(function (r) {
+            return r.map(function (c) { return '"' + String(c == null ? '' : c).replace(/"/g, '""') + '"'; }).join(',');
+        }).join('\n');
+        var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'branches.csv';
+        a.click();
+        URL.revokeObjectURL(a.href);
+    },
     showDataTablePage: function () {
-        var loader = $(".loader-table-branch");
-        loader.find(".loadingSpinner:first").remove();
-        PosnicPro.dashboard.datePicker();
         PosnicPro.HideSideBarModal();
-        $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
-        $(".vertical-layout").removeClass("toggle-menu");
-        $(".vertical-menu li a").removeClass("active");
         $('.page_loader,#osk-container').hide();
+        $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
+        $('.vertical-menu li a').removeClass('active');
         $('.page-title-box,#branches').show();
         $('#branches_new,#branches_view').modal('hide');
-        PosnicPro.branches.branchesTable('branches');
         $('#v-pills-manage-tab').addClass('active');
         $('#v-pills-manage').addClass('show active');
         $('.dashboard_img_menu').hide();
         $('#image_sidebar_branch').show();
+        PosnicPro.branches.loadList(1);
     },
     triggerAddNew: function (module) {
         PosnicPro.getAddNewPage(module + '_new');
@@ -512,12 +591,6 @@ PosnicPro.branches = {
         $('#show_last_created_branch').hide();
         PosnicPro.branches.sharingRow(true);
     },
-    exportBranches: function () {
-        PosnicPro.exportTableData(PosnicPro.branches_checkbox, 'branches');
-    },
-    deleteSelectedBranches: function () {
-        PosnicPro.deleteTableData(PosnicPro.branches_checkbox, 'branches');
-    },
     branchClearform: function () {
         PosnicPro.branches.loadSelectBranchState(PosnicPro.local.get('countryid'), 'clear');
         $('#branch_add_form')[0].reset();
@@ -730,4 +803,15 @@ $(function () {
         hiddenInput: "full",
         utilsScript: "../static/script/js/utils.js"
     });
+});
+
+/* Standard list wiring: Filter button, row click peeks the branch in
+   place, row action buttons never also open the row. */
+$(document).on('click', '#branches_filter_btn', function () {
+    PosnicPro.branches.mountFilters(true);
+    PosnicPro.listFilter.toggle('branches');
+});
+$(document).on('click', '#branches_list_rows tr.branches-row', function (e) {
+    if ($(e.target).closest('.br-row-act').length) { return; }
+    PosnicPro.branches.openDoc($(this).data('id'));
 });

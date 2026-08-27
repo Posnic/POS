@@ -3618,22 +3618,14 @@ PosnicPro = {
          */
         $('body > .tool-container').remove();
         $('#BackupReportName').html(table + ' Document').css('textTransform', 'capitalize').show();
+        /* Only the pages still on the OLD DataTable machinery keep an
+           entry - the standard lists render their own headers, and their
+           keys came out with them (owner: clean up after the redesign). */
         var TableBody = {
-            'sales': '<tr><th><input name="sales-select-all" type="checkbox" onclick="PosnicPro.checkboxSelectAll(this,\'sales\');"></th><th>#</th><th>Id</th><th>Date</th><th width="20%">Customer</th><th class="text-right table-phone-hide">Phone</th><th class="text-center table-number-hide">Table</th><th class="text-center order-type-column" width="10%">Order Type</th><th class="text-center">Process</th><th class="text-right">Price</th><th width="20%">Payment status</th><th class="text-center" width="16%">Actions</th></tr>',
             'kothistory': '<tr><th>#</th><th>Id</th><th>Date</th><th class="text-center table-number-hide">Table</th><th class="text-center">No.of.Pax</th><th class="text-center order-type-column" width="10%">Order Type</th><th class="text-center" width="16%">Actions</th></tr>',
-            'receivings': '<tr><th><input name="receivings-select-all" type="checkbox" onclick="PosnicPro.checkboxSelectAll(this,\'receivings\');"></th><th>#</th><th>Id</th><th>Date</th><th width="20%">Supplier</th><th class="text-right">Phone</th><th class="text-center">Status</th><th class="text-right">Price</th><th class="text-center" width="16%">Action</th></tr>',
             'branches': '<tr><th><input name="branches-select-all" type="checkbox" onclick="PosnicPro.checkboxSelectAll(this,\'branches\');"></th><th>#</th><th>Name</th><th class="text-right">Phone</th><th>Email</th><th>Address</th><th>State</th><th>Country</th><th class="text-center">Action</th></tr>',
-            'categories': '<tr><th><input name="categories-select-all" type="checkbox" onclick="PosnicPro.checkboxSelectAll(this,\'categories\');"></th><th>#</th><th>Name</th><th>Image</th><th class="text-right">Discount </th><th class="text-center">Description</th><th class="text-center">Action</th></tr>',
-            'customercategory': '<tr><th><input name="customercategory-select-all" type="checkbox" onclick="PosnicPro.checkboxSelectAll(this,\'customercategory\');"></th><th>#</th><th>Name</th><th>Description</th><th class="text-center">Action</th></tr>',
-            'customers': '<tr><th><input name="customers-select-all" type="checkbox" onclick="PosnicPro.checkboxSelectAll(this,\'customers\');"></th><th>#</th><th>Name</th><th class="text-right">Phone</th><th>Email</th><th>Address</th><th class="text-center">Action</th></tr>',
             'expenses': '<tr><th><input name="expenses-select-all" type="checkbox" onclick="PosnicPro.checkboxSelectAll(this,\'expenses\');"></th><th>#</th><th class="text-right">Amount</th><th>Type</th><th>Category</th><th>Approved By</th><th>Description</th><th class="text-center">Action</th></tr>',
-            'items': '<tr><th><input name="items-select-all" type="checkbox" onclick="PosnicPro.checkboxSelectAll(this,\'items\');"></th><th>#</th><th>Name</th><th>Image</th><th class="text-center">SKU</th><th class="text-right">Quantity</th><th class="text-center">Item type</th><th class="text-right">Price</th><th class="text-center kiosk-column">Kiosk</th><th class="text-center">Action</th></tr>',
-            'suppliers': '<tr><th><input name="suppliers-select-all" type="checkbox" onclick="PosnicPro.checkboxSelectAll(this,\'suppliers\');"></th><th>#</th><th>Name</th><th class="text-right">Phone</th><th>Email</th><th>Address</th><th class="text-center">Action</th></tr>',
-            'registers': '<tr><th data-module="user" data-access="delete"><input name="registers-select-all" type="checkbox" onclick="PosnicPro.checkboxSelectAll(this,\'registers\');"></th><th>#</th><th>Register name</th><th>Date</th><th>Id</th><th>User name</th><th>Branch</th><th class="text-right">Register amount</th><th class="text-center">Action</th></tr>',
-            'users': '<tr><th><input name="users-select-all" type="checkbox" onclick="PosnicPro.checkboxSelectAll(this,\'users\');"></th><th>#</th><th width="20%">Username</th><th>Image</th><th>Email Id</th><th class="text-center"> Type</th><th class="text-center">Status</th><th class="text-center" width="15%">Action</th></tr>',
-            'lowitem': '<tr><th>#</th><th>Item Name</th><th>Item Image</th><th class="text-center">SKU</th><th>Supplier</th><th>Category</th><th class="text-center">Quantity</th><th colspan="2" class="text-center">Action</th></tr>',
-            'stocklog': '<tr><th data-module="item" data-access="read"><input name="stocklogs-select-all" type="checkbox" onclick="PosnicPro.checkboxSelectAll(this,\'stocklogs\');"></th><th>#</th><th>Name</th><th>Date</th><th class="text-center">Activity</th><th class="text-center">User</th><th class="text-right">Opening Stock</th><th class="text-right">Stock Count</th><th class="text-right">Closing Stock</th><th class="text-center">Action</th></tr>',
-            'variants': '<tr><th><input name="variants-select-all" type="checkbox" onclick="PosnicPro.checkboxSelectAll(this,\'variants\');"></th><th>#</th><th>Name</th><th class="text-center">Action</th></tr>'
+            'registers': '<tr><th data-module="user" data-access="delete"><input name="registers-select-all" type="checkbox" onclick="PosnicPro.checkboxSelectAll(this,\'registers\');"></th><th>#</th><th>Register name</th><th>Date</th><th>Id</th><th>User name</th><th>Branch</th><th class="text-right">Register amount</th><th class="text-center">Action</th></tr>'
         };
 
         $(TableBody).each(function (key, val) {
@@ -4708,6 +4700,23 @@ $(".infobar-settings-close").on("click", function (e) {
             return;
         }
     }
+    /*
+     * A slide-over opened OVER a mini-dossier pane (a category's sales
+     * activity, an employee's full profile) is an overlay, not the owner
+     * of the hash - closing it must leave the pane's document address
+     * alone, or the pane snaps shut with it.
+     */
+    var overParts = currentHash.split('/');
+    if (typeof overParts[1] !== 'undefined' && /^[a-f\d]{24}$/i.test(overParts[1])
+        && typeof overParts[2] === 'undefined'
+        && PosnicPro.listDoc && PosnicPro.listDoc.activeId(overParts[0]) === overParts[1]) {
+        var overId = $(this).data('id');
+        e.preventDefault();
+        $('#infobar-settings-sidebar-' + overId).removeClass('sidebarshow');
+        $('#infobar-settings-sidebar-' + overId + '-details').removeClass('sidebarview');
+        $('.infobar-settings-sidebar-overlay').css({ "background": "transparent", "position": "initial" });
+        return;
+    }
     var patt = /^[a-f\d]{24}$/i;
     var parts = currentHash.split('/');
     if (typeof parts[1] !== 'undefined' && patt.test(parts[1])) {
@@ -5187,6 +5196,239 @@ PosnicPro.masterDetail = {
         $(sel).toggleClass('rail-collapsed');
     }
 };
+
+/*
+ * The peek modal (LIST_PAGE_UX_STANDARD field lesson): a widget or a list
+ * row on a WORK screen shows its record IN PLACE - details first, with a
+ * deliberate link out for whoever wants the full page. One shared modal so
+ * five pages do not each grow their own; the hash never moves, so closing
+ * it leaves the page exactly as it was.
+ */
+PosnicPro.peek = {
+    _ensure: function () {
+        if ($('#pp_peek_modal').length) { return; }
+        $('body').append(
+            '<div class="modal fade close_on_esc" id="pp_peek_modal" tabindex="-1" role="dialog" aria-hidden="true">'
+            + '<div class="modal-dialog" role="document"><div class="modal-content">'
+            + '<div class="modal-header" style="align-items:center;">'
+            + '<h5 class="modal-title" id="pp_peek_title"></h5>'
+            + '<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>'
+            + '</div>'
+            + '<div class="modal-body" id="pp_peek_body" style="max-height:70vh; overflow-y:auto;"></div>'
+            + '<div class="modal-footer" id="pp_peek_footer" style="justify-content:space-between; display:none;"></div>'
+            + '</div></div></div>');
+    },
+    open: function (o) {
+        o = o || {};
+        PosnicPro.peek._ensure();
+        $('#pp_peek_modal .modal-dialog').toggleClass('modal-lg', !!o.large);
+        $('#pp_peek_title').text(o.title || '');
+        $('#pp_peek_body').html(o.body || '<div class="text-center text-muted" style="padding:40px;">Loading ...</div>');
+        $('#pp_peek_footer').html(o.footer || '').toggle(!!o.footer);
+        $('#pp_peek_modal').modal('show');
+    },
+    /* Fill in a late-arriving body/footer without reopening. */
+    fill: function (o) {
+        o = o || {};
+        if (o.title != null) { $('#pp_peek_title').text(o.title); }
+        if (o.body != null) { $('#pp_peek_body').html(o.body); }
+        if (o.footer != null) { $('#pp_peek_footer').html(o.footer).toggle(!!o.footer); }
+    },
+    close: function () {
+        $('#pp_peek_modal').modal('hide');
+    },
+    /* A labelled fact row - the vocabulary every peek shares. */
+    row: function (label, value) {
+        if (value == null || value === '') { return ''; }
+        return '<tr><th style="white-space:nowrap; padding:6px 14px 6px 0; font-weight:600;">' + label + '</th>'
+            + '<td style="padding:6px 0;">' + value + '</td></tr>';
+    },
+    table: function (rows) {
+        return '<table class="table table-borderless mb-0" style="font-size:13.5px;"><tbody>' + rows + '</tbody></table>';
+    }
+};
+
+/*
+ * The mini-dossier pane (owner: "i didnt want pop. i want similar right
+ * side open design. maintain consistency"): every list opens its record
+ * in the SAME right pane the big pages use - master-detail split, URL per
+ * record, pull/close toolbar, boxed sheet. One helper so eight small pages
+ * do not each grow their own openDoc/closeDoc.
+ */
+PosnicPro.listDoc = {
+    _cfg: {},
+    activeId: function (key) {
+        var c = PosnicPro.listDoc._cfg[key];
+        return c ? c.id : null;
+    },
+    open: function (o) {
+        var split = '#' + o.key + '_split';
+        if (!PosnicPro.masterDetail.inSplit(split, o.key + '-split')) {
+            PosnicPro.masterDetail.enter(split, o.key + '-split');
+            $('#' + o.key + '_detail_card').show();
+        }
+        PosnicPro.listDoc._cfg[o.key] = { hashBase: o.hashBase || o.key, id: String(o.id) };
+        $('#' + o.key + '_list_rows tr').removeClass('is-active');
+        $('#' + o.key + '_list_rows tr[data-id="' + o.id + '"]').addClass('is-active');
+        if (o.hash !== false) {
+            var want = (o.hashBase || o.key) + '/' + o.id;
+            if (window.location.hash.slice(2) !== want) { hasher.setHash(want); }
+        }
+        var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
+        var toolbar = '<div class="p-doc-toolbar">'
+            + '<button type="button" class="btn btn-sm btn-light" title="Show or hide the list" aria-label="Show or hide the list" onclick="PosnicPro.masterDetail.toggleRail(\'' + split + '\');"><i class="feather icon-sidebar"></i></button>'
+            + '<span class="p-doc-title">' + esc(o.title) + '</span>' + (o.pills || '')
+            + '<span class="ml-auto"></span>'
+            + (o.actions || '')
+            + '<button type="button" class="btn btn-sm btn-light" title="Close and show the full list" aria-label="Close" onclick="PosnicPro.listDoc.close(\'' + o.key + '\');"><i class="feather icon-x"></i></button>'
+            + '</div>';
+        $('#' + o.key + '_doc').html(toolbar
+            + '<div class="s-doc-body"><div class="q-sheet s-sheet">'
+            + (o.body || '<div class="text-center text-muted" style="padding:40px;">Loading ...</div>')
+            + '</div></div>');
+    },
+    /* Swap the sheet's content once a fetch lands - the pane is already
+       open, the toolbar already right. */
+    body: function (key, html) {
+        $('#' + key + '_doc .q-sheet').html(html);
+    },
+    title: function (key, text) {
+        $('#' + key + '_doc .p-doc-title').text(text);
+    },
+    close: function (key) {
+        var c = PosnicPro.listDoc._cfg[key] || {};
+        $('#' + key + '_detail_card').hide();
+        $('#' + key + '_list_rows tr').removeClass('is-active');
+        PosnicPro.masterDetail.leave('#' + key + '_split', key + '-split');
+        var base = c.hashBase || key;
+        if (window.location.hash.slice(2).indexOf(base + '/') === 0) {
+            hasher.setHash(base);
+        }
+        PosnicPro.listDoc._cfg[key] = null;
+    },
+    /* The shared fact vocabulary the panes and the till peek both speak. */
+    row: function (label, value) {
+        return PosnicPro.peek.row(label, value);
+    },
+    table: function (rows) {
+        return PosnicPro.peek.table(rows);
+    },
+    /* The DOSSIER vocabulary (owner: the bare fact table read as
+       unfinished) - the same stats strip and labeled blocks the supplier
+       and customer dossiers wear, so a small pane is a small dossier,
+       never a form dump. */
+    stats: function (items) {
+        var cells = (items || []).filter(function (i) { return i && i.v != null && i.v !== ''; })
+            .map(function (i) {
+                return '<div class="s-stat"><div class="s-stat-value">' + i.v + '</div>'
+                    + '<div class="s-stat-label">' + i.l + '</div></div>';
+            }).join('');
+        return cells ? '<div class="s-doc-stats">' + cells + '</div>' : '';
+    },
+    grid: function (blocks) {
+        var cells = (blocks || []).map(function (b) {
+            var lines = ((b && b.lines) || []).filter(Boolean);
+            if (!lines.length) { return ''; }
+            return '<div class="q-block"><div class="q-label">' + b.label + '</div>' + lines.join('') + '</div>';
+        }).join('');
+        return cells ? '<div class="s-doc-grid">' + cells + '</div>' : '';
+    },
+    link: function (label, onclick) {
+        return '<div style="margin-top:16px; font-size:13px;">'
+            + '<a href="javascript:void(0)" onclick="' + onclick + '">' + label + ' &rarr;</a></div>';
+    }
+};
+
+/*
+ * List export, scoped (owner: "export button seems export everything...
+ * confirm with duration or selection... still user should have option to
+ * choose all"): every export button offers THIS PAGE or EVERYTHING
+ * MATCHING THE FILTER. "Everything" walks the list's own endpoint page by
+ * page with the filters that are on screen, capped so one click can never
+ * ask the server for an unbounded catalogue.
+ */
+PosnicPro.listExport = {
+    CAP: 5000,
+    save: function (rows, filename) {
+        var csv = rows.map(function (r) {
+            return r.map(function (c) { return '"' + String(c == null ? '' : c).replace(/"/g, '""') + '"'; }).join(',');
+        }).join('\n');
+        var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(a.href);
+    },
+    all: function (cfg) {
+        var rows = [cfg.head];
+        var page = 1;
+        var LIMIT = 100;
+        var step = function () {
+            PosnicPro.get({ url: cfg.url, data: cfg.params(page, LIMIT) }, function (r) {
+                var data = (r && r.data) || {};
+                var list = data.list || [];
+                list.forEach(function (x) { rows.push(cfg.map(x)); });
+                var total = Number(data.total) || (rows.length - 1);
+                var have = rows.length - 1;
+                if (list.length === LIMIT && have < Math.min(total, PosnicPro.listExport.CAP)) {
+                    page += 1;
+                    step();
+                    return;
+                }
+                if (total > PosnicPro.listExport.CAP) {
+                    PosnicPro.alert('warning', 'Exported the first ' + PosnicPro.listExport.CAP
+                        + ' of ' + total + ' rows - narrow the filter for the rest');
+                }
+                PosnicPro.listExport.save(rows, cfg.filename);
+            }, function () {
+                PosnicPro.alert('error', 'Export failed part-way - nothing was downloaded');
+            });
+        };
+        step();
+    }
+};
+
+/*
+ * The Sort control (owner: "high margin / low margin, recent, low stock,
+ * cost, price... similarly high total sales... quotes"): a labelled
+ * dropdown in the page header, one shared builder so every list gets the
+ * same control. The chosen sort is SERVER-side - a whitelisted name, never
+ * a raw field - so page 2 keeps the same order as page 1.
+ */
+PosnicPro.listSort = {
+    _reg: {},
+    mount: function (key, cfg) {
+        PosnicPro.listSort._reg[key] = PosnicPro.listSort._reg[key] || { _v: '' };
+        var reg = PosnicPro.listSort._reg[key];
+        reg.options = cfg.options;
+        reg.onChange = cfg.onChange;
+        var host = $('#' + key + '_sort_host');
+        if (!host.length || host.children().length) { return; }
+        var items = cfg.options.map(function (o) {
+            return '<a class="dropdown-item ls-sort-opt" href="javascript:void(0)" data-key="' + key + '" data-sort="' + o.v + '">' + o.l + '</a>';
+        }).join('');
+        host.html('<div class="btn-group">'
+            + '<button type="button" class="btn btn-primary-rgba dropdown-toggle" data-toggle="dropdown"'
+            + ' aria-haspopup="true" aria-expanded="false" id="' + key + '_sort_btn" title="Sort the list">'
+            + '<i class="feather icon-bar-chart mr-2"></i><span id="' + key + '_sort_label">Sort</span></button>'
+            + '<div class="dropdown-menu dropdown-menu-right">'
+            + '<a class="dropdown-item ls-sort-opt" href="javascript:void(0)" data-key="' + key + '" data-sort="">Default</a>'
+            + items + '</div></div>');
+    },
+    value: function (key) {
+        var reg = PosnicPro.listSort._reg[key];
+        return (reg && reg._v) || '';
+    }
+};
+$(document).on('click', '.ls-sort-opt', function () {
+    var key = $(this).data('key');
+    var reg = PosnicPro.listSort._reg[key];
+    if (!reg) { return; }
+    reg._v = String($(this).data('sort') || '');
+    $('#' + key + '_sort_label').text(reg._v ? $(this).text() : 'Sort');
+    if (typeof reg.onChange === 'function') { reg.onChange(reg._v); }
+});
 
 /* Tax Payable (#/taxpayable, PURCHASE_TAX_PLAN P4) - months of output vs
  * input tax and the net owed, credits in the statutory order (server math,
