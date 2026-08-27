@@ -607,6 +607,48 @@
         PosnicPro.sales.loadHistory();
     },
     /* ---- the invoice pane ---- */
+    /* A quick look at a bill WITHOUT leaving the page you are on. The
+       recent-sales rail lives on the NEW SALE screen - its View eye used
+       to navigate into the sales-history split, dumping the cashier off
+       the till mid-shift (owner: "keep the user in same page itself").
+       The same invoice sheet now opens in a modal; the history page stays
+       one deliberate click away, never an accident. */
+    peekSale: function (id) {
+        if (!$('#sale_peek_modal').length) {
+            $('body').append(
+                '<div class="modal fade close_on_esc" id="sale_peek_modal" tabindex="-1" role="dialog" aria-hidden="true">'
+                + '<div class="modal-dialog modal-lg" role="document"><div class="modal-content">'
+                + '<div class="modal-header" style="align-items:center;">'
+                + '<h5 class="modal-title" id="sale_peek_title">Bill</h5>'
+                + '<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>'
+                + '</div>'
+                + '<div class="modal-body" id="sale_peek_body" style="max-height:70vh; overflow-y:auto;"></div>'
+                + '<div class="modal-footer" id="sale_peek_footer" style="justify-content:space-between;"></div>'
+                + '</div></div></div>');
+        }
+        $('#sale_peek_title').text('Bill');
+        $('#sale_peek_footer').html('');
+        $('#sale_peek_body').html('<div class="text-center text-muted" style="padding:40px;">Loading ...</div>');
+        $('#sale_peek_modal').modal('show');
+        PosnicPro.get('sales/' + id, function (response) {
+            if (response.type !== 'success' || !response.data) {
+                $('#sale_peek_body').html('<div class="text-danger p-4">Could not open this bill.</div>');
+                return;
+            }
+            var d = response.data;
+            var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
+            $('#sale_peek_title').text(d.sales_id || 'Bill');
+            $('#sale_peek_body').html(PosnicPro.sales.buildSaleSheet(d));
+            $('#sale_peek_footer').html(
+                '<a href="javascript:void(0)" class="q-muted" style="font-size:13px;"'
+                + ' onclick="$(\'#sale_peek_modal\').modal(\'hide\'); hasher.setHash(\'sales/' + esc(d._id || id) + '\');">'
+                + 'Open in Sales history &rarr;</a>'
+                + '<button type="button" class="btn btn-sm btn-light" onclick="PosnicPro.sales.showPrint(\'' + esc(d._id || id) + '\'); return false;">'
+                + '<i class="feather icon-printer mr-1"></i>Print</button>');
+        }, function () {
+            $('#sale_peek_body').html('<div class="text-danger p-4">Could not open this bill.</div>');
+        });
+    },
     openDoc: function (id) {
         var self = PosnicPro.sales;
         if (!PosnicPro.masterDetail.inSplit('#sales_split', 'saleshist-split')) {
@@ -7928,7 +7970,7 @@ PosnicPro.sales.recentMenu = {
                             '<div class="rs-amt">' + currency + '&nbsp;' + Number(params.total_amount || 0).toFixed(2) + '</div>' + pill +
                             '</div>' +
                             '<div class="rs-actions">' +
-                            '<a data-module="sales" data-access="read" href="#/sales/' + id + '" class="rs-act btn-primary-rgba" data-toggle="tooltip" title="View"><i class="feather icon-eye"></i></a>' +
+                            '<a data-module="sales" data-access="read" href="javascript:void(0)" onclick="PosnicPro.sales.peekSale(\'' + id + '\'); return false;" class="rs-act btn-primary-rgba" data-toggle="tooltip" title="View"><i class="feather icon-eye"></i></a>' +
                             retrieveIcon + editIcon + returnIcon + deleteIcon +
                             '</div></div>';
                     });
