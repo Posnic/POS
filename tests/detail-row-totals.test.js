@@ -92,14 +92,14 @@ test('the money-path lists are card-ready on phones (Mobile P2)', () => {
      phones through the master-detail column rule instead of m-cards. */
   /* suppliers.html moved to the master-detail standard 2026-08-27 - phones
      get the stacked split, not m-cards. */
-  for (const f of ['items.html', 'sales_read.html', 'customers.html',
+  /* customers.html moved to the master-detail standard 2026-08-27. */
+  for (const f of ['items.html', 'sales_read.html',
     /* P3 slice 2 */ 'users.html', 'kothistory.html', 'stockactivity.html', 'variants.html', 'settings_write.html']) {
     assert.match(mod(f), /table-borderless m-cards/, f + ' lost its m-cards opt-in');
   }
   for (const [f, label] of [
     ['items.js', 'data-label="Price"'],
     ['sales.js', 'data-label="Total"'],
-    ['customers.js', 'data-label="Address"'],
     /* P3 slice 2 */
     ['users.js', 'data-label="Role"'],
     ['kothistory.js', 'data-label="Order type"'],

@@ -1,218 +1,53 @@
 <div class="vertical-layout page_loader" id="customers" style="display: none">
-    <!-- Start Containerbar -->
+    <!-- Customers on LIST_PAGE_UX_STANDARD.md - third speaker. Full-width
+         list first; a row click opens the dossier pane: lifetime stats,
+         contact grid, and the sales history with named columns. -->
     <div id="containerbar">
-        <!-- Start Breadcrumbbar -->
         <div class="breadcrumbbar crumbbar_padding">
             <div class="row align-items-center row_filter">
-                <div class="col-lg-2 col-xl-2">
-                    <h4 class="page-title break_title"><lang class="lang_customerdetails_title">Customer List</lang></h4>
-                </div>               
-                <div class="col-md-8 col-lg-8 show-button-action"></div>                  
-                <div class="col-lg-3 col-xl-2 hide-button-action tb_filter" style="display:none;">
-                    <div id="view_customers_daterange" class="form-control pull-right daterange-timepicker-all daterange-style date-align">
-                        <i class="feather icon-calendar"></i>&nbsp;
-                        <span></span>
-                    </div>
+                <div class="col-auto">
+                    <h4 class="page-title break_title mb-0"><lang class="lang_customers_title">Customers</lang></h4>
                 </div>
-                <div class="col-lg-2 col-xl-2 hide-button-action tb_filter" style="display:none;">
-                    <select class="custom-select border-control" id="view_customers_fields" data-id="customers" onchange="PosnicPro.changePlaceholder(this)" aria-label="View customers fields">
-                        <option value="name" selected>
-                        <lang class="lang_name_title">Name</lang>
-                        </option>
-                        <option value="phone">
-                        <lang class="lang_phone_title">Phone</lang>
-                        </option>
-                        <option value="email">
-                        <lang class="lang_email_title">Email</lang>
-                        </option>
-                        <option value="address">
-                        <lang class="lang_address_title">Address</lang>
-                        </option>
-                    </select>
+                <div class="col">
+                    <div class="lf-panel" id="customers_filter_panel" style="display:none;"></div>
                 </div>
-                <div class="col-lg-2 col-xl-2 hide-button-action tb_filter" style="display:none;">
-                    <input type="text" class="form-control border-control custom_search_input" id="view_customers_input"
-                           placeholder="Enter Name" data-id="customers" maxlength="25" autocomplete="off">
-                </div>
-                <div class="col-md-2 col-lg-2 tb_search hide-button-action adjuce_left" style="display:none;">
-                    <button type="button" class="btn btn-danger-rgba" data-id="customers" onclick="PosnicPro.dateRangefilterClear(this)">
-                        <lang class="lang_clear_title">Clear</lang>
-                    </button>
-                    <button type="button" class="btn btn-primary-rgba" data-id="customers" onclick="PosnicPro.search(this, 'Table')">
-                        <lang class="lang_filter_title">Apply</lang>
-                    </button>                    
-                </div>
-                <div class="col-lg-12 col-xl-2 tb_widget">
-                    <div class="widgetbar">
-                        <button type="button" class="btn btn-round btn-primary-rgba click-action-button adjuce_left add_new_tooltip" data-toggle="tooltip" title="Filter">
-                            <i class="feather icon-filter" aria-hidden="true"></i>
+                <div class="col-auto text-right">
+                    <div class="widgetbar" id="customers_controls">
+                        <a data-module="customer" data-access="write" href="#/customers" class="btn btn-primary-rgba"
+                            onclick="PosnicPro.importTableFile('customers'); return false;"
+                            data-toggle="tooltip" title="Import from CSV/Excel" aria-label="Import customers">
+                            <i class="feather icon-download"></i>
+                        </a>
+                        <button type="button" class="btn btn-primary-rgba" onclick="PosnicPro.customers.exportCsv();"
+                            data-toggle="tooltip" title="Export the filtered rows" aria-label="Export CSV">
+                            <i class="feather icon-share"></i>
                         </button>
-                        <a data-module="customer" data-access="write" href='#/customers/new' onclick="return PosnicPro.customers.addCustomerButton();" class="btn btn-primary-rgba dash_sale_count add_new_tooltip" data-toggle="tooltip" title="New Customer">
-                            <i class="feather icon-plus mr-2"></i>
-                            <lang class="lang_addvariant_title">New</lang> 
-                        </a>                       
+                        <button type="button" class="btn btn-primary-rgba lf-btn" id="customers_filter_btn"
+                            data-toggle="tooltip" title="Filter customers">
+                            <i class="feather icon-filter mr-2"></i>Filter
+                        </button>
+                        <a data-module="customer" data-access="write" href="#/customers/new"
+                            class="btn btn-primary-rgba customer_new_shortcut" data-toggle="tooltip" title="New customer">
+                            <i class="feather icon-plus mr-2"></i><lang class="lang_addvariant_title">New</lang>
+                        </a>
                     </div>
-                </div>  
+                </div>
             </div>
-            <div class="row">
-                <div class="col-md-3"></div>
-                <div class="col-md-6 col-xl-9 mobile-hide tb_date_range">
-                    <p>
-                        <span class="badge badge-secondary-inverse hide_date_filetr" style="display:none;">
-                            <span class="view_customers_date_filter_value"></span>
-                        </span>
-                        <span class="badge badge-secondary-inverse hide_value_filetr" style="display:none;">
-                            <span class="view_customers_filter_value"></span>
-                        </span>
-                    </p>
+        </div>
+
+        <div class="contentbar">
+            <div id="customers_split">
+                <div class="card m-b-30 md-rail" id="customers_list_card">
+                    <div class="card-body">
+                        <div id="customers_list_rows" class="md-rail-rows text-muted">Loading customers ...</div>
+                        <div class="q-pager" id="customers_list_paging"></div>
+                    </div>
+                </div>
+                <div class="card m-b-30 md-detail" id="customers_detail_card" style="display:none;">
+                    <div id="customers_doc"></div>
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- Start Contentbar -->
-    <div class="contentbar">
-        <!-- Start row -->
-        <div class="row">
-            <!-- Start col -->
-            <div class="col-lg-12">
-                <div class="card m-b-30">
-                    <div class="card-header customer_header">
-                        <div class="row align-items-center">
-                            <div class="col-4">
-                                <ul class="list-inline-group text-left mb-0 pl-0">
-                                    <li class="list-inline-item">
-                                        <div class="form-group mb-0 amount-spent-select selecct-align">
-                                            <select class="form-control select_page" id="view_customers_per_page" data-id="customers" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View customers per page">
-                                                <option value="5" selected>5</option>
-                                                <option value="10">10</option>
-                                                <option value="25">25</option>
-                                                <option value="50">50</option>
-                                                <option value="100">100</option>
-                                            </select>
-                                        </div>
-                                    </li>
-                                </ul>
-                            </div>
-                            <!-- Import, Export options -->
-                            <div class="col-8">
-                                <div class="email-rightbar">
-                                    <div class="card-header header_icon">
-                                        <ul class="list-inline mb-0 pl-0 float-right">
-                                            <li class="list-inline-item email_320">
-                                                <a data-module="customer" data-access="write" href="#/customers" id="customer_import" class="sale_color" onclick="PosnicPro.importTableFile('customers');" data-toggle="tooltip" title="Import from CSV/Excel">
-                                                    <i class="feather icon-upload font-20"></i>
-                                                </a>
-                                            </li>
-                                            <li class="list-inline-item email_320">
-                                                <a data-module="customer" data-access="write" href="#/customers" id="customers_importbtn" class="sale_color" onclick="PosnicPro.importTableFile('customers');" data-toggle="tooltip" title="Import">
-                                                    <i class="feather icon-download font-20"></i>
-                                                </a>
-                                            </li>
-                                            <li class="list-inline-item email_320">
-                                                <a data-module="customer" data-access="read" href="#/customers" id="customers_exportbtn" class="sale_color" onClick="PosnicPro.customers.exportCustomers();" data-toggle="tooltip" title="Export Selected">
-                                                    <i class="feather icon-share font-20"></i>
-                                                </a>
-                                            </li>
-                                            <li class="list-inline-item email_320">
-                                                <a data-module="customer" data-access="delete" href="#/customers" id="customers_deletebtn" class="sale_color" onclick="PosnicPro.customers.deleteSelectedCustomers();" data-toggle="tooltip" title="Delete">
-                                                    <i class="feather icon-trash font-20"></i>
-                                                </a>
-                                            </li>
-                                            <li class="list-inline-item email_320">
-                                                <a href="javascript:PosnicPro.refreshDatatable('customers')" data-id="customers" class="add_new_tooltip" data-toggle="tooltip" title="Refresh">
-                                                    <i class="feather icon-refresh-cw font-20"></i>
-                                                </a>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card-body loader-table-customer">
-                        <div class="table-responsive">
-                            <table class="table table-borderless m-cards" id="view_customers">
-                                <div class="col-sm-6 col-md-12 col-lg-12 text-center" id="customer_img_hide" style="display:none; padding:56px 20px;">
-                                    <!--
-                                        Nothing here yet.
-
-                                        This used to be a 200px download icon labelled "Import CSV" and
-                                        nothing else, so an empty list looked like a page that had failed
-                                        to load, and the only thing on offer was a bulk import to somebody
-                                        who almost certainly wanted to add one record. The primary action
-                                        is now the obvious one, with the import kept as the quieter second
-                                        option it should always have been.
-                                    -->
-                                    <i class="feather icon-inbox" style="font-size:56px; opacity:.25;"></i>
-                                    <p style="margin:14px 0 4px; font-size:16px; font-weight:600;">No customers yet</p>
-                                    <p class="text-muted" style="margin:0 0 18px; font-size:13px;">
-                                        Add your first customer with the New button above.
-                                    </p>
-                                    <a data-module="customer" data-access="write" href="javascript:void(0)"
-                                       class="sale_color" style="font-size:13px;" onclick="PosnicPro.importTableFile('customers');">
-                                        or import customers from a CSV file
-                                    </a>
-                                </div>
-                                <!--
-                                    The other kind of empty. "No customers yet" was shown
-                                    for a filtered view too, so a search that matched
-                                    nobody reported that the shop had no customers at all
-                                    - an answer that is confidently wrong, sending
-                                    somebody to look for missing DATA instead of fixing
-                                    their SEARCH. Same fix as the item list.
-                                -->
-                                <div class="col-sm-6 col-md-12 col-lg-12 text-center" id="customer_no_match" style="display:none; padding:56px 20px;">
-                                    <i class="feather icon-search" style="font-size:56px; opacity:.25;"></i>
-                                    <p style="margin:14px 0 4px; font-size:16px; font-weight:600;">No customers match this search</p>
-                                    <p class="text-muted" style="margin:0 0 18px; font-size:13px;">
-                                        Your other customers are still here - this view is filtered.
-                                    </p>
-                                    <a href="javascript:void(0)" class="sale_color" style="font-size:13px;"
-                                       onclick="PosnicPro.clearListFilters('customers');">
-                                        Clear the filter and show everything
-                                    </a>
-                                </div>
-                                <thead class="datatable-thead-tbody table-header customer_header"></thead>
-                                <tbody class="datatable-thead-tbody table-body customer_header"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-                <div class="card m-b-30 customer_header">
-                    <div class="card-body ecommerce-pagination page_padding">
-                        <div class="row align-items-center">
-                            <div class="col-8">
-                                <div class="hint-text">
-                                    Showing 
-                                    <b><span id="view_customers_page_total"></span></b> 
-                                    to 
-                                    <b><span id="view_customers_page_perpage_total"></span></b> 
-                                    of 
-                                    <b><span id="view_customers_total"></span></b>
-                                    entries 
-                                    <span class="showing-hide-show-customers" style="display:none;"> &nbsp;&nbsp;&nbsp;&nbsp; 
-                                        <span class="showing-value-customers text-dark"> 0 </span>&nbsp;
-                                        rows selected  
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="col-4">
-                                <nav aria-label="Page navigation example">
-                                    <ul class="pagination mb-0">
-                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="customers" onclick="PosnicPro.previousPage(this, 'Table')" aria-label="Previous page"> <i class="fa fa-angle-left font-20"></i> </button>
-                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="customers" onclick="PosnicPro.nextPage(this, 'Table')" aria-label="Next page"> <i class="fa fa-angle-right font-20"></i> </button>
-                                    </ul>
-                                </nav>
-                            </div>
-                        </div>                                
-                    </div>
-                </div>
-            </div>
-            <!-- End col -->
-        </div>
-        <!-- End row -->
-    </div>
-    <!-- End Contentbar -->
 </div>
-<!-- End Containerbar -->
+

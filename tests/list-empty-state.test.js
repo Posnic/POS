@@ -31,14 +31,28 @@ const LISTS = [
     empty: 'item_img_hide',
     noMatch: 'item_no_match',
   },
-  {
-    module: 'customers',
-    html: read('frontend', 'modules', 'customers.html'),
-    js: read('frontend', 'static', 'script', 'js', 'modules', 'js', 'customers.js'),
-    empty: 'customer_img_hide',
-    noMatch: 'customer_no_match',
-  },
+  /* customers moved to the master-detail standard (2026-08-27): its two
+     empty states are sentences rendered by loadList - pinned below. */
 ];
+
+test('standard master-detail lists keep two DISTINCT empty sentences', () => {
+  /* Same contract, new form: "none yet" invites the first record, "nothing
+     matched" points at the filter - and the branch is chosen by the actual
+     filter state, never guessed. */
+  for (const [file, key] of [
+    ['customers.js', 'customers'],
+    ['suppliers.js', 'suppliers'],
+  ]) {
+    const js = read('frontend', 'static', 'script', 'js', 'modules', 'js', file);
+    assert.match(js, /match this filter/, `${key}: the filtered state is gone`);
+    assert.match(js, /yet - press New/, `${key}: the none-yet state is gone`);
+    assert.match(
+      js,
+      new RegExp("activeCount\\('" + key + "'\\)"),
+      `${key}: the branch no longer reads the real filter state`,
+    );
+  }
+});
 
 test('a filtered list has its own empty state', () => {
   for (const l of LISTS) {
