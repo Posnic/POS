@@ -248,12 +248,28 @@ const secretUpdate = (key, raw) => {
  */
 const SHARING = ['share_customers', 'share_suppliers'];
 
+/*
+ * The tax regime and its per-country decisions (PURCHASE_TAX_PLAN G6).
+ * Written by the installer from the shop's country, edited on the Tax
+ * Configuration page, read at read-time by every tax surface.
+ */
+const TAX = [
+  /* Presentation and structure stay in the tax-profile registry (T0);
+     this group stores only what a SHOP decides inside its regime. */
+  'tax_regime', // override only: vat_credit | sales_tax | none
+  'india_gst_type', // regular | composition | unregistered
+  'india_turnover_above_5cr', // >=5cr: 6-digit HSN + e-invoice readiness
+  'india_qrmp', // quarterly filing scheme below 5cr
+  'us_resale_certificate', // the shop's own resale certificate number
+];
+
 const GROUPS = {
   features: FEATURES,
   preferences: PREFERENCES,
   documents: DOCUMENTS,
   secrets: SECRETS,
   sharing: SHARING,
+  tax: TAX,
 };
 
 /* key -> group, built once so lookups are not a scan per key */
@@ -276,6 +292,7 @@ const splitByGroup = (payload = {}) => {
     documents: {},
     secrets: {},
     sharing: {},
+    tax: {},
     unknown: {},
   };
   for (const [key, value] of Object.entries(payload || {})) {

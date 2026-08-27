@@ -125,6 +125,25 @@ class InstallService {
         now
       );
 
+      /*
+       * The tax REGIME, from the same country the taxes came from
+       * (PURCHASE_TAX_PLAN §3/G6). Written through the settings group so the
+       * Tax Configuration page edits exactly what the installer wrote, and
+       * every tax surface reads one source. Its own try/catch: a shop whose
+       * regime derivation hiccuped is a shop on defaults, not a failed
+       * install.
+       */
+      try {
+        const { installDecisionsFor } = require('./tax-regime');
+        const decisions = installDecisionsFor(sortname);
+        if (Object.keys(decisions).length) {
+          const SettingsRepository = require('../repositories/settings.repository');
+          await new SettingsRepository().saveGroup('tax', decisions, { licenseId, branchId });
+        }
+      } catch (e) {
+        console.error('Tax regime defaults skipped:', e.message);
+      }
+
       // Create default customer and supplier (pass sortname to avoid re-creating taxes)
       const customerId = await this._createDefaultCustomer(
         data,

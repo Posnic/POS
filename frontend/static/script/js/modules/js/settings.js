@@ -84,6 +84,65 @@ PosnicPro.settings = {
             }
         }, function () { /* presentation only - never disturb the page */ });
     },
+    /*
+     * The Tax System card (PURCHASE_TAX_PLAN G6). One GET fills everything:
+     * the profile says which country family the shop lives in, `decisions`
+     * carries what the shop chose inside it. Save writes ONLY the decision
+     * keys through the tax settings group - the profile is never edited here.
+     */
+    taxSystemLoad: function () {
+        PosnicPro.get({ url: 'setting/taxProfile', data: {} }, function (r) {
+            var d = r && r.data;
+            if (!d) { return; }
+            PosnicPro.settings._taxSystem = d;
+            var dec = d.decisions || {};
+            $('#tax_regime_override').val(dec.tax_regime || '');
+            $('#india_gst_type').val(dec.india_gst_type || 'regular');
+            $('#india_turnover_above_5cr').prop('checked', dec.india_turnover_above_5cr === true || dec.india_turnover_above_5cr === 'true');
+            $('#india_qrmp').prop('checked', dec.india_qrmp === true || dec.india_qrmp === 'true');
+            $('#us_resale_certificate').val(dec.us_resale_certificate || '');
+            PosnicPro.settings.taxSystemRegimeChanged();
+        }, function () { /* configuration card only - never disturb the page */ });
+    },
+    taxSystemRegimeChanged: function () {
+        var d = PosnicPro.settings._taxSystem || {};
+        var override = $('#tax_regime_override').val();
+        var regime = override || d.regime || 'vat_credit';
+        var family = regime === 'vat_credit' ? 'credit method'
+            : regime === 'sales_tax' ? 'no input credit' : 'no consumption tax';
+        $('#tax_system_summary').text((d.label || 'Tax') + ' (' + (d.code === '_default' ? 'generic' : d.code) + ') — ' + family);
+        var india = d.code === 'IN' && regime === 'vat_credit';
+        $('#tax_system_india').toggle(india);
+        $('#tax_system_us').toggle(regime === 'sales_tax');
+        if (india) {
+            var type = $('#india_gst_type').val();
+            $('#india_gst_type_note').text(
+                type === 'composition' ? 'Composition shops collect no GST and claim no input credit - sale and purchase screens follow.'
+                : type === 'unregistered' ? 'An unregistered shop neither collects GST nor claims credit.'
+                : 'Collects GST on sales; input credit on purchases.');
+            var above = $('#india_turnover_above_5cr').is(':checked');
+            $('#india_5cr_note').text(above
+                ? 'B2B e-invoicing is mandatory and items must carry 6-digit HSN codes.'
+                : '4-digit HSN suffices; the QRMP quarterly scheme is available.');
+            $('#india_qrmp_row').toggle(!above);
+        }
+    },
+    taxSystemSave: function () {
+        var values = {
+            tax_regime: $('#tax_regime_override').val() || null,
+            india_gst_type: $('#india_gst_type').val(),
+            india_turnover_above_5cr: $('#india_turnover_above_5cr').is(':checked'),
+            india_qrmp: $('#india_qrmp').is(':checked'),
+            us_resale_certificate: $.trim($('#us_resale_certificate').val())
+        };
+        PosnicPro.put({ url: 'settings/group/tax', data: JSON.stringify(values) }, function (r) {
+            PosnicPro.alert(r.type || 'success', r.message || 'Tax system saved');
+            PosnicPro.settings.taxSystemLoad();
+        }, function (xhr) {
+            var resp = {}; try { resp = jQuery.parseJSON(xhr.responseText) || {}; } catch (e) { }
+            PosnicPro.alert('error', resp.message || 'Could not save the tax system');
+        });
+    },
     restoreCoreTab: function () {
         var stored = PosnicPro.local.get('posnic_core_tab');
         if (stored && $('#core_settings_tabs a[href="' + stored + '"]').length) {
@@ -541,6 +600,7 @@ PosnicPro.settings = {
                         PosnicPro.local.set('gst_action', 'disable');
                     }
                     PosnicPro.settings.applyTaxProfile();
+                    PosnicPro.settings.taxSystemLoad();
                     loader.find(".loadingSpinner:first").remove();
                     // Saved from the Branch edit page: back to the list.
                     if (target) {
