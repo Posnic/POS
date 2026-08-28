@@ -114,12 +114,20 @@ test('release:windows is wired, and the release notes tell the truth', () => {
   assert.strictEqual(pkg.scripts['release:windows'], 'node scripts/release-windows.js');
   assert.ok(fs.existsSync(path.join(ROOT, 'scripts', 'release-windows.js')));
 
-  /* The notes used to say a certificate was "on the way" and tell Windows users
-     to click through a warning. Windows is signed now; macOS still is not, and
-     saying so is the honest part. */
+  /* The notes have tracked the truth through three eras: "certificate on the
+     way", then "Windows signed, macOS not yet", and now - with the Developer
+     ID certificate live and the notary gate proven on a real dmg - every
+     platform carries a trust chain and the notes say exactly which one. */
   assert.ok(
     !/The installers are not signed yet/.test(workflow),
     'the notes still tell Windows users to expect an unknown-publisher warning',
   );
-  assert.match(workflow, /macOS is not signed yet/, 'the notes no longer warn macOS users, who still need it');
+  assert.ok(
+    !/macOS is not signed yet/.test(workflow),
+    'the notes still say macOS is unsigned - the notarize gate made that untrue',
+  );
+  assert.match(workflow, /signed and notarized/,
+    'the notes no longer state the macOS trust chain');
+  assert.match(workflow, /packages\.posnic\.com/,
+    'the notes no longer point Linux users at the signed APT repository');
 });
