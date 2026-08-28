@@ -524,11 +524,11 @@
         });
         PosnicPro.listSort.mount('sales', {
             options: [
-                { v: 'date_desc', l: 'Business date: newest' },
-                { v: 'date_asc', l: 'Business date: oldest' },
-                { v: 'total_desc', l: 'Highest bill first' },
-                { v: 'total_asc', l: 'Lowest bill first' },
-                { v: 'items_desc', l: 'Most items first' }
+                { v: 'date_desc', l: 'Business date: newest', i: 'clock' },
+                { v: 'date_asc', l: 'Business date: oldest', i: 'rotate-ccw' },
+                { v: 'total_desc', l: 'Highest bill first', i: 'arrow-down' },
+                { v: 'total_asc', l: 'Lowest bill first', i: 'arrow-up' },
+                { v: 'items_desc', l: 'Most items first', i: 'layers' }
             ],
             onChange: function () { PosnicPro.sales.loadHistory(1); }
         });
@@ -9245,12 +9245,13 @@ PosnicPro.quotes = {
                under Share; everything that changes its state or destroys it
                lives under More, where a mis-click is far less likely.
                ONE primary, and danger only where it destroys. */
-            var mi = function (call, label, cls) {
+            var mi = function (call, label, cls, acc) {
                 return '<a class="dropdown-item' + (cls ? ' ' + cls : '')
+                    + (acc ? '" data-module="sales" data-access="' + acc : '')
                     + '" href="javascript:void(0)" onclick="' + call + '">' + label + '</a>';
             };
-            var menu = function (label, items) {
-                return '<div class="btn-group">'
+            var menu = function (label, items, acc) {
+                return '<div class="btn-group"' + (acc ? ' data-module="sales" data-access="' + acc + '"' : '') + '>'
                     + '<button type="button" class="btn btn-sm btn-light border dropdown-toggle"'
                     + ' data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">' + label + '</button>'
                     + '<div class="dropdown-menu dropdown-menu-right">' + items + '</div>'
@@ -9266,31 +9267,32 @@ PosnicPro.quotes = {
 
             var moreItems = '';
             if (open) {
-                moreItems += mi('PosnicPro.quotes.setStatus(\'accept\');', 'Mark accepted')
-                    + mi('PosnicPro.quotes.setStatus(\'decline\');', 'Mark declined')
+                moreItems += mi('PosnicPro.quotes.setStatus(\'accept\');', 'Mark accepted', '', 'write')
+                    + mi('PosnicPro.quotes.setStatus(\'decline\');', 'Mark declined', '', 'write')
                     + '<div class="dropdown-divider"></div>'
-                    + mi('PosnicPro.quotes.cancel();', 'Cancel quote', 'text-danger')
-                    + mi('PosnicPro.quotes.remove();', 'Delete quote', 'text-danger');
+                    + mi('PosnicPro.quotes.cancel();', 'Cancel quote', 'text-danger', 'write')
+                    + mi('PosnicPro.quotes.remove();', 'Delete quote', 'text-danger', 'delete');
             }
 
             var visible = '';
             if (open) {
-                visible += '<button type="button" class="btn btn-sm btn-light border" onclick="hasher.setHash(\'quotes/'
+                visible += '<button type="button" class="btn btn-sm btn-light border" data-module="sales" data-access="write" onclick="hasher.setHash(\'quotes/'
                     + String(q._id) + '/edit\');">Edit</button>'
                     /* Save appears only once an inline field has actually been
                        touched - otherwise it sits there all day inviting a
                        click that would do nothing. */
-                    + '<button type="button" class="btn btn-sm btn-primary" id="q_save_edits"'
+                    + '<button type="button" class="btn btn-sm btn-primary" id="q_save_edits" data-module="sales" data-access="write"'
                     + ' style="display:none;" onclick="PosnicPro.quotes.saveEdits();">Save changes</button>';
             }
             visible += share;
-            if (moreItems) { visible += menu('More', moreItems); }
+            if (moreItems) { visible += menu('More', moreItems, 'write||delete'); }
             if (open || q.status === 'accepted') {
                 /* The accent, not green: green now means "succeeded", and
                    converting a quote is an action, not an outcome. */
-                visible += '<button type="button" class="btn btn-sm btn-primary" onclick="PosnicPro.quotes.convert();">Convert to sale</button>';
+                visible += '<button type="button" class="btn btn-sm btn-primary" data-module="sales" data-access="write" onclick="PosnicPro.quotes.convert();">Convert to sale</button>';
             }
             $('#quotes_view_actions').html('<div class="q-actions">' + visible + '</div>');
+            PosnicPro.ACLForModule('sales');
             $('#quotes_view_card').show();
             if (open) { PosnicPro.quotes._pvInitSort(); }
         }, function () { PosnicPro.alert('error', 'Could not load the quote'); });
@@ -11141,10 +11143,10 @@ PosnicPro.quotes.mountFilters = function () {
     });
     PosnicPro.listSort.mount('quotes', {
         options: [
-            { v: 'total_desc', l: 'Highest amount first' },
-            { v: 'total_asc', l: 'Lowest amount first' },
-            { v: 'valid_asc', l: 'Valid till: soonest' },
-            { v: 'valid_desc', l: 'Valid till: latest' }
+            { v: 'total_desc', l: 'Highest amount first', i: 'arrow-down' },
+            { v: 'total_asc', l: 'Lowest amount first', i: 'arrow-up' },
+            { v: 'valid_asc', l: 'Valid till: soonest', i: 'clock' },
+            { v: 'valid_desc', l: 'Valid till: latest', i: 'calendar' }
         ],
         onChange: function () { PosnicPro.quotes.loadList(); }
     });

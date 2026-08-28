@@ -5338,9 +5338,9 @@ PosnicPro.listDoc = {
         }).join('');
         return cells ? '<div class="s-doc-grid">' + cells + '</div>' : '';
     },
-    link: function (label, onclick) {
+    link: function (label, onclick, attrs) {
         return '<div style="margin-top:16px; font-size:13px;">'
-            + '<a href="javascript:void(0)" onclick="' + onclick + '">' + label + ' &rarr;</a></div>';
+            + '<a href="javascript:void(0)"' + (attrs ? ' ' + attrs : '') + ' onclick="' + onclick + '">' + label + ' &rarr;</a></div>';
     }
 };
 
@@ -5411,7 +5411,11 @@ PosnicPro.listSort = {
         var host = $('#' + key + '_sort_host');
         if (!host.length || host.children().length) { return; }
         var items = cfg.options.map(function (o) {
-            return '<a class="dropdown-item ls-sort-opt" href="javascript:void(0)" data-key="' + key + '" data-sort="' + o.v + '">' + o.l + '</a>';
+            /* o.i = a feather icon name; the arrows say which END of the list
+               the option puts on top (owner: "sort we can have down arrow and
+               up arrow or any other icons inside options"). */
+            var icon = o.i ? '<i class="feather icon-' + o.i + ' mr-2 q-muted"></i>' : '';
+            return '<a class="dropdown-item ls-sort-opt" href="javascript:void(0)" data-key="' + key + '" data-sort="' + o.v + '">' + icon + o.l + '</a>';
         }).join('');
         host.html('<div class="btn-group">'
             + '<button type="button" class="btn btn-primary-rgba dropdown-toggle" data-toggle="dropdown"'
