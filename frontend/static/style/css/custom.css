@@ -3981,6 +3981,28 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     padding: 0 !important;
     background: #f6f8fa !important;
 }
+/*
+ * Everything in the rail that is NOT the row scroller keeps its breathing room.
+ *
+ * The card-body padding above is zeroed on purpose - the row table has to reach
+ * the rail's edges - but that zero also flattened every OTHER thing sharing the
+ * body: the roles note, the stock-log and purchase quick-filter strips, the
+ * pager. Their text then sat directly on the border the moment a row was
+ * selected and the split opened (owner, reporting it for the third module:
+ * "stick to border. need padding or margin. this issue when row selected
+ * happening... take care of this each module with new list design").
+ *
+ * One rule rather than another per-page patch, so a page that grows a note
+ * tomorrow inherits the fix instead of becoming the fourth report.
+ */
+.master-detail > .md-rail > .card-body > *:not(.md-rail-rows) {
+    padding-left: 14px;
+    padding-right: 14px;
+}
+.master-detail > .md-rail > .card-body > p,
+.master-detail > .md-rail > .card-body > .m-b-10 {
+    padding-top: 12px;
+}
 /* min-height:0 on both, or a flex child refuses to shrink below its content
    and the scrollbar lands on the page instead of inside the rail. */
 .quotes-split #quotes_list_card #quotes_filter_chips {
