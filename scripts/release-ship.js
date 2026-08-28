@@ -118,7 +118,16 @@ async function main() {
     if (JSON.parse(fs.readFileSync(pkgPath, 'utf8')).version !== version) {
       fail('The version bump did not take - package.json left untouched otherwise.');
     }
-    run('git', ['add', 'package.json']);
+    /*
+     * package.json is not the only file that names the release: codemeta.json
+     * states it twice plus a sentence, CITATION.cff states it again, and the
+     * generated OpenAPI spec carries it too. Three tests assert they agree and
+     * CI regenerates the docs and fails on any diff - so bumping one file
+     * pushes a tag that CI refuses a minute later, which is exactly what the
+     * first real run of this command did.
+     */
+    runLive('node', ['scripts/sync-version.js']);
+    run('git', ['add', '-A']);
     run('git', ['commit', '-m', tag]);
     run('git', ['tag', tag]);
     run('git', ['push', 'origin', 'main']);
