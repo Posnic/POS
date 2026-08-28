@@ -129,3 +129,23 @@ test('the website mints and consumes the token safely', (t) => {
   assert.match(server, /findOne\(\{ _id: row\.userId \}\)/,
     'the account must come from the token record, not the request');
 });
+
+test('the SSO routes forbid caching', (t) => {
+  /*
+   * posnic.com sits behind CloudFront, and it demonstrably caches on this
+   * path: a 404 served before the route existed was still being returned
+   * afterwards, and only a cache-busting parameter got through.
+   *
+   * A cached 404 is confusing. A cached redirect carrying Set-Cookie would
+   * hand one person's session to whoever asked next, which is why this is
+   * stated explicitly rather than left to the CDN's default handling.
+   */
+  if (!fs.existsSync(WEB_API)) { t.skip('web-api is not checked out beside this repo'); return; }
+  const server = fs.readFileSync(WEB_API, 'utf8');
+  assert.match(server, /Cache-Control', 'no-store/,
+    'the SSO routes must send no-store');
+  const mint = server.indexOf("app.post('/api/sso/token'");
+  const consume = server.indexOf('const ssoConsume = async');
+  assert.match(server.slice(mint, mint + 200), /noStore\(res\)/, 'mint must not be cacheable');
+  assert.match(server.slice(consume, consume + 200), /noStore\(res\)/, 'consume must not be cacheable');
+});
