@@ -104,3 +104,32 @@ test('stable tills verify update signatures; betas opt out explicitly', () => {
      (windows-code-signing.test.js pins the value; this pins the pairing). */
   assert.strictEqual(pkg.build.win.signtoolOptions.publisherName, 'BillMax');
 });
+
+test('a version bump reaches every file that states the version', () => {
+  /* package.json is not the only file naming the release: codemeta.json says
+     it twice plus a sentence, CITATION.cff says it again, and the generated
+     OpenAPI spec carries it. Three tests assert they agree and CI regenerates
+     the docs and fails on any diff - so bumping one file pushes a tag that CI
+     refuses a minute later. That is not theory: it is what the first real run
+     of release:ship did. */
+  const sync = fs.readFileSync(path.join(ROOT, 'scripts', 'sync-version.js'), 'utf8');
+  for (const f of ['codemeta.json', 'CITATION.cff', 'api/package.json']) {
+    assert.ok(sync.includes(f), `sync-version.js no longer updates ${f}`);
+  }
+  assert.match(sync, /softwareVersion/, 'codemeta states the version twice; one is missed');
+  assert.match(sync, /docs:api/, 'the OpenAPI spec is not regenerated, so CI will reject the tag');
+
+  const ship = fs.readFileSync(path.join(ROOT, 'scripts', 'release-ship.js'), 'utf8');
+  const syncAt = ship.indexOf('sync-version.js');
+  const commitAt = ship.indexOf("'commit'");
+  assert.ok(syncAt > 0, 'the ship command bumps package.json alone again');
+  assert.ok(syncAt < commitAt, 'the sync runs after the commit, so the tag misses it');
+});
+
+test('every version-bearing file agrees right now', () => {
+  /* The check mode, run as a test: this is the assertion CI makes from three
+     directions, caught here in one. */
+  const { execFileSync } = require('child_process');
+  execFileSync('node', [path.join(ROOT, 'scripts', 'sync-version.js'), '--check'],
+    { cwd: ROOT, stdio: 'pipe' });
+});
