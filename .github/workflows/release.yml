@@ -385,20 +385,22 @@ jobs:
 
             - **Windows** is signed and timestamped. The installer names its
               publisher, and no warning should appear.
-            - **macOS is not signed yet.** On Apple Silicon it will refuse to open
-              rather than warn, and the usual right-click -> **Open** advice does not
-              help for an app signed by nobody. Signing macOS needs an Apple
-              Developer membership, which is separate from the Windows certificate.
-            - **Linux** packages are unsigned, which is normal for AppImage and .deb
-              outside a distribution repository.
+            - **macOS is signed and notarized** (Developer ID, checked by Apple's
+              notary service, ticket stapled) - Gatekeeper opens it like any app
+              from the App Store era. If you see a publisher warning, you are not
+              holding our build.
+            - **Linux**: install through the signed APT repository at
+              [packages.posnic.com](https://packages.posnic.com) and `apt` verifies
+              every package and every update from then on. The direct `.deb` and
+              AppImage remain, with checksums and detached GPG signatures beside them.
 
-            That warning is accurate. You are trusting the download rather than a
-            certificate, so **check `SHA256SUMS.txt` against your file before installing**,
-            and download only from this releases page.
+            Whatever you download, `SHA256SUMS.txt` on this page lists what the
+            bytes should be - and the release is provenance-attested, so GitHub can
+            prove it was built by this repository's own workflow.
 
-            Automatic updates are not signature-verified in this build either. Posnic
-            checks the download against the hash it was told to expect, but nothing yet
-            proves that hash came from us.
+            Automatic updates check both the hash they were promised and, on
+            Windows and macOS, the code signature of what actually arrived -
+            an update that is not ours does not install.
 
             ### What to expect
 
