@@ -82,6 +82,7 @@
             "static/script/js/modules/js/categories.js",
             "static/script/js/modules/js/customer_categories.js",
             "static/script/js/modules/js/variants.js",
+            "static/script/js/modules/js/units.js",
             "static/script/js/modules/js/customers.js",
             "static/script/js/plugins/toolbar/jquery.toolbar.js",
             "static/script/js/modules/js/dashboard.js",

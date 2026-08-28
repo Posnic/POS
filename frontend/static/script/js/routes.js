@@ -170,19 +170,11 @@ $(document).ready(function () {
     });
     crossroads.addRoute('{page}/{module}/{id}/edit', function (page, module, id) {
         RECORD_ID = id;
-        if(module === 'unit'){
-           withModule(module, function () { PosnicPro[module].triggerUnitEdit(id); });
-        }else{
-           withModule(module, function () { PosnicPro[module].triggerTaxEdit(id); });
-        }
+        withModule(module, function () { PosnicPro[module].triggerTaxEdit(id); });
     });
     crossroads.addRoute('{page}/{module}/{id}/delete', function (page, module, id) {
-        RECORD_ID = id;        
-        if(module === 'unit'){
-            withModule(module, function () { PosnicPro[module].triggerUnitDelete(id); });
-        }else{
-           withModule(module, function () { PosnicPro[module].triggerTaxDelete(id); });
-        }
+        RECORD_ID = id;
+        withModule(module, function () { PosnicPro[module].triggerTaxDelete(id); });
     });
     crossroads.routed.add(function (request, data) {
         crossroads.resetState()
