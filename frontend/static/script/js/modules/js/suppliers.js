@@ -61,7 +61,6 @@ PosnicPro.suppliers = {
         $('#v-pills-purchase').addClass('show active');
         $('.vertical-menu li a#view_suppliers_page').addClass('active');
         $('.page-title-box,#suppliers').show();
-        $('#suppliers_new,#suppliers_view').modal('hide');
         $('.dashboard_img_menu').hide();
         $('#image_sidebar_supply').show();
     },

@@ -177,7 +177,6 @@ PosnicPro.categories = {
         $('#v-pills-inventory-tab,#view_categories_page').addClass('active');
         $('#v-pills-inventory').addClass('show active');
         $('.page-title-box,#categories').show();
-        $('#categories_new,#categories_view').modal('hide');
         $('.dashboard_img_menu').hide();
         $('#image_sidebar_itemcatgory').show();
     },
@@ -232,8 +231,7 @@ PosnicPro.categories = {
             var html = '<div class="table-responsive"><table class="table table-borderless">'
                 + '<thead><tr><th style="width:44px;"></th><th>Name</th>'
                 + '<th class="text-right">Items</th><th class="text-right">Discount</th>'
-                + '<th class="cg-col-desc">Description</th><th class="cg-col-created">Added</th>'
-                + '<th style="width:90px;"></th></tr></thead><tbody>';
+                + '<th class="cg-col-desc">Description</th><th class="cg-col-created">Added</th></tr></thead><tbody>';
             list.forEach(function (r) {
                 /* The sale screen paints each category as its TILE - the list
                    shows the same identity instead of one grey stock icon per
@@ -262,10 +260,6 @@ PosnicPro.categories = {
                     + '<td class="text-right">' + esc(discount) + '</td>'
                     + '<td class="cg-col-desc q-muted">' + esc(r.description || '-') + '</td>'
                     + '<td class="cg-col-created q-muted">' + esc(r.created_date ? PosnicPro.convertDate(r.created_date) : '-') + '</td>'
-                    + '<td class="text-right" style="white-space:nowrap;">'
-                    + '<a data-module="category" data-access="write" href="#/categories/' + esc(r._id) + '/edit" class="btn btn-sm btn-light cg-row-act" data-toggle="tooltip" title="Edit"><i class="feather icon-edit-2"></i></a> '
-                    + '<a data-module="category" data-access="delete" href="#/categories/' + esc(r._id) + '/delete" class="btn btn-sm btn-light cg-row-act" data-toggle="tooltip" title="Delete"><i class="feather icon-trash-2"></i></a>'
-                    + '</td>'
                     + '</tr>';
             });
             html += '</tbody></table></div>';
@@ -873,8 +867,7 @@ $(document).on('click', '#categories_filter_btn', function () {
     PosnicPro.categories.mountFilters(true);
     PosnicPro.listFilter.toggle('categories');
 });
-$(document).on('click', '#categories_list_rows tr.categories-row', function (e) {
-    if ($(e.target).closest('.cg-row-act').length) { return; }
+$(document).on('click', '#categories_list_rows tr.categories-row', function () {
     PosnicPro.categories.openDoc($(this).data('id'));
 });
 

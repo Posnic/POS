@@ -69,14 +69,6 @@ PosnicPro.roles = {
                     : '<span class="badge badge-success-inverse">Custom</span>') + '</td>'
                 + '<td class="rl-col-desc" style="max-width:320px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">' + esc(r.description || '') + '</td>'
                 + '<td class="rl-col-auth q-muted" style="white-space:nowrap;">' + esc(authority) + '</td>'
-                + '<td class="text-right" style="white-space:nowrap;">'
-                + (canWrite
-                    ? '<a href="javascript:void(0);" class="btn btn-sm btn-light rl-row-act" title="Edit" onclick="PosnicPro.roles.openEditor(\'' + id + '\');"><i class="feather icon-edit-2"></i></a> '
-                      + '<a href="javascript:void(0);" class="btn btn-sm btn-light rl-row-act" title="Clone as custom role" onclick="PosnicPro.roles.openEditor(\'' + id + '\', true);"><i class="feather icon-copy"></i></a>'
-                      + (r.is_system ? ''
-                          : ' <a href="javascript:void(0);" class="btn btn-sm btn-light text-danger rl-row-act" title="Delete" onclick="PosnicPro.roles.remove(\'' + id + '\');"><i class="feather icon-trash-2"></i></a>')
-                    : '')
-                + '</td>'
                 + '</tr>';
         });
         $('#roles_admin_body').html(html
@@ -126,6 +118,9 @@ PosnicPro.roles = {
                 + ' onclick="PosnicPro.roles.openEditor(\'' + esc(roleId) + '\', true);"><i class="feather icon-copy"></i></button>'
                 + '<button type="button" class="btn btn-sm btn-light" data-toggle="tooltip" title="Edit this role" aria-label="Edit"'
                 + ' onclick="PosnicPro.roles.openEditor(\'' + esc(roleId) + '\');"><i class="feather icon-edit-2"></i></button>'
+                + (r.is_system ? ''
+                    : '<button type="button" class="btn btn-sm btn-light" data-toggle="tooltip" title="Delete this role" aria-label="Delete"'
+                        + ' onclick="PosnicPro.listDoc.close(\'roles\'); PosnicPro.roles.remove(\'' + esc(roleId) + '\');"><i class="feather icon-trash-2"></i></button>')
             : '';
         PosnicPro.listDoc.open({ key: 'roles', id: roleId, title: r.name, actions: actions, body: body });
     },
@@ -255,7 +250,6 @@ PosnicPro.roles = {
 };
 
 /* Row click peeks the role in place; the action buttons never also open it. */
-$(document).on('click', '#roles_admin_body tr.roles-row', function (e) {
-    if ($(e.target).closest('.rl-row-act').length) { return; }
+$(document).on('click', '#roles_admin_body tr.roles-row', function () {
     PosnicPro.roles.openDoc($(this).data('id'));
 });

@@ -438,7 +438,12 @@ PosnicPro = {
     },
     alert: function (heading, text, hideAfter, position) {
         // More Toast details https://kamranahmed.info/toast#toast-head
-        hideAfter = typeof hideAfter === 'undefined' ? 4500 : hideAfter;
+        // 2500, down from 4500 (owner: "reduce auto close time") - a
+        // confirmation is read in a glance; errors linger a little longer
+        // because they carry something to act on.
+        if (typeof hideAfter === 'undefined') {
+            hideAfter = String(heading).toLowerCase() === 'error' ? 4000 : 2500;
+        }
         position = typeof position === 'undefined' ? 'top-right' : position;
         var icon = heading === 'Information' || heading === 'Alert' ? 'info' : heading;
         icon = icon.toLowerCase();

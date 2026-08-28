@@ -625,7 +625,6 @@ PosnicPro.items = {
         $('#v-pills-inventory-tab,#view_items_page').addClass('active');
         $('#v-pills-inventory').addClass('show active');
         $('.page-title-box,#items').show();
-        $('#items_new,#items_view').modal('hide');
         $('.dashboard_img_menu').hide();
         $('#image_sidebar_itemdetail').show();
     },
@@ -4431,9 +4430,6 @@ $(document).ready(function () {
         }
     });
 
-});
-$('.modal').on('show.bs.modal', function () {
-    $('#categories_view').css('z-index', 1051);
 });
 
 

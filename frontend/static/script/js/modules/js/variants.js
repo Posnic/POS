@@ -129,17 +129,13 @@ PosnicPro.variants = {
                 return;
             }
             var html = '<div class="table-responsive"><table class="table table-borderless">'
-                + '<thead><tr><th>Name</th><th class="vr-col-values">Values</th><th style="width:120px;"></th></tr></thead><tbody>';
+                + '<thead><tr><th>Name</th><th class="vr-col-values">Values</th></tr></thead><tbody>';
             list.forEach(function (r) {
                 var values = (r.fields || []).map(function (f) { return f && f.name; }).filter(Boolean).join(', ');
                 html += '<tr class="md-row variants-row highlight-select'
                     + (PosnicPro.listDoc.activeId('variants') === String(r._id) ? ' is-active' : '') + '" data-id="' + esc(r._id) + '" style="cursor:pointer;">'
                     + '<td>' + esc(r.name) + '</td>'
                     + '<td class="vr-col-values q-muted">' + esc(values || '-') + '</td>'
-                    + '<td class="text-right" style="white-space:nowrap;">'
-                    + '<a data-module="item" data-access="write" href="#/variants/' + esc(r._id) + '/edit" class="btn btn-sm btn-light vr-row-act" data-toggle="tooltip" title="Edit"><i class="feather icon-edit-2"></i></a> '
-                    + '<a data-module="item" data-access="delete" href="#/variants/' + esc(r._id) + '/delete" class="btn btn-sm btn-light vr-row-act" data-toggle="tooltip" title="Delete"><i class="feather icon-trash-2"></i></a>'
-                    + '</td>'
                     + '</tr>';
             });
             html += '</tbody></table></div>';
@@ -332,8 +328,7 @@ $(document).on('click', '#variants_filter_btn', function () {
     PosnicPro.variants.mountFilters(true);
     PosnicPro.listFilter.toggle('variants');
 });
-$(document).on('click', '#variants_list_rows tr.variants-row', function (e) {
-    if ($(e.target).closest('.vr-row-act').length) { return; }
+$(document).on('click', '#variants_list_rows tr.variants-row', function () {
     PosnicPro.variants.openDoc($(this).data('id'));
 });
 
