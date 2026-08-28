@@ -69,7 +69,7 @@ function publicUrlFor(key) {
  * Returns the shape the v2 call used to return, so callers reading `.Location`
  * keep working.
  */
-async function uploadObject({ key, filePath, body, contentType, acl }) {
+async function uploadObject({ key, filePath, body, contentType, contentDisposition, acl }) {
   const cfg = s3Config();
   await getS3Client().send(
     new PutObjectCommand({
@@ -77,6 +77,9 @@ async function uploadObject({ key, filePath, body, contentType, acl }) {
       Key: key,
       Body: body !== undefined ? body : fs.createReadStream(filePath),
       ContentType: contentType,
+      // Short keys carry no extension, so the OBJECT names the download -
+      // without this a saved link arrives as an extensionless blob.
+      ...(contentDisposition ? { ContentDisposition: contentDisposition } : {}),
       ...(acl ? { ACL: acl } : {}),
     })
   );
