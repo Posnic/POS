@@ -34,15 +34,40 @@
                             <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.items.exportAllCsv(); return false;">Everything matching the filter</a>
                         </div>
                         </div>
+                        <!-- The catalogue levers that used to hide across
+                             pages: price and stock in bulk, in one place. -->
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-primary-rgba dropdown-toggle" data-toggle="dropdown"
+                                aria-haspopup="true" aria-expanded="false" data-module="item" data-access="write"
+                                title="Catalogue tools">
+                                <i class="feather icon-tool mr-2"></i>Tools
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-right">
+                                <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.items.openBulkPrice(); return false;"><i class="feather icon-trending-up mr-2"></i>Bulk price update</a>
+                                <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.items.openStockAdjustment(); return false;"><i class="feather icon-sliders mr-2"></i>Stock adjustment</a>
+                                <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.items.openBulkStock(); return false;"><i class="feather icon-layers mr-2"></i>Bulk stock update</a>
+                            </div>
+                        </div>
                         <span id="items_sort_host"></span>
                         <button type="button" id="items_filter_btn" class="btn btn-primary-rgba lf-btn"
                                 data-toggle="tooltip" title="Filter items">
                             <i class="feather icon-filter mr-2"></i>Filter
                         </button>
-                        <a data-module="category" data-access="write" href='#/items/new' onClick="PosnicPro.items.addItemButton();" class="btn btn-primary-rgba dash_sale_count add_new_tooltip" data-toggle="tooltip" title="New Item">
-                            <i class="feather icon-plus mr-2"></i>
-                            <lang class="lang_addvariant_title">New</lang>
-                        </a>
+                        <!-- The hub's three add doors in ONE dropdown (owner-
+                             approved regroup) - and gated by the ITEM acl,
+                             which the old button was not (it said category). -->
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-primary-rgba dropdown-toggle" data-toggle="dropdown"
+                                aria-haspopup="true" aria-expanded="false" data-module="item" data-access="write"
+                                title="Add items">
+                                <i class="feather icon-plus mr-2"></i><lang class="lang_addvariant_title">New</lang>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-right">
+                                <a class="dropdown-item" href="#/items/new" onclick="PosnicPro.items.addItemButton();"><i class="feather icon-box mr-2"></i>Standard item</a>
+                                <a class="dropdown-item" href="#/quickitems"><i class="feather icon-zap mr-2"></i>Quick add</a>
+                                <a class="dropdown-item" href="#/bulkitems"><i class="feather icon-layers mr-2"></i>Bulk add</a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
