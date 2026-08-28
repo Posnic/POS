@@ -433,6 +433,32 @@ PosnicPro.listFilter = {
         if (typeof m.cfg.onChange === 'function') m.cfg.onChange(LF.params(key), m.state);
     };
 
+    /*
+     * Programmatic filter, for doors that land a page PRE-FILTERED - the
+     * item pane's "all movements for this item" lands on Inventory Logs
+     * already narrowed to the item, with the strip OPEN so the person can
+     * see what is applied and add the date range themselves. Rebuilding the
+     * strip here is safe on purpose: this runs on arrival, never while
+     * someone is typing in it.
+     */
+    LF.preset = function (key, opts) {
+        var m = LF._mounted[key];
+        if (!m) return;
+        opts = opts || {};
+        m.state.search = String(opts.search || '');
+        m.state.field = opts.field || 'all';
+        m.state.exact = !!opts.exact;
+        m.state._picked = !!opts.exact;
+        var $panel = $(m.cfg.container);
+        $panel.empty();
+        LF.render(key);
+        if (!$panel.is(':visible')) {
+            $panel.show();
+            $(m.cfg.button).addClass('lf-btn-open').attr('aria-expanded', 'true');
+        }
+        LF._changed(key);
+    };
+
     var owner = function (el) { return $(el).closest('[data-lf]').attr('data-lf'); };
 
     /* Search-as-you-type, without a query per letter.

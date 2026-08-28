@@ -284,14 +284,14 @@ PosnicPro.items = {
         });
         PosnicPro.listSort.mount('items', {
             options: [
-                { v: 'recent', l: 'Recently updated' },
-                { v: 'margin_desc', l: 'High margin first' },
-                { v: 'margin_asc', l: 'Low margin first' },
-                { v: 'stock_asc', l: 'Low stock first' },
-                { v: 'price_desc', l: 'Price: high to low' },
-                { v: 'price_asc', l: 'Price: low to high' },
-                { v: 'cost_desc', l: 'Cost: high to low' },
-                { v: 'name', l: 'Name A to Z' }
+                { v: 'recent', l: 'Recently updated', i: 'clock' },
+                { v: 'margin_desc', l: 'High margin first', i: 'trending-up' },
+                { v: 'margin_asc', l: 'Low margin first', i: 'trending-down' },
+                { v: 'stock_asc', l: 'Low stock first', i: 'alert-triangle' },
+                { v: 'price_desc', l: 'Price: high to low', i: 'arrow-down' },
+                { v: 'price_asc', l: 'Price: low to high', i: 'arrow-up' },
+                { v: 'cost_desc', l: 'Cost: high to low', i: 'arrow-down' },
+                { v: 'name', l: 'Name A to Z', i: 'type' }
             ],
             onChange: function () { PosnicPro.items.loadList(1); }
         });
@@ -599,6 +599,12 @@ PosnicPro.items = {
                     + '</tr>';
             });
             html += '</tbody></table>';
+            /* Recent only, BY DESIGN - the full ledger with its date range
+               lives on Inventory Logs; this door lands there pre-filtered
+               to the item (owner: "let him search in inventory logs"). */
+            html += '<div style="margin-top:8px; font-size:13px;">'
+                + '<a href="javascript:void(0)" onclick="PosnicPro.stocklogs.openForItem(' + JSON.stringify(String(d.name || '')).replace(/"/g, '&quot;') + ');">'
+                + 'All movements for this item &rarr;</a></div>';
             $('#i_doc_moves').html(html);
         }, function () {
             $('#i_doc_moves').html('<div class="text-muted">Stock history unavailable.</div>');

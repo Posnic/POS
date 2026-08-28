@@ -1897,11 +1897,25 @@ PosnicPro.purchaseorders = {
      */
     loadList: function (page) {
         PosnicPro.purchaseorders.mountPurchaseFilters();
+        PosnicPro.listSort.mount('purchases', {
+            options: [
+                { v: 'date_asc', l: 'Bill date: oldest', i: 'rotate-ccw' },
+                { v: 'total_desc', l: 'Highest amount first', i: 'arrow-down' },
+                { v: 'total_asc', l: 'Lowest amount first', i: 'arrow-up' },
+                { v: 'expected_asc', l: 'Expected: soonest', i: 'truck' },
+                { v: 'supplier', l: 'Supplier A to Z', i: 'type' }
+            ],
+            onChange: function () { PosnicPro.purchaseorders.loadList(1); }
+        });
         var self = PosnicPro.purchaseorders;
         if (page) { self._page = page; }
         var p = self._page;
         var size = self.PAGE_SIZE;
         var fetchLimit = Math.min(p * size + 1, 100);
+        /* An active sort must rank the whole honest window, not just the
+           newest page-load - otherwise "highest amount first" only ranks
+           the latest handful. Same 2x100 cap the pager already owns. */
+        if (PosnicPro.listSort.value('purchases')) { fetchLimit = 100; }
         var filters = PosnicPro.listFilter.legacyFilters('receivings', { dateKey: 'date' });
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
         var done = { po: null, rec: null };
@@ -1911,8 +1925,20 @@ PosnicPro.purchaseorders = {
             var rows = done.po.concat(done.rec);
             var ts = function (v) { var t = new Date(v || 0).getTime(); return isNaN(t) ? 0 : t; };
             /* Same bill date is the NORMAL case (today's purchases) - the
-               tie breaks on created time so the newest entry leads. */
-            rows.sort(function (a, b) { return ts(b.date) - ts(a.date) || ts(b.created) - ts(a.created); });
+               tie breaks on created time so the newest entry leads. The list
+               is a client-side merge of two doors, so Sort is client-side
+               too - no server round trip, the whole set is already here. */
+            var num = function (v) { return Number(v) || 0; };
+            var CMP = {
+                date_asc: function (a, b) { return ts(a.date) - ts(b.date) || ts(a.created) - ts(b.created); },
+                total_desc: function (a, b) { return num(b.total) - num(a.total); },
+                total_asc: function (a, b) { return num(a.total) - num(b.total); },
+                /* No expected date sinks to the bottom, not to "due first". */
+                expected_asc: function (a, b) { return (ts(a.expected) || Infinity) - (ts(b.expected) || Infinity); },
+                supplier: function (a, b) { return String(a.supplier || '').localeCompare(String(b.supplier || '')); }
+            };
+            rows.sort(CMP[PosnicPro.listSort.value('purchases')]
+                || function (a, b) { return ts(b.date) - ts(a.date) || ts(b.created) - ts(a.created); });
             self._lastRows = rows;
             var chip = self._status;
             var filtered = !chip ? rows : rows.filter(function (r) {

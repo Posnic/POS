@@ -26,9 +26,18 @@ PosnicPro.stocklogs = {
                 date: PosnicPro.convertDate(d.created_date),
                 item_id: d.view_item_id
             }));
+            PosnicPro.stocklogs._aclDoc();
         }, function () {
             PosnicPro.listDoc.body('stocklogs', '<div class="text-danger p-3">Could not open this movement.</div>');
         });
+    },
+    /* The pane draws AFTER the login-time ACL sweep - its links to the
+       bill, the purchase and the item must obey the same gates the menu
+       does, so every render re-scans the three modules it can point at. */
+    _aclDoc: function () {
+        PosnicPro.ACLForModule('sales');
+        PosnicPro.ACLForModule('receiving');
+        PosnicPro.ACLForModule('item');
     },
     /* Row click: the pane fills straight from the row the list holds. */
     openDoc: function (logId) {
@@ -51,6 +60,7 @@ PosnicPro.stocklogs = {
                 item_id: r.view_item_id
             })
         });
+        PosnicPro.stocklogs._aclDoc();
     },
     _docBody: function (o) {
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
@@ -69,7 +79,8 @@ PosnicPro.stocklogs = {
             var refTarget = /sale/i.test(o.process || '') ? 'sale'
                 : /receiving|purchase/i.test(o.process || '') ? 'purchase' : '';
             refLine = refTarget
-                ? '<div><a href="javascript:void(0)" onclick="PosnicPro.stocklogs.openReference(\'' + refTarget + '\', \'' + esc(o.reference) + '\');">'
+                ? '<div><a href="javascript:void(0)" data-module="' + (refTarget === 'sale' ? 'sales' : 'receiving') + '" data-access="read||write||delete"'
+                    + ' onclick="PosnicPro.stocklogs.openReference(\'' + refTarget + '\', \'' + esc(o.reference) + '\');">'
                     + esc(o.reference) + ' &rarr;</a>'
                     + '<span class="q-muted" style="margin-left:6px;">' + (refTarget === 'sale' ? 'the bill' : 'the purchase') + '</span></div>'
                 : '<div class="q-muted">Ref: ' + esc(o.reference) + '</div>';
@@ -91,11 +102,22 @@ PosnicPro.stocklogs = {
                 ] }
             ])
             + (o.item_id
-                ? PosnicPro.listDoc.link('Open item in Item List', "hasher.setHash('items/" + esc(o.item_id) + "');")
+                ? PosnicPro.listDoc.link('Open item in Item List', "hasher.setHash('items/" + esc(o.item_id) + "');",
+                    'data-module="item" data-access="read||write||delete"')
                 : '');
     },
     /* Resolve a reference number to its document and land on it - the
        ledger stores the NUMBER, the pages navigate by id. */
+    /* The item pane's door: the full ledger for ONE item, with the filter
+       strip open so the date range is one click away (owner: the pane shows
+       only recent - the search lives HERE, not duplicated in the pane). */
+    openForItem: function (name) {
+        hasher.setHash('stocklogs');
+        setTimeout(function () {
+            PosnicPro.stocklogs.mountFilters();
+            PosnicPro.listFilter.preset('stocklogs', { search: name, field: 'item_name', exact: true });
+        }, 200);
+    },
     openReference: function (kind, ref) {
         var exact = String(ref).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         if (kind === 'sale') {
