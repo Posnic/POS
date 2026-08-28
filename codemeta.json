@@ -25,8 +25,8 @@
   "codeRepository": "https://github.com/Posnic/POS",
   "issueTracker": "https://github.com/Posnic/POS/issues",
   "continuousIntegration": "https://github.com/Posnic/POS/actions",
-  "version": "1.6.0",
-  "developmentStatus": "active development; package version 1.6.0 is not a tagged release",
+  "version": "1.6.1",
+  "developmentStatus": "active development; package version 1.6.1 is not a tagged release",
   "license": "https://spdx.org/licenses/AGPL-3.0-only.html",
   "isAccessibleForFree": true,
   "programmingLanguage": [
@@ -76,7 +76,7 @@
     "https://posnic.com/developers",
     "https://github.com/Posnic/POS/blob/main/docs/ADOPTION_EVIDENCE.md"
   ],
-  "softwareVersion": "1.6.0",
+  "softwareVersion": "1.6.1",
   "dateModified": "2026-08-23",
   "readme": "https://github.com/Posnic/POS/blob/main/README.md",
   "buildInstructions": "https://github.com/Posnic/POS/blob/main/docs/DEVELOPMENT.md",
