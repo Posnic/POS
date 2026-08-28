@@ -5400,7 +5400,10 @@ class SalesController extends BaseController {
        * only makes the message longer. No .pdf either - the object's
        * content type renders it. Old invoices/... keys stay served.
        */
-      const key = `i/${crypto.randomBytes(9).toString('base64url')}`;
+      /* One short domain for EVERY instance (owner): each non-production
+       * instance namespaces its keys with SHARE_LINK_PREFIX (demo: 'd/'),
+       * and CloudFront routes each prefix to that instance's bucket. */
+      const key = `${process.env.SHARE_LINK_PREFIX || ''}i/${crypto.randomBytes(9).toString('base64url')}`;
 
       const { PutObjectCommand } = require('@aws-sdk/client-s3');
       await getS3Client().send(
