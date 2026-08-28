@@ -154,8 +154,13 @@ jobs:
       - name: Prepare everything the installer bundles
         run: npm run prepare:bundle
 
+      # Betas are deliberately unsigned test builds, so THEY must not bake in
+      # update-signature verification: a beta till that verified would refuse
+      # the next unsigned beta and silently stop updating. Stable keeps the
+      # repo default (verifyUpdateCodeSignature: true) - the desk build signs,
+      # so stable tills verify every download came from the same publisher.
       - name: Build
-        run: npx electron-builder ${{ matrix.flag }} --publish never
+        run: npx electron-builder ${{ matrix.flag }} --publish never --config.win.verifyUpdateCodeSignature=false
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
