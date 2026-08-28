@@ -45,6 +45,7 @@
     "sign:link": "node scripts/link-signing-cert.js",
     "sign:verify": "node scripts/verify-signature.js",
     "release:windows": "node scripts/release-windows.js",
+    "release:ship": "node scripts/release-ship.js",
     "scan:secrets": "node scripts/scan-git-history.js",
     "badges": "node scripts/check-badges.js",
     "badges:fix": "node scripts/check-badges.js --fix",
@@ -326,7 +327,7 @@
           ]
         }
       ],
-      "verifyUpdateCodeSignature": false,
+      "verifyUpdateCodeSignature": true,
       "signAndEditExecutable": true,
       "signtoolOptions": {
         "publisherName": "BillMax",
