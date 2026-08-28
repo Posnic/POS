@@ -66,7 +66,16 @@ test('the returned link has exactly one slash before ssoauth', () => {
   const m = body.match(/const path = `([^`]+)`/);
   assert.ok(m, 'the redirect path is no longer a template literal - check it by hand');
   assert.ok(!m[1].includes('//ssoauth'), 'double slash is back in the SSO link');
-  assert.match(m[1], /\$\{siteBase\}\/ssoauth\?token=/);
+  assert.match(m[1], /\$\{siteBase\}\/api\/sso\/auth\?token=/,
+    'the link must use the /api prefix - CloudFront forwards only that to the service, '
+    + 'and a bare /ssoauth answers 403 from the CDN exactly as /ssoauth.html did');
+});
+
+test('the website answers the consume route under /api too', (t) => {
+  if (!fs.existsSync(WEB_API)) { t.skip('web-api is not checked out beside this repo'); return; }
+  const server = fs.readFileSync(WEB_API, 'utf8');
+  assert.match(server, /app\.get\('\/api\/sso\/auth', ssoConsume\)/,
+    'without the /api route the token can be minted but never used through the CDN');
 });
 
 test('the token is url-encoded into the link', () => {
