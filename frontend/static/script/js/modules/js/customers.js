@@ -214,6 +214,7 @@ PosnicPro.customers = {
                 return;
             }
             PosnicPro.customers.renderCustomerDoc(response.data);
+            PosnicPro.ACLForModule('customer');
         }, function () {
             $('#customers_doc').html('<div class="text-danger p-4">Could not open this customer.</div>');
         });
@@ -238,13 +239,13 @@ PosnicPro.customers = {
             + (Number(d.partial_balance) > 0 ? '<span class="rs-pill unpaid">Dues ' + PosnicPro.local.get('currencySign') + '&nbsp;' + Number(d.partial_balance).toFixed(2) + '</span>' : '')
             + '<span class="ml-auto"></span>'
             + (Number(d.partial_balance) > 0
-                ? '<button type="button" class="btn btn-sm btn-primary" onclick="hasher.setHash(\'customers/' + esc(id) + '/transaction\');"><i class="feather icon-credit-card mr-1"></i>Settle dues</button>'
+                ? '<button type="button" class="btn btn-sm btn-primary" data-module="customer" data-access="write" onclick="hasher.setHash(\'customers/' + esc(id) + '/transaction\');"><i class="feather icon-credit-card mr-1"></i>Settle dues</button>'
                 : '')
-            + '<button type="button" class="btn btn-sm btn-light" onclick="hasher.setHash(\'customers/' + esc(id) + '/edit\');"><i class="feather icon-edit-2 mr-1"></i>Edit</button>'
+            + '<button type="button" class="btn btn-sm btn-light" data-module="customer" data-access="write" onclick="hasher.setHash(\'customers/' + esc(id) + '/edit\');"><i class="feather icon-edit-2 mr-1"></i>Edit</button>'
             + '<div class="btn-group">'
             + '<button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">More</button>'
             + '<div class="dropdown-menu dropdown-menu-right">'
-            + '<a class="dropdown-item text-danger" href="javascript:void(0)" onclick="PosnicPro.customers.deleteAsk();"><i class="feather icon-trash mr-2"></i>Delete</a>'
+            + '<a class="dropdown-item text-danger" data-module="customer" data-access="delete" href="javascript:void(0)" onclick="PosnicPro.customers.deleteAsk();"><i class="feather icon-trash mr-2"></i>Delete</a>'
             + '</div></div>'
             + '<button type="button" class="btn btn-sm btn-light" title="Close and show the full list" aria-label="Close" onclick="PosnicPro.customers.closeDoc();"><i class="feather icon-x"></i></button>'
             + '</div>';

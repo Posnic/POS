@@ -2087,6 +2087,7 @@ PosnicPro.purchaseorders = {
         PosnicPro.get('receivings/' + id, function (response) {
             if (response.type !== 'success') { $('#purchases_doc').html('<div class="text-danger p-4">Could not open this purchase.</div>'); return; }
             PosnicPro.purchaseorders.renderPurchaseDoc(response.data);
+            PosnicPro.ACLForModule('receiving');
         }, function () { $('#purchases_doc').html('<div class="text-danger p-4">Could not open this purchase.</div>'); });
     },
     closeDoc: function () {
@@ -2235,11 +2236,11 @@ PosnicPro.purchaseorders = {
             + '<a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.receivings.view.receivingPdf(\'' + esc(d._id) + '\');"><i class="feather icon-file mr-2"></i>Download PDF</a>'
             + '<a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.receivings.view.emailToSupplier(\'' + esc(d._id) + '\');"><i class="feather icon-mail mr-2"></i>Email supplier</a>'
             + (!open && !cancelled
-                ? '<a class="dropdown-item" href="javascript:void(0)" onclick="hasher.setHash(\'receivings/' + esc(d._id) + '/return\');"><i class="feather icon-corner-up-left mr-2"></i>Return items</a>'
+                ? '<a class="dropdown-item" data-module="receiving" data-access="write" href="javascript:void(0)" onclick="hasher.setHash(\'receivings/' + esc(d._id) + '/return\');"><i class="feather icon-corner-up-left mr-2"></i>Return items</a>'
                 : '')
             + (!cancelled
                 ? '<div class="dropdown-divider"></div>'
-                    + '<a class="dropdown-item text-danger" href="javascript:void(0)" onclick="PosnicPro.purchaseorders.voidPurchase(\'' + esc(d._id) + '\',\'' + esc(d.receiving_id) + '\');"><i class="feather icon-slash mr-2"></i>Void</a>'
+                    + '<a class="dropdown-item text-danger" data-module="receiving" data-access="delete" href="javascript:void(0)" onclick="PosnicPro.purchaseorders.voidPurchase(\'' + esc(d._id) + '\',\'' + esc(d.receiving_id) + '\');"><i class="feather icon-slash mr-2"></i>Void</a>'
                 : '')
             + '</div></div>';
         var toolbar = '<div class="p-doc-toolbar">'
@@ -2248,7 +2249,7 @@ PosnicPro.purchaseorders = {
             + '<span class="ml-auto"></span>'
             + ((open || partial) && !cancelled
                 ? '<div class="btn-group">'
-                    + '<button type="button" class="btn btn-sm btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="feather icon-check mr-1"></i>Receive</button>'
+                    + '<button type="button" class="btn btn-sm btn-primary dropdown-toggle" data-module="receiving" data-access="write" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="feather icon-check mr-1"></i>Receive</button>'
                     + '<div class="dropdown-menu">'
                     + '<a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.purchaseorders.receiveAll(\'' + esc(d._id) + '\');">Received all</a>'
                     + '<a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.purchaseorders.receiveStripOpen(\'' + esc(d._id) + '\');">Partially \u2026</a>'
@@ -2257,7 +2258,7 @@ PosnicPro.purchaseorders = {
                         : '')
                     + '</div></div>'
                 : '')
-            + (!cancelled ? '<button type="button" class="btn btn-sm btn-light" onclick="hasher.setHash(\'receivings/' + esc(d._id) + '/edit\');"><i class="feather icon-edit-2 mr-1"></i>Edit</button>' : '')
+            + (!cancelled ? '<button type="button" class="btn btn-sm btn-light" data-module="receiving" data-access="write" onclick="hasher.setHash(\'receivings/' + esc(d._id) + '/edit\');"><i class="feather icon-edit-2 mr-1"></i>Edit</button>' : '')
             + more
             + '<button type="button" class="btn btn-sm btn-light" title="Close this purchase and show the full list" aria-label="Close" onclick="PosnicPro.purchaseorders.closeDoc();"><i class="feather icon-x"></i></button>'
             + '</div>';

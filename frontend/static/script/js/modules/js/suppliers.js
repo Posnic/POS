@@ -203,6 +203,7 @@ PosnicPro.suppliers = {
                 return;
             }
             PosnicPro.suppliers.renderSupplierDoc(response.data);
+            PosnicPro.ACLForModule('supplier');
         }, function () {
             $('#suppliers_doc').html('<div class="text-danger p-4">Could not open this supplier.</div>');
         });
@@ -225,11 +226,11 @@ PosnicPro.suppliers = {
             + '<button type="button" class="btn btn-sm btn-light" title="Show or hide the list" aria-label="Show or hide the list" onclick="PosnicPro.masterDetail.toggleRail(\'#suppliers_split\');"><i class="feather icon-sidebar"></i></button>'
             + '<span class="p-doc-title">' + esc(d.name) + '</span>'
             + '<span class="ml-auto"></span>'
-            + '<button type="button" class="btn btn-sm btn-light" onclick="hasher.setHash(\'suppliers/' + esc(id) + '/edit\');"><i class="feather icon-edit-2 mr-1"></i>Edit</button>'
+            + '<button type="button" class="btn btn-sm btn-light" data-module="supplier" data-access="write" onclick="hasher.setHash(\'suppliers/' + esc(id) + '/edit\');"><i class="feather icon-edit-2 mr-1"></i>Edit</button>'
             + '<div class="btn-group">'
             + '<button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">More</button>'
             + '<div class="dropdown-menu dropdown-menu-right">'
-            + '<a class="dropdown-item text-danger" href="javascript:void(0)" onclick="PosnicPro.suppliers.deleteAsk();"><i class="feather icon-trash mr-2"></i>Delete</a>'
+            + '<a class="dropdown-item text-danger" data-module="supplier" data-access="delete" href="javascript:void(0)" onclick="PosnicPro.suppliers.deleteAsk();"><i class="feather icon-trash mr-2"></i>Delete</a>'
             + '</div></div>'
             + '<button type="button" class="btn btn-sm btn-light" title="Close and show the full list" aria-label="Close" onclick="PosnicPro.suppliers.closeDoc();"><i class="feather icon-x"></i></button>'
             + '</div>';

@@ -502,14 +502,14 @@ PosnicPro.items = {
             + '<span class="p-doc-title">' + esc(d.name) + '</span>'
             + (low ? '<span class="rs-pill unpaid">Low stock</span>' : '')
             + '<span class="ml-auto"></span>'
-            + '<button type="button" class="btn btn-sm btn-light" onclick="hasher.setHash(\'items/' + esc(id) + '/edit\');"><i class="feather icon-edit-2 mr-1"></i>Edit</button>'
+            + '<button type="button" class="btn btn-sm btn-light" data-module="item" data-access="write" onclick="hasher.setHash(\'items/' + esc(id) + '/edit\');"><i class="feather icon-edit-2 mr-1"></i>Edit</button>'
             + '<div class="btn-group">'
             + '<button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">More</button>'
             + '<div class="dropdown-menu dropdown-menu-right">'
-            + '<a class="dropdown-item" href="javascript:void(0)" onclick="hasher.setHash(\'items/' + esc(id) + '/clone\');"><i class="feather icon-copy mr-2"></i>Clone</a>'
+            + '<a class="dropdown-item" data-module="item" data-access="write" href="javascript:void(0)" onclick="hasher.setHash(\'items/' + esc(id) + '/clone\');"><i class="feather icon-copy mr-2"></i>Clone</a>'
             + (real(d.barcode_id) ? '<a class="dropdown-item" href="javascript:void(0)" onclick="hasher.setHash(\'items/' + esc(id) + '/barcode\');"><i class="feather icon-align-justify mr-2"></i>Barcode labels</a>' : '')
             + '<div class="dropdown-divider"></div>'
-            + '<a class="dropdown-item text-danger" href="javascript:void(0)" onclick="PosnicPro.items.deleteAsk();"><i class="feather icon-trash mr-2"></i>Delete</a>'
+            + '<a class="dropdown-item text-danger" data-module="item" data-access="delete" href="javascript:void(0)" onclick="PosnicPro.items.deleteAsk();"><i class="feather icon-trash mr-2"></i>Delete</a>'
             + '</div></div>'
             + '<button type="button" class="btn btn-sm btn-light" title="Close and show the full list" aria-label="Close" onclick="PosnicPro.items.closeDoc();"><i class="feather icon-x"></i></button>'
             + '</div>';
@@ -566,6 +566,10 @@ PosnicPro.items = {
             + '</div></div>';
         $('#items_doc').html(toolbar + strip + body);
         PosnicPro.items.loadStockMoves(d);
+        /* The dossier renders AFTER the login-time ACL sweep - it must
+           re-scan itself or a restricted user sees doors the server will
+           refuse (owner: every list carries the ACL we defined). */
+        PosnicPro.ACLForModule('item');
     },
     /* The item's latest ledger lines, straight from the stocklogs the
        transition machinery writes. */
@@ -1649,7 +1653,7 @@ PosnicPro.items = {
         $(".vertical-layout").removeClass("toggle-menu");
         $(".vertical-menu li a").removeClass("active");
         $('.dropdown-item').removeClass('active');
-        $('#v-pills-inventory-tab,#new_items_page').addClass('active');
+        $('#v-pills-inventory-tab,#view_items_page').addClass('active');
         $('#v-pills-inventory').addClass('show active');
         $('#item_title_data').text('Add');
         $('#itemid').val('');
