@@ -3464,6 +3464,35 @@ PosnicPro = {
          * through Date, which is exactly where moment's fallback ended up
          * anyway, minus the console noise.
          */
+        /*
+         * The API's own stamp, parsed exactly instead of guessed.
+         *
+         * Every list endpoint dates its rows through utils/helpers.formatDate,
+         * which writes MM/DD/YYYY hh:mm am/pm. That shape had no entry in the
+         * format list below, so non-strict moment fell through to DD/MM/YYYY
+         * and chewed across the separator: "08/09/2026 09:05 am" came back as
+         * 20/09/2008 - wrong day AND wrong year - and "08/28/2026 08:59 am"
+         * lost its time entirely and rendered as midnight (owner, on the
+         * login history: "all are 12am only?"). Every screen showing a
+         * string_date was affected: sign-ins, sales history, the panes.
+         *
+         * Matched here explicitly, so there is no guessing left to get wrong.
+         * Anything that is not this exact shape falls through untouched.
+         */
+        var stamp = (typeof date === 'string')
+            && date.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})[\sT]+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([ap])\.?m\.?$/i);
+        if (stamp) {
+            var hh = parseInt(stamp[4], 10) % 12;
+            if (/p/i.test(stamp[7])) { hh += 12; }
+            var exact = new Date(
+                parseInt(stamp[3], 10), parseInt(stamp[1], 10) - 1, parseInt(stamp[2], 10),
+                hh, parseInt(stamp[5], 10), parseInt(stamp[6] || '0', 10));
+            if (!isNaN(exact.getTime())) {
+                return (PosnicPro.local.get('timeformat') === 'enable')
+                    ? moment(exact).format(formatData + ' ' + 'LT')
+                    : moment(exact).format(formatData);
+            }
+        }
         var m = (date instanceof Date || typeof date === 'number')
             ? moment(date)
             : moment(date, [
