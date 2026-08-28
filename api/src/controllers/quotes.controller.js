@@ -86,13 +86,18 @@ module.exports = {
       const doc = found.data;
       const rev = ((doc.share && doc.share.rev) || 0) + 1;
       const crypto = require('crypto');
-      const licensePart = String(doc.license || ctx.licenseId || 'shop').slice(-8);
-      const year = new Date().getFullYear();
-      const key = `quotes/${licensePart}/${year}/${crypto.randomBytes(16).toString('hex')}-r${rev}.pdf`;
+      /*
+       * q/<code>, matching the invoices' i/<code> (owner: short links,
+       * nothing brandable in them). 12 url-safe chars = 72 random bits;
+       * the rev still rides the recorded share, not the path. Old
+       * quotes/... keys stay served.
+       */
+      const key = `q/${crypto.randomBytes(9).toString('base64url')}`;
       const up = await uploadObject({
         key,
         body: Buffer.from(b64, 'base64'),
         contentType: 'application/pdf',
+        contentDisposition: `inline; filename="quote-${String(doc.quote_id || 'quote').replace(/[^\w.-]/g, '_')}.pdf"`,
       });
       const rec = await repository.recordShare(req.params.id, { key, url: up.Location, rev }, ctx);
       if (!rec.status) return fail(res, rec.message);

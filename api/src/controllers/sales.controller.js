@@ -5391,9 +5391,16 @@ class SalesController extends BaseController {
       const pdfBuffer = Buffer.concat(chunks);
 
       const crypto = require('crypto');
-      const year = new Date().getFullYear();
-      const licensePart = String(sale.license || 'shop').slice(-8);
-      const key = `invoices/${licensePart}/${year}/${crypto.randomBytes(16).toString('hex')}.pdf`;
+      /*
+       * i/<code>, nothing else (owner: "link can make short"). The key IS
+       * the secret and the whole path a customer sees - 12 url-safe chars
+       * carry 72 random bits, and behind the short domain the link reads
+       * https://xbill.in/i/AbC9xYz12Qw3. No folders: the DB holds the key
+       * per sale, and a path that organises nothing for anyone reading it
+       * only makes the message longer. No .pdf either - the object's
+       * content type renders it. Old invoices/... keys stay served.
+       */
+      const key = `i/${crypto.randomBytes(9).toString('base64url')}`;
 
       const { PutObjectCommand } = require('@aws-sdk/client-s3');
       await getS3Client().send(
@@ -5402,6 +5409,9 @@ class SalesController extends BaseController {
           Key: key,
           Body: pdfBuffer,
           ContentType: 'application/pdf',
+          // The short key has no extension, so the object names its own
+          // download - the browser renders inline and saves a real .pdf.
+          ContentDisposition: `inline; filename="invoice-${String(sale.sales_id || 'invoice').replace(/[^\w.-]/g, '_')}.pdf"`,
         })
       );
 
