@@ -1,6 +1,6 @@
 {
   "name": "posnic",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "Free, offline-first point-of-sale software for retail and restaurants. Posnic source is AGPL-3.0-only; packages contain separately licensed components.",
   "main": "src/main.js",
   "desktopName": "com.posnic.app.desktop",
