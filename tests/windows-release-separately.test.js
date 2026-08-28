@@ -131,3 +131,20 @@ test('release:windows is wired, and the release notes tell the truth', () => {
   assert.match(workflow, /packages\.posnic\.com/,
     'the notes no longer point Linux users at the signed APT repository');
 });
+
+test('a stable release does not greet customers as a beta', () => {
+  /* This workflow builds every v* tag, betas included, so one hardcoded set
+     of notes served both - and a stable release would have opened with "This
+     is an early public build". The warning is now written only for a beta,
+     alpha or rc tag; everything below it is true of both. */
+  const compose = workflow.slice(workflow.indexOf('Compose the release notes'));
+  assert.match(compose, /\*beta\*\|\*alpha\*\|\*rc\*/,
+    'the notes no longer branch on the tag - stable would read as a beta again');
+  assert.match(compose, /## Posnic \$\{TAG\}/, 'a stable release has no header of its own');
+  assert.match(workflow, /body_path: release\/NOTES\.md/,
+    'the composed notes are not the ones published');
+  assert.ok(
+    !/This is a beta holding your sales/.test(workflow),
+    'beta wording is still in the section both kinds of release share',
+  );
+});

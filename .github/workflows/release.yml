@@ -360,6 +360,78 @@ jobs:
         with:
           subject-checksums: release/SHA256SUMS.txt
 
+      # The notes serve two kinds of tag: the beta channel builds from here
+      # too (this workflow triggers on every v*), and a stable release must
+      # not greet customers with "this is an early public build". The beta
+      # warning is written only when the tag says beta; everything below it
+      # is true of both.
+      - name: Compose the release notes
+        env:
+          TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          mkdir -p release
+          case "$TAG" in
+            *beta*|*alpha*|*rc*)
+              cat > release/NOTES.md <<'POSNIC_BETA'
+          ## Beta - please read before installing
+
+          This is an early public build. It works, it is tested, and it is **not
+          finished**. Expect rough edges, and please report them.
+          POSNIC_BETA
+              ;;
+            *)
+              cat > release/NOTES.md <<POSNIC_STABLE
+          ## Posnic ${TAG}
+          
+          A stable release. Every installer below is signed by a publisher your
+          operating system can check for itself - how, per platform, next.
+          POSNIC_STABLE
+              ;;
+          esac
+          cat >> release/NOTES.md <<'POSNIC_COMMON'
+          
+          ### About the installers
+
+          - **Windows** is signed and timestamped. The installer names its
+            publisher, and no warning should appear.
+          - **macOS is signed and notarized** (Developer ID, checked by Apple's
+            notary service, ticket stapled) - Gatekeeper opens it like any app
+            from the App Store era. If you see a publisher warning, you are not
+            holding our build.
+          - **Linux**: install through the signed APT repository at
+            [packages.posnic.com](https://packages.posnic.com) and `apt` verifies
+            every package and every update from then on. The direct `.deb` and
+            AppImage remain, with checksums and detached GPG signatures beside them.
+
+          Whatever you download, `SHA256SUMS.txt` on this page lists what the
+          bytes should be - and the release is provenance-attested, so GitHub can
+          prove it was built by this repository's own workflow.
+
+          Automatic updates check both the hash they were promised and, on
+          Windows and macOS, the code signature of what actually arrived -
+          an update that is not ours does not install.
+
+          ### What to expect
+
+          - Your data stays on your own computer. No account, and no internet needed.
+          - **Take your own backups.** *Backup Manager -> Backup Now*, and keep a copy on
+            another machine or a USB drive. This software holds your sales.
+          - Printing, scales and cash drawers are tested, but not on every model. Test
+            your hardware from *Config -> Device Setup* before a trading day.
+          - First launch takes a few minutes while the database is prepared. Later
+            launches take seconds.
+
+          ### If something goes wrong
+
+          Open an issue with what you did, what happened, and your log file attached -
+          `%APPDATA%\posnic\app.log` on Windows. For an urgent problem where a shop
+          cannot trade: **+91 94941 11161**, answered any hour.
+
+          Free and open source under AGPL-3.0-only. Posnic Cloud (sync, off-site backups,
+          remote dashboard) is a separate paid service, and nothing here needs it.
+          POSNIC_COMMON
+          echo "--- release notes ---"; cat release/NOTES.md
+
       - uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ inputs.tag || github.ref_name }}
@@ -375,48 +447,4 @@ jobs:
           # should be offered to installed copies - which is what verifying the
           # update path requires.
           prerelease: ${{ vars.POSNIC_PRERELEASE != 'no' }}
-          body: |
-            ## Beta - please read before installing
-
-            This is an early public build. It works, it is tested, and it is **not
-            finished**. Expect rough edges, and please report them.
-
-            ### About the installers
-
-            - **Windows** is signed and timestamped. The installer names its
-              publisher, and no warning should appear.
-            - **macOS is signed and notarized** (Developer ID, checked by Apple's
-              notary service, ticket stapled) - Gatekeeper opens it like any app
-              from the App Store era. If you see a publisher warning, you are not
-              holding our build.
-            - **Linux**: install through the signed APT repository at
-              [packages.posnic.com](https://packages.posnic.com) and `apt` verifies
-              every package and every update from then on. The direct `.deb` and
-              AppImage remain, with checksums and detached GPG signatures beside them.
-
-            Whatever you download, `SHA256SUMS.txt` on this page lists what the
-            bytes should be - and the release is provenance-attested, so GitHub can
-            prove it was built by this repository's own workflow.
-
-            Automatic updates check both the hash they were promised and, on
-            Windows and macOS, the code signature of what actually arrived -
-            an update that is not ours does not install.
-
-            ### What to expect
-
-            - Your data stays on your own computer. No account, and no internet needed.
-            - **Take your own backups.** *Backup Manager -> Backup Now*, and keep a copy on
-              another machine or a USB drive. This is a beta holding your sales.
-            - Printing, scales and cash drawers are tested, but not on every model. Test
-              your hardware from *Config -> Device Setup* before a trading day.
-            - First launch takes a few minutes while the database is prepared. Later
-              launches take seconds.
-
-            ### If something goes wrong
-
-            Open an issue with what you did, what happened, and your log file attached -
-            `%APPDATA%\posnic\app.log` on Windows. For an urgent problem where a shop
-            cannot trade: **+91 94941 11161**, answered any hour.
-
-            Free and open source under AGPL-3.0-only. Posnic Cloud (sync, off-site backups,
-            remote dashboard) is a separate paid service, and nothing here needs it.
+          body_path: release/NOTES.md
