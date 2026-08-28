@@ -1,0 +1,57 @@
+<div class="vertical-layout page_loader" id="units" style="display: none">
+    <!-- Units, promoted from Core Settings -> Inventory to a first-class page
+         in the Inventory group (owner: "Units also we can move from Core
+         settings to here"). Built to LIST_PAGE_UX_STANDARD.md: standard
+         header, one list card, a row click opens the unit in the right pane,
+         and the pane owns Edit/Delete. The editor lives IN the pane - no
+         slide-over, no modal. -->
+    <div id="containerbar">
+        <div class="breadcrumbbar crumbbar_padding">
+            <div class="row align-items-center row_filter">
+                <div class="col-auto">
+                    <h4 class="page-title break_title mb-0"><lang class="lang_units_title">Units</lang></h4>
+                </div>
+                <div class="col">
+                    <div class="lf-panel" id="units_filter_panel" style="display:none;"></div>
+                </div>
+                <div class="col-auto text-right">
+                    <div class="widgetbar" id="units_controls">
+                        <div class="btn-group">
+                        <button type="button" class="btn btn-primary-rgba dropdown-toggle" data-toggle="dropdown"
+                            aria-haspopup="true" aria-expanded="false" title="Export CSV" aria-label="Export CSV">
+                            <i class="feather icon-share"></i>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-right">
+                            <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.units.exportCsv(); return false;">This page (what is shown)</a>
+                            <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.units.exportAllCsv(); return false;">Everything matching the filter</a>
+                        </div>
+                        </div>
+                        <button type="button" class="btn btn-primary-rgba lf-btn" id="units_filter_btn"
+                            data-toggle="tooltip" title="Filter units">
+                            <i class="feather icon-filter mr-2"></i>Filter
+                        </button>
+                        <a data-module="branch" data-access="write" href="#/units/new"
+                            class="btn btn-primary-rgba" data-toggle="tooltip" title="New unit">
+                            <i class="feather icon-plus mr-2"></i><lang class="lang_addvariant_title">New</lang>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="contentbar">
+        <div id="units_split">
+        <div class="card m-b-30 md-rail" id="units_list_card">
+            <div class="card-body">
+                <div id="units_list_rows" class="md-rail-rows text-muted">Loading units ...</div>
+                <div class="q-pager" id="units_list_paging"></div>
+            </div>
+        </div>
+            <div class="card m-b-30 md-detail" id="units_detail_card" style="display:none;">
+                <div id="units_doc"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Containerbar -->
