@@ -123,59 +123,74 @@ PosnicPro.branches = {
         PosnicPro.branches.openDoc(id);
     },
     openDoc: function (id) {
-        var self = PosnicPro.branches;
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
         var current = PosnicPro.local.get('branch_id_set') === String(id);
-        var actions = '<button type="button" class="btn btn-sm btn-light" data-module="branch" data-access="write" data-toggle="tooltip" title="Edit this branch" aria-label="Edit"'
-            + ' onclick="hasher.setHash(\'branches/' + esc(id) + '/edit\');"><i class="feather icon-edit-2"></i></button>';
         var pills = current ? '<span class="badge badge-success-inverse">Current</span>' : '';
-        var r = (self._lastRows || []).filter(function (x) { return String(x._id) === String(id); })[0];
-        if (r) {
-            PosnicPro.listDoc.open({ key: 'branches', id: id, title: r.branch_name, pills: pills, actions: actions, body: self._docBody(r, current) });
-            PosnicPro.ACLForModule('branch');
-            return;
-        }
+        /* The branch you are STANDING in cannot be deleted from under you. */
+        var actions = '<button type="button" class="btn btn-sm btn-light" data-module="branch" data-access="write" data-toggle="tooltip" title="Edit this branch" aria-label="Edit"'
+            + ' onclick="hasher.setHash(\'branches/' + esc(id) + '/edit\');"><i class="feather icon-edit-2"></i></button>'
+            + (current ? '' : '<button type="button" class="btn btn-sm btn-light" data-module="branch" data-access="delete" data-toggle="tooltip" title="Delete this branch" aria-label="Delete"'
+                + ' onclick="PosnicPro.listDoc.close(\'branches\'); hasher.setHash(\'branches/' + esc(id) + '/delete\');"><i class="feather icon-trash-2"></i></button>');
         PosnicPro.listDoc.open({ key: 'branches', id: id, title: 'Branch', pills: pills, actions: actions });
         PosnicPro.ACLForModule('branch');
-        PosnicPro.get('branches/' + id, function (response) {
+        PosnicPro.get({ url: 'branches/getBranchDetails', data: { id: id } }, function (response) {
             var d = response && response.data;
             if (response.type !== 'success' || !d) {
                 PosnicPro.listDoc.body('branches', '<div class="text-danger p-3">Could not open this branch.</div>');
                 return;
             }
-            d._id = d._id || id;
-            d.branch_name = d.branch_name || d.name;
             PosnicPro.listDoc.title('branches', d.branch_name || 'Branch');
-            PosnicPro.listDoc.body('branches', self._docBody(d, current));
+            var registers = $.map(d.register || [], function (r) {
+                return (r && (r.register_name || r.name)) || (typeof r === 'string' ? r : null);
+            }).filter(Boolean);
+            var cv = (d.currency_value && d.currency_value[0]) || {};
+            var currency = [cv.currency_sign, cv.currency_text || d.currency_text].filter(Boolean).join(' ')
+                || d.currency_type || '';
+            var logo = (d.logo && d.logo !== 'store.png')
+                ? '<img src="' + esc(d.logo) + '" style="width:84px; height:84px; object-fit:contain; border-radius:8px; flex:0 0 84px; border:1px solid var(--theme-border-color, #e3e7ee); background:#fff;" alt="">'
+                : '';
+            PosnicPro.listDoc.body('branches',
+                '<div style="display:flex; gap:20px; align-items:flex-start;">'
+                + logo
+                + '<div style="flex:1 1 auto; min-width:0;">'
+                + PosnicPro.listDoc.stats([
+                    { v: String(registers.length || 1), l: registers.length === 1 ? 'Register' : 'Registers' },
+                    { v: esc(currency || '\u2014'), l: 'Currency' },
+                    { v: d.branch_gstin_number ? 'GST' : '\u2014', l: d.branch_gstin_number ? 'Registered' : 'No GSTIN' }
+                ])
+                + '</div></div>'
+                + PosnicPro.listDoc.grid([
+                    { label: 'Contact', lines: [
+                        d.store_telephone ? '<div><a href="tel:' + esc(d.store_telephone) + '">' + esc(d.store_telephone) + '</a></div>' : '',
+                        d.store_alternativephone ? '<div class="q-muted">Alt: ' + esc(d.store_alternativephone) + '</div>' : '',
+                        d.store_email ? '<div><a href="mailto:' + esc(d.store_email) + '">' + esc(d.store_email) + '</a></div>' : '',
+                        d.website ? '<div class="q-muted">' + esc(d.website) + '</div>' : ''
+                    ] },
+                    { label: 'Location', lines: [
+                        d.store_address ? '<div>' + esc(d.store_address) + '</div>' : '',
+                        (d.city || d.pincode) ? '<div class="q-muted">' + esc([d.city, d.pincode].filter(Boolean).join(' - ')) + '</div>' : '',
+                        (d.state || d.country) ? '<div class="q-muted">' + esc([d.state, d.country].filter(Boolean).join(', ')) + '</div>' : ''
+                    ] },
+                    { label: 'Tax', lines: [
+                        d.branch_gstin_number ? '<div>GSTIN ' + esc(d.branch_gstin_number) + '</div>' : '<div class="q-muted">No GSTIN configured</div>'
+                    ] },
+                    { label: 'Locale', lines: [
+                        currency ? '<div>' + esc(currency) + '</div>' : '',
+                        d.time_zone ? '<div class="q-muted">' + esc(d.time_zone) + '</div>' : '',
+                        d.client_dateformat ? '<div class="q-muted">Dates: ' + esc(d.dateformat_text || d.client_dateformat) + '</div>' : ''
+                    ] },
+                    { label: 'Printing', lines: [
+                        d.printing_address ? '<div class="q-muted">' + esc(d.printing_address) + '</div>' : ''
+                    ] },
+                    { label: 'Registers', lines: [
+                        registers.length
+                            ? ['<div>' + registers.map(function (r) { return '<span class="badge badge-secondary-inverse mr-1">' + esc(r) + '</span>'; }).join(' ') + '</div>']
+                            : '<div class="q-muted">One unnamed register</div>'
+                    ] }
+                ])
+                + (current ? '' : PosnicPro.listDoc.link('Switch to this branch', "PosnicPro.branches.showChange('" + esc(id) + "');")));
         }, function () {
             PosnicPro.listDoc.body('branches', '<div class="text-danger p-3">Could not open this branch.</div>');
-        });
-    },
-    _docBody: function (r, current) {
-        var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
-        return PosnicPro.listDoc.table(
-            PosnicPro.listDoc.row('Phone', esc(r.store_telephone || '-'))
-            + PosnicPro.listDoc.row('Email', esc(r.store_email || '-'))
-            + PosnicPro.listDoc.row('Address', esc(r.store_address || '-'))
-            + PosnicPro.listDoc.row('State', esc(r.state || '-'))
-            + PosnicPro.listDoc.row('Country', esc(r.country || '-')))
-            + (current ? ''
-                : '<div style="margin-top:14px; font-size:13px;"><a href="javascript:void(0)"'
-                    + ' onclick="PosnicPro.branches.showChange(\'' + esc(r._id) + '\');">Switch to this branch &rarr;</a></div>');
-    },
-    showChange: function (id) {
-        PosnicPro.local.set('changebranchid', id);
-        db.currentregister.get('1').then(function (data) {
-            if (data.register_status === 'open') {
-                $('#branch_register_swipe').modal('show');
-            } else {
-                let branch_id = PosnicPro.local.get('changebranchid');
-                PosnicPro.settings.listBranchName(branch_id);
-            }
-        }).catch(function () {
-            let branch_id = PosnicPro.local.get('changebranchid');
-            PosnicPro.settings.listBranchName(branch_id);
-            $('#branch_register_swipe').modal('hide');
         });
     },
     /* The name the OLD table machinery answered to - settings flows still
@@ -228,8 +243,7 @@ PosnicPro.branches = {
             var current = PosnicPro.local.get('branch_id_set');
             var html = '<div class="table-responsive"><table class="table table-borderless">'
                 + '<thead><tr><th>Name</th><th class="br-col-phone">Phone</th><th class="br-col-email">Email</th>'
-                + '<th class="br-col-address">Address</th><th class="br-col-state">State</th>'
-                + '<th style="width:90px;"></th></tr></thead><tbody>';
+                + '<th class="br-col-address">Address</th><th class="br-col-state">State</th></tr></thead><tbody>';
             list.forEach(function (r) {
                 var isCurrent = current === String(r._id);
                 html += '<tr class="md-row branches-row highlight-select'
@@ -240,10 +254,6 @@ PosnicPro.branches = {
                     + '<td class="br-col-email q-muted">' + esc(r.store_email || '-') + '</td>'
                     + '<td class="br-col-address q-muted">' + esc(r.store_address || '-') + '</td>'
                     + '<td class="br-col-state">' + esc(r.state || '-') + '</td>'
-                    + '<td class="text-right" style="white-space:nowrap;">'
-                    + '<a data-module="branch" data-access="write" href="#/branches/' + esc(r._id) + '/edit" class="btn btn-sm btn-light br-row-act" data-toggle="tooltip" title="Edit"><i class="feather icon-edit-2"></i></a> '
-                    + '<a data-module="branch" data-access="delete" href="#/branches/' + esc(r._id) + '/delete" class="btn btn-sm btn-light br-row-act" data-toggle="tooltip" title="Delete"><i class="feather icon-trash-2"></i></a>'
-                    + '</td>'
                     + '</tr>';
             });
             html += '</tbody></table></div>';
@@ -303,7 +313,6 @@ PosnicPro.branches = {
         $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
         $('.vertical-menu li a').removeClass('active');
         $('.page-title-box,#branches').show();
-        $('#branches_new,#branches_view').modal('hide');
         $('#v-pills-manage-tab').addClass('active');
         $('#v-pills-manage').addClass('show active');
         $('.dashboard_img_menu').hide();
@@ -811,7 +820,6 @@ $(document).on('click', '#branches_filter_btn', function () {
     PosnicPro.branches.mountFilters(true);
     PosnicPro.listFilter.toggle('branches');
 });
-$(document).on('click', '#branches_list_rows tr.branches-row', function (e) {
-    if ($(e.target).closest('.br-row-act').length) { return; }
+$(document).on('click', '#branches_list_rows tr.branches-row', function () {
     PosnicPro.branches.openDoc($(this).data('id'));
 });

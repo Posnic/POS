@@ -145,7 +145,6 @@ PosnicPro.customercategory = {
         $('#v-pills-customer-tab,#page_customercategory').addClass('active');
         $('#v-pills-customer').addClass('show active');
         $('.page-title-box,#customercategory').show();
-        $('#customercategory_new,#customercategory_view').modal('hide');
         $('.dashboard_img_menu').hide();
     },
     showDataTablePage: function () {
@@ -190,16 +189,12 @@ PosnicPro.customercategory = {
                 return;
             }
             var html = '<div class="table-responsive"><table class="table table-borderless">'
-                + '<thead><tr><th>Name</th><th class="cc-col-desc">Description</th><th style="width:90px;"></th></tr></thead><tbody>';
+                + '<thead><tr><th>Name</th><th class="cc-col-desc">Description</th></tr></thead><tbody>';
             list.forEach(function (r) {
                 html += '<tr class="md-row customercategory-row highlight-select'
                     + (PosnicPro.listDoc.activeId('customercategory') === String(r._id) ? ' is-active' : '') + '" data-id="' + esc(r._id) + '" style="cursor:pointer;">'
                     + '<td>' + esc(r.name) + '</td>'
                     + '<td class="cc-col-desc q-muted">' + esc(r.description || '-') + '</td>'
-                    + '<td class="text-right" style="white-space:nowrap;">'
-                    + '<a data-module="customer" data-access="write" href="#/customercategory/' + esc(r._id) + '/edit" class="btn btn-sm btn-light cc-row-act" data-toggle="tooltip" title="Edit"><i class="feather icon-edit-2"></i></a> '
-                    + '<a data-module="customer" data-access="delete" href="#/customercategory/' + esc(r._id) + '/delete" class="btn btn-sm btn-light cc-row-act" data-toggle="tooltip" title="Delete"><i class="feather icon-trash-2"></i></a>'
-                    + '</td>'
                     + '</tr>';
             });
             html += '</tbody></table></div>';
@@ -487,8 +482,7 @@ $(document).on('click', '#customercategory_filter_btn', function () {
     PosnicPro.customercategory.mountFilters(true);
     PosnicPro.listFilter.toggle('customercategory');
 });
-$(document).on('click', '#customercategory_list_rows tr.customercategory-row', function (e) {
-    if ($(e.target).closest('.cc-row-act').length) { return; }
+$(document).on('click', '#customercategory_list_rows tr.customercategory-row', function () {
     PosnicPro.customercategory.openDoc($(this).data('id'));
 });
 

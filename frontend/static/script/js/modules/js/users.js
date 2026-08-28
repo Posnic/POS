@@ -60,10 +60,7 @@ PosnicPro.users = {
     openDoc: function (id) {
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
         var mine = PosnicPro.local.get('userid') === String(id);
-        var actions = mine ? '' : '<button type="button" class="btn btn-sm btn-light" data-module="user" data-access="write" data-toggle="tooltip" title="Edit this employee" aria-label="Edit"'
-            + ' onclick="hasher.setHash(\'users/' + esc(id) + '/edit\');"><i class="feather icon-edit-2"></i></button>';
-        PosnicPro.listDoc.open({ key: 'users', id: id, title: 'Employee', actions: actions });
-        PosnicPro.ACLForModule('user');
+        PosnicPro.listDoc.open({ key: 'users', id: id, title: 'Employee' });
         PosnicPro.get('users/' + id, function (response) {
             var d = response && response.data;
             if (response.type !== 'success' || !d) {
@@ -78,18 +75,32 @@ PosnicPro.users = {
             var registers = $.map(d.registers || [], function (r) { return (r && r.register_name) || null; });
             var lastLogin = d.lastLogin || d.last_login;
             PosnicPro.listDoc.title('users', d.username || 'Employee');
+            /* super_admin is the shop's root and YOU cannot delete yourself -
+               the options simply never show (owner). */
+            var canDelete = d.usertype !== 'super_admin' && !mine;
+            PosnicPro.listDoc.open({
+                key: 'users',
+                id: id,
+                title: d.username || 'Employee',
+                pills: status,
+                actions: (mine ? '' : '<button type="button" class="btn btn-sm btn-light" data-module="user" data-access="write" data-toggle="tooltip" title="Edit this employee" aria-label="Edit"'
+                        + ' onclick="hasher.setHash(\'users/' + esc(id) + '/edit\');"><i class="feather icon-edit-2"></i></button>')
+                    + (canDelete ? '<button type="button" class="btn btn-sm btn-light" data-module="user" data-access="delete" data-toggle="tooltip" title="Delete this employee" aria-label="Delete"'
+                        + ' onclick="PosnicPro.listDoc.close(\'users\'); hasher.setHash(\'users/' + esc(id) + '/delete\');"><i class="feather icon-trash-2"></i></button>' : '')
+            });
+            PosnicPro.ACLForModule('user');
             PosnicPro.listDoc.body('users',
                 '<div style="display:flex; gap:20px; align-items:flex-start;">'
                 + '<img src="' + esc(img) + '" style="width:84px; height:84px; object-fit:cover; border-radius:50%; flex:0 0 84px; border:1px solid var(--theme-border-color, #e3e7ee);" alt="">'
                 + '<div style="flex:1 1 auto; min-width:0;">'
                 + '<div class="s-doc-stats" id="u_doc_stats">'
-                + '<div class="s-stat"><div class="s-stat-value">' + esc(d.usertype || '—') + '</div><div class="s-stat-label">Role</div></div>'
-                + '<div class="s-stat"><div class="s-stat-value">' + status + '</div><div class="s-stat-label">Status</div></div>'
+                + '<div class="s-stat"><div class="s-stat-value">' + esc(d.usertype || '\u2014') + '</div><div class="s-stat-label">Role</div></div>'
                 + '</div>'
                 + '</div></div>'
                 + PosnicPro.listDoc.grid([
                     { label: 'Contact', lines: [
-                        d.email ? '<div><a href="mailto:' + esc(d.email) + '">' + esc(d.email) + '</a></div>' : '<div class="q-muted">No email on record</div>'
+                        d.email ? '<div><a href="mailto:' + esc(d.email) + '">' + esc(d.email) + '</a></div>' : '<div class="q-muted">No email on record</div>',
+                        (d.firstname || d.lastname) ? '<div class="q-muted">' + esc([d.firstname, d.lastname].filter(Boolean).join(' ')) + '</div>' : ''
                     ] },
                     { label: 'Access', lines: [
                         branches.length ? '<div>' + esc(branches.join(', ')) + '</div>' : '<div class="q-muted">No branch access</div>',
@@ -101,15 +112,83 @@ PosnicPro.users = {
                         lastLogin ? '<div class="q-muted">Last login ' + esc(PosnicPro.convertDate(lastLogin)) + '</div>' : ''
                     ] }
                 ])
+                + PosnicPro.users._permsBlock(d)
                 + '<div class="q-label" style="margin-top:18px;">Recent sales</div>'
-                + '<div id="u_doc_sales" class="q-muted" style="font-size:13px;">Loading ...</div>');
+                + '<div id="u_doc_sales" class="q-muted" style="font-size:13px;">Loading ...</div>'
+                + '<div class="q-label" style="margin-top:18px;">Login history</div>'
+                + '<div id="u_doc_logins" class="q-muted" style="font-size:13px;">Loading ...</div>');
             PosnicPro.users.loadRecentSales(id);
+            PosnicPro.users.loadLoginHistory(id);
         }, function () {
             PosnicPro.listDoc.body('users', '<div class="text-danger p-3">Could not open this employee.</div>');
         });
     },
-    /* The employee's latest bills + their sales weight, from the same
-       report door the user report reads - authoritative, not recomputed. */
+    /* What this employee may DO, read from the same access matrix the
+       server enforces - module by module, then the till authority. */
+    _permsBlock: function (d) {
+        var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
+        var access = d.access || {};
+        var MODULES = ['dashboard', 'sales', 'receiving', 'customer', 'supplier',
+            'category', 'item', 'expense', 'branch', 'report', 'user'];
+        var chips = [];
+        MODULES.forEach(function (m) {
+            var mod = access[m] || {};
+            var letters = [mod.read === true ? 'R' : null, mod.write === true ? 'W' : null,
+                mod.delete === true ? 'D' : null].filter(Boolean).join('\u00b7');
+            if (letters) {
+                chips.push('<span class="badge badge-secondary-inverse mr-1" style="text-transform:capitalize;">'
+                    + esc(m) + ' ' + letters + '</span>');
+            }
+        });
+        var pos = access.pos || {};
+        var tillCount = Object.keys(pos).filter(function (k) { return pos[k] === true; }).length;
+        return '<div class="q-label" style="margin-top:18px;">Permissions</div>'
+            + '<div style="font-size:13px; line-height:2;">'
+            + (chips.length ? chips.join(' ') : '<span class="q-muted">No module access granted</span>')
+            + (tillCount ? '<div class="q-muted" style="font-size:12px;">' + tillCount + ' till action' + (tillCount === 1 ? '' : 's') + ' without a manager</div>' : '')
+            + '</div>';
+    },
+    /* The last sign-ins, straight from the staff activity report door -
+       when, from which outlet, on what device. */
+    loadLoginHistory: function (id) {
+        var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
+        var fmt = function (dt) {
+            return (dt.getMonth() + 1) + '/' + dt.getDate() + '/' + dt.getFullYear();
+        };
+        var to = new Date();
+        var from = new Date();
+        from.setDate(from.getDate() - 90);
+        PosnicPro.get({
+            url: 'users/userstatusReportTable',
+            data: {
+                page: 1, limit: 5,
+                starting_date: fmt(from), ending_date: fmt(to),
+                branch: [PosnicPro.local.get('branch_id_set')],
+                field_input: id
+            }
+        }, function (response) {
+            var list = (response && response.data && response.data.list) || [];
+            if (!list.length) {
+                $('#u_doc_logins').html('No sign-ins in the last 90 days.');
+                return;
+            }
+            var rows = list.map(function (r) {
+                var device = [r.device, r.os, r.browser].filter(Boolean).join(' \u00b7 ');
+                return '<tr>'
+                    + '<td>' + esc(r.string_date ? PosnicPro.convertDate(r.string_date) : '') + '</td>'
+                    + '<td>' + esc(r.branch_name || '-') + '</td>'
+                    + '<td class="q-muted">' + esc(device || '-') + '</td>'
+                    + '<td class="q-muted">' + esc(r.ip || '-') + '</td>'
+                    + '</tr>';
+            }).join('');
+            $('#u_doc_logins').removeClass('q-muted').html(
+                '<table class="q-items s-doc-purchases-table"><thead><tr>'
+                + '<th>Signed in</th><th>Outlet</th><th>Device</th><th>IP</th>'
+                + '</tr></thead><tbody>' + rows + '</tbody></table>');
+        }, function () {
+            $('#u_doc_logins').html('Login history unavailable.');
+        });
+    },
     loadRecentSales: function (id) {
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
         var cur = PosnicPro.local.get('currencySign');
@@ -193,11 +272,9 @@ PosnicPro.users = {
                 $('#users_list_paging').html('');
                 return;
             }
-            var me = PosnicPro.local.get('userid');
             var html = '<div class="table-responsive"><table class="table table-borderless">'
                 + '<thead><tr><th style="width:44px;"></th><th>Name</th><th class="us-col-email">Email</th>'
-                + '<th class="text-center">Role</th><th class="text-center">Status</th>'
-                + '<th style="width:90px;"></th></tr></thead><tbody>';
+                + '<th class="text-center">Role</th><th class="text-center">Status</th></tr></thead><tbody>';
             list.forEach(function (r) {
                 var img = (r.image && r.image !== 'user.svg') ? r.image : 'static/images/default/user.svg';
                 var roleClass = r.usertype === 'super_admin' ? 'badge badge-success-inverse'
@@ -205,7 +282,6 @@ PosnicPro.users = {
                 var status = r.activate === true
                     ? '<span class="badge badge-success-inverse">Active</span>'
                     : '<span class="badge badge-danger-inverse">Inactive</span>';
-                var canEdit = me !== String(r._id);
                 html += '<tr class="md-row users-row highlight-select'
                     + (PosnicPro.listDoc.activeId('users') === String(r._id) ? ' is-active' : '') + '" data-id="' + esc(r._id) + '" style="cursor:pointer;">'
                     + '<td><img loading="lazy" decoding="async" src="' + esc(img) + '" style="width:32px; height:32px; object-fit:cover; border-radius:50%;" alt=""></td>'
@@ -213,12 +289,6 @@ PosnicPro.users = {
                     + '<td class="us-col-email q-muted">' + esc(r.email || '-') + '</td>'
                     + '<td class="text-center"><span class="' + roleClass + '">' + esc(r.usertype) + '</span></td>'
                     + '<td class="text-center">' + status + '</td>'
-                    + '<td class="text-right" style="white-space:nowrap;">'
-                    + (canEdit
-                        ? '<a data-module="user" data-access="write" href="#/users/' + esc(r._id) + '/edit" class="btn btn-sm btn-light us-row-act" data-toggle="tooltip" title="Edit"><i class="feather icon-edit-2"></i></a> '
-                        : '')
-                    + '<a data-module="user" data-access="delete" href="#/users/' + esc(r._id) + '/delete" class="btn btn-sm btn-light us-row-act" data-toggle="tooltip" title="Delete"><i class="feather icon-trash-2"></i></a>'
-                    + '</td>'
                     + '</tr>';
             });
             html += '</tbody></table></div>';
@@ -278,7 +348,6 @@ PosnicPro.users = {
         $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
         $('.vertical-menu li a').removeClass('active');
         $('.page-title-box,#users').show();
-        $('#users_new,#users_view').modal('hide');
         $('#v-pills-manage-tab').addClass('active');
         $('#v-pills-manage').addClass('show active');
         $('.dashboard_img_menu').hide();
@@ -2439,8 +2508,7 @@ $(document).on('click', '#users_filter_btn', function () {
     PosnicPro.users.mountFilters(true);
     PosnicPro.listFilter.toggle('users');
 });
-$(document).on('click', '#users_list_rows tr.users-row', function (e) {
-    if ($(e.target).closest('.us-row-act').length) { return; }
+$(document).on('click', '#users_list_rows tr.users-row', function () {
     PosnicPro.users.openDoc($(this).data('id'));
 });
 
