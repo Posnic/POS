@@ -1699,8 +1699,11 @@ const form = document.getElementById('installForm');
                 return;
             }
             suChallenge = r.challenge;
-            label.innerHTML = 'Spam check <span class="required">*</span> — what is ' +
-                String(suChallenge.question || '').replace(/[<>]/g, '') + '?';
+            /* The challenge arrives already phrased as a question ("10 - 5 = ?")
+               and is not always addition, so it is shown as sent rather than
+               wrapped in wording of our own that would read "what is 10 - 5 = ??". */
+            label.innerHTML = 'Spam check <span class="required">*</span> — ' +
+                String(suChallenge.question || '').replace(/[<>]/g, '');
         }
 
         document.getElementById('signupLink').addEventListener('click', async (e) => {
