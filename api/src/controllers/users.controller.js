@@ -2764,7 +2764,10 @@ class UsersController extends BaseController {
         /* One slash. The old line joined 'https://www.posnic.com/' to
            '/ssoauth.html' and produced a double slash in every link it ever
            made. And the page is a route now, not a .html file. */
-        const path = `${siteBase}/ssoauth?token=${encodeURIComponent(response.data.data.token)}`;
+        /* /api/... because posnic.com is fronted by CloudFront, which forwards
+           only that prefix to the service; a bare /ssoauth answers 403 from the
+           CDN, exactly as the old /ssoauth.html did. */
+        const path = `${siteBase}/api/sso/auth?token=${encodeURIComponent(response.data.data.token)}`;
 
         console.log('[ssoClientLogin] Success! Returning path:', path);
         // Match PHP: type 'success', message 'valid', HTTP 200
