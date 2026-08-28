@@ -683,6 +683,7 @@
                 return;
             }
             PosnicPro.sales.renderSaleDoc(response.data);
+            PosnicPro.ACLForModule('sales');
         }, function () {
             $('#sales_doc').html('<div class="text-danger p-4">Could not open this sale.</div>');
         });
@@ -803,9 +804,9 @@
             + '<span class="p-doc-title">' + esc(d.sales_id) + '</span>' + pill
             + '<span class="ml-auto"></span>'
             + (unpaid
-                ? '<button type="button" class="btn btn-sm btn-primary" onclick="PosnicPro.sales.showPayment(\'' + esc(id) + '\');"><i class="feather icon-credit-card mr-1"></i>Settle payment</button>'
+                ? '<button type="button" class="btn btn-sm btn-primary" data-module="sales" data-access="write" onclick="PosnicPro.sales.showPayment(\'' + esc(id) + '\');"><i class="feather icon-credit-card mr-1"></i>Settle payment</button>'
                 : '')
-            + '<button type="button" class="btn btn-sm btn-light" data-toggle="tooltip" title="Edit this bill" aria-label="Edit" onclick="hasher.setHash(\'sales/' + esc(id) + '/edit\');"><i class="feather icon-edit-2"></i></button>'
+            + '<button type="button" class="btn btn-sm btn-light" data-module="sales" data-access="write" data-toggle="tooltip" title="Edit this bill" aria-label="Edit" onclick="hasher.setHash(\'sales/' + esc(id) + '/edit\');"><i class="feather icon-edit-2"></i></button>'
             + '<div class="btn-group">'
             + '<button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Share</button>'
             + '<div class="dropdown-menu dropdown-menu-right">'
@@ -821,7 +822,7 @@
                 ? '<div class="btn-group">'
                     + '<button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">More</button>'
                     + '<div class="dropdown-menu dropdown-menu-right">'
-                    + '<a class="dropdown-item" href="javascript:void(0)" onclick="hasher.setHash(\'sales/' + esc(id) + '/return\');"><i class="feather icon-corner-up-left mr-2"></i>Return items</a>'
+                    + '<a class="dropdown-item" data-module="sales" data-access="write" href="javascript:void(0)" onclick="hasher.setHash(\'sales/' + esc(id) + '/return\');"><i class="feather icon-corner-up-left mr-2"></i>Return items</a>'
                     + '</div></div>'
                 : '')
             + '<button type="button" class="btn btn-sm btn-light" title="Close and show the full list" aria-label="Close" onclick="PosnicPro.sales.closeDoc();"><i class="feather icon-x"></i></button>'
