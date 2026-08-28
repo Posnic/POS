@@ -2711,18 +2711,22 @@ class UsersController extends BaseController {
         });
       }
 
-      // Temporary hardcoded values for testing - TODO: Move to .env
       const posnicKey = process.env.GUZZLE_KEY || process.env.POSNIC_KEY;
       const posnicSecret = process.env.GUZZLE_SECRET || process.env.POSNIC_SECRET;
 
-      // Allow overriding the SSO endpoint via env for local/dev flexibility
+      /*
+       * The website mints the token now, not a PHP script.
+       *
+       * This pointed at api.posnic.com/user.php on a machine that has since
+       * been deleted - and it had already stopped working before that, because
+       * that origin no longer answered HTTPS, so Cloudflare returned 522 and
+       * this button failed silently for anyone who pressed it.
+       *
+       * SSO_URL still overrides, for local work against a dev website.
+       */
       const ssoUrlFromEnv = process.env.SSO_URL;
-      const isDev = process.env.NODE_ENV !== 'production';
-      const domainName = ssoUrlFromEnv
-        ? ssoUrlFromEnv
-        : isDev
-          ? 'http://api.dev.posnic.com/user.php?action=ssoToken'
-          : 'https://api.posnic.com/user.php?action=ssoToken';
+      const siteBase = (process.env.POSNIC_SITE_URL || 'https://posnic.com').replace(/\/+$/, '');
+      const domainName = ssoUrlFromEnv || `${siteBase}/api/sso/token`;
 
       console.log('[ssoClientLogin] Calling SSO API:', domainName);
       console.log('[ssoClientLogin] User ID:', String(userRecords._id));
@@ -2733,21 +2737,34 @@ class UsersController extends BaseController {
       formData.append('id', String(userRecords._id));
       formData.append('email', userRecords.email);
 
-      const response = await axios.post(domainName, formData, {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          posnickey: posnicKey,
-          posnicsecret: posnicSecret,
-          posnicsso: 'sso',
-        },
-        proxy: false,
-      });
+      /*
+       * JSON, because the endpoint answering is now our own Node service
+       * rather than a PHP script expecting form_params. The headers are
+       * unchanged so an older website that still speaks the old shape keeps
+       * working during a deploy where the two sides move separately.
+       */
+      const response = await axios.post(
+        domainName,
+        { id: String(userRecords._id), email: userRecords.email },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            posnickey: posnicKey,
+            posnicsecret: posnicSecret,
+            posnicsso: 'sso',
+          },
+          proxy: false,
+          timeout: 10000,
+        }
+      );
 
       console.log('[ssoClientLogin] SSO API response:', JSON.stringify(response.data, null, 2));
 
       if (response.data?.data?.token) {
-        const domainPath = isDev ? 'http://dev.posnic.com' : 'https://www.posnic.com/';
-        const path = domainPath + '/ssoauth.html?token=' + response.data.data.token;
+        /* One slash. The old line joined 'https://www.posnic.com/' to
+           '/ssoauth.html' and produced a double slash in every link it ever
+           made. And the page is a route now, not a .html file. */
+        const path = `${siteBase}/ssoauth?token=${encodeURIComponent(response.data.data.token)}`;
 
         console.log('[ssoClientLogin] Success! Returning path:', path);
         // Match PHP: type 'success', message 'valid', HTTP 200
