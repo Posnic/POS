@@ -92,7 +92,7 @@ module.exports = {
        * the rev still rides the recorded share, not the path. Old
        * quotes/... keys stay served.
        */
-      const key = `q/${crypto.randomBytes(9).toString('base64url')}`;
+      const key = `${process.env.SHARE_LINK_PREFIX || ''}q/${crypto.randomBytes(9).toString('base64url')}`;
       const up = await uploadObject({
         key,
         body: Buffer.from(b64, 'base64'),
