@@ -268,9 +268,27 @@ class SettingsRepository extends BaseModel {
     if (!ids) return { status: false, data: null, message: 'Branch context is required' };
 
     const owned = new Set(GROUPS[group] || []);
+    /*
+     * The public demo's analytics id is not the visitor's to change.
+     *
+     * Anyone can sign in to the demo as admin - the logins are printed on the
+     * login page - and settings are deliberately left explorable, because
+     * poking at them IS the product tour. The measurement id is the one
+     * exception: it points at the owner's own Google property, and a visitor
+     * repointing it would send the demo's traffic to a stranger, silently and
+     * until somebody noticed. Refused server-side; the rest of the group still
+     * saves, so the tour is unaffected.
+     */
+    const DEMO_LOCKED = new Set(['analytics_enable', 'analytics_ga_id']);
+    const demoLocked = require('../config/demo-mode').isDemoMode();
+
     const accepted = {};
     const rejected = [];
     for (const [key, value] of Object.entries(values || {})) {
+      if (demoLocked && DEMO_LOCKED.has(key)) {
+        rejected.push(key);
+        continue;
+      }
       if (owned.has(key)) {
         /* The welcome (and any checkbox map) sends 'true'/'false' strings.
            Stored verbatim they read as ENABLED through every `!== false`
