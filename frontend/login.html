@@ -351,7 +351,11 @@
     // with the small x.
     (function () {
       if (navigator.userAgent.indexOf('Electron') !== -1) return;
-      if (localStorage.getItem('posnic_web_ok') === '1') return;
+      /* Storage can throw outright, not merely return null - private windows
+         and "block site data" both do it. Reading it must not take the login
+         page down with it, so a browser that refuses to remember the choice
+         simply shows the card again rather than breaking. */
+      try { if (localStorage.getItem('posnic_web_ok') === '1') return; } catch (e) { /* cannot remember */ }
       var form = document.getElementById('login_form');
       if (!form) return;
 
@@ -385,7 +389,13 @@
       form.insertAdjacentElement('afterend', el);
       document.getElementById('posnic_app_card_open').onclick = function () { location.href = 'posnic://open'; return false; };
       document.getElementById('posnic_app_card_x').onclick = function () {
-        localStorage.setItem('posnic_web_ok', '1'); el.remove(); return false;
+        /* Close FIRST. Remembering is the nice-to-have; closing is what was
+           asked for by clicking. With setItem first, a browser that blocks
+           site data threw here and the card never went away at all - the one
+           outcome a dismiss button must never produce. */
+        el.remove();
+        try { localStorage.setItem('posnic_web_ok', '1'); } catch (e) { /* shown again next time */ }
+        return false;
       };
     })();
     </script>
