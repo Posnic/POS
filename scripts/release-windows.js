@@ -127,12 +127,32 @@ function main() {
     fail('No dist/ - run `npm run build` first, with POSNIC_SIGN_SHA1 set.');
   }
 
-  const installers = fs
-    .readdirSync(DIST)
-    .filter((f) => f.endsWith('.exe'))
+  /*
+   * Only THIS version's installers.
+   *
+   * dist/ is where every previous build also landed, and a desk that has
+   * released before still holds them. Uploading whatever .exe happens to be
+   * there put the last version's binaries on the new version's download page -
+   * signed, checksummed and completely wrong - and nothing downstream would
+   * have caught it, because each file is individually valid.
+   */
+  const version = tag.replace(/^v/, '');
+  const allExes = fs.readdirSync(DIST).filter((f) => f.endsWith('.exe'));
+  const stale = allExes.filter((f) => !f.includes(version));
+  const installers = allExes
+    .filter((f) => f.includes(version))
     .map((f) => path.join(DIST, f));
+  if (stale.length) {
+    console.log('\n  ignoring builds of another version left in dist/:');
+    for (const f of stale) console.log(`    ${f}`);
+  }
   if (!installers.length) {
-    fail('No .exe in dist/ - run `npm run build` first.');
+    fail(
+      `No ${version} installer in dist/ - run \`npm run build\` first.\n` +
+        (allExes.length
+          ? `  dist/ holds only other versions: ${allExes.join(', ')}`
+          : '  dist/ has no .exe at all.')
+    );
   }
 
   const signtool = findSignTool();
@@ -190,9 +210,13 @@ function main() {
   console.log(`\n  latest.yml matches ${meta.path}`);
 
   /* ---- upload ---- */
+  /* Same rule as the gate above: the manifests belong to this build, and the
+     installers and blockmaps must carry this version - an older build's files
+     sitting in dist/ are not part of this release. */
   const uploads = fs
     .readdirSync(DIST)
-    .filter((f) => /\.(exe|blockmap)$/.test(f) || /^latest.*\.yml$/.test(f))
+    .filter((f) =>
+      /^latest.*\.yml$/.test(f) || (/\.(exe|blockmap)$/.test(f) && f.includes(version)))
     .map((f) => path.join(DIST, f));
 
   console.log('\n  uploading:');

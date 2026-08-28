@@ -132,6 +132,17 @@ async function main() {
   if (haveInstaller && !REBUILD) {
     console.log('  dist/ already holds a ' + version + ' installer - keeping it (--rebuild to redo)');
   } else {
+    /* Previous releases left their installers here. The publisher refuses to
+       upload another version's bytes now, but clearing them first keeps the
+       build output unambiguous - and stops a half-built run from looking
+       finished to the resume check above. */
+    if (fs.existsSync(DIST)) {
+      for (const f of fs.readdirSync(DIST)) {
+        if (/\.(exe|blockmap)$/.test(f) || /^latest.*\.yml$/.test(f)) {
+          fs.rmSync(path.join(DIST, f), { force: true });
+        }
+      }
+    }
     console.log('  card PIN prompts may appear - this is the one human moment\n');
     if (!runLive('npm', ['run', 'build'], { env: { ...process.env, POSNIC_SIGN_SHA1: sha1 }, shell: true })) {
       fail('The Windows build failed - fix and re-run the same command to resume.');

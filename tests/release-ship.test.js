@@ -75,6 +75,20 @@ test('the Windows attach goes through the gated publisher, not a bare upload', (
     'a raw exe upload bypasses the signing gates');
 });
 
+test('another version left in dist/ can never ride along', () => {
+  /* dist/ is where every previous build also landed. Uploading whatever .exe
+     was lying there would put the LAST version's binaries on the new
+     version's download page - each file individually valid and signed, so
+     nothing downstream would catch it. */
+  const pub = fs.readFileSync(path.join(ROOT, 'scripts', 'release-windows.js'), 'utf8');
+  assert.match(pub, /f\.includes\(version\)/,
+    'the publisher no longer filters dist/ down to the tag being released');
+  assert.match(pub, /No \$\{version\} installer in dist\//,
+    'a dist/ holding only stale builds would report success with nothing uploaded');
+  const ship = fs.readFileSync(path.join(ROOT, 'scripts', 'release-ship.js'), 'utf8');
+  assert.match(ship, /rmSync/, 'the ship command no longer clears stale installers before building');
+});
+
 test('stable tills verify update signatures; betas opt out explicitly', () => {
   /* The repo default is the STABLE truth: desk builds are signed, so the
      flag rides every stable installer. The beta workflow builds unsigned
