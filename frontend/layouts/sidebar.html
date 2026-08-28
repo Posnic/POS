@@ -123,37 +123,19 @@
                                     <lang class="lang_inventory_title">Inventory</lang>
                                 </h5>
                             </li>
-                            <li>
-                                <a data-module="item" data-access="write" href="#/items/new" id="new_items_page">
-                                    <img src="static/images/svg-icon/items.svg" class="img-fluid" alt="new Item" loading="lazy" decoding="async">
-                                    <lang class="lang_item_new">Add New Item</lang>
-                                </a>
-                            </li>
-
                             <!--
-                                Two faster ways in, beside the full form rather
-                                than instead of it. The full form stays exactly
-                                where it was for everyone already using it.
+                                The Items hub (owner-approved, 2026-08-28,
+                                modeled on how Square/Shopify/Lightspeed group
+                                a catalog): ONE group of sibling pages, Items
+                                is the landing, and the three add doors moved
+                                into the New dropdown on the Items page - a
+                                menu is for places, not verbs.
                             -->
-                            <li>
-                                <a data-module="item" data-access="write" href="#/quickitems" id="quick_items_page">
-                                    <img src="static/images/svg-icon/items.svg" class="img-fluid" alt="Quick Item Add" loading="lazy" decoding="async">
-                                    <lang class="lang_item_quick">Quick Item Add</lang>
-                                </a>
-                            </li>
-
-                            <li>
-                                <a data-module="item" data-access="write" href="#/bulkitems" id="bulk_items_page">
-                                    <img src="static/images/svg-icon/webshop.svg" class="img-fluid" alt="Bulk Item Add" loading="lazy" decoding="async">
-                                    <lang class="lang_item_bulk">Bulk Item Add</lang>
-                                </a>
-                            </li>
-
                             <li id="itemModule">
                                 <a data-module="item" data-access="read||write||delete" href="#/items"
                                     id="view_items_page">
                                     <img src="static/images/svg-icon/webshop.svg" class="img-fluid" alt="Item Details" loading="lazy" decoding="async">
-                                    <lang class="lang_itemdetail_title">Item List</lang>
+                                    <lang class="lang_itemdetail_title">Items</lang>
                                 </a>
                             </li>
 
@@ -175,7 +157,7 @@
                                     class="categories" id="view_categories_page">
                                     <img src="static/images/svg-icon/category.svg" class="img-fluid"
                                         alt="Item Category" loading="lazy" decoding="async">
-                                    <lang class="lang_itemcategory_title">Category List</lang>
+                                    <lang class="lang_itemcategory_title">Categories</lang>
                                 </a>
                             </li>
 
@@ -183,7 +165,14 @@
                                 <a data-module="item" data-access="read||write||delete" href="#/variants"
                                     class="variants" id="view_variants_page">
                                     <img src="static/images/svg-icon/variant.svg" class="img-fluid" alt="Item Variant" loading="lazy" decoding="async">
-                                    <lang class="lang_itemvariant_title">Variant List</lang>
+                                    <lang class="lang_itemvariant_title">Variants</lang>
+                                </a>
+                            </li>
+
+                            <li id="unitsModule">
+                                <a data-module="branch" data-access="write" href="#/units" id="view_units_page">
+                                    <img src="static/images/svg-icon/result.svg" class="img-fluid" alt="Units" loading="lazy" decoding="async">
+                                    <lang class="lang_units_title">Units</lang>
                                 </a>
                             </li>
 
@@ -193,7 +182,7 @@
                                     id="view_itemslow_page">
                                     <img src="static/images/svg-icon/sales-report.svg" class="img-fluid"
                                         alt="Low stock Details" loading="lazy" decoding="async">
-                                    <lang class="lang_lowstockdetail_title">Low Stock List</lang>
+                                    <lang class="lang_lowstockdetail_title">Low Stock</lang>
                                 </a>
                             </li>
 

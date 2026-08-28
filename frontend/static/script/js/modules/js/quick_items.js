@@ -117,7 +117,7 @@
             $('.vertical-menu li a').removeClass('active');
             $('.page_loader,#osk-container').hide();
             $('.page-title-box,#quickitems').show();
-            $('#v-pills-inventory-tab,#quick_items_page').addClass('active');
+            $('#v-pills-inventory-tab,#view_items_page').addClass('active');
             $('#v-pills-inventory').addClass('show active');
 
             PosnicPro.quickitems.loadOptions();
@@ -350,7 +350,7 @@
             $('.vertical-menu li a').removeClass('active');
             $('.page_loader,#osk-container').hide();
             $('.page-title-box,#bulkitems').show();
-            $('#v-pills-inventory-tab,#bulk_items_page').addClass('active');
+            $('#v-pills-inventory-tab,#view_items_page').addClass('active');
             $('#v-pills-inventory').addClass('show active');
 
             if (categoryIndex === null) loadCategoryIndex();

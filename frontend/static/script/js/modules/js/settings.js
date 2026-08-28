@@ -2619,6 +2619,26 @@ PosnicPro.tax = {
     }
 
 };
+/*
+ * The Inventory group's door to Units (owner: 'Units also we can move
+ * from Core settings -> Inventory to here'). Units stay maintained in
+ * ONE place - Core Settings - and this lands there in a single click,
+ * on the Units sub-tab, with the table already loading.
+ * Shorthand method on purpose: tests anchor
+ * blockAt('showDataTablePage: function ()') to the settings namespace
+ * and need that string to stay unique in this file.
+ */
+PosnicPro.units = {
+    showDataTablePage() {
+        PosnicPro.settings.showDataTablePage();
+        setTimeout(function () {
+            $('a[href="#core-tab-inventory"]').tab('show');
+            $('a[href="#inv-sub-units"]').tab('show');
+            PosnicPro.unit.unitTable();
+        }, 350);
+    }
+};
+
 PosnicPro.unit = {
     triggerModules: function () {
         PosnicPro.showAddModal('unit');
