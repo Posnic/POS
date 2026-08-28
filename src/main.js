@@ -1235,7 +1235,7 @@ function getMachineId() {
   return id;
 }
 
-ipcMain.handle('cloud:activate', async (_event, { serverUrl, email, password } = {}) => {
+ipcMain.handle('cloud:activate', async (_event, { serverUrl, email, password, waitForShopMs } = {}) => {
   try {
     if (!serverUrl || !email || !password) {
       return { ok: false, error: 'Server, email and password are required' };
@@ -1243,16 +1243,34 @@ ipcMain.handle('cloud:activate', async (_event, { serverUrl, email, password } =
     const base = String(serverUrl).trim().replace(/\/+$/, '');
     const deviceName = require('os').hostname();
 
-    const response = await fetch(`${base}/v1/activate`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ email, password, deviceName, machineId: getMachineId() }),
-      signal: AbortSignal.timeout(20_000)
-    });
+    /*
+     * An account created a moment ago has a shop that is still being built.
+     *
+     * Signing in normally must fail fast - somebody who mistyped a password
+     * should be told so, not left watching a bar. But straight after creating
+     * an account there is nothing wrong: the shop simply does not exist yet,
+     * and the right behaviour is to wait for it. So the caller asks for that
+     * explicitly, and only a wrong password still ends it immediately, since
+     * no amount of waiting fixes that one.
+     */
+    const deadline = Date.now() + Math.max(0, Number(waitForShopMs) || 0);
+    let response;
+    for (;;) {
+      response = await fetch(`${base}/v1/activate`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email, password, deviceName, machineId: getMachineId() }),
+        signal: AbortSignal.timeout(20_000)
+      });
+      if (response.ok || response.status === 401 || Date.now() >= deadline) break;
+      await new Promise((r) => setTimeout(r, 5000));
+    }
     if (!response.ok) {
       const msg = response.status === 401
         ? 'Invalid email or password'
-        : `Cloud server error (${response.status})`;
+        : (deadline > Date.now() - 1000 && waitForShopMs
+          ? 'Your shop is still being set up. Please try again in a few minutes.'
+          : `Cloud server error (${response.status})`);
       return { ok: false, error: msg };
     }
     const { deviceToken, deviceId, syncUrl } = await response.json();
@@ -1484,6 +1502,69 @@ ipcMain.handle('cloud:status', async () => {
 });
 
 ipcMain.handle('cloud:signup', () => shell.openExternal('https://posnic.com/cloud'));
+
+/*
+ * Opening an account without leaving the till.
+ *
+ * The old answer to "I do not have an account yet" was to open posnic.com in a
+ * browser, which ends the installation: they sign up somewhere else, wait for
+ * an email, and come back later if they come back at all. Somebody standing in
+ * front of a machine they just installed should be able to finish on it.
+ *
+ * Only what a shopkeeper knows is asked - the shop's name, their name, an
+ * email and a password. The web address is derived from the business name by
+ * the server, which already does exactly that when the website omits one, and
+ * the sync address was never a question here: the gateway decides it at
+ * activation and hands it back.
+ *
+ * The spam check is kept. It is the same one-sum challenge the website uses,
+ * and dropping it for anything claiming to be the installer would put an
+ * unauthenticated create-a-shop call on the public internet, since the flag
+ * saying "I am the desktop app" is trivially forged.
+ */
+const WEBSITE_API = process.env.POSNIC_WEBSITE_API || 'https://posnic.com';
+
+ipcMain.handle('cloud:captcha', async () => {
+  try {
+    const r = await fetch(`${WEBSITE_API}/api/captcha`, { headers: { accept: 'application/json' } });
+    if (!r.ok) return { ok: false, error: `spam check unavailable (${r.status})` };
+    return { ok: true, challenge: await r.json() };
+  } catch (e) {
+    return { ok: false, error: 'Could not reach Posnic. Check the internet connection.' };
+  }
+});
+
+ipcMain.handle('cloud:create-account', async (_event, details = {}) => {
+  const { name, businessName, email, password, captchaToken, captchaAnswer, phone } = details;
+  if (!name || !businessName || !email || !password) {
+    return { ok: false, error: 'Shop name, your name, email and password are required' };
+  }
+  if (String(password).length < 8) {
+    return { ok: false, error: 'Password must be at least 8 characters' };
+  }
+  try {
+    const r = await fetch(`${WEBSITE_API}/api/signup`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', accept: 'application/json' },
+      body: JSON.stringify({
+        name, businessName, email, password, phone: phone || '',
+        captchaToken, captchaAnswer,
+        /* Start the shop now rather than on a click in an email nobody at this
+           counter can reach. The address is still verified, in its own time. */
+        startTrialNow: true,
+        tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      }),
+    });
+    const body = await r.json().catch(() => ({}));
+    if (!r.ok) return { ok: false, error: body.error || `Could not create the account (${r.status})` };
+    if (body.trialStarted === false) {
+      return { ok: false, error: 'The account was created but the shop could not be started. Please contact support.' };
+    }
+    return { ok: true, subdomain: body.subdomain, webUrl: body.webUrl };
+  } catch (e) {
+    return { ok: false, error: 'Could not reach Posnic. Check the internet connection.' };
+  }
+});
 
 // Does the local database contain an actual business (post-download check)?
 ipcMain.handle('cloud:check-data', async () => {

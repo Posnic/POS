@@ -298,6 +298,24 @@
             text-decoration: underline;
         }
 
+        /* States where the till connects rather than asking. Quiet on purpose:
+           it is telling the customer something, not asking them. */
+        .cloud-server-note {
+            font-size: 12px;
+            color: #64748b;
+            margin: -4px 0 14px;
+        }
+
+        .cloud-server-note a {
+            color: #94a3b8;
+            text-decoration: none;
+            margin-left: 6px;
+        }
+
+        .cloud-server-note a:hover {
+            text-decoration: underline;
+        }
+
         .mode-footnote {
             margin-top: 14px;
             font-size: 13px;
@@ -828,9 +846,27 @@
             <!-- Cloud setup: minimal connect + download -->
             <div class="form-section" id="stepCloud" style="display: none;">
                 <h2>☁️ Connect to Posnic Cloud</h2>
-                <div class="form-group">
+                <!--
+                  The server address is not a question a shopkeeper can answer.
+                  It has exactly one correct value, it was already filled in,
+                  and leaving it on screen only invited someone to change it
+                  into something that cannot work. The sync address was never
+                  typed here anyway - the gateway decides it at activation and
+                  hands it back - so this was the last piece of plumbing still
+                  facing the customer.
+
+                  Kept in the DOM, and reachable, because support occasionally
+                  needs to point an installation somewhere else; it is just no
+                  longer the first thing a new customer is asked.
+                -->
+                <input type="hidden" id="cloudServer" value="https://gateway.posnic.com">
+                <p class="cloud-server-note">
+                    Connecting to <strong>Posnic Cloud</strong>
+                    <a href="#" id="cloudServerToggle">change</a>
+                </p>
+                <div class="form-group" id="cloudServerRow" style="display: none;">
                     <label>Cloud Server</label>
-                    <input type="text" id="cloudServer" value="https://gateway.posnic.com" autocomplete="off">
+                    <input type="text" id="cloudServerVisible" value="https://gateway.posnic.com" autocomplete="off">
                 </div>
                 <div class="form-group">
                     <label>Email <span class="required">*</span></label>
@@ -851,6 +887,55 @@
                 <div class="btn-container">
                     <button type="button" class="btn btn-secondary" id="cloudBackBtn">← Back</button>
                     <button type="button" class="btn btn-primary" id="cloudConnectBtn">Connect &amp; Download Data</button>
+                </div>
+            </div>
+
+            <!--
+              Opening an account without leaving the till.
+
+              "Don't have an account?" used to open a browser, which ends the
+              installation: sign up elsewhere, wait for an email, come back
+              later if at all. Everything asked here is something a shopkeeper
+              knows. The web address is derived from the shop name by the
+              server, and the sync address was never asked for - the gateway
+              decides it at activation.
+            -->
+            <div class="form-section" id="stepCloudSignup" style="display: none;">
+                <h2>☁️ Create your Posnic Cloud account</h2>
+                <p style="color:#64748b;font-size:13px;margin:-6px 0 16px;">
+                    Your shop is ready to use straight away. We will email you to confirm
+                    your address, but you do not have to wait for it.
+                </p>
+                <div class="form-group">
+                    <label>Shop Name <span class="required">*</span></label>
+                    <input type="text" id="suBusinessName" placeholder="e.g. Sri Ganesh Stores" autocomplete="organization">
+                </div>
+                <div class="form-group">
+                    <label>Your Name <span class="required">*</span></label>
+                    <input type="text" id="suName" autocomplete="name">
+                </div>
+                <div class="form-group">
+                    <label>Email <span class="required">*</span></label>
+                    <input type="email" id="suEmail" autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label>Password <span class="required">*</span></label>
+                    <input type="password" id="suPassword" placeholder="Minimum 8 characters" autocomplete="new-password">
+                </div>
+                <div class="form-group">
+                    <label id="suCaptchaLabel">Spam check</label>
+                    <input type="text" id="suCaptchaAnswer" autocomplete="off" inputmode="numeric">
+                </div>
+                <div id="suError" style="display:none; color:#dc3545; margin:10px 0;"></div>
+                <div id="suProgress" style="display:none; margin:14px 0;">
+                    <div style="background:#eef0f7;border-radius:8px;height:12px;overflow:hidden;margin-bottom:10px;">
+                        <div id="suProgBar" style="height:100%;width:2%;border-radius:8px;background:#3D85C6;transition:width 0.6s ease;"></div>
+                    </div>
+                    <div class="mode-progress-text" id="suProgressText">Creating your account…</div>
+                </div>
+                <div class="btn-container">
+                    <button type="button" class="btn btn-secondary" id="suBackBtn">← Back</button>
+                    <button type="button" class="btn btn-primary" id="suCreateBtn">Create &amp; Continue</button>
                 </div>
             </div>
 
@@ -1585,9 +1670,129 @@ const form = document.getElementById('installForm');
         });
         document.getElementById('chooseCloudBtn').addEventListener('click', () => showSection('stepCloud'));
         document.getElementById('cloudBackBtn').addEventListener('click', () => showSection('step0'));
-        document.getElementById('signupLink').addEventListener('click', (e) => {
+        /*
+         * The server address is support's business, not the customer's.
+         * Hidden by default; the visible copy writes into the real field so
+         * the connect handler keeps reading one place.
+         */
+        document.getElementById('cloudServerToggle').addEventListener('click', (e) => {
             e.preventDefault();
-            window.electronAPI?.cloud?.signup();
+            const row = document.getElementById('cloudServerRow');
+            row.style.display = row.style.display === 'none' ? 'block' : 'none';
+            if (row.style.display === 'block') document.getElementById('cloudServerVisible').focus();
+        });
+        document.getElementById('cloudServerVisible').addEventListener('input', (e) => {
+            document.getElementById('cloudServer').value = e.target.value.trim();
+        });
+
+        /* Creating an account happens here now, not in a browser. */
+        let suChallenge = null;
+        /* Set only on the path straight out of account creation, so a
+           normal sign-in still fails fast on a wrong password. */
+        let justSignedUp = false;
+        async function loadCaptcha() {
+            const label = document.getElementById('suCaptchaLabel');
+            const r = await window.electronAPI?.cloud?.captcha();
+            if (!r || !r.ok) {
+                suChallenge = null;
+                label.textContent = 'Spam check unavailable — check the internet connection';
+                return;
+            }
+            suChallenge = r.challenge;
+            label.innerHTML = 'Spam check <span class="required">*</span> — what is ' +
+                String(suChallenge.question || '').replace(/[<>]/g, '') + '?';
+        }
+
+        document.getElementById('signupLink').addEventListener('click', async (e) => {
+            e.preventDefault();
+            /* Carry over anything already typed, so the same question is not
+               asked twice on the way to the same account. */
+            const typedEmail = document.getElementById('cloudEmail').value.trim();
+            const typedPassword = document.getElementById('cloudPassword').value;
+            if (typedEmail) document.getElementById('suEmail').value = typedEmail;
+            if (typedPassword) document.getElementById('suPassword').value = typedPassword;
+            showSection('stepCloudSignup');
+            document.getElementById('suBusinessName').focus();
+            await loadCaptcha();
+        });
+
+        document.getElementById('suBackBtn').addEventListener('click', () => showSection('stepCloud'));
+
+        document.getElementById('suCreateBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('suCreateBtn');
+            const err = document.getElementById('suError');
+            const prog = document.getElementById('suProgress');
+            const progText = document.getElementById('suProgressText');
+            const val = (id) => document.getElementById(id).value.trim();
+            const businessName = val('suBusinessName');
+            const name = val('suName');
+            const email = val('suEmail');
+            const password = document.getElementById('suPassword').value;
+            const captchaAnswer = val('suCaptchaAnswer');
+
+            err.style.display = 'none';
+            /* Checked here so a mistake is corrected in place rather than
+               costing a round trip AND a fresh spam sum. */
+            if (!businessName || !name || !email || !password) {
+                err.textContent = 'Please fill in the shop name, your name, email and password.';
+                err.style.display = 'block';
+                return;
+            }
+            if (password.length < 8) {
+                err.textContent = 'Password must be at least 8 characters.';
+                err.style.display = 'block';
+                return;
+            }
+            if (!suChallenge) {
+                err.textContent = 'The spam check could not be loaded. Check the internet connection and try again.';
+                err.style.display = 'block';
+                await loadCaptcha();
+                return;
+            }
+            if (!captchaAnswer) {
+                err.textContent = 'Please answer the spam check.';
+                err.style.display = 'block';
+                return;
+            }
+
+            btn.disabled = true;
+            prog.style.display = 'block';
+            progText.textContent = 'Creating your account…';
+
+            const r = await window.electronAPI.cloud.createAccount({
+                name, businessName, email, password,
+                captchaToken: suChallenge.token,
+                captchaAnswer,
+            });
+
+            if (!r || !r.ok) {
+                btn.disabled = false;
+                prog.style.display = 'none';
+                err.textContent = (r && r.error) || 'Could not create the account.';
+                err.style.display = 'block';
+                /* The sum is single use: a rejected attempt must be handed a
+                   new one, or the next try fails on the spam check instead of
+                   whatever was actually wrong. */
+                document.getElementById('suCaptchaAnswer').value = '';
+                await loadCaptcha();
+                return;
+            }
+
+            /*
+             * Straight on to connecting, with the details already given.
+             * Asking again for an email and password typed thirty seconds ago
+             * is the kind of step that makes software feel like paperwork.
+             */
+            document.getElementById('cloudEmail').value = email;
+            document.getElementById('cloudPassword').value = password;
+            progText.textContent = 'Setting up ' + (r.subdomain || 'your shop') + '…';
+            /* The shop is built by a background job on the server, so it is
+               not there the instant the account exists. Connecting waits for
+               it rather than reporting a failure that is only a few minutes
+               early. */
+            justSignedUp = true;
+            showSection('stepCloud');
+            document.getElementById('cloudConnectBtn').click();
         });
 
         document.getElementById('cloudConnectBtn').addEventListener('click', async () => {
@@ -1621,7 +1826,13 @@ const form = document.getElementById('installForm');
             progress.style.display = 'block';
             progressText.textContent = 'Connecting to your cloud account…';
 
-            const result = await window.electronAPI.cloud.activate({ serverUrl, email, password });
+            const result = await window.electronAPI.cloud.activate({
+                serverUrl, email, password,
+                /* Only after signing up: wait while the server finishes building
+                   the shop. Nothing to wait for on an ordinary sign-in. */
+                waitForShopMs: justSignedUp ? 300000 : 0,
+            });
+            justSignedUp = false;
             if (!result.ok) {
                 btn.disabled = false;
                 backBtn.disabled = false;   // nothing was started, so going back is safe again

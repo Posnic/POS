@@ -30,6 +30,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     activate:   (details) => ipcRenderer.invoke('cloud:activate', details),
     status:     () => ipcRenderer.invoke('cloud:status'),
     signup:     () => ipcRenderer.invoke('cloud:signup'),
+    /* Opening an account from inside the installer, so "I do not have one yet"
+       stops being the end of the installation. */
+    captcha:       () => ipcRenderer.invoke('cloud:captcha'),
+    createAccount: (details) => ipcRenderer.invoke('cloud:create-account', details),
     disconnect: () => ipcRenderer.invoke('cloud:disconnect'),
     checkData:  () => ipcRenderer.invoke('cloud:check-data')
   },
