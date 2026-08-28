@@ -133,3 +133,18 @@ test('every version-bearing file agrees right now', () => {
   execFileSync('node', [path.join(ROOT, 'scripts', 'sync-version.js'), '--check'],
     { cwd: ROOT, stdio: 'pipe' });
 });
+
+test('the snap reaches the release it is built for', () => {
+  /* package.json declares a snap target, so every Linux run builds
+     posnic_<v>_amd64.snap - and both the artifact upload and the release
+     collection filtered it out. publish-snap.yml then failed on every
+     release downloading a .snap that was never attached: a red X beside a
+     store that was quietly never updated, with the credentials configured
+     the whole time. Found on v1.6.1, which is exactly how it had gone
+     unnoticed - the release itself succeeds. */
+  const wf = fs.readFileSync(path.join(ROOT, '.github', 'workflows', 'release.yml'), 'utf8');
+  assert.match(wf, /dist\/\*\.snap/, 'the Linux job no longer uploads the snap it built');
+  assert.match(wf, /-name '\*\.snap'/, 'the release no longer collects the snap');
+  const linuxTargets = JSON.stringify(pkg.build.linux.target);
+  assert.match(linuxTargets, /snap/, 'nothing builds a snap, so publishing one cannot work');
+});

@@ -284,6 +284,11 @@ jobs:
             dist/*.zip
             dist/*.AppImage
             dist/*.deb
+            # Built on every Linux run (package.json declares the snap target)
+            # and then dropped here, so publish-snap.yml failed on every release
+            # trying to download a .snap the release never carried - a red X
+            # beside a store that was silently never updated.
+            dist/*.snap
             dist/*.cdx.json
             # The update manifest, without which auto-update cannot work at all:
             # electron-updater fetches latest.yml - latest-mac.yml, latest-linux.yml
@@ -338,7 +343,7 @@ jobs:
         run: |
           mkdir -p release
           find artifacts -type f \( -name '*.exe' -o -name '*.dmg' -o -name '*.zip' \
-            -o -name '*.AppImage' -o -name '*.deb' -o -name 'latest*.yml' \
+            -o -name '*.AppImage' -o -name '*.deb' -o -name '*.snap' -o -name 'latest*.yml' \
             -o -name '*.blockmap' -o -name '*.cdx.json' \) -exec mv {} release/ \;
           # The machine-readable statement of what this release IS (version,
           # channel, schema + sync-protocol, oldest supported client). Fleet
