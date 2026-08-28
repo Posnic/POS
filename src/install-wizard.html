@@ -876,6 +876,10 @@
                     <label>Password <span class="required">*</span></label>
                     <input type="password" id="cloudPassword" autocomplete="current-password">
                 </div>
+                <!-- Also offered here, not only on the previous screen. Someone
+                     who picks Cloud and only then realises they have no account
+                     should not have to go Back to find the way forward. -->
+                <a href="#" id="cloudSignupLink" class="mode-link" style="margin-top:6px;">Don't have an account? Create one →</a>
                 <div id="cloudError" style="display:none; color:#dc3545; margin:10px 0;"></div>
                 <div id="cloudProgress" style="display:none; margin:14px 0;">
                     <div style="background:#eef0f7;border-radius:8px;height:12px;overflow:hidden;margin-bottom:10px;">
@@ -1706,7 +1710,9 @@ const form = document.getElementById('installForm');
                 String(suChallenge.question || '').replace(/[<>]/g, '');
         }
 
-        document.getElementById('signupLink').addEventListener('click', async (e) => {
+        /* Both doors lead to the same form: the chooser screen and the cloud
+           step itself. Bound from one handler so they cannot drift apart. */
+        async function openSignup(e) {
             e.preventDefault();
             /* Carry over anything already typed, so the same question is not
                asked twice on the way to the same account. */
@@ -1717,7 +1723,9 @@ const form = document.getElementById('installForm');
             showSection('stepCloudSignup');
             document.getElementById('suBusinessName').focus();
             await loadCaptcha();
-        });
+        }
+        document.getElementById('signupLink').addEventListener('click', openSignup);
+        document.getElementById('cloudSignupLink').addEventListener('click', openSignup);
 
         document.getElementById('suBackBtn').addEventListener('click', () => showSection('stepCloud'));
 
