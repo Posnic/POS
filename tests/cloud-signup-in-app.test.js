@@ -46,11 +46,22 @@ test('support can still reach the server field', () => {
 });
 
 test('creating an account no longer opens a browser', () => {
-  const handler = wizard.match(/signupLink'\)\.addEventListener\([\s\S]*?\}\);/);
-  assert.ok(handler, 'the signup link handler was not found');
+  const handler = wizard.match(/async function openSignup\(e\)[\s\S]*?\n        \}/);
+  assert.ok(handler, 'the openSignup handler was not found');
   assert.ok(!/cloud\?\.signup\(\)/.test(handler[0]),
     'the link must open the in-app form, not shell out to the website');
   assert.match(handler[0], /showSection\('stepCloudSignup'\)/);
+});
+
+test('the way to create an account is on the cloud step too', () => {
+  /*
+   * The link lived only on the mode chooser, so somebody who picked Cloud and
+   * only then realised they had no account had to work out that Back was the
+   * way forward. Both doors now run the same handler, so they cannot drift.
+   */
+  assert.match(wizard, /id="cloudSignupLink"/);
+  assert.match(wizard, /signupLink'\)\.addEventListener\('click', openSignup\)/);
+  assert.match(wizard, /cloudSignupLink'\)\.addEventListener\('click', openSignup\)/);
 });
 
 test('the in-app form asks only what a shopkeeper knows', () => {
@@ -86,7 +97,7 @@ test('a rejected attempt is handed a fresh sum', () => {
 });
 
 test('details already typed are carried across, not asked again', () => {
-  const handler = wizard.match(/signupLink'\)\.addEventListener\([\s\S]*?\}\);/)[0];
+  const handler = wizard.match(/async function openSignup\(e\)[\s\S]*?\n        \}/)[0];
   assert.match(handler, /suEmail'\)\.value = typedEmail/);
   const create = wizard.match(/suCreateBtn'\)\.addEventListener\([\s\S]*?\n        \}\);/)[0];
   assert.match(create, /cloudEmail'\)\.value = email/,
