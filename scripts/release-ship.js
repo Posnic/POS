@@ -50,6 +50,11 @@ function runLive(cmd, args, opts = {}) {
   const r = spawnSync(cmd, args, { stdio: 'inherit', cwd: ROOT, shell: false, ...opts });
   return r.status === 0;
 }
+/* A whole command line, for the one step that must go through npm. */
+function runShell(line, opts = {}) {
+  const r = spawnSync(line, { stdio: 'inherit', cwd: ROOT, shell: true, ...opts });
+  return r.status === 0;
+}
 function fail(msg) {
   console.error('\n  ' + msg + '\n');
   process.exit(1);
@@ -153,7 +158,15 @@ async function main() {
       }
     }
     console.log('  card PIN prompts may appear - this is the one human moment\n');
-    if (!runLive('npm', ['run', 'build'], { env: { ...process.env, POSNIC_SIGN_SHA1: sha1 }, shell: true })) {
+    /*
+     * One command string through the shell, not a command plus an args array.
+     * npm has to go through a shell on Windows (spawning npm.cmd directly is
+     * refused since CVE-2024-27980), and passing args alongside shell:true is
+     * what earns DEP0190 - the args are concatenated rather than escaped.
+     * Nothing here is interpolated, so one literal string is both correct and
+     * quiet. The build must stay behind `npm run` for its prebuild hooks.
+     */
+    if (!runShell('npm run build', { env: { ...process.env, POSNIC_SIGN_SHA1: sha1 } })) {
       fail('The Windows build failed - fix and re-run the same command to resume.');
     }
   }

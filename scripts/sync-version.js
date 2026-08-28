@@ -65,8 +65,15 @@ edit('CITATION.cff', [[/^(version:\s*).+$/m, `$1${version}`]]);
 edit('api/package.json', [[/^(\s*"version":\s*")[^"]+(")/m, `$1${version}$2`]]);
 
 if (!CHECK) {
-  execFileSync('npm', ['run', 'docs:api'], {
-    cwd: path.join(ROOT, 'api'), stdio: 'pipe', shell: true,
+  /*
+   * The generator is invoked directly rather than through `npm run docs:api`.
+   * Going via npm on Windows means spawning npm.cmd, which modern Node refuses
+   * without a shell (CVE-2024-27980), and a shell with an args array earns a
+   * DeprecationWarning on every run. Node running a .js file needs neither.
+   * api/package.json's docs:api is exactly this command.
+   */
+  execFileSync(process.execPath, ['scripts/generate-api-docs.js'], {
+    cwd: path.join(ROOT, 'api'), stdio: 'pipe',
   });
   changed.push('docs/API.md + docs/openapi.json (regenerated)');
 }
