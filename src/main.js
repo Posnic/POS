@@ -1502,6 +1502,53 @@ ipcMain.handle('cloud:status', async () => {
 });
 
 ipcMain.handle('cloud:signup', () => shell.openExternal('https://posnic.com/cloud'));
+/*
+ * Pairing this till with a code, instead of the shop's password.
+ *
+ * A code is issued by somebody allowed to add a device, read out once, and
+ * dead in ten minutes. That is a different thing from the owner's password,
+ * which is shared with staff and never expires - and which, entered here,
+ * currently downloads the whole business onto whatever machine asked.
+ *
+ * The gateway address is not asked for and never was: the reply carries where
+ * this shop syncs, exactly as activation does.
+ */
+ipcMain.handle('cloud:pair', async (_event, { serverUrl, code, waitForShopMs } = {}) => {
+  try {
+    if (!code) return { ok: false, error: 'Enter the pairing code' };
+    const base = String(serverUrl || 'https://gateway.posnic.com').trim().replace(/\/+$/, '');
+    const deadline = Date.now() + Math.max(0, Number(waitForShopMs) || 0);
+    let response;
+    for (;;) {
+      response = await fetch(`${base}/v1/pairing/redeem`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          code: String(code).trim(),
+          deviceName: require('os').hostname(),
+          machineId: getMachineId(),
+        }),
+        signal: AbortSignal.timeout(20_000),
+      });
+      /* A refused code is refused for good - it is single use and short
+         lived, so retrying only burns the customer's ten minutes. */
+      if (response.ok || response.status === 401 || Date.now() >= deadline) break;
+      await new Promise((r) => setTimeout(r, 5000));
+    }
+    if (!response.ok) {
+      let msg = `Cloud server error (${response.status})`;
+      if (response.status === 401) {
+        const b = await response.json().catch(() => ({}));
+        msg = b.message || 'That code is not valid any more. Ask for a new one.';
+      }
+      return { ok: false, error: msg };
+    }
+    return { ok: true, ...(await response.json()) };
+  } catch (e) {
+    return { ok: false, error: 'Could not reach Posnic. Check the internet connection.' };
+  }
+});
+
 
 /*
  * Opening an account without leaving the till.
