@@ -34,6 +34,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
        stops being the end of the installation. */
     captcha:       () => ipcRenderer.invoke('cloud:captcha'),
     createAccount: (details) => ipcRenderer.invoke('cloud:create-account', details),
+    /* Pairing with a code issued by somebody allowed to add a device. */
+    pair: (details) => ipcRenderer.invoke('cloud:pair', details),
     disconnect: () => ipcRenderer.invoke('cloud:disconnect'),
     checkData:  () => ipcRenderer.invoke('cloud:check-data')
   },

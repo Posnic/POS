@@ -893,6 +893,24 @@
                 <!-- Also offered here, not only on the previous screen. Someone
                      who picks Cloud and only then realises they have no account
                      should not have to go Back to find the way forward. -->
+                <!--
+                  Pairing with a code.
+
+                  The alternative to typing the owner's password into a machine
+                  that then downloads the whole business. Somebody allowed to
+                  add a device issues a code, reads it out, and it dies in ten
+                  minutes - so a staff member can set a till up without ever
+                  holding the credential that opens everything.
+                -->
+                <div class="form-group" id="pairRow" style="margin-top:14px;">
+                    <label>Or pair with a code</label>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <input type="text" id="pairCode" placeholder="P1-K7M4-9QX2" autocomplete="off"
+                               style="text-transform:uppercase;letter-spacing:1px;">
+                        <button type="button" class="btn btn-secondary" id="pairBtn" style="white-space:nowrap;">Pair</button>
+                    </div>
+                    <div class="field-hint">Ask whoever manages your shop for a code. It lasts ten minutes.</div>
+                </div>
                 <a href="#" id="cloudSignupLink" class="mode-link" style="margin-top:6px;">Don't have an account? Create one →</a>
                 <div id="cloudError" style="display:none; color:#dc3545; margin:10px 0;"></div>
                 <div id="cloudProgress" style="display:none; margin:14px 0;">
@@ -1687,6 +1705,39 @@ const form = document.getElementById('installForm');
             }
         });
         document.getElementById('chooseCloudBtn').addEventListener('click', () => showSection('stepCloud'));
+        document.getElementById('pairBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('pairBtn');
+            const errorBox = document.getElementById('cloudError');
+            const progress = document.getElementById('cloudProgress');
+            const progressText = document.getElementById('cloudProgressText');
+            const code = document.getElementById('pairCode').value.trim();
+            errorBox.style.display = 'none';
+            if (!code) {
+                errorBox.textContent = 'Enter the pairing code.';
+                errorBox.style.display = 'block';
+                return;
+            }
+            btn.disabled = true;
+            progress.style.display = 'block';
+            progressText.textContent = 'Pairing this till…';
+            const r = await window.electronAPI.cloud.pair({
+                serverUrl: document.getElementById('cloudServer').value.trim(),
+                code,
+            });
+            if (!r || !r.ok) {
+                btn.disabled = false;
+                progress.style.display = 'none';
+                errorBox.textContent = (r && r.error) || 'Could not pair this till.';
+                errorBox.style.display = 'block';
+                return;
+            }
+            /* Paired. From here it is the same path an activated till takes:
+               the reply carried the token and where this shop syncs. */
+            progressText.textContent = 'Paired. Downloading your shop…';
+            if (window.electronAPI.cloud.onPaired) window.electronAPI.cloud.onPaired(r);
+            document.getElementById('cloudConnectBtn').click();
+        });
+
         document.getElementById('cloudBackBtn').addEventListener('click', () => showSection('step0'));
         /*
          * The server address is support's business, not the customer's.

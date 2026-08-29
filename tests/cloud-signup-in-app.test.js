@@ -126,3 +126,31 @@ test('the renderer can actually reach the new calls', () => {
   assert.match(preload, /createAccount:\s*\(details\) => ipcRenderer\.invoke\('cloud:create-account', details\)/);
   assert.match(main, /ipcMain\.handle\('cloud:create-account'/);
 });
+
+/* ------------------------------------------------------------- pairing --- */
+
+test('the installer offers a pairing code as well as a password', () => {
+  /*
+   * A code is issued by somebody allowed to add a device and dies in ten
+   * minutes. The password alternative is the owner's, is shared with staff,
+   * never expires, and downloads the whole business onto whatever asked.
+   */
+  assert.match(wizard, /id="pairCode"/, 'no pairing field in the installer');
+  assert.match(wizard, /cloud\.pair\(\{/, 'the pair button must call the pairing IPC');
+  assert.match(main, /ipcMain\.handle\('cloud:pair'/);
+  assert.match(preload, /pair: \(details\) => ipcRenderer\.invoke\('cloud:pair', details\)/);
+});
+
+test('a refused code is not retried into oblivion', () => {
+  /* Single use and ten minutes: retrying a 401 only burns the customer's
+     window and tells them nothing. */
+  const handler = main.slice(main.indexOf("ipcMain.handle('cloud:pair'"));
+  assert.match(handler.slice(0, 2000), /response\.status === 401/,
+    'a 401 must end the attempt rather than looping');
+});
+
+test('pairing does not ask for a gateway address either', () => {
+  const btn = wizard.slice(wizard.indexOf("pairBtn').addEventListener"));
+  assert.match(btn.slice(0, 900), /cloudServer'\)\.value/,
+    'the pair call must reuse the hidden server field, not add a new question');
+});
