@@ -653,24 +653,42 @@ class InstallService {
     let taxId = null;
     let taxData = null;
 
+    /*
+     * 128 of the 246 countries in countries.json carry exactly one tax row:
+     * {"tax_name": "0% Tax", "tax_value": 0}. That is missing data wearing the
+     * costume of an answer, and inserting it gave a shop in Angola a real tax
+     * record, a tax column on its receipts, and the clear implication that we
+     * know the Angolan regime. We do not.
+     *
+     * Owner's decision: those shops get no tax at all and are told they can
+     * switch it on in Settings. Countries with an actual rate are untouched -
+     * see country-tax.js for the order of preference and why it is that way
+     * round.
+     */
+    const countryTax = require('./country-tax');
+    let taxSource = 'unverified';
+
     for (const countryData of countriesData.countries) {
       if (countryData.value === data.register_country) {
         sortname = countryData.sortname;
 
-        for (const taxitem of countryData.tax) {
+        const plan = countryTax.taxRowsFor(sortname, countryData.tax);
+        taxSource = plan.source;
+
+        for (const rate of plan.rates) {
           const taxFields = [
             {
               tax_id: new ObjectId(),
-              tax_name: taxitem.tax_name,
-              tax_value: taxitem.tax_value,
+              tax_name: rate.name,
+              tax_value: rate.value,
             },
           ];
 
           taxData = {
             branch_id: branchId,
             branch_name: data.register_companyname.trim(),
-            name: taxitem.tax_name,
-            rate: parseFloat(taxitem.tax_value),
+            name: rate.name,
+            rate: parseFloat(rate.value),
             tax_fields: taxFields,
             tax_group: 'no',
             created_date: now,
@@ -684,11 +702,20 @@ class InstallService {
 
           taxId = await this.repository.insertTax(taxData);
         }
+
+        if (!plan.rates.length) {
+          console.log(
+            `ℹ️  No tax configured for ${countryData.value} (${taxSource}) - the shop starts with tax off`
+          );
+        }
         break;
       }
     }
 
-    return { taxId, taxData, sortname };
+    /* taxId stays null when nothing was created, and every caller already
+       degrades on that: the install defaults carry tax_checkbox:false and
+       _updateBranchDefaults writes `default_tax: taxId || ''`. */
+    return { taxId, taxData, sortname, taxSource };
   }
 
   async _createDefaultCustomer(data, branchId, userId, licenseId, now, sortname) {
