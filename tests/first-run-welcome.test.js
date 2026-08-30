@@ -430,3 +430,71 @@ test('opening a section leaves exactly ONE pane standing', () => {
     assert.match(open, /addClass\('show active'\)/);
     assert.match(open, /hasClass\('tab-pane'\)/);
 });
+
+/* -------------------------------------------- where saving leaves them --- */
+
+/*
+ * Owner: "after user sign up user comes to features page. after click save
+ * start selling, move page to sales/new instead of stay in features."
+ *
+ * The welcome puts the shop on the features page on purpose - maybeShowIntro
+ * sets that hash so the dialog is standing in front of the switches it is
+ * describing. The cost, unnoticed until somebody watched a real signup, is
+ * that dismissing it leaves a shop ninety seconds old looking at a settings
+ * screen. The button says where it goes. It has to go there.
+ */
+
+test('Save and start selling arrives at the sale screen', () => {
+    const save = block(settingsCode, 'startSelling:', 'saveIntro:');
+    assert.match(save, /hasher\.setHash\('sales\/new'\)/,
+        'the button that says start selling does not go anywhere');
+});
+
+test('the tour is not sent to the sale screen', () => {
+    /*
+     * "Save & show me around" is a walk around where these switches live. A
+     * page change would cut it off at the first step, so the two buttons have
+     * to part company after the save they share.
+     */
+    const success = block(settingsCode, "PosnicPro.alert('success', 'Feature switches saved')",
+                          'PosnicPro.alert(response.type');
+    assert.match(success, /var wantedTour = PosnicPro\.features\._tourAfterSave;/,
+        'nothing remembers which button was pressed');
+    assert.match(success, /if \(!wantedTour\) \{ PosnicPro\.features\.startSelling\(\); \}/,
+        'the tour and the sale screen are not told apart');
+    /* The flag is cleared by the tour branch above, so reading it afterwards
+       would always say "no tour" and the tour would be cut short every time. */
+    assert.ok(success.indexOf('var wantedTour') < success.indexOf('_tourAfterSave = false'),
+        'the flag is read after the branch that clears it');
+});
+
+test('a failed save goes nowhere', () => {
+    /* Same rule the tour already follows: a shop that did not save must not be
+       walked away from the screen that still holds its unsaved choices. */
+    const fail = block(settingsCode, 'Could not save - you can set these later', '};');
+    assert.ok(!/startSelling/.test(fail), 'a failed save still leaves the features page');
+    assert.ok(!/hasher\.setHash/.test(fail));
+});
+
+test('Not now stays where it is', () => {
+    /*
+     * Skipping decides nothing about features and asks to be left alone. Only
+     * the button that names selling goes to the sale screen.
+     */
+    const skip = block(settingsCode, "'click', '#feature_intro_skip'", "'change', '#fi_module_demo_data_enable'");
+    assert.ok(!/startSelling|sales\/new/.test(skip), 'Not now navigates the shop somewhere');
+});
+
+test('the sale screen waits for the sample-data bar', () => {
+    /*
+     * The bar is modal with a static backdrop and real work behind it.
+     * Changing the page under it leaves a progress dialog floating over the
+     * sale screen and lands its finishing message somewhere it makes no sense.
+     */
+    const save = block(settingsCode, 'startSelling:', 'saveIntro:');
+    assert.match(save, /#demo_progress_modal/);
+    assert.match(save, /bar\.one\('hidden\.bs\.modal', function \(\) \{ hasher\.setHash\('sales\/new'\); \}\)/,
+        'the sale screen does not wait for the bar to finish');
+    assert.match(save, /bar\.hasClass\('show'\) \|\| bar\.hasClass\('in'\)/,
+        'the visibility check is tied to one bootstrap version');
+});

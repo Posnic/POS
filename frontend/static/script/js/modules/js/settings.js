@@ -5699,6 +5699,36 @@ PosnicPro.features = {
         }).join('');
         $('#feature_intro_list').html(rows);
     },
+    /*
+     * "Save and start selling" has to arrive at the sale screen.
+     *
+     * The welcome puts the shop on the features page first, so it is standing
+     * in front of the switches it is being told about - maybeShowIntro sets
+     * that hash deliberately. The cost is that dismissing the dialog leaves a
+     * shop that signed up ninety seconds ago looking at a settings screen,
+     * which is the one place a new shop has no reason to be. The button names
+     * where it goes; it should go there.
+     *
+     * Not for "Save & show me around", which is a walk around where these
+     * switches live and would be cut short by a page change, and not for
+     * "Not now", which decided nothing and asked to be left alone.
+     */
+    startSelling: function () {
+        /*
+         * The sample-data bar is modal with a static backdrop and has real
+         * work running behind it. A hash change would not stop that work, but
+         * it would leave a progress dialog floating over the sale screen and
+         * land its finishing message somewhere it makes no sense. So while it
+         * is up, the sale screen waits for it.
+         */
+        var bar = $('#demo_progress_modal');
+        var up = bar.length && (bar.is(':visible') || bar.hasClass('show') || bar.hasClass('in'));
+        if (up) {
+            bar.one('hidden.bs.modal', function () { hasher.setHash('sales/new'); });
+            return;
+        }
+        hasher.setHash('sales/new');
+    },
     saveIntro: function () {
         /* Toggles only. This used to send sales_prefix:'SAL' and
            receiving_prefix:'REC' - invented values, purely to satisfy a
@@ -5745,6 +5775,10 @@ PosnicPro.features = {
                 else if (PosnicPro.applyModuleSidebar) { PosnicPro.applyModuleSidebar(); }
                 $('#feature_intro_modal').modal('hide');
                 PosnicPro.alert('success', 'Feature switches saved');
+                /* Read before the branch below clears it, because where this
+                   shop goes next depends on which of the two buttons was
+                   pressed and the flag does not survive to the end. */
+                var wantedTour = PosnicPro.features._tourAfterSave;
                 /* Only on a SAVED shop, and only when asked: a failed save
                    must never start a tour, and Save-alone must never grow
                    an uninvited one. */
@@ -5760,6 +5794,9 @@ PosnicPro.features = {
                         ? $('#fi_module_demo_data_enable').is(':checked')
                         : undefined
                 );
+                /* And then the sale screen, because that is what the button
+                   says. The tour goes the other way - see startSelling. */
+                if (!wantedTour) { PosnicPro.features.startSelling(); }
             } else {
                 PosnicPro.alert(response.type, response.message);
             }
