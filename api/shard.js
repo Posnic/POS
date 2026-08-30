@@ -103,11 +103,75 @@ let lastMiss = 0;
 
 let controlClient = null;
 
+/*
+ * Which shops this shard is responsible for.
+ *
+ * Unset means every provisioned shop, which is what a single-machine estate
+ * wants and what shipped. SHARD_INSTANCE narrows it to the shops assigned to
+ * one machine - necessary the moment a second machine runs a shard, because
+ * otherwise both would try to open every shop in the fleet and each would fail
+ * on the databases that live on the other one.
+ */
+const SHARD_INSTANCE = String(process.env.SHARD_INSTANCE || '').trim();
+
+/*
+ * A registry from a FILE instead of the control database.
+ *
+ * The demo estate needs this. Reading the control registry means holding the
+ * control credential and TENANT_SECRET_KEY, which unseals every shop's secrets
+ * across the whole fleet - and the demo box is a public machine whose logins
+ * are printed on its own login page. Putting the fleet master key there to
+ * serve shops that contain nothing would be a poor trade.
+ *
+ * The file carries its own plaintext secrets, which is the same posture the
+ * single-shop demo already has: its JWT_SECRET sits in a 0600 .env beside it.
+ * The difference from the control path is only WHERE the shop list comes from;
+ * every tenant still gets its own scope and its own keys, and currentSecret
+ * still refuses to fall through to the environment.
+ *
+ * Unset - which is every production shard - and nothing here runs.
+ */
+const REGISTRY_FILE = String(process.env.SHARD_REGISTRY_FILE || '').trim();
+
+function loadRegistryFromFile() {
+  const raw = JSON.parse(require('fs').readFileSync(REGISTRY_FILE, 'utf8'));
+  const rows = Array.isArray(raw) ? raw : raw.shops || [];
+  const next = new Map();
+
+  for (const r of rows) {
+    if (!r || !r.host || !r.tenantDb) continue;
+    /* Same rule as the control path: a shop whose keys are missing is not
+       served, because serving it would sign tokens nothing can verify. */
+    const secrets = r.secrets && typeof r.secrets === 'object' ? r.secrets : null;
+    if (!secrets || !secrets.JWT_SECRET) {
+      console.error(`[shard] ${r.host}: no JWT_SECRET in the registry file; not served`);
+      continue;
+    }
+    const connection = mongoose.connection.useDb(r.tenantDb, { useCache: true });
+    next.set(String(r.host).toLowerCase(), {
+      subdomain: r.subdomain || r.host,
+      tenantDb: r.tenantDb,
+      suspended: !!r.suspended,
+      connection,
+      db: connection.db,
+      secrets,
+    });
+  }
+
+  byHost.clear();
+  for (const [k, v] of next) byHost.set(k, v);
+  lastLoad = Date.now();
+  console.log(`[shard] serving ${next.size} hostname(s) from ${REGISTRY_FILE}`);
+}
+
 async function loadRegistry() {
+  if (REGISTRY_FILE) return loadRegistryFromFile();
+  const query = { provisioned: true, subdomain: { $exists: true, $nin: [null, ''] } };
+  if (SHARD_INSTANCE) query.instance = SHARD_INSTANCE;
   const tenants = await controlClient
     .db(CONTROL_DB)
     .collection('tenants')
-    .find({ provisioned: true, subdomain: { $exists: true, $nin: [null, ''] } })
+    .find(query)
     .project({ subdomain: 1, tenantDb: 1, secrets: 1, suspended: 1, webDomain: 1 })
     .toArray();
 
@@ -153,7 +217,8 @@ async function loadRegistry() {
   byHost.clear();
   for (const [k, v] of next) byHost.set(k, v);
   lastLoad = Date.now();
-  console.log(`[shard] serving ${next.size} hostname(s) across ${tenants.length} shop(s)`);
+  console.log(`[shard] serving ${next.size} hostname(s) across ${tenants.length} shop(s)`
+    + (SHARD_INSTANCE ? ` on ${SHARD_INSTANCE}` : ''));
 }
 
 /** The shop a request belongs to, or null. */
@@ -183,7 +248,8 @@ async function resolve(hostHeader) {
 
 async function main() {
   if (!CONTROL_URI) throw new Error('CONTROL_URI or MONGODB_URI must be set');
-  if (!CONTROL_DB) throw new Error('CONTROL_DB must be set');
+  /* Only the control path needs a control database to read. */
+  if (!REGISTRY_FILE && !CONTROL_DB) throw new Error('CONTROL_DB must be set');
 
   /*
    * Declared before anything is served.
@@ -196,8 +262,10 @@ async function main() {
   enableMultiTenant(true);
 
   await mongoose.connect(CONTROL_URI, { maxPoolSize: POOL_SIZE });
-  controlClient = new MongoClient(CONTROL_URI, { maxPoolSize: 5 });
-  await controlClient.connect();
+  if (!REGISTRY_FILE) {
+    controlClient = new MongoClient(CONTROL_URI, { maxPoolSize: 5 });
+    await controlClient.connect();
+  }
 
   await loadRegistry();
   setInterval(() => {
