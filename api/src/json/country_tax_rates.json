@@ -5,7 +5,8 @@
     "Cite the country's own tax authority or finance ministry. Not blog posts, not aggregators, not recollection.",
     "regime:'none' means PROVEN to have no consumption tax, with a source saying so. That is different from unverified, and the two must never be collapsed.",
     "An incomplete but sourced entry beats a complete invented one. Record only the bands you can cite.",
-    "verified:true means the rate was read from the cited source. reviewer records a PERSON having checked it, and is null until one has - the two are separate claims and the file keeps them apart on purpose."
+    "verified:true means the rate was read from the cited source. reviewer records a PERSON having checked it, and is null until one has - the two are separate claims and the file keeps them apart on purpose.",
+    "A country ABSENT from this file is not an oversight to fill in from memory. Australia, Canada, Saudi Arabia and Singapore were attempted and their sites refused automated reads or render the rate in JavaScript - they are deliberately absent, and fall back to countries.json."
   ],
   "_schema": {
     "regime": "vat_credit | sales_tax | none",
@@ -15,6 +16,340 @@
     "sourceUrl": "the tax authority page the rates were read from",
     "sourceName": "the authority",
     "checkedAt": "YYYY-MM-DD",
-    "reviewer": "person who checked it, or null if nobody has yet"
+    "reviewer": "person who checked it, or null if nobody has yet",
+    "provenance": "read-from-source (fetched and read during the change) | reviewed (a person checked it). verified gates USE; reviewer records a PERSON having signed off, and is null until one has."
+  },
+  "GB": {
+    "regime": "vat_credit",
+    "label": "VAT",
+    "rates": [
+      {
+        "category": "standard",
+        "value": 20,
+        "name": "VAT 20%"
+      },
+      {
+        "category": "reduced",
+        "value": 5,
+        "name": "VAT 5%"
+      },
+      {
+        "category": "zero",
+        "value": 0,
+        "name": "VAT 0%"
+      }
+    ],
+    "verified": true,
+    "sourceUrl": "https://www.gov.uk/vat-rates",
+    "sourceName": "GOV.UK (HM Revenue & Customs)",
+    "checkedAt": "2026-08-30",
+    "provenance": "read-from-source",
+    "reviewer": null
+  },
+  "AE": {
+    "regime": "vat_credit",
+    "label": "VAT",
+    "rates": [
+      {
+        "category": "standard",
+        "value": 5,
+        "name": "VAT 5%"
+      }
+    ],
+    "verified": true,
+    "sourceUrl": "https://tax.gov.ae/en/taxes/vat.aspx",
+    "sourceName": "UAE Federal Tax Authority",
+    "checkedAt": "2026-08-30",
+    "provenance": "read-from-source",
+    "reviewer": null
+  },
+  "NZ": {
+    "regime": "vat_credit",
+    "label": "GST",
+    "rates": [
+      {
+        "category": "standard",
+        "value": 15,
+        "name": "GST 15%"
+      }
+    ],
+    "verified": true,
+    "sourceUrl": "https://www.ird.govt.nz/gst",
+    "sourceName": "Inland Revenue (New Zealand)",
+    "checkedAt": "2026-08-30",
+    "provenance": "read-from-source",
+    "reviewer": null
+  },
+  "ZA": {
+    "regime": "vat_credit",
+    "label": "VAT",
+    "rates": [
+      {
+        "category": "standard",
+        "value": 15,
+        "name": "VAT 15%"
+      }
+    ],
+    "verified": true,
+    "sourceUrl": "https://www.sars.gov.za/types-of-tax/value-added-tax/",
+    "sourceName": "South African Revenue Service",
+    "checkedAt": "2026-08-30",
+    "provenance": "read-from-source",
+    "reviewer": null
+  },
+  "JP": {
+    "regime": "vat_credit",
+    "label": "Consumption tax",
+    "rates": [
+      {
+        "category": "standard",
+        "value": 10,
+        "name": "Consumption tax 10%"
+      },
+      {
+        "category": "reduced",
+        "value": 8,
+        "name": "Consumption tax 8%"
+      }
+    ],
+    "verified": true,
+    "sourceUrl": "https://www.nta.go.jp/english/taxes/consumption_tax/01.htm",
+    "sourceName": "National Tax Agency (Japan)",
+    "checkedAt": "2026-08-30",
+    "provenance": "read-from-source",
+    "reviewer": null
+  },
+  "CH": {
+    "regime": "vat_credit",
+    "label": "VAT",
+    "rates": [
+      {
+        "category": "standard",
+        "value": 8.1,
+        "name": "VAT 8.1%"
+      },
+      {
+        "category": "reduced",
+        "value": 2.6,
+        "name": "VAT 2.6%"
+      },
+      {
+        "category": "reduced",
+        "value": 3.8,
+        "name": "VAT 3.8%"
+      }
+    ],
+    "verified": true,
+    "sourceUrl": "https://www.estv.admin.ch/estv/en/home/value-added-tax/vat-rates-switzerland.html",
+    "sourceName": "Federal Tax Administration (Switzerland)",
+    "checkedAt": "2026-08-30",
+    "provenance": "read-from-source",
+    "reviewer": null
+  },
+  "NO": {
+    "regime": "vat_credit",
+    "label": "VAT",
+    "rates": [
+      {
+        "category": "standard",
+        "value": 25,
+        "name": "VAT 25%"
+      },
+      {
+        "category": "reduced",
+        "value": 15,
+        "name": "VAT 15%"
+      },
+      {
+        "category": "reduced",
+        "value": 12,
+        "name": "VAT 12%"
+      }
+    ],
+    "verified": true,
+    "sourceUrl": "https://www.skatteetaten.no/en/rates/value-added-tax/",
+    "sourceName": "Norwegian Tax Administration",
+    "checkedAt": "2026-08-30",
+    "provenance": "read-from-source",
+    "reviewer": null
+  },
+  "TH": {
+    "regime": "vat_credit",
+    "label": "VAT",
+    "rates": [
+      {
+        "category": "standard",
+        "value": 7,
+        "name": "VAT 7%"
+      }
+    ],
+    "verified": true,
+    "sourceUrl": "https://www.rd.go.th/english/6043.html",
+    "sourceName": "Revenue Department (Thailand)",
+    "checkedAt": "2026-08-30",
+    "provenance": "read-from-source",
+    "reviewer": null
+  },
+  "DE": {
+    "regime": "vat_credit",
+    "label": "VAT",
+    "rates": [
+      {
+        "category": "standard",
+        "value": 19,
+        "name": "VAT 19%"
+      },
+      {
+        "category": "reduced",
+        "value": 7,
+        "name": "VAT 7%"
+      }
+    ],
+    "verified": true,
+    "sourceUrl": "https://europa.eu/youreurope/business/taxation/vat/vat-rules-rates/index_en.htm",
+    "sourceName": "European Commission - Your Europe",
+    "checkedAt": "2026-08-30",
+    "provenance": "read-from-source",
+    "reviewer": null
+  },
+  "FR": {
+    "regime": "vat_credit",
+    "label": "VAT",
+    "rates": [
+      {
+        "category": "standard",
+        "value": 20,
+        "name": "VAT 20%"
+      },
+      {
+        "category": "reduced",
+        "value": 10,
+        "name": "VAT 10%"
+      },
+      {
+        "category": "reduced",
+        "value": 5.5,
+        "name": "VAT 5.5%"
+      },
+      {
+        "category": "reduced",
+        "value": 2.1,
+        "name": "VAT 2.1%"
+      }
+    ],
+    "verified": true,
+    "sourceUrl": "https://europa.eu/youreurope/business/taxation/vat/vat-rules-rates/index_en.htm",
+    "sourceName": "European Commission - Your Europe",
+    "checkedAt": "2026-08-30",
+    "provenance": "read-from-source",
+    "reviewer": null
+  },
+  "IE": {
+    "regime": "vat_credit",
+    "label": "VAT",
+    "rates": [
+      {
+        "category": "standard",
+        "value": 23,
+        "name": "VAT 23%"
+      },
+      {
+        "category": "reduced",
+        "value": 13.5,
+        "name": "VAT 13.5%"
+      },
+      {
+        "category": "reduced",
+        "value": 9,
+        "name": "VAT 9%"
+      }
+    ],
+    "verified": true,
+    "sourceUrl": "https://europa.eu/youreurope/business/taxation/vat/vat-rules-rates/index_en.htm",
+    "sourceName": "European Commission - Your Europe",
+    "checkedAt": "2026-08-30",
+    "provenance": "read-from-source",
+    "reviewer": null
+  },
+  "ES": {
+    "regime": "vat_credit",
+    "label": "VAT",
+    "rates": [
+      {
+        "category": "standard",
+        "value": 21,
+        "name": "VAT 21%"
+      },
+      {
+        "category": "reduced",
+        "value": 10,
+        "name": "VAT 10%"
+      },
+      {
+        "category": "reduced",
+        "value": 4,
+        "name": "VAT 4%"
+      }
+    ],
+    "verified": true,
+    "sourceUrl": "https://europa.eu/youreurope/business/taxation/vat/vat-rules-rates/index_en.htm",
+    "sourceName": "European Commission - Your Europe",
+    "checkedAt": "2026-08-30",
+    "provenance": "read-from-source",
+    "reviewer": null
+  },
+  "IT": {
+    "regime": "vat_credit",
+    "label": "VAT",
+    "rates": [
+      {
+        "category": "standard",
+        "value": 22,
+        "name": "VAT 22%"
+      },
+      {
+        "category": "reduced",
+        "value": 10,
+        "name": "VAT 10%"
+      },
+      {
+        "category": "reduced",
+        "value": 5,
+        "name": "VAT 5%"
+      },
+      {
+        "category": "reduced",
+        "value": 4,
+        "name": "VAT 4%"
+      }
+    ],
+    "verified": true,
+    "sourceUrl": "https://europa.eu/youreurope/business/taxation/vat/vat-rules-rates/index_en.htm",
+    "sourceName": "European Commission - Your Europe",
+    "checkedAt": "2026-08-30",
+    "provenance": "read-from-source",
+    "reviewer": null
+  },
+  "NL": {
+    "regime": "vat_credit",
+    "label": "VAT",
+    "rates": [
+      {
+        "category": "standard",
+        "value": 21,
+        "name": "VAT 21%"
+      },
+      {
+        "category": "reduced",
+        "value": 9,
+        "name": "VAT 9%"
+      }
+    ],
+    "verified": true,
+    "sourceUrl": "https://europa.eu/youreurope/business/taxation/vat/vat-rules-rates/index_en.htm",
+    "sourceName": "European Commission - Your Europe",
+    "checkedAt": "2026-08-30",
+    "provenance": "read-from-source",
+    "reviewer": null
   }
 }
