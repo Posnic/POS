@@ -134,7 +134,33 @@ function fetchBuffer(url, { timeoutMs = FETCH_TIMEOUT_MS, maxBytes = MAX_ZIP_BYT
  * field - the caller passes the /uploads path it staged, or null to keep the
  * placeholder.
  */
-function toPack(dataset, imageFor) {
+/*
+ * The dataset's own people, reshaped to what the seeder builds rows from.
+ *
+ * Only what a demo person needs: a name, a phone and a city. Everything else
+ * on a customer record - balances, tax registration, credit terms - is a claim
+ * about a real business and a demo must not make one.
+ */
+function peopleFrom(block, key) {
+  const rows = block && Array.isArray(block[key]) ? block[key] : [];
+  const out = [];
+  for (const r of rows) {
+    const name = String((r && r.name) || '').trim();
+    if (!name) continue;
+    /* The walk-in customer is created by the installer itself, for every shop
+       in every country. A second one from the dataset would be a duplicate
+       nobody could tell apart. */
+    if (/^walk-?in\b/i.test(name)) continue;
+    out.push({
+      name,
+      phone: String((r && r.phone) || '').trim(),
+      city: String((r && (r.city || (r.address && r.address.city))) || '').trim(),
+    });
+  }
+  return out;
+}
+
+function toPack(dataset, imageFor, people) {
   if (!dataset || !Array.isArray(dataset.products) || !dataset.products.length) return null;
   const img = typeof imageFor === 'function' ? imageFor : () => null;
 
@@ -167,11 +193,18 @@ function toPack(dataset, imageFor) {
     }));
 
   if (!products.length) return null;
+  const customers = peopleFrom(people && people.customers, 'customers');
+  const suppliers = peopleFrom(people && people.suppliers, 'suppliers');
   return {
     datasetId: String(dataset.datasetId || ''),
     currency: String(dataset.currency || ''),
     categories,
     products,
+    /* Null rather than empty when the dataset carries none, so the seeder can
+       tell "this dataset has no people" from "this dataset has none I could
+       use" and fall back rather than seed a shop with no customers at all. */
+    customers: customers.length ? customers : null,
+    suppliers: suppliers.length ? suppliers : null,
   };
 }
 
@@ -186,9 +219,27 @@ async function openZip(buffer) {
   const unzipper = require('unzipper');
   const dir = await unzipper.Open.buffer(buffer);
   let manifest = null;
+  const people = { customers: null, suppliers: null };
   const images = new Map();
   for (const entry of dir.files) {
     if (entry.type !== 'File') continue;
+    /*
+     * The people, so a shop in Tokyo is not stocked with customers from
+     * Chennai. Every currency dataset ships customers.json and suppliers.json
+     * already placed in its own city - "London Cash Customer", "Dubai Direct
+     * Imports" - and until now the zip was opened, they were skipped, and the
+     * seeder fell back to a hardcoded Indian list for every country on earth.
+     */
+    if (entry.path.endsWith('/customers.json') || entry.path === 'customers.json') {
+      // eslint-disable-next-line no-await-in-loop
+      try { people.customers = JSON.parse((await entry.buffer()).toString('utf8')); } catch (e) { /* products still install */ }
+      continue;
+    }
+    if (entry.path.endsWith('/suppliers.json') || entry.path === 'suppliers.json') {
+      // eslint-disable-next-line no-await-in-loop
+      try { people.suppliers = JSON.parse((await entry.buffer()).toString('utf8')); } catch (e) { /* products still install */ }
+      continue;
+    }
     if (entry.path.endsWith('/data.json') || entry.path === 'data.json') {
       // eslint-disable-next-line no-await-in-loop
       manifest = JSON.parse((await entry.buffer()).toString('utf8'));
@@ -197,7 +248,7 @@ async function openZip(buffer) {
       if (m) images.set(m[1], entry);
     }
   }
-  return { manifest, images };
+  return { manifest, images, people };
 }
 
 /*
@@ -269,7 +320,7 @@ async function loadDatasetPack({ currency, businessType, uploadsRoot }) {
     const buf = await fetchBuffer(datasetUrl(cur, trade));
     if (!buf) return null;
 
-    const { manifest, images } = await openZip(buf);
+    const { manifest, images, people } = await openZip(buf);
     if (!manifest) return null;
 
     let staged = new Map();
@@ -281,7 +332,7 @@ async function loadDatasetPack({ currency, businessType, uploadsRoot }) {
         console.error('[demo-dataset] image staging failed:', e.message);
       }
     }
-    return toPack(manifest, (id) => staged.get(id) || null);
+    return toPack(manifest, (id) => staged.get(id) || null, people);
   } catch (e) {
     console.error('[demo-dataset] falling back to built-in packs:', e.message);
     return null;
@@ -356,4 +407,5 @@ module.exports = {
   toPack,
   loadDatasetPack,
   imageSetKey,
+  peopleFrom,
 };

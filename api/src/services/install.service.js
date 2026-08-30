@@ -1429,6 +1429,12 @@ class InstallService {
           pack: businessType,
           items: itemMultiData,
           userName: username,
+          /* The dataset's own customers and suppliers, already placed in its
+             own city. Without this the seeder falls back to a hardcoded list
+             from Chennai, for every country on earth. */
+          datasetPeople: datasetPack
+            ? { customers: datasetPack.customers, suppliers: datasetPack.suppliers }
+            : null,
         });
       } catch (e) {
         console.error('Demo sales and quotes skipped:', e.message);
@@ -1452,7 +1458,7 @@ class InstallService {
    * which should happen for a demonstration - a demo sale that moved stock
    * would leave a shop whose counts are wrong before they have sold anything.
    */
-  async _insertDemoActivity({ branchId, branchName, licenseId, now, pack, items, userName }) {
+  async _insertDemoActivity({ branchId, branchName, licenseId, now, pack, items, userName, datasetPeople }) {
     const demoSeed = require('./demo-seed');
     const BaseModel = require('../models/base.model');
 
@@ -1493,6 +1499,7 @@ class InstallService {
         state: branch.state || '',
         sortname: branch.sortname || '',
       },
+      people: datasetPeople,
     });
     let seededCustomers = [];
     if (people.customers.length) {

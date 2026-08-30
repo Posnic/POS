@@ -424,7 +424,7 @@ const DEMO_SUPPLIERS = [
   { name: 'Anitha Traders', phone: '9445055667', city: 'Salem' },
 ];
 
-function buildPeople({ branch, pack, now, base }) {
+function buildPeople({ branch, pack, now, base, people }) {
   /*
    * Every person gets a DISTINCT placeholder email, because suppliers carry a
    * unique index on email and the shop's own General Supplier already holds
@@ -472,9 +472,27 @@ function buildPeople({ branch, pack, now, base }) {
     updated_by: 'Demo data',
   });
 
+  /*
+   * The dataset's own people when it ships any, and the built-in list only
+   * when it does not.
+   *
+   * DEMO_CUSTOMERS is Chennai, Madurai and Coimbatore with phone numbers
+   * beginning 98400. It was every country's demo, so a shop in Tokyo enabling
+   * sample data was stocked with customers from Tamil Nadu. Every currency
+   * dataset already ships its own, placed in its own city.
+   *
+   * Null, not empty, means "this dataset has none" - a dataset that shipped an
+   * empty list would otherwise leave the shop with no customers at all, which
+   * is worse than foreign ones.
+   */
+  const customerRows = people && people.customers && people.customers.length
+    ? people.customers : DEMO_CUSTOMERS;
+  const supplierRows = people && people.suppliers && people.suppliers.length
+    ? people.suppliers : DEMO_SUPPLIERS;
+
   return {
-    customers: DEMO_CUSTOMERS.map(common),
-    suppliers: DEMO_SUPPLIERS.map(common),
+    customers: customerRows.map(common),
+    suppliers: supplierRows.map(common),
   };
 }
 
