@@ -485,16 +485,45 @@ test('Not now stays where it is', () => {
     assert.ok(!/startSelling|sales\/new/.test(skip), 'Not now navigates the shop somewhere');
 });
 
-test('the sale screen waits for the sample-data bar', () => {
+test('the sale screen waits for both dialogs to finish closing', () => {
     /*
-     * The bar is modal with a static backdrop and real work behind it.
-     * Changing the page under it leaves a progress dialog floating over the
-     * sale screen and lands its finishing message somewhere it makes no sense.
+     * Both fade, so hiding one is asynchronous and it is still on screen when
+     * this runs. Changing the page under a modal mid-close is how a backdrop
+     * gets left behind, greying out the screen it was meant to reveal - the
+     * tour hits the same thing and waits a fixed 400ms.
+     *
+     * And the sample-data bar has real work behind it: switching demo data off
+     * during the welcome starts a purge.
      */
     const save = block(settingsCode, 'startSelling:', 'saveIntro:');
-    assert.match(save, /#demo_progress_modal/);
-    assert.match(save, /bar\.one\('hidden\.bs\.modal', function \(\) \{ hasher\.setHash\('sales\/new'\); \}\)/,
-        'the sale screen does not wait for the bar to finish');
-    assert.match(save, /bar\.hasClass\('show'\) \|\| bar\.hasClass\('in'\)/,
+    assert.match(save, /after\('#feature_intro_modal', function \(\) \{ after\('#demo_progress_modal', go\); \}\)/,
+        'the sale screen does not wait for the dialogs');
+    assert.match(save, /m\.hasClass\('show'\) \|\| m\.hasClass\('in'\)/,
         'the visibility check is tied to one bootstrap version');
+});
+
+test('a dialog that has already closed does not strand the shop', () => {
+    /*
+     * hidden.bs.modal fires once. A modal that closed before this line ran has
+     * already fired it, and binding then waits for something never coming - so
+     * the wait is entered only for a dialog that is still on screen.
+     */
+    const save = block(settingsCode, 'startSelling:', 'saveIntro:');
+    assert.match(save, /if \(!showing\(sel\)\) \{ next\(\); return; \}/,
+        'it binds to an event that may already have fired');
+});
+
+test('the shop arrives even if no transition ever fires', () => {
+    /*
+     * A detached element, reduced motion, a stylesheet that did not load - any
+     * of them leaves the shop on the settings page having pressed a button
+     * that names somewhere else. Arriving late is a blemish; not arriving is
+     * the bug being fixed.
+     */
+    const save = block(settingsCode, 'startSelling:', 'saveIntro:');
+    assert.match(save, /setTimeout\(go, 1200\)/, 'nothing guarantees the shop ever arrives');
+    /* And exactly once: the floor and a transition can both fire, and two
+       setHash calls push two history entries, so Back appears not to work. */
+    assert.match(save, /if \(went\) \{ return; \}[\s\S]{0,20}went = true;/,
+        'the navigation can run twice');
 });
