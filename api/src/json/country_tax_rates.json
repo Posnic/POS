@@ -1,0 +1,20 @@
+{
+  "_comment": "Consumption-tax rates per country, for provisioning a new shop. Read by api/src/services/country-tax.js. A rate here OVERRIDES the legacy `tax` array in countries.json; a country absent from this file, or present but not `verified`, falls back to that array, and a country whose only legacy row is a 0% placeholder gets NO tax at all. See country-tax.js for why that order.",
+  "_rules": [
+    "No rate without sourceUrl and checkedAt. A rate that cannot be cited is not entered - set verified:false and leave the rates out.",
+    "Cite the country's own tax authority or finance ministry. Not blog posts, not aggregators, not recollection.",
+    "regime:'none' means PROVEN to have no consumption tax, with a source saying so. That is different from unverified, and the two must never be collapsed.",
+    "An incomplete but sourced entry beats a complete invented one. Record only the bands you can cite.",
+    "verified:true means the rate was read from the cited source. reviewer records a PERSON having checked it, and is null until one has - the two are separate claims and the file keeps them apart on purpose."
+  ],
+  "_schema": {
+    "regime": "vat_credit | sales_tax | none",
+    "label": "what the country calls it, eg VAT, GST, Consumption tax",
+    "rates": "[{ category, name, value }] - category is one of standard, reduced, zero, exempt",
+    "verified": "boolean - whether the rates were read from the cited source",
+    "sourceUrl": "the tax authority page the rates were read from",
+    "sourceName": "the authority",
+    "checkedAt": "YYYY-MM-DD",
+    "reviewer": "person who checked it, or null if nobody has yet"
+  }
+}
