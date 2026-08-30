@@ -5715,19 +5715,53 @@ PosnicPro.features = {
      */
     startSelling: function () {
         /*
-         * The sample-data bar is modal with a static backdrop and has real
-         * work running behind it. A hash change would not stop that work, but
-         * it would leave a progress dialog floating over the sale screen and
-         * land its finishing message somewhere it makes no sense. So while it
-         * is up, the sale screen waits for it.
+         * Once, however this is reached. Every path below is a race that can
+         * be won twice - a transition that fires and a timeout that also
+         * fires - and setting the hash twice would push two history entries,
+         * so Back would appear not to work.
          */
-        var bar = $('#demo_progress_modal');
-        var up = bar.length && (bar.is(':visible') || bar.hasClass('show') || bar.hasClass('in'));
-        if (up) {
-            bar.one('hidden.bs.modal', function () { hasher.setHash('sales/new'); });
-            return;
-        }
-        hasher.setHash('sales/new');
+        var went = false;
+        var go = function () {
+            if (went) { return; }
+            went = true;
+            hasher.setHash('sales/new');
+        };
+        /*
+         * Both dialogs fade, so hiding one is asynchronous and it is still on
+         * screen when this runs. Changing the page under a modal that has not
+         * finished closing is how a backdrop gets left behind, greying out the
+         * screen it was supposed to reveal. The tour hits the same thing and
+         * waits a fixed 400ms; waiting for the event is the same idea without
+         * the guess.
+         *
+         * A visible check rather than a blind wait, because a modal that has
+         * ALREADY closed fired its event before this line ran, and binding to
+         * it then would wait for something that is never coming.
+         */
+        var showing = function (sel) {
+            var m = $(sel);
+            return m.length && (m.is(':visible') || m.hasClass('show') || m.hasClass('in'));
+        };
+        var after = function (sel, next) {
+            if (!showing(sel)) { next(); return; }
+            $(sel).one('hidden.bs.modal', next);
+        };
+        /*
+         * The sample-data bar has real work running behind it - switching demo
+         * data off during the welcome starts a purge. The hash change would
+         * not stop that work, but it would leave the bar floating over the
+         * sale screen and land its finishing message somewhere it makes no
+         * sense. So the sale screen waits for that too.
+         */
+        after('#feature_intro_modal', function () { after('#demo_progress_modal', go); });
+        /*
+         * And a floor under all of it. A transition that never fires - a
+         * detached element, a browser honouring reduced motion, a stylesheet
+         * that did not load - would leave the shop sitting on the settings
+         * page having pressed a button that names somewhere else. Arriving
+         * late is a blemish; not arriving is the bug being fixed.
+         */
+        setTimeout(go, 1200);
     },
     saveIntro: function () {
         /* Toggles only. This used to send sales_prefix:'SAL' and
