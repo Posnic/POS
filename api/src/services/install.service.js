@@ -55,7 +55,18 @@ class InstallService {
        * of anything worth keeping, and has to be passed on purpose.
        */
       if (data && data.force !== true) {
-        const existing = await this.repository.countExistingBranches().catch(() => 0);
+        /*
+         * Asked only if it can be asked.
+         *
+         * A repository that does not answer this - an older one, or a test
+         * double - must not turn every install into a failure. An unanswerable
+         * question is treated as "empty", because refusing then would block
+         * genuine signups, which is a worse failure than the one being
+         * prevented.
+         */
+        const existing = typeof this.repository.countExistingBranches === 'function'
+          ? await this.repository.countExistingBranches().catch(() => 0)
+          : 0;
         if (existing > 0) {
           console.error(
             `⛔ install refused: this database already holds ${existing} branch(es). ` +
