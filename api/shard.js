@@ -133,6 +133,10 @@ const SHARD_INSTANCE = String(process.env.SHARD_INSTANCE || '').trim();
  */
 const REGISTRY_FILE = String(process.env.SHARD_REGISTRY_FILE || '').trim();
 
+/* Lower-cased once: node lower-cases incoming header names, and comparing
+   against a mixed-case env value would simply never match. */
+const SHOP_HEADER = String(process.env.SHARD_SHOP_HEADER || '').trim().toLowerCase();
+
 function loadRegistryFromFile() {
   const raw = JSON.parse(require('fs').readFileSync(REGISTRY_FILE, 'utf8'));
   const rows = Array.isArray(raw) ? raw : raw.shops || [];
@@ -273,7 +277,21 @@ async function main() {
   }, RELOAD_MS).unref();
 
   const server = http.createServer((req, res) => {
-    resolve(req.headers.host)
+    /*
+     * Which header names the shop.
+     *
+     * Host, normally - a shop is its own hostname and that is the whole
+     * addressing scheme. The demo estate is the exception: fifty shops share
+     * ONE public hostname and are chosen by a cookie, so the front end has to
+     * name the shop some other way.
+     *
+     * Rewriting Host would do it, and would also put an internal name into
+     * every absolute URL the application generates - links to a hostname that
+     * does not resolve for anybody. A header of its own costs nothing and
+     * cannot leak into a page.
+     */
+    const named = SHOP_HEADER ? req.headers[SHOP_HEADER] : null;
+    resolve(named || req.headers.host)
       .then((tenant) => {
         if (!tenant) {
           res.writeHead(404, { 'content-type': 'text/plain' });
