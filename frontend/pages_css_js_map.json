@@ -115,6 +115,7 @@
             "static/script/js/plugins/colorpicker/jqColorPicker.min.js",
             "static/script/js/routes.js",
             "static/script/js/core/analytics-inject.js",
+            "static/script/js/core/signup-link.js",
             "static/script/js/core/demo-mode.js"
         ]
     },
@@ -140,6 +141,7 @@
             "static/script/js/core/ajax.js",
             "static/script/js/modules/js/users.js",
             "static/script/js/core/analytics-inject.js",
+            "static/script/js/core/signup-link.js",
             "static/script/js/core/demo-mode.js"
         ],
         "css": [
