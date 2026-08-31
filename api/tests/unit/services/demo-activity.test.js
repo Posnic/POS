@@ -230,3 +230,66 @@ describe('the demo endpoints stay wired - the CI check the owner asked for', () 
     }
   });
 });
+
+describe('demo sales are visible to the reports that aggregate them', () => {
+  /*
+   * Owner, looking at the dashboard: "best selling produces wth 0 quantity ?"
+   *
+   * The names were right and every quantity and amount was zero, in every shop
+   * including India, since the day demo sales existed.
+   *
+   * The dashboard sums items.item_quantity and items.total_amount - the names
+   * sales.helper.js writes when a real sale is rung up, and that 189 places in
+   * the application read. The demo wrote `quantity` and `total` only, so every
+   * demo sale was invisible to anything aggregating over line items while
+   * looking completely correct on the sale screen and the receipt.
+   */
+  const { buildSales } = require('../../../src/services/demo-seed');
+
+  const items = [
+    { _id: 'i1', name: 'Tea', selling_price: 10, unit: 'qty' },
+    { _id: 'i2', name: 'Rice', selling_price: 40, unit: 'kg' },
+  ];
+  const branch = { branch_id: 'b1', branch_name: 'Demo', license: 'L' };
+
+  it('every line carries the name the rest of the app reads', () => {
+    const sales = buildSales({ items, customers: [], branch, pack: 'retail', now: new Date() });
+    expect(sales.length).toBeGreaterThan(0);
+    for (const s of sales) {
+      for (const line of s.items) {
+        expect(typeof line.item_quantity).toBe('number');
+        expect(line.item_quantity).toBeGreaterThan(0);
+        expect(typeof line.total_amount).toBe('number');
+        expect(line.total_amount).toBeGreaterThan(0);
+        expect(line.item_name).toBeTruthy();
+      }
+    }
+  });
+
+  it('the aliases the sale screen reads are kept', () => {
+    /* Dropping them to tidy up would trade one silent emptiness for another. */
+    const sales = buildSales({ items, customers: [], branch, pack: 'retail', now: new Date() });
+    const line = sales[0].items[0];
+    expect(line.quantity).toBe(line.item_quantity);
+    expect(line.total).toBe(line.total_amount);
+  });
+
+  it('a Best Selling aggregation over them is not all zeroes', () => {
+    /* The dashboard's pipeline, in miniature: unwind the lines, group by name,
+       sum the two fields. This is the assertion that would have caught it. */
+    const sales = buildSales({ items, customers: [], branch, pack: 'retail', now: new Date() });
+    const totals = {};
+    for (const s of sales) {
+      for (const l of s.items) {
+        const k = l.item_name;
+        totals[k] = totals[k] || { qty: 0, amount: 0 };
+        totals[k].qty += l.item_quantity;
+        totals[k].amount += l.total_amount;
+      }
+    }
+    const rows = Object.values(totals);
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows.every((r) => r.qty > 0)).toBe(true);
+    expect(rows.every((r) => r.amount > 0)).toBe(true);
+  });
+});

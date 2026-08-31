@@ -128,14 +128,30 @@ function buildSales({
       const qty = 1 + Math.floor(rand() * 3);
       const lineTotal = round2(price * qty);
       subtotal += lineTotal;
+      /*
+       * item_quantity and total_amount are the names the REST OF THE APP uses.
+       *
+       * sales.helper.js writes item_quantity when a real sale is rung up, and
+       * 189 places read it. The demo wrote `quantity` and `total` only, so
+       * every demo sale was invisible to anything aggregating over line items -
+       * the dashboard's Best Selling Products listed the right product names
+       * with a quantity of 0 and an amount of 0.00 against every one of them,
+       * in every shop, since the day demo sales existed.
+       *
+       * Both spellings are written: the aliases are what the sale screen and
+       * the receipt read, and dropping them to tidy up would trade one silent
+       * emptiness for another.
+       */
       lines.push({
         item_id: String(item._id),
         item_name: item.name,
         name: item.name,
+        item_quantity: qty,
         quantity: qty,
         unit_price: price,
         price,
         subtotal: lineTotal,
+        total_amount: lineTotal,
         total: lineTotal,
         unit: item.unit || 'qty',
         tax_rate: 0,
