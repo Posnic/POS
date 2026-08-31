@@ -14,6 +14,25 @@ class InstallRepository extends BaseModel {
   }
 
   /**
+   * How many branches this database already holds.
+   *
+   * The one question that separates "install a new shop" from "destroy an
+   * existing one". Every installed shop has a branch and no empty database
+   * does, so a non-zero answer means somebody's shop is on the other end of
+   * the call.
+   *
+   * Asked by processInstallation before it writes anything. On 28 August 2026
+   * a live customer's five branches, 265 products and 87 sales were replaced
+   * because nothing asked it.
+   *
+   * @returns {Promise<number>}
+   */
+  async countExistingBranches() {
+    const branches = await this.getCollection('branches');
+    return branches.countDocuments({});
+  }
+
+  /**
    * Check if user already exists by username, email, or license
    * @param {Object} params
    * @param {string} params.username
