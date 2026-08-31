@@ -31,6 +31,48 @@ class InstallService {
   async processInstallation(data) {
     try {
       /*
+       * REFUSE TO INSTALL OVER A SHOP THAT ALREADY EXISTS.
+       *
+       * On 28 August 2026 a live white-label customer - a horticultural
+       * corporation with five branches, 265 products and 87 sales going back
+       * to April 2025 - had all of it replaced by a fresh shop and demo data.
+       * Nobody deleted anything. Their tenant row was set provisioned:false,
+       * the provisioner read that as "a new signup", and called this endpoint
+       * against their live database. This function did exactly as it was
+       * asked.
+       *
+       * That is the whole failure: install is a CREATE, and nothing here
+       * checked whether there was already something to destroy. It is the last
+       * point at which the mistake is still recoverable, so the check belongs
+       * here rather than only in the caller - the caller that did it was
+       * trusted, and a second caller will be trusted too.
+       *
+       * A branch is the right thing to look for. Every installed shop has one
+       * and no empty database does, so its presence means somebody's shop is
+       * on the other end of this call.
+       *
+       * `force` exists for the deliberate rebuild of a shop known to be empty
+       * of anything worth keeping, and has to be passed on purpose.
+       */
+      if (data && data.force !== true) {
+        const existing = await this.repository.countExistingBranches().catch(() => 0);
+        if (existing > 0) {
+          console.error(
+            `⛔ install refused: this database already holds ${existing} branch(es). ` +
+              'Installing would replace an existing shop. Pass force:true only if it is ' +
+              'certainly empty of anything worth keeping.'
+          );
+          return {
+            status: false,
+            message:
+              'This database already contains a shop. Installing would replace it, ' +
+              'so it has been refused.',
+            data: { existingBranches: existing },
+          };
+        }
+      }
+
+      /*
        * Speak the provisioner's language before anything reads this.
        *
        * Gateway sends `register_demo: 'yes'` and `business: 'retail'`
