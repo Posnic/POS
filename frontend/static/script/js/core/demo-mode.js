@@ -24,6 +24,26 @@
                 var info = JSON.parse(x.responseText || '{}');
                 if (!info.demo) { return; }
 
+                /*
+                 * Where a signup from here came from.
+                 *
+                 * Without it, somebody who spent ten minutes in the demo and
+                 * then signed up was indistinguishable from someone who typed
+                 * the address - both arrive as "direct", and the one channel
+                 * we fully control is the one we cannot measure.
+                 *
+                 * Falls back to the bare URL if the helper is not on the page,
+                 * because a missing measurement must never cost a signup.
+                 */
+                var signupHref = function (surface) {
+                    try {
+                        if (window.PosnicSignupLink) {
+                            return window.PosnicSignupLink.signupUrl(info, surface);
+                        }
+                    } catch (e) { /* fall through */ }
+                    return 'https://posnic.com/signup.html';
+                };
+
                 var bar = document.createElement('div');
                 bar.id = 'posnic_demo_bar';
                 bar.setAttribute('style',
@@ -32,7 +52,7 @@
                     'padding:7px 14px;text-align:center;');
                 bar.innerHTML =
                     'Public demo — everything resets on the hour. ' +
-                    '<a href="https://posnic.com/signup.html" style="color:#8ab4ff;font-weight:600;">Create your free shop</a>' +
+                    '<a href="' + signupHref('demo_bar') + '" style="color:#8ab4ff;font-weight:600;">Create your free shop</a>' +
                     '<span style="opacity:.65;"> · no credit card — and the offline desktop till is free forever</span>';
                 document.body.appendChild(bar);
                 document.body.style.paddingBottom = '34px';
@@ -99,7 +119,7 @@
                                         '<div style="font-size:19px;font-weight:700;margin-bottom:8px;">Making this shop yours?</div>' +
                                         '<div style="margin-bottom:18px;">Create your own free shop in a minute. No credit card, no commitment — ' +
                                         'if you never renew, you simply continue on the free Community Edition.</div>' +
-                                        '<a href="https://posnic.com/signup.html" target="_blank" rel="noopener" style="display:block;' +
+                                        '<a href="' + signupHref('demo_nudge') + '" target="_blank" rel="noopener" style="display:block;' +
                                         'background:#16203a;color:#fff;text-decoration:none;font-weight:600;padding:11px;border-radius:7px;margin-bottom:10px;">' +
                                         'Create my free shop</a>' +
                                         '<button type="button" id="posnic_demo_nudge_close" style="background:none;border:none;color:#5a6478;' +

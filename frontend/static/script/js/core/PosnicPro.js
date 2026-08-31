@@ -2795,6 +2795,19 @@ PosnicPro = {
         $('#manage_li_cashbook').toggle(on('module_cashbook_enable'));
         $('#li_quotes').toggle(on('quotes_enable'));
         $('#manage_li_credit').toggle(on('module_credit_enable'));
+        /*
+         * Customer Dues on the dashboard follows the same switch.
+         *
+         * A shop that never sells on account cannot have dues, so the panel
+         * could only ever say "No customer owes money right now" - which reads
+         * as a feature that is broken rather than one the shop does not use.
+         *
+         * Best Selling takes the whole row when it goes, rather than sitting at
+         * two thirds width beside a gap.
+         */
+        var creditOn = on('module_credit_enable');
+        $('#dashboard_dues_col').toggle(creditOn);
+        $('#dashboard_best_col').toggleClass('col-md-8', creditOn).toggleClass('col-md-12', !creditOn);
         $('#manage_li_marketingmodule').toggle(on('module_marketing_enable'));
         $('#manage_li_messagingmodule').toggle(on('module_messaging_enable'));
         $('#manage_li_kiosk').toggle(on('module_channels_enable'));

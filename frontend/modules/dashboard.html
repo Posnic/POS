@@ -122,7 +122,7 @@
                  dues, JS (syncDuesHeight) sizes the empty card to match Best
                  Sellers so the page fits one screen; with dues it grows. -->
             <div class="row">
-                <div class="col-md-8">
+                <div class="col-md-8" id="dashboard_best_col">
                     <div class="card m-b-30">
                         <div class="card-header">
                             <div class="row align-items-center">
@@ -156,7 +156,11 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4">
+                <!-- Shown only when Customer credit is switched on. A shop that
+                     never sells on account cannot have dues, so the panel could
+                     only ever tell it that nobody owes anything - which reads as
+                     a feature that is broken rather than one it does not use. -->
+                <div class="col-md-4" id="dashboard_dues_col">
                     <div class="card m-b-30 recent_card" style="overflow: hidden; min-height:auto;">
                         <div class="card-header">
                             <div class="row align-items-center">

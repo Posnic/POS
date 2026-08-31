@@ -744,6 +744,17 @@ PosnicPro.dashboard = {
             $("#" + arrBtns[i]).removeClass("active");
         }
         $("#" + obj.id).addClass("active");
+        /*
+         * The module gates, again, here.
+         *
+         * applyModuleSidebar runs at login and after a modules save, but the
+         * dashboard's own markup is fetched when its route opens - after that
+         * has already run. Without this the Customer Dues panel would appear
+         * for a shop with credit switched off until something else happened to
+         * re-apply the gates.
+         */
+        if (PosnicPro.applyModuleSidebar) { PosnicPro.applyModuleSidebar(); }
+
         // One request for the whole dashboard - see loadOverview.
         PosnicPro.dashboard.loadOverview(filter);
     },
