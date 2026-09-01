@@ -171,7 +171,7 @@ function buildLangPacks(cb) {
         const problems = [];
         for (const lang of languages) {
             if (lang === 'en') continue;
-            const source = pathx.join(process.cwd(), 'languages', `${lang}.json`);
+            const source = pathx.join(process.cwd(), '..', 'languages', `${lang}.json`);
             const raw = fsx.readFileSync(source, 'utf8');
             let dict;
             try {

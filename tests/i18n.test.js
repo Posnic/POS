@@ -26,6 +26,8 @@ const path = require('path');
 const FRONTEND = path.join(__dirname, '..', 'frontend');
 const MODULES = path.join(FRONTEND, 'static', 'script', 'js', 'modules', 'js');
 const CORE = path.join(FRONTEND, 'static', 'script', 'js', 'core', 'PosnicPro.js');
+/* Language files sit at the repository root so contributors can find them. */
+const LANGUAGES_DIR = path.join(__dirname, '..', 'languages');
 
 /*
  * The WHOLE script tree, not just modules/js.
@@ -175,7 +177,7 @@ test('no module JS contains mojibake', () => {
 });
 
 test('no language file contains mojibake', () => {
-  const dir = path.join(FRONTEND, 'languages');
+  const dir = LANGUAGES_DIR;
   const bad = [];
   for (const f of fs.readdirSync(dir).filter((x) => x.endsWith('.json'))) {
     const dict = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8'));
@@ -199,7 +201,7 @@ test('the build emits a pack for every non-English language', () => {
   assert.ok(declared.includes('en') && declared.includes('ta'), 'config lists en and ta');
   for (const lang of declared) {
     if (lang === 'en') continue;
-    assert.ok(fs.existsSync(path.join(FRONTEND, 'languages', `${lang}.json`)),
+    assert.ok(fs.existsSync(path.join(LANGUAGES_DIR, `${lang}.json`)),
       `no languages/${lang}.json for declared language ${lang}`);
   }
   const gulp = fs.readFileSync(path.join(FRONTEND, 'gulpfile.js', 'index.js'), 'utf8');
@@ -208,7 +210,7 @@ test('the build emits a pack for every non-English language', () => {
 });
 
 test('every language file is valid JSON with string values', () => {
-  const dir = path.join(FRONTEND, 'languages');
+  const dir = LANGUAGES_DIR;
   for (const f of fs.readdirSync(dir).filter((x) => x.endsWith('.json'))) {
     const raw = fs.readFileSync(path.join(dir, f), 'utf8');
     let dict;

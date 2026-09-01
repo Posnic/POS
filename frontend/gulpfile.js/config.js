@@ -1,7 +1,15 @@
 var path = require('path')
 var fs = require('fs');
 const dir = process.cwd();
-const langDir = `${dir}${path.sep}languages`;
+/*
+ * Language files live at the REPOSITORY ROOT, not under frontend/.
+ *
+ * They are a contribution surface before they are a build input: somebody who
+ * speaks Kannada and has never opened this project should find them by looking
+ * at the repository, not by knowing that the web build reads them. gulp runs
+ * with frontend/ as its working directory, hence the step up.
+ */
+const langDir = path.resolve(dir, '..', 'languages');
 const publicDir = `public`;
 const s = path.sep; // Separator short form to reduce line
 /*
