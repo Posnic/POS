@@ -174,7 +174,13 @@ const value = (name) => (args.includes(name) ? args[args.indexOf(name) + 1] : nu
 const data = report();
 
 if (flag('--json')) {
-  console.log(JSON.stringify(data, null, 2));
+  /* A Map stringifies to {} and a Set to {}, so the context would arrive empty
+     and every consumer would quietly see no English at all. */
+  const plain = { ...data, context: {} };
+  for (const [key, c] of data.context) {
+    plain.context[key] = { english: c.english, where: [...c.where] };
+  }
+  console.log(JSON.stringify(plain, null, 2));
   process.exit(0);
 }
 
@@ -187,6 +193,75 @@ if (only) {
   }
   console.log(`${row.missing.length} key(s) the UI uses that ${only} does not answer:`);
   for (const k of row.missing) console.log('  ' + k);
+  process.exit(0);
+}
+
+/*
+ * Inconsistencies a non-speaker can find.
+ *
+ * Nobody who does not speak the language can say whether a translation is
+ * good. Two things are wrong regardless of the language, though, and both are
+ * mechanical:
+ *
+ *   - the same English rendered two different ways, so the interface calls one
+ *     thing by two names;
+ *   - the same translation used for two different English meanings, which
+ *     means at least one of them is the wrong word.
+ *
+ * The second is how "Edit" was found to be labelled "Edited". This narrows
+ * hundreds of strings down to a short list worth a speaker's attention - the
+ * searching is mechanical, the judgement is not.
+ *
+ * Long sentences are skipped: they legitimately differ between screens, and
+ * including them would bury the labels that matter in noise.
+ */
+const review = value('--review');
+if (review) {
+  const row = data.rows.find((r) => r.lang === review);
+  if (!row) { console.error(`no language file for "${review}"`); process.exit(1); }
+  const dict = JSON.parse(fs.readFileSync(path.join(LANG_DIR, `${review}.json`), 'utf8'));
+
+  const byEnglish = new Map();
+  const byTranslation = new Map();
+  const add = (map, outer, inner, key) => {
+    if (!map.has(outer)) map.set(outer, new Map());
+    if (!map.get(outer).has(inner)) map.get(outer).set(inner, []);
+    map.get(outer).get(inner).push(key);
+  };
+
+  for (const [key, c] of data.context) {
+    const en = (c.english || '').trim();
+    const ta = dict[key];
+    if (!en || typeof ta !== 'string' || !ta.trim()) continue;
+    if (en.split(/\s+/).length > 3) continue;
+    add(byEnglish, en.toLowerCase(), ta, key);
+    add(byTranslation, ta, en.toLowerCase(), key);
+  }
+
+  const show = (title, why, map) => {
+    console.log('');
+    console.log('  === ' + title + ' ===');
+    console.log('  ' + why);
+    console.log('');
+    let found = 0;
+    for (const [outer, inners] of [...map].sort()) {
+      if (inners.size < 2) continue;
+      found += 1;
+      console.log('    ' + outer);
+      for (const [inner, keys] of inners) {
+        console.log('        ' + inner.padEnd(34) + keys.slice(0, 2).join(', '));
+      }
+    }
+    if (!found) console.log('    none');
+    return found;
+  };
+
+  const a = show('same English, two translations',
+    'the interface calling one thing by two names', byEnglish);
+  const b = show('same translation, two meanings',
+    'at least one of them is the wrong word', byTranslation);
+  console.log('');
+  console.log(`  ${a + b} thing(s) worth a speaker's eye.`);
   process.exit(0);
 }
 
