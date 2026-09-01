@@ -129,7 +129,11 @@ async function main() {
             register_stateid: '4035',
             register_currency: 'INR',
             register_timezone: 'Asia/Kolkata',
-            demo_data: 'yes',
+            /* register_demo, not demo_data. The install service reads only
+               the former, so this script has been creating an EMPTY local shop
+               all along - 'demo_data' was silently ignored. */
+            register_demo: 'yes',
+            businessType: 'supermarket',
           }),
         }).then((r) => r.json()).catch((e) => ({ error: e.message }));
         console.log('[local] shop install: ' + (res && (res.message || res.type || res.error || 'done')));
