@@ -103,16 +103,18 @@ describe('installing a shop where tax IS known', () => {
      */
     const fs = require('fs');
     const path = require('path');
-    const countries = JSON.parse(fs.readFileSync(
-      path.join(__dirname, '../../../src/json/countries.json'), 'utf8'));
+    const countries = JSON.parse(
+      fs.readFileSync(path.join(__dirname, '../../../src/json/countries.json'), 'utf8')
+    );
     const india = (countries.countries || countries).find((c) => c.value === 'India');
 
     const { taxId, taxData, taxSource } = await service._createTaxes(...args('India'));
 
     expect(service.repository.taxes).toHaveLength(india.tax.length);
     expect(service.repository.taxes.map((t) => t.name)).toEqual(india.tax.map((t) => t.tax_name));
-    expect(service.repository.taxes.map((t) => t.rate))
-      .toEqual(india.tax.map((t) => parseFloat(t.tax_value)));
+    expect(service.repository.taxes.map((t) => t.rate)).toEqual(
+      india.tax.map((t) => parseFloat(t.tax_value))
+    );
     expect(taxId).toBeTruthy();
     expect(taxData).toBeTruthy();
     expect(taxSource).toBe('legacy');
@@ -127,7 +129,15 @@ describe('installing a shop where tax IS known', () => {
   it('each record still carries the fields the rest of the app reads', async () => {
     await service._createTaxes(...args('India'));
     const first = service.repository.taxes[0];
-    for (const k of ['branch_id', 'branch_name', 'name', 'rate', 'tax_fields', 'tax_group', 'license']) {
+    for (const k of [
+      'branch_id',
+      'branch_name',
+      'name',
+      'rate',
+      'tax_fields',
+      'tax_group',
+      'license',
+    ]) {
       expect(first).toHaveProperty(k);
     }
     expect(Array.isArray(first.tax_fields)).toBe(true);
@@ -147,7 +157,9 @@ describe('the shop that gets no tax is left switched off, not half-configured', 
     const fs = require('fs');
     const path = require('path');
     const src = fs.readFileSync(
-      path.join(__dirname, '../../../src/services/install.service.js'), 'utf8');
+      path.join(__dirname, '../../../src/services/install.service.js'),
+      'utf8'
+    );
     expect(src).toMatch(/tax_checkbox:\s*false/);
     expect(src).toMatch(/default_tax:\s*taxId \|\| ''/);
     /* And every item mapping guards on it, or a shop with no tax would build

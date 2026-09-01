@@ -29,7 +29,9 @@ describe('the file-backed registry', () => {
   it('does nothing at all unless it is asked for', () => {
     /* Every production shard has this unset and must take exactly the path it
        took before this existed. */
-    expect(code).toMatch(/const REGISTRY_FILE = String\(process\.env\.SHARD_REGISTRY_FILE \|\| ''\)\.trim\(\);/);
+    expect(code).toMatch(
+      /const REGISTRY_FILE = String\(process\.env\.SHARD_REGISTRY_FILE \|\| ''\)\.trim\(\);/
+    );
     expect(code).toMatch(/if \(REGISTRY_FILE\) return loadRegistryFromFile\(\);/);
   });
 
@@ -45,8 +47,10 @@ describe('the file-backed registry', () => {
   });
 
   it('gives every shop its own scope and its own database', () => {
-    const block = code.slice(code.indexOf('function loadRegistryFromFile'),
-                             code.indexOf('async function loadRegistry()'));
+    const block = code.slice(
+      code.indexOf('function loadRegistryFromFile'),
+      code.indexOf('async function loadRegistry()')
+    );
     expect(block).toMatch(/mongoose\.connection\.useDb\(r\.tenantDb, \{ useCache: true \}\)/);
     expect(block).toMatch(/secrets,/);
     /* Suspension is honoured the same way, so a demo can be taken down without
@@ -55,8 +59,10 @@ describe('the file-backed registry', () => {
   });
 
   it('skips a malformed row rather than serving it half-configured', () => {
-    const block = code.slice(code.indexOf('function loadRegistryFromFile'),
-                             code.indexOf('async function loadRegistry()'));
+    const block = code.slice(
+      code.indexOf('function loadRegistryFromFile'),
+      code.indexOf('async function loadRegistry()')
+    );
     expect(block).toMatch(/if \(!r \|\| !r\.host \|\| !r\.tenantDb\) continue;/);
   });
 
@@ -73,13 +79,17 @@ describe('scoping a shard to one machine', () => {
      * try to open every shop in the fleet, and each would fail on the databases
      * that live on the other one.
      */
-    expect(code).toMatch(/const SHARD_INSTANCE = String\(process\.env\.SHARD_INSTANCE \|\| ''\)\.trim\(\);/);
+    expect(code).toMatch(
+      /const SHARD_INSTANCE = String\(process\.env\.SHARD_INSTANCE \|\| ''\)\.trim\(\);/
+    );
     expect(code).toMatch(/if \(SHARD_INSTANCE\) query\.instance = SHARD_INSTANCE;/);
   });
 
   it('still starts from the query the control path always used', () => {
     const block = code.slice(code.indexOf('async function loadRegistry()'));
-    expect(block).toMatch(/provisioned: true, subdomain: \{ \$exists: true, \$nin: \[null, ''\] \}/);
+    expect(block).toMatch(
+      /provisioned: true, subdomain: \{ \$exists: true, \$nin: \[null, ''\] \}/
+    );
   });
 });
 
