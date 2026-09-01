@@ -190,12 +190,12 @@ test('no language file contains mojibake', () => {
 
 test('the build emits a pack for every non-English language', () => {
   const config = fs.readFileSync(path.join(FRONTEND, 'gulpfile.js', 'config.js'), 'utf8');
-  /* Parse the languages ARRAY, not every two-letter string in the file -
+  /* Parse the LANGUAGES list, not every two-letter string in the file -
      require('fs') is not a language, and reading it as one made this test
      demand a languages/fs.json. */
-  const arr = /const languages = \[([\s\S]*?)\]/.exec(config);
-  assert.ok(arr, 'config.js has no languages array');
-  const declared = [...arr[1].matchAll(/'([a-z]{2})'/g)].map((m) => m[1]);
+  const arr = /const LANGUAGES = \[([\s\S]*?)\n\];/.exec(config);
+  assert.ok(arr, 'config.js has no LANGUAGES list');
+  const declared = [...arr[1].matchAll(/code: '([a-z]{2})'/g)].map((m) => m[1]);
   assert.ok(declared.includes('en') && declared.includes('ta'), 'config lists en and ta');
   for (const lang of declared) {
     if (lang === 'en') continue;
@@ -326,4 +326,43 @@ test('the signed asset bundle carries the packs', () => {
   assert.match(bundler, /walk\(assetsDir, assetsDir\)/, 'the bundler no longer walks the tree');
   const skip = /const skip = new Set\(\[([^\]]*)\]\)/.exec(bundler);
   assert.ok(skip && !/languages/.test(skip[1]), 'language packs are excluded from the bundle');
+});
+
+/* ------------------------------------- adding a language is data only (L5) --- */
+
+test('the language menu is generated, not hand-written', () => {
+  /*
+   * The header carried one <a> per language, so adding a language meant
+   * editing markup - the last place it was still a code change. One English
+   * entry stays in the HTML on purpose: if the list cannot be read, the menu
+   * must still offer something rather than nothing.
+   */
+  const header = fs.readFileSync(path.join(FRONTEND, 'layouts', 'header.html'), 'utf8');
+  const entries = (header.match(/<a class="dropdown-item"[^>]*data-code=/g) || []).length;
+  assert.equal(entries, 1, 'the header should hold exactly one fallback entry, not one per language');
+  assert.ok(!/data-id="[a-z]{2}_/.test(header), 'the menu still points at per-language filenames');
+
+  const dash = fs.readFileSync(path.join(FRONTEND, 'static', 'script', 'js', 'modules', 'js', 'dashboard.js'), 'utf8');
+  assert.match(dash, /languages\/index\.json/, 'the menu is not built from the shipped list');
+  assert.match(dash, /\$\('#change_language'\)\.on\('click', 'a'/,
+    'the handler is not delegated, so generated entries would be dead');
+});
+
+test('the build publishes the list the menu reads', () => {
+  const gulp = fs.readFileSync(path.join(FRONTEND, 'gulpfile.js', 'index.js'), 'utf8');
+  assert.match(gulp, /index\.json/, 'no language list is published');
+  const config = fs.readFileSync(path.join(FRONTEND, 'gulpfile.js', 'config.js'), 'utf8');
+  assert.match(config, /const LANGUAGES = \[/, 'languages carry no display names');
+  /* A language a speaker cannot recognise is not offered to them. */
+  assert.match(config, /name: 'தமிழ்'/, 'Tamil is not named in Tamil');
+});
+
+test('stylesheets are written once, not once per language', () => {
+  /*
+   * This looped the languages and wrote the same path every time - the
+   * filename never carried the language - so every stylesheet was rewritten
+   * once per language for no effect. Pointless work that grows with the list.
+   */
+  const css = fs.readFileSync(path.join(FRONTEND, 'gulpfile.js', 'css.js'), 'utf8');
+  assert.ok(!/languages\.forEach/.test(css), 'CSS is still written once per language');
 });

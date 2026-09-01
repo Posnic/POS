@@ -128,14 +128,20 @@
                                     data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span
                                         class="live-icon select_language">English</span><span
                                         class="feather icon-chevron-down live-icon"></span></a>
+                                <!--
+                                    Filled from languages/index.json at load.
+
+                                    This held one hand-written <a> per language
+                                    - the last place where adding a language
+                                    meant editing markup rather than dropping
+                                    in a file. English is left here so the menu
+                                    is never empty if the list cannot be read.
+                                -->
                                 <div class="dropdown-menu dropdown-menu-right" aria-labelledby="languagelink"
                                     id="change_language">
-                                    <a class="dropdown-item" href="javascript:void(0)" data-id="dashboard.html"
+                                    <a class="dropdown-item" href="javascript:void(0)" data-code="en"
                                         data-value="English"><i class="flag flag-icon-us flag-icon-squared"></i>
                                         English</a>
-                                    <a class="dropdown-item lang_change_tamil" href="javascript:void(0)"
-                                        data-id="ta_dashboard.html" data-value="தமிழ்"><i
-                                            class="flag flag-icon-in flag-icon-squared"></i> தமிழ்</a>
                                 </div>
                             </div>
                         </div>
