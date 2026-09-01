@@ -81,14 +81,32 @@ jobs:
             'bash -lc "cd ~/posnic-develop/api && npm install --omit=dev --no-audit --no-fund && pm2 reload posnic-develop --update-env || pm2 start server.js --name posnic-develop"'
 
       - name: Prove it is actually serving
+        env:
+          HOST: ${{ secrets.DEVELOP_HOST }}
         run: |
           # A deploy that reports success without checking is how a box sits
           # broken for a week while the badge stays green.
+          #
+          # The machine is checked by ADDRESS, not by hostname. DNS and TLS are
+          # a separate concern owned by whoever runs Cloudflare, and a deploy
+          # that goes red because a DNS record is missing is reporting on
+          # somebody else's work - which teaches people to ignore it.
           for i in 1 2 3 4 5 6; do
-            CODE=$(curl -s -o /dev/null -m 15 -w '%{http_code}' https://develop.posnic.io/public/login.html || echo 000)
+            CODE=$(curl -s -o /dev/null -m 15 -w '%{http_code}' "http://${HOST}/public/login.html" || echo 000)
             echo "attempt $i: $CODE"
-            [ "$CODE" = "200" ] && exit 0
+            if [ "$CODE" = "200" ]; then
+              echo "the app is serving on ${HOST}"
+              # Reported, never required. Until the DNS record exists this is
+              # expected to be unreachable, and that is not this job's failure.
+              PUB=$(curl -s -o /dev/null -m 15 -w '%{http_code}' https://develop.posnic.io/public/login.html || echo 000)
+              if [ "$PUB" = "200" ]; then
+                echo "develop.posnic.io is live"
+              else
+                echo "::notice::develop.posnic.io answered ${PUB} - DNS or TLS is not set up yet. The deploy itself succeeded."
+              fi
+              exit 0
+            fi
             sleep 10
           done
-          echo "::error::develop.posnic.io did not answer 200 after the deploy"
+          echo "::error::the app did not answer 200 on ${HOST} after the deploy"
           exit 1
