@@ -7,6 +7,7 @@
   "scripts": {
     "postinstall": "node scripts/enable-installer-extraction-details.js",
     "start": "electron .",
+    "dev": "node scripts/dev-server.js",
     "test:auth": "node --test tests/startup-auth.test.js",
     "prepare:frontend": "node scripts/prepare-frontend.js",
     "prepare:api-runtime": "node scripts/prepare-api-runtime.js",
