@@ -37,7 +37,7 @@ shop with a week of sample trading, running the same code as this repository;
 ring up sales, break things freely, and the whole shop is restored on the
 hour. Outbound email, SMS and password changes are switched off there.
 
-[Website](https://posnic.com/) · [Verified product facts](https://posnic.com/posnic-facts) · [Package evidence](https://posnic.com/assets/posnic-package-license-evidence.json) · [CodeMeta metadata](codemeta.json) · [Citation metadata](CITATION.cff) · [Roadmap](docs/ROADMAP.md) · [User guide](docs/USER_GUIDE.md) · [Developer guide](docs/DEVELOPMENT.md) · [Architecture](docs/ARCHITECTURE.md) · [API](docs/API.md) · [Discussions](https://github.com/Posnic/POS/discussions)
+[Website](https://posnic.com/) · [Verified product facts](https://posnic.com/posnic-facts) · [Package evidence](https://posnic.com/assets/posnic-package-license-evidence.json) · [CodeMeta metadata](codemeta.json) · [Citation metadata](CITATION.cff) · [Roadmap](docs/ROADMAP.md) · [Contributor quickstart](docs/CONTRIBUTOR_QUICKSTART.md) · [User guide](docs/USER_GUIDE.md) · [Developer guide](docs/DEVELOPMENT.md) · [Architecture](docs/ARCHITECTURE.md) · [API](docs/API.md) · [Discussions](https://github.com/Posnic/POS/discussions)
 
 </div>
 
@@ -144,7 +144,9 @@ npm run build:mac
 npm run build:linux
 ```
 
-See the **[developer guide](docs/DEVELOPMENT.md)** for tests, linting and
+New contributors should start with the
+**[contributor quickstart](docs/CONTRIBUTOR_QUICKSTART.md)**. See the
+**[developer guide](docs/DEVELOPMENT.md)** for deeper tests, linting and
 conventions.
 
 ## Editions
@@ -172,6 +174,7 @@ the free edition worse. This is written down in [GOVERNANCE.md](docs/GOVERNANCE.
 | | |
 |---|---|
 | [User guide](docs/USER_GUIDE.md) | Running a shop with Posnic, first sale to closing the till |
+| [Contributor quickstart](docs/CONTRIBUTOR_QUICKSTART.md) | Local setup, test commands, issue map, PR flow and safety rules |
 | [Developer guide](docs/DEVELOPMENT.md) | Setup, tests, conventions, good first issues |
 | [Architecture](docs/ARCHITECTURE.md) | How it fits together, and the parts that bite |
 | [REST API](docs/API.md) | 584 endpoints, generated from the routes |
@@ -201,7 +204,9 @@ the free edition worse. This is written down in [GOVERNANCE.md](docs/GOVERNANCE.
 ## Contributing
 
 Bug reports, fixes, translations, hardware quirks from real shops, documentation
-— all welcome, and none of it requires permission to start.
+— all welcome, and none of it requires permission to start. The
+[contributor quickstart](docs/CONTRIBUTOR_QUICKSTART.md) gives the local setup,
+test commands and public feature-ticket map.
 
 Good places to begin are listed in the
 [developer guide](docs/DEVELOPMENT.md#good-first-issues): 19 known-failing tests,
@@ -250,11 +255,11 @@ and the licence material shipped with the exact artifact. This summary is not
 legal advice.
 
 The **Posnic name and logo are trademarks** and are not covered by the AGPL —
-see [GOVERNANCE.md § Trademark](GOVERNANCE.md#trademark-and-reserved-rights).
+see [GOVERNANCE.md § Trademark](docs/GOVERNANCE.md#trademark-and-reserved-rights).
 
 Companies needing to keep modifications private can buy a commercial licence:
 **info@posnic.com**. Such a licence covers the code Posnic owns. Contributors
 keep the copyright in what they write and there is no CLA, so community code can
 only be relicensed with its author's agreement — a deliberate limit on our own
 power, set out in [GOVERNANCE.md § Contributor
-copyright](GOVERNANCE.md#contributor-copyright).
+copyright](docs/GOVERNANCE.md#contributor-copyright).
