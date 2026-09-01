@@ -775,9 +775,35 @@ $(document).ready(function (e) {
     }
 
 });
-$('#change_language a').click(function () {
+/*
+ * Build the language menu from what the build actually shipped.
+ *
+ * Every language used to need its own hand-written <a> in header.html. Now the
+ * list comes from languages/index.json, so adding one is a file and a line of
+ * config - never markup.
+ *
+ * The menu keeps its English entry if this fails: an unreadable list should
+ * cost the OTHER languages, never leave a shop with no way to choose at all.
+ */
+(function buildLanguageMenu() {
+    var menu = document.getElementById('change_language');
+    if (!menu || typeof fetch !== 'function') return;
+    fetch('languages/index.json')
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (list) {
+            if (!Array.isArray(list) || !list.length) return;
+            menu.innerHTML = list.map(function (l) {
+                return '<a class="dropdown-item" href="javascript:void(0)" data-code="' + l.code + '"'
+                    + ' data-value="' + l.name + '"><i class="flag flag-icon-' + (l.flag || 'us')
+                    + ' flag-icon-squared"></i> ' + l.name + '</a>';
+            }).join('');
+        })
+        .catch(function () { /* the English entry in the markup stands */ });
+}());
+
+$('#change_language').on('click', 'a', function () {
     var nav_language = $(this).data('value');
-    var nav_id = $(this).data('id');
+    var nav_id = $(this).data('code');
 
     // Persist selected language for subsequent loads
     PosnicPro.local.set('language', nav_language);
@@ -788,10 +814,12 @@ $('#change_language a').click(function () {
      * page now: change() records the code, fetches that language's words and
      * redraws in place, which is both simpler and instant.
      *
-     * The menu still carries a filename in data-id; change() takes the code
-     * from it so the markup did not have to be touched in the same breath.
+     * The menu carries the code itself now. A filename is still tolerated so a
+     * cached older header cannot break the switcher on the first load after an
+     * update.
      */
-    var code = /^([a-z]{2})_/.test(nav_id) ? nav_id.slice(0, 2) : 'en';
+    var code = /^[a-z]{2}$/.test(nav_id) ? nav_id
+        : (/^([a-z]{2})_/.test(nav_id) ? nav_id.slice(0, 2) : 'en');
     PosnicPro.i18n.change(code).then(function () {
         /* The type sizes below are language-dependent and were previously
            settled by loading a different page. */

@@ -73,13 +73,18 @@ function buildAllCss(cb) {
             for (let page in css) {
                 if (css.hasOwnProperty(page)) {
                     let content = css[page].join("\n");
-                    languages.forEach(lang => {
-                        let directory = `${publicDir}${s}style`;
-                        if (!fs.existsSync(directory)){
-                            fs.mkdirSync(directory, { recursive: true });
-                        }
-                        fs.writeFileSync(`${directory}${s}${page}.css`,content,{encoding:'utf8'})
-                    });
+                    /*
+                     * Written once. This looped over the languages and wrote
+                     * the SAME path each time - the filename never carried the
+                     * language - so it rewrote every stylesheet once per
+                     * language for no effect. Harmless at two; pointless work
+                     * that grows with every language added.
+                     */
+                    let directory = `${publicDir}${s}style`;
+                    if (!fs.existsSync(directory)){
+                        fs.mkdirSync(directory, { recursive: true });
+                    }
+                    fs.writeFileSync(`${directory}${s}${page}.css`,content,{encoding:'utf8'})
                 }
             }
             cb();

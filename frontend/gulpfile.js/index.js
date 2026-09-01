@@ -192,6 +192,16 @@ function buildLangPacks(cb) {
         if (problems.length) {
             return cb(new Error('language packs:\n  ' + problems.join('\n  ')));
         }
+        /*
+         * What the language menu offers.
+         *
+         * The header used to carry one hand-written <a> per language, so a new
+         * language meant editing markup as well as adding a file - the last
+         * place adding a language was still a code change. The menu is built
+         * from this at runtime instead.
+         */
+        const { LANGUAGES } = require('./config');
+        fsx.writeFileSync(pathx.join(outDir, 'index.json'), JSON.stringify(LANGUAGES), 'utf8');
         cb();
     } catch (e) { cb(e); }
 }
