@@ -1,0 +1,94 @@
+# Puts whatever is on develop onto develop.posnic.io, so anybody can try it.
+#
+# THIS MACHINE RUNS UNREVIEWED CONTRIBUTOR CODE. That single fact decides
+# everything below.
+#
+#   It is NOT registered in the estate console. A registered instance can be
+#   handed a real customer's shop by the provisioner, and no amount of care
+#   afterwards would undo that.
+#
+#   It gets its OWN database and its OWN secrets. It never receives the
+#   control-plane credentials, the S3 keys, the payment keys or the mail keys
+#   that the production deploys carry - deliberately, by simply not sending
+#   them, so nothing on that box can reach anything real.
+#
+#   It holds demo data only, and says so on every page.
+#
+# It is a public sandbox that happens to run our code. Treat anything on it as
+# readable by anyone, because it is.
+name: Deploy develop
+
+on:
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-develop
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    # Off until the machine exists and DEVELOP_DEPLOY_ENABLED is set to true.
+    # A workflow that fails on every push teaches people to ignore red marks.
+    if: vars.DEVELOP_DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+
+      # Built here rather than on the box: a 2 GB machine running mongod and
+      # the API should not also be running a gulp build, and building in CI
+      # means a broken build never reaches the sandbox at all.
+      - name: Build the frontend
+        run: |
+          npm --prefix frontend install --no-audit --no-fund
+          cd frontend && npx gulp build
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEVELOP_SSH_KEY }}" > ~/.ssh/develop.pem
+          chmod 600 ~/.ssh/develop.pem
+          ssh-keyscan -H "${{ secrets.DEVELOP_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Sync the app
+        run: |
+          # .env is excluded on purpose. The sandbox generates its own secrets
+          # once and keeps them; overwriting them on every deploy would sign
+          # out every tester mid-test.
+          rsync -az --delete \
+            --exclude node_modules --exclude .env --exclude uploads \
+            -e "ssh -i ~/.ssh/develop.pem" \
+            api/ "${{ secrets.DEVELOP_USER }}@${{ secrets.DEVELOP_HOST }}:~/posnic-develop/api/"
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/develop.pem" \
+            frontend/public/ "${{ secrets.DEVELOP_USER }}@${{ secrets.DEVELOP_HOST }}:~/posnic-develop/frontend/public/"
+          rsync -az \
+            -e "ssh -i ~/.ssh/develop.pem" \
+            languages/ "${{ secrets.DEVELOP_USER }}@${{ secrets.DEVELOP_HOST }}:~/posnic-develop/languages/"
+
+      - name: Install and restart
+        run: |
+          ssh -i ~/.ssh/develop.pem \
+            "${{ secrets.DEVELOP_USER }}@${{ secrets.DEVELOP_HOST }}" \
+            'bash -lc "cd ~/posnic-develop/api && npm install --omit=dev --no-audit --no-fund && pm2 reload posnic-develop --update-env || pm2 start server.js --name posnic-develop"'
+
+      - name: Prove it is actually serving
+        run: |
+          # A deploy that reports success without checking is how a box sits
+          # broken for a week while the badge stays green.
+          for i in 1 2 3 4 5 6; do
+            CODE=$(curl -s -o /dev/null -m 15 -w '%{http_code}' https://develop.posnic.io/public/login.html || echo 000)
+            echo "attempt $i: $CODE"
+            [ "$CODE" = "200" ] && exit 0
+            sleep 10
+          done
+          echo "::error::develop.posnic.io did not answer 200 after the deploy"
+          exit 1
