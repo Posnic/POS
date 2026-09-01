@@ -272,3 +272,58 @@ test('the runtime translates both shapes', () => {
   assert.match(applyFn, /if \(!dict\) return/, 'English should do no work at all');
   assert.ok(core.includes('DOMContentLoaded'), 'apply() never runs on its own');
 });
+
+/* ------------------------------------------------ offline, and delivery --- */
+
+test('the service worker caches the language pack', () => {
+  /*
+   * Pages ship in English and the words arrive by fetch, so without this a
+   * Tamil shop that loses its connection silently reverts to English - on a
+   * till, in front of a customer.
+   */
+  const sw = fs.readFileSync(path.join(FRONTEND, 'sw-template.js'), 'utf8');
+  assert.match(sw, /LANGUAGE_PACK\s*=/, 'the worker does not recognise a language pack');
+  assert.match(sw, /REFERENCE\.test\(url\.pathname\) \|\| LANGUAGE_PACK\.test\(url\.pathname\)/,
+    'the pack is not routed to the caching branch');
+});
+
+test('the pack is cached on first use, never precached', () => {
+  /*
+   * Precaching every language would put the weight back that this whole
+   * exercise removed: a shop should download the one language it chose.
+   */
+  const sw = fs.readFileSync(path.join(FRONTEND, 'sw-template.js'), 'utf8');
+  const precacheLine = sw.split('\n').find((l) => /const PRECACHE/.test(l)) || '';
+  assert.ok(!/languages/.test(precacheLine), 'language packs are precached');
+});
+
+test('the language-pack pattern matches packs and nothing else', () => {
+  const sw = fs.readFileSync(path.join(FRONTEND, 'sw-template.js'), 'utf8');
+  const m = /const LANGUAGE_PACK = (\/.*\/);/.exec(sw);
+  assert.ok(m, 'LANGUAGE_PACK is not a literal regex');
+  // eslint-disable-next-line no-eval
+  const re = eval(m[1]);
+  for (const good of ['/languages/ta.json', '/languages/hi.json', '/languages/pt-BR.json']) {
+    assert.ok(re.test(good), 'should match ' + good);
+  }
+  /* Not user uploads, not scripts, not anything that merely says "languages". */
+  for (const bad of ['/uploads/languages/x.json', '/api/languages.json', '/languages/ta.js', '/settings.json']) {
+    assert.ok(!re.test(bad), 'should NOT match ' + bad);
+  }
+});
+
+test('the signed asset bundle carries the packs', () => {
+  /*
+   * The owner suggested S3. The asset channel already ships frontend/public
+   * signed, staged and revertible, and the packs are written into that tree -
+   * so delivery needed no new code and no second, weaker door. This pins that
+   * the bundler still walks the whole tree rather than a list that could
+   * forget them.
+   */
+  const bundler = fs.readFileSync(
+    path.join(__dirname, '..', 'scripts', 'build-asset-bundle.js'), 'utf8');
+  assert.match(bundler, /frontend', 'public'/, 'the bundler no longer reads frontend/public');
+  assert.match(bundler, /walk\(assetsDir, assetsDir\)/, 'the bundler no longer walks the tree');
+  const skip = /const skip = new Set\(\[([^\]]*)\]\)/.exec(bundler);
+  assert.ok(skip && !/languages/.test(skip[1]), 'language packs are excluded from the bundle');
+});
