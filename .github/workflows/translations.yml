@@ -1,0 +1,67 @@
+# Checks a translation pull request the way a maintainer would, but instantly.
+#
+# A translation PR needs almost none of the repository's CI - no Electron, no
+# MongoDB, no packaging. It needs three questions answered, and answered fast
+# enough that a first-time contributor is not left guessing:
+#
+#   is the file still valid JSON
+#   did the encoding survive the round trip
+#   did anything outside the language files change
+#
+# The encoding question is the one a human reviewer cannot answer. Nine Tamil
+# strings shipped to the sale screen as UTF-8-saved-as-cp1252 and were live for
+# months, because mojibake is invisible to anyone who does not read the script.
+name: Translations
+
+on:
+  pull_request:
+    paths:
+      - 'languages/**'
+      - 'frontend/gulpfile.js/config.js'
+      - 'tests/tools/i18n-coverage.js'
+
+# A contributor pushing three times in a row should not queue three runs.
+concurrency:
+  group: translations-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+
+      # No npm install. These checks read files; pulling a dependency tree to
+      # do that would make the run slower than the contribution.
+      - name: Language files are valid
+        run: node tests/tools/check-translations.js
+
+      - name: Coverage
+        run: node tests/tools/i18n-coverage.js
+
+      - name: Nothing outside the language files changed
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          # A translation PR that also edits application code is not a
+          # translation PR. Saying so here is quicker and kinder than a
+          # reviewer noticing on the third read.
+          git fetch --no-tags --depth=1 origin "$BASE" >/dev/null 2>&1 || true
+          CHANGED=$(git diff --name-only "$BASE" "$HEAD" || git diff --name-only HEAD~1 HEAD)
+          echo "Changed:"; echo "$CHANGED" | sed 's/^/  /'
+          UNEXPECTED=$(echo "$CHANGED" | grep -v -E '^(languages/|docs/|\.github/)' \
+            | grep -v -E '^frontend/gulpfile\.js/config\.js$' || true)
+          if [ -n "$UNEXPECTED" ]; then
+            echo ""
+            echo "::warning::This PR changes files outside languages/. That may be"
+            echo "fine, but it needs a maintainer rather than a translation review:"
+            echo "$UNEXPECTED" | sed 's/^/  /'
+          fi

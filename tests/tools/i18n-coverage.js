@@ -34,7 +34,9 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..', '..', 'frontend');
-const LANG_DIR = path.join(ROOT, 'languages');
+/* At the repository root, not under frontend/: a translator should find these
+   by looking at the project, not by knowing which build step reads them. */
+const LANG_DIR = path.resolve(__dirname, '..', '..', 'languages');
 
 /* Output and build artefacts hold the SAME keys already substituted, so
    counting them would double every number and, for public/, would count
@@ -274,11 +276,52 @@ if (review) {
  * English and the screen beside every blank, so it can be filled in and handed
  * straight back - it is already the shape of a language file.
  */
+/*
+ * Start a language that does not exist yet.
+ *
+ * --worksheet needs a language file to compare against, so the FIRST person to
+ * offer Hindi had nothing to begin with - the tool could describe how
+ * incomplete a language was but not how to start one. This writes a worksheet
+ * for every string in the product.
+ *
+ * Separate from --worksheet on purpose. A typo would otherwise silently
+ * generate a worksheet for a language nobody speaks, and the first sign of it
+ * would be a pull request adding languages/hj.json.
+ */
+const starting = value('--new');
+if (starting) {
+  if (!/^[a-z]{2}(-[A-Za-z]{2,4})?$/.test(starting)) {
+    console.error(`"${starting}" is not a language code. Use e.g. hi, ta, pt-BR.`);
+    process.exit(1);
+  }
+  if (fs.existsSync(path.join(LANG_DIR, `${starting}.json`))) {
+    console.error(`languages/${starting}.json already exists - use --worksheet ${starting}`);
+    process.exit(1);
+  }
+  const out = {};
+  for (const key of [...data.context.keys()].sort()) {
+    const c = data.context.get(key);
+    out[key] = {
+      english: c.english,
+      screen: [...c.where].sort().slice(0, 3).join(', '),
+      [starting]: '',
+    };
+  }
+  const file = value('--out') || `${starting}-to-translate.json`;
+  fs.writeFileSync(file, JSON.stringify(out, null, 2) + '\n', 'utf8');
+  console.log(`  ${Object.keys(out).length} string(s) written to ${file}`);
+  console.log(`  Fill in the "${starting}" field on each - you do not have to do them all.`);
+  console.log(`  Then:  node tests/tools/i18n-coverage.js --merge ${starting} --out ${file}`);
+  console.log(`  and add "${starting}" to LANGUAGES in frontend/gulpfile.js/config.js.`);
+  process.exit(0);
+}
+
 const sheet = value('--worksheet');
 if (sheet) {
   const row = data.rows.find((r) => r.lang === sheet);
   if (!row) {
-    console.error(`no language file for "${sheet}" in ${LANG_DIR}`);
+    console.error(`no languages/${sheet}.json yet.`);
+    console.error(`To start that language:  node tests/tools/i18n-coverage.js --new ${sheet}`);
     process.exit(1);
   }
   const out = {};
@@ -315,7 +358,10 @@ if (merge) {
   }
   const sheetData = JSON.parse(fs.readFileSync(file, 'utf8'));
   const target = path.join(LANG_DIR, `${merge}.json`);
-  const dict = JSON.parse(fs.readFileSync(target, 'utf8'));
+  /* A brand-new language has no file yet - --new wrote only the worksheet, so
+     this is where the language actually starts existing. */
+  const isNew = !fs.existsSync(target);
+  const dict = isNew ? {} : JSON.parse(fs.readFileSync(target, 'utf8'));
 
   let taken = 0;
   let blank = 0;
@@ -337,8 +383,14 @@ if (merge) {
   const sorted = {};
   for (const k of Object.keys(dict).sort()) sorted[k] = dict[k];
   fs.writeFileSync(target, JSON.stringify(sorted, null, 2) + '\n', 'utf8');
-  console.log(`  merged ${taken} translation(s) into ${path.relative(process.cwd(), target)}`
-    + (blank ? `, ${blank} left blank` : ''));
+  console.log(`  ${isNew ? 'created' : 'merged into'} ${path.relative(process.cwd(), target)}`
+    + ` with ${taken} translation(s)` + (blank ? `, ${blank} left blank` : ''));
+  if (isNew) {
+    console.log('');
+    console.log(`  One more step: add { code: '${merge}', name: '<the language, written in`
+      + ` itself>', flag: '<icon>' }`);
+    console.log('  to LANGUAGES in frontend/gulpfile.js/config.js, or the app will not offer it.');
+  }
   console.log('  run this tool with no arguments to see the new coverage.');
   process.exit(0);
 }
