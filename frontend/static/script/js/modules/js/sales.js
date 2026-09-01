@@ -175,7 +175,7 @@
 
         $('#time-format').removeClass('commonDate');
         $('#time-format').addClass('commonEditDate');
-        $("#sales-text-change").text(PosnicPro.i18n.t('lang_action_edit_sale', 'Edit'));
+        $("#sales-text-change").text(PosnicPro.i18n.t('lang_action_edit', 'Edit'));
         $(".sale_table_head_hide").text('');
         $(".sale_table_head_text").text('Action');
         $('.return_sale_only_show').hide();
