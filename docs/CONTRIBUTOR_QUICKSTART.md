@@ -272,7 +272,8 @@ answer is to delete it and make another, which is only a comfortable answer
 because nothing on it matters.
 
 If you have a few minutes, testing somebody else's change is genuinely useful
-and needs no permissions. Filter issues by `ready for QA`, try the thing, and
+and needs no permissions - [`docs/QA_PROCESS.md`](QA_PROCESS.md) is the whole
+thing on one page. Filter issues by `ready for QA`, try the thing, and
 say what happened. Reporting that something is broken is as valuable as fixing
 it, and much better found there than by a shopkeeper.
 
