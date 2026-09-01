@@ -80,13 +80,19 @@ function keysUsed() {
   /* key -> { english, where } so a translator can be handed the sentence and
      the screen, not a list of identifiers. */
   const context = new Map();
+  /* Markup indentation is not part of the sentence. A tag broken over three
+     lines gives back "Your shop was set up with one\n      trade's sample",
+     which is unreadable in a worksheet and would be translated with the
+     whitespace baked in. */
+  const tidy = (s) => String(s || '').replace(/\s+/g, ' ').trim();
+
   const remember = (key, english, file) => {
     used.add(key);
     if (!context.has(key)) {
-      context.set(key, { english: (english || '').trim(), where: new Set() });
+      context.set(key, { english: tidy(english), where: new Set() });
     }
     const c = context.get(key);
-    if (!c.english && english) c.english = english.trim();
+    if (!c.english && english) c.english = tidy(english);
     c.where.add(path.basename(file));
   };
 
