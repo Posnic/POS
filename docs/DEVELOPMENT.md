@@ -4,6 +4,10 @@ Everything you need to get Posnic running, change it, and get the change
 merged. If something here is wrong or missing, that is a bug — please open an
 issue.
 
+If you are making your first contribution, start with
+[CONTRIBUTOR_QUICKSTART.md](CONTRIBUTOR_QUICKSTART.md). This guide is the deeper
+reference after the first setup works.
+
 ## Getting it running
 
 **You need:** Node 22.12 or later, Git, and about 3 GB of disk. You do **not**

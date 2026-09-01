@@ -6,6 +6,10 @@
 blank_issues_enabled: false
 
 contact_links:
+  - name: Start contributing
+    url: https://github.com/Posnic/POS/blob/main/docs/CONTRIBUTOR_QUICKSTART.md
+    about: Local setup, test commands, good first issues, PR flow and safety rules.
+
   - name: Question or help using Posnic
     url: https://github.com/Posnic/POS/discussions/categories/q-a
     about: How do I do X, is this normal, hardware advice. Faster than an issue.
