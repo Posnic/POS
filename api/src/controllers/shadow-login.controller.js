@@ -39,6 +39,14 @@ const BaseModel = require('../models/base.model');
    otherwise the console could mint a permanent key to any shop by accident. */
 const MAX_LIFETIME_SEC = 120;
 
+function clientIp(req) {
+  const forwardedFor = req.headers && req.headers['x-forwarded-for'];
+  const forwardedIp = Array.isArray(forwardedFor)
+    ? forwardedFor[0]
+    : String(forwardedFor || '').split(',')[0].trim();
+  return req.ip || req.connection?.remoteAddress || forwardedIp || 'unknown';
+}
+
 async function shadowLogin(req, res) {
   const token = req.query.token || req.body?.token;
   if (!token) return res.status(400).send('This link is missing its token.');
@@ -77,10 +85,17 @@ async function shadowLogin(req, res) {
    * only needed for as long as a token could still be replayed.
    */
   const spent = db.collection('shadow_login_tokens');
+  const shadowActor = claims.reason === 'owner sign-in from posnic.com' ? 'owner' : 'support';
   try {
     await spent.createIndex({ jti: 1 }, { unique: true, name: 'jti_once' });
     await spent.createIndex({ usedAt: 1 }, { expireAfterSeconds: 24 * 60 * 60, name: 'jti_ttl' });
-    await spent.insertOne({ jti: claims.jti, usedAt: new Date(), by: claims.by || null });
+    await spent.insertOne({
+      jti: claims.jti,
+      usedAt: new Date(),
+      by: claims.by || null,
+      reason: claims.reason || null,
+      actor: shadowActor,
+    });
   } catch (e) {
     if (e && e.code === 11000) {
       return res.status(401).send('This link has already been used. Ask for a new one.');
@@ -185,6 +200,31 @@ async function shadowLogin(req, res) {
   const nextRoute = /^[a-zA-Z0-9/_-]{1,80}$/.test(nextRaw) ? nextRaw : '';
   const firstBranch =
     Array.isArray(user.branch_access) && user.branch_access[0] ? user.branch_access[0] : {};
+  if (shadowActor === 'owner') {
+    const branchId = user.branch_id || firstBranch.branch_id;
+    const licenseId = user.license || user.license_id;
+    if (branchId && licenseId) {
+      const activity = await BaseModel.changeUserLog(
+        user._id,
+        user.username || user.name || user.email,
+        new Date(),
+        branchId,
+        firstBranch.branch_name || '',
+        licenseId,
+        {
+          userAgent: req.headers['user-agent'] || '',
+          ip: clientIp(req),
+        }
+      );
+      if (!activity || activity.status === false) {
+        // eslint-disable-next-line no-console
+        console.warn('shadow owner activity log failed:', activity && activity.message);
+      }
+    } else {
+      // eslint-disable-next-line no-console
+      console.warn('shadow owner activity log skipped: branch or license missing');
+    }
+  }
   const payload = JSON.stringify({
     next: nextRoute,
     token: authToken,
