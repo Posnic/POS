@@ -51,19 +51,34 @@ say "reset starting"
 pm2 stop "$APP" >/dev/null 2>&1 || say "note: $APP was not running"
 
 if [ -f "$SEED" ]; then
+  # A captured snapshot wins: somebody took it deliberately, and it may hold
+  # a state the seeder cannot rebuild.
   if mongorestore --drop --archive="$SEED" --gzip --quiet; then
-    say "restored from seed"
+    say "restored from the captured seed"
+    RESEED=no
   else
-    say "FAILED to restore the seed - dropping instead, so the box is at least clean"
+    say "the captured seed would not restore - falling back to seeding"
     mongosh "$DB" --quiet --eval 'db.dropDatabase()' >/dev/null 2>&1
+    RESEED=yes
   fi
 else
   mongosh "$DB" --quiet --eval 'db.dropDatabase()' >/dev/null 2>&1
-  say "no seed yet - database emptied (run reset.sh --capture after setting a shop up)"
+  RESEED=yes
 fi
 
 pm2 start "$APP" >/dev/null 2>&1 || pm2 restart "$APP" >/dev/null 2>&1
 sleep 4
+
+# Rebuilt rather than left blank. An empty sandbox every morning is the exact
+# problem the seeder exists to solve: whoever arrives has to walk the setup
+# wizard before they can look at the thing they came to look at.
+if [ "$RESEED" = "yes" ]; then
+  if node /home/ubuntu/posnic-develop/seed.js 2>&1 | sed 's/^/    /' | tee -a "$LOG"; then
+    say "reseeded"
+  else
+    say "WARNING: seeding failed - the sandbox is empty"
+  fi
+fi
 
 CODE=$(curl -s -o /dev/null -m 15 -w '%{http_code}' http://127.0.0.1:3000/public/login.html || echo 000)
 say "reset done, app answering ${CODE}"
