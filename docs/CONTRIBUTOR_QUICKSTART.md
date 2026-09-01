@@ -26,6 +26,19 @@ Start with one small, reviewable change.
 For anything non-trivial, comment on the issue before opening a large PR. A
 small design note saves everybody time.
 
+## Before you code
+
+Read the issue's acceptance criteria and pick one small checkbox or PR slice.
+If the issue does not say exactly what "done" means, make the first PR or issue
+comment add that checklist before changing behavior.
+
+A useful acceptance criterion is specific and testable:
+
+- It names the user-visible result.
+- It says what must keep working.
+- It names the test, fixture, screenshot, or evidence needed for review.
+- It names what is out of scope when the risky part needs a separate design.
+
 ## What you need
 
 - Git
@@ -196,15 +209,16 @@ Before opening a PR:
 
 1. Branch from `main`.
 2. Keep one concern per PR.
-3. Add or update a focused test when code behavior changes.
-4. Run the checks that match your change type.
-5. Sign off commits:
+3. Link the issue and state which acceptance criteria or PR slice is covered.
+4. Add or update a focused test when code behavior changes.
+5. Run the checks that match your change type.
+6. Sign off commits:
 
    ```bash
    git commit -s -m "Explain why this change exists"
    ```
 
-6. Fill in the pull request template with what changed and how you tested it.
+7. Fill in the pull request template with what changed and how you tested it.
 
 For a focused fix, a good PR title looks like:
 
