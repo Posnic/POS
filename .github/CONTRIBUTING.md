@@ -39,10 +39,12 @@ already run. The first launch takes a few minutes while it unpacks.
    [contributor roadmap](https://github.com/Posnic/POS/issues/35) or the
    [`good first issue`](https://github.com/Posnic/POS/labels/good%20first%20issue)
    label.
-3. Fork, create a branch (`fix/receipt-rounding`, `feat/tamil-translation`).
-4. Keep pull requests focused — one change per PR.
-5. Match the style of the surrounding code; avoid drive-by reformatting.
-6. Run the tests: `cd api && npm test` (7,744 unit tests, about a minute), plus
+3. Read the issue acceptance criteria and choose one small checkbox or PR slice.
+   If the issue does not yet define "done", start by proposing that checklist.
+4. Fork, create a branch (`fix/receipt-rounding`, `feat/tamil-translation`).
+5. Keep pull requests focused — one change per PR.
+6. Match the style of the surrounding code; avoid drive-by reformatting.
+7. Run the tests: `cd api && npm test` (7,744 unit tests, about a minute), plus
    `npm test` at the repo root for the desktop side (294 more). Both should pass on a
    clean checkout — if they do not, that is worth an issue on its own.
 
