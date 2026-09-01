@@ -27,8 +27,30 @@ const FRONTEND = path.join(__dirname, '..', 'frontend');
 const MODULES = path.join(FRONTEND, 'static', 'script', 'js', 'modules', 'js');
 const CORE = path.join(FRONTEND, 'static', 'script', 'js', 'core', 'PosnicPro.js');
 
-const moduleFiles = () => fs.readdirSync(MODULES).filter((f) => f.endsWith('.js'));
-const read = (f) => fs.readFileSync(path.join(MODULES, f), 'utf8');
+/*
+ * The WHOLE script tree, not just modules/js.
+ *
+ * The first pass of this work only looked at modules/js, and PosnicPro.js
+ * itself quietly kept three filename comparisons and three Tamil words. A test
+ * scoped more narrowly than the problem finds nothing and says so confidently.
+ *
+ * Vendor bundles are excluded: jQuery and friends are not ours to translate,
+ * and a minified library is full of byte sequences that look like anything.
+ */
+const SCRIPTS = path.join(FRONTEND, 'static', 'script');
+const SKIP_DIR = /^(vendor|plugins|lazy)$/;
+const VENDOR_FILE = /\.min\.js$|^(jquery|bootstrap|select2|moment|summernote|jspdf|html2canvas|sortable|dexie|hasher|crossroads|signals)/i;
+
+function ourScripts(dir = SCRIPTS, out = []) {
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (e.isDirectory()) { if (!SKIP_DIR.test(e.name)) ourScripts(path.join(dir, e.name), out); }
+    else if (e.name.endsWith('.js') && !VENDOR_FILE.test(e.name)) out.push(path.join(dir, e.name));
+  }
+  return out;
+}
+
+const moduleFiles = () => ourScripts().map((f) => path.relative(SCRIPTS, f));
+const read = (f) => fs.readFileSync(path.join(SCRIPTS, f), 'utf8');
 
 /*
  * PosnicPro.js is 200KB+, so a bare indexOf('is: function') lands somewhere
@@ -39,7 +61,7 @@ function i18nSource() {
   const core = fs.readFileSync(CORE, 'utf8');
   const start = core.indexOf('PosnicPro.i18n = {');
   assert.ok(start > 0, 'PosnicPro.i18n is missing');
-  const end = core.indexOf('\nPosnicPro.i18n.load();', start);
+  const end = core.indexOf('\nPosnicPro.i18n.load()', start);
   assert.ok(end > start, 'PosnicPro.i18n is not closed as expected');
   return core.slice(start, end);
 }
@@ -76,11 +98,26 @@ test('no module decides the language by comparing a page filename', () => {
     'these still identify the language by filename: ' + offenders.join(', '));
 });
 
-test('no module writes language_herf directly', () => {
-  /* Writing the filename without the code leaves i18n.code() answering with
-     the language the user just left. i18n.select() writes both. */
-  const offenders = moduleFiles().filter((f) => /local\.set\(\s*'language_herf'/.test(read(f)));
+test('i18n.select() is the only thing that writes the language', () => {
+  /*
+   * Writing the filename without the code leaves i18n.code() answering with
+   * the language the user just left, until the next reload.
+   *
+   * select() is the sanctioned writer and lives in PosnicPro.js, so the check
+   * is not "nobody writes it" but "nobody else does" - and that it is written
+   * inside select() rather than somewhere that merely happens to be in the
+   * same file.
+   */
+  const offenders = moduleFiles()
+    .filter((f) => f !== path.join('js', 'core', 'PosnicPro.js'))
+    .filter((f) => /local\.set\(\s*'language_herf'/.test(read(f)));
   assert.deepEqual(offenders, [], 'these bypass i18n.select(): ' + offenders.join(', '));
+
+  const core = fs.readFileSync(CORE, 'utf8');
+  const writes = (core.match(/local\.set\(\s*'language_herf'/g) || []).length;
+  assert.equal(writes, 1, 'the core should write language_herf exactly once');
+  assert.match(member('select'), /local\.set\(\s*'language_herf'/,
+    'the one write is not inside select()');
 });
 
 test('the language check has one implementation', () => {
@@ -180,4 +217,58 @@ test('every language file is valid JSON with string values', () => {
       assert.equal(typeof v, 'string', `${f}:${k} is not a string`);
     }
   }
+});
+
+/* -------------------------------------------------- one tree, not N (L3) --- */
+
+test('the build writes one page per screen, not one per language', () => {
+  /*
+   * Translating at build time wrote a complete second copy of every page for
+   * each language: 2.3MB of duplicated markup to deliver 43KB of Tamil, and
+   * ~23MB by the tenth language. The words are fetched at runtime now, so the
+   * output must not depend on how many languages exist.
+   */
+  const html = fs.readFileSync(path.join(FRONTEND, 'gulpfile.js', 'html.js'), 'utf8');
+  assert.ok(!/\$\{lang\}_\$\{item\}|lang === 'en' \? item :/.test(html),
+    'the build still names output files after a language');
+  assert.match(html, /markTranslatable/, 'the build does not mark pages for runtime translation');
+});
+
+test('the build sweeps per-language pages a previous build left', () => {
+  /* A stale ta_dashboard.html still loads and still looks right, frozen at
+     whatever the app said the day it was written. */
+  const html = fs.readFileSync(path.join(FRONTEND, 'gulpfile.js', 'html.js'), 'utf8');
+  assert.match(html, /\^\[a-z\]\{2\}_\.\+\\.html\$/, 'nothing removes stale per-language pages');
+});
+
+test('title and option carry the key on the parent, never a nested tag', () => {
+  /*
+   * Inside <title> and <option> the parser does not build an element for a
+   * nested tag, so leaving one there prints angle brackets at the customer.
+   */
+  const html = fs.readFileSync(path.join(FRONTEND, 'gulpfile.js', 'html.js'), 'utf8');
+  const fn = html.slice(html.indexOf('function markTranslatable'));
+  assert.match(fn, /title\|option/, 'title and option are not special-cased');
+  assert.match(fn, /data-t=/, 'the key is not hoisted onto the parent');
+});
+
+test('the marker element cannot affect layout', () => {
+  /*
+   * 1,351 places that used to contain bare text now contain an inline element
+   * around it. display:contents removes its box entirely, so spacing is
+   * unchanged on screens nobody will re-check by hand.
+   */
+  const css = fs.readFileSync(
+    path.join(FRONTEND, 'static', 'style', 'css', 'modules', 'font.css'), 'utf8');
+  assert.match(css, /lang\s*\{[^}]*display:\s*contents/,
+    'lang elements have no display:contents rule');
+});
+
+test('the runtime translates both shapes', () => {
+  const core = fs.readFileSync(CORE, 'utf8');
+  const applyFn = member('apply');
+  assert.match(applyFn, /lang\[class\]/, 'apply() does not translate <lang> tags');
+  assert.match(applyFn, /\[data-t\]/, 'apply() does not translate hoisted keys');
+  assert.match(applyFn, /if \(!dict\) return/, 'English should do no work at all');
+  assert.ok(core.includes('DOMContentLoaded'), 'apply() never runs on its own');
 });
