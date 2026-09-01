@@ -123,6 +123,22 @@ offers "ANSI", "Windows-1252" or "Western", do not use it.
 
 ---
 
+## Seeing your work
+
+You do not need this to contribute, but it is the fastest way to catch a word
+that is right in the dictionary and wrong on the button.
+
+```bash
+npm run dev
+```
+
+Open http://localhost:3000/public/login.html, sign in, and pick your language
+from the menu in the top bar. The switch is instant - the page does not reload.
+
+A string that overflows its button or wraps badly is worth reporting even if
+the translation itself is correct. Screens were laid out around English, and
+some languages simply need more room.
+
 ## Words that are hard to translate
 
 A POS has terms of art. Machine translation gets these wrong in ways a
