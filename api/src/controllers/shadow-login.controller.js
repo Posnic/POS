@@ -43,7 +43,9 @@ function clientIp(req) {
   const forwardedFor = req.headers && req.headers['x-forwarded-for'];
   const forwardedIp = Array.isArray(forwardedFor)
     ? forwardedFor[0]
-    : String(forwardedFor || '').split(',')[0].trim();
+    : String(forwardedFor || '')
+        .split(',')[0]
+        .trim();
   return req.ip || req.connection?.remoteAddress || forwardedIp || 'unknown';
 }
 
