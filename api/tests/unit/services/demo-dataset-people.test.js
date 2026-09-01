@@ -28,9 +28,20 @@ describe('reading the dataset own people', () => {
      * Balances, credit terms and tax registration on a demo customer are
      * claims about a business that does not exist. A demo must not make one.
      */
-    const out = peopleFrom({
-      customers: [{ name: 'Tokyo Cash Customer', phone: '03-1234', city: 'Tokyo', balance: 4200, taxNumber: 'JP99' }],
-    }, 'customers');
+    const out = peopleFrom(
+      {
+        customers: [
+          {
+            name: 'Tokyo Cash Customer',
+            phone: '03-1234',
+            city: 'Tokyo',
+            balance: 4200,
+            taxNumber: 'JP99',
+          },
+        ],
+      },
+      'customers'
+    );
     expect(out).toEqual([{ name: 'Tokyo Cash Customer', phone: '03-1234', city: 'Tokyo' }]);
   });
 
@@ -49,14 +60,24 @@ describe('reading the dataset own people', () => {
      * every terminal view of the file, so it matched nothing and the duplicate
      * came through. Hence the control-character test below.
      */
-    const out = peopleFrom({
-      customers: [{ name: 'Walk-in Customer' }, { name: 'Walkin Customer' }, { name: 'London Cash Customer' }],
-    }, 'customers');
+    const out = peopleFrom(
+      {
+        customers: [
+          { name: 'Walk-in Customer' },
+          { name: 'Walkin Customer' },
+          { name: 'London Cash Customer' },
+        ],
+      },
+      'customers'
+    );
     expect(out.map((p) => p.name)).toEqual(['London Cash Customer']);
   });
 
   it('a nameless row is skipped rather than seeded blank', () => {
-    const out = peopleFrom({ customers: [{ phone: '1' }, { name: '   ' }, { name: 'Real' }] }, 'customers');
+    const out = peopleFrom(
+      { customers: [{ phone: '1' }, { name: '   ' }, { name: 'Real' }] },
+      'customers'
+    );
     expect(out.map((p) => p.name)).toEqual(['Real']);
   });
 
