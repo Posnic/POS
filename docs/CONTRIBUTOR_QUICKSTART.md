@@ -253,6 +253,24 @@ Your change lands on `develop` and is labelled `ready for QA`, and a comment
 says where to try it. Anyone can test it - including you, and including people
 without write access.
 
+### About develop.posnic.io
+
+`develop` is deployed to **https://develop.posnic.io** on every merge, so you
+can try a change without checking anything out.
+
+It is a **public sandbox**, and worth being blunt about what that means:
+
+- It runs code that has been merged but not released, including changes nobody
+  has tested yet. It will sometimes be broken. That is what it is for.
+- It holds **demo data only** and is wiped. Do not put anything real into it -
+  not a customer, not a phone number, not a price you care about.
+- Assume anything you type there can be read by anyone.
+
+It shares nothing with the production estate: its own database, its own
+secrets, and no route to anything a real shop uses. If it ever misbehaves the
+answer is to delete it and make another, which is only a comfortable answer
+because nothing on it matters.
+
 If you have a few minutes, testing somebody else's change is genuinely useful
 and needs no permissions. Filter issues by `ready for QA`, try the thing, and
 say what happened. Reporting that something is broken is as valuable as fixing
