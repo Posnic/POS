@@ -263,15 +263,8 @@ PosnicPro.variants = {
                 PosnicPro.record_id = id;
                 $('#variant_id').val(PosnicPro.record_id);
                 $('#variant_name').val(data.name);
-                if (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') {
-                    $('#variant_title').text('திருத்தப்பட்ட');
-                    $('#variant_button_title').text('புதுப்பி');
-
-                } else {
-                    $('#variant_title').text('Edit');
-                    $('#variant_button_title').text('Update');
-
-                }
+                    $('#variant_title').text(PosnicPro.i18n.t('lang_action_edit', 'Edit'));
+                    $('#variant_button_title').text(PosnicPro.i18n.t('lang_updatebtn_title', 'Update'));
                 $('.variant-wrapper .variant-fields .variant-input:nth-child(n+2)').remove();
                 let $test = $('.variant-input:parent');
                 $('.add-variant-field', $test).hide();
@@ -301,13 +294,8 @@ PosnicPro.variants = {
     addVariantButton: function () {
         var loader = $(".loader-variant");
         loader.find(".loadingSpinner:first").remove();
-        if (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') {
-            $('#variant_title').text('புதிய');
-            $('#variant_button_title').text('சேமி');
-        } else {
-            $('#variant_title').text('Add');
-            $('#variant_button_title').text('Save');
-        }
+            $('#variant_title').text(PosnicPro.i18n.t('lang_new_title', 'Add'));
+            $('#variant_button_title').text(PosnicPro.i18n.t('lang_save_title', 'Save'));
         $('.update-button').attr('disabled', 'disabled').removeClass('btn-outline-success');
         $('#variant_id').val('');
     },

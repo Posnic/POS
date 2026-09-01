@@ -143,4 +143,58 @@ function fingerprintAssets(cb) {
     fingerprint.fingerprintAssets(cb);
 }
 exports.fingerprint = fingerprintAssets;
-exports.build = series(parallel(copyStatic, copyVendorScripts, copyLazyScripts, buildLazyReports, buildCss, buildJs, buildHtml), fingerprintAssets, buildServiceWorker);
+/*
+ * The language packs the running app fetches.
+ *
+ * Words JavaScript writes after load cannot be translated by the HTML build,
+ * so PosnicPro.i18n reads languages/<code>.json at runtime. This puts those
+ * files where the page can ask for them.
+ *
+ * English is deliberately NOT emitted: it lives in the markup and in every
+ * t(key, english) call, so an English shop fetches nothing and has nothing
+ * that can fail.
+ *
+ * Validated rather than copied. Nine Tamil strings in sales.js had been
+ * corrupted to mojibake and shipped to the sale screen for who knows how long,
+ * because nothing ever looked. A pack that is not valid JSON, or that carries
+ * Latin-1 wreckage where Tamil should be, fails the build here instead.
+ */
+function buildLangPacks(cb) {
+    /* Required here, not at module scope: that is the shape the other tasks in
+       this file use, and a name that only exists inside a sibling function is
+       exactly the kind of thing node --check cannot see. */
+    const fsx = require('fs');
+    const pathx = require('path');
+    try {
+        const outDir = pathx.join(process.cwd(), publicDir, 'languages');
+        fsx.mkdirSync(outDir, { recursive: true });
+        const problems = [];
+        for (const lang of languages) {
+            if (lang === 'en') continue;
+            const source = pathx.join(process.cwd(), 'languages', `${lang}.json`);
+            const raw = fsx.readFileSync(source, 'utf8');
+            let dict;
+            try {
+                dict = JSON.parse(raw);
+            } catch (e) {
+                problems.push(`${lang}.json is not valid JSON: ${e.message}`);
+                continue;
+            }
+            for (const [key, value] of Object.entries(dict)) {
+                /* A run of Latin-1 supplement characters is what UTF-8 read as
+                   Latin-1 looks like. Real translations never contain one. */
+                if (/[\u0080-\u00FF]{3,}/.test(String(value))) {
+                    problems.push(`${lang}.${key} looks like mojibake: ${String(value).slice(0, 40)}`);
+                }
+            }
+            fsx.writeFileSync(pathx.join(outDir, `${lang}.json`), JSON.stringify(dict), 'utf8');
+        }
+        if (problems.length) {
+            return cb(new Error('language packs:\n  ' + problems.join('\n  ')));
+        }
+        cb();
+    } catch (e) { cb(e); }
+}
+exports.langPacks = buildLangPacks;
+
+exports.build = series(parallel(copyStatic, copyVendorScripts, copyLazyScripts, buildLazyReports, buildLangPacks, buildCss, buildJs, buildHtml), fingerprintAssets, buildServiceWorker);

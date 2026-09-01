@@ -694,7 +694,7 @@ PosnicPro.users = {
                     $('#adminUser,#apiUser').prop('checked', false);
                     $('.apiAccessLabel').hide();
                 }
-                (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('#user_title').text('திருத்தப்பட்ட') : $('#user_title').text('Edit');
+                $('#user_title').text(PosnicPro.i18n.t('lang_action_edit', 'Edit'));
                 $('#image_upload_file_user').val(data.image);
                 $('#get_user_image_value').val(data.image);
                 $('#logo_user').val(data.image);
@@ -953,7 +953,7 @@ PosnicPro.users = {
         // A new user has no id yet, so the manager-PIN + RFID + wage controls can't apply.
         $('#manager_pin_row, #rfid_row, #wage_row, #targets_row').hide();
         $('#user_manager_pin, #user_rfid_uid, #user_hourly_rate').val('');
-        (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('#user_title').text('புதிய') : $('#user_title').text('Add');
+        $('#user_title').text(PosnicPro.i18n.t('lang_new_title', 'Add'));
         $('.user-image-label-title').html('<i class="feather icon-plus-circle mr-2"></i>Add Image');
         $('#user_button_title,#submit_user_img').text('Save');
         $("#users_password,#users_retype_password").css({cursor: "auto"}).removeAttr('disabled');

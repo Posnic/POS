@@ -87,16 +87,16 @@
         $('#image_sidebar_dashboard,#image_sidebar_salehistry').hide();
         $('.dashboard_img_menu').hide();
         $('#image_sidebar_newsale').show();
-        if (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') {
-            $("#sales-text-change").text('à®ªà¯à®¤à®¿à®¯');
-            $('.changeSalesBtnText').text('à®šà¯‡à®®à®¿');
+        /* The words are the same call either way; only the type sizes below
+           still depend on the language. */
+        $("#sales-text-change").text(PosnicPro.i18n.t('lang_new_title', 'New'));
+        $('.changeSalesBtnText').text(PosnicPro.i18n.t('lang_save_title', 'Save'));
+        if (PosnicPro.i18n.is('ta')) {
             $('.payment_detail').addClass('tm_payment');
             $('.sales_new_class th').addClass('tm_fontsize');
             $('.items_head').addClass('tm_font12');
             $('.pay_amount_total').addClass('tm_font13');
         } else {
-            $("#sales-text-change").text('New');
-            $('.changeSalesBtnText').text('Save');
             $('.btn-payment-mode').removeClass('tm_payment');
             $('.sales_new_class th').removeClass('tm_fontsize');
             $('.items_head').removeClass('tm_font12');
@@ -175,7 +175,7 @@
 
         $('#time-format').removeClass('commonDate');
         $('#time-format').addClass('commonEditDate');
-        (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $("#sales-text-change").text('à®¤à®¿à®°à¯à®¤à¯à®¤') : $("#sales-text-change").text('Edit');
+        $("#sales-text-change").text(PosnicPro.i18n.t('lang_action_edit_sale', 'Edit'));
         $(".sale_table_head_hide").text('');
         $(".sale_table_head_text").text('Action');
         $('.return_sale_only_show').hide();
@@ -1127,7 +1127,7 @@
             var return_line_total = updateReturnLineTotal + addSalesReturnTaxValue;
             //            $('.changeSalesBtnText').text('Return');
             $('.salesBalanceAmount').hide();
-            (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('.changeSalesBtnText').text('à®¤à®¿à®°à¯à®®à¯à®ª à®µà®¿à®±à¯à®ªà®©à¯ˆ') : $('.changeSalesBtnText').text('Return');
+            $('.changeSalesBtnText').text(PosnicPro.i18n.t('lang_action_return_sale_btn', 'Return'));
             $('#closeSaleButton').show();
             $("#return_disc").css("display", "none");
             $('#sales_new_customer_name').val(PosnicPro.sales.EditRecentSaleParams.customer_name);
@@ -4508,7 +4508,7 @@ PosnicPro.sales.editSale = {
                     }
                     PosnicPro.sales.recentMenu.recentSalesTabDetails();
                     PosnicPro.sales.salesId = '';
-                    (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('.changeSalesBtnText').text('புதுப்பி') : $('.changeSalesBtnText').text('Update');
+                    $('.changeSalesBtnText').text(PosnicPro.i18n.t('lang_updatebtn_title', 'Update'));
 
     
                     // Cache proceeded KOT sale ids locally so Sales History can
@@ -6769,13 +6769,9 @@ PosnicPro.sales.setSaleDefaults = function () {
     }
 
     if (isKotEditFlow) {
-        (PosnicPro.local.get('language_herf') === 'ta_dashboard.html')
-            ? $('.changeSalesBtnText').text('à®ªà¯à®¤à¯à®ªà¯à®ªà®¿')
-            : $('.changeSalesBtnText').text('Update');
+        $('.changeSalesBtnText').text(PosnicPro.i18n.t('lang_updatebtn_title', 'Update'));
     } else {
-        (PosnicPro.local.get('language_herf') === 'ta_dashboard.html')
-            ? $('.changeSalesBtnText').text('à®šà¯‡à®®à®¿')
-            : $('.changeSalesBtnText').text('Save');
+        $('.changeSalesBtnText').text(PosnicPro.i18n.t('lang_save_title', 'Save'));
     }
 
     $('#sales_new_item_name').focus();
@@ -6838,13 +6834,9 @@ PosnicPro.sales.setDefaults = function () {
     }
 
     if (isKotEditFlow) {
-        (PosnicPro.local.get('language_herf') === 'ta_dashboard.html')
-            ? $('.changeSalesBtnText').text('\u0baa\u0bc1\u0ba4\u0bc1\u0baa\u0bcd\u0baa\u0bbf')
-            : $('.changeSalesBtnText').text('Update');
+        $('.changeSalesBtnText').text(PosnicPro.i18n.t('lang_updatebtn_title', 'Update'));
     } else {
-        (PosnicPro.local.get('language_herf') === 'ta_dashboard.html')
-            ? $('.changeSalesBtnText').text('\u0b9a\u0bc7\u0bae\u0bbf')
-            : $('.changeSalesBtnText').text('Save');
+        $('.changeSalesBtnText').text(PosnicPro.i18n.t('lang_save_title', 'Save'));
     }
 
     $('#discount_sale_amount,#tax').text('0.00');
@@ -8291,11 +8283,7 @@ PosnicPro.sales.recentMenu = {
             // For all KOT edit screens (including kotorder/{id}/edit and
             // kotsales/{id}/edit), always show "Update" as the primary
             // action label.
-            if (PosnicPro && PosnicPro.local && PosnicPro.local.get('language_herf') === 'ta_dashboard.html') {
-                $(".changeSalesBtnText").text('புதுப்பி');
-            } else {
-                $(".changeSalesBtnText").text('Update');
-            }
+                $(".changeSalesBtnText").text(PosnicPro.i18n.t('lang_updatebtn_title', 'Update'));
 
             // And use the *current* date/time as the updated date instead of
             // the original sale date when we are in a KOT edit flow.
@@ -8328,11 +8316,7 @@ PosnicPro.sales.recentMenu = {
                 }
             });
 
-            if (PosnicPro && PosnicPro.local && PosnicPro.local.get('language_herf') === 'ta_dashboard.html') {
-                $(".changeSalesBtnText").text('சேமி');
-            } else {
-                $(".changeSalesBtnText").text('Save');
-            }
+                $(".changeSalesBtnText").text(PosnicPro.i18n.t('lang_save_title', 'Save'));
 
             $('#closeSaleButton').hide();
             PosnicPro.collapseMenuForWorkspace();
@@ -11904,11 +11888,7 @@ PosnicPro.kotsales.showEdit = function (id) {
     // primary action button label is shown as "Update" instead of "Save".
     // This keeps the UI consistent with other edit flows.
     if (typeof $ !== 'undefined') {
-        if (PosnicPro && PosnicPro.local && PosnicPro.local.get('language_herf') === 'ta_dashboard.html') {
-            $('.changeSalesBtnText').text('à®ªà¯à®¤à¯à®ªà¯à®ªà®¿');
-        } else {
-            $('.changeSalesBtnText').text('Update');
-        }
+            $('.changeSalesBtnText').text(PosnicPro.i18n.t('lang_updatebtn_title', 'Update'));
     }
 
     // Now close any open sidebars/overlays (such as the KOT table
@@ -11935,12 +11915,9 @@ PosnicPro.sales.ensureKotEditButtonLabel = function () {
         return;
     }
 
-    var isTamil = (PosnicPro && PosnicPro.local && PosnicPro.local.get('language_herf') === 'ta_dashboard.html');
-    if (isTamil) {
-        $('.changeSalesBtnText').text('à®ªà¯à®¤à¯à®ªà¯à®ªà®¿');
-    } else {
-        $('.changeSalesBtnText').text('Update');
-    }
+    /* No branch: t() already answers "Update" in English, so asking the
+       language first only gave two ways to say the same thing. */
+    $('.changeSalesBtnText').text(PosnicPro.i18n.t('lang_updatebtn_title', 'Update'));
 };
 
 // Run the KOT edit label helper on page load and whenever

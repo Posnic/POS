@@ -2458,13 +2458,8 @@ PosnicPro.tax = {
     triggerModules: function () {
         PosnicPro.showAddModal('tax');
         $('#tax_id').val('');
-        if (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') {
-            $('#tax-heading').text('புதிய');
-            $('#tax_text_change').text('சேமி');
-        } else {
-            $('#tax-heading').html('Add');
-            $('#tax_text_change').text('Save');
-        }
+            $('#tax-heading').text(PosnicPro.i18n.t('lang_new_title', 'Add'));
+            $('#tax_text_change').text(PosnicPro.i18n.t('lang_save_title', 'Save'));
         var loader = $(".loader-tax");
         loader.find(".loadingSpinner:first").remove();
         $('#tax_reset').show();
@@ -2476,14 +2471,9 @@ PosnicPro.tax = {
         $('#tax_id').val(id);
         $('#tax_name').val(module.data('taxname'));
         $('#tax_value').val(module.data('taxvalue'));
-        (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('#tax-heading').text('திருத்தப்பட்ட') : $('#tax-heading').html('Edit');
-        if (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') {
-            $('#tax-heading').text('திருத்தப்பட்ட');
-            $('#tax_text_change').text('புதுப்பி');
-        } else {
-            $('#tax-heading').html('Edit');
-            $('#tax_text_change').text('Update');
-        }
+        $('#tax-heading').text(PosnicPro.i18n.t('lang_action_edit', 'Edit'));
+            $('#tax-heading').text(PosnicPro.i18n.t('lang_action_edit', 'Edit'));
+            $('#tax_text_change').text(PosnicPro.i18n.t('lang_updatebtn_title', 'Update'));
         $('#tax_reset').hide();
         $('.tax_edit_reset').show();
         $('.tax_edit_reset').attr("id", id);
@@ -2623,13 +2613,8 @@ PosnicPro.denom = {
     triggerModules: function () {
         PosnicPro.showAddModal('denomcash');
         $('#denom_id').val('');
-        if (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') {
-            $('#denom-heading').text('புதிய');
-            $('#denom_text_change').text('சேமி');
-        } else {
-            $('#denom-heading').html('Add');
-            $('#denom_text_change').text('Save');
-        }
+            $('#denom-heading').text(PosnicPro.i18n.t('lang_new_title', 'Add'));
+            $('#denom_text_change').text(PosnicPro.i18n.t('lang_save_title', 'Save'));
         var loader = $(".loader-tax");
         loader.find(".loadingSpinner:first").remove();
         $('#denom_reset').show();
@@ -2640,14 +2625,9 @@ PosnicPro.denom = {
         PosnicPro.showAddModal('denomcash');
         $('#denom_id').val(id);
         $('#denom_value').val(module.data('denomvalue'));
-        (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('#tax-heading').text('திருத்தப்பட்ட') : $('#tax-heading').html('Edit');
-        if (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') {
-            $('#denom-heading').text('திருத்தப்பட்ட');
-            $('#denom_text_change').text('புதுப்பி');
-        } else {
-            $('#denom-heading').html('Edit');
-            $('#denom_text_change').text('Update');
-        }
+        $('#tax-heading').text(PosnicPro.i18n.t('lang_action_edit', 'Edit'));
+            $('#denom-heading').text(PosnicPro.i18n.t('lang_action_edit', 'Edit'));
+            $('#denom_text_change').text(PosnicPro.i18n.t('lang_updatebtn_title', 'Update'));
         $('#denom_reset').hide();
         $('.denom_edit_reset').show();
         $('.denom_edit_reset').attr("id", id);
@@ -2791,13 +2771,8 @@ PosnicPro.tableOrders = {
     triggerModules: function () {
         PosnicPro.showAddModal('tableorder');
         $('#tableorder_id').val('');
-        if (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') {
-            $('#tableorder-heading').text('புதிய');
-            $('#tableorder_text_change').text('சேமி');
-        } else {
-            $('#tableorder-heading').html('Add');
-            $('#tableorder_text_change').text('Save');
-        }
+            $('#tableorder-heading').text(PosnicPro.i18n.t('lang_new_title', 'Add'));
+            $('#tableorder_text_change').text(PosnicPro.i18n.t('lang_save_title', 'Save'));
         var loader = $(".loader-tax");
         loader.find(".loadingSpinner:first").remove();
         $('#tableorder_reset').show();
@@ -2808,13 +2783,8 @@ PosnicPro.tableOrders = {
         PosnicPro.showAddModal('tableorder');
         $('#tableorder_id').val(id);
         $('#tableorder_value').val(module.data('tableordervalue'));
-        if (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') {
-            $('#tableorder-heading').text('திருத்தப்பட்ட');
-            $('#tableorder_text_change').text('புதுப்பி');
-        } else {
-            $('#tableorder-heading').html('Edit');
-            $('#tableorder_text_change').text('Update');
-        }
+            $('#tableorder-heading').text(PosnicPro.i18n.t('lang_action_edit', 'Edit'));
+            $('#tableorder_text_change').text(PosnicPro.i18n.t('lang_updatebtn_title', 'Update'));
         $('#tableorder_reset').hide();
         $('.tableorder_edit_reset').show();
         $('.tableorder_edit_reset').attr("id", id);
@@ -3048,13 +3018,8 @@ PosnicPro.payment = {
     triggerModules: function () {
         PosnicPro.showAddModal('payment');
         $('.payment_id').val('');
-        if (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') {
-            $('#payment-heading').text('புதிய');
-            $('#payment_text_change').text('சேமி');
-        } else {
-            $('#payment-heading').html('Add');
-            $('#payment_text_change').text('Save');
-        }
+            $('#payment-heading').text(PosnicPro.i18n.t('lang_new_title', 'Add'));
+            $('#payment_text_change').text(PosnicPro.i18n.t('lang_save_title', 'Save'));
         var loader = $(".loader-tax");
         loader.find(".loadingSpinner:first").remove();
         $('#payment_reset').show();
@@ -3065,14 +3030,9 @@ PosnicPro.payment = {
         PosnicPro.showAddModal('payment');
         $('.payment_id').val(id);
         $('#payment_value').val(module.data('paymentvalue'));
-        (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('#tax-heading').text('திருத்தப்பட்ட') : $('#tax-heading').html('Edit');
-        if (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') {
-            $('#payment-heading').text('திருத்தப்பட்ட');
-            $('#payment_text_change').text('புதுப்பி');
-        } else {
-            $('#payment-heading').html('Edit');
-            $('#payment_text_change').text('Update');
-        }
+        $('#tax-heading').text(PosnicPro.i18n.t('lang_action_edit', 'Edit'));
+            $('#payment-heading').text(PosnicPro.i18n.t('lang_action_edit', 'Edit'));
+            $('#payment_text_change').text(PosnicPro.i18n.t('lang_updatebtn_title', 'Update'));
         $('#payment_reset').hide();
         $('.payment_edit_reset').show();
         $('.payment_edit_reset').attr("id", id);
@@ -3218,11 +3178,11 @@ PosnicPro.payment = {
 
 PosnicPro.taxgroup = {
     triggerModules: function () {
-        (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('#taxgroup-heading').text('புதிய') : $('#taxgroup-heading').html('Add');
+        $('#taxgroup-heading').text(PosnicPro.i18n.t('lang_new_title', 'Add'));
         PosnicPro.showAddModal('taxgroup');
         $('#taxgroup_id').val('');
         //        $('#taxgroup_text_change').text('Save');
-        (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('#taxgroup_text_change').text('சேமி') : $('#taxgroup_text_change').text('Save');
+        $('#taxgroup_text_change').text(PosnicPro.i18n.t('lang_save_title', 'Save'));
         $('#taxgroup_reset').show();
         $('.taxgroup_edit_reset').hide();
         var loader = $(".loader-taxgroup");
@@ -3249,11 +3209,11 @@ PosnicPro.taxgroup = {
         });
     },
     triggerTaxEdit: function (id) {
-        (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('#taxgroup-heading').text('திருத்தப்பட்ட') : $('#taxgroup-heading').html('Edit');
+        $('#taxgroup-heading').text(PosnicPro.i18n.t('lang_action_edit', 'Edit'));
         PosnicPro.showAddModal('taxgroup');
         $('#taxgroup_id').val(id);
         //        $('#taxgroup_text_change').text('Update');
-        (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('#taxgroup_text_change').text('புதுப்பி') : $('#taxgroup_text_change').text('Update');
+        $('#taxgroup_text_change').text(PosnicPro.i18n.t('lang_updatebtn_title', 'Update'));
         var loader = $(".loader-taxgroup");
         loader.find(".loadingSpinner:first").remove();
         $('#taxgroup_reset').hide();
