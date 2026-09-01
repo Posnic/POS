@@ -52,8 +52,29 @@ function htmlFiles(dir, found = []) {
   return found;
 }
 
-/* The key list the product actually needs. A key used on six screens is one
-   string to translate, not six, so this is a Set. */
+function jsFiles(dir, found = []) {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (entry.isDirectory()) {
+      if (!SKIP.test(entry.name)) jsFiles(path.join(dir, entry.name), found);
+    } else if (entry.name.endsWith('.js')) {
+      found.push(path.join(dir, entry.name));
+    }
+  }
+  return found;
+}
+
+/*
+ * The key list the product actually needs.
+ *
+ * Two sources, and both matter. The HTML carries <lang class="key">, and the
+ * JavaScript now carries PosnicPro.i18n.t('key', 'English') for the words it
+ * writes after the page is built. Counting only the HTML would report every
+ * key the JS uses as dead - and a cleanup acting on that would delete exactly
+ * the translations the sale screen depends on.
+ *
+ * A key used on six screens is one string to translate, not six, so this is a
+ * Set.
+ */
 function keysUsed() {
   const used = new Set();
   let tags = 0;
@@ -64,7 +85,15 @@ function keysUsed() {
       tags += 1;
     }
   }
-  return { used, tags };
+  let calls = 0;
+  for (const file of jsFiles(path.join(ROOT, 'static', 'script'))) {
+    const js = fs.readFileSync(file, 'utf8');
+    for (const m of js.matchAll(/i18n\.t\(\s*'([^']+)'/g)) {
+      used.add(m[1]);
+      calls += 1;
+    }
+  }
+  return { used, tags, calls };
 }
 
 function languages() {
@@ -79,7 +108,7 @@ function languages() {
 }
 
 function report() {
-  const { used, tags } = keysUsed();
+  const { used, tags, calls } = keysUsed();
   const rows = [];
   for (const lang of languages()) {
     let dict = {};
@@ -105,7 +134,7 @@ function report() {
       coverage: used.size ? Math.round((answered.length / used.size) * 100) : 0,
     });
   }
-  return { needed: used.size, tags, rows };
+  return { needed: used.size, tags, calls, rows };
 }
 
 /* ------------------------------------------------------------------ cli --- */
@@ -134,7 +163,8 @@ if (only) {
 }
 
 console.log('');
-console.log(`  The UI uses ${data.needed} distinct keys (${data.tags} <lang> tags).`);
+console.log(`  The UI uses ${data.needed} distinct keys `
+  + `(${data.tags} <lang> tags in HTML, ${data.calls} t() calls in JS).`);
 console.log('  English is not listed: it lives in the markup, so it is always 100%.');
 console.log('');
 console.log('  language   entries   translated   coverage   unused');

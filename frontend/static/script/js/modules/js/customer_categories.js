@@ -365,13 +365,8 @@ PosnicPro.customercategory = {
                 $('#customercategory_id').val(PosnicPro.record_id);
                 $('#customercategory_name').val(data.name);
                 $('#customercategory_description').val(data.description);
-                if (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') {
-                    $('#customercategory_title').text('திருத்தப்பட்ட');
-                    $('#customercategory_button_title').text('புதுப்பி');
-                } else {
-                    $('#customercategory_title').text('Edit');
-                    $('#customercategory_button_title').text('Update');
-                }
+                    $('#customercategory_title').text(PosnicPro.i18n.t('lang_action_edit', 'Edit'));
+                    $('#customercategory_button_title').text(PosnicPro.i18n.t('lang_updatebtn_title', 'Update'));
                 $('.update-button').attr('disabled', 'disabled').removeClass('btn-outline-success');
                 loader.find(".loadingSpinner:first").remove();
             } else {
@@ -388,13 +383,8 @@ PosnicPro.customercategory = {
     addCategoryButton: function () {
         var loader = $(".loader-customercategory");
         loader.find(".loadingSpinner:first").remove();
-        if (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') {
-            $('#customercategory_title').text('புதிய');
-            $('#customercategory_button_title').text('சேமி');
-        } else {
-            $('#customercategory_title').text('Add');
-            $('#customercategory_button_title').text('Save');
-        }
+            $('#customercategory_title').text(PosnicPro.i18n.t('lang_new_title', 'Add'));
+            $('#customercategory_button_title').text(PosnicPro.i18n.t('lang_save_title', 'Save'));
         $('.update-button').attr('disabled', 'disabled').removeClass('btn-outline-success');
         $('#customercategory_id').val('');
         $('#customercategory_new .alert').remove();

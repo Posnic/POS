@@ -407,14 +407,13 @@ PosnicPro.dashboard = {
                         $('.BestSellingitem').show();
                     }
                     $("#tblBestSellingProducts tbody").append(html);
-                } else if (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') {
-                    $("#tblBestSellingProducts tbody").text('உங்கள் தயாரிப்பு விவரங்கள் காலியாக உள்ளன.');
-                    $("#tblBestSellingProducts tbody").css({"color": "#2554C7"});
-                    $('.BestSellingitem').css('display', 'none');
-
                 } else {
-                    $("#tblBestSellingProducts tbody").text('Your product details are empty');
-                    $("#tblBestSellingProducts tbody").css({"color": "#2554C7", "column-span": "4"});
+                    /* One branch. The two halves differed only in the words -
+                       now a key - and in a column-span that does nothing to a
+                       tbody, so keeping it for both changes neither. */
+                    $("#tblBestSellingProducts tbody")
+                        .text(PosnicPro.i18n.t('lang_empty_product_details', 'Your product details are empty'))
+                        .css({"color": "#2554C7", "column-span": "4"});
                     $('.BestSellingitem').css('display', 'none');
                 }
                 $('span.number').number(true, 2);
@@ -454,14 +453,12 @@ PosnicPro.dashboard = {
                         $('.Expireditem').show();
                     }
                     $("#expired_stock_table tbody").append(html);
-                } else if (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') {
-                    $("#expired_stock_table tbody").text('உங்கள் தயாரிப்பு விவரங்கள் காலியாக உள்ளன.');
-                    $("#expired_stock_table tbody").css({"color": "#2554C7"});
-                    $('.Expireditem').css('display', 'none');
-
                 } else {
-                    $("#expired_stock_table tbody").text('Your product details are empty');
-                    $("#expired_stock_table tbody").css({"color": "#2554C7", "column-span": "4"});
+                    /* Same collapse as Best Selling above, for the same
+                       reason: only the words differed. */
+                    $("#expired_stock_table tbody")
+                        .text(PosnicPro.i18n.t('lang_empty_product_details', 'Your product details are empty'))
+                        .css({"color": "#2554C7", "column-span": "4"});
                     $('.Expireditem').css('display', 'none');
                 }
                 $('span.number').number(true, 2);
@@ -774,7 +771,7 @@ $(document).ready(function (e) {
     if ((nav_lang == null) || (nav_lang == '')) {
         $('.select_language').html('English');
         var nav_id = 'dashboard.html';
-        PosnicPro.local.set('language_herf', nav_id);
+        PosnicPro.i18n.select(nav_id);
     }
 
 });
@@ -784,7 +781,10 @@ $('#change_language a').click(function () {
 
     // Persist selected language for subsequent loads
     PosnicPro.local.set('language', nav_language);
-    PosnicPro.local.set('language_herf', nav_id);
+    /* select() records the language CODE too, and clears the cached
+       dictionary - without it the app keeps answering in the language the
+       user just left until the next reload. */
+    PosnicPro.i18n.select(nav_id);
 
     // Stay on the current host (localhost / custom domain / posnic.io) and
     // only swap the dashboard shell (dashboard.html <-> ta_dashboard.html),
@@ -794,8 +794,10 @@ $('#change_language a').click(function () {
 });
 jQuery(document).ready(function () {
     console.log('WORKING');
-    var pathname = window.location.pathname.slice(1);
-    if (pathname === 'ta_dashboard.html') {
+    /* Tamil needs its own type sizes and menu spacing. Asked of the language,
+       not of the URL - the filename stops being the language as soon as the
+       HTML is no longer built per language. */
+    if (PosnicPro.i18n.is('ta')) {
         $('.report_tab_font').addClass('tamil_font14');
         $('.vertical-menu').addClass('tamil_verticalmenu');
         $('.top_sales_tamil').addClass('card_tamil_padding');

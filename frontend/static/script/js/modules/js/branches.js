@@ -502,8 +502,8 @@ PosnicPro.branches = {
                 $('#branch_address').val(data.store_address);
                 $('#branch_country').val(data.country).trigger('change.select2');
                 PosnicPro.local.set('edit_branch_state', data.state);
-                (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('#branch_title').text('திருத்தப்பட்ட') : $('#branch_title').text('Edit');
-                (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('#branch_button_title').text('புதுப்பி') : $('#branch_button_title').text('Update');
+                $('#branch_title').text(PosnicPro.i18n.t('lang_action_edit', 'Edit'));
+                $('#branch_button_title').text(PosnicPro.i18n.t('lang_updatebtn_title', 'Update'));
 
                 $('.update-button').attr('disabled', 'disabled').removeClass('btn-outline-success');
                 PosnicPro.branches.sharingRow(false);
@@ -590,9 +590,9 @@ PosnicPro.branches = {
     addbranchButton: function () {
         var loader = $(".loader-branch");
         loader.find(".loadingSpinner:first").remove();
-        (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('#branch_title').text('புதிய') : $('#branch_title').text('Add');
+        $('#branch_title').text(PosnicPro.i18n.t('lang_new_title', 'Add'));
 //        $('#branch_button_title').text('Save');
-        (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('#branch_button_title').text('சேமி') : $('#branch_button_title').text('Save');
+        $('#branch_button_title').text(PosnicPro.i18n.t('lang_save_title', 'Save'));
 
         $('.update-button').attr('disabled', 'disabled').removeClass('btn-outline-success');
         $('#branch_id').val('');

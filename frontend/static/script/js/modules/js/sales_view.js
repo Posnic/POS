@@ -594,17 +594,13 @@ PosnicPro.sales.view = {
                         $('.page_loader,#osk-container,#clearSaleButton,.return_discount_show').hide();
                         if (PosnicPro.sales && PosnicPro.sales.syncActionTooltips) { PosnicPro.sales.syncActionTooltips(); }
                         $('.page-title-box,#sales_new_item_name,#sales_new,#closeSaleButton,.return_discount_hide').show();
-                        (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('.changeSalesBtnText').text('புதுப்பி') : $('.changeSalesBtnText').text('Update');
+                        $('.changeSalesBtnText').text(PosnicPro.i18n.t('lang_updatebtn_title', 'Update'));
                     }
                     // As an additional safeguard, if this edit page was reached via
                     // the dedicated KOT route (#/kotsales/{id}/edit), always show
                     // "Update" on the primary button so it never falls back to "Save".
                     if (typeof isKotEditRoute !== 'undefined' && isKotEditRoute) {
-                        if (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') {
-                            $('.changeSalesBtnText').text('புதுப்பி');
-                        } else {
-                            $('.changeSalesBtnText').text('Update');
-                        }
+                            $('.changeSalesBtnText').text(PosnicPro.i18n.t('lang_updatebtn_title', 'Update'));
                     }
                     $("#tax").prop('disabled', false);
                     //                    $(".changeSalesBtnText").text('Update');
@@ -646,7 +642,7 @@ PosnicPro.sales.view = {
         $('#sales_tax_return_value,.sales_discount_return_value').text("0.00");
 
         $('.return_sale_only_show').show();
-        (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $("#sales-text-change").text('திருப்பி அனுப்பிய') : $("#sales-text-change").text('Return');
+        $("#sales-text-change").text(PosnicPro.i18n.t('lang_action_return_sale', 'Return'));
         $(".return_table_head_hide").text('Returning');
         $(".sale_table_head_hide").text('Sold');
         $(".return_table_head_text").text('Cancel Return');

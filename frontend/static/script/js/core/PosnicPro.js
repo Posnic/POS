@@ -4185,6 +4185,119 @@ PosnicPro.local = {
         localStorage.removeItem(key);
     }
 };
+
+/*
+ * Language, for text JavaScript writes after the page is built.
+ *
+ * The HTML is translated at build time. Anything drawn later - a button that
+ * says Save until you edit something and then says Update - was not, and was
+ * handled like this, in fifteen files:
+ *
+ *     (PosnicPro.local.get('language_herf') === 'ta_dashboard.html')
+ *         ? $('#branch_title').text('...') : $('#branch_title').text('Edit');
+ *
+ * Three problems in one line. The language was identified by a FILENAME. It
+ * was a two-way branch, so a third language did not fit without editing all
+ * sixty-three of them. And the words lived in code, where no translator could
+ * reach them and where nine of them in sales.js had been silently corrupted
+ * into mojibake - Tamil bytes read as Latin-1 - and shipped to the sale
+ * screen, the most used screen in the product.
+ *
+ * Now: a language CODE, one dictionary per language as data, and one function.
+ *
+ * The English is always passed in as the fallback. That is the whole safety
+ * property - before the pack loads, if the pack 404s, if a key is missing or
+ * a language is half translated, the caller still gets real English rather
+ * than "undefined", which is exactly what the build already does for HTML.
+ *
+ * See Intranet docs/MULTI_LANGUAGE_ARCHITECTURE.md.
+ */
+PosnicPro.i18n = {
+    _dict: null,
+    _code: null,
+
+    /*
+     * 'en' | 'ta' | ...
+     *
+     * Read from the legacy `language_herf`, which holds a page filename like
+     * 'ta_dashboard.html'. Existing installs already have that value, so it is
+     * migrated rather than reset - resetting would silently put every Tamil
+     * shop back into English on upgrade.
+     */
+    code: function () {
+        if (PosnicPro.i18n._code) return PosnicPro.i18n._code;
+        var stored = PosnicPro.local.get('language_code');
+        if (!stored) {
+            var href = PosnicPro.local.get('language_herf') || '';
+            var m = /^([a-z]{2})_/.exec(href);
+            stored = m ? m[1] : 'en';
+            PosnicPro.local.set('language_code', stored);
+        }
+        PosnicPro.i18n._code = stored;
+        return stored;
+    },
+
+    is: function (code) {
+        return PosnicPro.i18n.code() === code;
+    },
+
+    /*
+     * The user picked a language.
+     *
+     * Still takes the page filename, because until the HTML stops being built
+     * per language that filename is also where the browser has to go. It
+     * records the CODE alongside it, and drops the cached value so the next
+     * t() answers as the new language rather than the one being left.
+     */
+    select: function (href) {
+        var m = /^([a-z]{2})_/.exec(String(href || ''));
+        var code = m ? m[1] : 'en';
+        PosnicPro.local.set('language_herf', href);
+        PosnicPro.local.set('language_code', code);
+        PosnicPro.i18n._code = code;
+        PosnicPro.i18n._dict = null;
+        return code;
+    },
+
+    /*
+     * t('lang_edit', 'Edit')
+     *
+     * The second argument is not optional in spirit: it is the English the old
+     * code carried in its else branch, and it is what ships when anything at
+     * all goes wrong.
+     */
+    t: function (key, english) {
+        var d = PosnicPro.i18n._dict;
+        if (d && Object.prototype.hasOwnProperty.call(d, key)) {
+            var value = d[key];
+            /* An empty entry is not a translation. Treating it as one is how a
+               generated skeleton blanks a button. */
+            if (typeof value === 'string' && value.trim() !== '') return value;
+        }
+        return english;
+    },
+
+    /*
+     * Fetch this shop's language pack, once.
+     *
+     * English loads nothing at all - it is in the markup and in every t()
+     * call, so there is nothing to fetch and no request to fail.
+     *
+     * Deliberately not awaited by callers. The pack is a local file behind the
+     * service worker and lands long before any button is clicked; if it were
+     * ever late, t() returns English for a moment rather than blocking the
+     * page on a network read.
+     */
+    load: function () {
+        var code = PosnicPro.i18n.code();
+        if (code === 'en' || PosnicPro.i18n._dict) return Promise.resolve();
+        return fetch('languages/' + code + '.json')
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (json) { if (json) PosnicPro.i18n._dict = json; })
+            .catch(function () { /* English is already the answer */ });
+    }
+};
+PosnicPro.i18n.load();
 $(document).ready(function () {
     // Printer and paper are set per machine in Hardware Manager. Pull them in
     // before the first sale so the first receipt is right, not the second.

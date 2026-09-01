@@ -34,9 +34,9 @@ PosnicPro.receivings = {
     },
     showAdd: function () {
         PosnicPro.receivings.showPaymentMode('');
-        (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('.purchase-tittle-change').text('புதிய') : $('.purchase-tittle-change').text('New');
+        $('.purchase-tittle-change').text(PosnicPro.i18n.t('lang_new_title', 'New'));
 //        $('.changeReceivingText').text('Save');
-        (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('.changeReceivingText').text('சேமி') : $('.changeReceivingText').text('Save');
+        $('.changeReceivingText').text(PosnicPro.i18n.t('lang_save_title', 'Save'));
         PosnicPro.HideSideBarModal();
         $('#receiving_submit').removeAttr('disabled');
         $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
@@ -82,7 +82,7 @@ PosnicPro.receivings = {
     showEdit: function (id) {
         $('#receiving_add_date').removeClass('commonDate');
         $('#receiving_add_date').addClass('commonEditDate');
-        (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('.purchase-tittle-change').text('திருத்தப்பட்ட') : $('.purchase-tittle-change').text('Edit');
+        $('.purchase-tittle-change').text(PosnicPro.i18n.t('lang_action_edit', 'Edit'));
         $('#show-already-return-table').hide();
         $('#v-pills-purchase').addClass('show active');
         (PosnicPro.local.get('gst_action') === 'enable') ? $('.indian-gstr').show() : $('.indian-gstr').hide();
@@ -621,7 +621,7 @@ PosnicPro.receivings = {
     },
     checkedItemReceiving: function (id) {
         $('#receiving_submit').removeAttr('disabled');
-        (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('.changeReceivingText').text('திரும்ப கொள்முதல்') : $('.changeReceivingText').text('Return');
+        $('.changeReceivingText').text(PosnicPro.i18n.t('lang_action_return_purchase', 'Return'));
         if ($('#addReceivingCheckedLineItem_' + id).is(":checked")) {
             $('#return_input_group_' + id).css({cursor: 'pointer', 'pointer-events': 'auto'});
             $('#receiving_row_' + id).css({cursor: 'pointer', background: '#ffffff'});
