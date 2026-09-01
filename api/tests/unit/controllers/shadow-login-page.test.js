@@ -36,6 +36,21 @@ describe('the shadow page stores what a normal sign-in stores', () => {
   });
 });
 
+describe('owner shadow sign-in counts as opening the shop', () => {
+  test('the owner path is classified separately from support shadow access', () => {
+    expect(src).toMatch(/owner sign-in from posnic\.com/);
+    expect(src).toMatch(/actor: shadowActor/);
+    expect(src).toMatch(/shadowActor === 'owner'/);
+  });
+
+  test('owner shadow sign-in writes the same staff activity row as normal login', () => {
+    expect(src).toMatch(/BaseModel\.changeUserLog\(/);
+    expect(src).toMatch(/user\.branch_id \|\| firstBranch\.branch_id/);
+    expect(src).toMatch(/user\.license \|\| user\.license_id/);
+    expect(src).toMatch(/clientIp\(req\)/);
+  });
+});
+
 describe('the next route (the rig lands on any page in one launch)', () => {
   /*
    * A page that only breaks on #/variants cannot be captured by a run that
