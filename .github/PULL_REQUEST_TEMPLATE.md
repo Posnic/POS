@@ -2,6 +2,14 @@
 
 <!-- Short description; link the issue it addresses: Fixes #123 -->
 
+## Acceptance criteria covered
+
+<!-- List the issue checklist items or PR slice this closes. If one is not
+     finished, say why so reviewers do not have to guess. -->
+
+- [ ] Linked issue has clear acceptance criteria, or this PR adds them first
+- [ ] This PR completes the listed criteria or names the remaining work
+
 ## How was it tested?
 
 - [ ] Ran locally (`npm start`)

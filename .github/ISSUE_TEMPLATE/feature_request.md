@@ -33,6 +33,19 @@ the one you had in mind.
 <!-- Optional. If you have a shape in mind, describe it - but the problem above
      matters more. -->
 
+## Acceptance criteria
+
+<!--
+What must be true before this issue can be closed? Keep these specific and
+testable. A maintainer may edit this into smaller PR-sized steps before code
+starts.
+-->
+
+- [ ] The user can...
+- [ ] The app still...
+- [ ] Tests or evidence prove...
+- [ ] Documentation or operator wording explains...
+
 ## Does it need an internet connection?
 
 <!-- The local edition must work fully offline. Anything that needs a
