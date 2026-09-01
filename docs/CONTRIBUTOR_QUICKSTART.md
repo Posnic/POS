@@ -74,6 +74,23 @@ npm start
 The app opens as an Electron desktop app. On first run it prepares a local
 database and walks you through setup.
 
+### Or run it in a browser
+
+```bash
+npm run dev
+```
+
+Then open **http://localhost:3000/public/login.html**.
+
+Same application, same API, same database - it is the desktop app's own server
+with a browser in front of it instead of an Electron window. Useful when you
+are changing a screen and want to hit refresh, and necessary if you are
+reviewing a translation, because you need to see the words in place.
+
+The first run generates development secrets into `api/.env` (kept out of git,
+and not what a real installation uses), builds the frontend if it has not been
+built, and starts the bundled MongoDB. Ctrl+C stops all of it.
+
 Development defaults:
 
 | Service | Default |
